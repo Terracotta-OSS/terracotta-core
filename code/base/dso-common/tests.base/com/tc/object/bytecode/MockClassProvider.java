@@ -1,0 +1,31 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tc.object.bytecode;
+
+import com.tc.object.loaders.ClassProvider;
+
+public class MockClassProvider implements ClassProvider {
+
+  public MockClassProvider() {
+    super();
+  }
+
+  public Class getClassFor(String className, String loaderDesc) throws ClassNotFoundException {
+    return getClass().getClassLoader().loadClass(className);
+
+  }
+
+  public String getLoaderDescriptionFor(Class clazz) {
+    return "";
+  }
+
+  public ClassLoader getClassLoader(String loaderDesc) {
+    return getClass().getClassLoader();
+  }
+
+  public String getLoaderDescriptionFor(ClassLoader loader) {
+    return "";
+  }
+
+}

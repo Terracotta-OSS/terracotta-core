@@ -1,0 +1,664 @@
+#  Pretty.settings
+version=1.0
+#  This is the number of spaces to indent for each block.
+#  Twice this number is the amount of space used for
+#  unexpected carrage returns.
+indent=3
+indent.char=space
+
+#  Style for { and }
+#  C style means that { is at the end of the line
+#  and } is on a line by itself.  For example,
+#  if (myTest) {
+#    //  This is c style
+#  }
+#
+#  PASCAL style means both { and } are on lines
+#  by themselves.  For example,
+#  if (myTest)
+#  {
+#    //  This is PASCAL style
+#  }
+block.style=C
+
+#  The following parameter should be changed to true if you
+#  like your parens to have a space before and after them
+#  if ( x == y )    //expr.space=true
+#  if (x == y)      //expr.space=false
+expr.space=false
+
+#  The following parameter is the minimum number of blank lines
+#  between methods, nested classes, and nested interfaces.
+#  It is also the number of lines before and after
+#  field declarations, though field declarations will have
+#  what ever spacing you used.
+#
+#  Note that this is a minimum.  If your code already
+#  has more space between methods, then it won't shrink
+#  the number of blank lines.
+lines.between=1
+
+
+#
+#  Default Javadoc comments
+#
+#  The following items are used by the mechanism that
+#  automatically inserts javadoc comments.  Other than
+#  author (which I recommend that you change), these
+#  values are probably sufficient.  However, if you
+#  want to make it easer to search your files to find
+#  where the values are missing, you can change these
+#  to something more unique.
+#
+
+#  Author - the default author
+author=Terracotta, Inc.
+
+#  Default description of the class
+class.descr=Description of the Class
+
+#  Default description of the interface
+interface.descr=Description of the Interface
+
+#  Default description of the constructor  {0} stands for the name
+#  of the constructor
+constructor.descr=Constructor for the {0} object
+
+#  Default description of the method
+method.descr=Description of the Method
+
+#  Default description of the parameter
+param.descr=Description of Parameter
+
+#  Default description of the return value
+return.descr=Description of the Returned Value
+
+#  Default description of the exception
+exception.descr=Description of Exception
+
+#  Pretty.settings
+version=1.1
+#  Default description of the getter.  {0} is the name of the
+#  attribute, {1} is the name of the class, {2} is 'class'
+#  or 'object' depending on whether it is static or not
+getter.descr=Gets the {0} attribute of the {1} {2}
+
+#  Default description of the setter.  {0} is the name of the
+#  attribute, {1} is the name of the class, {2} is 'class'
+#  or 'object' depending on whether it is static or not
+setter.descr=Sets the {0} attribute of the {1} {2}
+
+#  Parameter description for setters.  {0} is the name of the attribute
+setter.param.descr=The new {0} value
+
+#  Return description for getters.  {0} is the name of the attribute
+getter.return.descr=The {0} value
+
+#
+#  Sort order
+#
+#  To change the relative priorities of the sort, adjust the number after
+#  the dot.  For instance, if you want all the instance parts first then
+#  static parts second, and within these you want the field, constructor etc
+#  to be sorted next, switch the number of sort.1 and sort.2.
+
+
+#  Check the type first
+#    This places the fields first, and initializers last.  Note that to keep
+#    things compiling initializers must be after the fields.
+sort.1=Type(Field,Constructor,Method,NestedClass,NestedInterface,Initializer)
+
+#  Check the class/instance next
+#    To place the static methods and variables first, switch the order
+#    of instance and static.
+sort.2=Class(Instance,Static)
+
+#  Check the protection next
+#    To sort with public methods/variables use Protection(public)
+#    To sort with private methods/variables use Protection(private)
+sort.3=Protection(public)
+
+#  Group setters and getters last
+#    Setters are methods that start with the word 'set'
+#    Getters are methods that start with the word 'get' or 'is'
+sort.4=Method(setter,getter,other)
+
+#  Pretty.settings
+version=1.2
+
+#  Limits the level that javadoc comments are forced
+#  into the document.  The following are valid
+#  levels:
+#  *  all - all items must have javadoc
+#  *  private - same as all
+#  *  package - all items except private items must have javadoc
+#  *  default - same as package
+#  *  protected - protected and public items must have javadoc
+#  *  public - only public items must have javadoc
+#  *  none - nothing is required to have javadoc
+#
+#  method.minimum applies to constructors and methods
+method.minimum=none
+
+#  field.minimum applies to fields
+field.minimum=protected
+
+#  Default field description
+field.descr=Description of the Field
+
+#  Default description of the run method.  {0} is the name of the
+#  attribute, {1} is the name of the class, {2} is 'class'
+#  or 'object' depending on whether it is static or not
+run.descr=Main processing method for the {1} {2}
+
+
+#  Default description of the run method.  {0} is the name of the
+#  attribute, {1} is the name of the class, {2} is 'class'
+#  or 'object' depending on whether it is static or not
+main.descr=The main program for the {1} {2}
+
+#  Description of the main arguments
+main.param.descr=The command line arguments
+
+#  Is the date a required field of the class or interface
+date.required=false
+
+#  Pretty.settings
+version=1.3
+
+#  Default description of the add method.  {0} is the name of the
+#  attribute, {1} is the name of the class, {2} is 'class'
+#  or 'object' depending on whether it is static or not
+adder.descr=Adds a feature to the {0} attribute of the {1} {2}
+
+#  Description of the add argument
+adder.param.descr=The feature to be added to the {0} attribute
+
+
+
+
+#  Pretty Printer Version
+version=1.4
+#  JUnit has a particular format for the names of methods.
+#  These setup for the unit tests are done in a method named
+#  setUp, the cleanup afterwards is done in tearDown, and
+#  the unit tests all start with the word test.  The following
+#  are the default descriptions of these methods.
+junit.setUp.descr=The JUnit setup method
+
+junit.test.descr=A unit test for JUnit
+
+junit.tearDown.descr=The teardown method for JUnit
+
+junit.suite.descr=A suite of unit tests for JUnit
+junit.suite.return.descr=The test suite
+
+#  class.minimum applies to classes and interfaces
+class.minimum=all
+
+
+
+#  Pretty Printer Version
+version=1.5
+
+#  Is there a space after the cast
+cast.space=true
+
+#  Star count for javadoc
+javadoc.star=2
+
+#  Wordwrap length for javadoc.  You must have at least
+#  javadoc.wordwrap.min characters in the comment and you
+#  must be passing javadoc.wordwrapp.max for the indenting
+#  plus the comment
+javadoc.wordwrap.max=78
+javadoc.wordwrap.min=40
+
+#  Pretty Printer Version
+version=1.6
+
+#
+#  Header:
+#  Uncomment these lines if you would like
+#  a standard header at the beginning of each file.
+#  You are allowed an unlimited number of lines here,
+#  just number them sequentially.
+#
+header.1=/**
+header.2= @COPYRIGHT@
+header.3= */
+
+
+#  Pretty Printer Version
+version=1.7
+#  The following allow you to require and order
+#  tags for the classes, methods, and fields.  To
+#  require the tag, add the name of the tag here
+#  and then add a TAGNAME.descr field.  To only
+#  specify the order, just include the tag here.
+
+#  Here is the order for tags for classes and interfaces
+class.tags=author
+
+#  Here is the order for tags for methods and constructors
+method.tags=param,return,exception,since
+
+#  Here is the order for tags for fields
+field.tags=since
+
+#  In all tags that are required, there are some parameters
+#  that are available.  These are:
+#  {0} refers to the current user
+#  {1} refers to the current user
+#  {2} refers to the name of the current object
+
+#  Now we are ready to specify the author
+author.descr=Terracotta, Inc.
+
+#  Now we are ready to specify the created tag
+created.descr={1}
+
+
+#  Pretty Printer Version
+version=2.2
+
+#  Whether we put a space before the @
+space.before.javadoc=false
+
+#  Should we sort the types and imports?
+sort.top=false
+
+#  Should catch statements look like
+#  (true) is:
+#  try {
+#      //  Something here
+#  }
+#  catch (IOException ioe) {
+#      //  Something here
+#  }
+#  (false) is:
+#  try {
+#      //  Something here
+#  } catch (IOException ioe) {
+#      //  Something here
+#  }
+#  This value is also used for else statements
+catch.start.line=true
+
+#  This determines if there should be a space after keywords
+#  When this value is true, you get:
+#  if (true) {
+#      //  Do something
+#  }
+#  When this value is false, you get:
+#  if(true) {
+#      //  Do something
+#  }
+keyword.space=true
+
+
+#
+#  Do you want to lineup the names and descriptions
+#  in javadoc comments?
+#
+javadoc.id.lineup=true
+
+#
+#  How many spaces should javadoc comments be indented?
+#
+javadoc.indent=2
+
+#
+#  What do you do when a newline is unexpectedly encountered?
+#  The valid values are double and param.  Double means that
+#  you should indent twice.  Param means try to line up the
+#  the parameters.
+#
+surprise.return=double
+
+#
+#  To handle sun's coding standard, you want the method to begin
+#  with a PASCAL coding style and the {} beneath that to be C style.
+#  This parameter allows you to set the method style different
+#  from the rest.
+#
+method.block.style=C
+
+#
+#  To handle sun's coding standard, you want the class to begin
+#  with a PASCAL coding style and the {} beneath that to be C style.
+#  This parameter allows you to set the class style different
+#  from the rest.
+#
+class.block.style=C
+
+#
+#  Should throws part of a method/constructor declaration always be
+#  on it's own line?
+#
+throws.newline=false
+
+
+#  Pretty Printer Version
+version=3.0
+
+
+#
+#  Wordwrap the javadoc comments
+#
+reformat.comments=true
+
+#
+#  Single line comment type
+#
+
+#
+#  Should each single line comment be indented a certain number of spaces
+#  from the margin?  For this to work right be sure to indent each line with
+#  spaces.
+#
+singleline.comment.ownline=true
+
+
+#
+#  Indent the name of the field to this column (-1 for just one space)
+#
+field.name.indent=-1
+
+
+#
+#  Include javadoc comments where ever they appear
+#
+keep.all.javadoc=true
+
+
+#
+#  End of line character(s) - either CR, CRNL, NL, LF, CRLF, DOS, MAC, UNIX, ASIS
+#  CR means carriage return, NL or LF means newline (=linefeed),
+#  DOS means DOS\Windows PC, MAC is Apple Mac and UNIX includes Linux. 
+#
+end.line=ASIS
+
+#
+#  Absolute indent before a single line comment.
+#
+singleline.comment.absoluteindent=0
+
+#
+#  Space used before the start of a single line 
+#  from the end of the code
+#
+singleline.comment.incrementalindent=0
+
+#
+#  This feature describes how the pretty printer should 
+#  indent single line comments (//) that share the line
+#  with source code.  The two choices are incremental and absolute.
+#    incremental  -  use an incremental indent
+#    absolute  -  use the absolute indent level
+#
+singleline.comment.indentstyle.shared=incremental
+
+#
+#  This feature describes how the pretty printer should
+#  indent single line comments (//) that are on their
+#  own line.  The two choices are code and absolute.
+#    code  -  use the same indent as the current code
+#    absolute  -  use the absolute indent level
+#
+singleline.comment.indentstyle.ownline=code
+
+#
+#  This feature describes what type of characters are used for
+#  the java files.
+#    1 - ASCII (1 byte characters)
+#    2 - Unicode (2 byte characters - far east)
+#
+char.stream.type=1
+
+#
+#  This features sprecifies how to space out a field or a local
+#  variable declaration.
+#    single - a space between the modifiers, the type, the name 
+#        and the initializer
+#    dynamic - determine the spacing between the modifiers, type, 
+#        name, and initializers so everything lines up
+#
+variable.spacing=single
+
+
+#  Pretty Printer Version
+version=3.1
+
+#
+#  When a dynamic field spacing is used, this value specifies
+#  the number of additional spaces to add between the modifiers, 
+#  type, name, and initializer.
+#
+dynamic.variable.spacing=1
+
+
+#  Pretty Printer Version
+version=3.2
+
+#
+#  How to format C Style comments.  Valid values are:
+#    leave - leave alone
+#    align.star - place a row of stars to the right and align on those
+#    align.blank - just align the comments to the right (no star)
+#
+c.style.format=align.star
+
+#
+#  For one of the methods above that use the align type, this is
+#  the number of spaces to include after the * or blank
+#
+c.style.indent=2
+
+
+#  Pretty Printer Version
+version=3.3
+
+#
+#  Empty methods and constructors remain on a single line
+#
+empty.block.single.line=false
+
+
+#  Pretty Printer Version
+version=3.4
+
+#
+#  Do we force a space after a cast?
+#
+cast.force.nospace=false
+
+
+#  Pretty Printer Version
+version=3.5
+
+#
+#  What tag name should be used for exceptions
+#
+exception.tag.name=@exception
+
+
+#  Pretty Printer Version
+version=3.6
+
+#
+#  Should inner classes be documented
+#
+document.nested.classes=true
+
+#
+#  Should the document have a footer.  Include it here.
+#  To include more lines, just add more values
+#
+#footer.1=
+#footer.2=//  This is the end of the file
+#footer.3=
+
+#  Pretty Printer Version
+version=3.7
+
+#
+#  Should the local variables be aligned with the { and }
+#  or should they be indented to align with the other code?
+#  false means align with the code, true means align
+#  with the { }
+#
+variable.align.with.block=false
+
+
+#  Pretty Printer Version
+version=3.8
+
+#  Sort the fields with initializers to the top
+#sort.5=FieldInitializers()
+
+#  Sort the fields with initializers to the top
+#  * top - the final methods and fields should be sorted to the top
+#  * bottom - the final methods and fields should be sorted to the bottom
+#sort.6=Final(top)
+
+#  Sort the fields, methods, and classes in alphabetical order
+#sort.7=Alphabetical()
+
+#
+#  The amount to indent a case statement (in terms of indent.char)
+#
+case.indent=1
+
+#
+#  If you would like the pretty printer to make a backup
+#  of the file before applying the pretty printer to the file,
+#  add an extension here.  
+#
+pretty.printer.backup.ext=
+
+
+
+#  Pretty Printer Version
+version=3.9
+
+#
+#  Should C Style comments that exist at the end of a line containing program 
+#  code be placed on that line or on its ownline.
+cstyle.comment.ownline=true
+
+# ***JDK 1.5*** Here is the order for tags for enumerations 
+enum.tags=author
+
+# *** JDK 1.5 *** Default description of the enumeration
+enum.descr=Description of Enumeration
+
+jdk=1.4.2
+
+# List the prefixes of imports that should be
+# sorted to the top.  For instance:
+#    java,javax,org.w3c
+import.sort.important=java,javax
+
+# How many spaces should main description in
+# javadoc comments be indented?
+javadoc.tag.indent
+
+
+
+#  Pretty Printer Version
+version 4.0
+
+#author=Mike Atkinson
+#author.descr=Mike Atkinson
+
+#
+# Additional blank lines before and after local variable declarations
+#
+#insert.space.around.local.variables=false
+
+#
+# Remove brackets around single-line blocks
+#
+#remove.excess.blocks=false
+
+#
+# 'else' starts on a new line
+#
+#else.start.line=false
+
+#
+# Allow single line JavaDoc comments
+# If true then the JUnit tests fail.
+#allow.singleline.javadoc=true
+
+#
+# Lines after package statement: nnn
+# If 1 then the JUnit tests fail.
+#lines.after.package=1
+
+
+
+
+#  new in version 4.1 of the pretty printer 
+version 4.1
+
+#  Default description of the toString() method
+tostring.descr=Converts to a String representation of the {0} object.
+tostring.return.descr=A string representation of the {0} object.
+
+#  Default description of the equals(Object) method
+equals.descr=Compares this {0} to the parameter.
+equals.param.descr=the reference object with which to compare.
+equals.return.descr=<tt>true</tt> if this object is the same as the obj argument; <tt>false</tt> otherwise.
+
+#  Default description of the hashCode method
+hashcode.descr=Computes a hash value for this {0} object.
+hashcode.return.descr=The hash value for this {0} object.
+
+#  Default description of the clone() method
+clone.descr=Creates an exact copy of this {0} object.
+clone.return.descr=A clone of this {0} object.
+
+#  Default description of the copy constructor, {0} stands for the name
+#  of the constructor
+copyconstructor.descr=Copy constructor for the {0} object. Creates a copy of the {0} object parameter.
+copyconstructor.param.descr=Object to copy.
+
+#  Default description of the finalize() method, {1} stands for the name
+#  of the class.
+finalize.descr=Overrides the finalize method to dispose of system resources or to perform other cleanup when the {1} object is garbage collected.
+
+#  Default description of listener methods (addFooListener(), removeFooListener() ).
+#  {5} is the operation {add/remove).
+listener.add.descr=Adds the specified {0} listener to receive {0} events from this component. If listener l is null, no exception is thrown and no action is performed.
+listener.remove.descr=Removes the specified {0} listener so that it no longer receives {0} events from this component. This method performs no function, nor does it throw an exception, if the listener specified by the argument was not previously added to this component. If listener l is null, no exception is thrown and no action is performed.
+listener.param.descr=Contains the {0}Listener for {0}Event data.
+
+#  Default description of the static instance() method
+instance.descr=Gets an instance of this {0} class.
+instance.return.descr=An instance of {0}.
+
+
+
+#  new in version 4.2 of the pretty printer 
+version=4.2
+char.stream.type=2
+
+
+
+#  new in version 4.3 of the pretty printer 
+version=4.3
+first.singleline.javadoc=false
+sort.throws=true
+sort.extends=true
+sort.implements=true
+
+#  new in version 4.4 of the pretty printer
+version=4.4
+annotation.type.descr=An Anotation
+annotation.type.tags=author
+annotation.method.descr=Annotation part
+annotation.method.tags=
+constant.descr=A constant value
+constant.tags=

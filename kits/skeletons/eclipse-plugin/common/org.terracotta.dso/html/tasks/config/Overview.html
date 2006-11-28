@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<meta name="copyright" content="Copyright (c) Terracotta 2005, 2006.">
+<LINK REL="STYLESHEET" HREF="../../book.css" CHARSET="ISO-8859-1" TYPE="text/css">
+  <title>Configuring Your DSO Project</title>
+</head>
+
+<body>
+<H2>Configuring Your DSO Project</H2><BR>
+<p>Once you have <a href="../Install_nature.html">added Terracotta capabilities</a> to your existing Eclipse project or <a href="../New_project.html">created a new Terracotta project</a>, you're ready to configure your project for use with DSO.  There are three general categories of configuration elements:
+<ul>
+ <li>servers
+ <li>clients
+ <li>DSO application
+</ul>
+<p>There are three different ways you can specify configuration settings for Terracotta DSO:
+<ul>
+ <li>The Configuration Editor
+ <li>Workspace browser or Outline view context menus
+ <li>Java code editor context menus
+</ul>
+<BR>
+<img src="../../tutorial/img/open_config_editor.png" border=1>
+<BR><BR>
+<H3><a name="ConfigEditor">The Configuration Editor</a></H3>
+<p>The Terracotta Configuration Editor is composed of a set of tabbed pages:<BR>
+<div style="margin-left:12pt;margin-right:12pt">
+<H4>The XML Page</H4>
+<p>Displays the raw XML content of your config file. You can edit this
+  text directly and, if valid, the changes will be reflected in the
+  other pages of the editor. Problem markers may appear in the
+  left-hand margin of this page, and in the Problem view list, to
+  indicate elements that need to be addressed.<BR>
+<BR>
+<img src="overview2.jpg" border=1>
+<BR><BR>
+<H4>The DSO Application Configuration Page</H4>
+<p>Displays the configuration elements that relate to the DSO
+  artifacts of your application, such as the set of instrumented
+  classes, shared roots, and locked and distributed methods.<BR>
+<BR>
+<img src="overview3.jpg" border=1>
+<BR><BR>
+<H4>The Server Configuration Page</H4>
+<p>Displays the configuration elements that are related to the DSO portion
+  of the Terracotta Server, such as the service ports, log and
+  database locations, in-memory cache size, and garbage-collection
+  settings.<BR>
+<BR>
+<img src="overview4.jpg" border=1>
+<BR><BR>
+<H4>The Client Configuration Page</H4>
+<p>Displays the configuration elements that relate to the general DSO
+  client support, such as the log file location, the cache size, and
+  various logging options.<BR>
+<BR>
+<img src="overview5.jpg" border=1>
+<BR><BR>
+<H4>The Monitor Page</H4>
+<p>Displays an instance of the AdminConsole used to monitor running
+  servers and their attached clients.<BR>
+<BR>
+<img src="overview6.jpg" border=1>
+<BR><BR>
+</div>
+<H3>Configuring Applications</H3>
+<p>In order for your application to participate in transparent data sharing, the relevant artifacts of your system need to be described to DSO.  Primarily, the set of class data members that are to be treated as shared roots need to be listed.  As well, the methods that modify those roots must be expressed as locks.  For a detailed description of the Java elements in your project that can be configured for use with DSO refer to <a href="app/Overview.html">Configuring Your DSO Application</a>.<BR>
+<H3>Configuring Servers</H3>
+<p>You can create configurations for any number of servers, but generally you will only need a single server for developing your DSO application.  A server needs information about which ports upon which its various services should listen, where it should store its log files, and where it should create its database.  For a detailed description of these server configuration elements refer to <a href="servers/Overview.html">Configuring Your DSO Servers</a>.<BR>
+<H3>Configuring Clients</H3>
+<p>Currently Terracotta supports a single, unnamed client configuration element.  In the future multiple, named client configurations may be supported via a single source file. A client needs information about where to store its log files, the size of the in-memory object cache, and what debug setting are enabled.  For a detailed description of these client configuration elements refer to <a href="clients/Overview.html">Configuring Your DSO Clients</a>.<BR>
+<H4>The Package Explorer or Outline View</H4>
+<p>Viewing an Eclipse project in the Java Perspective you have available the
+  Package Explorer and Outline View tabs. By right-clicking elements
+  to call the context menus you may accomplish nearly everything that can be done through the Java Code Editor or The DSO Application Configuration page. For instance, you can browse to a particular field in one of your classes, invoke the <code>Terracotta</code> context menu on that field, and select the <code>Shared root</code> item. You can similarly lock or make distributed a method.<BR>
+<H4>The Java Code Editor</H4>
+<p>To make a field a shared root directly in your Java editor, simply select the field name in its declaration, invoke the <code>Terracotta</code> context menu and choose <code>Shared root</code>. An icon indicating the fields rootness will appear in the left-hand margin.  You can similarly manipulate methods and types in this way.
+<p>DSO artifacts are displayed specially in various Workbench pages and views. For instance, in the Package Explorer view your instrumented DSO classes and shared roots are adorned with a red check. Likewise, in your Java Code Editor similar graphics, known as <i>annotations</i>, are displayed to denote DSO-related items. By default, icons representing your shared roots, instrumented and excluded classes, distributed locks, transient fields, and distributed methods are rendered in the <i>Vertical ruler</i> in the left-hand gutter of the Java editor. In the right-hand gutter, the <i>Overview ruler</i>, simple corresponding region markers allow for direct navigation to the associated item.<BR><BR>
+<img src="source_annotations.png" border=1><BR><BR>
+<p>You can hide these DSO-related source annotations, change the text style and color, and control if they appear in the Vertical or Overview ruler using the Text Editor Annotations preferences dialog.<BR><BR>
+<img src="source_annotation_prefs.png" border=1><BR><BR>
+<H3>Monitoring Your DSO Application</H3>
+<p>Once you have your DSO application running you can use the
+  AdminConsole to monitor the system.  For more information on using
+  the AdminConsole refer
+  to <a href="../Monitor_server.html">Monitoring the server</a>.<BR><BR>
+</body>
+</html>

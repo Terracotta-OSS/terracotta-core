@@ -1,0 +1,88 @@
+package com.tctest.spring.integrationtests.tests;
+
+import com.tctest.spring.bean.IMasterBean;
+import com.tctest.spring.integrationtests.framework.AbstractTwoServerDeploymentTest;
+import com.tctest.spring.integrationtests.framework.DeploymentBuilder;
+
+import java.util.List;
+
+import junit.extensions.TestSetup;
+import junit.framework.Test;
+
+/**
+ * This is really testing a single WebApplicationContext with multiple bean definition files
+ * Testing the following features
+ * 1. proxy is correctly invoked
+ * 2. The shared bean is cached in the mixin cache
+ * 
+ * @author Liyu Yi
+ */
+public class MultipleBeanDefsTest extends AbstractTwoServerDeploymentTest {
+
+  private static final String REMOTE_SERVICE_NAME           = "MasterService";
+  private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory.xml \n classpath:/com/tctest/spring/beanfactory-master.xml";
+  private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/multibeandef-tc-config.xml";
+
+  private static IMasterBean masterBean1;
+  private static IMasterBean masterBean2;
+
+  /**
+   * Test regular shared bean behavior
+   */
+  public void testBeanFromMultipleContexts() throws Exception {
+    List values1 = masterBean1.getValues();
+    List values2 = masterBean2.getValues();
+    
+    assertEquals("Pre-condition checking failed" + values1, 0, values1.size());
+    assertEquals("Pre-condition checking failed" + values2, 0, values2.size());
+    
+    masterBean1.addValue("masterBean1");
+    masterBean2.addValue("masterBean2");
+
+    values1 = masterBean1.getValues();
+    values2 = masterBean2.getValues();
+
+    assertEquals("Not shared correctly" + values1, 2, values1.size());
+    assertEquals("Not shared correctly" + values2, 2, values2.size());
+    
+    assertTrue(values1.contains("masterBean1"));
+    assertTrue(values1.contains("masterBean2"));
+    assertTrue(values2.contains("masterBean1"));
+    assertTrue(values2.contains("masterBean2"));
+  }
+
+  /**
+   * 
+   */
+  public void testUsingSharedBeanReferenceAcrossCluster() throws Exception {
+    assertTrue("After a round trip, failed the check for ==", masterBean1.isTheSameSingletonReferenceUsed());
+    assertTrue("After a round trip, failed the check for ==", masterBean2.isTheSameSingletonReferenceUsed());
+  }
+
+  private static class MultipleBeanDefsTestSetup extends TwoSvrSetup {
+
+    private MultipleBeanDefsTestSetup() {
+      super(MultipleBeanDefsTest.class, CONFIG_FILE_FOR_TEST, "test-multibeandef");
+    }
+
+    protected void setUp() throws Exception {
+      super.setUp();
+      masterBean1 = (IMasterBean) server1.getProxy(IMasterBean.class, REMOTE_SERVICE_NAME);
+      masterBean2 = (IMasterBean) server2.getProxy(IMasterBean.class, REMOTE_SERVICE_NAME);
+    }
+
+    protected void configureWar(DeploymentBuilder builder) {
+      builder.addBeanDefinitionFile(BEAN_DEFINITION_FILE_FOR_TEST);
+      builder.addRemoteService(REMOTE_SERVICE_NAME, "distributedMasterBean", IMasterBean.class);
+    }
+  }
+
+  /**
+   *  JUnit test loader entry point
+   */
+  public static Test suite() {
+    TestSetup setup = new MultipleBeanDefsTestSetup();
+    return setup;
+  }
+
+}

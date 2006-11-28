@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- - - - - - - - - - - - - -->
+<!--  Terracotta for Spring  -->
+<!--  Sample Application     -->
+<!-- - - - - - - - - - - - - -->
+<html>
+<head>
+<title>Terracotta for Spring  &bull;  Thread Coordination</title>
+<link rel="stylesheet"    type="text/css"  href="../samples.css">
+<link rel="shortcut icon" type="image/ico"
+   href="http://www.terracotta.org/favicon.ico">
+</head>
+<body>
+   <p class=logo>
+      <a href="http://www.terracotta.org/"><img src="../samples.png"></a>
+      </p>
+   <h1>Terracotta for Spring</h1>
+   Thread Coordination Sample Application
+
+   <h2>About</h2>
+   The Thread Coordination sample application shows how to use Terracotta for
+   Spring to coordinate processes across a cluster of nodes using plain Java
+   synchronization.<br>
+   <br>
+   Details about what this sample application does and how it works can be found
+   in:&nbsp;
+   <a href="../../docs/TerracottaSpringGuide.html">Terracotta for Spring Guide</a>
+
+   <h2>Build Instructions</h2>
+   This sample application ships built ready to run.&nbsp;  If you modify the
+   application code, use the provided <code>build.xml</code> file to re-build the
+   application with Apache Ant (<code>ant build</code>).
+
+   <h2>Run Instructions </h2>
+   <ol>
+      <li>Start the Terracotta Server from the <code>spring/samples</code> directory<br><br>
+            Unix:    <samp>./start-demo-server.sh</samp><br>
+            Windows: <samp>start-demo-server.bat</samp><br>
+      <li>Start Tomcat server nodes from the <code>spring/samples/coordination</code> directory<br><br>
+            Unix:    <samp>./start-tomcat1.sh<br>./start-tomcat2.sh</samp><br>
+            Windows: <samp>start-tomcat1.bat<br>start-tomcat2.bat</samp><br>
+      <li>View the sample Coordination application<br><br>
+            In a web browser, open
+            <a href="http://localhost:8081/coordination/" target="node1">http://localhost:8081/coordination/</a>
+            for the first Tomcat server node and
+            <a href="http://localhost:8082/coordination/" target="node2">http://localhost:8082/coordination/</a>
+            for the second Tomcat server node.<br>
+      </ol>
+
+   <h2>Source Code</h2>
+   Browse configuration file and source code: <a href="docs/source.html" target="_blank">source.html</a>
+
+   <p class=footer>
+      <a href="../samples.html">Sample Applications</a><br>
+      <a class=footer href="http://www.terracotta.org/">
+      www.terracotta.org<br>Copyright &copy; 2006 Terracotta, Inc.
+      </a>
+   </p>
+</body>
+</html>

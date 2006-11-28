@@ -1,0 +1,15 @@
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+  <!-- workManager is prototype - not shared -->
+  <bean id="workManager" class="demo.workmanager.TCWorkManager" singleton="false">
+    <constructor-arg ref="queue"/>
+  </bean>
+
+  <!-- worker is prototype - not shared -->
+  <bean id="worker" class="demo.workmanager.Worker" singleton="false">
+    <constructor-arg ref="queue"/>
+  </bean>
+
+  <!-- the work queue is singleton - is shared -->
+  <bean id="queue" class="demo.workmanager.WorkQueue"/>
+</beans>

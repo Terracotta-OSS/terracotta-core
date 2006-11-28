@@ -1,0 +1,474 @@
+# InstallAnywhere Localization File
+#
+# External strings for locale: English (en)
+# See the 'ProjectLocalizationInfo.txt' file in this same directory for information 
+#     regarding mappings between the properties shown below and your InstallAnywhere
+#     project.
+#
+# External/Locale property names can take one of three forms:
+#     <ActionName>.<ReferenceID>.<ActionProperty>          (e.g., Installer.858175031081.productName)
+#     <ActionName>.<ReferenceID>.<ActionProperty>.<Index>  (e.g., Installer.858175031081.installLabels.01)
+#         - where the <ActionProperty> is a Vector and the <Index> represents the place within the
+#           Vector where the value of the property should be inserted
+#     _ia.<SomeProperty>                                   (e.g., _ia.MyCustomCodePanelProperty)
+#         - where <SomeProperty> is used as an identifier for a localized value by custom code
+#
+# External/Locale property values should be plain text strings.  Special or i18n characters
+#     that cannot be represented by ASCII characters should be written using escaped unicode.
+#     - see the utility 'native2ascii' distributed with your JDK
+#
+# Product Name: Terracotta for Spring
+# Project File: C:\trunk\open\code\base\build\dist\tmp\spring\install.iap_xml
+# Generated:    Sun Nov 26 15:55:38 PST 2006
+
+
+# Billboard.f7792e18a5e1.imageName=billboard.gif
+Billboard.f7792e18a5e1.imageName=billboard.gif
+
+# Billboard.f7792e18a5e1.imagePath=$IA_PROJECT_DIR$\\common\\images\\
+Billboard.f7792e18a5e1.imagePath=$IA_PROJECT_DIR$\\common\\images\\
+
+# CreateShortcut.f7792e18a5d8.args=
+CreateShortcut.f7792e18a5d8.args=
+
+# CreateShortcut.f7792e18a5d8.destinationName=Administrator Console
+CreateShortcut.f7792e18a5d8.destinationName=Administrator Console
+
+# CreateShortcut.f7792e18a5d8.workingDir=
+CreateShortcut.f7792e18a5d8.workingDir=
+
+# CreateShortcut.f7792e18a5e0.args=
+CreateShortcut.f7792e18a5e0.args=
+
+# CreateShortcut.f7792e18a5e0.destinationName=$PRODUCT_NAME$ Welcome
+CreateShortcut.f7792e18a5e0.destinationName=$PRODUCT_NAME$ Welcome
+
+# CreateShortcut.f7792e18a5e0.workingDir=
+CreateShortcut.f7792e18a5e0.workingDir=
+
+# CreateShortcut.f7792e19a5d9.args=
+CreateShortcut.f7792e19a5d9.args=
+
+# CreateShortcut.f7792e19a5d9.destinationName=Sample Applications Overview
+CreateShortcut.f7792e19a5d9.destinationName=Sample Applications Overview
+
+# CreateShortcut.f7792e19a5d9.workingDir=
+CreateShortcut.f7792e19a5d9.workingDir=
+
+# CreateShortcut.f7792e19a5db.args=
+CreateShortcut.f7792e19a5db.args=
+
+# CreateShortcut.f7792e19a5db.destinationName=Uninstall
+CreateShortcut.f7792e19a5db.destinationName=Uninstall
+
+# CreateShortcut.f7792e19a5db.workingDir=
+CreateShortcut.f7792e19a5db.workingDir=
+
+# CreateShortcut.f7792e19a5dc.args=
+CreateShortcut.f7792e19a5dc.args=
+
+# CreateShortcut.f7792e19a5dc.destinationName=Welcome
+CreateShortcut.f7792e19a5dc.destinationName=Welcome
+
+# CreateShortcut.f7792e19a5dc.workingDir=
+CreateShortcut.f7792e19a5dc.workingDir=
+
+# CreateShortcut.fc1bdc228c61.args=
+CreateShortcut.fc1bdc228c61.args=
+
+# CreateShortcut.fc1bdc228c61.destinationName=Explore
+CreateShortcut.fc1bdc228c61.destinationName=Explore
+
+# CreateShortcut.fc1bdc228c61.workingDir=
+CreateShortcut.fc1bdc228c61.workingDir=
+
+# CreateShortcut.fcbeb8948f8a.args=
+CreateShortcut.fcbeb8948f8a.args=
+
+# CreateShortcut.fcbeb8948f8a.destinationName=Guide
+CreateShortcut.fcbeb8948f8a.destinationName=Guide
+
+# CreateShortcut.fcbeb8948f8a.workingDir=
+CreateShortcut.fcbeb8948f8a.workingDir=
+
+# GetUserInput.f77ba5a1a5f1.prompt=
+GetUserInput.f77ba5a1a5f1.prompt=
+
+# GetUserInput.f77ba5a1a5f1.title=Shortcuts
+GetUserInput.f77ba5a1a5f1.title=Shortcuts
+
+# GetUserInput.f77ba5d0a613.prompt=Congratulations! $PRODUCT_NAME$ has been successfully installed to:\n\n     $USER_INSTALL_DIR$\n\nPress \"Done\" to quit the installer.
+GetUserInput.f77ba5d0a613.prompt=Congratulations! $PRODUCT_NAME$ has been successfully installed to:\n\n     $USER_INSTALL_DIR$\n\nPress \"Done\" to quit the installer.
+
+# GetUserInput.f77ba5d0a613.title=Install Complete
+GetUserInput.f77ba5d0a613.title=Install Complete
+
+# GetUserInput.f77ba5dfa615.prompt=The installation of $PRODUCT_NAME$ is finished, but some errors occurred during the install. Please see the installation log, $USER_INSTALL_DIR$$/$Terracotta_for_Spring_InstallLog.log, for details.
+GetUserInput.f77ba5dfa615.prompt=The installation of $PRODUCT_NAME$ is finished, but some errors occurred during the install. Please see the installation log, $USER_INSTALL_DIR$$/$Terracotta_for_Spring_InstallLog.log, for details.
+
+# GetUserInput.f77ba5dfa615.title=Install Complete
+GetUserInput.f77ba5dfa615.title=Install Complete
+
+# GUIComponentData.f77ba5a1a5f2.defaultValue=
+GUIComponentData.f77ba5a1a5f2.defaultValue=
+
+# GUIComponentData.f77ba5a1a5f2.label=
+GUIComponentData.f77ba5a1a5f2.label=
+
+# GUIComponentData.f77ba5a1a5f3.defaultValue=
+GUIComponentData.f77ba5a1a5f3.defaultValue=
+
+# GUIComponentData.f77ba5a1a5f3.label=
+GUIComponentData.f77ba5a1a5f3.label=
+
+# GUIComponentData.f77ba5a1a5f4.defaultValue=
+GUIComponentData.f77ba5a1a5f4.defaultValue=
+
+# GUIComponentData.f77ba5a1a5f4.label=
+GUIComponentData.f77ba5a1a5f4.label=
+
+# GUIComponentData.f77ba5a1a5f5.defaultValue=
+GUIComponentData.f77ba5a1a5f5.defaultValue=
+
+# GUIComponentData.f77ba5a1a5f5.label=
+GUIComponentData.f77ba5a1a5f5.label=
+
+# GUIComponentData.f77ba5a1a5f6.defaultValue=
+GUIComponentData.f77ba5a1a5f6.defaultValue=
+
+# GUIComponentData.f77ba5a1a5f6.label=
+GUIComponentData.f77ba5a1a5f6.label=
+
+# GUIComponentData.f77ba5a1a5f7.defaultValue=Selected
+GUIComponentData.f77ba5a1a5f7.defaultValue=Selected
+
+# GUIComponentData.f77ba5a1a5f7.label=$DESKTOP_SHORTCUT_CHECKBOX_TEXT$
+GUIComponentData.f77ba5a1a5f7.label=$DESKTOP_SHORTCUT_CHECKBOX_TEXT$
+
+# GUIComponentData.f77ba5a1a5f8.defaultValue=Selected
+GUIComponentData.f77ba5a1a5f8.defaultValue=Selected
+
+# GUIComponentData.f77ba5a1a5f8.label=$PROGRAMS_SHORTCUT_CHECKBOX_TEXT$
+GUIComponentData.f77ba5a1a5f8.label=$PROGRAMS_SHORTCUT_CHECKBOX_TEXT$
+
+# GUIComponentData.f77ba5d0a614.defaultValue=Selected
+GUIComponentData.f77ba5d0a614.defaultValue=Selected
+
+# GUIComponentData.f77ba5d0a614.label=$IC_PANEL_LAUNCH_WELCOME$
+GUIComponentData.f77ba5d0a614.label=$IC_PANEL_LAUNCH_WELCOME$
+
+# GUIComponentData.f77ba5dfa616.defaultValue=Selected
+GUIComponentData.f77ba5dfa616.defaultValue=Selected
+
+# GUIComponentData.f77ba5dfa616.label=$IC_PANEL_LAUNCH_WELCOME$
+GUIComponentData.f77ba5dfa616.label=$IC_PANEL_LAUNCH_WELCOME$
+
+# GUIGroupData.f77ba5a0a5f2.caption=
+GUIGroupData.f77ba5a0a5f2.caption=
+
+# GUIGroupData.f77ba5a0a5f3.caption=
+GUIGroupData.f77ba5a0a5f3.caption=
+
+# GUIGroupData.f77ba5a0a5f4.caption=
+GUIGroupData.f77ba5a0a5f4.caption=
+
+# GUIGroupData.f77ba5a0a5f5.caption=
+GUIGroupData.f77ba5a0a5f5.caption=
+
+# GUIGroupData.f77ba5a0a5f6.caption=Select from the following options:
+GUIGroupData.f77ba5a0a5f6.caption=Select from the following options:
+
+# GUIGroupData.f77ba5a0a5f7.caption=
+GUIGroupData.f77ba5a0a5f7.caption=
+
+# GUIGroupData.f77ba5a0a5f8.caption=
+GUIGroupData.f77ba5a0a5f8.caption=
+
+# GUIGroupData.f77ba5cfa614.caption=
+GUIGroupData.f77ba5cfa614.caption=
+
+# GUIGroupData.f77ba5e0a615.caption=
+GUIGroupData.f77ba5e0a615.caption=
+
+# InstallBundle.f7792dfaa5ab.bundleName=Product
+InstallBundle.f7792dfaa5ab.bundleName=Product
+
+# InstallBundle.f7792dfaa5ab.description=This installs the product feature.
+InstallBundle.f7792dfaa5ab.description=This installs the product feature.
+
+# InstallDirAction.f77ba592a5e7.additionalText=
+InstallDirAction.f77ba592a5e7.additionalText=
+
+# InstallDirAction.f77ba592a5e7.prompt=Where Would You Like to Install?
+InstallDirAction.f77ba592a5e7.prompt=Where Would You Like to Install?
+
+# InstallDirAction.f77ba592a5e7.stepTitle=Choose Install Folder
+InstallDirAction.f77ba592a5e7.stepTitle=Choose Install Folder
+
+# Installer.f77ba552a5e1.installLabels.00=Introduction
+Installer.f77ba552a5e1.installLabels.00=Introduction
+
+# Installer.f77ba552a5e1.installLabels.01=License Agreement
+Installer.f77ba552a5e1.installLabels.01=License Agreement
+
+# Installer.f77ba552a5e1.installLabels.02=Choose Install Folder
+Installer.f77ba552a5e1.installLabels.02=Choose Install Folder
+
+# Installer.f77ba552a5e1.installLabels.03=$SHORTCUT_NAME$s
+Installer.f77ba552a5e1.installLabels.03=$SHORTCUT_NAME$s
+
+# Installer.f77ba552a5e1.installLabels.04=Pre-Installation Summary
+Installer.f77ba552a5e1.installLabels.04=Pre-Installation Summary
+
+# Installer.f77ba552a5e1.installLabels.05=Installing...
+Installer.f77ba552a5e1.installLabels.05=Installing...
+
+# Installer.f77ba552a5e1.installLabels.06=Install Complete
+Installer.f77ba552a5e1.installLabels.06=Install Complete
+
+# Installer.f77ba552a5e1.installProgressImageName=introImage.png
+Installer.f77ba552a5e1.installProgressImageName=introImage.png
+
+# Installer.f77ba552a5e1.installProgressImagePath=com/zerog/ia/installer/images/
+Installer.f77ba552a5e1.installProgressImagePath=com/zerog/ia/installer/images/
+
+# Installer.f77ba552a5e1.panelImageName=introImage.png
+Installer.f77ba552a5e1.panelImageName=introImage.png
+
+# Installer.f77ba552a5e1.panelImagePath=com/zerog/ia/installer/images/
+Installer.f77ba552a5e1.panelImagePath=com/zerog/ia/installer/images/
+
+# Installer.f77ba552a5e1.rulesFailedMessage=The installer cannot run on your configuration. It will now quit.
+Installer.f77ba552a5e1.rulesFailedMessage=The installer cannot run on your configuration. It will now quit.
+
+# InstallerInfoData.f77ba5eea619.email=support@terracottatech.com
+InstallerInfoData.f77ba5eea619.email=support@terracottatech.com
+
+# InstallerInfoData.f77ba5eea619.installerName=install-terracotta-spring
+InstallerInfoData.f77ba5eea619.installerName=install-terracotta-spring
+
+# InstallerInfoData.f77ba5eea619.installerTitle=Terracotta for Spring
+InstallerInfoData.f77ba5eea619.installerTitle=Terracotta for Spring
+
+# InstallerInfoData.f77ba5eea619.productName=Terracotta for Spring
+InstallerInfoData.f77ba5eea619.productName=Terracotta for Spring
+
+# InstallerInfoData.f77ba5eea619.vendorName=Terracotta, Inc.
+InstallerInfoData.f77ba5eea619.vendorName=Terracotta, Inc.
+
+# InstallerInfoData.f77ba5eea619.vendorURL=http://www.terracottatech.com
+InstallerInfoData.f77ba5eea619.vendorURL=http://www.terracottatech.com
+
+# InstallFrameConfigurator.f77ba5efa617.uninstallerTitle=Uninstall $PRODUCT_NAME$
+InstallFrameConfigurator.f77ba5efa617.uninstallerTitle=Uninstall $PRODUCT_NAME$
+
+# InstallSet.11882bf99130.description=<Enter Install Set description here>
+InstallSet.11882bf99130.description=<Enter Install Set description here>
+
+# InstallSet.11882bf99130.imageName=typical.png
+InstallSet.11882bf99130.imageName=typical.png
+
+# InstallSet.11882bf99130.imagePath=com/zerog/ia/installer/images/
+InstallSet.11882bf99130.imagePath=com/zerog/ia/installer/images/
+
+# InstallSet.11882bf99130.installSetName=Core
+InstallSet.11882bf99130.installSetName=Core
+
+# InstallSet.161c086f9521.description=<Enter Install Set description here>
+InstallSet.161c086f9521.description=<Enter Install Set description here>
+
+# InstallSet.161c086f9521.imageName=typical.png
+InstallSet.161c086f9521.imageName=typical.png
+
+# InstallSet.161c086f9521.imagePath=com/zerog/ia/installer/images/
+InstallSet.161c086f9521.imagePath=com/zerog/ia/installer/images/
+
+# InstallSet.161c086f9521.installSetName=Minimal
+InstallSet.161c086f9521.installSetName=Minimal
+
+# InstallSet.f7792df9a5aa.description=The most common application features will be installed.  This option is recommended for most users.
+InstallSet.f7792df9a5aa.description=The most common application features will be installed.  This option is recommended for most users.
+
+# InstallSet.f7792df9a5aa.imageName=typical.png
+InstallSet.f7792df9a5aa.imageName=typical.png
+
+# InstallSet.f7792df9a5aa.imagePath=com/zerog/ia/installer/images/
+InstallSet.f7792df9a5aa.imagePath=com/zerog/ia/installer/images/
+
+# InstallSet.f7792df9a5aa.installSetName=Typical
+InstallSet.f7792df9a5aa.installSetName=Typical
+
+# InstallSet.f77ba5eea618.description=Choose this option to customize the features to be installed.
+InstallSet.f77ba5eea618.description=Choose this option to customize the features to be installed.
+
+# InstallSet.f77ba5eea618.imageName=customIcon.png
+InstallSet.f77ba5eea618.imageName=customIcon.png
+
+# InstallSet.f77ba5eea618.imagePath=com/zerog/ia/installer/images/
+InstallSet.f77ba5eea618.imagePath=com/zerog/ia/installer/images/
+
+# InstallSet.f77ba5eea618.installSetName=Custom
+InstallSet.f77ba5eea618.installSetName=Custom
+
+# InstallSummary.f77ba5b1a5ff.stepPrompt=Please Review the Following Before Continuing:
+InstallSummary.f77ba5b1a5ff.stepPrompt=Please Review the Following Before Continuing:
+
+# InstallSummary.f77ba5b1a5ff.title=Pre-Installation Summary
+InstallSummary.f77ba5b1a5ff.title=Pre-Installation Summary
+
+# InstallSummary.f77ba5b1a601.stepPrompt=Please Review the Following Before Continuing:
+InstallSummary.f77ba5b1a601.stepPrompt=Please Review the Following Before Continuing:
+
+# InstallSummary.f77ba5b1a601.title=Pre-Installation Summary
+InstallSummary.f77ba5b1a601.title=Pre-Installation Summary
+
+# InstallSummary.f77ba5c1a603.stepPrompt=Please Review the Following Before Continuing:
+InstallSummary.f77ba5c1a603.stepPrompt=Please Review the Following Before Continuing:
+
+# InstallSummary.f77ba5c1a603.title=Pre-Installation Summary
+InstallSummary.f77ba5c1a603.title=Pre-Installation Summary
+
+# InstallUninstaller.f7792e09a5c9.destinationName=Uninstall $PRODUCT_NAME$
+InstallUninstaller.f7792e09a5c9.destinationName=Uninstall $PRODUCT_NAME$
+
+# IntroAction.f77ba571a5e1.message=Welcome to the $PRODUCT_NAME$ installer.\n\nIt is strongly recommended that you quit all programs before continuing with this installation.\n\nClick the 'Next' button to proceed to the next screen. If you want to change something on a previous screen, click the 'Previous' button.\n\nYou may cancel this installation at any time by clicking the 'Cancel' button.
+IntroAction.f77ba571a5e1.message=Welcome to the $PRODUCT_NAME$ installer.\n\nIt is strongly recommended that you quit all programs before continuing with this installation.\n\nClick the 'Next' button to proceed to the next screen. If you want to change something on a previous screen, click the 'Previous' button.\n\nYou may cancel this installation at any time by clicking the 'Cancel' button.
+
+# IntroAction.f77ba571a5e1.stepTitle=Introduction
+IntroAction.f77ba571a5e1.stepTitle=Introduction
+
+# LicenseAgrAction.f77ba582a5e1.resourceName=End-User License (on website).txt
+LicenseAgrAction.f77ba582a5e1.resourceName=End-User License (on website).txt
+
+# LicenseAgrAction.f77ba582a5e1.resourcePath=$IA_PROJECT_DIR$\\common\\
+LicenseAgrAction.f77ba582a5e1.resourcePath=$IA_PROJECT_DIR$\\common\\
+
+# LicenseAgrAction.f77ba582a5e1.stepPrompt=Installation and Use of $PRODUCT_NAME$ Requires Acceptance of the Following License Agreement:
+LicenseAgrAction.f77ba582a5e1.stepPrompt=Installation and Use of $PRODUCT_NAME$ Requires Acceptance of the Following License Agreement:
+
+# LicenseAgrAction.f77ba582a5e1.title=License Agreement
+LicenseAgrAction.f77ba582a5e1.title=License Agreement
+
+# MakeExecutable.15e88ada8ba6.destinationName=AdminConsole
+MakeExecutable.15e88ada8ba6.destinationName=AdminConsole
+
+# MakeExecutable.f7792e18a5cf.destinationName=WelcomeFrame
+MakeExecutable.f7792e18a5cf.destinationName=WelcomeFrame
+
+# MakeRegEntry.f7792e19a5df.key=HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$PRODUCT_NAME$
+MakeRegEntry.f7792e19a5df.key=HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$PRODUCT_NAME$
+
+# MakeRegEntry.f7792e19a5df.value=$TC_VERSION$
+MakeRegEntry.f7792e19a5df.value=$TC_VERSION$
+
+# MakeRegEntry.f7792e19a5df.valueName=DisplayVersion
+MakeRegEntry.f7792e19a5df.valueName=DisplayVersion
+
+# ShowDialogAction.f77ba5a1a5f0.buttonLabel=Backup
+ShowDialogAction.f77ba5a1a5f0.buttonLabel=Backup
+
+# ShowDialogAction.f77ba5a1a5f0.cancelButtonLabel=Delete
+ShowDialogAction.f77ba5a1a5f0.cancelButtonLabel=Delete
+
+# ShowDialogAction.f77ba5a1a5f0.detailsButtonLabel=Details...
+ShowDialogAction.f77ba5a1a5f0.detailsButtonLabel=Details...
+
+# ShowDialogAction.f77ba5a1a5f0.label=Previous Installation Detected
+ShowDialogAction.f77ba5a1a5f0.label=Previous Installation Detected
+
+# ShowDialogAction.f77ba5a1a5f0.narrative=Would you like to Backup your prior installation of $PRODUCT_NAME$ to $BACKUP_FOLDER$ or delete the prior installation folder?
+ShowDialogAction.f77ba5a1a5f0.narrative=Would you like to Backup your prior installation of $PRODUCT_NAME$ to $BACKUP_FOLDER$ or delete the prior installation folder?
+
+# ShowDialogAction.f77ba5a1a5f0.title=Warning
+ShowDialogAction.f77ba5a1a5f0.title=Warning
+
+# ShowDialogAction.f77ba5d0a60d.buttonLabel=OK
+ShowDialogAction.f77ba5d0a60d.buttonLabel=OK
+
+# ShowDialogAction.f77ba5d0a60d.cancelButtonLabel=Cancel
+ShowDialogAction.f77ba5d0a60d.cancelButtonLabel=Cancel
+
+# ShowDialogAction.f77ba5d0a60d.detailsButtonLabel=Details...
+ShowDialogAction.f77ba5d0a60d.detailsButtonLabel=Details...
+
+# ShowDialogAction.f77ba5d0a60d.label=Backup Incomplete
+ShowDialogAction.f77ba5d0a60d.label=Backup Incomplete
+
+# ShowDialogAction.f77ba5d0a60d.narrative=The back up of your spring folder to $BACKUP_FOLDER$ cannot complete.\nClose all applications pointing to your existing Terracotta installation.
+ShowDialogAction.f77ba5d0a60d.narrative=The back up of your spring folder to $BACKUP_FOLDER$ cannot complete.\nClose all applications pointing to your existing Terracotta installation.
+
+# ShowDialogAction.f77ba5d0a60d.title=Warning
+ShowDialogAction.f77ba5d0a60d.title=Warning
+
+# ShowDialogAction.f77ba5d0a60f.buttonLabel=OK
+ShowDialogAction.f77ba5d0a60f.buttonLabel=OK
+
+# ShowDialogAction.f77ba5d0a60f.cancelButtonLabel=Cancel
+ShowDialogAction.f77ba5d0a60f.cancelButtonLabel=Cancel
+
+# ShowDialogAction.f77ba5d0a60f.detailsButtonLabel=Details...
+ShowDialogAction.f77ba5d0a60f.detailsButtonLabel=Details...
+
+# ShowDialogAction.f77ba5d0a60f.label=Delete Failed
+ShowDialogAction.f77ba5d0a60f.label=Delete Failed
+
+# ShowDialogAction.f77ba5d0a60f.narrative=The deletion of your spring folder to $USER_MAGIC_FOLDER_1$ cannot complete.\nClose all applications pointing to your existing Terracotta installation.
+ShowDialogAction.f77ba5d0a60f.narrative=The deletion of your spring folder to $USER_MAGIC_FOLDER_1$ cannot complete.\nClose all applications pointing to your existing Terracotta installation.
+
+# ShowDialogAction.f77ba5d0a60f.title=Warning
+ShowDialogAction.f77ba5d0a60f.title=Warning
+
+# UninstallCompleteAction.f77ba5fea61b.rebootNotNeededMessage=
+UninstallCompleteAction.f77ba5fea61b.rebootNotNeededMessage=
+
+# UninstallCompleteAction.f77ba5fea61b.rebootRecommendedMessage=You should restart the system to complete the uninstallation.
+UninstallCompleteAction.f77ba5fea61b.rebootRecommendedMessage=You should restart the system to complete the uninstallation.
+
+# UninstallCompleteAction.f77ba5fea61b.rebootRequiredMessage=You need to restart the system to complete the uninstallation.
+UninstallCompleteAction.f77ba5fea61b.rebootRequiredMessage=You need to restart the system to complete the uninstallation.
+
+# UninstallCompleteAction.f77ba5fea61b.stepTitle=Uninstall Complete
+UninstallCompleteAction.f77ba5fea61b.stepTitle=Uninstall Complete
+
+# UninstallCompleteAction.f77ba5fea61b.uninstallIncompleteMessage=The following items could not be removed:
+UninstallCompleteAction.f77ba5fea61b.uninstallIncompleteMessage=The following items could not be removed:
+
+# UninstallCompleteAction.f77ba5fea61b.uninstallSuccessMessage=All items were successfully uninstalled.
+UninstallCompleteAction.f77ba5fea61b.uninstallSuccessMessage=All items were successfully uninstalled.
+
+# UninstallIntroAction.f77ba5fea61a.message=About to uninstall...\n\n$PRODUCT_NAME$\n\nImportant: \nExit all Terracotta installed applications before continuing the uninstall process.\n\nThis will remove features installed by the $PRODUCT_NAME$ installer. It will not remove files and folders created after the installation.
+UninstallIntroAction.f77ba5fea61a.message=About to uninstall...\n\n$PRODUCT_NAME$\n\nImportant: \nExit all Terracotta installed applications before continuing the uninstall process.\n\nThis will remove features installed by the $PRODUCT_NAME$ installer. It will not remove files and folders created after the installation.
+
+# UninstallIntroAction.f77ba5fea61a.stepTitle=Uninstall $PRODUCT_NAME$
+UninstallIntroAction.f77ba5fea61a.stepTitle=Uninstall $PRODUCT_NAME$
+
+# VariablePropertyData.f77ba5b0a600.propertyName=Shortcut Icons:
+VariablePropertyData.f77ba5b0a600.propertyName=Shortcut Icons:
+
+# VariablePropertyData.f77ba5b0a600.propertyValue=$SHORTCUT_RESULTS$
+VariablePropertyData.f77ba5b0a600.propertyValue=$SHORTCUT_RESULTS$
+
+# VariablePropertyData.f77ba5b0a602.propertyName=Shortcut Icons:
+VariablePropertyData.f77ba5b0a602.propertyName=Shortcut Icons:
+
+# VariablePropertyData.f77ba5b0a602.propertyValue=$SHORTCUT_RESULTS$
+VariablePropertyData.f77ba5b0a602.propertyValue=$SHORTCUT_RESULTS$
+
+# VariablePropertyData.f77ba5b1a602.propertyName=Backup Folder:
+VariablePropertyData.f77ba5b1a602.propertyName=Backup Folder:
+
+# VariablePropertyData.f77ba5b1a602.propertyValue=$BACKUP_FOLDER$
+VariablePropertyData.f77ba5b1a602.propertyValue=$BACKUP_FOLDER$
+
+# VariablePropertyData.f77ba5c0a604.propertyName=Shortcut Icons:
+VariablePropertyData.f77ba5c0a604.propertyName=Shortcut Icons:
+
+# VariablePropertyData.f77ba5c0a604.propertyValue=$SHORTCUT_RESULTS$:
+VariablePropertyData.f77ba5c0a604.propertyValue=$SHORTCUT_RESULTS$:
+
+# VariablePropertyData.f77ba5c1a604.propertyName=Delete Folder:
+VariablePropertyData.f77ba5c1a604.propertyName=Delete Folder:
+
+# VariablePropertyData.f77ba5c1a604.propertyValue=$USER_MAGIC_FOLDER_1$
+VariablePropertyData.f77ba5c1a604.propertyValue=$USER_MAGIC_FOLDER_1$
+

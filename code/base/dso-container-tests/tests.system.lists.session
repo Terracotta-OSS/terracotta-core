@@ -1,0 +1,5 @@
+ServerHopCookieRewriteTest
+SessionEventsTest
+SimpleDsoSessionsTest
+SimpleSessionFilterTest
+SessionInvalidatorTest

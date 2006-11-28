@@ -1,0 +1,241 @@
+<DOCFLEX_TEMPLATE VER='1.7'>
+CREATED='2004-06-21 01:50:00'
+LAST_UPDATE='2006-10-09 06:34:49'
+DESIGNER_TOOL='DocFlex SDK 1.0'
+TEMPLATE_TYPE='DocumentTemplate'
+DSM_TYPE_ID='xsddoc'
+ROOT_ET='#DOCUMENTS'
+<TEMPLATE_PARAMS>
+	PARAM={
+		param.name='docTitle';
+		param.displayName='Documentation Title';
+		param.type='string';
+	}
+	PARAM={
+		param.name='include.detail.overview';
+		param.displayName='Overview Summary';
+		param.type='boolean';
+		param.boolean.default='true';
+	}
+</TEMPLATE_PARAMS>
+FMT={
+	doc.lengthUnits='pt';
+}
+<STYLES>
+	CHAR_STYLE={
+		style.name='Default Paragraph Font';
+		style.id='cs1';
+		style.default='true';
+	}
+	PAR_STYLE={
+		style.name='Frame Heading';
+		style.id='s1';
+		text.font.size='11';
+		text.font.style.bold='true';
+	}
+	PAR_STYLE={
+		style.name='Frame Item';
+		style.id='s2';
+		text.font.size='9';
+		par.option.nowrap='true';
+	}
+	PAR_STYLE={
+		style.name='Frame Subheading';
+		style.id='s3';
+		text.font.size='11';
+		par.margin.top='6';
+		par.margin.bottom='3';
+		par.option.nowrap='true';
+	}
+	CHAR_STYLE={
+		style.name='Hyperlink';
+		style.id='cs2';
+		text.decor.underline='true';
+		text.color.foreground='#0000FF';
+	}
+	PAR_STYLE={
+		style.name='Normal';
+		style.id='s4';
+		style.default='true';
+	}
+</STYLES>
+<ROOT>
+	<AREA_SEC>
+		FMT={
+			par.style='s1';
+		}
+		<AREA>
+			<CTRL_GROUP>
+				FMT={
+					txtfl.delimiter.type='none';
+					par.margin.bottom='6';
+				}
+				<CTRLS>
+					<DATA_CTRL>
+						FMT={
+							txtfl.option.renderEmbeddedHTML='true';
+						}
+						FORMULA='getStringParam("docTitle")'
+					</DATA_CTRL>
+				</CTRLS>
+			</CTRL_GROUP>
+		</AREA>
+	</AREA_SEC>
+	<AREA_SEC>
+		COND='getBooleanParam("include.detail.overview")'
+		FMT={
+			text.option.nbsps='true';
+			par.style='s2';
+		}
+		<AREA>
+			<CTRL_GROUP>
+				<CTRLS>
+					<LABEL>
+						<DOC_HLINK>
+							TARGET_FRAME_EXPR='"detailFrame"'
+							TARGET_KEYS={
+								'"overview-summary"';
+							}
+						</DOC_HLINK>
+						TEXT='Overview'
+					</LABEL>
+				</CTRLS>
+			</CTRL_GROUP>
+		</AREA>
+	</AREA_SEC>
+	<AREA_SEC>
+		COND='documentByTemplate("xmlns-bindings") != ""'
+		FMT={
+			par.style='s2';
+		}
+		<AREA>
+			<CTRL_GROUP>
+				<CTRLS>
+					<LABEL>
+						<DOC_HLINK>
+							TARGET_FRAME_EXPR='"detailFrame"'
+							TARGET_KEYS={
+								'"xmlns-bindings"';
+							}
+						</DOC_HLINK>
+						TEXT='Namespace Bindings'
+					</LABEL>
+				</CTRLS>
+			</CTRL_GROUP>
+		</AREA>
+	</AREA_SEC>
+	<ELEMENT_ITER>
+		DESCR='this actually iterates by namespaces (see sorting)'
+		TARGET_ET='xs:schema'
+		SCOPE='advanced-location-rules'
+		RULES={
+			{'*','#DOCUMENT/xs:schema'};
+		}
+		SORTING='by-attr'
+		SORTING_KEY={lpath='@targetNamespace',ascending,unique}
+		<BODY>
+			<AREA_SEC>
+				FMT={
+					par.style='s2';
+					par.option.nowrap='true';
+				}
+				<AREA>
+					<CTRL_GROUP>
+						<CTRLS>
+							<DATA_CTRL>
+								<DOC_HLINK>
+									TARGET_FRAME_EXPR='"listFrame"'
+									TARGET_KEYS={
+										'getAttrStringValue("targetNamespace")';
+										'"summary"';
+									}
+								</DOC_HLINK>
+								FORMULA='(ns = getAttrStringValue("targetNamespace")) != "" ? ns : "<global>"'
+							</DATA_CTRL>
+						</CTRLS>
+					</CTRL_GROUP>
+				</AREA>
+			</AREA_SEC>
+		</BODY>
+		<HEADER>
+			<AREA_SEC>
+				FMT={
+					par.style='s3';
+				}
+				<AREA>
+					<CTRL_GROUP>
+						<CTRLS>
+							<LABEL>
+								TEXT='Namespaces'
+							</LABEL>
+							<DATA_CTRL>
+								FORMULA='"(" + iterator.numItems + ")"'
+							</DATA_CTRL>
+						</CTRLS>
+					</CTRL_GROUP>
+				</AREA>
+			</AREA_SEC>
+		</HEADER>
+	</ELEMENT_ITER>
+	<ELEMENT_ITER>
+		TARGET_ET='xs:schema'
+		SCOPE='advanced-location-rules'
+		RULES={
+			{'*','#DOCUMENT/xs:schema'};
+		}
+		SORTING='by-expr'
+		SORTING_KEY={expr='getXMLDocument().getAttrStringValue("xmlName")',ascending}
+		<BODY>
+			<AREA_SEC>
+				FMT={
+					par.style='s2';
+					par.option.nowrap='true';
+				}
+				<AREA>
+					<CTRL_GROUP>
+						<CTRLS>
+							<DATA_CTRL>
+								<DOC_HLINK>
+									TARGET_FRAME_EXPR='"listFrame"'
+									TARGET_KEYS={
+										'contextElement.id';
+										'"summary"';
+									}
+								</DOC_HLINK>
+								<DOC_HLINK>
+									TARGET_FRAME_EXPR='"detailFrame"'
+									TARGET_KEYS={
+										'contextElement.id';
+										'"detail"';
+									}
+								</DOC_HLINK>
+								FORMULA='getXMLDocument().getAttrStringValue("xmlName")'
+							</DATA_CTRL>
+						</CTRLS>
+					</CTRL_GROUP>
+				</AREA>
+			</AREA_SEC>
+		</BODY>
+		<HEADER>
+			<AREA_SEC>
+				FMT={
+					par.style='s3';
+				}
+				<AREA>
+					<CTRL_GROUP>
+						<CTRLS>
+							<LABEL>
+								TEXT='Schemas'
+							</LABEL>
+							<DATA_CTRL>
+								FORMULA='"(" + iterator.numItems + ")"'
+							</DATA_CTRL>
+						</CTRLS>
+					</CTRL_GROUP>
+				</AREA>
+			</AREA_SEC>
+		</HEADER>
+	</ELEMENT_ITER>
+</ROOT>
+CHECKSUM='VvLNs7JENOfwhTiaxzSV0Q'
+</DOCFLEX_TEMPLATE>

@@ -1,0 +1,36 @@
+@ECHO OFF
+
+SETLOCAL
+
+if "x%BEA_HOME%" == "x" (
+  echo BEA_HOME must be set to a 8.1 installation.
+  exit 1
+  endlocal
+)
+
+if not exist "%BEA_HOME%" (
+  echo BEA_HOME '%BEA_HOME%' does not exist.
+  exit 1
+  endlocal
+)
+
+if NOT "x%WL_HOME%" == "x" goto haveWebLogicHome
+set WL_HOME=%BEA_HOME%\weblogic81
+
+:haveWebLogicHome
+
+set PRODUCTION_MODE=
+set JAVA_VENDOR=Sun
+
+call "%WL_HOME%\common\bin\commEnv.cmd"
+
+set SERVER_NAME=myserver
+
+set WLS_USER=tc
+set WLS_PW=tc
+
+set CLASSPATH=%WEBLOGIC_CLASSPATH%;%POINTBASE_CLASSPATH%;%JAVA_HOME%\jre\lib\rt.jar;%WL_HOME%\server\lib\webservices.jar;%CLASSPATH%
+
+"%JAVA_HOME%\bin\java" %JAVA_VM% %MEM_ARGS% %JAVA_OPTIONS% -classpath "%CLASSPATH%" -Dweblogic.Name=%SERVER_NAME% -Dweblogic.management.username=%WLS_USER% -Dweblogic.management.password=%WLS_PW% -Dweblogic.ProductionModeEnabled=%PRODUCTION_MODE% -Djava.security.policy="%WL_HOME%\server\lib\weblogic.policy" weblogic.Server
+
+ENDLOCAL

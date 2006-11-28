@@ -1,0 +1,47 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tctest.restart.system;
+
+import com.tc.simulator.listener.ListenerProvider;
+import com.tc.simulator.listener.MockStatsListener;
+import com.tc.simulator.listener.OutputListener;
+import com.tc.simulator.listener.ResultsListener;
+import com.tc.simulator.listener.StatsListener;
+import com.tctest.runner.TransparentAppConfig;
+
+import java.util.Properties;
+
+import junit.framework.TestCase;
+
+/**
+ * This is a test of the test app, not the system test.
+ */
+public class ObjectDataRestartTestAppTest extends TestCase {
+
+  private TransparentAppConfig cfg;
+
+  public void setUp() throws Exception {
+    cfg = new TransparentAppConfig(ObjectDataRestartTestApp.class.getName(), null, 1, 1);
+  }
+
+  public void testBasics() {
+    ObjectDataRestartTestApp app = new ObjectDataRestartTestApp("test", cfg, new ListenerProvider() {
+
+      public OutputListener getOutputListener() {
+        return null;
+      }
+
+      public ResultsListener getResultsListener() {
+        return null;
+      }
+
+      public StatsListener newStatsListener(Properties properties) {
+        return new MockStatsListener();
+      }
+      
+    });
+    app.run();
+  }
+
+}

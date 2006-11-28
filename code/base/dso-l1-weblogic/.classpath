@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/src.classes" path="src"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-common"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-common-jdk15"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-weblogic-stubs"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-session"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
+	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
+</classpath>

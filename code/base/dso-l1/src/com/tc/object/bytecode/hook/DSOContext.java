@@ -1,0 +1,23 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tc.object.bytecode.hook;
+
+import com.tc.object.bytecode.Manager;
+
+import java.util.Collection;
+
+public interface DSOContext extends ClassProcessor {
+
+  public static final String CLASS = "com/tc/object/bytecode/hook/DSOContext";
+  public static final String TYPE  = "L" + CLASS + ";";
+
+  public Manager getManager();
+
+  public Collection getDSOSpringConfigHelpers();
+
+  public void addInclude(String expression, boolean callConstructorOnLoad, String lockExpression);
+
+  public void addTransient(String beanClassName, String fieldName);
+
+}

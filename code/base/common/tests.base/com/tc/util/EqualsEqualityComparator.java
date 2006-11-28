@@ -1,0 +1,25 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tc.util;
+
+
+/**
+ * An {@link EqualityComparator} that compares objects with {@link Object#equals(Object)}.
+ */
+public class EqualsEqualityComparator implements EqualityComparator {
+  
+  public static final EqualsEqualityComparator INSTANCE = new EqualsEqualityComparator();
+  
+  private EqualsEqualityComparator() {
+    // Use INSTANCE instead.
+  }
+
+  public boolean isEquals(Object one, Object two) {
+    if ((one == null) != (two == null)) return false;
+    if (one == null) return true;
+    
+    return one.equals(two);
+  }
+
+}

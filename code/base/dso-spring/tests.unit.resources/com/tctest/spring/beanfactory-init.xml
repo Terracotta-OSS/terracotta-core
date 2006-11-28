@@ -1,0 +1,15 @@
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+
+  <bean id="recorder" class="com.tctest.spring.bean.Recorder"/>
+
+  <bean id="localInitBean" class="com.tctest.spring.bean.InitializingSingleton">
+    <property name="recorder" ref="recorder"/>
+  </bean>
+
+  <bean id="distributedInitBean" class="com.tctest.spring.bean.InitializingSingleton">
+    <property name="recorder" ref="recorder"/>
+  </bean>
+
+</beans>

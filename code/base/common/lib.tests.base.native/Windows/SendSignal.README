@@ -1,0 +1,9 @@
+SendSignal.EXE is a little utility that allows one to send a
+CRTL-BREAK keystroke to a VM running on windows. CTRL-BREAK is how
+you tell the VM to do a thread dump on windows (analogous to a kill
+-3 on unix)
+
+We call SendSignal from com.tc.util.runtime.ThreadDump.dumpThreads()
+DON'T move/remove it w/o considering that class first
+
+Program Source: http://www.latenighthacking.com/projects/2003/sendSignal/

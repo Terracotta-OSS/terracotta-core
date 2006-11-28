@@ -1,0 +1,18 @@
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+
+  <bean id="bean1" class="missing.MissingBean">
+  </bean>
+
+  <!-- 
+  <bean id="singleton" class="com.tctest.spring.bean.Singleton">
+    <property name="recorder" ref="recorder"/>
+  </bean>
+
+  <bean id="simpleListener" class="com.tctest.spring.bean.SimpleListener"/>
+
+  <bean id="recorder" class="java.util.ArrayList"/>
+  -->
+
+</beans>

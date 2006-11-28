@@ -1,0 +1,16 @@
+modules:
+  - services-tests:
+      options:
+        compiler_version: 1.5
+      dependencies:
+        - aspectwerkz
+        - common
+        - dso-common
+        - linked-child-process
+        - dso-l1
+        - simulator
+        - deploy
+        - thirdparty
+        - dso-l1-jdk15
+        - legacy-test-tree
+        - dso-l2

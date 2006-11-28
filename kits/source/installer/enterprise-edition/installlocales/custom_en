@@ -1,0 +1,414 @@
+# InstallAnywhere Localization File
+#
+# External strings for locale: English (en)
+# See the 'ProjectLocalizationInfo.txt' file in this same directory for information 
+#     regarding mappings between the properties shown below and your InstallAnywhere
+#     project.
+#
+# External/Locale property names can take one of three forms:
+#     <ActionName>.<ReferenceID>.<ActionProperty>          (e.g., Installer.858175031081.productName)
+#     <ActionName>.<ReferenceID>.<ActionProperty>.<Index>  (e.g., Installer.858175031081.installLabels.01)
+#         - where the <ActionProperty> is a Vector and the <Index> represents the place within the
+#           Vector where the value of the property should be inserted
+#     _ia.<SomeProperty>                                   (e.g., _ia.MyCustomCodePanelProperty)
+#         - where <SomeProperty> is used as an identifier for a localized value by custom code
+#
+# External/Locale property values should be plain text strings.  Special or i18n characters
+#     that cannot be represented by ASCII characters should be written using escaped unicode.
+#     - see the utility 'native2ascii' distributed with your JDK
+#
+# Product Name: Terracotta Enterprise Edition
+# Project File: C:\terracotta\main\kits\source\installer\enterprise-edition\install.iap_xml
+# Generated:    Thu Sep 21 16:20:41 PDT 2006
+
+
+# Billboard.092d7f29a6a3.imageName=billboard.gif
+Billboard.092d7f29a6a3.imageName=billboard.gif
+
+# Billboard.092d7f29a6a3.imagePath=$IA_INSTALLERS_DIR$\\sessions\\images\\
+Billboard.092d7f29a6a3.imagePath=$IA_INSTALLERS_DIR$\\sessions\\images\\
+
+# CreateShortcut.0d3a12bfacc9.args=
+CreateShortcut.0d3a12bfacc9.args=
+
+# CreateShortcut.0d3a12bfacc9.destinationName=Terracota Sessions Quick Start
+CreateShortcut.0d3a12bfacc9.destinationName=Terracota Sessions Quick Start
+
+# CreateShortcut.0d3a12bfacc9.workingDir=
+CreateShortcut.0d3a12bfacc9.workingDir=
+
+# CreateShortcut.0d3a6004acc9.args=
+CreateShortcut.0d3a6004acc9.args=
+
+# CreateShortcut.0d3a6004acc9.destinationName=Administrator Console
+CreateShortcut.0d3a6004acc9.destinationName=Administrator Console
+
+# CreateShortcut.0d3a6004acc9.workingDir=
+CreateShortcut.0d3a6004acc9.workingDir=
+
+# CreateShortcut.0d3a7978acc9.args=
+CreateShortcut.0d3a7978acc9.args=
+
+# CreateShortcut.0d3a7978acc9.destinationName=Administrator Console
+CreateShortcut.0d3a7978acc9.destinationName=Administrator Console
+
+# CreateShortcut.0d3a7978acc9.workingDir=
+CreateShortcut.0d3a7978acc9.workingDir=
+
+# CreateShortcut.0d3d7f75accf.args=
+CreateShortcut.0d3d7f75accf.args=
+
+# CreateShortcut.0d3d7f75accf.destinationName=Tomcat-Sandbox
+CreateShortcut.0d3d7f75accf.destinationName=Tomcat-Sandbox
+
+# CreateShortcut.0d3d7f75accf.workingDir=
+CreateShortcut.0d3d7f75accf.workingDir=
+
+# CreateShortcut.0d3edf14acd0.args=
+CreateShortcut.0d3edf14acd0.args=
+
+# CreateShortcut.0d3edf14acd0.destinationName=Configurator
+CreateShortcut.0d3edf14acd0.destinationName=Configurator
+
+# CreateShortcut.0d3edf14acd0.workingDir=
+CreateShortcut.0d3edf14acd0.workingDir=
+
+# CreateShortcut.0e7dc795a6de.args=
+CreateShortcut.0e7dc795a6de.args=
+
+# CreateShortcut.0e7dc795a6de.destinationName=Terracotta Sessions Configurator
+CreateShortcut.0e7dc795a6de.destinationName=Terracotta Sessions Configurator
+
+# CreateShortcut.0e7dc795a6de.workingDir=
+CreateShortcut.0e7dc795a6de.workingDir=
+
+# CreateShortcut.0e81148da755.args=
+CreateShortcut.0e81148da755.args=
+
+# CreateShortcut.0e81148da755.destinationName=Uninstall Enterprise Edition
+CreateShortcut.0e81148da755.destinationName=Uninstall Enterprise Edition
+
+# CreateShortcut.0e81148da755.workingDir=
+CreateShortcut.0e81148da755.workingDir=
+
+# CreateShortcut.0e87cddea8c3.args=
+CreateShortcut.0e87cddea8c3.args=
+
+# CreateShortcut.0e87cddea8c3.destinationName=Terracotta DSO Guide
+CreateShortcut.0e87cddea8c3.destinationName=Terracotta DSO Guide
+
+# CreateShortcut.0e87cddea8c3.workingDir=
+CreateShortcut.0e87cddea8c3.workingDir=
+
+# CreateShortcut.0e88da1ea8c7.args=
+CreateShortcut.0e88da1ea8c7.args=
+
+# CreateShortcut.0e88da1ea8c7.destinationName=Sample Applications
+CreateShortcut.0e88da1ea8c7.destinationName=Sample Applications
+
+# CreateShortcut.0e88da1ea8c7.workingDir=
+CreateShortcut.0e88da1ea8c7.workingDir=
+
+# CreateShortcut.0e8e7924a948.args=
+CreateShortcut.0e8e7924a948.args=
+
+# CreateShortcut.0e8e7924a948.destinationName=Terracotta for Spring Guide
+CreateShortcut.0e8e7924a948.destinationName=Terracotta for Spring Guide
+
+# CreateShortcut.0e8e7924a948.workingDir=
+CreateShortcut.0e8e7924a948.workingDir=
+
+# CreateShortcut.0e8f54a0a94d.args=
+CreateShortcut.0e8f54a0a94d.args=
+
+# CreateShortcut.0e8f54a0a94d.destinationName=Sample Applications
+CreateShortcut.0e8f54a0a94d.destinationName=Sample Applications
+
+# CreateShortcut.0e8f54a0a94d.workingDir=
+CreateShortcut.0e8f54a0a94d.workingDir=
+
+# CreateShortcut.4c957911a714.args=
+CreateShortcut.4c957911a714.args=
+
+# CreateShortcut.4c957911a714.destinationName=Terracotta Administrator Console
+CreateShortcut.4c957911a714.destinationName=Terracotta Administrator Console
+
+# CreateShortcut.4c957911a714.workingDir=
+CreateShortcut.4c957911a714.workingDir=
+
+# ExecuteScript.0ea15fe3aa8b.dialogLabel=Displaying Docs...
+ExecuteScript.0ea15fe3aa8b.dialogLabel=Displaying Docs...
+
+# GetUserInput.0975295aa855.prompt=Please select from the following options:
+GetUserInput.0975295aa855.prompt=Please select from the following options:
+
+# GetUserInput.0975295aa855.title=Shortcuts
+GetUserInput.0975295aa855.title=Shortcuts
+
+# GetUserInput.0e905a96a9bd.prompt=Congratulations! $PRODUCT_NAME$ has been successfully installed to:\r\n\r\n     $USER_INSTALL_DIR$\r\n\r\nPress \"Done\" to quit the installer.
+GetUserInput.0e905a96a9bd.prompt=Congratulations! $PRODUCT_NAME$ has been successfully installed to:\r\n\r\n     $USER_INSTALL_DIR$\r\n\r\nPress \"Done\" to quit the installer.
+
+# GetUserInput.0e905a96a9bd.title=Install Complete
+GetUserInput.0e905a96a9bd.title=Install Complete
+
+# GetUserInput.0e9fff59aa24.prompt=The installation of $PRODUCT_NAME$ is finished, but some errors occurred during the install. Please see the installation log, $USER_INSTALL_DIR$$/$Terracotta_Enterprise_Edition_InstallLog.log, for details.
+GetUserInput.0e9fff59aa24.prompt=The installation of $PRODUCT_NAME$ is finished, but some errors occurred during the install. Please see the installation log, $USER_INSTALL_DIR$$/$Terracotta_Enterprise_Edition_InstallLog.log, for details.
+
+# GetUserInput.0e9fff59aa24.title=Install Complete
+GetUserInput.0e9fff59aa24.title=Install Complete
+
+# GUIComponentData.09757b14a856.defaultValue=Selected
+GUIComponentData.09757b14a856.defaultValue=Selected
+
+# GUIComponentData.09757b14a856.label=$DESKTOP_SHORTCUT_CHECKBOX_TEXT$
+GUIComponentData.09757b14a856.label=$DESKTOP_SHORTCUT_CHECKBOX_TEXT$
+
+# GUIComponentData.0975f499a857.defaultValue=Selected
+GUIComponentData.0975f499a857.defaultValue=Selected
+
+# GUIComponentData.0975f499a857.label=$PROGRAMS_SHORTCUT_CHECKBOX_TEXT$
+GUIComponentData.0975f499a857.label=$PROGRAMS_SHORTCUT_CHECKBOX_TEXT$
+
+# GUIComponentData.229294c0a754.defaultValue=Selected
+GUIComponentData.229294c0a754.defaultValue=Selected
+
+# GUIComponentData.229294c0a754.label=$INSTALL_COMPLETE_PANEL_VIEW_README_TEXT$
+GUIComponentData.229294c0a754.label=$INSTALL_COMPLETE_PANEL_VIEW_README_TEXT$
+
+# GUIComponentData.2292d013a755.defaultValue=Selected
+GUIComponentData.2292d013a755.defaultValue=Selected
+
+# GUIComponentData.2292d013a755.label=$INSTALL_COMPLETE_PANEL_VIEW_README_TEXT$
+GUIComponentData.2292d013a755.label=$INSTALL_COMPLETE_PANEL_VIEW_README_TEXT$
+
+# GUIGroupData.09756f3da855.caption=
+GUIGroupData.09756f3da855.caption=
+
+# GUIGroupData.09757094a855.caption=
+GUIGroupData.09757094a855.caption=
+
+# GUIGroupData.0e9f9defaa23.caption=
+GUIGroupData.0e9f9defaa23.caption=
+
+# GUIGroupData.0e9fff59aa25.caption=
+GUIGroupData.0e9fff59aa25.caption=
+
+# InstallBundle.09287e08a682.bundleName=Help
+InstallBundle.09287e08a682.bundleName=Help
+
+# InstallBundle.09287e08a682.description=This installs the help feature.
+InstallBundle.09287e08a682.description=This installs the help feature.
+
+# InstallBundle.09287e09a681.bundleName=Application
+InstallBundle.09287e09a681.bundleName=Application
+
+# InstallBundle.09287e09a681.description=This installs the application feature.
+InstallBundle.09287e09a681.description=This installs the application feature.
+
+# InstallDirAction.09287e28a690.additionalText=
+InstallDirAction.09287e28a690.additionalText=
+
+# InstallDirAction.09287e28a690.prompt=Where Would You Like to Install?
+InstallDirAction.09287e28a690.prompt=Where Would You Like to Install?
+
+# InstallDirAction.09287e28a690.stepTitle=Choose Install Folder
+InstallDirAction.09287e28a690.stepTitle=Choose Install Folder
+
+# Installer.09287dcaa668.installLabels.00=Introduction
+Installer.09287dcaa668.installLabels.00=Introduction
+
+# Installer.09287dcaa668.installLabels.01=License Agreement
+Installer.09287dcaa668.installLabels.01=License Agreement
+
+# Installer.09287dcaa668.installLabels.02=Choose Install Folder
+Installer.09287dcaa668.installLabels.02=Choose Install Folder
+
+# Installer.09287dcaa668.installLabels.03=$SHORTCUT_NAME$s
+Installer.09287dcaa668.installLabels.03=$SHORTCUT_NAME$s
+
+# Installer.09287dcaa668.installLabels.04=Pre-Installation Summary
+Installer.09287dcaa668.installLabels.04=Pre-Installation Summary
+
+# Installer.09287dcaa668.installLabels.05=Installing...
+Installer.09287dcaa668.installLabels.05=Installing...
+
+# Installer.09287dcaa668.installLabels.06=Install Complete
+Installer.09287dcaa668.installLabels.06=Install Complete
+
+# Installer.09287dcaa668.installLabels.07=Install Complete
+Installer.09287dcaa668.installLabels.07=Install Complete
+
+# Installer.09287dcaa668.installProgressImageName=introImage.png
+Installer.09287dcaa668.installProgressImageName=introImage.png
+
+# Installer.09287dcaa668.installProgressImagePath=com/zerog/ia/installer/images/
+Installer.09287dcaa668.installProgressImagePath=com/zerog/ia/installer/images/
+
+# Installer.09287dcaa668.panelImageName=introImage.png
+Installer.09287dcaa668.panelImageName=introImage.png
+
+# Installer.09287dcaa668.panelImagePath=com/zerog/ia/installer/images/
+Installer.09287dcaa668.panelImagePath=com/zerog/ia/installer/images/
+
+# Installer.09287dcaa668.rulesFailedMessage=The installer cannot run on your configuration. It will now quit.
+Installer.09287dcaa668.rulesFailedMessage=The installer cannot run on your configuration. It will now quit.
+
+# InstallerInfoData.09287ddaa66a.email=support@terracottatech.com
+InstallerInfoData.09287ddaa66a.email=support@terracottatech.com
+
+# InstallerInfoData.09287ddaa66a.installerName=install-terracotta-enterprise-edition
+InstallerInfoData.09287ddaa66a.installerName=install-terracotta-enterprise-edition
+
+# InstallerInfoData.09287ddaa66a.installerTitle=Terracotta Enterprise Edition
+InstallerInfoData.09287ddaa66a.installerTitle=Terracotta Enterprise Edition
+
+# InstallerInfoData.09287ddaa66a.productName=Terracotta Enterprise Edition
+InstallerInfoData.09287ddaa66a.productName=Terracotta Enterprise Edition
+
+# InstallerInfoData.09287ddaa66a.productURL=http://www.terracottatech.com/product_overview.shtml
+InstallerInfoData.09287ddaa66a.productURL=http://www.terracottatech.com/product_overview.shtml
+
+# InstallerInfoData.09287ddaa66a.supportURL=http://www.terracottatech.com/support_services.shtml
+InstallerInfoData.09287ddaa66a.supportURL=http://www.terracottatech.com/support_services.shtml
+
+# InstallerInfoData.09287ddaa66a.vendorName=Terracotta, Inc.
+InstallerInfoData.09287ddaa66a.vendorName=Terracotta, Inc.
+
+# InstallerInfoData.09287ddaa66a.vendorURL=http://www.terracottatech.com
+InstallerInfoData.09287ddaa66a.vendorURL=http://www.terracottatech.com
+
+# InstallFrameConfigurator.09287de9a66b.uninstallerTitle=Uninstall $PRODUCT_NAME$
+InstallFrameConfigurator.09287de9a66b.uninstallerTitle=Uninstall $PRODUCT_NAME$
+
+# InstallSet.09287e08a681.description=The most common application features will be installed.  This option is recommended for most users.
+InstallSet.09287e08a681.description=The most common application features will be installed.  This option is recommended for most users.
+
+# InstallSet.09287e08a681.imageName=typical.png
+InstallSet.09287e08a681.imageName=typical.png
+
+# InstallSet.09287e08a681.imagePath=com/zerog/ia/installer/images/
+InstallSet.09287e08a681.imagePath=com/zerog/ia/installer/images/
+
+# InstallSet.09287e08a681.installSetName=Typical
+InstallSet.09287e08a681.installSetName=Typical
+
+# InstallSet.09287e09a680.description=Only required application features will be installed.  This option is recommended only for users with limited disk space.
+InstallSet.09287e09a680.description=Only required application features will be installed.  This option is recommended only for users with limited disk space.
+
+# InstallSet.09287e09a680.imageName=minimal.png
+InstallSet.09287e09a680.imageName=minimal.png
+
+# InstallSet.09287e09a680.imagePath=com/zerog/ia/installer/images/
+InstallSet.09287e09a680.imagePath=com/zerog/ia/installer/images/
+
+# InstallSet.09287e09a680.installSetName=Minimal
+InstallSet.09287e09a680.installSetName=Minimal
+
+# InstallSet.092da6b6a6a3.description=Choose this option to customize the features to be installed.
+InstallSet.092da6b6a6a3.description=Choose this option to customize the features to be installed.
+
+# InstallSet.092da6b6a6a3.imageName=customIcon.png
+InstallSet.092da6b6a6a3.imageName=customIcon.png
+
+# InstallSet.092da6b6a6a3.imagePath=com/zerog/ia/installer/images/
+InstallSet.092da6b6a6a3.imagePath=com/zerog/ia/installer/images/
+
+# InstallSet.092da6b6a6a3.installSetName=Custom
+InstallSet.092da6b6a6a3.installSetName=Custom
+
+# InstallSummary.09287e28a692.stepPrompt=Please Review the Following Before Continuing:
+InstallSummary.09287e28a692.stepPrompt=Please Review the Following Before Continuing:
+
+# InstallSummary.09287e28a692.title=Pre-Installation Summary
+InstallSummary.09287e28a692.title=Pre-Installation Summary
+
+# InstallSummary.097c7e5eaa59.stepPrompt=Please Review the Following Before Continuing:
+InstallSummary.097c7e5eaa59.stepPrompt=Please Review the Following Before Continuing:
+
+# InstallSummary.097c7e5eaa59.title=Pre-Installation Summary
+InstallSummary.097c7e5eaa59.title=Pre-Installation Summary
+
+# InstallUninstaller.09287e56a696.destinationName=Uninstall $PRODUCT_NAME$
+InstallUninstaller.09287e56a696.destinationName=Uninstall $PRODUCT_NAME$
+
+# IntroAction.09287e28a68f.message=Welcome to the $PRODUCT_NAME$ installer.\r\n\r\nIt is strongly recommended that you quit all programs before continuing with this installation.\r\n\r\nClick the 'Next' button to proceed to the next screen. If you want to change something on a previous screen, click the 'Previous' button.\r\n\r\nYou may cancel this installation at any time by clicking the 'Cancel' button.
+IntroAction.09287e28a68f.message=Welcome to the $PRODUCT_NAME$ installer.\r\n\r\nIt is strongly recommended that you quit all programs before continuing with this installation.\r\n\r\nClick the 'Next' button to proceed to the next screen. If you want to change something on a previous screen, click the 'Previous' button.\r\n\r\nYou may cancel this installation at any time by clicking the 'Cancel' button.
+
+# IntroAction.09287e28a68f.stepTitle=Introduction
+IntroAction.09287e28a68f.stepTitle=Introduction
+
+# LicenseAgrAction.092e0fb1a70c.resourceName=End-User License (on website).txt
+LicenseAgrAction.092e0fb1a70c.resourceName=End-User License (on website).txt
+
+# LicenseAgrAction.092e0fb1a70c.resourcePath=$IA_INSTALLERS_DIR$\\sessions\\
+LicenseAgrAction.092e0fb1a70c.resourcePath=$IA_INSTALLERS_DIR$\\sessions\\
+
+# LicenseAgrAction.092e0fb1a70c.stepPrompt=Installation and Use of $PRODUCT_NAME$ Requires Acceptance of the Following License Agreement:
+LicenseAgrAction.092e0fb1a70c.stepPrompt=Installation and Use of $PRODUCT_NAME$ Requires Acceptance of the Following License Agreement:
+
+# LicenseAgrAction.092e0fb1a70c.title=License Agreement
+LicenseAgrAction.092e0fb1a70c.title=License Agreement
+
+# MakeExecutable.0d432e98acd6.destinationName=Terracotta Sessions Configurator
+MakeExecutable.0d432e98acd6.destinationName=Terracotta Sessions Configurator
+
+# ShowDialogAction.097388c9a855.buttonLabel=OK
+ShowDialogAction.097388c9a855.buttonLabel=OK
+
+# ShowDialogAction.097388c9a855.cancelButtonLabel=Cancel
+ShowDialogAction.097388c9a855.cancelButtonLabel=Cancel
+
+# ShowDialogAction.097388c9a855.detailsButtonLabel=Details...
+ShowDialogAction.097388c9a855.detailsButtonLabel=Details...
+
+# ShowDialogAction.097388c9a855.label=Previous Installation Detected
+ShowDialogAction.097388c9a855.label=Previous Installation Detected
+
+# ShowDialogAction.097388c9a855.narrative=Prior installation of $PRODUCT_NAME$ will be backed up to $BACKUP_FOLDER$
+ShowDialogAction.097388c9a855.narrative=Prior installation of $PRODUCT_NAME$ will be backed up to $BACKUP_FOLDER$
+
+# ShowDialogAction.097388c9a855.title=Warning
+ShowDialogAction.097388c9a855.title=Warning
+
+# UninstallCompleteAction.09287e19a68d.rebootNotNeededMessage=
+UninstallCompleteAction.09287e19a68d.rebootNotNeededMessage=
+
+# UninstallCompleteAction.09287e19a68d.rebootRecommendedMessage=You should restart the system to complete the uninstallation.
+UninstallCompleteAction.09287e19a68d.rebootRecommendedMessage=You should restart the system to complete the uninstallation.
+
+# UninstallCompleteAction.09287e19a68d.rebootRequiredMessage=You need to restart the system to complete the uninstallation.
+UninstallCompleteAction.09287e19a68d.rebootRequiredMessage=You need to restart the system to complete the uninstallation.
+
+# UninstallCompleteAction.09287e19a68d.stepTitle=Uninstall Complete
+UninstallCompleteAction.09287e19a68d.stepTitle=Uninstall Complete
+
+# UninstallCompleteAction.09287e19a68d.uninstallIncompleteMessage=The following items could not be removed:
+UninstallCompleteAction.09287e19a68d.uninstallIncompleteMessage=The following items could not be removed:
+
+# UninstallCompleteAction.09287e19a68d.uninstallSuccessMessage=All items were successfully uninstalled.
+UninstallCompleteAction.09287e19a68d.uninstallSuccessMessage=All items were successfully uninstalled.
+
+# UninstallIntroAction.09287e18a689.message=About to uninstall...\r\n\r\n$PRODUCT_NAME$\r\n\r\nThis will remove features installed by InstallAnywhere.  It will not remove files and folders created after the installation.
+UninstallIntroAction.09287e18a689.message=About to uninstall...\r\n\r\n$PRODUCT_NAME$\r\n\r\nThis will remove features installed by InstallAnywhere.  It will not remove files and folders created after the installation.
+
+# UninstallIntroAction.09287e18a689.stepTitle=Uninstall $PRODUCT_NAME$
+UninstallIntroAction.09287e18a689.stepTitle=Uninstall $PRODUCT_NAME$
+
+# VariablePropertyData.097d17d0aa5a.propertyName=Backup Folder:
+VariablePropertyData.097d17d0aa5a.propertyName=Backup Folder:
+
+# VariablePropertyData.097d17d0aa5a.propertyValue=$BACKUP_FOLDER$
+VariablePropertyData.097d17d0aa5a.propertyValue=$BACKUP_FOLDER$
+
+# VariablePropertyData.22d86494a6ef.propertyName=Shortcut Icons:
+VariablePropertyData.22d86494a6ef.propertyName=Shortcut Icons:
+
+# VariablePropertyData.22d86494a6ef.propertyValue=$SHORTCUT_RESULTS$
+VariablePropertyData.22d86494a6ef.propertyValue=$SHORTCUT_RESULTS$
+
+# VariablePropertyData.22d88abaa6f0.propertyName=Shortcut Icons:
+VariablePropertyData.22d88abaa6f0.propertyName=Shortcut Icons:
+
+# VariablePropertyData.22d88abaa6f0.propertyValue=$SHORTCUT_RESULTS$
+VariablePropertyData.22d88abaa6f0.propertyValue=$SHORTCUT_RESULTS$
+

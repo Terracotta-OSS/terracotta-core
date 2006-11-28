@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="**/SCCS/**" output="build.eclipse/src.classes" kind="src" path="src"/>
+	<classpathentry excluding="**/SCCS/**" output="build.eclipse/tests.unit.classes" kind="src" path="tests.unit"/>
+	<classpathentry exported="true" kind="lib" path="lib/catalina.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/servlet-api.jar"/>
+	<classpathentry kind="lib" path="lib/tomcat-coyote.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-session"/>
+	<classpathentry kind="lib" path="lib/tomcat-util.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
+	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
+</classpath>

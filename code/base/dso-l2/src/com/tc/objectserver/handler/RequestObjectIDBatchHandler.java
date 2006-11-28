@@ -1,0 +1,41 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tc.objectserver.handler;
+
+import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.ConfigurationContext;
+import com.tc.async.api.EventContext;
+import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.msg.ObjectIDBatchRequestMessage;
+import com.tc.object.msg.ObjectIDBatchRequestResponseMessage;
+import com.tc.util.sequence.ObjectIDSequence;
+
+/**
+ * @author steve
+ */
+public class RequestObjectIDBatchHandler extends AbstractEventHandler {
+  private final ObjectIDSequence sequenceProvider;
+
+  public RequestObjectIDBatchHandler(ObjectIDSequence sequenceProvider) {
+    this.sequenceProvider = sequenceProvider;
+  }
+
+  public synchronized void handleEvent(EventContext context) {
+    ObjectIDBatchRequestMessage m = (ObjectIDBatchRequestMessage) context;
+    int batchSize = m.getBatchSize();
+    long id = m.getRequestID();
+    MessageChannel channel = m.getChannel();
+    ObjectIDBatchRequestResponseMessage response = (ObjectIDBatchRequestResponseMessage) channel
+        .createMessage(TCMessageType.OBJECT_ID_BATCH_REQUEST_RESPONSE_MESSAGE);
+
+    long ids = sequenceProvider.nextObjectIDBatch(batchSize);
+    response.initialize(id, ids, ids + batchSize);
+    response.send();
+  }
+
+  public void initialize(ConfigurationContext context) {
+    super.initialize(context);
+  }
+}

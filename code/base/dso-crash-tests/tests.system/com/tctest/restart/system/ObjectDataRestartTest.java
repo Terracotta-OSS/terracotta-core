@@ -1,0 +1,31 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tctest.restart.system;
+
+import com.tctest.TestConfigurator;
+import com.tctest.TransparentTestBase;
+import com.tctest.TransparentTestIface;
+
+public class ObjectDataRestartTest extends TransparentTestBase implements TestConfigurator {
+
+  private int clientCount = 2;
+
+  protected Class getApplicationClass() {
+    return ObjectDataRestartTestApp.class;
+  }
+
+  public void doSetUp(TransparentTestIface t) throws Exception {
+    t.getTransparentAppConfig().setClientCount(clientCount).setIntensity(1);
+    t.initializeTestRunner();
+  }
+
+  protected boolean canRunCrash() {
+    return true;
+  }
+
+  protected boolean canRunRestart() {
+    return true;
+  }
+
+}

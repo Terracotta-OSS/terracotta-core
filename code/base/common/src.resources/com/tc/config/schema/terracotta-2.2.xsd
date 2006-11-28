@@ -1,0 +1,918 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.terracotta.org/config"
+  xmlns="http://www.terracotta.org/config" version="2">
+
+  <xs:element name="tc-config">
+    <xs:complexType>
+      <xs:all>
+        <xs:element name="system" type="system" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+              The 'system' section contains configuration
+              data that affects the entire Terracotta
+              system as a whole; things like the configuration
+              mode go here.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
+
+        <xs:element name="servers" type="servers" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+              <p>
+                This section defines the servers present
+                in your Terracotta system. You can omit
+                this section entirely, in which case it
+                behaves as if there's a single server
+                with all values set at their default.
+                You can include exactly one server entry
+                here (the common case), or, if you're
+                going to run multiple servers for
+                failover, you can include multiple
+                servers here.
+              </p>
+
+              <p>
+                If you include more than one server
+                here, note that each server will need to
+                know which configuration it should use
+                as it starts up. If you name your
+                servers according to the host that they
+                run on (and no host contains more than
+                one server), then they will find the
+                hostname themselves and work
+                automatically.
+              </p>
+
+              <p>
+                If you name your servers in any other
+                fashion (and, again, only if there is
+                more than one 'server' element present
+                here), then you will need to pass the
+                command-line option "-n
+                <![CDATA[ <name>]]>
+                " to the start-tc-server script, passing
+                it the name of a server configuration
+                from this file.
+              </p>
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="clients" type="client" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+              This section contains settings that affect
+              all clients that connect to the system.
+
+              Note that while these settings are applied
+              uniformly across all clients, this does not
+              prevent you from applying different settings
+              to various clients. There are two ways of
+              doing this:
+
+              - Certain parameters ('logs', below) undergo
+              parameter expansion before being used by the
+              client. This allows you to use various
+              predefined substitutions (like '%h' for
+              host), or a general one (%(myprop) to use
+              the value of Java system property 'myprop'),
+              for these values; expansions are carried out
+              in each client's JVM independently.
+
+              - For each client to have its own
+              configuration you can set 'tc.config' to the
+              configuration file. If the configuration
+              model is production then the 'application'
+              section for all of the clients comes from
+              the application section of the server's
+              config file.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
+
+        <xs:element name="application" type="application" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+              This section contains items that affect the
+              core behavior of Terracotta as it relates to
+              your application. This data must be kept
+              consistent across clients and servers in
+              order for Terracotta to function properly,
+              and so the system will enforce this.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:simpleType name="class-expression">
+    <xs:restriction base="xs:token">
+      <xs:pattern value="[A-Za-z_0-9$\*\. ]+" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="method-expression">
+    <xs:restriction base="xs:token">
+      <xs:pattern value="[A-Za-z_0-9$\*\. \[\]]+(\([A-Za-z_0-9$,\*\. \[\]]*\))" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="method-name-expression">
+    <xs:restriction base="xs:token">
+      <xs:pattern value="[A-Za-z_0-9$\. \[\]]+(\([A-Za-z_0-9$,\. \[\]]*\))" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="web-application-name-expression">
+    <xs:restriction base="xs:token">
+      <xs:pattern value="[^\*]*" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="lock-level">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="write" />
+      <xs:enumeration value="read" />
+      <xs:enumeration value="concurrent" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="named-lock">
+    <xs:all>
+      <xs:element name="lock-name" type="java-identifier" />
+      <xs:element name="method-expression" type="method-expression" />
+      <xs:element name="lock-level" type="lock-level" minOccurs="0" />
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="autolock">
+    <xs:all>
+      <xs:element name="method-expression" type="method-expression" />
+      <xs:element name="lock-level" type="lock-level" minOccurs="0" />
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="locks">
+    <xs:sequence maxOccurs="unbounded">
+      <xs:element name="autolock" type="autolock" minOccurs="0" />
+      <xs:element name="named-lock" type="named-lock" minOccurs="0" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="root">
+    <xs:annotation>
+      <xs:documentation>
+        Declares a DSO root. A root can have a name that defaults to its fully 
+        qualifed field name.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:all>
+      <xs:element name="field-name" type="qualified-field-name" />
+      <xs:element name="root-name" type="java-identifier" minOccurs="0" />
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="roots">
+    <xs:sequence>
+      <xs:element name="root" type="root" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="include">
+    <xs:all>
+      <xs:element name="class-expression" type="class-expression" />
+      <xs:element name="honor-transient" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="on-load" type="on-load" minOccurs="0" />
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="on-load">
+    <xs:choice>
+      <xs:element name="execute" type="xs:string" />
+      <xs:element name="method" type="method-name" />
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="instrumented-classes">
+    <xs:sequence maxOccurs="unbounded">
+      <xs:element name="include" type="include" minOccurs="0" />
+      <xs:element name="exclude" type="class-expression" minOccurs="0" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="distributed-methods">
+    <xs:sequence>
+      <xs:element name="method-expression" type="method-name-expression" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="web-applications">
+    <xs:sequence>
+      <xs:element name="web-application" type="web-application-name-expression" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="instrumentation-logging">
+    <xs:all>
+      <xs:element name="class" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="hierarchy" type="xs:boolean" minOccurs="0" default="true" />
+      <xs:element name="locks" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="transient-root" type="xs:boolean" minOccurs="0" default="true" />
+      <xs:element name="roots" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="distributed-methods" type="xs:boolean" minOccurs="0" default="false" />
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="runtime-logging">
+    <xs:all>
+      <xs:element name="lock-debug" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="partial-instrumentation" type="xs:boolean" minOccurs="0" default="true" />
+      <xs:element name="field-change-debug" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="non-portable-warning" type="xs:boolean" minOccurs="0" default="true" />
+      <xs:element name="wait-notify-debug" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="distributed-method-debug" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="new-object-debug" type="xs:boolean" minOccurs="0" default="false" />
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="additional-boot-jar-classes">
+    <xs:sequence>
+      <xs:element name="include" type="qualified-class-name" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="transient-fields">
+    <xs:sequence>
+      <xs:element name="field-name" type="qualified-field-name" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="runtime-output-options">
+    <xs:all>
+      <xs:element name="auto-lock-details" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="caller" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="full-stack" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="find-needed-includes" type="xs:boolean" minOccurs="0" default="true" />
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="dso-client-debugging">
+    <xs:all>
+      <xs:element name="instrumentation-logging" type="instrumentation-logging" minOccurs="0" />
+      <xs:element name="runtime-logging" type="runtime-logging" minOccurs="0" />
+      <xs:element name="runtime-output-options" type="runtime-output-options" minOccurs="0" />
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="dso-client-data">
+    <xs:all>
+      <xs:element name="fault-count" type="non-negative-int" default="500" minOccurs="0" />
+      <xs:element name="debugging" type="dso-client-debugging" minOccurs="0" />
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="garbage-collection">
+    <xs:all>
+      <xs:element name="enabled" type="xs:boolean" minOccurs="0" default="true" />
+      <xs:element name="verbose" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="interval" type="positive-int" minOccurs="0" default="3600" />
+    </xs:all>
+  </xs:complexType>
+
+  <xs:simpleType name="persistence-mode">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="temporary-swap-only" />
+      <xs:enumeration value="permanent-store" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="persistence">
+    <xs:all>
+      <xs:element name="mode" type="persistence-mode" minOccurs="0" default="temporary-swap-only" />
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="dso-server-data">
+    <xs:all>
+      <xs:element name="client-reconnect-window" type="positive-int" minOccurs="0" default="120" />
+      <xs:element name="persistence" type="persistence" minOccurs="0"/>
+      <xs:element name="garbage-collection" type="garbage-collection" minOccurs="0" />
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="dso-application">
+    <xs:all>
+      <xs:element name="instrumented-classes" type="instrumented-classes" />
+      <xs:element name="transient-fields" type="transient-fields" minOccurs="0" />
+
+      <xs:element name="locks" type="locks" minOccurs="0" />
+      <xs:element name="roots" type="roots" minOccurs="0" />
+      <xs:element name="distributed-methods" type="distributed-methods" minOccurs="0" />
+
+      <xs:element name="additional-boot-jar-classes" type="additional-boot-jar-classes" minOccurs="0" />
+      <xs:element name="web-applications" type="web-applications" minOccurs="0" />
+
+      <xs:element name="dso-reflection-enabled" type="xs:boolean" minOccurs="0" default="true"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="spring-application">
+    <xs:sequence>
+      <xs:element name="jee-application" type="spring-apps" minOccurs="1" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="spring-bean">
+    <xs:sequence>
+      <xs:element name="bean" type="non-distributed-fields" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="non-distributed-fields">
+    <xs:sequence>
+      <xs:element name="non-distributed-field" type="java-identifier" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string" use="required" />
+  </xs:complexType>
+  
+  <xs:complexType name="spring-app-contexts">
+    <xs:sequence>
+      <xs:element name="application-context" type="spring-app-context" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="spring-distributed-event">
+    <xs:sequence>
+      <xs:element name="distributed-event" type="non-blank-token" maxOccurs="unbounded" />      
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="spring-app-context">
+    <xs:all>
+      <xs:element name="paths" type="spring-path" />
+      <xs:element name="distributed-events" type="spring-distributed-event" minOccurs="0" />
+      <xs:element name="beans" type="spring-bean" minOccurs="0" />
+    </xs:all>
+  </xs:complexType>
+  
+  <xs:complexType name="spring-path">
+    <xs:sequence>
+      <xs:element name="path" type="path" maxOccurs="unbounded" />    
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="spring-apps">
+    <xs:all>
+      <xs:element name="fast-proxy" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="session-support" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="locks" type="locks" minOccurs="0" />
+      <xs:element name="instrumented-classes" type="instrumented-classes" minOccurs="0" />
+        <xs:element name="application-contexts" type="spring-app-contexts" minOccurs="0" />
+      <xs:element name="transient-fields" type="transient-fields" minOccurs="0" />
+    </xs:all>
+    <xs:attribute name="name" type="xs:string" use="required" />
+  </xs:complexType>
+
+  <xs:complexType name="server">
+    <xs:annotation>
+      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+        Data specific to one of your servers.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:all>
+      <xs:element name="data" type="path" minOccurs="0"
+        default="data">
+        <xs:annotation>
+          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+            Where should the server store its persistent
+            data? (This includes stored object data for
+            DSO.) This value undergoes parameter
+            substitution before being used; this allows you
+            to use placeholders like '%h' (for the hostname)
+            or '%(com.mycompany.propname)' (to substitute in
+            the value of Java system property
+            'com.mycompany.propname'). Thus, a value of
+            'server-data-%h' would expand to
+            'server-data-artichoke' if running on host
+            'artichoke'.
+
+            If this is a relative path, then it is
+            interpreted relative to the current working
+            directory of the server (that is, the directory
+            you were in when you started the server). It is
+            thus recommended that you specify an absolute
+            path here.
+
+            <p>Default: 'data'</p>
+            This places the 'data' directory in the
+            directory you were in when you invoked
+            'start-tc-server'.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="logs" type="path" minOccurs="0"
+        default="logs">
+        <xs:annotation>
+          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+            In which directory should the server store its
+            log files? Again, this value undergoes parameter
+            substitution before being used; thus, a value
+            like 'server-logs-%h' would expand to
+            'server-logs-artichoke' if running on host
+            'artichoke'.
+
+            If this is a relative path, then it is
+            interpreted relative to the current working
+            directory of the server (that is, the directory
+            you were in when you started server). It is thus
+            recommended that you specify an absolute path
+            here.
+
+            <p>Default: 'logs'</p>
+            This places the 'logs' directory in the
+            directory you were in when you invoked
+            'start-tc-server'.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="dso-port" type="port" minOccurs="0"
+        default="9510">
+        <xs:annotation>
+          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+            On what port should the DSO server listen for
+            connections from DSO clients? This can be any
+            port you like, but note that ports below 1024
+            typically require 'root' privileges to use on
+            Unix-style systems (Linux, Solaris).
+            <p>Default:9510</p>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="jmx-port" type="port" minOccurs="0"
+        default="9520">
+        <xs:annotation>
+          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+            On what port should the server listen for
+            connections from the Terracotta administration
+            console? This can be any port you like, but note
+            that ports below 1024 typically require 'root'
+            privileges to use on Unix-style systems (Linux,
+            Solaris).
+            <p>Default: 9520</p>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+
+      <xs:element name="dso" type="dso-server-data"
+        minOccurs="0">
+        <xs:annotation>
+          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+            Configuration data for DSO that's specific to
+            the DSO server.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+    <xs:attribute name="name" type="non-blank-token"
+      use="required">
+      <xs:annotation>
+        <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+          The name of the server. The name is required.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="host" type="host" use="optional">
+      <xs:annotation>
+        <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+          The host that the server runs on. If the host is the
+          same as the name of the server, then you can omit
+          it; otherwise, you must include it.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+
+
+  <xs:complexType name="client">
+    <xs:annotation>
+      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+        This section contains settings that affect all clients
+        that connect to the system.
+
+        Note that while these settings are applied uniformly
+        across all clients, this does not prevent you from
+        applying different settings to various clients. There
+        are two ways of doing this:
+
+        - Certain parameters ('logs', below) undergo parameter
+        expansion before being used by the client. This allows
+        you to use various predefined substitutions (like '%h'
+        for host), or a general one (%(myprop) to use the value
+        of Java system property 'myprop'), for these values;
+        expansions are carried out in each client's JVM
+        independently.
+
+        - For each client to have its own configuration you can
+        set 'tc.config' to the configuration file. If the
+        configuration model is production then the 'application'
+        section for all of the clients comes from the
+        application section of the server's config file.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:all>
+      <xs:element name="logs" type="path" minOccurs="0"
+        default="logs-%i">
+        <xs:annotation>
+          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+            Where should the client write its log files?
+
+            This value undergoes parameter substitution
+            before being used; thus, a value like
+            'client-logs-%h' would expand to
+            'client-logs-banana' if running on host
+            'banana'.
+
+            If this is a relative path, then it is
+            interpreted relative to the current working
+            directory of the client (that is, the directory
+            you were in when you started the program that
+            uses Terracotta services). It is thus
+            recommended that you specify an absolute path
+            here.
+
+            <p>Default: 'logs-%i';</p>
+            this places the logs in a directory relative to
+            the directory you were in when you invoked the
+            program that uses Terracotta services (your
+            client), and calls that directory, for example,
+            'logs-10.0.0.57' if the machine that the client
+            is on has assigned IP address 10.0.0.57.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="dso" type="dso-client-data"
+        minOccurs="0">
+        <xs:annotation>
+          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+            This section contains data for Terracotta DSO
+            that's specific to the DSO client only.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="application">
+    <xs:annotation>
+      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+        This section contains items that affect the core
+        behavior of Terracotta as it relates to your
+        application. This data must be kept consistent across
+        clients and servers in order for Terracotta to function
+        properly, and so the system will enforce this; see the
+        comments for the 'configuration-model' switch, above,
+        for more details.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:all>
+      <xs:element name="dso" type="dso-application"
+        minOccurs="0">
+        <xs:annotation>
+          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+            This section controls how Terracotta DSO behaves
+            in your application.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+
+      <xs:element name="spring" type="spring-application"
+        minOccurs="0">
+        <xs:annotation>
+          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+            This section is a self-contained configuration
+            that controls how Terracotta Spring behaves in
+            your application.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="servers">
+    <xs:annotation>
+      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          This section defines the servers present in your
+          Terracotta system. You can omit this section
+          entirely, in which case it behaves as if there's a
+          single server with all values set at their default.
+          You can include exactly one server entry here (the
+          common case), or, if you're going to run multiple
+          servers for failover, you can include multiple
+          servers here.
+        </p>
+
+        <p>
+          If you include more than one server here, note that
+          each server will need to know which configuration it
+          should use as it starts up. If you name your servers
+          according to the host that they run on (and no host
+          contains more than one server), then they will find
+          the hostname themselves and work automatically.
+        </p>
+
+        <p>
+          If you name your servers in any other fashion (and,
+          again, only if there is more than one 'server'
+          element present here), then you will need to pass
+          the command-line option "-n
+          <![CDATA[
+        <name>        
+        ]]>
+          " to the start-tc-server script, passing it the name
+          of a server configuration from this file.
+        </p>
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="server" type="server"
+        maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="configuration-model">
+    <xs:annotation>
+      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          The configuration model: 'development' or
+          'production'.
+        </p>
+
+        <p>
+          The clients can each have their own configuration
+          file or all use the server's configuration file.
+        </p>
+
+        <p>
+          The server's configuration file is located at
+          http://localhost:9515/config
+        </p>
+
+        <p>
+          If the configuration model is production then the
+          'application' section for all of the clients comes
+          from the application section of the server's config
+          file.
+        </p>
+
+        <p>
+          If the configuration model is development then each
+          of the clients's 'application' section is determined
+          by their own configuration file.
+        </p>
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="development" />
+      <xs:enumeration value="production" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="license-type">
+    <xs:annotation>
+      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+        What type of license is in use? This can be 'trial' or
+        'production', and does not affect the behavior of the
+        system other than ensuring that the license in use
+        matches this type. (This prevents you from accidentally
+        putting a trial license onto your production server and
+        then panicking thirty days later when that license
+        expires.)
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="none" />
+      <xs:enumeration value="trial" />
+      <xs:enumeration value="production" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="license">
+    <xs:all>
+      <xs:element name="location" type="path">
+        <xs:annotation>
+          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+            Where is the license file? Each server must have
+            access to this file (which may be a relative or
+            absolute path). This item can use parameter
+            substitution, which allows you to insert data
+            like '%h' and have it expand to the current
+            hostname; this allows flexibility in the case
+            where different servers have their license file
+            in different locations.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="type" type="license-type"
+        default="none">
+        <xs:annotation>
+          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+            What type of license is in use? This can be
+            'trial' or 'production', and does not affect the
+            behavior of the system other than ensuring that
+            the license in use matches this type. (This
+            prevents you from accidentally putting a trial
+            license onto your production server and then
+            panicking thirty days later when that license
+            expires.)
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="system">
+    <xs:annotation>
+      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+        The 'system' section contains configuration data that
+        affects the entire Terracotta system as a whole; things
+        like whether to activate DSO services go here.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:all>
+      <xs:element name="license" type="license" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+            The 'license' element requires a 'location' and
+            'type' to be specified. If you omit the
+            'license' element, Terracotta will run in a
+            limited 'initial' mode, which limits server
+            runtime and limits the maximum number of
+            simultaneously-connected clients.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="configuration-model"
+        type="configuration-model" minOccurs="0" default="development" />
+    </xs:all>
+  </xs:complexType>
+
+  <xs:simpleType name="non-blank-token">
+    <xs:restriction base="xs:token">
+      <xs:minLength value="1" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="path">
+    <xs:annotation>
+      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+        Several different predefined substitutions are available
+        for your use:
+        <p>
+          %h expands to the fully-qualified host name of the
+          machine running your application
+        </p>
+        <p>
+          %i expands to the IP adress of the machine running
+          your application
+        </p>
+        <p>
+          %H refers to the home directory of the user running
+          running your application
+        </p>
+        <p>
+          %n refers to the username of the user running
+          running your application
+        </p>
+        <p>
+          %o refers to the name of the operating system
+          running running your application
+        </p>
+        <p>
+          %a refers to the processor architecture of the
+          machine running running your application %v refers
+          to the version of the operating system running
+          running your application
+        </p>
+        <p>
+          %t refers to the temporary directory of the machine
+          running your application(on Linux or Solaris, e.g.,
+          /tmp)
+        </p>
+        <p>
+          %(property) refers to the java system property of
+          the JVM running on the machine(e.g. %(java.home) )
+        </p>
+
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:token">
+      <xs:minLength value="1" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="fixed-string-unlimited">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="unlimited" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="fixed-string-none">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="none" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="positive-int">
+    <xs:restriction base="xs:positiveInteger">
+      <xs:maxInclusive value="2147483647" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="non-negative-int">
+    <xs:restriction base="xs:nonNegativeInteger">
+      <xs:maxInclusive value="2147483647" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="positive-int-or-none">
+    <xs:union memberTypes="positive-int fixed-string-none" />
+  </xs:simpleType>
+
+  <xs:simpleType name="port">
+    <xs:restriction base="xs:nonNegativeInteger">
+      <!-- We allow dynamic ports, for tests if nothing else -->
+      <xs:minInclusive value="0" />
+      <xs:maxInclusive value="65535" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="host">
+    <xs:annotation>
+      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+        <p>Valid values are from 1 to 255</p>
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:whiteSpace value="collapse" />
+      <xs:minLength value="1" />
+      <xs:maxLength value="255" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="qualified-class-name">
+    <xs:restriction base="xs:token">
+      <xs:pattern
+        value="[A-Za-z_][A-Za-z_0-9$]*(\.[A-Za-z_][A-Za-z_0-9$]*)*" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="class-name">
+    <xs:restriction base="xs:token">
+      <xs:pattern value="[A-Za-z_][A-Za-z_0-9$]*" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="qualified-field-name">
+    <xs:restriction base="xs:token">
+      <xs:pattern
+        value="[A-Za-z_][A-Za-z_0-9$]*(\.[A-Za-z_][A-Za-z_0-9$]*)+" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="field-name">
+    <xs:restriction base="xs:token">
+      <xs:pattern value="[A-Za-z_][A-Za-z_0-9$]*" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="method-name">
+    <xs:restriction base="xs:token">
+      <xs:pattern value="[A-Za-z_][A-Za-z_0-9$]*" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="qualified-method-name">
+    <xs:restriction base="xs:token">
+      <xs:pattern
+        value="[A-Za-z_][A-Za-z_0-9$]*(\.[A-Za-z_][A-Za-z_0-9$]*)+" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="optionally-qualified-method-name">
+    <xs:restriction base="xs:token">
+      <xs:pattern
+        value="[A-Za-z_][A-Za-z_0-9$]*(\.[A-Za-z_][A-Za-z_0-9$]*)*" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="java-identifier">
+    <xs:restriction base="xs:token">
+      <xs:pattern value="[A-Za-z_][A-Za-z_0-9$]*" />
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>

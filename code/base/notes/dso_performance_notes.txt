@@ -1,0 +1,36 @@
+This is a log of everyones performance tests. Each entry should have a few things
+1) Date/Time of test
+2) Change number (this is tricky because change numbers change in bk and you may be tweeking things but do your best)
+3) Machines used
+4) Timing results
+5) was the machine cpu bound/disk bound/network etc..
+6) was the test gc bound or memory constrained
+7) What test were you running
+8) Notes (what ever else happened that was interesting
+
+------------
+Date:		June 14, 2005
+Test:		GC Test
+Change Number:	???
+Results:	min: 0, max: 135825, mean: 5016.09449374289
+Config:		bones only, 3 clients
+Notes:		The test ran for over a week.  The min/max/mean refer to the
+		amount of time it took to perform 100 iterations of the test
+		loop on a single client.
+		
+		The very large max value is due to the synchronization on the
+		object store during object removal.  We currently synchronize
+		the object store on all operations.  Without such
+		synchronization, were were getting missing object exceptions.
+		We suspect Sleepycat doesn't handle transactions well, but we
+		aren't really sure what's going on.
+
+-------------
+
+1) June 20th I ran the ticker demo with lots of changes.
+3) kermit (1.6 ghz g5)
+4) took 790 seconds to do the initializing of 1,000,000 records memory usage looked good
+5) Cpu was pegged
+6) memory looked good ran server with 256 meg
+7) TickerDemo
+8) In the past this test had never completed so this was encouraging. It is however still kind of slow

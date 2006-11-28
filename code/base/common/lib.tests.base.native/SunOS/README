@@ -1,0 +1,10 @@
+The structure of the native libaries here will be busted when and if
+we run on Solaris x86. Basically we need another level of indirection
+for CPU architecture underneath each OS directory
+
+i.e. 
+
+  /SunOS/sparc
+  /SunOS/i586
+
+

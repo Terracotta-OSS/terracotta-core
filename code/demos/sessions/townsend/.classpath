@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="web/WEB-INF/lib/commons-beanutils.jar"/>
+	<classpathentry kind="lib" path="web/WEB-INF/lib/commons-digester.jar"/>
+	<classpathentry kind="lib" path="web/WEB-INF/lib/commons-fileupload.jar"/>
+	<classpathentry kind="lib" path="web/WEB-INF/lib/commons-logging.jar"/>
+	<classpathentry kind="lib" path="web/WEB-INF/lib/commons-validator.jar"/>
+	<classpathentry kind="lib" path="web/WEB-INF/lib/struts.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
+	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/servlet-api.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

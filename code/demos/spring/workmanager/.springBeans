@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beansProjectDescription>
+	<configExtensions>
+		<configExtension>xml</configExtension>
+	</configExtensions>
+	<configs>
+		<config>src/demo/commonj/workmanager/work-manager.xml</config>
+	</configs>
+	<configSets>
+	</configSets>
+</beansProjectDescription>

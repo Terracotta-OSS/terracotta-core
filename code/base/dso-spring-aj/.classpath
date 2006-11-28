@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="**/SCCS/**" kind="src" path="tests.system"/>
+	<classpathentry excluding="**/SCCS/**" kind="src" path="tests.system.resources"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-common"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-common-jdk15"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/legacy-test-tree"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/simulator"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/linked-child-process"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
+	<classpathentry kind="lib" path="lib/aspectjrt.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-spring"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-spring-tests"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/deploy"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-container-tests"/>
+	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
+</classpath>

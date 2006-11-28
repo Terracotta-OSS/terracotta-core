@@ -1,0 +1,437 @@
+<DOCFLEX_TEMPLATE VER='1.7'>
+CREATED='2004-06-21 01:50:00'
+LAST_UPDATE='2006-10-09 06:34:49'
+DESIGNER_TOOL='DocFlex SDK 1.0'
+TEMPLATE_TYPE='DocumentTemplate'
+DSM_TYPE_ID='xsddoc'
+ROOT_ET='#DOCUMENTS'
+<TEMPLATE_PARAMS>
+	PARAM={
+		param.name='docTitle';
+		param.displayName='Documentation Title';
+		param.type='string';
+	}
+	PARAM={
+		param.name='include.detail.namespace';
+		param.displayName='Namespace Overviews';
+		param.description='Specify whether the <i>Namespace Summary</i> documentation should be generated';
+		param.type='boolean';
+		param.boolean.default='true';
+	}
+	PARAM={
+		param.name='include.detail.schema';
+		param.displayName='Schema Overviews';
+		param.type='boolean';
+		param.boolean.default='true';
+	}
+</TEMPLATE_PARAMS>
+<HTARGET>
+	TARGET_KEYS={
+		'"overview-summary"';
+	}
+</HTARGET>
+FMT={
+	doc.lengthUnits='pt';
+	doc.hlink.style.link='cs4';
+}
+<STYLES>
+	CHAR_STYLE={
+		style.name='Code';
+		style.id='cs1';
+		text.font.name='Courier New';
+		text.font.size='9';
+	}
+	CHAR_STYLE={
+		style.name='Code Smaller';
+		style.id='cs2';
+		text.font.name='Courier New';
+		text.font.size='8';
+	}
+	CHAR_STYLE={
+		style.name='Default Paragraph Font';
+		style.id='cs3';
+		style.default='true';
+	}
+	PAR_STYLE={
+		style.name='Detail Heading 1';
+		style.id='s1';
+		text.font.size='12';
+		text.font.style.bold='true';
+		par.bkgr.opaque='true';
+		par.bkgr.color='#CCCCFF';
+		par.border.style='solid';
+		par.border.color='#666666';
+		par.margin.top='14';
+		par.margin.bottom='10';
+		par.padding.left='3';
+		par.padding.right='3';
+		par.padding.top='2';
+		par.padding.bottom='2';
+		par.page.keepWithNext='true';
+	}
+	CHAR_STYLE={
+		style.name='Hyperlink';
+		style.id='cs4';
+		text.decor.underline='true';
+		text.color.foreground='#0000FF';
+	}
+	PAR_STYLE={
+		style.name='Normal';
+		style.id='s2';
+		style.default='true';
+	}
+	CHAR_STYLE={
+		style.name='Normal Smaller';
+		style.id='cs5';
+		text.font.name='Arial';
+		text.font.size='9';
+	}
+	CHAR_STYLE={
+		style.name='Normal Smallest';
+		style.id='cs6';
+		text.font.name='Arial';
+		text.font.size='8';
+	}
+	PAR_STYLE={
+		style.name='Overview Heading';
+		style.id='s3';
+		text.font.name='Verdana';
+		text.font.size='13';
+		text.font.style.bold='true';
+		text.color.foreground='#4477AA';
+		par.bkgr.opaque='true';
+		par.bkgr.color='#EEEEEE';
+		par.border.style='solid';
+		par.border.color='#4477AA';
+		par.margin.top='0';
+		par.margin.bottom='1.7';
+		par.padding.left='4';
+		par.padding.right='4';
+		par.padding.top='3';
+		par.padding.bottom='3';
+	}
+	CHAR_STYLE={
+		style.name='Page Number';
+		style.id='cs7';
+		text.font.size='9';
+		text.font.style.italic='true';
+	}
+	PAR_STYLE={
+		style.name='Profile Subheading';
+		style.id='s4';
+		text.font.name='Arial';
+		text.font.size='9';
+		text.font.style.bold='true';
+		par.margin.top='6';
+	}
+	CHAR_STYLE={
+		style.name='Property Text';
+		style.id='cs8';
+		text.font.name='Verdana';
+		text.font.size='8';
+		par.lineHeight='11';
+	}
+	CHAR_STYLE={
+		style.name='Summary Heading Font';
+		style.id='cs9';
+		text.font.size='12';
+		text.font.style.bold='true';
+	}
+</STYLES>
+<ROOT>
+	<AREA_SEC>
+		<AREA>
+			<CTRL_GROUP>
+				FMT={
+					txtfl.delimiter.type='none';
+					par.style='s3';
+				}
+				<CTRLS>
+					<DATA_CTRL>
+						FMT={
+							text.font.style.bold='true';
+							txtfl.option.renderEmbeddedHTML='true';
+						}
+						FORMULA='getStringParam("docTitle")'
+					</DATA_CTRL>
+				</CTRLS>
+			</CTRL_GROUP>
+			<CTRL_GROUP>
+				FMT={
+					trow.align.vert='Top';
+				}
+				<CTRLS>
+					<DATA_CTRL>
+						FMT={
+							text.font.size='9';
+							text.option.nbsps='true';
+						}
+						FORMULA='dateTime ("MEDIUM")'
+					</DATA_CTRL>
+				</CTRLS>
+			</CTRL_GROUP>
+		</AREA>
+	</AREA_SEC>
+	<ELEMENT_ITER>
+		FMT={
+			table.sizing='Relative';
+			table.cellpadding.both='3';
+		}
+		TARGET_ET='xs:schema'
+		SCOPE='advanced-location-rules'
+		RULES={
+			{'*','#DOCUMENT/xs:schema'};
+		}
+		SORTING='by-attr'
+		SORTING_KEY={lpath='@targetNamespace',ascending,unique}
+		<BODY>
+			<AREA_SEC>
+				FMT={
+					sec.outputStyle='table';
+					sec.spacing.before='8';
+					sec.spacing.after='8';
+					table.sizing='Relative';
+					table.cellpadding.both='3';
+				}
+				<AREA>
+					<CTRL_GROUP>
+						FMT={
+							trow.bkgr.color='#EEEEFF';
+						}
+						<CTRLS>
+							<DATA_CTRL>
+								FMT={
+									ctrl.size.width='466.5';
+									ctrl.size.height='17.3';
+									tcell.sizing='Relative';
+									text.font.style.bold='true';
+								}
+								<DOC_HLINK>
+									TARGET_KEYS={
+										'getAttrStringValue("targetNamespace")';
+										'"detail"';
+									}
+								</DOC_HLINK>
+								FORMULA='(ns = getAttrStringValue("targetNamespace")) != "" ? ns : "<global>"'
+							</DATA_CTRL>
+							<LABEL>
+								COND='output.format.supportsPagination &&\ngetBooleanParam("include.detail.namespace")'
+								FMT={
+									ctrl.size.width='33';
+									ctrl.size.height='17.3';
+									tcell.align.horz='Center';
+									text.style='cs7';
+									text.font.style.bold='true';
+								}
+								TEXT='Page'
+							</LABEL>
+						</CTRLS>
+					</CTRL_GROUP>
+					<CTRL_GROUP>
+						<CTRLS>
+							<TEMPLATE_CALL_CTRL>
+								FMT={
+									ctrl.size.width='466.5';
+									ctrl.size.height='17.3';
+									tcell.sizing='Relative';
+									tcell.padding.extra.top='2';
+								}
+								TEMPLATE_FILE='namespace/namespaceProfile.tpl'
+								PASSED_PARAMS={
+									'nsURI','getAttrValue("targetNamespace")';
+								}
+								OUTPUT_TYPE='included'
+								DSM_MODE='pass-current-model'
+								PASSED_ROOT_ELEMENT_EXPR='rootElement'
+							</TEMPLATE_CALL_CTRL>
+							<DATA_CTRL>
+								COND='output.format.supportsPagination &&\ngetBooleanParam("include.detail.namespace")'
+								FMT={
+									ctrl.size.width='33';
+									ctrl.size.height='17.3';
+									ctrl.option.noHLinkFmt='true';
+									tcell.align.horz='Center';
+									text.style='cs7';
+									text.hlink.fmt='none';
+								}
+								<DOC_HLINK>
+									TARGET_KEYS={
+										'getAttrValue("targetNamespace")';
+										'"detail"';
+									}
+								</DOC_HLINK>
+								DOCFIELD='page-htarget'
+							</DATA_CTRL>
+						</CTRLS>
+					</CTRL_GROUP>
+				</AREA>
+			</AREA_SEC>
+		</BODY>
+		<HEADER>
+			<AREA_SEC>
+				FMT={
+					par.style='s1';
+				}
+				<AREA>
+					<CTRL_GROUP>
+						FMT={
+							trow.bkgr.color='#CCCCFF';
+						}
+						<CTRLS>
+							<LABEL>
+								FMT={
+									tcell.sizing='Relative';
+								}
+								TEXT='Namespace Summary'
+							</LABEL>
+						</CTRLS>
+					</CTRL_GROUP>
+				</AREA>
+			</AREA_SEC>
+		</HEADER>
+	</ELEMENT_ITER>
+	<ELEMENT_ITER>
+		FMT={
+			sec.outputStyle='table';
+			table.sizing='Relative';
+			table.cellpadding.both='3';
+		}
+		TARGET_ET='xs:schema'
+		SCOPE='advanced-location-rules'
+		RULES={
+			{'*','#DOCUMENT/xs:schema'};
+		}
+		SORTING='by-expr'
+		SORTING_KEY={expr='getXMLDocument().getAttrStringValue("xmlName")',ascending}
+		<BODY>
+			<AREA_SEC>
+				<AREA>
+					<CTRL_GROUP>
+						<CTRLS>
+							<DATA_CTRL>
+								FMT={
+									ctrl.size.width='120';
+									ctrl.size.height='17.3';
+									text.font.style.bold='true';
+								}
+								<DOC_HLINK>
+									TARGET_KEYS={
+										'contextElement.id';
+										'"detail"';
+									}
+								</DOC_HLINK>
+								FORMULA='getXMLDocument().getAttrStringValue("xmlName")'
+							</DATA_CTRL>
+							<SS_CALL_CTRL>
+								FMT={
+									ctrl.size.width='346.5';
+									ctrl.size.height='17.3';
+									tcell.sizing='Relative';
+								}
+								SS_NAME='Schema'
+							</SS_CALL_CTRL>
+							<DATA_CTRL>
+								COND='output.format.supportsPagination &&\ngetBooleanParam("include.detail.schema")'
+								FMT={
+									ctrl.size.width='33';
+									ctrl.size.height='17.3';
+									ctrl.option.noHLinkFmt='true';
+									tcell.align.horz='Center';
+									text.style='cs7';
+									text.hlink.fmt='none';
+								}
+								<DOC_HLINK>
+									TARGET_KEYS={
+										'contextElement.id';
+										'"detail"';
+									}
+								</DOC_HLINK>
+								DOCFIELD='page-htarget'
+							</DATA_CTRL>
+						</CTRLS>
+					</CTRL_GROUP>
+				</AREA>
+			</AREA_SEC>
+		</BODY>
+		<HEADER>
+			<AREA_SEC>
+				<AREA>
+					<SPACER>
+						FMT={
+							spacer.height='14';
+						}
+					</SPACER>
+					<CTRL_GROUP>
+						FMT={
+							trow.bkgr.color='#CCCCFF';
+						}
+						<CTRLS>
+							<LABEL>
+								FMT={
+									ctrl.size.width='465';
+									ctrl.size.height='17.3';
+									tcell.sizing='Relative';
+									text.style='cs9';
+								}
+								TEXT='Schema Summary'
+							</LABEL>
+							<LABEL>
+								COND='output.format.supportsPagination &&\ngetBooleanParam("include.detail.schema")'
+								FMT={
+									ctrl.size.width='34.5';
+									ctrl.size.height='17.3';
+									tcell.align.horz='Center';
+									text.style='cs7';
+									text.font.style.bold='true';
+								}
+								TEXT='Page'
+							</LABEL>
+						</CTRLS>
+					</CTRL_GROUP>
+				</AREA>
+			</AREA_SEC>
+		</HEADER>
+	</ELEMENT_ITER>
+	<TEMPLATE_CALL>
+		DESCR='Bottom Message'
+		COND='output.type == "document"'
+		TEMPLATE_FILE='about.tpl'
+		OUTPUT_TYPE='included'
+		DSM_MODE='pass-current-model'
+	</TEMPLATE_CALL>
+</ROOT>
+<STOCK_SECTIONS>
+	<FOLDER>
+		MATCHING_ET='xs:schema'
+		SS_NAME='Schema'
+		<BODY>
+			<AREA_SEC>
+				<AREA>
+					<CTRL_GROUP>
+						FMT={
+							par.margin.bottom='8';
+						}
+						<CTRLS>
+							<DATA_CTRL>
+								FMT={
+									ctrl.option.text.collapseSpaces='true';
+									ctrl.option.text.noBlankOutput='true';
+									text.style='cs5';
+									text.option.renderNLs='false';
+								}
+								FORMULA='firstSentence(mergeStrings(\n  getValuesByLPath ("xs:annotation/xs:documentation//(#TEXT | #CDATA)")\n))'
+							</DATA_CTRL>
+						</CTRLS>
+					</CTRL_GROUP>
+				</AREA>
+			</AREA_SEC>
+			<TEMPLATE_CALL>
+				TEMPLATE_FILE='schema/schemaProfile.tpl'
+				OUTPUT_TYPE='included'
+				DSM_MODE='pass-current-model'
+			</TEMPLATE_CALL>
+		</BODY>
+	</FOLDER>
+</STOCK_SECTIONS>
+CHECKSUM='RSBAiwetGdqmC?DOaTUhSQ'
+</DOCFLEX_TEMPLATE>

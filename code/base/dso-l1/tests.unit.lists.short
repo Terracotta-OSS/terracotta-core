@@ -1,0 +1,4 @@
+ClientObjectManagerTest
+ClientLockManagerTest
+ClientTransactionManagerTest
+RemoteTransactionManagerTest

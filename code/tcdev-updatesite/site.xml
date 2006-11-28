@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <description url="http://fileserver.terracotta.lan/ftp/pub/eclipse/update/">
+      Private/internal update site for Terracotta, Inc.
+   </description>
+   <feature url="features/org.terracotta.tcdev_1.3.3.jar" id="org.terracotta.tcdev" version="1.3.3">
+      <category name="Terracotta"/>
+   </feature>
+   <category-def name="Terracotta" label="Terracotta"/>
+</site>

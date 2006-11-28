@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath ><classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP" />
+<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER" />
+<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/src.classes" path="src" />
+<classpathentry exported="true" kind="lib" path="lib/commons-io-1.0.jar" />
+<classpathentry exported="true" kind="lib" path="lib/IAClasses.jar" />
+</classpath>

@@ -1,0 +1,480 @@
+# InstallAnywhere Localization File
+#
+# External strings for locale: English (en)
+# See the 'ProjectLocalizationInfo.txt' file in this same directory for information 
+#     regarding mappings between the properties shown below and your InstallAnywhere
+#     project.
+#
+# External/Locale property names can take one of three forms:
+#     <ActionName>.<ReferenceID>.<ActionProperty>          (e.g., Installer.858175031081.productName)
+#     <ActionName>.<ReferenceID>.<ActionProperty>.<Index>  (e.g., Installer.858175031081.installLabels.01)
+#         - where the <ActionProperty> is a Vector and the <Index> represents the place within the
+#           Vector where the value of the property should be inserted
+#     _ia.<SomeProperty>                                   (e.g., _ia.MyCustomCodePanelProperty)
+#         - where <SomeProperty> is used as an identifier for a localized value by custom code
+#
+# External/Locale property values should be plain text strings.  Special or i18n characters
+#     that cannot be represented by ASCII characters should be written using escaped unicode.
+#     - see the utility 'native2ascii' distributed with your JDK
+#
+# Product Name: Terracotta Sessions
+# Project File: C:\trunk\open\code\base\build\dist\tmp\sessions\install.iap_xml
+# Generated:    Sun Nov 26 16:00:58 PST 2006
+
+
+# Billboard.f83769029364.imageName=billboard.gif
+Billboard.f83769029364.imageName=billboard.gif
+
+# Billboard.f83769029364.imagePath=$IA_PROJECT_DIR$\\common\\images\\
+Billboard.f83769029364.imagePath=$IA_PROJECT_DIR$\\common\\images\\
+
+# CreateShortcut.15e503f69d54.args=
+CreateShortcut.15e503f69d54.args=
+
+# CreateShortcut.15e503f69d54.destinationName=Administrator Console
+CreateShortcut.15e503f69d54.destinationName=Administrator Console
+
+# CreateShortcut.15e503f69d54.workingDir=
+CreateShortcut.15e503f69d54.workingDir=
+
+# CreateShortcut.f8376902935d.args=
+CreateShortcut.f8376902935d.args=
+
+# CreateShortcut.f8376902935d.destinationName=$PRODUCT_NAME$ Welcome
+CreateShortcut.f8376902935d.destinationName=$PRODUCT_NAME$ Welcome
+
+# CreateShortcut.f8376902935d.workingDir=
+CreateShortcut.f8376902935d.workingDir=
+
+# CreateShortcut.f8376903935e.args=
+CreateShortcut.f8376903935e.args=
+
+# CreateShortcut.f8376903935e.destinationName=Welcome
+CreateShortcut.f8376903935e.destinationName=Welcome
+
+# CreateShortcut.f8376903935e.workingDir=
+CreateShortcut.f8376903935e.workingDir=
+
+# CreateShortcut.f8376903935f.args=
+CreateShortcut.f8376903935f.args=
+
+# CreateShortcut.f8376903935f.destinationName=Quick Start Guide
+CreateShortcut.f8376903935f.destinationName=Quick Start Guide
+
+# CreateShortcut.f8376903935f.workingDir=
+CreateShortcut.f8376903935f.workingDir=
+
+# CreateShortcut.f83769039360.args=
+CreateShortcut.f83769039360.args=
+
+# CreateShortcut.f83769039360.destinationName=Sessions Configurator
+CreateShortcut.f83769039360.destinationName=Sessions Configurator
+
+# CreateShortcut.f83769039360.workingDir=
+CreateShortcut.f83769039360.workingDir=
+
+# CreateShortcut.f83769039361.args=
+CreateShortcut.f83769039361.args=
+
+# CreateShortcut.f83769039361.destinationName=Sandbox
+CreateShortcut.f83769039361.destinationName=Sandbox
+
+# CreateShortcut.f83769039361.workingDir=
+CreateShortcut.f83769039361.workingDir=
+
+# CreateShortcut.f83769039362.args=
+CreateShortcut.f83769039362.args=
+
+# CreateShortcut.f83769039362.destinationName=Uninstall
+CreateShortcut.f83769039362.destinationName=Uninstall
+
+# CreateShortcut.f83769039362.workingDir=
+CreateShortcut.f83769039362.workingDir=
+
+# GetUserInput.f83cc7d39383.prompt=
+GetUserInput.f83cc7d39383.prompt=
+
+# GetUserInput.f83cc7d39383.title=Shortcuts
+GetUserInput.f83cc7d39383.title=Shortcuts
+
+# GetUserInput.f83cc80393a5.prompt=Congratulations! $PRODUCT_NAME$ has been successfully installed to:\n\n     $USER_INSTALL_DIR$\n\nPress \"Done\" to quit the installer.
+GetUserInput.f83cc80393a5.prompt=Congratulations! $PRODUCT_NAME$ has been successfully installed to:\n\n     $USER_INSTALL_DIR$\n\nPress \"Done\" to quit the installer.
+
+# GetUserInput.f83cc80393a5.title=Install Complete
+GetUserInput.f83cc80393a5.title=Install Complete
+
+# GetUserInput.f83cc81293a7.prompt=The installation of $PRODUCT_NAME$ is finished, but some errors occurred during the install. Please see the installation log, $USER_INSTALL_DIR$$/$Terracotta_Sessions_InstallLog.log, for details.
+GetUserInput.f83cc81293a7.prompt=The installation of $PRODUCT_NAME$ is finished, but some errors occurred during the install. Please see the installation log, $USER_INSTALL_DIR$$/$Terracotta_Sessions_InstallLog.log, for details.
+
+# GetUserInput.f83cc81293a7.title=Install Complete
+GetUserInput.f83cc81293a7.title=Install Complete
+
+# GUIComponentData.f83cc7d39384.defaultValue=
+GUIComponentData.f83cc7d39384.defaultValue=
+
+# GUIComponentData.f83cc7d39384.label=
+GUIComponentData.f83cc7d39384.label=
+
+# GUIComponentData.f83cc7d39385.defaultValue=
+GUIComponentData.f83cc7d39385.defaultValue=
+
+# GUIComponentData.f83cc7d39385.label=
+GUIComponentData.f83cc7d39385.label=
+
+# GUIComponentData.f83cc7d39386.defaultValue=
+GUIComponentData.f83cc7d39386.defaultValue=
+
+# GUIComponentData.f83cc7d39386.label=
+GUIComponentData.f83cc7d39386.label=
+
+# GUIComponentData.f83cc7d39387.defaultValue=
+GUIComponentData.f83cc7d39387.defaultValue=
+
+# GUIComponentData.f83cc7d39387.label=
+GUIComponentData.f83cc7d39387.label=
+
+# GUIComponentData.f83cc7d39388.defaultValue=
+GUIComponentData.f83cc7d39388.defaultValue=
+
+# GUIComponentData.f83cc7d39388.label=
+GUIComponentData.f83cc7d39388.label=
+
+# GUIComponentData.f83cc7d39389.defaultValue=Selected
+GUIComponentData.f83cc7d39389.defaultValue=Selected
+
+# GUIComponentData.f83cc7d39389.label=$DESKTOP_SHORTCUT_CHECKBOX_TEXT$
+GUIComponentData.f83cc7d39389.label=$DESKTOP_SHORTCUT_CHECKBOX_TEXT$
+
+# GUIComponentData.f83cc7d3938a.defaultValue=Selected
+GUIComponentData.f83cc7d3938a.defaultValue=Selected
+
+# GUIComponentData.f83cc7d3938a.label=$PROGRAMS_SHORTCUT_CHECKBOX_TEXT$
+GUIComponentData.f83cc7d3938a.label=$PROGRAMS_SHORTCUT_CHECKBOX_TEXT$
+
+# GUIComponentData.f83cc81293a8.defaultValue=Selected
+GUIComponentData.f83cc81293a8.defaultValue=Selected
+
+# GUIComponentData.f83cc81293a8.label=$IC_PANEL_LAUNCH_WELCOME$
+GUIComponentData.f83cc81293a8.label=$IC_PANEL_LAUNCH_WELCOME$
+
+# GUIComponentData.f83cc81393a5.defaultValue=Selected
+GUIComponentData.f83cc81393a5.defaultValue=Selected
+
+# GUIComponentData.f83cc81393a5.label=$IC_PANEL_LAUNCH_WELCOME$
+GUIComponentData.f83cc81393a5.label=$IC_PANEL_LAUNCH_WELCOME$
+
+# GUIGroupData.f83cc7d49383.caption=
+GUIGroupData.f83cc7d49383.caption=
+
+# GUIGroupData.f83cc7d49384.caption=
+GUIGroupData.f83cc7d49384.caption=
+
+# GUIGroupData.f83cc7d49385.caption=
+GUIGroupData.f83cc7d49385.caption=
+
+# GUIGroupData.f83cc7d49386.caption=
+GUIGroupData.f83cc7d49386.caption=
+
+# GUIGroupData.f83cc7d49387.caption=Select from the following options:
+GUIGroupData.f83cc7d49387.caption=Select from the following options:
+
+# GUIGroupData.f83cc7d49388.caption=
+GUIGroupData.f83cc7d49388.caption=
+
+# GUIGroupData.f83cc7d49389.caption=
+GUIGroupData.f83cc7d49389.caption=
+
+# GUIGroupData.f83cc81293a5.caption=
+GUIGroupData.f83cc81293a5.caption=
+
+# GUIGroupData.f83cc81393a7.caption=
+GUIGroupData.f83cc81393a7.caption=
+
+# InstallBundle.f83768f4933b.bundleName=Application
+InstallBundle.f83768f4933b.bundleName=Application
+
+# InstallBundle.f83768f4933b.description=This installs the application feature.
+InstallBundle.f83768f4933b.description=This installs the application feature.
+
+# InstallDirAction.f83cc7b59375.additionalText=
+InstallDirAction.f83cc7b59375.additionalText=
+
+# InstallDirAction.f83cc7b59375.prompt=Where Would You Like to Install?
+InstallDirAction.f83cc7b59375.prompt=Where Would You Like to Install?
+
+# InstallDirAction.f83cc7b59375.stepTitle=Choose Install Folder
+InstallDirAction.f83cc7b59375.stepTitle=Choose Install Folder
+
+# Installer.f83cc7769374.installLabels.00=Introduction
+Installer.f83cc7769374.installLabels.00=Introduction
+
+# Installer.f83cc7769374.installLabels.01=License Agreement
+Installer.f83cc7769374.installLabels.01=License Agreement
+
+# Installer.f83cc7769374.installLabels.02=Choose Install Folder
+Installer.f83cc7769374.installLabels.02=Choose Install Folder
+
+# Installer.f83cc7769374.installLabels.03=$SHORTCUT_NAME$s
+Installer.f83cc7769374.installLabels.03=$SHORTCUT_NAME$s
+
+# Installer.f83cc7769374.installLabels.04=Pre-Installation Summary
+Installer.f83cc7769374.installLabels.04=Pre-Installation Summary
+
+# Installer.f83cc7769374.installLabels.05=Installing...
+Installer.f83cc7769374.installLabels.05=Installing...
+
+# Installer.f83cc7769374.installLabels.06=Install Complete
+Installer.f83cc7769374.installLabels.06=Install Complete
+
+# Installer.f83cc7769374.installProgressImageName=background.gif
+Installer.f83cc7769374.installProgressImageName=background.gif
+
+# Installer.f83cc7769374.installProgressImagePath=$IA_PROJECT_DIR$\\common\\images\\
+Installer.f83cc7769374.installProgressImagePath=$IA_PROJECT_DIR$\\common\\images\\
+
+# Installer.f83cc7769374.panelImageName=introImage.png
+Installer.f83cc7769374.panelImageName=introImage.png
+
+# Installer.f83cc7769374.panelImagePath=com/zerog/ia/installer/images/
+Installer.f83cc7769374.panelImagePath=com/zerog/ia/installer/images/
+
+# Installer.f83cc7769374.rulesFailedMessage=The installer cannot run on your configuration. It will now quit.
+Installer.f83cc7769374.rulesFailedMessage=The installer cannot run on your configuration. It will now quit.
+
+# InstallerInfoData.f83cc83193ab.email=support@terracottatech.com
+InstallerInfoData.f83cc83193ab.email=support@terracottatech.com
+
+# InstallerInfoData.f83cc83193ab.installerName=install-terracotta-sessions
+InstallerInfoData.f83cc83193ab.installerName=install-terracotta-sessions
+
+# InstallerInfoData.f83cc83193ab.installerTitle=Terracotta Sessions
+InstallerInfoData.f83cc83193ab.installerTitle=Terracotta Sessions
+
+# InstallerInfoData.f83cc83193ab.productName=Terracotta Sessions
+InstallerInfoData.f83cc83193ab.productName=Terracotta Sessions
+
+# InstallerInfoData.f83cc83193ab.productURL=http://www.terracottatech.com
+InstallerInfoData.f83cc83193ab.productURL=http://www.terracottatech.com
+
+# InstallerInfoData.f83cc83193ab.vendorName=Terracotta, Inc.
+InstallerInfoData.f83cc83193ab.vendorName=Terracotta, Inc.
+
+# InstallerInfoData.f83cc83193ab.vendorURL=http://www.terracottatech.com
+InstallerInfoData.f83cc83193ab.vendorURL=http://www.terracottatech.com
+
+# InstallFrameConfigurator.f83cc82293aa.uninstallerTitle=Uninstall $PRODUCT_NAME$
+InstallFrameConfigurator.f83cc82293aa.uninstallerTitle=Uninstall $PRODUCT_NAME$
+
+# InstallSet.119d8108942f.description=<Enter Install Set description here>
+InstallSet.119d8108942f.description=<Enter Install Set description here>
+
+# InstallSet.119d8108942f.imageName=typical.png
+InstallSet.119d8108942f.imageName=typical.png
+
+# InstallSet.119d8108942f.imagePath=com/zerog/ia/installer/images/
+InstallSet.119d8108942f.imagePath=com/zerog/ia/installer/images/
+
+# InstallSet.119d8108942f.installSetName=Core
+InstallSet.119d8108942f.installSetName=Core
+
+# InstallSet.161c9d4c96f0.description=<Enter Install Set description here>
+InstallSet.161c9d4c96f0.description=<Enter Install Set description here>
+
+# InstallSet.161c9d4c96f0.imageName=typical.png
+InstallSet.161c9d4c96f0.imageName=typical.png
+
+# InstallSet.161c9d4c96f0.imagePath=com/zerog/ia/installer/images/
+InstallSet.161c9d4c96f0.imagePath=com/zerog/ia/installer/images/
+
+# InstallSet.161c9d4c96f0.installSetName=Minimal
+InstallSet.161c9d4c96f0.installSetName=Minimal
+
+# InstallSet.f83768f3933a.description=The most common application features will be installed.  This option is recommended for most users.
+InstallSet.f83768f3933a.description=The most common application features will be installed.  This option is recommended for most users.
+
+# InstallSet.f83768f3933a.imageName=typical.png
+InstallSet.f83768f3933a.imageName=typical.png
+
+# InstallSet.f83768f3933a.imagePath=com/zerog/ia/installer/images/
+InstallSet.f83768f3933a.imagePath=com/zerog/ia/installer/images/
+
+# InstallSet.f83768f3933a.installSetName=Typical
+InstallSet.f83768f3933a.installSetName=Typical
+
+# InstallSet.f83cc82393aa.description=Choose this option to customize the features to be installed.
+InstallSet.f83cc82393aa.description=Choose this option to customize the features to be installed.
+
+# InstallSet.f83cc82393aa.imageName=customIcon.png
+InstallSet.f83cc82393aa.imageName=customIcon.png
+
+# InstallSet.f83cc82393aa.imagePath=com/zerog/ia/installer/images/
+InstallSet.f83cc82393aa.imagePath=com/zerog/ia/installer/images/
+
+# InstallSet.f83cc82393aa.installSetName=Custom
+InstallSet.f83cc82393aa.installSetName=Custom
+
+# InstallSummary.f83cc7e39391.stepPrompt=Please Review the Following Before Continuing:
+InstallSummary.f83cc7e39391.stepPrompt=Please Review the Following Before Continuing:
+
+# InstallSummary.f83cc7e39391.title=Pre-Installation Summary
+InstallSummary.f83cc7e39391.title=Pre-Installation Summary
+
+# InstallSummary.f83cc7e39393.stepPrompt=Please Review the Following Before Continuing:
+InstallSummary.f83cc7e39393.stepPrompt=Please Review the Following Before Continuing:
+
+# InstallSummary.f83cc7e39393.title=Pre-Installation Summary
+InstallSummary.f83cc7e39393.title=Pre-Installation Summary
+
+# InstallSummary.f83cc7e39396.stepPrompt=Please Review the Following Before Continuing:
+InstallSummary.f83cc7e39396.stepPrompt=Please Review the Following Before Continuing:
+
+# InstallSummary.f83cc7e39396.title=Pre-Installation Summary
+InstallSummary.f83cc7e39396.title=Pre-Installation Summary
+
+# InstallUninstaller.f83769039345.destinationName=Uninstall $PRODUCT_NAME$
+InstallUninstaller.f83769039345.destinationName=Uninstall $PRODUCT_NAME$
+
+# IntroAction.f83cc7a69374.message=Welcome to the $PRODUCT_NAME$ installer.\n\nIt is strongly recommended that you quit all programs before continuing with this installation.\n\nClick the 'Next' button to proceed to the next screen. If you want to change something on a previous screen, click the 'Previous' button.\n\nYou may cancel this installation at any time by clicking the 'Cancel' button.
+IntroAction.f83cc7a69374.message=Welcome to the $PRODUCT_NAME$ installer.\n\nIt is strongly recommended that you quit all programs before continuing with this installation.\n\nClick the 'Next' button to proceed to the next screen. If you want to change something on a previous screen, click the 'Previous' button.\n\nYou may cancel this installation at any time by clicking the 'Cancel' button.
+
+# IntroAction.f83cc7a69374.stepTitle=Introduction
+IntroAction.f83cc7a69374.stepTitle=Introduction
+
+# LicenseAgrAction.f83cc7a69375.resourceName=End-User License (on website).txt
+LicenseAgrAction.f83cc7a69375.resourceName=End-User License (on website).txt
+
+# LicenseAgrAction.f83cc7a69375.resourcePath=$IA_PROJECT_DIR$\\common\\
+LicenseAgrAction.f83cc7a69375.resourcePath=$IA_PROJECT_DIR$\\common\\
+
+# LicenseAgrAction.f83cc7a69375.stepPrompt=Installation and Use of $PRODUCT_NAME$ Requires Acceptance of the Following License Agreement:
+LicenseAgrAction.f83cc7a69375.stepPrompt=Installation and Use of $PRODUCT_NAME$ Requires Acceptance of the Following License Agreement:
+
+# LicenseAgrAction.f83cc7a69375.title=License Agreement
+LicenseAgrAction.f83cc7a69375.title=License Agreement
+
+# MakeExecutable.15e1e0019aa2.destinationName=AdminConsole
+MakeExecutable.15e1e0019aa2.destinationName=AdminConsole
+
+# MakeExecutable.f8376902934c.destinationName=Sessions Configurator
+MakeExecutable.f8376902934c.destinationName=Sessions Configurator
+
+# MakeExecutable.f83769029354.destinationName=WelcomeFrame
+MakeExecutable.f83769029354.destinationName=WelcomeFrame
+
+# MakeRegEntry.f83769039363.key=HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$PRODUCT_NAME$
+MakeRegEntry.f83769039363.key=HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$PRODUCT_NAME$
+
+# MakeRegEntry.f83769039363.value=$TC_VERSION$
+MakeRegEntry.f83769039363.value=$TC_VERSION$
+
+# MakeRegEntry.f83769039363.valueName=DisplayVersion
+MakeRegEntry.f83769039363.valueName=DisplayVersion
+
+# ShowDialogAction.f83cc7c59381.buttonLabel=Backup
+ShowDialogAction.f83cc7c59381.buttonLabel=Backup
+
+# ShowDialogAction.f83cc7c59381.cancelButtonLabel=Delete
+ShowDialogAction.f83cc7c59381.cancelButtonLabel=Delete
+
+# ShowDialogAction.f83cc7c59381.detailsButtonLabel=Details...
+ShowDialogAction.f83cc7c59381.detailsButtonLabel=Details...
+
+# ShowDialogAction.f83cc7c59381.label=Previous Installation Detected
+ShowDialogAction.f83cc7c59381.label=Previous Installation Detected
+
+# ShowDialogAction.f83cc7c59381.narrative=Would you like to Backup your prior installation of $PRODUCT_NAME$ to $BACKUP_FOLDER$ or delete the prior installation folder?
+ShowDialogAction.f83cc7c59381.narrative=Would you like to Backup your prior installation of $PRODUCT_NAME$ to $BACKUP_FOLDER$ or delete the prior installation folder?
+
+# ShowDialogAction.f83cc7c59381.title=Warning
+ShowDialogAction.f83cc7c59381.title=Warning
+
+# ShowDialogAction.f83cc802939f.buttonLabel=OK
+ShowDialogAction.f83cc802939f.buttonLabel=OK
+
+# ShowDialogAction.f83cc802939f.cancelButtonLabel=Cancel
+ShowDialogAction.f83cc802939f.cancelButtonLabel=Cancel
+
+# ShowDialogAction.f83cc802939f.detailsButtonLabel=Details...
+ShowDialogAction.f83cc802939f.detailsButtonLabel=Details...
+
+# ShowDialogAction.f83cc802939f.label=Backup Incomplete
+ShowDialogAction.f83cc802939f.label=Backup Incomplete
+
+# ShowDialogAction.f83cc802939f.narrative=The back up of your sessions folder to $BACKUP_FOLDER$ cannot complete.\nClose all applications pointing to your existing Terracotta installation.
+ShowDialogAction.f83cc802939f.narrative=The back up of your sessions folder to $BACKUP_FOLDER$ cannot complete.\nClose all applications pointing to your existing Terracotta installation.
+
+# ShowDialogAction.f83cc802939f.title=Warning
+ShowDialogAction.f83cc802939f.title=Warning
+
+# ShowDialogAction.f83cc80293a1.buttonLabel=OK
+ShowDialogAction.f83cc80293a1.buttonLabel=OK
+
+# ShowDialogAction.f83cc80293a1.cancelButtonLabel=Cancel
+ShowDialogAction.f83cc80293a1.cancelButtonLabel=Cancel
+
+# ShowDialogAction.f83cc80293a1.detailsButtonLabel=Details...
+ShowDialogAction.f83cc80293a1.detailsButtonLabel=Details...
+
+# ShowDialogAction.f83cc80293a1.label=Delete Failed
+ShowDialogAction.f83cc80293a1.label=Delete Failed
+
+# ShowDialogAction.f83cc80293a1.narrative=The deletion of your sessions folder to $USER_MAGIC_FOLDER_1$ cannot complete.\nClose all applications pointing to your existing Terracotta installation.
+ShowDialogAction.f83cc80293a1.narrative=The deletion of your sessions folder to $USER_MAGIC_FOLDER_1$ cannot complete.\nClose all applications pointing to your existing Terracotta installation.
+
+# ShowDialogAction.f83cc80293a1.title=Warning
+ShowDialogAction.f83cc80293a1.title=Warning
+
+# UninstallCompleteAction.f83cc83293ad.rebootNotNeededMessage=
+UninstallCompleteAction.f83cc83293ad.rebootNotNeededMessage=
+
+# UninstallCompleteAction.f83cc83293ad.rebootRecommendedMessage=You should restart the system to complete the uninstallation.
+UninstallCompleteAction.f83cc83293ad.rebootRecommendedMessage=You should restart the system to complete the uninstallation.
+
+# UninstallCompleteAction.f83cc83293ad.rebootRequiredMessage=You need to restart the system to complete the uninstallation.
+UninstallCompleteAction.f83cc83293ad.rebootRequiredMessage=You need to restart the system to complete the uninstallation.
+
+# UninstallCompleteAction.f83cc83293ad.stepTitle=Uninstall Complete
+UninstallCompleteAction.f83cc83293ad.stepTitle=Uninstall Complete
+
+# UninstallCompleteAction.f83cc83293ad.uninstallIncompleteMessage=The following items could not be removed:
+UninstallCompleteAction.f83cc83293ad.uninstallIncompleteMessage=The following items could not be removed:
+
+# UninstallCompleteAction.f83cc83293ad.uninstallSuccessMessage=All items were successfully uninstalled.
+UninstallCompleteAction.f83cc83293ad.uninstallSuccessMessage=All items were successfully uninstalled.
+
+# UninstallIntroAction.f83cc83293ac.message=About to uninstall...\n\n$PRODUCT_NAME$\n\nImportant: \nExit all Terracotta installed applications including Tomcat instances running in the Terracotta sandbox before continuing the uninstall process.\n\nThis will remove features installed by the $PRODUCT_NAME$ installer.  It will not remove files and folders created after the installation.
+UninstallIntroAction.f83cc83293ac.message=About to uninstall...\n\n$PRODUCT_NAME$\n\nImportant: \nExit all Terracotta installed applications including Tomcat instances running in the Terracotta sandbox before continuing the uninstall process.\n\nThis will remove features installed by the $PRODUCT_NAME$ installer.  It will not remove files and folders created after the installation.
+
+# UninstallIntroAction.f83cc83293ac.stepTitle=Uninstall $PRODUCT_NAME$
+UninstallIntroAction.f83cc83293ac.stepTitle=Uninstall $PRODUCT_NAME$
+
+# VariablePropertyData.f83cc7e39394.propertyName=Backup Folder:
+VariablePropertyData.f83cc7e39394.propertyName=Backup Folder:
+
+# VariablePropertyData.f83cc7e39394.propertyValue=$BACKUP_FOLDER$
+VariablePropertyData.f83cc7e39394.propertyValue=$BACKUP_FOLDER$
+
+# VariablePropertyData.f83cc7e49391.propertyName=Shortcut Icons:
+VariablePropertyData.f83cc7e49391.propertyName=Shortcut Icons:
+
+# VariablePropertyData.f83cc7e49391.propertyValue=$SHORTCUT_RESULTS$
+VariablePropertyData.f83cc7e49391.propertyValue=$SHORTCUT_RESULTS$
+
+# VariablePropertyData.f83cc7e49393.propertyName=Shortcut Icons:
+VariablePropertyData.f83cc7e49393.propertyName=Shortcut Icons:
+
+# VariablePropertyData.f83cc7e49393.propertyValue=$SHORTCUT_RESULTS$:
+VariablePropertyData.f83cc7e49393.propertyValue=$SHORTCUT_RESULTS$:
+
+# VariablePropertyData.f83cc7f39396.propertyName=Shortcut Icons:
+VariablePropertyData.f83cc7f39396.propertyName=Shortcut Icons:
+
+# VariablePropertyData.f83cc7f39396.propertyValue=$SHORTCUT_RESULTS$:
+VariablePropertyData.f83cc7f39396.propertyValue=$SHORTCUT_RESULTS$:
+
+# VariablePropertyData.f83cc7f49396.propertyName=Delete Folder:
+VariablePropertyData.f83cc7f49396.propertyName=Delete Folder:
+
+# VariablePropertyData.f83cc7f49396.propertyValue=$USER_MAGIC_FOLDER_2$
+VariablePropertyData.f83cc7f49396.propertyValue=$USER_MAGIC_FOLDER_2$
+

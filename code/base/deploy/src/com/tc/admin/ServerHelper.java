@@ -1,0 +1,29 @@
+package com.tc.admin;
+
+import com.tc.management.beans.L2MBeanNames;
+
+import javax.management.ObjectName;
+
+public class ServerHelper extends BaseHelper {
+  private static ServerHelper m_helper = new ServerHelper();
+
+  public static ServerHelper getHelper() {
+    return m_helper;
+  }
+
+  public ObjectName getServerInfoMBean(ConnectionContext cc) throws Exception {
+    return cc.queryName(L2MBeanNames.TC_SERVER_INFO.getCanonicalName());
+  }
+
+  public boolean isActive(ConnectionContext cc) throws Exception {
+    ObjectName infoMBean = getServerInfoMBean(cc);
+
+    return infoMBean != null && cc.getBooleanAttribute(infoMBean, "Active");
+  }
+
+  public boolean isStarted(ConnectionContext cc) throws Exception {
+    ObjectName infoMBean = getServerInfoMBean(cc);
+
+    return infoMBean != null && cc.getBooleanAttribute(infoMBean, "Started");
+  }
+}

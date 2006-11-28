@@ -1,0 +1,31 @@
+#  The following settings are used to set
+#  up the process panel.
+#
+#  The button.name is the value that appears on the button
+#  The button.cmd is the value that is saved to the process
+#      tracking file
+#
+#  The system loads all properties starting with index 0
+#  and continuing until one or both of the next pair of
+#  values is missing.
+ 
+button.name.0=Design
+button.cmd.0=Design
+ 
+button.name.1=Coding
+button.cmd.1=Coding
+ 
+button.name.2=Unit Testing
+button.cmd.2=Unit Testing
+ 
+button.name.3=Verification
+button.cmd.3=Verification
+ 
+button.name.4=Meeting
+button.cmd.4=Meeting
+ 
+button.name.5=Interrupt
+button.cmd.5=Interrupt
+ 
+#  The name of the file to store the process data in
+process.file=c:\tools\process.txt

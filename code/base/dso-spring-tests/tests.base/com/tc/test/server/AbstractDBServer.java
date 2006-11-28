@@ -1,0 +1,28 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tc.test.server;
+
+import com.tctest.spring.integrationtests.framework.AbstractStoppable;
+import com.tctest.spring.integrationtests.framework.Stoppable;
+
+public abstract class AbstractDBServer extends AbstractStoppable implements Stoppable {
+    private int serverPort = 0;
+    private String dbName = null;
+
+    public int getServerPort() {
+      return serverPort;
+    }
+
+    public void setServerPort(int serverPort) {
+      this.serverPort = serverPort;
+    } 
+
+    public String getDbName() {
+      return dbName;
+    }
+
+    public void setDbName(String dbName) {
+      this.dbName = dbName;
+    }
+}

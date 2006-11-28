@@ -1,0 +1,57 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- - - - - - - - - - - - - -->
+<!--  Terracotta for Spring  -->
+<!--  Sample Application     -->
+<!-- - - - - - - - - - - - - -->
+<html>
+<head>
+<title>Terracotta for Spring  &bull;  WorkManager</title>
+<link rel="stylesheet"    type="text/css"  href="../samples.css">
+<link rel="shortcut icon" type="image/ico"
+   href="http://www.terracotta.org/favicon.ico">
+</head>
+<body>
+   <p class=logo>
+      <a href="http://www.terracotta.org/"><img src="../samples.png"></a>
+      </p>
+   <h1>Terracotta for Spring</h1>
+   WorkManager Sample Application
+
+   <h2>About</h2>
+   The WorkManager sample application shows how to use Terracotta for Spring to
+   cluster Spring beans and how to naturally coordinate concurrent execution in
+   the cluster.<br>
+   <br>
+   Details about what this sample application does and how it works can be found
+   in:&nbsp;
+   <a href="../../docs/TerracottaSpringGuide.html">Terracotta for Spring Guide</a>
+
+   <h2>Build Instructions</h2>
+   This sample application requires Java 5 and needs to be built before you can
+   run it.&nbsp;  Use the provided <code>build.xml</code> file to build the
+   application with Apache Ant (<code>ant build</code>).
+
+   <h2>Run Instructions </h2>
+   <ol>
+      <li>Start a Terracotta Server from the <code>spring/samples</code> directory.<br><br>
+            Unix:    <samp>./start-demo-server.sh</samp><br>
+            Windows: <samp>start-demo-server.bat</samp><br>
+      <li>Start a WorkManager from the <code>spring/samples/workmanager</code> directory.<br><br>
+            Unix:    <samp>./run-work-manager.sh</samp><br>
+            Windows: <samp>run-work-manager.bat</samp><br>
+      <li>Start one or more Workers<br><br>
+            Unix:    <samp>./run-worker.sh</samp><br>
+            Windows: <samp>run-worker.bat</samp><br>
+   </ol>
+
+   <h2>Source Code</h2>
+   Browse configuration file and source code: <a href="docs/source.html" target="_blank">source.html</a>
+
+   <p class=footer>
+      <a href="../samples.html">Sample Applications</a><br>
+      <a class=footer href="http://www.terracotta.org/">
+      www.terracotta.org<br>copyright &copy; 2006 terracotta, inc.
+      </a>
+   </p>
+</body>
+</html>

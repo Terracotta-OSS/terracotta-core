@@ -1,0 +1,64 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- - - - - - - - - - - - - -->
+<!--  Terracotta for Spring  -->
+<!--  Sample Application     -->
+<!-- - - - - - - - - - - - - -->
+<html>
+<head>
+<title>Terracotta for Spring  &bull;  JMX</title>
+<link rel="stylesheet"    type="text/css"  href="../samples.css">
+<link rel="shortcut icon" type="image/ico"
+   href="http://www.terracotta.org/favicon.ico">
+</head>
+<body>
+   <p class=logo>
+      <a href="http://www.terracotta.org/"><img src="../samples.png"></a>
+   </p>
+   <h1>Terracotta for Spring</h1>
+   JMX Sample Application
+
+   <h2>About</h2>
+   The JMX sample application shows how to use Terracotta for Spring to cluster
+   Spring beans and advices and how to expose clustered data through JMX.<br>
+   <br>
+   Details about what this sample application does and how it works can be found
+   in:&nbsp;
+   <a href="../../docs/TerracottaSpringGuide.html">Terracotta for Spring Guide</a>
+
+   <h2>Build Instructions</h2>
+   This sample application ships built ready to run.&nbsp;  If you modify the
+   application code, use the provided <code>build.xml</code> file to re-build the
+   application with Apache Ant (<code>ant build</code>).
+
+   <h2>Run Instructions </h2>
+   <ol>
+      <li>Start a Terracotta Server from the <code>spring/samples</code> directory.<br><br>
+            Unix:    <samp>./start-demo-server.sh</samp><br>
+            Windows: <samp>start-demo-server.bat</samp><br>
+      <li>Start Tomcat server nodes from the <code>spring/samples/jmx</code> directory.<br><br>
+            Unix:    <samp>./start-tomcat1.sh<br>./start-tomcat2.sh</samp><br>
+            Windows: <samp>start-tomcat1.bat<br>start-tomcat2.bat</samp><br>
+      <li>View application.<br><br>
+            In a web browser, open
+            <a href="http://localhost:8081/jmx/" target="node1">http://localhost:8081/jmx/</a>
+            for first Tomcat node and
+            <a href="http://localhost:8082/jmx/" target="node2">http://localhost:8082/jmx/</a>
+            for the second node.<br><br>
+      <li>From your JDK install directory, launch JConsole and connect to local JVM instances:
+         <br><br>
+            Unix:    <samp>bin/jconsole</samp><br>
+            Windows: <samp>bin\jconsole.exe</samp>
+   </ol>         
+   <p/>
+
+   <h2>Source Code</h2>
+   Browse configuration file and source code: <a href="docs/source.html" target="_blank">source.html</a>
+
+   <p class=footer>
+      <a href="../samples.html">Sample Applications</a><br>
+      <a class=footer href="http://www.terracotta.org/">
+      www.terracotta.org<br>copyright &copy; 2006 terracotta, inc.
+      </a>
+   </p>
+</body>
+</html>

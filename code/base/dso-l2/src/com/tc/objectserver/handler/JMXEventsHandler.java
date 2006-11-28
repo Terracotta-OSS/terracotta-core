@@ -1,0 +1,27 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tc.objectserver.handler;
+
+import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.EventContext;
+import com.tc.object.msg.JMXMessage;
+import com.tc.objectserver.DSOApplicationEvents;
+
+public class JMXEventsHandler extends AbstractEventHandler {
+
+  private final DSOApplicationEvents appEvents;
+
+  public JMXEventsHandler(DSOApplicationEvents appEvents) {
+    this.appEvents = appEvents;
+  }
+
+  public void handleEvent(EventContext context) {
+    if (context instanceof JMXMessage) {
+      appEvents.addMessage((JMXMessage) context);
+    } else {
+      throw new AssertionError("Unknown event type: " + context);
+    }
+  }
+
+}

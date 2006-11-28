@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beansProjectDescription>
+	<configExtensions>
+		<configExtension>xml</configExtension>
+	</configExtensions>
+	<configs>
+		<config>tests.system.resources/com/tctest/spring/appCtxDef1.xml</config>
+		<config>tests.system.resources/com/tctest/spring/interceptor-via-postprocessor.xml</config>
+		<config>tests.system.resources/com/tctest/spring/sellitem-beans.xml</config>
+		<config>tests.system.resources/com/tctest/spring/distributedevents.xml</config>
+		<config>tests.system.resources/com/tctest/spring/multictx-beanfactory1.xml</config>
+		<config>tests.system.resources/com/tctest/spring/higherlower-servlet.xml</config>
+		<config>tests.system.resources/com/tctest/spring/webflow-beans.xml</config>
+		<config>tests.system.resources/com/tctest/spring/beanfactory-master.xml</config>
+		<config>tests.system.resources/com/tctest/spring/beanfactory-jmx.xml</config>
+		<config>tests.system.resources/com/tctest/spring/beanfactory-proxiedbean.xml</config>
+		<config>tests.system.resources/com/tctest/spring/multifile-context-factory1.xml</config>
+		<config>tests.system.resources/com/tctest/spring/multifile-context-factory2.xml</config>
+		<config>tests.system.resources/com/tctest/spring/beanfactory-referenceandreplication.xml</config>
+		<config>tests.system.resources/com/tctest/spring/webflow-servlet.xml</config>
+		<config>tests.system.resources/com/tctest/spring/beanfactory-another.xml</config>
+		<config>tests.system.resources/com/tctest/spring/hierarchicalAppCtxTest/parent-beanfactory.xml</config>
+		<config>tests.system.resources/com/tctest/spring/higherlower-beans.xml</config>
+		<config>tests.system.resources/com/tctest/spring/beanfactory2.xml</config>
+		<config>tests.system.resources/com/tctest/spring/beanfactory-aop.xml</config>
+		<config>tests.system.resources/com/tctest/spring/appCtxDef2.xml</config>
+		<config>tests.system.resources/com/tctest/spring/beanfactory.xml</config>
+		<config>tests.system.resources/com/tctest/spring/beanfactory-sharedlock.xml</config>
+		<config>tests.system.resources/com/tctest/spring/redeployment.xml</config>
+		<config>tests.system.resources/com/tctest/spring/beanfactory-thread-coordination.xml</config>
+		<config>tests.system.resources/com/tctest/spring/beanfactory-init2.xml</config>
+		<config>tests.system.resources/com/tctest/spring/beanfactory-parent-child.xml</config>
+		<config>tests.system.resources/com/tctest/spring/beanfactory-subclass.xml</config>
+		<config>tests.system.resources/com/tctest/spring/multictx-beanfactory3.xml</config>
+		<config>tests.system.resources/com/tctest/spring/sellitem-servlet.xml</config>
+		<config>tests.system.resources/com/tctest/spring/hierarchicalAppCtxTest/child-beanfactory.xml</config>
+		<config>tests.system.resources/com/tctest/spring/sellitem-ctx.xml</config>
+		<config>tests.system.resources/com/tctest/spring/multictx-beanfactory2.xml</config>
+		<config>tests.system.resources/com/tctest/spring/hierarchicalAppCtxTest/beanfactoryRef.xml</config>
+		<config>tests.system.resources/com/tctest/spring/appCtxDef2a.xml</config>
+	</configs>
+	<configSets>
+	</configSets>
+</beansProjectDescription>

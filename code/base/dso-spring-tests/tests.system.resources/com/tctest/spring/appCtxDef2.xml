@@ -1,0 +1,9 @@
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+
+  <bean id="bean2" class="com.tctest.spring.bean.AppCtxDefBean2">
+    <property name="bean" ref="bean1"/>
+  </bean>
+
+</beans>

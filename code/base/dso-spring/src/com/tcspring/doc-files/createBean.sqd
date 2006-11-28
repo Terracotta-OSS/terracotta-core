@@ -1,0 +1,473 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<net.java.amateras.uml.sequence.model.InteractionModel>
+  <instances>
+    <net.java.amateras.uml.sequence.model.ActorModel>
+      <name>actor</name>
+      <lifeLine>
+        <owner class="net.java.amateras.uml.sequence.model.ActorModel" reference="../.."/>
+        <children>
+          <net.java.amateras.uml.sequence.model.ActivationModel>
+            <children/>
+            <ownerLine reference="../../.."/>
+            <constraint>
+              <x>70</x>
+              <y>71</y>
+              <width>10</width>
+              <height>495</height>
+            </constraint>
+            <sourceConnections>
+              <net.java.amateras.uml.sequence.model.SyncMessageModel>
+                <order>1</order>
+                <oldOrder>1</oldOrder>
+                <name>createBean(beanName, mergedBeanDefinition, args)</name>
+                <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../.."/>
+                <target class="net.java.amateras.uml.sequence.model.ActivationModel">
+                  <children>
+                    <net.java.amateras.uml.sequence.model.ActivationModel>
+                      <children/>
+                      <owner reference="../../.."/>
+                      <ownerLine>
+                        <owner>
+                          <name>AbstractAutowireCapableBeanFactory</name>
+                          <lifeLine reference="../.."/>
+                          <root reference="../../../../../../../../../../../../.."/>
+                          <constraint>
+                            <x>253</x>
+                            <y>20</y>
+                            <width>229</width>
+                            <height>-1</height>
+                          </constraint>
+                          <sourceConnections/>
+                          <targetConnections/>
+                          <children/>
+                          <listeners serialization="custom">
+                            <java.beans.PropertyChangeSupport>
+                              <default>
+                                <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                                <source class="net.java.amateras.uml.sequence.model.InstanceModel" reference="../../../.."/>
+                              </default>
+                              <null/>
+                            </java.beans.PropertyChangeSupport>
+                          </listeners>
+                        </owner>
+                        <children>
+                          <net.java.amateras.uml.sequence.model.ActivationModel reference="../../../../.."/>
+                        </children>
+                        <constraint>
+                          <x>367</x>
+                          <y>20</y>
+                          <width>5</width>
+                          <height>576</height>
+                        </constraint>
+                        <sourceConnections/>
+                        <targetConnections/>
+                        <children defined-in="net.java.amateras.uml.model.AbstractUMLEntityModel"/>
+                        <listeners serialization="custom">
+                          <java.beans.PropertyChangeSupport>
+                            <default>
+                              <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                              <source class="net.java.amateras.uml.sequence.model.LifeLineModel" reference="../../../.."/>
+                            </default>
+                            <null/>
+                          </java.beans.PropertyChangeSupport>
+                        </listeners>
+                      </ownerLine>
+                      <constraint>
+                        <x>367</x>
+                        <y>111</y>
+                        <width>10</width>
+                        <height>30</height>
+                      </constraint>
+                      <sourceConnections/>
+                      <targetConnections>
+                        <net.java.amateras.uml.sequence.model.SyncMessageModel>
+                          <order>2</order>
+                          <oldOrder>2</oldOrder>
+                          <name>bean = applyBeanPostProcessorsBeforeInstantiation(mergedBeanDefinition.getBeanClass(), beanName)</name>
+                          <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../../../.."/>
+                          <target class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../.."/>
+                          <listeners serialization="custom">
+                            <java.beans.PropertyChangeSupport>
+                              <default>
+                                <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                                <source class="net.java.amateras.uml.sequence.model.SyncMessageModel" reference="../../../.."/>
+                              </default>
+                              <null/>
+                            </java.beans.PropertyChangeSupport>
+                          </listeners>
+                        </net.java.amateras.uml.sequence.model.SyncMessageModel>
+                      </targetConnections>
+                      <children defined-in="net.java.amateras.uml.model.AbstractUMLEntityModel"/>
+                      <listeners serialization="custom">
+                        <java.beans.PropertyChangeSupport>
+                          <default>
+                            <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                            <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../../.."/>
+                          </default>
+                          <null/>
+                        </java.beans.PropertyChangeSupport>
+                      </listeners>
+                    </net.java.amateras.uml.sequence.model.ActivationModel>
+                    <net.java.amateras.uml.sequence.model.ActivationModel>
+                      <children/>
+                      <owner reference="../../.."/>
+                      <ownerLine reference="../../net.java.amateras.uml.sequence.model.ActivationModel/ownerLine"/>
+                      <constraint>
+                        <x>367</x>
+                        <y>176</y>
+                        <width>10</width>
+                        <height>30</height>
+                      </constraint>
+                      <sourceConnections/>
+                      <targetConnections>
+                        <net.java.amateras.uml.sequence.model.SyncMessageModel>
+                          <order>3</order>
+                          <oldOrder>3</oldOrder>
+                          <name>bean = applyBeanPostProcessorsAfterInitialization(bean, beanName)</name>
+                          <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../../../.."/>
+                          <target class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../.."/>
+                          <listeners serialization="custom">
+                            <java.beans.PropertyChangeSupport>
+                              <default>
+                                <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                                <source class="net.java.amateras.uml.sequence.model.SyncMessageModel" reference="../../../.."/>
+                              </default>
+                              <null/>
+                            </java.beans.PropertyChangeSupport>
+                          </listeners>
+                        </net.java.amateras.uml.sequence.model.SyncMessageModel>
+                      </targetConnections>
+                      <children defined-in="net.java.amateras.uml.model.AbstractUMLEntityModel"/>
+                      <listeners serialization="custom">
+                        <java.beans.PropertyChangeSupport>
+                          <default>
+                            <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                            <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../../.."/>
+                          </default>
+                          <null/>
+                        </java.beans.PropertyChangeSupport>
+                      </listeners>
+                    </net.java.amateras.uml.sequence.model.ActivationModel>
+                    <net.java.amateras.uml.sequence.model.ActivationModel>
+                      <children/>
+                      <owner reference="../../.."/>
+                      <ownerLine reference="../../net.java.amateras.uml.sequence.model.ActivationModel/ownerLine"/>
+                      <constraint>
+                        <x>367</x>
+                        <y>245</y>
+                        <width>10</width>
+                        <height>30</height>
+                      </constraint>
+                      <sourceConnections/>
+                      <targetConnections>
+                        <net.java.amateras.uml.sequence.model.SyncMessageModel>
+                          <order>4</order>
+                          <oldOrder>4</oldOrder>
+                          <name>bean = instanceWrapper.getWrappedInstance()</name>
+                          <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../../../.."/>
+                          <target class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../.."/>
+                          <listeners serialization="custom">
+                            <java.beans.PropertyChangeSupport>
+                              <default>
+                                <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                                <source class="net.java.amateras.uml.sequence.model.SyncMessageModel" reference="../../../.."/>
+                              </default>
+                              <null/>
+                            </java.beans.PropertyChangeSupport>
+                          </listeners>
+                        </net.java.amateras.uml.sequence.model.SyncMessageModel>
+                      </targetConnections>
+                      <children defined-in="net.java.amateras.uml.model.AbstractUMLEntityModel"/>
+                      <listeners serialization="custom">
+                        <java.beans.PropertyChangeSupport>
+                          <default>
+                            <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                            <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../../.."/>
+                          </default>
+                          <null/>
+                        </java.beans.PropertyChangeSupport>
+                      </listeners>
+                    </net.java.amateras.uml.sequence.model.ActivationModel>
+                    <net.java.amateras.uml.sequence.model.ActivationModel>
+                      <children/>
+                      <owner reference="../../.."/>
+                      <ownerLine reference="../../net.java.amateras.uml.sequence.model.ActivationModel/ownerLine"/>
+                      <constraint>
+                        <x>367</x>
+                        <y>310</y>
+                        <width>10</width>
+                        <height>30</height>
+                      </constraint>
+                      <sourceConnections/>
+                      <targetConnections>
+                        <net.java.amateras.uml.sequence.model.SyncMessageModel>
+                          <order>5</order>
+                          <oldOrder>5</oldOrder>
+                          <name>postProcessAfterInstantiation(bean, beanName)</name>
+                          <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../../../.."/>
+                          <target class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../.."/>
+                          <listeners serialization="custom">
+                            <java.beans.PropertyChangeSupport>
+                              <default>
+                                <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                                <source class="net.java.amateras.uml.sequence.model.SyncMessageModel" reference="../../../.."/>
+                              </default>
+                              <null/>
+                            </java.beans.PropertyChangeSupport>
+                          </listeners>
+                        </net.java.amateras.uml.sequence.model.SyncMessageModel>
+                      </targetConnections>
+                      <children defined-in="net.java.amateras.uml.model.AbstractUMLEntityModel"/>
+                      <listeners serialization="custom">
+                        <java.beans.PropertyChangeSupport>
+                          <default>
+                            <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                            <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../../.."/>
+                          </default>
+                          <null/>
+                        </java.beans.PropertyChangeSupport>
+                      </listeners>
+                    </net.java.amateras.uml.sequence.model.ActivationModel>
+                    <net.java.amateras.uml.sequence.model.ActivationModel>
+                      <children/>
+                      <owner reference="../../.."/>
+                      <ownerLine reference="../../net.java.amateras.uml.sequence.model.ActivationModel/ownerLine"/>
+                      <constraint>
+                        <x>367</x>
+                        <y>380</y>
+                        <width>10</width>
+                        <height>30</height>
+                      </constraint>
+                      <sourceConnections/>
+                      <targetConnections>
+                        <net.java.amateras.uml.sequence.model.SyncMessageModel>
+                          <order>6</order>
+                          <oldOrder>6</oldOrder>
+                          <name>populateBean(beanName, mergedBeanDefinition, instanceWrapper)</name>
+                          <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../../../.."/>
+                          <target class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../.."/>
+                          <listeners serialization="custom">
+                            <java.beans.PropertyChangeSupport>
+                              <default>
+                                <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                                <source class="net.java.amateras.uml.sequence.model.SyncMessageModel" reference="../../../.."/>
+                              </default>
+                              <null/>
+                            </java.beans.PropertyChangeSupport>
+                          </listeners>
+                        </net.java.amateras.uml.sequence.model.SyncMessageModel>
+                      </targetConnections>
+                      <children defined-in="net.java.amateras.uml.model.AbstractUMLEntityModel"/>
+                      <listeners serialization="custom">
+                        <java.beans.PropertyChangeSupport>
+                          <default>
+                            <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                            <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../../.."/>
+                          </default>
+                          <null/>
+                        </java.beans.PropertyChangeSupport>
+                      </listeners>
+                    </net.java.amateras.uml.sequence.model.ActivationModel>
+                    <net.java.amateras.uml.sequence.model.ActivationModel>
+                      <children/>
+                      <owner reference="../../.."/>
+                      <ownerLine reference="../../net.java.amateras.uml.sequence.model.ActivationModel/ownerLine"/>
+                      <constraint>
+                        <x>367</x>
+                        <y>449</y>
+                        <width>10</width>
+                        <height>30</height>
+                      </constraint>
+                      <sourceConnections/>
+                      <targetConnections>
+                        <net.java.amateras.uml.sequence.model.SyncMessageModel>
+                          <order>7</order>
+                          <oldOrder>7</oldOrder>
+                          <name>initializeBean(beanName, bean, mergedBeanDefinition)</name>
+                          <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../../../.."/>
+                          <target class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../.."/>
+                          <listeners serialization="custom">
+                            <java.beans.PropertyChangeSupport>
+                              <default>
+                                <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                                <source class="net.java.amateras.uml.sequence.model.SyncMessageModel" reference="../../../.."/>
+                              </default>
+                              <null/>
+                            </java.beans.PropertyChangeSupport>
+                          </listeners>
+                        </net.java.amateras.uml.sequence.model.SyncMessageModel>
+                      </targetConnections>
+                      <children defined-in="net.java.amateras.uml.model.AbstractUMLEntityModel"/>
+                      <listeners serialization="custom">
+                        <java.beans.PropertyChangeSupport>
+                          <default>
+                            <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                            <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../../.."/>
+                          </default>
+                          <null/>
+                        </java.beans.PropertyChangeSupport>
+                      </listeners>
+                    </net.java.amateras.uml.sequence.model.ActivationModel>
+                    <net.java.amateras.uml.sequence.model.ActivationModel>
+                      <children/>
+                      <owner reference="../../.."/>
+                      <ownerLine reference="../../net.java.amateras.uml.sequence.model.ActivationModel/ownerLine"/>
+                      <constraint>
+                        <x>367</x>
+                        <y>516</y>
+                        <width>10</width>
+                        <height>30</height>
+                      </constraint>
+                      <sourceConnections/>
+                      <targetConnections>
+                        <net.java.amateras.uml.sequence.model.SyncMessageModel>
+                          <order>8</order>
+                          <oldOrder>8</oldOrder>
+                          <name>registerDisposableBeanIfNecessary(beanName, originalBean, mergedBeanDefinition)</name>
+                          <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../../../.."/>
+                          <target class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../.."/>
+                          <listeners serialization="custom">
+                            <java.beans.PropertyChangeSupport>
+                              <default>
+                                <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                                <source class="net.java.amateras.uml.sequence.model.SyncMessageModel" reference="../../../.."/>
+                              </default>
+                              <null/>
+                            </java.beans.PropertyChangeSupport>
+                          </listeners>
+                        </net.java.amateras.uml.sequence.model.SyncMessageModel>
+                      </targetConnections>
+                      <children defined-in="net.java.amateras.uml.model.AbstractUMLEntityModel"/>
+                      <listeners serialization="custom">
+                        <java.beans.PropertyChangeSupport>
+                          <default>
+                            <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                            <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../../.."/>
+                          </default>
+                          <null/>
+                        </java.beans.PropertyChangeSupport>
+                      </listeners>
+                    </net.java.amateras.uml.sequence.model.ActivationModel>
+                  </children>
+                  <ownerLine reference="../children/net.java.amateras.uml.sequence.model.ActivationModel/ownerLine"/>
+                  <constraint>
+                    <x>362</x>
+                    <y>82</y>
+                    <width>10</width>
+                    <height>474</height>
+                  </constraint>
+                  <sourceConnections>
+                    <net.java.amateras.uml.sequence.model.SyncMessageModel reference="../../children/net.java.amateras.uml.sequence.model.ActivationModel/targetConnections/net.java.amateras.uml.sequence.model.SyncMessageModel"/>
+                    <net.java.amateras.uml.sequence.model.SyncMessageModel reference="../../children/net.java.amateras.uml.sequence.model.ActivationModel[2]/targetConnections/net.java.amateras.uml.sequence.model.SyncMessageModel"/>
+                    <net.java.amateras.uml.sequence.model.SyncMessageModel reference="../../children/net.java.amateras.uml.sequence.model.ActivationModel[3]/targetConnections/net.java.amateras.uml.sequence.model.SyncMessageModel"/>
+                    <net.java.amateras.uml.sequence.model.SyncMessageModel reference="../../children/net.java.amateras.uml.sequence.model.ActivationModel[4]/targetConnections/net.java.amateras.uml.sequence.model.SyncMessageModel"/>
+                    <net.java.amateras.uml.sequence.model.SyncMessageModel reference="../../children/net.java.amateras.uml.sequence.model.ActivationModel[5]/targetConnections/net.java.amateras.uml.sequence.model.SyncMessageModel"/>
+                    <net.java.amateras.uml.sequence.model.SyncMessageModel reference="../../children/net.java.amateras.uml.sequence.model.ActivationModel[6]/targetConnections/net.java.amateras.uml.sequence.model.SyncMessageModel"/>
+                    <net.java.amateras.uml.sequence.model.SyncMessageModel reference="../../children/net.java.amateras.uml.sequence.model.ActivationModel[7]/targetConnections/net.java.amateras.uml.sequence.model.SyncMessageModel"/>
+                  </sourceConnections>
+                  <targetConnections>
+                    <net.java.amateras.uml.sequence.model.SyncMessageModel reference="../../.."/>
+                  </targetConnections>
+                  <children defined-in="net.java.amateras.uml.model.AbstractUMLEntityModel"/>
+                  <listeners serialization="custom">
+                    <java.beans.PropertyChangeSupport>
+                      <default>
+                        <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                        <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../../.."/>
+                      </default>
+                      <null/>
+                    </java.beans.PropertyChangeSupport>
+                  </listeners>
+                </target>
+                <listeners serialization="custom">
+                  <java.beans.PropertyChangeSupport>
+                    <default>
+                      <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                      <source class="net.java.amateras.uml.sequence.model.SyncMessageModel" reference="../../../.."/>
+                    </default>
+                    <null/>
+                  </java.beans.PropertyChangeSupport>
+                </listeners>
+              </net.java.amateras.uml.sequence.model.SyncMessageModel>
+            </sourceConnections>
+            <targetConnections/>
+            <children defined-in="net.java.amateras.uml.model.AbstractUMLEntityModel"/>
+            <listeners serialization="custom">
+              <java.beans.PropertyChangeSupport>
+                <default>
+                  <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+                  <source class="net.java.amateras.uml.sequence.model.ActivationModel" reference="../../../.."/>
+                </default>
+                <null/>
+              </java.beans.PropertyChangeSupport>
+            </listeners>
+          </net.java.amateras.uml.sequence.model.ActivationModel>
+        </children>
+        <constraint>
+          <x>75</x>
+          <y>20</y>
+          <width>5</width>
+          <height>576</height>
+        </constraint>
+        <sourceConnections/>
+        <targetConnections/>
+        <children defined-in="net.java.amateras.uml.model.AbstractUMLEntityModel"/>
+        <listeners serialization="custom">
+          <java.beans.PropertyChangeSupport>
+            <default>
+              <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+              <source class="net.java.amateras.uml.sequence.model.LifeLineModel" reference="../../../.."/>
+            </default>
+            <null/>
+          </java.beans.PropertyChangeSupport>
+        </listeners>
+      </lifeLine>
+      <root reference="../../.."/>
+      <constraint>
+        <x>25</x>
+        <y>20</y>
+        <width>100</width>
+        <height>-1</height>
+      </constraint>
+      <sourceConnections/>
+      <targetConnections/>
+      <children/>
+      <listeners serialization="custom">
+        <java.beans.PropertyChangeSupport>
+          <default>
+            <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+            <source class="net.java.amateras.uml.sequence.model.ActorModel" reference="../../../.."/>
+          </default>
+          <null/>
+        </java.beans.PropertyChangeSupport>
+      </listeners>
+    </net.java.amateras.uml.sequence.model.ActorModel>
+    <net.java.amateras.uml.sequence.model.InstanceModel reference="../net.java.amateras.uml.sequence.model.ActorModel/lifeLine/children/net.java.amateras.uml.sequence.model.ActivationModel/sourceConnections/net.java.amateras.uml.sequence.model.SyncMessageModel/target/children/net.java.amateras.uml.sequence.model.ActivationModel/ownerLine/owner"/>
+  </instances>
+  <activations>
+    <net.java.amateras.uml.sequence.model.ActivationModel reference="../../instances/net.java.amateras.uml.sequence.model.ActorModel/lifeLine/children/net.java.amateras.uml.sequence.model.ActivationModel"/>
+    <net.java.amateras.uml.sequence.model.ActivationModel reference="../../instances/net.java.amateras.uml.sequence.model.ActorModel/lifeLine/children/net.java.amateras.uml.sequence.model.ActivationModel/sourceConnections/net.java.amateras.uml.sequence.model.SyncMessageModel/target"/>
+    <net.java.amateras.uml.sequence.model.ActivationModel reference="../../instances/net.java.amateras.uml.sequence.model.ActorModel/lifeLine/children/net.java.amateras.uml.sequence.model.ActivationModel/sourceConnections/net.java.amateras.uml.sequence.model.SyncMessageModel/target/children/net.java.amateras.uml.sequence.model.ActivationModel"/>
+    <net.java.amateras.uml.sequence.model.ActivationModel reference="../../instances/net.java.amateras.uml.sequence.model.ActorModel/lifeLine/children/net.java.amateras.uml.sequence.model.ActivationModel/sourceConnections/net.java.amateras.uml.sequence.model.SyncMessageModel/target/children/net.java.amateras.uml.sequence.model.ActivationModel[2]"/>
+    <net.java.amateras.uml.sequence.model.ActivationModel reference="../../instances/net.java.amateras.uml.sequence.model.ActorModel/lifeLine/children/net.java.amateras.uml.sequence.model.ActivationModel/sourceConnections/net.java.amateras.uml.sequence.model.SyncMessageModel/target/children/net.java.amateras.uml.sequence.model.ActivationModel[3]"/>
+    <net.java.amateras.uml.sequence.model.ActivationModel reference="../../instances/net.java.amateras.uml.sequence.model.ActorModel/lifeLine/children/net.java.amateras.uml.sequence.model.ActivationModel/sourceConnections/net.java.amateras.uml.sequence.model.SyncMessageModel/target/children/net.java.amateras.uml.sequence.model.ActivationModel[4]"/>
+    <net.java.amateras.uml.sequence.model.ActivationModel reference="../../instances/net.java.amateras.uml.sequence.model.ActorModel/lifeLine/children/net.java.amateras.uml.sequence.model.ActivationModel/sourceConnections/net.java.amateras.uml.sequence.model.SyncMessageModel/target/children/net.java.amateras.uml.sequence.model.ActivationModel[5]"/>
+    <net.java.amateras.uml.sequence.model.ActivationModel reference="../../instances/net.java.amateras.uml.sequence.model.ActorModel/lifeLine/children/net.java.amateras.uml.sequence.model.ActivationModel/sourceConnections/net.java.amateras.uml.sequence.model.SyncMessageModel/target/children/net.java.amateras.uml.sequence.model.ActivationModel[6]"/>
+    <net.java.amateras.uml.sequence.model.ActivationModel reference="../../instances/net.java.amateras.uml.sequence.model.ActorModel/lifeLine/children/net.java.amateras.uml.sequence.model.ActivationModel/sourceConnections/net.java.amateras.uml.sequence.model.SyncMessageModel/target/children/net.java.amateras.uml.sequence.model.ActivationModel[7]"/>
+  </activations>
+  <fragments/>
+  <lifelines>
+    <net.java.amateras.uml.sequence.model.LifeLineModel reference="../../instances/net.java.amateras.uml.sequence.model.ActorModel/lifeLine"/>
+    <net.java.amateras.uml.sequence.model.LifeLineModel reference="../../instances/net.java.amateras.uml.sequence.model.ActorModel/lifeLine/children/net.java.amateras.uml.sequence.model.ActivationModel/sourceConnections/net.java.amateras.uml.sequence.model.SyncMessageModel/target/children/net.java.amateras.uml.sequence.model.ActivationModel/ownerLine"/>
+  </lifelines>
+  <children/>
+  <listeners serialization="custom">
+    <java.beans.PropertyChangeSupport>
+      <default>
+        <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+        <source class="net.java.amateras.uml.sequence.model.InteractionModel" reference="../../../.."/>
+      </default>
+      <null/>
+    </java.beans.PropertyChangeSupport>
+  </listeners>
+</net.java.amateras.uml.sequence.model.InteractionModel>

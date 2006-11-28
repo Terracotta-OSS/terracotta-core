@@ -1,0 +1,28 @@
+/*
+ * Created on Sep 14, 2004
+ */
+package com.tc.object;
+
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+
+/**
+ * @author steve
+ */
+public class WeakObjectReference extends WeakReference {
+  private final ObjectID id;
+
+  public WeakObjectReference(ObjectID id, Object referent) {
+    super(referent);
+    this.id = id;
+  }
+
+  public WeakObjectReference(ObjectID id, Object referent, ReferenceQueue q) {
+    super(referent, q);
+    this.id = id;
+  }
+
+  public ObjectID getObjectID() {
+    return id;
+  }
+}

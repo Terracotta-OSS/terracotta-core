@@ -1,0 +1,3 @@
+<Context path="/events" docBase="${catalina.base}/../target/events.war"
+        debug="0" privileged="true">
+</Context>

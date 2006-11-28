@@ -1,0 +1,15 @@
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+
+	<bean id="spring.xml"
+		class="org.springframework.context.support.ClassPathXmlApplicationContext">
+		<constructor-arg>
+			<list>
+				<value>/com/tctest/spring/hierarchicalAppCtxTest/parent-beanfactory.xml</value>
+			</list>
+		</constructor-arg>
+	</bean>
+
+
+</beans>

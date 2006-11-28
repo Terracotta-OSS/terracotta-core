@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<bea-licenses>
+    <license-group format="1.0" product="WebLogic Platform" release="8.1">
+        <license
+            component="2PC"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC0CFFaJGWxOQjAZQGhQcoovSSEE7HZIAhUA2HO+wO3F5bcU8S0/SEBZrNutUwA="
+        />
+        <license
+            component="AI Events"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MCwCFGg+/Vwk5xflz3gy4zpjFc4YinduAhRe9HUolxDlydeEUzWcBfi0FAljyA=="
+        />
+        <license
+            component="AI Services"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC4CFQCd1JOEi0EFsqn0fNMx4iigoSnAFgIVAK6uLfBWjtFWtFEdOLwRXcNz/Cq+"
+        />
+        <license
+            component="B2Bi"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC4CFQCd1JOEi0EFsqn0fNMx4iigoSnAFgIVANrxQM3H4/YeZ+p+n8ZrK8XxDcdV"
+        />
+        <license
+            component="BPM - Data Transformation"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC0CFHd8fxXJlTcUT9zTwuzXL7NZA+bvAhUA4Xo1V7+g4WTviysPlGkU4aPbJtQ="
+        />
+        <license
+            component="BPM - Message Broker"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MCwCFHv9exS7KAr/833OQ5g1Ejd4foqPAhQ/RQdSmpv9ZLExUiDxjz3GluDMyQ=="
+        />
+        <license
+            component="BPM - Service Broker Control"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MCwCFHv9exS7KAr/833OQ5g1Ejd4foqPAhQ8fmb4iZXCgYhS5+zJpq/S+b1TkA=="
+        />
+        <license
+            component="BPM - Stateful Processes"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC4CFQCyWoYyK9WuHlQ81QYY2+JMudi1bgIVALD/NRYA3yDK/kUYpPe7kRb3S2YU"
+        />
+        <license
+            component="BPM - Stateless Processes"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC0CFQCyWoYyK9WuHlQ81QYY2+JMudi1bgIUbSoMewvCPs0JqzunKbAEG3aosdc="
+        />
+        <license
+            component="BPM - Worklist"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC0CFCwmmFmYaOI0gqZmcx39nIc5SXneAhUAxG52epL4xcM2rrv1AjyvCAN7Dx4="
+        />
+        <license
+            component="Campaign Manager"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC0CFAGi3wbaBAFnKbFiaarmx2rUgGg3AhUAlXnglFXfNYCqBLUAeOSFmifrMkM="
+        />
+        <license
+            component="Cluster"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MCwCFAGi3wbaBAFnKbFiaarmx2rUgGg3AhRlKdj2RvbuAA9Ui5doZSP1fWrxBw=="
+        />
+        <license
+            component="Clustered JMS"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC4CFQDB4kQpVxWP+88sqSzRucUruf86ZgIVAL5O2XxXPiVmdkbShABjnzTOS9rw"
+        />
+        <license
+            component="Commerce"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC0CFFlXvRUGJmjRYCpFMqdWxqLBfnbKAhUAsuqnW9G5ev0Lqp0wlAmN2ya08nA="
+        />
+        <license
+            component="Connector"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC0CFFlXvRUGJmjRYCpFMqdWxqLBfnbKAhUAhHqMKX5srr4UUQvAnfVrxjzrBME="
+        />
+        <license
+            component="EJB 1.0"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC0CFAk+V1AY08mCoyw5H/YyQQdvFic6AhUAwH1LlwLWenc0zpiC+cytMwhtEmc="
+        />
+        <license
+            component="EJB 2.0"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MCwCFCto/PQYpMFvbkOA4EGjhFWVWjKDAhQM0zMJVrQ7oQYIvIF3sabTxBZrxQ=="
+        />
+        <license
+            component="Encryption/Domestic"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC0CFQCcLbU8XoM2eidf9HttbuVXoul9fQIUYy6wO3iM2hL83EtnlDCnTSieOx0="
+        />
+        <license
+            component="Enterprise Web Services"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MCwCFDnWoP/1Y07xXAmlaZM0MPu9ShcyAhQ3TGUzOVJIJjiTq2qR+4cUm2Ak0Q=="
+        />
+        <license
+            component="In-memory Replication - EJB"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC0CFDnWoP/1Y07xXAmlaZM0MPu9ShcyAhUAjrz6ZmBI0GPT4K2JcrUJBtRiQYY="
+        />
+        <license
+            component="In-memory Replication - Servlet"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC0CFQCsHi3uB2krkldHa80IQm/NfF8AKQIUHOKf0N8ywL+1pZyfGJqiPwHihWQ="
+        />
+        <license
+            component="JMS"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC4CFQCd0VCKePXPeOUI6vr9UPE61SW6bQIVAIhz3WPo4xX5SGzFW1HbQbwmDDZq"
+        />
+        <license
+            component="Personalization"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC0CFQCd0VCKePXPeOUI6vr9UPE61SW6bQIUKV8uTS0WN61oirV04O/DowsLq34="
+        />
+        <license
+            component="Portal"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MCwCFC1M+mXyDIhHrL0yuVPdV3OELsxXAhRh8Hx8PAY1nZWEK3arVSak83N6dg=="
+        />
+        <license
+            component="PortalFramework"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MCwCFC1M+mXyDIhHrL0yuVPdV3OELsxXAhRbJkiRnfH4vycdWh/7azgqpNpM3w=="
+        />
+        <license
+            component="SSL/Domestic"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MC0CFA+mnAMkwKSQ34HhXED9UEpjFMtnAhUA4AZJwbA+X0TUsIwIdmIJKoqzT0M="
+        />
+        <license
+            component="SSL/Export"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MCwCFHIKg7jA6SgjSiTDAum82hU53JOrAhQ7iIZUB4NBsNBkgehS909PuPc/MA=="
+        />
+        <license
+            component="Servlet Session"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            sessions="unlimited"
+            type="SDK"
+            units="5"
+            signature="MC0CFHIKg7jA6SgjSiTDAum82hU53JOrAhUAzOCf7vmfg5VsJeE9JSA/rAswNhM="
+        />
+        <license
+            component="WebLogic"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform Developer"
+            serial="616351266349-1496087369219"
+            type="SDK"
+            units="5"
+            signature="MCwCFCBOAlzrXnlzqoF7gPNDkkmvdNBKAhRlz8AvJ6cYM4HUXREEcNmCi9jYKw=="
+        />
+    </license-group>
+    <license-group format="1.0" product="Liquid Data for WebLogic" release="8.1">
+        <license
+            component="Liquid Data Runtime"
+            cpus="1"
+            expiration="never"
+            ip="any"
+            licensee="WebLogic Platform developer"
+            serial="616351266349-1496089332810"
+            type="SDK"
+            units="5"
+            signature="MC0CFAVbswIoWQD7pg9Wf1cU/CAoaAoYAhUAm43Xi6E6BybER6gveudjOpXkFRE="
+        />
+    </license-group>
+
+</bea-licenses>
+
+

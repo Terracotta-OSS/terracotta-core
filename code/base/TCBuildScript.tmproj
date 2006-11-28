@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>documents</key>
+	<array>
+		<dict>
+			<key>filename</key>
+			<string>build-tc.rb</string>
+			<key>lastUsed</key>
+			<date>2006-11-27T22:07:53Z</date>
+		</dict>
+		<dict>
+			<key>filename</key>
+			<string>services.modules.yml</string>
+			<key>lastUsed</key>
+			<date>2006-10-20T23:53:11Z</date>
+		</dict>
+		<dict>
+			<key>filename</key>
+			<string>build-config.global</string>
+			<key>lastUsed</key>
+			<date>2006-09-26T21:34:06Z</date>
+		</dict>
+		<dict>
+			<key>filename</key>
+			<string>modules.def.yml</string>
+			<key>lastUsed</key>
+			<date>2006-10-10T17:52:43Z</date>
+		</dict>
+		<dict>
+			<key>expanded</key>
+			<true/>
+			<key>name</key>
+			<string>buildconfig</string>
+			<key>regexFolderFilter</key>
+			<string>!.*/(\.[^/]*|CVS|_darcs|\{arch\}|blib|.*~\.nib|.*\.(framework|app|pbproj|pbxproj|xcode(proj)?|bundle))$</string>
+			<key>sourceDirectory</key>
+			<string>buildconfig</string>
+		</dict>
+		<dict>
+			<key>expanded</key>
+			<true/>
+			<key>name</key>
+			<string>buildscripts</string>
+			<key>regexFolderFilter</key>
+			<string>!.*/(\.[^/]*|CVS|_darcs|\{arch\}|blib|.*~\.nib|.*\.(framework|app|pbproj|pbxproj|xcode(proj)?|bundle))$</string>
+			<key>sourceDirectory</key>
+			<string>buildscripts</string>
+		</dict>
+	</array>
+	<key>fileHierarchyDrawerWidth</key>
+	<integer>199</integer>
+	<key>metaData</key>
+	<dict/>
+	<key>showFileHierarchyDrawer</key>
+	<true/>
+	<key>windowFrame</key>
+	<string>{{209, 0}, {1227, 878}}</string>
+</dict>
+</plist>

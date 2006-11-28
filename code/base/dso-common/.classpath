@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/src.classes" path="src"/>
+	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.base.classes" path="tests.base"/>
+	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.unit.classes" path="tests.unit"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
+	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
+</classpath>

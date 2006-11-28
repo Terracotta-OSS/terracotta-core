@@ -1,0 +1,51 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- - - - - - - - - - - - - -->
+<!--  Terracotta for Spring  -->
+<!--  Sample Application     -->
+<!-- - - - - - - - - - - - - -->
+<html>
+<head>
+<title>Terracotta for Spring  &bull;  In-Memory Database</title>
+<link rel="stylesheet"    type="text/css"  href="../samples.css">
+<link rel="shortcut icon" type="image/ico"
+   href="http://www.terracotta.org/favicon.ico">
+</head>
+<body>
+   <p class=logo>
+      <a href="http://www.terracotta.org/"><img src="../samples.png"></a>
+      </p>
+   <h1>Terracotta for Spring</h1>
+   Inventory Sample Application
+
+   <h2>About</h2>
+   The Inventory sample application shows how to use Terracotta for
+   Spring to enable simple, transparent and natural clustering of Spring beans, 
+   to enable persistence, fail-over and coherence across a cluster.<br>
+   <br>
+   Details about what this sample application does and how it works can be found
+   in:&nbsp;
+   <a href="../../docs/TerracottaSpringGuide.html">Terracotta for Spring Guide</a>
+
+   <h2>Build Instructions</h2>
+   This sample application ships built ready to run.&nbsp;  If you modify the
+   application code, use the provided <code>build.xml</code> file to re-build the
+   application with Apache Ant (<code>ant build</code>).
+
+   <h2>Run Instructions </h2>
+   <ol>
+      <li>Start a Terracotta Server from the <code>spring/samples</code> directory.<br><br>
+            Unix:    <samp>./start-demo-server.sh</samp><br>
+            Windows: <samp>start-demo-server.bat</samp><br>
+      <li>Start one or more inventory clients from the <code>spring/samples/inventory</code> directory<br><br>
+            Unix:    <samp>./inventory.sh</samp><br>
+            Windows: <samp>inventory.bat</samp><br>
+      </ol>
+
+   <p class=footer>
+      <a href="../samples.html">Sample Applications</a><br>
+      <a class=footer href="http://www.terracotta.org/">
+      www.terracotta.org<br>copyright &copy; 2006 terracotta, inc.
+      </a>
+   </p>
+</body>
+</html>

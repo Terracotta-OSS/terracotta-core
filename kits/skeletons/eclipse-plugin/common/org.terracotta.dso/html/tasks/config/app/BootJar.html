@@ -1,0 +1,25 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<meta name="copyright" content="Copyright (c) Terracotta 2005, 2006.">
+<LINK REL="STYLESHEET" HREF="../../../book.css" CHARSET="ISO-8859-1" TYPE="text/css">
+  <title>Creating a Custom BootJar</title>
+</head>
+
+<body>
+<H2>Creating a Custom BootJar</H2>
+
+<p>If you need to use system classes in your DSO application shared object graphs, you may need to create a custom BootJar that contains instrumented versions of those class. BootJar classes take priority over all other classes.
+
+<p>Terracotta DSO comes with a BootJar containing pre-instrumented versions of many of the most commonly used system classes, such as <tt>java.util.HashMap</tt>, as well as the majority of the Swing data models, such as <tt>javax.swing.table.DefaultTableModel</tt>. However, if you're attempting to include a system class in a shared root graph and you are receiving a runtime exception stating that the class is not portable, you will need to include that class in a custom BootJar.
+
+<p>You can specify additional BootJar classes on the Boot classes tab of the DSO Config page of the Terracotta Config editor. Alternatively, you can select a system type in the Package Explorer or Outline View, invoke the <code>Terracotta</code> project menu and select <code>Boot Jar</code>. Note that types meant to be added to the BootJar are system types, such as those that make up the core Java platform, as opposed to classes you define or classes that are part of open-source or third-party libraries.
+
+<p>If you have declared BootJar classes, when you run your DSO application and your config file is newer than the BootJar, the BootJar will automatically be updated. You can also manually update the BootJar by invoking the project context menu and selecting <code>Build BootJar...</code>. The new BootJar will be created in the root of your project with a name that begins with <code>dso-boot-</code> and includes the compiler- and platform-name and Java version number (for example: dso-boot-hotspot_win32_142.jar).
+
+<P>When running your DSO Applications, that BootJar will automatically be used. If you no longer have a need for the BootJar be sure to delete it from your workspace.
+
+<p>For more information on the concept of DSO BootJars refer to <a href="../../../concepts/BootJar.html">DSO Boot JARs</a>.<BR>
+</body>
+</html>

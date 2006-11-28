@@ -1,0 +1,7 @@
+<toc label="Refs">
+  <topic label="Configuration schema" href="html/ref/schema/tc-config.html"/>
+  <topic label="Demos" href="html/ref/Demos.html">
+    <topic label="JTable" href="html/ref/demos/jtable.html"/>
+    <topic label="Shared Editor" href="html/ref/demos/shared_editor.html"/>
+  </topic>
+</toc>

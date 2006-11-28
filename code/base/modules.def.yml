@@ -1,0 +1,418 @@
+modules:
+  - linked-child-process:
+      options:
+        compiler_version: 1.4
+  - common:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - linked-child-process
+  - thirdparty:
+      options:
+        compiler_version: 1.4
+  - aspectwerkz:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - common
+        - thirdparty
+  - dso-common:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - common
+  - dso-common-jdk15:
+      options:
+        compiler_version: 1.5
+      dependencies:
+        - common
+        - dso-common
+  - management:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - common
+        - dso-common
+  - dso-l1:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - common
+        - thirdparty
+        - aspectwerkz
+        - management
+        - dso-common
+        - dso-common-jdk15
+  - dso-l1-jdk15:
+      options:
+        compiler_version: 1.5
+      dependencies:
+        - common
+        - thirdparty
+        - aspectwerkz
+        - dso-common
+        - dso-common-jdk15
+        - dso-l1
+  - dso-l1-session:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - common
+        - dso-common
+        - dso-l1
+        - management
+  - dso-weblogic-stubs:
+      options:
+        compiler_version: 1.4
+  - dso-l1-weblogic:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - dso-weblogic-stubs
+        - common
+        - dso-common
+        - dso-common-jdk15
+        - dso-l1
+        - dso-l1-session
+        - aspectwerkz
+  - dso-l1-tomcat:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - common
+        - dso-l1
+        - dso-common
+  - dso-l1-tomcat50:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - common
+        - dso-l1
+        - dso-l1-session
+  - dso-l1-tomcat55:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - common
+        - dso-l1
+        - dso-l1-session
+  - dso-l2:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - common
+        - dso-common
+        - dso-common-jdk15
+        - thirdparty
+        - management
+  - dso-demoapp:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - common
+        - dso-common
+        - dso-common-jdk15
+  - deploy:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - linked-child-process
+        - common
+        - dso-common
+        - dso-common-jdk15
+        - dso-l2
+        - dso-l1
+        - thirdparty
+        - aspectwerkz
+        - management
+  - simulator:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - common
+        - dso-l1
+        - dso-l2
+        - dso-common
+        - dso-common-jdk15
+        - deploy
+  - ui-configurator:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - common
+        - dso-common
+        - dso-common-jdk15
+        - dso-l2
+        - dso-l1
+        - deploy
+        - aspectwerkz
+  - examples:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - common
+        - dso-l1
+        - dso-l2
+        - dso-common
+        - dso-common-jdk15
+        - deploy
+  - ui-eclipse:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - common
+        - dso-common
+        - dso-common-jdk15
+        - dso-l2
+        - dso-l1
+        - deploy
+        - aspectwerkz
+  - installer:
+      options:
+        compiler_version: 1.4
+  - legacy-test-tree:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - aspectwerkz
+        - linked-child-process
+        - common
+        - dso-common
+        - dso-common-jdk15
+        - dso-l1
+        - dso-l2
+        - dso-l1-weblogic
+        - simulator
+        - deploy
+        - management
+        - thirdparty
+  - dso-spring:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - common
+        - aspectwerkz
+        - dso-common
+        - dso-common-jdk15
+        - management
+        - deploy
+        - dso-l1
+        - dso-l2
+        - legacy-test-tree
+        - simulator
+        - thirdparty
+        - linked-child-process
+  - dso-system-tests:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - aspectwerkz
+        - linked-child-process
+        - common
+        - dso-common
+        - management
+        - dso-common-jdk15
+        - dso-l1
+        - dso-l2
+        - dso-l1-weblogic
+        - simulator
+        - deploy
+        - thirdparty
+        - legacy-test-tree
+  - dso-alt-boot-jar-tests:
+      options:
+        compiler_version: 1.5
+      dependencies:
+        - aspectwerkz
+        - linked-child-process
+        - common
+        - dso-common
+        - management
+        - dso-common-jdk15
+        - dso-l1
+        - dso-l2
+        - simulator
+        - deploy
+        - thirdparty
+        - legacy-test-tree
+  - dso-crash-tests:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - aspectwerkz
+        - linked-child-process
+        - common
+        - dso-common
+        - management
+        - dso-common-jdk15
+        - dso-l1
+        - dso-l2
+        - dso-l1-weblogic
+        - simulator
+        - deploy
+        - thirdparty
+        - dso-system-tests
+        - legacy-test-tree
+  - dso-tests-jdk15:
+      options:
+        compiler_version: 1.5
+      dependencies:
+        - aspectwerkz
+        - common
+        - dso-common
+        - management
+        - dso-common-jdk15
+        - linked-child-process
+        - dso-l1
+        - simulator
+        - deploy
+        - thirdparty
+        - dso-l1-jdk15
+        - legacy-test-tree
+        - dso-l2
+        - management
+  - dso-container-tests:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - aspectwerkz
+        - linked-child-process
+        - common
+        - dso-common
+        - management
+        - dso-common-jdk15
+        - dso-l1
+        - dso-l2
+        - management
+        - simulator
+        - deploy
+        - thirdparty
+        - legacy-test-tree
+  - dso-spring-tests:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - aspectwerkz
+        - common
+        - linked-child-process
+        - dso-common
+        - management
+        - dso-common-jdk15
+        - dso-l1
+        - dso-l2
+        - dso-l1-weblogic
+        - dso-spring
+        - simulator
+        - deploy
+        - thirdparty
+        - legacy-test-tree
+        - dso-container-tests
+  - dso-spring-aj:
+      options:
+        compiler_version: 1.5
+        aspectj: true
+      dependencies:
+        - common
+        - aspectwerkz
+        - thirdparty
+        - dso-common
+        - dso-common-jdk15
+        - dso-l1
+        - dso-l2
+        - legacy-test-tree
+        - simulator
+        - linked-child-process
+        - dso-l1-weblogic
+        - dso-spring
+        - dso-spring-tests
+        - simulator
+        - deploy
+        - thirdparty
+        - legacy-test-tree
+        - dso-container-tests
+  - dso-spring-crash-tests:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - aspectwerkz
+        - linked-child-process
+        - common
+        - management
+        - dso-common
+        - dso-common-jdk15
+        - dso-l1
+        - dso-l2
+        - dso-l1-weblogic
+        - dso-spring
+        - simulator
+        - deploy
+        - thirdparty
+        - dso-system-tests
+        - legacy-test-tree
+  - dso-performance-tests:
+      options:
+        compiler_version: 1.5
+      dependencies:
+        - aspectwerkz
+        - common
+        - linked-child-process
+        - management
+        - dso-common
+        - dso-common-jdk15
+        - dso-l1
+        - dso-l1-jdk15
+        - dso-l2
+        - simulator
+        - deploy
+        - thirdparty
+        - legacy-test-tree
+
+module-groups:
+  container:
+    - dso-container-tests
+  allbutspring:
+    - linked-child-process
+    - common
+    - thirdparty
+    - aspectwerkz
+    - dso-common
+    - dso-common-jdk15
+    - dso-l1
+    - dso-l1-jdk15
+    - dso-l1-weblogic
+    - dso-l1-session
+    - dso-l1-tomcat
+    - dso-l1-tomcat50
+    - dso-l1-tomcat55
+    - dso-l2
+    - dso-demoapp
+    - deploy
+    - simulator
+    - ui-configurator
+    - examples
+    - ui-eclipse
+    - installer
+    - legacy-test-tree
+    - dso-system-tests
+    - dso-alt-boot-jar-tests
+    - dso-tests-jdk15
+    - management
+  spring:
+    - dso-spring
+    - dso-spring-tests
+    - dso-spring-crash-tests
+  l1:
+    - dso-l1
+    - dso-l1-jdk15
+    - management
+  dso:
+    - common
+    - dso-common
+    - dso-l1
+    - dso-l1-jdk15
+    - dso-l2
+    - legacy-test-tree
+    - dso-system-tests
+    - dso-alt-boot-jar-tests
+    - dso-tests-jdk15
+    - management

@@ -1,0 +1,26 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tc.aspectwerkz.annotation;
+
+/**
+ * Annotation for after throwing advice
+ *
+ * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
+ */
+public interface AfterThrowing {
+  /**
+   * The pointcut expression to bind, when no type is specified for the throwned value
+   */
+  String value();
+
+  /**
+   * The pointcut expression to bind, when a type is specified for the throwned value
+   */
+  String pointcut();
+
+  /**
+   * The type pattern for the returned value
+   */
+  String type();
+}

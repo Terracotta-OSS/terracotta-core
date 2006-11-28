@@ -1,0 +1,32 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tc.net.protocol.transport;
+
+import com.tc.net.core.TCConnection;
+
+import java.util.List;
+
+public class MockMessageTransportFactory implements MessageTransportFactory {
+
+  public MessageTransport             transport;
+  public int                          callCount;
+
+  public MessageTransport createNewTransport() {
+    callCount++;
+    return transport;
+  }
+
+  public MessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
+                                             TransportHandshakeMessageFactory handshakeMessageFactory, List transportListeners) {
+    callCount++;
+    return transport;
+  }
+
+  public MessageTransport createNewTransport(ConnectionID connectionId, TCConnection connection,
+                                             TransportHandshakeErrorHandler handler,
+                                             TransportHandshakeMessageFactory handshakeMessageFactory, List transportListeners) {
+    callCount++;
+    return transport;
+  }
+}

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!-- This config file is used by BootJarTool. -->
+
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config">
+    <servers>
+        <server name="localhost">
+            <data>%(user.home)/terracotta/server-data</data>
+            <logs>%(user.home)/terracotta/server-logs</logs>
+        </server>
+    </servers>
+
+  <clients>
+      <logs>%(user.home)/terracotta/client-logs</logs>
+  </clients>
+</tc:tc-config>

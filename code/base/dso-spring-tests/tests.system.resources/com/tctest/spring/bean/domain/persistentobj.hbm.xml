@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+	"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+	<class name="com.tctest.spring.bean.domain.PersistentObj" table="POBJ" dynamic-update="true" lazy="true">
+		<id name="id" column="OBJ_ID">
+			<generator class="native" />
+		</id>
+		<property name="strFld" column="STR_FLD"/>
+		<many-to-one name="child" cascade="all" column="CHILD_ID"/>
+	</class>
+</hibernate-mapping>
+

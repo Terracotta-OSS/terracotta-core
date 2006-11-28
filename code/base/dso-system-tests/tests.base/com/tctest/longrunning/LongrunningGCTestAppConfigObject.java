@@ -1,0 +1,53 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tctest.longrunning;
+
+import com.tc.simulator.app.ApplicationConfig;
+
+public class LongrunningGCTestAppConfigObject implements LongrunningGCTestAppConfig {
+
+  private long     loopSleepTime      = 250;
+  private String[] applicationClasses = new String[0];
+
+  public void setLoopSleepTime(long time) {
+    this.loopSleepTime = time;
+  }
+
+  public long getLoopSleepTime() {
+    return loopSleepTime;
+  }
+
+  public String getApplicationClassname() {
+    return LongrunningGCTestApp.class.getName();
+  }
+
+  public String[] getApplicationClasses() {
+    return this.applicationClasses;
+  }
+
+  public void setApplicationClasses(String[] classes) {
+    this.applicationClasses = classes;
+  }
+
+  public void setAttribute(String key, String value) {
+    //
+  }
+
+  public String getAttribute(String key) {
+    return null;
+  }
+
+
+  public int getIntensity() {
+    throw new AssertionError();
+  }
+
+  public int getGlobalParticipantCount() {
+    throw new AssertionError();
+  }
+
+  public ApplicationConfig copy() {
+    throw new AssertionError();
+  }
+}

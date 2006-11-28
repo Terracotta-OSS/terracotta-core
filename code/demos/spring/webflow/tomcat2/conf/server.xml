@@ -1,0 +1,9 @@
+<Server port="9082" shutdown="SHUTDOWN">
+    <Service name="Catalina">
+        <Connector port="8082" maxKeepAliveRequests="1" />
+        <Engine name="Catalina" defaultHost="localhost">
+            <Host name="localhost" appBase="." debug="100" unpackWARs="false"
+                autoDeploy="false" xmlValidation="false" xmlNamespaceAware="false" />
+        </Engine>
+    </Service>
+</Server>

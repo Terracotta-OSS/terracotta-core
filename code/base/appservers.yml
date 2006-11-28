@@ -1,0 +1,6 @@
+# this is where you specify which jdk should be used for
+# certain app server
+
+tomcat5-5.5.20: 1.5
+weblogic8-8.1.SP5: 1.4
+weblogic8-8.1.SP6: 1.4

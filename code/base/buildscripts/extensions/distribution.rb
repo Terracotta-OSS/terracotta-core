@@ -1,0 +1,175 @@
+class BaseCodeTerracottaBuilder <  TerracottaBuilder
+  alias_method :__init, :init
+  
+  # HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK
+  def init
+    __init
+    srcdir  = FilePath.new(@static_resources.source_root(@flavor), '..', '..', 'overwrite', 'open').canonicalize.to_s
+    destdir = FilePath.new(@static_resources.root_dir, '..', '..').canonicalize.to_s
+    if File.exists?(srcdir)
+      ant.copy(:todir => destdir, :overwrite => true, :verbose => true) do
+        ant.fileset(:dir => srcdir, :excludes => "**/.svn/**")
+      end 
+    end
+  end
+
+  # assemble the kit for the product code supplied
+  def dist(product_code='DSO', flavor='OPENSOURCE')
+    check_if_type_supplied(product_code, flavor)
+    
+    depends :init, :compile
+    call_actions :__assemble
+  end
+  
+  def dist_all(flavor='OPENSOURCE')
+    depends :init, :compile
+    flavor        = flavor.downcase
+    srcdir        = @static_resources.distribution_config_directory(flavor).canonicalize.to_s
+    product_codes = Dir.entries(srcdir).delete_if { |entry| (/\-(#{flavor})\.def\.yml$/i !~ entry) || (/^x\-/i =~ entry) }
+    product_codes.each do |product_code| 
+      @product_code = product_code.sub(/\-.*$/, '')
+      @flavor       = flavor
+      call_actions :__assemble
+      srcdir  = product_directory.to_s
+      destdir = FilePath.new(@distribution_results.archive_dir.ensure_directory, package_filename).to_s
+      FileUtils.mv srcdir, destdir
+    end
+  end
+  
+  # assemble and package the kits  for the product code supplied
+  def create_package(product_code='DSO', flavor='OPENSOURCE')
+    check_if_type_supplied(product_code, flavor)
+
+    depends :init, :compile
+    call_actions :__assemble, :__package
+  end
+  
+  # assemble, package, and publish all possible kits (based on the configuration
+  # files found under buildconfig/distribution directory)
+  def create_all_packages(flavor='OPENSOURCE')
+    depends :init, :compile
+    flavor        = flavor.downcase
+    srcdir        = @static_resources.distribution_config_directory(flavor).canonicalize.to_s
+    product_codes = Dir.entries(srcdir).delete_if { |entry| (/\-(#{flavor})\.def\.yml$/i !~ entry) || (/^x\-/i =~ entry) }
+    product_codes.each do |product_code| 
+      @product_code = product_code.sub(/\-.*$/, '')
+      @flavor       = flavor
+      call_actions :__assemble, :__package
+      __publish @distribution_results.archive_dir.ensure_directory
+    end
+  end
+
+  # assemble, package, and publish the kit for the product code supplied
+  def publish_package(product_code='DSO', flavor='OPENSOURCE')
+    check_if_type_supplied(product_code, flavor)
+
+    depends :init, :compile
+    call_actions :__assemble, :__package, :__publish
+  end
+  
+  # assemble, package, and publish all possible kits (based on the configuration
+  # files found under buildconfig/distribution directory)
+  def publish_all_packages(flavor='OPENSOURCE')
+    assert("The package publisher task is only meant to be run by a monkey. Are you a monkey?") { @build_environment.username == 'cruise' || config_source['distribution.publish.override-monkey-check'] }
+    assert("build-archive-dir is not set") { !config_source['build-archive-dir'].nil? }
+    
+    depends :init, :compile
+    srcdir        = @static_resources.distribution_config_directory(flavor.downcase!).canonicalize.to_s
+    product_codes = Dir.entries(srcdir).delete_if { |entry| (/\-(#{flavor})\.def\.yml$/i !~ entry) || (/^x\-/i =~ entry) }
+    product_codes.each do |product_code| 
+      @product_code = product_code.sub(/\-.*$/, '')
+      @flavor       = flavor
+      call_actions :__assemble, :__package, :__publish
+    end
+  end
+
+  # HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK
+  # assemble, package, and publish all possible kits (based on the configuration
+  # files found under buildconfig/distribution directory) for the opensource version
+  # of the product
+  def publish_opensource_packages
+    publish_all_packages('OPENSOURCE')
+  end
+  
+  # HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK
+  # assemble, package, and publish all possible kits (based on the configuration
+  # files found under buildconfig/distribution directory) for the enterprise version
+  # of the product
+  def publish_enterprise_packages
+    publish_all_packages('ENTERPRISE')
+  end
+  
+  # build the JAR files for the product code supplied without assembling a full kit
+  def dist_jars(product_code='DSO', component_name='common', flavor='OPENSOURCE')
+    check_if_type_supplied(product_code, flavor)
+
+    depends :init, :compile, :load_config
+    component = get_spec(:bundled_components, []).find { |component| /^#{component_name}$/i =~ component[:name] }
+    libdir    = FilePath.new(@distribution_results.build_dir, 'lib.tmp').ensure_directory
+    destdir   = FilePath.new(@distribution_results.build_dir, 'lib').ensure_directory
+    add_binaries(component, libdir, destdir)
+    libdir.delete_recursively(ant)
+    
+    add_module_bootjars(component, destdir)
+    add_dso_bootjar(component, destdir)
+    ant.move(:todir => FilePath.new(File.dirname(destdir.to_s), 'tc-jars').to_s) do
+      ant.fileset(:dir => destdir.to_s, :includes => '**/*')
+    end
+    destdir.delete_recursively(ant)
+  end
+  
+  private
+  def call_actions(*actions)
+    load_config
+    @distribution_results.clean(ant)
+    actions.each { |action| method(action.to_sym).call }
+  end
+
+  require 'extensions/distribution-utils'
+  include DistributionUtils
+  
+  require 'extensions/bundled-components'
+  include BundledComponents
+
+  require 'extensions/bundled-vendors'
+  include BundledVendors
+  
+  require 'extensions/bundled-demos'
+  include BundledDemos
+
+  require 'extensions/bundled-jres'
+  include BundledJREs
+  
+  require 'extensions/packaging'
+  include Packaging
+
+  require 'extensions/postscripts'
+  include Postscripts
+  
+  def __publish(archive_dir=nil)
+    destdir        = archive_dir || FilePath.new(config_source['build-archive-dir'], "kits", @build_environment.current_branch, @build_environment.os_type(:nice).downcase).ensure_directory    
+    incomplete_tag = "__incomplete__"
+    Dir.glob("#{@distribution_results.build_dir.to_s}/*").each do | entry |
+      next if File.directory?(entry)
+      filename            = File.basename(entry)
+      incomplete_filename = destdir.to_s + "/" + filename + incomplete_tag
+      dest_filename       = destdir.to_s + "/" + filename        
+      FileUtils.cp(entry, incomplete_filename)
+      FileUtils.rm(dest_filename) if File.exist?(dest_filename) 
+      FileUtils.mv(incomplete_filename, dest_filename)
+    end
+  end
+  
+  def __assemble
+    exec_section :bundled_components
+    exec_section :bundled_vendors
+    exec_section :bundled_demos
+    exec_section :bundled_jres
+    exec_section :postscripts
+  end
+
+  def __package
+    exec_section :packaging
+    product_directory.delete_recursively(ant)
+  end
+end

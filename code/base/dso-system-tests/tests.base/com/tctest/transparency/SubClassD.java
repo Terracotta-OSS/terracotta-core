@@ -1,0 +1,32 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tctest.transparency;
+
+/* Super class contains private members */
+public class SubClassD extends NotInstrumented implements Cloneable {
+
+  public int d = 2;
+
+  public synchronized void method1() {
+    toString();
+  }
+  
+  public synchronized Object clone() {
+    try {
+      return super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public String toString() {
+    return "SubClassD::" + super.toString();
+  }
+
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o instanceof SubClassD) { return d == ((SubClassD) o).d && super.equals(o); }
+    return false;
+  }
+}

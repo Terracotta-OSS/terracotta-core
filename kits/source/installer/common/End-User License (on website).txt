@@ -1,0 +1,130 @@
+TERRACOTTA SOFTWARE LICENSE AGREEMENT
+
+USE OF SOFTWARE OBTAINED FROM TERRACOTTA, INC. ("TERRACOTTA") IS PROVIDED ONLY UNDER LICENSE FROM TERRACOTTA.  PLEASE READ THE FOLLOWING LICENSE CAREFULLY AND INDICATE YOUR ACCEPTANCE BY CLICKING THE ACCEPTANCE BOX. CERTAIN CAPITALIZED TERMS ARE DEFINED IN SECTION 11. 
+       
+1.	LICENSE TERMS
+
+a. 	Evaluation Use.  The terms of this Section 1(a) are applicable to you if you have registered as an Evaluation Use customer. Subject to the terms of this Agreement, Terracotta grants to you a non-exclusive, non-transferable, license to use the Software solely for Evaluation Use.  Third party software products or modules supplied by Terracotta, if any, may be used solely with the Software, and may be subject to your acceptance of terms and conditions provided by such third parties. This license begins upon downloading and ends if and when terminated by Terracotta in accordance with this Agreement. When the license terminates you must stop using the Software.  All rights not specifically granted to you herein are retained by Terracotta.  Note that not all Software is available for Evaluation Use. 
+
+b.	Trial Use. The terms of this Section 1(b) are applicable to you if you have registered as a Trial Use customer. Subject to the terms of this Agreement, Terracotta grants to you a non-exclusive, non-transferable, license to use the Software solely for Trial Use for the number of users and the number of CPU's, Servers and/or at the Sites, and for the length of the term, as specified in the term sheet accompanying your license key.  Third party software products or modules supplied by Terracotta, if any, may be used solely with the Software. All rights not specifically granted to you herein are retained by Terracotta. 
+
+c.	Production Use. The terms of this Section 1(c) are applicable to you if you have registered as a Production Use customer. Subject to the terms of this Agreement, Terracotta grants to you a non-exclusive, non-transferable, fee-bearing license to use the Software solely for Production Use on the number of CPU's, Servers and/or at the Sites, and for the length of the term, as specified in Terracotta’s invoice.  Third party software products supplied by Terracotta, if any, may be used solely with the Software.  All rights not specifically granted to you herein are retained by Terracotta. 
+
+d.	Restrictions on Use.  Whether the Software is being licensed for Evaluation Use, Trial Use, or Production Use, you may not reverse engineer, decompile or disassemble and you may not otherwise attempt to determine source code or protocols from the Software and you may not disclose the results of software performance benchmarks to any third party without Terracotta's prior written consent.  Additional restrictions, if any, with respect to third party software will be provided with the Software.  You are forbidden from using Evaluation Use or Trial Use Software for Production Use.  You may not lease, rent, resell or sublicense the Software to any third party, or otherwise use it except as permitted in this Agreement.
+
+e.	Ownership Rights. You may modify the Software in accordance with the Documentation solely to allow for interoperability with your internal MIS system.  Such modifications shall not be derivative works, nor shall you create or attempt to create any derivative works from the Software. Title, ownership rights and all intellectual property rights in and to the Software shall remain the sole and exclusive property of Terracotta.
+
+f.	Copies and Number of Users.  The terms of this Section 1(f) are applicable to you if you are a Trial Use or Production Use customer.  You may make a reasonable number of copies of the Software and Documentation (provided that all copyright and other proprietary notices of Terracotta and its licensors are reproduced), solely for archival purposes.  If you do copy for this purpose, you must preserve any proprietary rights notices on the Software and place such notices on any and all copies you made or make.  If you would like to change the number of Users, or number or identity of Sites, CPU's and/or Servers indicated on your invoice, you must contact Terracotta in writing for our approval; you may be subject to additional fees. 
+
+g.	Territory.  The license grants hereunder are limited to use within the Territory.
+
+h.	Audit.  Terracotta may, at any time with seven (7) days’ prior written notice, request and gain access to your premises subject to your security procedures, for the limited purpose of conducting an audit to determine and verify that you are in compliance with these terms and conditions.  You agree to promptly grant such access and cooperate with Terracotta in the audit.  The Audit will be conducted in a manner not intended to unreasonably disrupt your business and will be restricted in scope, manner and duration to that reasonably necessary to achieve its purpose.  You will be liable for promptly remedying any discrepancies revealed during the audit, including reimbursement to Terracotta for the costs of the Audit and any underpayments.
+
+2. 	LICENSE FEES. 
+
+a.	Payment and Taxes.  In consideration of the applicable license(s) granted pursuant to Sections 1(c), you agree to pay Terracotta the total non-refundable and non-cancelable  license fee(s) within thirty (30) days of Terracotta's invoice. You will pay all sales, use, VAT and other consumption taxes, personal property taxes and other taxes (other than those based on Terracotta's net income) unless you furnish Terracotta with written proof of exemption.  Terracotta may assess interest charges of one and one-half percent (1.5%) per month for late payments.
+
+b.	Foreign Taxes.  If you download and/or use the Software outside the United States, you agree that the amounts to be remitted to Terracotta are to be the actual amounts due without withholding taxes or other assessments by authorities anywhere in the foreign location, which withholding taxes or assessments you agree to pay. You agree to promptly furnish Terracotta with certificates evidencing payment of such amounts. 
+
+3. 	SUPPORT SERVICES  
+
+You must purchase annual Support Services from Terracotta in order to qualify for the Support Services.
+
+a.	Support Services.  Support Services generally means that Terracotta will provide: (i) Maintenance Updates and Upgrades ("Maintenance Releases") if, as and when Terracotta makes any such Maintenance Releases generally available and (ii) helpdesk  assistance with respect to the Software, including (a) clarification of functions and features; (b) clarification of documentation; (c) guidance in the operation of the Software; and (d) Software error analysis. Terracotta will use reasonable efforts to provide error corrections or work-arounds for the most severe errors as soon as possible and based upon Terracotta's classification of the severity of the error. Support Services will be provided only with respect to versions of the Software that, in accordance with Terracotta policy, are then being supported by Terracotta. 
+
+b.	Your Responsibilities. You agree to provide Terracotta with reasonable access to your personnel and equipment, if necessary, during normal business hours in order to enable Terracotta’s provision of Support Services.  You agree to document and promptly report all errors or malfunctions of the Software to Terracotta.  You agree to pay the Support Services fees when due, and if you do not do so within thirty (30) days after any such amount becomes due, Terracotta may suspend performance of its Support Services obligations.
+
+4. 	LIMITED WARRANTY 
+
+a.  	Limited Warranty.  With respect to the Software licensed for a fee for Production Use, Terracotta warrants that the Software will conform in all material respects to the Documentation for a period of ninety (90) days from the date of delivery of the Software.  Terracotta does not warrant that operation of the Software will be uninterrupted or "bug" free.  If Terracotta breaches the foregoing warranty and you promptly notify Terracotta in writing of the nature of the breach, Terracotta shall make commercially reasonable efforts to promptly repair or replace the non-conforming Software, without charge.  If, after a reasonable opportunity to cure, Terracotta does not repair or replace the non-conforming Software, you must return the Software and the Documentation to Terracotta, or certify in writing that all copies have been destroyed, and Terracotta will refund the fees it received for the Software to you.  This is your sole and exclusive remedy for breach of the exclusive warranty set forth above. 
+
+b. 	Disclaimer.  THE FOREGOING WARRANTY IS EXCLUSIVE AND IN LIEU OF ALL OTHER WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF NONINFRINGEMENT, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. 
+
+5.	LIMITATION OF LIABILITY 
+
+a.	Evaluation Use; Trial Use.  Evaluation Use and Trial Use Software is provided gratuitously and, therefore, Terracotta and its suppliers shall not be liable for any direct, indirect, incidental, special, punitive or consequential damages under any theory of liability whether in tort, contract, strict liability or otherwise even if advised of the possibility of such damages. 
+
+b.	Production Use.  With respect to Production Use, Terracotta's aggregate liability to you for damages concerning performance or nonperformance by Terracotta or in any way related to this Agreement, and regardless of whether the claim for such damages is based in contract, tort, strict liability of otherwise, shall not exceed the license fees received by Terracotta for the affected Software for the twelve (12) month period preceding the occurrence of such liability. In no event shall Terracotta be liable for any indirect, incidental, special, punitive or consequential damages, lost data or lost profits, even if Terracotta has been advised as to the possibility of such damages.
+
+c.	Applicability.  Some States do not permit disclaimers of certain warranties or limitations on certain types of liability under certain circumstances; consequently, some of the foregoing disclaimers and limitations may not be applicable to you, in whole or in part. 
+
+6. 	SOFTWARE CHANGES. 
+
+Terracotta reserves the right at any time not to release or to discontinue release of any Software and to alter prices, features, specifications, capabilities, functions, licensing terms, release dates, general availability or other characteristics of the Software. 
+
+7. 	 INTELLECTUAL PROPERTY INDEMNIFICATION. 
+
+a. 	Defense.  If a third party claims that your use of the Software infringes any United States copyright, you must promptly notify Terracotta in writing.  Terracotta will defend you against such claim if you fully cooperate with Terracotta and allow Terracotta to control the defense and all related settlement negotiations, and then Terracotta will indemnify you from and against any damages finally awarded for such infringement.
+
+b. 	Injunctive Relief.  If an injunction is sought or obtained against your use of the Software as a result of a third party infringement claim, Terracotta may, at its sole option and expense, (i) procure for you the right to continue using the affected Software, (ii) replace or modify the affected Software with functionally equivalent software so that it does not infringe, or, if either (i) or (ii) is not commercially feasible, (iii) terminate the licenses and refund the license fees received for the affected Software on a pro rata basis using a thirty-six (36) month amortization schedule.
+
+c.	Disclaimer of Liability.  Terracotta shall have no liability for any third party claim of infringement based upon (i) use of other than the then current, unaltered version of the applicable Software, unless the infringing portion is also in the then current, unaltered release; (ii) use, operation or combination of the applicable Software with non-Terracotta programs, data, equipment or documentation if such infringement would have been avoided but for such use, operation or combination; or (iii) any third party software.  The foregoing constitutes the entire liability of Terracotta, and your sole and exclusive remedy with respect to any third party claims of infringement. 
+
+8. 	TERM AND TERMINATION. 
+
+a.	Acceptance of Agreement; Termination.  This Agreement takes effect upon the earlier of (i) your electronic indication of your selection of the ACCEPTANCE button at the end of this License Agreement, (ii) your downloading of the Software, (iii) your use of the Software, or (iv) receipt by Terracotta of a valid, binding purchase order, Agreement or other ordering document for the Software, and will remain in force until terminated in accordance with this Agreement.  This Agreement may be terminated by you upon thirty (30) days' prior written notice to Terracotta or by destroying or returning to Terracotta all copies and partial copies of the Software and Documentation under your control; provided that no such termination will entitle you to a refund of any portion of the License or Support Services Fees. Terracotta may, by written notice to you, terminate this Agreement immediately if any of the following events occur: (a) you fail to pay any amount due to Terracotta within thirty (30) days after Terracotta gives you written notice of such nonpayment;  (b) you are in material breach of any non-monetary provision of this Agreement, which breach, if capable of being cured, is not cured within thirty (30) days after Terracotta gives you written notice thereof, or (c) you declare bankruptcy or make an assignment to or for the benefit of creditors.
+
+b.	Survival.   Upon termination of this Agreement for non-default, the provisions of Sections 1, 2, 4(b), 5, 7(c), 8, 10 and 11 will survive.  Upon termination of this Agreement for default, the provisions of Sections 1(d), 1(e), 1(h), 2, 4(b), 5, 7(c), 8, 9, 10 and 11 will survive.
+
+c.	Effect of Termination. Within thirty (30) days after the date of termination or discontinuance of this Agreement for any reason whatsoever, you shall destroy the Software and all copies, in whole or in part, all Documentation relating thereto, and any other Terracotta confidential information in your possession that is in tangible form. 
+
+9. 	UNITED STATES GOVERNMENT RIGHTS. 
+
+The Software provided under this Agreement is commercial computer software developed exclusively at private expense, and in all respects are proprietary data belonging solely to Terracotta. 
+
+a.	Department of Defense End Users: If the Software is acquired by or on behalf of agencies or units of the Department of Defense (D.O.D.), then, pursuant to D.O.D. F.A.R. Supplement Section 227.7202 and its successors (48 C.F.R. 227.7202) the Government's right to use, reproduce or disclose the Software and any accompanying documentation acquired under this Agreement is subject to the restrictions of this Agreement. 
+
+b.	Civilian Agency End Users: If the Software is acquired by or on behalf of civilian agencies of the United States Government, then, pursuant to F.A.R. Section 12.212 and its successors (48 C.F.R. 12.212), the Government's right to use, reproduce or disclose the Software acquired under this Agreement is subject to the restrictions of this Agreement. 
+
+10. 	MISCELLANEOUS. 
+
+a. 	Force Majeure.  Neither party shall be liable for any delay or failure in performance due to causes beyond its reasonable control.  
+
+b. 	Export Compliance. You may not download or otherwise export or re-export the Software or any underlying information or technology except in full compliance with all United States and other applicable laws and regulations. In particular, but without limitation, none of the Software or underlying information or technology may be downloaded or otherwise exported or re-exported (a) into (or to a national or resident of) Cuba, Iran, Iraq, Libya, North Korea, Syria, or Sudan, or (b) to anyone on the US Treasury Department's list of Specially Designated Nationals or the US Commerce Department's Table of Denial Orders. By licensing the Software, you are agreeing to the foregoing and you are representing and warranting that you are not located in, under control of, or a national or resident of any such country or on any such list.  
+
+c. 	Assignment. You may not assign this Agreement without Terracotta's prior written consent.
+
+d. 	Severability.  If any part of this Agreement is held to be unenforceable, in whole or in part, such holding will not affect the validity of the other parts of the Agreement.
+
+e. 	Waiver.  The waiver of a breach of any provision of this Agreement will not operate or be interpreted as a waiver of any other or subsequent breach.
+
+f. 	Notices.  All notices permitted or required under this Agreement shall be in writing and shall be delivered in person, by facsimile, overnight courier service or mailed by first class, registered or certified mail, postage prepaid, to the address of the party specified as accepting these terms and conditions upon completion of the registration sheet and ACCEPTANCE of this Agreement by clicking on the ACCEPTANCE button.
+
+g. 	Governing Law and Venue.  Notwithstanding the Territory, this Agreement will be governed by both the substantive and procedural laws of California, U.S.A., excluding its conflict of law rules. Any dispute regarding this Agreement will be heard in the state or federal courts having jurisdiction in San Francisco County, California, U.S.A. and you agree that you shall be subject to the personal jurisdiction of such courts. 
+
+h. 	Entire Agreement.  Any amendment or modification to the Agreement must be in writing signed by both parties.  This Agreement constitutes the entire agreement and supersedes all prior or contemporaneous oral or written agreements regarding the subject matter hereof. No terms, provisions or conditions of any purchase order, acknowledgment or other business form that you may use in connection with the licensing of the Software will have any effect on the rights, duties or obligations of the parties hereunder, or otherwise modify this Agreement, regardless of any failure of Terracotta to object to such terms, provisions or conditions. 
+
+i.	Acceptance.  The earlier of your (i) clicking on the ACCEPTANCE button, (ii) downloading of the Software, (iii) use of the Software or (iv) receipt by Terracotta of a valid, binding purchase order, Agreement or other ordering document for the Software, constitutes an acceptance of the terms of this Agreement.  If you do not agree to be bound by these provisions, you are required to destroy all copies of the Software in your possession or under your control immediately.  
+
+11.	DEFINITIONS. 
+
+a.	"Documentation" means Terracotta's current user manuals, operating instructions and installation guides generally provided with the Software to its licensees. 
+
+b. 	"Error" means a failure of the Software to conform to the specifications as set forth in the Documentation, resulting in the inability to use the Software or a material restriction in use of the Software.
+
+c. 	"Evaluation Use" means use of the Software solely for evaluation purposes, and shall not include using the software in a production environment.
+
+d.	"Maintenance Release" means a subsequent version of the Software that includes Updates and/or Upgrades.
+
+e.	"Production Use" means using the Software with your application(s) for internal business purposes only, which may include third party customers' access to or use of such applications.  Production Use does not include the right to reproduce the Software for sublicensing, resale, or distribution, including without limitation, operation on a time-sharing or service bureau basis or distributing the Software as part of an ASP, VAR, OEM, distributor or reseller arrangement.
+
+f.	"Server" means a single computer processor capable of executing the Software. 
+
+g.	"Site" means the specific, physical location of a Server, as set forth on your registration form. 
+
+h.	"Software" means the object code versions, extracts and/or derivative works of the software electronically downloaded from Terracotta's website upon acceptance of this Agreement, and the related Documentation, including Maintenance Releases provided pursuant to the standard Support Services Terms and Conditions. 
+
+i.	"Support Services" means technical support for Software under Terracotta's then current policies. 
+
+j.	"Support Services Term" means the first year after the Effective Date of the applicable Software License Agreement and the related Order, plus any respective renewal terms.
+
+k.	"Territory" means the geographical territory into which you download the Software, or with respect to which you indicate acceptance of this Agreement.
+
+l.	“Trial Use” means use of the Software solely for evaluation and trial purposes, and shall not include using the software in a production environment.  
+
+m.	"Update" means either a Software modification or addition that, when made or added to the Software, corrects the Error, or a procedure or routine that, when observed in the regular operation of the Software, eliminates the practical adverse effect of the Error on customer.
+
+n.	"Upgrade" means a revision of the Software released by Terracotta to its end user customers generally, during the Support Services Term, to add new and different functions or to increase the capacity of the Software.  Upgrade does not include the release of a new product or added features for which there may be a separate charge.  If a question arises as to whether a new product offering is an Upgrade or a new product or feature, Terracotta's opinion will prevail, provided that Terracotta treats the product offering as a new product or feature for its end user customers generally.
+
+
+

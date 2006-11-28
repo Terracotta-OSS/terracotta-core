@@ -1,0 +1,44 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tc.config.schema.validate;
+
+import org.apache.xmlbeans.XmlException;
+import org.apache.xmlbeans.XmlObject;
+
+public class MockConfigurationValidator implements ConfigurationValidator {
+
+  private int          numValidates;
+  private XmlObject    lastBean;
+  private XmlException thrownException;
+
+  public MockConfigurationValidator() {
+    this.thrownException = null;
+
+    reset();
+  }
+
+  public void reset() {
+    this.numValidates = 0;
+    this.lastBean = null;
+  }
+
+  public void validate(XmlObject bean) throws XmlException {
+    ++this.numValidates;
+    this.lastBean = bean;
+    if (this.thrownException != null) throw this.thrownException;
+  }
+
+  public XmlObject getLastBean() {
+    return lastBean;
+  }
+
+  public int getNumValidates() {
+    return numValidates;
+  }
+
+  public void setThrownException(XmlException thrownException) {
+    this.thrownException = thrownException;
+  }
+
+}

@@ -1,0 +1,175 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- saved from url=(0014)about:internet -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel=stylesheet type="text/css" href="styles.css">
+<title>DocFlex/XML (Kit) - XMLDoc - XML File Documentor</title>
+
+<script language = "JavaScript">
+  function popupWindow(url, width, height)
+  {
+    var max_width = screen.width - 8;
+    var max_height = screen.height - 64;
+
+    var resizable = false;
+
+    if (height > max_height)
+    {
+      height = max_height;
+      width = width + 20;
+      resizable = true;
+    }
+
+    if (width > max_width)
+    {
+      width = max_width;
+      resizable = true;
+    }
+
+    var left = (max_width - width) / 2;
+    var top = (max_height - height) / 2;
+
+    var winName = width + "x" + height;
+    var winParms = "top=" + top + ",left=" + left + ",height=" + height + ",width=" + width +
+                   ",toolbar=no,location=no,directories=no,status=no,menubar=no," +
+                   (resizable ? ",resizable=yes,scrollbars=yes" : ",resizable=no,scrollbars=no");
+
+    var win = window.open(url, winName, winParms);
+    if (parseInt(navigator.appVersion) >= 4) { win.window.focus(); }
+  }
+</script>
+
+</head>
+
+<body>
+
+<h1>
+  DocFlex/XML (Kit) - XMLDoc - XML File Documentor
+</h1>
+
+<!-- TABLE OF CONTENTS -->
+<ul>
+  <li><a href="#overview">Overview</a></li>
+  <li><a href="#examples">Examples</a></li>
+    <ul>
+      <li><a href="#rtf_demo">RTF demo</a></li>
+      <li><a href="#plain_html_demo">Plain HTML demo</a></li>
+      <li><a href="#framed_html_demo">Framed HTML demo</a></li>
+    </ul>
+  </li>
+</ul>
+<!-- END TABLE OF CONTENTS -->
+
+<h2>
+  <a name="overview"></a>
+  Overview
+</h2>
+
+<p>The "XML File Documentor" (or "XMLDoc") set of templates allows
+to compile any number of generic XML files into a nice looking web-ready HTML or printable
+RTF documentation with the optional inclusion of a namespace binding report.
+
+<p>It may also serve as an example of a very simple and, at the same time,
+practically useful application of <a href="about.html">DocFlex/XML</a>.
+See <a href="http://www.filigris.com/products/docflex_xml/xmldoc/templates.php" target="_blank">Templates</a>
+to learn how it works.
+
+<p>The set includes two main templates (i.e. those to be specified directly
+in the <a href="doc.html#generator_dialog">generator dialog</a>
+or on the <a href="doc.html#generator">command line</a>
+with <code>-<a href="doc.html#generator.template_option">template</a></code>
+option):
+
+<ol>
+<li>
+<a href="http://www.filigris.com/products/docflex_xml/xmldoc/templates.php#XMLDoc.tpl" target="_blank"><b>XMLDoc.tpl</b></a>
+template can be used to generate single file documentation in any output format supported by DocFlex.
+See <a href="#rtf_demo">RTF demo</a> and <a href="#plain_html_demo">Plain HTML demo</a>.
+</li>
+<li class="mrg8">
+<a href="http://www.filigris.com/products/docflex_xml/xmldoc/templates.php#XMLDocFrames.tpl" target="_blank"><b>XMLDocFrames.tpl</b></a>
+template is a variant of the same but designed to generate a framed HTML documentation.
+See <a href="#framed_html_demo">Framed HTML demo</a>.</li>
+</ol>
+
+<p>Besides those main templates, there are few sub-templates, which are called internally from the
+both main ones. See
+<a href="http://www.filigris.com/products/docflex_xml/xmldoc/templates.php" target="_blank">Templates</a>
+for more details.
+
+<h2>
+  <a name="examples"></a>
+  Examples
+</h2>
+
+<p>The following XML file demo documentation has been generated from three XSL files
+(XSL is a subset of XML that encodes <a href="http://www.w3.org/TR/xslt" target="_blank">XSLT</a> scripts)
+found in Apache Ant software package.
+
+<p class="mrg8">
+We have chosen those files simply because we use Apache Ant itself (without learning
+much what those XSLT scripts do).
+
+<h3>
+  <a name="rtf_demo"></a>
+  RTF demo
+</h3>
+
+<p>The following pages are from an RTF document generated with
+<a href="http://www.filigris.com/products/docflex_xml/xmldoc/templates.php#XMLDoc.tpl" target="_blank">XMLDoc.tpl</a>
+template (click on the screenshot to see the real size page preview):
+
+<blockquote>
+<table cellspacing="0" cellpadding="0" border="0">
+<tr>
+  <td><a href="javascript:popupWindow('images/XMLDoc_rtf_p1.html',860,1128)"><img src="images/XMLDoc_rtf_p1_s.png" alt="RTF demo, p.1" border="0"></a></td>
+  <td><a href="javascript:popupWindow('images/XMLDoc_rtf_p6.html',860,1128)"><img src="images/XMLDoc_rtf_p6_s.png" alt="RTF demo, p.6" border="0"></a></td>
+  <td><a href="javascript:popupWindow('images/XMLDoc_rtf_p8.html',860,1128)"><img src="images/XMLDoc_rtf_p8_s.png" alt="RTF demo, p.8" border="0"></a></td>
+</tr>
+</table>
+</blockquote>
+
+<h3>
+  <a name="plain_html_demo"></a>
+  Plain HTML demo
+</h3>
+
+<p>This is actually the same document as RTF above generated with
+<a href="http://www.filigris.com/products/docflex_xml/xmldoc/templates.php#XMLDoc.tpl" target="_blank">XMLDoc.tpl</a>
+template, however, now it is in HTML format (click on the screenshot to see the real HTML):
+
+<blockquote>
+<a href="http://www.filigris.com/products/docflex_xml/xmldoc/examples/XMLDoc.html" target="_blank">
+  <img src="images/XMLDoc_html.png" alt="Plain HTML demo" border="0">
+</a>
+</blockquote>
+
+
+<h3>
+  <a name="framed_html_demo"></a>
+  Framed HTML demo
+</h3>
+
+<p>The following is a framed HTML variant generated with
+<a href="http://www.filigris.com/products/docflex_xml/xmldoc/templates.php#XMLDocFrames.tpl" target="_blank">XMLDocFrames.tpl</a>
+template (click on the screenshot to see the real HTML):
+
+<blockquote>
+<a href="http://www.filigris.com/products/docflex_xml/xmldoc/examples/XMLDocFrames.html" target="_blank">
+  <img src="images/XMLDocFrames_html.png" alt="Framed HTML demo" border="0">
+</a>
+</blockquote>
+
+<p>
+<hr>
+<span class="impr">Copyright&copy; 2003-2006 Filigris Works. Leonid Rudy Softwareprodukte. All rights reserved.<br>
+To contact us, please visit
+<a href="http://www.filigris.com">www.filigris.com</a> or e-mail to: <a href="mailto:contact@filigris.com">contact@filigris.com</a>
+</span>
+</p>
+
+</body>
+
+</html>

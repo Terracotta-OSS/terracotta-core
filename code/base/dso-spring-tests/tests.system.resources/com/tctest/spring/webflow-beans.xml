@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" 
+	"http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+	<!-- note: webflow bean is a prototype, it holds caller state in flow scope as instance variables -->
+	<bean id="webflow" class="com.tctest.spring.bean.WebFlowBean" singleton="false"/>
+</beans>

@@ -1,0 +1,45 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tctest.spring.bean;
+
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+
+import java.util.Date;
+
+public class EventManagerImpl implements EventManager, ApplicationContextAware {
+
+  private SimpleListener     listener;
+  private ApplicationContext ctx;
+
+  public EventManagerImpl(SimpleListener listener) {
+    this.listener = listener;
+  }
+
+  public void setApplicationContext(ApplicationContext ctx) throws BeansException {
+    this.ctx = ctx;
+  }
+
+  public int size() {
+    return listener.getEvents().size();
+  }
+
+  public void publishEvent(Object source, String message) {
+    ctx.publishEvent(new DistributedSingletonEvent(source, message));
+  }
+
+  public void publishLocalEvent(Object source, String message) {
+    ctx.publishEvent(new NonDistributedSingletonEvent(source, message));
+  }
+  
+  public void clear() {
+    listener.getEvents().clear();
+  }
+
+  public Date getLastEventTime() {
+    return listener.getLastEventTime();
+  }
+
+}

@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<meta name="copyright" content="Copyright (c) Terracotta 2005, 2006.">
+<LINK REL="STYLESHEET" HREF="../../../book.css" CHARSET="ISO-8859-1" TYPE="text/css">
+  <title>Configuring Your DSO Servers</title>
+</head>
+
+<body>
+<H2>Configuring Your DSO Servers</H2><BR>
+<p>Each Terracotta server requires certain information to run,
+  primarily related to the ports upon which its various services
+  should listen. To specify this information, double-click on the name
+  of your configuration file in the Eclipse workspace view to display
+  The Configuration Editor. This editor is composed of a set of tabbed
+  pages, each related to different aspects of the configuration. For a
+  detailed description of the pages that make up this editor refer
+  to <a href="../Overview.html#ConfigEditor">Configuring Your
+	Terracotta Project</a>.  The remainder of this document describes
+  the Server config page.<BR>
+
+<BR><BR>
+<img src="overview1.jpg" border=1>
+<BR> 
+
+<H3>Server config</H3>
+<p>The Server config page displays a list of the server elements and their attributes.  You can add any number of server configurations by clicking the <code>Add</code> button and remove the selected server element by clicking then <code>Remove</code> button.  When a server element is selected, it associated attributes are displayed in the form below the list.<BR>
+<p>A server has a name, an optional host upon which it will be run, and a set of ports for use by its various services.<BR>
+<H4><a href="Ports.html">Ports</a></H4>
+<p>Each server must specify a unique set of ports upon which its various services will listen.  For a detailed description of the ports required by the Terracotta server refer to <a href="Ports.html">Specifying the Server Ports</a>.<BR>
+<H4><a href="Logs.html">Logs</a></H4>
+<p>The Terracotta server writes messages of varying degrees of importance to its log file. For a detailed description of the server log file refer to <a href="Logs.html">Specifying the Server Logs</a>.<BR>
+<H4><a href="Data.html">Data</a></H4>
+<p>The Terracotta server maintains a database that contains copies of DSO objects not currently contained in the <a href="#cache">in-memory cache<a>. The default location of this database is the <code>terracotta</code> folder located at the root of your project workspace. For a detailed description of the Data storage area refer to <a href="Data.html">Specifying the Server Database Location</a>.<BR>
+<H4><a href="Memory.html">Memory</a></H4>
+<p>The Terracotta server can be configured to free unused DSO object at a specified interval.  For a detailed description of the garbage collection feature refer to <a href="Memory.html">Enabling Server Garbage-collection</a>.<BR>
+<H4><a name="cache" href="Cache.html">Cache</a></H4>
+<p>The Terracotta server can operate in a limited memory environment wherein the size of the set of DSO objects that are kept in memory can be specified, and the rest are stored in a disk-based cache. For a detailed description of the in-memory cache refer to <a href="Cache.html">Limiting Server Memory Usage</a>.<BR><BR>
+</body>
+</html>

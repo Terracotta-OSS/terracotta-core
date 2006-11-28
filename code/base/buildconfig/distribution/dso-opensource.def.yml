@@ -1,0 +1,88 @@
+name: Terracotta DSO
+internal_name: dso
+short_internal_name: os.dso
+root_directory: terracotta
+bundled_jres:
+  - jre15:
+      assert: '@build_environment.os_type !~ /^\s*darwin\s*$/i'
+      install_directory: jre
+      version: 1.5.0_09
+bundled_demos:
+  - dso:
+      install_directory: dso/samples
+      manifest:
+        - chatter
+        - coordination
+        - inventory
+        - jtable
+        - sharededitor
+        - sharedqueue
+bundled_components:
+  - base:
+      documentations:
+        distribute/notices:
+          - readme
+          - releasenotes
+          - thirdpartylicenses
+          - disclaimer
+          - license
+  - shared-base:
+      install_directory: dso
+  - common:
+      install_directory: common
+      bootjar:
+        install_directory: lib/dso-boot
+        compiler_versions:
+          - 1.4
+          - 1.5
+      module_bootjars:
+        - tc-session:
+            install_directory: lib/session
+            modules:
+              - dso-l1-session
+              - dso-l1-weblogic
+              - dso-l1-tomcat
+              - dso-l1-tomcat50
+              - dso-l1-tomcat55
+      # WARNING:
+      # This section also controls what goes into the 'tc.jar' file
+      # if you modify this section, please make sure it is duplicated
+      # across all kit configuration files, so that the 'tc.jar' file
+      # will contain the same bits across kit types; this allows us
+      # to stack different kit types over one another.
+      modules:
+        - aspectwerkz
+        - common
+        - deploy 
+        - dso-common 
+        - dso-common-jdk15 
+        - dso-l1
+        - dso-l1-jdk15 
+        - dso-l2 
+        - dso-spring:
+            exclude-runtime-libraries: true
+        - linked-child-process
+        - management
+        - thirdparty
+        - ui-configurator 
+  - dso:
+      install_directory: dso
+      documentations:
+        distribute:
+          - TerracottaDSOGuide
+packaging:
+  - tar:
+      assert: '@build_environment.os_type !~ /^\s*windows\s*$/i'
+  - zip:
+      assert: '!@build_environment.has_installanywhere && (@build_environment.os_type =~ /^\s*windows\s*$/i)'
+  - installanywhere:
+      assert: '@build_environment.has_installanywhere && (@build_environment.os_type =~ /^\s*windows\s*$/i)'
+postscripts:
+  - fix-bin-perms
+  - include-schemas:
+      args:
+        - common/schema
+  - inject-copyright
+  - make-srcdocs:
+      args:
+        - dso/samples

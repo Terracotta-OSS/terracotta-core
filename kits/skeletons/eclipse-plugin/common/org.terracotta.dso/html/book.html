@@ -1,0 +1,30 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<meta name="copyright" content="Copyright (c) Terracotta and others 2005, 2006." >
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+	<LINK REL="STYLESHEET" HREF="book.css" CHARSET="ISO-8859-1" TYPE="text/css">
+	<title>Terracotta Distributed Shared Objects (DSO)</title>
+</head>
+
+<body>
+<H2>Terracotta Distributed Shared Objects (DSO)</H2>
+<P>With Terracotta DSO, you can craft distributed applications whose data is transparently shared, or mirrored, across many Java virtual-machines. This transparency means, among other things, that you do not write any code.  You simply configure your application in a declarative way, specifying which fields are to be shared and which methods are to act as distributed semaphores during modification of that data. Terracotta DSO handles the task of distributing your changes to other like-configured clients running in different virtual machines, possibly on different hosts.<BR>
+<p>The benefits of the DSO architecture includes, but is not limited
+  to, a natural, standard development process without the burdens of
+  yet another application programming interface with exceptions that
+  must be thrown and caught.<br>
+<H2>Using DSO</H2>
+<p>Accomplishing transparent data sharing with DSO is similar to creating a normal
+application meant to run in a single Java virtual machine. You write your classes as you always have and only later, at your convenience, do you target your application at the Terracotta runtime.<BR>
+<p>The Terracotta DSO Eclipse Plugin serves to make that transition as straightforward as possible. The plugin provides several different ways to convey your particular configuration needs, from forms&fields editors to direct manipulation of the elements in your Java code editor.<BR>
+<p>Having expressed how you want your code to integrate with DSO, you can fire up the Terracotta Server, run multiple instances of your application, and see how DSO mirrors your data such that it appears as a single copy to your application.  Your application has no knowledge that the data it holds is being managed under the hood by a combination of DSO classes in your client and the Terracotta Server.<BR>
+
+<p style="margin: 20px; font-style: italic;">Terracotta, Inc., Terracotta, the Terracotta stylized "T" logo, and the 
+names of all Terracotta software products are trademarks of Terracotta, 
+Inc.  All other trademarks are the property of their respective owners 
+and are used here for identification purposes only.
+<br>
+</body>
+</html>

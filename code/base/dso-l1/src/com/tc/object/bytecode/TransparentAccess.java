@@ -1,0 +1,24 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tc.object.bytecode;
+
+import java.util.Map;
+
+/**
+ * This interface is used to allow *physically* managed objects to be read and updated
+ */
+public interface TransparentAccess {
+  public static final String CLASS = "com/tc/object/bytecode/TransparentAccess";
+  public static final String TYPE  = "L" + CLASS + ";";
+
+  public void __tc_getallfields(Map map);
+
+  public void __tc_setfield(String name, Object value);
+
+  // These two methods are called from the TC instrumented version of the
+  // reflection classes (java.lang.reflect.Field, etc)
+  public Object __tc_getmanagedfield(String name);
+
+  public void __tc_setmanagedfield(String name, Object value);
+}

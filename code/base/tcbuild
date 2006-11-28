@@ -1,0 +1,15 @@
+#!/bin/sh
+
+if [ ! -f build-tc.rb ]; then
+	echo "$0: No 'build-tc.rb' script found. Run this from a directory with a valid 'build-tc.rb' script."
+fi
+
+if [ "x${JAVA_HOME}" = "x" ]; then
+	JAVA_HOME=${TC_JAVA_HOME_15}
+	export JAVA_HOME
+fi
+
+JRUBY_HOME=`dirname $0`/../../buildsystems/jruby
+export JRUBY_HOME
+
+exec $JRUBY_HOME/bin/jruby -Ibuildscripts build-tc.rb "$@"

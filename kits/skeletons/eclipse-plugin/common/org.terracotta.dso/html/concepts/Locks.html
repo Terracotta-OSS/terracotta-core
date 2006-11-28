@@ -1,0 +1,15 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<meta name="copyright" content="Copyright (c) Terracotta 2005, 2006.">
+<LINK REL="STYLESHEET" HREF="../book.css" CHARSET="ISO-8859-1" TYPE="text/css">
+  <title>DSO Distributed Locks</title>
+</head>
+
+<body>
+<H2>DSO Distributed Locks</H2>
+<p>A DSO Distributed Lock is a form of a distributed semaphore, protecting areas of code that modify members of a shared root graph from simultaneous access and providing the hook DSO uses to synchronize data values across to the server for subsequent broadcast to other connected clients. If you're familiar with distributed programming methods, you can think of a lock as a distributed synchronized method.<BR>
+<p>There are two categories of locks, Named and Automatic. Named locks are meant to be used when your code was not written with multi-thread safety in mind. A method can be associated with a particular name, meaning that all similarly named methods use the same lock. In other words, if two methods share the same lock name and one method invokes the other, only a single actual lock will be taken out for the duration of the outer invocation. The other category of lock is the Automatic Lock. The Auto Lock is meant for the case were the code <em>was</em> written with multiple threads in mind, using the <code>synchronized</code> keyword to demarcate protected areas. A synchronized block or method denotes a section of control flow that will be serialized with respect to thread access; only a single thread can enter the block at a time.<BR>
+</body>
+</html>

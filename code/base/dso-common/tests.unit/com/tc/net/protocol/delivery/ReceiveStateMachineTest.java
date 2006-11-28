@@ -1,0 +1,49 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tc.net.protocol.delivery;
+
+import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
+
+import com.tc.net.protocol.tcm.NullMessageMonitor;
+import com.tc.net.protocol.tcm.msgs.PingMessage;
+
+import junit.framework.TestCase;
+
+/**
+ * 
+ */
+public class ReceiveStateMachineTest extends TestCase {
+
+  public void tests() throws Exception {
+    LinkedQueue receiveQueue = new LinkedQueue();
+    TestProtocolMessageDelivery delivery = new TestProtocolMessageDelivery(receiveQueue);
+    ReceiveStateMachine rsm = new ReceiveStateMachine(delivery);
+    TestProtocolMessage tpm = new TestProtocolMessage();
+    tpm.isAckRequest = true;
+
+    rsm.start();
+
+    // Ack request
+    rsm.execute(tpm);
+    assertTrue(delivery.sentAck);
+
+    delivery.clear();
+
+    tpm.msg = new PingMessage(new NullMessageMonitor());
+    tpm.sent = 0;
+    tpm.isAckRequest = false;
+
+    assertEquals(0, delivery.receivedMessageCount);
+    //REceive message
+    rsm.execute(tpm);
+    int received = delivery.receivedMessageCount;
+    assertTrue(delivery.receivedMessageCount > 0);
+    assertTrue(receiveQueue.poll(0) != null);
+    
+    //Receive a second time
+    rsm.execute(tpm);
+    assertEquals(received, delivery.receivedMessageCount);
+    assertTrue(receiveQueue.poll(0) == null);
+  }
+}

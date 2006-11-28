@@ -1,0 +1,458 @@
+<DOCFLEX_TEMPLATE VER='1.7'>
+CREATED='2005-10-13 03:37:00'
+LAST_UPDATE='2006-10-09 06:34:49'
+DESIGNER_TOOL='DocFlex SDK 1.0'
+TEMPLATE_TYPE='DocumentTemplate'
+DSM_TYPE_ID='xsddoc'
+ROOT_ET='xs:attribute'
+<TEMPLATE_PARAMS>
+	PARAM={
+		param.name='nsURI';
+		param.displayName='attribute\'s namespace URI';
+		param.description='The namespace to which this global attribute belongs';
+		param.type='string';
+	}
+	PARAM={
+		param.name='usageCount';
+		param.description='number of locations where this global attribute is used';
+		param.type='int';
+		param.defaultExpr='countElementsByKey (\n  "attribute-usage",\n  QName (getStringParam("nsURI"), getAttrStringValue("name"))\n)';
+		param.hidden='true';
+	}
+	PARAM={
+		param.name='showNS';
+		param.type='boolean';
+		param.boolean.default='true';
+	}
+	PARAM={
+		param.name='showSchema';
+		param.type='boolean';
+		param.boolean.default='true';
+	}
+	PARAM={
+		param.name='page.refs';
+		param.displayName='Generate page references';
+		param.type='boolean';
+		param.boolean.default='true';
+	}
+</TEMPLATE_PARAMS>
+FMT={
+	doc.lengthUnits='pt';
+	doc.hlink.style.link='cs3';
+}
+<STYLES>
+	CHAR_STYLE={
+		style.name='Code Smaller';
+		style.id='cs1';
+		text.font.name='Courier New';
+		text.font.size='8';
+	}
+	CHAR_STYLE={
+		style.name='Default Paragraph Font';
+		style.id='cs2';
+		style.default='true';
+	}
+	CHAR_STYLE={
+		style.name='Hyperlink';
+		style.id='cs3';
+		text.decor.underline='true';
+		text.color.foreground='#0000FF';
+	}
+	PAR_STYLE={
+		style.name='Normal';
+		style.id='s1';
+		style.default='true';
+	}
+	CHAR_STYLE={
+		style.name='Page Number Small';
+		style.id='cs4';
+		text.font.name='Courier New';
+		text.font.size='8';
+	}
+	PAR_STYLE={
+		style.name='Property Title';
+		style.id='s2';
+		text.font.size='8';
+		text.font.style.bold='true';
+		par.lineHeight='11';
+		par.margin.right='7';
+	}
+	PAR_STYLE={
+		style.name='Property Value';
+		style.id='s3';
+		text.font.name='Verdana';
+		text.font.size='8';
+		par.lineHeight='11';
+	}
+</STYLES>
+<ROOT>
+	<FOLDER>
+		DESCR='SUMMARY INFO'
+		FMT={
+			sec.outputStyle='table';
+			table.cellpadding.both='0';
+			table.border.style='none';
+			table.page.keepTogether='true';
+			table.option.borderStylesInHTML='true';
+		}
+		<BODY>
+			<AREA_SEC>
+				COND='getBooleanParam("showNS")'
+				FMT={
+					trow.align.vert='Top';
+				}
+				<AREA>
+					<CTRL_GROUP>
+						<CTRLS>
+							<LABEL>
+								FMT={
+									ctrl.size.width='54.8';
+									ctrl.size.height='17.3';
+									par.style='s2';
+								}
+								TEXT='Namespace:'
+							</LABEL>
+							<DATA_CTRL>
+								FMT={
+									ctrl.size.width='444.8';
+									ctrl.size.height='17.3';
+									text.style='cs1';
+									par.style='s3';
+								}
+								<DOC_HLINK>
+									TARGET_KEYS={
+										'getStringParam("nsURI")';
+										'"detail"';
+									}
+								</DOC_HLINK>
+								FORMULA='(ns = getParam("nsURI")) != "" ? ns : "<global>"'
+							</DATA_CTRL>
+						</CTRLS>
+					</CTRL_GROUP>
+				</AREA>
+			</AREA_SEC>
+			<AREA_SEC>
+				FMT={
+					trow.align.vert='Top';
+				}
+				<AREA>
+					<CTRL_GROUP>
+						<CTRLS>
+							<LABEL>
+								FMT={
+									ctrl.size.width='54.8';
+									ctrl.size.height='17.3';
+									par.style='s2';
+								}
+								TEXT='Type:'
+							</LABEL>
+							<SS_CALL_CTRL>
+								FMT={
+									ctrl.size.width='444.8';
+									ctrl.size.height='17.3';
+									par.style='s3';
+								}
+								SS_NAME='Type Info'
+							</SS_CALL_CTRL>
+						</CTRLS>
+					</CTRL_GROUP>
+				</AREA>
+			</AREA_SEC>
+			<AREA_SEC>
+				COND='getBooleanParam("showSchema")'
+				FMT={
+					trow.align.vert='Top';
+				}
+				<AREA>
+					<CTRL_GROUP>
+						<CTRLS>
+							<LABEL>
+								FMT={
+									ctrl.size.width='54.8';
+									ctrl.size.height='59.3';
+									par.style='s2';
+								}
+								TEXT='Defined:'
+							</LABEL>
+							<PANEL>
+								FMT={
+									ctrl.size.width='444.8';
+									ctrl.size.height='59.3';
+									par.style='s3';
+								}
+								<AREA>
+									<CTRL_GROUP>
+										<CTRLS>
+											<LABEL>
+												TEXT='globally in'
+											</LABEL>
+											<DATA_CTRL>
+												<DOC_HLINK>
+													TARGET_KEYS={
+														'getXMLDocument().id';
+														'"detail"';
+													}
+												</DOC_HLINK>
+												FORMULA='getXMLDocument().getAttrStringValue("xmlName")'
+											</DATA_CTRL>
+											<PANEL>
+												COND='hyperTargetExists (Array (contextElement.id, "xml-source"))'
+												FMT={
+													ctrl.size.width='108.8';
+												}
+												<AREA>
+													<CTRL_GROUP>
+														<CTRLS>
+															<DELIMITER>
+																FMT={
+																	txtfl.delimiter.type='text';
+																	txtfl.delimiter.text=', ';
+																}
+															</DELIMITER>
+															<LABEL>
+																TEXT='see'
+															</LABEL>
+															<LABEL>
+																<DOC_HLINK>
+																	TARGET_KEYS={
+																		'contextElement.id';
+																		'"xml-source"';
+																	}
+																</DOC_HLINK>
+																TEXT='XML source'
+															</LABEL>
+														</CTRLS>
+													</CTRL_GROUP>
+												</AREA>
+											</PANEL>
+										</CTRLS>
+									</CTRL_GROUP>
+								</AREA>
+							</PANEL>
+						</CTRLS>
+					</CTRL_GROUP>
+				</AREA>
+			</AREA_SEC>
+			<AREA_SEC>
+				COND='getIntParam("usageCount") == 0'
+				FMT={
+					trow.align.vert='Top';
+				}
+				<AREA>
+					<CTRL_GROUP>
+						<CTRLS>
+							<LABEL>
+								FMT={
+									ctrl.size.width='54.8';
+									ctrl.size.height='17.3';
+									par.style='s2';
+								}
+								TEXT='Used:'
+							</LABEL>
+							<LABEL>
+								FMT={
+									ctrl.size.width='444.8';
+									ctrl.size.height='17.3';
+									par.style='s3';
+								}
+								TEXT='never'
+							</LABEL>
+						</CTRLS>
+					</CTRL_GROUP>
+				</AREA>
+			</AREA_SEC>
+			<AREA_SEC>
+				COND='getIntParam("usageCount") > 0'
+				FMT={
+					trow.align.vert='Top';
+				}
+				<AREA>
+					<CTRL_GROUP>
+						<CTRLS>
+							<LABEL>
+								FMT={
+									ctrl.size.width='54.8';
+									ctrl.size.height='38.3';
+									par.style='s2';
+								}
+								TEXT='Used:'
+							</LABEL>
+							<PANEL>
+								FMT={
+									ctrl.size.width='444.8';
+									ctrl.size.height='38.3';
+									par.style='s3';
+								}
+								<AREA>
+									<CTRL_GROUP>
+										<CTRLS>
+											<LABEL>
+												TEXT='at'
+											</LABEL>
+											<DATA_CTRL>
+												FORMULA='getIntParam("usageCount")'
+											</DATA_CTRL>
+											<LABEL>
+												COND='getIntParam("usageCount") == 1'
+												<DOC_HLINK>
+													TARGET_KEYS={
+														'contextElement.id';
+														'"usage-locations"';
+													}
+												</DOC_HLINK>
+												TEXT='location'
+											</LABEL>
+											<LABEL>
+												COND='getIntParam("usageCount") > 1'
+												<DOC_HLINK>
+													TARGET_KEYS={
+														'contextElement.id';
+														'"usage-locations"';
+													}
+												</DOC_HLINK>
+												TEXT='locations'
+											</LABEL>
+										</CTRLS>
+									</CTRL_GROUP>
+								</AREA>
+							</PANEL>
+						</CTRLS>
+					</CTRL_GROUP>
+				</AREA>
+			</AREA_SEC>
+		</BODY>
+	</FOLDER>
+</ROOT>
+<STOCK_SECTIONS>
+	<FOLDER>
+		MATCHING_ET='xs:attribute'
+		FMT={
+			sec.outputStyle='text-par';
+		}
+		SS_NAME='Type Info'
+		<BODY>
+			<AREA_SEC>
+				COND='getAttrStringValue("type") == ""'
+				CONTEXT_ELEMENT_EXPR='findChild("xs:complexType | xs:simpleType")'
+				MATCHING_ETS={'xs:%complexType';'xs:%simpleType'}
+				<AREA>
+					<CTRL_GROUP>
+						<CTRLS>
+							<LABEL>
+								<DOC_HLINK>
+									TARGET_KEYS={
+										'contextElement.id';
+										'"detail"';
+									}
+								</DOC_HLINK>
+								TEXT='embedded'
+							</LABEL>
+							<TEMPLATE_CALL_CTRL>
+								TEMPLATE_FILE='../type/derivationSummary.tpl'
+								OUTPUT_TYPE='included'
+								DSM_MODE='pass-current-model'
+								ALT_FORMULA='"simpleType"'
+							</TEMPLATE_CALL_CTRL>
+						</CTRLS>
+					</CTRL_GROUP>
+				</AREA>
+			</AREA_SEC>
+			<FOLDER>
+				DESCR='when there\'s a reference to a global type'
+				COND='getAttrStringValue("type") != ""'
+				<BODY>
+					<AREA_SEC>
+						DESCR='when the reference is resolved into a documented element'
+						CONTEXT_ELEMENT_EXPR='findElementByKey ("types", getAttrQNameValue("type"))'
+						MATCHING_ETS={'xs:complexType';'xs:simpleType'}
+						<AREA>
+							<CTRL_GROUP>
+								<CTRLS>
+									<DATA_CTRL>
+										FMT={
+											text.style='cs1';
+										}
+										<DOC_HLINK>
+											TARGET_KEYS={
+												'contextElement.id';
+												'"detail"';
+											}
+										</DOC_HLINK>
+										FORMULA='name = getAttrStringValue("name");\n\nschema = getXMLDocument().findChild ("xs:schema");\nnsURI = schema.getAttrStringValue("targetNamespace");\n\nQName (nsURI, name, Enum (rootElement, contextElement))'
+									</DATA_CTRL>
+									<PANEL>
+										COND='output.format.supportsPagination &&\ngetBooleanParam("page.refs") &&\nhyperTargetExists (Array (contextElement.id,  "detail"))'
+										FMT={
+											ctrl.size.width='154.5';
+											text.style='cs4';
+											txtfl.delimiter.type='none';
+										}
+										<AREA>
+											<CTRL_GROUP>
+												<CTRLS>
+													<LABEL>
+														TEXT='['
+													</LABEL>
+													<DATA_CTRL>
+														FMT={
+															ctrl.option.noHLinkFmt='true';
+															text.hlink.fmt='none';
+														}
+														<DOC_HLINK>
+															TARGET_KEYS={
+																'contextElement.id';
+																'"detail"';
+															}
+														</DOC_HLINK>
+														DOCFIELD='page-htarget'
+													</DATA_CTRL>
+													<LABEL>
+														TEXT=']'
+													</LABEL>
+												</CTRLS>
+											</CTRL_GROUP>
+										</AREA>
+									</PANEL>
+								</CTRLS>
+							</CTRL_GROUP>
+						</AREA>
+					</AREA_SEC>
+					<AREA_SEC>
+						DESCR='otherwise, the referenced global type is not within documentation scope'
+						COND='sectionBlock.execSecNone'
+						<AREA>
+							<CTRL_GROUP>
+								<CTRLS>
+									<DATA_CTRL>
+										FMT={
+											text.style='cs1';
+										}
+										ATTR='type'
+									</DATA_CTRL>
+								</CTRLS>
+							</CTRL_GROUP>
+						</AREA>
+					</AREA_SEC>
+				</BODY>
+			</FOLDER>
+			<AREA_SEC>
+				DESCR='otherwise, if no type information specified, assume anySimpleType'
+				COND='sectionBlock.execSecNone'
+				<AREA>
+					<CTRL_GROUP>
+						<CTRLS>
+							<LABEL>
+								FMT={
+									text.style='cs1';
+								}
+								TEXT='anySimpleType'
+							</LABEL>
+						</CTRLS>
+					</CTRL_GROUP>
+				</AREA>
+			</AREA_SEC>
+		</BODY>
+	</FOLDER>
+</STOCK_SECTIONS>
+CHECKSUM='gIHirGCy?Pg5BioNPBHf0w'
+</DOCFLEX_TEMPLATE>

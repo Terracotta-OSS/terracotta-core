@@ -1,0 +1,43 @@
+<project name="jmx" default="build" basedir=".">
+
+  <target name="init">
+    <mkdir dir="target/classes"/>
+
+    <path id="lib.dir">
+      <fileset dir="lib">
+        <include name="*.jar"/>
+      </fileset>
+    </path>
+  </target>
+
+  <target name="clean">
+    <delete dir="target/classes"/>
+    <delete file="target/jmx.war"/>
+  </target>
+
+  <target name="build" depends="init">
+    
+    <javac srcdir="src/main/java" destdir="target/classes"
+           classpathref="lib.dir" target="1.4" source="1.4"/>
+
+    <zip destfile="target/jmx.war">
+      <zipfileset dir="src/main/webapp"/>
+      <zipfileset dir="src/main/resources" prefix="WEB-INF/classes"/>
+      <zipfileset dir="target/classes" prefix="WEB-INF/classes"/>        
+      <zipfileset dir="lib" prefix="WEB-INF/lib">
+        <include name="commons-logging-1.0.4.jar"/>
+        <include name="spring-aop-1.2.8.jar"/>
+        <include name="spring-beans-1.2.8.jar"/>
+        <include name="spring-context-1.2.8.jar"/>
+        <include name="spring-core-1.2.8.jar"/>
+        <include name="spring-support-1.2.8.jar"/>
+        <include name="spring-web-1.2.8.jar"/>
+        <include name="spring-webmvc-1.2.8.jar"/>
+        <include name="jstl-1.0.jar"/>
+        <include name="standard-1.0.6.jar"/>
+      </zipfileset>
+    </zip>
+
+  </target>
+
+</project>

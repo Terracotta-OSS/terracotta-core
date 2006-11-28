@@ -1,0 +1,9 @@
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+
+	<bean id="distributedMasterBean" class="com.tctest.spring.bean.MasterBean">
+    <property name="singleton" ref="singleton"/>
+  </bean>
+	
+</beans>

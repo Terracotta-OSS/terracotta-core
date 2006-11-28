@@ -1,0 +1,6 @@
+#tests to be pounded
+TransparencySpeedTest
+LinkedQueueTest
+FastReadSlowWriteTest
+SimplePrimitiveArrayTest
+MaxConnectionTest

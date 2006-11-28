@@ -1,0 +1,34 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tc.admin;
+
+import com.tc.admin.common.XObjectTable;
+import com.tc.admin.common.XObjectTableModel;
+
+import java.awt.Point;
+import java.awt.event.MouseEvent;
+
+public class ClusterMemberTable extends XObjectTable {
+  public ClusterMemberTable() {
+    super();
+  }
+  
+  public String getToolTipText(MouseEvent event) {
+    String tip = null;
+    Point  p   = event.getPoint();
+    int    row = rowAtPoint(p);
+
+    if(row != -1) {  
+      XObjectTableModel       model = (XObjectTableModel)getModel();
+      ServerConnectionManager scm   = (ServerConnectionManager)model.getObjectAt(row);
+      Exception               e     = scm.getConnectionException();
+      
+      if(e != null) {
+        tip = ServerNode.getConnectionExceptionString(e, scm);
+      }
+    }
+    
+    return tip;
+  }
+}

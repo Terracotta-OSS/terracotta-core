@@ -1,0 +1,4048 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This script was automatically generated using Macrovision's InstallAnywhere 8.0 Enterprise, Build 3063
+     STATUS: Fully Functional LICENSED Edition
+     DATE:   Sun Nov 26 15:55:37 PST 2006 -->
+<InstallAnywhere_Deployment_Project increments="3503">
+	<!-- ** DO NOT EDIT ** Essential authorization and configuration data ** DO NOT EDIT ** -->
+	<essentialScriptInfo>
+		<versionID major="8" minor="0" revision="-1"/>
+		<editionID>56,46,48,32,69,110,116,101,114,112,114,105,115,101,32,66,117,105,108,100,32,51,48,54,51</editionID>
+		<scriptID>12,42,11,81,49,50,55,56,74,87,50,87,72,53,52,55</scriptID>
+		<buildID>3,13,71,87,105,110,100,111,119,115,32,88,80,44,32,53,46,49,44,32,120,56,54,59,32,74,97,118,97,32,49,46,53,46,48,44,32,83,117,110,32,77,105,99,114,111,115,121,115,116,101,109,115,32,73,110,99,46,44,32,104,116,116,112,58,47,47,106,97,118,97,46,115,117,110,46,99,111,109,47,59,32,101,110,44,32,85,110,107,110,111,119,110,59,32,67,112,49,50,53,50</buildID>
+		<!-- The authorizationID may change between project saves and builds.  This does not effect the integrity of the project, nor do changes in this value represent changes in the actual InstallAnywhere project. -->
+		<authorizationID>1,0,0,0,35,-80,2,-32,80,112,117,106,83,99,113,97,113,65,67,66,74,67,78,70,91,65,64,69,66,69,64,95,87,5,2,13,1,-46,102,15,1,0,0</authorizationID>
+	</essentialScriptInfo>
+	<installationObjects uniqueObjects="224">
+		<object class="com.zerog.ia.installer.Installer" objectID="f77ba552a5e1">
+			<property name="classpath">
+				<object class="java.util.Vector"/>
+			</property>
+			<property name="rulesFailedMessage">
+				<string><![CDATA[The installer cannot run on your configuration. It will now quit.]]></string>
+			</property>
+			<property name="userSplashPath">
+				<string><![CDATA[$IA_PROJECT_DIR$\common\images\]]></string>
+			</property>
+			<property name="userSplashName">
+				<string><![CDATA[splashscreen.gif]]></string>
+			</property>
+			<property name="localesToBuild">
+				<object class="java.util.Vector">
+					<method name="addElement">
+						<string><![CDATA[en]]></string>
+					</method>
+				</object>
+			</property>
+			<property name="installLabels">
+				<object class="java.util.Vector">
+					<method name="addElement">
+						<string><![CDATA[Introduction]]></string>
+					</method>
+					<method name="addElement">
+						<string><![CDATA[License Agreement]]></string>
+					</method>
+					<method name="addElement">
+						<string><![CDATA[Choose Install Folder]]></string>
+					</method>
+					<method name="addElement">
+						<string><![CDATA[$SHORTCUT_NAME$s]]></string>
+					</method>
+					<method name="addElement">
+						<string><![CDATA[Pre-Installation Summary]]></string>
+					</method>
+					<method name="addElement">
+						<string><![CDATA[Installing...]]></string>
+					</method>
+					<method name="addElement">
+						<string><![CDATA[Install Complete]]></string>
+					</method>
+				</object>
+			</property>
+			<property name="installProgressLabelIndex">
+				<int>5</int>
+			</property>
+			<property name="installProgressLabelOption">
+				<int>2</int>
+			</property>
+			<property name="preferredGUIMode">
+				<int>2</int>
+			</property>
+			<property name="supportsAWTUI">
+				<boolean>true</boolean>
+			</property>
+			<property name="supportsSwingUI">
+				<boolean>true</boolean>
+			</property>
+			<property name="supportsConsoleUI">
+				<boolean>false</boolean>
+			</property>
+			<property name="supportsSilentUI">
+				<boolean>false</boolean>
+			</property>
+			<property name="panelImagePath">
+				<string><![CDATA[com/zerog/ia/installer/images/]]></string>
+			</property>
+			<property name="panelImageName">
+				<string><![CDATA[introImage.png]]></string>
+			</property>
+			<property name="installProgressImagePath">
+				<string><![CDATA[com/zerog/ia/installer/images/]]></string>
+			</property>
+			<property name="installProgressImageName">
+				<string><![CDATA[introImage.png]]></string>
+			</property>
+			<property name="installProgressImageOption">
+				<int>1</int>
+			</property>
+			<property name="installLogEnabled">
+				<boolean>true</boolean>
+			</property>
+			<property name="installLogFormat">
+				<int>1</int>
+			</property>
+			<property name="splashHeight">
+				<int>350</int>
+			</property>
+			<property name="splashWidth">
+				<int>450</int>
+			</property>
+			<property name="defaultInstallSetIndex">
+				<int>0</int>
+			</property>
+			<property name="disableUnixPermissions">
+				<boolean>false</boolean>
+			</property>
+			<property name="unixPermissions">
+				<string><![CDATA[775]]></string>
+			</property>
+			<property name="macOSXPermissions">
+				<string><![CDATA[775]]></string>
+			</property>
+			<property name="preInstallActions">
+				<object class="java.util.Vector">
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.IntroAction" objectID="f77ba571a5e1">
+							<property name="imageOption">
+								<int>1</int>
+							</property>
+							<property name="stepTitle">
+								<string><![CDATA[Introduction]]></string>
+							</property>
+							<property name="message">
+								<string><![CDATA[Welcome to the $PRODUCT_NAME$ installer.
+
+It is strongly recommended that you quit all programs before continuing with this installation.
+
+Click the 'Next' button to proceed to the next screen. If you want to change something on a previous screen, click the 'Previous' button.
+
+You may cancel this installation at any time by clicking the 'Cancel' button.]]></string>
+							</property>
+							<property name="justification">
+								<int>0</int>
+							</property>
+							<property name="alignment">
+								<int>3</int>
+							</property>
+							<property name="labelOption">
+								<int>2</int>
+							</property>
+							<property name="labelIndex">
+								<int>0</int>
+							</property>
+							<property name="help">
+								<object class="com.zerog.ia.installer.util.Help" objectID="f77ba581a5e1">
+									<property name="showHelp">
+										<boolean>false</boolean>
+									</property>
+								</object>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.LicenseAgrAction" objectID="f77ba582a5e1">
+							<property name="imageOption">
+								<int>1</int>
+							</property>
+							<property name="labelOption">
+								<int>2</int>
+							</property>
+							<property name="labelIndex">
+								<int>1</int>
+							</property>
+							<property name="title">
+								<string><![CDATA[License Agreement]]></string>
+							</property>
+							<property name="stepPrompt">
+								<string><![CDATA[Installation and Use of $PRODUCT_NAME$ Requires Acceptance of the Following License Agreement:]]></string>
+							</property>
+							<property name="resourcePath">
+								<string><![CDATA[$IA_PROJECT_DIR$\common\]]></string>
+							</property>
+							<property name="resourceName">
+								<string><![CDATA[End-User License (on website).txt]]></string>
+							</property>
+							<property name="sourceFileType">
+								<int>0</int>
+							</property>
+							<property name="requiresUserChoice">
+								<boolean>true</boolean>
+							</property>
+							<property name="agreeWithLicenseByDefault">
+								<boolean>false</boolean>
+							</property>
+							<property name="forceScroll">
+								<boolean>false</boolean>
+							</property>
+							<property name="openExternalLinks">
+								<boolean>true</boolean>
+							</property>
+							<property name="help">
+								<object class="com.zerog.ia.installer.util.Help" objectID="f77ba581a5e2">
+									<property name="showHelp">
+										<boolean>false</boolean>
+									</property>
+								</object>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.PlugInAction" objectID="f77ba582a5e2">
+							<property name="showPleaseWaitPanel">
+								<boolean>true</boolean>
+							</property>
+							<property name="showIndeterminateDialog">
+								<boolean>false</boolean>
+							</property>
+							<property name="dialogLabel">
+								<string><![CDATA[Executing Custom Code...]]></string>
+							</property>
+							<property name="clientClassFullName">
+								<string><![CDATA[com.zerog.ia.customcode.util.fileutils.ExtractToFile]]></string>
+							</property>
+							<property name="resourcePath">
+								<string><![CDATA[$IA_HOME$\plugins]]></string>
+							</property>
+							<property name="resourceName">
+								<string><![CDATA[extracttofilecustomcode.jar]]></string>
+							</property>
+							<property name="runsAfterFileDeletesNotBefore">
+								<boolean>false</boolean>
+							</property>
+							<property name="comment">
+								<string><![CDATA[build-data.txt to tc-build-data.properties]]></string>
+							</property>
+							<property name="descriptiveName">
+								<string><![CDATA[Extract to File]]></string>
+							</property>
+							<property name="variables">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba581a5e3">
+											<property name="propertyValue">
+												<string><![CDATA[build-data.txt]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[ExtractToFile_Source]]></string>
+											</property>
+										</object>
+									</method>
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba582a5e3">
+											<property name="propertyValue">
+												<string><![CDATA[$prop.user.dir$$/$tc-build-data.properties]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[ExtractToFile_Destination]]></string>
+											</property>
+										</object>
+									</method>
+								</object>
+							</property>
+							<property name="sourceJarPath">
+								<string><![CDATA[C:\Program Files\Macrovision\InstallAnywhere 7.1 Enterprise\plugins\extracttofilecustomcode.jar]]></string>
+							</property>
+							<property name="hasHelp">
+								<boolean>true</boolean>
+							</property>
+							<property name="hasSpecialImage">
+								<boolean>true</boolean>
+							</property>
+							<property name="specialImagePath">
+								<string><![CDATA[target.png]]></string>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.PlugInAction" objectID="f77ba581a5e4">
+							<property name="showPleaseWaitPanel">
+								<boolean>false</boolean>
+							</property>
+							<property name="showIndeterminateDialog">
+								<boolean>false</boolean>
+							</property>
+							<property name="dialogLabel">
+								<string><![CDATA[Executing Custom Code...]]></string>
+							</property>
+							<property name="clientClassFullName">
+								<string><![CDATA[com.zerog.ia.customcode.action.PropertiesFileReader]]></string>
+							</property>
+							<property name="resourcePath">
+								<string><![CDATA[$IA_HOME$\plugins]]></string>
+							</property>
+							<property name="resourceName">
+								<string><![CDATA[PropertiesFileReader.jar]]></string>
+							</property>
+							<property name="runsAfterFileDeletesNotBefore">
+								<boolean>false</boolean>
+							</property>
+							<property name="comment">
+								<string><![CDATA[PropertiesFileReader]]></string>
+							</property>
+							<property name="descriptiveName">
+								<string><![CDATA[Properties File Reader]]></string>
+							</property>
+							<property name="variables">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.PropertyData" objectID="f77ba582a5e4">
+											<property name="propertyValue">
+												<string><![CDATA[true]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[SUBSTITUTE_VARIABLES]]></string>
+											</property>
+										</object>
+									</method>
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.PropertyData" objectID="f77ba581a5e5">
+											<property name="propertyValue">
+												<string><![CDATA[true]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[OVERRIDE_EXISTING_VARIABLES]]></string>
+											</property>
+										</object>
+									</method>
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba591a5e5">
+											<property name="propertyValue">
+												<string><![CDATA[$prop.user.dir$$/$tc-build-data.properties]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[PROPERTIES_FILE_LOCATION]]></string>
+											</property>
+										</object>
+									</method>
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.PropertyData" objectID="f77ba592a5e5">
+											<property name="propertyValue">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[PROPERTIES_TO_IGNORE]]></string>
+											</property>
+										</object>
+									</method>
+								</object>
+							</property>
+							<property name="sourceJarPath">
+								<string><![CDATA[C:\Program Files\Macrovision\InstallAnywhere 7.1 Enterprise\plugins\PropertiesFileReader.jar]]></string>
+							</property>
+							<property name="hasHelp">
+								<boolean>true</boolean>
+							</property>
+							<property name="hasSpecialImage">
+								<boolean>false</boolean>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditMultipleVariables" objectID="f77ba591a5e6">
+							<property name="comment">
+								<string><![CDATA[build-date.txt values]]></string>
+							</property>
+							<property name="propertyList">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba592a5e6">
+											<property name="propertyValue">
+												<string><![CDATA[$terracotta.build.version$]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[$TC_VERSION$]]></string>
+											</property>
+										</object>
+									</method>
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba591a5e7">
+											<property name="propertyValue">
+												<string><![CDATA[terracotta-]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[$SHORT_NAME$]]></string>
+											</property>
+										</object>
+									</method>
+								</object>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.InstallDirAction" objectID="f77ba592a5e7">
+							<property name="imageOption">
+								<int>1</int>
+							</property>
+							<property name="stepTitle">
+								<string><![CDATA[Choose Install Folder]]></string>
+							</property>
+							<property name="prompt">
+								<string><![CDATA[Where Would You Like to Install?]]></string>
+							</property>
+							<property name="canSpecifyInstallFolderName">
+								<boolean>false</boolean>
+							</property>
+							<property name="additionalText">
+								<string><![CDATA[]]></string>
+							</property>
+							<property name="canManuallyEnterPath">
+								<boolean>true</boolean>
+							</property>
+							<property name="labelOption">
+								<int>2</int>
+							</property>
+							<property name="labelIndex">
+								<int>2</int>
+							</property>
+							<property name="help">
+								<object class="com.zerog.ia.installer.util.Help" objectID="f77ba591a5e8">
+									<property name="showHelp">
+										<boolean>false</boolean>
+									</property>
+								</object>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditVariableTable" objectID="f77ba592a5e8">
+							<property name="name">
+								<string><![CDATA[$USER_MAGIC_FOLDER_1$]]></string>
+							</property>
+							<property name="value">
+								<string><![CDATA[$USER_INSTALL_DIR$$/$$SHORT_NAME$$TC_VERSION$$/$spring]]></string>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.DumpDebugInfo" objectID="f77ba591a5e9">
+							<property name="printingToConsole">
+								<boolean>true</boolean>
+							</property>
+							<property name="printingToFile">
+								<boolean>false</boolean>
+							</property>
+							<property name="outputPath">
+								<string><![CDATA[$INSTALL_DRIVE_ROOT$$/$installer_debug.txt]]></string>
+							</property>
+							<property name="selectedModules">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<string><![CDATA[InstallAnywhere Variables]]></string>
+									</method>
+								</object>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditMultipleVariables" objectID="f77ba592a5e9">
+							<property name="comment">
+								<string><![CDATA[shortcut variables]]></string>
+							</property>
+							<property name="propertyList">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba591a5ea">
+											<property name="propertyValue">
+												<string><![CDATA[Add Desktop shortcuts]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[$DESKTOP_SHORTCUT_CHECKBOX_TEXT$]]></string>
+											</property>
+										</object>
+									</method>
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba592a5ea">
+											<property name="propertyValue">
+												<string><![CDATA[Add Start Menu shortcuts]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[$PROGRAMS_SHORTCUT_CHECKBOX_TEXT$]]></string>
+											</property>
+										</object>
+									</method>
+								</object>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditVariableTable" objectID="f77ba591a5eb">
+							<property name="name">
+								<string><![CDATA[$CURRENT_VERSION_EXISTS$]]></string>
+							</property>
+							<property name="value">
+								<string><![CDATA[false]]></string>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditVariableTable" objectID="f77ba592a5eb">
+							<property name="name">
+								<string><![CDATA[$CURRENT_VERSION_EXISTS$]]></string>
+							</property>
+							<property name="value">
+								<string><![CDATA[true]]></string>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.FileFolderPathChk" objectID="f77ba591a5ec">
+									<property name="path">
+										<string><![CDATA[$USER_MAGIC_FOLDER_1$]]></string>
+									</property>
+									<property name="checkIsFileFolder">
+										<boolean>true</boolean>
+									</property>
+									<property name="isFile">
+										<boolean>false</boolean>
+									</property>
+									<property name="checkExists">
+										<boolean>true</boolean>
+									</property>
+									<property name="exists">
+										<boolean>true</boolean>
+									</property>
+									<property name="checkReadWrite">
+										<boolean>false</boolean>
+									</property>
+									<property name="isReadable">
+										<boolean>true</boolean>
+									</property>
+									<property name="isWriteable">
+										<boolean>true</boolean>
+									</property>
+									<property name="checksInUseNotNotInUse">
+										<boolean>false</boolean>
+									</property>
+									<property name="checkInUse">
+										<boolean>false</boolean>
+									</property>
+								</object>
+								<object class="com.zerog.ia.installer.rules.FileFolderPathChk" objectID="f77ba592a5ec">
+									<property name="path">
+										<string><![CDATA[$USER_MAGIC_FOLDER_1$$/$bin$/$tc-admin.bat]]></string>
+									</property>
+									<property name="checkIsFileFolder">
+										<boolean>true</boolean>
+									</property>
+									<property name="isFile">
+										<boolean>true</boolean>
+									</property>
+									<property name="checkExists">
+										<boolean>true</boolean>
+									</property>
+									<property name="exists">
+										<boolean>true</boolean>
+									</property>
+									<property name="checkReadWrite">
+										<boolean>false</boolean>
+									</property>
+									<property name="isReadable">
+										<boolean>true</boolean>
+									</property>
+									<property name="isWriteable">
+										<boolean>true</boolean>
+									</property>
+									<property name="checksInUseNotNotInUse">
+										<boolean>false</boolean>
+									</property>
+									<property name="checkInUse">
+										<boolean>false</boolean>
+									</property>
+								</object>
+								<object class="com.zerog.ia.installer.rules.FileFolderPathChk" objectID="f77ba591a5ed">
+									<property name="path">
+										<string><![CDATA[$USER_MAGIC_FOLDER_1$$/$bin$/$dso-java.bat]]></string>
+									</property>
+									<property name="checkIsFileFolder">
+										<boolean>true</boolean>
+									</property>
+									<property name="isFile">
+										<boolean>true</boolean>
+									</property>
+									<property name="checkExists">
+										<boolean>true</boolean>
+									</property>
+									<property name="exists">
+										<boolean>true</boolean>
+									</property>
+									<property name="checkReadWrite">
+										<boolean>false</boolean>
+									</property>
+									<property name="isReadable">
+										<boolean>true</boolean>
+									</property>
+									<property name="isWriteable">
+										<boolean>true</boolean>
+									</property>
+									<property name="checksInUseNotNotInUse">
+										<boolean>false</boolean>
+									</property>
+									<property name="checkInUse">
+										<boolean>false</boolean>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditVariableTable" objectID="f77ba592a5ed">
+							<property name="name">
+								<string><![CDATA[$DATE_FORMAT$]]></string>
+							</property>
+							<property name="value">
+								<string><![CDATA[MM-dd-yyyy_HH_mm]]></string>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.CustomAction" objectID="f77ba591a5ee">
+							<property name="showPleaseWaitPanel">
+								<boolean>false</boolean>
+							</property>
+							<property name="showIndeterminateDialog">
+								<boolean>false</boolean>
+							</property>
+							<property name="dialogLabel">
+								<string><![CDATA[Executing Custom Code...]]></string>
+							</property>
+							<property name="clientClassFullName">
+								<string><![CDATA[com.tc.installer.util.DateStamp]]></string>
+							</property>
+							<property name="resourcePath">
+								<string><![CDATA[$IA_PROJECT_DIR$\install_build_output\lib\]]></string>
+							</property>
+							<property name="resourceName">
+								<string><![CDATA[tc-installer-custom.jar]]></string>
+							</property>
+							<property name="runsAfterFileDeletesNotBefore">
+								<boolean>false</boolean>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5a0a5ee">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$CURRENT_VERSION_EXISTS$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[true]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditMultipleVariables" objectID="f77ba5a1a5ee">
+							<property name="comment">
+								<string><![CDATA[Backup folder names for backing up existing Terracotta installation]]></string>
+							</property>
+							<property name="propertyList">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba5a0a5ef">
+											<property name="propertyValue">
+												<string><![CDATA[$USER_MAGIC_FOLDER_1$_$FORMATTED_DATE$]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[$BACKUP_FOLDER$]]></string>
+											</property>
+										</object>
+									</method>
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba5a1a5ef">
+											<property name="propertyValue">
+												<string><![CDATA[spring_$FORMATTED_DATE$]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[$BACKUP_FOLDER_NAME$]]></string>
+											</property>
+										</object>
+									</method>
+								</object>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5a0a5f0">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$CURRENT_VERSION_EXISTS$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[true]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.ShowDialogAction" objectID="f77ba5a1a5f0">
+							<property name="title">
+								<string><![CDATA[Warning]]></string>
+							</property>
+							<property name="label">
+								<string><![CDATA[Previous Installation Detected]]></string>
+							</property>
+							<property name="narrative">
+								<string><![CDATA[Would you like to Backup your prior installation of $PRODUCT_NAME$ to $BACKUP_FOLDER$ or delete the prior installation folder?]]></string>
+							</property>
+							<property name="dismissalAction">
+								<int>1</int>
+							</property>
+							<property name="cancelDismissalAction">
+								<int>1</int>
+							</property>
+							<property name="detailsDismissalAction">
+								<int>1</int>
+							</property>
+							<property name="buttonLabel">
+								<string><![CDATA[Backup]]></string>
+							</property>
+							<property name="cancelButtonLabel">
+								<string><![CDATA[Delete]]></string>
+							</property>
+							<property name="detailsButtonLabel">
+								<string><![CDATA[Details...]]></string>
+							</property>
+							<property name="variableName">
+								<string><![CDATA[$BACKUP_OR_DELETE_DIALOG$]]></string>
+							</property>
+							<property name="buttonCombination">
+								<int>1</int>
+							</property>
+							<property name="alertLevel">
+								<int>0</int>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5a0a5f1">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$CURRENT_VERSION_EXISTS$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[true]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.GetUserInput" objectID="f77ba5a1a5f1">
+							<property name="imageOption">
+								<int>1</int>
+							</property>
+							<property name="title">
+								<string><![CDATA[Shortcuts]]></string>
+							</property>
+							<property name="prompt">
+								<string><![CDATA[]]></string>
+							</property>
+							<property name="guiGroups">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.GUIGroupData" objectID="f77ba5a0a5f2">
+											<property name="groupType">
+												<int>1</int>
+											</property>
+											<property name="componentType">
+												<int>1</int>
+											</property>
+											<property name="components">
+												<object class="java.util.Vector">
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.GUIComponentData" objectID="f77ba5a1a5f2">
+															<property name="label">
+																<string><![CDATA[]]></string>
+															</property>
+															<property name="defaultValue">
+																<string><![CDATA[]]></string>
+															</property>
+															<property name="variableName">
+																<string><![CDATA[$USER_INPUT_RESULT_16$]]></string>
+															</property>
+														</object>
+													</method>
+												</object>
+											</property>
+											<property name="caption">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="additional">
+												<object class="java.lang.Integer">0</object>
+											</property>
+										</object>
+									</method>
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.GUIGroupData" objectID="f77ba5a0a5f3">
+											<property name="groupType">
+												<int>1</int>
+											</property>
+											<property name="componentType">
+												<int>1</int>
+											</property>
+											<property name="components">
+												<object class="java.util.Vector">
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.GUIComponentData" objectID="f77ba5a1a5f3">
+															<property name="label">
+																<string><![CDATA[]]></string>
+															</property>
+															<property name="defaultValue">
+																<string><![CDATA[]]></string>
+															</property>
+															<property name="variableName">
+																<string><![CDATA[$USER_INPUT_RESULT_17$]]></string>
+															</property>
+														</object>
+													</method>
+												</object>
+											</property>
+											<property name="caption">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="additional">
+												<object class="java.lang.Integer">0</object>
+											</property>
+										</object>
+									</method>
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.GUIGroupData" objectID="f77ba5a0a5f4">
+											<property name="groupType">
+												<int>1</int>
+											</property>
+											<property name="componentType">
+												<int>1</int>
+											</property>
+											<property name="components">
+												<object class="java.util.Vector">
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.GUIComponentData" objectID="f77ba5a1a5f4">
+															<property name="label">
+																<string><![CDATA[]]></string>
+															</property>
+															<property name="defaultValue">
+																<string><![CDATA[]]></string>
+															</property>
+															<property name="variableName">
+																<string><![CDATA[$USER_INPUT_RESULT_18$]]></string>
+															</property>
+														</object>
+													</method>
+												</object>
+											</property>
+											<property name="caption">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="additional">
+												<object class="java.lang.Integer">0</object>
+											</property>
+										</object>
+									</method>
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.GUIGroupData" objectID="f77ba5a0a5f5">
+											<property name="groupType">
+												<int>1</int>
+											</property>
+											<property name="componentType">
+												<int>1</int>
+											</property>
+											<property name="components">
+												<object class="java.util.Vector">
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.GUIComponentData" objectID="f77ba5a1a5f5">
+															<property name="label">
+																<string><![CDATA[]]></string>
+															</property>
+															<property name="defaultValue">
+																<string><![CDATA[]]></string>
+															</property>
+															<property name="variableName">
+																<string><![CDATA[$USER_INPUT_RESULT_19$]]></string>
+															</property>
+														</object>
+													</method>
+												</object>
+											</property>
+											<property name="caption">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="additional">
+												<object class="java.lang.Integer">0</object>
+											</property>
+										</object>
+									</method>
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.GUIGroupData" objectID="f77ba5a0a5f6">
+											<property name="groupType">
+												<int>1</int>
+											</property>
+											<property name="componentType">
+												<int>1</int>
+											</property>
+											<property name="components">
+												<object class="java.util.Vector">
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.GUIComponentData" objectID="f77ba5a1a5f6">
+															<property name="label">
+																<string><![CDATA[]]></string>
+															</property>
+															<property name="defaultValue">
+																<string><![CDATA[]]></string>
+															</property>
+															<property name="variableName">
+																<string><![CDATA[]]></string>
+															</property>
+														</object>
+													</method>
+												</object>
+											</property>
+											<property name="caption">
+												<string><![CDATA[Select from the following options:]]></string>
+											</property>
+											<property name="additional">
+												<object class="java.lang.Integer">0</object>
+											</property>
+										</object>
+									</method>
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.GUIGroupData" objectID="f77ba5a0a5f7">
+											<property name="groupType">
+												<int>2</int>
+											</property>
+											<property name="componentType">
+												<int>3</int>
+											</property>
+											<property name="components">
+												<object class="java.util.Vector">
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.GUIComponentData" objectID="f77ba5a1a5f7">
+															<property name="label">
+																<string><![CDATA[$DESKTOP_SHORTCUT_CHECKBOX_TEXT$]]></string>
+															</property>
+															<property name="defaultValue">
+																<string><![CDATA[Selected]]></string>
+															</property>
+															<property name="variableName">
+																<string><![CDATA[$DESKTOP_SHORTCUT_RESULT$]]></string>
+															</property>
+														</object>
+													</method>
+												</object>
+											</property>
+											<property name="caption">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="additional">
+												<object class="java.lang.Integer">0</object>
+											</property>
+										</object>
+									</method>
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.GUIGroupData" objectID="f77ba5a0a5f8">
+											<property name="groupType">
+												<int>2</int>
+											</property>
+											<property name="componentType">
+												<int>3</int>
+											</property>
+											<property name="components">
+												<object class="java.util.Vector">
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.GUIComponentData" objectID="f77ba5a1a5f8">
+															<property name="label">
+																<string><![CDATA[$PROGRAMS_SHORTCUT_CHECKBOX_TEXT$]]></string>
+															</property>
+															<property name="defaultValue">
+																<string><![CDATA[Selected]]></string>
+															</property>
+															<property name="variableName">
+																<string><![CDATA[$STARTMENU_SHORTCUT_RESULT$]]></string>
+															</property>
+														</object>
+													</method>
+												</object>
+											</property>
+											<property name="caption">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="additional">
+												<object class="java.lang.Integer">0</object>
+											</property>
+										</object>
+									</method>
+								</object>
+							</property>
+							<property name="labelOption">
+								<int>2</int>
+							</property>
+							<property name="labelIndex">
+								<int>3</int>
+							</property>
+							<property name="help">
+								<object class="com.zerog.ia.installer.util.Help" objectID="f77ba5a0a5f9">
+									<property name="showHelp">
+										<boolean>false</boolean>
+									</property>
+								</object>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditVariableTable" objectID="f77ba5a1a5f9">
+							<property name="name">
+								<string><![CDATA[$USER_MAGIC_FOLDER_2$]]></string>
+							</property>
+							<property name="value">
+								<string><![CDATA[]]></string>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditVariableTable" objectID="162546c49329">
+							<property name="name">
+								<string><![CDATA[$USER_MAGIC_FOLDER_2$]]></string>
+							</property>
+							<property name="value">
+								<string><![CDATA[$WIN_PROGRAMS_MENU$$/$Terracotta $TC_VERSION$$/$Spring]]></string>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="162546c59329">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$STARTMENU_SHORTCUT_RESULT$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[1]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditVariableTable" objectID="f77ba5a1a5fa">
+							<property name="name">
+								<string><![CDATA[$USER_MAGIC_FOLDER_3$        ]]></string>
+							</property>
+							<property name="value">
+								<string><![CDATA[$USER_INSTALL_DIR$$/$terracotta-$TC_VERSION$]]></string>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditVariableTable" objectID="f77ba5a0a5fb">
+							<property name="name">
+								<string><![CDATA[$SHORTCUT_RESULTS$]]></string>
+							</property>
+							<property name="value">
+								<string><![CDATA[Do Not Install]]></string>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditVariableTable" objectID="f77ba5a1a5fb">
+							<property name="name">
+								<string><![CDATA[$SHORTCUT_RESULTS$]]></string>
+							</property>
+							<property name="value">
+								<string><![CDATA[Desktop]]></string>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5a0a5fc">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$DESKTOP_SHORTCUT_RESULT$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[1]]></string>
+									</property>
+								</object>
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5b0a5fc">
+									<property name="operation">
+										<string><![CDATA[does not equal]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$STARTMENU_SHORTCUT_RESULT$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[1]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditVariableTable" objectID="f77ba5b1a5fc">
+							<property name="name">
+								<string><![CDATA[$SHORTCUT_RESULTS$]]></string>
+							</property>
+							<property name="value">
+								<string><![CDATA[Start Menu]]></string>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5b0a5fd">
+									<property name="operation">
+										<string><![CDATA[does not equal]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$DESKTOP_SHORTCUT_RESULT$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[1]]></string>
+									</property>
+								</object>
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5b1a5fd">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$STARTMENU_SHORTCUT_RESULT$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[1]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditVariableTable" objectID="f77ba5b0a5fe">
+							<property name="name">
+								<string><![CDATA[$SHORTCUT_RESULTS$]]></string>
+							</property>
+							<property name="value">
+								<string><![CDATA[Desktop and Start Menu]]></string>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5b1a5fe">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$DESKTOP_SHORTCUT_RESULT$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[1]]></string>
+									</property>
+								</object>
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5b0a5ff">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$STARTMENU_SHORTCUT_RESULT$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[1]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.InstallSummary" objectID="f77ba5b1a5ff">
+							<property name="imageOption">
+								<int>1</int>
+							</property>
+							<property name="title">
+								<string><![CDATA[Pre-Installation Summary]]></string>
+							</property>
+							<property name="stepPrompt">
+								<string><![CDATA[Please Review the Following Before Continuing:]]></string>
+							</property>
+							<property name="requiresUserChoice">
+								<boolean>false</boolean>
+							</property>
+							<property name="showProductName">
+								<boolean>true</boolean>
+							</property>
+							<property name="showInstallDir">
+								<boolean>true</boolean>
+							</property>
+							<property name="showShortcutDir">
+								<boolean>false</boolean>
+							</property>
+							<property name="showInstallSets">
+								<boolean>false</boolean>
+							</property>
+							<property name="showInstallBundles">
+								<boolean>false</boolean>
+							</property>
+							<property name="showJREDir">
+								<boolean>false</boolean>
+							</property>
+							<property name="showDiskSpace">
+								<boolean>true</boolean>
+							</property>
+							<property name="labelOption">
+								<int>2</int>
+							</property>
+							<property name="labelIndex">
+								<int>4</int>
+							</property>
+							<property name="fieldList">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba5b0a600">
+											<property name="propertyValue">
+												<string><![CDATA[$SHORTCUT_RESULTS$]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[Shortcut Icons:]]></string>
+											</property>
+										</object>
+									</method>
+								</object>
+							</property>
+							<property name="help">
+								<object class="com.zerog.ia.installer.util.Help" objectID="f77ba5b1a600">
+									<property name="showHelp">
+										<boolean>false</boolean>
+									</property>
+								</object>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5b0a601">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$CURRENT_VERSION_EXISTS$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[false]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.InstallSummary" objectID="f77ba5b1a601">
+							<property name="imageOption">
+								<int>1</int>
+							</property>
+							<property name="title">
+								<string><![CDATA[Pre-Installation Summary]]></string>
+							</property>
+							<property name="stepPrompt">
+								<string><![CDATA[Please Review the Following Before Continuing:]]></string>
+							</property>
+							<property name="requiresUserChoice">
+								<boolean>false</boolean>
+							</property>
+							<property name="showProductName">
+								<boolean>true</boolean>
+							</property>
+							<property name="showInstallDir">
+								<boolean>true</boolean>
+							</property>
+							<property name="showShortcutDir">
+								<boolean>false</boolean>
+							</property>
+							<property name="showInstallSets">
+								<boolean>false</boolean>
+							</property>
+							<property name="showInstallBundles">
+								<boolean>false</boolean>
+							</property>
+							<property name="showJREDir">
+								<boolean>false</boolean>
+							</property>
+							<property name="showDiskSpace">
+								<boolean>true</boolean>
+							</property>
+							<property name="labelOption">
+								<int>2</int>
+							</property>
+							<property name="labelIndex">
+								<int>4</int>
+							</property>
+							<property name="fieldList">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba5b0a602">
+											<property name="propertyValue">
+												<string><![CDATA[$SHORTCUT_RESULTS$]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[Shortcut Icons:]]></string>
+											</property>
+										</object>
+									</method>
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba5b1a602">
+											<property name="propertyValue">
+												<string><![CDATA[$BACKUP_FOLDER$]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[Backup Folder:]]></string>
+											</property>
+										</object>
+									</method>
+								</object>
+							</property>
+							<property name="help">
+								<object class="com.zerog.ia.installer.util.Help" objectID="f77ba5b0a603">
+									<property name="showHelp">
+										<boolean>false</boolean>
+									</property>
+								</object>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5b1a603">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$CURRENT_VERSION_EXISTS$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[true]]></string>
+									</property>
+								</object>
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5c0a603">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$BACKUP_OR_DELETE_DIALOG$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[0]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.InstallSummary" objectID="f77ba5c1a603">
+							<property name="imageOption">
+								<int>1</int>
+							</property>
+							<property name="title">
+								<string><![CDATA[Pre-Installation Summary]]></string>
+							</property>
+							<property name="stepPrompt">
+								<string><![CDATA[Please Review the Following Before Continuing:]]></string>
+							</property>
+							<property name="requiresUserChoice">
+								<boolean>false</boolean>
+							</property>
+							<property name="showProductName">
+								<boolean>true</boolean>
+							</property>
+							<property name="showInstallDir">
+								<boolean>true</boolean>
+							</property>
+							<property name="showShortcutDir">
+								<boolean>false</boolean>
+							</property>
+							<property name="showInstallSets">
+								<boolean>false</boolean>
+							</property>
+							<property name="showInstallBundles">
+								<boolean>false</boolean>
+							</property>
+							<property name="showJREDir">
+								<boolean>false</boolean>
+							</property>
+							<property name="showDiskSpace">
+								<boolean>true</boolean>
+							</property>
+							<property name="labelOption">
+								<int>2</int>
+							</property>
+							<property name="labelIndex">
+								<int>4</int>
+							</property>
+							<property name="fieldList">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba5c0a604">
+											<property name="propertyValue">
+												<string><![CDATA[$SHORTCUT_RESULTS$:]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[Shortcut Icons:]]></string>
+											</property>
+										</object>
+									</method>
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba5c1a604">
+											<property name="propertyValue">
+												<string><![CDATA[$USER_MAGIC_FOLDER_1$]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[Delete Folder:]]></string>
+											</property>
+										</object>
+									</method>
+								</object>
+							</property>
+							<property name="help">
+								<object class="com.zerog.ia.installer.util.Help" objectID="f77ba5c0a605">
+									<property name="showHelp">
+										<boolean>false</boolean>
+									</property>
+								</object>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5c1a605">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$CURRENT_VERSION_EXISTS$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[true]]></string>
+									</property>
+								</object>
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5c0a606">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$BACKUP_OR_DELETE_DIALOG$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[1]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditMultipleVariables" objectID="f77ba5c1a606">
+							<property name="comment">
+								<string><![CDATA[Backup existing install]]></string>
+							</property>
+							<property name="propertyList">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba5c0a607">
+											<property name="propertyValue">
+												<string><![CDATA[$USER_MAGIC_FOLDER_1$]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[$Rename_Target$]]></string>
+											</property>
+										</object>
+									</method>
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba5c1a607">
+											<property name="propertyValue">
+												<string><![CDATA[$BACKUP_FOLDER_NAME$]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[$Rename_NewName$]]></string>
+											</property>
+										</object>
+									</method>
+								</object>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5c0a608">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$CURRENT_VERSION_EXISTS$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[true]]></string>
+									</property>
+								</object>
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5c1a608">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$BACKUP_OR_DELETE_DIALOG$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[0]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.CustomAction" objectID="f77ba5c0a609">
+							<property name="showPleaseWaitPanel">
+								<boolean>true</boolean>
+							</property>
+							<property name="showIndeterminateDialog">
+								<boolean>false</boolean>
+							</property>
+							<property name="dialogLabel">
+								<string><![CDATA[Executing Custom Code...]]></string>
+							</property>
+							<property name="clientClassFullName">
+								<string><![CDATA[com.zerog.ia.customcode.util.fileutils.Rename]]></string>
+							</property>
+							<property name="resourcePath">
+								<string><![CDATA[$IA_PROJECT_DIR$\install_build_output\lib\]]></string>
+							</property>
+							<property name="resourceName">
+								<string><![CDATA[tc-installer-custom.jar]]></string>
+							</property>
+							<property name="runsAfterFileDeletesNotBefore">
+								<boolean>false</boolean>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5c1a609">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$CURRENT_VERSION_EXISTS$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[true]]></string>
+									</property>
+								</object>
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5c0a60a">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$BACKUP_OR_DELETE_DIALOG$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[0]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditMultipleVariables" objectID="f77ba5c1a60a">
+							<property name="comment">
+								<string><![CDATA[Delete prior install directory]]></string>
+							</property>
+							<property name="propertyList">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba5c0a60b">
+											<property name="propertyValue">
+												<string><![CDATA[$USER_MAGIC_FOLDER_1$]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[$DeleteDirectory_Path$]]></string>
+											</property>
+										</object>
+									</method>
+								</object>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5c1a60b">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$CURRENT_VERSION_EXISTS$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[true]]></string>
+									</property>
+								</object>
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5c0a60c">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$BACKUP_OR_DELETE_DIALOG$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[1]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.CustomAction" objectID="f77ba5cfa60c">
+							<property name="showPleaseWaitPanel">
+								<boolean>true</boolean>
+							</property>
+							<property name="showIndeterminateDialog">
+								<boolean>false</boolean>
+							</property>
+							<property name="dialogLabel">
+								<string><![CDATA[Executing Custom Code...]]></string>
+							</property>
+							<property name="clientClassFullName">
+								<string><![CDATA[com.zerog.ia.customcode.util.fileutils.DeleteDirectory]]></string>
+							</property>
+							<property name="resourcePath">
+								<string><![CDATA[$IA_PROJECT_DIR$\install_build_output\lib\]]></string>
+							</property>
+							<property name="resourceName">
+								<string><![CDATA[tc-installer-custom.jar]]></string>
+							</property>
+							<property name="runsAfterFileDeletesNotBefore">
+								<boolean>false</boolean>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5d0a60c">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$CURRENT_VERSION_EXISTS$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[true]]></string>
+									</property>
+								</object>
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5cfa60d">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$BACKUP_OR_DELETE_DIALOG$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[1]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.ShowDialogAction" objectID="f77ba5d0a60d">
+							<property name="title">
+								<string><![CDATA[Warning]]></string>
+							</property>
+							<property name="label">
+								<string><![CDATA[Backup Incomplete]]></string>
+							</property>
+							<property name="narrative">
+								<string><![CDATA[The back up of your spring folder to $BACKUP_FOLDER$ cannot complete.
+Close all applications pointing to your existing Terracotta installation.]]></string>
+							</property>
+							<property name="dismissalAction">
+								<int>0</int>
+							</property>
+							<property name="cancelDismissalAction">
+								<int>1</int>
+							</property>
+							<property name="detailsDismissalAction">
+								<int>1</int>
+							</property>
+							<property name="buttonLabel">
+								<string><![CDATA[OK]]></string>
+							</property>
+							<property name="cancelButtonLabel">
+								<string><![CDATA[Cancel]]></string>
+							</property>
+							<property name="detailsButtonLabel">
+								<string><![CDATA[Details...]]></string>
+							</property>
+							<property name="variableName">
+								<string><![CDATA[$CHOSEN_DIALOG_BUTTON$]]></string>
+							</property>
+							<property name="buttonCombination">
+								<int>0</int>
+							</property>
+							<property name="alertLevel">
+								<int>0</int>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5cfa60e">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$CURRENT_VERSION_EXISTS$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[true]]></string>
+									</property>
+								</object>
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5d0a60e">
+									<property name="operation">
+										<string><![CDATA[does not equal]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$RENAME_SUCCESS$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[SUCCESS]]></string>
+									</property>
+								</object>
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5cfa60f">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$BACKUP_OR_DELETE_DIALOG$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[0]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.ShowDialogAction" objectID="f77ba5d0a60f">
+							<property name="title">
+								<string><![CDATA[Warning]]></string>
+							</property>
+							<property name="label">
+								<string><![CDATA[Delete Failed]]></string>
+							</property>
+							<property name="narrative">
+								<string><![CDATA[The deletion of your spring folder to $USER_MAGIC_FOLDER_1$ cannot complete.
+Close all applications pointing to your existing Terracotta installation.]]></string>
+							</property>
+							<property name="dismissalAction">
+								<int>1</int>
+							</property>
+							<property name="cancelDismissalAction">
+								<int>1</int>
+							</property>
+							<property name="detailsDismissalAction">
+								<int>1</int>
+							</property>
+							<property name="buttonLabel">
+								<string><![CDATA[OK]]></string>
+							</property>
+							<property name="cancelButtonLabel">
+								<string><![CDATA[Cancel]]></string>
+							</property>
+							<property name="detailsButtonLabel">
+								<string><![CDATA[Details...]]></string>
+							</property>
+							<property name="variableName">
+								<string><![CDATA[$CHOSEN_DIALOG_BUTTON$]]></string>
+							</property>
+							<property name="buttonCombination">
+								<int>0</int>
+							</property>
+							<property name="alertLevel">
+								<int>0</int>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5cfa610">
+									<property name="operation">
+										<string><![CDATA[does not equal]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$DELETE_DIRECTORY_SUCCESS$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[SUCCESS]]></string>
+									</property>
+								</object>
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5d0a610">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$CURRENT_VERSION_EXISTS$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[true]]></string>
+									</property>
+								</object>
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5cfa611">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$BACKUP_OR_DELETE_DIALOG$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[1]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.DumpDebugInfo" objectID="f77ba5d0a611">
+							<property name="printingToConsole">
+								<boolean>true</boolean>
+							</property>
+							<property name="printingToFile">
+								<boolean>false</boolean>
+							</property>
+							<property name="outputPath">
+								<string><![CDATA[$INSTALL_DRIVE_ROOT$$/$installer_debug.txt]]></string>
+							</property>
+							<property name="selectedModules">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<string><![CDATA[InstallAnywhere Variables]]></string>
+									</method>
+								</object>
+							</property>
+						</object>
+					</method>
+				</object>
+			</property>
+			<property name="postInstallActions">
+				<object class="java.util.Vector">
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.DumpDebugInfo" objectID="f77ba5cfa612">
+							<property name="printingToConsole">
+								<boolean>true</boolean>
+							</property>
+							<property name="printingToFile">
+								<boolean>false</boolean>
+							</property>
+							<property name="outputPath">
+								<string><![CDATA[$INSTALL_DRIVE_ROOT$$/$installer_debug.txt]]></string>
+							</property>
+							<property name="selectedModules">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<string><![CDATA[InstallAnywhere Variables]]></string>
+									</method>
+								</object>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.EditMultipleVariables" objectID="f77ba5d0a612">
+							<property name="comment">
+								<string><![CDATA[Install Complete Panel text]]></string>
+							</property>
+							<property name="propertyList">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.VariablePropertyData" objectID="f77ba5cfa613">
+											<property name="propertyValue">
+												<string><![CDATA[Launch Terracotta Welcome Application]]></string>
+											</property>
+											<property name="propertyName">
+												<string><![CDATA[$IC_PANEL_LAUNCH_WELCOME$]]></string>
+											</property>
+										</object>
+									</method>
+								</object>
+							</property>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.GetUserInput" objectID="f77ba5d0a613">
+							<property name="imageOption">
+								<int>1</int>
+							</property>
+							<property name="title">
+								<string><![CDATA[Install Complete]]></string>
+							</property>
+							<property name="prompt">
+								<string><![CDATA[Congratulations! $PRODUCT_NAME$ has been successfully installed to:
+
+     $USER_INSTALL_DIR$
+
+Press "Done" to quit the installer.]]></string>
+							</property>
+							<property name="guiGroups">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.GUIGroupData" objectID="f77ba5cfa614">
+											<property name="groupType">
+												<int>2</int>
+											</property>
+											<property name="componentType">
+												<int>3</int>
+											</property>
+											<property name="components">
+												<object class="java.util.Vector">
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.GUIComponentData" objectID="f77ba5d0a614">
+															<property name="label">
+																<string><![CDATA[$IC_PANEL_LAUNCH_WELCOME$]]></string>
+															</property>
+															<property name="defaultValue">
+																<string><![CDATA[Selected]]></string>
+															</property>
+															<property name="variableName">
+																<string><![CDATA[$RUN_WELCOME_APP$]]></string>
+															</property>
+														</object>
+													</method>
+												</object>
+											</property>
+											<property name="caption">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="additional">
+												<object class="java.lang.Integer">0</object>
+											</property>
+										</object>
+									</method>
+								</object>
+							</property>
+							<property name="labelOption">
+								<int>2</int>
+							</property>
+							<property name="labelIndex">
+								<int>6</int>
+							</property>
+							<property name="help">
+								<object class="com.zerog.ia.installer.util.Help" objectID="f77ba5dfa614">
+									<property name="showHelp">
+										<boolean>false</boolean>
+									</property>
+								</object>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5e0a614">
+									<property name="operation">
+										<string><![CDATA[equals]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$INSTALL_SUCCESS$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[SUCCESS]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.GetUserInput" objectID="f77ba5dfa615">
+							<property name="imageOption">
+								<int>1</int>
+							</property>
+							<property name="title">
+								<string><![CDATA[Install Complete]]></string>
+							</property>
+							<property name="prompt">
+								<string><![CDATA[The installation of $PRODUCT_NAME$ is finished, but some errors occurred during the install. Please see the installation log, $USER_INSTALL_DIR$$/$Terracotta_for_Spring_InstallLog.log, for details.]]></string>
+							</property>
+							<property name="guiGroups">
+								<object class="java.util.Vector">
+									<method name="addElement">
+										<object class="com.zerog.ia.installer.util.GUIGroupData" objectID="f77ba5e0a615">
+											<property name="groupType">
+												<int>2</int>
+											</property>
+											<property name="componentType">
+												<int>3</int>
+											</property>
+											<property name="components">
+												<object class="java.util.Vector">
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.GUIComponentData" objectID="f77ba5dfa616">
+															<property name="label">
+																<string><![CDATA[$IC_PANEL_LAUNCH_WELCOME$]]></string>
+															</property>
+															<property name="defaultValue">
+																<string><![CDATA[Selected]]></string>
+															</property>
+															<property name="variableName">
+																<string><![CDATA[$RUN_WELCOME_APP$]]></string>
+															</property>
+														</object>
+													</method>
+												</object>
+											</property>
+											<property name="caption">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="additional">
+												<object class="java.lang.Integer">0</object>
+											</property>
+										</object>
+									</method>
+								</object>
+							</property>
+							<property name="labelOption">
+								<int>2</int>
+							</property>
+							<property name="labelIndex">
+								<int>6</int>
+							</property>
+							<property name="help">
+								<object class="com.zerog.ia.installer.util.Help" objectID="f77ba5e0a616">
+									<property name="showHelp">
+										<boolean>false</boolean>
+									</property>
+								</object>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5dfa617">
+									<property name="operation">
+										<string><![CDATA[does not equal]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$INSTALL_SUCCESS$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[SUCCESS]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.ExecFile" objectID="f77ba5e0a617">
+							<property name="targetAction">
+								<object class="com.zerog.ia.installer.actions.MakeExecutable" objectID="f7792e18a5cf">
+									<property name="unixPermissions">
+										<string><![CDATA[664]]></string>
+									</property>
+									<property name="overrideUnixPermissions">
+										<boolean>false</boolean>
+									</property>
+									<property name="guiLauncher">
+										<boolean>true</boolean>
+									</property>
+									<property name="propertyList">
+										<object class="java.util.Vector">
+											<method name="addElement">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e19a5cf">
+													<property name="propertyValue">
+														<string><![CDATA[]]></string>
+													</property>
+													<property name="propertyName">
+														<string><![CDATA[lax.stderr.redirect]]></string>
+													</property>
+													<property name="propertyComment">
+														<string><![CDATA[leave blank for no input, "console" to read from the console window,
+and any path to a file to read from that file]]></string>
+													</property>
+												</object>
+											</method>
+											<method name="addElement">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e18a5d0">
+													<property name="propertyValue">
+														<string><![CDATA[2750]]></string>
+													</property>
+													<property name="propertyName">
+														<string><![CDATA[lax.nl.win32.microsoftvm.min.version]]></string>
+													</property>
+													<property name="propertyComment">
+														<string><![CDATA[The minimum version of Microsoft's VM this application will run against]]></string>
+													</property>
+												</object>
+											</method>
+											<method name="addElement">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e19a5d0">
+													<property name="propertyValue">
+														<string><![CDATA[]]></string>
+													</property>
+													<property name="propertyName">
+														<string><![CDATA[lax.stdin.redirect]]></string>
+													</property>
+													<property name="propertyComment">
+														<string><![CDATA[leave blank for no input, "console" to read from the console window,
+and any path to a file to read from that file]]></string>
+													</property>
+												</object>
+											</method>
+											<method name="addElement">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e18a5d1">
+													<property name="propertyValue">
+														<string><![CDATA[.]]></string>
+													</property>
+													<property name="propertyName">
+														<string><![CDATA[lax.user.dir]]></string>
+													</property>
+													<property name="propertyComment">
+														<string><![CDATA[left blank, this property will cause the native launcher to not
+alter the platform default behavior for setting the user dir.
+To override this you may set this property to a relative or absolute path.
+Relative paths are relative to the launcher.]]></string>
+													</property>
+												</object>
+											</method>
+											<method name="addElement">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e19a5d1">
+													<property name="propertyValue">
+														<string><![CDATA[main]]></string>
+													</property>
+													<property name="propertyName">
+														<string><![CDATA[lax.main.method]]></string>
+													</property>
+													<property name="propertyComment">
+														<string><![CDATA[the method in the main class that will be invoked]]></string>
+													</property>
+												</object>
+											</method>
+											<method name="addElement">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e18a5d2">
+													<property name="propertyValue">
+														<string><![CDATA[$USER_INSTALL_DIR$]]></string>
+													</property>
+													<property name="propertyName">
+														<string><![CDATA[lax.root.install.dir]]></string>
+													</property>
+													<property name="propertyComment">
+														<string><![CDATA[path to the installdir magic folder]]></string>
+													</property>
+												</object>
+											</method>
+											<method name="addElement">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e19a5d2">
+													<property name="propertyValue">
+														<string><![CDATA[]]></string>
+													</property>
+													<property name="propertyName">
+														<string><![CDATA[lax.command.line.args]]></string>
+													</property>
+													<property name="propertyComment">
+														<string><![CDATA[what will be passed to the main method -- be sure to quote arguments with spaces in them]]></string>
+													</property>
+												</object>
+											</method>
+											<method name="addElement">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e18a5d3">
+													<property name="propertyValue">
+														<string><![CDATA[$USER_MAGIC_FOLDER_3$$/$common$/$lib$/$tc.jar]]></string>
+													</property>
+													<property name="propertyName">
+														<string><![CDATA[lax.class.path]]></string>
+													</property>
+													<property name="propertyComment">
+														<string><![CDATA[the Java classpath necessary to run this application
+Can be separated by colons (Mac OS/Unix) or semicolons (Windows)]]></string>
+													</property>
+												</object>
+											</method>
+											<method name="addElement">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e18a5d4">
+													<property name="propertyValue">
+														<string><![CDATA[Spring]]></string>
+													</property>
+													<property name="propertyName">
+														<string><![CDATA[tc.welcome.product]]></string>
+													</property>
+												</object>
+											</method>
+											<method name="addElement">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e19a5d3">
+													<property name="propertyValue">
+														<string><![CDATA[J2]]></string>
+													</property>
+													<property name="propertyName">
+														<string><![CDATA[lax.nl.valid.vm.list]]></string>
+													</property>
+													<property name="propertyComment">
+														<string><![CDATA[a string containing one or more of [ ALL JDK JRE J1 J2 JRE_J1 JDK_J1 JRE_J2 JDK_J2 MSJ ]
+ delimited by spaces or commas.  If the native launcher cannot find the current vm,
+it will search for ones in this list]]></string>
+													</property>
+												</object>
+											</method>
+											<method name="addElement">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e18a5d5">
+													<property name="propertyValue">
+														<string><![CDATA[7.0]]></string>
+													</property>
+													<property name="propertyName">
+														<string><![CDATA[lax.version]]></string>
+													</property>
+													<property name="propertyComment">
+														<string><![CDATA[version of LaunchAnywhere that created this properties file]]></string>
+													</property>
+												</object>
+											</method>
+											<method name="addElement">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e19a5d4">
+													<property name="propertyValue">
+														<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
+													</property>
+													<property name="propertyName">
+														<string><![CDATA[tc.install-root]]></string>
+													</property>
+												</object>
+											</method>
+											<method name="addElement">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="3a168aeb8f0c">
+													<property name="propertyValue">
+														<string><![CDATA[com.tc.welcome.WelcomeFrame]]></string>
+													</property>
+													<property name="propertyName">
+														<string><![CDATA[lax.main.class]]></string>
+													</property>
+													<property name="propertyComment">
+														<string><![CDATA[the class that contains the main method for the application]]></string>
+													</property>
+												</object>
+											</method>
+											<method name="addElement">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e18a5d6">
+													<property name="propertyValue">
+														<string><![CDATA[$USER_MAGIC_FOLDER_3$$/$jre$/$bin$/$java.exe]]></string>
+													</property>
+													<property name="propertyName">
+														<string><![CDATA[lax.nl.current.vm]]></string>
+													</property>
+												</object>
+											</method>
+											<method name="addElement">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e19a5d6">
+													<property name="propertyValue">
+														<string><![CDATA[]]></string>
+													</property>
+													<property name="propertyName">
+														<string><![CDATA[lax.stdout.redirect]]></string>
+													</property>
+													<property name="propertyComment">
+														<string><![CDATA[leave blank for no input, "console" to read from the console window,
+and any path to a file to read from that file]]></string>
+													</property>
+												</object>
+											</method>
+										</object>
+									</property>
+									<property name="shouldUninstall">
+										<boolean>true</boolean>
+									</property>
+									<property name="destinationName">
+										<string><![CDATA[WelcomeFrame]]></string>
+									</property>
+									<property name="executableIcon">
+										<object class="com.zerog.ia.installer.util.BindingWin32" objectID="f7792e18a5d7">
+											<property name="smallIconName">
+												<string><![CDATA[terracotta_icon.gif]]></string>
+											</property>
+											<property name="largeIconName">
+												<string><![CDATA[terracotta_icon.gif]]></string>
+											</property>
+											<property name="smallIconPath">
+												<string><![CDATA[$IA_PROJECT_DIR$\common\images\]]></string>
+											</property>
+											<property name="largeIconPath">
+												<string><![CDATA[$IA_PROJECT_DIR$\common\images\]]></string>
+											</property>
+										</object>
+									</property>
+									<property name="mainClass">
+										<string><![CDATA[com.tc.welcome.WelcomeFrame]]></string>
+									</property>
+								</object>
+							</property>
+							<property name="commandLineArgs">
+								<string><![CDATA[$EXECUTE_FILE_TARGET$]]></string>
+							</property>
+							<property name="waitForProcess">
+								<boolean>false</boolean>
+							</property>
+							<property name="suppressConsoleWindow">
+								<boolean>false</boolean>
+							</property>
+							<property name="showPleaseWaitPanel">
+								<boolean>true</boolean>
+							</property>
+							<property name="showIndeterminateDialog">
+								<boolean>false</boolean>
+							</property>
+							<property name="dialogLabel">
+								<string><![CDATA[Executing...]]></string>
+							</property>
+							<property name="userLabel">
+								<string><![CDATA[WelcomeFrame]]></string>
+							</property>
+							<property name="stdoutVar">
+								<string><![CDATA[$EXECUTE_STDOUT$]]></string>
+							</property>
+							<property name="stderrVar">
+								<string><![CDATA[$EXECUTE_STDERR$]]></string>
+							</property>
+							<property name="exitCodeVar">
+								<string><![CDATA[$EXECUTE_EXITCODE$]]></string>
+							</property>
+							<rules logicalOperation="AND">
+								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f77ba5eea617">
+									<property name="operation">
+										<string><![CDATA[contains]]></string>
+									</property>
+									<property name="operandOne">
+										<string><![CDATA[$RUN_WELCOME_APP$]]></string>
+									</property>
+									<property name="operandTwo">
+										<string><![CDATA[1]]></string>
+									</property>
+								</object>
+							</rules>
+						</object>
+					</method>
+				</object>
+			</property>
+			<property name="installDir">
+				<object class="com.zerog.ia.installer.util.magicfolders.InstallDirMF" factoryID="155" objectID="deff6542a668">
+					<property name="solarisMagicFolder">
+						<object class="com.zerog.ia.installer.util.magicfolders.ProgramsDirMF" factoryID="159" objectID="deff6543a668"/>
+					</property>
+					<property name="macMagicFolder">
+						<object refID="deff6543a668"/>
+					</property>
+					<property name="macXMagicFolder">
+						<object refID="deff6543a668"/>
+					</property>
+					<property name="win32MagicFolder">
+						<object refID="deff6543a668"/>
+					</property>
+					<property name="solarisMagicFolderPath">
+						<string><![CDATA[$PRODUCT_NAME$]]></string>
+					</property>
+					<property name="macMagicFolderPath">
+						<string><![CDATA[install]]></string>
+					</property>
+					<property name="macXMagicFolderPath">
+						<string><![CDATA[$PRODUCT_NAME$]]></string>
+					</property>
+					<property name="win32MagicFolderPath">
+						<string><![CDATA[Terracotta]]></string>
+					</property>
+				</object>
+			</property>
+			<property name="shortcutDir">
+				<object class="com.zerog.ia.installer.util.magicfolders.ShortcutsMF" factoryID="158" objectID="deffbcf8a66c">
+					<property name="solarisMagicFolder">
+						<object class="com.zerog.ia.installer.util.magicfolders.UserHomeMF" factoryID="994" objectID="deffbcf7a66d"/>
+					</property>
+					<property name="macMagicFolder">
+						<object class="com.zerog.ia.installer.util.magicfolders.DesktopMF" factoryID="16" objectID="deffbcf8a66d"/>
+					</property>
+					<property name="macXMagicFolder">
+						<object refID="deffbcf8a66d"/>
+					</property>
+					<property name="win32MagicFolder">
+						<object class="com.zerog.ia.installer.util.magicfolders.ProgramsMenuMF" factoryID="2" objectID="deffbcf7a66e"/>
+					</property>
+					<property name="solarisMagicFolderPath">
+						<string><![CDATA[]]></string>
+					</property>
+					<property name="macMagicFolderPath">
+						<string><![CDATA[]]></string>
+					</property>
+					<property name="macXMagicFolderPath">
+						<string><![CDATA[]]></string>
+					</property>
+					<property name="win32MagicFolderPath">
+						<string><![CDATA[Terracotta]]></string>
+					</property>
+				</object>
+			</property>
+			<property name="bundledJREInstall">
+				<int>1</int>
+			</property>
+			<property name="uninstallJRE">
+				<boolean>false</boolean>
+			</property>
+			<property name="JREInstallDirectory">
+				<int>990</int>
+			</property>
+			<property name="JREDirectoryName">
+				<string><![CDATA[jre]]></string>
+			</property>
+			<property name="buildSettings">
+				<object class="java.util.Properties">
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.platform.hpux.novm]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.platform.linux.novm]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.platform.linux.vm]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.options.optimization.platform.merge]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.installer.options.platform.macosx.authentication]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.platform.macosx.novm]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.platform.aix.novm]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.vmpack.solaris.path]]></string>
+						<string><![CDATA[SunJRE150_03SolarisINTEL.vm]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.platform.solaris.vm]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.vmpack.windows.path]]></string>
+						<string><![CDATA[SunJRE150_09iWin32Custom.vm]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.project.build.last.date]]></string>
+						<string><![CDATA[November 18, 2006 1:59:03 PM PST]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.platform.windows.vm]]></string>
+						<string><![CDATA[true]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.options.output.web]]></string>
+						<string><![CDATA[true]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.options.optimization.platform.web]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.options.output.location]]></string>
+						<string><![CDATA[$IA_PROJECT_DIR$\install_build_output]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.vmpack.linux.path]]></string>
+						<string><![CDATA[SunJRE150_07LinuxINTEL.vm]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.platform.named_unix.vm]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.platform.unix.novm]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.options.output.cdrom]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.platform.hpux.vm]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.vmpack.unix.path]]></string>
+						<string><![CDATA[SunJRE150_03LinuxINTEL.vm]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.platform.named_unix.novm]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.installer.options.stderr.redirect]]></string>
+						<string><![CDATA[]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.options.output.merge.read.only]]></string>
+						<string><![CDATA[true]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.platform.solaris.novm]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.platform.windows.novm]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.platform.aix.vm]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.installer.options.stdout.redirect]]></string>
+						<string><![CDATA[]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.installer.options.platform.windows.64.support]]></string>
+						<string><![CDATA[true]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.project.save.last.date]]></string>
+						<string><![CDATA[November 26, 2006 3:55:37 PM PST]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.options.optimization.platform.cdrom]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.installer.options.platform.unix.ui.default]]></string>
+						<string><![CDATA[GUI]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.options.output.merge]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.installer.options.platform.macosx.authentication.gui]]></string>
+						<string><![CDATA[true]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.installer.options.platform.macosx.vm.version]]></string>
+						<string><![CDATA[1.3+]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.options.webpage.language]]></string>
+						<string><![CDATA[en]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.build.platform.java.novm]]></string>
+						<string><![CDATA[false]]></string>
+					</method>
+					<method name="put">
+						<string><![CDATA[com.zerog.ia.installer.options.platform.windows.ui.default]]></string>
+						<string><![CDATA[GUI]]></string>
+					</method>
+				</object>
+			</property>
+			<property name="installFrameConfigurator">
+				<object class="com.zerog.ia.installer.util.InstallFrameConfigurator" objectID="f77ba5efa617">
+					<property name="decorationType">
+						<int>2</int>
+					</property>
+					<property name="bevelDecoration">
+						<boolean>false</boolean>
+					</property>
+					<property name="useLabelBackgroundImage">
+						<boolean>false</boolean>
+					</property>
+					<property name="labelBackgroundImagePath">
+						<string><![CDATA[com/zerog/ia/installer/images/]]></string>
+					</property>
+					<property name="labelBackgroundImageName">
+						<string><![CDATA[labelBackground.png]]></string>
+					</property>
+					<property name="useBackgroundImage">
+						<boolean>true</boolean>
+					</property>
+					<property name="backgroundImagePath">
+						<string><![CDATA[$IA_PROJECT_DIR$\common\images\]]></string>
+					</property>
+					<property name="backgroundImageName">
+						<string><![CDATA[background.gif]]></string>
+					</property>
+					<property name="currentLabelIconPath">
+						<string><![CDATA[$IA_PROJECT_DIR$\common\images\]]></string>
+					</property>
+					<property name="currentLabelIconName">
+						<string><![CDATA[bullet_on.gif]]></string>
+					</property>
+					<property name="previousLabelIconPath">
+						<string><![CDATA[$IA_PROJECT_DIR$\common\images\]]></string>
+					</property>
+					<property name="previousLabelIconName">
+						<string><![CDATA[bullet_off.gif]]></string>
+					</property>
+					<property name="futureLabelIconPath">
+						<string><![CDATA[$IA_PROJECT_DIR$\common\images\]]></string>
+					</property>
+					<property name="futureLabelIconName">
+						<string><![CDATA[bullet_off.gif]]></string>
+					</property>
+					<property name="enablePathSubst">
+						<boolean>true</boolean>
+					</property>
+					<property name="fitBackgroundImageHorizontally">
+						<boolean>true</boolean>
+					</property>
+					<property name="fitBackgroundImageVertically">
+						<boolean>true</boolean>
+					</property>
+					<property name="zerogBannerUI">
+						<boolean>true</boolean>
+					</property>
+					<property name="uninstallerTitle">
+						<string><![CDATA[Uninstall $PRODUCT_NAME$]]></string>
+					</property>
+					<property name="installPanelBackgroundRGB">
+						<int>-1</int>
+					</property>
+					<property name="panelBorder">
+						<boolean>true</boolean>
+					</property>
+					<property name="titleTextColorRGB">
+						<int>-16777216</int>
+					</property>
+					<property name="installFrameWidth">
+						<int>600</int>
+					</property>
+					<property name="installFrameHeight">
+						<int>400</int>
+					</property>
+					<property name="useSystemInstallPanelBackgroundRGB">
+						<boolean>false</boolean>
+					</property>
+					<property name="useSystemTitleTextColorRGB">
+						<boolean>false</boolean>
+					</property>
+				</object>
+			</property>
+			<property name="customInstallSet">
+				<object class="com.zerog.ia.installer.InstallSet" objectID="f77ba5eea618">
+					<property name="imagePath">
+						<string><![CDATA[com/zerog/ia/installer/images/]]></string>
+					</property>
+					<property name="description">
+						<string><![CDATA[Choose this option to customize the features to be installed.]]></string>
+					</property>
+					<property name="imageName">
+						<string><![CDATA[customIcon.png]]></string>
+					</property>
+					<property name="shortName">
+						<string><![CDATA[Custom]]></string>
+					</property>
+					<property name="installSetName">
+						<string><![CDATA[Custom]]></string>
+					</property>
+					<property name="preferredLocalizationVariant">
+						<string><![CDATA[custom]]></string>
+					</property>
+				</object>
+			</property>
+			<property name="fileModificationTimestampBehavior">
+				<int>1</int>
+			</property>
+			<property name="fileModificationTimestamp">
+				<long>-1</long>
+			</property>
+			<property name="suiteObjects">
+				<object class="java.util.Vector">
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.Project" objectID="f77ba5efa618">
+							<property name="name">
+								<string><![CDATA[install]]></string>
+							</property>
+							<property name="projectLocation">
+								<string><![CDATA[Same as current product]]></string>
+							</property>
+							<property name="requiresServiceSupport">
+								<boolean>false</boolean>
+							</property>
+						</object>
+					</method>
+				</object>
+			</property>
+			<property name="defaultProject">
+				<object refID="f77ba5efa618"/>
+			</property>
+			<property name="advertisedVariables">
+				<object class="java.util.Vector"/>
+			</property>
+			<property name="isMergeModule">
+				<boolean>false</boolean>
+			</property>
+			<property name="installerInfoData">
+				<object class="com.zerog.ia.installer.util.InstallerInfoData" objectID="f77ba5eea619">
+					<property name="installerTitle">
+						<string><![CDATA[Terracotta for Spring]]></string>
+					</property>
+					<property name="installerName">
+						<string><![CDATA[install-terracotta-spring]]></string>
+					</property>
+					<property name="productName">
+						<string><![CDATA[Terracotta for Spring]]></string>
+					</property>
+					<property name="productID">
+						<object class="com.zerog.registry.UUID">
+							<method name="update">
+								<string><![CDATA[deffbce7-1ede-11b2-a66c-8f6b5e70874f]]></string>
+							</method>
+						</object>
+					</property>
+					<property name="productVersionMajor">
+						<int>2</int>
+					</property>
+					<property name="productVersionMinor">
+						<int>2</int>
+					</property>
+					<property name="productVersionRevision">
+						<int>0</int>
+					</property>
+					<property name="productVersionSubRevision">
+						<int>0</int>
+					</property>
+					<property name="vendorName">
+						<string><![CDATA[Terracotta, Inc.]]></string>
+					</property>
+					<property name="vendorID">
+						<object class="com.zerog.registry.UUID">
+							<method name="update">
+								<string><![CDATA[7f1ebb3c-1ec7-11b2-8037-c0d9e9f9d7a6]]></string>
+							</method>
+						</object>
+					</property>
+					<property name="vendorURL">
+						<string><![CDATA[http://www.terracottatech.com]]></string>
+					</property>
+					<property name="email">
+						<string><![CDATA[support@terracottatech.com]]></string>
+					</property>
+					<property name="copyright">
+						<string><![CDATA[2006]]></string>
+					</property>
+				</object>
+			</property>
+			<property name="installLogUninstall">
+				<boolean>true</boolean>
+			</property>
+			<property name="neverReboots">
+				<boolean>false</boolean>
+			</property>
+			<property name="suggestedMedias">
+				<object class="com.zerog.resources.Medias" objectID="f77ba5fea619">
+					<property name="medias">
+						<object class="java.util.Vector"/>
+					</property>
+				</object>
+			</property>
+			<property name="dIMReferences">
+				<object class="java.util.Vector"/>
+			</property>
+			<property name="help">
+				<object class="com.zerog.ia.installer.util.Help" objectID="f77ba5ffa619">
+					<property name="showHelp">
+						<boolean>false</boolean>
+					</property>
+				</object>
+			</property>
+			<property name="useInstallerHelp">
+				<boolean>false</boolean>
+			</property>
+			<property name="contextualHelp">
+				<boolean>true</boolean>
+			</property>
+			<property name="htmlHelp">
+				<boolean>true</boolean>
+			</property>
+			<property name="defaultTargetCheckKind">
+				<int>1</int>
+			</property>
+			<property name="preUninstallActions">
+				<object class="java.util.Vector">
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.UninstallIntroAction" objectID="f77ba5fea61a">
+							<property name="imageOption">
+								<int>1</int>
+							</property>
+							<property name="stepTitle">
+								<string><![CDATA[Uninstall $PRODUCT_NAME$]]></string>
+							</property>
+							<property name="message">
+								<string><![CDATA[About to uninstall...
+
+$PRODUCT_NAME$
+
+Important: 
+Exit all Terracotta installed applications before continuing the uninstall process.
+
+This will remove features installed by the $PRODUCT_NAME$ installer. It will not remove files and folders created after the installation.]]></string>
+							</property>
+							<property name="justification">
+								<int>0</int>
+							</property>
+							<property name="alignment">
+								<int>3</int>
+							</property>
+							<property name="labelOption">
+								<int>3</int>
+							</property>
+							<property name="labelIndex">
+								<int>0</int>
+							</property>
+							<property name="help">
+								<object class="com.zerog.ia.installer.util.Help" objectID="f77ba5ffa61a">
+									<property name="showHelp">
+										<boolean>false</boolean>
+									</property>
+								</object>
+							</property>
+						</object>
+					</method>
+				</object>
+			</property>
+			<property name="postUninstallActions">
+				<object class="java.util.Vector">
+					<method name="addElement">
+						<object class="com.zerog.ia.installer.actions.UninstallCompleteAction" objectID="f77ba5fea61b">
+							<property name="imageOption">
+								<int>1</int>
+							</property>
+							<property name="stepTitle">
+								<string><![CDATA[Uninstall Complete]]></string>
+							</property>
+							<property name="justification">
+								<int>0</int>
+							</property>
+							<property name="alignment">
+								<int>3</int>
+							</property>
+							<property name="labelOption">
+								<int>3</int>
+							</property>
+							<property name="labelIndex">
+								<int>0</int>
+							</property>
+							<property name="uninstallSuccessMessage">
+								<string><![CDATA[All items were successfully uninstalled.]]></string>
+							</property>
+							<property name="uninstallIncompleteMessage">
+								<string><![CDATA[The following items could not be removed:]]></string>
+							</property>
+							<property name="rebootNotNeededMessage">
+								<string><![CDATA[]]></string>
+							</property>
+							<property name="rebootRecommendedMessage">
+								<string><![CDATA[You should restart the system to complete the uninstallation.]]></string>
+							</property>
+							<property name="rebootRequiredMessage">
+								<string><![CDATA[You need to restart the system to complete the uninstallation.]]></string>
+							</property>
+							<property name="allowUserChoice">
+								<boolean>false</boolean>
+							</property>
+							<property name="showsRebootStatusMessage">
+								<boolean>false</boolean>
+							</property>
+							<property name="showsInstallStatusMessage">
+								<boolean>true</boolean>
+							</property>
+							<property name="showsUnhandledFileList">
+								<boolean>true</boolean>
+							</property>
+						</object>
+					</method>
+				</object>
+			</property>
+			<property name="inputLanguage">
+				<string><![CDATA[en]]></string>
+			</property>
+			<property name="runtimeAccessType">
+				<string><![CDATA[off]]></string>
+			</property>
+			<property name="SolutionInstallPackages">
+				<object class="java.util.Vector"/>
+			</property>
+			<property name="replayVariablesExcluded">
+				<object class="java.util.Vector"/>
+			</property>
+			<property name="responseFileEnabled">
+				<boolean>false</boolean>
+			</property>
+			<visualChildren>
+				<object class="com.zerog.ia.installer.InstallSet" objectID="f7792df9a5aa">
+					<property name="imagePath">
+						<string><![CDATA[com/zerog/ia/installer/images/]]></string>
+					</property>
+					<property name="description">
+						<string><![CDATA[The most common application features will be installed.  This option is recommended for most users.]]></string>
+					</property>
+					<property name="imageName">
+						<string><![CDATA[typical.png]]></string>
+					</property>
+					<property name="shortName">
+						<string><![CDATA[Typical]]></string>
+					</property>
+					<property name="installSetName">
+						<string><![CDATA[Typical]]></string>
+					</property>
+					<property name="preferredLocalizationVariant">
+						<string><![CDATA[typical]]></string>
+					</property>
+					<installChildren>
+						<object class="com.zerog.ia.installer.InstallBundle" objectID="f7792dfaa5ab">
+							<property name="bundleName">
+								<string><![CDATA[Product]]></string>
+							</property>
+							<property name="description">
+								<string><![CDATA[This installs the product feature.]]></string>
+							</property>
+							<property name="shortName">
+								<string><![CDATA[Product]]></string>
+							</property>
+							<property name="preferredLocalizationVariant">
+								<string><![CDATA[application]]></string>
+							</property>
+							<installChildren>
+								<object class="com.zerog.ia.installer.InstallComponent" objectID="f7792df9a5ad">
+									<property name="componentName">
+										<string><![CDATA[Spring]]></string>
+									</property>
+									<property name="comment">
+										<string><![CDATA[This component holds resources (e.g., files, folders, actions) common to all Product Features]]></string>
+									</property>
+									<property name="shortName">
+										<string><![CDATA[Spring]]></string>
+									</property>
+									<property name="uniqueId">
+										<object class="com.zerog.registry.UUID">
+											<method name="update">
+												<string><![CDATA[fd01a5a3-1ee0-11b2-9299-b8707ce64358]]></string>
+											</method>
+										</object>
+									</property>
+									<property name="versionMajor">
+										<int>1</int>
+									</property>
+									<property name="versionMinor">
+										<int>0</int>
+									</property>
+									<property name="versionRevision">
+										<int>0</int>
+									</property>
+									<property name="versionSubRevision">
+										<int>0</int>
+									</property>
+									<property name="keyFile">
+										<object class="com.zerog.ia.installer.actions.CreateShortcut" objectID="f7792e19a5dc">
+											<property name="targetAction">
+												<object refID="f7792e18a5cf"/>
+											</property>
+											<property name="useInstalledFile">
+												<boolean>true</boolean>
+											</property>
+											<property name="workingDir">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="shouldUninstall">
+												<boolean>true</boolean>
+											</property>
+											<property name="destinationName">
+												<string><![CDATA[Welcome]]></string>
+											</property>
+											<property name="args">
+												<string><![CDATA[]]></string>
+											</property>
+											<rules logicalOperation="AND">
+												<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f7792e18a5dd">
+													<property name="operation">
+														<string><![CDATA[equals]]></string>
+													</property>
+													<property name="operandOne">
+														<string><![CDATA[$STARTMENU_SHORTCUT_RESULT$]]></string>
+													</property>
+													<property name="operandTwo">
+														<string><![CDATA[1]]></string>
+													</property>
+												</object>
+											</rules>
+										</object>
+									</property>
+									<property name="dependency">
+										<object class="com.zerog.ia.installer.ComponentDependency" objectID="f77ba60ea61b">
+											<property name="matchesKeyFile">
+												<boolean>false</boolean>
+											</property>
+											<property name="matchingKeyFileReturnVariable">
+												<string><![CDATA[$Spring_MATCHED_KEY_FILE$]]></string>
+											</property>
+											<property name="checksLowerBound">
+												<boolean>false</boolean>
+											</property>
+											<property name="checksUpperBound">
+												<boolean>false</boolean>
+											</property>
+											<property name="lowerBoundComponentVersion">
+												<object class="com.zerog.ia.installer.util.ComponentVersion" objectID="f77ba60fa61b">
+													<property name="versionMajor">
+														<int>1</int>
+													</property>
+													<property name="versionMinor">
+														<int>0</int>
+													</property>
+													<property name="versionRevision">
+														<int>0</int>
+													</property>
+													<property name="versionSubrevision">
+														<int>0</int>
+													</property>
+												</object>
+											</property>
+											<property name="upperBoundComponentVersion">
+												<object class="com.zerog.ia.installer.util.ComponentVersion" objectID="f77ba60ea61c">
+													<property name="versionMajor">
+														<int>1</int>
+													</property>
+													<property name="versionMinor">
+														<int>0</int>
+													</property>
+													<property name="versionRevision">
+														<int>0</int>
+													</property>
+													<property name="versionSubrevision">
+														<int>0</int>
+													</property>
+												</object>
+											</property>
+											<property name="parentComponent">
+												<object refID="f7792df9a5ad"/>
+											</property>
+											<property name="dependencyFailedMessage">
+												<string><![CDATA[Spring dependency has failed.]]></string>
+											</property>
+											<property name="dependencyFailedMessageVariableName">
+												<string><![CDATA[$Spring_DEPENDENCY_STATE_VARIABLE$]]></string>
+											</property>
+										</object>
+									</property>
+									<property name="checksDependency">
+										<boolean>false</boolean>
+									</property>
+									<property name="hasSomethingToInstall">
+										<boolean>true</boolean>
+									</property>
+									<installChildren>
+										<object refID="f7792e18a5cf"/>
+										<object class="com.zerog.ia.installer.actions.MakeExecutable" objectID="15e88ada8ba6">
+											<property name="unixPermissions">
+												<string><![CDATA[664]]></string>
+											</property>
+											<property name="overrideUnixPermissions">
+												<boolean>false</boolean>
+											</property>
+											<property name="guiLauncher">
+												<boolean>true</boolean>
+											</property>
+											<property name="propertyList">
+												<object class="java.util.Vector">
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15e88adb8bad">
+															<property name="propertyValue">
+																<string><![CDATA[]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[lax.stderr.redirect]]></string>
+															</property>
+															<property name="propertyComment">
+																<string><![CDATA[leave blank for no input, "console" to read from the console window,
+and any path to a file to read from that file]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15e88ada8ba8">
+															<property name="propertyValue">
+																<string><![CDATA[2750]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[lax.nl.win32.microsoftvm.min.version]]></string>
+															</property>
+															<property name="propertyComment">
+																<string><![CDATA[The minimum version of Microsoft's VM this application will run against]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15e88adb8ba9">
+															<property name="propertyValue">
+																<string><![CDATA[]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[lax.stdin.redirect]]></string>
+															</property>
+															<property name="propertyComment">
+																<string><![CDATA[leave blank for no input, "console" to read from the console window,
+and any path to a file to read from that file]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15e88adb8bac">
+															<property name="propertyValue">
+																<string><![CDATA[.]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[lax.user.dir]]></string>
+															</property>
+															<property name="propertyComment">
+																<string><![CDATA[left blank, this property will cause the native launcher to not
+alter the platform default behavior for setting the user dir.
+To override this you may set this property to a relative or absolute path.
+Relative paths are relative to the launcher.]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15e88adb8bab">
+															<property name="propertyValue">
+																<string><![CDATA[main]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[lax.main.method]]></string>
+															</property>
+															<property name="propertyComment">
+																<string><![CDATA[the method in the main class that will be invoked]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15e88ada8ba9">
+															<property name="propertyValue">
+																<string><![CDATA[$USER_INSTALL_DIR$]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[lax.root.install.dir]]></string>
+															</property>
+															<property name="propertyComment">
+																<string><![CDATA[path to the installdir magic folder]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15e88adb8ba8">
+															<property name="propertyValue">
+																<string><![CDATA[]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[lax.command.line.args]]></string>
+															</property>
+															<property name="propertyComment">
+																<string><![CDATA[what will be passed to the main method -- be sure to quote arguments with spaces in them]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15e88adb8ba7">
+															<property name="propertyValue">
+																<string><![CDATA[$USER_MAGIC_FOLDER_3$$/$common$/$lib$/$tc.jar]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[lax.class.path]]></string>
+															</property>
+															<property name="propertyComment">
+																<string><![CDATA[the Java classpath necessary to run this application
+Can be separated by colons (Mac OS/Unix) or semicolons (Windows)]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15e88ada8bab">
+															<property name="propertyValue">
+																<string><![CDATA[J2]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[lax.nl.valid.vm.list]]></string>
+															</property>
+															<property name="propertyComment">
+																<string><![CDATA[a string containing one or more of [ ALL JDK JRE J1 J2 JRE_J1 JDK_J1 JRE_J2 JDK_J2 MSJ ]
+ delimited by spaces or commas.  If the native launcher cannot find the current vm,
+it will search for ones in this list]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15e88ada8baa">
+															<property name="propertyValue">
+																<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[tc.install-root]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15e88ada8ba7">
+															<property name="propertyValue">
+																<string><![CDATA[8.0]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[lax.version]]></string>
+															</property>
+															<property name="propertyComment">
+																<string><![CDATA[version of LaunchAnywhere that created this properties file]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="3a168b388f63">
+															<property name="propertyValue">
+																<string><![CDATA[com.tc.admin.AdminClient]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[lax.main.class]]></string>
+															</property>
+															<property name="propertyComment">
+																<string><![CDATA[the class that contains the main method for the application]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15e88adb8baa">
+															<property name="propertyValue">
+																<string><![CDATA[$USER_MAGIC_FOLDER_3$$/$jre$/$bin$/$java.exe]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[lax.nl.current.vm]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15e88ada8bac">
+															<property name="propertyValue">
+																<string><![CDATA[]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[lax.stdout.redirect]]></string>
+															</property>
+															<property name="propertyComment">
+																<string><![CDATA[leave blank for no input, "console" to read from the console window,
+and any path to a file to read from that file]]></string>
+															</property>
+														</object>
+													</method>
+												</object>
+											</property>
+											<property name="shouldUninstall">
+												<boolean>true</boolean>
+											</property>
+											<property name="destinationName">
+												<string><![CDATA[AdminConsole]]></string>
+											</property>
+											<property name="executableIcon">
+												<object class="com.zerog.ia.installer.util.BindingWin32" objectID="15e88ada8bae">
+													<property name="smallIconName">
+														<string><![CDATA[terracotta_icon.gif]]></string>
+													</property>
+													<property name="largeIconName">
+														<string><![CDATA[terracotta_icon.gif]]></string>
+													</property>
+													<property name="smallIconPath">
+														<string><![CDATA[$IA_PROJECT_DIR$\common\images\]]></string>
+													</property>
+													<property name="largeIconPath">
+														<string><![CDATA[$IA_PROJECT_DIR$\common\images\]]></string>
+													</property>
+												</object>
+											</property>
+											<property name="mainClass">
+												<string><![CDATA[com.tc.admin.AdminClient]]></string>
+											</property>
+										</object>
+										<object refID="f7792e19a5dc"/>
+										<object class="com.zerog.ia.installer.actions.CreateShortcut" objectID="f7792e19a5d9">
+											<property name="useInstalledFile">
+												<boolean>false</boolean>
+											</property>
+											<property name="existingFilePath">
+												<string><![CDATA[$USER_MAGIC_FOLDER_1$$/$samples$/$samples.html]]></string>
+											</property>
+											<property name="workingDir">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="shouldUninstall">
+												<boolean>true</boolean>
+											</property>
+											<property name="destinationName">
+												<string><![CDATA[Sample Applications Overview]]></string>
+											</property>
+											<property name="args">
+												<string><![CDATA[]]></string>
+											</property>
+											<rules logicalOperation="AND">
+												<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f7792e18a5da">
+													<property name="operation">
+														<string><![CDATA[equals]]></string>
+													</property>
+													<property name="operandOne">
+														<string><![CDATA[$STARTMENU_SHORTCUT_RESULT$]]></string>
+													</property>
+													<property name="operandTwo">
+														<string><![CDATA[1]]></string>
+													</property>
+												</object>
+											</rules>
+										</object>
+										<object class="com.zerog.ia.installer.actions.CreateShortcut" objectID="f7792e18a5d8">
+											<property name="targetAction">
+												<object refID="15e88ada8ba6"/>
+											</property>
+											<property name="useInstalledFile">
+												<boolean>true</boolean>
+											</property>
+											<property name="existingFilePath">
+												<string><![CDATA[$USER_MAGIC_FOLDER_1$$/$bin$/$tc-admin.bat]]></string>
+											</property>
+											<property name="workingDir">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="shouldUninstall">
+												<boolean>true</boolean>
+											</property>
+											<property name="destinationName">
+												<string><![CDATA[Administrator Console]]></string>
+											</property>
+											<property name="args">
+												<string><![CDATA[]]></string>
+											</property>
+											<rules logicalOperation="AND">
+												<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f7792e19a5d8">
+													<property name="operation">
+														<string><![CDATA[equals]]></string>
+													</property>
+													<property name="operandOne">
+														<string><![CDATA[$STARTMENU_SHORTCUT_RESULT$]]></string>
+													</property>
+													<property name="operandTwo">
+														<string><![CDATA[1]]></string>
+													</property>
+												</object>
+											</rules>
+										</object>
+										<object class="com.zerog.ia.installer.actions.CreateShortcut" objectID="fc1bdc228c61">
+											<property name="useInstalledFile">
+												<boolean>false</boolean>
+											</property>
+											<property name="existingFilePath">
+												<string><![CDATA[$USER_MAGIC_FOLDER_1$]]></string>
+											</property>
+											<property name="workingDir">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="shouldUninstall">
+												<boolean>true</boolean>
+											</property>
+											<property name="destinationName">
+												<string><![CDATA[Explore]]></string>
+											</property>
+											<property name="args">
+												<string><![CDATA[]]></string>
+											</property>
+											<rules logicalOperation="AND">
+												<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="076110938fa4">
+													<property name="operation">
+														<string><![CDATA[equals]]></string>
+													</property>
+													<property name="operandOne">
+														<string><![CDATA[$STARTMENU_SHORTCUT_RESULT$]]></string>
+													</property>
+													<property name="operandTwo">
+														<string><![CDATA[1]]></string>
+													</property>
+												</object>
+											</rules>
+										</object>
+										<object class="com.zerog.ia.installer.actions.CreateShortcut" objectID="fcbeb8948f8a">
+											<property name="useInstalledFile">
+												<boolean>false</boolean>
+											</property>
+											<property name="existingFilePath">
+												<string><![CDATA[$USER_MAGIC_FOLDER_1$$/$docs$/$TerracottaSpringGuide.html]]></string>
+											</property>
+											<property name="workingDir">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="shouldUninstall">
+												<boolean>true</boolean>
+											</property>
+											<property name="destinationName">
+												<string><![CDATA[Guide]]></string>
+											</property>
+											<property name="args">
+												<string><![CDATA[]]></string>
+											</property>
+											<rules logicalOperation="AND">
+												<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="076162aa8fa5">
+													<property name="operation">
+														<string><![CDATA[equals]]></string>
+													</property>
+													<property name="operandOne">
+														<string><![CDATA[$STARTMENU_SHORTCUT_RESULT$]]></string>
+													</property>
+													<property name="operandTwo">
+														<string><![CDATA[1]]></string>
+													</property>
+												</object>
+											</rules>
+										</object>
+										<object class="com.zerog.ia.installer.actions.CreateShortcut" objectID="f7792e19a5db">
+											<property name="targetAction">
+												<object class="com.zerog.ia.installer.actions.InstallUninstaller" objectID="f7792e09a5c9">
+													<property name="unixPermissions">
+														<string><![CDATA[664]]></string>
+													</property>
+													<property name="overrideUnixPermissions">
+														<boolean>false</boolean>
+													</property>
+													<property name="guiLauncher">
+														<boolean>true</boolean>
+													</property>
+													<property name="propertyList">
+														<object class="java.util.Vector">
+															<method name="addElement">
+																<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e18a5c9">
+																	<property name="propertyValue">
+																		<string><![CDATA[]]></string>
+																	</property>
+																	<property name="propertyName">
+																		<string><![CDATA[lax.stderr.redirect]]></string>
+																	</property>
+																	<property name="propertyComment">
+																		<string><![CDATA[leave blank for no input, "console" to read from the console window,
+and any path to a file to read from that file]]></string>
+																	</property>
+																</object>
+															</method>
+															<method name="addElement">
+																<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e19a5c9">
+																	<property name="propertyValue">
+																		<string><![CDATA[2750]]></string>
+																	</property>
+																	<property name="propertyName">
+																		<string><![CDATA[lax.nl.win32.microsoftvm.min.version]]></string>
+																	</property>
+																	<property name="propertyComment">
+																		<string><![CDATA[The minimum version of Microsoft's VM this application will run against]]></string>
+																	</property>
+																</object>
+															</method>
+															<method name="addElement">
+																<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e18a5ca">
+																	<property name="propertyValue">
+																		<string><![CDATA[]]></string>
+																	</property>
+																	<property name="propertyName">
+																		<string><![CDATA[lax.stdin.redirect]]></string>
+																	</property>
+																	<property name="propertyComment">
+																		<string><![CDATA[leave blank for no input, "console" to read from the console window,
+and any path to a file to read from that file]]></string>
+																	</property>
+																</object>
+															</method>
+															<method name="addElement">
+																<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e19a5ca">
+																	<property name="propertyValue">
+																		<string><![CDATA[.]]></string>
+																	</property>
+																	<property name="propertyName">
+																		<string><![CDATA[lax.user.dir]]></string>
+																	</property>
+																	<property name="propertyComment">
+																		<string><![CDATA[left blank, this property will cause the native launcher to not
+alter the platform default behavior for setting the user dir.
+To override this you may set this property to a relative or absolute path.
+Relative paths are relative to the launcher.]]></string>
+																	</property>
+																</object>
+															</method>
+															<method name="addElement">
+																<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e18a5cb">
+																	<property name="propertyValue">
+																		<string><![CDATA[main]]></string>
+																	</property>
+																	<property name="propertyName">
+																		<string><![CDATA[lax.main.method]]></string>
+																	</property>
+																	<property name="propertyComment">
+																		<string><![CDATA[the method in the main class that will be invoked]]></string>
+																	</property>
+																</object>
+															</method>
+															<method name="addElement">
+																<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e19a5cb">
+																	<property name="propertyValue">
+																		<string><![CDATA[$USER_INSTALL_DIR$]]></string>
+																	</property>
+																	<property name="propertyName">
+																		<string><![CDATA[lax.root.install.dir]]></string>
+																	</property>
+																	<property name="propertyComment">
+																		<string><![CDATA[path to the installdir magic folder]]></string>
+																	</property>
+																</object>
+															</method>
+															<method name="addElement">
+																<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e18a5cc">
+																	<property name="propertyValue">
+																		<string><![CDATA[$CMD_LINE_ARGUMENTS$]]></string>
+																	</property>
+																	<property name="propertyName">
+																		<string><![CDATA[lax.command.line.args]]></string>
+																	</property>
+																	<property name="propertyComment">
+																		<string><![CDATA[what will be passed to the main method -- be sure to quote arguments with spaces in them]]></string>
+																	</property>
+																</object>
+															</method>
+															<method name="addElement">
+																<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e19a5cc">
+																	<property name="propertyValue">
+																		<string><![CDATA[$IA_CLASSPATH$]]></string>
+																	</property>
+																	<property name="propertyName">
+																		<string><![CDATA[lax.class.path]]></string>
+																	</property>
+																	<property name="propertyComment">
+																		<string><![CDATA[the Java classpath necessary to run this application
+Can be separated by colons (Mac OS/Unix) or semicolons (Windows)]]></string>
+																	</property>
+																</object>
+															</method>
+															<method name="addElement">
+																<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e18a5cd">
+																	<property name="propertyValue">
+																		<string><![CDATA[J2]]></string>
+																	</property>
+																	<property name="propertyName">
+																		<string><![CDATA[lax.nl.valid.vm.list]]></string>
+																	</property>
+																	<property name="propertyComment">
+																		<string><![CDATA[a string containing one or more of [ ALL JDK JRE J1 J2 JRE_J1 JDK_J1 JRE_J2 JDK_J2 MSJ ]
+ delimited by spaces or commas.  If the native launcher cannot find the current vm,
+it will search for ones in this list]]></string>
+																	</property>
+																</object>
+															</method>
+															<method name="addElement">
+																<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e19a5cd">
+																	<property name="propertyValue">
+																		<string><![CDATA[7.0]]></string>
+																	</property>
+																	<property name="propertyName">
+																		<string><![CDATA[lax.version]]></string>
+																	</property>
+																	<property name="propertyComment">
+																		<string><![CDATA[version of LaunchAnywhere that created this properties file]]></string>
+																	</property>
+																</object>
+															</method>
+															<method name="addElement">
+																<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7792e18a5ce">
+																	<property name="propertyValue">
+																		<string><![CDATA[]]></string>
+																	</property>
+																	<property name="propertyName">
+																		<string><![CDATA[lax.stdout.redirect]]></string>
+																	</property>
+																	<property name="propertyComment">
+																		<string><![CDATA[leave blank for no input, "console" to read from the console window,
+and any path to a file to read from that file]]></string>
+																	</property>
+																</object>
+															</method>
+														</object>
+													</property>
+													<property name="shouldUninstall">
+														<boolean>true</boolean>
+													</property>
+													<property name="destinationName">
+														<string><![CDATA[Uninstall $PRODUCT_NAME$]]></string>
+													</property>
+													<property name="executableIcon">
+														<object class="com.zerog.ia.installer.util.BindingWin32" objectID="f7792e19a5ce">
+															<property name="smallIconName">
+																<string><![CDATA[terracotta_icon.gif]]></string>
+															</property>
+															<property name="largeIconName">
+																<string><![CDATA[terracotta_icon.gif]]></string>
+															</property>
+															<property name="smallIconPath">
+																<string><![CDATA[$IA_PROJECT_DIR$\common\images\]]></string>
+															</property>
+															<property name="largeIconPath">
+																<string><![CDATA[$IA_PROJECT_DIR$\common\images\]]></string>
+															</property>
+														</object>
+													</property>
+													<property name="neverRestarts">
+														<boolean>false</boolean>
+													</property>
+													<property name="asksUserAboutRestart">
+														<boolean>true</boolean>
+													</property>
+												</object>
+											</property>
+											<property name="useInstalledFile">
+												<boolean>true</boolean>
+											</property>
+											<property name="workingDir">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="shouldUninstall">
+												<boolean>true</boolean>
+											</property>
+											<property name="destinationName">
+												<string><![CDATA[Uninstall]]></string>
+											</property>
+											<property name="args">
+												<string><![CDATA[]]></string>
+											</property>
+											<rules logicalOperation="AND">
+												<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f7792e18a5dc">
+													<property name="operation">
+														<string><![CDATA[equals]]></string>
+													</property>
+													<property name="operandOne">
+														<string><![CDATA[$STARTMENU_SHORTCUT_RESULT$]]></string>
+													</property>
+													<property name="operandTwo">
+														<string><![CDATA[1]]></string>
+													</property>
+												</object>
+											</rules>
+										</object>
+										<object class="com.zerog.ia.installer.actions.MakeRegEntry" objectID="f7792e19a5df">
+											<property name="userLabel">
+												<string><![CDATA[version number:uninstall]]></string>
+											</property>
+											<property name="valueName">
+												<string><![CDATA[DisplayVersion]]></string>
+											</property>
+											<property name="value">
+												<string><![CDATA[$TC_VERSION$]]></string>
+											</property>
+											<property name="key">
+												<string><![CDATA[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$PRODUCT_NAME$]]></string>
+											</property>
+											<property name="uninstallOptions">
+												<int>2</int>
+											</property>
+											<property name="dataType">
+												<int>0</int>
+											</property>
+											<property name="overrideInstallerRegView">
+												<boolean>false</boolean>
+											</property>
+											<property name="target64BitReg">
+												<boolean>false</boolean>
+											</property>
+										</object>
+										<object class="com.zerog.ia.installer.actions.CreateShortcut" objectID="f7792e18a5e0">
+											<property name="targetAction">
+												<object refID="f7792e18a5cf"/>
+											</property>
+											<property name="useInstalledFile">
+												<boolean>true</boolean>
+											</property>
+											<property name="workingDir">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="shouldUninstall">
+												<boolean>true</boolean>
+											</property>
+											<property name="destinationName">
+												<string><![CDATA[$PRODUCT_NAME$ Welcome]]></string>
+											</property>
+											<property name="args">
+												<string><![CDATA[]]></string>
+											</property>
+											<rules logicalOperation="AND">
+												<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="f7792e19a5e0">
+													<property name="operation">
+														<string><![CDATA[equals]]></string>
+													</property>
+													<property name="operandOne">
+														<string><![CDATA[$DESKTOP_SHORTCUT_RESULT$]]></string>
+													</property>
+													<property name="operandTwo">
+														<string><![CDATA[1]]></string>
+													</property>
+												</object>
+											</rules>
+										</object>
+										<object class="com.zerog.ia.installer.actions.InstallDirectory" objectID="3a325c219756">
+											<property name="unixPermissions">
+												<string><![CDATA[775]]></string>
+											</property>
+											<property name="sourceName">
+												<string><![CDATA[]]></string>
+											</property>
+											<property name="overrideUnixPermissions">
+												<boolean>false</boolean>
+											</property>
+											<property name="sourcePath">
+												<string><![CDATA[$IA_PROJECT_DIR$\install_build_output\Application Files\terracotta-2.2]]></string>
+											</property>
+											<property name="shouldUninstall">
+												<boolean>false</boolean>
+											</property>
+											<property name="destinationName">
+												<string><![CDATA[terracotta-2.2]]></string>
+											</property>
+											<property name="removeRecursively">
+												<boolean>false</boolean>
+											</property>
+											<property name="totalSize">
+												<long>1</long>
+											</property>
+											<property name="macBinary">
+												<boolean>false</boolean>
+											</property>
+										</object>
+									</installChildren>
+								</object>
+								<object class="com.zerog.ia.installer.InstallComponent" objectID="f7792df9a5ae">
+									<property name="componentName">
+										<string><![CDATA[InstallAnywhere Uninstall Component]]></string>
+									</property>
+									<property name="comment">
+										<string><![CDATA[This component is intended to hold this project's Uninstaller and any resources specific to the uninstallation of the product installed by this project]]></string>
+									</property>
+									<property name="shortName">
+										<string><![CDATA[Uninstall_ZG-IA]]></string>
+									</property>
+									<property name="uniqueId">
+										<object class="com.zerog.registry.UUID">
+											<method name="update">
+												<string><![CDATA[15fe0c2a-1ee1-11b2-93bd-b8707ce64358]]></string>
+											</method>
+										</object>
+									</property>
+									<property name="versionMajor">
+										<int>1</int>
+									</property>
+									<property name="versionMinor">
+										<int>0</int>
+									</property>
+									<property name="versionRevision">
+										<int>0</int>
+									</property>
+									<property name="versionSubRevision">
+										<int>0</int>
+									</property>
+									<property name="keyFile">
+										<object refID="f7792e09a5c9"/>
+									</property>
+									<property name="dependency">
+										<object class="com.zerog.ia.installer.ComponentDependency" objectID="f77ba6aaa61c">
+											<property name="matchesKeyFile">
+												<boolean>false</boolean>
+											</property>
+											<property name="matchingKeyFileReturnVariable">
+												<string><![CDATA[$InstallAnywhere_Uninstall_Component_MATCHED_KEY_FILE$]]></string>
+											</property>
+											<property name="checksLowerBound">
+												<boolean>false</boolean>
+											</property>
+											<property name="checksUpperBound">
+												<boolean>false</boolean>
+											</property>
+											<property name="lowerBoundComponentVersion">
+												<object class="com.zerog.ia.installer.util.ComponentVersion" objectID="f77ba6aba61c">
+													<property name="versionMajor">
+														<int>1</int>
+													</property>
+													<property name="versionMinor">
+														<int>0</int>
+													</property>
+													<property name="versionRevision">
+														<int>0</int>
+													</property>
+													<property name="versionSubrevision">
+														<int>0</int>
+													</property>
+												</object>
+											</property>
+											<property name="upperBoundComponentVersion">
+												<object class="com.zerog.ia.installer.util.ComponentVersion" objectID="f77ba6aaa61d">
+													<property name="versionMajor">
+														<int>1</int>
+													</property>
+													<property name="versionMinor">
+														<int>0</int>
+													</property>
+													<property name="versionRevision">
+														<int>0</int>
+													</property>
+													<property name="versionSubrevision">
+														<int>0</int>
+													</property>
+												</object>
+											</property>
+											<property name="parentComponent">
+												<object refID="f7792df9a5ae"/>
+											</property>
+											<property name="dependencyFailedMessage">
+												<string><![CDATA[InstallAnywhere Uninstall Component dependency has failed.]]></string>
+											</property>
+											<property name="dependencyFailedMessageVariableName">
+												<string><![CDATA[$InstallAnywhere_Uninstall_Component_DEPENDENCY_STATE_VARIABLE$]]></string>
+											</property>
+										</object>
+									</property>
+									<property name="checksDependency">
+										<boolean>false</boolean>
+									</property>
+									<property name="hasSomethingToInstall">
+										<boolean>true</boolean>
+									</property>
+									<installChildren>
+										<object class="com.zerog.ia.installer.actions.InstallDirectory" objectID="f7792e09a5c8">
+											<property name="unixPermissions">
+												<string><![CDATA[775]]></string>
+											</property>
+											<property name="overrideUnixPermissions">
+												<boolean>false</boolean>
+											</property>
+											<property name="shouldUninstall">
+												<boolean>true</boolean>
+											</property>
+											<property name="destinationName">
+												<string><![CDATA[uninstall]]></string>
+											</property>
+											<property name="removeRecursively">
+												<boolean>false</boolean>
+											</property>
+											<property name="totalSize">
+												<long>1</long>
+											</property>
+											<property name="macBinary">
+												<boolean>false</boolean>
+											</property>
+											<visualChildren>
+												<object class="com.zerog.ia.installer.actions.Comment" objectID="f7792e0aa5c8">
+													<property name="commentStr">
+														<string><![CDATA[IMPORTANT: Avoid adding non-uninstaller specific resources directly to the InstallAnywhere Uninstall Component (Uninstall) when modifying or adding new actions to your project. 
+
+ The Uninstall component is only intended to hold this project's Uninstaller and any resources specific to the uninstallation of the product installed by this project. 
+
+ It is recommended that this comment not be removed.]]></string>
+													</property>
+												</object>
+												<object refID="f7792e09a5c9"/>
+											</visualChildren>
+										</object>
+										<object refID="f7792e0aa5c8"/>
+										<object refID="f7792e09a5c9"/>
+									</installChildren>
+								</object>
+								<object class="com.zerog.ia.installer.VMComponent" objectID="f7792dfaa5ad">
+									<property name="componentName">
+										<string><![CDATA[InstallAnywhere VM Component]]></string>
+									</property>
+									<property name="comment">
+										<string><![CDATA[<Enter Install Component comment here -- do not forget to assign this Component to desired Product Features>]]></string>
+									</property>
+									<property name="shortName">
+										<string><![CDATA[VM]]></string>
+									</property>
+									<property name="uniqueId">
+										<object class="com.zerog.registry.UUID">
+											<method name="update">
+												<string><![CDATA[fd050dd4-1ee0-11b2-930c-b8707ce64358]]></string>
+											</method>
+										</object>
+									</property>
+									<property name="versionMajor">
+										<int>1</int>
+									</property>
+									<property name="versionMinor">
+										<int>0</int>
+									</property>
+									<property name="versionRevision">
+										<int>0</int>
+									</property>
+									<property name="versionSubRevision">
+										<int>0</int>
+									</property>
+									<property name="dependency">
+										<object class="com.zerog.ia.installer.ComponentDependency" objectID="f77ba6baa61d">
+											<property name="matchesKeyFile">
+												<boolean>false</boolean>
+											</property>
+											<property name="matchingKeyFileReturnVariable">
+												<string><![CDATA[$InstallAnywhere_VM_Component_MATCHED_KEY_FILE$]]></string>
+											</property>
+											<property name="checksLowerBound">
+												<boolean>false</boolean>
+											</property>
+											<property name="checksUpperBound">
+												<boolean>false</boolean>
+											</property>
+											<property name="lowerBoundComponentVersion">
+												<object class="com.zerog.ia.installer.util.ComponentVersion" objectID="f77ba6bba61d">
+													<property name="versionMajor">
+														<int>1</int>
+													</property>
+													<property name="versionMinor">
+														<int>0</int>
+													</property>
+													<property name="versionRevision">
+														<int>0</int>
+													</property>
+													<property name="versionSubrevision">
+														<int>0</int>
+													</property>
+												</object>
+											</property>
+											<property name="upperBoundComponentVersion">
+												<object class="com.zerog.ia.installer.util.ComponentVersion" objectID="f77ba6baa61e">
+													<property name="versionMajor">
+														<int>1</int>
+													</property>
+													<property name="versionMinor">
+														<int>0</int>
+													</property>
+													<property name="versionRevision">
+														<int>0</int>
+													</property>
+													<property name="versionSubrevision">
+														<int>0</int>
+													</property>
+												</object>
+											</property>
+											<property name="parentComponent">
+												<object refID="f7792dfaa5ad"/>
+											</property>
+											<property name="dependencyFailedMessage">
+												<string><![CDATA[InstallAnywhere VM Component dependency has failed.]]></string>
+											</property>
+											<property name="dependencyFailedMessageVariableName">
+												<string><![CDATA[$InstallAnywhere_VM_Component_DEPENDENCY_STATE_VARIABLE$]]></string>
+											</property>
+										</object>
+									</property>
+									<property name="checksDependency">
+										<boolean>false</boolean>
+									</property>
+									<property name="hasSomethingToInstall">
+										<boolean>true</boolean>
+									</property>
+								</object>
+								<object class="com.zerog.ia.installer.Billboard" objectID="f7792e18a5e1">
+									<property name="imagePath">
+										<string><![CDATA[$IA_PROJECT_DIR$\common\images\]]></string>
+									</property>
+									<property name="imageName">
+										<string><![CDATA[billboard.gif]]></string>
+									</property>
+								</object>
+							</installChildren>
+						</object>
+					</installChildren>
+				</object>
+				<object class="com.zerog.ia.installer.InstallSet" objectID="11882bf99130">
+					<property name="imagePath">
+						<string><![CDATA[com/zerog/ia/installer/images/]]></string>
+					</property>
+					<property name="description">
+						<string><![CDATA[<Enter Install Set description here>]]></string>
+					</property>
+					<property name="imageName">
+						<string><![CDATA[typical.png]]></string>
+					</property>
+					<property name="shortName">
+						<string><![CDATA[Core]]></string>
+					</property>
+					<property name="installSetName">
+						<string><![CDATA[Core]]></string>
+					</property>
+				</object>
+				<object class="com.zerog.ia.installer.InstallSet" objectID="161c086f9521">
+					<property name="imagePath">
+						<string><![CDATA[com/zerog/ia/installer/images/]]></string>
+					</property>
+					<property name="description">
+						<string><![CDATA[<Enter Install Set description here>]]></string>
+					</property>
+					<property name="imageName">
+						<string><![CDATA[typical.png]]></string>
+					</property>
+					<property name="shortName">
+						<string><![CDATA[Minimal]]></string>
+					</property>
+					<property name="installSetName">
+						<string><![CDATA[Minimal]]></string>
+					</property>
+				</object>
+				<object refID="f7792dfaa5ab"/>
+				<object refID="f7792df9a5ad"/>
+				<object refID="f7792dfaa5ad"/>
+				<object refID="f7792df9a5ae"/>
+				<object class="com.zerog.ia.installer.GhostDirectory" objectID="f7792df9a5af">
+					<property name="destinationFolder">
+						<object refID="deff6542a668"/>
+					</property>
+					<property name="overrideUnixPermissions">
+						<boolean>false</boolean>
+					</property>
+					<property name="unixPermissions">
+						<string><![CDATA[775]]></string>
+					</property>
+					<visualChildren>
+						<object refID="3a325c219756"/>
+					</visualChildren>
+				</object>
+				<object class="com.zerog.ia.installer.GhostDirectory" objectID="f7792e0aa5c7">
+					<property name="destinationFolder">
+						<object class="com.zerog.ia.installer.util.magicfolders.UserMagicFolder1MF" factoryID="992" objectID="df9bed0aa67a"/>
+					</property>
+					<property name="overrideUnixPermissions">
+						<boolean>false</boolean>
+					</property>
+					<property name="unixPermissions">
+						<string><![CDATA[775]]></string>
+					</property>
+					<visualChildren>
+						<object refID="f7792e09a5c8"/>
+						<object refID="f7792e18a5cf"/>
+						<object refID="15e88ada8ba6"/>
+					</visualChildren>
+				</object>
+				<object class="com.zerog.ia.installer.GhostDirectory" objectID="f7792e19a5d7">
+					<property name="destinationFolder">
+						<object class="com.zerog.ia.installer.util.magicfolders.UserMagicFolder2MF" factoryID="991" objectID="e5d5e494a67b"/>
+					</property>
+					<property name="overrideUnixPermissions">
+						<boolean>false</boolean>
+					</property>
+					<property name="unixPermissions">
+						<string><![CDATA[775]]></string>
+					</property>
+					<visualChildren>
+						<object refID="f7792e19a5dc"/>
+						<object refID="f7792e19a5d9"/>
+						<object refID="f7792e18a5d8"/>
+						<object refID="fc1bdc228c61"/>
+						<object refID="fcbeb8948f8a"/>
+						<object refID="f7792e19a5db"/>
+					</visualChildren>
+				</object>
+				<object class="com.zerog.ia.installer.GhostDirectory" objectID="f7792e19a5dd">
+					<property name="destinationFolder">
+						<object refID="deffbcf8a66d"/>
+					</property>
+					<property name="overrideUnixPermissions">
+						<boolean>false</boolean>
+					</property>
+					<property name="unixPermissions">
+						<string><![CDATA[775]]></string>
+					</property>
+					<visualChildren>
+						<object refID="f7792e19a5df"/>
+						<object refID="f7792e18a5e0"/>
+					</visualChildren>
+				</object>
+				<object refID="f7792e18a5e1"/>
+			</visualChildren>
+			<installChildren>
+				<object refID="f7792df9a5aa"/>
+				<object refID="11882bf99130"/>
+				<object refID="161c086f9521"/>
+			</installChildren>
+		</object>
+	</installationObjects>
+	<restorationObjects count="1">
+		<object refID="3a325c219756"/>
+	</restorationObjects>
+</InstallAnywhere_Deployment_Project>

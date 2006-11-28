@@ -1,0 +1,69 @@
+/*
+ * Created on Aug 25, 2004
+ */
+package com.tc.object.msg;
+
+import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferOutput;
+import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.MessageMonitor;
+import com.tc.net.protocol.tcm.TCMessageHeader;
+import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.session.SessionID;
+import com.tc.object.tx.TransactionID;
+
+import java.io.IOException;
+
+/**
+ * @author steve
+ */
+public class AcknowledgeTransactionMessageImpl extends DSOMessageBase implements AcknowledgeTransactionMessage {
+  private final static byte REQUEST_ID   = 1;
+  private final static byte REQUESTER_ID = 2;
+
+  private TransactionID     requestID;
+  private ChannelID         requesterID;
+
+  public AcknowledgeTransactionMessageImpl(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
+                                           TCMessageType type) {
+    super(monitor, out, channel, type);
+  }
+
+  public AcknowledgeTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
+                                           TCMessageHeader header, TCByteBuffer[] data) {
+    super(sessionID, monitor, channel, header, data);
+  }
+
+  protected void dehydrateValues() {
+    putNVPair(REQUEST_ID, requestID.toLong());
+    putNVPair(REQUESTER_ID, requesterID.toLong());
+  }
+
+  protected boolean hydrateValue(byte name) throws IOException {
+    switch (name) {
+      case REQUESTER_ID:
+        requesterID = new ChannelID(getLongValue());
+        return true;
+      case REQUEST_ID:
+        requestID = new TransactionID(getLongValue());
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  public void initialize(ChannelID channelID, TransactionID txID) {
+    this.requesterID = channelID;
+    this.requestID = txID;
+  }
+
+  public ChannelID getRequesterID() {
+    return requesterID;
+  }
+
+  public TransactionID getRequestID() {
+    return requestID;
+  }
+
+}

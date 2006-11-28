@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath ><classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP" />
+<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/src.classes" path="src" />
+<classpathentry exported="true" kind="lib" path="lib/catalina.jar" />
+<classpathentry combineaccessrules="false" kind="src" path="/common" />
+<classpathentry combineaccessrules="false" kind="src" path="/dso-l1" />
+        <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
+</classpath>

@@ -1,0 +1,9 @@
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+
+	<bean id="service"
+		class="com.tctest.spring.bean.SingletonWithTransientField">
+	</bean>
+
+</beans>

@@ -1,0 +1,16 @@
+2/14/2005
+* Added distributed wait and notify support. 
+* Once and Only Once messaging option
+* First version of simulator that can do multi vm coordination.
+* First version of client side memory management
+* Added support for Logical collections including:
+  HashSet, LinkedList, ArrayList, Stack, Vector, HashMap
+* Fixed bug where protected tc transients didn't work
+* Importing a previous Terracotta DSO Eclipse project incorrectly reports
+  that project as still having the Terracotta nature. A project should cease
+  to have a Terracotta nature when it is removed from the workspace.
+  When this happens you will be unable to view the TC config file or really
+  do anything TC-related. Remove the Terracotta nature and then add it
+  back again.
+
+

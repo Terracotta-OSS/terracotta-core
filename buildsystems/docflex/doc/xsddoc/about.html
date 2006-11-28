@@ -1,0 +1,1291 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- saved from url=(0014)about:internet -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel=stylesheet type="text/css" href="../styles.css">
+<title>DocFlex/XML (Kit) - XSDDoc - XML Schema Documentation Generator</title>
+
+<script language = "JavaScript">
+  function popupWindow(url, width, height)
+  {
+    var max_width = screen.width - 8;
+    var max_height = screen.height - 64;
+
+    var resizable = false;
+
+    if (height > max_height)
+    {
+      height = max_height;
+      width = width + 20;
+      resizable = true;
+    }
+
+    if (width > max_width)
+    {
+      width = max_width;
+      resizable = true;
+    }
+
+    var left = (max_width - width) / 2;
+    var top = (max_height - height) / 2;
+
+    var winName = width + "x" + height;
+    var winParms = "top=" + top + ",left=" + left + ",height=" + height + ",width=" + width +
+                   ",toolbar=no,location=no,directories=no,status=no,menubar=no," +
+                   (resizable ? ",resizable=yes,scrollbars=yes" : ",resizable=no,scrollbars=no");
+
+    var win = window.open(url, winName, winParms);
+    if (parseInt(navigator.appVersion) >= 4) { win.window.focus(); }
+  }
+</script>
+
+</head>
+
+<body>
+
+<h1>
+  DocFlex/XML (Kit) - XSDDoc - XML Schema Documentation Generator
+</h1>
+
+<!-- TABLE OF CONTENTS -->
+<ol>
+  <li class="mrg4"><a href="#introduction"><b>Introduction</b></a></li>
+
+  <li class="mrg4"><a href="#template_driven_docgen"><b>Template-driven Documentation Generation</b></a>
+      <ul class="mrg4">
+         <li><a href="#xsddoc_templates">"XSDDoc" Templates</a>
+           <ul>
+             <li><a href="#XSDDocFrames.tpl">XSDDocFrames.tpl</a></li>
+             <li><a href="#XSDDoc.tpl">XSDDoc.tpl</a></li>
+           </ul>
+         </li>
+         <li><a href="#template_designer">Template Designer</a></li>
+      </ul>
+  </li>
+
+  <li class="mrg4"><a href="#generator_gui"><b>Generator GUI</b></a>
+      <ul class="mrg4">
+         <li><a href="#generator_dialog">Generator Dialog</a></li>
+         <li><a href="#param_inspector">Parameter Inspector</a></li>
+      </ul>
+  </li>
+
+  <li class="mrg4"><a href="#output"><b>Generated Documentation</b></a>
+      <ul class="mrg4">
+         <li><a href="#output.html">HTML Documentation</a></li>
+         <li><a href="#output.rtf">RTF Documentation</a></li>
+      </ul>
+  </li>
+
+  <li class="mrg4"><a href="#proc"><b>Processing Capabilities</b></a>
+      <ul class="mrg4">
+         <li><a href="#proc.schemas">Schema Processing</a>
+           <ul>
+             <li><a href="#proc.schemas.many">Documenting multiple XML schemas at once</a></li>
+             <li><a href="#proc.schemas.loading">Loading schemas by local pathnames and Internet URLs</a></li>
+             <li><a href="#proc.schemas.import_include">Processing of imported and included schemas</a></li>
+             <li><a href="#proc.schemas.redefine">Processing of &lt;xs:redefine&gt; elements</a></li>
+           </ul>
+         </li>
+         <li><a href="#proc.ns">Namespace Processing</a>
+           <ul>
+             <li><a href="#proc.ns.prefixes">Showing namespace prefixes</a></li>
+             <li><a href="#proc.ns.binding_report">Namespace Bindings Report</a></li>
+           </ul>
+         </li>
+         <li><a href="#proc.ann">Annotation Processing</a>
+           <ul>
+             <li><a href="#proc.ann.elements">Processing of &lt;xs:annotation&gt; elements</a></li>
+             <li><a href="#proc.ann.line_breaks">Rendering line breaks</a></li>
+             <li><a href="#proc.ann.xhtml">Support for XHTML</a></li>
+             <li><a href="#proc.ann.images">Inserting images</a></li>
+           </ul>
+         </li>
+      </ul>
+  </li>
+
+  <li class="mrg4"><a href="#doc"><b>Documentation Features</b></a>
+
+      <ul class="mrg4">
+         <li><a href="#doc.blocks">Main Blocks</a>
+           <ul>
+             <li><a href="#doc.blocks.overview_summary">Overview Summary</a></li>
+             <li><a href="#doc.blocks.namespace_overview">Namespace Overview</a></li>
+             <li><a href="#doc.blocks.schema_overview">Schema Overview</a></li>
+             <li><a href="#doc.blocks.component">Component Documentation</a></li>
+           </ul>
+         </li>
+         <li><a href="#doc.local_elements">Documenting Local Elements</a></li>
+         <li><a href="#doc.xml_rep">XML Representation Summary</a>
+           <ul>
+             <li><a href="#doc.xml_rep.complex_content_model">Complex Content Models</a></li>
+           </ul>
+         </li>
+         <li><a href="#doc.comp_lists">Related Component Lists</a>
+           <ul>
+             <li><a href="#doc.comp_lists.content_elements">List of Content Elements</a></li>
+             <li><a href="#doc.comp_lists.containing_elements">List of Containing Elements</a></li>
+             <li><a href="#doc.comp_lists.direct_subtypes">List of Direct Subtypes</a></li>
+             <li><a href="#doc.comp_lists.indirect_subtypes">List of Indirect Subtypes</a></li>
+             <li><a href="#doc.comp_lists.based_elements">List of All Based Elements</a></li>
+             <li><a href="#doc.comp_lists.based_attributes">List of All Based Attributes</a></li>
+             <li><a href="#doc.comp_lists.usage">Usage Locations Report</a></li>
+           </ul>
+         </li>
+         <li><a href="#doc.type">Type Documentation</a>
+           <ul>
+             <li><a href="#doc.type.derivation.tree">Type Derivation Tree</a></li>
+             <li><a href="#doc.type.derivation.detail">Simple Type Derivation Detail</a></li>
+             <li><a href="#doc.type.facet">Facet Documentation</a></li>
+             <li><a href="#doc.type.embedded">Documenting Embedded Types</a></li>
+           </ul>
+         </li>
+         <li><a href="#doc.xml_source">XML Source Documentation</a></li>
+      </ul>
+  </li>
+
+</ol>
+<!-- END TABLE OF CONTENTS -->
+
+
+<h2>
+  <a name="introduction"></a>
+  1.&nbsp; Introduction
+</h2>
+
+<p>DocFlex/XML XSDDoc is a high quality documentation generator 
+for any <a href="http://www.w3.org/XML/Schema" target="_blank">W3C XML Schema</a>
+able to produce both multi-framed Javadoc-like <a href="#output.html">HTML</a> and 
+printable <a href="#output.rtf">RTF</a> documentation.
+
+<p>As XML becomes the universal medium for storing and transferring various computer 
+information and more XML applications appear, the XML schemas serve those
+rails on which such applications are being developed and moving on.
+Now, XML schemas are growing ever more complicated, may consist of a lot of modules 
+designed by different software architects. Meanwhile, 
+<a href="http://www.w3.org/XML/Schema" target="_blank">W3C XML Schema</a> language 
+is complicated and verbose and more suitable for processing by machines 
+rather than for human readers.
+
+<p>All of this makes new XML schemas nearly impossible to understand without 
+a special documentation provided by their authors or, perhaps, generated by 
+a special tool from the schemas themselves.
+
+<p>DocFlex/XML XSDDoc is one of such tools. It will allow you to decipher any XML schema
+and represent it in the form of a clear-cut <a href="#output">documentation</a>, 
+which will help you to understand what that schema actually describes.
+
+<h2>
+  <a name="template_driven_docgen"></a>
+  2.&nbsp; Template-driven Documentation Generation
+</h2>
+
+<p>The XML Schema Documentation Generator is the first big template application of 
+<a href="../about.html">DocFlex/XML</a> (see also
+<a href="../about.html#roadmap">DocFlex/XML | Roadmap</a>),
+which is intended both to demonstrate the full capabilities of this technology 
+and to deliver a highly valuable software tool.
+
+<p>The generator is implemented entirely as a set of
+<a href="../about.html">DocFlex/XML</a> templates 
+(called <b>"XSDDoc"</b> templates) using only generic capabilities 
+of raw XML file processing offered by this tool.
+No Java code has been written anywhere specifically for this purpose!
+Neither any other XML processing technologies (e.g. XSL Transformations) are used anywhere in background!
+
+<h4 class="spec">
+  <a name="xsddoc_templates"></a>
+  "XSDDoc" Templates
+</h4>
+
+<p>The template set includes two <b>main templates</b>, which effectively 
+provide two different documentation generators:
+
+<ul>
+
+<li>
+  <a name="XSDDocFrames.tpl"></a>
+  <b>XSDDocFrames.tpl</b> template allows to generate a multi-framed hypertext
+  <a href="#output.html">HTML documentation</a> similar to that produced by Javadoc.
+  Click on the picture to see this template open in the <a href="#template_designer">Template Designer</a>:
+  <p>
+  <a href="javascript:popupWindow('images/XSDDocFrames_tpl.html',906,612)"><img src="images/XSDDocFrames_tpl_s.png" alt="XSDDocFrames.tpl" border="0"></a>
+  <p>
+</li>
+
+<li>
+  <a name="XSDDoc.tpl"></a>
+  <b>XSDDoc.tpl</b> template is designed specifically to generate a single-file documentation 
+  in all supported output formats (which currently include HTML, RTF and TXT).
+  The <b>RTF output</b> is the most important of them, which delivers an unprecedented quality printable 
+  <a href="#output.rtf">RTF documentation</a>. 
+  No other software we have ever seen so far was able to generate such an excellent RTF!
+  <p>
+  Here is how the template looks when open in the <a href="#template_designer">Template Designer</a>
+  (click to see the full screenshot):
+  <p>
+  <a href="javascript:popupWindow('images/XSDDoc_tpl.html',947,539)"><img src="images/XSDDoc_tpl_s.png" alt="XSDDoc.tpl" border="0"></a>
+</li>
+</ul>
+
+<p>Besides the main templates, there are many other templates (called <b>subtemplates</b>) that are used internally.
+Those subtemplates work as procedures invoked from the both main templates as well as from themselves.
+The entire "XSDDoc" template set consists of <b>63 templates</b>.
+
+<h4 class="spec">
+  <a name="template_designer"></a>
+  Template Designer
+</h4>
+
+<p>Using a visual graphic 
+<a href="../doc.html#designer">Template Designer</a> provided with the full edition
+of <a href="../about.html">DocFlex/XML</a>,
+you can customize all "XSDDoc" templates as you need. 
+In particular, you can easily translate any messages specified in the templates from English 
+into your native language, insert your company logotype, change documentation design and content, 
+extend with your own functionality and so on.
+
+<blockquote>
+<a href="javascript:popupWindow('images/td_linux.html',917,558)"><img src="images/td_linux_s.png" alt="Template Designer under Linux" border="0"></a>
+</blockquote>
+
+<p>This picture shows the <a href="#XSDDoc.tpl">XSDDoc.tpl</a> template open with the
+<a href="../doc.html#designer">Template Designer</a>
+under Linux and the <a href="../doc.html#generator_dialog">generator dialog</a> 
+invoked to generate with this template a sample XML schema documentation in RTF format 
+(click to see the full-size screenshot).
+
+<h2>
+  <a name="generator_gui"></a>
+  3.&nbsp; Generator GUI
+</h2>
+
+<h4 class="spec">
+  <a name="generator_dialog"></a>
+  Generator Dialog
+</h4>
+
+<ul>
+<li>
+
+Besides the possibility of running the generator from the 
+<a href="../doc.html#generator">command line</a> and adjusting everything
+using command line <a href="../doc.html#generator.options">options</a>,
+<a href="../about.html">DocFlex/XML</a> also provides a little GUI 
+that allows specifying all the setting in a more user-friendly way.
+<p class="mrg8">
+When no -<a href="../doc.html#generator.nodialog_option">nodialog</a> option is specified
+on the command line, the generator launches automatically the following Generator Dialog:
+<p>
+<img src="images/generator_dialog.png" alt="Generator Dialog" border="0">
+<p>
+In the Generator Dialog, you can:
+<p>
+<ol>
+  <li>Select the <a href="#xsddoc_templates">template</a> (which determines what documentation you are going to generate).
+  <li>Specify the <a href="#param_inspector">template parameters</a>.
+  <li>Choose the source XML files (in the case of XSDDoc, this will be XSD files).
+  <li>Select the documentation <a href="../doc.html#generator_dialog.output_format">output format</a>.
+  <li>Specify the output <a href="../doc.html#generator_dialog.format_option_inspector">format options</a> 
+      (i.e. some generator settings special for the selected output format).
+  <li>Choose the destination folder and the main output file name for the generated documentation.
+  <li>Run the generator.
+  <li>View the generation progress.
+</ol>
+<p>
+Once you click the <b>"Run"</b> button, the dialog transforms itself to show 
+the progress of the generation:
+<p>
+<img src="images/generating.png" alt="Running Generator" border="0">
+<p>
+
+</li>
+</ul>
+
+<h4 class="spec">
+  <a name="param_inspector"></a>
+  Parameter Inspector
+</h4>
+
+<ul>
+<li>
+
+Since all the content and formatting of the <a href="#gen">generated documentation</a> are programmed 
+entirely within templates, the numerous options and switches, which normally control such things in 
+an ordinary doc-generator, now simply become the <b>template parameters</b>.
+<p>
+"XSDDoc" templates provide plenty of parameters that allow to vary the generated 
+XML Schema documentation within a vast range of included details, 
+starting from the most comprehensive documentation containing every feature possible up to 
+just summaries and overviews of certain special things.
+<p>
+Besides the possibility of setting the template parameters directly on the 
+<a href="../doc.html#generator">command line</a> using 
+-<a href="../doc.html#generator.p_option">p option</a>, 
+the generator GUI provides an immensely convenient way of specifying any of them using 
+the <b>Parameter Inspector</b> dialog (invoked from the Generator dialog).
+Here, you can:
+<p>
+<ul>
+  <li>Edit each parameter according to its type.
+  <li>Switch on/off whether the default parameter value specified in the template must be used.
+  <li>View the HTML description of the parameter, which is also obtained from the template.
+</ul>
+<p>
+The following screenshot shows the Parameter Inspector dialog of <a href="#XSDDoc.tpl">XSDDoc.tpl</a>
+template. Click on the image to see the full list of the parameters contained in this dialog:
+<p>
+<a href="javascript:popupWindow('images/param_inspector.html',488,3273)"><img src="images/param_inspector_s.png" alt="Template Parameters" border="0"></a>
+
+</li>
+</ul>
+
+<h2>
+  <a name="output"></a>
+  4.&nbsp; Genereated Documentation
+</h2>
+
+<p>The <a href="#xsddoc_templates">"XSDDoc"</a> set of templates allow 
+to generated the following types of documentation:
+
+<h4 class="spec">
+  <a name="output.html"></a>
+  HTML documentation
+</h4>
+
+<ul><li>
+
+Generating a single <b>multi-framed HTML</b> (Javadoc-like) documentation by any number of source 
+<a href="http://www.w3.org/XML/Schema" target="_blank">W3C XML Schema</a> definition (XSD) files.
+<p class="mrg8">
+The entire HTML documentation is interconnected with a common network of hyperlinks. 
+For instance, the documentation of a component declared in one schema will be hyperlinked from any other
+locations where that component is used or referred to in any other documented schemas.
+<p class="mrg8">
+The following screenshot shows such a documentation generated by <code>'XMLSchema.xsd'</code>
+using <a href="#XSDDocFrames.tpl">XSDDocFrames.tpl</a> template (click on the picture to see the live HTML):
+<p>
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/index.html" target="_blank">
+  <img src="images/XMLSchema_xsddoc.png" alt="XML Schema for XML Schemas" border="0">
+</a>
+</p>
+
+<code>'XMLSchema.xsd'</code> is the "XML Schema for XML Schemas",
+the basic XML Schema that defines 
+the <a href="http://www.w3.org/XML/Schema" target="_blank">W3C XML Schema</a> language itself
+(see <a href="http://www.w3.org/2001/XMLSchema.xsd" target="_blank">http://www.w3.org/2001/XMLSchema.xsd</a>).
+
+</li></ul>
+
+<h4 class="spec">
+  <a name="output.rtf"></a>
+  RTF documentation
+</h4>
+
+<ul><li>
+
+Generating by any number of XSD files a splendid quality single-file <b>RTF</b> documentation 
+ready for printing and friendly to open with <b>MS Word</b> under Windows 
+or <b>OpenOffice.org</b> Writer under Linux.
+<p class="mrg8">
+Similarly to the framed <a href="#output.html">HTML</a>, the RTF documentation
+is also entirely interconnected with hyperlinks. However, in addition to the interactive hyperlinks, 
+many of them are duplicated with page number references, which may greatly help using/navigating 
+such a documentation when it is printed out on the paper.
+<p class="mrg8">
+The following screenshots show pages of the RTF documentation generated by 
+the same <code>'XMLSchema.xsd'</code> schema, however, now using <a href="#XSDDoc.tpl">XSDDoc.tpl</a> template 
+(click on the picture to see the real size page preview):
+
+<p>
+<table cellspacing="0" cellpadding="0" border="0">
+<tr>
+  <td><a href="javascript:popupWindow('images/p002.html',880,1128)"><img src="images/p002_s.gif" alt="XML Schema for XML Schemas, RTF: namespace overview summary" border="0"></a></td>
+  <td><a href="javascript:popupWindow('images/p038.html',880,1128)"><img src="images/p038_s.gif" alt="XML Schema for XML Schemas, RTF: element documentation" border="0"></a></td>
+  <td><a href="javascript:popupWindow('images/p249.html',880,1128)"><img src="images/p249_s.gif" alt="XML Schema for XML Schemas, RTF: type documentation" border="0"></a></td>
+</tr>
+</table>
+
+<p>See also 
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/index.php#rtf" target="_blank">Examples | RTF Documentation</a>
+for more details about that demo RTF and a lot more screenshots!
+
+</li></ul>
+
+<h2>
+  <a name="proc"></a>
+  5.&nbsp; Processing Capabilities
+</h2>
+
+<h4 class="spec">
+  <a name="proc.schemas"></a>
+  Schema Processing
+</h4>
+
+<ul>
+
+<li class="mrg8">
+<a name="proc.schemas.many"></a>
+<b>Processing any number</b> of source
+<a href="http://www.w3schools.com/schema/" target="_blank">XML Schema</a> documents (XSD files)
+and generating by them a coherent documentation with the separate tracking of components 
+both for each target namespace and every single schema as well as documenting 
+any interactions between them followed up with a single network of hyperlinks.
+</li>
+
+<li class="mrg8">
+<a name="proc.schemas.loading"></a>
+Loading the source XML schema files both by <b>local pathnames</b> and 
+by <b>URLs</b> directly from Internet.
+</li>
+
+<li class="mrg8">
+<a name="proc.schemas.import_include"></a>
+Automatic loading and processing of any schemas specified within other schemas 
+using <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/import.html" target="_blank"><code>&lt;xs:import&gt;</code></a>
+and <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/include.html" target="_blank"><code>&lt;xs:include&gt;</code></a>
+elements and adding them for documenting (with possibility to download the imported schemas 
+directly from Internet by the URLs specified in those elements).
+</li>
+
+<li class="mrg8">
+<a name="proc.schemas.redefine"></a>
+The <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/redefine.html" target="_blank"><code>&lt;xs:redefine&gt;</code></a>
+elements are processed in the following way.
+<p class="mrg8">
+The XML schema specified in such an element is loaded into memory and then altered so that
+every component being redefined within the
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/redefine.html" target="_blank"><code>&lt;xs:redefine&gt;</code></a>
+element is renamed within the loaded schema by adding the <code><b>'$ORIGINAL'</b></code> suffix to the component's name.
+All references to the original components within the 
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/redefine.html" target="_blank"><code>&lt;xs:redefine&gt;</code></a>
+element are also renamed. Further, the schema is processed the same way as in the case of 
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/include.html" target="_blank"><code>&lt;xs:include&gt;</code></a>
+element.
+<p class="mrg8">
+As a result, not only all the new semantics of the redefined components gets fully supported 
+and documented but also the original components are preserved and documented as well.
+<p class="mrg8">
+For example, see
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/xhtml11/index.html" target="_blank">"XML Schemas for XHTML 1.1"</a>,
+where 
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/redefine.html" target="_blank"><code>&lt;xs:redefine&gt;</code></a>
+elements are used in several locations.
+
+</li>
+
+</ul>
+
+<h4 class="spec">
+  <a name="proc.ns"></a>
+  Namespace Processing
+</h4>
+
+<ul>
+
+<li class="mrg8">
+<a name="proc.ns.prefixes"></a>
+<b>Showing the original namespace prefixes</b> defined and used in the source XSD files
+within the names of the schema components appearing in the documentation.
+This makes the generated documentation a lot more convenient and easy to read!
+<p class="mrg8">
+Although, it sounds like nothing special, that feature appears to be so difficult to support
+that we have never seen it in any other existing XML schema doc-generators so far!
+Indeed, one needs to have some special technology to do that, because most of the standard 
+means of processing XML (like XSL Transformations, for instance) completely hide 
+the original namespace prefixes as the local thing of XML files. 
+It may be irrelevant for most purposes, of course, but not for an XML documentation tool!
+</li>
+
+<li class="mrg8">
+<a name="proc.ns.binding_report"></a>
+Optional inclusion in the generated documentation the <b>Namespace Binding Report</b>, 
+which allows to quickly find for any namespace prefix used in the source XSD documents 
+the namespace URI associated with it and the location of where that namespace 
+binding is specified. (Click 
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/wsdl20/xmlns-bindings.html" target="_blank">here</a>
+to see an example of how it looks).
+</li>
+
+</ul>
+
+<h4 class="spec">
+  <a name="proc.ann"></a>
+  Annotation Processing
+</h4>
+
+<ul>
+
+<li class="mrg8">
+<a name="proc.ann.elements"></a>
+Using <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/annotation.html" target="_blank"><code>&lt;xs:annotation&gt;</code></a>
+elements, you can add descriptions both to your XML schema as a whole and, separately, to any components defined in it.
+(Specifically, the description text must be enclosed in 
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/documentation.html" target="_blank"><code>&lt;xs:documentation&gt;</code></a>
+element, which, in turn, is nested in the 
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/annotation.html" target="_blank"><code>&lt;xs:annotation&gt;</code></a>
+element).
+<p class="mrg8">
+Click on the following link to see the documentation of 
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/annotation.html" target="_blank"><code>&lt;xs:annotation&gt;</code></a>
+element generated by its definition in the 
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/index.html" target="_blank">"XML Schema for XML Schemas"</a>,
+the basic XML schema defining the <a href="http://www.w3.org/XML/Schema" target="_blank">W3C XML Schema</a> language itself.
+
+<p>
+<table border="1" cellspacing="1" cellpadding="6">
+<tr><td bgcolor="#F5F5F5">
+
+<p class="mrg0"><b><i>Which &lt;xs:annotation&gt; elements are processed?</i></b></p>
+
+<p class="inset">
+As you may notice, the
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/annotation.html" target="_blank"><code class="small">&lt;xs:annotation&gt;</code></a>
+elements can be inserted in almost any other XML Schema elements.
+However, currently, the <a href="#xsddoc_templates">XSDDoc</a> templates process only the 
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/annotation.html" target="_blank"><code class="small">&lt;xs:annotation&gt;</code></a>
+elements specified in the following locations: 
+
+<ol class="inset">
+<li>
+  In the definition of the entire XML schema. Here,
+  the <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/annotation.html" target="_blank"><code class="small">&lt;xs:annotation&gt;</code></a>
+  may appear as one or multiple children of the element:
+
+  <ul type="square" class="mrg8">
+    <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/schema.html" target="_blank">&lt;xs:schema&gt;</a></code></li>
+  </ul>
+  <p class="mrg8">
+  In that case, the annotation text will get into the "Annotation" section of the <a href="#doc.blocks.schema_overview">Schema Overview</a>
+  (e.g. see also <a href="#proc.ann.xhtml">below</a>).
+  When multiple 
+  <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/annotation.html" target="_blank"><code class="small">&lt;xs:annotation&gt;</code></a>
+  elements are used, each of them will produce a separate "Annotation" sub-section. For example, see 
+  <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/schema-summary.html" target="_blank">"XMLSchema.xsd"</a>
+  schema overview.
+  </p>
+</li>
+<li>
+  In definitions of global components. Here, the 
+  <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/annotation.html" target="_blank"><code class="small">&lt;xs:annotation&gt;</code></a>
+  element may be a child of one of the XML Schema elements:
+  <p class="mrg8">
+  <table cellspacing="0" cellpadding="0" border="0">
+  <tr>
+  <td class="inset">
+    <ul type="square" class="mrg0">
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/element.html" target="_blank">&lt;xs:element&gt;</a></code></li>
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/complexType.html" target="_blank">&lt;xs:complexType&gt;</a></code></li>
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/simpleType.html" target="_blank">&lt;xs:simpleType&gt;</a></code></li>
+    </ul>
+  </td>
+  <td class="inset">
+    <ul type="square" class="mrg0">
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/group.html" target="_blank">&lt;xs:group&gt;</a></code></li>
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/attribute.html" target="_blank">&lt;xs:attribute&gt;</a></code></li>
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/attributeGroup.html" target="_blank">&lt;xs:attributeGroup&gt;</a></code></li>
+    </ul>
+  </td>
+  </tr>
+  </table>
+  <p class="mrg8">
+  This will be processed into an "Annotation" section of the <a href="#doc.blocks.component">Component Documentation</a>.
+  </p>
+</li> 
+<li>
+  In definitions of embedded Complex/Simple Types within element/attribute definitions.
+  Here, the <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/annotation.html" target="_blank"><code class="small">&lt;xs:annotation&gt;</code></a>
+  element may be a child of one of the locally used XML Schema elements:
+  <p class="mrg8">
+  <table cellspacing="0" cellpadding="0" border="0">
+  <tr>
+  <td class="inset">
+    <ul type="square" class="mrg0">
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/complexType_1.html" target="_blank">&lt;xs:complexType&gt;</a> 
+          <i>(type <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/complexTypes/localComplexType.html" target="_blank">xs:localComplexType</a>)</i></code></li>
+
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/simpleType_1.html" target="_blank">&lt;xs:simpleType&gt;</a>&nbsp;
+          <i>(type <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/complexTypes/localComplexType.html" target="_blank">xs:localSimpleType</a>)</i></code></li>
+    </ul>
+  </td>
+  </tr>
+  </table>
+  <p class="mrg8">
+  Such an <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/annotation.html" target="_blank"><code class="small">&lt;xs:annotation&gt;</code></a>
+  processed into the "Annotation" section of the <a href="#doc.type.embedded">Embedded Type Detail</a>.
+  </p>
+</li> 
+<li>
+  In definitions of local elements or within references to global elements.
+  Here, the <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/annotation.html" target="_blank"><code class="small">&lt;xs:annotation&gt;</code></a>
+  is a child of one of the local XML Schema elements:
+
+  <p class="mrg8">
+  <table cellspacing="0" cellpadding="0" border="0">
+  <tr>
+  <td class="inset">
+    <ul type="square" class="mrg0">
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/element_1.html" target="_blank">&lt;xs:element&gt;</a>
+          <i>(type <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/complexTypes/localElement.html" target="_blank">xs:localElement</a>)</i></code></li>
+
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/element_2.html" target="_blank">&lt;xs:element&gt;</a> 
+          <i>(type <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/complexTypes/narrowMaxMin.html" target="_blank">xs:narrowMaxMin</a>)</i></code></li>
+    </ul>
+  </td>
+  </tr>
+  </table>
+  <p class="mrg8">
+  This annotation will be placed in the corresponding item of the 
+  <a href="#doc.content_element_detail">Content Element Detail</a> of the parent component.
+  </p>
+</li> 
+<li>
+  In definitions of local attributes or within references to global attributes.
+  Here, the <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/annotation.html" target="_blank"><code class="small">&lt;xs:annotation&gt;</code></a>
+  is a child of the locally used XML Schema element:
+  <p class="mrg8">
+  <table cellspacing="0" cellpadding="0" border="0">
+  <tr>
+  <td class="inset">
+    <ul type="square" class="mrg0">
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/attribute_1.html" target="_blank">&lt;xs:attribute&gt;</a></code></li>
+    </ul>
+  </td>
+  </tr>
+  </table>
+  <p class="mrg8">
+  This annotation will be placed in the corresponding item of the 
+  <a href="#doc.attribute_detail">Attribute Detail</a> of the parent component.
+  </p>
+</li> 
+<li>
+  In facet definitions.
+  Here, the <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/annotation.html" target="_blank"><code class="small">&lt;xs:annotation&gt;</code></a>
+  may be a child of one of the XML Schema facet elements:
+  <p class="mrg8">
+  <table cellspacing="0" cellpadding="0" border="0">
+  <tr>
+  <td class="inset">
+    <ul type="square" class="mrg0">
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/enumeration.html" target="_blank">&lt;xs:enumeration&gt;</a></code></li>
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/fractionDigits.html" target="_blank">&lt;xs:fractionDigits&gt;</a></code></li>
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/length.html" target="_blank">&lt;xs:length&gt;</a></code></li>
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/maxExclusive.html" target="_blank">&lt;xs:maxExclusive&gt;</a></code></li>
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/maxInclusive.html" target="_blank">&lt;xs:maxInclusive&gt;</a></code></li>
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/maxLength.html" target="_blank">&lt;xs:maxLength&gt;</code></li>
+    </ul>
+  </td>
+  <td class="inset">
+    <ul type="square" class="mrg0">
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/minExclusive.html" target="_blank">&lt;xs:minExclusive&gt;</a></code></li>
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/minInclusive.html" target="_blank">&lt;xs:minInclusive&gt;</a></code></li>
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/minLength.html" target="_blank">&lt;xs:minLength&gt;</a></code></li>
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/pattern.html" target="_blank">&lt;xs:pattern&gt;</a></code></li>
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/totalDigits.html" target="_blank">&lt;xs:totalDigits&gt;</a></code></li>
+      <li><code class="small"><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/whiteSpace.html" target="_blank">&lt;xs:whiteSpace&gt;</a></code></li>
+    </ul>
+  </td>
+  </tr>
+  </table>
+  </p>
+  This annotation will be placed in the <a href="#doc.type.facet">Facet Documentation</a>.
+</li> 
+</ol>
+
+</td></tr>
+</table>
+
+</li>
+
+<li class="mrg8">
+<a name="proc.ann.line_breaks"></a>
+<b>Rendering line breaks.</b>
+<p class="mrg8"></p>
+For details, see
+<a href="faq.html#rendering_line_breaks">FAQ | How to enable/disable interpreting line breaks in my comments?</a>
+</li>
+
+<li class="mrg8">
+<a name="proc.ann.xhtml"></a>
+<b>Support for XHTML.</b>
+Click on the screenshots to see demo:
+<p>
+<table border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XSDDocFrames/schemas/rdf_xsd/schema-summary.html" target="_blank"><img src="images/schema_overview_html_s.gif" alt="Processing of XHTML in Annotations (HTML)" border="0"></a></td>
+<td><table width="20" height="8" border=0><tr><td></td></tr></table></td>
+<td><a href="javascript:popupWindow('images/ann_rtf.html',880,1128)"><img src="images/ann_rtf_s.gif" alt="Processing of XHTML in Annotations (RTF)" border="0"></a></td>
+</tr>
+</table>
+<p>
+For details, see
+<a href="faq.html#xhtml">FAQ | How to format my comments using XHTML?</a>
+</li>
+
+<li class="mrg8">
+<a name="proc.ann.images"></a>
+<b>Inserting images.</b>
+<p class="mrg8">
+Please, see
+<a href="faq.html#xhtml.images">FAQ | How to format my comments using XHTML? |
+How to insert images?</a>
+</li>
+
+</ul>
+
+<h2>
+  <a name="doc"></a>
+  6.&nbsp; Documentation Features
+</h2>
+
+<h4 class="spec">
+  <a name="doc.blocks"></a>
+  Main Blocks
+</h4>
+
+<ul>
+
+<li class="mrg8">
+<a name="doc.blocks.overview_summary"></a>
+The <b>Overview Summary</b> block starts the documentation (in the case of a framed 
+<a href="#output.html">HTML</a> documentation,
+this is a separate document, which is loaded in the details frame the first).
+It consists of the following sections:
+<ul class="mrg8">
+  <li>Namespace Summary</li>
+  <li>Schema Summary</li>
+</ul>
+Here is how a typical Overview Summary looks (click on the picture):
+<p class="mrg8">
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/overview-summary.html" target="_blank"><img src="images/overview_summary_html_s.gif" alt="Overview Summary" border="0"></a>
+</li>
+
+<li class="mrg8">
+<a name="doc.blocks.namespace_overview"></a>
+The <b>Namespace Overview</b> is generated for each documented namespace.
+It may consist of the following sections:
+<ul class="mrg8">
+  <li>The namespace profile</li>
+  <li>The summaries of components defined in this namespace:
+    <ul>
+      <li>All / Global / Local Elements</li>
+      <li>Global Complex / Simple Types</li>
+      <li>Global Element / Attribute Groups</li>
+      <li>Global Attributes</li>
+    </ul>
+  </li>
+</ul>
+Precisely, which of those sections are included can be specified using 
+<a href="#param_inspector">template parameters</a>.
+Click on the screenshot to see a Namespace Overview sample:
+<p class="mrg8">
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/namespaces/http_www_w3_org_2001_XMLSchema/namespace-summary.html" target="_blank"><img src="images/ns_overview_html_s.gif" alt="Namespace Overview" border="0"></a>
+</li>
+
+<li class="mrg8">
+<a name="doc.blocks.schema_overview"></a>
+The <b>Schema Overview</b> block is generated for each documented schema (XSD file).
+It may include the following sections:
+<ul class="mrg8">
+  <li>The schema profile</li>
+  <li>The schema <a href="#proc.ann">annotation</a></li>
+  <li>The summaries of components defined in this schema:
+    <ul>
+      <li>All / Global / Local Elements</li>
+      <li>Global Complex / Simple Types</li>
+      <li>Global Element / Attribute Groups</li>
+      <li>Global Attributes</li>
+    </ul>
+  <li>The <a href="#doc.xml_source">XML source</a> of the schema</li>
+  </li>
+</ul>
+The inclusion of the sections can be controlled using <a href="#param_inspector">template parameters</a>.
+Click on the following screenshot to see a sample of the complete Schema Overview:
+<p class="mrg8">
+<a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XSDDocFrames/schemas/rdf_xsd/schema-summary.html" target="_blank"><img src="images/schema_overview_html_s.gif" alt="Schema Overview" border="0"></a>
+</li>
+
+<li class="mrg8">
+<a name="doc.blocks.component"></a>
+The <b>Component Documentation</b> blocks are generated for all major XML schema components:
+<ul class="mrg8">
+  <li>Elements (both global ones and those defined <a href="#doc.local_elements">locally</a>)</li>
+  <li>Global Complex Types</li>
+  <li>Global Simple Types</li>
+  <li>Global Element Groups</li>
+  <li>Global Attributes</li>
+  <li>Global Attribute Groups</li>
+</ul>
+Each Component Documentation may include the following sections (depending on the component type
+shown in the last column):
+<p class="mrg8">
+<table border="1" cellspacing="1" cellpadding="4">
+
+  <tr align="left">
+    <th><b>Section</b></th>
+    <th><b>Component</b></th>
+  </tr>
+  <tr>
+    <td>Component Profile</td>
+    <td>All</td>
+  </tr>
+  <tr>
+    <td><a href="#doc.xml_rep">XML&nbsp;Representation Summary</a></td>
+    <td>All</td>
+  </tr>
+  <tr>
+    <td><a href="#doc.comp_lists.content_elements">List of Content Elements</a></td>
+    <td>Element, Complex&nbsp;Type, Element&nbsp;Group</td>
+  </tr>
+  <tr>
+    <td><a href="#doc.comp_lists.containing_elements">List of Containing Elements</a></td>
+    <td>Element</td>
+  </tr>
+  <tr>
+    <td><a href="#doc.comp_lists.direct_subtypes">List of Direct Subtypes</a></td>
+    <td>Simple/Complex&nbsp;Type</td>
+  </tr>
+  <tr>
+    <td><a href="#doc.comp_lists.indirect_subtypes">List of Indirect Subtypes</a></td>
+    <td>Simple/Complex&nbsp;Type</td>
+  </tr>
+  <tr>
+    <td><a href="#doc.comp_lists.based_elements">List of All Based Elements</a></td>
+    <td>Simple/Complex&nbsp;Type</td>
+  </tr>
+  <tr>
+    <td><a href="#doc.comp_lists.based_attributes">List of All Based Attributes</a></td>
+    <td>Simple&nbsp;Type</td>
+  </tr>
+  <tr>
+    <td><a href="#doc.comp_lists.usage">Usage Locations Report</a></td>
+    <td>All</td>
+  </tr>
+  <tr>
+    <td><a href="#proc.ann">Annotation</a></td>
+    <td>All</td>
+  </tr>
+  <tr>
+    <td><a href="#doc.type">Type Definition Detail</a></td>
+    <td>Simple/Complex&nbsp;Type</td>
+  </tr>
+  <tr>
+    <td><a href="#doc.type.embedded">Embedded Type Detail</a></td>
+    <td>Element, Attribute</td>
+  </tr>
+  <tr>
+    <td><a href="#doc.xml_source">XML Source</a></td>
+    <td>All</td>
+  </tr>
+  <tr>
+    <td><a href="#doc.attribute_detail">Attribute&nbsp;Detail</a></td>
+    <td>Element, Complex&nbsp;Type, Attribute&nbsp;Group</td>
+  </tr>
+  <tr>
+    <td><a href="#doc.content_element_detail">Content&nbsp;Element Detail</a></td>
+    <td>Element, Complex&nbsp;Type, Element&nbsp;Group</td>
+  </tr>
+
+</table>
+
+<p class="mrg8">
+Precisely, which sections are included for a particular component type can be controlled 
+using <a href="#param_inspector">template parameters</a>.
+The following screenshots show samples of the Element and Simple Type Documentation,
+where all those sections are employed (click to view the HTML):
+<p class="mrg8">
+<table border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/elements/restriction.html" target="_blank"><img src="images/element_doc_html_s.gif" alt="Element Documentation" border="0"></a></td>
+<td><table width="20" height="8" border=0><tr><td></td></tr></table></td>
+<td><a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/html/XMLSchema/schemas/XMLSchema_xsd/simpleTypes/language.html" target="_blank"><img src="images/simpleType_doc_html_s.gif" alt="Simple Type Documentation" border="0"></a></td>
+</tr>
+</table>
+
+</li>
+
+</ul>
+
+<h4 class="spec">
+  <a name="doc.local_elements"></a>
+  Documenting Local Elements
+</h4>
+
+<ul>
+
+<li>
+This XML Schema doc-generator provides a unique capability to document all local elements 
+defined in a schema (not found in any other product!).
+<p class="mrg8">
+
+<table border="1" cellspacing="1" cellpadding="6">
+<tr><td bgcolor="#F5F5F5">
+
+<p class="mrg0"><b><i>Here are more details</i></b></p>
+
+<p class="inset">
+The local elements are the element components defined within complex types (global or
+embedded in other elements) and within element groups (which are separate schema components 
+that define the whole batches of elements arranged in certain complex models).
+</p>
+<p class="inset">
+The problem with local elements is that with their introduction there is no 
+direct relation any more between an element name and its type for the whole XML document. 
+</p>
+<p class="inset">
+For example, when in an XML document you meet, for instance, an element 
+<code class="small">&lt;record&gt;</code>, 
+you need to look into the context where that element appears, because within the same XML document, 
+there may be quite another <code class="small">&lt;record&gt;</code> 
+element describing absolutely different thing (e.g. the first one may be related 
+to a book-keeping record whereas another one may be saying something about a music song, 
+and the whole document is something like a sales log of a music store).
+</p>
+<p class="inset">
+For all that trouble with their interpretation, local elements happen to be very much convenient and useful.
+Now, many XML schemas are designed so that the global elements are never used in them at all.
+Instead, the schema authors prefer to define only global data types and, then, refer to them from the local 
+element definitions, occasionally modifying some global type within the types embedded 
+in local elements.
+</p>
+<p class="inset">
+All of this does not eliminate the need to know what each local element describes and to have 
+some documentation about it. That's especially true, because when you look at a particular XML document 
+described by a schema, there is no type information shown nearby each element -- only element tags and that's all.
+</p>
+<p class="inset">
+The <a href="#xsddoc_templates">XSDDoc</a> templates are designed to handle this problem in the following way:
+</p>
+<ul class="inset">
+<li>
+Those local elements that share the same name, and whose type is determined 
+by 'type' attribute referring to the same global simple or complex type, are considered as a single 
+<i>quasi-global</i> element.
+<p class="mrg8">
+Unlike ordinary global elements whose names are unique for the whole namespace, each quasi-global element
+is unique only by its name/type combination. Almost anything that can be said about each local element 
+with equal name/type combination is all the same and, therefore, may be referred and documented 
+as a single unit.
+</p>
+<p class="mrg8">
+Actually, such an approach may be even more interesting, because the same name/type combination 
+for a schema element is normally associated with the same thing from the real world. 
+When you try to understand a particular XML schema, tracking something associated 
+with different local elements scattered across the whole schema may be difficult. 
+Having a single documentation for this may quickly reveal a lot more details.
+</p>
+<p class="mrg8">
+Each quasi-global element is documented separately and is referred to from every location
+of the corresponding local elements. In various lists and summaries within the documentation
+the quasi-global elements appear with their names extended with their types.
+For example:
+</p>
+<blockquote class="mrg8">
+  <code class="small">xs:element <i>(type xs:narrowMaxMin)</i></code>
+</blockquote>
+</li>
+
+<li>
+The local elements with the embedded type definition are truly local ones. 
+The presence of the embedded type means that such an element is associated with something 
+relevant to only this particular local context.
+<p class="mrg8">
+Each local element with embedded type is documented separately and referred to by its name
+followed by the name of another element, which may contain it. 
+<p class="mrg8">
+In the case, the element may be included in multiple other elements (e.g. when it was defined 
+within an element group that is reused in different locations) its name is extended with more 
+details about the embedded type, although that situation is rare. 
+<p class="mrg8">
+For example, an expression
+</p>
+<blockquote class="mrg8">
+  <code class="small">xs:all <i>(within xs:group)</i></code>
+</blockquote>
+<p class="mrg8">
+represents the element <code class="small">&lt;xs:all&gt;</code>, whose type is embedded,
+and which may appear in an XML document only as a child of 
+<code class="small">&lt;xs:group&gt;</code> element.
+</p>
+</li>
+</ul>
+</td></tr>
+</table>
+
+</li>
+</ul>
+
+<h4 class="spec">
+  <a name="doc.xml_rep"></a>
+  XML Representation Summary
+</h4>
+
+<ul>
+
+<li class="mrg8">
+The <b>XML Representation Summary</b> generated for each schema component 
+shows a schematic representation of all possible XML constructions this component describes 
+as well as how those constructions may look in an XML file.
+In particular, this includes:
+<ul class="mrg8">
+  <li>A list of possible attributes an XML element may have.</li>
+  <li>The type and possible values for each attribute.</li>
+  <li>The element content representation, which has two different forms for 
+      simple and complex content models.</li>
+      
+  <li>The element simple content is represented in the form of a data type and possible values
+      the element may enclose.</li>
+
+  <li>The element complex content is represented with the use of extended Kleene operators 
+      (see <a href="#doc.xml_rep.complex_content_model">below</a>).</li>
+</ul>
+
+<p class="mrg8">
+Here is how such a representation may look:
+<p class="mrg8">
+<img src="images/xmlRep.png" alt="XML Representation Summary" border="0">
+</li>
+
+<li class="mrg8">
+<a name="doc.xml_rep.complex_content_model"></a>
+The element <b>Complex Content Models</b>, which represent all possible combinations of children of an element, 
+are shown within XML Representation Summary of certain elements (see 'Content' field on the picture above), 
+complex types and element groups.
+<p class="mrg8">
+Complex Content Models are represented using Kleene operators (those used in 
+<a href="http://www.w3schools.com/dtd/" target="_blank">DTD</a>) extended with 
+two more operators to cover all situations allowed by W3C XML Schemas. The following table shows 
+all operators used in Complex Content Model representations:
+<p class="mrg8">
+<table border="1" cellspacing="1" cellpadding="5">
+
+  <tr>
+    <th><b>Operator</b></th>
+    <th><b>Description</b></th>
+  </tr>
+
+  <tr>
+    <td align="center">,</td>
+    <td>sequence</td>
+  </tr>
+  <tr>
+    <td align="center">|</td>
+    <td>choice</td>
+  </tr>
+  <tr>
+    <td align="center">()</td>
+    <td>grouping</td>
+  </tr>
+  <tr>
+    <td align="center">?</td>
+    <td>0 or 1 times</td>
+  </tr>
+  <tr>
+    <td align="center">+</td>
+    <td>1 or more times</td>
+  </tr>
+  <tr>
+    <td align="center">*</td>
+    <td>0 or more times</td>
+  </tr>
+  <tr>
+    <th colspan="2">
+      <i>Extended operators</i>
+    </td>
+  </tr>
+  <tr valign="top">
+    <td align="center">&#215;</td>
+    <td>
+      The idea of this operator can be expressed by formula:
+      <blockquote class="mrg8">
+        <i>a</i> &#215; <i>b</i> = ((<i>a</i>, <i>b</i>) | (<i>b</i>, <i>a</i>))
+      </blockquote>
+      <p class="mrg8">
+      This operator is used in two situations:
+      <ol class="mrg4">
+        <li>
+          To represent an unordered content model (which is the one defined with &lt;xs:all&gt; compositor)
+        </li>
+        <li>
+          To represent a mixed content model (i.e. when any text is allowed before, between and after elements).
+          <p class="mrg8">
+          For example, a content model for <i>marked text</i> used in messages at some programming forum web-sites
+          (that is, a text with allowed italic, bold and code markup) may be represented as the following:
+          <p class="mrg4">
+          {text} &#215; (i? | b? | code?)*
+        </li>
+      </ol>
+    </td>
+  </tr>
+  <tr valign="top">
+    <td align="center">[<i>n1</i>, <i>n2</i>]</td>
+    <td>
+      A general cardinality operator
+      (<i>n1</i> can be 0 or any number; <i>n2</i> is any number or *).
+      <p class="mrg8">
+      This operator is used in those rare situations when Kleene cardinality operators (?, +, *) 
+      are not enough.
+      <p class="mrg8">
+      For example:
+      <blockquote class="mrg8">A+</blockquote>
+      <p class="mrg8">
+      is the same as
+      <blockquote class="mrg4">A[1,*]</blockquote>
+    </td>
+  </tr>
+
+</table>
+
+</li>
+</ul>
+
+<h4 class="spec">
+  <a name="doc.comp_lists"></a>
+  Related Component Lists
+</h4>
+
+<ul>
+
+<li class="mrg8">
+<a name="doc.comp_lists.content_elements"></a>
+<b>List of Content Elements</b> 
+(which in the <a href="#doc.blocks.component">Element Documentation</a> also appears
+under the heading <i>"May contain elements"</i>)
+shows all elements declared in the element content model of a given component.
+These are the same elements as shown in the 
+<a href="#doc.xml_rep.complex_content_model">Complex Content Model</a> 
+of the component's <a href="#doc.xml_rep">XML&nbsp;Representation Summary</a>.
+However, unlike the model representation, the elements in this list are ordered alphabetically,
+never repeat and hyperlinked directly to the corresponding 
+<a href="#doc.blocks.component">Element Documentations</a>.
+</li>
+
+<li class="mrg8">
+<a name="doc.comp_lists.containing_elements"></a>
+<b>List of Containing Elements</b> is generated only for Element Components and 
+appears in the <a href="#doc.blocks.component">Element Documentation</a>
+under the heading <i>"May be included in elements"</i>.
+It shows all elements that may contain the given element as a child (more precisely, 
+the given element has been explicitly declared within the content models of the elements in the list).
+<p class="mrg8">
+This is another tremendously helpful feature that we have never seen to be supported by any other 
+XML Schema documentation generator so far!</p>
+</li>
+
+<li class="mrg8">
+<a name="doc.comp_lists.direct_subtypes"></a>
+<b>List of Direct Subtypes</b> is generated for each Simple/Complex Type Component.
+It shows all other type components that are directly <a href="#doc.type.derivation.tree">derived</a>
+from the given type component.
+(A type is considered to be "directly derived" from the given type, when its definition contains
+an explicit reference to the given type).
+</li>
+
+<li class="mrg8">
+<a name="doc.comp_lists.indirect_subtypes"></a>
+<b>List of Indirect Subtypes</b> is generated for each Simple/Complex Type Component.
+It shows all other type components that are indirectly <a href="#doc.type.derivation.tree">derived</a>
+from the given type component.
+(A type is considered to be "indirectly derived" from the given type, when its definition
+contains no explicit references to the given type but a reference to a certain third type that is directly 
+or indirectly derived from the given type).
+</li>
+
+<li class="mrg8">
+<a name="doc.comp_lists.based_elements"></a>
+<b>List of All Based Elements</b> is generated for each Simple/Complex Type Component.
+It shows all elements whose type is either the given type itself or directly/indirectly 
+<a href="#doc.type.derivation.tree">derived</a> from the given type.
+</li>
+
+<li class="mrg8">
+<a name="doc.comp_lists.based_attributes"></a>
+<b>List of All Based Attributes</b> is generated for each Simple Type Component.
+It shows all attributes (defined both globally and locally) whose type is either 
+the given type itself or directly/indirectly <a href="#doc.type.derivation.tree">derived</a> 
+from the given type.
+</li>
+
+<li class="mrg8">
+<a name="doc.comp_lists.usage"></a>
+<b>Usage Locations Report</b> may be generated for each component.
+It shows where and how the given component is used within this and other XML Schemas 
+included in the documentation. 
+(For a local element, this report shows all definition locations associated with 
+that element. See also <a href="#doc.local_elements">Documenting Local Elements</a>).
+</li>
+
+</ul>
+
+<h4 class="spec">
+  <a name="doc.type"></a>
+  Type Documentation
+</h4>
+
+<ul>
+
+<li class="mrg8">
+<a name="doc.type.derivation.tree"></a>
+The <b>Type Derivation Tree</b> graphically shows how a given type has been produced from all its know 
+supertypes, which appear in the form of a tree (with mentioning the method by which a particular 
+type has been produced from its parent type):
+
+<p class="mrg8">
+<img src="images/typeDerivationTree.png" alt="Type Derivation Tree" border="0">
+
+<p class="mrg8">
+In the case of a derivation by union, the full supertype tree is too complicated, 
+so it is reduced to a formula that shows only the ancestor types used directly 
+in the declaration of the given type:
+<p class="mrg8">
+<img src="images/typeDerivationTree2.png" alt="Type Derivation Tree" border="0">
+</li>
+
+</ul>
+
+<h4 class="spec">
+  <a name="doc.xml_source"></a>
+  XML Source Documentation
+</h4>
+
+<ul>
+
+<li class="mrg8">
+Reproducing the original XML source for the whole XML schema document.
+</li>
+
+<li class="mrg8">
+Reproducing a fragment of the XML source defining each particular schema component
+and inclusion it in the component's documentation. For example, as on this screenshot:
+
+<p class="mrg8">
+<img src="images/xmlSource.png" alt="Component's XML Source" border="0">
+</li>
+
+<li class="mrg8">
+Highlighting with separate colors the XML markup, tags, attribute names and values,
+XML comments and other XML source declarations.
+</li>
+
+<li class="mrg8">
+Generating direct hyperlinks from the reproduced XML source to the documentation
+of the referenced schema components as well as to external Internet pages 
+from the URL values of attributes. 
+See <a href="http://www.filigris.com/products/docflex_xml/xsddoc/examples/index.php#html" target="_blank">Examples | HTML Documentation</a>.
+</li>
+
+</ul>
+
+<p>
+<hr>
+<span class="impr">Copyright&copy; 2003-2006 Filigris Works. Leonid Rudy Softwareprodukte. All rights reserved.<br>
+To contact us, please visit
+<a href="http://www.filigris.com">www.filigris.com</a> or e-mail to: <a href="mailto:contact@filigris.com">contact@filigris.com</a>
+</span>
+</p>
+
+</body>
+
+</html>

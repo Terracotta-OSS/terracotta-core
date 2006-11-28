@@ -1,0 +1,22 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tc.object.applicator;
+
+import com.tc.object.ClientObjectManager;
+import com.tc.object.dna.impl.DNAEncoding;
+
+public class PartialHashMapApplicator extends HashMapApplicator {
+
+  public PartialHashMapApplicator(DNAEncoding encoding) {
+    super(encoding);
+  }
+
+  /*
+   * This applicator is to be used where the Map supports partial collection. (ex. HashMap)
+   */
+  protected Object getObjectForValue(ClientObjectManager objectManager, Object v) {
+    return v;
+  }
+
+}

@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dict tag="Top">
+  <container tag="ServerPanel">
+    <children>
+      <container>
+        <children>
+          <container name="ServerControlsPanel">
+            <border>
+              <etched-border type="raised"/>
+            </border>
+            <children>
+              <button image-uri="/com/tc/admin/icons/newex_wiz.gif" name="ConnectButton" text="Connect" tip="Connect to server"/>
+              <textfield name="PortField" text="4756"/>
+              <label text="JMX Port:"/>
+              <textfield name="HostField" text="localhost"/>
+              <label text="Server Host:"/>
+            </children>
+            <connections>
+              <item bottom="-1,bottom:sn" height="n" left="1,right:n" right="-1,right:n" top="-1,top:sn" width="n"/>
+              <item bottom="-1,bottom:sn" height="n" left="2,right:n" right="0,left:n" top="-1,top:sn" width="sn"/>
+              <item bottom="-1,bottom:sn" height="n" left="3,right:n" right="1,left:n" top="-1,top:sn" width="n"/>
+              <item bottom="-1,bottom:sn" height="n" left="4,right:n" right="2,left:n" top="-1,top:sn" width="sn"/>
+              <item bottom="-1,bottom:sn" height="n" left="-1,left:n" right="3,left:n" top="-1,top:sn" width="n"/>
+            </connections>
+          </container>
+          <label image-uri="/com/tc/admin/icons/logo.gif" name="ImageLabel"/>
+          <container name="RuntimeInfoPanel">
+            <children>
+              <item child-name="ProductInfoPanel" child-type="com.tc.admin.ProductInfoPanel"/>
+              <label text="Cluster members"/>
+              <scrollpane>
+                <table class="com.tc.admin.ClusterMemberTable" name="ClusterMembersTable"/>
+              </scrollpane>
+            </children>
+            <connections>
+              <item bottom="-1,bottom:sn" height="n" left="-1,left:sn" right="-1,right:sn" top="2,bottom:sn" width="n"/>
+              <item bottom="2,top:0" height="n" left="-1,left:n" right="-1,right:s" top="-1,top:sn" width="n"/>
+              <item bottom="0,top:sn" height="sn" left="-1,left:n" right="-1,right:n" top="1,bottom:0" width="s"/>
+            </connections>
+          </container>
+          <item child-name="StatusIndicator" child-type="com.tc.admin.common.StatusView"/>
+        </children>
+        <connections>
+          <item bottom="3,top:sn" height="n" left="-1,left:sn" right="-1,right:sn" top="1,bottom:n" width="sn"/>
+          <item bottom="0,top:sn" height="s" left="-1,left:sn" right="-1,right:sn" top="-1,top:sn" width="s"/>
+          <item bottom="-1,bottom:sn" height="sn" left="-1,left:sn" right="-1,right:sn" top="3,bottom:n" width="sn"/>
+          <item bottom="2,top:sn" height="n" left="0,left:0" right="-1,right:sn" top="0,bottom:n" width="n"/>
+        </connections>
+      </container>
+    </children>
+    <connections>
+      <item bottom="-1,bottom:n" height="sn" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="sn"/>
+    </connections>
+  </container>
+  <container tag="TablesPanel">
+    <children>
+      <label text="Table filter:"/>
+      <textfield class="com.tc.admin.common.XTextField" name="FilterField" text=".*"/>
+      <scrollpane>
+        <table class="com.tc.admin.jdbc.TablesTable" name="TablesTable"/>
+      </scrollpane>
+    </children>
+    <connections>
+      <item bottom="1,bottom:s" height="n" left="-1,left:n" right="1,left:n" top="1,top:s" width="n"/>
+      <item bottom="2,top:n" height="n" left="0,right:n" right="-1,right:ns" top="-1,top:n" width="100s"/>
+      <item bottom="-1,bottom:n" height="s" left="-1,left:n" right="-1,right:n" top="1,bottom:n" width="s"/>
+    </connections>
+  </container>
+  <container class="com.tc.admin.AdminClientInfoPanel" tag="AdminClientInfoPanel">
+    <border>
+      <etched-border type="raised"/>
+    </border>
+    <children>
+      <label text="Version:"/>
+      <label text="License:"/>
+      <label name="CopyrightLabel" text="Copyright"/>
+      <label name="VersionLabel" text="Text"/>
+      <label name="LicenseLabel" text="Text"/>
+    </children>
+    <connections>
+      <item bottom="1,top:sn" height="n" left="-1,left:n" right="3,left:sn" top="-1,top:n" width="n"/>
+      <item bottom="2,top:sn" height="n" left="-1,left:n" right="4,left:n" top="0,bottom:n" width="n"/>
+      <item bottom="-1,bottom:sn" height="n" left="-1,left:n" right="-1,right:sn" top="1,bottom:sn" width="n"/>
+      <item bottom="0,bottom:s" height="n" left="0,right:n" right="-1,right:sn" top="0,top:s" width="n"/>
+      <item bottom="1,bottom:s" height="n" left="1,right:sn" right="-1,right:sn" top="1,top:s" width="n"/>
+    </connections>
+  </container>
+  <frame bounds="50,50,800,650" help-uri="/com/tc/admin/AdminClient.html" icon-image-uri="/com/tc/admin/icons/logo_small.gif" name="Main" tag="MyFrame" title="Terracotta AdminClient" visible="false">
+    <content-pane>
+      <children>
+        <splitpane divider-location="-1" focus-index="0" name="MainSplitter">
+          <left>
+            <splitpane divider-location="-1" focus-index="0" name="LeftSplitter" orientation="horizontal">
+              <left>
+                <scrollpane>
+                  <tree class="com.tc.admin.NavTree" name="Tree"/>
+                </scrollpane>
+              </left>
+              <right>
+                <container class="com.tc.admin.common.XContainer" name="NodeView"/>
+              </right>
+            </splitpane>
+          </left>
+          <right>
+            <tabbedpane class="com.tc.admin.common.XTabbedPane" name="BottomPane" selected-index="0">
+              <tab bg="0xff0000" fg="0xff0000" title="Console">
+                <scrollpane>
+                  <textarea class="com.tc.admin.common.XTextArea" editable="false" font="helvetica-plain-12" name="LogArea"/>
+                </scrollpane>
+              </tab>
+            </tabbedpane>
+          </right>
+        </splitpane>
+        <textfield class="com.tc.admin.common.XTextField" editable="false" focusable="false" name="StatusLine"/>
+      </children>
+      <connections>
+        <item bottom="1,top:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s388"/>
+        <item bottom="-1,bottom:0" height="n" left="-1,left:0" right="-1,right:0" top="0,bottom:0" width="s"/>
+      </connections>
+    </content-pane>
+  </frame>
+  <container tag="AltProductInfoPanel">
+    <children>
+      <label name="CopyrightLabel" text="Text"/>
+      <table class="com.tc.admin.common.PropertyTable" name="ProductInfoTable"/>
+    </children>
+    <connections>
+      <item bottom="-1,bottom:sn" height="n" left="-1,left:n" right="-1,right:sn" top="1,bottom:sn" width="n"/>
+      <item bottom="0,top:sn" height="n" left="-1,left:n" right="-1,right:sn" top="-1,top:sn" width="sn"/>
+    </connections>
+  </container>
+  <container class="com.tc.admin.common.XContainer" tag="LocksPanel">
+    <children>
+      <scrollpane>
+        <tree class="com.tc.admin.common.XTree" name="LockTree"/>
+      </scrollpane>
+    </children>
+    <connections>
+      <item bottom="-1,bottom:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s"/>
+    </connections>
+  </container>
+  <container class="com.tc.admin.ProductInfoPanel" tag="ProductInfoPanel">
+    <children>
+      <label name="Copyright" text="Copyright"/>
+      <label name="Version" text="Version"/>
+    </children>
+    <connections>
+      <item bottom="-1,bottom:sn" height="n" left="-1,left:sn" right="-1,right:sn" top="1,bottom:sn" width="n"/>
+      <item bottom="0,top:n" height="n" left="-1,left:sn" right="-1,right:sn" top="-1,top:sn" width="n"/>
+    </connections>
+  </container>
+  <dialog bounds="50,50,459,279" modal="true" tag="AboutDialog" title="About Administrator Console" visible="false" resizable="false">
+    <content-pane>
+      <children>
+        <label font="Trebuchet MS-plain-17" text="Terrracotta Administrator Console" name="MonikerLabel"/>
+        <label image-uri="/com/tc/admin/icons/logo.gif"/>
+        <container class="com.tc.admin.AdminClientInfoPanel" name="AdminClientInfoPanel">
+          <children>
+            <container>
+              <border>
+                <titled-border title="System Information"/>
+              </border>
+              <children>
+                <textarea name="SystemInformationTextArea" class="com.tc.admin.common.XTextArea" editable="false"/>
+              </children>
+              <connections>
+                <item bottom="-1,bottom:0" height="n" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="ns"/>
+              </connections>
+            </container>
+            <label name="CopyrightLabel" text="Copyright"/>
+          </children>
+          <connections>
+            <item bottom="1,top:n" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="ns"/>
+            <item bottom="-1,bottom:n" height="n" left="-1,left:s" right="-1,right:s" top="0,bottom:n" width="sn"/>
+          </connections>
+        </container>
+      </children>
+      <connections>
+        <item bottom="1,top:sn" height="n" left="-1,left:s" right="-1,right:s" top="-1,top:n" width="n"/>
+        <item bottom="2,top:sn" height="sn" left="-1,left:s" right="-1,right:s" top="0,bottom:n" width="sn"/>
+        <item bottom="-1,bottom:n" height="sn" left="-1,left:n" right="-1,right:n" top="1,bottom:n" width="sn"/>
+      </connections>
+    </content-pane>
+  </dialog>
+  <container tag="DSOPanel">
+    <children>
+      <container>
+        <border>
+          <line-border/>
+        </border>
+        <children>
+          <label text="Distributed Shared Object Server"/>
+          <label text="Version 1.0" name="Version"/>
+          <label text="Built on May 10, 2005 12:34:59" name="BuildID"/>
+        </children>
+        <connections>
+          <item bottom="1,top:n" height="n" left="-1,left:sn" right="-1,right:sn" top="-1,top:sn" width="n"/>
+          <item bottom="2,top:n" height="n" left="-1,left:s" right="-1,right:s" top="0,bottom:n" width="n"/>
+          <item bottom="-1,bottom:sn" height="n" left="-1,left:s" right="-1,right:s" top="1,bottom:n" width="n"/>
+        </connections>
+      </container>
+    </children>
+    <connections>
+      <item bottom="-1,bottom:sn" height="n" left="-1,left:sn" right="-1,right:sn" top="-1,top:sn" width="n"/>
+    </connections>
+  </container>
+  <container tag="SessionMonitorPanel">
+    <children>
+      <scrollpane>
+        <table name="SessionMonitorTable" class="com.tc.admin.sessions.SessionMonitorTable"/>
+      </scrollpane>
+    </children>
+    <connections>
+      <item bottom="-1,bottom:sn" height="ns" left="-1,left:sn" right="-1,right:sn" top="-1,top:sn" width="ns"/>
+    </connections>
+  </container>
+  <container tag="SessionsProductPanel">
+    <children>
+      <scrollpane>
+        <table name="SessionsProductTable" class="com.tc.admin.sessions.SessionsProductTable"/>
+      </scrollpane>
+      <scrollpane>
+        <table name="ClassCreationTable" class="com.tc.admin.common.XObjectTable"/>
+      </scrollpane>
+    </children>
+    <connections>
+      <item bottom="1,top:n" height="ns" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="ns"/>
+      <item bottom="-1,bottom:n" height="ns" left="-1,left:n" right="-1,right:n" top="0,bottom:n" width="ns"/>
+    </connections>
+  </container>
+  <container tag="StatusRenderer">
+    <children>
+      <label class="com.tc.admin.common.XLabel" name="StatusIndicator"/>
+      <label class="com.tc.admin.common.XLabel" name="StatusLabel"/>
+    </children>
+    <connections>
+      <item bottom="-1,bottom:s" height="10" left="-1,left:n" right="1,left:n" top="-1,top:s" width="10"/>
+      <item bottom="-1,bottom:s" height="n" left="0,right:n" right="-1,right:s" top="-1,top:s" width="n"/>
+    </connections>
+  </container>
+  <container tag="ClientStatsPanel">
+    <children>
+      <container name="Panel1"/>
+      <container name="Panel2"/>
+    </children>
+    <connections>
+      <item bottom="1,top:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s"/>
+      <item bottom="-1,bottom:0" height="s" left="-1,left:0" right="-1,right:0" top="0,bottom:0" width="s"/>
+    </connections>
+  </container>
+  <container tag="DSOClientPanel">
+    <children>
+      <label class="com.tc.admin.common.XLabel" name="HostLabel" text="Text"/>
+      <label text="Server Host:"/>
+      <label class="com.tc.admin.common.XLabel" name="PortLabel" text="Text"/>
+      <label text="Port:"/>
+      <label text="Channel ID:"/>
+      <label class="com.tc.admin.common.XLabel" name="ChannelIDLabel" text="Text"/>
+    </children>
+    <connections>
+      <item bottom="1,bottom:s" height="n" left="1,right:24" right="-1,right:s" top="1,top:s" width="n"/>
+      <item bottom="3,top:n" height="n" left="-1,left:s" right="0,left:24" top="-1,top:s" width="n"/>
+      <item bottom="3,bottom:s" height="n" left="0,left:0" right="-1,right:s" top="3,top:s" width="n"/>
+      <item bottom="4,top:n" height="n" left="1,left:0" right="-1,right:s" top="1,bottom:n" width="n"/>
+      <item bottom="-1,bottom:s" height="n" left="3,left:0" right="-1,right:s" top="3,bottom:n" width="n"/>
+      <item bottom="4,bottom:s" height="n" left="2,left:0" right="-1,right:s" top="4,top:s" width="n"/>
+    </connections>
+  </container>
+  <container tag="GCStatsPanel">
+    <children>
+      <scrollpane>
+        <table class="com.tc.admin.dso.GCStatsTable" name="GCStatsTable"/>
+      </scrollpane>
+    </children>
+    <connections>
+      <item bottom="-1,bottom:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s"/>
+    </connections>
+  </container>
+  <container tag="StatsPanel">
+    <children>
+      <container name="Panel1"/>
+      <container name="Panel2"/>
+      <container name="Panel3"/>
+    </children>
+    <connections>
+      <item bottom="1,top:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s"/>
+      <item bottom="2,top:0" height="s" left="-1,left:0" right="-1,right:0" top="0,bottom:0" width="s"/>
+      <item bottom="-1,bottom:0" height="s" left="-1,left:0" right="-1,right:0" top="1,bottom:0" width="s"/>
+    </connections>
+  </container>
+  <container tag="ClassesPanel">
+    <children>
+      <tabbedpane selected-index="0">
+        <tab title="Tablular">
+          <scrollpane>
+            <table class="com.tc.admin.dso.ClassesTable" name="ClassTable"/>
+          </scrollpane>
+        </tab>
+        <tab title="Hierarchical">
+          <scrollpane>
+            <tree class="com.tc.admin.common.XTree" name="ClassTree"/>
+          </scrollpane>
+        </tab>
+        <tab title="Map">
+          <item child-name="ClassesTreeMap" child-type="com.tc.admin.dso.ClassesTreeMap"/>
+        </tab>
+      </tabbedpane>
+    </children>
+    <connections>
+      <item bottom="-1,bottom:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s"/>
+    </connections>
+  </container>
+  <container tag="StatisticPanel">
+    <children>
+      <splitpane divider-location="-1" focus-index="0" name="Splitter" resize-weight="1.0">
+        <left>
+          <container>
+            <children>
+              <button name="ControlsButton">
+                <border>
+                  <empty-border/>
+                </border>
+              </button>
+              <container name="ChartHolder"/>
+            </children>
+            <connections>
+              <item bottom="-1,bottom:n" height="n" left="1,right:n" right="-1,right:n" top="-1,top:sn" width="n"/>
+              <item bottom="-1,bottom:0" height="s" left="-1,left:0" right="0,left:sn" top="-1,top:0" width="s"/>
+            </connections>
+          </container>
+        </left>
+        <right>
+          <container name="Controls">
+            <children>
+              <button image-uri="/com/tc/admin/icons/clear_co.gif" name="ClearButton" tip="Clear samples"/>
+              <button enabled="false" image-uri="/com/tc/admin/icons/suspend_co.gif" name="StopButton" tip="Stop monitoring"/>
+              <button image-uri="/com/tc/admin/icons/resume_co.gif" name="StartButton" tip="Start monitoring"/>
+              <spinner name="HistorySpinner" tip="Number of samples to display"/>
+              <label text="History Items:"/>
+              <spinner name="PeriodSpinner" tip="Sample poll period (seconds)"/>
+              <label text="Poll period:"/>
+            </children>
+            <connections>
+              <item bottom="-1,bottom:s" height="n" left="1,right:n" right="-1,right:n" top="-1,top:s" width="n"/>
+              <item bottom="-1,bottom:s" height="n" left="2,right:n" right="0,left:n" top="-1,top:s" width="n"/>
+              <item bottom="-1,bottom:s" height="n" left="3,right:sn" right="1,left:n" top="-1,top:s" width="n"/>
+              <item bottom="-1,bottom:s" height="n" left="4,right:n" right="2,left:sn" top="-1,top:s" width="sn"/>
+              <item bottom="3,bottom:s" height="n" left="5,right:26" right="3,left:n" top="3,top:s" width="n"/>
+              <item bottom="-1,bottom:s" height="n" left="6,right:n" right="4,left:26" top="-1,top:s" width="sn"/>
+              <item bottom="5,bottom:s" height="n" left="-1,left:n" right="5,left:n" top="5,top:s" width="n"/>
+            </connections>
+          </container>
+        </right>
+      </splitpane>
+    </children>
+    <connections>
+      <item bottom="-1,bottom:n" height="s" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="s"/>
+    </connections>
+  </container>
+  <dialog bounds="50,50,324,91" modal="true" resizable="false" tag="ConnectDialog" title="AdminClient" undecorated="true" visible="false">
+    <content-pane>
+      <children>
+        <container>
+          <border>
+            <line-border/>
+          </border>
+          <children>
+            <button name="CancelButton" text="Cancel"/>
+            <label text="Connecting.  Please wait..."/>
+          </children>
+          <connections>
+            <item bottom="-1,bottom:sn" height="n" left="1,right:sn" right="-1,right:sn" top="-1,top:sn" width="n"/>
+            <item bottom="-1,bottom:sn" height="n" left="-1,left:sn" right="0,left:sn" top="-1,top:sn" width="n"/>
+          </connections>
+        </container>
+      </children>
+      <connections>
+        <item bottom="-1,bottom:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s"/>
+      </connections>
+    </content-pane>
+  </dialog>
+</dict>

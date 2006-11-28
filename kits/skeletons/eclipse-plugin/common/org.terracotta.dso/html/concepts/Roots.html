@@ -1,0 +1,15 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<meta name="copyright" content="Copyright (c) Terracotta 2005, 2006.">
+<LINK REL="STYLESHEET" HREF="../book.css" CHARSET="ISO-8859-1" TYPE="text/css">
+  <title>DSO Shared Roots</title>
+</head>
+
+<body>
+<H2>DSO Shared Roots</H2>
+<p>A shared root is a class data member that will be transparently mirrored across all like-configured DSO applications running against the same DSO server. The term <i>root</i> refers to the fact that the field may represent the top of an arbitrarily large object graph. For instance, a <code>java.util.ArrayList</code> is a collection of <code>java.lang.Object</code>s, each of which may also be composed of further sub-objects. A root <i>can</i> also be a simple primitive such as an int or boolean.  There are certain types of objects that make no sense as part of a shared object graph. These types of objects are intimately bound to a particular host and they're not the kind of object that can <i>move</i> across the network. For example, an instance of <code>java.lang.Thread</code> is tightly bound to the CPU on which it is meant to execute. Other types of objects that are not candidates for transparent distribution are any AWT or Swing component, as they are directly associated with a graphical element implemented as a native component, such as a Micrsoft Windows HWin.<BR>
+<p>
+</body>
+</html>

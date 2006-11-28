@@ -1,0 +1,73 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tc.object.tx;
+
+import com.tc.management.beans.tx.ClientTxMonitorMBean;
+import com.tc.object.ObjectID;
+import com.tc.object.TCObject;
+import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.lockmanager.api.Notify;
+import com.tc.util.SequenceID;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Hangs on to a grouping of changes to be sent as a batch to the server
+ *
+ * @author steve
+ */
+public interface ClientTransaction {
+
+  public void setTransactionContext(TransactionContext transactionContext);
+
+  public Map getChangeBuffers();
+
+  public Map getNewRoots();
+
+  public LockID getLockID();
+
+  public LockID[] getAllLockIDs();
+
+  public TransactionID getTransactionID();
+
+  public void createObject(TCObject source);
+
+  public void createRoot(String name, ObjectID rootID);
+
+  public void fieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index);
+
+  public void literalValueChanged(TCObject source, Object newValue);
+
+  public void arrayChanged(TCObject source, int startPos, Object array, int length);
+
+  public void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName);
+
+  public boolean hasChangesOrNotifies();
+
+  public boolean isNull();
+
+  public TxnType getTransactionType();
+
+  public List addNotifiesTo(List notifies);
+
+  public void addNotify(Notify notify);
+
+  public void setSequenceID(SequenceID sequenceID);
+
+  public SequenceID getSequenceID();
+
+  public boolean isConcurrent();
+
+  public boolean isAlreadyCommitted();
+
+  public void setAlreadyCommitted(boolean alreadyCommittedFlag);
+
+  public boolean hasChanges();
+
+  public int getNotifiesCount();
+
+  public void updateMBean(ClientTxMonitorMBean txMBean);
+
+}

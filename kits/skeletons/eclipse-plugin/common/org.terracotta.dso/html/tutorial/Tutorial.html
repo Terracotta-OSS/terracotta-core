@@ -1,0 +1,240 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<meta name="copyright" content="Copyright (c) Terracotta and others 2005, 2006." >
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+	<LINK REL="STYLESHEET" HREF="../book.css" CHARSET="ISO-8859-1" TYPE="text/css">
+	<title>Building a DSO Application</title>
+</head>
+
+<body>
+<H2>Building a DSO Application</H2>
+<p>The goal of this tutorial is to create a simple DSO Application with clear step-by-step instructions, exploring the main concepts of Terracotta DSO along the way. We will start out by creating a standard Eclipse application, then convert the application over to DSO.
+<H3>The Problem</H3>
+<p>The application we will create is a simple Swing GUI application that displays a window containing a slider. We will then convert the project to use DSO and configure the application such that the slider value will be transparently shared among multiple instances of the application. When running multiple instances of the application, dragging the slider in one window will automatically update the values of the sliders in each of the other windows. Finally, we will create a second, similar application that will display the shared slider value in a text label.
+<H3>Getting started</H3>
+<p>First create a standard Java project by using the <code>File|New|Project...|Java|Terracotta Projects|Terracotta DSO Project</code> menu. <br><br>
+<img src="img/create.png"><br><br>
+Name the project <code>DSO Tutorial</code> and accept the default location for the project within your workspace.<BR><BR>
+<img src="img/new_project.png"><BR><BR>
+<p>Next create a new class by invoking the <code>File|New|Class</code> menu. Specify the package name as <code>tutorial</code> and the class name as <code>Slider</code>.<BR><BR>
+<img src="img/create_slider.png"><BR><BR>
+<p>The new class will appear in a Java Code Editor. Enter the following code for the Slider module:
+<code>
+<pre>
+package tutorial;
+
+import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.JFrame;
+import javax.swing.JSlider;
+
+public class Slider {
+  private DefaultBoundedRangeModel rangeModel;
+  
+  public static void main(String[] args) {
+    new Slider();
+  }
+  
+  public Slider() {
+    JFrame frame = new JFrame("Slider Test");
+
+    rangeModel = new DefaultBoundedRangeModel();
+    frame.getContentPane().add(new JSlider(rangeModel));
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    frame.pack();
+    frame.setVisible(true);
+  }
+}
+</pre>
+</code>
+<img src="img/complete_slider.png" border=1><BR>
+<H3>The Slider Module</H3>
+<p>The <code>Slider</code> constructor creates a window (<code>JFrame</code>), sets the window such that closing it terminates the process, adds a slider to the window, packs the window to its preferred size, and makes the window visible. The static <code>main()</code> method is required to run the class as an application.
+<p>You might notice that we explicity declared a <code>DefaultBoundedRangeModel</code> instance variable. Normally you would not need to create a model for a slider but for the purposes of this tutorial we have since it is that model that we plan on sharing with DSO.
+<H3>Running the Slider Application</H3>
+<p>If you don't have the <code>Project|Build Automatically</code> option enabled, compile the <code>Slider</code> class using the <code>Project|Build Project</code> menu. Invoke the context menu on the <code>Slider</code> module and choose <code>Run As|Java Application</code>. The window containing the slider should appear in the upper left corner of your display.<BR><BR>
+<img src="img/running_slider.png">
+<p>If you run another instance of the <code>Slider</code> class using the same procedure you will have two separately executing copies of the application. Our goal in the next section is to make it such that dragging one of the two sliders causes both to display the same value. We will accomplish this goal without changing the existing code at all but rather by converting the <code>Tutorial</code> project into a DSO project.
+<H3>Adding the Terracotta Nature</H3>
+<p>To convert our standard Java project to a DSO project, invoke the context menus on the <code>DSO Tutorial</code> project node in the Package Explorer view and select <code>Terracotta|Add Terracotta Nature</code>. You will be asked to specify the location within the project where you would like the configuration file, <code>tc-config.xml</code>, to be stored.  By default the file will be created in your root project folder.<BR><BR>
+<img src="img/add_nature.png"><BR><BR>
+<p>Click <code>Finish</code> to complete the conversion of your project. A folder named <code>terracotta</code> will be created in the root of your project, meant to contain any files created by the DSO runtime, such as log files. The <code>tc-config.xml</code> file specifies a default server configuration named <code>localhost</code> that will write its log files in the <code>terracotta/server-logs</code> folder.  Client logs will be store in <code>terracotta/client-logs</code>.
+<H3>Running the Server</H3>
+<p>At this point you can run the <code>Terracotta Server</code> in one of several ways. You'll notice a new drop-down menu control has been added to the workspace toolbar. That drop-down menu contains all the server configurations that have been added to <code>tc-config.xml</code>. There should be a single entry labeled <code>localhost</code> which you should select.<BR><BR>
+<img src="img/start_server_menu.png" border="1"><BR><BR>
+<p>The Terracotta server will be run using the information specified for <code>localhost</code> in the server section of <code>tc-config.xml</code>. You can stop the server by invoking the <code>Stop Terracotta Server</code> project context menu.
+<br><br>
+<img src="img/stop_server.png" border=1>
+<br><br>
+ If you attempt to start a new server when one is already running, the running server will first be stopped and then a new server will start. Go ahead and stop the server now.
+<H3>Sharing the Slider Model</H3>
+<p>To accomplish our goal of sharing the slider model amongst multiple running instances of our application, we will need to take several configuration steps:
+<ul>
+ <li>Declare the <code>Slider</code> instance variable <code>rangeModel</code> be a DSO <i>Shared Root</i>
+ <li>Declare <i>Named Locks</i> on the mutator methods of <code>DefaultBoundedRangeModel</code>
+ <li>Declare any <i>Distributed Methods</i> defined by <code>DefaultBoundedRangeModel</code>
+ <li>Declare any <i>Transient Fields</i> belonging to <code>DefaultBoundedRangeModel</code>
+</ul>
+<p>In the following section each of these steps will be described in detail. Finally, we will run our newly configured DSO application.
+<H3>Declaring the Shared Root</H3>
+<p>To declare our shared slider model, select the <code>rangeModel</code> instance variable in the Source Editor and use the <code>Terracotta|Field rangeModel|Shared root</code> context menu.<BR><BR>
+<img src="img/make_shared_root.png" border="1"><BR><BR><BR>
+<p>You could also have specified the shared root by navigating to the field in the Package Explorer view, using the context menu on the <code>rangeModel</code> field there. There are quite a number of ways to accomplish nearly all of the tasks needed to configure an application for use with DSO. The <i>DSO Configuration Editor</i>, which can be accessed via the <i>Open with... Terracotta Config</i> context-menu on the DSO configuration file node, provides graphical editors for carrying out all DSO configuration activities. For instance, the <i>Roots</i> panel of the the <i>DSO Config</i> tab lets you see and manipulate the complete set of roots specified in the configuration.  You could have chosen to <i>Add</i> the new root, and then <i>Select</i>'ed <code>rangeModel</code> from the <i>Field Navigator</i>.<BR><BR>
+NOTE: You will need to save the config file before changes take effect.
+<br><br>
+
+<img src="img/choose_root.png"><BR><BR>
+<p>As a side-effect of declaring <code>rangeModel</code> as a shared root, the declaring type <code>Slider</code> and the <code>rangeModel</code> type, <code>javax.swing.DefaultBoundedRangeModel</code>, are declared as being <i>instrumented classes</i>. Furthermore, since <code>DefaultBoundedRangeModel</code> is a system type and not a class that is pre-instrumented by Terracotta, it is also declared as an <i>additional bootjar class</i>. When it comes time to run our <code>Slider</code> application the DSO plugin will ensure that a custom bootjar is created based off the configuration file we are in the process of creating. You can manually create a custom bootjar from your configuration at any time by using the <code>Build BootJar...</code> menu.<BR><BR>
+<H3>Declare Locks for the Root Mutators</H3>
+<p>Since <code>DefaultBoundedRangeModel</code> was not written for multi-threaded operation, we will need to declare DSO <i>Named Locks</i> on any methods that change any part of the model. These methods are known as the model <i>mutators</i>. In this case we need to know about how <code>DefaultBoundedRangeModel</code> works. By inspecting the code it would seem that <code>setValue()</code> is the method that actually sets the slider value:
+<code>
+<pre>
+  public void setValue(int n) {
+    int newValue = Math.max(n, min);
+    if(newValue + extent > max) {
+        newValue = max - extent; 
+    }
+    setRangeProperties(newValue, extent, min, max, isAdjusting);
+  }
+</pre>
+</code>
+<p>But we can see that <code>setValue()</code> delegates to <code>setRangeProperties()</code> to set the slider values. So we need to create a <i>Name Lock</i> on <code>setRangeProperties()</code>. Select that method name and hit <code>F3</code> to go to it's body. Next use the <code>Terracotta|Locks|Named</code> context menu to add the lock to the DSO configuration. Alternatively, use the <i>Instrumented classes</i> page of the <i>DSO Config</i> tab of the Configuration Editor to add the new <i>Name Lock</i> and select the method using the <i>Method Navigator</i>. By default the new lock will be a <code>WRITE</code> lock, which is what we want.<BR><BR>
+<img src="img/make_named_lock.png" border="1"><BR><BR><BR>
+<H3>Declaring Distributed Methods</H3>
+<p>All Swing models implement a listener interface to inform other objects of changes to the model state. Objects add themselves as listeners of the model and respond to callbacks issued by the model upon change. In this case the range model declares a list of <code>ChangeListener</code>s which it notifies of changes via its <code>fireStateChanged()</code> method. It is this method that we must make distributed, meaning that it will be invoked on each of the Slider models in each of our DSO applications. Select the name of the <code>fireStateChanged()</code> method and use the <code>Terracotta|Methods|Distributed</code> context menu to add this distributed method to your DSO configuration, or use the DSO Configuration Editor.
+<H3>Declaring Transient Fields</H3>
+<p>The list of listeners that the range model notifies upon change is held in an instance variable named <code>listenerList</code>:
+<code>
+<pre>
+  /** The listeners waiting for model changes. */
+  protected EventListenerList listenerList = new EventListenerList();
+</pre>
+</code>
+<p>We need to add this variable as a <i>Transient Field</i> in the configuration so that DSO knows not to try to share this field across applications. This list contains references to Swing UI delegates, or views, that are display-specific and thus should not be shared by DSO. If this instance variable had been declared to be a Java <i>transient</i>, we could have just enabled the <code>honor-transients</code> attribute of the <code>DefaultBoundedRangeModel</code>'s DSO instrumentation specification. As it turns out, we still need to enable its <code>honor-transients</code> attribute because the model lazily maintains a <code>ChangeEvent</code> that it uses to pass to the listeners held in listenerList, and that ChangeEvent <b>is</b> declared as a Java <i>transient</i>. By <i>lazily</i> we refer to the fact that the model always checks to see if the event is null before using it to announce a change, and re-initializes it, if so. It functions like this to support Java object serialization.
+<p>To add this field as a transient, select its name in the declaration and use the <code>Terracotta|Fields|Transient</code> context menu.
+<p>Now that we have ensured that DSO will not attempt to share either the <code>listenerList</code> or <code>changeEvent</code>, we need a way to ensure the <code>listenerList</code> is available to shared instances of the model when it is loaded into a DSO client from a DSO server. It's important to understand that the first time the Slider application is run in the context of DSO, the model is created through the normal invocation of its default constructor:
+<code>
+<pre>
+    rangeModel = new DefaultBoundedRangeModel();
+</pre>
+</code>
+<p>This code results in the DSO root we previously declared, <code>rangeModel</code>, being transmitted to the DSO server.  All subsequent changes made to the state of the model are also sent to the server for possible re-transmission to any other connected clients. When the second Slider application is executed, DSO queries the server to see if there is a shared instance already defined, finds that there is, and returns that instance to be assigned to the root field. To be clear, even in the first application DSO looked for a pre-existing instance of the root in the server, but it just didn't find one, so the normal construction took place.
+<p>This shared object lifecycle is important to understanding why and how we can make sure a shared object that contains transient state can see that state as if it were not being transparently managed by DSO.
+<H3>Recreating Transient State</H3>
+<p>We need to specify to DSO how to cause the model's <code>listenerList</code> to be reinitialized when the model is loaded from the DSO server. There are three different ways do accomplish this:
+<ol>
+<li>Lazy initialization
+<li>Specifying a method to be called at load-time
+<li>Providing BeanShell script to be executed at load-time
+</ol>
+<p>The following are descriptions of these three methods. The third, providing a BeanShell script is the method that we will use for this tutorial exercise.</p>
+<H4>Lazy Initialization</H4>
+<p>Lazy Initialization is the method described earlier, used by the <code>DefaultBoundedRangeModel</code> to ensure that its <code>changeEvent</code> is always non-null prior to its use in change notification:
+<code>
+<pre>
+    protected void fireStateChanged() 
+    {
+        Object[] listeners = listenerList.getListenerList();
+        for (int i = listeners.length - 2; i >= 0; i -=2 ) {
+            if (listeners[i] == ChangeListener.class) {
+                 if (changeEvent == null) {
+                    changeEvent = new ChangeEvent(this);
+                }
+                ((ChangeListener)listeners[i+1]).stateChanged(changeEvent);
+            }          
+        }
+    }   
+</pre>
+</code>
+<p>The model simply checks for a null <code>changeEvent</code> and recreates it if needed.
+<H4>Specifying an Initialization Method</H4>
+<p>Specifying an Initialization Method entails adding a method to your DSO-instrumented class whose purpose is to re-initialize any transient data, and specifying that method by name in the class's instrumentation specification using the <code>on-load</code> <b>method</b> element:
+<pre>
+   &lt;include>
+     &lt;class-expression>com.my.Class&lt;/class-expression>
+     &lt;on-load>
+       &lt;method>initTransients&lt;/method>
+     &lt;/on-load>
+   &lt;/include>
+</pre>
+<p>The specified method must have public access, return void and have no arguments. Note that in order to use this technique for our <code>Slider</code> application, we would have needed to subclass, or extend, <code>DefaultBoundedRangeModel</code> to add the new initialization method.
+<H4>Providing BeanShell Script</H4>
+<p>Providing BeanShell Script entails using the <code>on-load</code> <b>execute</b> element to write BeanShell script that initializes a class's transient data. In the case of the <code>DefaultBoundedRangeModel</code> class, we will provide the following script to initialize the <code>listenerList</code>:
+<pre>
+   &lt;include>
+     &lt;class-expression>javax.swing.DefaultBoundedRangeModel&lt;/class-expression>
+     &lt;on-load>
+       &lt;execute>self.listenerList = new EventListenerList();&lt;/execute>
+     &lt;/on-load>
+   &lt;/include>
+</pre>
+<p>This is a powerful technique that does not require us to subclass the model.
+<p>You can accomplish all of these tasks by using the <i>Instrumented classes</i> page of the <i>DSO Configuration Editor</i>.
+<H3>Validating the Configuration</H3>
+<p>To this point we have done all configuration tasks through context menus. Now lets take a more detailed look at the complete configuration picture. To view the DSO <i>Configuration Editor</i>, use the <code>Open with...|Terracotta Config</code> context menu on <code>tc-config.xml</code>.<BR><BR>
+<img src="img/open_config_editor.png" border="1"><BR><BR>
+<p>The Configuration Editor will be displayed, showing the raw XML as well as various pages displaying that information in a structured way. We are most interested in the <i>DSO Config</i> page, which contains futher pages broken down by content area.<BR><BR>
+<img src="img/dso_config_page.png"><BR><BR>
+<p>Go to the <i>Roots</i> page to validate that our shared root <code>tutorial.Slider.rangeModel</code> is listed.
+<p>Go to the <i>Locks</i> page to be sure there is a <i>Named</i> write-lock on <code>javax.swing.DefaultBoundedRangeModel.setRangeProperties()</code>.
+<p>Go to the <i>Instrumented Classes</i> page to be sure both <code>tutorial.Slider</code> and <code>javax.swing.DefaultBoundedRangeModel</code> are listed, and that <code>DefaultBoundedRangeModel</code> has <i>Honor transients</i> enabled and the proper BeanShell script to be <i>executed</i> On load.
+<p>Go to the <i>Distributed Methods</i> page to be sure <code>javax.swing.DefaultBoundedRangeModel.fireStateChanged()</code> is listed.
+<p>Go to the <i>Transient Fields</i> page to be sure <code>javax.swing.DefaultBoundedRangeModel.listenerList</code> is listed.
+<p>Go to the <i>Boot Classes</i> page to be sure <code>javax.swing.DefaultBoundedRangeModel</code> is listed.
+<p>And finally, make sure you save the config and restart the server</p>
+<H3>Running the Slider Application</H3>
+<p>Now that we've confirmed that our configuration settings are in place, we can run our DSO application.  If you stopped the server that we ran at the beginning of this tutorial, be sure to restart it now. To execute the <code>Slider</code> class use the <code>Run As|Terracotta DSO Application</code> context menu in the Java Source Editor for Slider.java.<BR><BR>
+<img src="img/run_dso_slider.png" border="1"><BR><BR>
+<p>You should see some output in the <i>Console View</i> indicating that the DSO runtime environment has been activated. The <code>Slider</code> window should appear in the upper left corner of your display. Now repeat this procedure to run a second instance of the <code>Slider</code> DSO application. The second window will appear directly overtop of the first window. Move the second window so that both windows can be viewed at once. Now drag one of the sliders and see how the second slider updates automatically to the same value.<BR><BR>
+<img src="img/two_running_sliders.png"><BR><BR>
+<H3>Sharing a Root Across Different Applications</H3>
+<p>We have created a single DSO application and have seen that we can transparently share a field among multiple running copies of that application. Now we will create a different application class that also shares the same range model but displays it in a different way.
+<p>Use the <code>File|New|Class</code> menu to create a class named <code>Label</code> in package <code>tutorial</code>. Copy the following code into the new <code>Label</code> class:
+<code>
+<pre>
+package tutorial;
+
+import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+public class Label {
+  private DefaultBoundedRangeModel rangeModel;
+  private JLabel label;
+  
+  public static void main(String[] args) {
+    new Label();
+  }
+  
+  public Label() {
+    JFrame frame = new JFrame("Label Test");
+
+    rangeModel = new DefaultBoundedRangeModel();
+    rangeModel.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        label.setText(rangeModel.getValue()+"");
+      }
+    });
+    label = new JLabel(rangeModel.getValue()+"");
+    frame.getContentPane().add(label);
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    frame.pack();
+    frame.setVisible(true);
+  }
+}
+</pre>
+</code>
+<p>This class is very similar to the original <code>Slider</code> class except that it uses a label to display the slider value. To configure this class as a DSO application, make the <code>rangeModel</code> a shared root and be sure the <code>Label</code> class is declared as instrumented. The important point to make about this enhancement is that we must be sure to give this root the same <i>name</i> as the original root declared for the <code>Slider</code> application. If not set, a root's name is the same as it's field-name. That is, <code>tutorial.Slider.rangeModel</code> is the field-name and, if not otherwise specified, it is also the root-name. We need to give the <code>Slider.rangeModel</code> root a name of <code>SliderRoot</code> and also assign that name to the <code>Label.rangeModel</code> root. By giving these two roots the same name, they are treated as the same shared object by DSO.<BR><BR>
+<img src="img/same_root_name.png"><BR><BR>
+<p>Since we changed the <code>Slider</code>'s root name in the DSO configuration, we will need to restart those applications to pick up the new changes.
+<H3>Running the Label Application</H3>
+<p>Now run the <code>Label</code> DSO application in the same way we previously ran the <code>Slider</code> DSO application. The <code>Label</code> window should appear with an initial value of <code>42</code> displayed. Now change one of the sliders and you will see the label update to the slider's new value.<BR><BR>
+<img src="img/running_with_label.png"><BR><BR>
+<H3>Conclusions</H3>
+<p>In this tutorial we created a simple Swing application which we then converted to a DSO application, learning the necessary configuration needed to transparently share a simple data model among multiple instances of the same application. We then took the further step of sharing that same data model with a completely different application by simply declaring the same shared object name. The data model that was shared was a system class, loaded from the Java <i>boot classpath</i>, requiring some special treatment to integrate with the DSO runtime.
+<p>Hopefully this introduction to Terracotta DSO has made clear the potential power provided by a non-API, declarative approach to transparent data sharing.<BR><BR>
+</body>
+</html>

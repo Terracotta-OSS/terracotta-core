@@ -1,0 +1,48 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
+package com.tc.test.server;
+
+import org.hsqldb.HsqlProperties;
+import org.hsqldb.Server;
+import org.hsqldb.ServerConfiguration;
+
+
+public class HSqlDBServer extends AbstractDBServer {
+  private static final Class HSQLDB_MAIN = org.hsqldb.Server.class;
+  private static final String DEFAULT_DB_NAME = "testdb";
+  private static final int DEFAULT_PORT = ServerConfiguration.getDefaultPort(1, false);
+  
+  Server server = null;
+  
+  
+  public HSqlDBServer(String name, int port) {
+    super();
+    
+    this.setDbName(name==null ? this.DEFAULT_DB_NAME : name);
+    this.setServerPort(port==0 ? this.DEFAULT_PORT : port);
+  }
+
+  public void doStart() throws Exception {
+    HsqlProperties hsqlproperties1 = new HsqlProperties();
+    HsqlProperties hsqlproperties2 = HsqlProperties.argArrayToProps(new String[]{
+           "-database.0", "mem:test", 
+           "-dbname.0", this.getDbName(),
+           "server.port", "" + this.getServerPort()
+           }, "server");
+    hsqlproperties1.addProperties(hsqlproperties2);
+    ServerConfiguration.translateDefaultDatabaseProperty(hsqlproperties1);
+    server = new Server();
+    server.setProperties(hsqlproperties1);
+    server.start();    
+  }
+
+  public void doStop() throws Exception {
+    server.setNoSystemExit(true);
+    server.stop();
+  }
+  
+  public String toString() {
+    return super.toString() + " dbName:" + this.getDbName() + "; serverPort:" + this.getServerPort();
+  }  
+}

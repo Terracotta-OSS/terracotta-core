@@ -1,0 +1,23 @@
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+  <bean id="sharedParent" class="com.tctest.spring.bean.SimpleBean">
+  	<property name="sharedRef">
+  		<ref local="localChild1"/>
+  	</property>
+  	<property name="transientRef">
+  		<ref local="localChild2"/>
+  	</property>
+  	<property name="dsoTransientRef">
+  		<ref local="localChild3"/>
+  	</property>
+	</bean>
+
+	<!-- local child beans -->
+  <bean id="localChild1" class="com.tctest.spring.bean.SimpleBean"/>
+
+  <bean id="localChild2" class="com.tctest.spring.bean.SimpleBean"/>
+
+  <bean id="localChild3" class="com.tctest.spring.bean.SimpleBean"/>
+	
+</beans>
