@@ -3,6 +3,7 @@
  */
 package com.tc.simulator.app;
 
+import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
@@ -27,6 +28,9 @@ public class DSOApplicationBuilderTest extends BaseDSOTestCase {
   public void setUp() throws Exception {
     TestTVSConfigurationSetupManagerFactory factory = super.configFactory();
     L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
+
+    // minor hack to make server listen on an OS assigned port
+    ((SettableConfigItem) factory.l2DSOConfig().listenPort()).setValue(0);
 
     server = new DistributedObjectServer(manager, new TCThreadGroup(new ThrowableHandler(TCLogging
         .getLogger(DistributedObjectServer.class))), new NullConnectionPolicy(), new NullTCServerInfo());
