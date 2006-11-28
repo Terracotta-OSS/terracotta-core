@@ -1,3 +1,6 @@
+/**
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
 package com.tctest.util;
 
 import com.tc.object.config.ConfigVisitor;
@@ -9,7 +12,7 @@ import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.concurrent.CyclicBarrier;
 
-/*
+/**
  * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
  */
 
