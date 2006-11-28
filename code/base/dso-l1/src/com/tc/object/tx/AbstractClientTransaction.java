@@ -6,9 +6,7 @@ package com.tc.object.tx;
 import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.lockmanager.api.LockID;
-import com.tc.util.DebugUtil;
 import com.tc.util.SequenceID;
 
 /**
@@ -87,10 +85,6 @@ abstract class AbstractClientTransaction implements ClientTransaction {
       throwReadOnlyException("Failed To Change Value in:  " + newValue.getClass().getName());
     }
     alreadyCommittedCheck();
-    if (DebugUtil.DEBUG) {
-      System.err.println("In AbstractClientTransaction -- Client id: " + ManagerUtil.getClientID() + ", newValue: "
-                         + newValue + ", tcObject: " + source + ", peer: " + source.getPeerObject());
-    }
     basicLiteralValueChanged(source, newValue, oldValue);
   }
 

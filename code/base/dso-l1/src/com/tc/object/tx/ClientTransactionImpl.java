@@ -7,13 +7,11 @@ import com.tc.management.beans.tx.ClientTxMonitorMBean;
 import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.change.TCChangeBuffer;
 import com.tc.object.change.TCChangeBufferImpl;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 
 import gnu.trove.TIntArrayList;
 
@@ -67,10 +65,6 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
       runtimeLogger.literalValueChanged(source, newValue);
     }
 
-    if (DebugUtil.DEBUG) {
-      System.err.println("In ClientTransactionImpl.basicLiteralValueChanged -- Client id: " + ManagerUtil.getClientID()
-                         + ", newValue: " + newValue + ", tcObject: " + source + ", peer: " + source.getPeerObject());
-    }
     getOrCreateChangeBuffer(source).literalValueChanged(newValue);
     // To prevent it gcing on us.
     addReferenced(oldValue);

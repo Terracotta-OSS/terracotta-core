@@ -11,7 +11,6 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.lang.reflect.Field;
@@ -123,16 +122,11 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
     barrier.barrier();
     
     if (index == 0) {
-      DebugUtil.DEBUG = true;
-      
       int NUM_OF_COUNT = 5000;
       long startTime = System.currentTimeMillis();
       int i=0;
       while (i < NUM_OF_COUNT) {
         i++;
-        if (DebugUtil.DEBUG) {
-          System.err.println("i: " + i);
-        }
       }
       long endTime = System.currentTimeMillis();
       
@@ -142,15 +136,13 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
       primitiveIntRoot = 0;
       i = 0;
       while (primitiveIntRoot < NUM_OF_COUNT) {
-        //Assert.assertEquals(i, primitiveIntRoot);
+        Assert.assertEquals(i, primitiveIntRoot);
         primitiveIntRoot++;
         i++;
       }
       endTime = System.currentTimeMillis();
       
       System.err.println("Elapsed time for replaceable int root: " + (endTime-startTime) + "ms");
-      
-      DebugUtil.DEBUG = false;
     }
   }
   

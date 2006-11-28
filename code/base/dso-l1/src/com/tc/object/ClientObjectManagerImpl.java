@@ -39,7 +39,6 @@ import com.tc.text.NonPortableReasonFormatter;
 import com.tc.text.ParagraphFormatter;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 import com.tc.util.NonPortableReason;
 import com.tc.util.State;
 import com.tc.util.concurrent.StoppableThread;
@@ -405,12 +404,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
       if (o == null) {
         reap(objectID);
       }
-      if (o != null) {
-        if (DebugUtil.DEBUG) {
-          System.err.println("In ClientObjectManagerImpl -- Client id: " + ManagerUtil.getClientID() + ", o: " + o
-                             + ", tcObject: " + tco);
-        }
-      }
     }
     return o;
   }
@@ -549,10 +542,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
       return lookupOrCreateRoot(rootName, root, false);
     } else if (isLiteralPojo(root)) {
       TCObject tcObject = lookupExistingLiteralRootOrNull(rootName);
-      if (DebugUtil.DEBUG) {
-        System.err.println("In ClientObjectManagerImpl -- Client id: " + ManagerUtil.getClientID() + ", existingRoot: "
-                           + existingRoot + ", newValue: " + root + ", tcObject: " + tcObject + ", peer: " + tcObject.getPeerObject());
-      }
       tcObject.literalValueChanged(root, existingRoot);
       return root;
     } else {
