@@ -107,11 +107,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.persistenceTransactionProvider = persistenceTransactionProvider;
     this.references = new HashMap(guessMapSize(evictionPolicy));
     this.objectManagementMonitor = objectManagementMonitor;
-    
+
     final boolean doGC = config.doGC();
     this.objectManagementMonitor.registerGCController(new GCComptroller() {
       public void startGC() {
-        if(doGC) {
+        if (doGC) {
           // don't override what's in the config
           logger.warn("Cannot run GC externally because GC is enabled through config.");
           return;
@@ -806,24 +806,26 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     int size = references_size();
     int toEvict = stat.getObjectCountToEvict(size);
     if (toEvict <= 0) return;
+    // This could be a costly call, so call just once
+    Collection removalCandidates = evictionPolicy.getRemovalCandidates(toEvict);
     int evicted = 0;
-    while (toEvict > 0) {
-      int maxCount = Math.min(COMMIT_SIZE, toEvict);
-      Collection removalCandidates = evictionPolicy.getRemovalCandidates(maxCount);
-      if (removalCandidates.isEmpty()) break; // couldnt find any more
+    for (Iterator i = removalCandidates.iterator(); i.hasNext();) {
+      ArrayList splitRC = new ArrayList(COMMIT_SIZE);
+      while (splitRC.size() < COMMIT_SIZE && i.hasNext()) {
+        splitRC.add(i.next());
+      }
 
       HashSet toFlush = new HashSet();
       ArrayList removed = new ArrayList();
-      reapCache(removalCandidates, toFlush, removed);
+      reapCache(splitRC, toFlush, removed);
+      evicted +=  (toFlush.size() + removed.size());
+      removed = null;     /// Let GC work for us
       if (!toFlush.isEmpty()) {
         PersistenceTransaction tx = newTransaction();
         flushAll(tx, toFlush);
         tx.commit();
         evicted(toFlush);
       }
-      int evictedNow = (toFlush.size() + removed.size());
-      toEvict -= evictedNow;
-      evicted += evictedNow;
     }
     // TODO:: Send the right objects to the cache manager
     stat.objectEvicted(evicted, references_size(), Collections.EMPTY_LIST);
