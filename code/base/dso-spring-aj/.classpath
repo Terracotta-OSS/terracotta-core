@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="**/SCCS/**" kind="src" path="tests.system"/>
-	<classpathentry excluding="**/SCCS/**" kind="src" path="tests.system.resources"/>
+	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.system.classes" path="tests.system"/>
+	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.system.classes" path="tests.system.resources"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common"/>
