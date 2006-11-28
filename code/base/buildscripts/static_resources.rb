@@ -104,7 +104,7 @@ class StaticResources
 
     # Where does the Ant executable live?
     def ant_script
-        fail("ANT_HOME is not defined!") if ENV['ANT_HOME'].nil?        
+        fail("ANT_HOME is not defined. Please set env variable ANT_HOME to Apache Ant 1.6.5 or later.") if ENV['ANT_HOME'].nil?        
         ant_script = FilePath.new(ENV['ANT_HOME'], 'bin', 'ant').canonicalize.to_s         
     end
 
