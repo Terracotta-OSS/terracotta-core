@@ -1,15 +1,5 @@
-/*
+/**
  * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
- *
- * To be used for Windows only.
- *
- * Get java processes that are holding locks on a given file.
- *
- * This class depends on 2 free programs
- *   - Handle  from http://www.sysinternals.com and
- *   - PrcView from http://www.prcview.com
- *
- * Author: Hung Huynh
  */
 package com.tc.test;
 
@@ -20,6 +10,17 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+/*
+ * To be used for Windows only.
+ *
+ * Get java processes that are holding locks on a given file.
+ *
+ * This class depends on 2 free programs
+ *   - Handle  from http://www.sysinternals.com and
+ *   - PrcView from http://www.prcview.com
+ *
+ * Author: Hung Huynh
+ */
 public class Handle {
 
   private static String runProcess(String[] args) throws IOException {
