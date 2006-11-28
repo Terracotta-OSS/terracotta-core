@@ -4,7 +4,7 @@
 	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.unit.classes" path="tests.unit"/>
 	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.unit.classes" path="tests.unit.resources"/>
 	<classpathentry exported="true" kind="lib" path="lib/ognl-2.7.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/spring-2.0.jar" sourcepath="lib/spring-2.0-src.zip"/>
+	<classpathentry exported="true" kind="lib" path="lib/spring-2.0.1.jar" sourcepath="lib/spring-2.0.1-src.zip"/>
 	<classpathentry exported="true" kind="lib" path="lib.tests.unit/cglib-nodep-2.1_3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib.tests.unit/hibernate3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib.tests.unit/jmock-1.0.1.jar"/>
