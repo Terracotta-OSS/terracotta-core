@@ -65,7 +65,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private static final byte                    DEFAULT_FLAG             = 0x00;
   private static final byte                    MISSING_OK               = 0x01;
   private static final byte                    NEW_REQUEST              = 0x02;
-  private static final byte                    REMOVE_ON_RELEASE        = 0x03;
+  private static final byte                    REMOVE_ON_RELEASE        = 0x04;
 
   // XXX:: Should go to property file
   private static final int                     INITIAL_SET_SIZE         = 1;
@@ -317,7 +317,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         if (rv.isRemoveOnRelease()) {
           // This Object is faulted in by GC or Management interface with removeOnRelease = true, but before they got a
           // chance to grab it, a regular request for object is received. Take corrective action.
-          rv.setRemoveOnRelease(isRemoveOnRelease(flags));
+          rv.setRemoveOnRelease(false);
           evictionPolicy.add(rv);
         } else {
           evictionPolicy.markReferenced(rv);
