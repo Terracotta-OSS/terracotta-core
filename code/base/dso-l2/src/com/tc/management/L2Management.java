@@ -6,7 +6,6 @@ package com.tc.management;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
@@ -19,6 +18,7 @@ import java.net.BindException;
 import java.util.List;
 
 import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
@@ -30,8 +30,6 @@ import javax.management.remote.JMXServiceURL;
 
 public class L2Management extends TerracottaManagement {
 
-  private static final TCLogger                logger = TCLogging.getLogger(L2Management.class);
-
   private MBeanServer                          mBeanServer;
   private JMXConnectorServer                   jmxConnectorServer;
   private final L2TVSConfigurationSetupManager configurationSetupManager;
@@ -39,7 +37,7 @@ public class L2Management extends TerracottaManagement {
   private final ObjectManagementMonitor        objectManagementBean;
 
   public L2Management(TCServerInfoMBean tcServerInfo, L2TVSConfigurationSetupManager configurationSetupManager)
-      throws MBeanRegistrationException, NotCompliantMBeanException {
+      throws MBeanRegistrationException, NotCompliantMBeanException, InstanceAlreadyExistsException {
     this.tcServerInfo = tcServerInfo;
     this.configurationSetupManager = configurationSetupManager;
 
@@ -80,7 +78,8 @@ public class L2Management extends TerracottaManagement {
     }
   }
 
-  public synchronized void stop() throws IOException {
+  public synchronized void stop() throws IOException, InstanceNotFoundException, MBeanRegistrationException {
+    unregisterMBeans();
     if (jmxConnectorServer != null) {
       jmxConnectorServer.stop();
     }
@@ -98,15 +97,15 @@ public class L2Management extends TerracottaManagement {
     return objectManagementBean;
   }
 
-  private void registerMBeans() throws MBeanRegistrationException, NotCompliantMBeanException {
-    try {
-      mBeanServer.registerMBean(tcServerInfo, L2MBeanNames.TC_SERVER_INFO);
-      mBeanServer.registerMBean(TCLogging.getAppender().getMBean(), L2MBeanNames.LOGGER);
-      mBeanServer.registerMBean(objectManagementBean, L2MBeanNames.OBJECT_MANAGEMENT);
-    } catch (InstanceAlreadyExistsException e) {
-      // tests trigger multiple registration attemps of these mbeans 
-      logger.warn("Could not register all mbeans in L2Management because InstanceAlreadyExistsException thrown.");
-    }
+  private void registerMBeans() throws MBeanRegistrationException, NotCompliantMBeanException, InstanceAlreadyExistsException {
+    mBeanServer.registerMBean(tcServerInfo, L2MBeanNames.TC_SERVER_INFO);
+    mBeanServer.registerMBean(TCLogging.getAppender().getMBean(), L2MBeanNames.LOGGER);
+    mBeanServer.registerMBean(objectManagementBean, L2MBeanNames.OBJECT_MANAGEMENT);
   }
 
+  private void unregisterMBeans() throws InstanceNotFoundException, MBeanRegistrationException {
+    mBeanServer.unregisterMBean(L2MBeanNames.TC_SERVER_INFO);
+    mBeanServer.unregisterMBean(L2MBeanNames.LOGGER);
+    mBeanServer.unregisterMBean(L2MBeanNames.OBJECT_MANAGEMENT);
+  }
 }
