@@ -13,13 +13,10 @@ import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 
 import gnu.trove.TIntObjectHashMap;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 public class TestTCChangeBuffer implements TCChangeBuffer {
-
-  public Object newObject;
 
   public void fieldChanged(String classname, String fieldname, Object newValue, int index) {
     throw new ImplementMe();
@@ -33,10 +30,6 @@ public class TestTCChangeBuffer implements TCChangeBuffer {
 
   public void writeTo(TCByteBufferOutputStream output, ObjectStringSerializer serializer, DNAEncoding encoding) {
     return;
-  }
-
-  public void addNewObjectTo(Collection newObjects) {
-    if (newObject != null) newObjects.add(newObject);
   }
 
   public Map getPhysicalEvents() {

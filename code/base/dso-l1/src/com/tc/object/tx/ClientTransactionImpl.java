@@ -17,6 +17,7 @@ import com.tc.util.DebugUtil;
 
 import gnu.trove.TIntArrayList;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -33,7 +34,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   private final Map           newRoots      = new HashMap();
   private final List          notifies      = new LinkedList();
 
-  // used to keep things referenced until at least the transaction is completely sent
+  // used to keep things referenced until the transaction is completely ACKED
   private final Map           referenced    = new IdentityHashMap();
 
   public ClientTransactionImpl(TransactionID txID, RuntimeLogger logger, ChannelIDProvider cidProvider) {
@@ -67,10 +68,12 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     }
 
     if (DebugUtil.DEBUG) {
-      System.err.println("In ClientTransactionImpl.basicLiteralValueChanged -- Client id: " + ManagerUtil.getClientID() + ", newValue: "
-                         + newValue + ", tcObject: " + source + ", peer: " + source.getPeerObject());
+      System.err.println("In ClientTransactionImpl.basicLiteralValueChanged -- Client id: " + ManagerUtil.getClientID()
+                         + ", newValue: " + newValue + ", tcObject: " + source + ", peer: " + source.getPeerObject());
     }
     getOrCreateChangeBuffer(source).literalValueChanged(newValue);
+    // To prevent it gcing on us.
+    addReferenced(oldValue);
     addReferenced(newValue);
   }
 
@@ -123,6 +126,10 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     referenced.put(pojo, null);
   }
 
+  public Collection getReferencesOfObjectsInTxn() {
+    return referenced.keySet();
+  }
+  
   public void addNotify(Notify notify) {
     if (!notify.isNull()) notifies.add(notify);
   }
@@ -168,4 +175,5 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     txMBean.committedWriteTransaction(getNotifiesCount(), modifiedObjectCount, writesPerObject.toNativeArray(),
                                       creationCountByClass);
   }
+
 }

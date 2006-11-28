@@ -8,7 +8,6 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.MockClassProvider;
-import com.tc.object.change.TestTCChangeBuffer;
 import com.tc.object.dna.impl.DNAEncoding;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -31,12 +30,10 @@ import com.tc.util.SequenceID;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import junit.framework.TestCase;
@@ -52,37 +49,6 @@ public class TransactionBatchTest extends TestCase {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     messageFactory = new TestCommitTransactionMessageFactory();
     writer = new TransactionBatchWriter(new TxnBatchID(1), serializer, encoding, messageFactory);
-  }
-
-  public void testNewObjectPinning() throws Exception {
-    Map newObjects = new HashMap();
-
-    for (int i = 0; i < 3; i++) {
-      TestClientTransaction txn = new TestClientTransaction();
-      txn.txID = new TransactionID(i);
-      txn.txnType = TxnType.NORMAL;
-      txn.sequenceID = new SequenceID(i);
-      TestTCChangeBuffer changeBuffer = new TestTCChangeBuffer();
-      Object myObject = new Object();
-      newObjects.put(txn.txID, myObject);
-      changeBuffer.newObject = myObject;
-      txn.changeBuffers.put(new Object(), changeBuffer);
-      writer.addTransaction(txn);
-    }
-
-    writer.wait4AllTxns2Serialize();
-
-    // make sure that the batch writer has new objects pinned.
-    // assertTrue(newObjects.values(), writer.getNewObjects());
-    assertEquals(new HashSet(newObjects.values()), new HashSet(writer.getNewObjects()));
-
-    // now, remove transactions and make sure that the proper new objects are unpinned.
-    for (Iterator i = newObjects.keySet().iterator(); i.hasNext();) {
-      TransactionID txID = (TransactionID) i.next();
-      i.remove();
-      writer.removeTransaction(txID);
-      assertEquals(new HashSet(newObjects.values()), new HashSet(writer.getNewObjects()));
-    }
   }
 
   public void testGetMinTransaction() throws Exception {

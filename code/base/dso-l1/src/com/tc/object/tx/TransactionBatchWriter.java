@@ -122,16 +122,15 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     }
 
     Map changes = txn.getChangeBuffers();
-    Collection newObjects = new ArrayList(changes.size());
     out.writeInt(changes.size());
     for (Iterator i = changes.values().iterator(); i.hasNext();) {
       TCChangeBuffer buffer = (TCChangeBuffer) i.next();
-      buffer.addNewObjectTo(newObjects);
       buffer.writeTo(out, serializer, encoding);
     }
 
     bytesWritten += out.getBytesWritten();
-    transactionData.put(txn.getTransactionID(), new TransactionDescriptor(sequenceID, out.toArray(), newObjects));
+    transactionData.put(txn.getTransactionID(), new TransactionDescriptor(sequenceID, out.toArray(), txn
+        .getReferencesOfObjectsInTxn()));
   }
 
   // Called from CommitTransactionMessageImpl
@@ -146,7 +145,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     }
     batchDataOutputStreams.add(out);
 
-    // System.err.println("Batch size: " + out.getBytesWritten() + ", # TXNs  = " + numberOfTxns());
+    // System.err.println("Batch size: " + out.getBytesWritten() + ", # TXNs = " + numberOfTxns());
 
     return out.toArray();
   }
@@ -227,47 +226,21 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     }
   }
 
-  /**
-   * This is for testing only.
-   */
-  public Set getNewObjects() {
-    Set newObjects = new HashSet();
-    for (Iterator i = transactionData.values().iterator(); i.hasNext();) {
-      TransactionDescriptor tdesc = (TransactionDescriptor) i.next();
-      newObjects.addAll(tdesc.getNewObjects());
-    }
-    return newObjects;
-  }
-
   private static final class TransactionDescriptor implements Recyclable {
 
     final SequenceID         sequenceID;
     final TCByteBuffer[]     data;
-    private final Collection newObjects;
+    // Maintaining hard references so that it doesnt get GCed on us
+    private final Collection references;
 
-    TransactionDescriptor(SequenceID sequenceID, TCByteBuffer[] data, Collection newObjects) {
+    TransactionDescriptor(SequenceID sequenceID, TCByteBuffer[] data, Collection references) {
       this.sequenceID = sequenceID;
       this.data = data;
-      this.newObjects = newObjects;
+      this.references = references;
     }
 
     public String dump() {
-      return " { " + sequenceID + " , New Objects = " + toString(newObjects) + " }";
-    }
-
-    private String toString(Collection newObjects2) {
-      StringBuffer sb = new StringBuffer();
-      for (Iterator iter = newObjects2.iterator(); iter.hasNext();) {
-        Object element = iter.next();
-        // @see TCChangeBufferImpl.java
-        if (element instanceof ObjectID) {
-          sb.append(element).append(",");
-        }
-      }
-      if (sb.length() > 0) {
-        sb.setLength(sb.length() - 1);
-      }
-      return sb.toString();
+      return " { " + sequenceID + " , Objects in Txn = " + references.size() + " }";
     }
 
     SequenceID getSequenceID() {
@@ -276,11 +249,6 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
 
     TCByteBuffer[] getData() {
       return data;
-    }
-
-    /* Used for testing only */
-    Collection getNewObjects() {
-      return newObjects;
     }
 
     public void recycle() {

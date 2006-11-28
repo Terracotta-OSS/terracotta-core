@@ -3,56 +3,23 @@
  */
 package com.tc.object.change;
 
-import com.tc.exception.ImplementMe;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.object.ClientObjectManager;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
-import com.tc.object.TCClass;
-import com.tc.object.TCObject;
-import com.tc.object.TestTCObject;
-import com.tc.object.TraversedReferences;
 import com.tc.object.bytecode.MockClassProvider;
-import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAEncoding;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.field.TCField;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.tx.optimistic.OptimisticTransactionManager;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 import junit.framework.TestCase;
 
 public class TCChangeBufferTest extends TestCase {
-
-  public void testAddNewObjectTo() throws Exception {
-    Object myObject = new Object();
-    TestTCObject tcObject = new TestTCObject(myObject);
-    tcObject.setTCClass(new TestTCClass());
-    List newObjects = new ArrayList(1);
-
-    TCChangeBuffer changeBuffer = new TCChangeBufferImpl(tcObject);
-    changeBuffer.addNewObjectTo(newObjects);
-    assertTrue(newObjects.isEmpty());
-
-    tcObject.setIsNew();
-    changeBuffer = new TCChangeBufferImpl(tcObject);
-    changeBuffer.addNewObjectTo(newObjects);
-    assertEquals(1, newObjects.size());
-    assertSame(myObject, newObjects.get(0));
-  }
 
   public void testLogicalClassIgnoresPhysicalChanges() throws Exception {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
@@ -154,122 +121,6 @@ public class TCChangeBufferTest extends TestCase {
     }
 
     assertEquals(1, count);
-  }
-
-  private static class TestTCClass implements TCClass {
-
-    public Class getPeerClass() {
-      throw new ImplementMe();
-    }
-
-   public Map connectedCopy(Object source, Object dest, Map visited, OptimisticTransactionManager txManager){
-      throw new ImplementMe();
-   }
-
-    public boolean hasOnLoadExecuteScript() {
-      throw new ImplementMe();
-    }
-
-    public boolean hasOnLoadMethod() {
-      throw new ImplementMe();
-    }
-
-    public String getOnLoadMethod() {
-      throw new ImplementMe();
-    }
-
-    public String getOnLoadExecuteScript() {
-      throw new ImplementMe();
-    }
-
-    public Field getParentField() {
-      throw new ImplementMe();
-    }
-
-    public String getParentFieldName() {
-      throw new ImplementMe();
-    }
-
-    public TCField[] getPortableFields() {
-      throw new ImplementMe();
-    }
-
-    public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
-      throw new ImplementMe();
-    }
-
-    public Constructor getConstructor() {
-      throw new ImplementMe();
-    }
-
-    public String getName() {
-      throw new ImplementMe();
-    }
-
-    public Class getComponentType() {
-      throw new ImplementMe();
-    }
-
-    public boolean isLogical() {
-      return false;
-    }
-
-    public TCClass getSuperclass() {
-      throw new ImplementMe();
-    }
-
-    public boolean isNonStaticInner() {
-      throw new ImplementMe();
-    }
-
-    public boolean isUseNonDefaultConstructor() {
-      throw new ImplementMe();
-    }
-
-    public Object getNewInstanceFromNonDefaultConstructor(DNA dna) {
-      throw new ImplementMe();
-    }
-
-    public TCField getField(String name) {
-      throw new ImplementMe();
-    }
-
-    public boolean isIndexed() {
-      return false;
-    }
-
-    public void hydrate(TCObject tcObject, DNA dna, Object pojo, boolean force) {
-      throw new ImplementMe();
-    }
-
-    public void dehydrate(TCObject tcObject, DNAWriter writer, Object pojo) {
-      throw new ImplementMe();
-    }
-
-    public String getDefiningLoaderDescription() {
-      throw new ImplementMe();
-    }
-
-    public TCObject createTCObject(ObjectID id, Object peer) {
-      throw new ImplementMe();
-    }
-
-    public String getFieldNameByOffset(long fieldOffset) {
-      throw new ImplementMe();
-    }
-
-    public ClientObjectManager getObjectManager() {
-      throw new ImplementMe();
-    }
-
-    public boolean isProxyClass() {
-      return false;
-    }
-
-    public String getExtendingClassName() {
-      return getName();
-    }
-
   }
 
 }

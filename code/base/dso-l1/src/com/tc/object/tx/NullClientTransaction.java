@@ -56,10 +56,6 @@ public class NullClientTransaction extends AbstractClientTransaction {
     return Collections.EMPTY_MAP;
   }
 
-  public Collection getNewObjects() {
-    return Collections.EMPTY_LIST;
-  }
-
   public void addNotify(Notify notify) {
     return;
   }
@@ -86,6 +82,10 @@ public class NullClientTransaction extends AbstractClientTransaction {
 
   protected void basicLiteralValueChanged(TCObject source, Object newValue, Object oldValue) {
     // do nothingg
+  }
+
+  public Collection getReferencesOfObjectsInTxn() {
+    return Collections.EMPTY_LIST;
   }
 
 }

@@ -10,8 +10,6 @@ import com.tc.object.dna.impl.DNAEncoding;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 
-import java.util.Collection;
-
 /**
  * @author orion
  */
@@ -30,11 +28,6 @@ public interface TCChangeBuffer {
   public void logicalInvoke(int method, Object[] parameters);
 
   public void writeTo(TCByteBufferOutputStream output, ObjectStringSerializer serializer, DNAEncoding encoding);
-
-  /**
-   * Adds a reference to the real object, if the object is new.
-   */
-  public void addNewObjectTo(Collection newObjects);
 
   public TCObject getTCObject();
 

@@ -12,6 +12,7 @@ import com.tc.object.lockmanager.api.Notify;
 import com.tc.util.SequenceID;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -57,14 +58,6 @@ public class TestClientTransaction implements ClientTransaction {
   }
 
   public void createRoot(String name, ObjectID rootID) {
-    throw new ImplementMe();
-  }
-
-  public boolean holdsLock(LockID lid) {
-    throw new ImplementMe();
-  }
-
-  public ClientTransaction getNextTransaction() {
     throw new ImplementMe();
   }
 
@@ -120,11 +113,6 @@ public class TestClientTransaction implements ClientTransaction {
     throw new ImplementMe();
   }
 
-  public void readOnlyCheck() {
-    throw new ImplementMe();
-
-  }
-
   public boolean hasChanges() {
     throw new ImplementMe();
   }
@@ -143,6 +131,10 @@ public class TestClientTransaction implements ClientTransaction {
 
   public void literalValueChanged(TCObject source, Object newValue, Object oldValue) {
     throw new ImplementMe();
+  }
+
+  public Collection getReferencesOfObjectsInTxn() {
+    return Collections.EMPTY_LIST;
   }
 
 }

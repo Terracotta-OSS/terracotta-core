@@ -6,7 +6,6 @@ package com.tc.object.change;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.change.event.ArrayElementChangeEvent;
@@ -71,16 +70,6 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
       literalValueChangedEvents = new LinkedList();
       logicalEvents = null;
       arrayEvents = null;
-    }
-  }
-
-  public void addNewObjectTo(Collection newObjects) {
-    if (tcObject.isNew()) {
-      // XXX:: ObjectID is added to the collection just so that when you dump TransactionBatchWriter on resend()
-      // we know what Objects are created in which Transactions.
-      ObjectID oid = tcObject.getObjectID();
-      if (oid != null) newObjects.add(oid);
-      newObjects.add(tcObject.getPeerObject());
     }
   }
 

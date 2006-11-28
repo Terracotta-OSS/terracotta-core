@@ -10,6 +10,7 @@ import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.util.SequenceID;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -69,5 +70,7 @@ public interface ClientTransaction {
   public int getNotifiesCount();
 
   public void updateMBean(ClientTxMonitorMBean txMBean);
+
+  public Collection getReferencesOfObjectsInTxn();
 
 }
