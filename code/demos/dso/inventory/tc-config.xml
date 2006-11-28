@@ -11,7 +11,7 @@
        See the Terracotta DSO Guide for additional information. -->
   <clients>
     <logs>%(user.home)/terracotta/inventory/client-logs</logs>
-  </clients>terracotta.org
+  </clients>
 
   <application>
     <dso>
