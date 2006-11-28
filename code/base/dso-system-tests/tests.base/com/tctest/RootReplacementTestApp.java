@@ -140,8 +140,11 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
       
       startTime = System.currentTimeMillis();
       primitiveIntRoot = 0;
+      i = 0;
       while (primitiveIntRoot < NUM_OF_COUNT) {
+        //Assert.assertEquals(i, primitiveIntRoot);
         primitiveIntRoot++;
+        i++;
       }
       endTime = System.currentTimeMillis();
       

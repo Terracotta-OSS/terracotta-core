@@ -12,7 +12,6 @@ import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.ByteCodeUtil;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.loaders.Namespace;
@@ -24,7 +23,6 @@ import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.session.SessionID;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
-import com.tc.util.DebugUtil;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -472,7 +470,7 @@ private static final TCLogger          logger        = TCLogging.getLogger(Clien
   // }
   // }
 
-  public void literalValueChanged(TCObject source, Object newValue) {
+  public void literalValueChanged(TCObject source, Object newValue, Object oldValue) {
     if (isTransactionLoggingDisabled()) { return; }
 
     try {
@@ -481,11 +479,7 @@ private static final TCLogger          logger        = TCLogging.getLogger(Clien
       Object pojo = source.getPeerObject();
       ClientTransaction tx = getTransaction(pojo);
 
-      if (DebugUtil.DEBUG) {
-        System.err.println("In ClientTransactionManagerImpl -- Client id: " + ManagerUtil.getClientID() + ", newValue: "
-                           + newValue + ", tcObject: " + source + ", peer: " + source.getPeerObject());
-      }
-      tx.literalValueChanged(source, newValue);
+      tx.literalValueChanged(source, newValue, oldValue);
     } finally {
       enableTransactionLogging();
     }

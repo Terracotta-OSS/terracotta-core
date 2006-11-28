@@ -553,7 +553,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
         System.err.println("In ClientObjectManagerImpl -- Client id: " + ManagerUtil.getClientID() + ", existingRoot: "
                            + existingRoot + ", newValue: " + root + ", tcObject: " + tcObject + ", peer: " + tcObject.getPeerObject());
       }
-      tcObject.literalValueChanged(root);
+      tcObject.literalValueChanged(root, existingRoot);
       return root;
     } else {
       return lookupOrCreateRoot(rootName, root, false);

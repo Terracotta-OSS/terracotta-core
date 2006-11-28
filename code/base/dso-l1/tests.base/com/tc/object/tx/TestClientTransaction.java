@@ -141,7 +141,7 @@ public class TestClientTransaction implements ClientTransaction {
     throw new ImplementMe();
   }
 
-  public void literalValueChanged(TCObject source, Object newValue) {
+  public void literalValueChanged(TCObject source, Object newValue, Object oldValue) {
     throw new ImplementMe();
   }
 

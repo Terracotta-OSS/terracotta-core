@@ -61,7 +61,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     return this.objectChanges;
   }
 
-  protected void basicLiteralValueChanged(TCObject source, Object newValue) {
+  protected void basicLiteralValueChanged(TCObject source, Object newValue, Object oldValue) {
     if (runtimeLogger.fieldChangeDebug()) {
       runtimeLogger.literalValueChanged(source, newValue);
     }
@@ -71,6 +71,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
                          + newValue + ", tcObject: " + source + ", peer: " + source.getPeerObject());
     }
     getOrCreateChangeBuffer(source).literalValueChanged(newValue);
+    addReferenced(newValue);
   }
 
   protected void basicFieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index) {
@@ -106,7 +107,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   }
 
   private TCChangeBuffer getOrCreateChangeBuffer(TCObject object) {
-    addReferenced(object);
+    addReferenced(object.getPeerObject());
 
     TCChangeBuffer cb = (TCChangeBuffer) objectChanges.get(object);
     if (cb == null) {
@@ -117,15 +118,9 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     return cb;
   }
 
-  private void addReferenced(TCObject object) {
-    Object peer = object.getPeerObject();
-    if (peer == null) {
-      if (DebugUtil.DEBUG) {
-        System.err.println("In ClientTransactionImpl -- Client id: " + ManagerUtil.getClientID() + ", tcObject: " + object);
-      }
-    }
-    Assert.assertNotNull("peer", peer);
-    referenced.put(peer, null);
+  private void addReferenced(Object pojo) {
+    Assert.assertNotNull("pojo", pojo);
+    referenced.put(pojo, null);
   }
 
   public void addNotify(Notify notify) {

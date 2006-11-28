@@ -229,7 +229,7 @@ public abstract class TCObjectImpl implements TCObject {
     // override me
   }
 
-  public void literalValueChanged(Object newValue) {
+  public void literalValueChanged(Object newValue, Object oldValue) {
     throw new UnsupportedOperationException();
   }
 

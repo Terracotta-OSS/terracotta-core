@@ -3,12 +3,10 @@
  */
 package com.tc.object;
 
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.field.TCField;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
-import com.tc.util.DebugUtil;
 
 import gnu.trove.THashMap;
 
@@ -113,12 +111,8 @@ public class TCObjectPhysical extends TCObjectImpl {
     throw new UnsupportedOperationException();
   }
   
-  public void literalValueChanged(Object newValue) {
-    if (DebugUtil.DEBUG) {
-      System.err.println("In TCObjectPhysical -- Client id: " + ManagerUtil.getClientID() + ", newValue: "
-                         + newValue + ", tcObject: " + toString() + ", peer: " + getPeerObject());
-    }
-    getObjectManager().getTransactionManager().literalValueChanged(this, newValue);
+  public void literalValueChanged(Object newValue, Object oldValue) {
+    getObjectManager().getTransactionManager().literalValueChanged(this, newValue, oldValue);
     setPeerObject(new WeakObjectReference(getObjectID(), newValue, getObjectManager().getReferenceQueue()));
   }
   

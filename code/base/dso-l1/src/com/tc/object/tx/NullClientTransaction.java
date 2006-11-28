@@ -84,7 +84,7 @@ public class NullClientTransaction extends AbstractClientTransaction {
     // null do nothing
   }
 
-  protected void basicLiteralValueChanged(TCObject source, Object newValue) {
+  protected void basicLiteralValueChanged(TCObject source, Object newValue, Object oldValue) {
     // do nothingg
   }
 

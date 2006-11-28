@@ -38,7 +38,7 @@ public interface ClientTransaction {
 
   public void fieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index);
 
-  public void literalValueChanged(TCObject source, Object newValue);
+  public void literalValueChanged(TCObject source, Object newValue, Object oldValue);
 
   public void arrayChanged(TCObject source, int startPos, Object array, int length);
 

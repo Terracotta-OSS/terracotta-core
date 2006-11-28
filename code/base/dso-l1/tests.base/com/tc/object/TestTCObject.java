@@ -231,7 +231,7 @@ public class TestTCObject implements TCObject {
     throw new ImplementMe();
   }
 
-  public void literalValueChanged(Object newValue) {
+  public void literalValueChanged(Object newValue, Object oldValue) {
     throw new ImplementMe();
   }
 

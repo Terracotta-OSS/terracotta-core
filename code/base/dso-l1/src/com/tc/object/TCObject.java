@@ -63,7 +63,7 @@ public interface TCObject extends Cacheable {
 
   public void primitiveArrayChanged(int startPos, Object array, int length);
 
-  public void literalValueChanged(Object newValue);
+  public void literalValueChanged(Object newValue, Object oldValue);
 
   public void setLiteralValue(Object newValue);
 

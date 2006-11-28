@@ -82,7 +82,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
     basicFieldChanged(source, classname, fieldname, newValue, index);
   }
 
-  public final void literalValueChanged(TCObject source, Object newValue) {
+  public final void literalValueChanged(TCObject source, Object newValue, Object oldValue) {
     if (transactionContext.getType() == TxnType.READ_ONLY) {
       throwReadOnlyException("Failed To Change Value in:  " + newValue.getClass().getName());
     }
@@ -91,7 +91,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
       System.err.println("In AbstractClientTransaction -- Client id: " + ManagerUtil.getClientID() + ", newValue: "
                          + newValue + ", tcObject: " + source + ", peer: " + source.getPeerObject());
     }
-    basicLiteralValueChanged(source, newValue);
+    basicLiteralValueChanged(source, newValue, oldValue);
   }
 
   public final void arrayChanged(TCObject source, int startPos, Object array, int length) {
@@ -146,7 +146,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   abstract protected void basicFieldChanged(TCObject source, String classname, String fieldname, Object newValue,
                                             int index);
 
-  abstract protected void basicLiteralValueChanged(TCObject source, Object newValue);
+  abstract protected void basicLiteralValueChanged(TCObject source, Object newValue, Object oldValue);
 
   abstract protected void basicArrayChanged(TCObject source, int startPos, Object array, int length);
 

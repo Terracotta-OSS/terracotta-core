@@ -45,7 +45,7 @@ public interface ClientTransactionManager {
 
   public void createRoot(String name, ObjectID id);
 
-  public void literalValueChanged(TCObject source, Object newValue);
+  public void literalValueChanged(TCObject source, Object newValue, Object oldValue);
 
   public void fieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index);
 

@@ -159,7 +159,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void literalValueChanged(TCObject source, Object newValue) {
+    public void literalValueChanged(TCObject source, Object newValue, Object oldValue) {
       throw new ImplementMe();
     }
   }
