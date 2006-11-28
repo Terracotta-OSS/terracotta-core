@@ -102,6 +102,7 @@ public class DistributedTestRunner implements ResultsListener {
                                     this.control, this.resultsListeners[i], this.applicationBuilders[i]);
     }
     L2TVSConfigurationSetupManager manager = configFactory.createL2TVSConfigurationSetupManager(null);
+
     this.server = new DistributedObjectServer(manager, new TCThreadGroup(new ThrowableHandler(TCLogging
         .getLogger(DistributedObjectServer.class))), new ConnectionPolicyImpl(-1), new NullTCServerInfo());
   }

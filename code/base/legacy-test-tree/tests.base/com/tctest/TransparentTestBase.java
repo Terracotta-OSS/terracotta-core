@@ -51,6 +51,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
                                      new RestartTestEnvironment(getTempDirectory(), new PortChooser(),
                                                                 RestartTestEnvironment.PROD_MODE));
       ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(helper.getServerPort());
+    } else {
+      ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(0);
     }
 
     this.doSetUp(this);
@@ -167,8 +169,9 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
         }
       }
 
-      if(!this.runner.success()) {
-        AssertionFailedError e = new AssertionFailedError(new ErrorContextFormatter(this.runner.getErrors()).formatForExceptionMessage());
+      if (!this.runner.success()) {
+        AssertionFailedError e = new AssertionFailedError(new ErrorContextFormatter(this.runner.getErrors())
+            .formatForExceptionMessage());
         throw e;
       }
     } else {
@@ -178,13 +181,14 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   }
 
   private static final class ErrorContextFormatter {
-    private final Collection contexts;
+    private final Collection   contexts;
     private final StringBuffer buf = new StringBuffer();
+
     public ErrorContextFormatter(Collection contexts) {
       this.contexts = contexts;
     }
 
-    private void div(){
+    private void div() {
       buf.append("\n**************************************************************\n");
     }
 
