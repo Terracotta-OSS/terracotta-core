@@ -10,6 +10,7 @@ import com.tc.text.PrettyPrinter;
 import gnu.trove.TLinkable;
 import gnu.trove.TLinkedList;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -24,10 +25,13 @@ import java.util.Map.Entry;
  */
 public class LFUEvictionPolicy implements EvictionPolicy {
 
-  private static final TCLogger logger = TCLogging.getLogger(LFUEvictionPolicy.class);
+  private static final TCLogger logger       = TCLogging.getLogger(LFUEvictionPolicy.class);
+
+  private static final int      AGING_FACTOR = 2;
+
   private final int             capacity;
   private final int             evictionSize;
-  private final TLinkedList     cache  = new TLinkedList();
+  private final TLinkedList     cache        = new TLinkedList();
   // This is a marker in the linked list where the old (non-new) objects starts.
   private TLinkable             mark;
 
@@ -106,8 +110,8 @@ public class LFUEvictionPolicy implements EvictionPolicy {
   // cache.remove(obj);
   // cache.addBefore(next, obj);
   // long end = System.currentTimeMillis();
-  // if(end-start > 500) {
-  // logger.info("BAD : Mark Reference took " + (end-start) +" ms");
+  // if (end - start > 500) {
+  // logger.info("BAD : Mark Reference took " + (end - start) + " ms");
   // }
   // }
 
@@ -115,54 +119,72 @@ public class LFUEvictionPolicy implements EvictionPolicy {
     obj.markAccessed();
   }
 
-  public synchronized Collection getRemovalCandidates(int maxCount) {
-    if (capacity > 0) {
-      if (!isCacheFull()) { return Collections.EMPTY_LIST; }
-      if (maxCount <= 0 || maxCount > evictionSize) {
-        maxCount = evictionSize;
-      }
-    } else if (maxCount <= 0) {
-      // disallow negetative maxCount when capacity is negative
-      throw new AssertionError("Please specify maxcount > 0 as capacity is set to : " + capacity + " Max Count = "
-                               + maxCount);
-    }
+  public Collection getRemovalCandidates(int maxCount) {
 
     Collection rv = new HashSet();
-    int count = Math.min(cache.size(), maxCount);
-    Map accessCountSummary = new TreeMap(); // This is sorted map
-
-    Cacheable c = (Cacheable) mark;
-    if (c == null) {
-      c = (Cacheable) cache.getFirst();
-    }
-    Cacheable save = c;
-    mark = (Cacheable) cache.getFirst();
-
-    // Step 1: Remove elements which were never accessed and at the same time collect stats
-    while (cache.size() - rv.size() > capacity && count > 0 && c != null) {
-      Cacheable next = (Cacheable) c.getNext();
-      int accessed = c.accessCount();
-      if (accessed == 0) {
-        if (c.canEvict()) {
-          rv.add(c);
-          if (mark != c) {
-            cache.remove(c);
-            cache.addBefore(mark, c);
-          }
-          count--;
+    int count = 0;
+    ArrayList accessCounts;
+    Cacheable save, c;
+    synchronized (this) {
+      if (capacity > 0) {
+        if (!isCacheFull()) { return Collections.EMPTY_LIST; }
+        if (maxCount <= 0 || maxCount > evictionSize) {
+          maxCount = evictionSize;
         }
-      } else {
-        incrementAccessCountFor(accessCountSummary, accessed);
-
+      } else if (maxCount <= 0) {
+        // disallow negetative maxCount when capacity is negative
+        throw new AssertionError("Please specify maxcount > 0 as capacity is set to : " + capacity + " Max Count = "
+                                 + maxCount);
       }
-      c = next;
-    }
-    if (cache.size() - rv.size() <= capacity || count <= 0) {
-      // we already got what is needed
-      return rv;
+
+      count = Math.min(cache.size(), maxCount);
+      accessCounts = new ArrayList(cache.size());
+
+      c = (Cacheable) mark;
+      if (c == null) {
+        c = (Cacheable) cache.getFirst();
+      }
+      save = c;
+      mark = (Cacheable) cache.getFirst();
+
+      // Step 1: Remove elements which were never accessed and at the same time collect stats
+      while (cache.size() - rv.size() > capacity && count > 0 && c != null) {
+        Cacheable next = (Cacheable) c.getNext();
+        int accessed = c.accessCount(AGING_FACTOR);
+        if (accessed == 0) {
+          if (c.canEvict()) {
+            rv.add(c);
+            if (mark != c) {
+              cache.remove(c);
+              cache.addBefore(mark, c);
+            }
+            count--;
+          }
+        } else {
+          // incrementAccessCountFor(accessCountSummary, accessed);
+          accessCounts.add(new Integer(accessed));
+
+        }
+        c = next;
+      }
+      if (cache.size() - rv.size() <= capacity || count <= 0) {
+        // we already got what is needed
+        while (c != null) {
+          c.accessCount(AGING_FACTOR);
+          c = (Cacheable) c.getNext();
+        }
+        return rv;
+      }
     }
 
-    // Step 2: Use the summary that was built earlier to decide the accessCountCutOff
+    // Step 2: Do the sorting ... This can be optimized since we dont need it to be sorted.
+    Map accessCountSummary = new TreeMap(); // This is sorted map
+    for (Iterator i = accessCounts.iterator(); i.hasNext();) {
+      Integer ac = (Integer) i.next();
+      incrementAccessCountFor(accessCountSummary, ac);
+    }
+
+    // Step 3: Use the summary that was built earlier to decide the accessCountCutOff
     int accessCountCutOff = 0;
     int remaining = count;
     for (Iterator i = accessCountSummary.entrySet().iterator(); i.hasNext();) {
@@ -174,27 +196,32 @@ public class LFUEvictionPolicy implements EvictionPolicy {
         break;
       }
     }
+
+    // Step 4 : Use the calculated accessCountCutOff to get the rigth candidates under the lock. Since we release teh
+    // lock,
+    // we have to be fault tolerant
     c = save;
-    while (cache.size() - rv.size() > capacity && count > 0 && c != null) {
-      Cacheable next = (Cacheable) c.getNext();
-      int accessed = c.accessCount();
-      if (accessed <= accessCountCutOff) {
-        if (c.canEvict()) {
-          rv.add(c);
-          if (mark != c) {
-            cache.remove(c);
-            cache.addBefore(mark, c);
+    synchronized (this) {
+      while (cache.size() - rv.size() > capacity && count > 0 && c != null) {
+        Cacheable next = (Cacheable) c.getNext();
+        int accessed = c.accessCount(1);
+        if (accessed <= accessCountCutOff) {
+          if (c.canEvict()) {
+            rv.add(c);
+            if (mark != c) {
+              cache.remove(c);
+              cache.addBefore(mark, c);
+            }
+            count--;
           }
-          count--;
         }
+        c = next;
       }
-      c = next;
+      return rv;
     }
-    return rv;
   }
 
-  private void incrementAccessCountFor(Map accessCountSummary, int ac) {
-    Integer key = new Integer(ac);
+  private void incrementAccessCountFor(Map accessCountSummary, Integer key) {
     Integer count = (Integer) accessCountSummary.get(key);
     if (count == null) {
       accessCountSummary.put(key, new Integer(1));

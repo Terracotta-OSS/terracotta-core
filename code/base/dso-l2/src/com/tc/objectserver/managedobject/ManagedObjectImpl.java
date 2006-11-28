@@ -326,7 +326,8 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     return accessed > 0;
   }
 
-  public int accessCount() {
+  public int accessCount(int factor) {
+    accessed = accessed / factor;
     return accessed;
   }
 

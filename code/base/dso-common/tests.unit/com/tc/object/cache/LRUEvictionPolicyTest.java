@@ -95,6 +95,11 @@ public class LRUEvictionPolicyTest extends TCTestCase {
       this.id = id;
     }
 
+    public TestCacheable(ObjectID id, int accessed) {
+      this.id = id;
+      this.accessed = accessed;
+    }
+
     public ObjectID getObjectID() {
       return id;
     }
@@ -136,6 +141,11 @@ public class LRUEvictionPolicyTest extends TCTestCase {
       return true;
     }
 
+    public int accessCount(int factor) {
+      accessed = accessed / factor;
+      return accessed;
+    }
+    
     public int accessCount() {
       return accessed;
     }

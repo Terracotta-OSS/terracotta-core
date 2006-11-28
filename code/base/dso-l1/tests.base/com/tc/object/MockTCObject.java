@@ -191,7 +191,7 @@ public class MockTCObject implements TCObject {
     return this.accessed;
   }
 
-  public int accessCount() {
+  public int accessCount(int factor) {
     throw new ImplementMe();
   }
 

@@ -208,7 +208,7 @@ public class TCObjectClone implements TCObject {
     throw new ImplementMe();
   }
 
-  public int accessCount() {
+  public int accessCount(int factor) {
     throw new ImplementMe();
   }
 

@@ -166,7 +166,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     throw new ImplementMe();
   }
 
-  public int accessCount() {
+  public int accessCount(int accessed) {
     throw new ImplementMe();
   }
 

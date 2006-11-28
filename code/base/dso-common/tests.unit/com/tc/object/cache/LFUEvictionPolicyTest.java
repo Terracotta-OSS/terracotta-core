@@ -63,8 +63,45 @@ public class LFUEvictionPolicyTest extends LRUEvictionPolicyTest {
           errorThreshold++;
         }
       }
-      if(errorThreshold >= rc.size()) {
-        throw new AssertionError("Beyond Error Threshold : " + errorThreshold);
+      if (errorThreshold >= rc.size()) { throw new AssertionError("Beyond Error Threshold : " + errorThreshold); }
+    }
+  }
+
+  public void testLargeCacheEviction() throws Exception {
+    if (true) {
+      System.err.println("This test (testLargeCacheEviction) is DISABLED.");
+      return;
+    }
+    int capacity = 3500000;
+    int count = capacity + 500000;
+    EvictionPolicy slc = createNewCache(capacity);
+
+    LinkedHashMap cacheables = new LinkedHashMap();
+    for (int i = 1; i < count; i++) {
+      ObjectID id = new ObjectID(i);
+      TestCacheable tc = new TestCacheable(id, i);
+      cacheables.put(id, tc);
+      slc.add(tc);
+    }
+
+    int s_range = 0, e_range = 0;
+    while (cacheables.size() > capacity) {
+      long start = System.currentTimeMillis();
+      Collection rc = slc.getRemovalCandidates(10000);
+      s_range = e_range;
+      e_range = e_range + rc.size();
+      long end = System.currentTimeMillis();
+      System.err.println("Time take for evicting " + rc.size() + " from " + cacheables.size() + " = " + (end - start)
+                         + " ms");
+      for (Iterator i = rc.iterator(); i.hasNext();) {
+        TestCacheable tc = (TestCacheable) i.next();
+        if (s_range > tc.accessCount() || e_range < tc.accessCount()) {
+          // XXX:: This is not an error anymore since every call to getRemovalCandidates affects the accessCount
+          System.err.println("Access Count falls in the wrong for " + tc + " range : " + tc.accessCount() + " range = "
+                             + s_range + " , " + e_range);
+        }
+        slc.remove(tc);
+        assertTrue(cacheables.remove(tc.getObjectID()) == tc);
       }
     }
   }

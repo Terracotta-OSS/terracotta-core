@@ -354,7 +354,7 @@ public abstract class TCObjectImpl implements TCObject {
     return getFlag(ACCESSED_OFFSET);
   }
 
-  public int accessCount() {
+  public int accessCount(int factor) {
     //TODO:: Implement when needed
     throw new UnsupportedOperationException();
   }

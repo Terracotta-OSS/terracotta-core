@@ -19,7 +19,14 @@ public interface Cacheable extends TLinkable {
 
   public boolean recentlyAccessed();
   
-  public int accessCount();
+  /*
+   * @param factor : factor by which accessCount to be reduced. 
+   * 
+   * @return accessCount after divided by factor
+   * 
+   * throws ArithmeticException if factor=0
+   */
+  public int accessCount(int factor);
   
   // This method checks to see if the element is in a state where it can be evicted.
   public boolean canEvict();

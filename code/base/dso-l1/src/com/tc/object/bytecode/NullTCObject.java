@@ -211,7 +211,7 @@ public class NullTCObject implements TCObject {
     // do nothing
   }
 
-  public int accessCount() {
+  public int accessCount(int factor) {
     throw new ImplementMe();
   }
 

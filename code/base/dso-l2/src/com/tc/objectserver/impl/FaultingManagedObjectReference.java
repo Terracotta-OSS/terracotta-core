@@ -93,7 +93,7 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
     return true;
   }
   
-  public int accessCount() {
+  public int accessCount(int factor) {
     return 0;
   }
 
