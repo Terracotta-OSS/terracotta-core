@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
  */
 package com.tc.util;
@@ -25,21 +25,22 @@ import java.util.Properties;
  * Utility class to retrieve the build information for the product.
  */
 public final class ProductInfo {
+  private static final BundleHelper bundleHelper              = new BundleHelper(ProductInfo.class);
 
-  private static final DateFormat DATE_FORMAT               = new SimpleDateFormat("yyyyMMdd-HHmmss");
+  private static final DateFormat   DATE_FORMAT               = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
-  private static final String     BUILD_DATA_RESOURCE_NAME  = "/build-data.txt";
+  private static final String       BUILD_DATA_RESOURCE_NAME  = "/build-data.txt";
 
-  private static final String     BUILD_DATA_ROOT_KEY       = "terracotta.build.";
-  private static final String     BUILD_DATA_VERSION_KEY    = "version";
-  private static final String     BUILD_DATA_TIMESTAMP_KEY  = "timestamp";
-  private static final String     BUILD_DATA_HOST_KEY       = "host";
-  private static final String     BUILD_DATA_USER_KEY       = "user";
-  private static final String     BUILD_DATA_CHANGESET_KEY  = "revision";
-  private static final String     BUILD_DATA_CHANGE_TAG_KEY = "change-tag";
-  private static final String     BUILD_DATA_BRANCH_KEY     = "branch";
+  private static final String       BUILD_DATA_ROOT_KEY       = "terracotta.build.";
+  private static final String       BUILD_DATA_VERSION_KEY    = "version";
+  private static final String       BUILD_DATA_TIMESTAMP_KEY  = "timestamp";
+  private static final String       BUILD_DATA_HOST_KEY       = "host";
+  private static final String       BUILD_DATA_USER_KEY       = "user";
+  private static final String       BUILD_DATA_CHANGESET_KEY  = "revision";
+  private static final String       BUILD_DATA_CHANGE_TAG_KEY = "change-tag";
+  private static final String       BUILD_DATA_BRANCH_KEY     = "branch";
 
-  private static final String     UNKNOWN_VALUE             = "[unknown]";
+  private static final String       UNKNOWN_VALUE             = "[unknown]";
 
   // WARNING: DO NOT DO NOT DO NOT MOVE THIS DECLARATION HIGHER!
   //
@@ -55,9 +56,8 @@ public final class ProductInfo {
   //
   // Yup, order of static initializers still *can* be a problem in Java, clearly. At least the order is defined, though.
   // ;)
-  private static final TCLogger   logger                    = TCLogging.getLogger(ProductInfo.class);
+  private static final TCLogger   logger                      = TCLogging.getLogger(ProductInfo.class);
 
-  private static BundleHelper     bundleHelper              = new BundleHelper(ProductInfo.class);
   private final String            moniker;
   private final String            version;
   private final Date              timestamp;

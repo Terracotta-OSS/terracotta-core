@@ -9,7 +9,7 @@ public class DSOSamplesFrameBundle extends ListResourceBundle {
 
   static final Object[][] contents = {
     {"frame.title", "Sample Application Launcher"},
-    {"jvm.coordinate", "JVM Coordination"},
+    {"jvm.coordination", "JVM Coordination"},
     {"shared.work.queue", "Shared Work Queue"},
     {"starting.jtable", "Staring Shared JTable..."},
     {"starting.shared.editor", "Starting Shared Graphics Editor..."},

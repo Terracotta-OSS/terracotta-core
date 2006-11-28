@@ -13,6 +13,7 @@ import com.tc.object.tools.BootJar;
 import com.tc.object.tools.BootJarSignature;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -51,6 +52,19 @@ public class BootClassHelper {
     
       m_bootClasses = bootJar.getAllPreInstrumentedClasses();
     }
+    
+    if(m_bootClasses == null) {
+      m_bootClasses = new HashSet();
+    }
+    
+    m_bootClasses.add("java.lang.Integer");
+    m_bootClasses.add("java.lang.String");
+    m_bootClasses.add("java.lang.Double");
+    m_bootClasses.add("java.lang.Boolean");
+    m_bootClasses.add("java.lang.Character");
+    m_bootClasses.add("java.lang.Float");
+    m_bootClasses.add("java.util.HashMap");
+    m_bootClasses.add("java.util.ArrayList");
   }
 
   public boolean isAdaptable(final ICompilationUnit module) {
@@ -66,7 +80,10 @@ public class BootClassHelper {
   }
   
   public boolean isAdaptable(final IType type) {
-    return type != null ? isAdaptable(PatternHelper.getFullyQualifiedName(type)) : false;
+    if(type != null) {
+      return isAdaptable(PatternHelper.getFullyQualifiedName(type));
+    }
+    return false;
   }
   
   public boolean isAdaptable(String fullName) {
