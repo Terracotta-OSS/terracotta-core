@@ -152,9 +152,9 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       filename            = File.basename(entry)
       incomplete_filename = destdir.to_s + "/" + filename + incomplete_tag
       dest_filename       = destdir.to_s + "/" + filename        
-      File.copy(entry, incomplete_filename)
-      File.delete(dest_filename) if File.exist?(dest_filename) 
-      File.move(incomplete_filename, dest_filename)
+      FileUtils.cp(entry, incomplete_filename)
+      FileUtils.rm(dest_filename) if File.exist?(dest_filename) 
+      FileUtils.mv(incomplete_filename, dest_filename)
     end
   end
   
