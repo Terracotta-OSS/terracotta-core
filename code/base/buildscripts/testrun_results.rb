@@ -40,7 +40,7 @@ class TestRunResults
     # test-run directories.
     def self.clean_all(build_results, ant)
         Dir.entries(build_results.build_dir.to_s).each do |entry|
-            FilePath.new(build_results.build_dir, entry).delete_recursively(ant) if entry =~ /testrun-\d\d\d\d/
+            FilePath.new(build_results.build_dir, entry).delete if entry =~ /testrun-\d\d\d\d/
         end
     end
     

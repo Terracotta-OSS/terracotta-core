@@ -232,7 +232,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
         depends :init, :compile
         test_set = FixedModuleTypeTestSet.new([ module_name ], [ test_type ])
         if test_set.validate(@module_set, @script_results)
-            results_dir = FilePath.new(@build_results.build_dir, "externally-run-tests").delete_recursively(ant).ensure_directory
+            results_dir = FilePath.new(@build_results.build_dir, "externally-run-tests").delete.ensure_directory
             prepare_and_run_block_on_tests(test_set,
                 TestRunResults.new(results_dir), Proc.new { |testrun| testrun.prepare_for_external_run })
         end

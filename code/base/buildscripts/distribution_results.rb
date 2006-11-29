@@ -8,6 +8,6 @@ class DistributionResults
   end
     
   def clean(ant)
-    @build_dir.delete_recursively(ant)
+    @build_dir.delete
   end
 end

@@ -106,14 +106,14 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     libdir    = FilePath.new(@distribution_results.build_dir, 'lib.tmp').ensure_directory
     destdir   = FilePath.new(@distribution_results.build_dir, 'lib').ensure_directory
     add_binaries(component, libdir, destdir)
-    libdir.delete_recursively(ant)
+    libdir.delete
     
     add_module_bootjars(component, destdir)
     add_dso_bootjar(component, destdir)
     ant.move(:todir => FilePath.new(File.dirname(destdir.to_s), 'tc-jars').to_s) do
       ant.fileset(:dir => destdir.to_s, :includes => '**/*')
     end
-    destdir.delete_recursively(ant)
+    destdir.delete
   end
   
   private
@@ -168,6 +168,6 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
   def __package
     exec_section :packaging
-    product_directory.delete_recursively(ant)
+    product_directory.delete
   end
 end

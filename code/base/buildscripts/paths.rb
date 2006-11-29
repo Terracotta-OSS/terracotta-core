@@ -161,14 +161,6 @@ class FilePath
         directory? && Dir.entries(to_s).reject { |entry| entry == '.' || entry == '..' }.empty?
     end
 
-    # Deletes this file or directory, and any files or directories it may contain, recursively.
-    def delete_recursively(ant)
-        if FileTest.directory?(to_s)
-            ant.delete(:dir => canonicalize.to_s) 
-        end
-        self
-    end
-
     # What's the relative path to this file (or directory), starting from the other file (or directory)?
     def relative_path_from(other_path)
         out = [ ]
@@ -184,7 +176,8 @@ class FilePath
 
     # Deletes this file or directory.
     def delete
-        Dir.delete(to_s)
+        FileUtils.rm_rf(to_s)
+        self
     end
 
     # Create this path as a directory (unless it already is one), including any leading directories.

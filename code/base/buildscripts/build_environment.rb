@@ -22,7 +22,7 @@ class BuildEnvironment < Environment
             @svninfo = YAML::load(platform.exec("svn", "info"))        
         rescue            
             @svninfo = {}
-            @svninfo["Revision"] = "unknown-revision"
+            @svninfo["Revision"] = "00"
             @svninfo["URL"] = "unknown-url"
         end
     end

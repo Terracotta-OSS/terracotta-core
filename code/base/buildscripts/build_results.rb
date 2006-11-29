@@ -19,7 +19,7 @@ class BuildResults
     
     # Deletes absolutely all build results. 
     def clean(ant)
-        @build_dir.delete_recursively(ant)
+        @build_dir.delete
     end
     
     # Returns the root of the classes hierarchy for the given build subtree -- that is, if you

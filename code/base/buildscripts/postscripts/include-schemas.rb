@@ -51,6 +51,6 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         ant.fileset(:dir => tmpdir.to_s)
       end
     end
-   tmpdir.delete_recursively(ant)
+   tmpdir.delete
   end
 end

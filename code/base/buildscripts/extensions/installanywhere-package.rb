@@ -45,7 +45,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     ia_libpath = FilePath.new(ia_output_directory, 'lib').ensure_directory
     jarfile    = FilePath.new(ia_libpath, "tc-installer-custom.jar")
     ant.jar(:destfile => jarfile.to_s, :basedir => rt_classes_dir.to_s)
-    rt_classes_dir.delete_recursively(ant)
+    rt_classes_dir.delete
 
     ant.taskdef(:name => "buildinstaller", :classname => "com.zerog.ia.integration.ant.InstallAnywhereAntTask")
     ant.buildinstaller(:IALocation => BuildEnvironment::IA_LOCATION, :IAProjectFile => project_file.to_s, :failonerror => true)

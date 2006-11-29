@@ -44,7 +44,7 @@ module BundledComponents
         ant.manifest { ant.attribute(:name => 'Class-Path', :value => classpath) }
       end
     end
-    runtime_classes_dir.delete_recursively(ant)
+    runtime_classes_dir.delete
   end
 
   def add_dso_bootjar(component, destdir=libpath(component))
@@ -81,7 +81,7 @@ module BundledComponents
         jarfile = FilePath.new(libdir, "#{name}.jar")
         ant.jar(:destfile => jarfile.to_s, :basedir => runtime_classes_dir.to_s)
       end
-      runtime_classes_dir.delete_recursively(ant)
+      runtime_classes_dir.delete
     end
   end
 

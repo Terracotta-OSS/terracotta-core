@@ -4,7 +4,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   def postscript(ant, build_environment, product_directory, *args)
     args.each do |arg|
       destdir = FilePath.new(product_directory, *arg.split('/'))
-      destdir.delete_recursively(ant)
+      destdir.delete
     end
   end
 end
