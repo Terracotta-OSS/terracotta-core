@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jstl/core" %>
 
 <%
-    String node = application.getInitParameter("node"); 
+    String node = System.getProperty("tc.node.name", "unknown"); 
 %>
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
@@ -12,7 +12,7 @@
 <!-- - - - - - - - - - - - - - - -->
 <html>
 <head>
-    <title>Terracotta for Spring &bull; Web Flow (Tomcat server node <%= node %>)</title>
+    <title>Terracotta for Spring &bull; Web Flow (Server <%= node %>)</title>
     <link rel="shortcut icon" type="image/ico" href="http://www.terracotta.org/favicon.ico">
     <style>
         body  { width: 620px; font-size: 85%; font-family: trebuchet ms, sans-serif; margin: 20px 40px; }
@@ -47,7 +47,7 @@
     </script>
 </head>
 <body onload="startDemo()">
-  <h2>Spring Web Flow: (you are on Tomcat server node <%= node %>)</h2>
+  <h2>Spring Web Flow: (you are on Server <%= node %>)</h2>
 
   <div id="errmsg0" align="center" style="color:red; background-color:yellow; border:2px solid brown; font-size:12pt; padding:5px; display:;">
      You need to have JavaScript enabled.
@@ -58,21 +58,21 @@
   clustered with Terracotta for Spring to enable failover of the conversation state.
   <p/>
 
-  At any point you may stop/start/restart any or all of the Tomcat server nodes (the title
+  At any point you may stop/start/restart any or all of the web server nodes (the title
   above will tell you which one served your current request) and observe that Terracotta for Spring
-  maintains your conversation state properly, regardless of which Tomcat server node served the
+  maintains your conversation state properly, regardless of which server node served the
   request.
   <p/>
 
-  If you stop both Tomcat server nodes you must restart at least one of them for the
+  If you stop both server nodes you must restart at least one of them for the
   application to work; but for demonstration purposes you can stop both nodes to see that
-  the Terracotta Server maintains the state even when no Tomcat server nodes are running, then
+  the Terracotta Server maintains the state even when no server nodes are running, then
   allows them to resume with the current conversation state as they are restarted.
   <p/>
 
-  You can stop the Tomcat server nodes individually by issuing the appropriate <code>stop-tomcat</code>
+  You can stop the server nodes individually by issuing the appropriate <code>stop-tomcat</code>
   command from the <code>spring/samples/webflow</code> directory. For example, <code>./stop-tomcat1.sh</code>
-  (or <code>stop-tomcat1.bat</code> in Windows) will stop the Tomcat server instance from node 1.
+  (or <code>stop-tomcat1.bat</code> in Windows) will stop the Tomcat server instance from node1.
   <p/>
     
   <c:choose>
@@ -88,8 +88,7 @@
         <c:when test="${webflow.state != 'complete'}">
           <h3><c:out value="${webflow.a}"/>, please continue by answering the next question</h3>
           You may use your browser "Back" and "Forward" buttons to go back and change some of
-          your answers, while maintaining your conversation state across multiple Tomcat server
-          nodes.
+          your answers, while maintaining your conversation state across multiple server nodes.
           <p/>
         </c:when>
         <c:otherwise>
