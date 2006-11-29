@@ -1,5 +1,5 @@
 /*
- * Created on Sep 1, 2004
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
  */
 package com.tc.objectserver.l1.api;
 

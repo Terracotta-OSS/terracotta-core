@@ -315,7 +315,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   }
 
   /*********************************************************************************************************************
-   * Private crap
+   * Private stuff
    */
 
   private void validateID(ObjectID id) {

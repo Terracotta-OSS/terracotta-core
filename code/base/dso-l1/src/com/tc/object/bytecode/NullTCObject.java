@@ -22,7 +22,7 @@ public class NullTCObject implements TCObject {
 
   private final static ObjectID NULL_ID  = ObjectID.NULL_ID;
 
-  // Used by bytecode shit so won't show up in compiler
+  // Used by bytecode stuff so won't show up in compiler
   public static TCObject getNullTCObject() {
     return INSTANCE;
   }

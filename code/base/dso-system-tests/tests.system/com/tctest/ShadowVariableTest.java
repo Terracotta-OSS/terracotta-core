@@ -3,9 +3,6 @@
  */
 package com.tctest;
 
-/**
- * TODO May 27, 2005: I, steve, am too lazy to write a single sentence describing what this class is for.
- */
 public class ShadowVariableTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 2;

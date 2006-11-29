@@ -119,7 +119,7 @@ public final class Container implements Runnable {
   }
 
   /*********************************************************************************************************************
-   * Private crap
+   * Private stuff
    */
 
   private ApplicationExecutionInstance newExecutionInstance(ContainerExecutionInstance containerExecution,

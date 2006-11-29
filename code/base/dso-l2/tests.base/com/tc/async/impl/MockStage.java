@@ -1,5 +1,5 @@
 /*
- * Created on Jun 17, 2004
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
  */
 package com.tc.async.impl;
 

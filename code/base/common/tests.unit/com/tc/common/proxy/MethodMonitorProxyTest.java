@@ -10,9 +10,6 @@ import java.util.Random;
 
 import junit.framework.TestCase;
 
-/**
- * TODO Sep 24, 2004: I am too lazy to come up something witty to describe this collection of test cases
- */
 public class MethodMonitorProxyTest extends TestCase {
 
   final static Method i1_m1;

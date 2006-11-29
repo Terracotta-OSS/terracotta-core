@@ -1,6 +1,5 @@
 /*
- * Created on May 11, 2005 TODO To change the template for this generated file go to Window - Preferences - Java - Code
- * Style - Code Templates
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
  */
 package com.tc.object.lockmanager.api;
 

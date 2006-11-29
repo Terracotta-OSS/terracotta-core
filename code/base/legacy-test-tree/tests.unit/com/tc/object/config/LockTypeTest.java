@@ -3,12 +3,8 @@
  */
 package com.tc.object.config;
 
-
 import junit.framework.TestCase;
 
-/**
- * TODO Nov 1, 2004: I, orion, am too lazy to write a single sentence describing what this class is for.
- */
 public class LockTypeTest extends TestCase {
 
   public void testLockTypeByName() {

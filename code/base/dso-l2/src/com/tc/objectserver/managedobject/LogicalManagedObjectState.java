@@ -29,7 +29,7 @@ public abstract class LogicalManagedObjectState extends AbstractManagedObjectSta
   protected abstract Collection getAllReferences();
 
   public final Set getObjectReferences() {
-    // XXX: Holy inefficient batman I'm going to have fix that
+    // XXX: this is inefficient. I'm going to have to fix that
 
     return getObjectReferencesFrom(getAllReferences());
   }

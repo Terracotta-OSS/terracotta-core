@@ -130,7 +130,7 @@ public class LockTimer implements LockEventListener {
   }
 
   /*********************************************************************************************************************
-   * Private crap.
+   * Private stuff.
    */
 
   private void putTimerTask(LockTimeoutTask task) {

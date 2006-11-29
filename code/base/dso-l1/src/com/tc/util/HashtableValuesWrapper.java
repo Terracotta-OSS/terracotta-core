@@ -136,7 +136,7 @@ public class HashtableValuesWrapper implements Collection {
     }
 
     public final void remove() {
-      // XXX: This linear scan of the hashtable to find the proper key is ASS. The only way to it (I think) would be to
+      // XXX: This linear scan of the hashtable to find the proper key is bad. The only way to it (I think) would be to
       // instrument the actual hastable.values.iterator.remove code that has access to the key object right then and
       // there
       ManagerUtil.monitorEnter(hashtable, LockLevel.WRITE);

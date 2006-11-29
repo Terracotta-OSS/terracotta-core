@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
 package com.tc.net.core;
 
 import com.tc.bytes.TCByteBuffer;
@@ -13,8 +16,6 @@ import java.util.Arrays;
 import junit.framework.TestCase;
 
 /**
- * TODO: Document me
- *
  * @author teck
  */
 public class MessageLatencyTest extends TestCase {

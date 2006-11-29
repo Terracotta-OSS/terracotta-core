@@ -49,9 +49,6 @@ class OOOProtocolMessageImpl extends AbstractTCNetworkMessage implements OOOProt
     return getOOOPHeader().isAckRequest();
   }
 
-  /**
-   * This message is hella-tight. It's got hecka weed, tho.
-   */
   public boolean isSend() {
     return getOOOPHeader().isSend();
   }

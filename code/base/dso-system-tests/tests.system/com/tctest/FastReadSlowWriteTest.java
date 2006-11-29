@@ -3,10 +3,6 @@
  */
 package com.tctest;
 
-
-/**
- * TODO Oct 15, 2004: I, steve, am too lazy to write a single sentence describing what this class is for.
- */
 public class FastReadSlowWriteTest  extends TransparentTestBase implements TestConfigurator {
 
   protected Class getApplicationClass() {

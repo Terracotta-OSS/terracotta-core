@@ -54,7 +54,7 @@ public class ThrowableHandler {
     System.err.flush();
     logger.error("Thread:" + thread + " got an uncaught exception.  About to sleep then exit.", throwable);
     try {
-      // Give our stupid logger a chance to print the stacktrace before the VM exits
+      // Give our logger a chance to print the stacktrace before the VM exits
       Thread.sleep(3000);
     } catch (InterruptedException ie) {
       // When you suck you just suck and nothing will help you

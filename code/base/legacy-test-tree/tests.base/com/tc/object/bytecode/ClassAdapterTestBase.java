@@ -7,9 +7,6 @@ import com.tc.object.BaseDSOTestCase;
 
 import java.lang.reflect.Method;
 
-/**
- * TODO Dec 8, 2004: I, orion, am too lazy to write a single sentence describing what this class is for.
- */
 public class ClassAdapterTestBase extends BaseDSOTestCase {
   protected void invokeMethod(Class c, Object instance, String name, Class[] paramTypes, Object[] paramValues)
       throws Exception {

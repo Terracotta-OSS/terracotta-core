@@ -8,8 +8,6 @@ package com.tc.common.proxy.subpkg;
  */
 public class Factory {
 
-  // gimme gimme gimme, I need some more
-  //gimme gimme gimme, don't ask what for
   public static TestInterface getInstance() {
     return new PackagePrivateClass();
   }

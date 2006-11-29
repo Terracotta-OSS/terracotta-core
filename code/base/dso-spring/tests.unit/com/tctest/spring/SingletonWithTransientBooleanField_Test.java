@@ -14,7 +14,7 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.spring.bean.SingletonWithTransientField;
 
 /**
- * Test for JIRA issue: http://jira.terracottatech.com:8080//browse/LKC-1490 Unfortunately, it does not fail.
+ * Test for JIRA issue LKC-1490  Unfortunately, it does not fail.
  */
 
 public class SingletonWithTransientBooleanField_Test extends SimpleTransparentTestBase {

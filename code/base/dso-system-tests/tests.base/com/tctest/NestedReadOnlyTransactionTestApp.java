@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
 package com.tctest;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;

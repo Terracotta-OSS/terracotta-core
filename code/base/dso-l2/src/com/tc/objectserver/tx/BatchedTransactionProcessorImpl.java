@@ -136,7 +136,7 @@ public class BatchedTransactionProcessorImpl implements BatchedTransactionProces
       queue = maxDepth > 0 ? (Channel) new BoundedLinkedQueue(maxDepth) : new LinkedQueue();
     }
 
-    // It is soo stupid that Channel doesnt have isEmpty() on it.
+    // Channel doesnt have isEmpty() on it.
     private boolean isEmpty() {
       if (queue instanceof LinkedQueue) {
         return ((LinkedQueue) queue).isEmpty();

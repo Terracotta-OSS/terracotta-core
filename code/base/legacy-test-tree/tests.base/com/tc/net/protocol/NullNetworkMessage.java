@@ -1,10 +1,11 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
 package com.tc.net.protocol;
 
 import com.tc.bytes.TCByteBuffer;
 
 /**
- * TODO: Document me
- * 
  * @author teck
  */
 public class NullNetworkMessage implements TCNetworkMessage {

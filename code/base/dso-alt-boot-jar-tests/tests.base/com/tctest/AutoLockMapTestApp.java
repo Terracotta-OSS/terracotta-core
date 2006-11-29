@@ -551,7 +551,6 @@ public class AutoLockMapTestApp extends GenericTestApp {
   }
 
   private static class SimpleEntry implements Map.Entry {
-    // NOTE: this class more or less copied from Sun's source to java/util/AbstractMap
 
     private final Object key;
     private Object       value;

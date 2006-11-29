@@ -1,11 +1,12 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
 package com.tc.net.protocol;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 
 /**
- * TODO: Document me
- * 
  * @author teck
  */
 public class NullNetworkHeader implements TCNetworkHeader {

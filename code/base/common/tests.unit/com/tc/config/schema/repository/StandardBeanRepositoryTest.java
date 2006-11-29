@@ -23,7 +23,7 @@ public class StandardBeanRepositoryTest extends TCTestCase {
   private static class MyXmlObject extends MockXmlObject {
     // DO NOT REMOVE THIS TO FIX THE WARNING. We have to have public static final 'type' fields on both MockXmlObject
     // and MyXmlObject, because that's the way XMLBeans does it; various classes use reflection to find this, and so
-    // you'll break tests if you change it. If you know of a way to simply get Eclipse to shut up about the warning,
+    // you'll break tests if you change it. If you know of a way to simply get Eclipse to ignore the warning,
     // please, by all means, do so.
     public static final SchemaType type = new MockSchemaType();
 

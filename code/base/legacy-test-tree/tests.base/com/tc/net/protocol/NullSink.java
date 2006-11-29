@@ -1,8 +1,9 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
 package com.tc.net.protocol;
 
 /**
- * TODO: Document me
- * 
  * @author teck
  */
 public class NullSink implements GenericNetworkMessageSink {

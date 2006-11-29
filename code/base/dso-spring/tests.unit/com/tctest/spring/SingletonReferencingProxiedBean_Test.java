@@ -14,7 +14,7 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.spring.bean.FooService;
 
 /**
- * Test attempted to reproduce JIRA issue http://ruby:8080/browse/LKC-1435 where proxies "disappear" when
+ * Test attempted to reproduce JIRA issue LKC-1435 where proxies "disappear" when
  * distributed bean references a proxied non-distributed bean.
  */
 public class SingletonReferencingProxiedBean_Test extends SimpleTransparentTestBase {

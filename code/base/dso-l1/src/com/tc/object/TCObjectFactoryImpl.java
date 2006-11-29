@@ -1,5 +1,5 @@
 /*
- * Created on Dec 31, 2003
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
  */
 package com.tc.object;
 

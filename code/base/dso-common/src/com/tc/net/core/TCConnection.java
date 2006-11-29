@@ -10,12 +10,8 @@ import java.net.Socket;
 
 /**
  * Common interface for TC network connections
- *
+ * 
  * @author teck
- */
-
-/**
- * TODO Oct 21, 2006: I, teck, am too lazy to write a single sentence describing what this class is for.
  */
 public interface TCConnection extends NetworkMessageSink {
 
@@ -34,7 +30,7 @@ public interface TCConnection extends NetworkMessageSink {
   /**
    * Add the given connection event listener. Re-adding an existing listener will have no effect (ie. the listener will
    * not be in the list twice).
-   *
+   * 
    * @param listener listener to add
    */
   public void addListener(TCConnectionEventListener listener);
@@ -50,15 +46,16 @@ public interface TCConnection extends NetworkMessageSink {
    */
   public void asynchClose();
 
-
   /**
    * Detatch this connection from it's connection manager
+   * 
    * @throws IOException
    */
   public Socket detach() throws IOException;
 
   /**
    * Close this connection, blocking for at most the given timeout value
+   * 
    * @return true/false whether the connection closed in time
    */
   public boolean close(long timeout);
@@ -66,7 +63,7 @@ public interface TCConnection extends NetworkMessageSink {
   /**
    * Connect synchronously to a given destination. If this call fails, connect called be called again. However once a
    * connection has successfully connected once, it cannot be re-connected
-   *
+   * 
    * @param addr the destination address
    * @param timeout time in milliseconds to wait before throwing a timeout exception
    * @throws IOException if there is an error connecting to the destination address
@@ -76,7 +73,7 @@ public interface TCConnection extends NetworkMessageSink {
 
   /**
    * Connect asynchronously to the given destination address
-   *
+   * 
    * @param addr the destination address to connect to
    * @return true if the connection was opened immediately, otherwise false (NOTE: return value of "false" this NOT an
    *         indication of error)
@@ -86,28 +83,28 @@ public interface TCConnection extends NetworkMessageSink {
 
   /**
    * Whether or not this connection is connected
-   *
+   * 
    * @return true iff this connection is connected to the destination address
    */
   public boolean isConnected();
 
   /**
    * Whether or not this connection is closed
-   *
+   * 
    * @return true iff this connection is closed
    */
   public boolean isClosed();
 
   /**
    * Get local side connection details
-   *
+   * 
    * @throws IllegalStateException if connection has never been connected
    */
   public TCSocketAddress getLocalAddress();
 
   /**
    * Get remote side connection details
-   *
+   * 
    * @throws IllegalStateException if connection has never been connected
    */
   public TCSocketAddress getRemoteAddress();

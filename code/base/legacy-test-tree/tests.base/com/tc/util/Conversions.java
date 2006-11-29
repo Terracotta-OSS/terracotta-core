@@ -4,8 +4,7 @@
 package com.tc.util;
 
 /**
- * @author steve To change the template for this generated type comment go to Window&gt;Preferences&gt;Java&gt;Code
- *         Generation&gt;Code and Comments
+ * @author steve
  */
 public class Conversions {
   public final static void main(String[] args) throws Exception {
