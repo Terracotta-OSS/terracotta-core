@@ -11,32 +11,33 @@ import javax.management.NotCompliantMBeanException;
 
 public class ObjectManagementMonitor extends AbstractTerracottaMBean implements ObjectManagementMonitorMBean {
 
-  private static final TCLogger logger = TCLogging.getLogger(ObjectManagementMonitor.class);
+  private static final TCLogger  logger = TCLogging.getLogger(ObjectManagementMonitor.class);
 
-  private final Object          gcControllerLock;
-  private GCComptroller         gcController;
-  private final GCRunner        gcRunner;
+  private volatile GCComptroller gcController;
+  private final GCRunner         gcRunner;
 
   public ObjectManagementMonitor() throws NotCompliantMBeanException {
     super(ObjectManagementMonitorMBean.class, false);
-    gcControllerLock = new Object();
 
     gcRunner = new GCRunner() {
       private boolean isRunning = false;
 
       public void run() {
-        synchronized (this) {
-          if (isRunning) { throw new UnsupportedOperationException("Cannot run GC because GC is already running."); }
-          isRunning = true;
-          logger.info("Running GC.");
-        }
-        synchronized (gcControllerLock) {
-          gcController.startGC();
-        }
-        synchronized (this) {
-          isRunning = false;
-          logger.info("GC finished.");
-        }
+        setRunningState();
+        gcController.startGC();
+        setStopState();
+      }
+
+      private synchronized void setRunningState() {
+        if (isRunning) { throw new UnsupportedOperationException("Cannot run GC because GC is already running."); }
+        isRunning = true;
+        logger.info("Running GC.");
+      }
+
+      private synchronized void setStopState() {
+        if (!isRunning) { throw new UnsupportedOperationException("Cannot stop GC because GC is not running."); }
+        isRunning = false;
+        logger.info("GC finished.");
       }
 
       public synchronized boolean isGCRunning() {
@@ -45,34 +46,33 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
     };
   }
 
-  public synchronized boolean isGCRunning() {
+  public boolean isGCRunning() {
     return gcRunner.isGCRunning();
   }
 
   public synchronized void runGC() {
     if (!isEnabled()) { throw new UnsupportedOperationException("Cannot run GC because mBean is not enabled."); }
-    synchronized (gcControllerLock) {
-      if (gcController == null) { throw new RuntimeException("Failure: see log for more information"); }
-      if (gcController.gcEnabledInConfig()) { throw new UnsupportedOperationException(
-          "Cannot run GC externally because GC is enabled through config."); }
-    }
+    if (gcController == null) { throw new RuntimeException("Failure: see log for more information"); }
+    if (gcController.gcEnabledInConfig()) { throw new UnsupportedOperationException(
+        "Cannot run GC externally because GC is enabled through config."); }
     if (isGCRunning()) { throw new UnsupportedOperationException("Cannot run GC because GC is already running."); }
-    new Thread(gcRunner).start();
+
+    Thread gcRunnerThread = new Thread(gcRunner);
+    gcRunnerThread.setName("GCRunnerThread");
+    gcRunnerThread.start();
   }
 
   public synchronized void reset() {
     // nothing to reset
   }
 
-  public synchronized void registerGCController(GCComptroller controller) {
+  public void registerGCController(GCComptroller controller) {
     if (isEnabled()) {
-      synchronized (gcControllerLock) {
-        if (gcController != null) {
-          logger.warn("Not registering new gc-controller because one was already registered.");
-          return;
-        }
-        gcController = controller;
+      if (gcController != null) {
+        logger.warn("Not registering new gc-controller because one was already registered.");
+        return;
       }
+      gcController = controller;
     }
   }
 
