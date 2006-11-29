@@ -4,14 +4,11 @@
 package com.tc.management.beans.object;
 
 import com.tc.management.TerracottaMBean;
-import com.tc.management.beans.object.ObjectManagementMonitor.GCComptroller;
 
 public interface ObjectManagementMonitorMBean extends TerracottaMBean {
   
   void runGC();
   
   boolean isGCRunning();
-  
-  void registerGCController(GCComptroller controller);
   
 }

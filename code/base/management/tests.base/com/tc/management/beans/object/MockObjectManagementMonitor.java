@@ -30,4 +30,8 @@ public final class MockObjectManagementMonitor extends AbstractTerracottaMBean i
     // nothing to reset
   }
 
+  public String getGCResult() {
+    return "";
+  }
+
 }

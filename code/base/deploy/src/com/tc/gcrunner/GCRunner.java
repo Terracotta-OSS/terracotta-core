@@ -48,6 +48,6 @@ public class GCRunner {
   }
 
   private static void usage() {
-    consoleLogger.error("Usage: run-dgc  hostname  jmxport");
+    consoleLogger.error("Please indicate hostname and jmxport when running this script.");
   }
 }

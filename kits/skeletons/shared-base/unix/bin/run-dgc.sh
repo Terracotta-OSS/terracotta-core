@@ -7,7 +7,7 @@ TOPDIR=`dirname "$0"`/..
 
 tc_install_dir "${TOPDIR}"/..
 tc_classpath "" true
-tc_java_opts "-Dcom.sun.management.jmxremote"
+tc_java_opts ""
 
 tc_java -classpath "${TC_CLASSPATH}" -Dtc.install-root="${TC_INSTALL_DIR}" ${TC_ALL_JAVA_OPTS} com.tc.gcrunner.GCRunner "$@"
 ~

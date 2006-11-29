@@ -7,6 +7,7 @@ import com.tc.async.api.Sink;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.management.beans.object.ObjectManagementMonitor;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.management.beans.object.ObjectManagementMonitor.GCComptroller;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -109,16 +110,17 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.objectManagementMonitor = objectManagementMonitor;
 
     final boolean doGC = config.doGC();
-    this.objectManagementMonitor.registerGCController(new GCComptroller() {
-      public void startGC() {
-        if (doGC) {
-          // don't override what's in the config
-          logger.warn("Cannot run GC externally because GC is enabled through config.");
-          return;
+    if (this.objectManagementMonitor instanceof ObjectManagementMonitor) {
+      ((ObjectManagementMonitor) this.objectManagementMonitor).registerGCController(new GCComptroller() {
+        public void startGC() {
+          gc();
         }
-        gc();
-      }
-    });
+
+        public boolean gcEnabledInConfig() {
+          return doGC;
+        }
+      });
+    }
   }
 
   private int guessMapSize(EvictionPolicy ep) {
@@ -818,8 +820,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       HashSet toFlush = new HashSet();
       ArrayList removed = new ArrayList();
       reapCache(splitRC, toFlush, removed);
-      evicted +=  (toFlush.size() + removed.size());
-      removed = null;     /// Let GC work for us
+      evicted += (toFlush.size() + removed.size());
+      removed = null; // / Let GC work for us
       if (!toFlush.isEmpty()) {
         PersistenceTransaction tx = newTransaction();
         flushAll(tx, toFlush);

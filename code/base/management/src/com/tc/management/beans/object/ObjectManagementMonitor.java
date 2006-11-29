@@ -3,7 +3,6 @@
  */
 package com.tc.management.beans.object;
 
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
@@ -12,9 +11,7 @@ import javax.management.NotCompliantMBeanException;
 
 public class ObjectManagementMonitor extends AbstractTerracottaMBean implements ObjectManagementMonitorMBean {
 
-  private static final TCLogger logger        = TCLogging.getLogger(ObjectManagementMonitor.class);
-  private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
-  private static final boolean  isDebug       = false;
+  private static final TCLogger logger = TCLogging.getLogger(ObjectManagementMonitor.class);
 
   private final Object          gcControllerLock;
   private GCComptroller         gcController;
@@ -29,16 +26,16 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
 
       public void run() {
         synchronized (this) {
-          if (isRunning) { return; }
+          if (isRunning) { throw new UnsupportedOperationException("Cannot run GC because GC is already running."); }
           isRunning = true;
-          consoleLogger.info("Running GC.");
+          logger.info("Running GC.");
         }
         synchronized (gcControllerLock) {
           gcController.startGC();
         }
         synchronized (this) {
           isRunning = false;
-          consoleLogger.info("GC finished.");
+          logger.info("GC finished.");
         }
       }
 
@@ -53,23 +50,14 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
   }
 
   public synchronized void runGC() {
-    if (!isEnabled()) {
-      logger.warn("Cannot run GC because mBean is not enabled.");
-      return;
-    }
-    if (isGCRunning()) {
-      logger.warn("Cannot run GC because it is already running.");
-      return;
-    }
+    if (!isEnabled()) { throw new UnsupportedOperationException("Cannot run GC because mBean is not enabled."); }
     synchronized (gcControllerLock) {
-      if (gcController == null) {
-        if (isDebug) {
-          logger.error("Cannot run GC because gc-controller was not set");
-        }
-        return;
-      }
-      new Thread(gcRunner).start();
+      if (gcController == null) { throw new RuntimeException("Failure: see log for more information"); }
+      if (gcController.gcEnabledInConfig()) { throw new UnsupportedOperationException(
+          "Cannot run GC externally because GC is enabled through config."); }
     }
+    if (isGCRunning()) { throw new UnsupportedOperationException("Cannot run GC because GC is already running."); }
+    new Thread(gcRunner).start();
   }
 
   public synchronized void reset() {
@@ -80,9 +68,7 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
     if (isEnabled()) {
       synchronized (gcControllerLock) {
         if (gcController != null) {
-          if (isDebug) {
-            logger.warn("Not registering new gc-controller because one was already registered.");
-          }
+          logger.warn("Not registering new gc-controller because one was already registered.");
           return;
         }
         gcController = controller;
@@ -92,6 +78,8 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements 
 
   public static interface GCComptroller {
     void startGC();
+
+    boolean gcEnabledInConfig();
   }
 
   static interface GCRunner extends Runnable {
