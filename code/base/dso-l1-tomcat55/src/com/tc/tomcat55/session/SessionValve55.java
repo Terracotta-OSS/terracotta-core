@@ -81,7 +81,8 @@ public class SessionValve55 extends ValveBase {
     final ContextMgr contextMgr = DefaultContextMgr
         .makeInstance(contextPath, valveReq.getContext().getServletContext());
     final TerracottaSessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr, cp
-        .getSessionTimeoutSeconds(), cp.getInvalidatorSleepSeconds(), cp.getLogBenchEnabled(), new BaseRequestResponseFactory());
+        .getSessionTimeoutSeconds(), cp.getInvalidatorSleepSeconds(), cp.getRequestLogBenchEnabled(), cp
+        .getInvalidatorLogBenchEnabled(), new BaseRequestResponseFactory());
     return rv;
   }
 

@@ -29,13 +29,16 @@ public class TerracottaSessionManager {
   private final SessionDataStore       store;
   private final LifecycleEventMgr      eventMgr;
   private final ContextMgr             contextMgr;
-  private final boolean                logEnabled;
+  private final boolean                reqeustLogEnabled;
+  private final boolean                invalidatorLogEnabled;
   private final TCLogger               logger;
   private final RequestResponseFactory factory;
 
   public TerracottaSessionManager(SessionIdGenerator sig, SessionCookieWriter scw, LifecycleEventMgr eventMgr,
                                   ContextMgr contextMgr, int maxIdleSeconds, int invalidatorSleepSeconds,
-                                  boolean logEnabled, RequestResponseFactory factory) {
+                                  boolean reqeustLogEnabled, boolean invalidatorLogEnabled,
+                                  RequestResponseFactory factory) {
+    this.invalidatorLogEnabled = invalidatorLogEnabled;
     Assert.pre(sig != null);
     Assert.pre(scw != null);
     Assert.pre(eventMgr != null);
@@ -48,8 +51,11 @@ public class TerracottaSessionManager {
     this.factory = factory;
     this.store = new SessionDataStore(contextMgr.getAppName(), maxIdleSeconds);
     this.logger = ManagerUtil.getLogger("com.tc.tcsession." + contextMgr.getAppName());
-    this.logEnabled = logEnabled;
+    this.reqeustLogEnabled = reqeustLogEnabled;
 
+    // XXX: If reasonable, we should move this out of the constructor -- leaking a reference to "this" to another thread
+    // within a constructor is a bad practice (note: althought "this" isn't explicitly based as arg, it is available and
+    // acessed by the non-static inner class)
     Thread invalidator = new Thread(new SessionInvalidator(store, invalidatorSleepSeconds, maxIdleSeconds),
                                     "SessionInvalidator - " + contextMgr.getAppName());
     invalidator.setDaemon(true);
@@ -105,7 +111,7 @@ public class TerracottaSessionManager {
       }
     } finally {
       if (req.isUnlockSesssionId()) id.commitLock();
-      if (logEnabled) {
+      if (reqeustLogEnabled) {
         final String msg = "REQUEST BENCH: url=[" + req.getRequestURL() + "] sid=[" + id.getKey() + "] -> ["
                            + id.getLock().getLockTimer().elapsed() + ":" + id.getLock().getUnlockTimer().elapsed()
                            + "] -> " + (System.currentTimeMillis() - req.getRequestStartMillis());
@@ -224,7 +230,7 @@ public class TerracottaSessionManager {
     else return idGenerator.makeInstanceFromBrowserId(requestedSessionId);
   }
 
-  class SessionInvalidator implements Runnable {
+  private class SessionInvalidator implements Runnable {
 
     private final long sleepMillis;
 
@@ -241,13 +247,17 @@ public class TerracottaSessionManager {
         if (Thread.interrupted()) {
           break;
         } else {
-          final Lock lock = new Lock(invalidatorLock);
-          lock.tryWriteLock();
-          if (!lock.isLocked()) continue;
           try {
-            invalidateSessions();
-          } finally {
-            lock.commitLock();
+            final Lock lock = new Lock(invalidatorLock);
+            lock.tryWriteLock();
+            if (!lock.isLocked()) continue;
+            try {
+              invalidateSessions();
+            } finally {
+              lock.commitLock();
+            }
+          } catch (Throwable t) {
+            logger.error("Unhandled exception occurred during session invalidation", t);
           }
         }
       }
@@ -260,23 +270,29 @@ public class TerracottaSessionManager {
       int invalCnt = 0;
       int evaled = 0;
       int notEvaled = 0;
-      for (int i = 0; i < keys.length; i++) {
+      int errors = 0;
+      for (int i = 0, n = keys.length; i < n; i++) {
         final String key = keys[i];
-        final SessionId id = idGenerator.makeInstanceFromInternalKey(key);
-        final Timestamp dtm = store.findTimestampUnlocked(id);
-        if (dtm == null) continue;
-        totalCnt++;
-        if (dtm.getMillis() < System.currentTimeMillis()) {
-          evaled++;
-          if (evaluateSession(dtm, id)) invalCnt++;
-        } else {
-          notEvaled++;
+        try {
+          final SessionId id = idGenerator.makeInstanceFromInternalKey(key);
+          final Timestamp dtm = store.findTimestampUnlocked(id);
+          if (dtm == null) continue;
+          totalCnt++;
+          if (dtm.getMillis() < System.currentTimeMillis()) {
+            evaled++;
+            if (evaluateSession(dtm, id)) invalCnt++;
+          } else {
+            notEvaled++;
+          }
+        } catch (Throwable t) {
+          errors++;
+          logger.error("Unhandled exception inspecting session " + key + " for possible invalidation", t);
         }
       }
-      if (logEnabled) {
+      if (invalidatorLogEnabled) {
         final String msg = "SESSION INVALIDATOR BENCH: " + " -> total=" + totalCnt + ", evaled=" + evaled
-                           + ", notEvaled=" + notEvaled + ", invalidated=" + invalCnt + " -> elapsed="
-                           + (System.currentTimeMillis() - startMillis);
+                           + ", notEvaled=" + notEvaled + ", errors=" + errors + ", invalidated=" + invalCnt
+                           + " -> elapsed=" + (System.currentTimeMillis() - startMillis);
         logger.info(msg);
       }
     }

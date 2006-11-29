@@ -87,7 +87,8 @@ public class SessionValve50 extends ValveBase {
         .makeInstance(contextPath, valveReq.getContext().getServletContext());
 
     final TerracottaSessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr, cp
-        .getSessionTimeoutSeconds(), cp.getInvalidatorSleepSeconds(), cp.getLogBenchEnabled(), new Tomcat50RequestResponseFactory());
+        .getSessionTimeoutSeconds(), cp.getInvalidatorSleepSeconds(), cp.getRequestLogBenchEnabled(), cp
+        .getInvalidatorLogBenchEnabled(), new Tomcat50RequestResponseFactory());
     return rv;
   }
 

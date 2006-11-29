@@ -282,6 +282,7 @@ modules:
         - management
         - dso-common-jdk15
         - dso-l1
+        - dso-l1-session
         - dso-l2
         - management
         - simulator

@@ -100,7 +100,7 @@ public class SessionFilter implements Filter {
     final LifecycleEventMgr eventMgr = DefaultLifecycleEventMgr.makeInstance(cp);
     final ContextMgr contextMgr = DefaultContextMgr.makeInstance(req, servletContext);
     final TerracottaSessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr, cp
-        .getSessionTimeoutSeconds(), cp.getInvalidatorSleepSeconds(), cp.getLogBenchEnabled(), factory);
+        .getSessionTimeoutSeconds(), cp.getInvalidatorSleepSeconds(), cp.getRequestLogBenchEnabled(), cp.getInvalidatorLogBenchEnabled(), factory);
     return rv;
   }
 

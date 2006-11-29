@@ -32,6 +32,7 @@ import com.tc.text.Banner;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.ThreadDump;
+import com.terracotta.session.util.ConfigProperties;
 
 import java.io.File;
 import java.io.IOException;
@@ -85,26 +86,26 @@ import javax.servlet.http.HttpSessionListener;
  * the appserver)
  * </ul>
  * <p>
- * 
+ *
  * <pre>
- *     outer class:
- *     ...
- *     int port0 = startAppServer(false).serverPort();
- *     boolean[] values = HttpUtil.getBooleanValues(createUrl(port0, SimpleDsoSessionsTest.DsoPingPongServlet.class));
- *     assertTrue(values[0]);
- *     assertFalse(values[1]);
- *     ...
- *  
- *     inner class servlet:
- *     ...
- *     response.setContentType(&quot;text/html&quot;);
- *     PrintWriter out = response.getWriter();
- *  
- *     out.println(&quot;true&quot;);
- *     out.println(&quot;false&quot;);
- *     ...
+ *      outer class:
+ *      ...
+ *      int port0 = startAppServer(false).serverPort();
+ *      boolean[] values = HttpUtil.getBooleanValues(createUrl(port0, SimpleDsoSessionsTest.DsoPingPongServlet.class));
+ *      assertTrue(values[0]);
+ *      assertFalse(values[1]);
+ *      ...
+ *
+ *      inner class servlet:
+ *      ...
+ *      response.setContentType(&quot;text/html&quot;);
+ *      PrintWriter out = response.getWriter();
+ *
+ *      out.println(&quot;true&quot;);
+ *      out.println(&quot;false&quot;);
+ *      ...
  * </pre>
- * 
+ *
  * <p>
  * <h3>Debugging Information:</h3>
  * There are a number of locations and files to consider when debugging appserver unit tests. Below is a list followed
@@ -139,7 +140,7 @@ import javax.servlet.http.HttpSessionListener;
  * <p>
  * As a final note: the <tt>UttpUtil</tt> class should be used (and added to as needed) to page servlets and validate
  * assertions.
- * 
+ *
  * @author eellis
  */
 public abstract class AbstractAppServerTestCase extends TCTestCase {
@@ -288,7 +289,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   /**
    * Starts an instance of the assigned default application server listed in testconfig.properties. Servlets and the WAR
    * are dynamically generated using the convention listed in the header of this document.
-   * 
+   *
    * @param dsoEnabled - enable or disable dso for this instance
    * @return AppServerResult - series of return values including the server port assigned to this instance
    */
@@ -327,6 +328,8 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       }
       // params.appendJvmArgs("-Dtc.classloader.writeToDisk=true");
 
+      params.appendJvmArgs("-D" + ConfigProperties.REQUEST_BENCHES + "=true");
+
       params.addWar(warFile());
       return (AppServerResult) appServer.start(params);
     } catch (Exception e) {
@@ -362,7 +365,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
   /**
    * If overridden <tt>super.tearDown()</tt> must be called to ensure that servers are all shutdown properly
-   * 
+   *
    * @throws Exception
    */
   protected void tearDown() throws Exception {

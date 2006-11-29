@@ -14,38 +14,40 @@ import javax.servlet.http.HttpSessionListener;
 
 public class ConfigProperties {
 
-  protected static final String  PREFIX                  = "com.terracotta.session.";
-  protected static final String  ID_LENGTH               = PREFIX + "id.length";
-  protected static final String  SERVER_ID               = PREFIX + "serverid";
-  protected static final String  COOKIE_DOMAIN           = PREFIX + "cookie.domain";
-  protected static final String  COOKIE_COMMENT          = PREFIX + "cookie.comment";
-  protected static final String  COOKIE_SECURE           = PREFIX + "cookie.secure";
-  protected static final String  COOKIE_MAX_AGE          = PREFIX + "cookie.maxage.seconds";
-  protected static final String  COOKIE_NAME             = PREFIX + "cookie.name";
-  protected static final String  COOKIE_PATH             = PREFIX + "cookie.path";
-  protected static final String  COOKIE_ENABLED          = PREFIX + "cookie.enabled";
-  protected static final String  SESSION_TIMEOUT_SECONDS = PREFIX + "maxidle.seconds";
-  protected static final String  TRACKING_ENABLED        = PREFIX + "tracking.enabled";
-  protected static final String  URL_REWRITE_ENABLED     = PREFIX + "urlrewrite.enabled";
-  protected static final String  ATTRIBUTE_LISTENERS     = PREFIX + "attribute.listeners";
-  protected static final String  SESSION_LISTENERS       = PREFIX + "listeners";
-  protected static final String  INVALIDATOR_SLEEP       = PREFIX + "invalidator.sleep";
-  protected static final String  LOG_BENCHES             = PREFIX + "log.bench.enabled";
+  protected static final String  PREFIX                            = "com.terracotta.session.";
+  public static final String     ID_LENGTH                         = PREFIX + "id.length";
+  public static final String     SERVER_ID                         = PREFIX + "serverid";
+  public static final String     COOKIE_DOMAIN                     = PREFIX + "cookie.domain";
+  public static final String     COOKIE_COMMENT                    = PREFIX + "cookie.comment";
+  public static final String     COOKIE_SECURE                     = PREFIX + "cookie.secure";
+  public static final String     COOKIE_MAX_AGE                    = PREFIX + "cookie.maxage.seconds";
+  public static final String     COOKIE_NAME                       = PREFIX + "cookie.name";
+  public static final String     COOKIE_PATH                       = PREFIX + "cookie.path";
+  public static final String     COOKIE_ENABLED                    = PREFIX + "cookie.enabled";
+  public static final String     SESSION_TIMEOUT_SECONDS           = PREFIX + "maxidle.seconds";
+  public static final String     TRACKING_ENABLED                  = PREFIX + "tracking.enabled";
+  public static final String     URL_REWRITE_ENABLED               = PREFIX + "urlrewrite.enabled";
+  public static final String     ATTRIBUTE_LISTENERS               = PREFIX + "attribute.listeners";
+  public static final String     SESSION_LISTENERS                 = PREFIX + "listeners";
+  public static final String     INVALIDATOR_SLEEP                 = PREFIX + "invalidator.sleep";
+  public static final String     REQUEST_BENCHES                   = PREFIX + "request.bench.enabled";
+  public static final String     INVALIDATOR_BENCHES               = PREFIX + "invalidator.bench.enabled";
 
-  protected static final boolean defaultCookiesEnabled   = true;
-  protected static final boolean defaultTrackingEnabled  = true;
-  protected static final boolean defaultUrlEnabled       = true;
-  protected static final String  defaultCookieComment    = null;
-  protected static final String  defaultCookieDomain     = null;
-  protected static final int     defaultCookieMaxAge     = -1;
-  protected static final String  defaultCookieName       = "JSESSIONID";
-  protected static final String  defaultCookiePath       = "/";
-  protected static final boolean defaultCookieSecure     = false;
-  protected static final int     defaultIdLength         = 20;
-  protected static final String  defaultServerId         = ManagerUtil.getClientID();
-  protected static final int     defaultSessionTimeout   = 30 * 60;
-  protected static final int     defaultInvalidatorSleep = 5 * 60;
-  protected static final boolean defaultLogBenchEnabled  = true;
+  protected static final boolean defaultCookiesEnabled             = true;
+  protected static final boolean defaultTrackingEnabled            = true;
+  protected static final boolean defaultUrlEnabled                 = true;
+  protected static final String  defaultCookieComment              = null;
+  protected static final String  defaultCookieDomain               = null;
+  protected static final int     defaultCookieMaxAge               = -1;
+  protected static final String  defaultCookieName                 = "JSESSIONID";
+  protected static final String  defaultCookiePath                 = "/";
+  protected static final boolean defaultCookieSecure               = false;
+  protected static final int     defaultIdLength                   = 20;
+  protected static final String  defaultServerId                   = ManagerUtil.getClientID();
+  protected static final int     defaultSessionTimeout             = 30 * 60;
+  protected static final int     defaultInvalidatorSleep           = 5 * 60;
+  protected static final boolean defaultRequestLogBenchEnabled     = false;
+  protected static final boolean defaultInvalidatorLogBenchEnabled = true;
 
   private final WebAppConfig     wac;
   private final Properties       props;
@@ -134,8 +136,13 @@ public class ConfigProperties {
     return "true".equals(boolVal);
   }
 
-  public boolean getLogBenchEnabled() {
-    final String boolVal = getStringVal(LOG_BENCHES, null, Boolean.toString(defaultLogBenchEnabled));
+  public boolean getRequestLogBenchEnabled() {
+    final String boolVal = getStringVal(REQUEST_BENCHES, null, Boolean.toString(defaultRequestLogBenchEnabled));
+    return "true".equals(boolVal);
+  }
+
+  public boolean getInvalidatorLogBenchEnabled() {
+    final String boolVal = getStringVal(INVALIDATOR_BENCHES, null, Boolean.toString(defaultInvalidatorLogBenchEnabled));
     return "true".equals(boolVal);
   }
 
