@@ -70,9 +70,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   # assemble, package, and publish all possible kits (based on the configuration
   # files found under buildconfig/distribution directory)
   def publish_all_packages(flavor='OPENSOURCE')
-    assert("The package publisher task is only meant to be run by a monkey. Are you a monkey?") { @build_environment.username == 'cruise' || config_source['distribution.publish.override-monkey-check'] }
-    assert("build-archive-dir is not set") { !config_source['build-archive-dir'].nil? }
-    
+        
     depends :init, :compile
     srcdir        = @static_resources.distribution_config_directory(flavor.downcase!).canonicalize.to_s
     product_codes = Dir.entries(srcdir).delete_if { |entry| (/\-(#{flavor})\.def\.yml$/i !~ entry) || (/^x\-/i =~ entry) }
@@ -147,16 +145,16 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   include Postscripts
   
   def __publish(archive_dir=nil)
-    destdir        = archive_dir || FilePath.new(config_source['build-archive-dir'], "kits", @build_environment.current_branch, @build_environment.os_type(:nice).downcase).ensure_directory    
+    destdir        = archive_dir || FilePath.new(config_source['build-archive-dir'] || ".", "kits", @build_environment.current_branch, @build_environment.os_type(:nice).downcase).ensure_directory    
     incomplete_tag = "__incomplete__"
     Dir.glob("#{@distribution_results.build_dir.to_s}/*").each do | entry |
       next if File.directory?(entry)
       filename            = File.basename(entry)
       incomplete_filename = destdir.to_s + "/" + filename + incomplete_tag
       dest_filename       = destdir.to_s + "/" + filename        
-      FileUtils.cp(entry, incomplete_filename)
-      FileUtils.rm(dest_filename) if File.exist?(dest_filename) 
-      FileUtils.mv(incomplete_filename, dest_filename)
+      File.copy(entry, incomplete_filename)
+      File.delete(dest_filename) if File.exist?(dest_filename) 
+      File.move(incomplete_filename, dest_filename)
     end
   end
   
