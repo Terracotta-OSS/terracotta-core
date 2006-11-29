@@ -16,7 +16,6 @@ import com.tc.aspectwerkz.transform.TransformationUtil;
  * statically.
  *
  * @author <a href="mailto:the_mindstorm@evolva.ro">Alex Popescu </a>
- * @version $Revision$
  */
 public class StaticInitializationJoinPointCompiler extends AbstractJoinPointCompiler {
   private static final Type[] ARG_TYPES = new Type[0];

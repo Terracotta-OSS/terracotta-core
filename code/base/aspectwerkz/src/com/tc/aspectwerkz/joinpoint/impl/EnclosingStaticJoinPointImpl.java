@@ -1,18 +1,11 @@
 /*
  * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
  */
-
-/*
- * $Id$
- * $Date$
- */
 package com.tc.aspectwerkz.joinpoint.impl;
-
 
 import com.tc.aspectwerkz.joinpoint.EnclosingStaticJoinPoint;
 import com.tc.aspectwerkz.joinpoint.Signature;
 import com.tc.aspectwerkz.joinpoint.management.JoinPointType;
-
 
 /**
  * Sole implementation of {@link com.tc.aspectwerkz.joinpoint.EnclosingStaticJoinPoint}.
@@ -20,7 +13,6 @@ import com.tc.aspectwerkz.joinpoint.management.JoinPointType;
  * of the joinpoint.
  *
  * @author <a href="mailto:the_mindstorm@evolva.ro">Alex Popescu</a>
- * @version $Revision$
  */
 public class EnclosingStaticJoinPointImpl implements EnclosingStaticJoinPoint {
   private Signature m_signature;

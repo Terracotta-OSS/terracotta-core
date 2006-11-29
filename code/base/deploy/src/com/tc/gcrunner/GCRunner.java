@@ -37,7 +37,11 @@ public class GCRunner {
     ObjectManagementMonitorMBean mbean = (ObjectManagementMonitorMBean) MBeanServerInvocationHandler
         .newProxyInstance(mbs, L2MBeanNames.OBJECT_MANAGEMENT, ObjectManagementMonitorMBean.class, false);
 
-    mbean.runGC();
+    try {
+      mbean.runGC();
+    } catch (RuntimeException re) {
+      consoleLogger.error(re.getCause().getMessage());
+    }
   }
 
   private static JMXConnector getJMXConnector(String hostName, int jmxPort) throws IOException {

@@ -1,11 +1,6 @@
 /*
  * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
  */
-
-/*
- * $Id$
- * $Date$
- */
 package com.tc.aspectwerkz.compiler;
 
 import java.io.File;
