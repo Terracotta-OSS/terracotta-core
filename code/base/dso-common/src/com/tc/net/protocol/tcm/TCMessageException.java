@@ -1,14 +1,12 @@
 /*
- * Created on Apr 22, 2004 To change the template for this generated file go to Window&gt;Preferences&gt;Java&gt;Code
- * Generation&gt;Code and Comments
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
  */
 package com.tc.net.protocol.tcm;
 
 import com.tc.exception.TCException;
 
 /**
- * @author Orion Letizi To change the template for this generated type comment go to
- *         Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
+ * @author Orion Letizi
  */
 public class TCMessageException extends TCException {
 

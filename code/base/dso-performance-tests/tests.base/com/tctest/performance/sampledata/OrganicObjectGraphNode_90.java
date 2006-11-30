@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
 package com.tctest.performance.sampledata;
 
 public final class OrganicObjectGraphNode_90 extends OrganicObjectGraph {

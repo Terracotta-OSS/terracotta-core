@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
 package com.tc.io.serializer.impl;
 
 import com.tc.io.serializer.api.Serializer;
