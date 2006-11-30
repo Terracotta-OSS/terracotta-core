@@ -348,6 +348,12 @@ public class TCLogging {
 
       Logger jettyLogger = Logger.getLogger("org.mortbay");
       jettyLogger.setLevel(Level.OFF);
+      
+      // LKC-3171: disable logging of the GenericConnector in the JMXRemoteOptional package
+      // I made this change earlier but either didn't check it in very well or it was somehow
+      // overwritten.  In either case, here it is again.
+      java.util.logging.Logger jmxLogger = java.util.logging.Logger.getLogger("javax.management.remote.generic");
+      jmxLogger.setLevel(java.util.logging.Level.OFF);
 
       Logger internalLogger = Logger.getLogger(INTERNAL_LOGGER_NAMESPACE);
       Logger customerLogger = Logger.getLogger(CUSTOMER_LOGGER_NAMESPACE);
