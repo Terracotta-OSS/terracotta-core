@@ -336,46 +336,6 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
     }
   }
   
-  private static class GetMethodAdapter extends MethodAdapter implements Opcodes {
-    public GetMethodAdapter(MethodVisitor mv) {
-      super(mv);
-    }
-    
-    public void visitCode() {
-      super.visitCode();
-      
-      mv.visitFieldInsn(GETSTATIC, "com/tc/util/DebugUtil", "DEBUG", "Z");
-      Label l1 = new Label();
-      mv.visitJumpInsn(IFEQ, l1);
-      Label l2 = new Label();
-      mv.visitLabel(l2);
-      mv.visitLineNumber(274, l2);
-      mv.visitFieldInsn(GETSTATIC, "java/lang/System", "err", "Ljava/io/PrintStream;");
-      mv.visitTypeInsn(NEW, "java/lang/StringBuffer");
-      mv.visitInsn(DUP);
-      mv.visitLdcInsn("Segment.Get -- client id: ");
-      mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuffer", "<init>", "(Ljava/lang/String;)V");
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "getClientID", "()Ljava/lang/String;");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
-      mv.visitLdcInsn(", identity: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
-      mv.visitVarInsn(ALOAD, 0);
-      mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "identityHashCode", "(Ljava/lang/Object;)I");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(I)Ljava/lang/StringBuffer;");
-      mv.visitLdcInsn(", key: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
-      mv.visitVarInsn(ALOAD, 1);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/Object;)Ljava/lang/StringBuffer;");
-      mv.visitLdcInsn(", hash: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
-      mv.visitVarInsn(ILOAD, 2);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(I)Ljava/lang/StringBuffer;");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "toString", "()Ljava/lang/String;");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
-      mv.visitLabel(l1);
-    }
-  }
-
   private static class PutMethodAdapter extends MethodAdapter implements Opcodes {
 
     public PutMethodAdapter(MethodVisitor mv) {
@@ -397,50 +357,6 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
       Label endBlock = new Label();
       Label logicalInvokeLabel = new Label();
       
-      mv.visitFieldInsn(GETSTATIC, "com/tc/util/DebugUtil", "DEBUG", "Z");
-      mv.visitJumpInsn(IFEQ, logicalInvokeLabel);
-      Label l25 = new Label();
-      mv.visitLabel(l25);
-      mv.visitLineNumber(440, l25);
-      mv.visitFieldInsn(GETSTATIC, "java/lang/System", "err", "Ljava/io/PrintStream;");
-      mv.visitTypeInsn(NEW, "java/lang/StringBuilder");
-      mv.visitInsn(DUP);
-      mv.visitLdcInsn("Segment.Put: client id: ");
-      mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "(Ljava/lang/String;)V");
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "getClientID", "()Ljava/lang/String;");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitLdcInsn(", identity: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitVarInsn(ALOAD, 0);
-      mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "identityHashCode", "(Ljava/lang/Object;)I");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;");
-      mv.visitLdcInsn(", count: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitVarInsn(ILOAD, 5);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;");
-      mv.visitLdcInsn(", key: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitVarInsn(ALOAD, 1);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/Object;)Ljava/lang/StringBuilder;");
-      mv.visitLdcInsn(", hash: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitVarInsn(ILOAD, 2);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;");
-      mv.visitLdcInsn(", value: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitVarInsn(ALOAD, 3);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/Object;)Ljava/lang/StringBuilder;");
-      mv.visitLdcInsn(", onlyIfAbsent: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitVarInsn(ILOAD, 4);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Z)Ljava/lang/StringBuilder;");
-      mv.visitLdcInsn(", index: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitVarInsn(ILOAD, 7);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
-
       mv.visitLabel(logicalInvokeLabel);
       
       ByteCodeUtil.pushThis(mv);
@@ -491,46 +407,6 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
     private void addFoundLogicalInvokePutMethodCall() {
       Label notManaged = new Label();
       Label logicalInvokeLabel = new Label();
-      
-      mv.visitFieldInsn(GETSTATIC, "com/tc/util/DebugUtil", "DEBUG", "Z");
-      mv.visitJumpInsn(IFEQ, logicalInvokeLabel);
-      Label l20 = new Label();
-      mv.visitLabel(l20);
-      mv.visitLineNumber(430, l20);
-      mv.visitFieldInsn(GETSTATIC, "java/lang/System", "err", "Ljava/io/PrintStream;");
-      mv.visitTypeInsn(NEW, "java/lang/StringBuilder");
-      mv.visitInsn(DUP);
-      mv.visitLdcInsn("Segment.Put: client id: ");
-      mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "(Ljava/lang/String;)V");
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "getClientID", "()Ljava/lang/String;");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitLdcInsn(", identity: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitVarInsn(ALOAD, 0);
-      mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "identityHashCode", "(Ljava/lang/Object;)I");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;");
-      mv.visitLdcInsn(", count: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitVarInsn(ILOAD, 5);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;");
-      mv.visitLdcInsn(", key: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitVarInsn(ALOAD, 1);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/Object;)Ljava/lang/StringBuilder;");
-      mv.visitLdcInsn(", hash: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitVarInsn(ILOAD, 2);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;");
-      mv.visitLdcInsn(", value: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitVarInsn(ALOAD, 3);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/Object;)Ljava/lang/StringBuilder;");
-      mv.visitLdcInsn(", onlyIfAbsent: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitVarInsn(ILOAD, 4);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Z)Ljava/lang/StringBuilder;");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
       
       mv.visitLabel(logicalInvokeLabel);
       
@@ -662,29 +538,6 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
       Label notManaged = new Label();
       Label logicalInvokeLabel = new Label();
       
-      mv.visitFieldInsn(GETSTATIC, "com/tc/util/DebugUtil", "DEBUG", "Z");
-      mv.visitJumpInsn(IFEQ, logicalInvokeLabel);
-      Label l5 = new Label();
-      mv.visitLabel(l5);
-      mv.visitLineNumber(520, l5);
-      mv.visitFieldInsn(GETSTATIC, "java/lang/System", "err", "Ljava/io/PrintStream;");
-      mv.visitTypeInsn(NEW, "java/lang/StringBuilder");
-      mv.visitInsn(DUP);
-      mv.visitLdcInsn("Segment.remove: client id: ");
-      mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "(Ljava/lang/String;)V");
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "getClientID", "()Ljava/lang/String;");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitLdcInsn(", key: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitVarInsn(ALOAD, 1);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/Object;)Ljava/lang/StringBuilder;");
-      mv.visitLdcInsn(", hash: ");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-      mv.visitVarInsn(ILOAD, 2);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
-
       mv.visitLabel(logicalInvokeLabel);
       
       ByteCodeUtil.pushThis(mv);

@@ -9,7 +9,6 @@ import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
@@ -18,7 +17,6 @@ import com.tc.object.dna.impl.DNAEncoding;
 import com.tc.object.field.TCFieldFactory;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.TCObjectClone;
-import com.tc.util.DebugUtil;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -104,25 +102,13 @@ public class HashMapApplicator extends BaseApplicator {
 
         Object value = getObjectForValue(objectManager, v);
 
-        if (DebugUtil.DEBUG) {
-          System.err.println("Put -- client id: " + ManagerUtil.getClientID() + ", key: " + k);
-          System.err.println("Put -- client id: " + ManagerUtil.getClientID() + ", value: " + v);
-          System.err.println("Put -- client id: " + ManagerUtil.getClientID() + ", pKey: " + pkey);
-          System.err.println("Put -- client id: " + ManagerUtil.getClientID() + ", pValue: " + value);
-        }
         m.put(pkey, value);
         break;
       case SerializationUtil.REMOVE:
         Object rkey = params[0] instanceof ObjectID ? objectManager.lookupObject((ObjectID) params[0]) : params[0];
-        if (DebugUtil.DEBUG) {
-          System.err.println("Remove -- client id: " + ManagerUtil.getClientID() + ", rkey: " + rkey);
-        }
         m.remove(rkey);
         break;
       case SerializationUtil.CLEAR:
-        if (DebugUtil.DEBUG) {
-          System.err.println("Clear -- client id: " + ManagerUtil.getClientID());
-        }
         m.clear();
         break;
       default:
