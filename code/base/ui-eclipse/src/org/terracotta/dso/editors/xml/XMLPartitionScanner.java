@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
 package org.terracotta.dso.editors.xml;
 
 import org.eclipse.jface.text.rules.IPredicateRule;

@@ -1,7 +1,6 @@
-/*
- * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
- */
-
+/**
+@COPYRIGHT@
+*/
 package demo.events.web;
 
 import java.util.HashMap;

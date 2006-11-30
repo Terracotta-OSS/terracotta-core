@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
 package org.terracotta.dso.launch;
 
 import org.eclipse.core.resources.IFile;

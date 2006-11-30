@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
 package com.tc.stats;
 
 import org.apache.commons.collections.set.ListOrderedSet;

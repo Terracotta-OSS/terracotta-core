@@ -1,5 +1,5 @@
 /*
- * Created on Jun 8, 2005
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
  */
 package com.tcclient.util;
 

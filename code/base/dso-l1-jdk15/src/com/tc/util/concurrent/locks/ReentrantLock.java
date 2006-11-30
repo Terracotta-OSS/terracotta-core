@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ */
 package com.tc.util.concurrent.locks;
 
 import com.tc.exception.TCNotSupportedMethodException;
@@ -19,9 +22,6 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
-/*
- * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
- */
 public class ReentrantLock implements Lock, java.io.Serializable {
   private boolean  isFair;
 
