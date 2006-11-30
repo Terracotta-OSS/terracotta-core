@@ -180,6 +180,7 @@
                  <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
                </enablement>
          </action>
+<!--
          <action
                id="contactSalesAction"
                label="Contact Terracotta Sales"
@@ -194,6 +195,7 @@
                class="org.terracotta.dso.actions.ContactTerracottaAction"
                enablesFor="*">
          </action>
+-->         
          <action
                id="contactSupportAction"
                label="Contact Terracotta Technical Support"

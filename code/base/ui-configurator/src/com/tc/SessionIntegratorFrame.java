@@ -536,10 +536,12 @@ public class SessionIntegratorFrame extends Frame {
                                          getBundleString("forums.url")));
     menu.add(new ContactTerracottaAction(getBundleString("contact.support.title"),
                                          getBundleString("support.url")));
+    /*
     menu.add(new ContactTerracottaAction(getBundleString("contact.field.eng.title"),
                                          getBundleString("field.eng.url")));
     menu.add(new ContactTerracottaAction(getBundleString("contact.sales.title"),
                                          getBundleString("sales.url")));
+    */                                         
     menu.addSeparator();
     menu.add(new AboutAction());
     menuBar.add(menu);

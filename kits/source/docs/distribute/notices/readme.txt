@@ -54,7 +54,7 @@ Terracotta DSO
 
 Terracotta DSO Eclipse Plug-in
    Follow the installation directions at:
-      - http://www.terracotta.org/confluence/display/orgsite/Eclipse+Plugin
+      - http://www.terracotta.org/eclipse
 
 
 Configuration File Samples

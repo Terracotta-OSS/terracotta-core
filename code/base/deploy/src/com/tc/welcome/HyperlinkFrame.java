@@ -76,10 +76,12 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
                                          getBundleString("forums.url")));
     menu.add(new ContactTerracottaAction(getBundleString("contact.support.title"),
                                          getBundleString("support.url")));
+    /*
     menu.add(new ContactTerracottaAction(getBundleString("contact.field.eng.title"),
                                          getBundleString("field.eng.url")));
     menu.add(new ContactTerracottaAction(getBundleString("contact.sales.title"),
                                          getBundleString("sales.url")));
+    */
     menu.add(new Separator());
     menu.add(new AboutAction());
     
