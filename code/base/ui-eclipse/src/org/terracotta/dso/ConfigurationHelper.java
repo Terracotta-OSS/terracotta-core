@@ -1192,13 +1192,16 @@ public class ConfigurationHelper {
   
   public void ensureTransient(final String fieldName) {
     if(!isTransient(fieldName)) {
-      IType   fieldType          = getFieldType(fieldName);
       boolean updateInstrumented = false;
       boolean updateRoots        = false;
       
-      if(fieldType != null && !isAdaptable(fieldType)) {
-        ensureAdaptable(fieldType);
-        updateInstrumented = true;        
+      IField field = getField(fieldName);
+      if(field != null) {
+        IType fieldType = field.getDeclaringType();
+        if(!isAdaptable(fieldType)) {
+          ensureAdaptable(fieldType);
+          updateInstrumented = true;        
+        }
       }
       
       if(isRoot(fieldName)) {

@@ -135,6 +135,9 @@ public class OnLoadDialog extends Dialog {
     OnLoad onLoad = include.getOnLoad();
     String view   = NOOP_VIEW;
     
+    m_codePane.setText(null);
+    m_methodNameField.setText(null);
+    
     if(onLoad != null) {
       if(onLoad.isSetExecute()) {
         view = EXECUTE_VIEW;

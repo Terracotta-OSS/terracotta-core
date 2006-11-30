@@ -19,9 +19,9 @@ Configuration:
 
 The Terracotta configuration file format has changed in the following ways:
 
-1) The XML namespace has changed permanently changed from
-   http://www.terracottatech.com/config-V1
-   to http://www.terracotta.org/config.
+1) The XML namespace has permanently changed from
+   http://www.terracottatech.com/config-V1 to
+   http://www.terracotta.org/config.
 
 2) The following elements have been removed because the associated
    functionality has been removed:
@@ -64,6 +64,9 @@ Usability:
    the client configuration source, as specified by
    -Dtc.config=[server-host]:[dso-port].
 
+3) The start-tc-server script no longer support the --create-config option
+   for creating a new default configuration file. Now each product comes
+   with template configuration files in <PRODUCT>/config-samples.
 
 Known Issues
 ============

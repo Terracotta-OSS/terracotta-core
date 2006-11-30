@@ -239,12 +239,14 @@ public class RuleTable extends XObjectTable {
       m_onLoadButton = new OnLoadButton("On load...");
       m_onLoadButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ae) {
-          getOnLoadDialog().edit(getIncludeAt(m_onLoadButton.getRow()));
+          int     row          = m_onLoadButton.getRow();
+          Include include      = getIncludeAt(row);
+          String  savedInclude = include.xmlText();
           
-          int row = m_onLoadButton.getRow();
-          int col = m_onLoadButton.getCol();
-
-          getRuleModel().fireTableCellUpdated(row, col);
+          getOnLoadDialog().edit(include);
+          if(!include.xmlText().equals(savedInclude)) {
+            getRuleModel().fireTableCellUpdated(row, m_onLoadButton.getCol());
+          }
         }
       });
       m_editorComponent = new RuleDetailPanel(m_honorTransientToggle, m_onLoadButton); 

@@ -5,7 +5,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.xmlbeans.XmlError;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
-import org.dijon.ApplicationManager;
 import org.dijon.DictionaryResource;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
@@ -70,11 +69,8 @@ import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.eclipse.ui.texteditor.MarkerUtilities;
 import org.osgi.framework.BundleContext;
-
 import org.terracotta.dso.actions.ActionUtil;
 import org.terracotta.dso.actions.IProjectAction;
-import com.tc.admin.common.InputStreamDrainer;
-import com.tc.config.Loader;
 import org.terracotta.dso.decorator.AdaptedModuleDecorator;
 import org.terracotta.dso.decorator.AdaptedTypeDecorator;
 import org.terracotta.dso.decorator.AutolockedDecorator;
@@ -87,6 +83,9 @@ import org.terracotta.dso.decorator.ServerRunningDecorator;
 import org.terracotta.dso.decorator.TransientDecorator;
 import org.terracotta.dso.editors.ConfigurationEditor;
 import org.terracotta.dso.wizards.ProjectWizard;
+
+import com.tc.admin.common.InputStreamDrainer;
+import com.tc.config.Loader;
 import com.terracottatech.configV2.Server;
 import com.terracottatech.configV2.Servers;
 import com.terracottatech.configV2.TcConfigDocument;
@@ -111,6 +110,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 /**
  * The Terracotta plugin.  The whole enchilada centers around this singleton.
@@ -251,7 +251,11 @@ public class TcPlugin extends AbstractUIPlugin
     URL url = Platform.resolve(context.getBundle().getEntry("/"));
     m_location = new Path(url.getPath()).removeTrailingSeparator();
 
-    ApplicationManager.parseLAFArgs(new String[]{});
+    try {
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    } catch(Exception e) {
+      /**/
+    }
     
     InputStream is = null;
     try {
