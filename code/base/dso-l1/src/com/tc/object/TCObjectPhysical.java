@@ -116,6 +116,10 @@ public class TCObjectPhysical extends TCObjectImpl {
     setPeerObject(new WeakObjectReference(getObjectID(), newValue, getObjectManager().getReferenceQueue()));
   }
   
+  /**
+   * Unlike literalValueChange, this method is not synchronized on getResolveLock() because this method is called
+   * by the applicator thread which has been synchronized on getResolveLock() in TCObjectImpl.hydrate().
+   */
   public void setLiteralValue(Object newValue) {
     setPeerObject(new WeakObjectReference(getObjectID(), newValue, getObjectManager().getReferenceQueue()));
   }
