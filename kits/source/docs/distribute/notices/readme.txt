@@ -9,7 +9,7 @@ Sales:   sales@terracottatech.com or +1 415-738-4000
 Documentation
 -------------
 
-http://wiki.terracotta.org/confluence/display/docs/
+http://www.terracotta.org/confluence/display/docs/
 
 
 Getting Started
@@ -54,7 +54,7 @@ Terracotta DSO
 
 Terracotta DSO Eclipse Plug-in
    Follow the installation directions at:
-      - http://wiki.terracotta.org/confluence/display/orgsite/Tools#eclipse
+      - http://www.terracotta.org/confluence/display/orgsite/Eclipse+Plugin
 
 
 Configuration File Samples
