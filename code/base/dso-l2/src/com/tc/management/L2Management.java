@@ -49,9 +49,9 @@ public class L2Management extends TerracottaManagement {
                                    ncmbe);
     }
 
-    java.util.logging.Logger jmxRemoteOptionalLogger = java.util.logging.Logger
-        .getLogger("javax.management.remote.generic");
-    jmxRemoteOptionalLogger.setLevel(java.util.logging.Level.OFF);
+    // LKC-2990 and LKC-3171: Remove the JMX generic optional logging
+    java.util.logging.Logger jmxLogger = java.util.logging.Logger.getLogger("javax.management.remote.generic");
+    jmxLogger.setLevel(java.util.logging.Level.OFF);
 
     final List jmxServers = MBeanServerFactory.findMBeanServer(null);
     if (jmxServers != null && !jmxServers.isEmpty()) {
@@ -97,7 +97,8 @@ public class L2Management extends TerracottaManagement {
     return objectManagementBean;
   }
 
-  private void registerMBeans() throws MBeanRegistrationException, NotCompliantMBeanException, InstanceAlreadyExistsException {
+  private void registerMBeans() throws MBeanRegistrationException, NotCompliantMBeanException,
+      InstanceAlreadyExistsException {
     mBeanServer.registerMBean(tcServerInfo, L2MBeanNames.TC_SERVER_INFO);
     mBeanServer.registerMBean(TCLogging.getAppender().getMBean(), L2MBeanNames.LOGGER);
     mBeanServer.registerMBean(objectManagementBean, L2MBeanNames.OBJECT_MANAGEMENT);

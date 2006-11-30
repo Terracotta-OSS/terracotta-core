@@ -60,7 +60,7 @@ public final class L1Management extends TerracottaManagement {
     mBeanServerLock = new Object();
     Thread registrationThread = new Thread(new Runnable() {
       private final int MAX_ATTEMPTS = 60 * 5;
-      
+
       public void run() {
         boolean registered = false;
         int attemptCounter = 0;
@@ -78,8 +78,9 @@ public final class L1Management extends TerracottaManagement {
             }
           }
         }
-        if(!registered) {
-          logger.error("Aborted attempts to register management beans after " + (MAX_ATTEMPTS/60) + " min of trying.");
+        if (!registered) {
+          logger
+              .error("Aborted attempts to register management beans after " + (MAX_ATTEMPTS / 60) + " min of trying.");
         }
       }
     }, "L1Management JMX registration");
@@ -113,9 +114,6 @@ public final class L1Management extends TerracottaManagement {
 
   private void attemptToRegister() throws InstanceAlreadyExistsException, MBeanRegistrationException,
       NotCompliantMBeanException {
-    // LKC-2990: Remove the JMX generic optional logging
-    java.util.logging.Logger jmxRemoteOptionalLogger = java.util.logging.Logger.getLogger("javax.management.remote.generic");
-    jmxRemoteOptionalLogger.setLevel(java.util.logging.Level.OFF);
     synchronized (mBeanServerLock) {
       if (mBeanServer == null) {
         if (shouldCreateMBeanServer()) {
@@ -138,6 +136,14 @@ public final class L1Management extends TerracottaManagement {
 
   private void addJMXConnectors() {
     JMXServiceURL url = null;
+    try {
+      // LKC-2990 and LKC-3171: Remove the JMX generic optional logging
+      java.util.logging.Logger jmxLogger = java.util.logging.Logger.getLogger("javax.management.remote.generic");
+      jmxLogger.setLevel(java.util.logging.Level.OFF);
+    } catch (Throwable t) {
+      logger.warn("Unable to disable default logging in Sun's JMX package; when Terracotta clients go"
+                  + " up/down you may see stack traces printed to the log");
+    }
     try {
       final Map environment = new HashMap();
       ProtocolProvider.addTerracottaJmxProvider(environment);
