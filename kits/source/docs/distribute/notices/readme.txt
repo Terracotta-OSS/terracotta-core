@@ -1,15 +1,10 @@
 Terracotta
 ==========
 
-Forums:   http://www.terracottatech.com/forums/
-Lists:    http://www.terracotta.org/confluence/display/orgsite/Mailing+Lists
-Services: http://www.terracottatech.com/support_services.shtml
-
-
-Documentation
--------------
-
-http://www.terracotta.org/confluence/display/docs/
+Documentation: http://docs.terracotta.org
+Forums:        http://www.terracottatech.com/forums/
+Mailing Lists: http://lists.terracotta.org
+Services:      http://www.terracottatech.com/support_services.shtml
 
 
 Getting Started
