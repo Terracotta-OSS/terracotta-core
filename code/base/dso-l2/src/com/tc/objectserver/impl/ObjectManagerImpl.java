@@ -815,6 +815,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       ArrayList splitRC = new ArrayList(COMMIT_SIZE);
       while (splitRC.size() < COMMIT_SIZE && i.hasNext()) {
         splitRC.add(i.next());
+        i.remove();
       }
 
       HashSet toFlush = new HashSet();

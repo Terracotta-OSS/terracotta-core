@@ -15,19 +15,19 @@ import com.tc.util.State;
 import java.util.List;
 
 public class CacheManager implements MemoryEventsListener {
-  
-  private static final TCLogger logger = TCLogging.getLogger(CacheManager.class);
 
-  private static final State        INIT           = new State("INIT");
-  private static final State        PROCESSING     = new State("PROCESSING");
-  private static final State        COMPLETE       = new State("COMPLETE");
+  private static final TCLogger     logger              = TCLogging.getLogger(CacheManager.class);
+
+  private static final State        INIT                = new State("INIT");
+  private static final State        PROCESSING          = new State("PROCESSING");
+  private static final State        COMPLETE            = new State("COMPLETE");
 
   private final Evictable           evictable;
   private final CacheConfig         config;
   private final TCMemoryManagerImpl memoryManager;
 
-  private int                       objectsInCache = 0;
-  private CacheStatistics           lastStat       = null;
+  private int                       calculatedCacheSize = 0;
+  private CacheStatistics           lastStat            = null;
 
   public CacheManager(Evictable evictable, CacheConfig config) {
     this.evictable = evictable;
@@ -84,23 +84,28 @@ public class CacheManager implements MemoryEventsListener {
       if (toEvict > 0) {
         state = PROCESSING;
       }
-      if(config.isLoggingEnabled()) {
-        logger.info("Asking to evict " + toEvict + " current Size = " + currentCount);
+      if (config.isLoggingEnabled()) {
+        logger.info("Asking to evict " + toEvict + " current size = " + currentCount + " calculated cache size = "
+                    + calculatedCacheSize + " heap used = " + usage.getUsedPercentage() + " %  gc count = "
+                    + usage.getCollectionCount());
       }
       return this.toEvict;
     }
 
     private void adjustCachedObjectCount(int currentCount) {
       if (type == MemoryEventType.BELOW_THRESHOLD) {
-        if (objectsInCache < currentCount) {
-          objectsInCache = currentCount;
+        if (calculatedCacheSize < currentCount) {
+          calculatedCacheSize = currentCount;
         }
-      } else if (lastStat == null || lastStat.type == MemoryEventType.BELOW_THRESHOLD) {
-        // This is the first threshold crossing alarm.
+      } else if (lastStat == null || lastStat.type == MemoryEventType.BELOW_THRESHOLD
+                 || lastStat.usage.getCollectionCount() < usage.getCollectionCount()) {
+        // 1) This is the first threshold crossing alarm or
+        // 2) The memory just went below threshold or
+        // 3) A GC has taken place since the last time, but the memory has not gone below the threshold. (danger)
         int used = usage.getUsedPercentage();
         int diff = used - config.getUsedThreshold();
         Assert.assertTrue(diff >= 0);
-        objectsInCache = currentCount - (currentCount * diff / 100);
+        calculatedCacheSize = currentCount - (currentCount * diff / 100);
       }
     }
 
@@ -109,18 +114,18 @@ public class CacheManager implements MemoryEventsListener {
       this.countAfter = currentCount;
       state = COMPLETE;
       // TODO:: add reference queue
-      if(config.isLoggingEnabled()) {
-        logger.info("Evict " + evictedCount + " current Size = " + currentCount);
+      if (config.isLoggingEnabled()) {
+        logger.info("Evicted " + evictedCount + " current Size = " + currentCount);
       }
     }
 
     // TODO:: This need to be more intellegent. It should also check if a GC actually happened after eviction. Use
     // Reference Queue
     private int computeObjects2Evict(int currentCount) {
-      if (type == MemoryEventType.BELOW_THRESHOLD || objectsInCache > currentCount) { return 0; }
-      int overshoot = currentCount - objectsInCache;
+      if (type == MemoryEventType.BELOW_THRESHOLD || calculatedCacheSize > currentCount) { return 0; }
+      int overshoot = currentCount - calculatedCacheSize;
       if (overshoot <= 0) return 0;
-      int objects2Evict = overshoot + ((objectsInCache * config.getPercentageToEvict()) / 100);
+      int objects2Evict = overshoot + ((calculatedCacheSize * config.getPercentageToEvict()) / 100);
       return objects2Evict;
     }
 
