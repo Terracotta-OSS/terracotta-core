@@ -75,17 +75,16 @@ class StaticResources
         FilePath.new(@root_directory, '..', 'demos')
     end
 
-    # this function is retired since we want to pull vendors app from URL instead
-    #~ def vendors_directory
-        #~ FilePath.new(@root_directory, '..', 'vendors')
-    #~ end
-    
     def vendors_url
-        default_url = "http://kong/resources/resources/vendors"
-        ENV["VENDORS_URL"].nil? ? default_url : ENV["VENDORS_URL"]
+        default_url = "http://apache.mirrormax.net/tomcat/tomcat-5/v5.5.20/bin"
+        ENV["TC_VENDORS_URL"].nil? ? default_url : ENV["TC_VENDORS_URL"]
     end
     
-
+    def jre_url
+      default_url = "http://kong.terracotta.lan/resources/resources/bundled-jre/sun"
+      ENV["TC_JRE_URL"].nil? ? default_url : ENV["TC_JRE_URL"]
+    end
+  
     def templates_directory
         FilePath.new(@root_directory, '..', '..', 'kits', 'source', 'templates')
     end

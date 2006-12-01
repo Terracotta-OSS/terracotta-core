@@ -15,10 +15,8 @@ bundled_demos:
          - tasklist
          - townsend
 bundled_vendors:
-   - apache:
-       install_directory: vendors
-       manifest:
-         - tomcat5.5
+   - apache-tomcat-5.5.20:
+       install_directory: vendors/tomcat5.5
 bundled_components:
   - base:
       documentations:
