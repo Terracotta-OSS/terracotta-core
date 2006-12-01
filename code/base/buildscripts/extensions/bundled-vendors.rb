@@ -14,7 +14,7 @@ module BundledVendors
     end
 
     def getCachedVendorDir(vendor)
-        url       = "#{@static_resources.vendors_ur}/#{vendor}.zip"
+        url       = "#{@static_resources.vendors_url}/#{vendor}.zip"
         cache_dir = FilePath.new('.tc-build-cache').ensure_directory.canonicalize.to_s
         zipfile   = FilePath.new(cache_dir, vendor + ".zip").to_s
         ant.get(:src => url, :dest => zipfile, :usetimestamp => true)

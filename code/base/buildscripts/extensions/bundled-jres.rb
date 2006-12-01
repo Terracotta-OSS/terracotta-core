@@ -3,7 +3,7 @@ module BundledJREs
     version        = spec[:version]
     os_type        = @build_environment.os_type(:nice).downcase
     processor_type = @build_environment.processor_type.downcase
-    jre_filename   = "jre-with-jdk-#{version}-#{os_type}-#{processor_type}.tar.gz"
+    jre_filename   = "jre-with-jdk-#{version}-#{os_type}.tar.gz"
     jre_url        = "#{@static_resources.jre_url}/#{os_type}/#{jre_filename}" 
     jre_srcdir     = FilePath.new('.tc-build-cache', 'bundled-jre', 'sun', os_type).ensure_directory
     jre_srcfile    = FilePath.new(jre_srcdir, jre_filename)

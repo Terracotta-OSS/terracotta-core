@@ -80,8 +80,8 @@ class StaticResources
         ENV["TC_VENDORS_URL"].nil? ? default_url : ENV["TC_VENDORS_URL"]
     end
     
-    def jre_url
-      default_url = "http://kong.terracotta.lan/resources/resources/bundled-jre/sun"
+    def jre_url      
+      default_url = "http://download.terracotta.org/bundled-jre/sun"
       ENV["TC_JRE_URL"].nil? ? default_url : ENV["TC_JRE_URL"]
     end
   
