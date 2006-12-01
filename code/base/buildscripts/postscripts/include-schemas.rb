@@ -9,6 +9,8 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   # - generate a javadoc style documentation for the schemas
   protected
   def postscript(ant, build_environment, product_directory, *args)
+    return if @static_resources.docflex_home.nil? 
+    
     srcdir = @static_resources.config_schema_source_directory(@module_set)
     tmpdir = FilePath.new(product_directory, 'tmp').ensure_directory
 
@@ -16,7 +18,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       ant.fileset(:dir => srcdir.to_s, :includes => '*.xsd')
     end
 
-    docflex           = FilePath.new("..", "..", "buildsystems", "docflex")
+    docflex           = FilePath.new(@static_resources.docflex_home)
     docflex_lib       = FilePath.new(docflex, "lib")
     docflex_template  = FilePath.new(docflex, "templates", "XSDDocFrames.tpl")
     docflex_classpath = "#{docflex_lib.to_s}/xercesImpl.jar:#{docflex_lib.to_s}/xml-apis.jar:#{docflex_lib.to_s}/docflex-xml-kit.jar"
@@ -57,6 +59,6 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         ant.fileset(:dir => tmpdir.to_s)
       end
     end
-   tmpdir.delete
+    tmpdir.delete
   end
 end

@@ -90,6 +90,10 @@ class StaticResources
       default_url = "http://download.terracotta.org/bundled-jre/sun"
       ENV["TC_JRE_URL"].nil? ? default_url : ENV["TC_JRE_URL"]
     end
+    
+    def docflex_home
+      ENV["DOCFLEX_HOME"]
+    end
   
     def templates_directory
         FilePath.new(@root_directory, '..', '..', 'kits', 'source', 'templates')
