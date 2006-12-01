@@ -9,12 +9,12 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.ChannelStats;
 import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.statistics.CountStatistic;
+import com.tc.stats.statistics.Statistic;
 
 import java.lang.reflect.Method;
 
 import javax.management.NotCompliantMBeanException;
-import javax.management.j2ee.statistics.CountStatistic;
-import javax.management.j2ee.statistics.Statistic;
 
 public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean {
 
@@ -30,7 +30,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     this.flushRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.OBJECT_FLUSH_RATE);
     this.faultRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.OBJECT_REQUEST_RATE);
   }
-  
+
   public void reset() {
     // nothing to reset
   }
@@ -46,18 +46,15 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   }
 
   public CountStatistic getTransactionRate() {
-    return StatsUtil.makeCountStat(txnRate, "Transaction rate", "transactions per second",
-                                   "Total transactions per second for this client");
+    return StatsUtil.makeCountStat(txnRate);
   }
 
   public CountStatistic getObjectFaultRate() {
-    return StatsUtil.makeCountStat(faultRate, "Object fault rate", "objects per second",
-                                   "Total objects faulted per second for this client");
+    return StatsUtil.makeCountStat(faultRate);
   }
 
   public CountStatistic getObjectFlushRate() {
-    return StatsUtil.makeCountStat(flushRate, "Object flush rate", "objects per second",
-                                   "Total objects flushed per second for this client");
+    return StatsUtil.makeCountStat(flushRate);
   }
 
   public Statistic[] getStatistics(final String[] names) {

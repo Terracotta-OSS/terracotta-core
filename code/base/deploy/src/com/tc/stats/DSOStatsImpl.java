@@ -3,23 +3,22 @@
  */
 package com.tc.stats;
 
-import java.lang.reflect.Method;
-
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.api.ObjectManagerStats;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.DoubleStatistic;
 import com.tc.stats.statistics.DoubleStatisticImpl;
+import com.tc.stats.statistics.Statistic;
 
-import javax.management.j2ee.statistics.Statistic;
-import javax.management.j2ee.statistics.CountStatistic;
+import java.lang.reflect.Method;
 
 /**
  * This is the root interface to the global DSO Server statistics.
- * 
+ *
  * @see StatsSupport
  * @see DSOStats
  */
@@ -43,40 +42,34 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
   }
 
   public CountStatistic getObjectFaultRate() {
-    return StatsUtil.makeCountStat(faultRate, "Object Fault Rate", "objects faulted per second",
-                                   "DSO total objects faulted per second");
+    return StatsUtil.makeCountStat(faultRate);
   }
 
   public CountStatistic getObjectFlushRate() {
-    return StatsUtil.makeCountStat(flushRate, "Object Flush Rate", "objects flushed per second",
-                                   "DSO total objects flushed per second");
+    return StatsUtil.makeCountStat(flushRate);
   }
 
   public CountStatistic getTransactionRate() {
-    return StatsUtil.makeCountStat(txnRate, "Transaction Rate", "transactions per second",
-                                   "DSP total transactions per second");
+    return StatsUtil.makeCountStat(txnRate);
   }
 
   public DoubleStatistic getCacheHitRatio() {
     double value = objMgrStats.getCacheHitRatio();
-    DoubleStatisticImpl rv = new DoubleStatisticImpl("Server Cache Hit Ratio", "hits/total",
-                                                     "The ratio of cache hits over total cache requests", 0L, System
-                                                         .currentTimeMillis());
+    DoubleStatisticImpl rv = new DoubleStatisticImpl(System.currentTimeMillis());
     rv.setDoubleValue(value);
     return rv;
   }
 
   public Statistic[] getStatistics(String[] names) {
-    int         count  = names.length;
+    int count = names.length;
     Statistic[] result = new Statistic[count];
-    Method      method;
+    Method method;
 
-    for(int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) {
       try {
-        method = getClass().getMethod("get"+names[i], new Class[]{});
-        result[i] = (Statistic)method.invoke(this, new Object[]{});
-      }
-      catch(Exception e) {
+        method = getClass().getMethod("get" + names[i], new Class[] {});
+        result[i] = (Statistic) method.invoke(this, new Object[] {});
+      } catch (Exception e) {
         e.printStackTrace();
       }
     }

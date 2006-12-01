@@ -7,8 +7,8 @@ public class DoubleStatisticImpl extends StatisticImpl implements DoubleStatisti
 
   private double doubleValue;
 
-  public DoubleStatisticImpl(String name, String unit, String desc, long startTime, long lastSampleTime) {
-    super(name, unit, desc, startTime, lastSampleTime);
+  public DoubleStatisticImpl(long lastSampleTime) {
+    super(lastSampleTime);
   }
 
   public double getDoubleValue() {

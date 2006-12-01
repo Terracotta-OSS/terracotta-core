@@ -3,8 +3,8 @@
  */
 package com.tc.stats.statistics;
 
-public interface DoubleStatistic extends Statistic {
+public interface Statistic {
 
-  double getDoubleValue();
+  long getLastSampleTime();
 
 }

@@ -5,9 +5,8 @@ package com.tc.stats;
 
 import com.tc.management.TerracottaMBean;
 import com.tc.net.protocol.tcm.ChannelID;
-
-import javax.management.j2ee.statistics.CountStatistic;
-import javax.management.j2ee.statistics.Statistic;
+import com.tc.stats.statistics.CountStatistic;
+import com.tc.stats.statistics.Statistic;
 
 public interface DSOClientMBean extends TerracottaMBean {
 

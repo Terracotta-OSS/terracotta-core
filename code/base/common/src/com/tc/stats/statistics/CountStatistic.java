@@ -3,8 +3,8 @@
  */
 package com.tc.stats.statistics;
 
-public interface DoubleStatistic extends Statistic {
+public interface CountStatistic extends Statistic {
 
-  double getDoubleValue();
+  long getCount();
 
 }

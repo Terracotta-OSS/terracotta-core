@@ -3,6 +3,11 @@
  */
 package com.tc.admin.common;
 
+import org.dijon.Button;
+import org.dijon.Container;
+import org.dijon.ContainerResource;
+import org.dijon.Spinner;
+import org.dijon.SplitPane;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.ValueAxis;
@@ -10,22 +15,16 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
 
-import org.dijon.Button;
-import org.dijon.Container;
-import org.dijon.ContainerResource;
-import org.dijon.Spinner;
-import org.dijon.SplitPane;
-
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
 import com.tc.admin.ConnectionContext;
+import com.tc.stats.statistics.Statistic;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.management.ObjectName;
-import javax.management.j2ee.statistics.Statistic;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.SpinnerNumberModel;
@@ -59,7 +58,7 @@ public class StatisticPanel extends XContainer implements Poller {
 
   private static final int DEFAULT_POLL_PERIOD   = 1000;
   private static final int DEFAULT_HISTORY_COUNT = 30;
-    
+
   private static final String SHOW_ICON_URI= "/com/tc/admin/icons/view_menu.gif";
   private static final String HIDE_ICON_URI= "/com/tc/admin/icons/hide_menu.gif";
 
@@ -150,10 +149,10 @@ public class StatisticPanel extends XContainer implements Poller {
         }
       }
     });
-    
+
     m_splitter = (SplitPane)findComponent("Splitter");
     m_splitter.hideRight();
-    
+
     m_cc         = cc;
     m_pollPeriod = DEFAULT_POLL_PERIOD;
     m_timer      = new Timer(m_pollPeriod, new TaskPerformer());
@@ -180,11 +179,11 @@ public class StatisticPanel extends XContainer implements Poller {
   public void setBean(ObjectName bean) {
     m_bean = bean;
   }
-    
+
   public ObjectName getBean() {
     return m_bean;
   }
-    
+
   public void setStatisticName(String statisticName) {
     m_statisticName = statisticName;
   }
@@ -192,23 +191,23 @@ public class StatisticPanel extends XContainer implements Poller {
   public String getStatisticName() {
     return m_statisticName;
   }
-    
+
   public void setPollPeriod(int millis) {
     m_timer.setDelay(m_pollPeriod = Math.abs(millis));
   }
-    
+
   public int getPollPeriod() {
     return m_pollPeriod;
   }
-    
+
   public void setStatistic(Statistic statistic) {
     m_statistic = statistic;
   }
-    
+
   public Statistic getStatistic() {
     return m_statistic;
   }
-    
+
   class TaskPerformer implements ActionListener {
     public void actionPerformed(ActionEvent evt) {
       if(m_cc.isConnected()) {
@@ -238,7 +237,7 @@ public class StatisticPanel extends XContainer implements Poller {
   public JFreeChart createChart() {
     return DemoChartFactory.getXYLineChart("", "", "", m_timeSeries);
   }
-  
+
   public JFreeChart getChart() {
     if(m_chart == null) {
       m_chart = createChart();
@@ -279,7 +278,7 @@ public class StatisticPanel extends XContainer implements Poller {
   public boolean isRunning() {
     return m_timer != null && m_timer.isRunning();
   }
-  
+
   public void start() {
     if(!isRunning()) {
       m_timer.start();
@@ -287,10 +286,10 @@ public class StatisticPanel extends XContainer implements Poller {
       m_stopButton.setEnabled(true);
     }
   }
-    
+
   public void stop() {
     if(isRunning()) {
-      m_timer.stop();      
+      m_timer.stop();
       m_startButton.setEnabled(true);
       m_stopButton.setEnabled(false);
     }

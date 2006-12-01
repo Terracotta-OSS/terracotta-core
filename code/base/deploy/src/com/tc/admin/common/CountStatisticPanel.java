@@ -3,14 +3,13 @@
  */
 package com.tc.admin.common;
 
-import java.util.Date;
-
-import javax.management.j2ee.statistics.CountStatistic;
-import javax.management.j2ee.statistics.Statistic;
-
 import org.jfree.data.time.Second;
 
 import com.tc.admin.ConnectionContext;
+import com.tc.stats.statistics.CountStatistic;
+import com.tc.stats.statistics.Statistic;
+
+import java.util.Date;
 
 public class CountStatisticPanel extends StatisticPanel {
   private Date date = new Date();
@@ -25,12 +24,12 @@ public class CountStatisticPanel extends StatisticPanel {
     CountStatistic countStat = (CountStatistic)stat;
     long           ts        = countStat.getLastSampleTime();
     long           count     = countStat.getCount();
-    
+
     date.setTime(ts);
 
     getTimeSeries().addOrUpdate(new Second(date), count);
   }
-  
+
   public void tearDown() {
     super.tearDown();
     date = null;
