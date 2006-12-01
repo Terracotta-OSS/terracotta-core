@@ -1,4 +1,4 @@
-/**
+/*
 @COPYRIGHT@
 */
 package demo.townsend.action;

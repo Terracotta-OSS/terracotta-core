@@ -1,3 +1,6 @@
+/*
+@COPYRIGHT@
+*/
 package demo.sharededitor.ui;
 
 public interface IFontable

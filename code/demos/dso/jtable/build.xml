@@ -1,3 +1,4 @@
+<!-- Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved. -->
 <project name="JTable" default="build" basedir=".">
 	<property name="src" location="src"/>
 	<property name="build.dir" location="classes"/>

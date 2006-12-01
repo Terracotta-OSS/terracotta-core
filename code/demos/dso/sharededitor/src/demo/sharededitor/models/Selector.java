@@ -1,3 +1,6 @@
+/*
+@COPYRIGHT@
+*/
 package demo.sharededitor.models;
 
 import java.awt.Image;

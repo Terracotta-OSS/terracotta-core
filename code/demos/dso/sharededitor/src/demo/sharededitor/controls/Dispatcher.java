@@ -1,3 +1,6 @@
+/*
+@COPYRIGHT@
+*/
 package demo.sharededitor.controls;
 
 import java.awt.BasicStroke;

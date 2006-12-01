@@ -1,5 +1,4 @@
 @echo off
-
 rem @COPYRIGHT@
 
 IF NOT "x%1"=="x" GOTO invalid_args

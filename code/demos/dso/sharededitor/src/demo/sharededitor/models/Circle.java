@@ -1,3 +1,6 @@
+/*
+@COPYRIGHT@
+*/
 package demo.sharededitor.models;
 
 import demo.sharededitor.ui.ITexturable;

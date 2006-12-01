@@ -1,7 +1,7 @@
+<!-- Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved. -->
 <project name="webflow" default="build" basedir=".">
   <target name="init">
     <mkdir dir="target/classes"/>
-
     <path id="lib.dir">
       <fileset dir="lib">
         <include name="*.jar"/>
@@ -15,7 +15,6 @@
 
   <target name="build" depends="init">
     <javac srcdir="src/main/java" destdir="target/classes" classpathref="lib.dir" target="1.4" source="1.4"/>
-
     <zip destfile="target/webflow.war">
       <zipfileset dir="src/main/webapp"/>
       <zipfileset dir="target/classes" prefix="WEB-INF/classes"/>        

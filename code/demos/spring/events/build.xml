@@ -1,8 +1,7 @@
+<!-- Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved. -->
 <project name="events" default="build" basedir=".">
-
   <target name="init">
     <mkdir dir="target/classes"/>
-
     <path id="lib.dir">
       <fileset dir="lib">
         <include name="*.jar"/>
@@ -16,10 +15,7 @@
   </target>
 
   <target name="build" depends="init">
-    
-    <javac srcdir="src/main/java" destdir="target/classes"
-           classpathref="lib.dir" target="1.4" source="1.4"/>
-
+    <javac srcdir="src/main/java" destdir="target/classes" classpathref="lib.dir" target="1.4" source="1.4"/>
     <zip destfile="target/events.war">
       <zipfileset dir="src/main/webapp"/>
       <zipfileset dir="src/main/resources" prefix="WEB-INF/classes"/>
@@ -36,7 +32,5 @@
         <include name="spring-webmvc-2.0.jar"/>
       </zipfileset>
     </zip>
-
   </target>
-
 </project>

@@ -1,3 +1,6 @@
+/*
+@COPYRIGHT@
+*/
 package demo.sharededitor.events;
 
 public interface IListListener

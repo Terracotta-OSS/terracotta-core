@@ -1,5 +1,4 @@
 #!/bin/sh
-
 #@COPYRIGHT@
 
 if test "$#" -ne 0; then

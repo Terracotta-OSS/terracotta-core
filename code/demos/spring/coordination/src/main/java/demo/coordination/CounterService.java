@@ -1,6 +1,6 @@
-/**
- * @COPYRIGHT@
- */
+/*
+@COPYRIGHT@
+*/
 package demo.coordination;
 
 import java.text.MessageFormat;

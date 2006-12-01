@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved. -->
+
 <!-- This is a Terracotta configuration file that has been pre-configured
 for use with Tomcat Sessions.
 

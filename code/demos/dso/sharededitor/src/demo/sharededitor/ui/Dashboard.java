@@ -1,3 +1,6 @@
+/*
+@COPYRIGHT@
+*/
 package demo.sharededitor.ui;
 
 import demo.sharededitor.controls.Dispatcher;

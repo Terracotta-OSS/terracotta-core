@@ -1,8 +1,7 @@
-/**
+/*
 @COPYRIGHT@
 */
 package demo.jmx;
-
 
 import java.util.HashMap;
 import java.util.Map;
