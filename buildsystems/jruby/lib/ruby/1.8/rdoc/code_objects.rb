@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # We represent the various high-level code constructs that appear
 # in Ruby programs: classes, modules, methods, and so on.
 

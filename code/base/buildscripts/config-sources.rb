@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # Contains classes that represent a configuration source -- a set of name-value pairs
 # (where both name and value are strings) that control how we build.
 

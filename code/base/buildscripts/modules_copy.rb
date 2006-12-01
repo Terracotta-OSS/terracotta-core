@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # Extends BuildSubtree with some methods that allow copying various pieces of it to
 # any desired directory. This is largely used by the distribution-building system.
 

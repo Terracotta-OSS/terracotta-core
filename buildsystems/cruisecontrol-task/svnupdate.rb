@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 
 # this script is called by build-terracotta.xml to svn update
 # it will try to call "svn update" 3 times before crapping out

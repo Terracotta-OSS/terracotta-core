@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # An object that knows how to create a Terracotta home directory -- that is, a directory
 # you can start the Terracotta Server in and have it actually work.
 class TerracottaHome

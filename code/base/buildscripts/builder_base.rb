@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # Defines the base classes for all Terracotta buildsystems. Basically, this is infrastructure
 # that's generic to pretty much any conceivable way of building our software; it does not
 # include the stuff that defines modules, knows about how we lay out our build directory,

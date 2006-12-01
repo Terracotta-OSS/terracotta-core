@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # Adds methods to BuildSubtree that allow you to run JUnit tests on it. This is probably
 # the most complex single file in the entire buildsystem.
 

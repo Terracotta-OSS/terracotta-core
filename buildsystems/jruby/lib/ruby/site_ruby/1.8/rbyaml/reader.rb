@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # This is a more or less straight translation of PyYAML3000 to Ruby
 
 # the big difference in this implementation is that unicode support is not here...

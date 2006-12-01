@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # A JarDirectory object is pointed at a directory, and can return a PathSet
 # object that points to all of the JARs contained in that directory.
 class JarDirectory

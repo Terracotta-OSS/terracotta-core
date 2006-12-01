@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 module REXML
   # If you add a method, keep in mind two things:
   # (1) the first argument will always be a list of nodes from which to

@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # Defines a number of TestSet classes. A TestSet defines a set of tests that we would
 # like to run (or prepare to run, or whatever); it knows which modules it's interested
 # in, which subtrees it's interested in, and what test patterns it wants to run for

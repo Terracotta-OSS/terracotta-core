@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+/*
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
 package com.tctest.util;
 
@@ -11,10 +11,6 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.concurrent.CyclicBarrier;
-
-/**
- * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
- */
 
 public abstract class AbstractTransparentAppMultiplexer extends AbstractTransparentApp
 {

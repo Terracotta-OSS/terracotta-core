@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # Contains classes and methods having to do with creating boot JARs based on various JVMs, etc.
 
 # Adds a method to BuildSubtree indicating where the boot JAR configuration file for the

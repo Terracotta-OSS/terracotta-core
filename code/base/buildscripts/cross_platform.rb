@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # This file contains implementations of Platform objects, which offer services
 # for executing commands on the system and getting the value of environment
 # variables. This encapsulates some of the differences between Ruby and JRuby.

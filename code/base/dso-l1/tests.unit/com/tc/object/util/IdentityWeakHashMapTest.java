@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
 package com.tc.object.util;
 
@@ -9,9 +9,6 @@ import junit.framework.TestCase;
 
 /**
  * @author steve
- *
- * TODO To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Style - Code Templates
  */
 public class IdentityWeakHashMapTest extends TestCase {
   public void tests() throws Exception {

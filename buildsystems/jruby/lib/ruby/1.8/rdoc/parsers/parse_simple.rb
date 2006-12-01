@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # Parse a non-source file. We basically take the whole thing 
 # as one big comment. If the first character in the file
 # is '#', we strip leading pound signs.

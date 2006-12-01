@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # Adds methods to BuildSubtree that let it return all kinds of various CLASSPATHs,
 # native library paths, and so on, for use both in runtime and compile-time situations.
 #

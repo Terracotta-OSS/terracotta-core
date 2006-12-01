@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 module Packaging
   def packaging(name, directory, spec)
     destdir = FilePath.new(@distribution_results.build_dir, directory) 

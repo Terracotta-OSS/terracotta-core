@@ -1,4 +1,10 @@
 #
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
+#
 #   e2mmap.rb - for ruby 1.1
 #   	$Release Version: 2.0$
 #   	$Revision$

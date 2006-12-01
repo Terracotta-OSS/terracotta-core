@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # We're responsible for generating all the HTML files
 # from the object tree defined in code_objects.rb. We
 # generate:

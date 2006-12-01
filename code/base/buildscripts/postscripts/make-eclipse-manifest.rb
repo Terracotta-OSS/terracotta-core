@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 class BaseCodeTerracottaBuilder <  TerracottaBuilder
   # - ensure that the contents of the META-INF/MANIFEST.MF file for the
   #   ecliplse plugin contains the up-to-date information in it's 

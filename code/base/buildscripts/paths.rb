@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # Contains classes that let you represent file paths and sets of paths (think
 # CLASSPATH) as objects which expose platform-neutral methods to operate on
 # them.

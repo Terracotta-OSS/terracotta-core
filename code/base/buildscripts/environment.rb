@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # A class that lets you determine, in a consistent, cross-platform manner, a number of
 # properties about the environment in which your Ruby code is running. This is things
 # like the hostname, the operating-system type, the username, and so on.

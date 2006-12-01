@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # Knows everything there is to know about results from a test run, as needed
 # at the time we run the tests. In other words, knows things like where results
 # files should go, where temporary files should go, where boot JARs should go,

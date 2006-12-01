@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # Unit tests for BuildModule. These should be augmented a great, *great*, GREAT, *GREAT* deal. :)
 
 require 'test/unit'

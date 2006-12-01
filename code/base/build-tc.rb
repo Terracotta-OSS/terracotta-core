@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # This is the main Terracotta build file. It consists primarily of the
 # BaseCodeTerracottaBuilder, which is an object that knows how to build various
 # things in code/base/.

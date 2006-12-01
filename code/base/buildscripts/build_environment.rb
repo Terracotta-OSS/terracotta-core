@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # Represents the environment that this build is running in. Adds a number of
 # methods to the base Environment class that are specific to building code
 # out of our source environment, as opposed to a more general Ruby or JRuby

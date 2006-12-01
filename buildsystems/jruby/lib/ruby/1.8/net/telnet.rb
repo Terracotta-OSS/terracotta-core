@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # = net/telnet.rb - Simple Telnet Client Library
 # 
 # Author:: Wakou Aoyama <wakou@ruby-lang.org>

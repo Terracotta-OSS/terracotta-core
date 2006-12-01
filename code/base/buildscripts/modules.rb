@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # This file contains the base definitions for BuildModule and BuildSubtree classes, which
 # form the heart of our buildsystem. Note that much of both of these classes is defined
 # elsewhere -- this file primarily just gives the basic structure, while various methods

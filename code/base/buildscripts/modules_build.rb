@@ -1,3 +1,9 @@
+#
+# All content copyright (c) 2003-2006 Terracotta, Inc.,
+# except as may otherwise be noted in a separate copyright notice.
+# All rights reserved
+#
+
 # A BuildModuleSetBuilder can take a root directory and an array of filenames, and,
 # for each filename, reads it as a YAML file and adds modules based on that YAML to
 # a module set, which it returns. Along the way, it also reads in module groups
