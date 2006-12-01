@@ -1,9 +1,9 @@
 Terracotta Release Notes
 Version 2.2
 
-Forums:      http://www.terracotta.org/forums/
-Support:     support@terracottatech.com
-License Key: sales@terracottatech.com or +1 415-738-4000
+Forums:   http://www.terracottatech.com/forums/
+Lists:    http://www.terracotta.org/confluence/display/orgsite/Mailing+Lists
+Services: http://www.terracottatech.com/support_services.shtml
 
 
 Improvements and New Features for v2.2
@@ -101,7 +101,7 @@ Known Issues
 
 ----
 The most up-to-date version of this document can be found at:
-   http://www.terracotta.org/documentation.shtml
+   http://www.terracotta.org/confluence/display/docs/
 
 Copyright (c) 2006, Terracotta, Inc.
 http://www.terracotta.org
