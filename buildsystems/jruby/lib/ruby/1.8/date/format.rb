@@ -1,9 +1,3 @@
-#
-# All content copyright (c) 2003-2006 Terracotta, Inc.,
-# except as may otherwise be noted in a separate copyright notice.
-# All rights reserved
-#
-
 # format.rb: Written by Tadayoshi Funaba 1999-2005
 # $Id$
 

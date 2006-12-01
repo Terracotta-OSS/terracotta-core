@@ -1,10 +1,4 @@
 #
-# All content copyright (c) 2003-2006 Terracotta, Inc.,
-# except as may otherwise be noted in a separate copyright notice.
-# All rights reserved
-#
-
-#
 # = uri/ftp.rb
 #
 # Author:: Akira Yamada <akira@ruby-lang.org>

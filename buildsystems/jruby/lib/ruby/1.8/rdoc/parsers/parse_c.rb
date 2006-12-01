@@ -1,9 +1,3 @@
-#
-# All content copyright (c) 2003-2006 Terracotta, Inc.,
-# except as may otherwise be noted in a separate copyright notice.
-# All rights reserved
-#
-
   # We attempt to parse C extension files. Basically we look for
   # the standard patterns that you find in extensions: <tt>rb_define_class,
   # rb_define_method</tt> and so on. We also try to find the corresponding

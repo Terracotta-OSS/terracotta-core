@@ -1,10 +1,4 @@
 #
-# All content copyright (c) 2003-2006 Terracotta, Inc.,
-# except as may otherwise be noted in a separate copyright notice.
-# All rights reserved
-#
-
-#
 # cgi/session/pstore.rb - persistent storage of marshalled session data
 #
 # Documentation: William Webber (william@williamwebber.com)

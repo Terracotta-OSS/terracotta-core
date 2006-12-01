@@ -1,10 +1,4 @@
 #
-# All content copyright (c) 2003-2006 Terracotta, Inc.,
-# except as may otherwise be noted in a separate copyright notice.
-# All rights reserved
-#
-
-#
 # observer.rb implements the _Observer_ object-oriented design pattern.  The
 # following documentation is copied, with modifications, from "Programming
 # Ruby", by Hunt and Thomas; http://www.rubycentral.com/book/lib_patterns.html.

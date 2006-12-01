@@ -1,9 +1,3 @@
-#
-# All content copyright (c) 2003-2006 Terracotta, Inc.,
-# except as may otherwise be noted in a separate copyright notice.
-# All rights reserved
-#
-
 # A TokenStream is a list of tokens, gathered during the parse
 # of some entity (say a method). Entities populate these streams
 # by being registered with the lexer. Any class can collect tokens

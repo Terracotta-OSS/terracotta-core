@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>buildscripts/extensions/bundled-vendors.rb</string>
+	<string>buildscripts/postscripts/include-schemas.rb</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -60,9 +60,23 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>52</integer>
+				<integer>43</integer>
 				<key>line</key>
 				<integer>16</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>0</integer>
+		</dict>
+		<key>buildscripts/postscripts/include-schemas.rb</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>0</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
@@ -74,7 +88,7 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>47</integer>
+				<integer>15</integer>
 				<key>line</key>
 				<integer>29</integer>
 			</dict>
@@ -88,9 +102,9 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>66</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>58</integer>
+				<integer>94</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
@@ -103,6 +117,7 @@
 		<string>buildscripts/script_results.rb</string>
 		<string>buildscripts/static_resources.rb</string>
 		<string>buildscripts/extensions/bundled-vendors.rb</string>
+		<string>buildscripts/postscripts/include-schemas.rb</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
 	<true/>

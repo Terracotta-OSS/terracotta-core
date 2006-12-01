@@ -1,9 +1,3 @@
-#
-# All content copyright (c) 2003-2006 Terracotta, Inc.,
-# except as may otherwise be noted in a separate copyright notice.
-# All rights reserved
-#
-
 # open3.rb: Spawn a program like popen, but with stderr, too. You might also
 # want to use this if you want to bypass the shell. (By passing multiple args,
 # which IO#popen does not allow)

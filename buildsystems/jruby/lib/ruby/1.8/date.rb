@@ -1,10 +1,4 @@
 #
-# All content copyright (c) 2003-2006 Terracotta, Inc.,
-# except as may otherwise be noted in a separate copyright notice.
-# All rights reserved
-#
-
-#
 # date.rb - date and time library
 #
 # Author: Tadayoshi Funaba 1998-2005
