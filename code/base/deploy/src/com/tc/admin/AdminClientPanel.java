@@ -256,10 +256,12 @@ public class AdminClientPanel extends XContainer
                                          "http://www.terracottatech.com/forums/"));
     menu.add(new ContactTerracottaAction("Contact Terracotta Technical Support",
                                          "http://www.terracottatech.com/support_services.shtml"));
+    /*
     menu.add(new ContactTerracottaAction("Contact Terracotta Field Engineering",
                                          "http://www.terracottatech.com/contact/field/"));
     menu.add(new ContactTerracottaAction("Contact Terracotta Sales",
                                          "http://www.terracottatech.com/contact/"));
+    */
     menu.addSeparator();
     menu.add(m_aboutAction = new AboutAction());
     

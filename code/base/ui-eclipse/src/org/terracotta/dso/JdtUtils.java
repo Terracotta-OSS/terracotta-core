@@ -175,7 +175,7 @@ public class JdtUtils {
       if (resolvedNames != null && resolvedNames.length > 0) {
         return concatenateName(resolvedNames[0][0], resolvedNames[0][1].replace('.', '$'));
       }
-      return null;
+      return "*";
     } else {
       return Signature.toString(refTypeSig.substring(arrayCount));
     }

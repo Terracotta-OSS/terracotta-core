@@ -26,6 +26,7 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
@@ -34,10 +35,10 @@ import org.eclipse.jface.text.FindReplaceDocumentAdapter;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.ui.texteditor.MarkerUtilities;
+import org.terracotta.dso.editors.ConfigurationEditor;
 
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.aspectwerkz.reflect.MethodInfo;
-import org.terracotta.dso.editors.ConfigurationEditor;
 import com.terracottatech.configV2.AdditionalBootJarClasses;
 import com.terracottatech.configV2.Application;
 import com.terracottatech.configV2.Autolock;
@@ -1307,7 +1308,13 @@ public class ConfigurationHelper {
   }
 
   public boolean isDistributedMethod(final MethodDeclaration methodDecl) {
-    return isDistributedMethod(PatternHelper.methodDecl2IMethod(methodDecl));
+    IMethodBinding binding = methodDecl.resolveBinding();
+    
+    if(binding != null && !binding.getDeclaringClass().isInterface()) {
+      return isDistributedMethod(PatternHelper.methodDecl2IMethod(methodDecl));
+    }
+    
+    return false;
   }
 
   public boolean isDistributedMethod(final IMethod method) {
@@ -1405,11 +1412,23 @@ public class ConfigurationHelper {
   }
 
   public boolean isLocked(final IMethod method) {
-    return isAutolocked(method) || isNameLocked(method);
+    try {
+      if(!method.getDeclaringType().isInterface()) {
+        return isAutolocked(method) || isNameLocked(method);
+      }
+    } catch(JavaModelException jme) {/**/}
+    
+    return false;
   }
 
   public boolean isLocked(final MethodDeclaration methodDecl) {
-    return isLocked(PatternHelper.methodDecl2IMethod(methodDecl));
+    IMethodBinding binding = methodDecl.resolveBinding();
+    
+    if(binding != null && !binding.getDeclaringClass().isInterface()) {
+      return isLocked(PatternHelper.methodDecl2IMethod(methodDecl));
+    }
+    
+    return false;
   }
 
   public boolean isAutolocked(final IJavaElement element) {
@@ -1430,8 +1449,14 @@ public class ConfigurationHelper {
   }
   
   public boolean isAutolocked(final IMethod method) {
-    MethodInfo methodInfo = m_patternHelper.getMethodInfo(method);
-    return methodInfo != null && isAutolocked(methodInfo);
+    try {
+      if(!method.getDeclaringType().isInterface()) {
+        MethodInfo methodInfo = m_patternHelper.getMethodInfo(method);
+        return methodInfo != null && isAutolocked(methodInfo);
+      }
+    } catch(JavaModelException jme) {/**/}
+    
+    return false;
   }
 
   public boolean isAutolocked(final MethodInfo methodInfo) {
@@ -1460,10 +1485,22 @@ public class ConfigurationHelper {
   }
 
   public boolean isAutolocked(final MethodDeclaration methodDecl) {
-    return isAutolocked(PatternHelper.methodDecl2IMethod(methodDecl));
+    IMethodBinding binding = methodDecl.resolveBinding();
+    
+    if(binding != null && !binding.getDeclaringClass().isInterface()) {
+      return isAutolocked(PatternHelper.methodDecl2IMethod(methodDecl));
+    }
+    
+    return false;
   }
   
   public boolean isAutolocked(final IType type) {
+    try {
+      if(type.isInterface()) {
+        return false;
+      }
+    } catch(JavaModelException jme) {/**/}
+    
     TcConfig config = getConfig();
     
     if(config != null) {
@@ -1558,8 +1595,14 @@ public class ConfigurationHelper {
   }
   
   public boolean isNameLocked(final IMethod method) {
-    MethodInfo methodInfo = m_patternHelper.getMethodInfo(method);
-    return methodInfo != null && isNameLocked(methodInfo);
+    try {
+      if(!method.getDeclaringType().isInterface()) {
+        MethodInfo methodInfo = m_patternHelper.getMethodInfo(method);
+        return methodInfo != null && isNameLocked(methodInfo);
+      }
+    } catch(JavaModelException jme) {/**/}
+    
+    return false;
   }
 
   public boolean isNameLocked(final MethodInfo methodInfo) {
@@ -1588,10 +1631,22 @@ public class ConfigurationHelper {
   }
 
   public boolean isNameLocked(final MethodDeclaration methodDecl) {
-    return isNameLocked(PatternHelper.methodDecl2IMethod(methodDecl));
+    IMethodBinding binding = methodDecl.resolveBinding();
+    
+    if(binding != null && !binding.getDeclaringClass().isInterface()) {
+      return isNameLocked(PatternHelper.methodDecl2IMethod(methodDecl));
+    }
+    
+    return false;
   }
   
   public boolean isNameLocked(final IType type) {
+    try {
+      if(type.isInterface()) {
+        return false;
+      }
+    } catch(JavaModelException jme) {/**/}
+    
     TcConfig config = getConfig();
     
     if(config != null) {
@@ -2958,24 +3013,21 @@ public class ConfigurationHelper {
       try {
         String prefix = findMethodExpressionPrefix(methodExpr);
         
-        if(prefix == null || prefix.length() == 0) {
-          return "Must be a fully-qualified method name";
-        }
-        
-        try {
-          IType type = JdtUtils.findType(m_javaProject, prefix);
-          
-          if(type != null) {
-            IMethod[] methods = type.getMethods();
+        if(prefix != null && prefix.length() > 0) {
+          try {
+            IType type = JdtUtils.findType(m_javaProject, prefix);
             
-            for(int m = 0; m < methods.length; m++) {
-              if(m_patternHelper.matchesMethod(methodExpr, methods[m])) {
-                return null;
+            if(type != null) {
+              IMethod[] methods = type.getMethods();
+              
+              for(int m = 0; m < methods.length; m++) {
+                if(m_patternHelper.matchesMethod(methodExpr, methods[m])) {
+                  return null;
+                }
               }
             }
-          }
-        } catch(JavaModelException jme) {/**/}
-        
+          } catch(JavaModelException jme) {/**/}
+        }
 
         IPackageFragment[] fragments = m_javaProject.getPackageFragments();
         IPackageFragment   fragment;

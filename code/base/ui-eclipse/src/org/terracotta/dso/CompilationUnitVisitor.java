@@ -224,7 +224,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
     Type         typeNode = node.getType();
     ITypeBinding binding  = typeNode.resolveBinding();
     
-    if(binding != null && !binding.isPrimitive()) {
+    if(binding != null && !binding.isPrimitive() && !binding.isTypeVariable()) {
       IType type = (IType)binding.getJavaElement();
       
       if(type != null) {
@@ -260,12 +260,12 @@ public class CompilationUnitVisitor extends ASTVisitor {
       if(!isDeclaringTypeAdaptable(node)) {
         addProblemMarker("DeclaringTypeNotInstrumentedMarker",
                          "Declaring type not instrumented",
-                         node);
+                         node.getName());
       }
       if(CHECK_SYNCHRONIZED && hasSynchronization(node)) {
         addProblemMarker("ConfigProblemMarker",
                          "Autolocked method without synchronization",
-                         node);
+                         node.getName());
       }
     }
     else if(m_configHelper.isNameLocked(node)) {
@@ -276,7 +276,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
       if(!isDeclaringTypeAdaptable(node)) {
         addProblemMarker("DeclaringTypeNotInstrumentedMarker",
                          "Declaring type not instrumented",
-                         node);
+                         node.getName());
       }
     }
 
@@ -288,7 +288,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
       if(!isDeclaringTypeAdaptable(node)) {
         addProblemMarker("DeclaringTypeNotInstrumentedMarker",
                          "Declaring type not instrumented",
-                         node);
+                         node.getName());
       }
     }
 
@@ -366,7 +366,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
           if(!m_configHelper.isAdaptable(parentClass)) {
             addProblemMarker("DeclaringTypeNotInstrumentedMarker",
                              "Declaring type not instrumented",
-                             node);
+                             node.getName());
           }
         }
         else if(m_configHelper.isTransient(fieldName)) {
@@ -377,7 +377,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
           if(!m_configHelper.isAdaptable(parentClass)) {
             addProblemMarker("DeclaringTypeNotInstrumentedMarker",
                              "Declaring type not instrumented",
-                             node);
+                             node.getName());
           }
         }
       }

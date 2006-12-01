@@ -188,18 +188,25 @@ public class PatternHelper {
   {
     StringBuffer sb            = new StringBuffer();
     IType        declaringType = method.getDeclaringType();
-    String       returnType    = method.getReturnType();
-    int          dim           = Signature.getArrayCount(returnType);
     boolean      isVararg      = isVarargs(method);
     String[]     params        = method.getParameterTypes();
     int          lastParam     = params.length - 1;
+    int          dim;
     
-    returnType = Signature.getTypeErasure(returnType);
-    sb.append(JdtUtils.getResolvedTypeFileName(returnType, declaringType));
-    while(dim > 0) {
-      sb.append("[]");
-      dim--;
+    try {
+      String returnType = method.getReturnType();
+
+      dim        = Signature.getArrayCount(returnType);
+      returnType = Signature.getTypeErasure(returnType);
+      sb.append(JdtUtils.getResolvedTypeFileName(returnType, declaringType));
+      while(dim > 0) {
+        sb.append("[]");
+        dim--;
+      }
+    } catch(JavaModelException jme) {
+      sb.append("*");
     }
+    
     sb.append(" ");
     sb.append(getFullyQualifiedName(declaringType));
     sb.append(".");
@@ -283,6 +290,9 @@ public class PatternHelper {
   
   public static String getExecutionPattern(IMethod method) {
     try {
+      if(!method.getOpenable().isOpen()) {
+        method.getOpenable().open(null);
+      }
       return getJavadocSignature(method);
     } catch(JavaModelException jme) {
       IType  type     = method.getDeclaringType();
