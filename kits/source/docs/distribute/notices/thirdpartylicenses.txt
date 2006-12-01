@@ -510,3 +510,12 @@ facility.
 
 (8) Terracotta incorporates Base64, a Java class
 freely-available in the public domain, into its software.
+
+(9) Terracotta distributes certain files contained in the Java
+Development Kit (JDK) in accordance with the terms of the "Sun
+Microsystems, Inc. Binary Code License Agreement for the Java 2
+Platform Standard Edition Development Kit 5.0."  In addition,
+Terracotta distributes certain files contained in the Java Runtime
+Environment (JRE) in accordance with the terms of the "Sun
+Microsystems, Inc. Binary Code License Agreement for the Java 2
+Platform Standard Edition Runtime Environment 5.0."
