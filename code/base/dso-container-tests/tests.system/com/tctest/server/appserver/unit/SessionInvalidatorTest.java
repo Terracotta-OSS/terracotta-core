@@ -228,6 +228,7 @@ public class SessionInvalidatorTest extends AbstractAppServerTestCase {
     System.err.println("=== Send Request [" + (new Date()) + "]: url=[" + url + "]");
     final String actualResponse = HttpUtil.getResponseBody(url, client);
     System.err.println("=== Got Response [" + (new Date()) + "]: url=[" + url + "], response=[" + actualResponse + "]");
+    assertTimeDirection();
     assertEquals(expectedResponse, actualResponse);
   }
 
