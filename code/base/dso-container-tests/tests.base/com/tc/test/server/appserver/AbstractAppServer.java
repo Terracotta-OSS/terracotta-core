@@ -9,6 +9,9 @@ import org.codehaus.cargo.util.log.Logger;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Properties;
 
 /**
@@ -92,8 +95,10 @@ public abstract class AbstractAppServer implements AppServer {
 
   public final static class ConsoleLogger implements Logger {
 
-    private final String  instance;
-    private final boolean debugEnabled;
+    private static final DateFormat FORMAT = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss.SSS");
+
+    private final String            instance;
+    private final boolean           debugEnabled;
 
     public ConsoleLogger(String instance, boolean debugEnabled) {
       this.instance = instance;
@@ -115,7 +120,8 @@ public abstract class AbstractAppServer implements AppServer {
     }
 
     private void log(String severity, String message, String category) {
-      System.out.println("[" + severity + "][" + category + "][" + instance + "] " + message);
+      System.out.println(FORMAT.format(new Date()) + " [" + severity + "][" + category + "][" + instance + "] "
+                         + message);
     }
   }
 }

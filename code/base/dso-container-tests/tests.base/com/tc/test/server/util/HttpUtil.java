@@ -5,9 +5,12 @@ package com.tc.test.server.util;
 
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.HttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.params.HttpMethodParams;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -56,6 +59,9 @@ public final class HttpUtil {
 
     GetMethod get = new GetMethod(url.toString());
 
+    // this disables the automatic request retry junk in HttpClient
+    get.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, NoRetryHandler.INSTANCE);
+
     try {
       int status = client.executeMethod(get);
       if (status != HttpStatus.SC_OK) {
@@ -87,6 +93,16 @@ public final class HttpUtil {
     if (DEBUG) {
       System.out.println("XXXXX " + s);
     }
+  }
+
+  private static class NoRetryHandler implements HttpMethodRetryHandler {
+
+    static final NoRetryHandler INSTANCE = new NoRetryHandler();
+
+    public boolean retryMethod(HttpMethod httpmethod, IOException ioexception, int i) {
+      return false;
+    }
+
   }
 
 }
