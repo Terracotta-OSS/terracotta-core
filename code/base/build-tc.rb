@@ -109,6 +109,10 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
         # will then be missing.
         @build_results.clean(ant)
     end
+    
+    def clean_cache
+        FileUtils.rm_rf '.tc-build-cache'
+    end
 
     # Removes the results of all tests you've ever run, but doesn't remove any of the compiled classes.
     # Can be useful for slimming down your 'build' directory when it's gotten out of control, but you
