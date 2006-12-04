@@ -82,7 +82,7 @@ class StaticResources
     end
 
     def vendors_url
-        default_url = "http://apache.mirrormax.net/tomcat/tomcat-5/v5.5.20/bin"
+        default_url = "http://download.terracotta.org/bundled-vendors"
         ENV["TC_VENDORS_URL"].nil? ? default_url : ENV["TC_VENDORS_URL"]
     end
     
