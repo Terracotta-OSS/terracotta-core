@@ -6,25 +6,26 @@ package com.tctest.performance.http.load;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.lang.SerializationUtils;
 
+import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
+
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.LinkedList;
-import java.util.List;
 
 final class StatsCollector implements Serializable {
 
-  private List stats;
-  private int  success = 0;
-  private int  errors  = 0;
+  private int               count;
+  private int               success = 0;
+  private int               errors  = 0;
+  private final LinkedQueue stats   = new LinkedQueue();
+  private final Object      END     = new Object();
 
   public StatsCollector() {
-    this.stats = new LinkedList();
+    // ;
   }
 
   void addStat(ResponseStatistic stat) {
-    synchronized (stats) {
-      stats.add(stat);
+    synchronized (this) {
+      count++;
 
       boolean isSuccess = stat.statusCode() == HttpStatus.SC_OK;
       if (isSuccess) {
@@ -33,10 +34,16 @@ final class StatsCollector implements Serializable {
         errors++;
       }
 
-      int size = stats.size();
-      if ((size % 500) == 0) {
-        System.out.println("Completed " + size + " requests (" + success + " OK, " + errors + " errors)");
+      if ((count % 500) == 0) {
+        System.out.println("Completed " + count + " requests (" + success + " OK, " + errors + " errors)");
       }
+    }
+
+    try {
+      stats.put(stat);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
@@ -44,22 +51,23 @@ final class StatsCollector implements Serializable {
     return (StatsCollector) SerializationUtils.deserialize(in);
   }
 
-  void write(OutputStream out) {
-    SerializationUtils.serialize(this, out);
-  }
-
-  public void add(StatsCollector sc) {
-    ResponseStatistic rss[] = sc.toArray();
-    synchronized (stats) {
-      for (int i = 0; i < rss.length; i++) {
-        stats.add(rss[i]);
-      }
+  public ResponseStatistic takeStat() {
+    try {
+      Object o = stats.take();
+      if (o == END) { return null; }
+      return (ResponseStatistic) o;
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
-  public ResponseStatistic[] toArray() {
-    synchronized (stats) {
-      return (ResponseStatistic[]) stats.toArray(new ResponseStatistic[0]);
+  public void finalStat() {
+    try {
+      stats.put(END);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 }

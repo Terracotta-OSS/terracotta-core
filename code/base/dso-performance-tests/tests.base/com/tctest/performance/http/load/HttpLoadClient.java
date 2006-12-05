@@ -33,6 +33,8 @@ final class HttpLoadClient {
     }
     requestExecutor.shutdownAfterProcessingCurrentlyQueuedTasks();
     requestExecutor.awaitTerminationAfterShutdown();
+
+    collector.finalStat();
   }
 
   public StatsCollector getCollector() {

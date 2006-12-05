@@ -8,21 +8,25 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
+import org.apache.commons.lang.SerializationUtils;
 
 import EDU.oswego.cs.dl.util.concurrent.PooledExecutor;
 import EDU.oswego.cs.dl.util.concurrent.ThreadFactory;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
+import java.net.InetAddress;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.zip.GZIPOutputStream;
 
 public abstract class AbstractHttpLoadTest {
 
   private static final String       REPORT      = "report";
   private static final String       RESULTS_DIR = "results";
+
   private final LinkedBlockingQueue workQ;
   private final HttpLoadClient      loadClient;
   private final int                 duration;
@@ -72,10 +76,6 @@ public abstract class AbstractHttpLoadTest {
 
   protected abstract WorkItem[] generateFinishWorkItems();
 
-  public void writeResults(File file) throws IOException {
-    loadClient.getCollector().write(new FileOutputStream(file));
-  }
-
   protected void warmUp() throws InterruptedException {
     WorkItem[] items = generateWarmUpWorkItems();
     System.out.println("WARMING UP " + items.length + " SESSIONS");
@@ -99,7 +99,6 @@ public abstract class AbstractHttpLoadTest {
           while (endTime > System.currentTimeMillis()) {
             WorkItem item = generateWorkItem(endTime);
             workQ.put(item);
-            // Thread.sleep(2000);
           }
           System.out.println(df.format(new Date(System.currentTimeMillis())));
           finished();
@@ -111,11 +110,50 @@ public abstract class AbstractHttpLoadTest {
     };
     worker.setPriority(Thread.MAX_PRIORITY);
     worker.start();
+
+    final String host = InetAddress.getLocalHost().getHostName();
+    final StatsCollector collector = loadClient.getCollector();
+    resultsDir().mkdir();
+
+    Thread statsWriter = new Thread() {
+      private int count = 0;
+
+      public void run() {
+        try {
+          run0();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+
+      private void run0() throws Exception {
+        File outFile = new File(resultsDir(), HttpResponseAnalysisReport.RESULTS_FILE_PREFIX + "." + host);
+        FileOutputStream fout = new FileOutputStream(outFile);
+        GZIPOutputStream gzOut = new GZIPOutputStream(new BufferedOutputStream(fout));
+
+        while (true) {
+          ResponseStatistic stat = collector.takeStat();
+
+          if (stat == null) {
+            break;
+          }
+
+          gzOut.write(SerializationUtils.serialize(stat));
+          count++;
+        }
+
+        gzOut.close();
+
+        boolean renamed = outFile.renameTo(new File(outFile.getParent(), outFile.getName() + "." + count + ".gz"));
+        if (!renamed) { throw new RuntimeException("rename failed: " + outFile + ", count " + count); }
+      }
+    };
+    statsWriter.start();
+
     loadClient.execute();
-    File resultsDir = new File(workingDir + File.separator + RESULTS_DIR);
-    resultsDir.mkdir();
-    File resultsFile = new File(resultsDir + File.separator + HttpResponseAnalysisReport.RESULTS_FILE);
-    writeResults(resultsFile);
+
+    statsWriter.join();
+    worker.join();
   }
 
   protected void finished() throws InterruptedException {

@@ -3,14 +3,13 @@
  */
 package com.tctest.performance.http.load;
 
-import com.tctest.performance.generate.load.Measurement;
-import com.tctest.performance.results.PerformanceMeasurementMarshaller;
-
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -20,21 +19,95 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 
 final class HttpResponseAnalysisReport {
 
-  static final String RESULTS_FILE = "response-statistics.obj";
-  static final String PAD          = " ";
+  static final String RESULTS_FILE_PREFIX = "response-statistics";
+  static final String PAD                 = " ";
 
   private HttpResponseAnalysisReport() {
     // cannot instantiate
   }
 
-  public static void printReport(File resultsDir, String testName, int duration) throws FileNotFoundException,
-      IOException {
+  private static class StatsIterator implements Iterator {
 
-    StatWrapper statWrapper = getStats(resultsDir);
-    //writeData(statWrapper, duration);
+    private final File[]    files;
+    private final Pattern   pattern = Pattern.compile("^" + RESULTS_FILE_PREFIX + "\\.(.+)\\.(\\d+)\\.gz$");
+    private final int[]     counts;
+    private int             index   = 0;
+    private GZIPInputStream in;
+
+    public StatsIterator(File resultsDir) {
+      files = resultsDir.listFiles(new FileFilter() {
+        public boolean accept(File pathname) {
+          return pattern.matcher(pathname.getName()).matches();
+        }
+      });
+
+      counts = new int[files.length];
+
+      for (int i = 0; i < files.length; i++) {
+        File file = files[i];
+        Matcher m = pattern.matcher(file.getName());
+        if (!m.matches()) { throw new RuntimeException(file + " doesn't match"); }
+        int count = Integer.parseInt(m.group(2));
+        System.err.println("Going to read " + count + " stats from host " + m.group(1));
+        counts[i] = count;
+      }
+    }
+
+    public boolean hasNext() {
+      for (int i = 0; i < counts.length; i++) {
+        if (counts[i] > 0) { return true; }
+      }
+      return false;
+    }
+
+    public Object next() {
+      try {
+        return next0();
+      } catch (Exception e) {
+        if (e instanceof RuntimeException) { throw (RuntimeException) e; }
+        throw new RuntimeException(e);
+      }
+    }
+
+    private Object next0() throws Exception {
+      if (index >= counts.length) { throw new IllegalStateException("no more data: index = " + index); }
+
+      if (in == null) {
+        in = inputFor(files[index]);
+      }
+
+      if (counts[index] == 0) {
+        index++;
+        in.close();
+        in = inputFor(files[index]);
+      }
+
+      counts[index]--;
+      return new ObjectInputStream(in).readObject();
+    }
+
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
+
+    public int numClients() {
+      return files.length;
+    }
+
+    private static GZIPInputStream inputFor(File file) throws FileNotFoundException, IOException {
+      return new GZIPInputStream(new BufferedInputStream(new FileInputStream(file)));
+    }
+  }
+
+  public static void printReport(File resultsDir, String testName, int duration) throws IOException {
+    StatsIterator statsIterator = new StatsIterator(resultsDir);
+
     Map hostGroup = new TreeMap();
     Map fullUrlGroup = new TreeMap();
     List fullUrlList;
@@ -43,12 +116,12 @@ final class HttpResponseAnalysisReport {
     URL url;
     String hostKey;
     String urlKey;
-    ResponseStatistic[] stats = statWrapper.stats.toArray();
+
     long minStart = Long.MAX_VALUE;
     long maxEnd = -1;
 
-    for (int i = 0; i < stats.length; i++) {
-      ResponseStatistic stat = stats[i];
+    while (statsIterator.hasNext()) {
+      ResponseStatistic stat = (ResponseStatistic) statsIterator.next();
       minStart = Math.min(stat.startTime(), minStart);
       maxEnd = Math.max(stat.endTime(), maxEnd);
 
@@ -84,9 +157,9 @@ final class HttpResponseAnalysisReport {
       urlList.add(stat); // add stats to host/url list
     }
 
-    int realDuration = (int)((maxEnd - minStart) / 1000);
+    int realDuration = (int) ((maxEnd - minStart) / 1000);
 
-    printHeader(resultsDir, testName, realDuration, statWrapper.loadClients);
+    printHeader(resultsDir, testName, realDuration, statsIterator.numClients());
     out("Throughput Analyze:");
     out(repeat('_', "Throughput Analyze:".length()));
 
@@ -251,32 +324,6 @@ final class HttpResponseAnalysisReport {
     out("" + loadClients, 6);
   }
 
-  private static StatWrapper getStats(File resultsDir) throws FileNotFoundException {
-    String[] files = resultsDir.list(new FilenameFilter() {
-      public boolean accept(File dir, String name) {
-        return (name.startsWith(RESULTS_FILE.substring(0, RESULTS_FILE.length() - 4))) ? true : false;
-      }
-    });
-    StatsCollector allStats = new StatsCollector();
-    for (int i = 0; i < files.length; i++) {
-      FileInputStream in = new FileInputStream(resultsDir + File.separator + files[i]);
-      StatsCollector sc = StatsCollector.read(in);
-      allStats.add(sc);
-    }
-
-    return new StatWrapper(files.length, allStats);
-  }
-
-  private static class StatWrapper {
-    StatWrapper(final int loadClients, StatsCollector c) {
-      this.loadClients = loadClients;
-      this.stats = c;
-    }
-
-    final int            loadClients;
-    final StatsCollector stats;
-  }
-
   private static void write(String str, int width) {
     if (str.length() > width) str = str.substring(0, width);
     System.out.print(pad(width - str.length()) + str);
@@ -315,39 +362,5 @@ final class HttpResponseAnalysisReport {
 
   private static void nl() {
     System.out.print("\n");
-  }
-
-  private static List generateStatistics(ResponseStatistic[] stats) {
-    List measurementList = new ArrayList();
-    Measurement[] measurements = new Measurement[stats.length];
-    for (int i = 0; i < stats.length; i++) {
-      if (stats[i] == null) continue;
-      measurements[i] = new Measurement(i, stats[i].duration());
-    }
-    measurementList.add(measurements);
-    return measurementList;
-  }
-
-  private static void writeData(StatWrapper statWrapper, int duration) {
-    try {
-      File output = new File("../results.data");
-      output.createNewFile();
-      System.err.println("WROTE RESULT DATA TO: " + output);
-
-      PerformanceMeasurementMarshaller.Header header = PerformanceMeasurementMarshaller.createHeader();
-      header.title = "HTTP RESPONSE ANALYSIS";
-      header.xLabel = "Requests";
-      header.yLabel = "Response Time";
-      header.duration = duration;
-
-      String[] lineDescriptions = new String[] { "Cluster Response Times" };
-
-      PerformanceMeasurementMarshaller.marshall(generateStatistics(statWrapper.stats.toArray()), header, output,
-                                                lineDescriptions);
-      System.out.println("\n\n");
-    } catch (Exception e) {
-      System.out.println("\nUnable to write data file\n\n");
-      e.printStackTrace();
-    }
   }
 }
