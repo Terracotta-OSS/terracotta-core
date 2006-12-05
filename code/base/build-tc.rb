@@ -826,3 +826,4 @@ require 'buildscripts/extensions/distribution'
 
 builder = BaseCodeTerracottaBuilder.new(ARGV)
 builder.run
+
