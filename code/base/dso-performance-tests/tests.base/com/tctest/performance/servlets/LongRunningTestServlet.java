@@ -5,6 +5,8 @@ package com.tctest.performance.servlets;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 import javax.servlet.http.HttpServlet;
@@ -14,7 +16,6 @@ import javax.servlet.http.HttpSession;
 
 public class LongRunningTestServlet extends HttpServlet {
 
-  // XXX: REMOVE THIS Catch all throwable stuff
   protected void doGet(HttpServletRequest req, HttpServletResponse res) {
     try {
       doGet0(req, res);
@@ -43,9 +44,34 @@ public class LongRunningTestServlet extends HttpServlet {
       throw new AssertionError("unknown action: " + action);
     }
 
+    createGarbageAndConsumeCPU(random);
+
     res.setStatus(HttpServletResponse.SC_OK);
     PrintWriter writer = res.getWriter();
     writer.println("OK");
+  }
+
+  private void createGarbageAndConsumeCPU(Random random) {
+    List list = new LinkedList();
+
+    for (int i = 0; i < 512; i++) {
+      list.add(String.valueOf(System.currentTimeMillis()));
+    }
+
+    int hc = Math.abs(list.hashCode());
+    hc = hc == Integer.MIN_VALUE ? 0 : hc;
+
+    double d = 0;
+    while ((hc % 10000) != 0) {
+      d += hc;
+      d = Math.sqrt(d);
+      hc--;
+    }
+
+    if (d == random.nextDouble()) {
+      System.err.println("Really?");
+    }
+
   }
 
   private void doRemove(HttpServletRequest req, HttpServletResponse res, Random random) {
@@ -95,7 +121,7 @@ public class LongRunningTestServlet extends HttpServlet {
   }
 
   static DataObject makeGraph(Random random) {
-    return makeGraph(random, random.nextInt(50) + 1);
+    return makeGraph(random, random.nextInt(100) + 1);
   }
 
   static HttpSession getSession(HttpServletRequest req, boolean expectedNewValue) {
