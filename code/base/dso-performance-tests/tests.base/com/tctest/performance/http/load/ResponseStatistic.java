@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.performance.http.load;
 
@@ -19,8 +20,8 @@ final class ResponseStatistic implements Serializable {
     this.statusCode = statusCode;
   }
 
-  public long duration() {
-    return endTime - startTime;
+  public int duration() {
+    return (int) (endTime - startTime);
   }
 
   public String url() {

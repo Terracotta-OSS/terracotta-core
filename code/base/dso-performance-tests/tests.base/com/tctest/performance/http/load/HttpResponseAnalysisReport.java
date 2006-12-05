@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.performance.http.load;
 
@@ -12,11 +13,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.URL;
 import java.text.NumberFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -30,6 +28,36 @@ final class HttpResponseAnalysisReport {
 
   private HttpResponseAnalysisReport() {
     // cannot instantiate
+  }
+
+  private static class UrlStat {
+    private final IntList times   = new IntList();
+    private int           errors  = 0;
+    private int           success = 0;
+
+    void add(ResponseStatistic stat) {
+      times.add(stat.duration());
+      if (stat.statusCode() == 200) {
+        success++;
+      } else {
+        errors++;
+      }
+    }
+  }
+
+  private static class HostStat {
+    private final Map urlStats = new TreeMap();
+
+    void add(String urlKey, ResponseStatistic stat) {
+      UrlStat urlStat = (UrlStat) urlStats.get(urlKey);
+      if (urlStat == null) {
+        urlStat = new UrlStat();
+        urlStats.put(urlKey, urlStat);
+      }
+
+      urlStat.add(stat);
+    }
+
   }
 
   private static class StatsIterator implements Iterator {
@@ -108,53 +136,44 @@ final class HttpResponseAnalysisReport {
   public static void printReport(File resultsDir, String testName, int duration) throws IOException {
     StatsIterator statsIterator = new StatsIterator(resultsDir);
 
+    int count = 0;
+
     Map hostGroup = new TreeMap();
     Map fullUrlGroup = new TreeMap();
-    List fullUrlList;
-    Map urlGroup;
-    List urlList;
-    URL url;
-    String hostKey;
-    String urlKey;
 
     long minStart = Long.MAX_VALUE;
     long maxEnd = -1;
 
     while (statsIterator.hasNext()) {
+      count++;
+      if ((count % 50000) == 0) {
+        System.err.println("Processed " + count + " stats...");
+      }
+
       ResponseStatistic stat = (ResponseStatistic) statsIterator.next();
       minStart = Math.min(stat.startTime(), minStart);
       maxEnd = Math.max(stat.endTime(), maxEnd);
 
       // split url parts
-      url = new URL(stat.url());
-      hostKey = url.getHost() + ":" + url.getPort();
-      urlKey = url.getPath() + url.getQuery();
+      URL url = new URL(stat.url());
+      String hostKey = url.getHost() + ":" + url.getPort();
+      String urlKey = url.getPath() + url.getQuery();
 
-      // populate full url group
-      if (!fullUrlGroup.containsKey(urlKey)) {
-        fullUrlList = new ArrayList();
-        fullUrlGroup.put(urlKey, fullUrlList);
-      } else {
-        fullUrlList = (List) fullUrlGroup.get(urlKey);
+      // group response times for all unique URLs
+      IntList urlTimes = (IntList) fullUrlGroup.get(urlKey);
+      if (urlTimes == null) {
+        urlTimes = new IntList();
+        fullUrlGroup.put(urlKey, urlTimes);
       }
+      urlTimes.add(stat.duration());
 
-      if (!hostGroup.containsKey(hostKey)) { // group hosts
-        urlGroup = new HashMap(); // create new url group
-        urlList = new ArrayList(); // create new url list
-        urlGroup.put(urlKey, urlList);
-        hostGroup.put(hostKey, urlGroup);
-
-      } else {
-        urlGroup = (Map) hostGroup.get(hostKey);
-        if (!urlGroup.containsKey(urlKey)) { // group urls in host group
-          urlList = new ArrayList();
-          urlGroup.put(urlKey, urlList);
-        } else {
-          urlList = (List) urlGroup.get(urlKey);
-        }
+      //
+      HostStat hostStat = (HostStat) hostGroup.get(hostKey);
+      if (hostStat == null) {
+        hostStat = new HostStat();
+        hostGroup.put(hostKey, hostStat);
       }
-      fullUrlList.add(stat); // add stats to full url list
-      urlList.add(stat); // add stats to host/url list
+      hostStat.add(urlKey, stat);
     }
 
     int realDuration = (int) ((maxEnd - minStart) / 1000);
@@ -166,9 +185,9 @@ final class HttpResponseAnalysisReport {
     Iterator iter = hostGroup.entrySet().iterator();
     while (iter.hasNext()) {
       Map.Entry entry = (Map.Entry) iter.next();
-      Map value = (Map) entry.getValue();
-      String key = (String) entry.getKey();
-      throughputAnalysis(key, value, realDuration);
+      String hostKey = (String) entry.getKey();
+      HostStat hostStat = (HostStat) entry.getValue();
+      throughputAnalysis(hostKey, hostStat, realDuration);
     }
     nl();
     nl();
@@ -177,7 +196,7 @@ final class HttpResponseAnalysisReport {
     responseAnalysis(fullUrlGroup);
   }
 
-  private static void throughputAnalysis(String key, Map value, long duration) {
+  private static void throughputAnalysis(String key, HostStat hostStat, long duration) {
     int colWidth = 16;
     nl();
     write("(" + key + ")", (42 + key.length()) - ((key.length() + 2) / 2));
@@ -197,41 +216,39 @@ final class HttpResponseAnalysisReport {
     int totalSuccess = 0;
     int totalError = 0;
 
-    String urlKey;
-    List values;
-    Map.Entry entry;
-    Iterator iter = value.entrySet().iterator();
+    Iterator iter = hostStat.urlStats.entrySet().iterator();
     while (iter.hasNext()) {
-
       double ave = 0;
       double tps = 0;
-      int success = 0;
-      int error = 0;
-      double size = 0;
       long sum = 0;
 
-      entry = (Map.Entry) iter.next();
-      values = (List) entry.getValue();
-      urlKey = (String) entry.getKey();
+      Map.Entry entry = (Map.Entry) iter.next();
+      String urlKey = (String) entry.getKey();
+      UrlStat urlStat = (UrlStat) entry.getValue();
+
+      final IntList times = urlStat.times;
+      final int success = urlStat.success;
+      final int error = urlStat.errors;
+
       out(urlKey);
-      size = values.size();
+      int size = times.size();
 
       for (int i = 0; i < size; i++) {
-        ResponseStatistic stat = (ResponseStatistic) values.get(i);
-        sum += stat.duration();
-        if (stat.statusCode() == 200) success++;
-        else error++;
+        sum += times.get(i);
       }
-      ave = sum / size;
+
+      double doubleSize = size;
+
+      ave = sum / doubleSize;
       totalAve += ave;
-      tps = size / duration;
+      tps = doubleSize / duration;
       totalTps += tps;
-      totalTotal += size;
+      totalTotal += doubleSize;
       totalSuccess += success;
       totalError += error;
       writeNum(Math.floor(ave), colWidth);
       writeNum(tps, colWidth);
-      writeNum(size, colWidth);
+      writeNum(doubleSize, colWidth);
       writeNum(success, colWidth);
       writeNum(error, colWidth);
       nl();
@@ -262,28 +279,21 @@ final class HttpResponseAnalysisReport {
     nl();
     out(repeat('-', 80));
 
-    String urlKey;
-    List values;
-    Map.Entry entry;
-    Iterator iter = urlGroup.entrySet().iterator();
-    while (iter.hasNext()) {
-
+    for (Iterator iter = urlGroup.entrySet().iterator(); iter.hasNext(); ) {
       double ave = 0;
       double size = 0;
       double squareSum = 0;
       long sum = 0;
-      long duration;
 
-      entry = (Map.Entry) iter.next();
-      values = (List) entry.getValue();
-      urlKey = (String) entry.getKey();
+      Map.Entry entry = (Map.Entry) iter.next();
+      String urlKey = (String) entry.getKey();
+      IntList values = (IntList) entry.getValue();
       out(urlKey);
       size = values.size();
       long[] durationSpread = new long[values.size()];
 
       for (int i = 0; i < size; i++) {
-        ResponseStatistic stat = (ResponseStatistic) values.get(i);
-        duration = stat.duration();
+        int duration = values.get(i);
         sum += duration;
         squareSum += duration * duration;
         durationSpread[i] = duration;
