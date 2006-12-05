@@ -19,13 +19,16 @@ import java.util.Random;
 public class LongRunningTest extends AbstractHttpLoadTest {
 
   // 1 in this many will be either invalidated or abandoned
-  private static final int    END_SESSION    = 20;
+  private static final int    END_SESSION    = 50;
 
-  // 1 in this many will explicitly invalidated (versus simply abandoned)
+  // 1 in this many will be explicitly invalidated (versus simply abandoned)
   private static final int    INVALIDATE     = 4;
 
+  // 1 in this many will add/remove (vs. mutate) session data
+  private static final int    ADD_REMOVE     = 20;
+
   // session idle timeout
-  private static final int    IDLE_SECONDS   = 60;
+  private static final int    IDLE_SECONDS   = 300;
 
   private static final String SERVLET        = "/perftest/LongRunningTestServlet";
   private static final String CREATE_URL     = SERVLET + "?action=create&idle=" + IDLE_SECONDS;
@@ -84,7 +87,7 @@ public class LongRunningTest extends AbstractHttpLoadTest {
   }
 
   private WorkItem regularAccess(HttpClientAdapter adapter, long endtime) {
-    int n = random.nextInt(5);
+    int n = random.nextInt(ADD_REMOVE);
     if (n == 0) {
       if (random.nextBoolean()) {
         return new Work(adapter, ADD_URL, true, endtime);
