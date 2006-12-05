@@ -672,26 +672,3 @@ END
         out
     end
 end
-
-
-              file << "    <property name=\"%s\" value=\"%s\"></property>\n" % [ key.xml_escape(true), value.xml_escape(true) ]
-            end
-
-            file << "  </properties>\n"
-            file << ("  <failure message=\"" + NOT_RUN_MESSAGE + "\">\n") % class_name.xml_escape(true)
-            file << ("      " + NOT_RUN_MESSAGE + "\n") % class_name.xml_escape
-            file << "   </failure>\n"
-            file << "</testsuite>\n"
-        end
-    end
-
-    # What JVM arguments should we use for these tests?
-    def all_jvmargs
-        out = @jvmargs || [ ]
-        out += @extra_jvmargs unless @extra_jvmargs.empty?
-        out
-    end
-end
-
-
-# ruby is cool
