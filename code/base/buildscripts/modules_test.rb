@@ -43,7 +43,7 @@ class BuildSubtree
             write_dynamic_property(file, "data-root", build_test_data_directory(testrun_results, ant))
             # The CLASSPATH that should be used for the LinkedChildProcess; this needs to be quite minimal (which
             # is why that class is pretty much in its own module), as it's in the CLASSPATH used to run application
-            # servers -- and they typically don't like it if you put random crap in their CLASSPATH that isn't
+            # servers -- and they typically don't like it if you put random stuff in their CLASSPATH that isn't
             # their own classes.
             write_dynamic_property(file, "linked-child-process-classpath", build_module.module_set['linked-child-process'].subtree('src').classpath(build_results, :full, :runtime))
 
