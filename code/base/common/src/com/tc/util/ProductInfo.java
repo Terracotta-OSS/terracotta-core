@@ -163,7 +163,7 @@ public final class ProductInfo {
   }
 
   public String toLongString() {
-    return toShortString() + ", as of " + buildTimestampAsString() + " (" + buildChangeset()
+    return toShortString() + ", as of " + buildTimestampAsString() + " (Revision " + buildChangeset()
            + (buildChangeTag() != null ? " (" + buildChangeTag() + ")" : "") + " by " + buildUser() + "@" + buildHost()
            + " from " + buildBranch() + ")";
   }
