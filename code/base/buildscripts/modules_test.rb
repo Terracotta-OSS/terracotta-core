@@ -654,6 +654,7 @@ END
             properties.merge!(@ant.all_ant_properties)
 
             properties.each do |key, value|
+                value ||= ""
                 file << "    <property name=\"%s\" value=\"%s\"></property>\n" % [ key.xml_escape(true), value.xml_escape(true) ]
             end
 
