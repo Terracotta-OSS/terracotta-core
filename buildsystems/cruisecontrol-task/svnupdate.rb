@@ -15,7 +15,7 @@ error_msg=''
 3.downto(1) do 
     error_msg=`svn update #{topdir} -q --non-interactive 2>&1`
     exit(0) if $? == 0
-    sleep(60)
+    sleep(300)
 end
 
 fail(error_msg)
