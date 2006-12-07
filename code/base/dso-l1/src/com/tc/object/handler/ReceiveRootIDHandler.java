@@ -10,10 +10,6 @@ import com.tc.object.ClientConfigurationContext;
 import com.tc.object.RemoteObjectManager;
 import com.tc.object.msg.RequestRootResponseMessage;
 
-/**
- * @author steve To change the template for this generated type comment go to Window&gt;Preferences&gt;Java&gt;Code
- *         Generation&gt;Code and Comments
- */
 public class ReceiveRootIDHandler extends AbstractEventHandler {
   private RemoteObjectManager objectManager;
 

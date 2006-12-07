@@ -15,9 +15,6 @@ import junit.framework.Test;
  * 
  * @author cer
  */
-/**
- * TODO Jun 13, 2006: I, lyi, am too lazy to write a single sentence describing what this class is for.
- */
 public class BeanWithSuperclassTest extends AbstractTwoServerDeploymentTest {
 
   private static final String REMOTE_SERVICE_NAME           = "Singleton";

@@ -444,7 +444,7 @@ public class Processor {
 
     /**
      * IputStream wrapper class used to protect input streams from being closed
-     * by some stupid XML parsers.
+     * by some XML parsers.
      */
     private static final class ProtectedInputStream extends InputStream {
         private final InputStream is;

@@ -8,9 +8,6 @@ import com.tc.aspectwerkz.reflect.MethodInfo;
 import com.tc.backport175.bytecode.AnnotationElement.Annotation;
 import com.tc.exception.ImplementMe;
 
-/**
- * TODO Nov 3, 2004: I, orion, am too lazy to write a single sentence describing what this class is for.
- */
 public class SimpleMethodInfo implements MethodInfo {
 
   private String    methodName;

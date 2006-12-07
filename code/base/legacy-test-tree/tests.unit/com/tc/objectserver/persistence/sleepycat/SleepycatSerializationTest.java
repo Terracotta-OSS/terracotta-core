@@ -58,12 +58,11 @@ public class SleepycatSerializationTest extends TCTestCase {
   private static File                    tempDirectory;
 
   public void setUp() throws Exception {
-    // XXX: This static temp directory is here to solve lame file problems
+    // XXX: This static temp directory is here to solve file problems
     // on Windows. Each test spawns a new instance of the test class
     // which causes a cleaning of the old temp directory which fails
     // because the je lock file can't be removed because it's still open
-    // by sleepycat because sleepycat has a static cache because
-    // sleepycat is stupid.
+    // by sleepycat (sleepycat has a static cache).
     // The static temp directory is here to stop subsequent test instances
     // from trying to clean the temp directory and failing.
     if (tempDirectory == null) tempDirectory = getTempDirectory();

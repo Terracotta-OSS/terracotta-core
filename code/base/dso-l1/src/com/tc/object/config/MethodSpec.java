@@ -3,9 +3,6 @@
  */
 package com.tc.object.config;
 
-/**
- * TODO Dec 22, 2004: I, steve, am too lazy to write a single sentence describing what this class is for.
- */
 public class MethodSpec {
   public final static int ALWAYS_LOG                             = 1;
   public final static int NONE                                   = 2;

@@ -52,7 +52,6 @@ public class StandardClassProvider implements ClassProvider {
   private static String getName(NamedClassLoader loader) {
     String name = loader.__tc_getClassLoaderName();
     if (name == null || name.length() == 0) {
-      // bad dog
       throw new AssertionError("Invalid name [" + name + "] from loader " + loader);
     }
     return name;
