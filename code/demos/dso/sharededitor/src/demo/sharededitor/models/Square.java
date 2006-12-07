@@ -11,7 +11,7 @@ import java.awt.Shape;
 
 import demo.sharededitor.ui.ITexturable;
 
-final class Square 
+class Square 
 	extends BaseObject
 	implements ITexturable
 {

@@ -90,7 +90,7 @@ public final class Dashboard
 		add(b1);
 		bg.add(b1);
 
-		b1 = new JToggleButton(new SetDrawToolAction("Square", IFillStyleConsts.FILLSTYLE_TEXTURED));
+		b1 = new JToggleButton(new SetDrawToolAction("Image", IFillStyleConsts.FILLSTYLE_TEXTURED));
 		textureToolButton = b1;
 		b1.setIcon(new ImageIcon("images/placeholder.gif"));
 		setWithImageIcon(b1, "images/warrior.jpg");
