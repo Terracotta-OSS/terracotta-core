@@ -359,7 +359,7 @@ tc_set_dso_boot_jar() {
 
          exit 12
       else
-         echo "$0: DSO_BOOT_JAR: ${DSO_BOOT_JAR}"
+         # echo "$0: DSO_BOOT_JAR: ${DSO_BOOT_JAR}"
       fi
    else
       DSO_BOOT_JAR_NAME="`${TC_JAVA} -classpath "${TC_INSTALL_DIR}/common/lib/tc.jar" ${TC_ALL_JAVA_OPTS} com.tc.object.tools.BootJarSignature`"

@@ -4,7 +4,8 @@ rem @COPYRIGHT@
 SET TOPDIR=%~d0%~p0..
 SET __CONFIG=%~1
 
-CALL "%TOPDIR%\libexec\tc-functions.bat" tc_install_dir "%TOPDIR%"\.. TRUE
+IF "x%TC_INSTALL_DIR%" == "x" SET TC_INSTALL_DIR=%TOPDIR%\..
+CALL "%TOPDIR%\libexec\tc-functions.bat" tc_install_dir "%TC_INSTALL_DIR%" TRUE
 CALL "%TOPDIR%\libexec\tc-functions.bat" tc_config "%__CONFIG%"
 CALL "%TOPDIR%\libexec\tc-functions.bat" tc_set_dso_boot_jar
  

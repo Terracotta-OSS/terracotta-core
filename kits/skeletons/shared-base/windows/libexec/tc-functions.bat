@@ -387,7 +387,7 @@ GOTO END
             GOTO END
 
          :tc_set_dso_boot_jar__1_1_2
-            echo DSO_BOOT_JAR: %DSO_BOOT_JAR%
+            rem echo DSO_BOOT_JAR: %DSO_BOOT_JAR%
             GOTO END
 
       :tc_set_dso_boot_jar__1_2
