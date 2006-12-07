@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session.util;
 
@@ -33,13 +34,8 @@ public class DefaultLifecycleEventMgr implements LifecycleEventMgr {
     Assert.pre(s != null);
     HttpSessionEvent e = new HttpSessionEvent(s);
     for (int i = 0; i < sessionListeners.length; i++) {
-      try {
-        HttpSessionListener l = sessionListeners[i];
-        if (l != null) l.sessionCreated(e);
-      } catch (Throwable ignore) {
-        // nada
-      }
-
+      HttpSessionListener l = sessionListeners[i];
+      if (l != null) l.sessionCreated(e);
     }
   }
 
@@ -47,12 +43,8 @@ public class DefaultLifecycleEventMgr implements LifecycleEventMgr {
     Assert.pre(session != null);
     HttpSessionEvent e = new HttpSessionEvent(session);
     for (int i = 0; i < sessionListeners.length; i++) {
-      try {
-        HttpSessionListener l = sessionListeners[i];
-        if (l != null) l.sessionDestroyed(e);
-      } catch (Throwable ignore) {
-        // n/a
-      }
+      HttpSessionListener l = sessionListeners[i];
+      if (l != null) l.sessionDestroyed(e);
     }
   }
 
@@ -60,11 +52,7 @@ public class DefaultLifecycleEventMgr implements LifecycleEventMgr {
     if (val instanceof HttpSessionBindingListener) {
       Assert.pre(sess != null);
       HttpSessionBindingEvent e = new HttpSessionBindingEvent(sess, name, val);
-      try {
-        ((HttpSessionBindingListener) val).valueBound(e);
-      } catch (Throwable ignore) {
-        // n/a
-      }
+      ((HttpSessionBindingListener) val).valueBound(e);
     }
   }
 
@@ -72,11 +60,7 @@ public class DefaultLifecycleEventMgr implements LifecycleEventMgr {
     if (val instanceof HttpSessionBindingListener) {
       Assert.pre(sess != null);
       HttpSessionBindingEvent e = new HttpSessionBindingEvent(sess, name, val);
-      try {
-        ((HttpSessionBindingListener) val).valueUnbound(e);
-      } catch (Throwable ignore) {
-        // n/a
-      }
+      ((HttpSessionBindingListener) val).valueUnbound(e);
     }
   }
 
@@ -84,13 +68,8 @@ public class DefaultLifecycleEventMgr implements LifecycleEventMgr {
     Assert.pre(sess != null);
     HttpSessionBindingEvent e = new HttpSessionBindingEvent(sess, name, val);
     for (int i = 0; i < attributeListeners.length; i++) {
-      try {
-        HttpSessionAttributeListener l = attributeListeners[i];
-        if (l != null) l.attributeRemoved(e);
-      } catch (Throwable ignore) {
-        // n/a
-      }
-
+      HttpSessionAttributeListener l = attributeListeners[i];
+      if (l != null) l.attributeRemoved(e);
     }
   }
 
@@ -99,12 +78,8 @@ public class DefaultLifecycleEventMgr implements LifecycleEventMgr {
     Assert.pre(oldVal != null);
     HttpSessionBindingEvent e = new HttpSessionBindingEvent(sess, name, oldVal);
     for (int i = 0; i < attributeListeners.length; i++) {
-      try {
-        HttpSessionAttributeListener l = attributeListeners[i];
-        if (l != null) l.attributeReplaced(e);
-      } catch (Throwable ignore) {
-        // n/a
-      }
+      HttpSessionAttributeListener l = attributeListeners[i];
+      if (l != null) l.attributeReplaced(e);
     }
   }
 
@@ -112,12 +87,8 @@ public class DefaultLifecycleEventMgr implements LifecycleEventMgr {
     Assert.pre(sess != null);
     HttpSessionBindingEvent e = new HttpSessionBindingEvent(sess, name, val);
     for (int i = 0; i < attributeListeners.length; i++) {
-      try {
-        HttpSessionAttributeListener l = attributeListeners[i];
-        if (l != null) l.attributeAdded(e);
-      } catch (Throwable ignore) {
-        // n/a
-      }
+      HttpSessionAttributeListener l = attributeListeners[i];
+      if (l != null) l.attributeAdded(e);
     }
   }
 }
