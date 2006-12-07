@@ -378,16 +378,12 @@ GOTO END
 
       :tc_set_dso_boot_jar__1_1
          IF NOT EXIST "%DSO_BOOT_JAR%" GOTO tc_set_dso_boot_jar__1_1_1
-         GOTO tc_set_dso_boot_jar__1_1_2
+         GOTO END
 
          :tc_set_dso_boot_jar__1_1_1
             echo The custom DSO boot JAR you specified in the DSO_BOOT_JAR
             echo environment variable, %DSO_BOOT_JAR%, does not exist. Stop.
             SET EXITFLAG=TRUE
-            GOTO END
-
-         :tc_set_dso_boot_jar__1_1_2
-            rem echo DSO_BOOT_JAR: %DSO_BOOT_JAR%
             GOTO END
 
       :tc_set_dso_boot_jar__1_2
