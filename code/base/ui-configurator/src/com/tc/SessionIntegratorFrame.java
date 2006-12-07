@@ -765,7 +765,7 @@ public class SessionIntegratorFrame extends Frame {
   
   void showQuittingDialog() {
     Dialog dialog = new Dialog(this, getTitle());
-    Label  label  = new Label(getBundleString("qutting.dialog.msg"));
+    Label  label  = new Label(getBundleString("quitting.dialog.msg"));
     
     label.setBorder(new EmptyBorder(10,20,10,20));
     dialog.getContentPane().add(label);
