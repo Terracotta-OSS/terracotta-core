@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.server.appserver.unit;
 
@@ -42,6 +43,13 @@ public class SessionInvalidatorTest extends AbstractAppServerTestCase {
         reply = key + "=" + req.getSession().getAttribute(key);
       } else if ("set".equals(action)) {
         req.getSession().setAttribute(key, new BindingListener(key));
+      } else if ("setwithexception".equals(action)) {
+        try {
+          req.getSession().setAttribute(key, new BindingListenerWithException(key));
+          reply = "Did not get expected exception!";
+        } catch (Throwable e) {
+          // this is expected
+        }
       } else if ("remove".equals(action)) {
         req.getSession().removeAttribute(key);
       } else if ("call_count".equals(action)) {
@@ -155,6 +163,28 @@ public class SessionInvalidatorTest extends AbstractAppServerTestCase {
     }
   }
 
+  public static final class BindingListenerWithException implements HttpSessionBindingListener {
+    private final String key;
+
+    public BindingListenerWithException(String key) {
+      this.key = key;
+    }
+
+    public void valueBound(HttpSessionBindingEvent arg0) {
+      ListenerReportingServlet.incrementCallCount("BindingListener.valueBound");
+      throw new RuntimeException("Testing Exception Delivery");
+    }
+
+    public void valueUnbound(HttpSessionBindingEvent arg0) {
+      ListenerReportingServlet.incrementCallCount("BindingListener.valueUnbound");
+      throw new RuntimeException("Testing Exception Delivery");
+    }
+
+    public String toString() {
+      return key;
+    }
+  }
+
   private int port;
 
   public void testInvalidator() throws Exception {
@@ -183,6 +213,17 @@ public class SessionInvalidatorTest extends AbstractAppServerTestCase {
 
     checkCallCount("SessionListener.sessionCreated", 1, client);
     checkCallCount("BindingListener.valueBound", 1, client);
+
+    // now set exception-throwing BindingListener..
+    url = new URL(createUrl(port, SessionInvalidatorTest.ListenerReportingServlet.class)
+                  + "?action=setwithexception&key=attr2");
+    checkResponse("OK", url, client);
+    // ... and check if it DID NOT made it there.
+    url = new URL(createUrl(port, SessionInvalidatorTest.ListenerReportingServlet.class) + "?action=get&key=attr2");
+    checkResponse("attr2=null", url, client);
+
+    checkCallCount("BindingListener.valueBound", 2, client);
+    checkCallCount("BindingListener.valueUnbound", 0, client);
 
     // set session max idle time
     url = new URL(createUrl(port, SessionInvalidatorTest.ListenerReportingServlet.class) + "?action=setmax&key=3");
