@@ -8,11 +8,10 @@ Services:      http://www.terracottatech.com/support_services.shtml
 
 
 Getting Started
-------------
+---------------
 
 Consult the appropriate Terracotta product guide for detailed installation
-instructions.  Below are abbreviated install steps and a tool or sample
-application to run.
+instructions.  Below are abbreviated install steps for each product.
 
 Terracotta Sessions
    Unix/Linux:
