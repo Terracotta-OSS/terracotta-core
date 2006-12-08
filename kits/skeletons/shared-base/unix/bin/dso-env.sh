@@ -3,14 +3,16 @@
 #@COPYRIGHT@
 
 TOPDIR=`dirname "$0"`/..
+test "$1" = "-v" && shift
+
 . "${TC_INSTALL_DIR:-${TOPDIR}}"/libexec/tc-functions.sh
-__CONFIG=$1
+__DSO_ENV_CONFIG=$1
 
 tc_install_dir "${TOPDIR}"/.. true
-tc_config "${__CONFIG}"
+tc_config "${__DSO_ENV_CONFIG}"
 tc_set_dso_boot_jar
  
-test -z "${__CONFIG}" && unset D_TC_CONFIG
+test -z "${__DSO_ENV_CONFIG}" && unset D_TC_CONFIG
 TC_JAVA_OPTS="-Xbootclasspath/p:${DSO_BOOT_JAR} -Dtc.install-root=${TC_INSTALL_DIR} ${D_TC_CONFIG}"
 
-echo ${TC_JAVA_OPTS}
+test -n ${__DSO_ENV_VERBOSE} && echo ${TC_JAVA_OPTS}
