@@ -3,7 +3,7 @@
 #@COPYRIGHT@
 
 TOPDIR=`dirname "$0"`/..
-test "$1" = "-v" && shift
+test "$1" = "-v" && shift && __DSO_ENV_VERBOSE="true"
 
 . "${TC_INSTALL_DIR:-${TOPDIR}}"/libexec/tc-functions.sh
 __DSO_ENV_CONFIG=$1
