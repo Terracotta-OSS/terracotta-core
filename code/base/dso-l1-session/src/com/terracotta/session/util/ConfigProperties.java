@@ -40,7 +40,7 @@ public class ConfigProperties {
   protected static final String  defaultCookieDomain               = null;
   protected static final int     defaultCookieMaxAge               = -1;
   protected static final String  defaultCookieName                 = "JSESSIONID";
-  protected static final String  defaultCookiePath                 = "/";
+  protected static final String  defaultCookiePath                 = null;
   protected static final boolean defaultCookieSecure               = false;
   protected static final int     defaultIdLength                   = 20;
   protected static final String  defaultServerId                   = ManagerUtil.getClientID();

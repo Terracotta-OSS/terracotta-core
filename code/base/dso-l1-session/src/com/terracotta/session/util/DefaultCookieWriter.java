@@ -37,11 +37,10 @@ public class DefaultCookieWriter implements SessionCookieWriter {
          cp.getCookieMaxAgeSeconds(), cp.getCookieSecure());
   }
 
-  public DefaultCookieWriter(boolean isTrackingEnabled, boolean isCookieEnabled, boolean isUrlRewriteEnabled,
+  protected DefaultCookieWriter(boolean isTrackingEnabled, boolean isCookieEnabled, boolean isUrlRewriteEnabled,
                              String cookieName, String cookieDomain, String cookiePath, String cookieComment,
                              int cookieMaxAge, boolean isCookieSecure) {
     Assert.pre(cookieName != null && cookieName.trim().length() > 0);
-    Assert.pre(cookiePath != null && cookiePath.trim().length() > 0);
     Assert.pre(cookieMaxAge >= -1);
     this.isTrackingEnabled = isTrackingEnabled;
     this.isCookieEnabled = isCookieEnabled;
@@ -249,7 +248,8 @@ public class DefaultCookieWriter implements SessionCookieWriter {
 
   protected String getCookiePath(HttpServletRequest req) {
     Assert.pre(req != null);
-    if (cookiePath == ConfigProperties.defaultCookiePath) {
+    if (cookiePath == null) {
+      // if nothing is specified, use request context path
       String rv = req.getContextPath();
       return rv == null || rv.trim().length() == 0 ? ConfigProperties.defaultCookiePath : rv.trim();
     } else {
