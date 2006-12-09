@@ -61,9 +61,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author steve
- */
 public class ClientObjectManagerImpl implements ClientObjectManager, PortableObjectProvider, Evictable {
 
   private static final State                   PAUSED                  = new State("PAUSED");
