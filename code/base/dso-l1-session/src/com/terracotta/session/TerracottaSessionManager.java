@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session;
 
@@ -9,6 +10,7 @@ import com.tc.management.beans.sessions.SessionMonitorMBean.SessionsComptroller;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.terracotta.session.util.Assert;
+import com.terracotta.session.util.ConfigProperties;
 import com.terracotta.session.util.ContextMgr;
 import com.terracotta.session.util.DefaultContextMgr;
 import com.terracotta.session.util.LifecycleEventMgr;
@@ -33,12 +35,11 @@ public class TerracottaSessionManager {
   private final boolean                invalidatorLogEnabled;
   private final TCLogger               logger;
   private final RequestResponseFactory factory;
+  private final RequestTracker         tracker;
 
   public TerracottaSessionManager(SessionIdGenerator sig, SessionCookieWriter scw, LifecycleEventMgr eventMgr,
-                                  ContextMgr contextMgr, int maxIdleSeconds, int invalidatorSleepSeconds,
-                                  boolean reqeustLogEnabled, boolean invalidatorLogEnabled,
-                                  RequestResponseFactory factory) {
-    this.invalidatorLogEnabled = invalidatorLogEnabled;
+                                  ContextMgr contextMgr, RequestResponseFactory factory, ConfigProperties cp) {
+
     Assert.pre(sig != null);
     Assert.pre(scw != null);
     Assert.pre(eventMgr != null);
@@ -49,15 +50,16 @@ public class TerracottaSessionManager {
     this.eventMgr = eventMgr;
     this.contextMgr = contextMgr;
     this.factory = factory;
-    this.store = new SessionDataStore(contextMgr.getAppName(), maxIdleSeconds);
+    this.store = new SessionDataStore(contextMgr.getAppName(), cp.getSessionTimeoutSeconds());
     this.logger = ManagerUtil.getLogger("com.tc.tcsession." + contextMgr.getAppName());
-    this.reqeustLogEnabled = reqeustLogEnabled;
+    this.reqeustLogEnabled = cp.getRequestLogBenchEnabled();
+    this.invalidatorLogEnabled = cp.getInvalidatorLogBenchEnabled();
 
     // XXX: If reasonable, we should move this out of the constructor -- leaking a reference to "this" to another thread
     // within a constructor is a bad practice (note: althought "this" isn't explicitly based as arg, it is available and
     // acessed by the non-static inner class)
-    Thread invalidator = new Thread(new SessionInvalidator(store, invalidatorSleepSeconds, maxIdleSeconds),
-                                    "SessionInvalidator - " + contextMgr.getAppName());
+    Thread invalidator = new Thread(new SessionInvalidator(store, cp.getInvalidatorSleepSeconds(), cp
+        .getSessionTimeoutSeconds()), "SessionInvalidator - " + contextMgr.getAppName());
     invalidator.setDaemon(true);
     invalidator.start();
     Assert.post(invalidator.isAlive());
@@ -76,11 +78,25 @@ public class TerracottaSessionManager {
         expire(id);
         return true;
       }
-
     });
+
+    if (cp.isRequestTrackingEnabled()) {
+      tracker = new StuckRequestTracker(cp.getRequestTrackerSleepMillis(), cp.getRequestTrackerStuckThresholdMillis(),
+                                        cp.isDumpThreadsOnStuckRequests());
+      ((StuckRequestTracker) tracker).start();
+    } else {
+      tracker = new NullRequestTracker();
+    }
   }
 
   public TerracottaRequest preprocess(HttpServletRequest req, HttpServletResponse res) {
+    tracker.begin(req);
+    TerracottaRequest terracottaRequest = basicPreprocess(req, res);
+    tracker.recordSessionId(terracottaRequest);
+    return terracottaRequest;
+  }
+
+  private TerracottaRequest basicPreprocess(HttpServletRequest req, HttpServletResponse res) {
     Assert.pre(req != null);
     Assert.pre(res != null);
 
@@ -96,6 +112,14 @@ public class TerracottaSessionManager {
   }
 
   public void postprocess(TerracottaRequest req) {
+    try {
+      basicPostprocess(req);
+    } finally {
+      tracker.end();
+    }
+  }
+
+  private void basicPostprocess(TerracottaRequest req) {
     Assert.pre(req != null);
 
     mBean.requestProcessed();
@@ -332,6 +356,22 @@ public class TerracottaSessionManager {
     Assert.pre(request != null);
     final String appName = DefaultContextMgr.computeAppName(request);
     return ClassProcessorHelper.isDSOSessions(appName);
+  }
+
+  private static final class NullRequestTracker implements RequestTracker {
+
+    public final boolean end() {
+      return true;
+    }
+
+    public final void begin(HttpServletRequest req) {
+      //
+    }
+
+    public final void recordSessionId(TerracottaRequest terracottaRequest) {
+      //
+    }
+
   }
 
 }

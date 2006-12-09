@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session.util;
 
@@ -14,40 +15,48 @@ import javax.servlet.http.HttpSessionListener;
 
 public class ConfigProperties {
 
-  protected static final String  PREFIX                            = "com.terracotta.session.";
-  public static final String     ID_LENGTH                         = PREFIX + "id.length";
-  public static final String     SERVER_ID                         = PREFIX + "serverid";
-  public static final String     COOKIE_DOMAIN                     = PREFIX + "cookie.domain";
-  public static final String     COOKIE_COMMENT                    = PREFIX + "cookie.comment";
-  public static final String     COOKIE_SECURE                     = PREFIX + "cookie.secure";
-  public static final String     COOKIE_MAX_AGE                    = PREFIX + "cookie.maxage.seconds";
-  public static final String     COOKIE_NAME                       = PREFIX + "cookie.name";
-  public static final String     COOKIE_PATH                       = PREFIX + "cookie.path";
-  public static final String     COOKIE_ENABLED                    = PREFIX + "cookie.enabled";
-  public static final String     SESSION_TIMEOUT_SECONDS           = PREFIX + "maxidle.seconds";
-  public static final String     TRACKING_ENABLED                  = PREFIX + "tracking.enabled";
-  public static final String     URL_REWRITE_ENABLED               = PREFIX + "urlrewrite.enabled";
-  public static final String     ATTRIBUTE_LISTENERS               = PREFIX + "attribute.listeners";
-  public static final String     SESSION_LISTENERS                 = PREFIX + "listeners";
-  public static final String     INVALIDATOR_SLEEP                 = PREFIX + "invalidator.sleep";
-  public static final String     REQUEST_BENCHES                   = PREFIX + "request.bench.enabled";
-  public static final String     INVALIDATOR_BENCHES               = PREFIX + "invalidator.bench.enabled";
+  protected static final String  PREFIX                              = "com.terracotta.session.";
+  public static final String     ID_LENGTH                           = PREFIX + "id.length";
+  public static final String     SERVER_ID                           = PREFIX + "serverid";
+  public static final String     COOKIE_DOMAIN                       = PREFIX + "cookie.domain";
+  public static final String     COOKIE_COMMENT                      = PREFIX + "cookie.comment";
+  public static final String     COOKIE_SECURE                       = PREFIX + "cookie.secure";
+  public static final String     COOKIE_MAX_AGE                      = PREFIX + "cookie.maxage.seconds";
+  public static final String     COOKIE_NAME                         = PREFIX + "cookie.name";
+  public static final String     COOKIE_PATH                         = PREFIX + "cookie.path";
+  public static final String     COOKIE_ENABLED                      = PREFIX + "cookie.enabled";
+  public static final String     SESSION_TIMEOUT_SECONDS             = PREFIX + "maxidle.seconds";
+  public static final String     TRACKING_ENABLED                    = PREFIX + "tracking.enabled";
+  public static final String     URL_REWRITE_ENABLED                 = PREFIX + "urlrewrite.enabled";
+  public static final String     ATTRIBUTE_LISTENERS                 = PREFIX + "attribute.listeners";
+  public static final String     SESSION_LISTENERS                   = PREFIX + "listeners";
+  public static final String     INVALIDATOR_SLEEP                   = PREFIX + "invalidator.sleep";
+  public static final String     REQUEST_BENCHES                     = PREFIX + "request.bench.enabled";
+  public static final String     INVALIDATOR_BENCHES                 = PREFIX + "invalidator.bench.enabled";
+  public static final String     STUCK_REQUEST_TRACKING              = PREFIX + "request.tracking";
+  public static final String     STUCK_REQUEST_THREAD_DUMP           = PREFIX + "request.tracking.dump";
+  public static final String     STUCK_REQUEST_INTERVAL              = PREFIX + "request.tracking.interval";
+  public static final String     STUCK_REQUEST_THRESHOLD             = PREFIX + "request.tracking.threshold";
 
-  protected static final boolean defaultCookiesEnabled             = true;
-  protected static final boolean defaultTrackingEnabled            = true;
-  protected static final boolean defaultUrlEnabled                 = true;
-  protected static final String  defaultCookieComment              = null;
-  protected static final String  defaultCookieDomain               = null;
-  protected static final int     defaultCookieMaxAge               = -1;
-  protected static final String  defaultCookieName                 = "JSESSIONID";
-  protected static final String  defaultCookiePath                 = null;
-  protected static final boolean defaultCookieSecure               = false;
-  protected static final int     defaultIdLength                   = 20;
-  protected static final String  defaultServerId                   = ManagerUtil.getClientID();
-  protected static final int     defaultSessionTimeout             = 30 * 60;
-  protected static final int     defaultInvalidatorSleep           = 5 * 60;
-  protected static final boolean defaultRequestLogBenchEnabled     = false;
-  protected static final boolean defaultInvalidatorLogBenchEnabled = true;
+  protected static final boolean defaultCookiesEnabled               = true;
+  protected static final boolean defaultTrackingEnabled              = true;
+  protected static final boolean defaultUrlEnabled                   = true;
+  protected static final String  defaultCookieComment                = null;
+  protected static final String  defaultCookieDomain                 = null;
+  protected static final int     defaultCookieMaxAge                 = -1;
+  protected static final String  defaultCookieName                   = "JSESSIONID";
+  protected static final String  defaultCookiePath                   = "/";
+  protected static final boolean defaultCookieSecure                 = false;
+  protected static final int     defaultIdLength                     = 20;
+  protected static final String  defaultServerId                     = ManagerUtil.getClientID();
+  protected static final int     defaultSessionTimeout               = 30 * 60;
+  protected static final int     defaultInvalidatorSleep             = 5 * 60;
+  protected static final boolean defaultRequestLogBenchEnabled       = false;
+  protected static final boolean defaultInvalidatorLogBenchEnabled   = true;
+  protected static final boolean defaultRequestTrackerEnabled        = false;
+  protected static final boolean defaultRequestTrackerThreadDump     = false;
+  protected static final int     defaultRequestTrackerSleepMillis    = 2500;
+  protected static final int     defaultRequestTrackerStuckThreshold = 15000;
 
   private final WebAppConfig     wac;
   private final Properties       props;
@@ -61,6 +70,25 @@ public class ConfigProperties {
 
     this.wac = wac;
     this.props = props;
+  }
+
+  public boolean isRequestTrackingEnabled() {
+    final String boolVal = getStringVal(STUCK_REQUEST_TRACKING, null, Boolean.toString(defaultRequestTrackerEnabled));
+    return "true".equals(boolVal);
+  }
+
+  public boolean isDumpThreadsOnStuckRequests() {
+    final String boolVal = getStringVal(STUCK_REQUEST_THREAD_DUMP, null, Boolean
+        .toString(defaultRequestTrackerThreadDump));
+    return "true".equals(boolVal);
+  }
+
+  public long getRequestTrackerSleepMillis() {
+    return getPropertyInt(STUCK_REQUEST_INTERVAL, defaultRequestTrackerSleepMillis);
+  }
+
+  public long getRequestTrackerStuckThresholdMillis() {
+    return getPropertyInt(STUCK_REQUEST_THRESHOLD, defaultRequestTrackerStuckThreshold);
   }
 
   public int getSessionIdLength() {

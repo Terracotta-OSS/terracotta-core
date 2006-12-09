@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.tomcat55.session;
 
@@ -80,9 +81,8 @@ public class SessionValve55 extends ValveBase {
     final LifecycleEventMgr eventMgr = DefaultLifecycleEventMgr.makeInstance(cp);
     final ContextMgr contextMgr = DefaultContextMgr
         .makeInstance(contextPath, valveReq.getContext().getServletContext());
-    final TerracottaSessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr, cp
-        .getSessionTimeoutSeconds(), cp.getInvalidatorSleepSeconds(), cp.getRequestLogBenchEnabled(), cp
-        .getInvalidatorLogBenchEnabled(), new BaseRequestResponseFactory());
+    final TerracottaSessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr,
+                                                                     new BaseRequestResponseFactory(), cp);
     return rv;
   }
 

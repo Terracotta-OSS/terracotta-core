@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session;
 
@@ -93,17 +94,15 @@ public class SessionFilter implements Filter {
     return rv;
   }
 
-  protected static TerracottaSessionManager createManager(final HttpServletRequest req,
-                                                                      final WebAppConfig wac,
-                                                                      final RequestResponseFactory factory,
-                                                                      final ServletContext servletContext) {
+  protected static TerracottaSessionManager createManager(final HttpServletRequest req, final WebAppConfig wac,
+                                                          final RequestResponseFactory factory,
+                                                          final ServletContext servletContext) {
     final ConfigProperties cp = new ConfigProperties(wac);
     final SessionIdGenerator sig = DefaultIdGenerator.makeInstance(cp);
     final SessionCookieWriter scw = DefaultCookieWriter.makeInstance(cp);
     final LifecycleEventMgr eventMgr = DefaultLifecycleEventMgr.makeInstance(cp);
     final ContextMgr contextMgr = DefaultContextMgr.makeInstance(req, servletContext);
-    final TerracottaSessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr, cp
-        .getSessionTimeoutSeconds(), cp.getInvalidatorSleepSeconds(), cp.getRequestLogBenchEnabled(), cp.getInvalidatorLogBenchEnabled(), factory);
+    final TerracottaSessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr, factory, cp);
     return rv;
   }
 
