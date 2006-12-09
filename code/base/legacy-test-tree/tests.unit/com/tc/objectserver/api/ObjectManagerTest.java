@@ -29,6 +29,7 @@ import com.tc.object.dna.impl.DNAEncoding;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.context.ManagedObjectFaultingContext;
+import com.tc.objectserver.context.ManagedObjectFlushingContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.core.api.GarbageCollector;
@@ -100,6 +101,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   private TCLogger                           logger;
   private ObjectManagerStatsImpl             stats;
   private SampledCounter                     newObjectCounter;
+  private SampledCounterImpl                 objectfaultCounter;
   private TestPersistenceTransactionProvider persistenceTransactionProvider;
   private TestPersistenceTransaction         NULL_TRANSACTION;
 
@@ -122,7 +124,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     ManagedObjectStateFactory.disableSingleton(true);
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), new InMemoryPersistor());
     this.newObjectCounter = new SampledCounterImpl(new SampledCounterConfig(1, 1, true, 0L));
-    stats = new ObjectManagerStatsImpl(newObjectCounter);
+    this.objectfaultCounter = new SampledCounterImpl(new SampledCounterConfig(1, 1, true, 0L));
+    stats = new ObjectManagerStatsImpl(newObjectCounter, objectfaultCounter);
     persistenceTransactionProvider = new TestPersistenceTransactionProvider();
     NULL_TRANSACTION = TestPersistenceTransaction.NULL_TRANSACTION;
   }
@@ -146,13 +149,16 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
   private void initObjectManager(ThreadGroup threadGroup, EvictionPolicy cache, ManagedObjectStore store) {
     TestSink faultSink = new TestSink();
+    TestSink flushSink = new TestSink();
     try {
       this.objectManager = new ObjectManagerImpl(config, threadGroup, clientStateManager, store, cache,
-                                                 persistenceTransactionProvider, faultSink, new MockObjectManagementMonitor());
+                                                 persistenceTransactionProvider, faultSink, flushSink,
+                                                 new MockObjectManagementMonitor());
     } catch (NotCompliantMBeanException e) {
       throw new RuntimeException(e);
     }
     new TestMOFaulter(this.objectManager, store, faultSink).start();
+    new TestMOFlusher(this.objectManager, flushSink).start();
   }
 
   public void testShutdownAndSetGarbageCollector() throws Exception {
@@ -620,11 +626,13 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
     PersistentManagedObjectStore store = new PersistentManagedObjectStore(mop);
     TestSink faultSink = new TestSink();
+    TestSink flushSink = new TestSink();
     config.paranoid = paranoid;
     objectManager = new ObjectManagerImpl(config, createThreadGroup(), clientStateManager, store,
                                           new LRUEvictionPolicy(100), persistenceTransactionProvider, faultSink,
-                                          new MockObjectManagementMonitor());
+                                          flushSink, new MockObjectManagementMonitor());
     new TestMOFaulter(this.objectManager, store, faultSink).start();
+    new TestMOFlusher(this.objectManager, flushSink).start();
 
     TestResultsContext responseContext = new TestResultsContext();
     final Map lookedUpObjects = responseContext.objects;
@@ -1058,7 +1066,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     assertEquals(1, stats3.getActualGarbageCount());
     assertEquals(1, stats3.getCandidateGarbageCount());
   }
-  
+
   public void testLookupFacadeForMissingObject() {
     initObjectManager();
 
@@ -1870,6 +1878,30 @@ public class ObjectManagerTest extends BaseDSOTestCase {
         try {
           ManagedObjectFaultingContext ec = (ManagedObjectFaultingContext) faultSink.take();
           objectManager.addFaultedObject(ec.getId(), store.getObjectByID(ec.getId()), ec.isRemoveOnRelease());
+        } catch (InterruptedException e) {
+          throw new AssertionError(e);
+        }
+      }
+    }
+  }
+
+  private static class TestMOFlusher extends Thread {
+
+    private final ObjectManagerImpl objectManager;
+    private final TestSink          flushSink;
+
+    public TestMOFlusher(ObjectManagerImpl objectManager, TestSink flushSink) {
+      this.objectManager = objectManager;
+      this.flushSink = flushSink;
+      setName("TestMOFlusher");
+      setDaemon(true);
+    }
+
+    public void run() {
+      while (true) {
+        try {
+          ManagedObjectFlushingContext ec = (ManagedObjectFlushingContext) flushSink.take();
+          objectManager.flushAndEvict(ec.getObjectToFlush());
         } catch (InterruptedException e) {
           throw new AssertionError(e);
         }

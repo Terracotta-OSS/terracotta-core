@@ -9,6 +9,7 @@ import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandlerException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -18,6 +19,7 @@ import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchReader;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
+import com.tc.util.SequenceValidator;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -38,12 +40,14 @@ public class ProcessTransactionHandler extends AbstractEventHandler {
   private final TransactionBatchManager     transactionBatchManager;
   private final MessageRecycler             messageRecycler;
   private final BatchedTransactionProcessor batchedTransactionProcessor;
+  private final SequenceValidator           sequenceValidator;
 
   public ProcessTransactionHandler(TransactionBatchManager transactionBatchManager,
                                    BatchedTransactionProcessor batchedTransactionProcessor,
-                                   MessageRecycler messageRecycler) {
+                                   SequenceValidator sequenceValidator, MessageRecycler messageRecycler) {
     this.transactionBatchManager = transactionBatchManager;
     this.batchedTransactionProcessor = batchedTransactionProcessor;
+    this.sequenceValidator = sequenceValidator;
     this.messageRecycler = messageRecycler;
   }
 
@@ -60,7 +64,9 @@ public class ProcessTransactionHandler extends AbstractEventHandler {
 
       List txns = new LinkedList();
       Set serverTxnIDs = new HashSet();
+      ChannelID channelID = reader.getChannelID();
       while ((txn = reader.getNextTransaction()) != null) {
+        sequenceValidator.setCurrent(channelID, txn.getClientSequenceID());
         txns.add(txn);
         serverTxnIDs.add(txn.getServerTransactionID());
       }

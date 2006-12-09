@@ -71,9 +71,9 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     MockStage batchTxnStage;
     stageMap.put(ServerConfigurationContext.BATCH_TRANSACTION_LOOKUP_STAGE,
                  (batchTxnStage = new MockStage(ServerConfigurationContext.BATCH_TRANSACTION_LOOKUP_STAGE)));
-    batchTxnProcessor = new BatchedTransactionProcessorImpl(-1, sequenceValidator, objectManager, gtxm, batchTxnStage
-        .getSink());
-    handler = new ProcessTransactionHandler(transactionBatchManager, batchTxnProcessor, new NullMessageRecycler());
+    batchTxnProcessor = new BatchedTransactionProcessorImpl(objectManager, gtxm, batchTxnStage.getSink());
+    handler = new ProcessTransactionHandler(transactionBatchManager, batchTxnProcessor, sequenceValidator,
+                                            new NullMessageRecycler());
 
     transactionBatchReaderFactory = new TestTransactionBatchReaderFactory();
     cctxt = new TestServerConfigurationContext();
@@ -120,23 +120,23 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     MockSink batchTxnSink = (MockSink) ((Stage) stageMap.get(ServerConfigurationContext.BATCH_TRANSACTION_LOOKUP_STAGE))
         .getSink();
     assertFalse(batchTxnSink.queue.isEmpty());
-    
+
     EventContext context = (EventContext) batchTxnSink.queue.remove(0);
     assertNotNull(context);
-    
+
     // Look up shouldnt have happened yet
     args = (Object[]) objectManager.lookupObjectForCreateIfNecessaryContexts.poll(100);
     assertNull(args);
-    
+
     // send another txn and see that Transaction Queue is NOT added again to the stage
     batch = new TestTransactionBatchReader();
     batch.channelID = new ChannelID(1);
     batch.batchID = new TxnBatchID(2);
 
-    serverTransaction = new ServerTransactionImpl(batch.batchID, new TransactionID(2),
-                                                                    new SequenceID(2), new LockID[0], batch.channelID,
-                                                                    dnaList, new ObjectStringSerializer(), newRootsMap,
-                                                                    TxnType.NORMAL, new LinkedList());
+    serverTransaction = new ServerTransactionImpl(batch.batchID, new TransactionID(2), new SequenceID(2),
+                                                  new LockID[0], batch.channelID, dnaList,
+                                                  new ObjectStringSerializer(), newRootsMap, TxnType.NORMAL,
+                                                  new LinkedList());
     completedTransactionIDs = new HashSet();
     for (int i = 11; i < 20; i++) {
       completedTransactionIDs.add(new GlobalTransactionID(i));
@@ -153,7 +153,7 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     objectManager.makePending = true;
     handler.handleEvent(null);
     assertTrue(batchTxnSink.queue.isEmpty());
-    
+
   }
 
   private final class TestTransactionBatchReader implements TransactionBatchReader {

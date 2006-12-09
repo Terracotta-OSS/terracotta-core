@@ -37,6 +37,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String COMMIT_CHANGES_STAGE                               = "commit_changes_stage";
   public static final String JMX_EVENTS_STAGE                                   = "jmx_events_stage";
   public static final String MANAGED_OBJECT_FAULT_STAGE                         = "managed_object_fault_stage";
+  public static final String MANAGED_OBJECT_FLUSH_STAGE                         = "managed_object_flush_stage";
   public static final String JMXREMOTE_TUNNEL_STAGE                             = "jmxremote_tunnel_stage";
   public static final String JMXREMOTE_CONNECT_STAGE                            = "jmxremote_connect_stage";
 

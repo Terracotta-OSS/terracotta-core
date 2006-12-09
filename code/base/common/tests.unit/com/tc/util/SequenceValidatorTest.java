@@ -46,6 +46,23 @@ public class SequenceValidatorTest extends TestCase {
     assertTrue(sv.isNext(key1, one));
     assertTrue(sv.isNext(key2, one));
   }
+  
+  public void testSetCurrent() throws Exception {
+    
+    Object key = new Object();
+    SequenceID sid = new SequenceID(1);
+    for (int i = 0; i < 50; i++) {
+      assertTrue(sv.isNext(key, sid));
+      sv.setCurrent(key, sid);
+      sid = sid.next();
+      try {
+        sv.setCurrent(key, sid.next());
+        fail();
+      } catch(AssertionError er) {
+        // expected
+      }
+    }
+  }
 
   public void testDisjointSequences() throws Exception {
 

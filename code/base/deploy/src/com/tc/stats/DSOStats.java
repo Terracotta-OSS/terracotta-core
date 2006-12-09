@@ -22,6 +22,8 @@ public interface DSOStats { // extends Stats { XXX: (TE) Not extending the gener
 
   DoubleStatistic getCacheHitRatio();
 
+  CountStatistic getCacheMissRate();
+
   CountStatistic getTransactionRate();
 
   CountStatistic getObjectFaultRate();

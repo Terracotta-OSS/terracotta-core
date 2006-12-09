@@ -26,18 +26,5 @@ public interface ManagedObjectReference extends Cacheable {
 
   public boolean isNew();
 
-  /**
-   * Pins this reference in the cache.
-   */
-  public void pin();
-
-  public void unpin();
-
-  /**
-   * Determines whether or not this reference is pinned in the ObjectManager's cache. This allows the object manager to
-   * lookup multiple objects one at a time without evicting them from the cache.
-   */
-  public boolean isPinned();
-
   public ManagedObject getObject();
 }

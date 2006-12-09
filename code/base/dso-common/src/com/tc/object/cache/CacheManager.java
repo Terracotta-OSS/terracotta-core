@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.cache;
 
@@ -58,6 +59,7 @@ public class CacheManager implements MemoryEventsListener {
     private int                   evicted;
     private boolean               objectsGCed = false;
     private int                   toEvict;
+    private long                  startTime;
     private State                 state       = INIT;
 
     public CacheStatistics(MemoryEventType type, MemoryUsage usage) {
@@ -73,6 +75,7 @@ public class CacheManager implements MemoryEventsListener {
     }
 
     public int getObjectCountToEvict(int currentCount) {
+      startTime = System.currentTimeMillis();
       countBefore = currentCount;
       adjustCachedObjectCount(currentCount);
       toEvict = computeObjects2Evict(currentCount);
@@ -94,14 +97,13 @@ public class CacheManager implements MemoryEventsListener {
 
     private void adjustCachedObjectCount(int currentCount) {
       if (type == MemoryEventType.BELOW_THRESHOLD) {
-        if (calculatedCacheSize < currentCount) {
-          calculatedCacheSize = currentCount;
-        }
-      } else if (lastStat == null || lastStat.type == MemoryEventType.BELOW_THRESHOLD
-                 || lastStat.usage.getCollectionCount() < usage.getCollectionCount()) {
+        int used = usage.getUsedPercentage();
+        int diff = config.getUsedThreshold() - used;
+        Assert.assertTrue(diff >= 0);
+        calculatedCacheSize = currentCount + (currentCount * diff / 100);
+      } else if (lastStat == null || lastStat.usage.getCollectionCount() < usage.getCollectionCount()) {
         // 1) This is the first threshold crossing alarm or
-        // 2) The memory just went below threshold or
-        // 3) A GC has taken place since the last time, but the memory has not gone below the threshold. (danger)
+        // 2) A GC has taken place since the last time, but the memory has not gone below the threshold. (danger)
         int used = usage.getUsedPercentage();
         int diff = used - config.getUsedThreshold();
         Assert.assertTrue(diff >= 0);
@@ -115,8 +117,13 @@ public class CacheManager implements MemoryEventsListener {
       state = COMPLETE;
       // TODO:: add reference queue
       if (config.isLoggingEnabled()) {
-        logger.info("Evicted " + evictedCount + " current Size = " + currentCount);
+        logger.info("Evicted " + evictedCount + " current Size = " + currentCount + " new objects created = "
+                    + getNewObjectsCount() + " time taken = " + (System.currentTimeMillis() - startTime) + " ms");
       }
+    }
+
+    private int getNewObjectsCount() {
+      return countAfter - (countBefore - evicted);
     }
 
     // TODO:: This need to be more intellegent. It should also check if a GC actually happened after eviction. Use

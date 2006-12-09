@@ -48,15 +48,15 @@ The DSO server in-memory cache can be configured to hold some maximum number of 
 
 <h3 name="ObjectFlushRate">Object Flush Rate</h3>
 
-The Object Flush Rate DSO statistic shows a measure of how many objects are being moved from the server in-memory cache to the disk-cache.  Objects are moved to the server disk on a Least-Recently-Used (LRU) basis whenever the in-memory cache becomes full.
+The Object Flush Rate DSO statistic shows a measure of how many objects are being flushed out of the client memory. These objects are available in the server if needed at a later point in time.
 
 <h3 name="ObjectFaultRate">Object Fault Rate</h3>
 
-The Object Fault Rate DSO statistic shows a measure of how many objects are being moved from the server disk-cache to the in-memory cache.  Objects are moved to the in-memory cache whenever the are involved in a transaction.
+The Object Fault Rate DSO statistic shows a measure of how many objects are being faulted into the client memory from the server.
 
-<h2><a name="CacheHitRatio">Cache Hit Ratio</a></h2>
+<h2><a name="CacheMissRate">Cache Miss Rate</a></h2>
 
-The Cache Hit Ratio DSO statistic shows a measure of the relative rate at which object are being retrieved from the server in-memory cache, as opposed as needing to be faulted in from the disk-cache.
+The Cache Miss Rate DSO statistic shows a measure of how many objects are being faulted from the disk-cache per second, as opposed to retrieving from the server's in-memory cache.
 
 <h2><a name="TransactionRate">Object Transaction Rate</a></h2>
 

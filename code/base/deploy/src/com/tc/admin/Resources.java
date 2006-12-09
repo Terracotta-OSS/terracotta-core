@@ -158,11 +158,11 @@ public class Resources extends ListResourceBundle {
     {"dso.cache.activity",
      "Cache activity"},
     
-    {"dso.cache.hit.ratio",
-     "Cache hit ratio"},
+    {"dso.cache.miss.rate",
+     "Cache Miss Rate"},
     
-    {"dso.cache.hit.ration.range.label",
-     "Cache hits/Cache lookups"},
+    {"dso.cache.miss.rate.label",
+     "Cache Misses per second"},
 
     {"dso.gcstats.iteration",
      "Iteration"},

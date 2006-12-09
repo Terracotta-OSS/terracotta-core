@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.impl;
 
@@ -12,13 +13,11 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
 
   private final ObjectID id;
   private boolean        inProgress;
-  private boolean        pinned;
   private boolean        processPending;
 
   public FaultingManagedObjectReference(ObjectID id) {
     this.id = id;
     this.inProgress = true;
-    this.pinned = false;
   }
 
   public boolean isFaultingInProgress() {
@@ -61,18 +60,6 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
     return false;
   }
 
-  public void pin() {
-    this.pinned = true;
-  }
-
-  public void unpin() {
-    this.pinned = false;
-  }
-
-  public boolean isPinned() {
-    return this.pinned;
-  }
-
   public ManagedObject getObject() {
     throw new AssertionError("This should never be called");
   }
@@ -92,7 +79,7 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
   public boolean recentlyAccessed() {
     return true;
   }
-  
+
   public int accessCount(int factor) {
     return 0;
   }
@@ -122,8 +109,8 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
   }
 
   public String toString() {
-    return "FaultingManagedObjectReference [ " + id + " inProgress : " + inProgress + " pinned : " + pinned
-           + " processPending : " + processPending + " ]";
+    return "FaultingManagedObjectReference [ " + id + " inProgress : " + inProgress + " processPending : "
+           + processPending + " ]";
   }
 
 }

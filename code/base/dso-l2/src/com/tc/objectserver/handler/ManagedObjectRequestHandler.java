@@ -53,7 +53,13 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
   }
 
   private void handleEventFromServer(ManagedObjectRequestContext context) {
-    objectRequestManager.requestObjects(context.getRequestedObjectIDs(), context, context.getMaxRequestDepth());
+    Collection ids = context.getRequestedObjectIDs();
+    // XXX::TODO:: Server initiated lookups are not updated to the channel counter for now
+    final int numObjectsRequested = ids.size();
+    if (numObjectsRequested != 0) {
+      globalObjectRequestCounter.increment(numObjectsRequested);
+    }
+    objectRequestManager.requestObjects(ids, context, context.getMaxRequestDepth());
   }
 
   private void handleEventFromClient(RequestManagedObjectMessage rmom) {

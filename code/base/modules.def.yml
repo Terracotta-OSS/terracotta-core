@@ -102,6 +102,12 @@ modules:
         - common
         - dso-l1
         - dso-l1-session
+  - dso-memory-datastore:
+      options:
+        compiler_version: 1.4
+      dependencies:
+        - dso-common
+        - common
   - dso-l2:
       options:
         compiler_version: 1.4
@@ -111,6 +117,7 @@ modules:
         - dso-common-jdk15
         - thirdparty
         - management
+        - dso-memory-datastore
   - deploy:
       options:
         compiler_version: 1.4
@@ -218,6 +225,7 @@ modules:
         - deploy
         - thirdparty
         - legacy-test-tree
+        - dso-memory-datastore
   - dso-alt-boot-jar-tests:
       options:
         compiler_version: 1.5
@@ -252,6 +260,7 @@ modules:
         - thirdparty
         - dso-system-tests
         - legacy-test-tree
+        - dso-memory-datastore
   - dso-tests-jdk15:
       options:
         compiler_version: 1.5
@@ -396,6 +405,7 @@ module-groups:
     - dso-alt-boot-jar-tests
     - dso-tests-jdk15
     - management
+    - dso-memory-datastore
   spring:
     - dso-spring
     - dso-spring-tests
@@ -415,3 +425,4 @@ module-groups:
     - dso-alt-boot-jar-tests
     - dso-tests-jdk15
     - management
+    - dso-memory-datastore

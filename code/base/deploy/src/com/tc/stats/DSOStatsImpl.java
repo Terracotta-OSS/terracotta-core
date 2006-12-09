@@ -59,6 +59,11 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
     rv.setDoubleValue(value);
     return rv;
   }
+  
+  public CountStatistic getCacheMissRate() {
+    return StatsUtil.makeCountStat( objMgrStats.getCacheMissRate());
+  }
+
 
   public Statistic[] getStatistics(String[] names) {
     int count = names.length;

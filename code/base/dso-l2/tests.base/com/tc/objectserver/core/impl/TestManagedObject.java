@@ -133,19 +133,6 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return referenced;
   }
   
-  boolean pinned;
-  public void pin() {
-    pinned = true;
-  }
-
-  public void unpin() {
-    pinned = false;
-  }
-
-  public boolean isPinned() {
-    return pinned;
-  }
-
   public ManagedObject getObject() {
     return this;
   }
