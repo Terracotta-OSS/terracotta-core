@@ -11,6 +11,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCRuntimeException;
+import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
@@ -35,6 +36,8 @@ import java.util.Set;
 import junit.framework.TestCase;
 
 public class RemoteTransactionManagerTest extends TestCase {
+  
+  private static final TCLogger logger = TCLogging.getLogger(RemoteTransactionManagerTest.class);
 
   private RemoteTransactionManagerImpl manager;
   private TestTransactionBatchFactory  batchFactory;
@@ -49,7 +52,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     batchFactory = new TestTransactionBatchFactory();
     batchAccounting = new TransactionBatchAccounting();
     lockAccounting = new LockAccounting();
-    manager = new RemoteTransactionManagerImpl(TCLogging.getLogger(RemoteTransactionManagerImpl.class), batchFactory,
+    manager = new RemoteTransactionManagerImpl(logger, batchFactory,
                                                batchAccounting, lockAccounting, new NullSessionManager());
     number = new SynchronizedInt(0);
     error = new SynchronizedRef(null);
@@ -523,7 +526,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     }
 
     public int byteSize() {
-      throw new ImplementMe();
+      return 64000;
     }
 
   }
