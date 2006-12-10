@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util.concurrent.locks;
 
@@ -38,18 +39,16 @@ public class ReentrantLock implements Lock, java.io.Serializable {
   public ReentrantLock() {
     this.isFair = false;
 
-    this.owner = null;
-    this.numOfHolds = 0;
-    this.waitingQueue = new ArrayList();
-    this.state = 0;
-    this.numQueued = 0;
-    this.lock = new Object();
-    this.lockInUnShared = new Stack();
+    initialize();
   }
 
   public ReentrantLock(boolean fair) {
     this.isFair = fair;
 
+    initialize();
+  }
+  
+  private void initialize() {
     this.owner = null;
     this.numOfHolds = 0;
     this.waitingQueue = new ArrayList();
@@ -305,17 +304,18 @@ public class ReentrantLock implements Lock, java.io.Serializable {
   private int getState() {
     return this.state;
   }
-
+  
   private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
     s.defaultReadObject();
     isFair = s.readBoolean();
+    initialize();
   }
 
   private void writeObject(java.io.ObjectOutputStream s) throws java.io.IOException {
     s.defaultWriteObject();
     s.writeBoolean(isFair);
   }
-  
+
   private static class SyncCondition implements java.io.Serializable {
     public SyncCondition() {
       super();
@@ -323,18 +323,18 @@ public class ReentrantLock implements Lock, java.io.Serializable {
   }
 
   private static class ConditionObject implements Condition, java.io.Serializable {
-    public static final String   CLASS_SLASH   = "com/tcclient/util/ConditionObjectWrapper";
-    public static final String   CLASS_DOTS    = "com.tcclient.util.ConditionObjectWrapper";
-    private static final int     SIGNALLED     = 1;
-    private static final int     NOT_SIGNALLED = 0;
+    public static final String  CLASS_SLASH   = "com/tcclient/util/ConditionObjectWrapper";
+    public static final String  CLASS_DOTS    = "com.tcclient.util.ConditionObjectWrapper";
+    private static final int    SIGNALLED     = 1;
+    private static final int    NOT_SIGNALLED = 0;
 
-    private final transient List waitingThreads;
-    private transient int        numOfWaitingThreards;
-    private final transient Map  waitOnUnshared;
+    private transient List      waitingThreads;
+    private transient int       numOfWaitingThreards;
+    private transient Map       waitOnUnshared;
 
-    private final ReentrantLock  originalLock;
-    private final Object         realCondition;
-    private int                  signal        = NOT_SIGNALLED;
+    private final ReentrantLock originalLock;
+    private final Object        realCondition;
+    private int                 signal        = NOT_SIGNALLED;
 
     private static long getSystemNanos() {
       return System.nanoTime();
@@ -587,5 +587,18 @@ public class ReentrantLock implements Lock, java.io.Serializable {
       Assert.assertFalse(ManagerUtil.isManaged(originalLock));
       return waitingThreads;
     }
+
+    private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
+      s.defaultReadObject();
+      this.waitingThreads = new ArrayList();
+      this.numOfWaitingThreards = 0;
+      this.waitOnUnshared = new HashMap();
+      this.signal = NOT_SIGNALLED;
+    }
+
+    private void writeObject(java.io.ObjectOutputStream s) throws java.io.IOException {
+      s.defaultWriteObject();
+    }
+
   }
 }

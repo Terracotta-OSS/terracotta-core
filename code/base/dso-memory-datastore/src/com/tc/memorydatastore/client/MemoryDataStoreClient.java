@@ -53,7 +53,7 @@ public class MemoryDataStoreClient implements MemoryDataMap {
   public MemoryDataStoreClient(String storeName) {
     //this(storeName, "lindso2.terracotta.lan", 9001); // TODO: temporary
                                                       // hardcoded
-    this(storeName, "10.0.0.110", 9001);
+    this(storeName, "localhost", 9001);
   }
 
   private void setupClient(String serverHost, int serverPort) {
@@ -80,6 +80,10 @@ public class MemoryDataStoreClient implements MemoryDataMap {
         throw new RuntimeException(ioe);
       }
     }
+  }
+  
+  public void close() {
+    channel.close();
   }
 
   private synchronized long nextThreadID() {
