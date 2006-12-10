@@ -31,6 +31,7 @@ import com.tc.object.LiteralValues;
 import com.tc.object.Portability;
 import com.tc.object.PortabilityImpl;
 import com.tc.object.SerializationUtil;
+import com.tc.object.bytecode.AbstractListMethodCreator;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.DSOUnsafeAdapter;
 import com.tc.object.bytecode.JavaLangReflectArrayAdapter;
@@ -720,7 +721,9 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     spec = getOrCreateSpec("java.util.AbstractMap");
     spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
     spec = getOrCreateSpec("java.util.AbstractList");
+    spec.setHonorTransient(true);
     spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
+    spec.addSupportMethodCreator(new AbstractListMethodCreator());
     spec = getOrCreateSpec("java.util.AbstractSet");
     spec.setInstrumentationAction(TransparencyClassSpec.ADAPTABLE);
     spec = getOrCreateSpec("java.util.AbstractSequentialList");

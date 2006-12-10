@@ -25,6 +25,8 @@ public class PortabilityImpl implements Portability {
   static {
     nonInstrumentedClass.add("java.lang.Object");
     nonInstrumentedClass.add("java.lang.Number");
+    nonInstrumentedClass.add("java.util.AbstractList");
+    nonInstrumentedClass.add("java.util.AbstractCollection");
     nonInstrumentedClass.add("java.lang.Enum");
     nonInstrumentedClass.add("java.lang.reflect.AccessibleObject");
     nonInstrumentedClass.add("java.util.concurrent.locks.AbstractQueuedSynchronizer$Node");

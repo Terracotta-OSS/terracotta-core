@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -42,12 +43,14 @@ public class GenericListTestApp extends GenericTestApp {
     lists.add(new MyLinkedList());
     lists.add(new MyVector());
     lists.add(new MyStack());
+    lists.add(new MyAbstractListSubclass());
 
     sharedMap.put("lists", lists);
     sharedMap.put("arrayforLinkedList", new Object[2]);
     sharedMap.put("arrayforArrayList", new Object[2]);
     sharedMap.put("arrayforVector", new Object[2]);
     sharedMap.put("arrayforStack", new Object[2]);
+    sharedMap.put("arrayforAbstractListSubclass", new Object[2]);
   }
 
   void testBasicAdd(List list, boolean validate) {
@@ -1102,6 +1105,7 @@ public class GenericListTestApp extends GenericTestApp {
       return (Object[]) sharedMap.get("arrayforStack");
     }
     if (list instanceof Vector) { return (Object[]) sharedMap.get("arrayforVector"); }
+    if (list instanceof MyAbstractListSubclass) { return (Object[]) sharedMap.get("arrayforAbstractListSubclass"); }
     return null;
   }
 
@@ -1168,29 +1172,57 @@ public class GenericListTestApp extends GenericTestApp {
     Assert.assertEquals(1, count);
 
   }
-  
+
   private static class MyArrayList extends ArrayList {
     public MyArrayList() {
       super();
     }
   }
-  
+
   private static class MyLinkedList extends LinkedList {
     public MyLinkedList() {
       super();
     }
   }
-  
+
   private static class MyVector extends Vector {
     public MyVector() {
       super();
     }
   }
-  
+
   private static class MyStack extends Stack {
     public MyStack() {
       super();
     }
+  }
+
+  private static class MyAbstractListSubclass extends AbstractList {
+    // This is in here to make sure that a subclass of AbstractList is shareable in DSO, not that this is a good/proper
+    // List implementation ;-)
+
+    private ArrayList data = new ArrayList();
+
+    public void add(int index, Object element) {
+      data.add(index, element);
+    }
+
+    public Object set(int index, Object element) {
+      return data.set(index, element);
+    }
+
+    public Object get(int index) {
+      return data.get(index);
+    }
+
+    public int size() {
+      return data.size();
+    }
+
+    public Object remove(int index) {
+      return data.remove(index);
+    }
+
   }
 
 }
