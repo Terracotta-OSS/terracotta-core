@@ -16,7 +16,7 @@ set java_opts=%java_opts% -Dcom.sun.management.jmxremote.port=8091
 set java_opts=%java_opts% -Dcom.sun.management.jmxremote.authenticate=false
 set java_opts=%java_opts% -Dcom.sun.management.jmxremote.ssl=false
 
-set java_opts=%java_opts% -Dtc.node.name=Node1
+set java_opts=%java_opts% -Dtc.node-name=Node1
 
 set catalina_base=tomcat1
 set java_home=%tc_java_home%

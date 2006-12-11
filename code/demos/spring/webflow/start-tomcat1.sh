@@ -17,7 +17,7 @@ JAVA_OPTS="${JAVA_OPTS} -Dcom.sun.management.jmxremote.port=8091"
 JAVA_OPTS="${JAVA_OPTS} -Dcom.sun.management.jmxremote.authenticate=false"
 JAVA_OPTS="${JAVA_OPTS} -Dcom.sun.management.jmxremote.ssl=false"
 
-JAVA_OPTS="${JAVA_OPTS} -Dtc.node.name=Node1
+JAVA_OPTS="${JAVA_OPTS} -Dtc.node-name=Node1
 
 export JAVA_OPTS
 

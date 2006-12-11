@@ -10,7 +10,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jstl/core" %>
 
 <%
-    String node = System.getProperty("tc.node.name", "unknown"); 
+    String node = System.getProperty("tc.node-name", "unknown"); 
 %>
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
