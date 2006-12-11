@@ -5,7 +5,7 @@
 TOPDIR=`dirname "$0"`/../..
 . "${TOPDIR}"/libexec/tc-functions.sh
 
-TC_JAVA_OPTS="`./"${TOPDIR}"/bin/dso-env.sh -v tc-config.xml`"
+TC_JAVA_OPTS="`./"${TOPDIR}"/bin/dso-env.sh tc-config.xml`"
 if [ $? -ne 0 ]; then
   echo $TC_JAVA_OPTS
   exit 1
