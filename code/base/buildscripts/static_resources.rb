@@ -42,7 +42,7 @@ class StaticResources
     end
 
     def source_root(flavor)
-      (flavor !~ /opensource/i) ? FilePath.new(@root_directory, '..', '..', '..', '..', flavor, 'code', 'base') : @root_directory
+      (flavor !~ /opensource/i) ? FilePath.new(@root_directory, '..', '..', flavor, 'code', 'base') : @root_directory
     end
     
     def distribution_config_directory(flavor)

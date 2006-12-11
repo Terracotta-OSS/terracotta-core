@@ -27,7 +27,7 @@ module DistributionUtils
     fail 'You need to tell me the type of kit to build: SPR|DSO|TST?'                 if product_code.nil? 
     fail 'You need to tell me the flavor of the kit to build: OPENSOURCE|ENTERPRISE?' if flavor.nil? 
     @product_code = product_code
-    @flavor       = flavor
+    @flavor       = flavor.downcase
   end
   
   def product_directory

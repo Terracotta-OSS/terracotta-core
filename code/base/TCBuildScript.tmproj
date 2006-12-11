@@ -3,16 +3,14 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>build-tc.rb</string>
+	<string>buildscripts/static_resources.rb</string>
 	<key>documents</key>
 	<array>
 		<dict>
 			<key>filename</key>
 			<string>build-tc.rb</string>
 			<key>lastUsed</key>
-			<date>2006-12-02T01:00:35Z</date>
-			<key>selected</key>
-			<true/>
+			<date>2006-12-11T18:10:56Z</date>
 		</dict>
 		<dict>
 			<key>filename</key>
@@ -56,35 +54,8 @@
 	<key>fileHierarchyDrawerWidth</key>
 	<integer>199</integer>
 	<key>metaData</key>
+	<dict/>
 	<dict>
-		<key>build-tc.rb</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>41</integer>
-				<key>line</key>
-				<integer>113</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>67</integer>
-		</dict>
-		<key>buildscripts/build_results.rb</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>0</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>0</integer>
-		</dict>
 		<key>buildscripts/builder_base.rb</key>
 		<dict>
 			<key>caret</key>
@@ -99,44 +70,14 @@
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
 		</dict>
-		<key>buildscripts/extensions/bundled-jres.rb</key>
+		<key>buildscripts/extensions/distribution.rb</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>0</integer>
+				<integer>8</integer>
 				<key>line</key>
-				<integer>16</integer>
-			</dict>
-			<key>columnSelection</key>
-			<false/>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>0</integer>
-			<key>selectFrom</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>25</integer>
-			</dict>
-			<key>selectTo</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>16</integer>
-			</dict>
-		</dict>
-		<key>buildscripts/extensions/bundled-vendors.rb</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>43</integer>
-				<key>line</key>
-				<integer>16</integer>
+				<integer>18</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
@@ -157,20 +98,6 @@
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
 		</dict>
-		<key>buildscripts/script_results.rb</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>15</integer>
-				<key>line</key>
-				<integer>29</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>0</integer>
-		</dict>
 		<key>buildscripts/static_resources.rb</key>
 		<dict>
 			<key>caret</key>
@@ -178,7 +105,7 @@
 				<key>column</key>
 				<integer>0</integer>
 				<key>line</key>
-				<integer>94</integer>
+				<integer>44</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
@@ -188,14 +115,8 @@
 	</dict>
 	<key>openDocuments</key>
 	<array>
-		<string>buildscripts/script_results.rb</string>
 		<string>buildscripts/static_resources.rb</string>
-		<string>buildscripts/extensions/bundled-vendors.rb</string>
-		<string>buildscripts/extensions/bundled-jres.rb</string>
-		<string>buildscripts/build_results.rb</string>
-		<string>build-tc.rb</string>
-		<string>buildscripts/postscripts/include-schemas.rb</string>
-		<string>buildscripts/builder_base.rb</string>
+		<string>buildscripts/extensions/distribution.rb</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
 	<true/>

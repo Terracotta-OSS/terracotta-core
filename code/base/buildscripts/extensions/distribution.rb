@@ -14,10 +14,6 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     destdir = FilePath.new(@static_resources.root_dir, '..', '..').canonicalize.to_s
     if File.exists?(srcdir)
       ant.copy(:todir => destdir, :overwrite => true, :verbose => true) do
-        puts "**************"
-        puts "#{srcdir}"
-        puts "#{destdir}"
-        puts "**************"
         ant.fileset(:dir => srcdir, :excludes => "**/.svn/**")
       end 
     end
