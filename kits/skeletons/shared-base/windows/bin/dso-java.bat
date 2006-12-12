@@ -1,4 +1,4 @@
-echo off
+@echo off
 
 rem
 rem  All content copyright (c) 2003-2006 Terracotta, Inc.,

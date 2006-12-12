@@ -6,25 +6,19 @@ rem  except as may otherwise be noted in a separate copyright notice.
 rem  All rights reserved.
 rem
 
-
-#
-#  All content copyright (c) 2003-2006 Terracotta, Inc.,
-#  except as may otherwise be noted in a separate copyright notice.
-#  All rights reserved.
-#
-
 SET TOPDIR=%~d0%~p0..
 
 IF "%1" == "-q" GOTO tc_dso_env_0
 SETLOCAL
-SET __DSO_ENV_QUIET=false
+SET __DSO_ENV_QUIET=falsese
 GOTO tc_dso_env_1
 
 :tc_dso_env_0
   IF NOT "%TOPDIR%" == "" GOTO tc_dso_env_0_0
     ECHO Error: When the -q option is specified, I expect that
     ECHO the environment variable TOPDIR is set so that I
-    ECHO can locate the libexec directory.
+    ECHO can locate the libexec directory of your Terracotta
+    ECHO software installation.
     GOTO tc_dso_env_3
   
   :tc_dso_env_0_0

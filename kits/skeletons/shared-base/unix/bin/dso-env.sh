@@ -10,7 +10,8 @@ if test "$1" = "-q"; then
   if test -z ${TOPDIR}; then
     echo "Error: When the -q option is specified, I expect that"
     echo "the environment variable TOPDIR is set so that I"
-    echo "can locate the libexec directory."
+    echo "can locate the libexec directory of your Terracotta"
+    echo "software installation."
     exit 1
   fi
   shift
