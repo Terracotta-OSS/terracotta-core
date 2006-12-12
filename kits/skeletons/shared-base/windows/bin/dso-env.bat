@@ -1,5 +1,17 @@
 @echo off
-rem @COPYRIGHT@
+
+rem
+rem  All content copyright (c) 2003-2006 Terracotta, Inc.,
+rem  except as may otherwise be noted in a separate copyright notice.
+rem  All rights reserved.
+rem
+
+
+#
+#  All content copyright (c) 2003-2006 Terracotta, Inc.,
+#  except as may otherwise be noted in a separate copyright notice.
+#  All rights reserved.
+#
 
 SET TOPDIR=%~d0%~p0..
 
@@ -9,8 +21,15 @@ SET __DSO_ENV_QUIET=false
 GOTO tc_dso_env_1
 
 :tc_dso_env_0
-  SHIFT
-  SET __DSO_ENV_QUIET=false
+  IF NOT "%TOPDIR%" == "" GOTO tc_dso_env_0_0
+    ECHO Error: When the -q option is specified, I expect that
+    ECHO the environment variable TOPDIR is set so that I
+    ECHO can locate the libexec directory.
+    GOTO tc_dso_env_3
+  
+  :tc_dso_env_0_0
+    SHIFT
+    SET __DSO_ENV_QUIET=false
   
 :tc_dso_env_1
   SET __DSO_ENV_CONFIG=%~1
@@ -30,5 +49,4 @@ GOTO tc_dso_env_1
   ENDLOCAL
 
 :tc_dso_env_3
-  REM dso-env completes
 

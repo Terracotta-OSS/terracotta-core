@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved. 
+// Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.. 
 //
 var http_request = false;
 var error        = false;

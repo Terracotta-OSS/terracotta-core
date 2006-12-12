@@ -1,4 +1,4 @@
-<!-- Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved. -->
+<!-- Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved.. -->
 <project name="DepartmentTaskList" default="deploy" basedir=".">
 	<property name="bundled.server.home" value="${basedir}/../../../vendors/tomcat5.5"/>
 	<condition property="is.live" value="true">
