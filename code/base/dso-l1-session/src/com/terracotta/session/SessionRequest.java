@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session;
 
@@ -15,7 +16,9 @@ public class SessionRequest extends HttpServletRequestWrapper implements Terraco
   private final HttpServletResponse res;
   private final SessionId           requestedSessionId;
   private final long                requestStartMillis;
-  private boolean                   unlockSesssionId = true;
+  private final boolean             isForwarded;
+  private final boolean             isSessionOwner;
+
   private Session                   session;
   private TerracottaSessionManager  mgr;
 
@@ -28,6 +31,17 @@ public class SessionRequest extends HttpServletRequestWrapper implements Terraco
     this.res = res;
     this.requestedSessionId = requestedSessionId;
     this.requestStartMillis = System.currentTimeMillis();
+    // in some cases, we could be multi-wrapping native requests.
+    // in this case, we need to check if TC session has already been created
+    HttpSession nativeSess = req.getSession(false);
+    if (nativeSess instanceof Session) {
+      this.isForwarded = true;
+      this.isSessionOwner = false;
+      this.session = (Session) nativeSess;
+    } else {
+      this.isSessionOwner = true;
+      this.isForwarded = req.getAttribute("javax.servlet.forward.request_uri") != null;
+    }
   }
 
   public HttpSession getSession() {
@@ -54,31 +68,24 @@ public class SessionRequest extends HttpServletRequestWrapper implements Terraco
     return mgr.getCookieWriter().encodeURL(url, this);
   }
 
-  protected Session getTerracottaSession(boolean createNew) {
+  public Session getTerracottaSession(boolean createNew) {
     if (session != null) return session;
-    // we need to make this check in case of a RequestDispatcher.forward call...
-    final HttpSession s = req.getSession(false);
-    if (s != null && s instanceof Session) {
-      session = (Session) s;
-      unlockSesssionId = false;
-    } else {
-      session = (createNew) ? mgr.getSession(requestedSessionId, req, res) : mgr.getSessionIfExists(requestedSessionId,
-                                                                                                    req, res);
-    }
+    session = (createNew) ? mgr.getSession(requestedSessionId, req, res) : mgr.getSessionIfExists(requestedSessionId,
+                                                                                                  req, res);
     Assert.post(!createNew || session != null);
     return session;
   }
 
-  public Session getSessionIfAny() {
-    return session;
+  public boolean isSessionOwner() {
+    return isSessionOwner && session != null;
+  }
+
+  public boolean isForwarded() {
+    return isForwarded;
   }
 
   public long getRequestStartMillis() {
     return requestStartMillis;
-  }
-
-  public boolean isUnlockSesssionId() {
-    return unlockSesssionId;
   }
 
   public void setSessionManager(TerracottaSessionManager sessionManager) {

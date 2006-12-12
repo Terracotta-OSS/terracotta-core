@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session;
 
@@ -11,9 +12,11 @@ public interface TerracottaRequest extends HttpServletRequest {
 
   String encodeURL(String url);
 
-  Session getSessionIfAny();
+  Session getTerracottaSession(boolean createNew);
 
-  boolean isUnlockSesssionId();
+  boolean isSessionOwner();
+
+  boolean isForwarded();
 
   long getRequestStartMillis();
 

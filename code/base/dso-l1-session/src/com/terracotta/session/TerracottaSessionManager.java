@@ -122,9 +122,40 @@ public class TerracottaSessionManager {
   private void basicPostprocess(TerracottaRequest req) {
     Assert.pre(req != null);
 
+    // don't do anything for forwarded requests
+    if (req.isForwarded()) return;
+
+    Assert.inv(!req.isForwarded());
+
     mBean.requestProcessed();
-    final Session session = req.getSessionIfAny();
-    if (session == null) return;
+
+    try {
+      if (req.isSessionOwner()) postprocessSession(req);
+    } finally {
+      if (reqeustLogEnabled) {
+        logRequestBench(req);
+      }
+    }
+  }
+
+  private void logRequestBench(TerracottaRequest req) {
+    final String msgPrefix = "REQUEST BENCH: url=[" + req.getRequestURL() + "]";
+    String sessionInfo = "";
+    if (req.isSessionOwner()) {
+      final SessionId id = req.getTerracottaSession(false).getSessionId();
+      sessionInfo = " sid=[" + id.getKey() + "] -> [" + id.getLock().getLockTimer().elapsed() + ":"
+                    + id.getLock().getUnlockTimer().elapsed() + "]";
+    }
+    final String msg = msgPrefix + sessionInfo + " -> " + (System.currentTimeMillis() - req.getRequestStartMillis());
+    logger.info(msg);
+  }
+
+  private void postprocessSession(TerracottaRequest req) {
+    Assert.pre(req != null);
+    Assert.pre(!req.isForwarded());
+    Assert.pre(req.isSessionOwner());
+    final Session session = req.getTerracottaSession(false);
+    Assert.inv(session != null);
     final SessionId id = session.getSessionId();
     final SessionData sd = session.getSessionData();
     try {
@@ -134,13 +165,7 @@ public class TerracottaSessionManager {
         store.updateTimestampIfNeeded(sd);
       }
     } finally {
-      if (req.isUnlockSesssionId()) id.commitLock();
-      if (reqeustLogEnabled) {
-        final String msg = "REQUEST BENCH: url=[" + req.getRequestURL() + "] sid=[" + id.getKey() + "] -> ["
-                           + id.getLock().getLockTimer().elapsed() + ":" + id.getLock().getUnlockTimer().elapsed()
-                           + "] -> " + (System.currentTimeMillis() - req.getRequestStartMillis());
-        logger.info(msg);
-      }
+      id.commitLock();
     }
   }
 
