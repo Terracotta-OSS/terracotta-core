@@ -98,7 +98,6 @@ import com.tc.object.logging.InstrumentationLoggerImpl;
 import com.tc.session.SessionSupport;
 import com.tc.text.Banner;
 import com.tc.util.AbstractIdentifier;
-import com.tc.util.AbstractMap;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
 import com.tc.util.EnumerationWrapper;
@@ -277,9 +276,6 @@ public class BootJarTool {
       loadTerracottaClass(TraverseTest.class.getName());
       loadTerracottaClass(Os.class.getName());
       loadTerracottaClass(NIOWorkarounds.class.getName());
-
-      // array stuff (need to clean the IdentityWeakHashMap stuff here)
-      loadTerracottaClass(AbstractMap.class.getName());
 
       // These two classes need to be specified as literal in order to prevent
       // the static block of IdentityWeakHashMap from executing during generating
