@@ -5,13 +5,14 @@
 #
 
 class BaseCodeTerracottaBuilder <  TerracottaBuilder
+  require 'tmpdir'
   IA_LOCATION = "C:\\Program Files\\Macrovision\\InstallAnywhere 8.0 Enterprise"
   
   protected
   def make_package(srcdir, destdir, filename, install_name, internal_name)
     installer_directory = FilePath.new('..', '..', 'kits', 'source', 'installer')
-
-    tmpdir = FilePath.new(destdir, 'tmp').ensure_directory
+    tmpdir              = FilePath.new(Dir.tmpdir).ensure_directory 
+    
     ant.copy(:todir => tmpdir.to_s) do
       ant.fileset(:dir => installer_directory.to_s, :includes => "#{internal_name.to_s}/**")
     end
