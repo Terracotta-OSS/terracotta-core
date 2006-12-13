@@ -52,7 +52,8 @@ bundled_components:
       # will contain the same bits across kit types; this allows us
       # to stack different kit types over one another.
       modules:
-        - aspectwerkz
+        - aspectwerkz:
+            exclude-runtime-libraries: true
         - common
         - deploy 
         - dso-common 

@@ -17,19 +17,20 @@ bundled_components:
           - 1.4
           - 1.5
       modules:
-         - aspectwerkz
-         - common
-         - deploy 
-         - dso-common
-         - dso-common-jdk15 
-         - dso-l1
-         - dso-l1-jdk15 
-         - dso-l2 
-         - linked-child-process
-         - management
-         - thirdparty
-         - ui-eclipse:
-             exclude-runtime-libraries: true
+        - aspectwerkz:
+            exclude-runtime-libraries: true
+        - common
+        - deploy 
+        - dso-common
+        - dso-common-jdk15 
+        - dso-l1
+        - dso-l1-jdk15 
+        - dso-l2 
+        - linked-child-process
+        - management
+        - thirdparty
+        - ui-eclipse:
+            exclude-runtime-libraries: true
   - eclipse-plugin: 
       install_directory: eclipse
   - eclipse-update-site: 
