@@ -50,7 +50,7 @@ public class NoLicense implements TerracottaLicense {
   }
 
   public String describe() {
-    return "Open Source - No License Needed";
+    return "Open Source License";
   }
   
   public boolean dsoHAEnabled() {
