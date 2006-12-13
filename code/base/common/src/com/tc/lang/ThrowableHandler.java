@@ -34,7 +34,7 @@ public class ThrowableHandler {
     if (proximateCause instanceof ConfigurationSetupException) {
       handleStartupException((ConfigurationSetupException) proximateCause);
     } else if (ultimateCause instanceof BindException) {
-      ultimateCause.printStackTrace();
+      logger.error(ultimateCause);
       handleStartupException((Exception)ultimateCause, ".  Please make sure the server isn't already running or choose a different port.");
     } else if (ultimateCause instanceof DatabaseException) {
       handleStartupException((Exception)proximateCause);
