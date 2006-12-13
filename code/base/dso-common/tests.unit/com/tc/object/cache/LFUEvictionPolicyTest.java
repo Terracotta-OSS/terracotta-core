@@ -12,6 +12,11 @@ import java.util.Random;
 
 public class LFUEvictionPolicyTest extends LRUEvictionPolicyTest {
 
+  public LFUEvictionPolicyTest() {
+    disableAllUntil("2007-01-08");
+  }
+
+
   public void tests() throws Exception {
     int capacity = 50;
     int maxObjects = capacity * 2;
