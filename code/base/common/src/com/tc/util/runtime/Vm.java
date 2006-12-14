@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util.runtime;
 
@@ -10,12 +11,14 @@ public class Vm {
 
   public static final Version VERSION_1_4 = new Version("1.4");
   public static final Version VERSION_1_5 = new Version("1.5");
+  public static final Version VERSION_1_6 = new Version("1.6");
 
   private static final Map    versions    = new HashMap();
 
   static {
     versions.put(VERSION_1_4.version, VERSION_1_4);
     versions.put(VERSION_1_5.version, VERSION_1_5);
+    versions.put(VERSION_1_6.version, VERSION_1_6);
   }
 
   private Vm() {
@@ -35,7 +38,7 @@ public class Vm {
     return (System.getProperty("java.vm.name", "").toLowerCase().indexOf("jrockit") >= 0)
            || (System.getProperty("jrockit.version") != null);
   }
-  
+
   public static boolean isJDK15() {
     return VERSION_1_5.equals(getMajorVersion());
   }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management;
 
@@ -27,8 +28,9 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
 
   private static final ResourceBundle          DEFAULT_BUNDLE = getBundleForMBean(TerracottaMBean.class, TCLogging
                                                                   .getLogger(TerracottaMBean.class));
-  
-  private static final boolean ENABLED = TCProperties.getProperties().getBoolean("tc.management.mbeans.enabled");
+
+  private static final boolean                 ENABLED        = TCProperties.getProperties()
+                                                                  .getBoolean("tc.management.mbeans.enabled");
 
   private final TCLogger                       logger;
   private final ResourceBundle                 beanBundle;
@@ -67,7 +69,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
                                                          + " it broadcasts notifications");
       throw re;
     }
-    return broadcaster.getNotificationInfo();
+    return new MBeanNotificationInfo[0];
   }
 
   public final void removeNotificationListener(final NotificationListener notificationlistener,
