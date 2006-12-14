@@ -17,7 +17,6 @@ DYNAMICALLY_GENERATED_PROPERTIES_PREFIX = 'tc.tests.info.'
 # the tests.
 STATIC_PROPERTIES_PREFIX = 'tc.tests.configuration.'
 
-
 class BuildSubtree
     # Creates a SubtreeTestRun object for this subtree and returns it. Most of the arguments
     # are self-explanatory (they're the obvious instances of the classes with the same names);
@@ -29,6 +28,16 @@ class BuildSubtree
     def test_run(static_resources, testrun_results, build_results, build_environment, config_source, jvm_set, ant, platform, test_patterns, aggregation_directory=nil)
         SubtreeTestRun.new(self, static_resources, buildconfig_properties,
             testrun_results, build_results, build_environment, config_source, jvm_set, ant, platform, test_patterns, aggregation_directory)
+    end
+
+    def self.container_home
+      ENV['TC_CONTAINER_HOME']
+    end
+
+    def self.create_dynamic_property(key, value)
+      "%s%s=%s" % [ DYNAMICALLY_GENERATED_PROPERTIES_PREFIX,
+          key.to_s.to_propertyfile_escaped_s,
+          value.to_s.to_propertyfile_escaped_s ]
     end
 
     # Creates a property file (in the style of java.util.Properties.load()) that contains all
@@ -47,7 +56,9 @@ class BuildSubtree
             # their own classes.
             write_dynamic_property(file, "linked-child-process-classpath", build_module.module_set['linked-child-process'].subtree('src').classpath(build_results, :full, :runtime))
 
-            write_dynamic_property(file, "appserver.home", ENV['TC_CONTAINER_HOME'])
+            if container_home = BuildSubtree.container_home
+                write_dynamic_property(file, "appserver.home", container_home)
+            end
 
             # Builds up the set of classes required for DSO to support sessions
             sessionSet = PathSet.new
@@ -154,7 +165,7 @@ class BuildSubtree
     # Writes out a 'dynamic' property -- one starting with the DYNAMICALLY_GENERATED_PROPERTIES_PREFIX --
     # to the given file.
     def write_dynamic_property(file, key, value)
-        file << "%s%s=%s\n" % [ DYNAMICALLY_GENERATED_PROPERTIES_PREFIX, key.to_s.to_propertyfile_escaped_s, value.to_s.to_propertyfile_escaped_s ]
+        file << "#{BuildSubtree.create_dynamic_property(key, value)}\n"
     end
 
     # Writes out all properties that start with the STATIC_PROPERTIES_PREFIX from the given
@@ -420,13 +431,19 @@ class SubtreeTestRun
             file << "tcbuild.prepared.jvm.java=%s\n" % @jvm.java.to_s.to_propertyfile_escaped_s
             file << "tcbuild.prepared.jvm.version=%s\n" % @jvm.actual_version.to_propertyfile_escaped_s
             file << "tcbuild.prepared.jvm.type=%s\n" % @jvm.actual_type.to_propertyfile_escaped_s
-            file << "tcbuild.prepared.jvmargs=%s\n" % all_jvmargs.length.to_s.to_propertyfile_escaped_s
+
+            jvm_args = all_jvmargs
+            if container_home = BuildSubtree.container_home
+              jvm_args << BuildSubtree.create_dynamic_property('appserver.home', container_home)
+            end
+            file << "tcbuild.prepared.jvmargs=%s\n" % jvm_args.length.to_s.to_propertyfile_escaped_s
 
             index = 0
-            all_jvmargs.each do |jvmarg|
+            jvm_args.each do |jvmarg|
                 file << "tcbuild.prepared.jvmarg_%d=%s\n" % [ index, jvmarg.to_propertyfile_escaped_s ]
                 index += 1
             end
+
 
             required_system_properties.each do |syspropertykey|
                 file << "tcbuild.prepared.system-property.%s=%s\n" % [ syspropertykey.to_propertyfile_escaped_s, @sysproperties[syspropertykey].to_s.to_propertyfile_escaped_s ]
