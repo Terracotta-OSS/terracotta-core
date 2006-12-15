@@ -30,11 +30,11 @@ class BuildSubtree
             testrun_results, build_results, build_environment, config_source, jvm_set, ant, platform, test_patterns, aggregation_directory)
     end
 
-    def self.container_home
+    def container_home
       ENV['TC_CONTAINER_HOME']
     end
 
-    def self.create_dynamic_property(key, value)
+    def create_dynamic_property(key, value)
       "%s%s=%s" % [ DYNAMICALLY_GENERATED_PROPERTIES_PREFIX,
           key.to_s.to_propertyfile_escaped_s,
           value.to_s.to_propertyfile_escaped_s ]
@@ -56,7 +56,7 @@ class BuildSubtree
             # their own classes.
             write_dynamic_property(file, "linked-child-process-classpath", build_module.module_set['linked-child-process'].subtree('src').classpath(build_results, :full, :runtime))
 
-            if container_home = BuildSubtree.container_home
+            if container_home
                 write_dynamic_property(file, "appserver.home", container_home)
             end
 
@@ -165,7 +165,7 @@ class BuildSubtree
     # Writes out a 'dynamic' property -- one starting with the DYNAMICALLY_GENERATED_PROPERTIES_PREFIX --
     # to the given file.
     def write_dynamic_property(file, key, value)
-        file << "#{BuildSubtree.create_dynamic_property(key, value)}\n"
+        file << "#{create_dynamic_property(key, value)}\n"
     end
 
     # Writes out all properties that start with the STATIC_PROPERTIES_PREFIX from the given
@@ -433,8 +433,8 @@ class SubtreeTestRun
             file << "tcbuild.prepared.jvm.type=%s\n" % @jvm.actual_type.to_propertyfile_escaped_s
 
             jvm_args = all_jvmargs
-            if container_home = BuildSubtree.container_home
-              jvm_args << BuildSubtree.create_dynamic_property('appserver.home', container_home)
+            if container_home = @subtree.container_home || @config_source['tc.tests.configuration.appserver.home']
+              jvm_args << @subtree.create_dynamic_property('appserver.home', container_home)
             end
             file << "tcbuild.prepared.jvmargs=%s\n" % jvm_args.length.to_s.to_propertyfile_escaped_s
 
