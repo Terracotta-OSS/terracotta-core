@@ -434,7 +434,7 @@ class SubtreeTestRun
 
             jvm_args = all_jvmargs
             if container_home = @subtree.container_home || @config_source['tc.tests.configuration.appserver.home']
-              jvm_args << @subtree.create_dynamic_property('appserver.home', container_home)
+              jvm_args << "-D#{@subtree.create_dynamic_property('appserver.home', container_home)}"
             end
             file << "tcbuild.prepared.jvmargs=%s\n" % jvm_args.length.to_s.to_propertyfile_escaped_s
 
