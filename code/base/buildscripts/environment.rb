@@ -135,13 +135,20 @@ class Environment
         # FIXME: This should include service pack, too (e.g., win2k3-sp2).
         if type =~ /Windows/i
             if @windows_version.nil?
-                @windows_version = @platform.exec("uname", "-s").strip
+                begin
+                    #@windows_version = @platform.exec("uname", "-s").strip
+                    @windows_version = `uname -s`.strip
+                rescue
+                    @windows_version = `ver`.strip
+                end
                 if @windows_version =~ /CYGWIN_NT-(\d+)\.(\d+)/i
                    @windows_version = case $2.to_i
                    when 1 then 'winxp'
                    when 2 then 'win2k3'
                    else 'windows-unknown-rev-%s' % @windows_version
                    end
+                elsif @windows_version =~ /XP/
+                   @windows_version = 'winxp'
                 else
                    @windows_version = 'windows-unknown-%s' % @windows_version
                 end
@@ -157,7 +164,11 @@ class Environment
     # 'athlon'.
     def processor_type
         if @processor_type.nil?
-            @processor_type = @platform.exec("uname", (os_type(:nice) =~ /Windows/ ? '-m' : '-p')).strip
+            if os_family == 'Windows'
+                @processor_type = ENV['PROCESSOR_ARCHITECTURE']
+            else
+                @processor_type = @platform.exec("uname", (os_type(:nice) =~ /Windows/ ? '-m' : '-p')).strip
+            end
         end
         
         @processor_type
