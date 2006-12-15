@@ -159,6 +159,9 @@ public class FutureTask implements Future, Runnable {
     Object innerGet() throws InterruptedException, ExecutionException {
       lock.lock();
       try {
+        if (DebugUtil.DEBUG) {
+          System.err.println("In FutureTask innerGet: -- Client id: " + ManagerUtil.getClientID() + ", state: " + state + ", proxyRunner: " + proxyRunner);
+        }
         while (tryAcquireShared() < 0) {
           ran.await();
         }

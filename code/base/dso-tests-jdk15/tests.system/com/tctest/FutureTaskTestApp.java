@@ -109,6 +109,8 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
   private void testWithLinkedBlockingQueue(int index) throws Exception {
     long startTime = System.currentTimeMillis();
     if (index == 0) {
+      DebugUtil.DEBUG = true;
+      
       for (int i = 0; i < NUM_OF_ITEMS; i++) {
         System.err.println("Putting task " + i);
         FutureTask task = new MyFutureTask(new MyCallable(i));
@@ -131,8 +133,14 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
     if (index == 0) {
       for (int i = 0; i < NUM_OF_ITEMS; i++) {
         FutureTask task = (FutureTask) resultQueue.take();
+        
+        if (DebugUtil.DEBUG) {
+          System.err.println("Getting task " + i);
+        }
         Assert.assertEquals(root, task.get());
       }
+      
+      DebugUtil.DEBUG = false;
     }
 
     long endTime = System.currentTimeMillis();
