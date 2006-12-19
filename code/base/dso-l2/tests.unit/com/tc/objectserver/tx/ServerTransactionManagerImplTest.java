@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.tx;
 
@@ -238,7 +239,9 @@ public class ServerTransactionManagerImplTest extends TestCase {
       assertTrue(action.clientID == null && action.txID == null);
       // commit stage
       gtxm.commitAll(null, getServerTransactionIDs(txns));
-      transactionManager.committed(txns);
+      ArrayList committedIDs = new ArrayList();
+      committedIDs.add(tx.getServerTransactionID());
+      transactionManager.committed(committedIDs);
       assertTrue(action.clientID == null && action.txID == null);
 
       // broadcast stage
