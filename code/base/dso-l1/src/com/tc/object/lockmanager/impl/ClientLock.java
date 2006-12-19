@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.lockmanager.impl;
 
@@ -34,26 +35,28 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimerTask;
 
 public class ClientLock implements WaitTimerCallback, LockFlushCallback {
 
-  private static final State      RUNNING                = new State("RUNNING");
-  private static final State      PAUSED                 = new State("PAUSED");
+  private static final State      RUNNING                  = new State("RUNNING");
+  private static final State      PAUSED                   = new State("PAUSED");
 
-  private final Map               holders                = Collections.synchronizedMap(new HashMap());
+  private final Map               holders                  = Collections.synchronizedMap(new HashMap());
+  private final Set               rejectedLockRequesterIDs = new HashSet();
   private final LockID            lockID;
-  private final Map               waitLocksByRequesterID = new HashMap();
-  private final Map               pendingLockRequests    = new LinkedHashMap();
-  private final Map               waitTimers             = new HashMap();
+  private final Map               waitLocksByRequesterID   = new HashMap();
+  private final Map               pendingLockRequests      = new LinkedHashMap();
+  private final Map               waitTimers               = new HashMap();
   private final RemoteLockManager remoteLockManager;
   private final WaitTimer         waitTimer;
 
   private final TCLogger          logger;
-  private final Greediness        greediness             = new Greediness();
-  private int                     useCount               = 0;
-  private State                   state                  = RUNNING;
-  private long                    timeUsed               = System.currentTimeMillis();
+  private final Greediness        greediness               = new Greediness();
+  private int                     useCount                 = 0;
+  private State                   state                    = RUNNING;
+  private long                    timeUsed                 = System.currentTimeMillis();
 
   public ClientLock(TCLogger logger, LockID lockID, RemoteLockManager remoteLockManager, WaitTimer waitTimer) {
     Assert.assertNotNull(lockID);
@@ -77,12 +80,10 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     final Action action = new Action();
     synchronized (this) {
       waitUntillRunning();
-      
+
       // if it is tryLock and is already being held by other thread of the same node, return
       // immediately.
-      if (noBlock && isHeld() && !isHeldBy(requesterID)) {
-        return;
-      }
+      if (noBlock && isHeld() && !isHeldBy(requesterID)) { return; }
       // debug("lock - BEGIN - ", requesterID, LockLevel.toString(type));
       if (isHeldBy(requesterID)) {
         // deal with upgrades/downgrades on locks already held
@@ -261,8 +262,8 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
         } else {
           // try again - this could potentially loop forever in a highly contended environment
           changed = true;
-          logger.debug(lockID + " :: wait() : " + threadID + " : STATE CHANGED - From = " + action + " To = " + newAction
-                       + " - retrying ...");
+          logger.debug(lockID + " :: wait() : " + threadID + " : STATE CHANGED - From = " + action + " To = "
+                       + newAction + " - retrying ...");
         }
       }
     } while (changed);
@@ -357,7 +358,14 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
       }
     }
     synchronized (waitLock) {
+      reject(threadID);
       waitLock.notifyAll();
+    }
+  }
+  
+  private void reject(ThreadID threadID) {
+    synchronized(rejectedLockRequesterIDs) {
+      rejectedLockRequesterIDs.add(threadID);
     }
   }
 
@@ -422,20 +430,21 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
   private void waitForTryLock(ThreadID threadID, Object waitLock) {
     // debug("waitForTryLock() - BEGIN - ", requesterID, LockLevel.toString(type));
     synchronized (waitLock) {
-      Object pendingWaitLock = null;
-
-      // We need to check if the pendingWaitLocks still exists because the server
-      // may have responded already.
-      synchronized (this) {
-        pendingWaitLock = waitLocksByRequesterID.get(threadID);
-      }
-      if (pendingWaitLock != null) {
+      // We need to check if the respond has returned already before we do a wait
+      while (!isLockRequestResponded(threadID)) {
         try {
           waitLock.wait();
         } catch (InterruptedException ioe) {
           throw new TCRuntimeException(ioe);
         }
       }
+    }
+  }
+
+  private boolean isLockRequestResponded(ThreadID threadID) {
+    if (isHeldBy(threadID)) { return true; }
+    synchronized (rejectedLockRequesterIDs) {
+      return rejectedLockRequesterIDs.remove(threadID);
     }
   }
 

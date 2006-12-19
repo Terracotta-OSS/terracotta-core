@@ -162,6 +162,6 @@ public class TestRemoteLockManager implements RemoteLockManager {
   }
 
   public void tryRequestLock(LockID lockID, ThreadID threadID, int lockType) {
-    throw new ImplementMe();
+    //
   }
 }

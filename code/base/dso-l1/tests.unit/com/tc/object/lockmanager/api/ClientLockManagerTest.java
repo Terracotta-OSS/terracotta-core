@@ -1,14 +1,22 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.lockmanager.api;
 
+import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
+import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
+import com.tc.exception.TCRuntimeException;
 import com.tc.logging.NullTCLogger;
+import com.tc.logging.TCLogger;
 import com.tc.object.lockmanager.api.TestRemoteLockManager.LockResponder;
 import com.tc.object.lockmanager.impl.ClientLockManagerImpl;
+import com.tc.object.session.SessionID;
+import com.tc.object.session.SessionManager;
+import com.tc.object.session.SessionProvider;
 import com.tc.object.session.TestSessionManager;
 import com.tc.object.tx.WaitInvocation;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -41,6 +49,78 @@ public class ClientLockManagerTest extends TestCase {
     rmtLockManager = new TestRemoteLockManager(sessionManager);
     lockManager = new ClientLockManagerImpl(new NullTCLogger(), rmtLockManager, sessionManager);
     rmtLockManager.setClientLockManager(lockManager);
+  }
+
+  public void testTryLock() {
+    class TryLockRemoteLockManager extends TestRemoteLockManager {
+      private CyclicBarrier requestBarrier;
+      private CyclicBarrier awardBarrier;
+
+      public TryLockRemoteLockManager(SessionProvider sessionProvider, CyclicBarrier requestBarrier, CyclicBarrier awardBarrier) {
+        super(sessionProvider);
+        this.requestBarrier = requestBarrier;
+        this.awardBarrier = awardBarrier;
+      }
+
+      public void tryRequestLock(LockID lockID, ThreadID threadID, int lockType) {
+        try {
+          requestBarrier.barrier();
+          awardBarrier.barrier();
+        } catch (BrokenBarrierException e) {
+          throw new TCRuntimeException(e);
+        } catch (InterruptedException e) {
+          throw new TCRuntimeException(e);
+        }
+      }
+    }
+
+    class TryLockClientLockManager extends ClientLockManagerImpl {
+      private CyclicBarrier awardBarrier;
+
+      public TryLockClientLockManager(TCLogger logger, RemoteLockManager remoteLockManager,
+                                      SessionManager sessionManager, CyclicBarrier awardBarrier) {
+        super(logger, remoteLockManager, sessionManager);
+        this.awardBarrier = awardBarrier;
+      }
+
+      public void awardLock(SessionID sessionID, LockID lockID, ThreadID threadID, int level) {
+        try {
+          awardBarrier.barrier();
+          super.awardLock(sessionID, lockID, threadID, level);
+        } catch (BrokenBarrierException e) {
+          throw new TCRuntimeException(e);
+        } catch (InterruptedException e) {
+          throw new TCRuntimeException(e);
+        }
+      }
+    }
+
+    final CyclicBarrier requestBarrier = new CyclicBarrier(2);
+    final CyclicBarrier awardBarrier = new CyclicBarrier(2);
+
+    rmtLockManager = new TryLockRemoteLockManager(sessionManager, requestBarrier, awardBarrier);
+    lockManager = new TryLockClientLockManager(new NullTCLogger(), rmtLockManager, sessionManager, awardBarrier);
+
+    final LockID lockID1 = new LockID("1");
+    final ThreadID txID = new ThreadID(1);
+
+    Thread t1 = new Thread(new Runnable() {
+      public void run() {
+        try {
+          requestBarrier.barrier();
+          lockManager.awardLock(sessionManager.getSessionID(), lockID1, ThreadID.VM_ID, LockLevel
+              .makeGreedy(LockLevel.WRITE));
+        } catch (BrokenBarrierException e) {
+          throw new TCRuntimeException(e);
+        } catch (InterruptedException e) {
+          throw new TCRuntimeException(e);
+        }
+      }
+    });
+    t1.start();
+
+    lockManager.tryLock(lockID1, txID, LockLevel.WRITE);
+
   }
 
   public void testGreedyLockRequest() {
