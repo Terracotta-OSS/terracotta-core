@@ -185,13 +185,16 @@ public class HashMapTC extends HashMap implements Manageable, Clearable {
       synchronized (__tc_managed().getResolveLock()) {
         ManagerUtil.checkWriteAccess(this);
         // It sucks todo two lookups
-        Map.Entry e = getEntry(key);
+        HashMap.Entry e = getEntry(key);
         if (e == null) {
           // New mapping
           ManagerUtil.logicalInvoke(this, "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", new Object[] {
               key, value });
           return lookUpIfNecessary(super.put(key, value));
         } else {
+          // without this, LinkedHashMap will not function properly
+          e.recordAccess(this);
+
           // Replacing old mapping
           Object old = lookUpIfNecessary(e.getValue());
           if (value != old) {

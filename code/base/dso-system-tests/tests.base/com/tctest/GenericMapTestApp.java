@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -22,6 +23,7 @@ import gnu.trove.TObjectHash;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -422,7 +424,7 @@ public class GenericMapTestApp extends GenericTestApp {
   void testBasicGet(Map map, boolean validate) {
     if (validate) {
       try {
-        if (isSynchronizedGetRequired(map)) {
+        if (isAccessOrderedLinkedHashMap(map)) {
           synchronized (map) {
             Assert.assertEquals("value", map.get("key"));
           }
@@ -1699,53 +1701,107 @@ public class GenericMapTestApp extends GenericTestApp {
       }
     }
   }
-  
+
   void testLinkedHashMapAccessOrderGet(Map map, boolean validate) {
-    if (!isSynchronizedGetRequired(map)) { return; }
-    
+    if (!isAccessOrderedLinkedHashMap(map)) { return; }
+
     if (validate) {
-      Map toBeExpected = new HashMap();
-      toBeExpected.put("Second", "Second Value");
+      Map toBeExpected = new LinkedHashMap();
       toBeExpected.put("First", "First Value");
       toBeExpected.put("Third", "Third Value");
+      toBeExpected.put("Second", "Second Value"); // access order maps put recently accessed items at the end
       assertMappings(toBeExpected, map);
     } else {
-      Map toBeAdded = new HashMap();
+      Map toBeAdded = new LinkedHashMap();
       toBeAdded.put("First", "First Value");
       toBeAdded.put("Second", "Second Value");
       toBeAdded.put("Third", "Third Value");
-      synchronized(map) {
+      synchronized (map) {
         map.putAll(toBeAdded);
       }
-      synchronized(map) {
+      synchronized (map) {
         Assert.assertEquals("Second Value", map.get("Second"));
       }
     }
   }
-  
-  void testLinkedHashMapAccessOrderPut(Map map, boolean validate) {
-    if (!isSynchronizedGetRequired(map)) { return; }
-    
+
+  void testLinkedHashMapInsertionOrderPut(Map map, boolean validate) {
+    if (!(map instanceof LinkedHashMap)) { return; }
+
+    // we only want insertion ordered maps in this test
+    if (isAccessOrderedLinkedHashMap(map)) { return; }
+
     if (validate) {
-      Map toBeExpected = new HashMap();
-      toBeExpected.put("Second", "New Second Value");
+      Map toBeExpected = new LinkedHashMap();
       toBeExpected.put("First", "First Value");
+      toBeExpected.put("Second", "New Second Value");
       toBeExpected.put("Third", "Third Value");
       assertMappings(toBeExpected, map);
     } else {
-      Map toBeAdded = new HashMap();
+      Map toBeAdded = new LinkedHashMap();
       toBeAdded.put("First", "First Value");
       toBeAdded.put("Second", "Second Value");
       toBeAdded.put("Third", "Third Value");
-      synchronized(map) {
+      synchronized (map) {
         map.putAll(toBeAdded);
       }
-      synchronized(map) {
+      synchronized (map) {
+        // replacing mapping should not affect order (for insertion order maps)
         map.put("Second", "New Second Value");
       }
     }
   }
 
+  void testLinkedHashMapInsertionOrderRemovePut(Map map, boolean validate) {
+    if (!(map instanceof LinkedHashMap)) { return; }
+
+    // we only want insertion ordered maps in this test
+    if (isAccessOrderedLinkedHashMap(map)) { return; }
+
+    if (validate) {
+      Map toBeExpected = new LinkedHashMap();
+      toBeExpected.put("First", "First Value");
+      toBeExpected.put("Third", "Third Value");
+      toBeExpected.put("Second", "New Second Value");
+      assertMappings(toBeExpected, map);
+    } else {
+      Map toBeAdded = new LinkedHashMap();
+      toBeAdded.put("First", "First Value");
+      toBeAdded.put("Second", "Second Value");
+      toBeAdded.put("Third", "Third Value");
+      synchronized (map) {
+        map.putAll(toBeAdded);
+      }
+      synchronized (map) {
+        map.remove("Second");
+        map.put("Second", "New Second Value");
+      }
+    }
+  }
+
+  void testLinkedHashMapAccessOrderPut(Map map, boolean validate) {
+    if (!isAccessOrderedLinkedHashMap(map)) { return; }
+
+    if (validate) {
+      Map toBeExpected = new LinkedHashMap();
+      toBeExpected.put("First", "First Value");
+      toBeExpected.put("Third", "Third Value");
+      toBeExpected.put("Second", "New Second Value"); // access order maps put recently accessed items at the end
+      assertMappings(toBeExpected, map);
+    } else {
+      Map toBeAdded = new LinkedHashMap();
+      toBeAdded.put("First", "First Value");
+      toBeAdded.put("Second", "Second Value");
+      toBeAdded.put("Third", "Third Value");
+      synchronized (map) {
+        map.putAll(toBeAdded);
+      }
+      synchronized (map) {
+        // puts count as access on access order linked hash maps
+        map.put("Second", "New Second Value");
+      }
+    }
+  }
 
   private boolean canTestSharedArray(Map map) {
     return (!(map instanceof HashMap) && !(map instanceof LinkedHashMap) && !(map instanceof Hashtable));
@@ -1830,7 +1886,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   void assertMappingsEqual(Object[] expect, Map map) {
     Assert.assertEquals(expect.length, map.size());
-    
+
     if (map instanceof LinkedHashMap) {
       Set entries = map.entrySet();
       int i = 0;
@@ -1838,11 +1894,11 @@ public class GenericMapTestApp extends GenericTestApp {
         Assert.assertEquals(expect[i++], iActual.next());
       }
     }
-    
+
     for (int i = 0; i < expect.length; i++) {
       Entry entry = (Entry) expect[i];
-      if (isSynchronizedGetRequired(map)) {
-        synchronized(map) {
+      if (isAccessOrderedLinkedHashMap(map)) {
+        synchronized (map) {
           Assert.assertEquals(entry.getValue(), map.get(entry.getKey()));
         }
       } else {
@@ -1859,7 +1915,7 @@ public class GenericMapTestApp extends GenericTestApp {
       Assert.assertEquals(1, map.values().size());
       Assert.assertEquals(1, map.keySet().size());
 
-      if (isSynchronizedGetRequired(map)) {
+      if (isAccessOrderedLinkedHashMap(map)) {
         // MyLinkedHashMap3 has accessOrder set to true; therefore, get() method
         // will mutate internal state and thus, require synchronized.
         synchronized (map) {
@@ -1922,15 +1978,25 @@ public class GenericMapTestApp extends GenericTestApp {
     map.put("April", "Apr");
     return map;
   }
-  
-  private boolean isSynchronizedGetRequired(Map map) {
-    return map instanceof MyLinkedHashMap3;
+
+  private boolean isAccessOrderedLinkedHashMap(Map map) {
+    if (map instanceof LinkedHashMap) {
+      try {
+        Field f = LinkedHashMap.class.getDeclaredField("accessOrder");
+        f.setAccessible(true);
+        return ((Boolean) f.get(map)).booleanValue();
+      } catch (Throwable t) {
+        throw new RuntimeException(t);
+      }
+    }
+
+    return false;
   }
 
   private static boolean allowsNull(Map map) {
     return !(map instanceof Hashtable);
   }
-  
+
   // Used to determine if a specific key instance is retained or not
   private static class Key implements Comparable {
     private final String id;
@@ -2087,6 +2153,10 @@ public class GenericMapTestApp extends GenericTestApp {
       this.i = i;
     }
 
+    public int getI() {
+      // this method here to silence compiler warning, no other reason
+      return i;
+    }
   }
 
   private static class MyTreeMap2 extends MyTreeMap {

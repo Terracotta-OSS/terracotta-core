@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -15,7 +16,9 @@ import com.tc.util.Assert;
 import java.awt.Color;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ReflectionFieldTestApp extends GenericTestApp {
   // This field is used by reflection.
@@ -325,7 +328,7 @@ public class ReflectionFieldTestApp extends GenericTestApp {
       }
     }
   }
-  
+
   void testModifyLongWithDoubleValue(DataRoot root, boolean validate) throws Exception {
     if (validate) {
       Assert.assertEquals(Long.MIN_VALUE, root.getLongValue());
@@ -468,9 +471,8 @@ public class ReflectionFieldTestApp extends GenericTestApp {
           // Checking the exact text of the exception isn't great, but unless we want to create a unique
           // expception type for this condition, this is how we differentiate between other potential
           // IllegalAccessExceptions being thrown here
-          Assert
-              .assertEquals("Field modification through reflection for non-physical shared object of type " + list.getClass().getName() + " is not supported!",
-                            re.getMessage());
+          Assert.assertEquals("Field modification through reflection for non-physical shared object of type "
+                              + list.getClass().getName() + " is not supported!", re.getMessage());
         }
       }
 
@@ -498,6 +500,48 @@ public class ReflectionFieldTestApp extends GenericTestApp {
       Assert.assertNotNull(color);
       Assert.assertEquals(new Color(100, true), color);
     }
+  }
+
+  void testLogicalClasses(DataRoot root, boolean validate) throws Exception {
+    Map map = root.getMap();
+    Map subMap = root.getSubMap();
+
+    Field sizeField = HashMap.class.getDeclaredField("size");
+    Field iField = subMap.getClass().getDeclaredField("i");
+    sizeField.setAccessible(true);
+    iField.setAccessible(true);
+
+    if (validate) {
+      int size = sizeField.getInt(map);
+      Assert.assertEquals(1, size);
+      size = ((Integer) sizeField.get(subMap)).intValue();
+
+      int i = iField.getInt(subMap);
+      Assert.assertEquals(5, i);
+
+    } else {
+      try {
+        sizeField.setInt(map, 42);
+        throw new RuntimeException("modify allowed");
+      } catch (IllegalAccessException iae) {
+        // expected
+      }
+
+      try {
+        sizeField.setInt(subMap, 42);
+        throw new RuntimeException("modify allowed");
+      } catch (IllegalAccessException iae) {
+        // expected
+      }
+
+      int i = iField.getInt(subMap);
+      Assert.assertEquals(3, i);
+
+      synchronized (subMap) {
+        iField.setInt(subMap, 5);
+      }
+    }
+
   }
 
   /*
@@ -557,6 +601,8 @@ public class ReflectionFieldTestApp extends GenericTestApp {
     String testClass = ReflectionFieldTestApp.class.getName();
     config.getOrCreateSpec(testClass);
 
+    config.getOrCreateSpec(SubMap.class.getName());
+
     String writeAllowedMethodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(writeAllowedMethodExpression);
     String readOnlyMethodExpression = "* " + testClass + "*.*ReadOnly*(..)";
@@ -604,6 +650,17 @@ public class ReflectionFieldTestApp extends GenericTestApp {
     }
   }
 
+  private static class SubMap extends HashMap {
+    private int i = 3;
+
+    public SubMap() {
+      put("key", "value");
+      if (i == 5) { // silence compiler warning
+        throw new RuntimeException();
+      }
+    }
+  }
+
   private static class DataRoot {
     private static Long staticLong;
 
@@ -618,12 +675,27 @@ public class ReflectionFieldTestApp extends GenericTestApp {
     private double      doubleValue  = Double.MIN_VALUE;
     private float       floatValue   = Float.MIN_VALUE;
 
+    private final Map   map          = new HashMap();
+    {
+      map.put("key", "value");
+    }
+
+    private final Map   subMap       = new SubMap();
+
     public DataRoot(long longValue) {
       this.longValue = longValue;
     }
 
     public DataRoot() {
       //
+    }
+
+    public Map getSubMap() {
+      return subMap;
+    }
+
+    public Map getMap() {
+      return map;
     }
 
     public static Long getStaticLong() {

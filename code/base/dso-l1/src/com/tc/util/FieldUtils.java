@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -18,9 +19,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 public class FieldUtils {
-  public final static String CLASS    = "com/tc/util/FieldUtils";
+  public final static String CLASS       = "com/tc/util/FieldUtils";
 
-  public final static String GET_DESC = "(Ljava/lang/Object;Ljava/lang/reflect/Field;Lsun/reflect/FieldAccessor;)";
+  public final static String GET_DESC    = "(Ljava/lang/Object;Ljava/lang/reflect/Field;Lsun/reflect/FieldAccessor;)";
 
   private static ThreadLocal allowAccess = new ThreadLocal();
 
@@ -41,8 +42,8 @@ public class FieldUtils {
       }
     }
 
-    if ((obj instanceof TransparentAccess) && (obj instanceof Manageable)
-        && (((Manageable) obj).__tc_managed() != null)) {
+    if (TransparentAccess.class.isAssignableFrom(field.getDeclaringClass()) && (obj instanceof TransparentAccess)
+        && (obj instanceof Manageable) && (((Manageable) obj).__tc_managed() != null)) {
       // field of physically managed object
       return resolveReference((TransparentAccess) obj, field);
     }
@@ -155,7 +156,7 @@ public class FieldUtils {
     }
 
   }
-  
+
   private static boolean accessAllowed(Field field) {
     return field == allowAccess.get();
   }
@@ -186,6 +187,13 @@ public class FieldUtils {
         //
         throw new IllegalAccessException(
                                          "Field modification through reflection for non-physical shared object of type "
+                                             + obj.getClass().getName() + " is not supported!");
+      }
+
+      if (!TransparentAccess.class.isAssignableFrom(field.getDeclaringClass())) {
+        //
+        throw new IllegalAccessException(
+                                         "Field modification through reflection for fields of non-physically instrumented type "
                                              + obj.getClass().getName() + " is not supported!");
       }
 
