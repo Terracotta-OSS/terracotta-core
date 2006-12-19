@@ -287,7 +287,7 @@ public class DistributedObjectServer extends SEDA {
       persistor = new SleepycatPersistor(TCLogging.getLogger(SleepycatPersistor.class), dbenv,
                                          serializationAdapterFactory);
 
-      String cachePolicy = l2Properties.getProperty("object.cachePolicy").toUpperCase();
+      String cachePolicy = l2Properties.getProperty("objectmanager.cachePolicy").toUpperCase();
       if (cachePolicy.equals("LRU")) {
         swapCache = new LRUEvictionPolicy(-1);
       } else if (cachePolicy.equals("LFU")) {

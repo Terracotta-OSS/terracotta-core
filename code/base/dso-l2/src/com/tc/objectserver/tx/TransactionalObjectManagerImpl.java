@@ -15,6 +15,7 @@ import com.tc.objectserver.context.CommitTransactionContext;
 import com.tc.objectserver.context.LookupEventContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
+import com.tc.properties.TCProperties;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -38,8 +39,8 @@ import java.util.Set;
  */
 public class TransactionalObjectManagerImpl implements TransactionalObjectManager, PrettyPrintable {
 
-  // TODO:: Move to TCProperties
-  private static final int                     MAX_OBJECTS_TO_COMMIT = 500;
+  private static final int                     MAX_OBJECTS_TO_COMMIT = TCProperties.getProperties()
+                                                                         .getInt("l2.objectmanager.maxObjectsToCommit");
 
   private final ObjectManager                  objectManager;
   private final TransactionSequencer           sequencer;
@@ -60,7 +61,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   private final PendingList                    pendingTxnList        = new PendingList();
 
   public TransactionalObjectManagerImpl(ObjectManager objectManager, TransactionSequencer sequencer,
-                                      ServerGlobalTransactionManager gtxm, Sink lookupSink) {
+                                        ServerGlobalTransactionManager gtxm, Sink lookupSink) {
     this.objectManager = objectManager;
     this.sequencer = sequencer;
     this.gtxm = gtxm;
@@ -257,13 +258,16 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   // Commit Transaction stage method
   public synchronized void addTransactionsToCommit(CommitTransactionContext ctc) {
     int count = 0;
+    int txncount = 0;
     for (Iterator i = commitPendingTxns.values().iterator(); i.hasNext();) {
       TxnObjectGrouping grouping = (TxnObjectGrouping) i.next();
       i.remove();
       Assert.assertTrue(grouping.getApplyPendingTxns().isEmpty());
       Map objects = grouping.getObjects();
+      Collection txnIDs = grouping.getTxnIDs();
       count += objects.size();
-      ctc.addObjectsAndAppliedTxns(grouping.getTxnIDs(), objects.values(), grouping.getNewRoots());
+      txncount += txnIDs.size();
+      ctc.addObjectsAndAppliedTxns(txnIDs, objects.values(), grouping.getNewRoots());
       for (Iterator j = objects.keySet().iterator(); j.hasNext();) {
         Object old = checkedOutObjects.remove(j.next());
         Assert.assertTrue(old == grouping);
@@ -272,7 +276,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
         break;
       }
     }
-    if (count > 0) {
+    if (txncount > 0) {
       ctc.setCompletedTransactionIds(getCompletedTxnIds());
     }
   }
@@ -317,7 +321,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     public boolean isNewRequest() {
       return isNew;
     }
-    
+
     public void setNewRequest(boolean b) {
       this.isNew = b;
     }
