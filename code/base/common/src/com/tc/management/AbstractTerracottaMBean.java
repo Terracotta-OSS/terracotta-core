@@ -7,7 +7,7 @@ package com.tc.management;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 
 import java.util.Locale;
 import java.util.MissingResourceException;
@@ -29,7 +29,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
   private static final ResourceBundle          DEFAULT_BUNDLE = getBundleForMBean(TerracottaMBean.class, TCLogging
                                                                   .getLogger(TerracottaMBean.class));
 
-  private static final boolean                 ENABLED        = TCProperties.getProperties()
+  private static final boolean                 ENABLED        = TCPropertiesImpl.getProperties()
                                                                   .getBoolean("tc.management.mbeans.enabled");
 
   private final TCLogger                       logger;

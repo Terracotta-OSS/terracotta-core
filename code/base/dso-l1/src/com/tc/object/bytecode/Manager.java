@@ -9,6 +9,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.TraverseTest;
 import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.properties.TCProperties;
 
 /**
  * The Manager interface
@@ -111,5 +112,7 @@ public interface Manager {
   public TCLogger getLogger(String loggerName);
 
   public SessionMonitorMBean getSessionMonitorMBean();
+
+  public TCProperties getTCProperites();
 
 }

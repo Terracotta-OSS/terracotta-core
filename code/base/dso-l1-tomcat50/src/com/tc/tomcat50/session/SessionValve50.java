@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.tomcat50.session;
 
@@ -51,14 +52,11 @@ public class SessionValve50 extends ValveBase {
 
   private void tcInvoke(final CoyoteRequest valveReq, final CoyoteResponse valveRes, final ValveContext valveContext)
       throws IOException, ServletException {
-    TerracottaSessionManager mgr = null;
-    SessionRequest50 sReq50 = null;
-    SessionResponse50 sRes50 = null;
+    TerracottaSessionManager mgr = findOrCreateManager(valveReq, valveReq.getContextPath());
+    SessionRequest50 sReq50 = (SessionRequest50) mgr.preprocess(valveReq, valveRes);
+    SessionResponse50 sRes50 = new SessionResponse50(valveRes, sReq50);
+    sReq50.setSessionResposne50(sRes50);
     try {
-      mgr = findOrCreateManager(valveReq, valveReq.getContextPath());
-      sReq50 = (SessionRequest50) mgr.preprocess(valveReq, valveRes);
-      sRes50 = new SessionResponse50(valveRes, sReq50);
-      sReq50.setSessionResposne50(sRes50);
       valveContext.invokeNext(sReq50, sRes50);
     } finally {
       mgr.postprocess(sReq50);
@@ -86,7 +84,8 @@ public class SessionValve50 extends ValveBase {
     final ContextMgr contextMgr = DefaultContextMgr
         .makeInstance(contextPath, valveReq.getContext().getServletContext());
 
-    final TerracottaSessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr, new Tomcat50RequestResponseFactory(), cp);
+    final TerracottaSessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr,
+                                                                     new Tomcat50RequestResponseFactory(), cp);
     return rv;
   }
 

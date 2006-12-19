@@ -96,6 +96,7 @@ import com.tc.object.loaders.StandardClassLoaderAdapter;
 import com.tc.object.loaders.StandardClassProvider;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.InstrumentationLoggerImpl;
+import com.tc.properties.TCProperties;
 import com.tc.session.SessionSupport;
 import com.tc.text.Banner;
 import com.tc.util.AbstractIdentifier;
@@ -277,6 +278,7 @@ public class BootJarTool {
       loadTerracottaClass(TraverseTest.class.getName());
       loadTerracottaClass(Os.class.getName());
       loadTerracottaClass(NIOWorkarounds.class.getName());
+      loadTerracottaClass(TCProperties.class.getName());
 
       // These two classes need to be specified as literal in order to prevent
       // the static block of IdentityWeakHashMap from executing during generating

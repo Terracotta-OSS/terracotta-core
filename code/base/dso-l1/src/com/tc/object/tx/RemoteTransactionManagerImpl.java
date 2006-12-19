@@ -10,7 +10,7 @@ import com.tc.object.lockmanager.api.LockFlushCallback;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
-import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 import com.tc.util.State;
@@ -29,14 +29,14 @@ import java.util.Set;
 
 /**
  * Sends off committed transactions
- * 
+ *
  * @author steve
  */
 public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   private static final long                TIMEOUT                 = 30000L;
 
-  private static final int                 MAX_OUTSTANDING_BATCHES = TCProperties
+  private static final int                 MAX_OUTSTANDING_BATCHES = TCPropertiesImpl
                                                                        .getProperties()
                                                                        .getInt(
                                                                                "l1.transactionmanager.maxOutstandingBatchSize");

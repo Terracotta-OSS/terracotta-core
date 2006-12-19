@@ -8,6 +8,7 @@ import com.tc.management.beans.sessions.SessionMonitorMBean;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.TraverseTest;
+import com.tc.properties.TCProperties;
 
 public final class NullManager implements Manager {
 
@@ -207,6 +208,10 @@ public final class NullManager implements Manager {
   }
 
   public final Object lookupObject(ObjectID id) {
+    throw new UnsupportedOperationException();
+  }
+
+  public final TCProperties getTCProperites() {
     throw new UnsupportedOperationException();
   }
 }

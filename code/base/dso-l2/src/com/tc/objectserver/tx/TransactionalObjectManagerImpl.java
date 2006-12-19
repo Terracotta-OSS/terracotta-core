@@ -15,7 +15,7 @@ import com.tc.objectserver.context.CommitTransactionContext;
 import com.tc.objectserver.context.LookupEventContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
-import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -39,7 +39,7 @@ import java.util.Set;
  */
 public class TransactionalObjectManagerImpl implements TransactionalObjectManager, PrettyPrintable {
 
-  private static final int                     MAX_OBJECTS_TO_COMMIT = TCProperties.getProperties()
+  private static final int                     MAX_OBJECTS_TO_COMMIT = TCPropertiesImpl.getProperties()
                                                                          .getInt("l2.objectmanager.maxObjectsToCommit");
 
   private final ObjectManager                  objectManager;

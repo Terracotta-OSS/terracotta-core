@@ -85,6 +85,7 @@ import com.tc.object.tx.TransactionBatchAccounting;
 import com.tc.object.tx.TransactionBatchFactory;
 import com.tc.object.tx.TransactionBatchWriterFactory;
 import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
@@ -99,7 +100,7 @@ import java.util.Collections;
 
 /**
  * Thing to startup a client.
- * 
+ *
  * @author steve
  */
 
@@ -212,7 +213,7 @@ public class DistributedObjectClient extends SEDA {
                                                 runtimeLogger, channel.getChannelIDProvider(), classProvider,
                                                 classFactory, objectFactory, config.getPortability());
 
-    l1Properties = TCProperties.getProperties().getPropertiesFor("l1");
+    l1Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l1");
     TCProperties cacheManagerProperties = l1Properties.getPropertiesFor("cachemanager");
     if (cacheManagerProperties.getBoolean("enabled")) {
       this.cacheManager = new CacheManager(objectManager, new CacheConfigImpl(cacheManagerProperties));

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
 
@@ -31,6 +32,8 @@ import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.WaitInvocation;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.OptimisticTransactionManagerImpl;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.Util;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -276,7 +279,7 @@ public class ManagerImpl implements Manager {
       return this.objectManager.createOrReplaceRoot(name, object);
     } catch (Throwable t) {
       Util.printLogAndRethrowError(t, logger);
-      
+
       // shouldn't get here
       throw new AssertionError();
     }
@@ -669,6 +672,10 @@ public class ManagerImpl implements Manager {
       Util.printLogAndRethrowError(t, logger);
     }
     return ret;
+  }
+
+  public TCProperties getTCProperites() {
+    return TCPropertiesImpl.getProperties();
   }
 
   private class ShutdownAction implements Runnable {

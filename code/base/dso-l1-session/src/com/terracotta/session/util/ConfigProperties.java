@@ -5,90 +5,90 @@
 package com.terracotta.session.util;
 
 import com.tc.object.bytecode.ManagerUtil;
+import com.tc.properties.TCProperties;
 import com.terracotta.session.WebAppConfig;
 
 import java.util.ArrayList;
-import java.util.Properties;
 
 import javax.servlet.http.HttpSessionAttributeListener;
 import javax.servlet.http.HttpSessionListener;
 
 public class ConfigProperties {
 
-  protected static final String  PREFIX                              = "com.terracotta.session.";
-  public static final String     ID_LENGTH                           = PREFIX + "id.length";
-  public static final String     SERVER_ID                           = PREFIX + "serverid";
-  public static final String     COOKIE_DOMAIN                       = PREFIX + "cookie.domain";
-  public static final String     COOKIE_COMMENT                      = PREFIX + "cookie.comment";
-  public static final String     COOKIE_SECURE                       = PREFIX + "cookie.secure";
-  public static final String     COOKIE_MAX_AGE                      = PREFIX + "cookie.maxage.seconds";
-  public static final String     COOKIE_NAME                         = PREFIX + "cookie.name";
-  public static final String     COOKIE_PATH                         = PREFIX + "cookie.path";
-  public static final String     COOKIE_ENABLED                      = PREFIX + "cookie.enabled";
-  public static final String     SESSION_TIMEOUT_SECONDS             = PREFIX + "maxidle.seconds";
-  public static final String     TRACKING_ENABLED                    = PREFIX + "tracking.enabled";
-  public static final String     URL_REWRITE_ENABLED                 = PREFIX + "urlrewrite.enabled";
-  public static final String     ATTRIBUTE_LISTENERS                 = PREFIX + "attribute.listeners";
-  public static final String     SESSION_LISTENERS                   = PREFIX + "listeners";
-  public static final String     INVALIDATOR_SLEEP                   = PREFIX + "invalidator.sleep";
-  public static final String     REQUEST_BENCHES                     = PREFIX + "request.bench.enabled";
-  public static final String     INVALIDATOR_BENCHES                 = PREFIX + "invalidator.bench.enabled";
-  public static final String     STUCK_REQUEST_TRACKING              = PREFIX + "request.tracking";
-  public static final String     STUCK_REQUEST_THREAD_DUMP           = PREFIX + "request.tracking.dump";
-  public static final String     STUCK_REQUEST_INTERVAL              = PREFIX + "request.tracking.interval";
-  public static final String     STUCK_REQUEST_THRESHOLD             = PREFIX + "request.tracking.threshold";
+  protected static final String  PREFIX                     = "session.";
+  public static final String     ID_LENGTH                  = PREFIX + "id.length";
+  public static final String     SERVER_ID                  = PREFIX + "serverid";
+  public static final String     COOKIE_DOMAIN              = PREFIX + "cookie.domain";
+  public static final String     COOKIE_COMMENT             = PREFIX + "cookie.comment";
+  public static final String     COOKIE_SECURE              = PREFIX + "cookie.secure";
+  public static final String     COOKIE_MAX_AGE             = PREFIX + "cookie.maxage.seconds";
+  public static final String     COOKIE_NAME                = PREFIX + "cookie.name";
+  public static final String     COOKIE_PATH                = PREFIX + "cookie.path";
+  public static final String     COOKIE_ENABLED             = PREFIX + "cookie.enabled";
+  public static final String     SESSION_TIMEOUT_SECONDS    = PREFIX + "maxidle.seconds";
+  public static final String     TRACKING_ENABLED           = PREFIX + "tracking.enabled";
+  public static final String     URL_REWRITE_ENABLED        = PREFIX + "urlrewrite.enabled";
+  public static final String     ATTRIBUTE_LISTENERS        = PREFIX + "attribute.listeners";
+  public static final String     SESSION_LISTENERS          = PREFIX + "listeners";
+  public static final String     INVALIDATOR_SLEEP          = PREFIX + "invalidator.sleep";
+  public static final String     REQUEST_BENCHES            = PREFIX + "request.bench.enabled";
+  public static final String     INVALIDATOR_BENCHES        = PREFIX + "invalidator.bench.enabled";
+  public static final String     STUCK_REQUEST_TRACKING     = PREFIX + "request.tracking";
+  public static final String     STUCK_REQUEST_THREAD_DUMP  = PREFIX + "request.tracking.dump";
+  public static final String     STUCK_REQUEST_INTERVAL     = PREFIX + "request.tracking.interval";
+  public static final String     STUCK_REQUEST_THRESHOLD    = PREFIX + "request.tracking.threshold";
+  public static final String     DEBUG_SERVER_HOPS          = PREFIX + "debug.hops";
+  public static final String     DEBUG_SERVER_HOPS_INTERVAL = PREFIX + "debug.hops.interval";
 
-  protected static final boolean defaultCookiesEnabled               = true;
-  protected static final boolean defaultTrackingEnabled              = true;
-  protected static final boolean defaultUrlEnabled                   = true;
-  protected static final String  defaultCookieComment                = null;
-  protected static final String  defaultCookieDomain                 = null;
-  protected static final int     defaultCookieMaxAge                 = -1;
-  protected static final String  defaultCookieName                   = "JSESSIONID";
-  protected static final String  defaultCookiePath                   = "/";
-  protected static final boolean defaultCookieSecure                 = false;
-  protected static final int     defaultIdLength                     = 20;
-  protected static final String  defaultServerId                     = ManagerUtil.getClientID();
-  protected static final int     defaultSessionTimeout               = 30 * 60;
-  protected static final int     defaultInvalidatorSleep             = 5 * 60;
-  protected static final boolean defaultRequestLogBenchEnabled       = false;
-  protected static final boolean defaultInvalidatorLogBenchEnabled   = true;
-  protected static final boolean defaultRequestTrackerEnabled        = false;
-  protected static final boolean defaultRequestTrackerThreadDump     = false;
-  protected static final int     defaultRequestTrackerSleepMillis    = 2500;
-  protected static final int     defaultRequestTrackerStuckThreshold = 15000;
+  protected static final boolean defaultCookiesEnabled      = true;
+  protected static final boolean defaultTrackingEnabled     = true;
+  protected static final boolean defaultUrlEnabled          = true;
+  protected static final String  defaultCookieComment       = null;
+  protected static final String  defaultCookieDomain        = null;
+  protected static final int     defaultCookieMaxAge        = -1;
+  protected static final String  defaultCookieName          = "JSESSIONID";
+  protected static final String  defaultCookiePath          = "/";
+  protected static final boolean defaultCookieSecure        = false;
+  protected static final int     defaultIdLength            = 20;
+  protected static final String  defaultServerId            = ManagerUtil.getClientID();
+  protected static final int     defaultSessionTimeout      = 30 * 60;
 
   private final WebAppConfig     wac;
-  private final Properties       props;
+  private final TCProperties     props;
 
   public ConfigProperties(final WebAppConfig wac) {
-    this(wac, System.getProperties());
+    this(wac, ManagerUtil.getTCProperties());
   }
 
-  public ConfigProperties(final WebAppConfig wac, final Properties props) {
+  public ConfigProperties(final WebAppConfig wac, final TCProperties props) {
     Assert.pre(props != null);
 
     this.wac = wac;
     this.props = props;
   }
 
+  public int getDebugServerHopsInterval() {
+    return props.getInt(DEBUG_SERVER_HOPS_INTERVAL);
+  }
+
+  public boolean isDebugServerHops() {
+    return props.getBoolean(DEBUG_SERVER_HOPS);
+  }
+
   public boolean isRequestTrackingEnabled() {
-    final String boolVal = getStringVal(STUCK_REQUEST_TRACKING, null, Boolean.toString(defaultRequestTrackerEnabled));
-    return "true".equals(boolVal);
+    return props.getBoolean(STUCK_REQUEST_TRACKING);
   }
 
   public boolean isDumpThreadsOnStuckRequests() {
-    final String boolVal = getStringVal(STUCK_REQUEST_THREAD_DUMP, null, Boolean
-        .toString(defaultRequestTrackerThreadDump));
-    return "true".equals(boolVal);
+    return props.getBoolean(STUCK_REQUEST_THREAD_DUMP);
   }
 
   public long getRequestTrackerSleepMillis() {
-    return getPropertyInt(STUCK_REQUEST_INTERVAL, defaultRequestTrackerSleepMillis);
+    return props.getLong(STUCK_REQUEST_INTERVAL);
   }
 
   public long getRequestTrackerStuckThresholdMillis() {
-    return getPropertyInt(STUCK_REQUEST_THRESHOLD, defaultRequestTrackerStuckThreshold);
+    return props.getLong(STUCK_REQUEST_THRESHOLD);
   }
 
   public int getSessionIdLength() {
@@ -110,9 +110,7 @@ public class ConfigProperties {
   }
 
   public int getInvalidatorSleepSeconds() {
-    final int wacVal = defaultInvalidatorSleep;
-    final int rv = getIntVal(INVALIDATOR_SLEEP, wacVal, defaultInvalidatorSleep, -1);
-    return Math.max(1, rv);
+    return props.getInt(INVALIDATOR_SLEEP);
   }
 
   public String getServerId() {
@@ -165,13 +163,11 @@ public class ConfigProperties {
   }
 
   public boolean getRequestLogBenchEnabled() {
-    final String boolVal = getStringVal(REQUEST_BENCHES, null, Boolean.toString(defaultRequestLogBenchEnabled));
-    return "true".equals(boolVal);
+    return props.getBoolean(REQUEST_BENCHES);
   }
 
   public boolean getInvalidatorLogBenchEnabled() {
-    final String boolVal = getStringVal(INVALIDATOR_BENCHES, null, Boolean.toString(defaultInvalidatorLogBenchEnabled));
-    return "true".equals(boolVal);
+    return props.getBoolean(INVALIDATOR_BENCHES);
   }
 
   public HttpSessionAttributeListener[] getSessionAttributeListeners() {
@@ -245,7 +241,7 @@ public class ConfigProperties {
   }
 
   protected String getProperty(final String propName) {
-    String rv = props.getProperty(propName);
+    String rv = props.getProperty(propName, true);
     if (rv == null) return null;
     rv = rv.trim();
     if (rv.length() == 0) return null;
@@ -253,7 +249,7 @@ public class ConfigProperties {
   }
 
   protected int getPropertyInt(String propName, int defVal) {
-    final String val = props.getProperty(propName);
+    final String val = props.getProperty(propName, true);
     if (val == null || val.length() == 0) return defVal;
     try {
       return Integer.parseInt(val);
@@ -261,4 +257,5 @@ public class ConfigProperties {
       return defVal;
     }
   }
+
 }

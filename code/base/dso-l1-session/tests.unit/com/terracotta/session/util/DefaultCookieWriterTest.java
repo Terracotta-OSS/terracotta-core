@@ -4,9 +4,8 @@
  */
 package com.terracotta.session.util;
 
+import com.tc.properties.TCPropertiesImpl;
 import com.terracotta.session.SessionId;
-
-import java.util.Properties;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.MockHttpServletRequest;
@@ -34,7 +33,8 @@ public class DefaultCookieWriterTest extends TestCase {
 
   public final void testConstructor() {
     // test default c-tor
-    DefaultCookieWriter w = DefaultCookieWriter.makeInstance(new ConfigProperties(null, new Properties()));
+    DefaultCookieWriter w = DefaultCookieWriter.makeInstance(new ConfigProperties(null, TCPropertiesImpl
+        .getProperties()));
     assertEquals(ConfigProperties.defaultCookieName, w.cookieName);
 
   }

@@ -9,7 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 
@@ -24,10 +24,10 @@ public class TransactionSequencer {
 
   static {
     // Set the values from the properties here.
-    LOGGING_ENABLED = TCProperties.getProperties().getBoolean("l1.transactionmanager.logging.enabled");
-    MAX_BYTE_SIZE_FOR_BATCH = TCProperties.getProperties().getInt("l1.transactionmanager.maxBatchSizeInKiloBytes") * 1024;
-    MAX_PENDING_BATCHES = TCProperties.getProperties().getInt("l1.transactionmanager.maxPendingBatches");
-    MAX_SLEEP_TIME_BEFORE_HALT = TCProperties.getProperties().getLong("l1.transactionmanager.maxSleepTimeBeforeHalt");
+    LOGGING_ENABLED = TCPropertiesImpl.getProperties().getBoolean("l1.transactionmanager.logging.enabled");
+    MAX_BYTE_SIZE_FOR_BATCH = TCPropertiesImpl.getProperties().getInt("l1.transactionmanager.maxBatchSizeInKiloBytes") * 1024;
+    MAX_PENDING_BATCHES = TCPropertiesImpl.getProperties().getInt("l1.transactionmanager.maxPendingBatches");
+    MAX_SLEEP_TIME_BEFORE_HALT = TCPropertiesImpl.getProperties().getLong("l1.transactionmanager.maxSleepTimeBeforeHalt");
   }
 
   private final SequenceGenerator       sequence       = new SequenceGenerator(1);

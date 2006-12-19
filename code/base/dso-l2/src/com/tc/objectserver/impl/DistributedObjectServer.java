@@ -130,9 +130,10 @@ import com.tc.objectserver.tx.ServerTransactionManagerImpl;
 import com.tc.objectserver.tx.ServerTransactionManagerMBean;
 import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchManagerImpl;
-import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.objectserver.tx.TransactionSequencer;
+import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterManager;
@@ -259,7 +260,7 @@ public class DistributedObjectServer extends SEDA {
     StageManager stageManager = getStageManager();
     SessionManager sessionManager = new NullSessionManager();
     SessionProvider sessionProvider = (SessionProvider) sessionManager;
-    l2Properties = TCProperties.getProperties().getPropertiesFor("l2");
+    l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
 
     EvictionPolicy swapCache;
     final ClientStatePersistor clientStateStore;
@@ -428,8 +429,9 @@ public class DistributedObjectServer extends SEDA {
     Stage batchTxLookupStage = stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE,
                                                         new BatchTransactionLookupHandler(), 1, maxStageSize);
     TransactionalObjectManagerImpl txnObjectManager = new TransactionalObjectManagerImpl(objectManager,
-                                                                                     new TransactionSequencer(), gtxm,
-                                                                                     batchTxLookupStage.getSink());
+                                                                                         new TransactionSequencer(),
+                                                                                         gtxm, batchTxLookupStage
+                                                                                             .getSink());
     Stage processTx = stageManager.createStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE,
                                                new ProcessTransactionHandler(transactionBatchManager, txnObjectManager,
                                                                              sequenceValidator, recycler), 1,

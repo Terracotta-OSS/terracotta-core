@@ -36,6 +36,9 @@ public class TerracottaSessionManager {
   private final TCLogger               logger;
   private final RequestResponseFactory factory;
   private final RequestTracker         tracker;
+  private final boolean                debugServerHops;
+  private final int                    debugServerHopsInterval;
+  private int                          serverHopsDetected = 0;
 
   public TerracottaSessionManager(SessionIdGenerator sig, SessionCookieWriter scw, LifecycleEventMgr eventMgr,
                                   ContextMgr contextMgr, RequestResponseFactory factory, ConfigProperties cp) {
@@ -87,6 +90,9 @@ public class TerracottaSessionManager {
     } else {
       tracker = new NullRequestTracker();
     }
+
+    this.debugServerHops = cp.isDebugServerHops();
+    this.debugServerHopsInterval = cp.getDebugServerHopsInterval();
   }
 
   public TerracottaRequest preprocess(HttpServletRequest req, HttpServletResponse res) {
@@ -101,6 +107,18 @@ public class TerracottaSessionManager {
     Assert.pre(res != null);
 
     SessionId sessionId = findSessionId(req);
+
+    if (debugServerHops) {
+      if (sessionId != null && sessionId.isServerHop()) {
+        synchronized (this) {
+          serverHopsDetected++;
+          if ((serverHopsDetected % debugServerHopsInterval) == 0) {
+            logger.info(serverHopsDetected + " server hops detected");
+          }
+        }
+      }
+    }
+
     TerracottaRequest rw = wrapRequest(sessionId, req, res);
 
     Assert.post(rw != null);

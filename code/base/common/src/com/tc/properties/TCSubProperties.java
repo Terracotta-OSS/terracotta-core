@@ -3,13 +3,8 @@
  */
 package com.tc.properties;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.util.Enumeration;
 
-class TCSubProperties extends TCProperties {
+class TCSubProperties extends TCPropertiesImpl {
 
   private final String category;
   private final TCProperties properties;
@@ -24,10 +19,6 @@ class TCSubProperties extends TCProperties {
     return super.getPropertiesFor(getActualKey(category2));
   }
 
-  public String getProperty(String key, String defaultValue) {
-    return properties.getProperty(getActualKey(key), defaultValue);
-  }
-
   private String getActualKey(String key) {
     return category + "." + key;
   }
@@ -36,35 +27,7 @@ class TCSubProperties extends TCProperties {
     return properties.getProperty(getActualKey(key));
   }
 
-  public void list(PrintStream out) {
-    throw new UnsupportedOperationException();
-  }
-
-  public void list(PrintWriter out) {
-    throw new UnsupportedOperationException();
-  }
-
-  public synchronized void load(InputStream inStream) {
-    throw new UnsupportedOperationException();
-  }
-
-  public Enumeration propertyNames() {
-    throw new UnsupportedOperationException();
-  }
-
-  public synchronized void save(OutputStream out, String header) {
-    throw new UnsupportedOperationException();
-  }
-
-  public synchronized Object setProperty(String key, String value) {
-    throw new UnsupportedOperationException();
-  }
-
-  public void store(OutputStream out, String header) {
-    throw new UnsupportedOperationException();
-  }
-
   public String toString() {
-    return "TCSubProperties("+category+")"; 
+    return "TCSubProperties("+category+")";
   }
 }

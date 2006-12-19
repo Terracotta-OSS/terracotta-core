@@ -15,7 +15,7 @@ import com.tc.async.api.StageMonitor;
 import com.tc.logging.DefaultLoggerProvider;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
-import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.Stats;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
@@ -37,8 +37,8 @@ public class StageManagerImpl implements StageManager {
   private static final String  STAGE_MONITOR       = "tc.stage.monitor.enabled";
   private static final String  STAGE_MONITOR_DELAY = "tc.stage.monitor.delay";
 
-  private static final boolean MONITOR             = TCProperties.getProperties().getBoolean(STAGE_MONITOR);
-  private static final long    MONITOR_DELAY       = TCProperties.getProperties().getLong(STAGE_MONITOR_DELAY);
+  private static final boolean MONITOR             = TCPropertiesImpl.getProperties().getBoolean(STAGE_MONITOR);
+  private static final long    MONITOR_DELAY       = TCPropertiesImpl.getProperties().getLong(STAGE_MONITOR_DELAY);
 
   private Map                  stages              = new HashMap();
   private TCLoggerProvider     loggerProvider;

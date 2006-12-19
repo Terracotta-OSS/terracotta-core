@@ -1,8 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session.util;
 
+import com.tc.exception.ImplementMe;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.terracotta.session.MockWebAppConfig;
 
 import java.util.Properties;
@@ -43,9 +47,9 @@ public class ConfigPropertiesTest extends TestCase {
   private final boolean    spcTrackingEnabled = false;
   private final boolean    spcUrlEnabled      = false;
   private final boolean    spcCookieSecure    = false;
-  
+
   private MockWebAppConfig wac;
-  private Properties       spc;
+  private TCProperties     tpc;
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -64,7 +68,7 @@ public class ConfigPropertiesTest extends TestCase {
     wac.setTrackingEnabled(wacTrackingEnabled);
     wac.setUrlEnabled(wacUrlEnabled);
 
-    spc = new Properties();
+    Properties spc = new Properties();
     spc.setProperty(ConfigProperties.COOKIE_COMMENT, spcCookieComment);
     spc.setProperty(ConfigProperties.COOKIE_DOMAIN, spcCookieDomain);
     spc.setProperty(ConfigProperties.COOKIE_ENABLED, String.valueOf(spcCookieEnabled));
@@ -79,19 +83,22 @@ public class ConfigPropertiesTest extends TestCase {
     spc.setProperty(ConfigProperties.TRACKING_ENABLED, String.valueOf(spcTrackingEnabled));
     spc.setProperty(ConfigProperties.TRACKING_ENABLED, String.valueOf(spcUrlEnabled));
     spc.setProperty(ConfigProperties.URL_REWRITE_ENABLED, String.valueOf(spcUrlEnabled));
+
+    tpc = new MockTCPropeties(spc);
+
   }
 
   public void testConfigProperties() {
     try {
-      new ConfigProperties(null);
-      new ConfigProperties(new MockWebAppConfig());
+      new ConfigProperties(null, TCPropertiesImpl.getProperties());
+      new ConfigProperties(new MockWebAppConfig(), TCPropertiesImpl.getProperties());
     } catch (Exception e) {
       fail("unexpected exception");
     }
   }
 
   public void testSystemPropertyOverrides() {
-    ConfigProperties cp = new ConfigProperties(wac, spc);
+    ConfigProperties cp = new ConfigProperties(wac, tpc);
     assertEquals(spcCookieEnabled, cp.getCookiesEnabled());
     assertEquals(spcTrackingEnabled, cp.getSessionTrackingEnabled());
     assertEquals(spcUrlEnabled, cp.getUrlRewritingEnabled());
@@ -108,7 +115,7 @@ public class ConfigPropertiesTest extends TestCase {
   }
 
   public void testEmptyProperties() {
-    ConfigProperties cp = new ConfigProperties(wac, new Properties());
+    ConfigProperties cp = new ConfigProperties(wac, TCPropertiesImpl.getProperties());
     assertEquals(wacCookieEnabled, cp.getCookiesEnabled());
     assertEquals(wacTrackingEnabled, cp.getSessionTrackingEnabled());
     assertEquals(wacUrlEnabled, cp.getUrlRewritingEnabled());
@@ -125,7 +132,7 @@ public class ConfigPropertiesTest extends TestCase {
   }
 
   public void testDefaults() {
-    ConfigProperties cp = new ConfigProperties(null, new Properties());
+    ConfigProperties cp = new ConfigProperties(null, TCPropertiesImpl.getProperties());
     assertEquals(ConfigProperties.defaultCookiesEnabled, cp.getCookiesEnabled());
     assertEquals(ConfigProperties.defaultTrackingEnabled, cp.getSessionTrackingEnabled());
     assertEquals(ConfigProperties.defaultUrlEnabled, cp.getUrlRewritingEnabled());
@@ -139,44 +146,44 @@ public class ConfigPropertiesTest extends TestCase {
     assertEquals(ConfigProperties.defaultServerId, cp.getServerId());
     assertEquals(ConfigProperties.defaultSessionTimeout, cp.getSessionTimeoutSeconds());
   }
-  
+
   public void testGetSessionListeners() {
     final String propVal = SessionListener.class.getName() + "," + AttributeListener.class.getName();
     final Properties props = new Properties();
     props.setProperty(ConfigProperties.SESSION_LISTENERS, propVal);
-    final ConfigProperties cp = new ConfigProperties(null, props);
+    final ConfigProperties cp = new ConfigProperties(null, new MockTCPropeties(props));
     HttpSessionListener[] listeners = cp.getSessionListeners();
     assertNotNull(listeners);
     assertEquals(1, listeners.length);
     assertTrue(listeners[0] instanceof SessionListener);
   }
-  
+
   public void testGetAttibuteListeners() {
     final String propVal = SessionListener.class.getName() + "," + AttributeListener.class.getName();
     final Properties props = new Properties();
     props.setProperty(ConfigProperties.ATTRIBUTE_LISTENERS, propVal);
-    final ConfigProperties cp = new ConfigProperties(null, props);
+    final ConfigProperties cp = new ConfigProperties(null, new MockTCPropeties(props));
     HttpSessionAttributeListener[] listeners = cp.getSessionAttributeListeners();
     assertNotNull(listeners);
     assertEquals(1, listeners.length);
     assertTrue(listeners[0] instanceof AttributeListener);
   }
-  
+
   public void testMakeSessionListener() {
     HttpSessionListener listener = ConfigProperties.makeSessionListener("com.some.Bogus.Type");
     assertNull(listener);
-    
+
     listener = ConfigProperties.makeSessionListener(ConfigPropertiesTest.SessionListener.class.getName());
     assertTrue(listener instanceof ConfigPropertiesTest.SessionListener);
 
     listener = ConfigProperties.makeSessionListener(ConfigPropertiesTest.AttributeListener.class.getName());
     assertNull(listener);
   }
-  
+
   public void testMakeAttributeListener() {
     HttpSessionAttributeListener listener = ConfigProperties.makeAttributeListener("com.some.Bogus.Type");
     assertNull(listener);
-    
+
     listener = ConfigProperties.makeAttributeListener(ConfigPropertiesTest.AttributeListener.class.getName());
     assertTrue(listener instanceof ConfigPropertiesTest.AttributeListener);
 
@@ -198,7 +205,7 @@ public class ConfigPropertiesTest extends TestCase {
       // n/a
     }
   }
-  
+
   static class SessionListener implements HttpSessionListener {
 
     public void sessionCreated(HttpSessionEvent arg0) {
@@ -208,5 +215,42 @@ public class ConfigPropertiesTest extends TestCase {
     public void sessionDestroyed(HttpSessionEvent arg0) {
       // n/a
     }
+
   }
+
+  private static class MockTCPropeties implements TCProperties {
+
+    private final Properties props;
+
+    MockTCPropeties(Properties props) {
+      this.props = props;
+    }
+
+    public boolean getBoolean(String key) {
+      return Boolean.valueOf(getProperty(key)).booleanValue();
+    }
+
+    public int getInt(String key) {
+      return Integer.valueOf(getProperty(key)).intValue();
+    }
+
+    public long getLong(String key) {
+      return Long.valueOf(getProperty(key)).longValue();
+    }
+
+    public TCProperties getPropertiesFor(String key) {
+      throw new ImplementMe();
+    }
+
+    public String getProperty(String key) {
+      return getProperty(key, false);
+    }
+
+    public String getProperty(String key, boolean missingOkay) {
+      String s = props.getProperty(key);
+      if (s == null && !missingOkay) { throw new RuntimeException("missing value for " + key); }
+      return s;
+    }
+  }
+
 }

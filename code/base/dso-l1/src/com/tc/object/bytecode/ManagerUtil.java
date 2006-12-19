@@ -11,6 +11,7 @@ import com.tc.object.TraverseTest;
 import com.tc.object.bytecode.hook.impl.ArrayManager;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.properties.TCProperties;
 
 /**
  * A bunch of static methods that make calling Manager method much easier from instrumented classes
@@ -375,6 +376,10 @@ public class ManagerUtil {
 
   public static SessionMonitorMBean getSessionMonitorMBean() {
     return getManager().getSessionMonitorMBean();
+  }
+
+  public static TCProperties getTCProperties() {
+    return getManager().getTCProperites();
   }
 
 }
