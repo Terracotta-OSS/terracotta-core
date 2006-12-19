@@ -38,7 +38,7 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
     if ("<init>".equals(name) && "(IF)V".equals(desc)) {
       description = INIT_DESC;
     }
-    MethodVisitor mv = super.visitMethod(0, name, description, signature, exceptions);
+    MethodVisitor mv = super.visitMethod(access, name, description, signature, exceptions);
 
     if ("put".equals(name) && "(Ljava/lang/Object;ILjava/lang/Object;Z)Ljava/lang/Object;".equals(desc)) {
       return new PutMethodAdapter(mv);

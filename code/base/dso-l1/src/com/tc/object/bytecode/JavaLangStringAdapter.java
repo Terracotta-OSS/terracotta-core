@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
 
@@ -29,7 +30,7 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
     if ("getBytes".equals(name) && "(II[BI)V".equals(desc)) {
       return rewriteGetBytes(mv);
     } else if ("<init>".equals(name) && "(Ljava/lang/StringBuffer;)V".equals(desc)) {
-      if (vmVersion == Vm.VERSION_1_4 && portableStringBuffer) { return rewriteStringBufferConstructor(mv); }
+      if (vmVersion.isJDK14() && portableStringBuffer) { return rewriteStringBufferConstructor(mv); }
     } else if ("getChars".equals(name) && "(II[CI)V".equals(desc)) {
       // make formatter sane
       return new GetCharsAdapter(mv);
@@ -86,7 +87,7 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
 
   private MethodVisitor rewriteStringBufferConstructor(MethodVisitor mv) {
     // move the sync into StringBuffer.toString() where it belongs
-    Assert.assertEquals(Vm.VERSION_1_4, Vm.getMajorVersion());
+    Assert.assertTrue(Vm.isJDK14());
     mv.visitCode();
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V");

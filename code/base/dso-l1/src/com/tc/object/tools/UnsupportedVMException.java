@@ -5,7 +5,12 @@ package com.tc.object.tools;
 
 public class UnsupportedVMException extends BootJarException {
 
-  public UnsupportedVMException(String message) {
+  public UnsupportedVMException(final String message) {
     super(message);
   }
+
+  public UnsupportedVMException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
+
 }

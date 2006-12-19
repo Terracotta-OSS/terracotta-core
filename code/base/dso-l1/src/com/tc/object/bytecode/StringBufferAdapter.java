@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
 
@@ -9,7 +10,6 @@ import com.tc.asm.Label;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
-import com.tc.util.runtime.Vm;
 import com.tc.util.runtime.Vm.Version;
 
 public class StringBufferAdapter extends ClassAdapter implements Opcodes {
@@ -23,7 +23,7 @@ public class StringBufferAdapter extends ClassAdapter implements Opcodes {
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-    if ("toString".equals(name) && "()Ljava/lang/String;".equals(desc) && (version == Vm.VERSION_1_4)) {
+    if ("toString".equals(name) && "()Ljava/lang/String;".equals(desc) && version.isJDK14()) {
       rewriteToString1_4(mv);
       return null;
     }
@@ -92,7 +92,7 @@ public class StringBufferAdapter extends ClassAdapter implements Opcodes {
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       MethodVisitor visitor = super.visitMethod(access, name, desc, signature, exceptions);
 
-      if (MANAGED_APPEND.equals(name) && "([CII)Ljava/lang/StringBuffer;".equals(desc) && version == Vm.VERSION_1_4) {
+      if (MANAGED_APPEND.equals(name) && "([CII)Ljava/lang/StringBuffer;".equals(desc) && version.isJDK14()) {
         // comment to make formatter sane
         return new CloneCharArrayFixup(visitor);
       }

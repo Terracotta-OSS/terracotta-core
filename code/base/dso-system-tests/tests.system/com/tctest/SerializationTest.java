@@ -204,8 +204,8 @@ public class SerializationTest extends BaseDSOTestCase {
 
   private boolean canValidateExternal(Object o) {
     // Serialization of IdentityHashMap is busted on 1.4.x (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4821217)
-    if (o.getClass() == IdentityHashMap.class && Vm.getMajorVersion() == Vm.VERSION_1_4) {
-      System.err.println("Skipping " + o.getClass() + " due to sun lameness (bug 4821217)");
+    if (o.getClass() == IdentityHashMap.class && Vm.isJDK14()) {
+      System.err.println("Skipping " + o.getClass() + " due to Java bug 4821217");
       return false;
     }
     return true;

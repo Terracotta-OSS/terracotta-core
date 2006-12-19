@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.tools;
 
@@ -1127,7 +1128,7 @@ public class BootJarTool {
     // 1st pass
     ClassReader cr = new ClassReader(bytes);
     ClassWriter cw = new ClassWriter(true);
-    ClassVisitor cv = new StringBufferAdapter(cw, Vm.getMajorVersion());
+    ClassVisitor cv = new StringBufferAdapter(cw, Vm.VERSION);
     cr.accept(cv, false);
     bytes = cw.toByteArray();
 
@@ -1154,7 +1155,7 @@ public class BootJarTool {
     // 5th pass (fixups)
     cr = new ClassReader(bytes);
     cw = new ClassWriter(true);
-    cv = new StringBufferAdapter.FixUp(cw, Vm.getMajorVersion());
+    cv = new StringBufferAdapter.FixUp(cw, Vm.VERSION);
     cr.accept(cv, false);
     bytes = cw.toByteArray();
 
@@ -1234,7 +1235,7 @@ public class BootJarTool {
     ClassReader cr = new ClassReader(orig);
     ClassWriter cw = new ClassWriter(true);
 
-    ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.getMajorVersion(), shouldIncludeStringBufferAndFriends());
+    ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.VERSION, shouldIncludeStringBufferAndFriends());
     cr.accept(cv, false);
 
     bootJar.loadClassIntoJar("java.lang.String", cw.toByteArray(), false);
