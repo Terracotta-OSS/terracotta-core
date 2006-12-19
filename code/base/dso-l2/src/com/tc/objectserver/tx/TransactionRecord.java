@@ -17,8 +17,8 @@ public class TransactionRecord {
     this.waitees = new HashSet();
   }
 
-  public void applySkipped() {
-    state.applySkipped();
+  public void applyAndCommitSkipped() {
+    state.applyAndCommitSkipped();
   }
 
   public void applyStarted() {

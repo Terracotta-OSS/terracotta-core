@@ -84,7 +84,7 @@ public class TestServerTransactionManager implements ServerTransactionManager {
 
   }
 
-  public void skipApply(ServerTransaction txn) {
+  public void skipApplyAndCommit(ServerTransaction txn) {
     skipCalls.put(txn);
   }
 

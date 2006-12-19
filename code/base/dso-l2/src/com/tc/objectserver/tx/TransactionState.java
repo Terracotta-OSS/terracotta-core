@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.tx;
 
@@ -10,8 +11,8 @@ public class TransactionState {
 
   private int              state               = 0x00;
 
-  public void applySkipped() {
-    applyStarted();
+  public void applyAndCommitSkipped() {
+    state |= APPLY_STARTED | APPLY_COMMITTED;
   }
 
   public void applyStarted() {

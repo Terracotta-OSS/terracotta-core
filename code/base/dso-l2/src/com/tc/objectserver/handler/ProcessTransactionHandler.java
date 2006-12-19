@@ -7,18 +7,20 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.Sink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.MessageRecycler;
+import com.tc.objectserver.context.LookupEventContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.BatchDefinedException;
-import com.tc.objectserver.tx.BatchedTransactionProcessor;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchReader;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
+import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.util.SequenceValidator;
 
 import java.io.IOException;
@@ -39,14 +41,15 @@ public class ProcessTransactionHandler extends AbstractEventHandler {
   private TransactionBatchReaderFactory     batchReaderFactory;
   private final TransactionBatchManager     transactionBatchManager;
   private final MessageRecycler             messageRecycler;
-  private final BatchedTransactionProcessor batchedTransactionProcessor;
   private final SequenceValidator           sequenceValidator;
+  private final TransactionalObjectManager txnObjectManager;
+  private Sink lookupStage;
 
   public ProcessTransactionHandler(TransactionBatchManager transactionBatchManager,
-                                   BatchedTransactionProcessor batchedTransactionProcessor,
+                                   TransactionalObjectManager txnObjectManager,
                                    SequenceValidator sequenceValidator, MessageRecycler messageRecycler) {
     this.transactionBatchManager = transactionBatchManager;
-    this.batchedTransactionProcessor = batchedTransactionProcessor;
+    this.txnObjectManager = txnObjectManager;
     this.sequenceValidator = sequenceValidator;
     this.messageRecycler = messageRecycler;
   }
@@ -71,7 +74,8 @@ public class ProcessTransactionHandler extends AbstractEventHandler {
         serverTxnIDs.add(txn.getServerTransactionID());
       }
       messageRecycler.addMessage((CommitTransactionMessageImpl) context, serverTxnIDs);
-      batchedTransactionProcessor.addTransactions(reader.getChannelID(), txns, completedTxnIds);
+      txnObjectManager.addTransactions(reader.getChannelID(), txns, completedTxnIds);
+      lookupStage.add(new LookupEventContext());
     } catch (IOException e) {
       logger.error("Error reading transaction batch. Discarding remaining changes in this batch", e);
     }
@@ -81,5 +85,6 @@ public class ProcessTransactionHandler extends AbstractEventHandler {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;
     batchReaderFactory = oscc.getTransactionBatchReaderFactory();
+    lookupStage = context.getStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE).getSink();
   }
 }

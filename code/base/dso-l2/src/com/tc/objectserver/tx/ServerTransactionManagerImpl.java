@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.tx;
 
@@ -184,11 +185,11 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
   }
 
-  public void skipApply(ServerTransaction txn) {
+  public void skipApplyAndCommit(ServerTransaction txn) {
     final ChannelID channelID = txn.getChannelID();
     final TransactionID txnID = txn.getTransactionID();
     TransactionAccount ci = getOrCreateTransactionAccount(channelID);
-    ci.skipApply(txnID);
+    ci.skipApplyAndCommit(txnID);
   }
 
   public void release(PersistenceTransaction ptx, Collection objects, Map newRoots) {
@@ -203,11 +204,11 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  public void committed(Collection txns) {
-    for (Iterator i = txns.iterator(); i.hasNext();) {
-      final ServerTransaction txn = (ServerTransaction) i.next();
-      final ChannelID waiter = txn.getChannelID();
-      final TransactionID requestID = txn.getTransactionID();
+  public void committed(Collection txnsIds) {
+    for (Iterator i = txnsIds.iterator(); i.hasNext();) {
+      final ServerTransactionID txnId = (ServerTransactionID) i.next();
+      final ChannelID waiter = txnId.getChannelID();
+      final TransactionID requestID = txnId.getClientTransactionID();
 
       TransactionAccount ci = getTransactionAccount(waiter);
       if (ci != null && ci.applyCommitted(requestID)) {
@@ -215,7 +216,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       }
 
       // TODO :: Move this outside the loop
-      fireTransactionAppliedEvent(txn.getServerTransactionID());
+      fireTransactionAppliedEvent(txnId);
     }
   }
 

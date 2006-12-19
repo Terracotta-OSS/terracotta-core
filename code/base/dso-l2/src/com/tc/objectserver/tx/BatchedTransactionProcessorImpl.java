@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.tx;
 
@@ -22,27 +23,27 @@ import java.util.Set;
 
 public class BatchedTransactionProcessorImpl implements BatchedTransactionProcessor {
 
-  private static final int                     MAX_TRANSACTIONS_PER_BATCH = 1000;
-  private static final State                   OUT_OF_SINK                = new State("OUT_OF_SINK");
-  private static final State                   IN_SINK                    = new State("IN_SINK");
+  private static final State                   OUT_OF_SINK         = new State("OUT_OF_SINK");
+  private static final State                   IN_SINK             = new State("IN_SINK");
 
-  private final Object                         completedTxnIdsLock        = new Object();
+  private final Object                         completedTxnIdsLock = new Object();
   private final TransactionSequencer           sequencer;
 
-  private volatile State                       state                      = OUT_OF_SINK;
-  private BatchedTransactionProcessingContext  batchedContext             = new BatchedTransactionProcessingContext();
-  private Set                                  completedTxnIDs            = new HashSet();
+  private volatile State                       state               = OUT_OF_SINK;
+  private BatchedTransactionProcessingContext  batchedContext      = new BatchedTransactionProcessingContext();
+  private Set                                  completedTxnIDs     = new HashSet();
 
   private final ServerGlobalTransactionManager gtxm;
-  private final ObjectManager                  objectManager;
+  private final TransactionObjectManagerImpl   objectManager;
   private final Sink                           batchTxnLookupSink;
 
   public BatchedTransactionProcessorImpl(ObjectManager objectManager, ServerGlobalTransactionManager gtxm,
                                          Sink batchTxnLookupSink) {
-    this.objectManager = objectManager;
+    // TODO::pass this in
+    this.sequencer = new TransactionSequencer();
     this.gtxm = gtxm;
     this.batchTxnLookupSink = batchTxnLookupSink;
-    this.sequencer = new TransactionSequencer();
+    this.objectManager = new TransactionObjectManagerImpl(objectManager, sequencer, gtxm, batchTxnLookupSink);
   }
 
   public void addTransactions(ChannelID channelID, List txns, Collection completedTxnIds) {
@@ -51,18 +52,14 @@ public class BatchedTransactionProcessorImpl implements BatchedTransactionProces
     if (state != IN_SINK) addToSink();
   }
 
-  // Only one thread should process transaction
   public void processTransactions(EventContext context, Sink applyChangesSink) {
     state = OUT_OF_SINK;
-    int count = 0;
     try {
       ServerTransaction txn;
-      while ((count++ <= MAX_TRANSACTIONS_PER_BATCH) && (txn = getNextTxn()) != null) {
+      while ((txn = getNextTxn()) != null) {
         ServerTransactionID stxID = txn.getServerTransactionID();
         if (gtxm.needsApply(stxID)) {
-          // XXX:: This might either succeed or become pending
-          objectManager.lookupObjectsForCreateIfNecessary(txn.getChannelID(), txn.getObjectIDs(),
-                                                          new TxnLookupContext(txn));
+          // objectManager.lookupObjectsForApply(txn);
         } else {
           // These txns are already applied, hence just sending it to the next stage.
           addTransactionToBatchedContext(txn);

@@ -22,12 +22,11 @@ import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
-import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
-import com.tc.objectserver.context.BatchedTransactionProcessingContext;
+import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.TestServerConfigurationContext;
@@ -37,21 +36,19 @@ import com.tc.objectserver.lockmanager.api.NotifiedWaiters;
 import com.tc.objectserver.lockmanager.api.TestLockManager;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
-import com.tc.objectserver.tx.TestServerTransaction;
 import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.objectserver.tx.TestTransactionBatchManager;
+import com.tc.objectserver.tx.TestTransactionalObjectManagerImpl;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import junit.framework.TestCase;
 
@@ -81,26 +78,12 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     TestServerConfigurationContext context = new TestServerConfigurationContext();
     context.transactionManager = transactionManager;
     context.channelManager = channelManager;
+    context.txnObjectManager = new TestTransactionalObjectManagerImpl();
     context.addStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, stageBo);
     context.addStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE, stageCo);
     context.lockManager = lockManager;
 
     handler.initialize(context);
-  }
-
-  public void testGlobalTransactionIDInteraction() throws Exception {
-    TxnBatchID batchID = new TxnBatchID(1);
-    ServerTransactionID serverTransactionID = new ServerTransactionID(new ChannelID(1), new TransactionID(1));
-    TestServerTransaction serverTransaction = new TestServerTransaction(serverTransactionID, batchID);
-
-    Set appliedServerTransactionIDs = new HashSet();
-
-    // Set the GlobalTransactionManager so that the transaction doesn't need to be applied.
-    BatchedTransactionProcessingContext batchedTxnContext = getBatchedTxnContext(serverTransaction);
-
-    appliedServerTransactionIDs.add(serverTransactionID);
-    handler.handleEvent(batchedTxnContext);
-    assertEquals(appliedServerTransactionIDs, batchedTxnContext.getAppliedServerTransactionIDs());
   }
 
   public void testLockManagerNotifyIsCalled() throws Exception {
@@ -123,14 +106,14 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     // call handleEvent with the global transaction reporting that it doesn't need an apply...
     assertTrue(lockManager.notifyCalls.isEmpty());
     assertTrue(broadcastSink.queue.isEmpty());
-    handler.handleEvent(getBatchedTxnContext(tx));
+    handler.handleEvent(getApplyTxnContext(tx));
     // even if the transaction has already been applied, the notifies must be applied, since they aren't persistent.
     assertEquals(notifies.size(), lockManager.notifyCalls.size());
     lockManager.notifyCalls.clear();
     assertNotNull(broadcastSink.queue.remove(0));
 
     // call handleEvent with the global transaction reporting that it DOES need an apply...
-    handler.handleEvent(getBatchedTxnContext(tx));
+    handler.handleEvent(getApplyTxnContext(tx));
 
     assertEquals(notifies.size(), lockManager.notifyCalls.size());
     NotifiedWaiters notifiedWaiters = null;
@@ -172,7 +155,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     assertFalse(transactionBatchManager.isBatchComponentComplete.get());
     assertTrue(channelManager.newBatchTransactionAcknowledgeMessageCalls.isEmpty());
     assertFalse(channelManager.shouldThrowNoSuchChannelException);
-    handler.handleEvent(getBatchedTxnContext(tx));
+    handler.handleEvent(getApplyTxnContext(tx));
 
     // make sure it called batchComponentComplete on TransactionBatchManager.
     assertBatchComponentCompleteCalled(batchID, txID, channelID);
@@ -184,7 +167,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     transactionBatchManager.isBatchComponentComplete.set(true);
     channelManager.btamsg = new TestBatchTransactionAcknowledgeMessage();
     assertNotNull(channelManager.btamsg);
-    handler.handleEvent(getBatchedTxnContext(tx));
+    handler.handleEvent(getApplyTxnContext(tx));
     assertBatchComponentCompleteCalled(batchID, txID, channelID);
 
     // make sure it sent a message
@@ -200,15 +183,13 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     assertTrue(channelManager.newBatchTransactionAcknowledgeMessageCalls.isEmpty());
     assertTrue(channelManager.shouldThrowNoSuchChannelException);
 
-    handler.handleEvent(getBatchedTxnContext(tx));
+    handler.handleEvent(getApplyTxnContext(tx));
     assertNotNull(channelManager.newBatchTransactionAcknowledgeMessageCalls.poll(1));
   }
 
-  private BatchedTransactionProcessingContext getBatchedTxnContext(ServerTransaction txt) {
-    BatchedTransactionProcessingContext btxtContext = new BatchedTransactionProcessingContext();
-    btxtContext.addTransaction(txt);
-    btxtContext.close(new HashSet());
-    return btxtContext;
+  private ApplyTransactionContext getApplyTxnContext(ServerTransaction txt) {
+    ApplyTransactionContext atc = new ApplyTransactionContext(txt, new HashMap());
+    return atc;
   }
 
   private void assertBatchComponentCompleteCalled(TxnBatchID batchID, TransactionID txID, ChannelID channelID) {

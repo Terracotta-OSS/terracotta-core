@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.core.api;
 
@@ -12,9 +13,9 @@ import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.lockmanager.api.LockManager;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
-import com.tc.objectserver.tx.BatchedTransactionProcessor;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
+import com.tc.objectserver.tx.TransactionalObjectManager;
 
 public interface ServerConfigurationContext extends ConfigurationContext {
 
@@ -24,7 +25,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public final static String RESPOND_TO_OBJECT_REQUEST_STAGE                    = "respond_to_request_stage";
   public final static String MANAGED_OBJECT_REQUEST_STAGE                       = "managed_object_request_stage";
   public final static String PROCESS_TRANSACTION_STAGE                          = "process_transaction_stage";
-  public final static String BATCH_TRANSACTION_LOOKUP_STAGE                     = "batch_transaction_lookup_stage";
+  public final static String TRANSACTION_LOOKUP_STAGE                           = "transaction_lookup_stage";
   public final static String RESPOND_TO_LOCK_REQUEST_STAGE                      = "respond_to_lock_request_stage";
   public final static String REQUEST_LOCK_STAGE                                 = "request_lock_stage";
   public final static String CHANNEL_LIFE_CYCLE_STAGE                           = "channel_life_cycle_stage";
@@ -51,7 +52,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
 
   public ServerTransactionManager getTransactionManager();
 
-  public BatchedTransactionProcessor getBatchedTransactionProcessor();
+  public TransactionalObjectManager getTransactionalObjectManager();
 
   public ManagedObjectStore getObjectStore();
 

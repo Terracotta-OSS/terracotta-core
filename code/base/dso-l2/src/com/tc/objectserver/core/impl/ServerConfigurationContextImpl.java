@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.core.impl;
 
@@ -14,9 +15,9 @@ import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.lockmanager.api.LockManager;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
-import com.tc.objectserver.tx.BatchedTransactionProcessor;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
+import com.tc.objectserver.tx.TransactionalObjectManager;
 
 /**
  * App specific configuration context
@@ -35,14 +36,14 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   private final ChannelStats                  channelStats;
   private final TransactionBatchReaderFactory transactionBatchReaderFactory;
   private final ObjectRequestManager          objectRequestManager;
-  private final BatchedTransactionProcessor   txnProcessor;
+  private final TransactionalObjectManager      txnObjectManager;
 
   public ServerConfigurationContextImpl(StageManager stageManager, ObjectManager objectManager,
                                         ObjectRequestManager objectRequestManager, ManagedObjectStore objectStore,
                                         LockManager lockManager, DSOChannelManager channelManager,
                                         ClientStateManager clientStateManager,
                                         ServerTransactionManager transactionManager,
-                                        BatchedTransactionProcessor txnProcessor,
+                                        TransactionalObjectManager txnObjectManager,
                                         ServerClientHandshakeManager clientHandshakeManager, ChannelStats channelStats,
                                         TransactionBatchReaderFactory transactionBatchReaderFactory) {
     super(stageManager);
@@ -53,7 +54,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
     this.channelManager = channelManager;
     this.clientStateManager = clientStateManager;
     this.transactionManager = transactionManager;
-    this.txnProcessor = txnProcessor;
+    this.txnObjectManager = txnObjectManager;
     this.clientHandshakeManager = clientHandshakeManager;
     this.channelStats = channelStats;
     this.transactionBatchReaderFactory = transactionBatchReaderFactory;
@@ -78,9 +79,9 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   public ServerTransactionManager getTransactionManager() {
     return transactionManager;
   }
-  
-  public BatchedTransactionProcessor getBatchedTransactionProcessor() {
-    return txnProcessor;
+
+  public TransactionalObjectManager getTransactionalObjectManager() {
+    return txnObjectManager;
   }
 
   public ManagedObjectStore getObjectStore() {

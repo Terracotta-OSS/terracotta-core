@@ -123,8 +123,6 @@ import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
 import com.tc.objectserver.persistence.sleepycat.DBException;
 import com.tc.objectserver.persistence.sleepycat.SerializationAdapterFactory;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
-import com.tc.objectserver.tx.BatchedTransactionProcessor;
-import com.tc.objectserver.tx.BatchedTransactionProcessorImpl;
 import com.tc.objectserver.tx.CommitTransactionMessageRecycler;
 import com.tc.objectserver.tx.CommitTransactionMessageToTransactionBatchReader;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -132,6 +130,8 @@ import com.tc.objectserver.tx.ServerTransactionManagerImpl;
 import com.tc.objectserver.tx.ServerTransactionManagerMBean;
 import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchManagerImpl;
+import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
+import com.tc.objectserver.tx.TransactionSequencer;
 import com.tc.properties.TCProperties;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
@@ -425,12 +425,13 @@ public class DistributedObjectServer extends SEDA {
                                                           objectManager, taa, globalTxnCounter, channelStats);
     MessageRecycler recycler = new CommitTransactionMessageRecycler(transactionManager);
 
-    Stage batchTxLookupStage = stageManager.createStage(ServerConfigurationContext.BATCH_TRANSACTION_LOOKUP_STAGE,
+    Stage batchTxLookupStage = stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE,
                                                         new BatchTransactionLookupHandler(), 1, maxStageSize);
-    BatchedTransactionProcessor txnProcessor = new BatchedTransactionProcessorImpl(objectManager, gtxm,
-                                                                                   batchTxLookupStage.getSink());
+    TransactionalObjectManagerImpl txnObjectManager = new TransactionalObjectManagerImpl(objectManager,
+                                                                                     new TransactionSequencer(), gtxm,
+                                                                                     batchTxLookupStage.getSink());
     Stage processTx = stageManager.createStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE,
-                                               new ProcessTransactionHandler(transactionBatchManager, txnProcessor,
+                                               new ProcessTransactionHandler(transactionBatchManager, txnObjectManager,
                                                                              sequenceValidator, recycler), 1,
                                                maxStageSize);
 
@@ -441,7 +442,8 @@ public class DistributedObjectServer extends SEDA {
                              new ApplyTransactionChangeHandler(instanceMonitor, transactionBatchManager, gtxm), 1,
                              maxStageSize);
     stageManager.createStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE,
-                             new CommitTransactionChangeHandler(gtxm, transactionStorePTP), 1, maxStageSize);
+                             new CommitTransactionChangeHandler(gtxm, transactionStorePTP), (persistent ? 2 : 1),
+                             maxStageSize);
     stageManager.createStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, new BroadcastChangeHandler(), 1,
                              maxStageSize);
     stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,
@@ -543,7 +545,7 @@ public class DistributedObjectServer extends SEDA {
                                                                                            reconnectTimeout, persistent);
     context = new ServerConfigurationContextImpl(stageManager, objectManager, objectRequestManager, objectStore,
                                                  lockManager, channelManager, clientStateManager, transactionManager,
-                                                 txnProcessor, clientHandshakeManager, channelStats,
+                                                 txnObjectManager, clientHandshakeManager, channelStats,
                                                  new CommitTransactionMessageToTransactionBatchReader());
 
     stageManager.startAll(context);

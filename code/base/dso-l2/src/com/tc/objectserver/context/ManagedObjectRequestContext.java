@@ -11,7 +11,6 @@ import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
@@ -89,10 +88,6 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
     this.objects = results.getObjects();
     this.lookupPendingObjectIDs = results.getLookupPendingObjectIDs();
     this.sink.add(this);  // Add to next stage
-  }
-
-  public Set getCheckedOutObjectIDs() {
-    return Collections.EMPTY_SET;
   }
 
   public boolean isPendingRequest() {

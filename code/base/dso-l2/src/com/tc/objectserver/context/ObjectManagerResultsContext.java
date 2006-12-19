@@ -8,7 +8,6 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * @author steve Interface for a context that needs ObjectManager look results
@@ -19,9 +18,6 @@ public interface ObjectManagerResultsContext extends EventContext {
   
   public void makePending(ChannelID channelID, Collection ids);
   
-  public Set getCheckedOutObjectIDs();
-  
-  // supposed to return true if makePending is already called.
   public boolean isPendingRequest();
   
 }

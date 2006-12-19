@@ -69,7 +69,7 @@ public interface ServerTransactionManager {
    * The set of transactions are commited.
    * This could potentially trigger an acknowledgement to the orginating client.
    */
-  public void committed(Collection txns);
+  public void committed(Collection txnIds);
   
   /**
    * The broadcast stage is completed.
@@ -82,7 +82,7 @@ public interface ServerTransactionManager {
   /**
    * Notifies the transaction managed that the given transaction is being skipped
    */
-  public void skipApply(ServerTransaction txn);
+  public void skipApplyAndCommit(ServerTransaction txn);
 
   public void setResentTransactionIDs(ChannelID channelID, Collection transactionIDs);
   

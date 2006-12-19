@@ -1476,10 +1476,6 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     public Map objects = new HashMap();
     boolean    pending = false;
 
-    public synchronized Set getCheckedOutObjectIDs() {
-      return this.objects.keySet();
-    }
-
     public synchronized void waitTillComplete() {
       while (pending) {
         try {

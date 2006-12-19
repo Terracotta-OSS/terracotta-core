@@ -30,14 +30,15 @@ import com.tc.objectserver.impl.TestObjectManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.lockmanager.api.LockManager;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
-import com.tc.objectserver.tx.BatchedTransactionProcessor;
-import com.tc.objectserver.tx.BatchedTransactionProcessorImpl;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TestTransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchReader;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
+import com.tc.objectserver.tx.TransactionalObjectManager;
+import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
+import com.tc.objectserver.tx.TransactionSequencer;
 import com.tc.test.TCTestCase;
 import com.tc.util.SequenceID;
 import com.tc.util.SequenceValidator;
@@ -61,18 +62,18 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
   private TestTransactionBatchManager       transactionBatchManager;
   private TestGlobalTransactionManager      gtxm;
   private SequenceValidator                 sequenceValidator;
-  private BatchedTransactionProcessorImpl   batchTxnProcessor;
+  private TransactionalObjectManager          txnObjectManager;
 
   public void setUp() throws Exception {
     objectManager = new TestObjectManager();
     transactionBatchManager = new TestTransactionBatchManager();
     gtxm = new TestGlobalTransactionManager();
     sequenceValidator = new SequenceValidator(0);
-    MockStage batchTxnStage;
-    stageMap.put(ServerConfigurationContext.BATCH_TRANSACTION_LOOKUP_STAGE,
-                 (batchTxnStage = new MockStage(ServerConfigurationContext.BATCH_TRANSACTION_LOOKUP_STAGE)));
-    batchTxnProcessor = new BatchedTransactionProcessorImpl(objectManager, gtxm, batchTxnStage.getSink());
-    handler = new ProcessTransactionHandler(transactionBatchManager, batchTxnProcessor, sequenceValidator,
+    MockStage lookupStage;
+    stageMap.put(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE,
+                 (lookupStage = new MockStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE)));
+    txnObjectManager = new TransactionalObjectManagerImpl(objectManager, new TransactionSequencer(), gtxm,  lookupStage.getSink());
+    handler = new ProcessTransactionHandler(transactionBatchManager, txnObjectManager, sequenceValidator,
                                             new NullMessageRecycler());
 
     transactionBatchReaderFactory = new TestTransactionBatchReaderFactory();
@@ -116,19 +117,19 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     // there shouldn't be any more calls in the queue
     assertTrue(transactionBatchManager.defineBatchContexts.isEmpty());
 
-    // make sure that a Transaction Queue is created and put into the Batch Transaction Lookup Stage
-    MockSink batchTxnSink = (MockSink) ((Stage) stageMap.get(ServerConfigurationContext.BATCH_TRANSACTION_LOOKUP_STAGE))
+    // make sure that a lookup context is put into the lookup queue
+    MockSink lookupSink = (MockSink) ((Stage) stageMap.get(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE))
         .getSink();
-    assertFalse(batchTxnSink.queue.isEmpty());
+    assertFalse(lookupSink.queue.isEmpty());
 
-    EventContext context = (EventContext) batchTxnSink.queue.remove(0);
+    EventContext context = (EventContext) lookupSink.queue.remove(0);
     assertNotNull(context);
 
     // Look up shouldnt have happened yet
     args = (Object[]) objectManager.lookupObjectForCreateIfNecessaryContexts.poll(100);
     assertNull(args);
 
-    // send another txn and see that Transaction Queue is NOT added again to the stage
+    // send another txn and see that an event context is added again to the stage
     batch = new TestTransactionBatchReader();
     batch.channelID = new ChannelID(1);
     batch.batchID = new TxnBatchID(2);
@@ -152,7 +153,10 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     // HANDLE EVENT
     objectManager.makePending = true;
     handler.handleEvent(null);
-    assertTrue(batchTxnSink.queue.isEmpty());
+    assertFalse(lookupSink.queue.isEmpty());
+
+    context = (EventContext) lookupSink.queue.remove(0);
+    assertNotNull(context);
 
   }
 
@@ -249,8 +253,8 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public BatchedTransactionProcessor getBatchedTransactionProcessor() {
-      return batchTxnProcessor;
+    public TransactionalObjectManager getTransactionalObjectManager() {
+      return txnObjectManager;
     }
 
   }

@@ -16,10 +16,9 @@ import java.util.Set;
 
 /**
  * An account of the state of a given transaction. Keeps track of the initiating client, the state of the transaction
- * (applied, committed, etc), which clients the transaction has been broadcast to, and which clients have ACKed that
+ * (applied, committed, etc), clients the transaction has been broadcast to, and clients that have ACKed the
  * transaction.
  * 
- * @author Saravanan
  */
 public class TransactionAccount {
   final ChannelID   clientID;
@@ -73,10 +72,10 @@ public class TransactionAccount {
     return transactionRecord;
   }
 
-  public void skipApply(TransactionID requestID) {
+  public void skipApplyAndCommit(TransactionID requestID) {
     TransactionRecord transactionRecord = getOrCreateRecord(requestID);
     synchronized (transactionRecord) {
-      transactionRecord.applySkipped();
+      transactionRecord.applyAndCommitSkipped();
     }
   }
 

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.core.impl;
 
@@ -19,6 +20,7 @@ import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.tx.BatchedTransactionProcessor;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
+import com.tc.objectserver.tx.TransactionalObjectManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +38,7 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
   public Map                          stages = new HashMap();
   public ChannelStats                 channelStats;
   public BatchedTransactionProcessor  txnBatchProcessor;
+  public TransactionalObjectManager     txnObjectManager;
 
   public void addStage(String name, Stage stage) {
     stages.put(name, stage);
@@ -89,8 +92,8 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
     return objectRequestManager;
   }
 
-  public BatchedTransactionProcessor getBatchedTransactionProcessor() {
-    return txnBatchProcessor;
+  public TransactionalObjectManager getTransactionalObjectManager() {
+    return txnObjectManager;
   }
 
 }

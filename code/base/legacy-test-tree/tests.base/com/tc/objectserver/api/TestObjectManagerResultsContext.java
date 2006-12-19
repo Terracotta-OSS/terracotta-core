@@ -8,7 +8,6 @@ import com.tc.objectserver.context.ObjectManagerResultsContext;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author steve
@@ -29,10 +28,6 @@ public class TestObjectManagerResultsContext implements ObjectManagerResultsCont
   public void setResults(ChannelID chID, Collection ids, ObjectManagerLookupResults results) {
     pending = false;
     this.results.putAll(results.getObjects());
-  }
-
-  public Set getCheckedOutObjectIDs() {
-    return results.keySet();
   }
 
   public boolean isPendingRequest() {

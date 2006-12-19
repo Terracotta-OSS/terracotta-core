@@ -204,18 +204,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     syncAssertNotInShutdown();
 
     if (collector.isPausingOrPaused()) {
-      Set checkedoutObjectIDs = responseContext.getCheckedOutObjectIDs();
-      if (checkedoutObjectIDs.isEmpty()) {
-        // XXX:: since we are making pending without trying to lookup, cache hit count might be skewed
-        makePending(channelID, ids, responseContext, create, maxReachableObjects).setProcessPending(true);
-        return false;
-      } else if (collector.isPaused()) {
-        // shouldnt happen ....
-        logger.error("Collector is paused while checkedoutObjectIDs is " + checkedoutObjectIDs + " idsToCheckOut = "
-                     + ids + " responseContext = " + responseContext);
-        dump();
-        throw new AssertionError("Can't have Objects checked out when GC in progress !");
-      }
+      // XXX:: since we are making pending without trying to lookup, cache hit count might be skewed
+      makePending(channelID, ids, responseContext, create, maxReachableObjects).setProcessPending(true);
+      return false;
     }
     return basicLookupObjectsFor(channelID, ids, responseContext, create, maxReachableObjects);
   }
@@ -440,7 +431,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private boolean basicLookupObjectsFor(ChannelID channelID, Collection ids, ObjectManagerResultsContext context,
                                         boolean canCreate, int maxReachableObjects) {
     Set objects = createNewSet();
-    Set checkedoutObjectIDs = context.getCheckedOutObjectIDs();
 
     boolean processPending = false;
     boolean available = true;
@@ -452,9 +442,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         // 1) To get the right hit/miss count and
         // 2) to Fault objects that are not available
         reference = getOrLookupReference(id, (context.isPendingRequest() ? DEFAULT_FLAG : NEW_REQUEST));
-        if (available && !checkedoutObjectIDs.contains(id) && reference.isReferenced()) {
+        if (available && reference.isReferenced()) {
           available = false;
-          // Setting only the first referenced object to process Pending. If objects are being faulted in, then this will
+          // Setting only the first referenced object to process Pending. If objects are being faulted in, then this
+          // will
           // ensure that we dont run processPending multiple times unnecessarily.
           reference.setProcessPendingOnRelease(true);
         }
