@@ -162,7 +162,7 @@ import javax.management.NotCompliantMBeanException;
 
 /**
  * Startup and shutdown point. Builds and starts the server. This is a quick and dirty dirty way of doing this stuff
- *
+ * 
  * @author steve
  */
 public class DistributedObjectServer extends SEDA {
@@ -441,13 +441,12 @@ public class DistributedObjectServer extends SEDA {
                                                  new RequestRootHandler(), 1, maxStageSize);
 
     stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
-                             new ApplyTransactionChangeHandler(instanceMonitor, transactionBatchManager, gtxm), 1,
-                             maxStageSize);
+                             new ApplyTransactionChangeHandler(instanceMonitor, gtxm), 1, maxStageSize);
     stageManager.createStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE,
                              new CommitTransactionChangeHandler(gtxm, transactionStorePTP), (persistent ? 2 : 1),
                              maxStageSize);
-    stageManager.createStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, new BroadcastChangeHandler(), 1,
-                             maxStageSize);
+    stageManager.createStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE,
+                             new BroadcastChangeHandler(transactionBatchManager), 1, maxStageSize);
     stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,
                              new RespondToRequestLockHandler(), 1, maxStageSize);
     Stage requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE,

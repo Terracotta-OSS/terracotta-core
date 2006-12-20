@@ -1,24 +1,31 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
+import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectRequestID;
+import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
 import com.tc.object.msg.BroadcastTransactionMessage;
 import com.tc.object.net.DSOChannelManager;
+import com.tc.object.net.NoSuchChannelException;
 import com.tc.object.tx.TransactionID;
+import com.tc.object.tx.TxnBatchID;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.context.ManagedObjectRequestContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.objectserver.tx.NoSuchBatchException;
 import com.tc.objectserver.tx.ServerTransactionManager;
+import com.tc.objectserver.tx.TransactionBatchManager;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -32,21 +39,24 @@ import java.util.Set;
  * @author steve
  */
 public class BroadcastChangeHandler extends AbstractEventHandler {
-  private DSOChannelManager        channelManager;
-  private ClientStateManager       clientStateManager;
-  private ServerTransactionManager transactionManager;
-  private Sink                     managedObjectRequestSink;
-  private Sink                     respondObjectRequestSink;
+  private DSOChannelManager             channelManager;
+  private ClientStateManager            clientStateManager;
+  private ServerTransactionManager      transactionManager;
+  private Sink                          managedObjectRequestSink;
+  private Sink                          respondObjectRequestSink;
+  private final TransactionBatchManager transactionBatchManager;
 
-  public void handleEvent(EventContext context) {
+  public BroadcastChangeHandler(TransactionBatchManager transactionBatchManager) {
+    this.transactionBatchManager = transactionBatchManager;
+  }
+
+  public void handleEvent(EventContext context) throws EventHandlerException {
     BroadcastChangeContext bcc = (BroadcastChangeContext) context;
 
     final ChannelID committerID = bcc.getChannelID();
     final TransactionID txnID = bcc.getTransactionID();
 
     final MessageChannel[] channels = channelManager.getChannels();
-               
-
 
     for (int i = 0; i < channels.length; i++) {
       MessageChannel client = channels[i];
@@ -83,6 +93,20 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
       }
     }
     transactionManager.broadcasted(committerID, txnID);
+    try {
+      TxnBatchID batchID = bcc.getBatchID();
+      if (transactionBatchManager.batchComponentComplete(committerID, batchID, txnID)) {
+        try {
+          BatchTransactionAcknowledgeMessage msg = channelManager.newBatchTransactionAcknowledgeMessage(committerID);
+          msg.initialize(batchID);
+          msg.send();
+        } catch (NoSuchChannelException e) {
+          getLogger().warn("Can't send transaction batch acknowledge message to unconnected client: " + committerID);
+        }
+      }
+    } catch (NoSuchBatchException e) {
+      throw new EventHandlerException(e);
+    }
   }
 
   private synchronized long getNextChangeIDFor(ChannelID id) {

@@ -11,6 +11,7 @@ import com.tc.text.PrettyPrinter;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,7 +46,7 @@ public class TestClientStateManager implements ClientStateManager {
 
   public List createPrunedChangesAndAddObjectIDTo(Collection changes, BackReferences includeIDs, ChannelID clientID,
                                                   Set objectIDs) {
-    throw new ImplementMe();
+    return Collections.EMPTY_LIST;
   }
 
   public void addAllReferencedIdsTo(Set rescueIds) {

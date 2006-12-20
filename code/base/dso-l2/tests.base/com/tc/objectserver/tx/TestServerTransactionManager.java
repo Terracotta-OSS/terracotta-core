@@ -76,12 +76,11 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   }
 
   public void committed(Set txnset) {
-    throw new ImplementMe();
+    //NOP
   }
 
   public void broadcasted(ChannelID waiter, TransactionID requestID) {
-    throw new ImplementMe();
-
+    // NOP
   }
 
   public void skipApplyAndCommit(ServerTransaction txn) {
@@ -102,7 +101,7 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   }
 
   public void committed(Collection tx) {
-    throw new ImplementMe();
+    //NOP
   }
 
   public void release(PersistenceTransaction ptx, Collection objects, Map newRoots) {

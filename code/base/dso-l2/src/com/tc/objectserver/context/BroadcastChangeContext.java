@@ -9,6 +9,7 @@ import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.tx.TransactionID;
+import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.lockmanager.api.NotifiedWaiters;
 import com.tc.objectserver.managedobject.BackReferences;
@@ -57,6 +58,10 @@ public class BroadcastChangeContext implements EventContext {
 
   public TransactionID getTransactionID() {
     return tx.getTransactionID();
+  }
+  
+  public TxnBatchID getBatchID() {
+    return tx.getBatchID();
   }
 
   public TxnType getTransactionType() {
