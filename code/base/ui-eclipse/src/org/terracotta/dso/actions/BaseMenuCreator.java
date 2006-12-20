@@ -22,7 +22,7 @@ import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowPulldownDelegate2;
-
+import org.eclipse.ui.texteditor.ITextEditor;
 import org.terracotta.dso.ConfigurationHelper;
 import org.terracotta.dso.TcPlugin;
 
@@ -40,21 +40,24 @@ public abstract class BaseMenuCreator
   protected IJavaElement m_element;
   protected IAction      m_delegateAction;
   protected ISelection   m_selection;
+  protected IEditorPart  m_editorPart;
 
   public BaseMenuCreator() {/**/}
 
   public void init(IWorkbenchWindow window) {/**/}
   public void run(IAction action) {/**/}
-  public void setActiveEditor(IAction action, IEditorPart targetEditor) {/**/}
   public void dispose() {/**/}
   public void init(IViewPart view) {/**/}
   public void setActivePart(IAction action, IWorkbenchPart targetPart) {/**/}
+
+  public void setActiveEditor(IAction action, IEditorPart targetEditor) {
+    m_editorPart = targetEditor;
+  }
   
   protected IJavaElement getElement(ISelection selection) {
     IJavaElement element;
     
-    if(!selection.isEmpty() &&
-       (element = getJavaElement(selection)) != null &&
+    if((element = getJavaElement(selection)) != null &&
        hasTerracottaNature(element))
     {
       return element;
@@ -69,8 +72,6 @@ public abstract class BaseMenuCreator
       m_delegateAction.setMenuCreator(this);
     }
     m_selection = selection;
-    
-    //action.setEnabled((m_element = getElement(selection)) != null);
   }
 
   protected abstract IJavaElement getJavaElement(ISelection selection);
@@ -90,9 +91,20 @@ public abstract class BaseMenuCreator
     });
   }
 
+  protected ISelection getSelection() {
+    if(m_editorPart != null) {
+      if(m_editorPart instanceof ITextEditor) {
+        return ((ITextEditor)m_editorPart).getSelectionProvider().getSelection();
+      }
+    }
+    
+    return m_selection;
+  }
+  
   public Menu getMenu(Control parent) {
     Menu menu = null;
     
+    m_selection = getSelection();
     if((m_element = getElement(m_selection)) != null) {
       buildMenu(menu = new Menu(parent));
     }
@@ -103,6 +115,7 @@ public abstract class BaseMenuCreator
   public Menu getMenu(Menu parent) {
     Menu menu = null;
     
+    m_selection = getSelection();
     if((m_element = getElement(m_selection)) != null) {
       buildMenu(menu = new Menu(parent));
     }

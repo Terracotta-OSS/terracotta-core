@@ -51,11 +51,8 @@ import java.util.Iterator;
  */
 
 public class ActionUtil {
-  private static ISelection   m_lastSelection;
-  private static IJavaElement m_lastJavaElement;
-  
   public static IJavaProject locateSelectedJavaProject(ISelection selection) {
-    if(selection != null) {
+    if(selection != null && !selection.isEmpty()) {
       if(selection instanceof IStructuredSelection) {
         IStructuredSelection ss   = (IStructuredSelection)selection;
         Iterator             iter = ss.iterator();
@@ -83,23 +80,22 @@ public class ActionUtil {
           }
         }
       }
-      else if(selection instanceof ITextSelection) {
-        IEditorPart part = findSelectedEditorPart();
+    }
+
+    IEditorPart part = findSelectedEditorPart();
+    
+    if(part != null) {
+      IEditorInput input = part.getEditorInput();
+      
+      if(input instanceof IFileEditorInput) {
+        IProject project = ((IFileEditorInput)input).getFile().getProject();
         
-        if(part != null) {
-          IEditorInput input = part.getEditorInput();
-          
-          if(input instanceof IFileEditorInput) {
-            IProject project = ((IFileEditorInput)input).getFile().getProject();
-            
-            if(project != null) {
-              return findJavaProject(project);
-            }
-          }
+        if(project != null) {
+          return findJavaProject(project);
         }
       }
     }
-
+    
     return null;
   }
 
@@ -290,25 +286,12 @@ public class ActionUtil {
 
   public static IJavaElement findSelectedJavaElement(ISelection selection) {
     if(selection != null) {
-      if(m_lastSelection != null && selection.equals(m_lastSelection)) {
-        return m_lastJavaElement;
+      if(selection instanceof IStructuredSelection) {
+        return findSelectedJavaElement((IStructuredSelection)selection);
       }
-      else {
-        m_lastSelection = selection;
-        
-        if(selection instanceof IStructuredSelection) {
-          IStructuredSelection ssel = (IStructuredSelection)selection;
-          return m_lastJavaElement = findSelectedJavaElement(ssel);
-        }
-        else if(selection instanceof ITextSelection) {
-          ITextSelection tsel = (ITextSelection)selection;
-          return m_lastJavaElement = findSelectedJavaElement(tsel);
-        }
+      else if(selection instanceof ITextSelection) {
+        return findSelectedJavaElement((ITextSelection)selection);
       }
-    }
-    else {
-      m_lastSelection = null;
-      m_lastJavaElement = null;
     }
     
     return null;

@@ -49,6 +49,13 @@ public class BootJarHelper implements IJavaLaunchConfigurationConstants {
    * Retrieve the name of the default bootjar.
    */
   public String getBootJarName() throws CoreException {
+    return getBootJarName(null);
+  }
+  
+  /**
+   * Retrieve the name of the default bootjar.
+   */
+  public String getBootJarName(String jreContainerPath) throws CoreException {
     ILaunchManager           manager = DebugPlugin.getDefault().getLaunchManager();
     ILaunchConfigurationType type    = manager.getLaunchConfigurationType(ID_JAVA_APPLICATION);
     ILaunchConfiguration[]   configs = manager.getLaunchConfigurations(type);
@@ -69,6 +76,10 @@ public class BootJarHelper implements IJavaLaunchConfigurationConstants {
 
     wc.setAttribute(ATTR_CLASSPATH_PROVIDER, CLASSPATH_PROVIDER);
     wc.setAttribute(ATTR_MAIN_TYPE_NAME, BOOT_JAR_NAMER);
+    
+    if(jreContainerPath != null) {
+      wc.setAttribute(ATTR_JRE_CONTAINER_PATH, jreContainerPath);
+    }
     
     delegate.launch(wc, runMode, launch, null);
     

@@ -7,27 +7,44 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.window.ApplicationWindow;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-
+import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.terracotta.dso.ServerTracker;
 import org.terracotta.dso.TcPlugin;
 
 /**
- * Start the named server.
+ * Manage the named server.
  */
 
-public class StartServerAction extends BaseAction {
-  private String m_name;
+public class ManageServerAction extends BaseAction {
+  private String                 m_name;
+  private static ImageDescriptor m_startImage;
+  private static ImageDescriptor m_stopImage;
+  
+  static {
+    String pluginId  = TcPlugin.getPluginId();
+    String startPath = "/images/eclipse/start.gif";
+    String stopPath  = "/images/eclipse/stop.gif";
+    
+    m_startImage = AbstractUIPlugin.imageDescriptorFromPlugin(pluginId, startPath);
+    m_stopImage  = AbstractUIPlugin.imageDescriptorFromPlugin(pluginId, stopPath);
+  }
 	
-  public StartServerAction(IJavaProject javaProject, String name) {
+  public ManageServerAction(IJavaProject javaProject, String name) {
     super(name);
     setJavaElement(javaProject);
     m_name = name;
+    
+    ServerTracker serverTracker = ServerTracker.getDefault(); 
+    ImageDescriptor imageDesc;
+    imageDesc = serverTracker.isRunning(javaProject, name) ? m_stopImage : m_startImage;
+    setImageDescriptor(imageDesc);
   }
 
   public void performAction() {
@@ -54,8 +71,8 @@ public class StartServerAction extends BaseAction {
         ActionUtil.getStatusMessages(ce));
     }
     
-    Display                display   = workbench.getDisplay();
-    final IWorkbenchWindow window    = workbench.getActiveWorkbenchWindow();
+    Display                display = workbench.getDisplay();
+    final IWorkbenchWindow window  = workbench.getActiveWorkbenchWindow();
     
     display.asyncExec(new Runnable () {
       public void run() {
@@ -63,8 +80,12 @@ public class StartServerAction extends BaseAction {
           IJavaProject  javaProject = (IJavaProject)getJavaElement();
           ServerTracker tracker     = ServerTracker.getDefault();
           
-          tracker.startServer(javaProject, m_name);
-          ((ApplicationWindow)window).setStatus("Terracotta Server, "+m_name+", Started.");
+          if(tracker.isRunning(javaProject, m_name)) {
+            tracker.stopServer(javaProject, m_name);
+          } else {
+            tracker.startServer(javaProject, m_name);
+            ((ApplicationWindow)window).setStatus("Terracotta Server, "+m_name+", Started.");
+          }
         }
         catch(CoreException e) {
           Shell shell = new Shell();

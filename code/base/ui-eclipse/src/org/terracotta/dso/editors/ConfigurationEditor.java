@@ -4,6 +4,7 @@
 package org.terracotta.dso.editors;
 
 import org.apache.xmlbeans.XmlOptions;
+import org.dijon.ScrollPane;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
@@ -46,12 +47,10 @@ import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.part.MultiPageEditorPart;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.IElementStateListener;
-
 import org.terracotta.dso.ConfigurationHelper;
 import org.terracotta.dso.JavaSetupParticipant;
 import org.terracotta.dso.Messages;
 import org.terracotta.dso.TcPlugin;
-import com.tc.admin.AdminClientPanel;
 import org.terracotta.dso.decorator.AdaptedModuleDecorator;
 import org.terracotta.dso.decorator.AdaptedTypeDecorator;
 import org.terracotta.dso.decorator.AutolockedDecorator;
@@ -62,6 +61,8 @@ import org.terracotta.dso.decorator.NameLockedDecorator;
 import org.terracotta.dso.decorator.RootDecorator;
 import org.terracotta.dso.decorator.TransientDecorator;
 import org.terracotta.dso.editors.xml.XMLEditor;
+
+import com.tc.admin.AdminClientPanel;
 import com.terracottatech.configV2.Application;
 import com.terracottatech.configV2.ConfigurationModel;
 import com.terracottatech.configV2.System;
@@ -127,7 +128,8 @@ public class ConfigurationEditor extends MultiPageEditorPart
 
     frame.add(root);
     root.add(rootPane);
-    rootPane.getContentPane().add(m_dsoAppPanel = new DsoApplicationPanel());
+    ScrollPane scroller = new ScrollPane(m_dsoAppPanel = new DsoApplicationPanel()); 
+    rootPane.getContentPane().add(scroller);
     m_dsoAppPanel.setup(m_project);
     m_dsoAppPanel.setVisible(true);
 
@@ -151,7 +153,8 @@ public class ConfigurationEditor extends MultiPageEditorPart
 
     frame.add(root);
     root.add(rootPane);
-    rootPane.getContentPane().add(m_serversPanel = new ServersPanel());
+    ScrollPane scroller = new ScrollPane(m_serversPanel = new ServersPanel());
+    rootPane.getContentPane().add(scroller);
     m_serversPanel.setup(m_project);
     m_serversPanel.setVisible(true);
 
@@ -167,7 +170,8 @@ public class ConfigurationEditor extends MultiPageEditorPart
     
     frame.add(root);
     root.add(rootPane);
-    rootPane.getContentPane().add(m_clientsPanel = new ClientsPanel());
+    ScrollPane scroller = new ScrollPane(m_clientsPanel = new ClientsPanel());
+    rootPane.getContentPane().add(scroller);
     m_clientsPanel.setup(m_project);
     m_clientsPanel.setVisible(true);
 
@@ -202,7 +206,8 @@ public class ConfigurationEditor extends MultiPageEditorPart
           
     frame.add(root);
     root.add(rootPane);
-    rootPane.getContentPane().add(m_monitorPanel = new AdminClientPanel());
+    ScrollPane scroller = new ScrollPane(m_monitorPanel = new AdminClientPanel());
+    rootPane.getContentPane().add(scroller);
     m_monitorPanel.setVisible(true);
     
     addPage(pageIndex, composite);

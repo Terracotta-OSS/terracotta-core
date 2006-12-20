@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso.actions;
 
@@ -19,19 +20,19 @@ import com.terracottatech.configV2.Server;
 import com.terracottatech.configV2.Servers;
 
 /**
- * Popup action submenu that server-specific start actions.
+ * Action providing server management menuitems.
  * 
  * @see org.eclipse.jdt.core.IProject
  * @see BaseMenuCreator
- * @see StartServerAction
+ * @see ManageServerAction
  */
 
-public class StartServerHandler extends BaseMenuCreator
+public class ManageServerHandler extends BaseMenuCreator
   implements IProjectAction
 {
   private IJavaProject m_javaProject;
 
-  public StartServerHandler() {
+  public ManageServerHandler() {
     super();
     TcPlugin.getDefault().registerProjectAction(this);
   }
@@ -94,7 +95,7 @@ public class StartServerHandler extends BaseMenuCreator
 
       if(servers == null) {
         m_delegateAction.setEnabled(true);
-        addMenuAction(menu, new StartServerAction(m_javaProject, "default"));
+        addMenuAction(menu, new ManageServerAction(m_javaProject, "default"));
       } else {
         Server[] serverArray = servers.getServerArray();
 
@@ -102,7 +103,7 @@ public class StartServerHandler extends BaseMenuCreator
 
         if(serverArray != null) {
           for(int i = 0; i < serverArray.length; i++) {
-            addMenuAction(menu, new StartServerAction(m_javaProject, serverArray[i].getName()));
+            addMenuAction(menu, new ManageServerAction(m_javaProject, serverArray[i].getName()));
           }
         }
         else {

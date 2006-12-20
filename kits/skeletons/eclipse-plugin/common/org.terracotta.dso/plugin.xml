@@ -3,7 +3,7 @@
 
   All content copyright (c) 2003-2006 Terracotta, Inc.,
   except as may otherwise be noted in a separate copyright notice.
-  All rights reserved.
+  All rights reserved
 
 -->
 <?eclipse version="3.0"?>
@@ -122,7 +122,6 @@
       </editor>
    </extension>
 
-<!--
    <extension point="org.eclipse.ui.views"> 
       <category id="org.terracotta.dso.views" name="Terracotta DSO"/> 
       <view 
@@ -131,8 +130,13 @@
          category="org.terracotta.dso.views"
          class="org.terracotta.dso.views.BootJarView" 
          icon="images/eclipse/logo16.gif"/>
+      <view 
+         id="org.terracotta.dso.ui.views.appOverview" 
+         name="DSO Application Overview" 
+         category="org.terracotta.dso.views"
+         class="org.terracotta.dso.views.ApplicationOverview" 
+         icon="images/eclipse/logo16.gif"/>
    </extension> 
--->
 
    <extension point="org.eclipse.core.resources.natures"
             id="ProjectNature"
@@ -164,10 +168,10 @@
                id="workbenchNatureAction">
          </action>
          <action
-               label="Start Terracotta Server"
+               label="Servers"
                icon="images/eclipse/logo16.gif"
                style="pulldown"
-               class="org.terracotta.dso.actions.StartServerHandler"
+               class="org.terracotta.dso.actions.ManageServerHandler"
                menubarPath="org.terracotta.dso.workbenchActionSetMenu/group1"
                toolbarPath="Terracotta"
                enablesFor="1"
@@ -271,40 +275,15 @@
       <objectContribution
             objectClass="org.eclipse.jdt.core.IJavaProject"
             id="stopTerracottaServerContribution">
-         <visibility>
-            <objectState name="sessionProperty" value="org.terracotta.dso.ServerRunning"/>
-         </visibility>
          <action
-               label="Stop Terracotta Server"
-               icon="images/eclipse/stop.gif"
-               class="org.terracotta.dso.actions.StopServerAction"
+               label="Servers"
+               icon="images/eclipse/logo16.gif"
+               style="pulldown"
+               class="org.terracotta.dso.actions.ManageServerHandler"
                menubarPath="projectPopupMenu/group2"
                enablesFor="1"
                helpContextId="stop_server_context"
                id="stopTerracottaServerAction">
-         </action>
-      </objectContribution>
-
-      <objectContribution
-            objectClass="org.eclipse.jdt.core.IJavaProject"
-            id="startTerracottaServerContribution">
-         <visibility>
-            <and>
-              <not>
-                <objectState name="sessionProperty" value="org.terracotta.dso.ServerRunning"/>
-              </not>
-              <objectState name="nature" value="org.terracotta.dso.ProjectNature"/>
-            </and>
-         </visibility>
-         <action
-               label="Start Terracotta Server"
-               icon="images/eclipse/start.gif"
-               style="pulldown"
-               class="org.terracotta.dso.actions.StartServerHandler"
-               menubarPath="projectPopupMenu/group2"
-               enablesFor="1"
-               helpContextId="start_server_context"
-               id="startTerracottaServerAction">
          </action>
       </objectContribution>
 

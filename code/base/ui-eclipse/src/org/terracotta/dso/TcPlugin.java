@@ -173,7 +173,7 @@ public class TcPlugin extends AbstractUIPlugin
   private ArrayList              m_projectActionList;
   private BootClassHelper        m_bootClassHelper;
   
-  public  static final String INSTALL_NAME  = "org.terracotta.dso";
+  public  static final String PLUGIN_ID     = "org.terracotta.dso";
   private static final String RESOURCE_FILE = "Resources.xml";
   
   public static final String DEFAULT_CONFIG_FILENAME = "tc-config.xml";
@@ -181,6 +181,10 @@ public class TcPlugin extends AbstractUIPlugin
   
   public TcPlugin() {
     super();
+  }
+
+  public static String getPluginId() {
+    return PLUGIN_ID;
   }
 
   public BootClassHelper getBootClassHelper() {
@@ -441,10 +445,10 @@ public class TcPlugin extends AbstractUIPlugin
         
         monitor.beginTask("Stopping server", 4);
         final ServerTracker tracker = ServerTracker.getDefault();
-        if(tracker.isRunning(m_javaProject)) {
+        if(tracker.anyRunning(m_javaProject)) {
           Display.getDefault().syncExec(new Runnable() {
             public void run() {
-              tracker.stopServer(m_javaProject);
+              tracker.shutdownAllServers();
             }
           });
         }
@@ -1494,4 +1498,12 @@ public class TcPlugin extends AbstractUIPlugin
     
     return true;
   }
+
+  public static Display getStandardDisplay() {
+    Display display= Display.getCurrent();
+    if (display == null) {
+      display= Display.getDefault();
+    }
+    return display;   
+  } 
 }

@@ -75,7 +75,9 @@ public class ServerTracker {
   
             if(serverInfo != null) {
               m_servers.remove(source);
-              setRunning(serverInfo.getJavaProject(), null);
+              if(m_servers.isEmpty()) {
+                setRunning(serverInfo.getJavaProject(), null);
+              }
             }
           }
         }
@@ -83,7 +85,7 @@ public class ServerTracker {
     }
   };
 
-  public boolean isRunning(IJavaProject javaProj) {
+  public boolean anyRunning(IJavaProject javaProj) {
     try {
       return javaProj.getProject().getSessionProperty(SERVER_RUNNING_NAME) != null;
     } catch(CoreException ce) {
@@ -91,6 +93,27 @@ public class ServerTracker {
     }
   }
 	
+  public boolean isRunning(IJavaProject javaProj, String name) {
+    if(anyRunning(javaProj)) {
+      Iterator   iter = m_servers.keySet().iterator();
+      IProcess   proc;
+      ServerInfo serverInfo;
+      String     serverName;
+      
+      while(iter.hasNext()) {
+        proc       = (IProcess)iter.next();
+        serverInfo = (ServerInfo)m_servers.get(proc);
+        serverName = serverInfo.getName();
+
+        if(name.equals(serverName)) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+  
   public void setRunning(IJavaProject javaProj, Boolean value) {
     if(value != null && value.equals(Boolean.FALSE)) {
       value = null;
@@ -109,7 +132,7 @@ public class ServerTracker {
   public void startServer(IJavaProject javaProject, String name)
     throws CoreException
   {
-    if(isRunning(javaProject)) {
+    if(isRunning(javaProject, name)) {
       internalStopServer(javaProject, true, name);
     }
     else {
@@ -120,12 +143,13 @@ public class ServerTracker {
   private void internalStartServer(IJavaProject javaProject, String name)
     throws CoreException
   {
-    TcPlugin plugin   = TcPlugin.getDefault();
-    String   projName = javaProject.getElementName();
-    int      jmxPort  = plugin.getJmxPort(javaProject.getProject(), name);
-    ILaunch  launch   = plugin.launchServer(javaProject, projName, name);
+    TcPlugin   plugin   = TcPlugin.getDefault();
+    String     projName = javaProject.getElementName();
+    int        jmxPort  = plugin.getJmxPort(javaProject.getProject(), name);
+    ILaunch    launch   = plugin.launchServer(javaProject, projName, name);
+    ServerInfo info     = new ServerInfo(javaProject, name, jmxPort != 0 ? jmxPort : 9520);
     
-    m_servers.put(launch.getProcesses()[0], new ServerInfo(javaProject, jmxPort != 0 ? jmxPort : 9520));
+    m_servers.put(launch.getProcesses()[0], info);
     
     DebugPlugin.getDefault().addDebugEventListener(listener);
     setRunning(javaProject, Boolean.TRUE);
@@ -153,7 +177,11 @@ public class ServerTracker {
   public void stopServer(IJavaProject javaProject) {
     internalStopServer(javaProject, false, null);
   }
-  
+ 
+  public void stopServer(IJavaProject javaProject, String name) {
+    internalStopServer(javaProject, false, name);
+  }
+
   private void internalStopServer(IJavaProject javaProject, boolean restart, String name) {
     IWorkbench       workbench = PlatformUI.getWorkbench();
     IWorkbenchWindow window    = workbench.getActiveWorkbenchWindow();
@@ -161,7 +189,7 @@ public class ServerTracker {
   
     try {
       IRunnableWithProgress op = new TCStopper(javaProject, restart, name);
-      new ProgressMonitorDialog(shell).run(true, false, op);
+      new ProgressMonitorDialog(shell).run(true, true, op);
     } catch(InvocationTargetException e) {
       TcPlugin.getDefault().openError("Cannot stop Terracotta server", e.getCause());
     } catch(InterruptedException e) {/**/}  
@@ -187,7 +215,10 @@ public class ServerTracker {
     {
       try {
         monitor.beginTask("Stopping Terracotta Server...", IProgressMonitor.UNKNOWN);
-        doStopServer(m_javaProject, monitor);
+        doStopServer(m_javaProject, m_name, monitor);
+        if(monitor.isCanceled()) {
+          return;
+        }
         if(m_restart) {
           internalStartServer(m_javaProject, m_name);
         }
@@ -197,25 +228,33 @@ public class ServerTracker {
     }
   }
       
-  private void doStopServer(IJavaProject targetProj, IProgressMonitor monitor) {
+  private void doStopServer(IJavaProject targetProj, String targetName, IProgressMonitor monitor) {
     Iterator     iter = m_servers.keySet().iterator();
     IProcess     proc;
     ServerInfo   serverInfo;
     IJavaProject javaProject;
     int          jmxPort;
+    String       name;
     
     while(iter.hasNext()) {
       proc        = (IProcess)iter.next();
       serverInfo  = (ServerInfo)m_servers.get(proc);
       javaProject = serverInfo.getJavaProject();
       jmxPort     = serverInfo.getJmxPort();
+      name        = serverInfo.getName();
       
-      if(javaProject.getProject().isOpen() && targetProj.equals(javaProject)) {
+      if(javaProject.getProject().isOpen() &&
+         targetProj.equals(javaProject) &&
+         targetName.equals(name))
+      {
         TCStop stopper = new TCStop("localhost", jmxPort != -1 ? jmxPort : 9520);
         
         try {
           stopper.stop();
           while(true) {
+            if(monitor.isCanceled()) {
+              return;
+            }
             try {
               proc.getExitValue();
               return;
@@ -251,14 +290,20 @@ public class ServerTracker {
 class ServerInfo {
   IJavaProject m_javaProject;
   int          m_jmxPort;
+  String       m_name;
   
-  ServerInfo(IJavaProject javaProject, int jmxPort) {
+  ServerInfo(IJavaProject javaProject, String name, int jmxPort) {
     m_javaProject = javaProject;
+    m_name        = name;
     m_jmxPort     = jmxPort;
   }
   
   IJavaProject getJavaProject() {
     return m_javaProject;
+  }
+  
+  String getName() {
+    return m_name;
   }
   
   int getJmxPort() {

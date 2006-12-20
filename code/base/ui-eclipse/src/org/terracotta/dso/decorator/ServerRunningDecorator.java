@@ -37,7 +37,7 @@ public class ServerRunningDecorator extends LabelProvider
     IJavaProject javaProj = (IJavaProject)element;
 
     if(TcPlugin.getDefault().hasTerracottaNature(javaProj) &&
-       ServerTracker.getDefault().isRunning(javaProj))
+       ServerTracker.getDefault().anyRunning(javaProj))
     {
       decoration.addOverlay(m_imageDesc);
     }
