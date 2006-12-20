@@ -26,6 +26,10 @@ public class Vm {
     // Utility class
   }
 
+  public static int getMegaVersion() {
+    return VERSION.getMegaVersion();
+  }
+
   public static int getMajorVersion() {
     return VERSION.getMajorVersion();
   }
