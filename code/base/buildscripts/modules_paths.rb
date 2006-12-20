@@ -17,7 +17,7 @@
 # * Any overall libraries for this subtree (<modulename>/lib.<subtreename>) -- <subtreename> is omitted if it's 'src'
 # * Any runtime libraries for this subtree (<modulename>/lib.<subtreename>.runtime) -- <subtreename> is omitted if it's 'src' -- but *only* if the CLASSPATH is being computed for runtime (as opposed to compile-time)
 # * Any compile-time libraries for this subtree (<modulename>/lib.<subtreename>.compile) -- <subtreename> is omitted if it's 'src' -- but *only* if the CLASSPATH is being computed for compile-time (as opposed to runtime)
-# 
+#
 # and then...
 #
 # * All four of the above, for any subtrees in this same module that this subtree is dependent upon
@@ -37,6 +37,7 @@
 # 'compiling against' a native library).
 
 class BuildSubtree
+
     # Returns the CLASSPATH that this subtree should be compiled or run with. type must
     # be either :runtime or :compile; libraries in <module>/lib.<subtree>.runtime will only
     # be added if type is :runtime, while libraries in module/lib.<subtree>.compile will only
@@ -102,6 +103,9 @@ class BuildSubtree
     # Returns the libraries for just this subtree (as a PathSet); type is either :runtime or :compile.
     def subtree_only_libraries(type)
         out = PathSet.new
+        ivy_dependencies(type).each do |jar|
+            out << FilePath.new(@static_resources.lib_dependencies_directory, jar)
+        end
         roots = subtree_only_library_roots(type)
         roots.each { |root| out << JarDirectory.new(root).to_classpath }
         out
@@ -280,5 +284,40 @@ class BuildSubtree
     # This implies that native libraries must be organized by operating-system test
     def native_library_subdir(build_environment)
         build_environment.os_type(:nice)
+    end
+
+
+    module DOM4J
+      # Include some DOM4J classes in this module.
+      %w(Document DocumentException Element Node).each do |dom4j_class|
+        include_class("org.dom4j.#{dom4j_class}")
+        include_class("org.dom4j.io.SAXReader")
+      end
+    end
+
+    include_class("java.io.FileReader")
+
+    # Returns an Array containing the names of all libraries defined in the Ivy
+    # dependency file(s) for this subtree.  The Array elements are simple file
+    # names and do not include any paths.
+    def ivy_dependencies(type)
+      result = Array.new
+
+      dependencies_file = ivy_file_name.canonicalize.to_s
+      if File.exists?(dependencies_file)
+        xml = DOM4J::SAXReader.new.read(FileReader.new(dependencies_file))
+        xml.selectNodes("/ivy-module/dependencies/dependency").each do |node|
+          name = node.attribute('name').value
+          rev = node.attribute('rev').value
+          result << "#{name}-#{rev}.jar"
+        end
+      end
+
+      result
+    end
+
+    # The name of the Ivy dependency file for this subtree.
+    def ivy_file_name
+        FilePath.new(@build_module.root.to_s, "ivy#{lib_suffix.gsub(/\./, '-')}.xml")
     end
 end

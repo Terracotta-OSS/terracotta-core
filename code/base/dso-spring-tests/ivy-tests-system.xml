@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ivy-module version="1.0">
+  <info organisation="ibiblio" module="dso-spring-tests-tests-system"/>
+  <dependencies>
+  	<dependency name="cglib" rev="nodep-2.1_3"/>
+  	<dependency name="commons-collections" rev="3.1"/>
+  	<dependency name="commons-dbcp" rev="1.2.1"/>
+  	<dependency name="commons-pool" rev="1.2"/>
+  	<dependency name="dom4j" rev="1.6.1"/>
+  	<dependency name="ehcache" rev="1.1"/>
+  	<dependency name="hibernate" rev="3.1.2" org="terracotta"/>
+  	<dependency name="hsqldb" rev="1.7.2.2"/>
+  </dependencies>
+</ivy-module>

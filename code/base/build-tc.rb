@@ -109,7 +109,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
         # will then be missing.
         @build_results.clean(ant)
     end
-    
+
     def clean_cache
         FileUtils.rm_rf '.tc-build-cache'
     end
@@ -419,7 +419,7 @@ END
         scope = (config_source['scope'] || :full).to_sym
         classpath = @module_set[module_name].subtree(subtree_name).classpath(@build_results, scope, type)
 
-        puts "For subtree '%s/%s', the %s %s classpath is:" % [ module_name, subtree_name, scope, type ]
+        puts "For subtree '#{module_name}/#{subtree_name}', the #{scope} #{type} classpath is:"
         puts ""
         puts classpath
     end
@@ -768,15 +768,15 @@ END
         # Configuration data.
         configuration_data = {
             'branch' => @build_environment.current_branch,
-            'platform' => @build_environment.platform,            
+            'platform' => @build_environment.platform,
             'target' => config_source['tc.build-control.build.target'],
             'jvm-tests-1.4' => @jvm_set['tests-1.4'].short_description,
-            'jvm-tests-1.5' => @jvm_set['tests-1.5'].short_description,            
-        }        
+            'jvm-tests-1.5' => @jvm_set['tests-1.5'].short_description,
+        }
 
         # Parameters data.
         parameters_data = {
-          'host' => @build_environment.build_hostname,          
+          'host' => @build_environment.build_hostname,
           'monkey-name' => config_source['monkey-name']
         }
 

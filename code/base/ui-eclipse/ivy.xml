@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ivy-module version="1.0">
+  <info organisation="ibiblio" module="ui-eclipse"/>
+  <dependencies>
+	<dependency name="org.eclipse.core.commands" rev="3.2.0.I20060605-1400" org="tc-eclipse"/>
+	<dependency name="org.eclipse.core.contenttype" rev="3.2.0.v20060603" org="tc-eclipse"/>
+	<dependency name="org.eclipse.core.filebuffers" rev="3.2.0.v20060605-1400" org="tc-eclipse"/>
+	<dependency name="org.eclipse.core.jobs" rev="3.2.0.v20060603" org="tc-eclipse"/>
+	<dependency name="org.eclipse.core.resources" rev="3.2.0.v20060603" org="tc-eclipse"/>
+	<dependency name="org.eclipse.core.runtime" rev="3.2.0.v20060603" org="tc-eclipse"/>
+	<dependency name="org.eclipse.debug.core" rev="3.2.0.v20060605" org="tc-eclipse"/>	
+	<dependency name="org.eclipse.debug.ui" rev="3.2.0.v20060605" org="tc-eclipse"/>
+	<dependency name="org.eclipse.equinox.common" rev="3.2.0.v20060603" org="tc-eclipse"/>
+	<dependency name="org.eclipse.equinox.preferences" rev="3.2.0.v20060601" org="tc-eclipse"/>
+	<dependency name="org.eclipse.equinox.registry" rev="3.2.0.v20060601" org="tc-eclipse"/>
+	<dependency name="org.eclipse.help" rev="3.2.0.v20060602" org="tc-eclipse"/>
+	<dependency name="org.eclipse.jdt.core" rev="3.2.0.v_671" org="tc-eclipse"/>
+	<dependency name="org.eclipse.jdt.debug.ui" rev="3.2.0.v20060605" org="tc-eclipse"/>
+	<dependency name="org.eclipse.jdt.launching" rev="3.2.0.v20060605" org="tc-eclipse"/>
+	<dependency name="org.eclipse.jdt.ui" rev="3.2.0.v20060605-1400" org="tc-eclipse"/>
+	<dependency name="org.eclipse.jface" rev="3.2.0.I20060605-1400" org="tc-eclipse"/>
+	<dependency name="org.eclipse.jface.text" rev="3.2.0.v20060605-1400" org="tc-eclipse"/>
+	<dependency name="org.eclipse.ltk.core.refactoring" rev="3.2.0.v20060605-1400" org="tc-eclipse"/>
+	<dependency name="org.eclipse.osgi" rev="3.2.0.v20060601" org="tc-eclipse"/>
+	<dependency name="org.eclipse.swt" rev="3.2.0.v3232o" org="tc-eclipse"/>
+	<dependency name="org.eclipse.swt.gtk.linux.x86" rev="3.2.0.v3232m" org="tc-eclipse"/>
+	<dependency name="org.eclipse.text" rev="3.2.0.v20060605-1400" org="tc-eclipse"/>
+	<dependency name="org.eclipse.ui" rev="3.2.0.I20060605-1400" org="tc-eclipse"/>
+	<dependency name="org.eclipse.ui.editors" rev="3.2.0.v20060605-1400" org="tc-eclipse"/>
+	<dependency name="org.eclipse.ui.ide" rev="3.2.0.I20060605-1400" org="tc-eclipse"/>
+	<dependency name="org.eclipse.ui.workbench" rev="3.2.0.I20060605-1400" org="tc-eclipse"/>
+	<dependency name="org.eclipse.ui.workbench.texteditor" rev="3.2.0.v20060605-1400" org="tc-eclipse"/>
+	<dependency name="runtime_registry_compatibility" rev="x" org="tc-eclipse"/>
+  </dependencies>
+</ivy-module>

@@ -9,7 +9,7 @@
 # directory. <b>This is very important</b>; you may think it's annoying to pass around the
 # BuildResults object, but the alternative is to spread out the knowledge of where stuff goes
 # into a zillion different classes and then suffer abject pain the moment you have to change
-# any of it. 
+# any of it.
 #
 # So, right now, absolutely _all_ knowledge about the structure of the 'build' directory is here,
 # and, in this author's opinion, that is a very, very good thing.
@@ -17,25 +17,25 @@
 # Represents the results of a build -- that is, the contents of the 'build' directory.
 class BuildResults
     attr_reader :build_dir
-    
+
     # Creates a new BuildResults instance. build_dir is the FilePath that points to the 'build' directory.
     def initialize(build_dir)
         @build_dir = build_dir
     end
-    
-    # Deletes absolutely all build results. 
+
+    # Deletes absolutely all build results.
     def clean(ant)
         @build_dir.delete
     end
-    
+
     # Returns the root of the classes hierarchy for the given build subtree -- that is, if you
     # want to use classes from the given subtree, this must be on your CLASSPATH.
     #
     # Returns a FilePath object.
     def classes_directory(subtree)
-        FilePath.new(@build_dir, subtree.build_module.name, "%s.classes" % subtree.name).ensure_directory
+        FilePath.new(@build_dir, subtree.build_module.name, "#{subtree.name}.classes").ensure_directory
     end
-    
+
     # Given a subtree and a path (absolute or relative, starting from anywhere) to a .class
     # file, returns the fully-qualified name of the Java class that should reside in that file.
     def class_name_for_class_file(subtree, class_file)
@@ -46,7 +46,7 @@ class BuildResults
         subpath_string.gsub!("\\", ".")
         subpath_string
     end
-    
+
     # The name of the file into which our build mechanism writes all the system properties that
     # should be set when running tests. This is written by 'check_prep', and read by the
     # Java TestConfigObject, in its static initializer block. Note that this is *quite* different
@@ -58,14 +58,14 @@ class BuildResults
     def test_config_system_properties_file(module_set)
         FilePath.new(classes_directory_for_eclipse(module_set['common'].subtree('tests.base')), "test-system-properties.properties")
     end
-    
+
     # The path to a properties file that indicates which tree we've run 'check_prep' for most recently.
     # This is read by Eric's Eclipse tool to figure out whether it needs to re-run 'check_prep' before
     # spinning up a test.
     def prepped_stamp_file(module_set)
         FilePath.new(classes_directory_for_eclipse(module_set['common'].subtree('tests.base')), "tests-prepared.properties")
     end
-    
+
     # The directory that Eclipse puts the compiled classes of the given subtree into. This is set in
     # the Eclipse project by our Eclipse-project-generation mechanism, and used by check_prep to write
     # files out that can be read in as resources by our Eclipse code.
@@ -78,8 +78,8 @@ class BuildResults
     def tools_home
         FilePath.new(@build_dir, "homes", "tools").ensure_directory
     end
-    
-    # Creates a JAR archive of the entirety of the build-results directory to the given path. 
+
+    # Creates a JAR archive of the entirety of the build-results directory to the given path.
     #
     # Currently, we exclude certain JARs from this archive to reduce its size. This is not ideal, because I'd
     # like to provide absolutely everything so that people can debug easily, but without this we get 300+ MByte
@@ -90,7 +90,7 @@ class BuildResults
           path = FilePath.new(path)
           FilePath.new(path.directoryname).ensure_directory
           puts "Archiving entire build directory ('%s') to '%s'..." % [ @build_dir.to_s, path.to_s ]
-           
+
           ant.jar(:destfile => path.to_s) do
               ant.fileset(:dir => @build_dir.to_s,
                           :includes => "**/testrun*/**,**/tests_aggregation/*",
@@ -98,18 +98,18 @@ class BuildResults
               ant.fileset(:dir => @build_dir.to_s,
                           :includes => "**/normal-boot-jars/*.jar")
           end
-          
+
           puts "Done archiving build."
         end
     end
-    
+
     # The "server home", which is the working directory we set (and into which we copy certain files required
     # by the server) when we run the Terracotta Server directly from tcbuild. (This is not, and should not be, ever
     # used by tests.)
     def server_home
         FilePath.new(@build_dir, "homes", "server").ensure_directory
     end
-    
+
     # The path to the XML file we write out with all the relevant properties of our build, so that monkeys
     # (and, most particularly, the monkey database) can pick it up and integrate it into the main CruiseControl
     # XML result log. This is how monkeys (and, thus, the monkey database) know things like which branch the
@@ -118,7 +118,7 @@ class BuildResults
         dir = FilePath.new(@build_dir, "cruisecontrol_integrated_xml_files").ensure_directory
         FilePath.new(dir, "build-information.xml")
     end
-    
+
     # The directory into which we generate the XMLBeans source code that represents the Terracotta configuration
     # schema (.xsd files).
     def config_schema_generation_directory

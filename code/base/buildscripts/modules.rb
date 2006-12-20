@@ -30,7 +30,7 @@ ALL_SUBTREE_NAMES = [ 'src' ].concat(ALL_TEST_SUBTREE_NAMES)
 # instances of this to make sure we create all the right subtrees for each build module.
 class BuildSubtreeFactory
     attr_reader :name
-    
+
     # Creates a new instance. name is the name of the subtree it will create;
     # internal_dependent_subtree_names is an array of the names of the other subtrees
     # that this subtree is dependent upon (read: 'will compile against'), while
@@ -47,7 +47,7 @@ class BuildSubtreeFactory
     # For 'tests.base', 'tests.unit', 'and 'tests.system' subtrees, it is set to
     # 'tests.base', meaning 'tests.*' subtrees compile only against 'tests.base' and
     # 'src' subtrees in other build modules. (This is because you really shouldn't
-    # be writing tests in one module that depend on _tests_ in another module -- 
+    # be writing tests in one module that depend on _tests_ in another module --
     # just the test _infrastructure_ in another module.)
     def initialize(name, internal_dependent_subtree_names, external_dependencies_like)
         @name = name.to_s
@@ -77,10 +77,10 @@ end
 
 # A build subtree. This represents, for example, 'common/src', or 'dso-system-tests/tests.base', or
 # 'ui-configuration/tests.system' -- that is, a single source root, along with all the libraries
-# and other stuff that go with it. 
+# and other stuff that go with it.
 class BuildSubtree
     attr_reader :name, :build_module, :source_exists
-    
+
     # Creates a new instance. The name is something like 'src', 'tests.unit', or whatever; for
     # information about internal_dependencies and external_dependencies_like, see the doc
     # for BuildSubtreeFactory, above.
@@ -89,41 +89,44 @@ class BuildSubtree
         @build_module = build_module
         @internal_dependencies = internal_dependencies
         @external_dependencies_like = external_dependencies_like
-        
+
         @source_exists = FileTest.directory?(source_root.to_s)
         @resources_exists = FileTest.directory?(resource_root.to_s)
+
+        parent_dir = FilePath.new(@build_module.root, '..').canonicalize
+        @static_resources = StaticResources.new(parent_dir)
     end
-    
+
     def to_s
         "<Module subtree: %s/%s>" % [ build_module.name, name ]
     end
-    
+
     # Returns a FilePath pointing to the root of this subtree's source (whether it actually
     # exists or not).
     def source_root
         FilePath.new(build_module.root, name).canonicalize
     end
-    
+
     # Returns the FilePath to the file that designates which tests in this module are part
     # of the test list named basename. This FilePath is returned whether it actually
     # exists or not.
     def test_list_file(basename)
       FilePath.new(build_module.root, "%s.lists.%s" % [ name, basename ])
     end
-    
+
     # This returns a PathSet representing the paths to all classes that match any of the
     # patterns (expressed as Ant-style patterns, with '*' and '**') in patterns. This can
     # be used to figure out what tests we're going to run before we use them; it uses the
     # Ant 'path' task so that it's reasonably efficient.
     def classes_matching_patterns(patterns, ant, platform, build_results)
         out = PathSet.new
-        
+
         patterns.each do |pattern|
             # Yup, gotta use a fresh, new Ant property name each time. Yuck.
             path_property_name = platform.next_ant_property_name('patterns_search_path')
             classes_directory = build_results.classes_directory(self).to_s
             pattern_spec = "**/%s.class" % pattern
-            
+
             ant.path(:id => path_property_name) {
                 ant.fileset(:dir => classes_directory, :includes => pattern_spec)
             }
@@ -133,10 +136,10 @@ class BuildSubtree
             ant.property(:name => property_name, :refid => path_property_name)
             out << ant.get_ant_property(property_name)
         end
-        
+
         out
     end
-    
+
     # Where would resources for this subtree live?
     def resource_root
         FilePath.new(build_module.root, name + ".resources").canonicalize
@@ -162,35 +165,35 @@ class BuildModule
         @module_set = module_set
         @name = data[:name]
         @root = FilePath.new(root_dir, @name).canonicalize
-        @compiler_version = data[:compiler_version] 
+        @compiler_version = data[:compiler_version]
         @aspectj = data[:aspectj] || false
         @dependencies = data[:dependencies] || [ ]
 
         assert("Root ('#{@root.to_s}') must be an absolute path") { @root.absolute? }
         assert("Root ('#{@root.to_s}') must exist, and be a directory") { FileTest.directory?(@root.to_s) }
         assert("Compiler version must be specified.") { ! @compiler_version.nil? }
-        
+
         @subtrees = [ ]
         # Run through all the factories and add a new subtree for each one.
         BuildSubtreeFactory::ALL_BUILD_SUBTREE_FACTORIES.each { |factory| @subtrees << factory.create(self) }
     end
-    
+
     # Runs the passed block for each subtree, passing in the subtree.
     def each(&proc)
         @subtrees.each(&proc)
     end
-    
+
     def to_s
         "<Module '%s', at '%s', compiler version '%s', dependent on: %s>" % [ @name, root, compiler_version, @dependencies.join(", ") ]
     end
-    
+
     # The list of build modules (actual BuildModule objects) that this module is dependent upon.
     def dependent_modules
         out = [ ]
         @dependencies.each { |dependency| out << @module_set[dependency] }
         out
     end
-    
+
     # Returns the subtree with the specified name. Raises an exception if no subtree
     # with the given name exists.
     def subtree(name)
@@ -212,13 +215,13 @@ class BuildModuleSet
         @root_dir = root_dir
         @modules = [ ]
     end
-    
+
     # Given a hash, creates a new BuildModule from it and adds it to the set. The hash
     # must contain exactly the data required by BuildModule#initialize (see above).
     def add(data)
         @modules << BuildModule.new(@root_dir, self, data)
     end
-    
+
     # Returns the module with the given name, or raises an exception if no such module
     # exists.
     def [](module_name)
@@ -227,12 +230,12 @@ class BuildModuleSet
         raise "No such module '#{module_name}'" if out.nil?
         out
     end
-    
+
     # Runs the given block for each module in the system, yielding each module in turn.
     def each(&proc)
         @modules.each(&proc)
     end
-    
+
     def to_s
         out = "<BuildModuleSet:\n"
         @modules.each { |buildmodule| out += "   %s\n" % buildmodule.to_s }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ivy-module version="1.0">
+  <info organisation="ibiblio" module="dso-performance-tests-tests-base"/>
+  <dependencies>
+  	<dependency name="commons-codec" rev="1.3"/>
+	<dependency name="commons-httpclient" rev="3.0.1"/>
+	<dependency name="commons-lang" rev="2.0"/>
+	<dependency name="concurrent" rev="1.3.4"/>
+	<dependency name="jfreechart" rev="1.0.0x" org="terracotta"/>
+  </dependencies>
+</ivy-module>

@@ -12,4 +12,30 @@ fi
 JRUBY_HOME=`dirname $0`/../../buildsystems/jruby
 export JRUBY_HOME
 
-exec $JRUBY_HOME/bin/jruby -Ibuildscripts build-tc.rb "$@"
+if [ ! -d "${JRUBY_HOME}" ]; then
+	echo "--------------------------------------------------------------------------------"
+	echo "LOADING JRUBY USING IVY"
+	echo ""
+	$ANT_HOME/bin/ant -buildfile `dirname $0`/buildconfig/build.xml
+fi
+
+if [ ! -d "${ANT_HOME}" ]; then
+	echo "--------------------------------------------------------------------------------"
+	echo "ANT_HOME not set. Skipping dependency resolution with ANT+IVY."
+	__IVY_EXIT_CODE=0
+else
+	echo "--------------------------------------------------------------------------------"
+	echo "RUNNING ANT+IVY"
+	echo ""
+
+	$ANT_HOME/bin/ant -buildfile `dirname $0`/buildconfig/resolve-dependencies/build.xml
+	__IVY_EXIT_CODE="$?"
+fi
+
+if test "$__IVY_EXIT_CODE" = 0; then
+	echo ""
+	echo "--------------------------------------------------------------------------------"
+	echo "RUNNING TCBUILD"
+	echo ""
+	exec /bin/sh $JRUBY_HOME/bin/jruby -Ibuildscripts build-tc.rb "$@"
+fi
