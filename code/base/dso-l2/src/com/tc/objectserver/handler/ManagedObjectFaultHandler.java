@@ -15,16 +15,19 @@ import com.tc.objectserver.context.ManagedObjectFaultingContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
+import com.tc.properties.TCPropertiesImpl;
 
 public class ManagedObjectFaultHandler extends AbstractEventHandler {
 
-  private static final TCLogger logger = TCLogging.getLogger(ManagedObjectFaultHandler.class);
+  private static final TCLogger logger           = TCLogging.getLogger(ManagedObjectFaultHandler.class);
+  private static final boolean  LOG_OBJECT_FAULT = TCPropertiesImpl.getProperties()
+                                                     .getBoolean("l2.objectmanager.fault.logging.enabled");
 
   private ObjectManager         objectManager;
   private ManagedObjectStore    objectStore;
 
   public void handleEvent(EventContext context) {
-    if (false) incrementAndLog();
+    if (LOG_OBJECT_FAULT) incrementAndLog();
     ManagedObjectFaultingContext mfc = (ManagedObjectFaultingContext) context;
     ObjectID oid = mfc.getId();
     ManagedObject mo = objectStore.getObjectByID(oid);
@@ -35,7 +38,7 @@ public class ManagedObjectFaultHandler extends AbstractEventHandler {
 
   private synchronized void incrementAndLog() {
     count++;
-    if (count % 10 == 0) {
+    if (count % 100 == 0) {
       logger.info("Fault count = " + count);
     }
   }

@@ -72,10 +72,11 @@ public class TransactionAccount {
     return transactionRecord;
   }
 
-  public void skipApplyAndCommit(TransactionID requestID) {
+  public boolean skipApplyAndCommit(TransactionID requestID) {
     TransactionRecord transactionRecord = getOrCreateRecord(requestID);
     synchronized (transactionRecord) {
       transactionRecord.applyAndCommitSkipped();
+      return checkCompleted(requestID, transactionRecord);
     }
   }
 

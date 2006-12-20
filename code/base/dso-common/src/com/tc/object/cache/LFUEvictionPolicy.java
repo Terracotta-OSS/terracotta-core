@@ -8,7 +8,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.text.PrettyPrinter;
 
-import gnu.trove.TLinkable;
 import gnu.trove.TLinkedList;
 import gnu.trove.TObjectLongHashMap;
 
@@ -28,36 +27,56 @@ import java.util.Map.Entry;
  */
 public class LFUEvictionPolicy implements EvictionPolicy {
 
-  private static final TCLogger logger        = TCLogging.getLogger(LFUEvictionPolicy.class);
+  private static final TCLogger  logger         = TCLogging.getLogger(LFUEvictionPolicy.class);
 
-  // XXX::This feature is disabled for now. (until I find the right balance to make it work well with our performance
-  // tests.
-  private static final int      AGING_FACTOR  = 1;
-  private static final boolean  DEBUG_ENABLED = false;
+  private static final LFUConfig DEFAULT_CONFIG = new LFUConfig() {
 
-  private final int             capacity;
-  private final int             evictionSize;
-  private final TLinkedList     cache         = new TLinkedList();
-  // This is a marker in the linked list where the new objects starts.
-  private TLinkable             mark          = null;
+                                                  public float getAgingFactor() {
+                                                    // DISABLED
+                                                    return 1;
+                                                  }
 
-  private TObjectLongHashMap    smap          = new TObjectLongHashMap();
+                                                  public int getRecentlyAccessedIgnorePercentage() {
+                                                    return 20;
+                                                  }
+
+                                                  public boolean isDebugEnabled() {
+                                                    return false;
+                                                  }
+
+                                                };
+
+  private final int              capacity;
+  private final int              evictionSize;
+  private final TLinkedList      cache          = new TLinkedList();
+  private final LFUConfig        config;
+
+  private TObjectLongHashMap     smap           = new TObjectLongHashMap();
 
   public LFUEvictionPolicy(int capacity) {
-    this(capacity, capacity / 10);
+    this(capacity, capacity / 10, DEFAULT_CONFIG);
+  }
+
+  public LFUEvictionPolicy(int capacity, LFUConfig config) {
+    this(capacity, capacity / 10, config);
   }
 
   public LFUEvictionPolicy(int capacity, int evictionSize) {
+    this(capacity, evictionSize, DEFAULT_CONFIG);
+  }
+
+  public LFUEvictionPolicy(int capacity, int evictionSize, LFUConfig config) {
     if (logger.isDebugEnabled()) {
       logger.debug("new " + getClass().getName() + "(" + capacity + ")");
     }
     this.capacity = capacity;
     this.evictionSize = (evictionSize <= 0 ? 1 : evictionSize);
+    this.config = config;
   }
 
   public synchronized boolean add(Cacheable obj) {
     cache.addLast(obj);
-    if (DEBUG_ENABLED) smap.put(obj.getObjectID(), System.currentTimeMillis());
+    if (config.isDebugEnabled()) smap.put(obj.getObjectID(), System.currentTimeMillis());
     return isCacheFull();
   }
 
@@ -71,11 +90,19 @@ public class LFUEvictionPolicy implements EvictionPolicy {
 
   public synchronized void markReferenced(Cacheable obj) {
     obj.markAccessed();
+    moveToTail(obj);
+  }
+
+  private void moveToTail(Cacheable obj) {
+    if (contains(obj)) {
+      cache.remove(obj);
+      cache.addLast(obj);
+    }
   }
 
   public Collection getRemovalCandidates(int maxCount) {
     Collection candidates = getRemovalCandidatesInternal(maxCount);
-    if (DEBUG_ENABLED) {
+    if (config.isDebugEnabled()) {
       reportTime("Cache", cache.subList(0, cache.size()));
       reportTime("Eviction candidates", candidates);
     }
@@ -134,20 +161,12 @@ public class LFUEvictionPolicy implements EvictionPolicy {
       accessCounts = new ArrayList(cache.size());
 
       c = (Cacheable) cache.getFirst();
-      if (mark != null) {
-        stop = (Cacheable) mark.getNext();
-      } else {
-        // The first time the last 20 % of element are not processed to be fair with new objects
-        stop = (Cacheable) cache.getLast();
-        int ignore = (int) (cache.size() * 0.2);
-        while (ignore-- > 0) {
-          stop = (Cacheable) stop.getPrevious();
-        }
-      }
+      stop = getStopPoint();
+      int agingFactor = (int) config.getAgingFactor();
       // Step 1: Remove elements which were never accessed and at the same time collect stats
       while (cache.size() - rv.size() > capacity && count > 0 && c != null && c != stop) {
         Cacheable next = (Cacheable) c.getNext();
-        int accessed = c.accessCount(AGING_FACTOR);
+        int accessed = c.accessCount(agingFactor);
         if (accessed == 0) {
           if (c.canEvict()) {
             rv.add(c);
@@ -163,12 +182,11 @@ public class LFUEvictionPolicy implements EvictionPolicy {
         c = next;
       }
       while (c != null && c != stop) {
-        c.accessCount(AGING_FACTOR);
+        c.accessCount(agingFactor);
         c = (Cacheable) c.getNext();
       }
       if (cache.size() - rv.size() <= capacity || count <= 0) {
         // we already got what is needed
-        mark = (TLinkable) cache.getLast();
         log_time_taken(start);
         return rv;
       }
@@ -218,10 +236,21 @@ public class LFUEvictionPolicy implements EvictionPolicy {
         }
         c = next;
       }
-      mark = (TLinkable) cache.getLast();
       log_time_taken(start);
       return rv;
     }
+  }
+
+  private Cacheable getStopPoint() {
+    // The last LRU_IN_MEMORY_PERCENTAGE of element are not processed to be fair with new objects/recently accessed
+    // objects
+    Cacheable stop = (Cacheable) cache.getLast();
+    int ignore = (int) (cache.size() * config.getRecentlyAccessedIgnorePercentage() / 100.0); // force floating point
+    // arithemetic
+    while (ignore-- > 0) {
+      stop = (Cacheable) stop.getPrevious();
+    }
+    return stop;
   }
 
   private void log_time_taken(long start) {
@@ -247,11 +276,8 @@ public class LFUEvictionPolicy implements EvictionPolicy {
 
   public synchronized void remove(Cacheable obj) {
     if (contains(obj)) {
-      if (mark == obj) {
-        mark = obj.getPrevious();
-      }
       cache.remove(obj);
-      if (DEBUG_ENABLED) smap.remove(obj.getObjectID());
+      if (config.isDebugEnabled()) smap.remove(obj.getObjectID());
     }
   }
 

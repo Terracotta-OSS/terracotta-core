@@ -1,16 +1,17 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.async.impl;
 
 import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.Channel;
+import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.async.api.AddPredicate;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
-import com.tc.exception.ImplementMe;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
@@ -47,8 +48,29 @@ public class StageQueueImpl implements Sink, Source {
     this.statsCollector = new NullStageQueueStatsCollector(stage);
   }
 
+  /**
+   * The context will be added if the sink was found to be empty(at somepoint during the call). If the queue was not
+   * empty (at somepoint during the call) the context might not be added. This method should only be used where the
+   * stage threads are to be signaled on data availablity and the threads take care of getting data from elsewhere
+   */
   public boolean addLossy(EventContext context) {
-    throw new ImplementMe();
+    if (isEmpty()) {
+      add(context);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  // XXX::Ugly hack since this method doesnt exist on the Channel interface
+  private boolean isEmpty() {
+    if (queue instanceof BoundedLinkedQueue) {
+      return ((BoundedLinkedQueue) queue).isEmpty();
+    } else if (queue instanceof LinkedQueue) {
+      return ((LinkedQueue) queue).isEmpty();
+    } else {
+      throw new AssertionError("Unsupported channel " + queue.getClass().getName() + " in " + getClass().getName());
+    }
   }
 
   public void addMany(Collection contexts) {

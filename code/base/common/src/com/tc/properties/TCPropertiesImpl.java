@@ -147,6 +147,11 @@ public class TCPropertiesImpl implements TCProperties {
     return Long.valueOf(val).longValue();
   }
 
+  public float getFloat(String key) {
+    String val = getProperty(key);
+    return Float.valueOf(val).floatValue();
+  }
+
   static class LogBuffer {
     // This class could be made fancier if it needs to log message at different levels (ie. INFO vs ERROR, etc)
 
@@ -199,5 +204,4 @@ public class TCPropertiesImpl implements TCProperties {
     }
 
   }
-
 }

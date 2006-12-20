@@ -17,4 +17,6 @@ public interface TCProperties {
 
   String getProperty(String key, boolean missingOkay);
 
+  float getFloat(String key);
+
 }

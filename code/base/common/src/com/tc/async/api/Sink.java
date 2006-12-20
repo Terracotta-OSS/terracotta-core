@@ -13,7 +13,8 @@ import java.util.List;
  */
 public interface Sink extends Monitorable {
   /**
-   * Add context but it may never get executed if the stage decides it is too busy
+   * The context may or may not be added to the sink depending on the state of the sink. The
+   * implementation can make the decision based on various factors.
    * 
    * @param context
    * @return

@@ -17,7 +17,6 @@ import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.lockmanager.api.LockManager;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
-import com.tc.objectserver.tx.BatchedTransactionProcessor;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
 import com.tc.objectserver.tx.TransactionalObjectManager;
@@ -37,7 +36,6 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
   public ObjectRequestManager         objectRequestManager;
   public Map                          stages = new HashMap();
   public ChannelStats                 channelStats;
-  public BatchedTransactionProcessor  txnBatchProcessor;
   public TransactionalObjectManager     txnObjectManager;
 
   public void addStage(String name, Stage stage) {

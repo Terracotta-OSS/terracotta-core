@@ -75,7 +75,7 @@ public class ProcessTransactionHandler extends AbstractEventHandler {
       }
       messageRecycler.addMessage((CommitTransactionMessageImpl) context, serverTxnIDs);
       txnObjectManager.addTransactions(reader.getChannelID(), txns, completedTxnIds);
-      lookupStage.add(new LookupEventContext());
+      lookupStage.addLossy(new LookupEventContext());
     } catch (IOException e) {
       logger.error("Error reading transaction batch. Discarding remaining changes in this batch", e);
     }

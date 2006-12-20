@@ -62,7 +62,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     if (gtxm.needsApply(stxnID)) {
       transactionManager.apply(gtxnID, txn, atc.getObjects(), includeIDs, instanceMonitor);
       if (txnObjectMgr.applyTransactionComplete(stxnID)) {
-        commitChangesSink.add(new CommitTransactionContext());
+        commitChangesSink.addLossy(new CommitTransactionContext());
       }
     } else {
       transactionManager.skipApplyAndCommit(txn);

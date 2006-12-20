@@ -251,6 +251,10 @@ public class ConfigPropertiesTest extends TestCase {
       if (s == null && !missingOkay) { throw new RuntimeException("missing value for " + key); }
       return s;
     }
+
+    public float getFloat(String key) {
+      return Float.valueOf(getProperty(key)).floatValue();
+    }
   }
 
 }

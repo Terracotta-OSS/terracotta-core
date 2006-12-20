@@ -11,9 +11,9 @@ import com.tc.async.api.Sink;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 
-public class BatchTransactionLookupHandler extends AbstractEventHandler {
+public class TransactionLookupHandler extends AbstractEventHandler {
 
-  private Sink                     applyChangesSink;
+  private Sink                       applyChangesSink;
   private TransactionalObjectManager txnObjectMgr;
 
   public void handleEvent(EventContext context) {
