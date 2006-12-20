@@ -611,8 +611,10 @@ public class SessionIntegratorFrame extends Frame {
         info.init(title, new ProductInfo());
         Label monikerLabel = (Label)m_aboutDialog.findComponent("MonikerLabel");
         monikerLabel.setText(title);
-        m_aboutDialog.getContentPane().addMouseListener(new MouseAdapter() {
-          public void mouseClicked(MouseEvent me) {
+        Button okButton = (Button)m_aboutDialog.findComponent("OKButton");
+        m_aboutDialog.getRootPane().setDefaultButton(okButton);
+        okButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent ae2) {
             m_aboutDialog.setVisible(false);
           }
         });

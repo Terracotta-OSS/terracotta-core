@@ -3,6 +3,7 @@
  */
 package com.tc.admin;
 
+import org.dijon.Button;
 import org.dijon.Dialog;
 import org.dijon.DialogResource;
 import org.dijon.FrameResource;
@@ -28,6 +29,7 @@ import com.tc.admin.common.XTreeNode;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -598,13 +600,16 @@ public class AdminClientPanel extends XContainer
         info.init(title, new ProductInfo());
         Label monikerLabel = (Label)m_aboutDialog.findComponent("MonikerLabel");
         monikerLabel.setText(title);
-        m_aboutDialog.getContentPane().addMouseListener(new MouseAdapter() {
-          public void mouseClicked(MouseEvent me) {
+        Button okButton = (Button)m_aboutDialog.findComponent("OKButton");
+        m_aboutDialog.getRootPane().setDefaultButton(okButton);
+        okButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent ae2) {
             m_aboutDialog.setVisible(false);
           }
         });
       }
 
+      m_aboutDialog.pack();
       m_aboutDialog.center(AdminClientPanel.this);
       m_aboutDialog.setVisible(true);
     }
