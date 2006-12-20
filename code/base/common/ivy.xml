@@ -22,7 +22,6 @@
 	<dependency name="servlet-api" rev="2.4" org="terracotta"/>
 	<dependency name="slf4j-nop" rev="1.0.2" org="terracotta"/>
 	<dependency name="trove" rev="1.1b5" org="terracotta"/>
-	<dependency name="xalan" rev="2.7.0" org="terracotta"/>
 	<dependency name="xbean_xpath" rev="2.1.0" org="terracotta"/>
 	<dependency name="xbean" rev="2.1.0" org="terracotta"/>
 	<dependency name="xercesImpl" rev="2.7.1" org="terracotta"/>
