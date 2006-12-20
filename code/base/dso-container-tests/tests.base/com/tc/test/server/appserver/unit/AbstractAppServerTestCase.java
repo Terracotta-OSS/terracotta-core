@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver.unit;
 
@@ -28,6 +29,7 @@ import com.tc.test.server.dsoserver.StandardDsoServerParameters;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
 import com.tc.test.server.tcconfig.TerracottaServerConfigGenerator;
 import com.tc.test.server.util.HttpUtil;
+import com.tc.test.server.util.VmStat;
 import com.tc.text.Banner;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
@@ -86,26 +88,26 @@ import javax.servlet.http.HttpSessionListener;
  * the appserver)
  * </ul>
  * <p>
- *
+ * 
  * <pre>
- *      outer class:
- *      ...
- *      int port0 = startAppServer(false).serverPort();
- *      boolean[] values = HttpUtil.getBooleanValues(createUrl(port0, SimpleDsoSessionsTest.DsoPingPongServlet.class));
- *      assertTrue(values[0]);
- *      assertFalse(values[1]);
- *      ...
- *
- *      inner class servlet:
- *      ...
- *      response.setContentType(&quot;text/html&quot;);
- *      PrintWriter out = response.getWriter();
- *
- *      out.println(&quot;true&quot;);
- *      out.println(&quot;false&quot;);
- *      ...
+ *        outer class:
+ *        ...
+ *        int port0 = startAppServer(false).serverPort();
+ *        boolean[] values = HttpUtil.getBooleanValues(createUrl(port0, SimpleDsoSessionsTest.DsoPingPongServlet.class));
+ *        assertTrue(values[0]);
+ *        assertFalse(values[1]);
+ *        ...
+ *  
+ *        inner class servlet:
+ *        ...
+ *        response.setContentType(&quot;text/html&quot;);
+ *        PrintWriter out = response.getWriter();
+ *  
+ *        out.println(&quot;true&quot;);
+ *        out.println(&quot;false&quot;);
+ *        ...
  * </pre>
- *
+ * 
  * <p>
  * <h3>Debugging Information:</h3>
  * There are a number of locations and files to consider when debugging appserver unit tests. Below is a list followed
@@ -140,7 +142,7 @@ import javax.servlet.http.HttpSessionListener;
  * <p>
  * As a final note: the <tt>UttpUtil</tt> class should be used (and added to as needed) to page servlets and validate
  * assertions.
- *
+ * 
  * @author eellis
  */
 public abstract class AbstractAppServerTestCase extends TCTestCase {
@@ -289,7 +291,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   /**
    * Starts an instance of the assigned default application server listed in testconfig.properties. Servlets and the WAR
    * are dynamically generated using the convention listed in the header of this document.
-   *
+   * 
    * @param dsoEnabled - enable or disable dso for this instance
    * @return AppServerResult - series of return values including the server port assigned to this instance
    */
@@ -365,7 +367,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
   /**
    * If overridden <tt>super.tearDown()</tt> must be called to ensure that servers are all shutdown properly
-   *
+   * 
    * @throws Exception
    */
   protected void tearDown() throws Exception {
@@ -377,6 +379,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
       if (dsoServer != null && dsoServer.isRunning()) dsoServer.stop();
     } finally {
+      VmStat.stop();
       synchronized (workingDirLock) {
         File dest = new File(tempDir, getName());
         if (dest.exists()) {
@@ -398,6 +401,10 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
         }
       }
     }
+  }
+
+  protected final void collectVmStats() throws IOException {
+    VmStat.start(workingDir);
   }
 
   private synchronized File warFile() throws Exception {
