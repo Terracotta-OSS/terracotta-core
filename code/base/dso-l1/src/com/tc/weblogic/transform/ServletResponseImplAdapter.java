@@ -3,10 +3,10 @@
  */
 package com.tc.weblogic.transform;
 
-import com.sleepycat.asm.Opcodes;
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodVisitor;
+import com.tc.asm.Opcodes;
 
 public class ServletResponseImplAdapter extends ClassAdapter implements Opcodes {
 

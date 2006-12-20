@@ -12,8 +12,10 @@ import com.tc.test.server.util.HttpUtil;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -193,10 +195,10 @@ public class SessionInvalidatorTest extends AbstractAppServerTestCase {
     final int invalidatorSleepSeconds = 1;
     final int defaultMaxIdleSeconds = 5;
     final int waitFactor = 4;
-    final Properties props = new Properties();
-    props.setProperty("com.terracotta.session.invalidator.sleep", String.valueOf(invalidatorSleepSeconds));
-    props.setProperty("com.terracotta.session.maxidle.seconds", String.valueOf(defaultMaxIdleSeconds));
-    port = startAppServer(true, props).serverPort();
+    final List props = new ArrayList();
+    props.add("-Dcom.tc.properties.session.invalidator.sleep=" + String.valueOf(invalidatorSleepSeconds));
+    props.add("-Dcom.tc.properties.session.maxidle.seconds=" + String.valueOf(defaultMaxIdleSeconds));
+    port = startAppServer(true, new Properties(), (String[]) props.toArray(new String[] {})).serverPort();
 
     HttpClient client = HttpUtil.createHttpClient();
 
