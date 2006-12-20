@@ -10,16 +10,12 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
-import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.RangeType;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.IntervalXYDataset;
 import org.jfree.data.xy.XYDataset;
-import org.jfree.ui.RectangleInsets;
 
-import java.awt.Color;
 import java.text.SimpleDateFormat;
 
 public class DemoChartFactory {
@@ -64,22 +60,6 @@ public class DemoChartFactory {
 
     XYPlot plot = (XYPlot)chart.getPlot();
 
-    plot.setBackgroundPaint(Color.lightGray);
-    plot.setDomainGridlinePaint(Color.white);
-    plot.setRangeGridlinePaint(Color.white);
-    plot.setAxisOffset(new RectangleInsets(5.0, 5.0, 5.0, 5.0));
-    plot.setDomainCrosshairVisible(true);
-    plot.setRangeCrosshairVisible(true);
-
-    XYItemRenderer r = plot.getRenderer();
-
-    if(r instanceof XYLineAndShapeRenderer) {
-      XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer)r;
-
-      renderer.setBaseShapesVisible(true);
-      renderer.setBaseShapesFilled(true);
-    }
-
     DateAxis axis = (DateAxis)plot.getDomainAxis();
     axis.setFixedAutoRange(30000.0);
     axis.setDateFormatOverride(new SimpleDateFormat("kk:mm:ss"));
@@ -119,32 +99,15 @@ public class DemoChartFactory {
     boolean   legend)
   {
     JFreeChart chart =
-      ChartFactory.createXYLineChart(header,
-                                     xLabel,
-                                     yLabel,
-                                     dataset,
-                                     PlotOrientation.VERTICAL,
-                                     legend,
-                                     true,
-                                     false);
+      ChartFactory.createTimeSeriesChart(header,
+                                         xLabel,
+                                         yLabel,
+                                         dataset,
+                                         legend,
+                                         true,
+                                         false);
     
     XYPlot plot = (XYPlot)chart.getPlot();
-
-    plot.setBackgroundPaint(Color.lightGray);
-    plot.setDomainGridlinePaint(Color.white);
-    plot.setRangeGridlinePaint(Color.white);
-    plot.setAxisOffset(new RectangleInsets(5.0, 5.0, 5.0, 5.0));
-    plot.setDomainCrosshairVisible(true);
-    plot.setRangeCrosshairVisible(true);
-    
-    XYItemRenderer r = plot.getRenderer();
-
-    if(r instanceof XYLineAndShapeRenderer) {
-      XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer)r;
-      
-      renderer.setBaseShapesVisible(true);
-      renderer.setBaseShapesFilled(true);
-    }
 
     ValueAxis axis = plot.getDomainAxis();
     axis.setFixedAutoRange(30000.0);
@@ -197,22 +160,6 @@ public class DemoChartFactory {
                                      false);
                                               
     XYPlot plot = (XYPlot)chart.getPlot();
-
-    plot.setBackgroundPaint(Color.lightGray);
-    plot.setDomainGridlinePaint(Color.white);
-    plot.setRangeGridlinePaint(Color.white);
-    plot.setAxisOffset(new RectangleInsets(5.0, 5.0, 5.0, 5.0));
-    plot.setDomainCrosshairVisible(true);
-    plot.setRangeCrosshairVisible(true);
-                                              
-    XYItemRenderer r = plot.getRenderer();
-
-    if(r instanceof XYLineAndShapeRenderer) {
-      XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer)r;
-                                                
-      renderer.setBaseShapesVisible(true);
-      renderer.setBaseShapesFilled(true);
-    }
 
     ValueAxis axis = plot.getDomainAxis();
     axis.setFixedAutoRange(30000.0);

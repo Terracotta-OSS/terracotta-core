@@ -9,13 +9,14 @@ import org.dijon.ContainerResource;
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
 import com.tc.admin.ConnectionContext;
+import com.tc.admin.common.Poller;
 import com.tc.admin.common.RatePanel;
 import com.tc.admin.common.XContainer;
-import com.tc.admin.common.Poller;
 
 import java.awt.BorderLayout;
 
 import javax.management.ObjectName;
+import javax.swing.SwingConstants;
 
 public class ClientStatsPanel extends XContainer implements Poller {
   private CacheActivityPanel m_cacheActivity;
@@ -26,7 +27,7 @@ public class ClientStatsPanel extends XContainer implements Poller {
 
     load((ContainerResource)acc.topRes.getComponent("ClientStatsPanel"));
 
-    m_cacheActivity = new CacheActivityPanel(cc, bean);
+    m_cacheActivity = new CacheActivityPanel(cc, bean, SwingConstants.VERTICAL);
     addPanel("Panel1", m_cacheActivity);
 
     String stat   = "TransactionRate";

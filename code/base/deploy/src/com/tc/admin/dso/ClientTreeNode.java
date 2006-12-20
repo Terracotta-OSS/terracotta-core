@@ -11,6 +11,7 @@ import com.tc.admin.common.PollerNode;
 import com.tc.admin.common.RatePanel;
 
 import javax.management.ObjectName;
+import javax.swing.SwingConstants;
 
 public class ClientTreeNode extends ComponentNode {
   private DSOClient          m_client;
@@ -27,7 +28,7 @@ public class ClientTreeNode extends ComponentNode {
     ObjectName         bean = client.getObjectName();
     ComponentNode      node;
 
-    m_cacheActivity = new CacheActivityPanel(cc, bean);
+    m_cacheActivity = new CacheActivityPanel(cc, bean, SwingConstants.VERTICAL);
     node  = new PollerNode(acc.getMessage("dso.cache.activity"),
                            m_cacheActivity);
     

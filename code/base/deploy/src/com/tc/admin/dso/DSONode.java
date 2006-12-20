@@ -15,6 +15,7 @@ import com.tc.admin.common.RatePanel;
 import com.tc.admin.common.StatisticPanel;
 
 import javax.management.ObjectName;
+import javax.swing.SwingConstants;
 
 public class DSONode extends ComponentNode {
   public DSONode(ConnectionContext cc) {
@@ -39,7 +40,7 @@ public class DSONode extends ComponentNode {
     String xLabel = null;
     String yLabel = acc.getMessage("dso.cache.rate.range.label");
 
-    CacheActivityPanel cacheActivityPanel = new CacheActivityPanel(cc, bean);
+    CacheActivityPanel cacheActivityPanel = new CacheActivityPanel(cc, bean, SwingConstants.VERTICAL);
     header = acc.getMessage("dso.cache.activity");
     node = new PollerNode(header, cacheActivityPanel);
 

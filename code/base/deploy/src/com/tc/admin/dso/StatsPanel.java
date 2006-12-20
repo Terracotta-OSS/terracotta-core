@@ -16,6 +16,7 @@ import com.tc.admin.common.XContainer;
 import java.awt.BorderLayout;
 
 import javax.management.ObjectName;
+import javax.swing.SwingConstants;
 
 public class StatsPanel extends XContainer implements Poller {
   private CacheActivityPanel m_cacheActivity;
@@ -27,7 +28,7 @@ public class StatsPanel extends XContainer implements Poller {
 
     load((ContainerResource) acc.topRes.getComponent("StatsPanel"));
 
-    m_cacheActivity = new CacheActivityPanel(cc, bean);
+    m_cacheActivity = new CacheActivityPanel(cc, bean, SwingConstants.HORIZONTAL);
     addPanel("Panel1", m_cacheActivity);
 
     String stat = "TransactionRate";

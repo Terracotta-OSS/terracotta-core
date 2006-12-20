@@ -10,7 +10,6 @@ import org.dijon.Spinner;
 import org.dijon.SplitPane;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
@@ -21,7 +20,7 @@ import com.tc.admin.ConnectionContext;
 import com.tc.stats.statistics.CountStatistic;
 import com.tc.stats.statistics.Statistic;
 
-import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Date;
@@ -30,6 +29,7 @@ import javax.management.ObjectName;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -39,7 +39,7 @@ import javax.swing.event.ChangeListener;
 
 public class MultiStatisticPanel extends XContainer implements Poller {
   protected ConnectionContext m_cc;
-  protected JFreeChart        m_chart;
+  protected JFreeChart[]      m_charts;
   protected TimeSeries[]      m_timeSeries;
   protected SplitPane         m_splitter;
   protected Button            m_controlsButton;
@@ -64,7 +64,7 @@ public class MultiStatisticPanel extends XContainer implements Poller {
   private static final String HIDE_ICON_URI         = "/com/tc/admin/icons/hide_menu.gif";
 
   public MultiStatisticPanel(ConnectionContext cc, ObjectName bean, String[] stats, String[] labels, String header,
-                             String xAxis, String yAxis) {
+                             String xAxis, String yAxis, int orientation) {
     super();
 
     m_shouldAutoStart = true;
@@ -74,11 +74,17 @@ public class MultiStatisticPanel extends XContainer implements Poller {
     load((ContainerResource) cntx.topRes.getComponent("StatisticPanel"));
 
     Container chartHolder = (Container) findComponent("ChartHolder");
-    chartHolder.setLayout(new BorderLayout());
+    int rows = 1, cols = stats.length;
+    if(orientation == SwingConstants.VERTICAL) {
+      rows = stats.length;
+      cols = 1;
+    }
+    chartHolder.setLayout(new GridLayout(rows, cols));
 
     m_bean = bean;
     m_statisticNames = stats;
     m_timeSeries = new TimeSeries[stats.length];
+    m_charts = new JFreeChart[stats.length];
 
     for (int i = 0; i < stats.length; i++) {
       m_timeSeries[i] = new TimeSeries(labels[i], Second.class);
@@ -127,13 +133,22 @@ public class MultiStatisticPanel extends XContainer implements Poller {
 
         for (int j = 0; j < m_timeSeries.length; j++) {
           m_timeSeries[j].setMaximumItemCount(i.intValue());
+          ((XYPlot) m_charts[j].getPlot()).getDomainAxis().setFixedAutoRange(i.intValue() * 1000);
         }
-        ((XYPlot) m_chart.getPlot()).getDomainAxis().setFixedAutoRange(i.intValue() * 1000);
       }
     });
 
-    m_chart = getChart(header, xAxis, yAxis);
-    chartHolder.add(new ChartPanel(m_chart, false));
+    for(int i = 0; i < m_charts.length; i++) {
+      m_charts[i] = getChart(m_timeSeries[i], labels[i], xAxis, yAxis);
+      chartHolder.add(new ChartPanel(m_charts[i], false));
+      if(i == 0) {
+        if(orientation == SwingConstants.HORIZONTAL) {
+          yAxis = null;
+        } else {
+          xAxis = null;
+        }
+      }
+    }
 
     m_controlsButton = (Button) findComponent("ControlsButton");
 
@@ -208,39 +223,18 @@ public class MultiStatisticPanel extends XContainer implements Poller {
     }
   }
 
-  public JFreeChart createChart() {
-    return DemoChartFactory.getXYBarChart("", "", "", m_timeSeries);
+  public JFreeChart createChart(TimeSeries series) {
+    return DemoChartFactory.getXYBarChart("", "", "", series);
   }
 
-  public JFreeChart getChart(String header, String xAxis, String yAxis) {
-    if (m_chart == null) {
-      m_chart = createChart();
-      m_chart.setTitle(header);
-      setTimeAxisLabel(xAxis);
-      setValueAxisLabel(yAxis);
-    }
-
-    return m_chart;
-  }
-
-  public XYPlot getXYPlot() {
-    return m_chart.getXYPlot();
-  }
-
-  public ValueAxis getDomainAxis() {
-    return getXYPlot().getDomainAxis();
-  }
-
-  public ValueAxis getRangeAxis() {
-    return getXYPlot().getRangeAxis();
-  }
-
-  public void setTimeAxisLabel(String label) {
-    getDomainAxis().setLabel(label);
-  }
-
-  public void setValueAxisLabel(String label) {
-    getRangeAxis().setLabel(label);
+  public JFreeChart getChart(TimeSeries series, String header, String xAxis, String yAxis) {
+    JFreeChart chart = createChart(series);
+    
+    chart.setTitle(header);
+    chart.getXYPlot().getDomainAxis().setLabel(xAxis);
+    chart.getXYPlot().getRangeAxis().setLabel(yAxis);
+    
+    return chart;
   }
 
   public boolean isRunning() {
@@ -284,7 +278,7 @@ public class MultiStatisticPanel extends XContainer implements Poller {
     super.tearDown();
 
     m_cc = null;
-    m_chart = null;
+    m_charts = null;
     m_timeSeries = null;
     m_startButton = null;
     m_stopButton = null;

@@ -4,14 +4,15 @@
 package com.tc.admin.dso;
 
 import org.jfree.chart.JFreeChart;
+import org.jfree.data.time.TimeSeries;
 
 import com.tc.admin.AdminClient;
 import com.tc.admin.AdminClientContext;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.DemoChartFactory;
 import com.tc.admin.common.MultiStatisticPanel;
-import com.tc.admin.common.XContainer;
 import com.tc.admin.common.Poller;
+import com.tc.admin.common.XContainer;
 
 import java.awt.BorderLayout;
 
@@ -20,7 +21,7 @@ import javax.management.ObjectName;
 public class CacheActivityPanel extends XContainer implements Poller {
   private MultiStatisticPanel m_panel;
 
-  public CacheActivityPanel(ConnectionContext cc, ObjectName bean) {
+  public CacheActivityPanel(ConnectionContext cc, ObjectName bean, int orientation) {
     super(new BorderLayout());
 
     AdminClientContext acc = AdminClient.getContext();
@@ -38,10 +39,10 @@ public class CacheActivityPanel extends XContainer implements Poller {
     String header = acc.getMessage("dso.cache.activity");
     String xAxis  = null;
     String yAxis  = acc.getMessage("dso.cache.rate.range.label");
-
-    m_panel = new MultiStatisticPanel(cc, bean, stats, names, header, xAxis, yAxis) {
-      public JFreeChart createChart() {
-        return DemoChartFactory.getXYLineChart("", "", "", m_timeSeries);
+    
+    m_panel = new MultiStatisticPanel(cc, bean, stats, names, header, xAxis, yAxis, orientation) {
+      public JFreeChart createChart(TimeSeries series) {
+        return DemoChartFactory.getXYLineChart("", "", "", series);
       }
     };
     add(m_panel);
