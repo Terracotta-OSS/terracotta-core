@@ -1030,7 +1030,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   }
 
   private void addJDK15InstrumentedSpec() {
-    if (Vm.getMegaVersion() > 1 && Vm.getMajorVersion() > 4) {
+    if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() > 4) {
       TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock$ConditionObject");
       spec.setCallConstructorOnLoad(true);
       spec.setHonorTransient(true);
@@ -1064,7 +1064,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   }
 
   private void addJDK15PreInstrumentedSpec() {
-    if (Vm.getMegaVersion() > 1 && Vm.getMajorVersion() > 4) {
+    if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() > 4) {
       TransparencyClassSpec spec = getOrCreateSpec("sun.misc.Unsafe");
       addCustomAdapter("sun.misc.Unsafe", UnsafeAdapter.class);
       spec = getOrCreateSpec(DSOUnsafe.CLASS_DOTS);
