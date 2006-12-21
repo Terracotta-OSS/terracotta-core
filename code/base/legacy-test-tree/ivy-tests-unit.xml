@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<ivy-module version="1.0">
-  <info organisation="ibiblio" module="legacy-test-tree-tests-unit"/>
-  <dependencies>
-  	<dependency name="spring-hibernate3-2.0" rev="m4" org="terracotta"/>
-  	<dependency name="spring-hibernate3" rev="2.0-m5" org="terracotta"/>
-  	<dependency name="xstream" rev="1.0.2"/>
-  </dependencies>
-</ivy-module>

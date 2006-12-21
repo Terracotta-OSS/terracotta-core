@@ -37,12 +37,6 @@ class StaticResources
         FilePath.new(@root_directory, "buildscripts", "extensions")
     end
 
-    # Returns a FilePath object referring to the directory where library
-    # dependencies are installed.
-    def lib_dependencies_directory
-        FilePath.new(@root_directory, "dependencies", "lib")
-    end
-
     def kit_builder_scripts
         FilePath.new(@root_directory, "buildscripts", "postscripts")
     end
@@ -50,15 +44,15 @@ class StaticResources
     def source_root(flavor)
       (flavor !~ /opensource/i) ? FilePath.new(@root_directory, '..', '..', '..', 'code', 'base') : @root_directory
     end
-
+    
     def distribution_config_directory(flavor)
       FilePath.new(source_root(flavor), 'buildconfig', 'distribution')
-    end
-
+    end 
+    
     def jrefactory_config_directory
         FilePath.new(@root_directory, "buildconfig")
-    end
-
+    end 
+  
     # Where does the default Log4J properties file live?
     def log4j_properties_file
         FilePath.new(@root_directory, ".tc.dev.log4j.properties")
@@ -91,16 +85,16 @@ class StaticResources
         default_url = "http://download.terracotta.org/bundled-vendors"
         ENV["TC_VENDORS_URL"].nil? ? default_url : ENV["TC_VENDORS_URL"]
     end
-
-    def jre_url
+    
+    def jre_url      
       default_url = "http://download.terracotta.org/bundled-jre/sun"
       ENV["TC_JRE_URL"].nil? ? default_url : ENV["TC_JRE_URL"]
     end
-
+    
     def docflex_home
       ENV["DOCFLEX_HOME"]
     end
-
+  
     def templates_directory
         FilePath.new(@root_directory, '..', '..', 'kits', 'source', 'templates')
     end
@@ -119,8 +113,8 @@ class StaticResources
 
     # Where does the Ant executable live?
     def ant_script
-        fail("ANT_HOME is not defined. Please set env variable ANT_HOME to Apache Ant 1.6.5 or later.") if ENV['ANT_HOME'].nil?
-        ant_script = FilePath.new(ENV['ANT_HOME'], 'bin', 'ant').canonicalize.to_s
+        fail("ANT_HOME is not defined. Please set env variable ANT_HOME to Apache Ant 1.6.5 or later.") if ENV['ANT_HOME'].nil?        
+        ant_script = FilePath.new(ENV['ANT_HOME'], 'bin', 'ant').canonicalize.to_s         
     end
 
     def supported_documentation_formats

@@ -3,7 +3,12 @@
 	<classpathentry excluding="**/SCCS/**" output="build.eclipse/src.classes" kind="src" path="src"/>
 	<classpathentry excluding="**/SCCS/**" output="build.eclipse/src.classes" kind="src" path="src.resources"/>
 	<classpathentry excluding="**/SCCS/**" kind="src" path="tests.base"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
+        <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
+	<classpathentry exported="true" kind="lib" path="lib/appframe.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jfreechart-1.0.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jmxremote-1.0.1_04.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jmxremote_optional-1.0.1_03-b57-tc.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/treemap.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/linked-child-process"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common"/>
@@ -13,10 +18,5 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common-jdk15"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/management"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/treemap-tc-1.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jmxremote-1.0.1_04.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jmxremote_optional-1.0.1_03-b57-tc.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/appframe-1.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jfreechart-1.0.0x.jar"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>

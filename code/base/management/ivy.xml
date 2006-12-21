@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<ivy-module version="1.0">
-  <info organisation="ibiblio" module="management"/>
-  <dependencies>
-	<dependency name="jmxremote_optional" rev="1.0.1_03-b57-tc" org="terracotta"/>
-	<dependency name="jmxremote" rev="1.0.1_04" org="terracotta"/>
-  </dependencies>
-</ivy-module>

@@ -335,7 +335,10 @@ class SubtreeTestRun
 
         # 'tc.tests.info.property-files' is set so that TestConfigObject knows which file to go read.
         @sysproperties = {
-            "tc.base-dir" => @static_resources.root_dir.to_s,
+            # 2006-07-19 andrew -- HACK HACK HACK. We shouldn't have 'tc.install-root' defined for tests;
+            # there isn't a kit for tests, so there isn't an installation root.
+            "tc.install-root" => @static_resources.root_dir.to_s,
+
             'java.awt.headless' => true,
             'tc.tests.info.property-files' => @testrun_results.build_configuration_file(@subtree).to_s
         }

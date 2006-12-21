@@ -1,15 +1,12 @@
-@ECHO OFF
+@echo off
+rem
+rem All content copyright (c) 2003-2006 Terracotta, Inc.,
+rem except as may otherwise be noted in a separate copyright notice.
+rem All rights reserved
+rem
 IF NOT EXIST build-tc.rb GOTO no_build_tc
 
 set JRUBY_HOME=%~p0..\..\buildsystems\jruby
-if NOT EXIST "%JRUBY_HOME%" GOTO install_jruby
-GOTO has_jruby_home
-
-:install_jruby
-echo --------------------------------------------------------------------------------
-echo LOADING JRUBY USING IVY
-
-call %ANT_HOME%\bin\ant.bat -buildfile %~p0buildconfig\build.xml
 
 :has_jruby_home
 if "x%JAVA_HOME%"=="x" GOTO has_no_java_home
@@ -27,27 +24,6 @@ echo Your JAVA_HOME (possibly located via TC_JAVA_HOME_15), "%JAVA_HOME%", does 
 GOTO end
 
 :located_java_home
-
-if "x%ANT_HOME%"=="x" GOTO no_ant_home
-
-echo --------------------------------------------------------------------------------
-echo RUNNING ANT+IVY
-
-call %ANT_HOME%\bin\ant.bat -buildfile %~p0buildconfig\resolve-dependencies\build.xml
-set TCBUILD_ERR=%ERRORLEVEL%
-IF NOT %TCBUILD_ERR%==0 GOTO end
-
-echo --------------------------------------------------------------------------------
-echo RUNNING TCBUILD"
-
-GOTO run_jruby
-
-:no_ant_home
-echo --------------------------------------------------------------------------------
-echo ANT_HOME not set. Skipping dependency resolution with ANT+IVY.
-
-:run_jruby
-
 %JRUBY_HOME%\bin\jruby.bat -Ibuildscripts build-tc.rb %*
 set TCBUILD_ERR=%ERRORLEVEL%
 GOTO end
@@ -57,5 +33,5 @@ GOTO end
 	GOTO end
 
 :end
-echo tcbuild.bat: exit code is %TCBULD_ERR%
+echo tcbuild.bat: exit code is %E%
 exit /b %TCBUILD_ERR%
