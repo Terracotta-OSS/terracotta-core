@@ -28,6 +28,8 @@ import com.tc.exception.ExceptionWrapperImpl;
 import com.tc.exception.TCNotSupportedMethodException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.geronimo.GeronimoLoaderNaming;
+import com.tc.logging.CustomerLogging;
+import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.TerracottaMBean;
 import com.tc.management.beans.sessions.SessionMonitorMBean;
@@ -208,7 +210,9 @@ public class BootJarTool {
       exit(e.getMessage(), e.getCause());
     }
 
-    bootJarHandler.announceCreationStart();
+    if(!quiet) {
+      bootJarHandler.announceCreationStart();
+    }
 
     try {
 
@@ -1757,9 +1761,9 @@ public class BootJarTool {
     configFileOption.setType(String.class);
     configFileOption.setRequired(false);
 
-    Option quietOption = new Option("q", "quiet");
-    quietOption.setType(Boolean.class);
-    quietOption.setRequired(false);
+    Option verboseOption = new Option("v", "verbose");
+    verboseOption.setType(String.class);
+    verboseOption.setRequired(false);
 
     Option helpOption = new Option("h", "help");
     helpOption.setType(String.class);
@@ -1768,7 +1772,7 @@ public class BootJarTool {
     Options options = new Options();
     options.addOption(targetFileOption);
     options.addOption(configFileOption);
-    options.addOption(quietOption);
+    options.addOption(verboseOption);
     options.addOption(helpOption);
 
     CommandLine commandLine = null;
@@ -1808,9 +1812,10 @@ public class BootJarTool {
     StandardTVSConfigurationSetupManagerFactory factory;
     factory = new StandardTVSConfigurationSetupManagerFactory(commandLine, false,
                                                               new FatalIllegalConfigurationChangeHandler());
-    L1TVSConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager();
+    boolean verbose = commandLine.hasOption("v");
+    TCLogger logger = verbose ? CustomerLogging.getConsoleLogger() : new NullTCLogger();
+    L1TVSConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager(logger);
 
-    boolean quiet = commandLine.hasOption("q");
     File outputFile;
 
     if (!commandLine.hasOption(OUTPUT_FILE_OPTION)) {
@@ -1829,7 +1834,7 @@ public class BootJarTool {
     // WAS: systemProvider = new RuntimeJarBytesProvider(...)
     ClassBytesProvider systemProvider = new ClassLoaderBytesProvider(ClassLoader.getSystemClassLoader());
 
-    new BootJarTool(new StandardDSOClientConfigHelper(config, false), outputFile, systemProvider, quiet).generateJar();
+    new BootJarTool(new StandardDSOClientConfigHelper(config, false), outputFile, systemProvider, !verbose).generateJar();
   }
 
   public static class RuntimeJarBytesProvider implements ClassBytesProvider {

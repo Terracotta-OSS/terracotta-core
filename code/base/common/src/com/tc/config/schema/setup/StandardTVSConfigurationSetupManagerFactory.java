@@ -11,6 +11,7 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.commons.lang.StringUtils;
 
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
+import com.tc.logging.TCLogger;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -145,6 +146,22 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     return options;
   }
 
+
+  public L1TVSConfigurationSetupManager createL1TVSConfigurationSetupManager(TCLogger logger)
+    throws ConfigurationSetupException
+  {
+    ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(logger,
+                                                                                        this.configSpec,
+                                                                                        this.cwd,
+                                                                                        this.beanFactory);
+  
+    L1TVSConfigurationSetupManager setupManager = new StandardL1TVSConfigurationSetupManager(configurationCreator,
+                                                                                             this.defaultValueProvider,
+                                                                                             this.xmlObjectComparator,
+                                                                                             this.illegalChangeHandler);
+    
+    return setupManager;
+  }
 
   public L1TVSConfigurationSetupManager createL1TVSConfigurationSetupManager()
     throws ConfigurationSetupException

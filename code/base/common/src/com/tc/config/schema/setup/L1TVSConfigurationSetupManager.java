@@ -22,6 +22,7 @@ public interface L1TVSConfigurationSetupManager {
   L2ConfigForL1 l2Config();
 
   NewL1DSOConfig dsoL1Config();
+  void setupLogging();
 
   String[] applicationNames();
 

@@ -137,6 +137,7 @@ public class DSOContextImpl implements DSOContext {
 
       logger.debug("Created StandardTVSConfigurationSetupManagerFactory.");
       L1TVSConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager();
+      config.setupLogging();
       logger.debug("Created L1TVSConfigurationSetupManager.");
 
       try {

@@ -44,21 +44,17 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public class StandardXMLFileConfigurationCreator implements ConfigurationCreator {
 
-  private static final TCLogger     logger                               = TCLogging
-                                                                             .getLogger(StandardXMLFileConfigurationCreator.class);
   private static final TCLogger     consoleLogger                        = CustomerLogging.getConsoleLogger();
 
-  private static final long         GET_CONFIGURATION_TOTAL_TIMEOUT      = 5 * 60 * 1000;                                          // five
-  // minutes
-  private static final long         GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = 30 * 1000;                                              // thirty
-  // seconds
-  private static final long         MIN_RETRY_TIMEOUT                    = 5 * 1000;                                               // five
-  // seconds
-
+  private static final long         GET_CONFIGURATION_TOTAL_TIMEOUT      = 5 * 60 * 1000; // five minutes
+  private static final long         GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = 30 * 1000;     // thirty seconds
+  private static final long         MIN_RETRY_TIMEOUT                    = 5 * 1000;      // five seconds
+  
   protected final String            configurationSpec;
   protected final File              defaultDirectory;
   protected final ConfigBeanFactory beanFactory;
 
+  private TCLogger                  logger;
   private boolean                   loadedFromTrustedSource;
   private String                    configDescription;
   private File                      directoryLoadedFrom;
@@ -66,14 +62,24 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   public StandardXMLFileConfigurationCreator(String configurationSpec,
                                              File defaultDirectory,
                                              ConfigBeanFactory beanFactory) {
+    this(TCLogging.getLogger(StandardXMLFileConfigurationCreator.class),
+         configurationSpec,
+         defaultDirectory,
+         beanFactory);
+  }
+
+  public StandardXMLFileConfigurationCreator(TCLogger logger,
+                                             String configurationSpec,
+                                             File defaultDirectory,
+                                             ConfigBeanFactory beanFactory) {
     Assert.assertNotBlank(configurationSpec);
     Assert.assertNotNull(defaultDirectory);
     Assert.assertNotNull(beanFactory);
 
+    this.logger = logger;
     this.configurationSpec = configurationSpec;
     this.defaultDirectory = defaultDirectory;
     this.beanFactory = beanFactory;
-
     this.configDescription = null;
   }
 

@@ -59,13 +59,15 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
 
     runConfigurationCreator(this.configurationCreator);
     
-    FileConfigItem logsPath = commonL1Config().logsPath();
-    TCLogging.setLogDirectory(logsPath.getFile(), TCLogging.PROCESS_TYPE_L1);
-    logsPath.addListener(new LogSettingConfigItemListener(TCLogging.PROCESS_TYPE_L1));
-    
     this.loadedFromTrustedSource = this.configurationCreator.loadedFromTrustedSource();
   }
 
+  public void setupLogging() {
+    FileConfigItem logsPath = commonL1Config().logsPath();
+    TCLogging.setLogDirectory(logsPath.getFile(), TCLogging.PROCESS_TYPE_L1);
+    logsPath.addListener(new LogSettingConfigItemListener(TCLogging.PROCESS_TYPE_L1));
+  }
+  
   public boolean loadedFromTrustedSource() {
     return this.loadedFromTrustedSource;
   }

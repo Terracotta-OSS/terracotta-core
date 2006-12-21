@@ -15,15 +15,14 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 public class BootJarHandler {
-  private final static String         TEMP_OUTPUT_FILE_PREFIX      = "temp-";
-  private final boolean        write_out_temp_file;
-  private final File                  outputFile;
-  private final File                  tempOutputFile;
-  private final String                tempDir;
-  private final String tempOutputFileAbsPath;
-  private final String outputFileAbsPath;
+  private final static String TEMP_OUTPUT_FILE_PREFIX = "temp-";
+  private final boolean       write_out_temp_file;
+  private final File          outputFile;
+  private final File          tempOutputFile;
+  private final String        tempDir;
+  private final String        tempOutputFileAbsPath;
+  private final String        outputFileAbsPath;
 
-  
   public BootJarHandler(boolean write_out_temp_file, File outputFile) {
     this.write_out_temp_file = write_out_temp_file;
     this.outputFile = outputFile;

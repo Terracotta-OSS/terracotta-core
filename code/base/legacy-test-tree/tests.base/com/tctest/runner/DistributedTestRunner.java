@@ -233,6 +233,7 @@ public class DistributedTestRunner implements ResultsListener {
     ApplicationBuilder[] rv = new ApplicationBuilder[count];
     for (int i = 0; i < rv.length; i++) {
       L1TVSConfigurationSetupManager l1ConfigManager = this.configFactory.createL1TVSConfigurationSetupManager();
+      l1ConfigManager.setupLogging();
       PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(l1ConfigManager);
       rv[i] = new DSOApplicationBuilder(this.configHelper, this.applicationConfig, components);
     }
