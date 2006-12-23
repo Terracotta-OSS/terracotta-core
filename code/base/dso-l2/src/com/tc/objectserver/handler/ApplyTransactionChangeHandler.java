@@ -14,7 +14,6 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.BroadcastChangeContext;
-import com.tc.objectserver.context.CommitTransactionContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.lockmanager.api.LockManager;
@@ -37,7 +36,6 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   private ServerTransactionManager             transactionManager;
   private LockManager                          lockManager;
   private Sink                                 broadcastChangesSink;
-  private Sink                                 commitChangesSink;
   private final ObjectInstanceMonitor          instanceMonitor;
   private final ServerGlobalTransactionManager gtxm;
   private TransactionalObjectManager           txnObjectMgr;
@@ -61,9 +59,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     // ofcourse there is a bug !)
     if (gtxm.needsApply(stxnID)) {
       transactionManager.apply(gtxnID, txn, atc.getObjects(), includeIDs, instanceMonitor);
-      if (txnObjectMgr.applyTransactionComplete(stxnID)) {
-        commitChangesSink.addLossy(new CommitTransactionContext());
-      }
+      txnObjectMgr.applyTransactionComplete(stxnID);
     } else {
       transactionManager.skipApplyAndCommit(txn);
       getLogger().warn("Not applying previously applied transaction: " + stxnID);
@@ -84,7 +80,6 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     ServerConfigurationContext scc = (ServerConfigurationContext) context;
     this.transactionManager = scc.getTransactionManager();
     this.broadcastChangesSink = scc.getStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE).getSink();
-    this.commitChangesSink = scc.getStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE).getSink();
     this.txnObjectMgr = scc.getTransactionalObjectManager();
     this.lockManager = scc.getLockManager();
   }

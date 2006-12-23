@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.handler;
 
@@ -62,7 +63,7 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
   private TestTransactionBatchManager       transactionBatchManager;
   private TestGlobalTransactionManager      gtxm;
   private SequenceValidator                 sequenceValidator;
-  private TransactionalObjectManager          txnObjectManager;
+  private TransactionalObjectManager        txnObjectManager;
 
   public void setUp() throws Exception {
     objectManager = new TestObjectManager();
@@ -72,7 +73,14 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     MockStage lookupStage;
     stageMap.put(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE,
                  (lookupStage = new MockStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE)));
-    txnObjectManager = new TransactionalObjectManagerImpl(objectManager, new TransactionSequencer(), gtxm,  lookupStage.getSink());
+    MockStage applyStage;
+    stageMap.put(ServerConfigurationContext.APPLY_CHANGES_STAGE,
+                 (applyStage = new MockStage(ServerConfigurationContext.APPLY_CHANGES_STAGE)));
+    MockStage commitStage;
+    stageMap.put(ServerConfigurationContext.COMMIT_CHANGES_STAGE,
+                 (commitStage = new MockStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE)));
+    txnObjectManager = new TransactionalObjectManagerImpl(objectManager, new TransactionSequencer(), gtxm, lookupStage
+        .getSink(), applyStage.getSink(), commitStage.getSink(), 1);
     handler = new ProcessTransactionHandler(transactionBatchManager, txnObjectManager, sequenceValidator,
                                             new NullMessageRecycler());
 

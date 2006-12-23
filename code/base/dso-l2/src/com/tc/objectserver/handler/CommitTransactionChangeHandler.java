@@ -15,7 +15,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 
-import java.util.Set;
+import java.util.Collection;
 
 public class CommitTransactionChangeHandler extends AbstractEventHandler {
 
@@ -31,21 +31,14 @@ public class CommitTransactionChangeHandler extends AbstractEventHandler {
 
   public void handleEvent(EventContext context) {
     CommitTransactionContext ctc = (CommitTransactionContext) context;
-    while (true) {
-      txnObjectManager.addTransactionsToCommit(ctc);
-      Set appliedTxns = ctc.getAppliedServerTransactionIDs();
-      if (appliedTxns.size() > 0) {
-        PersistenceTransaction ptx = ptxp.newTransaction();
-        transactionManager.release(ptx, ctc.getObjects(), ctc.getNewRoots());
-        gtxm.commitAll(ptx, appliedTxns);
-        gtxm.completeTransactions(ptx, ctc.getCompletedTransactionIDs());
-        ptx.commit();
-        transactionManager.committed(appliedTxns);
-        ctc = new CommitTransactionContext();
-      } else {
-        break;
-      }
-    }
+    Collection appliedTxns = ctc.getAppliedServerTransactionIDs();
+    PersistenceTransaction ptx = ptxp.newTransaction();
+    transactionManager.release(ptx, ctc.getObjects(), ctc.getNewRoots());
+    gtxm.commitAll(ptx, appliedTxns);
+    gtxm.completeTransactions(ptx, ctc.getCompletedTransactionIDs());
+    ptx.commit();
+    transactionManager.committed(appliedTxns);
+    txnObjectManager.commitTransactionsComplete(appliedTxns);
   }
 
   public void initialize(ConfigurationContext context) {

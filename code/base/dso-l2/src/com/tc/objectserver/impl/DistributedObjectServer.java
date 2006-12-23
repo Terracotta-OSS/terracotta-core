@@ -427,12 +427,24 @@ public class DistributedObjectServer extends SEDA {
                                                           objectManager, taa, globalTxnCounter, channelStats);
     MessageRecycler recycler = new CommitTransactionMessageRecycler(transactionManager);
 
-    Stage batchTxLookupStage = stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE,
-                                                        new TransactionLookupHandler(), 1, maxStageSize);
+    Stage lookupStage = stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE,
+                                                 new TransactionLookupHandler(), 1, maxStageSize);
+    
+    // Lookup stage should never be blocked trying to add to apply stage
+    Stage applyStage = stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
+                                                new ApplyTransactionChangeHandler(instanceMonitor, gtxm), 1, -1);
+    
+    int commitThreads = (persistent ? 4 : 1);
+    Stage commitStage = stageManager.createStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE,
+                                                 new CommitTransactionChangeHandler(gtxm, transactionStorePTP),
+                                                 commitThreads, maxStageSize);
+    
     TransactionalObjectManagerImpl txnObjectManager = new TransactionalObjectManagerImpl(objectManager,
                                                                                          new TransactionSequencer(),
-                                                                                         gtxm, batchTxLookupStage
-                                                                                             .getSink());
+                                                                                         gtxm, lookupStage.getSink(),
+                                                                                         applyStage.getSink(),
+                                                                                         commitStage.getSink(),
+                                                                                         commitThreads);
     Stage processTx = stageManager.createStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE,
                                                new ProcessTransactionHandler(transactionBatchManager, txnObjectManager,
                                                                              sequenceValidator, recycler), 1,
@@ -441,12 +453,6 @@ public class DistributedObjectServer extends SEDA {
     Stage rootRequest = stageManager.createStage(ServerConfigurationContext.MANAGED_ROOT_REQUEST_STAGE,
                                                  new RequestRootHandler(), 1, maxStageSize);
 
-    // Lookup stage should never be blocked trying to add to apply stage
-    stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
-                             new ApplyTransactionChangeHandler(instanceMonitor, gtxm), 1, -1);
-    stageManager.createStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE,
-                             new CommitTransactionChangeHandler(gtxm, transactionStorePTP), (persistent ? 4 : 1),
-                             maxStageSize);
     stageManager.createStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE,
                              new BroadcastChangeHandler(transactionBatchManager), 1, maxStageSize);
     stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,

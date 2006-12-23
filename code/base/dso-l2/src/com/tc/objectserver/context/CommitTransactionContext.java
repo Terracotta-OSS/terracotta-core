@@ -1,32 +1,28 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.context;
 
 import com.tc.async.api.EventContext;
 import com.tc.util.Assert;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class CommitTransactionContext implements EventContext {
 
-  private Set txnIDs = new HashSet();
-  private Collection objects = new ArrayList();
-  private Set completedTxnIds;
-  private Map newRoots = new HashMap();
+  private final Collection txnIDs;
+  private final Collection objects;
+  private final Set        completedTxnIds;
+  private final Map        newRoots;
 
-  public void addObjectsAndAppliedTxns(Collection appliedTxnIDs, Collection appliedObject, Map newRootsInAppliedTxns) {
-    this.txnIDs.addAll(appliedTxnIDs);
-    this.objects.addAll(appliedObject);
-    this.newRoots.putAll(newRootsInAppliedTxns);
-  }
-
-  public void setCompletedTransactionIds(Set completedTxnIds) {
+  public CommitTransactionContext(Collection appliedTxnIDs, Collection appliedObjects, Map newRootsInAppliedTxns,
+                                  Set completedTxnIds) {
+    this.txnIDs = appliedTxnIDs;
+    this.objects = appliedObjects;
+    this.newRoots = newRootsInAppliedTxns;
     this.completedTxnIds = completedTxnIds;
   }
 
@@ -39,10 +35,10 @@ public class CommitTransactionContext implements EventContext {
     return objects;
   }
 
-  public Set getAppliedServerTransactionIDs() {
+  public Collection getAppliedServerTransactionIDs() {
     return txnIDs;
   }
-  
+
   public Map getNewRoots() {
     return newRoots;
   }
