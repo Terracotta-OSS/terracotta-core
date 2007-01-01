@@ -17,7 +17,7 @@ public class StartServersStopDSOStartServersAgainTest extends AbstractDeployment
 
   
   public StartServersStopDSOStartServersAgainTest() {
-    disableAllUntil("2007-01-01");
+    disableAllUntil("2010-03-01");
   }
   
   public void testStartServersStopDSOStartServersAgain() throws Exception {
