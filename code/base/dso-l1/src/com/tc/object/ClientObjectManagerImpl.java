@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -46,6 +47,7 @@ import com.tc.util.concurrent.StoppableThread;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationHandler;
@@ -813,13 +815,24 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
       traverser.traverse(root, traverseTests, context);
     } catch (TCNonPortableObjectError e) {
       if (DUMP_OBJECT_HIERARCHY) {
-        try {
-          InstanceWalker.hierarchy(root, new PrintWriter(System.err));
-        } catch (IOException ex) {
-          //
-        }
+        dumpObjectHierarchy(root);
       }
       throw e;
+    }
+  }
+
+  private void dumpObjectHierarchy(Object root) {
+    Writer w = new PrintWriter(System.err);
+    try {
+      InstanceWalker.hierarchy(root, w);
+    } catch (IOException ex) {
+      logger.error(ex);
+    } finally {
+      try {
+        w.flush();
+      } catch (IOException e) {
+        logger.error(e);
+      }
     }
   }
 
