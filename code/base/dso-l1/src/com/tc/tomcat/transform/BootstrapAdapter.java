@@ -25,8 +25,6 @@ public class BootstrapAdapter extends ClassAdapter {
 
     if ("initClassLoaders".equals(name)) {
       mv = new InitClassLoadersAdatper(mv);
-    } else if ("init".equals(name) && "()V".equals(desc)) {
-      mv = new InitMethodAdapter(mv);
     }
 
     return mv;
@@ -60,24 +58,6 @@ public class BootstrapAdapter extends ClassAdapter {
       }
       super.visitInsn(opcode);
     }
-  }
-
-  static class InitMethodAdapter extends MethodAdapter implements Opcodes {
-
-    public InitMethodAdapter(MethodVisitor mv) {
-      super(mv);
-    }
-
-    public void visitInsn(int opcode) {
-      if (opcode == Opcodes.RETURN) {
-        mv.visitVarInsn(ALOAD, 1);
-        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;");
-        mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/SessionsHelper", "injectClasses",
-                           "(Ljava/lang/ClassLoader;)V");
-      }
-      super.visitInsn(opcode);
-    }
-
   }
 
 }
