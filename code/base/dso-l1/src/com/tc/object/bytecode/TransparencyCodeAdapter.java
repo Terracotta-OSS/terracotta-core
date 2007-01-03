@@ -54,7 +54,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     this.labelZero = new Label();
     this.mgrHelper = spec.getManagerHelper();
     this.codeSpec = spec.getTransparencyClassSpec().getCodeSpec(originalMethodName, description, isAutolock);
-    
+
     if (!"<init>".equals(methodName)) {
       visitInit = true;
     }
@@ -95,10 +95,10 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     String logicalExtendingClassName = spec.getSuperClassNameSlashes();
     if (INVOKESPECIAL == opcode && !spec.getClassNameSlashes().equals(classname) && !"<init>".equals(theMethodName)) {
       storeStackValuesToLocalVariables(desc);
-      mv.visitMethodInsn(INVOKESPECIAL, spec.getClassNameSlashes(), ByteCodeUtil.fieldGetterMethod(ClassAdapterBase
+      super.visitMethodInsn(INVOKESPECIAL, spec.getClassNameSlashes(), ByteCodeUtil.fieldGetterMethod(ClassAdapterBase
           .getDelegateFieldName(logicalExtendingClassName)), "()L" + logicalExtendingClassName + ";");
       loadLocalVariables(desc);
-      mv.visitMethodInsn(INVOKEVIRTUAL, logicalExtendingClassName, theMethodName, desc);
+      super.visitMethodInsn(INVOKEVIRTUAL, logicalExtendingClassName, theMethodName, desc);
       return true;
     }
     return false;
@@ -127,17 +127,17 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
    * there is no implementation of clone() defined in that classes' hierarchy. If it does, it a bug in the compiler ;-)
    * This adaption is needed for both PORTABLE and ADAPTABLE classes as we can have instance where Logical subclass of
    * ADAPTABLE class calls clone() to make a copy of itself.
-   * 
+   *
    * @see AbstractMap and HashMap
    */
   private boolean handleJavaLangObjectCloneCall(int opcode, String classname, String theMethodName, String desc) {
     if ("clone".equals(theMethodName) && "()Ljava/lang/Object;".equals(desc)) {
-      mv.visitInsn(DUP);
-      mv.visitInsn(DUP);
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/Util", "resolveAllReferencesBeforeClone",
+      super.visitInsn(DUP);
+      super.visitInsn(DUP);
+      super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/Util", "resolveAllReferencesBeforeClone",
                          "(Ljava/lang/Object;)V");
       super.visitMethodInsn(opcode, classname, theMethodName, desc);
-      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/Util", "fixTCObjectReferenceOfClonedObject",
+      super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/Util", "fixTCObjectReferenceOfClonedObject",
                          "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
       return true;
     }
@@ -224,8 +224,8 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
       switch (opCode) {
         case MONITORENTER:
           if (this.isAutolock) {
-            mv.visitInsn(DUP);
-            mv.visitLdcInsn(new Integer(autoLockType));
+            super.visitInsn(DUP);
+            super.visitLdcInsn(new Integer(autoLockType));
             mgrHelper.callManagerMethod("monitorEnter", this);
             super.visitInsn(opCode);
           } else {
@@ -234,7 +234,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
           return;
         case MONITOREXIT:
           if (this.isAutolock) {
-            mv.visitInsn(DUP);
+            super.visitInsn(DUP);
             super.visitInsn(opCode);
             mgrHelper.callManagerMethod("monitorExit", this);
           } else {
@@ -248,28 +248,28 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
         case AALOAD:
           Label end = new Label();
           Label notManaged = new Label();
-          mv.visitInsn(DUP2);
-          mv.visitInsn(POP);
+          super.visitInsn(DUP2);
+          super.visitInsn(POP);
           callArrayManagerMethod("getObject", "(Ljava/lang/Object;)Lcom/tc/object/TCObject;");
-          mv.visitInsn(DUP);
-          mv.visitJumpInsn(IFNULL, notManaged);
-          mv.visitInsn(DUP_X2);
-          mv.visitInsn(DUP);
-          mv.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "getResolveLock", "()Ljava/lang/Object;");
-          mv.visitInsn(MONITORENTER);
-          mv.visitInsn(DUP2);
-          mv.visitInsn(SWAP);
-          mv.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "resolveArrayReference", "(I)V");
-          mv.visitInsn(POP);
+          super.visitInsn(DUP);
+          super.visitJumpInsn(IFNULL, notManaged);
+          super.visitInsn(DUP_X2);
+          super.visitInsn(DUP);
+          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "getResolveLock", "()Ljava/lang/Object;");
+          super.visitInsn(MONITORENTER);
+          super.visitInsn(DUP2);
+          super.visitInsn(SWAP);
+          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "resolveArrayReference", "(I)V");
+          super.visitInsn(POP);
           super.visitInsn(opCode);
-          mv.visitInsn(SWAP);
-          mv.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "getResolveLock", "()Ljava/lang/Object;");
-          mv.visitInsn(MONITOREXIT);
-          mv.visitJumpInsn(GOTO, end);
-          mv.visitLabel(notManaged);
-          mv.visitInsn(POP);
+          super.visitInsn(SWAP);
+          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "getResolveLock", "()Ljava/lang/Object;");
+          super.visitInsn(MONITOREXIT);
+          super.visitJumpInsn(GOTO, end);
+          super.visitLabel(notManaged);
+          super.visitInsn(POP);
           super.visitInsn(opCode);
-          mv.visitLabel(end);
+          super.visitLabel(end);
           return;
         case AASTORE:
           callArrayManagerMethod("objectArrayChanged", "([Ljava/lang/Object;ILjava/lang/Object;)V");
@@ -311,7 +311,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   }
 
   private void callArrayManagerMethod(String name, String desc) {
-    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, name, desc);
+    super.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, name, desc);
   }
 
   public void visitMaxs(int stack, int vars) {
@@ -387,19 +387,19 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     String sDesc = "(" + desc + ")V";
 
     swap(reference, fieldType);
-    mv.visitInsn(DUP);
+    super.visitInsn(DUP);
     Label l1 = new Label();
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;");
+    super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;");
     mgrHelper.callManagerMethod("isPhysicallyInstrumented", mv);
-    mv.visitJumpInsn(IFEQ, l1);
+    super.visitJumpInsn(IFEQ, l1);
     swap(fieldType, reference);
     visitMethodInsn(INVOKEVIRTUAL, classname, ByteCodeUtil.fieldSetterMethod(fieldName), sDesc);
     Label l2 = new Label();
-    mv.visitJumpInsn(GOTO, l2);
-    mv.visitLabel(l1);
+    super.visitJumpInsn(GOTO, l2);
+    super.visitLabel(l1);
     swap(fieldType, reference);
-    mv.visitFieldInsn(PUTFIELD, classname, fieldName, desc);
-    mv.visitLabel(l2);
+    super.visitFieldInsn(PUTFIELD, classname, fieldName, desc);
+    super.visitLabel(l2);
   }
 
   private void visitGetFieldInsn(String classname, String fieldName, String desc) {
@@ -434,17 +434,17 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
    */
   private void visitCheckedGetFieldInsn(String classname, String fieldName, String desc) {
     String gDesc = "()" + desc;
-    mv.visitInsn(DUP);
+    super.visitInsn(DUP);
     Label l1 = new Label();
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;");
+    super.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;");
     mgrHelper.callManagerMethod("isPhysicallyInstrumented", mv);
-    mv.visitJumpInsn(IFEQ, l1);
+    super.visitJumpInsn(IFEQ, l1);
     visitMethodInsn(INVOKEVIRTUAL, classname, ByteCodeUtil.fieldGetterMethod(fieldName), gDesc);
     Label l2 = new Label();
-    mv.visitJumpInsn(GOTO, l2);
-    mv.visitLabel(l1);
-    mv.visitFieldInsn(GETFIELD, classname, fieldName, desc);
-    mv.visitLabel(l2);
+    super.visitJumpInsn(GOTO, l2);
+    super.visitLabel(l1);
+    super.visitFieldInsn(GETFIELD, classname, fieldName, desc);
+    super.visitLabel(l2);
   }
 
   public void visitLocalVariable(String name, String desc, String fieldSignature, Label start, Label end, int index) {
@@ -454,13 +454,13 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
 
   private void addFinallyByteCode(MethodVisitor c) {
 
-    mv.visitJumpInsn(GOTO, jsrLabel);
-    mv.visitLabel(labelEnd);
-    mv.visitVarInsn(ASTORE, localVariablesCount + 1);
+    c.visitJumpInsn(GOTO, jsrLabel);
+    c.visitLabel(labelEnd);
+    c.visitVarInsn(ASTORE, localVariablesCount + 1);
     callTCCommit(c);
-    mv.visitVarInsn(ALOAD, localVariablesCount + 1);
-    mv.visitInsn(ATHROW);
-    mv.visitLabel(jsrLabel);
+    c.visitVarInsn(ALOAD, localVariablesCount + 1);
+    c.visitInsn(ATHROW);
+    c.visitLabel(jsrLabel);
     callTCCommit(c);
   }
 
@@ -472,98 +472,6 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     // This method added to silence warning about never reading "signature" field. If some code actually starts usiung
     // that field, then you can kill this method
     return this.signature;
-  }
-
-  // --------------------------------------------------------------------
-  // Copied from GeneratorAdapter
-  // --------------------------------------------------------------------
-  public void swap() {
-    mv.visitInsn(Opcodes.SWAP);
-  }
-
-  /**
-   * Generates the instructions to swap the top two stack values.
-   * 
-   * @param prev type of the top - 1 stack value.
-   * @param type type of the top stack value.
-   */
-  public void swap(final Type prev, final Type type) {
-    if (type.getSize() == 1) {
-      if (prev.getSize() == 1) {
-        swap(); // same as dupX1(), pop();
-      } else {
-        dupX2();
-        pop();
-      }
-    } else {
-      if (prev.getSize() == 1) {
-        dup2X1();
-        pop2();
-      } else {
-        dup2X2();
-        pop2();
-      }
-    }
-  }
-
-  // ------------------------------------------------------------------------
-  // Instructions to manage the stack
-  // ------------------------------------------------------------------------
-
-  /**
-   * Generates a POP instruction.
-   */
-  public void pop() {
-    mv.visitInsn(Opcodes.POP);
-  }
-
-  /**
-   * Generates a POP2 instruction.
-   */
-  public void pop2() {
-    mv.visitInsn(Opcodes.POP2);
-  }
-
-  /**
-   * Generates a DUP instruction.
-   */
-  public void dup() {
-    mv.visitInsn(Opcodes.DUP);
-  }
-
-  /**
-   * Generates a DUP2 instruction.
-   */
-  public void dup2() {
-    mv.visitInsn(Opcodes.DUP2);
-  }
-
-  /**
-   * Generates a DUP_X1 instruction.
-   */
-  public void dupX1() {
-    mv.visitInsn(Opcodes.DUP_X1);
-  }
-
-  /**
-   * Generates a DUP_X2 instruction.
-   */
-  public void dupX2() {
-    mv.visitInsn(Opcodes.DUP_X2);
-  }
-
-  /**
-   * Generates a DUP2_X1 instruction.
-   */
-  public void dup2X1() {
-    mv.visitInsn(Opcodes.DUP2_X1);
-  }
-
-  /**
-   * Generates a DUP2_X2 instruction.
-   */
-  public void dup2X2() {
-    mv.visitInsn(Opcodes.DUP2_X2);
   }
 
   protected void onMethodEnter() {

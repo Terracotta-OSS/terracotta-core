@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -33,7 +34,7 @@ public class TransparencyTestApp extends AbstractTransparentApp {
   private Map           myRoot;
   private Object        out;
   private static Object err;
-  
+
   public TransparencyTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     System.err.println("APPID is " + appId);
@@ -57,8 +58,11 @@ public class TransparencyTestApp extends AbstractTransparentApp {
     spec.addTransient("transientPrimitive");
     config.addWriteAutolock("* com.tctest.TransparencyTestApp.*(..)");
     config.addWriteAutolock("* com.tctest.AbstractTransparencyApp.*(..)");
+
+    config.getOrCreateSpec(FunnyCstr.class.getName());
+    config.getOrCreateSpec(FunnyBase.class.getName());
   }
-  
+
   public void run() {
     // Test case for LKC-774 (accessing static fields of the same name as roots)
     out = new Object();
@@ -71,8 +75,15 @@ public class TransparencyTestApp extends AbstractTransparentApp {
       Vector v = new Vector();
       v.add("Hello Steve");
       testFunnyInner();
+      testFunnyCstr();
     }
 
+  }
+
+  FunnyCstr funnyCstr;
+
+  private void testFunnyCstr() {
+    funnyCstr = new FunnyCstr(new Object[] { this }, new Object(), true);
   }
 
   interface Foo {
@@ -456,6 +467,25 @@ public class TransparencyTestApp extends AbstractTransparentApp {
     Assert.eval(obj.getTwoDobjects()[0].length == 4);
     Assert.eval(obj.getTwoDobject(4, 2).getStringValue().equals("baby"));
     System.out.println("Checked 2d");
+  }
+
+  private static class FunnyBase {
+    FunnyBase(Object object, Object arg2) {
+      //
+    }
+  }
+
+  private static class FunnyCstr extends FunnyBase {
+    // The only thing interesting about this class is that makes
+    // a static method invocation in it's cstr(). Our class adapter
+    // tripped up on this construct at one point
+    public FunnyCstr(Object[] arg1, Object arg2, boolean b) {
+      super(FunnyCstr.foo(arg1[0], b), arg2);
+    }
+
+    private static Object foo(Object object, boolean b) {
+      return object;
+    }
   }
 
   public class TestObj {
@@ -1102,7 +1132,6 @@ public class TransparencyTestApp extends AbstractTransparentApp {
     public void setBigIntegerObject(BigInteger bigIntegerObject) {
       this.bigIntegerObject = bigIntegerObject;
     }
-
 
   }
 
