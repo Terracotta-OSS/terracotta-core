@@ -42,7 +42,7 @@ public class SingletonWithTransientBooleanField_Test extends SimpleTransparentTe
 
       SingletonWithTransientField singleton1 = (SingletonWithTransientField) ctx1.getBean("service");
       assertTrue(singleton1.isTransientValue());
-      assertDistributed(ctx1, singleton1);
+      assertDistributed(ctx1, "service", singleton1);
 
       moveToStageAndWait(1);
       singleton1.setTransientValue(false);

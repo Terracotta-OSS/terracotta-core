@@ -71,7 +71,6 @@ public class DelegatingProxyAopProxy_Test extends TCTestCase {
     IDelegatingProxyTarget proxy = (IDelegatingProxyTarget) ctx.getBean("testAroundAdviceChainDelegating");
     assertNotNull(proxy);
     proxy.doStuff("fuzzy");
-    System.out.println(Logger.log);
     assertEquals("before-around args(fuzzy) this(" + proxy.getClass().getName() + ") before-around args(fuzzy) this("
         + proxy.getClass().getName() + ") doStuff after-around after-around ", Logger.log);
   }

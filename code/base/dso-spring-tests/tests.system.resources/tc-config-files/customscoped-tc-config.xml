@@ -40,7 +40,7 @@
 	            </paths>
 	             
 	            <beans>
-	              <bean name="scopedTarget.simplebean"/>
+	              <bean name="scopedTarget.simpleBean"/>
 	            </beans>
 	            
 	          </application-context>

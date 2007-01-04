@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.aop.framework.AdvisedSupport;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.framework.ProxyFactoryBean;
+import org.springframework.beans.factory.BeanFactory;
 
 import com.tc.aspectwerkz.joinpoint.StaticJoinPoint;
 
@@ -44,4 +45,28 @@ public class AopProxyFactoryProtocol {
       return jp.proceed();
     }
   }
+  
+  /**
+   * Advises PCD: before(execution(void saveBeanFactory(..)) && args(beanFactory) && this(bean))
+   */
+  public void saveBeanFactory(BeanFactoryAware bean, BeanFactory beanFactory) throws Throwable {
+      bean.tc$setBeanFactory(beanFactory);
+  }
+
+  /**
+   * Mixin to hold a publicly accessible reference to BeanFactory that created the bean
+   */
+  public static class BeanFactoryAwareMixin implements BeanFactoryAware {
+    private transient BeanFactory beanFactory;
+    
+    public void tc$setBeanFactory(BeanFactory beanFactory) {
+      this.beanFactory = beanFactory;
+    }
+
+    public BeanFactory tc$getBeanFactory() {
+      return beanFactory;
+    }
+  }
+  
 }
+

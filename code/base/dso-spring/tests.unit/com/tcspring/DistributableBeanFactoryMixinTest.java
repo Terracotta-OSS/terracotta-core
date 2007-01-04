@@ -32,23 +32,11 @@ public class DistributableBeanFactoryMixinTest extends MockObjectTestCase {
   private DSOContext                    dsoContext;
   private Mock                          dsoContextMock;
 
-  private DistributableBeanFactoryMixin identifiable;
+  private DistributableBeanFactoryMixin distributableBeanFactoryMixin;
   private Mock                          mockSpringConfigHelper;
   private DSOSpringConfigHelper         springConfigHelper;
   private Mock                          mockManagerUtilWrapper;
   private Set                           nonDistributables = new HashSet();
-
-  // private String beanName = "TheBeanName";
-  //
-  // private TCClass tcClass;
-  // private TCField tcField;
-  //
-  // private Mock tcClassMock;
-  // private Mock tcSuperClassMock;
-  // private Mock tcFieldMock;
-  //
-  // private Mock tcObjectMock;
-  // private TCObject tcObject;
 
   private HashMap                       singletonCache;
 
@@ -61,7 +49,7 @@ public class DistributableBeanFactoryMixinTest extends MockObjectTestCase {
 
     mockManagerUtilWrapper = new Mock(DistributableBeanFactoryMixin.ManagerUtilWrapper.class);
     ManagerUtilWrapper managerUtilWrapper = (ManagerUtilWrapper) mockManagerUtilWrapper.proxy();
-    identifiable = new DistributableBeanFactoryMixin(appName, dsoContext, managerUtilWrapper, nonDistributables);
+    distributableBeanFactoryMixin = new DistributableBeanFactoryMixin(appName, dsoContext, managerUtilWrapper, nonDistributables);
 
     mockSpringConfigHelper = new Mock(DSOSpringConfigHelper.class);
     springConfigHelper = (DSOSpringConfigHelper) mockSpringConfigHelper.proxy();
@@ -109,16 +97,16 @@ public class DistributableBeanFactoryMixinTest extends MockObjectTestCase {
         .with(eq(eventClass), ANYTHING, eq("* " + eventClass + ".*(..)"));
     dsoContextMock.expects(once()).method("addInclude").with(eq(baseEventClass), ANYTHING,
                                                              eq("* " + baseEventClass + ".*(..)"));
-    identifiable.registerDistributedEvents(Collections.singletonList(eventClass));
+    distributableBeanFactoryMixin.registerDistributedEvents(Collections.singletonList(eventClass));
   }
 
   public void testAddDistributedEventsWithWildcard() {
     String eventClass = "com.tcspring.events.*Event"; // XXX we don't support this kind of wildcards!
-    identifiable.registerDistributedEvents(Collections.singletonList(eventClass));
+    distributableBeanFactoryMixin.registerDistributedEvents(Collections.singletonList(eventClass));
   }
 
   public void testRegisterBeanDefinitions() {
-    identifiable.addLocation("config/foo.xml");
+    distributableBeanFactoryMixin.addLocation("config/foo.xml");
 
     dsoContextMock.expects(once()).method("getDSOSpringConfigHelpers").withNoArguments()
         .will(returnValue(Collections.singletonList(springConfigHelper)));
@@ -145,7 +133,7 @@ public class DistributableBeanFactoryMixinTest extends MockObjectTestCase {
     mockManagerUtilWrapper.expects(once()).method("lookupOrCreateRoot").with(ANYTHING, ANYTHING)
         .will(returnValue(singletonCache));
     mockManagerUtilWrapper.expects(once()).method("commitLock").with(ANYTHING);
-    identifiable.registerBeanDefinitions(Collections.singletonMap("bean",
+    distributableBeanFactoryMixin.registerBeanDefinitions(Collections.singletonMap("bean",
                                                                   new RootBeanDefinition(SimplePropertyBean.class)));
   }
 
@@ -156,40 +144,39 @@ public class DistributableBeanFactoryMixinTest extends MockObjectTestCase {
   public void testIsDistibutedBean_yes() {
     testRegisterBeanDefinitions();
     mockSpringConfigHelper.expects(once()).method("isDistributedBean").with(eq("bean")).will(returnValue(true));
-    assertTrue(identifiable.isDistributedBean("bean"));
+    assertTrue(distributableBeanFactoryMixin.isDistributedBean("bean"));
   }
 
   public void testIsDistibutedBean_no() {
     testRegisterBeanDefinitions();
-    mockSpringConfigHelper.expects(once()).method("isDistributedBean").with(eq("someOtherBean"))
-        .will(returnValue(false));
-    assertFalse(identifiable.isDistributedBean("someOtherBean"));
+    mockSpringConfigHelper.expects(once()).method("isDistributedBean").with(eq("someOtherBean")).will(returnValue(false));
+    assertFalse(distributableBeanFactoryMixin.isDistributedBean("someOtherBean"));
   }
 
   public void testIsDistributedField_yes() {
     testRegisterBeanDefinitions();
     mockSpringConfigHelper.expects(once()).method("isDistributedField").with(eq("bean"), eq("fieldA"))
         .will(returnValue(true));
-    assertTrue(identifiable.isDistributedField("bean", "fieldA"));
+    assertTrue(distributableBeanFactoryMixin.isDistributedField("bean", "fieldA"));
   }
 
   public void testIsDistributedField_no() {
     testRegisterBeanDefinitions();
     mockSpringConfigHelper.expects(once()).method("isDistributedField").with(eq("bean"), eq("fieldB"))
         .will(returnValue(false));
-    assertFalse(identifiable.isDistributedField("bean", "fieldB"));
+    assertFalse(distributableBeanFactoryMixin.isDistributedField("bean", "fieldB"));
   }
 
   public void testIsDistributedEvent_yes() {
     testRegisterBeanDefinitions();
     mockSpringConfigHelper.expects(once()).method("isDistributedEvent").with(eq("event1")).will(returnValue(true));
-    assertTrue(identifiable.isDistributedEvent("event1"));
+    assertTrue(distributableBeanFactoryMixin.isDistributedEvent("event1"));
   }
 
   public void testIsDistributedEvent_no() {
     testRegisterBeanDefinitions();
     mockSpringConfigHelper.expects(once()).method("isDistributedEvent").with(eq("event2")).will(returnValue(false));
-    assertFalse(identifiable.isDistributedEvent("event2"));
+    assertFalse(distributableBeanFactoryMixin.isDistributedEvent("event2"));
 
   }
 
@@ -330,37 +317,43 @@ public class DistributableBeanFactoryMixinTest extends MockObjectTestCase {
   //
   // }
 
-  public void testVirtualizeSingletonBeanWhenNotYetShared() {
-    testRegisterBeanDefinitions();
+//  public void testVirtualizeSingletonBeanWhenNotYetShared() {
+//    testRegisterBeanDefinitions();
+//
+//    // mockSpringConfigHelper.expects(once()).method("isDistributedBean").with(eq("beanName")).will(returnValue(true));
+//
+//    ComplexBeanId beanId = new ComplexBeanId("beanName");
+//    
+//    distributableBeanFactoryMixin.virtualizeBean(beanId, localBean, container);
+//    assertSame(localBean, result);
+//    assertSame(localBean, distributableBeanFactoryMixin.getBeanContainer(beanId).getBean());
+//  }
 
-    mockSpringConfigHelper.expects(once()).method("isDistributedBean").with(eq("beanName")).will(returnValue(true));
+//  public void testVirtualizeSingletonBeanWhenAlreadyShared() {
+//    testRegisterBeanDefinitions();
+//
+//    ComplexBeanId beanId = new ComplexBeanId("beanName");
+//
+//    singletonCache.put(beanId, new BeanContainer(distributedBean, true));
+//    
+//    // mockSpringConfigHelper.expects(once()).method("isDistributedBean").with(eq("beanName")).will(returnValue(true));
+//
+//    distributableBeanFactoryMixin.virtualizeBean(beanId, localBean, container);
+//    assertSame(distributedBean, result);
+//    assertSame(distributedBean, distributableBeanFactoryMixin.getBeanContainer(beanId).getBean());
+//  }
 
-    Object result = identifiable.virtualizeSingletonBean("beanName", localBean);
-    assertSame(localBean, result);
-    assertSame(localBean, identifiable.getBeanFromSingletonCache("beanName"));
-  }
-
-  public void testVirtualizeSingletonBeanWhenAlreadyShared() {
-    testRegisterBeanDefinitions();
-
-    singletonCache.put("beanName", distributedBean);
-
-    mockSpringConfigHelper.expects(once()).method("isDistributedBean").with(eq("beanName")).will(returnValue(true));
-
-    Object result = identifiable.virtualizeSingletonBean("beanName", localBean);
-    assertSame(distributedBean, result);
-    assertSame(distributedBean, identifiable.getBeanFromSingletonCache("beanName"));
-  }
-
-  public void testVirtualizeSingletonBeanWhenNotDistributed() {
-    testRegisterBeanDefinitions();
-
-    mockSpringConfigHelper.expects(once()).method("isDistributedBean").with(eq("beanName")).will(returnValue(false));
-
-    Object result = identifiable.virtualizeSingletonBean("beanName", localBean);
-    assertSame(localBean, result);
-    assertTrue(singletonCache.isEmpty());
-  }
+//  public void testVirtualizeSingletonBeanWhenNotDistributed() {
+//    testRegisterBeanDefinitions();
+//
+//    ComplexBeanId beanId = new ComplexBeanId("beanName");
+//
+//    // mockSpringConfigHelper.expects(once()).method("isDistributedBean").with(eq("beanName")).will(returnValue(false));
+//
+//    Object result = distributableBeanFactoryMixin.virtualizeBean(beanId, localBean);
+//    assertSame(localBean, result);
+//    assertNull(distributableBeanFactoryMixin.getBeanContainer(beanId));
+//  }
 
   // TODO - mock the monitor code
 }

@@ -57,9 +57,6 @@ public class SessionScopedBeanTest extends AbstractTwoServerDeploymentTest {
 //  }
 
   public void testSharedFields() throws Exception {
-
-    logger.debug("testing shared fields");
-    
     beanN1S1.setField("newVal1");
     beanN2S2.setField("newVal2");
     
@@ -67,20 +64,14 @@ public class SessionScopedBeanTest extends AbstractTwoServerDeploymentTest {
     
     assertEquals("Failed to shared: ", "newVal1", beanN2S1.getField());
     assertEquals("Failed to shared: ", "newVal2", beanN1S2.getField());
-    
-    logger.debug("!!!! Asserts passed !!!");
   }
 
   public void testTransparentFields() throws Exception {
-
-    logger.debug("testing transparent fields");
-    
     assertEquals("Failed to initialize/virtualize the transient field.", "transient-val", beanN1S1.getTransientField());
     assertEquals("Failed to initialize/virtualize the transient field.", "transient-val", beanN1S2.getTransientField());
     assertEquals("Failed to initialize/virtualize the transient field.", "transient-val", beanN2S1.getTransientField());
     assertEquals("Failed to initialize/virtualize the transient field.", "transient-val", beanN2S2.getTransientField());
 
-    
     beanN1S1.setTransientField("newVal11");
     beanN1S2.setTransientField("newVal12");
     beanN2S1.setTransientField("newVal21");
@@ -90,8 +81,6 @@ public class SessionScopedBeanTest extends AbstractTwoServerDeploymentTest {
     assertEquals("Unexpected sharing: ", "newVal12", beanN1S2.getTransientField());
     assertEquals("Unexpected sharing: ", "newVal21", beanN2S1.getTransientField());
     assertEquals("Unexpected sharing: ", "newVal22", beanN2S2.getTransientField());
-    
-    logger.debug("!!!! Asserts passed !!!");
   }
 
   private static class InnerTestSetup extends TwoSvrSetup {

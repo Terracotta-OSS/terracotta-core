@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tcspring;
 
@@ -98,7 +99,7 @@ public class FastAopProxy implements AopProxy {
     m_systemDef = new SystemDefinition(m_proxyName + UuidGenerator.generate(m_proxyName));
 
     try {
-      m_beanFactory = ((BeanFactoryAware)proxyFactory).tc$getBeanFactory();
+      m_beanFactory = ((BeanFactoryAware) proxyFactory).tc$getBeanFactory();
     } catch (Exception e) {
       throw new WrappedRuntimeException(e);
     }
@@ -109,8 +110,8 @@ public class FastAopProxy implements AopProxy {
 
   private String getProxyName() {
     return m_targetClass.getName().replace('.', '/')
-        + (m_isSubclassingProxy ? ProxySubclassingStrategy.PROXY_SUFFIX : ProxyDelegationStrategy.PROXY_SUFFIX)
-        + Long.toString(Uuid.newUuid());
+           + (m_isSubclassingProxy ? ProxySubclassingStrategy.PROXY_SUFFIX : ProxyDelegationStrategy.PROXY_SUFFIX)
+           + Long.toString(Uuid.newUuid());
   }
 
   public Object getProxy() {

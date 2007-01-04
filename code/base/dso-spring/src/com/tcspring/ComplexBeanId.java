@@ -3,68 +3,60 @@
  */
 package com.tcspring;
 
+
 public class ComplexBeanId {
-  private transient boolean isVirtualized = false;
-  
-  private transient ComplexBeanId equalPeer = null;
-  
   private String scopeId = null;
   private String beanName = null;
   
-  public ComplexBeanId(String newScopeId, String newBeanName, boolean virtualized) {
+  public ComplexBeanId(String beanName) {
+    this("singleton", beanName);
+  }
+  
+  public ComplexBeanId(String newScopeId, String newBeanName) {
     this.scopeId = newScopeId;
     this.beanName = newBeanName;
-    this.isVirtualized = virtualized;
-  }
-  
-  public boolean equals(Object obj) {
-    boolean rtv = obj != null && obj.getClass().equals(this.getClass());
-    if (rtv) {
-      ComplexBeanId beanId = (ComplexBeanId) obj;
-      rtv = isEqual(beanId.scopeId, this.scopeId) && isEqual(beanId.beanName, this.beanName);
-      if (rtv) {
-        this.equalPeer = (ComplexBeanId) obj;
-        ((ComplexBeanId) obj).equalPeer = this;
-      }
-    }
-
-    return rtv;
-  }
-  
-  public int hashCode() {
-    return (scopeId==null? 0 : scopeId.hashCode()) + beanName.hashCode();
-  }
-  
-  public String toString() {
-    return "" + scopeId + "--" + beanName;
   }
 
   public String getBeanName() {
     return beanName;
   }
-
-  public Object getScopeId() {
+  
+  public String getScopeId() {
     return scopeId;
   }
   
-  private boolean isEqual(Object obj1, Object obj2) {
-    return obj1==null ? obj2==null : obj1.equals(obj2);
+  public int hashCode() {
+    return (31 * scopeId.hashCode()) + beanName.hashCode();
   }
 
-  public ComplexBeanId getEqualPeer() {
-    return equalPeer;
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (obj == null) return false;
+    if (getClass() != obj.getClass()) return false;
+    
+    ComplexBeanId other = (ComplexBeanId) obj;
+    if (beanName == null) {
+      if (other.beanName != null) {
+        return false;
+      }
+    } else if (!beanName.equals(other.beanName)) {
+      return false;
+    }
+    
+    if (scopeId == null) {
+      if (other.scopeId != null) {
+        return false;
+      }
+    } else if (!scopeId.equals(other.scopeId)) {
+      return false;
+    }
+    
+    return true;
   }
 
-  public void setEqualPeer(ComplexBeanId equalPeer) {
-    this.equalPeer = equalPeer;
+  public String toString() {
+    return scopeId + ":" + beanName;
   }
-
-  public boolean isVirtualized() {
-    return isVirtualized;
-  }
-
-  public void setVirtualized(boolean isVirtualized) {
-    this.isVirtualized = isVirtualized;
-  }
-
+  
 }
+

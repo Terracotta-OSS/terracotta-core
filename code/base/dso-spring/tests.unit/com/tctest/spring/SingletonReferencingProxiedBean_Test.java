@@ -43,7 +43,7 @@ public class SingletonReferencingProxiedBean_Test extends SimpleTransparentTestB
 
       FooService singleton1 = (FooService) ctx1.getBean("service");
 
-      assertDistributed(ctx1, singleton1);
+      assertDistributed(ctx1, "service", singleton1);
 
       assertEquals("barAndinterceptorInvoked", singleton1.serviceMethod());
     }

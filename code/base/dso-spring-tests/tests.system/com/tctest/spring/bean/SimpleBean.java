@@ -3,9 +3,11 @@
  */
 package com.tctest.spring.bean;
 
+import org.springframework.beans.factory.BeanNameAware;
+
 import com.tc.aspectwerkz.proxy.Uuid;
 
-public class SimpleBean implements ISimpleBean {
+public class SimpleBean implements ISimpleBean, BeanNameAware {
   private transient long id                    = System.identityHashCode(this) + Uuid.newUuid();
   
   private transient long timeStamp             = System.currentTimeMillis();
@@ -21,6 +23,8 @@ public class SimpleBean implements ISimpleBean {
   private ISimpleBean sharedRef               = null;
   private transient ISimpleBean transientRef  = null;
   private transient ISimpleBean dsoTransientRef  = null;
+
+  private transient String beanName;
     
   public SimpleBean() {
     synchronized(SimpleBean.class) {
@@ -128,5 +132,13 @@ public class SimpleBean implements ISimpleBean {
         return myInstanceCnt;
       }
     }
+  }
+
+  public String getBeanName() {
+    return beanName;
+  }
+
+  public void setBeanName(String beanName) {
+    this.beanName = beanName;
   }  
 }

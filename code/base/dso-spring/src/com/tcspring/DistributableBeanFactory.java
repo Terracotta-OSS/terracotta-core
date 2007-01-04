@@ -3,8 +3,6 @@
  */
 package com.tcspring;
 
-import com.tc.object.TCClass;
-
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +14,11 @@ import java.util.Map;
  */
 public interface DistributableBeanFactory {
 
+  public static final String PROTOTYPE = "prototype";
+
+  public static final String SINGLETON = "singleton";
+  
+  
   boolean isClustered();
 
   String getAppName();
@@ -26,11 +29,7 @@ public interface DistributableBeanFactory {
 
   List getSpringConfigHelpers();
 
-  // initialization
-  void addLocation(String location);
-
-  void registerBeanDefinitions(Map beanMap);
-
+  
   // configuration details
   boolean isDistributedEvent(String className);
 
@@ -38,15 +37,30 @@ public interface DistributableBeanFactory {
 
   boolean isDistributedField(String beanName, String name);
 
-  Object getBeanFromSingletonCache(Object beanId);
-
-  Object removeBeanFromSingletonCache(Object beanId);
-
-  Object virtualizeSingletonBean(Object beanId, Object localInstance);
+  boolean isDistributedSingleton(String beanName);
   
-  boolean isDistributed(Object bean);
+  boolean isDistributedScoped(String beanName);
+  
 
-  void copyTransientFields(String beanName, Object sourceBean, Object targetBean, 
-                           Class targetClass, TCClass tcClass) throws IllegalAccessException;
+  // initialization
+  void addLocation(String location);
+  
+  /**
+   * Register bean definitions
+   * 
+   * @param beanMap map of <code>String</code> bean names to <code>AbstractBeanDefinition</code>.
+   */
+  void registerBeanDefinitions(Map beanMap);
+  
+  
+  // runtime
+  
+  BeanContainer getBeanContainer(ComplexBeanId beanId);
+
+  BeanContainer putBeanContainer(ComplexBeanId beanId, BeanContainer container);
+
+  BeanContainer removeBeanContainer(ComplexBeanId beanId);
+  
+  void initializeBean(ComplexBeanId beanId, Object bean, BeanContainer container);
 
 }

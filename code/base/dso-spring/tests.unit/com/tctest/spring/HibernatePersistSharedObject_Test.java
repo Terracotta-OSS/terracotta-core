@@ -42,7 +42,7 @@ public class HibernatePersistSharedObject_Test extends SimpleTransparentTestBase
 
       HibernatePersister singleton1 = (HibernatePersister) ctx1.getBean("persister");
 
-      assertDistributed(ctx1, singleton1);
+      assertDistributed(ctx1, "persister", singleton1);
       PersistentObject po = singleton1.make();
       singleton1.changeStatus(po.getMessageId());
 

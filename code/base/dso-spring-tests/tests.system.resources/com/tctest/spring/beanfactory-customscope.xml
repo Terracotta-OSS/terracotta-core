@@ -7,21 +7,31 @@
 
 -->
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:aop="http://www.springframework.org/schema/aop" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.0.xsd">
+       xmlns:aop="http://www.springframework.org/schema/aop" 
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd 
+                           http://www.springframework.org/schema/aop 
+                           http://www.springframework.org/schema/aop/spring-aop-2.0.xsd">
 
-	<bean class="org.springframework.beans.factory.config.CustomScopeConfigurer">
-        <property name="scopes">
-            <map>
-                <entry key="conversation"> <ref local="conversationscopeinstance"/> </entry>
-            </map>
-        </property>
-    </bean>
+  <bean class="org.springframework.beans.factory.config.CustomScopeConfigurer">
+    <property name="scopes">
+      <map>
+        <entry key="conversation" value-ref="conversationScopeInstance"/>
+      </map>
+    </property>
+  </bean>
 
-	  <bean id="conversationscopeinstance" class="com.tctest.spring.integrationtests.tests.CustomScopedBeanTest$ConversationScope"/>
-	
-	  <bean id="simplebean" class="com.tctest.spring.bean.ScopedSimpleBean" scope="conversation">
-	  	<property name="field" value="v1"/>
-	  	<property name="transientField" value="transient-val"/>
-	  	<aop:scoped-proxy/>
-	  </bean>		  
+  <bean id="conversationScopeInstance" class="com.tctest.spring.integrationtests.tests.CustomScopedBeanTest$ConversationScope"/>
+
+  <bean id="testFacade" class="com.tctest.spring.integrationtests.tests.CustomScopedBeanTest$ConversationScopeTestFacade">
+    <property name="scope" ref="conversationScopeInstance"/>
+    <property name="bean" ref="simpleBean"/>
+  </bean>
+
+  <bean id="simpleBean" class="com.tctest.spring.bean.SimpleBean" scope="conversation">
+    <property name="field" value="v1"/>
+    <property name="transientField" value="transient-val"/>
+    <aop:scoped-proxy/>
+  </bean>
+  
 </beans>

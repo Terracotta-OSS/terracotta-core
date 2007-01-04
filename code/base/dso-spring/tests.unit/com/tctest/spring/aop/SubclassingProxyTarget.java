@@ -14,7 +14,6 @@ public class SubclassingProxyTarget{
   }
 
   public void throwStuff(String string) throws ExpectedException {
-    System.out.println("SubclassingProxyTarget.throwStuff()");
     Logger.log += "throwStuff ";
     throw new ExpectedException("expected");
   }

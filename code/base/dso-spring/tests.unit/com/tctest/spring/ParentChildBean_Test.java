@@ -41,7 +41,7 @@ public class ParentChildBean_Test extends SimpleTransparentTestBase {
 
       FooService singleton1 = (FooService) ctx1.getBean("service");
 
-      assertDistributed(ctx1, singleton1);
+      assertDistributed(ctx1, "service", singleton1);
       assertEquals("rawValue", singleton1.serviceMethod());
 
       ctx1.close();

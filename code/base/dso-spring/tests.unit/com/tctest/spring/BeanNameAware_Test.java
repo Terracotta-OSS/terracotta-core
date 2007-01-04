@@ -42,7 +42,7 @@ public class BeanNameAware_Test extends SimpleTransparentTestBase {
 
       BeanNameAwareBean singleton1 = (BeanNameAwareBean) ctx1.getBean("aware");
 
-      assertDistributed(ctx1, singleton1);
+      assertDistributed(ctx1, "aware", singleton1);
 
       assertEquals("aware", singleton1.getName());
 

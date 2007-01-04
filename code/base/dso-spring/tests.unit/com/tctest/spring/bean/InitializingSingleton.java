@@ -17,7 +17,6 @@ public class InitializingSingleton implements InitializingBean, BeanNameAware, B
   private transient BeanFactory beanFactory;
   
   public void setRecorder(Recorder recorder) {
-    System.err.println(System.identityHashCode(this) + "Calling setRecroder(" + recorder + ")");
     this.recorder = recorder;
   }
   
@@ -30,8 +29,6 @@ public class InitializingSingleton implements InitializingBean, BeanNameAware, B
   }
   
   public void afterPropertiesSet() throws Exception {
-    System.err.println(System.identityHashCode(this) + " Calling afterPropertiesSet()");
-    System.err.println(System.identityHashCode(this) + " has recorder " + recorder);
     recorder.addValue(name);
   }
 }

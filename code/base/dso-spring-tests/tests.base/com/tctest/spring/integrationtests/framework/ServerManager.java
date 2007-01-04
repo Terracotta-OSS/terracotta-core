@@ -24,8 +24,6 @@ import java.util.List;
 import junit.framework.Assert;
 
 public class ServerManager {
-  public static final String     HSQL           = "HSQL";
-
   private static int             appServerIndex = 0;
 
   private List                   serversToStop  = new ArrayList();
@@ -156,6 +154,7 @@ public class ServerManager {
   }
 
   public AbstractDBServer makeDBServer(String dbType, String dbName, int serverPort) {
+    // XXX this should use server factory
     AbstractDBServer svr = new HSqlDBServer(dbName, serverPort);
     this.addServerToStop(svr);
     return svr;

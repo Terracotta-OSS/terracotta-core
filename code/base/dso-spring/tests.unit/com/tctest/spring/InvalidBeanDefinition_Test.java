@@ -40,7 +40,7 @@ public class InvalidBeanDefinition_Test extends SimpleTransparentTestBase {
       try {
         ClassPathXmlApplicationContext ctx1 = new ClassPathXmlApplicationContext(
             "com/tctest/spring/beanfactory-interceptor-with-error.xml");
-        assertDistributed(ctx1, ctx1.getBean("service"));
+        assertDistributed(ctx1, "service", ctx1.getBean("service"));
         fail("expected BeanCreationException");
       } catch (BeanCreationException e) {
         // expected

@@ -42,5 +42,7 @@ public interface ISimpleBean {
   public void setSharedId(long sharedId);
   
   public long getTimeStamp();
+  
+  public String getBeanName();
  
 }

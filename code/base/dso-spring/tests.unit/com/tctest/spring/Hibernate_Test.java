@@ -114,8 +114,6 @@ public class Hibernate_Test extends TransparentTestBase {
 //      customerDao.save(customer);
 //
 //      txMgr.commit(status);
-      
-      System.out.println("done");
     }
 
     protected Class getApplicationClass() {

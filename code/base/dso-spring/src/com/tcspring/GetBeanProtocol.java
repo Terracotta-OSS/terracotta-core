@@ -7,150 +7,130 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
-import org.springframework.beans.factory.support.BeanDefinitionReader;
+import org.springframework.beans.factory.support.AbstractBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.springframework.web.context.support.ServletContextResource;
 
 import com.tc.aspectwerkz.joinpoint.StaticJoinPoint;
-import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
-
-import java.util.LinkedList;
 
 
 /**
  * Virtualize <code>AbstractBeanFactory.getBean()</code>.
  * 
  * @author Eugene Kuleshov
- * @author Jonas Bon&#233;r
  */
 public class GetBeanProtocol {
+  
   private final transient Log logger = LogFactory.getLog(getClass());
-    
-  protected ThreadLocal cflowStack = new ThreadLocal() {
-    protected Object initialValue() {
-      return new LinkedList();
-    }
-  };
+
+  private final transient ThreadLocal beanNameCflow = new ThreadLocal() {
+      protected Object initialValue() {
+        return new String[1];
+      }
+    };
+  
   
   /**
-   * Invoked after loadBeanDefinitions method in BeanDefinitionReader. Adds resource location to the DistributableBeanFactory mixin.
+   * Invoked after constructor of the <code>AbstractBeanFactory</code>
    * 
-   * @see org.springframework.beans.factory.support.BeanDefinitionReader#loadBeanDefinitions(org.springframework.core.io.Resource)
+   * @see org.springframework.beans.factory.support.AbstractBeanFactory#AbstractBeanFactory()
+   * 
+   * @deprecated This approach does not work because of Spring's handling of the circular dependencies 
    */
-  public void captureIdentity(StaticJoinPoint jp, Resource resource, BeanDefinitionReader reader) throws Throwable {
-    Object beanFactory = reader.getBeanFactory();
-    if (beanFactory instanceof DistributableBeanFactory) {
-      String location;
-      if (resource instanceof ClassPathResource) {
-        location = ((ClassPathResource) resource).getPath();
-      } else if (resource instanceof FileSystemResource) {
-        location = ((FileSystemResource) resource).getPath();
-      } else if (resource instanceof ServletContextResource) {
-        location = ((ServletContextResource) resource).getPath();
-      } else {
-        location = resource.getDescription();
-      }
-
-      DistributableBeanFactory distributableBeanFactory = (DistributableBeanFactory) beanFactory;
-      distributableBeanFactory.addLocation(location);
+  public void registerBeanPostProcessor(StaticJoinPoint jp, AbstractBeanFactory factory) {
+    if(factory instanceof DistributableBeanFactory) {
+      factory.addBeanPostProcessor(new DistributableBeanPostProcessor((DistributableBeanFactory) factory));
     }
   }
+  
 
   /**
-   * Captures the name of the bean being created and makes it accessible to virtualizeSingletonBean() It also exits the
-   * monitor entered while Spring finishes initialization of the Bean
+   * Captures the name of the bean being created and makes it accessible to virtualizeSingletonBean()
+   * It also maintain the locking for distributed bean initialization.
+   * 
+   * Invoked around <code>AbstractAutowireCapableBeanFactory.createBean(String, ..)</code> method.
+   * 
+   * @see org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#createBean(String, ...)
    */
-  public Object beanNameCflow(StaticJoinPoint jp, String beanName, AutowireCapableBeanFactory beanFactory)
-      throws Throwable {
-    
-    if (beanFactory instanceof DistributableBeanFactory) {
-      Object beanId = beanName;
-      LinkedList stack = (LinkedList)cflowStack.get();
-      if (!stack.isEmpty()) {
-        Object param = stack.getFirst();
-        if (param instanceof Object[] && ((Object[])param)[0] instanceof ComplexBeanId && ((ComplexBeanId)((Object[])param)[0]).getBeanName().equals(beanName)) {
-          beanId = ((Object[])param)[0];
-        }
-      } 
-            
-      try {
-        stack.addFirst(beanId);
-        DistributableBeanFactory distributableBeanFactory = (DistributableBeanFactory) beanFactory;
-        if (!distributableBeanFactory.isDistributedBean(beanName)) {
-          return jp.proceed();
-        }
-        
-        try {
-          return jp.proceed();
-        } finally {
-          Object distributed = distributableBeanFactory.getBeanFromSingletonCache(beanId);
-          if (distributed != null) {
-            // This exits the monitor entered in virtualizeSingletonBean
-            ManagerUtil.monitorExit(distributed);
+  public Object beanNameCflow(StaticJoinPoint jp, String beanName, AutowireCapableBeanFactory factory) throws Throwable {
+    String[] beanNameHolder = (String[]) beanNameCflow.get();
+    String previousBeanName = beanNameHolder[0];
+    beanNameHolder[0] = beanName;
+    try {
+      if (factory instanceof DistributableBeanFactory) {
+        DistributableBeanFactory distributableBeanFactory = (DistributableBeanFactory) factory;
+        if (distributableBeanFactory.isDistributedSingleton(beanName)) {
+          logger.info(distributableBeanFactory.getId()+" distributed lock for bean " + beanName);
+          String lockId = "@spring_context_" + ((DistributableBeanFactory) factory).getId() + "_" + beanName;
+          ManagerUtil.beginLock(lockId, Manager.LOCK_TYPE_WRITE);
+          try {
+            return jp.proceed();
+          } finally {
+            ManagerUtil.commitLock(lockId);
           }
         }
-      } finally {
-        stack.removeFirst();
       }
-    } else {
       return jp.proceed();
+      
+    } finally {
+      beanNameHolder[0] = previousBeanName;
     }
   }
 
   /**
-   * Called on...
+   * Virtualize singleton bean.
+   * 
+   * Invoked around call to <code>BeanWrapper.getWrappedInstance()</code> method within 
+   * <code>AbstractAutowireCapableBeanFactory.createBean(String, ..)</code> method execution.
+   * 
+   * @see GetBeanProtocol#beanNameCflow(StaticJoinPoint, String, AutowireCapableBeanFactory)
+   * @see org.springframework.beans.BeanWrapper#getWrappedInstance()
+   * @see org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#createBean(String, ..)
    */
   public Object virtualizeSingletonBean(StaticJoinPoint jp, AutowireCapableBeanFactory beanFactory) throws Throwable {
     Object localBean = jp.proceed();
 
     if (beanFactory instanceof DistributableBeanFactory) {
       DistributableBeanFactory distributableBeanFactory = (DistributableBeanFactory) beanFactory;
-      Object beanId = ((LinkedList)cflowStack.get()).getFirst();
-      Object distributed = distributableBeanFactory.virtualizeSingletonBean(beanId, localBean);
-      if (distributed != null) {
-        ManagerUtil.monitorEnter(distributed, Manager.LOCK_TYPE_WRITE);
-        // This monitor is exited in GetBeanProtocol.beanNameCflow()
-        return distributed;
+      String beanName = ((String[]) beanNameCflow.get())[0];
+      if (distributableBeanFactory.isDistributedSingleton(beanName)) {
+        ComplexBeanId beanId = new ComplexBeanId(beanName);
+        BeanContainer container = distributableBeanFactory.getBeanContainer(beanId);
+        if (container != null) {
+          logger.info(distributableBeanFactory.getId() + " virtualizing existing bean " + beanName);
+          return container.getBean();
+        }
+        logger.info(distributableBeanFactory.getId() + " virtualizing new bean " + beanName);
+        distributableBeanFactory.putBeanContainer(beanId, new BeanContainer(localBean, true));
       }
     }
+    
     return localBean;
   }
   
   /**
-   * Called after call(* org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(..))
-   *  AND withincode(* org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(String, ..))
+   * Initialize singleton bean.
+   * 
+   * Invoked after call to <code>AbstractAutowireCapableBeanFactory.populateBean(..)</code> method
+   * within execution of <code>AbstractAutowireCapableBeanFactory.createBean(String, ..))</code>
+   *  
+   * @see GetBeanProtocol#beanNameCflow(StaticJoinPoint, String, AutowireCapableBeanFactory)
+   * @see GetBeanProtocol#virtualizeSingletonBean(StaticJoinPoint, AutowireCapableBeanFactory)
+   * @see org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#createBean(String, ..)
+   * @see org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#populateBean(..)
    */
-  public void copyTransientFields(String beanName, RootBeanDefinition mergedBeanDefinition,
+  public void initializeSingletonBean(String beanName, RootBeanDefinition mergedBeanDefinition,
       BeanWrapper instanceWrapper, AutowireCapableBeanFactory beanFactory) {
     if (beanFactory instanceof DistributableBeanFactory) {
-      Object beanId = ((LinkedList)cflowStack.get()).getFirst();
-      
       DistributableBeanFactory distributableBeanFactory = (DistributableBeanFactory) beanFactory;
-      Object distributed = distributableBeanFactory.getBeanFromSingletonCache(beanId);
-      if(distributed!=null) {
-        Object localInstance = instanceWrapper.getWrappedInstance();
-        if(localInstance==distributed) {
-          return;
+      if (distributableBeanFactory.isDistributedSingleton(beanName)) {
+        ComplexBeanId beanId = new ComplexBeanId(beanName);
+        BeanContainer container = distributableBeanFactory.getBeanContainer(beanId);
+        if (container != null && !container.isInitialized()) {
+          Object localInstance = instanceWrapper.getWrappedInstance();
+          distributableBeanFactory.initializeBean(beanId, localInstance, container);
         }
-
-        logger.info(distributableBeanFactory.getId() + " Initializing distributed bean " + beanName);
-        try {
-          distributableBeanFactory.copyTransientFields(
-              beanName, 
-              localInstance, 
-              distributed, 
-              distributed.getClass(), 
-              ((Manageable) distributed).__tc_managed().getTCClass()
-          );
-        } catch (Throwable e) {
-          // TODO should we fail here?
-          logger.warn(distributableBeanFactory.getId() + " Error when copying transient fields to " + beanName, e);
-        }        
       }
     }
   }

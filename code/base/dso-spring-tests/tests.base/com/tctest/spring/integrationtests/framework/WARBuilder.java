@@ -93,10 +93,6 @@ public class WARBuilder implements DeploymentBuilder {
     // addDirectoryOrJARContainingClass(BeanFactory.class);  // springframework
   }
 
-  private String getSpringVersion() {
-    return System.getProperty("tc.spring.version", "2.0-m5" /* "1.2.8" */);
-  }
-
   public DeploymentBuilder addClassesDirectory(FileSystemPath path) {
     classDirectories.add(path);
     return this;

@@ -7,6 +7,8 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tcspring.BeanContainer;
+import com.tcspring.ComplexBeanId;
 import com.tcspring.DistributableBeanFactory;
 import com.tctest.TransparentTestBase;
 import com.tctest.runner.AbstractTransparentApp;
@@ -57,10 +59,11 @@ public abstract class SimpleTransparentTestBase extends TransparentTestBase {
 
   }
 
-  protected static void assertDistributed(ClassPathXmlApplicationContext ctx, Object bean) {
-    DistributableBeanFactory distributableBeanFactory = ((DistributableBeanFactory) ctx.getBeanFactory());
-    final boolean isDistributed = distributableBeanFactory.isDistributed(bean);
-    assertTrue("Expected to be distributed" + bean, isDistributed);
+  protected static void assertDistributed(ClassPathXmlApplicationContext ctx, String beanName, Object bean) {
+    DistributableBeanFactory distributableBeanFactory = (DistributableBeanFactory) ctx.getBeanFactory();
+    BeanContainer container = distributableBeanFactory.getBeanContainer(new ComplexBeanId(beanName));
+    assertNotNull("Bean " + beanName + " is not in distributed cache", container);
+    assertSame("Bean " + beanName + " don't match instance from distributed cache", bean, container.getBean());
   }
 
 }

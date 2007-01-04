@@ -43,7 +43,7 @@ public class DisposableBean_Test extends SimpleTransparentTestBase {
 
       DisposableService singleton1 = (DisposableService) ctx1.getBean("disposable");
       
-      assertDistributed(ctx1, singleton1);
+      assertDistributed(ctx1, "disposable", singleton1);
       
       assertSame(singleton1, DisposableService.afterPropertiesSetThis);
 

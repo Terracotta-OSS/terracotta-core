@@ -896,8 +896,13 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     addIncludePattern("com.tcspring.ApplicationContextEventProtocol", true, true, true);
 
     addIncludePattern("com.tcspring.ComplexBeanId", true, true, true);
-    addIncludePattern("com.tcspring.GetBeanProtocolWithScope$ScopedBeanDestructionCallBack", true, true, true);
-    addIncludePattern("com.tcspring.GetBeanProtocolWithScope$ChainedBindingListener", true, true, true);
+    // addIncludePattern("com.tcspring.BeanContainer", true, true, true);
+    getOrCreateSpec("com.tcspring.BeanContainer").addTransient("isInitialized"); //.setHonorTransient(true);
+    
+    // scoped beans
+    // addTransient("org.springframework.web.context.request.ServletRequestAttributes$DestructionCallbackBindingListener", "aw$MIXIN_0");
+    addIncludePattern("com.tcspring.SessionProtocol$DestructionCallbackBindingListener", true, true, true);
+    addIncludePattern("com.tcspring.ScopedBeanDestructionCallBack", true, true, true);
 
     // Spring AOP introduction/mixin classes
     addIncludePattern("org.springframework.aop.support.IntroductionInfoSupport", true, true, true);

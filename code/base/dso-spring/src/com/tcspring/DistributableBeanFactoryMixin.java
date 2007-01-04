@@ -44,19 +44,20 @@ import java.util.Set;
  */
 public final class DistributableBeanFactoryMixin implements DistributableBeanFactory {
 
-  private final transient Log logger                  = LogFactory.getLog(getClass());
+  private final transient Log logger              = LogFactory.getLog(getClass());
 
   private final String        appName;
   private final DSOContext    dsoContext;
 
-  private List                springConfigHelpers     = Collections.synchronizedList(new ArrayList());
-  private MessageDigest       digest                  = createDigest();
+  private List                springConfigHelpers = Collections.synchronizedList(new ArrayList());
+
+  private Map                 beanDefinitions     = Collections.synchronizedMap(new HashMap());
 
   private String              id;
-  private List                locations               = new ArrayList();
+  private List                locations           = new ArrayList();
 
-  private boolean             isClustered             = false;
-  private Map                 clusteredSingletonCache = new HashMap();
+  private boolean             isClustered         = false;
+  private Map                 clusteredBeans      = new HashMap();
 
   private ManagerUtilWrapper  managerUtilWrapper;
 
@@ -81,14 +82,6 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
     this.dsoContext = dsoContext;
     this.managerUtilWrapper = managerUtilWrapper;
     this.nonDistributables = nonDistributables;
-  }
-
-  private static MessageDigest createDigest() {
-    try {
-      return MessageDigest.getInstance("MD5");
-    } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException(e.getMessage());
-    }
   }
 
   public boolean isClustered() {
@@ -117,6 +110,17 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
       if (springConfigHelper.isDistributedEvent(className)) { return true; }
     }
     return false;
+  }
+
+  public boolean isDistributedScoped(String beanName) {
+    AbstractBeanDefinition definition = (AbstractBeanDefinition) beanDefinitions.get(beanName);
+    // method definition.isPrototype() is Spring 2.0+ 
+    return definition!=null && !definition.isSingleton() && !definition.isPrototype();
+  }
+  
+  public boolean isDistributedSingleton(String beanName) {
+    AbstractBeanDefinition definition = (AbstractBeanDefinition) beanDefinitions.get(beanName);
+    return definition!=null && definition.isSingleton();
   }
 
   public boolean isDistributedBean(String beanName) {
@@ -207,7 +211,7 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
 
     managerUtilWrapper.beginLock(lockName, Manager.LOCK_TYPE_WRITE);
     try {
-      this.clusteredSingletonCache = (Map) managerUtilWrapper.lookupOrCreateRoot("tc:spring_context:" + this.id, this.clusteredSingletonCache);
+      this.clusteredBeans = (Map) managerUtilWrapper.lookupOrCreateRoot("tc:spring_context:" + this.id, this.clusteredBeans);
     } finally {
       managerUtilWrapper.commitLock(lockName);
     }
@@ -235,6 +239,8 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
 
       Set excludedFields = (Set) distributedBeans.get(beanName);
       if (excludedFields != null) {
+        beanDefinitions.put(beanName, definition);  // need to unregister on reload/destroy
+        
         String beanClassName = getBeanClassName(definition, beanMap);
 
         walker.walkClass(beanClassName, getClass().getClassLoader());
@@ -284,6 +290,7 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
 
   private String getDigest(String s) {
     try {
+      MessageDigest digest = MessageDigest.getInstance("MD5");
       digest.update(s.getBytes("ASCII"));
       byte[] b = digest.digest();
 
@@ -294,54 +301,65 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
         sb.append(hex.charAt((n & 0xF) >> 4)).append(hex.charAt(n & 0xF));
       }
       return sb.toString();
+      
+    } catch (NoSuchAlgorithmException e) {
+      // should never happens
+      throw new RuntimeException(e.getMessage());
     } catch (UnsupportedEncodingException e) {
       // should never happens
       throw new RuntimeException(e.getMessage());
     }
   }
 
-  public Object virtualizeSingletonBean(Object beanId, Object localInstance) {
-    String beanName = beanId instanceof ComplexBeanId ? ((ComplexBeanId)(beanId)).getBeanName() : (String)beanId;
-    
-    if (this.isDistributedBean(beanName)) {
-      ManagerUtil.monitorEnter(this.clusteredSingletonCache, Manager.LOCK_TYPE_WRITE);
-      Object distributed;
-      try {
-        distributed = this.clusteredSingletonCache.get(beanId);
-        if (distributed == null) {
-          if (localInstance instanceof Manageable) {
-            logger.debug(this.getId() + " New distributed bean " + beanId);
-            this.clusteredSingletonCache.put(beanId, localInstance);
-            distributed = localInstance;
-          }
-//        } else {
-//          logger.info(this.getId() + " Found distributed bean " + beanName);
-//          try {
-//            copyTransientFields(
-//                beanName, 
-//                localInstance, 
-//                distributed, 
-//                distributed.getClass(), 
-//                ((Manageable) distributed).__tc_managed().getTCClass()
-//            );
-//          } catch (Throwable e) {
-//            // TODO should we fail here?
-//            logger.error(this.getId() + " Error when copying transient fields to " + beanName, e);
-//          }
-        }
-      } finally {
-        ManagerUtil.monitorExit(this.clusteredSingletonCache);
-      }
-
-      return distributed;
+  
+  public BeanContainer getBeanContainer(ComplexBeanId beanId) {
+    ManagerUtil.monitorEnter(this.clusteredBeans, Manager.LOCK_TYPE_READ);
+    try {
+      return (BeanContainer) clusteredBeans.get(beanId);
+    } finally {
+      ManagerUtil.monitorExit(this.clusteredBeans);
     }
-
-//    nonDistributables.add(localInstance);
-
-    return null;
   }
   
-  public void copyTransientFields(String beanName, Object sourceBean, Object targetBean, 
+  public BeanContainer putBeanContainer(ComplexBeanId beanId, BeanContainer container) {
+    ManagerUtil.monitorEnter(this.clusteredBeans, Manager.LOCK_TYPE_WRITE);
+    try {
+      return (BeanContainer) clusteredBeans.put(beanId, container);
+    } finally {
+      ManagerUtil.monitorExit(this.clusteredBeans);
+    }
+  }
+
+  public BeanContainer removeBeanContainer(ComplexBeanId beanId) {
+    ManagerUtil.monitorEnter(this.clusteredBeans, Manager.LOCK_TYPE_WRITE);
+    try {
+      return (BeanContainer) clusteredBeans.remove(beanId);
+    } finally {
+      ManagerUtil.monitorExit(this.clusteredBeans);
+    }
+  }
+  
+  public void initializeBean(ComplexBeanId beanId, Object bean, BeanContainer container) {
+    logger.info(getId() + " Initializing distributed bean " + beanId);
+
+    // TODO make initialization from shadow local copy optional
+
+    Object distributed = container.getBean();
+    try {
+      copyTransientFields(
+          beanId.getBeanName(), 
+          bean, 
+          distributed,
+          distributed.getClass(), 
+          ((Manageable) distributed).__tc_managed().getTCClass()
+      );
+    } catch (Throwable e) {
+      // TODO should we fail here?
+      logger.warn(getId() + " Error when copying transient fields to " + beanId, e);
+    }        
+  }
+  
+  private void copyTransientFields(String beanName, Object sourceBean, Object targetBean, 
         Class targetClass, TCClass tcClass) throws IllegalAccessException {
     if(tcClass.isLogical()) {
       return;
@@ -377,44 +395,8 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
     }
   }
   
-//  public void registerVirtualizedBeanId(Object beanId) {
-//    if (!(beanId instanceof ComplexBeanId)) throw new RuntimeException("Not expected registering bean " + beanId);
-//    this.virtualizedBeanIds.add(beanId);
-//  }
-//  
-//  public boolean isVirtualizedBean(Object beanId) {
-//    if (!(beanId instanceof ComplexBeanId)) throw new RuntimeException("Not expected registering bean " + beanId);
-//    return this.virtualizedBeanIds.contains(beanId);
-//  }
   
-  public Object getBeanFromSingletonCache(Object beanId) {
-    ManagerUtil.monitorEnter(this.clusteredSingletonCache, Manager.LOCK_TYPE_WRITE);
-    try {
-      return clusteredSingletonCache.get(beanId);
-    } finally {
-      ManagerUtil.monitorExit(this.clusteredSingletonCache);
-    }
-  }
   
-  public Object removeBeanFromSingletonCache(Object beanId) {
-    ManagerUtil.monitorEnter(this.clusteredSingletonCache, Manager.LOCK_TYPE_WRITE);
-    try {
-      return clusteredSingletonCache.remove(beanId);
-    } finally {
-      ManagerUtil.monitorExit(this.clusteredSingletonCache);
-    }
-  }
-
-
-  public boolean isDistributed(Object bean) {
-    ManagerUtil.monitorEnter(this.clusteredSingletonCache, Manager.LOCK_TYPE_WRITE);
-    try {
-      return this.clusteredSingletonCache.values().contains(bean);
-    } finally {
-      ManagerUtil.monitorExit(this.clusteredSingletonCache);
-    }
-  }
-
   interface ManagerUtilWrapper {
     void beginLock(String lockId, int type);
 
@@ -423,6 +405,7 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
     void commitLock(String lockId);
   }
 
+  
   private static class ManagerUtilWrapperImpl implements ManagerUtilWrapper {
 
     public ManagerUtilWrapperImpl(NonDistributableObjectRegistry nonDistributableObjectRegistry) {

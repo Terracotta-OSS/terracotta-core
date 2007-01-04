@@ -44,7 +44,7 @@ public class InitializingBean2_Test extends SimpleTransparentTestBase {
 
       SimpleInitializingSingleton singleton = (SimpleInitializingSingleton) ctx.getBean("distributedInitBean");
 
-      assertDistributed(ctx, singleton);
+      assertDistributed(ctx, "distributedInitBean", singleton);
       
       assertSame(singleton, SimpleInitializingSingleton.afterPropertiesSetThis);
       
