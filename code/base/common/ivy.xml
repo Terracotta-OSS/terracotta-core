@@ -10,7 +10,7 @@
 	<dependency name="commons-lang" rev="2.0"/>
 	<dependency name="commons-logging" rev="1.0.3"/>
 	<dependency name="concurrent" rev="1.3.4"/>
-	<dependency name="je" rev="3.2.5" org="terracotta"/>
+	<dependency name="je" rev="3.2.13" org="terracotta"/>
 	<dependency name="jetty" rev="6.0.1"/>
 	<dependency name="jetty-util" rev="6.0.1" org="terracotta"/>
 	<dependency name="jmxri" rev="1.2.1" org="terracotta"/>
