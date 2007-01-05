@@ -31,6 +31,11 @@ import javax.servlet.http.HttpSessionListener;
 public class SessionInvalidatorTest extends AbstractAppServerTestCase {
 
   public SessionInvalidatorTest() {
+    try {
+      collectVmStats();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
     // disableAllUntil("2007-01-01");
   }
 
