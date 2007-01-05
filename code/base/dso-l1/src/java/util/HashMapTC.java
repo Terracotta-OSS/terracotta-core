@@ -234,6 +234,10 @@ public class HashMapTC extends HashMap implements Manageable, Clearable {
   }
 
   public Set entrySet() {
+    return nonOverridableEntrySet();
+  }
+
+  private Set nonOverridableEntrySet() {
     return new EntrySetWrapper(super.entrySet());
   }
 
@@ -482,7 +486,7 @@ public class HashMapTC extends HashMap implements Manageable, Clearable {
     }
 
     public Iterator iterator() {
-      return new KeysIterator(HashMapTC.this.entrySet().iterator());
+      return new KeysIterator(HashMapTC.this.nonOverridableEntrySet().iterator());
     }
 
     public boolean remove(Object o) {
@@ -532,7 +536,7 @@ public class HashMapTC extends HashMap implements Manageable, Clearable {
     }
 
     public Iterator iterator() {
-      return new ValuesIterator(HashMapTC.this.entrySet().iterator());
+      return new ValuesIterator(HashMapTC.this.nonOverridableEntrySet().iterator());
     }
 
     public int size() {

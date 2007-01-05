@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package java.util;
 
@@ -13,9 +14,9 @@ import com.tc.object.bytecode.hook.impl.Util;
 import java.util.Map.Entry;
 
 /*
- * This class will be merged with java.lang.HashMap in the bootjar. This HashMap can store ObjectIDs instead of Objects
- * to save memory and transparently fault Objects as needed. It can also clear references. For General rules
- * 
+ * This class will be merged with java.lang.Hashtable in the bootjar. This hashtable can store ObjectIDs instead of
+ * Objects to save memory and transparently fault Objects as needed. It can also clear references. For General rules
+ *
  * @see HashMapTC class
  */
 public class HashtableTC extends Hashtable implements Manageable, Clearable {
@@ -179,6 +180,10 @@ public class HashtableTC extends Hashtable implements Manageable, Clearable {
   }
 
   public Set entrySet() {
+    return nonOverridableEntrySet();
+  }
+
+  private Set nonOverridableEntrySet() {
     return new EntrySetWrapper(super.entrySet());
   }
 
@@ -383,7 +388,7 @@ public class HashtableTC extends Hashtable implements Manageable, Clearable {
     }
 
     public Iterator iterator() {
-      return new KeysIterator(entrySet().iterator());
+      return new KeysIterator(nonOverridableEntrySet().iterator());
     }
 
     // XXX:: Calls Hashtable.remove();
@@ -416,7 +421,7 @@ public class HashtableTC extends Hashtable implements Manageable, Clearable {
     }
 
     public Iterator iterator() {
-      return new ValuesIterator(entrySet().iterator());
+      return new ValuesIterator(nonOverridableEntrySet().iterator());
     }
 
     public int size() {
