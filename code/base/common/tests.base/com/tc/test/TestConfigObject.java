@@ -29,7 +29,7 @@ public class TestConfigObject {
 
   private static final String     APP_SERVER_WORKING               = "sandbox";
 
-  private static final String     TC_BASE_DIR                      = "tc.base-dir";
+  public static final String      TC_BASE_DIR                      = "tc.base-dir";
 
   public static final String      SPRING_VARIANT                   = "spring";
 
