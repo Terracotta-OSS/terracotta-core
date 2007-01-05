@@ -11,6 +11,7 @@
     <taskdef resource="net/sf/antcontrib/antcontrib.properties">
         <classpath>
             <pathelement location="${basedir}/tcbuild.lib/java/ant-contrib-1.0b2.jar" />
+            <pathelement location="${basedir}/../../buildsystems/cruisecontrol-task/ant-contrib-1.0b2.jar" />
         </classpath>
     </taskdef>
 

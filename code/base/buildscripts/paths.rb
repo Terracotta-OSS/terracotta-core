@@ -26,14 +26,14 @@ require "%s/additions" % our_directory
 # like "is this an absolute pathname?" is very difficult to do with strings in a
 # platform-independent manner. If you use instances of FilePath instead, you'll
 # be able to perform these operations without worrying about which platform you're
-# on. 
+# on.
 #
 # Be sure you call #to_s on an object that might be a FilePath before you pass it
 # to any Ant tasks or any other code that may call directly into Java (from JRuby,
-# that is). As of this writing, you get nasty Java stack traces (that omit all 
+# that is). As of this writing, you get nasty Java stack traces (that omit all
 # JRuby filenames and line numbers) otherwise, and these aren't very fun or easy
 # to track down.
-# 
+#
 # Feel free to add methods to this class to do anything else you might need. It's
 # not meant to be complete in general; it's meant to be complete for what we need,
 # right now.
@@ -62,13 +62,13 @@ class FilePath
         if ENV['OS'] =~ /windows/i
             # The native directory separator; this variant is for Windows, normal Ruby
             NATIVE_DIRECTORY_SEPARATOR = '\\'
-            
+
             # The extension for executable files; this variant is for Windows
             EXECUTABLE_EXTENSION = '.exe'
         else
             # The native directory separator; this variant is for Unix, normal Ruby
             NATIVE_DIRECTORY_SEPARATOR = File::SEPARATOR
-            
+
             # The extension for executable files; this variant is for Unix
             EXECUTABLE_EXTENSION = ''
         end
@@ -280,6 +280,7 @@ end
 # as well as for turning the entire thing into a string formatted correctly for your
 # platform.
 class PathSet
+  include Enumerable
     # The separator for paths on your platform. That is, ':' for Unix, ';' for Windows.
     NATIVE_PATH_SEPARATOR=File::PATH_SEPARATOR
 

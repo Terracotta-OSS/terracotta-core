@@ -1,43 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/src.classes" path="src"/>
-	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/src.classes" path="src.resources"/>
-	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.unit.classes" path="tests.unit"/>
-	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.base.classes" path="tests.base"/>
+	<classpathentry excluding="**/SCCS/**" output="build.eclipse/src.classes" kind="src" path="src"/>
+	<classpathentry excluding="**/SCCS/**" output="build.eclipse/src.classes" kind="src" path="src.resources"/>
+	<classpathentry excluding="**/SCCS/**" output="build.eclipse/tests.unit.classes" kind="src" path="tests.unit"/>
+	<classpathentry excluding="**/SCCS/**" output="build.eclipse/tests.base.classes" kind="src" path="tests.base"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
-	<classpathentry exported="true" kind="lib" path="lib/antlr-2.7.3.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/je-3.2.13.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/bsh-2.0b4.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/commons-cli-1.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/commons-collections-3.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/commons-io-1.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/commons-lang-2.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/concurrent-1.3.4.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/jetty-6.0.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/jetty-util-6.0.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/jmxtools.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/jsr173_api.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/log4j-1.2.9.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/resolver.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/serializer.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/tcconfig-xmlbeans-generated.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/trove-1.1b5.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/xalan.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/xbean.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/xbean_xpath.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/xercesImpl.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/xml-apis-std.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/xmlpublic.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib.tests.base/ant-junit.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib.tests.base/ant.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib.tests.base/junit-3.8.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib.tests.base/junit-addons-1.4.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib.tests.unit/tctest-xmlbeans-generated.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/linked-child-process"/>
-	<classpathentry exported="true" kind="lib" path="lib/slf4j-nop.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/tcconfig-xmlbeans-generated.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/tcconfigV1.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/jmxri-1.2.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/commons-logging.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/servlet-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib.tests.unit/tctest-xmlbeans-generated.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xmlbeans-jsr173_1.0_api.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/junit-addons-1.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/junit-3.8.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jmxtools-1.2_8.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jmxri-1.2.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jetty-util-6.0.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jetty-6.0.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/je-3.2.13.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/concurrent-1.3.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-logging-1.0.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-lang-2.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-io-1.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-collections-3.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-cli-1.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/bsh-2.0b4.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/antlr-2.7.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/ant-junit-1.6.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/ant-1.6.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xml-resolver-1.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xmlpublic-2.1.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xml-apis-1.3.02.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xercesImpl-2.7.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xbean-2.1.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xbean_xpath-2.1.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xalan-2.7.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/trove-1.1b5.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/slf4j-nop-1.0.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/servlet-api-2.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/serializer-2.7.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/log4j-1.2.9.jar"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>

@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test;
 
@@ -131,8 +132,8 @@ public class TestConfigObject {
   private static void loadEnv() {
     File userDir = new File(System.getProperty("user.dir"));
     String baseDirProp = System.getProperty(TC_BASE_DIR);
-    if (baseDirProp == null) return;
-    String[] baseDirParts = baseDirProp.split("/");
+    if (baseDirProp == null || baseDirProp.trim().equals("")) invalidBaseDir();
+    String[] baseDirParts = baseDirProp.split("[/\\\\]");
     String baseDir = null;
     int count = baseDirParts.length - 1;
     File parent = null;
@@ -146,14 +147,21 @@ public class TestConfigObject {
       else break;
     }
 
-    if (baseDir == null) throw new RuntimeException("System Property: " + TC_BASE_DIR + " is not valid.\n"
-                                                    + System.getProperty(TC_BASE_DIR));
+    if (baseDir == null || baseDir.trim().equals("")) invalidBaseDir();
 
-    if (Directories.TC_INSTALL_ROOT_PROPERTY_NAME == null) {
+    if (StringUtils.isBlank(System.getProperty(Directories.TC_INSTALL_ROOT_PROPERTY_NAME))) {
       System.setProperty(Directories.TC_INSTALL_ROOT_PROPERTY_NAME, baseDir);
       System.setProperty(Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME, "true");
     }
     System.setProperty(Directories.TC_LICENSE_LOCATION_PROPERTY_NAME, baseDir);
+  }
+
+  private static void invalidBaseDir() {
+    String value = System.getProperty(TC_BASE_DIR);
+    StringBuffer buf = new StringBuffer();
+    buf.append("The value of the system property " + TC_BASE_DIR + " is not valid.");
+    buf.append(" The value is: \"").append(value).append("\"");
+    throw new RuntimeException(buf.toString());
   }
 
   private TestConfigObject() throws IOException {

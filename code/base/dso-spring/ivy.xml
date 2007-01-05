@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ivy-module version="1.0">
+  <info organisation="ibiblio" module="dso-spring"/>
+  <dependencies>
+  	<dependency name="ognl" rev="2.7" org="terracotta"/>
+  	<dependency name="spring" rev="2.0.1" org="terracotta"/>
+  	<dependency name="spring-binding" rev="1.0" org="terracotta"/>
+  	<dependency name="spring-webflow" rev="1.0" org="terracotta"/>
+  </dependencies>
+</ivy-module>

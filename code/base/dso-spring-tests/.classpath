@@ -3,12 +3,6 @@
 	<classpathentry excluding="**/SCCS/**" output="build.eclipse/tests.system.classes" kind="src" path="tests.system"/>
 	<classpathentry excluding="**/SCCS/**" output="build.eclipse/tests.system.classes" kind="src" path="tests.system.resources"/>
 	<classpathentry excluding="**/SCCS/**" output="build.eclipse/tests.base.classes" kind="src" path="tests.base"/>
-	<classpathentry exported="true" kind="lib" path="lib.tests.base/standard-1.0.6.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib.tests.base/plexus-utils-1.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib.tests.base/httpunit-1.6.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib.tests.base/jtidy-4aug2000r7-dev.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib.tests.base/jstl-1.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib.tests.base/jakarta-oro-2.0.8.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/linked-child-process"/>
@@ -23,14 +17,20 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/legacy-test-tree"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-container-tests"/>
-	<classpathentry kind="lib" path="lib.tests.system/cglib-nodep-2.1_3.jar"/>
-	<classpathentry kind="lib" path="lib.tests.base/commons-httpclient-3.0.1.jar"/>
-	<classpathentry kind="lib" path="lib.tests.system/ehcache-1.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib.tests.system/hibernate3.jar"/>
-	<classpathentry kind="lib" path="lib.tests.system/commons-collections-3.1.jar"/>
-	<classpathentry kind="lib" path="lib.tests.system/commons-dbcp-1.2.1.jar"/>
-	<classpathentry kind="lib" path="lib.tests.system/commons-pool-1.2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
-	<classpathentry kind="lib" path="lib.tests.base/hsqldb-1.7.2.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/standard-1.0.6.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/plexus-utils-1.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jtidy-4aug2000r7-dev.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jstl-1.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jakarta-oro-2.0.8.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/httpunit-1.6.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/hsqldb-1.7.2.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/hibernate-3.1.2.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/ehcache-1.1.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/commons-pool-1.2.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/commons-httpclient-3.0.1.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/commons-dbcp-1.2.1.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/commons-collections-3.1.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/cglib-nodep-2.1_3.jar"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>

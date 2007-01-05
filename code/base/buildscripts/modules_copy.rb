@@ -16,11 +16,12 @@ class BuildSubtree
           ant.fileset(:dir => build_results.classes_directory(self).to_s)
       } if FileTest.directory?(build_results.classes_directory(self).to_s)
   end
-  
+
   # Copies the runtime libraries (JAR files), if any, from this build subtree into the given
   # destination directory.
   def copy_runtime_libraries(destdir, ant)
       copy_directories_to(destdir, subtree_only_library_roots(:runtime), ant)
+      copy_dependencies_libraries(destdir, ant)
   end
 
   # Copies the native libraries, if any, from this build subtree into the given
@@ -28,7 +29,7 @@ class BuildSubtree
   def copy_native_runtime_libraries(destdir, ant, build_environment)
       copy_directories_to(destdir, subtree_only_native_library_roots(build_environment), ant)
   end
-  
+
   private
   # Copies files from a given set of directories into a given destination directory.
   def copy_directories_to(destdir, directories, ant)
@@ -37,5 +38,15 @@ class BuildSubtree
               ant.fileset(:dir => directory.to_s)
           end
       } unless directories.empty?
+  end
+
+  # Copies libraries listed as dependencies in this subtree's Ivy XML file into
+  # the given destination directory.
+  def copy_dependencies_libraries(destdir, ant)
+    require 'fileutils'
+    libs = dependencies_libraries(:runtime).map { |lib| lib.to_s }
+    libs.each do |lib|
+      FileUtils.copy(lib, destdir.to_s)
+    end
   end
 end
