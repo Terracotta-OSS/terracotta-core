@@ -113,8 +113,8 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   public void lookupObjectsForTransactions() {
     processPendingIfNecessary();
     while (true) {
-      initiateCommitTransactions();
       processApplyComplete();
+      initiateCommitTransactions();
       ServerTransaction txn = sequencer.getNextTxnToProcess();
       if (txn == null) break;
       ServerTransactionID stxID = txn.getServerTransactionID();
@@ -125,6 +125,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
         applySink.add(new ApplyTransactionContext(txn, Collections.EMPTY_MAP));
       }
     }
+    // log(shortDescription());
   }
 
   private void processPendingIfNecessary() {
@@ -143,10 +144,14 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       TxnObjectGrouping tog;
       if (pendingObjectRequest.contains(oid)) {
         makePending = true;
-      } else if ((tog = (TxnObjectGrouping) checkedOutObjects.get(oid)) == null || tog.limitReached()) {
+      } else if ((tog = (TxnObjectGrouping) checkedOutObjects.get(oid)) == null) {
         // 1) Object is not already checked out or
+        newRequests.add(oid);
+      } else if (tog.limitReached()) {
         // 2) the object is available, but we dont use it to prevent huge commits, large txn acks etc
         newRequests.add(oid);
+        // log(shortDescription());
+        // log("Limit Reached. " + oid + " - " + tog.shortDescription());
       }
     }
     // TODO:: make cache and stats right
@@ -173,6 +178,12 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       makeUnpending(txn);
       // log("lookupObjectsForApplyAndAddToSink(): Success: " + txn.getServerTransactionID());
     }
+  }
+
+  private String shortDescription() {
+    return "TxnObjectManager : checked Out count = " + checkedOutObjects.size() + " apply pending txn = "
+           + applyPendingTxns.size() + " commit pending = " + commitPendingTxns.size() + " pending txns = "
+           + pendingTxnList.size() + " pending object requests = " + pendingObjectRequest.size();
   }
 
   private Map getRequiredObjectsMap(Collection oids, Map objects) {
@@ -220,9 +231,9 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
         applyPendingTxns.put(oldTxnId, newGrouping);
       }
     }
-    if (false && (newGrouping.getTxnIDs().size() % 10 == 0 || newGrouping.getObjects().size() % 50 == 0)) {
-      log("Merged " + oids.size() + " object into " + newGrouping.shortDescription() + " in "
-          + (System.currentTimeMillis() - start) + " ms");
+    long timeTaken = System.currentTimeMillis() - start;
+    if (timeTaken > 500) {
+      log("Merged " + oids.size() + " object into " + newGrouping.shortDescription() + " in " + timeTaken + " ms");
     }
   }
 
@@ -325,42 +336,57 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       // against
       ServerTransactionID pTxnID = grouping.getServerTransactionID();
       Assert.assertNull(applyPendingTxns.get(pTxnID));
-      if (!addToCommitStage(grouping)) {
-        Object old = commitPendingTxns.put(pTxnID, grouping);
-        Assert.assertNull(old);
-      }
+      Object old = commitPendingTxns.put(pTxnID, grouping);
+      Assert.assertNull(old);
     }
   }
 
   private synchronized void initiateCommitTransactions() {
-    for (Iterator i = commitPendingTxns.values().iterator(); i.hasNext();) {
-      TxnObjectGrouping tog = (TxnObjectGrouping) i.next();
-      if (addToCommitStage(tog)) {
-        i.remove();
-      } else {
-        break;
+    synchronized (processingCommits) {
+      while (processingCommits.size() < commitThreadsCount && commitPendingTxns.size() > 0) {
+        Map newRoots = new HashMap();
+        Map objects = new HashMap();
+        Collection txnIDs = new ArrayList();
+        for (Iterator i = commitPendingTxns.values().iterator(); i.hasNext();) {
+          TxnObjectGrouping tog = (TxnObjectGrouping) i.next();
+          newRoots.putAll(tog.getNewRoots());
+          txnIDs.addAll(tog.getTxnIDs());
+          objects.putAll(tog.getObjects());
+          i.remove();
+          if (objects.size() > 5000) {
+            break;
+          }
+        }
+        CommitTransactionContext ctc = new CommitTransactionContext(txnIDs, objects.values(), newRoots,
+                                                                    getCompletedTxnIds());
+        for (Iterator j = objects.keySet().iterator(); j.hasNext();) {
+          Object old = checkedOutObjects.remove(j.next());
+          Assert.assertNotNull(old);
+        }
+        commitSink.add(ctc);
+        processingCommits.add(ctc);
       }
     }
   }
 
   // This should be called from a thread already holding the monitor for this object
-  private boolean addToCommitStage(TxnObjectGrouping grouping) {
-    synchronized (processingCommits) {
-      if (processingCommits.size() < commitThreadsCount) {
-        Map objects = grouping.getObjects();
-        CommitTransactionContext ctc = new CommitTransactionContext(grouping.getTxnIDs(), objects.values(), grouping
-            .getNewRoots(), getCompletedTxnIds());
-        for (Iterator j = objects.keySet().iterator(); j.hasNext();) {
-          Object old = checkedOutObjects.remove(j.next());
-          Assert.assertTrue(old == grouping);
-        }
-        commitSink.add(ctc);
-        processingCommits.add(grouping.getServerTransactionID());
-        return true;
-      }
-      return false;
-    }
-  }
+  // private boolean addToCommitStage(TxnObjectGrouping grouping) {
+  // synchronized (processingCommits) {
+  // if (processingCommits.size() < commitThreadsCount) {
+  // Map objects = grouping.getObjects();
+  // CommitTransactionContext ctc = new CommitTransactionContext(grouping.getTxnIDs(), objects.values(), grouping
+  // .getNewRoots(), getCompletedTxnIds());
+  // for (Iterator j = objects.keySet().iterator(); j.hasNext();) {
+  // Object old = checkedOutObjects.remove(j.next());
+  // Assert.assertTrue(old == grouping);
+  // }
+  // commitSink.add(ctc);
+  // processingCommits.add(ctc);
+  // return true;
+  // }
+  // return false;
+  // }
+  // }
 
   // Commit Transaction stage method
   public void commitTransactionsComplete(Collection txns) {
@@ -447,5 +473,8 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       return "PendingList : pending Txns = " + pending;
     }
 
+    public int size() {
+      return pending.size();
+    }
   }
 }
