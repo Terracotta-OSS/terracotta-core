@@ -27,7 +27,6 @@ import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.TransactionStore;
 import com.tc.stats.counter.Counter;
-import com.tc.util.Assert;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -170,14 +169,12 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
     Map newRoots = txn.getNewRoots();
 
-    for (Iterator i = newRoots.keySet().iterator(); i.hasNext();) {
-      String rootName = (String) i.next();
-      ObjectID oldID = objectManager.lookupRootID(rootName);
-      ObjectID newID = (ObjectID) newRoots.get(rootName);
-      objectManager.createRoot(rootName, newID);
-      Assert.assertNotNull(oldID);
-      if (oldID.isNull() || oldID.equals(newID)) {
-        i.remove();
+    if (newRoots.size() > 0) {
+      for (Iterator i = newRoots.entrySet().iterator(); i.hasNext();) {
+        Entry entry = (Entry) i.next();
+        String rootName = (String) entry.getKey();
+        ObjectID newID = (ObjectID) entry.getValue();
+        objectManager.createRoot(rootName, newID);
       }
     }
     transactionRateCounter.increment();

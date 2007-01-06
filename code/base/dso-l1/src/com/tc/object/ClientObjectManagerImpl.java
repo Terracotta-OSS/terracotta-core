@@ -667,7 +667,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     waitUntilRunning();
 
     ObjectID oldRootID = (ObjectID) roots.get(rootName);
-    if (oldRootID != null && oldRootID.equals(newRootID)) { return; }
+    if (oldRootID == null || oldRootID.equals(newRootID)) { return; }
 
     roots.put(rootName, newRootID);
   }

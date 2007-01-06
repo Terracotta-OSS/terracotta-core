@@ -30,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * @author steve
@@ -427,9 +428,10 @@ private static final TCLogger          logger        = TCLogging.getLogger(Clien
       }
     }
 
-    for (Iterator i = newRoots.keySet().iterator(); i.hasNext();) {
-      String rootName = (String) i.next();
-      ObjectID newRootID = (ObjectID) newRoots.get(rootName);
+    for (Iterator i = newRoots.entrySet().iterator(); i.hasNext();) {
+      Entry entry = (Entry) i.next();
+      String rootName = (String) entry.getKey();
+      ObjectID newRootID = (ObjectID) entry.getValue();
       objectManager.replaceRootIDIfNecessary(rootName, newRootID);
     }
   }
