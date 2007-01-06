@@ -10,5 +10,6 @@
   	<dependency name="ehcache" rev="1.1"/>
   	<dependency name="hibernate" rev="3.1.2" org="terracotta"/>
   	<dependency name="hsqldb" rev="1.7.2.2"/>
+	<dependency name="dom4j" rev="1.6.1"/>
   </dependencies>
 </ivy-module>

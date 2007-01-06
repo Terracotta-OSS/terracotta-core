@@ -3,23 +3,22 @@
  */
 package com.tc.aspectwerkz.definition;
 
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
+import org.w3c.dom.Document;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.XMLReaderFactory;
 
 import com.tc.aspectwerkz.exception.WrappedRuntimeException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URL;
-import java.util.Iterator;
 import java.util.Set;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Parses the XML definition file using <tt>dom4j</tt>.
@@ -60,8 +59,7 @@ public class XmlParser {
       // Definition definition = DocumentParser.parse(url);
       // System.out.println("------------------> " + definition);
 
-      Document document = createDocument(url);
-      s_definitions = DocumentParser.parse(loader, document);
+      s_definitions = DocumentParser.parse(loader, createDocument(url));
       return s_definitions;
     } catch (Exception e) {
       throw new WrappedRuntimeException(e);
@@ -75,48 +73,45 @@ public class XmlParser {
    * @param document2 the second document
    * @return the definition merged document
    */
-  public static Document mergeDocuments(final Document document1, final Document document2) {
-    if ((document2 == null) && (document1 != null)) {
-      return document1;
-    }
-    if ((document1 == null) && (document2 != null)) {
-      return document2;
-    }
-    if ((document1 == null) && (document2 == null)) {
-      return null;
-    }
-    try {
-      Element root1 = document1.getRootElement();
-      Element root2 = document2.getRootElement();
-      for (Iterator it1 = root2.elementIterator(); it1.hasNext();) {
-        Element element = (Element) it1.next();
-        element.setParent(null);
-        root1.add(element);
-      }
-    } catch (Exception e) {
-      throw new WrappedRuntimeException(e);
-    }
-    return document1;
-  }
+//  public static Document mergeDocuments(final Document document1, final Document document2) {
+//    if ((document2 == null) && (document1 != null)) {
+//      return document1;
+//    }
+//    if ((document1 == null) && (document2 != null)) {
+//      return document2;
+//    }
+//    if ((document1 == null) && (document2 == null)) {
+//      return null;
+//    }
+//    try {
+//      Element root1 = document1.getRootElement();
+//      Element root2 = document2.getRootElement();
+//      for (Iterator it1 = root2.elementIterator(); it1.hasNext();) {
+//        Element element = (Element) it1.next();
+//        element.setParent(null);
+//        root1.add(element);
+//      }
+//    } catch (Exception e) {
+//      throw new WrappedRuntimeException(e);
+//    }
+//    return document1;
+//  }
 
   /**
    * Creates a DOM document.
    *
    * @param url the URL to the file containing the XML
    * @return the DOM document
-   * @throws DocumentException
+   * 
+   * @throws IOException 
+   * @throws SAXException 
+   * @throws ParserConfigurationException 
    */
-  public static Document createDocument(final URL url) throws DocumentException {
+  public static Document createDocument(final URL url) throws IOException {
     InputStream in = null;
     try {
-      SAXReader reader = new SAXReader(XMLReaderFactory.createXMLReader(), false);
-      setEntityResolver(reader);
       in = url.openStream();
-      return reader.read(in);
-    } catch (IOException e) {
-      throw new DocumentException(e);
-    } catch (SAXException e) {
-      throw new DocumentException(e);
+      return createDocument(new InputSource(in));
     } finally {
       try {
         in.close();
@@ -124,9 +119,6 @@ public class XmlParser {
         // ignore
       }
     }
-//        SAXReader reader = new SAXReader();
-//        setEntityResolver(reader);
-//        return reader.read(url);
   }
 
   /**
@@ -136,35 +128,48 @@ public class XmlParser {
    * @return the DOM document
    * @throws DocumentException
    */
-  public static Document createDocument(final String string) throws DocumentException {
-    return DocumentHelper.parseText(string);
+  public static Document createDocument(final String string) throws IOException {
+    return createDocument(new InputSource(new StringReader(string)));
   }
+
+  private static Document createDocument(InputSource in) throws IOException {
+    try {
+      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+      DocumentBuilder builder = factory.newDocumentBuilder();
+      builder.setEntityResolver(getEntityResolver());
+      return builder.parse(in);
+    } catch (SAXException e) {
+      throw new IOException(e.toString());
+    } catch (ParserConfigurationException e) {
+      throw new IOException(e.toString());
+    }      
+  }
+  
 
   /**
    * Sets the entity resolver which is created based on the DTD from in the root dir of the AspectWerkz distribution.
    *
    * @param reader the reader to set the resolver in
    */
-  private static void setEntityResolver(final SAXReader reader) {
-    EntityResolver resolver = new EntityResolver() {
-      public InputSource resolveEntity(String publicId, String systemId) {
-        if (publicId.equals(DTD_PUBLIC_ID) || publicId.equals(DTD_PUBLIC_ID_ALIAS)) {
-          try {
-            InputStream in = DTD_URL.openStream();
-            if (in != null)
-              return new InputSource(in);
-          } catch (IOException ioex) {
+  private static EntityResolver getEntityResolver() {
+    return new EntityResolver() {
+        public InputSource resolveEntity(String publicId, String systemId) {
+          if (publicId.equals(DTD_PUBLIC_ID) || publicId.equals(DTD_PUBLIC_ID_ALIAS)) {
+            try {
+              InputStream in = DTD_URL.openStream();
+              if (in != null)
+                return new InputSource(in);
+            } catch (IOException ioex) {
+            }
+            System.err.println("AspectWerkz - WARN - could not open DTD");
+            return new InputSource(); // avoid null pointer exception }
+          } else {
+            System.err.println(
+                    "AspectWerkz - WARN - deprecated DTD " + publicId +
+                            " - consider upgrading to " + DTD_PUBLIC_ID);
+            return new InputSource(); // avoid null pointer exception
           }
-          System.err.println("AspectWerkz - WARN - could not open DTD");
-          return new InputSource(); // avoid null pointer exception }
-        } else {
-          System.err.println(
-                  "AspectWerkz - WARN - deprecated DTD " + publicId +
-                          " - consider upgrading to " + DTD_PUBLIC_ID);
-          return new InputSource(); // avoid null pointer exception
         }
-      }
-    };
-    reader.setEntityResolver(resolver);
+      };
   }
 }

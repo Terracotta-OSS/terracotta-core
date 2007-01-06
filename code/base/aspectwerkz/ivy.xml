@@ -2,8 +2,6 @@
 <ivy-module version="1.0">
   <info organisation="ibiblio" module="aspectwerkz"/>
   <dependencies>
-	<dependency name="dom4j" rev="1.6.1"/>
-
 	<!-- The build system depends on the following for compiling this module -->
 	<dependency name="junit" rev="3.8.1"/>
 	<dependency name="ant" rev="1.6.2"/>

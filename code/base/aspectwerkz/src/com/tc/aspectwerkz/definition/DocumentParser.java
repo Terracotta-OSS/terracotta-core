@@ -3,10 +3,18 @@
  */
 package com.tc.aspectwerkz.definition;
 
-import org.dom4j.Attribute;
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.Element;
+//import org.dom4j.Attribute;
+//import org.dom4j.Document;
+//import org.dom4j.DocumentException;
+//import org.dom4j.Element;
+
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
 
 import com.tc.aspectwerkz.DeploymentModel;
 import com.tc.aspectwerkz.expression.ExpressionInfo;
@@ -24,6 +32,7 @@ import com.tc.aspectwerkz.reflect.MethodInfo;
 import com.tc.aspectwerkz.transform.inlining.AspectModelManager;
 import com.tc.aspectwerkz.util.Strings;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -45,45 +54,50 @@ public class DocumentParser {
    * @param document the defintion as a document
    * @return the aspect class names
    */
-  public static List parseAspectClassNames(final Document document) {
-    final List aspectClassNames = new ArrayList();
-    for (Iterator it1 = document.getRootElement().elementIterator("system"); it1.hasNext();) {
-      Element system = (Element) it1.next();
-      final String basePackage = getBasePackage(system);
-      for (Iterator it11 = system.elementIterator("aspect"); it11.hasNext();) {
-        String className = null;
-        Element aspect = (Element) it11.next();
-        for (Iterator it2 = aspect.attributeIterator(); it2.hasNext();) {
-          Attribute attribute = (Attribute) it2.next();
-          final String name = attribute.getName().trim();
-          final String value = attribute.getValue().trim();
-          if (name.equalsIgnoreCase("class")) {
-            className = value;
-          }
-        }
-        aspectClassNames.add(basePackage + className);
-      }
-      for (Iterator it11 = system.elementIterator("package"); it11.hasNext();) {
-        final Element packageElement = ((Element) it11.next());
-        final String packageName = getPackage(packageElement);
-        for (Iterator it12 = packageElement.elementIterator("aspect"); it12.hasNext();) {
-          String className = null;
-          Element aspect = (Element) it12.next();
-          for (Iterator it2 = aspect.attributeIterator(); it2.hasNext();) {
-            Attribute attribute = (Attribute) it2.next();
-            final String name = attribute.getName().trim();
-            final String value = attribute.getValue().trim();
-            if (name.equalsIgnoreCase("class")) {
-              className = value;
+  public static List parseAspectClassNames(Document document) {
+    List aspectClassNames = new ArrayList();
+    
+    Element documentElement = document.getDocumentElement();
+    NodeList systemNodes = documentElement.getChildNodes();
+    for (int i = 0; i<systemNodes.getLength(); i++) {
+      Node systemNode = systemNodes.item(i); 
+      String nodeName = systemNode.getNodeName();
+      if(nodeName.equals("system")) {
+        String basePackage = getBasePackage((Element) systemNode);
+        
+        NodeList childNodes = systemNode.getChildNodes();
+        for (int j = 0; j < childNodes.getLength(); j++) {
+          Node childNode = childNodes.item(j);
+          if(childNode.getNodeName().equals("aspect")) {
+            addAspectClassName(aspectClassNames, childNode, basePackage);
+            
+          } else if(childNode.getNodeName().equals("package")) {
+            NodeList aspectNodes = childNode.getChildNodes();
+            for (int k = 0; k < aspectNodes.getLength(); k++) {
+              Node aspectNode = aspectNodes.item(k);
+              if(aspectNode.getNodeName().equals("aspect")) {
+                addAspectClassName(aspectClassNames, aspectNode, basePackage);
+              }
             }
           }
-          aspectClassNames.add(packageName + className);
         }
       }
     }
+    
     aspectClassNames.add(Virtual.class.getName());
-
     return aspectClassNames;
+  }
+
+  private static void addAspectClassName(List aspectClassNames, Node aspectNode, String basePackage) {
+    if(aspectNode.getNodeName().equals("aspect")) {
+      NamedNodeMap attrs = aspectNode.getAttributes();
+      for (int l = 0; l < attrs.getLength(); l++) {
+        Node attr = attrs.item(l);
+        if(attr.getNodeName().equals("class")) {
+          aspectClassNames.add(basePackage + ((Attr) attr).getValue().trim());
+        }
+      }
+    }
   }
 
   /**
@@ -95,62 +109,62 @@ public class DocumentParser {
    * @return the definition
    * @throws DocumentParserException 
    */
-  public static AspectDefinition parseAspectDefinition(final String xmlDef,
-                                                       final SystemDefinition systemDef,
-                                                       final Class aspectClass) {
+  public static AspectDefinition parseAspectDefinition(String xmlDef,
+                                                       SystemDefinition systemDef,
+                                                       Class aspectClass) {
     Document document;
     try {
       document = XmlParser.createDocument(xmlDef);
-    } catch (DocumentException e) {
+    } catch (IOException e) {
       throw new DefinitionException("Unable to parse definition; "+e.toString());
     }
 
-    final Element aspect = document.getRootElement();
+    Element aspectElement = document.getDocumentElement();
 
-    if (!"aspect".equals(aspect.getName())) {
-      throw new DefinitionException("XML definition for aspect is not well-formed: " + document.asXML());
+    if (!"aspect".equals(aspectElement.getNodeName())) {
+      throw new DefinitionException("XML definition for aspect is not well-formed: " + xmlDef);
     }
     String specialAspectName = null;
     String className = null;
     String deploymentModelAsString = null;
     String containerClassName = null;
-    for (Iterator it2 = aspect.attributeIterator(); it2.hasNext();) {
-      Attribute attribute = (Attribute) it2.next();
-      final String name = attribute.getName().trim();
-      final String value = attribute.getValue().trim();
+    NamedNodeMap aspectAttributes = aspectElement.getAttributes();
+    for (int i = 0; i < aspectAttributes.getLength(); i++) {
+      Node attribute = aspectAttributes.item(i);
+      String name = attribute.getNodeName().trim();
       if (name.equalsIgnoreCase("class")) {
-        className = value;
+        className = ((Attr) attribute).getValue().trim();
       } else if (name.equalsIgnoreCase("deployment-model")) {
-        deploymentModelAsString = value;
+        deploymentModelAsString = ((Attr) attribute).getValue().trim();
       } else if (name.equalsIgnoreCase("name")) {
-        specialAspectName = value;
+        specialAspectName = ((Attr) attribute).getValue().trim();
       } else if (name.equalsIgnoreCase("container")) {
-        containerClassName = value;
+        containerClassName = ((Attr) attribute).getValue().trim();
       }
     }
-    if (specialAspectName == null) {
+    if (specialAspectName == null || specialAspectName.trim().length() == 0) {
       specialAspectName = className;
     }
 
-    final ClassInfo classInfo = JavaClassInfo.getClassInfo(aspectClass);
-    final ClassLoader loader = aspectClass.getClassLoader();
+    ClassInfo classInfo = JavaClassInfo.getClassInfo(aspectClass);
+    ClassLoader loader = aspectClass.getClassLoader();
 
     // create the aspect definition
-    final AspectDefinition aspectDef = new AspectDefinition(specialAspectName, classInfo, systemDef);
+    AspectDefinition aspectDef = new AspectDefinition(specialAspectName, classInfo, systemDef);
     //TODO: if this XML centric deployment is supposed to PRESERVE @Aspect values, then it is broken
     aspectDef.setContainerClassName(containerClassName);
     aspectDef.setDeploymentModel(DeploymentModel.getDeploymentModelFor(deploymentModelAsString));
 
-    parsePointcutElements(aspect, aspectDef); //needed to support undefined named pointcut in Attributes AW-152
+    parsePointcutElements(aspectElement, aspectDef); //needed to support undefined named pointcut in Attributes AW-152
 
     // load the different aspect model and let them define their aspects
     AspectModelManager.defineAspect(classInfo, aspectDef, loader);
 
     // parse the aspect info
-    parseParameterElements(aspect, aspectDef);
-    parsePointcutElements(aspect, aspectDef); //reparse pc for XML override (AW-152)
-    parseAdviceElements(aspect, aspectDef, JavaClassInfo.getClassInfo(aspectClass));
-    parseIntroduceElements(aspect, aspectDef, "", aspectClass.getClassLoader());
+    parseParameterElements(aspectElement, aspectDef);
+    parsePointcutElements(aspectElement, aspectDef); //reparse pc for XML override (AW-152)
+    parseAdviceElements(aspectElement, aspectDef, JavaClassInfo.getClassInfo(aspectClass));
+    parseIntroduceElements(aspectElement, aspectDef, "", aspectClass.getClassLoader());
     return aspectDef;
   }
 
@@ -161,11 +175,9 @@ public class DocumentParser {
    * @param document the defintion as a document
    * @return the definitions
    */
-  public static Set parse(final ClassLoader loader, final Document document) {
-    final Element root = document.getRootElement();
-
+  public static Set parse(ClassLoader loader, Document document) {
     // parse the transformation scopes
-    return parseSystemElements(loader, root);
+    return parseSystemElements(loader, document.getDocumentElement());
   }
 
   /**
@@ -174,13 +186,18 @@ public class DocumentParser {
    * @param loader the current class loader
    * @param root   the root element
    */
-  private static Set parseSystemElements(final ClassLoader loader, final Element root) {
-    final Set systemDefs = new HashSet();
-    for (Iterator it1 = root.elementIterator("system"); it1.hasNext();) {
-      Element system = (Element) it1.next();
-      SystemDefinition definition = parseSystemElement(loader, system, getBasePackage(system));
-      if (definition != null) {
-        systemDefs.add(definition);
+  private static Set parseSystemElements(ClassLoader loader, Element root) {
+    Set systemDefs = new HashSet();
+    
+    NodeList rootNodes = root.getChildNodes();
+    for (int i = 0; i < rootNodes.getLength(); i++) {
+      Node childNode = rootNodes.item(i);
+      if(childNode.getNodeName().equals("system")) {
+        Element systemElement = (Element) childNode;
+        SystemDefinition definition = parseSystemElement(loader, systemElement, getBasePackage(systemElement));
+        if (definition != null) {
+          systemDefs.add(definition);
+        }
       }
     }
     return systemDefs;
@@ -194,20 +211,21 @@ public class DocumentParser {
    * @param basePackage   the base package
    * @return the definition for the system
    */
-  private static SystemDefinition parseSystemElement(final ClassLoader loader,
-                                                     final Element systemElement,
-                                                     final String basePackage) {
-    String uuid = systemElement.attributeValue("id");
-    if ((uuid == null) || uuid.equals("")) {
+  private static SystemDefinition parseSystemElement(ClassLoader loader,
+                                                     Element systemElement,
+                                                     String basePackage) {
+    String uuid = systemElement.getAttribute("id");
+    if (uuid == null || uuid.equals("")) {
       throw new DefinitionException("system UUID must be specified");
     }
-    final SystemDefinition definition = new SystemDefinition(uuid);
+    SystemDefinition definition = new SystemDefinition(uuid);
 
     // add the virtual aspect
     addVirtualAspect(definition);
 
     // parse the global pointcuts
     List globalPointcuts = parseGlobalPointcutDefs(systemElement);
+    
     //FIXME: systemDef should link a namespace, + remove static hashmap in Namespace (uuid clash in parallel CL)
     ExpressionNamespace systemNamespace = ExpressionNamespace.getNamespace(definition.getUuid());
     for (Iterator iterator = globalPointcuts.iterator(); iterator.hasNext();) {
@@ -249,27 +267,25 @@ public class DocumentParser {
    * @param systemElement the system element
    * @return a list with the pointcuts
    */
-  private static List parseGlobalPointcutDefs(final Element systemElement) {
-    final List globalPointcuts = new ArrayList();
-    for (Iterator it11 = systemElement.elementIterator("pointcut"); it11.hasNext();) {
-      PointcutInfo pointcutInfo = new PointcutInfo();
-      Element globalPointcut = (Element) it11.next();
-      for (Iterator it2 = globalPointcut.attributeIterator(); it2.hasNext();) {
-        Attribute attribute = (Attribute) it2.next();
-        final String name = attribute.getName().trim();
-        final String value = attribute.getValue().trim();
-        if (name.equalsIgnoreCase("name")) {
-          pointcutInfo.name = value;
-        } else if (name.equalsIgnoreCase("expression")) {
-          pointcutInfo.expression = value;
+  private static List parseGlobalPointcutDefs(Element systemElement) {
+    List globalPointcuts = new ArrayList();
+    
+    NodeList childNodes = systemElement.getChildNodes();
+    for (int i = 0; i < childNodes.getLength(); i++) {
+      Node childNode = childNodes.item(i);
+      if (childNode.getNodeName().equals("pointcut")) {
+        Element pointcutElement = (Element) childNode;
+        PointcutInfo pointcutInfo = new PointcutInfo();
+        pointcutInfo.name = pointcutElement.getAttribute("name");
+        pointcutInfo.expression = pointcutElement.getAttribute("expression").trim();
+        // pointcut CDATA is expression unless already specified as an attribute
+        if (pointcutInfo.expression == null || pointcutInfo.expression.trim().length() == 0) {
+          pointcutInfo.expression = getText(pointcutElement).trim().replace('\n', ' ');
         }
+        globalPointcuts.add(pointcutInfo);
       }
-      // pointcut CDATA is expression unless already specified as an attribute
-      if (pointcutInfo.expression == null) {
-        pointcutInfo.expression = globalPointcut.getTextTrim();
-      }
-      globalPointcuts.add(pointcutInfo);
     }
+
     return globalPointcuts;
   }
 
@@ -279,186 +295,159 @@ public class DocumentParser {
    * @param systemElement the system element
    * @param definition
    */
-  private static void parseDeploymentScopeDefs(final Element systemElement,
-                                               final SystemDefinition definition) {
-    for (Iterator it11 = systemElement.elementIterator("deployment-scope"); it11.hasNext();) {
-      String expression = null;
-      String name = null;
-      Element globalPointcut = (Element) it11.next();
-      for (Iterator it2 = globalPointcut.attributeIterator(); it2.hasNext();) {
-        Attribute attribute = (Attribute) it2.next();
-        final String attrName = attribute.getName().trim();
-        final String attrValue = attribute.getValue().trim();
-        if (attrName.equalsIgnoreCase("name")) {
-          name = attrValue;
-        } else if (attrName.equalsIgnoreCase("expression")) {
-          expression = attrValue;
+  private static void parseDeploymentScopeDefs(Element systemElement, SystemDefinition definition) {
+    NodeList childNodes = systemElement.getChildNodes();
+    for (int i = 0; i < childNodes.getLength(); i++) {
+      Node childNode = childNodes.item(i);
+      if (childNode.getNodeName().equals("deployment-scope")) {
+        Element deploymentScopeElement = (Element) childNode;
+        String name = deploymentScopeElement.getAttribute("name");
+        String expression = deploymentScopeElement.getAttribute("expression");
+        // pointcut CDATA is expression unless already specified as an attribute
+        if (expression == null || expression.trim().length() == 0) {
+          expression = getText(deploymentScopeElement).trim();
         }
+        DefinitionParserHelper.createAndAddDeploymentScopeDef(name, expression, definition);
       }
-      // pointcut CDATA is expression unless already specified as an attribute
-      if (expression == null) {
-        expression = globalPointcut.getTextTrim();
-      }
-      DefinitionParserHelper.createAndAddDeploymentScopeDef(name, expression, definition);
     }
   }
 
   /**
    * Parses the global advisable elements.
-   *
+   * 
    * @param systemElement the system element
    * @param definition
    */
-  private static void parseAdvisableDefs(final Element systemElement,
-                                         final SystemDefinition definition) {
-    for (Iterator it11 = systemElement.elementIterator("advisable"); it11.hasNext();) {
-      Element advisableElement = (Element) it11.next();
-      String expression = "";
-      String pointcutTypes = "all";
-      for (Iterator it2 = advisableElement.attributeIterator(); it2.hasNext();) {
-        Attribute attribute = (Attribute) it2.next();
-        final String name = attribute.getName().trim();
-        final String value = attribute.getValue().trim();
-        if (name.equalsIgnoreCase("expression")) {
-          expression = value;
-        } else if (name.equalsIgnoreCase("pointcut-type")) {
-          pointcutTypes = value;
+  private static void parseAdvisableDefs(Element systemElement, SystemDefinition definition) {
+    NodeList childNodes = systemElement.getChildNodes();
+    for (int i = 0; i < childNodes.getLength(); i++) {
+      Node childNode = childNodes.item(i);
+      if (childNode.getNodeName().equals("advisable")) {
+        Element advisableElement = (Element) childNode;
+        String pointcutTypes = advisableElement.getAttribute("pointcut-type");
+        if (pointcutTypes == null || pointcutTypes.trim().length() == 0) {
+          pointcutTypes = "all";
         }
+        String expression = advisableElement.getAttribute("expression");
+        // pointcut CDATA is expression unless already specified as an attribute
+        if (expression == null || expression.trim().length() == 0) {
+          expression = getText(advisableElement).trim();
+        }
+        handleAdvisableDefinition(definition, expression, pointcutTypes);
       }
-      // pointcut CDATA is expression unless already specified as an attribute
-      if (expression == null) {
-        expression = advisableElement.getTextTrim();
-      }
-      handleAdvisableDefinition(definition, expression, pointcutTypes);
     }
   }
 
   /**
    * Parses the definition DOM document.
-   *
-   * @param loader          the current class loader
-   * @param systemElement   the system element
-   * @param definition      the definition
-   * @param basePackage     the base package
+   * 
+   * @param loader the current class loader
+   * @param systemElement the system element
+   * @param definition the definition
+   * @param basePackage the base package
    * @param globalPointcuts the global pointcuts
    */
-  private static void parsePackageElements(final ClassLoader loader,
-                                           final Element systemElement,
-                                           final SystemDefinition definition,
-                                           final String basePackage,
-                                           final List globalPointcuts) {
-    for (Iterator it1 = systemElement.elementIterator("package"); it1.hasNext();) {
-      final Element packageElement = ((Element) it1.next());
-      final String packageName = basePackage + getPackage(packageElement);
-      parseAspectElements(loader, packageElement, definition, packageName, globalPointcuts);
-      parseMixinElements(loader, packageElement, definition, packageName);
-      parseAdvisableDefs(packageElement, definition);
+  private static void parsePackageElements(ClassLoader loader, Element systemElement, SystemDefinition definition,
+                                           String basePackage, List globalPointcuts) {
+    NodeList childNodes = systemElement.getChildNodes();
+    for (int i = 0; i < childNodes.getLength(); i++) {
+      Node childNode = childNodes.item(i);
+      if (childNode.getNodeName().equals("package")) {
+        Element packageElement = (Element) childNode;
+        String packageName = basePackage + getPackage(packageElement);
+        parseAspectElements(loader, packageElement, definition, packageName, globalPointcuts);
+        parseMixinElements(loader, packageElement, definition, packageName);
+        parseAdvisableDefs(packageElement, definition);
+      }
     }
   }
 
   /**
    * Parses the <tt>aspect</tt> elements.
-   *
-   * @param loader          the current class loader
-   * @param systemElement   the system element
-   * @param definition      the definition object
-   * @param packageName     the package name
+   * 
+   * @param loader the current class loader
+   * @param systemElement the system element
+   * @param definition the definition object
+   * @param packageName the package name
    * @param globalPointcuts the global pointcuts
    */
-  private static void parseAspectElements(final ClassLoader loader,
-                                          final Element systemElement,
-                                          final SystemDefinition definition,
-                                          final String packageName,
-                                          final List globalPointcuts) {
+  private static void parseAspectElements(ClassLoader loader,
+                                          Element systemElement,
+                                          SystemDefinition definition,
+                                          String packageName,
+                                          List globalPointcuts) {
+    NodeList childNodes = systemElement.getChildNodes();
+    for (int i = 0; i < childNodes.getLength(); i++) {
+      Node childNode = childNodes.item(i);
+      if (childNode.getNodeName().equals("aspect")) {
+        Element aspectElement = (Element) childNode;
+        
+        String aspectName = aspectElement.getAttribute("name");
+        String className = aspectElement.getAttribute("class");
+        String deploymentModel = aspectElement.getAttribute("deployment-model");
+        String containerClassName = aspectElement.getAttribute("container");
 
-    for (Iterator it1 = systemElement.elementIterator("aspect"); it1.hasNext();) {
-      String aspectName = null;
-      String className = null;
-      String deploymentModel = null;
-      String containerClassName = null;
-      Element aspect = (Element) it1.next();
-      for (Iterator it2 = aspect.attributeIterator(); it2.hasNext();) {
-        Attribute attribute = (Attribute) it2.next();
-        final String name = attribute.getName().trim();
-        final String value = attribute.getValue().trim();
-        if (name.equalsIgnoreCase("class")) {
-          className = value;
-        } else if (name.equalsIgnoreCase("deployment-model")) {
-          deploymentModel = value;
-        } else if (name.equalsIgnoreCase("name")) {
-          aspectName = value;
-        } else if (name.equalsIgnoreCase("container")) {
-          containerClassName = value;
+        // class is mandatory
+        if (Strings.isNullOrEmpty(className)) {
+          System.err.println("Warning: could not load aspect without 'class=..' attribute");
+          new Exception().printStackTrace();
+          continue;
         }
+
+        String aspectClassName = packageName + className;
+        if (aspectName == null || aspectName.trim().length() == 0) {
+          aspectName = aspectClassName;
+        }
+
+        // create the aspect definition
+        ClassInfo aspectClassInfo;
+        try {
+          aspectClassInfo = AsmClassInfo.getClassInfo(aspectClassName, loader);
+        } catch (Exception e) {
+          System.err.println("Warning: could not load aspect " + aspectClassName + " from " + loader + "; "
+                             + e.toString());
+          e.printStackTrace();
+          continue;
+        }
+
+        AspectDefinition aspectDef = new AspectDefinition(aspectName, aspectClassInfo, definition);
+
+        // add the global pointcuts to the aspect
+        for (Iterator it = globalPointcuts.iterator(); it.hasNext();) {
+          PointcutInfo pointcutInfo = (PointcutInfo) it.next();
+          DefinitionParserHelper.createAndAddPointcutDefToAspectDef(
+                  pointcutInfo.name,
+                  pointcutInfo.expression,
+                  aspectDef
+          );
+        }
+        parsePointcutElements(aspectElement, aspectDef); //needed to support undefined named pointcut in Attributes AW-152
+
+        // load the different aspect model and let them define their aspects
+        AspectModelManager.defineAspect(aspectClassInfo, aspectDef, loader);
+
+        // parse the class bytecode annotations
+        AspectAnnotationParser.parse(aspectClassInfo, aspectDef, loader);
+
+        // XML definition settings always overrides attribute definition settings AW-357
+        if (!Strings.isNullOrEmpty(deploymentModel)) {
+          aspectDef.setDeploymentModel(DeploymentModel.getDeploymentModelFor(deploymentModel));
+        }
+        if (!Strings.isNullOrEmpty(aspectName)) {
+          aspectDef.setName(aspectName);
+        }
+        if (!Strings.isNullOrEmpty(containerClassName)) {
+          aspectDef.setContainerClassName(containerClassName);
+        }
+
+        // parse the aspect info
+        parseParameterElements(aspectElement, aspectDef);
+        parsePointcutElements(aspectElement, aspectDef); // reparse pc for XML override (AW-152)
+        parseAdviceElements(aspectElement, aspectDef, aspectClassInfo);
+        parseIntroduceElements(aspectElement, aspectDef, packageName, loader);
+
+        definition.addAspect(aspectDef);
       }
-
-      // class is mandatory
-      if (Strings.isNullOrEmpty(className)) {
-        System.err.println("Warning: could not load aspect without 'class=..' attribute");
-        new Exception().printStackTrace();
-        continue;
-      }
-
-      String aspectClassName = packageName + className;
-      if (aspectName == null) {
-        aspectName = aspectClassName;
-      }
-
-      // create the aspect definition
-      ClassInfo aspectClassInfo;
-      try {
-        aspectClassInfo = AsmClassInfo.getClassInfo(aspectClassName, loader);
-      } catch (Exception e) {
-        System.err.println(
-                "Warning: could not load aspect "
-                        + aspectClassName
-                        + " from "
-                        + loader
-                        + "due to: "
-                        + e.toString()
-        );
-        e.printStackTrace();
-        continue;
-      }
-
-      final AspectDefinition aspectDef = new AspectDefinition(aspectName, aspectClassInfo, definition);
-
-      // add the global pointcuts to the aspect
-      for (Iterator it = globalPointcuts.iterator(); it.hasNext();) {
-        PointcutInfo pointcutInfo = (PointcutInfo) it.next();
-        DefinitionParserHelper.createAndAddPointcutDefToAspectDef(
-                pointcutInfo.name,
-                pointcutInfo.expression,
-                aspectDef
-        );
-      }
-      parsePointcutElements(aspect, aspectDef); //needed to support undefined named pointcut in Attributes AW-152
-
-      // load the different aspect model and let them define their aspects
-      AspectModelManager.defineAspect(aspectClassInfo, aspectDef, loader);
-
-      // parse the class bytecode annotations
-      AspectAnnotationParser.parse(aspectClassInfo, aspectDef, loader);
-
-      // XML definition settings always overrides attribute definition settings
-      // AW-357
-      if (!Strings.isNullOrEmpty(deploymentModel)) {
-        aspectDef.setDeploymentModel(DeploymentModel.getDeploymentModelFor(deploymentModel));
-      }
-      if (!Strings.isNullOrEmpty(aspectName)) {
-        aspectDef.setName(aspectName);
-      }
-      if (!Strings.isNullOrEmpty(containerClassName)) {
-        aspectDef.setContainerClassName(containerClassName);
-      }
-
-      // parse the aspect info
-      parseParameterElements(aspect, aspectDef);
-      parsePointcutElements(aspect, aspectDef); //reparse pc for XML override (AW-152)
-      parseAdviceElements(aspect, aspectDef, aspectClassInfo);
-      parseIntroduceElements(aspect, aspectDef, packageName, loader);
-
-      definition.addAspect(aspectDef);
     }
   }
 
@@ -470,85 +459,68 @@ public class DocumentParser {
    * @param systemDefinition the system definition
    * @param packageName      the package name
    */
-  private static void parseMixinElements(final ClassLoader loader,
-                                         final Element systemElement,
-                                         final SystemDefinition systemDefinition,
-                                         final String packageName) {
-
-    for (Iterator it1 = systemElement.elementIterator("mixin"); it1.hasNext();) {
-      String className = null;
-      String deploymentModelAsString = null;
-      boolean isTransient = false;
-      boolean isTransientSetInXML = false;
-      String factoryClassName = null;
-      String expression = null;
-      Element mixin = (Element) it1.next();
-      for (Iterator it2 = mixin.attributeIterator(); it2.hasNext();) {
-        Attribute attribute = (Attribute) it2.next();
-        final String name = attribute.getName().trim();
-        final String value = attribute.getValue().trim();
-        if (name.equalsIgnoreCase("class")) {
-          className = value;
-        } else if (name.equalsIgnoreCase("deployment-model") && value != null) {
-          deploymentModelAsString = value;
-        } else if (name.equalsIgnoreCase("transient")) {
-          if (value != null && value.equalsIgnoreCase("true")) {
-            isTransient = true;
-            isTransientSetInXML = true;
-          }
-        } else if (name.equalsIgnoreCase("factory")) {
-          factoryClassName = value;
-        } else if (name.equalsIgnoreCase("bind-to")) {
-          expression = value;
+  private static void parseMixinElements(ClassLoader loader,
+                                         Element systemElement,
+                                         SystemDefinition systemDefinition,
+                                         String packageName) {
+    NodeList childNodes = systemElement.getChildNodes();
+    for (int i = 0; i < childNodes.getLength(); i++) {
+      Node childNode = childNodes.item(i);
+      if (childNode.getNodeName().equals("mixin")) {
+        Element mixinElement = (Element) childNode;
+        
+        String className = mixinElement.getAttribute("class");
+        String deploymentModelAsString = mixinElement.getAttribute("deployment-model");
+        boolean isTransient = false;
+        boolean isTransientSetInXML = false;
+        String transientValue = mixinElement.getAttribute("transient"); 
+        if(transientValue!=null) {
+          isTransient = transientValue.equalsIgnoreCase("true");
+          isTransientSetInXML = true;
         }
+        
+        String factoryClassName = mixinElement.getAttribute("factory");
+        String expression = mixinElement.getAttribute("bind-to");
+        
+        String mixinClassName = packageName + className;
+
+        // create the mixin definition
+        ClassInfo mixinClassInfo;
+        try {
+          mixinClassInfo = AsmClassInfo.getClassInfo(mixinClassName, loader);
+        } catch (Exception e) {
+          System.err.println("Warning: could not load mixin " + mixinClassName + " from " + loader + "; "
+                             + e.toString());
+          e.printStackTrace();
+          continue;
+        }
+
+        DeploymentModel deploymentModel = deploymentModelAsString == null
+                                          || deploymentModelAsString.trim().length() == 0 ? DeploymentModel.PER_INSTANCE
+            : DeploymentModel.getDeploymentModelFor(deploymentModelAsString);
+
+        MixinDefinition mixinDefinition = DefinitionParserHelper.createAndAddMixinDefToSystemDef(mixinClassInfo,
+                                                                                                 expression,
+                                                                                                 deploymentModel,
+                                                                                                 isTransient,
+                                                                                                 systemDefinition);
+
+        // parse the class bytecode annotations
+        MixinAnnotationParser.parse(mixinClassInfo, mixinDefinition);
+
+        // XML definition settings always overrides attribute definition settings if present
+        if (!Strings.isNullOrEmpty(deploymentModelAsString)) {
+          mixinDefinition.setDeploymentModel(DeploymentModel.getDeploymentModelFor(deploymentModelAsString));
+        }
+        if (!Strings.isNullOrEmpty(factoryClassName)) {
+          mixinDefinition.setFactoryClassName(factoryClassName);
+        }
+        if (isTransientSetInXML) {
+          mixinDefinition.setTransient(isTransient);
+        }
+
+        parseParameterElements(mixinElement, mixinDefinition);
       }
-      String mixinClassName = packageName + className;
-
-      // create the mixin definition
-      ClassInfo mixinClassInfo;
-      try {
-        mixinClassInfo = AsmClassInfo.getClassInfo(mixinClassName, loader);
-      } catch (Exception e) {
-        System.err.println(
-                "Warning: could not load mixin "
-                        + mixinClassName
-                        + " from "
-                        + loader
-                        + "due to: "
-                        + e.toString()
-        );
-        e.printStackTrace();
-        continue;
-      }
-
-      final DeploymentModel deploymentModel =
-              (deploymentModelAsString != null) ? DeploymentModel.getDeploymentModelFor(deploymentModelAsString)
-                      : DeploymentModel.PER_INSTANCE;
-
-      final MixinDefinition mixinDefinition =
-              DefinitionParserHelper.createAndAddMixinDefToSystemDef(
-                      mixinClassInfo,
-                      expression,
-                      deploymentModel,
-                      isTransient,
-                      systemDefinition
-              );
-
-      // parse the class bytecode annotations
-      MixinAnnotationParser.parse(mixinClassInfo, mixinDefinition);
-
-      // XML definition settings always overrides attribute definition settings if present
-      if (!Strings.isNullOrEmpty(deploymentModelAsString)) {
-        mixinDefinition.setDeploymentModel(DeploymentModel.getDeploymentModelFor(deploymentModelAsString));
-      }
-      if (!Strings.isNullOrEmpty(factoryClassName)) {
-        mixinDefinition.setFactoryClassName(factoryClassName);
-      }
-      if (isTransientSetInXML) {
-        mixinDefinition.setTransient(isTransient);
-      }
-
-      parseParameterElements(mixin, mixinDefinition);
     }
   }
 
@@ -557,11 +529,11 @@ public class DocumentParser {
    *
    * @param definition
    */
-  public static void addVirtualAspect(final SystemDefinition definition) {
-    final Class clazz = Virtual.class;
-    final String aspectName = clazz.getName();
+  public static void addVirtualAspect(SystemDefinition definition) {
+    Class clazz = Virtual.class;
+    String aspectName = clazz.getName();
     ClassInfo aspectClassInfo = JavaClassInfo.getClassInfo(clazz);
-    final AspectDefinition aspectDef = new AspectDefinition(aspectName, aspectClassInfo, definition);
+    AspectDefinition aspectDef = new AspectDefinition(aspectName, aspectClassInfo, definition);
     try {
       MethodInfo methodInfo = JavaMethodInfo.getMethodInfo(clazz.getDeclaredMethod("virtual", new Class[]{}));
       aspectDef.addBeforeAdviceDefinition(
@@ -588,15 +560,13 @@ public class DocumentParser {
    * @param aspectElement the aspect element
    * @param aspectDef     the aspect def
    */
-  private static void parseParameterElements(final Element aspectElement,
-                                             final AspectDefinition aspectDef) {
-    for (Iterator it2 = aspectElement.elementIterator(); it2.hasNext();) {
-      Element parameterElement = (Element) it2.next();
-      if (parameterElement.getName().trim().equals("param")) {
-        aspectDef.addParameter(
-                parameterElement.attributeValue("name"),
-                parameterElement.attributeValue("value")
-        );
+  private static void parseParameterElements(Element aspectElement, AspectDefinition aspectDef) {
+    NodeList childNodes = aspectElement.getChildNodes();
+    for (int i = 0; i < childNodes.getLength(); i++) {
+      Node childNode = childNodes.item(i);
+      if (childNode.getNodeName().equals("param")) {
+        Element paramElement = (Element) childNode;
+        aspectDef.addParameter(paramElement.getAttribute("name"), paramElement.getAttribute("value"));
       }
     }
   }
@@ -607,55 +577,69 @@ public class DocumentParser {
    * @param mixinElement the mixin element
    * @param mixinDef     the mixin def
    */
-  private static void parseParameterElements(final Element mixinElement,
-                                             final MixinDefinition mixinDef) {
-    for (Iterator it2 = mixinElement.elementIterator(); it2.hasNext();) {
-      Element parameterElement = (Element) it2.next();
-      if (parameterElement.getName().trim().equals("param")) {
-        mixinDef.addParameter(
-                parameterElement.attributeValue("name"),
-                parameterElement.attributeValue("value")
-        );
+  private static void parseParameterElements(Element mixinElement, MixinDefinition mixinDef) {
+    NodeList childNodes = mixinElement.getChildNodes();
+    for (int i = 0; i < childNodes.getLength(); i++) {
+      Node childNode = childNodes.item(i);
+      if (childNode.getNodeName().equals("param")) {
+        Element paramElement = (Element) childNode;
+        mixinDef.addParameter(paramElement.getAttribute("name"), paramElement.getAttribute("value"));
       }
     }
   }
 
   /**
    * Parses the pointcuts.
-   *
+   * 
    * @param aspectElement the aspect element
-   * @param aspectDef     the system definition
+   * @param aspectDef the system definition
    */
-  private static void parsePointcutElements(final Element aspectElement, final AspectDefinition aspectDef) {
-    for (Iterator it2 = aspectElement.elementIterator(); it2.hasNext();) {
-      Element pointcutElement = (Element) it2.next();
-      if (pointcutElement.getName().trim().equals("pointcut")) {
-        String name = pointcutElement.attributeValue("name");
-        String expression = pointcutElement.attributeValue("expression");
+  private static void parsePointcutElements(Element aspectElement, AspectDefinition aspectDef) {
+    NodeList aspectNodes = aspectElement.getChildNodes();
+    for (int i = 0; i < aspectNodes.getLength(); i++) {
+      Node childNode = aspectNodes.item(i);
+      if(childNode.getNodeType()!=Node.ELEMENT_NODE) {
+        continue;
+      }
+      Element childElement = (Element) childNode;
+      if (childElement.getNodeName().equals("pointcut")) {
+        String name = childElement.getAttribute("name");
+        String expression = childElement.getAttribute("expression");
         // pointcut CDATA is expression unless already specified as an attribute
-        if (expression == null) {
-          expression = pointcutElement.getTextTrim();
+        if (expression == null || expression.trim().length() == 0) {
+          expression = getText(childElement).trim();
         }
         DefinitionParserHelper.createAndAddPointcutDefToAspectDef(name, expression, aspectDef);
-      } else if (pointcutElement.getName().trim().equals("deployment-scope")) {
-        String name = pointcutElement.attributeValue("name");
-        String expression = pointcutElement.attributeValue("expression");
+      } else if (childElement.getNodeName().equals("deployment-scope")) {
+        String name = childElement.getAttribute("name");
+        String expression = childElement.getAttribute("expression");
         // pointcut CDATA is expression unless already specified as an attribute
         if (expression == null) {
-          expression = pointcutElement.getTextTrim();
+          expression = getText(childElement).trim();
         }
         DefinitionParserHelper.createAndAddDeploymentScopeDef(
                 name, expression, aspectDef.getSystemDefinition()
         );
-      } else if (pointcutElement.getName().trim().equals("advisable")) {
-        String expression = pointcutElement.attributeValue("expression");
-        String pointcutTypes = pointcutElement.attributeValue("pointcut-type");
-        if (expression == null) {
-          expression = pointcutElement.getTextTrim();
+      } else if (childElement.getNodeName().equals("advisable")) {
+        String expression = childElement.getAttribute("expression");
+        String pointcutTypes = childElement.getAttribute("pointcut-type");
+        if (expression == null || expression.trim().length() == 0) {
+          expression = getText(childElement).trim();
         }
         handleAdvisableDefinition(aspectDef.getSystemDefinition(), expression, pointcutTypes);
       }
     }
+  }
+  
+  public static String getText(Element element) {
+    NodeList childNodes = element.getChildNodes();
+    for (int i = 0; i < childNodes.getLength(); i++) {
+      Node childNode = childNodes.item(i);
+      if(childNode.getNodeType()==Node.TEXT_NODE) {
+        return ((Text) childNode).getData();
+      }
+    }
+    return "";
   }
 
   /**
@@ -665,22 +649,28 @@ public class DocumentParser {
    * @param aspectDef       the system definition
    * @param aspectClassInfo the aspect class
    */
-  private static void parseAdviceElements(final Element aspectElement,
-                                          final AspectDefinition aspectDef,
-                                          final ClassInfo aspectClassInfo) {
-    for (Iterator it2 = aspectElement.elementIterator(); it2.hasNext();) {
-      Element adviceElement = (Element) it2.next();
-      if (adviceElement.getName().trim().equals("advice")) {
-        String name = adviceElement.attributeValue("name");
-        String type = adviceElement.attributeValue("type");
-        String bindTo = adviceElement.attributeValue("bind-to");
+  private static void parseAdviceElements(Element aspectElement, AspectDefinition aspectDef, ClassInfo aspectClassInfo) {
+    NodeList childNodes = aspectElement.getChildNodes();
+    for (int i = 0; i < childNodes.getLength(); i++) {
+      Node childNode = childNodes.item(i);
+      if (childNode.getNodeName().equals("advice")) {
+        Element adviceElement = (Element) childNode;
+
+        String name = adviceElement.getAttribute("name");
+        String type = adviceElement.getAttribute("type");
+        String bindTo = adviceElement.getAttribute("bind-to");
 
         MethodInfo method = DefinitionParserHelper.createMethodInfoForAdviceFQN(name, aspectDef, aspectClassInfo);
         DefinitionParserHelper.createAndAddAdviceDefsToAspectDef(type, bindTo, name, method, aspectDef);
-        for (Iterator it1 = adviceElement.elementIterator("bind-to"); it1.hasNext();) {
-          Element bindToElement = (Element) it1.next();
-          String pointcut = bindToElement.attributeValue("pointcut");
-          DefinitionParserHelper.createAndAddAdviceDefsToAspectDef(type, pointcut, name, method, aspectDef);
+
+        NodeList bindNodes = adviceElement.getChildNodes();
+        for (int j = 0; j < bindNodes.getLength(); j++) {
+          Node bindToNode = bindNodes.item(j);
+          if (bindToNode.getNodeName().equals("bind-to")) {
+            Element bindToElement = (Element) bindToNode;
+            String pointcut = bindToElement.getAttribute("pointcut");
+            DefinitionParserHelper.createAndAddAdviceDefsToAspectDef(type, pointcut, name, method, aspectDef);
+          }
         }
       }
     }
@@ -688,26 +678,29 @@ public class DocumentParser {
 
   /**
    * Parses the interface introductions.
-   *
+   * 
    * @param aspectElement the aspect element
-   * @param aspectDef     the system definition
+   * @param aspectDef the system definition
    * @param packageName
    * @param loader
    */
-  private static void parseIntroduceElements(final Element aspectElement,
-                                             final AspectDefinition aspectDef,
-                                             final String packageName,
-                                             final ClassLoader loader) {
-    for (Iterator it2 = aspectElement.elementIterator(); it2.hasNext();) {
-      Element introduceElement = (Element) it2.next();
-      if (introduceElement.getName().trim().equals("introduce")) {
-        String klass = introduceElement.attributeValue("class");
-        String name = introduceElement.attributeValue("name");
-        String bindTo = introduceElement.attributeValue("bind-to");
+  private static void parseIntroduceElements(Element aspectElement,
+                                             AspectDefinition aspectDef,
+                                             String packageName,
+                                             ClassLoader loader) {
+    NodeList childNodes = aspectElement.getChildNodes();
+    for (int i = 0; i < childNodes.getLength(); i++) {
+      Node childNode = childNodes.item(i);
+      if (childNode.getNodeName().equals("introduce")) {
+        Element introduceElement = (Element) childNode;
+        
+        String klass = introduceElement.getAttribute("class");
+        String name = introduceElement.getAttribute("name");
+        String bindTo = introduceElement.getAttribute("bind-to");
 
         // default name = FQN
-        final String fullClassName = packageName + klass;
-        if ((name == null) || (name.length() <= 0)) {
+        String fullClassName = packageName + klass;
+        if (name == null || name.length() == 0) {
           name = fullClassName;
         }
 
@@ -716,34 +709,25 @@ public class DocumentParser {
         try {
           introductionClassInfo = AsmClassInfo.getClassInfo(fullClassName, loader);
         } catch (Exception e) {
-          throw new DefinitionException(
-                  "could not find interface introduction: "
-                          + packageName
-                          + klass
-                          + " "
-                          + e.getMessage()
-          );
+          throw new DefinitionException("could not find interface introduction: " + packageName + klass + "; "
+                                        + e.getMessage());
         }
 
         // pure interface introduction
         if (introductionClassInfo.isInterface()) {
-          DefinitionParserHelper.createAndAddInterfaceIntroductionDefToAspectDef(
-                  bindTo,
-                  name,
-                  fullClassName,
-                  aspectDef
-          );
+          DefinitionParserHelper
+              .createAndAddInterfaceIntroductionDefToAspectDef(bindTo, name, fullClassName, aspectDef);
 
           // handles nested "bind-to" elements
-          for (Iterator it1 = introduceElement.elementIterator("bind-to"); it1.hasNext();) {
-            Element bindToElement = (Element) it1.next();
-            String pointcut = bindToElement.attributeValue("pointcut");
-            DefinitionParserHelper.createAndAddInterfaceIntroductionDefToAspectDef(
-                    pointcut,
-                    name,
-                    fullClassName,
-                    aspectDef
-            );
+          NodeList bindToNodes = introduceElement.getChildNodes();
+          for (int j = 0; j < bindToNodes.getLength(); j++) {
+            Node bindToNode = bindToNodes.item(j);
+            if (bindToNode.getNodeName().equals("bindTo")) {
+              Element bindToElement = (Element) bindToNode;
+              String pointcut = bindToElement.getAttribute("pointcut");
+              DefinitionParserHelper.createAndAddInterfaceIntroductionDefToAspectDef(pointcut, name, fullClassName,
+                                                                                     aspectDef);
+            }
           }
         }
       }
@@ -756,25 +740,16 @@ public class DocumentParser {
    * @param packageElement the package element
    * @return the package as a string ending with DOT, or empty string
    */
-  private static String getPackage(final Element packageElement) {
-    String packageName = "";
-    for (Iterator it2 = packageElement.attributeIterator(); it2.hasNext();) {
-      Attribute attribute = (Attribute) it2.next();
-      if (attribute.getName().trim().equalsIgnoreCase("name")) {
-        packageName = attribute.getValue().trim();
-        if (packageName.endsWith(".*")) {
-          packageName = packageName.substring(0, packageName.length() - 1);
-        } else if (packageName.endsWith(".")) {
-          // skip
-        } else {
-          packageName += ".";
-        }
-        break;
-      } else {
-        continue;
+  private static String getPackage(Element packageElement) {
+    String packageName = packageElement.getAttribute("name");
+    if (packageName != null) {
+      if (packageName.endsWith(".*")) {
+        return packageName.substring(0, packageName.length() - 1);
+      } else if (!packageName.endsWith(".")) { 
+        return packageName + "."; 
       }
     }
-    return packageName;
+    return "";
   }
 
   /**
@@ -784,36 +759,34 @@ public class DocumentParser {
    * @param definition  the definition object
    * @param packageName the package name
    */
-  private static void parseIncludePackageElements(final Element root,
-                                                  final SystemDefinition definition,
-                                                  final String packageName) {
-    for (Iterator it1 = root.elementIterator("include"); it1.hasNext();) {
-      String includePackage = "";
-      Element includeElement = (Element) it1.next();
-      for (Iterator it2 = includeElement.attributeIterator(); it2.hasNext();) {
-        Attribute attribute = (Attribute) it2.next();
-        if (attribute.getName().trim().equalsIgnoreCase("package")) {
-          // handle base package
-          if (packageName.endsWith(".*")) {
-            includePackage = packageName.substring(0, packageName.length() - 2);
-          } else if (packageName.endsWith(".")) {
-            includePackage = packageName.substring(0, packageName.length() - 1);
-          }
+  private static void parseIncludePackageElements(Element root,
+                                                  SystemDefinition definition,
+                                                  String packageName) {
+    NodeList childNodes = root.getChildNodes();
+    for (int i = 0; i < childNodes.getLength(); i++) {
+      Node includeNode = childNodes.item(i);
+      if (includeNode.getNodeName().equals("include")) {
+        Element includeElement = (Element) includeNode;
+        String packageValue = includeElement.getAttribute("package");
 
-          // handle exclude package
-          includePackage = packageName + attribute.getValue().trim();
-          if (includePackage.endsWith(".*")) {
-            includePackage = includePackage.substring(0, includePackage.length() - 2);
-          } else if (includePackage.endsWith(".")) {
-            includePackage = includePackage.substring(0, includePackage.length() - 1);
-          }
-          break;
-        } else {
-          continue;
+        String includePackage = "";
+        // handle base package
+        if (packageName.endsWith(".*")) {
+          includePackage = packageName.substring(0, packageName.length() - 2);
+        } else if (packageName.endsWith(".")) {
+          includePackage = packageName.substring(0, packageName.length() - 1);
         }
-      }
-      if (includePackage.length() != 0) {
-        definition.addIncludePackage(includePackage);
+
+        // handle exclude package
+        includePackage = packageName + packageValue.trim();
+        if (includePackage.endsWith(".*")) {
+          includePackage = includePackage.substring(0, includePackage.length() - 2);
+        } else if (includePackage.endsWith(".")) {
+          includePackage = includePackage.substring(0, includePackage.length() - 1);
+        }
+        if (includePackage.length() != 0) {
+          definition.addIncludePackage(includePackage);
+        }
       }
     }
   }
@@ -825,77 +798,73 @@ public class DocumentParser {
    * @param definition  the definition object
    * @param packageName the package name
    */
-  private static void parseExcludePackageElements(final Element root,
-                                                  final SystemDefinition definition,
-                                                  final String packageName) {
-    for (Iterator it1 = root.elementIterator("exclude"); it1.hasNext();) {
-      String excludePackage = "";
-      Element excludeElement = (Element) it1.next();
-      for (Iterator it2 = excludeElement.attributeIterator(); it2.hasNext();) {
-        Attribute attribute = (Attribute) it2.next();
-        if (attribute.getName().trim().equalsIgnoreCase("package")) {
-          // handle base package
-          if (packageName.endsWith(".*")) {
-            excludePackage = packageName.substring(0, packageName.length() - 2);
-          } else if (packageName.endsWith(".")) {
-            excludePackage = packageName.substring(0, packageName.length() - 1);
-          }
+  private static void parseExcludePackageElements(Element root, SystemDefinition definition, String packageName) {
+    NodeList childNodes = root.getChildNodes();
+    for (int i = 0; i < childNodes.getLength(); i++) {
+      Node childNode = childNodes.item(i);
+      if (childNode.getNodeName().equals("exclude")) {
+        Element excludeElement = (Element) childNode;
 
-          // handle exclude package
-          excludePackage = packageName + attribute.getValue().trim();
-          if (excludePackage.endsWith(".*")) {
-            excludePackage = excludePackage.substring(0, excludePackage.length() - 2);
-          } else if (excludePackage.endsWith(".")) {
-            excludePackage = excludePackage.substring(0, excludePackage.length() - 1);
-          }
-          break;
-        } else {
-          continue;
+        String excludeValue = excludeElement.getAttribute("package");
+
+        String excludePackage = "";
+        // handle base package
+        if (packageName.endsWith(".*")) {
+          excludePackage = packageName.substring(0, packageName.length() - 2);
+        } else if (packageName.endsWith(".")) {
+          excludePackage = packageName.substring(0, packageName.length() - 1);
         }
-      }
-      if (excludePackage.length() != 0) {
-        definition.addExcludePackage(excludePackage);
+
+        // handle exclude package
+        excludePackage = packageName + excludeValue.trim();
+        if (excludePackage.endsWith(".*")) {
+          excludePackage = excludePackage.substring(0, excludePackage.length() - 2);
+        } else if (excludePackage.endsWith(".")) {
+          excludePackage = excludePackage.substring(0, excludePackage.length() - 1);
+        }
+        if (excludePackage.length() != 0) {
+          definition.addExcludePackage(excludePackage);
+        }
       }
     }
   }
 
   /**
    * Parses the <tt>prepare</tt> elements.
-   *
-   * @param root        the root element
-   * @param definition  the definition object
+   * 
+   * @param root the root element
+   * @param definition the definition object
    * @param packageName the base package name
    */
-  private static void parsePrepareElements(final Element root,
-                                          final SystemDefinition definition,
-                                          final String packageName) {
-    for (Iterator it1 = root.elementIterator("prepare"); it1.hasNext();) {
-      String preparePackage = "";
-      Element prepareElement = (Element) it1.next();
-      for (Iterator it2 = prepareElement.attributeIterator(); it2.hasNext();) {
-        Attribute attribute = (Attribute) it2.next();
-        if (attribute.getName().trim().equals("package")) {
-          // handle base package
-          if (packageName.endsWith(".*")) {
-            preparePackage = packageName.substring(0, packageName.length() - 2);
-          } else if (packageName.endsWith(".")) {
-            preparePackage = packageName.substring(0, packageName.length() - 1);
-          }
+  private static void parsePrepareElements(Element root,
+                                          SystemDefinition definition,
+                                          String packageName) {
+    NodeList childNodes = root.getChildNodes();
+    for (int i = 0; i < childNodes.getLength(); i++) {
+      Node childNode = childNodes.item(i);
+      if (childNode.getNodeName().equals("prepare")) {
+        Element prepareElement = (Element) childNode;
+        String packageValue = prepareElement.getAttribute("package");
+        
+        String preparePackage = "";
 
-          // handle prepare package
-          preparePackage = packageName + attribute.getValue().trim();
-          if (preparePackage.endsWith(".*")) {
-            preparePackage = preparePackage.substring(0, preparePackage.length() - 2);
-          } else if (preparePackage.endsWith(".")) {
-            preparePackage = preparePackage.substring(0, preparePackage.length() - 1);
-          }
-          break;
-        } else {
-          continue;
+        // handle base package
+        if (packageName.endsWith(".*")) {
+          preparePackage = packageName.substring(0, packageName.length() - 2);
+        } else if (packageName.endsWith(".")) {
+          preparePackage = packageName.substring(0, packageName.length() - 1);
         }
-      }
-      if (preparePackage.length() != 0) {
-        definition.addPreparePackage(preparePackage);
+
+        // handle prepare package
+        preparePackage = packageName + packageValue.trim();
+        if (preparePackage.endsWith(".*")) {
+          preparePackage = preparePackage.substring(0, preparePackage.length() - 2);
+        } else if (preparePackage.endsWith(".")) {
+          preparePackage = preparePackage.substring(0, preparePackage.length() - 1);
+        }
+        if (preparePackage.length() != 0) {
+          definition.addPreparePackage(preparePackage);
+        }
       }
     }
   }
@@ -906,8 +875,23 @@ public class DocumentParser {
    * @param system a system element
    * @return the base package
    */
-  private static String getBasePackage(final Element system) {
+  private static String getBasePackage(Element system) {
     String basePackage = "";
+    NamedNodeMap attrs = system.getAttributes();
+    for (int i = 0; i < attrs.getLength(); i++) {
+      Node item = attrs.item(i);
+      if (item.getNodeName().equalsIgnoreCase("base-package")) {
+        basePackage = ((Attr) item).getValue().trim();
+        if (basePackage.endsWith(".*")) {
+          basePackage = basePackage.substring(0, basePackage.length() - 1);
+        } else if (!basePackage.endsWith(".")) {
+          basePackage += ".";
+        }
+        break;
+      }
+    }
+    
+/*    
     for (Iterator it2 = system.attributeIterator(); it2.hasNext();) {
       Attribute attribute = (Attribute) it2.next();
       if (attribute.getName().trim().equalsIgnoreCase("base-package")) {
@@ -924,6 +908,7 @@ public class DocumentParser {
         continue;
       }
     }
+*/    
     return basePackage;
   }
 
@@ -942,9 +927,9 @@ public class DocumentParser {
    * @param withinPointcut
    * @param pointcutTypes
    */
-  private static void handleAdvisableDefinition(final SystemDefinition definition,
-                                                final String withinPointcut,
-                                                final String pointcutTypes) {
+  private static void handleAdvisableDefinition(SystemDefinition definition,
+                                                String withinPointcut,
+                                                String pointcutTypes) {
     // add the Advisable Mixin with the expression defined to the system definitions
     definition.addMixinDefinition(
             DefinitionParserHelper.createAndAddMixinDefToSystemDef(
