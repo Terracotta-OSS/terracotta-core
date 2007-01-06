@@ -79,8 +79,8 @@ public class DBEnvironment {
     this.ecfg.setAllowCreate(true);
     this.ecfg.setReadOnly(false);
     this.ecfg.setTxnWriteNoSync(!paranoid);
-    // Lock timeout in microseconds - 30 seconds
-    this.ecfg.setLockTimeout(30000000);
+    // Lock timeout in microseconds - 3 minutes
+    this.ecfg.setLockTimeout(180000000L);
     this.dbcfg = new DatabaseConfig();
     this.dbcfg.setAllowCreate(true);
     this.dbcfg.setTransactional(true);

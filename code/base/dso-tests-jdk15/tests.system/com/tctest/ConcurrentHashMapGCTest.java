@@ -4,6 +4,10 @@
 package com.tctest;
 
 public class ConcurrentHashMapGCTest extends GCTestBase implements TestConfigurator {
+  public ConcurrentHashMapGCTest() {
+    disableAllUntil("2007-01-15");
+  }
+  
   protected Class getApplicationClass() {
     return ConcurrentHashMapSwapingTestApp.class;
   }
