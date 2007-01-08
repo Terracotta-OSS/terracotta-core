@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -870,15 +871,23 @@ public class ArrayCopyTestApp extends AbstractTransparentApp {
   }
 
   private static class TestObject {
-    private int i;
+    private final int i;
 
     public TestObject(int i) {
       this.i = i;
     }
 
+    public int hashCode() {
+      return i;
+    }
+
     public boolean equals(Object o) {
       if (!(o instanceof TestObject)) { return false; }
       return this.i == ((TestObject) o).i;
+    }
+
+    public String toString() {
+      return getClass().getName() + "(" + i + ")";
     }
   }
 
@@ -974,6 +983,10 @@ public class ArrayCopyTestApp extends AbstractTransparentApp {
     public boolean equals(Object obj) {
       if (!(obj instanceof Thingy)) { return false; }
       return val.equals(((Thingy) obj).val);
+    }
+
+    public String toString() {
+      return getClass().getName() + "(" + val + ")";
     }
 
   }
