@@ -7,6 +7,7 @@ import com.tc.config.schema.dynamic.FixedValueConfigItem;
 import com.tc.exception.TCRuntimeException;
 import com.tc.memorydatastore.message.MemoryDataStoreRequestMessage;
 import com.tc.memorydatastore.message.MemoryDataStoreResponseMessage;
+import com.tc.memorydatastore.server.MemoryDataStoreServer;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
@@ -51,9 +52,7 @@ public class MemoryDataStoreClient implements MemoryDataMap {
   }
 
   public MemoryDataStoreClient(String storeName) {
-    //this(storeName, "lindso2.terracotta.lan", 9001); // TODO: temporary
-                                                      // hardcoded
-    this(storeName, "localhost", 9001);
+    this(storeName, "localhost", MemoryDataStoreServer.DEFAULT_PORT);
   }
 
   private void setupClient(String serverHost, int serverPort) {
@@ -81,7 +80,7 @@ public class MemoryDataStoreClient implements MemoryDataMap {
       }
     }
   }
-  
+
   public void close() {
     channel.close();
   }

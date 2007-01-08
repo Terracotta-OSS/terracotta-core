@@ -19,23 +19,24 @@ import junit.framework.TestCase;
 
 public class MemoryDataMapTest extends TestCase {
   private MemoryDataStoreServer server = null;
-  
+
   protected void setUp() throws Exception {
     super.setUp();
-    server = MemoryDataStoreServer.getInstance();
+    server = MemoryDataStoreServer.createInstance(0);
     server.start();
+    System.err.println("Server started on port " + server.getListenPort());
   }
-  
+
   protected void tearDown() throws Exception {
     super.tearDown();
     server.shutdown();
     server = null;
     Thread.sleep(5000);
   }
-  
+
   public void testPerf() throws Exception {
     int numOfPut = 5000;
-    MemoryDataStoreClient client = new MemoryDataStoreClient("storePerf");
+    MemoryDataStoreClient client = new MemoryDataStoreClient("storePerf", "localhost", server.getListenPort());
     for (int i=0; i<numOfPut; i++) {
       String key = "key"+i;
       String value = "value"+i;
@@ -52,23 +53,23 @@ public class MemoryDataMapTest extends TestCase {
     Assert.assertNotNull(o);
     long end = System.currentTimeMillis();
     System.err.println("Time to get 1 item: " + (end-start) + "ms");
-    
+
     byte[] bytes = new byte[]{107, 101};
     start = System.currentTimeMillis();
     Collection allValues = client.getAll(bytes);
     end = System.currentTimeMillis();
     Assert.assertEquals(numOfPut, allValues.size());
     System.err.println("Time to get " + numOfPut + " items: " + (end-start) + "ms");
-    
+
     client.close();
   }
-  
+
   public void testBasic() throws Exception {
     CyclicBarrier barrier = new CyclicBarrier(16);
-    
-    MemoryDataStoreClient client1 = new MemoryDataStoreClient("store1");
-    MemoryDataStoreClient client2 = new MemoryDataStoreClient("store2");
-    
+
+    MemoryDataStoreClient client1 = new MemoryDataStoreClient("store1", "localhost", server.getListenPort());
+    MemoryDataStoreClient client2 = new MemoryDataStoreClient("store2", "localhost", server.getListenPort());
+
     Runnable[] putClients = new Runnable[15];
     putClients[0] = new TestPutClient(barrier, client1, "key1".getBytes(), "value1".getBytes());
     putClients[1] = new TestPutClient(barrier, client1, "key2".getBytes(), "value2".getBytes());
@@ -85,14 +86,14 @@ public class MemoryDataMapTest extends TestCase {
     putClients[12] = new TestPutClient(barrier, client2, "key3".getBytes(), "value3".getBytes());
     putClients[13] = new TestPutClient(barrier, client2, "key4".getBytes(), "value4".getBytes());
     putClients[14] = new TestPutClient(barrier, client2, "key5".getBytes(), "value5".getBytes());
-    
+
     runAllClients(putClients);
-    
+
     barrier.barrier();
-    
+
     Runnable[] getClients = new Runnable[17];
     barrier = new CyclicBarrier(18);
-        
+
     getClients[0] = new TestGetClient(barrier, client1, "key1".getBytes(), "value1".getBytes());
     getClients[1] = new TestGetClient(barrier, client1, "key2".getBytes(), "value2".getBytes());
     getClients[2] = new TestGetClient(barrier, client1, "key3".getBytes(), "value3".getBytes());
@@ -110,44 +111,44 @@ public class MemoryDataMapTest extends TestCase {
     getClients[14] = new TestGetClient(barrier, client2, "key5".getBytes(), "value5".getBytes());
     getClients[15] = new TestGetClient(barrier, client2, "key6".getBytes(), null);
     getClients[16] = new TestGetClient(barrier, client1, "key11".getBytes(), null);
-    
+
     runAllClients(getClients);
-    
+
     barrier.barrier();
-    
+
     client1.close();
     client2.close();
-    
-    MemoryDataStoreClient client = new MemoryDataStoreClient("store2");
+
+    MemoryDataStoreClient client = new MemoryDataStoreClient("store2", "localhost", server.getListenPort());
     byte[] bytes = new byte[]{107, 101};
     Collection allValues = client.getAll(bytes);
     System.err.println("Getting all of [107 101]:");
     printByteArrayCollection(allValues);
-    
-    client = new MemoryDataStoreClient("store1");
+
+    client = new MemoryDataStoreClient("store1", "localhost", server.getListenPort());
     client.remove("key1".getBytes());
-    
+
     Object o = client.get("key1".getBytes());
     Assert.assertNull(o);
-    
+
     bytes = new byte[]{107, 101};
     client.removeAll(bytes);
-    
+
     o = client.get("key5".getBytes());
     Assert.assertNull(o);
 
   }
-  
+
   private void printByteArrayCollection(Collection allValues) {
     int size = allValues.size();
-    
+
     System.err.println("No of values: " + size);
     for (Iterator i=allValues.iterator(); i.hasNext(); ) {
       TCByteArrayKeyValuePair keyValuePair = (TCByteArrayKeyValuePair)i.next();
-      
+
       byte[] key = keyValuePair.getKey();
       byte[] value = keyValuePair.getValue();
-      
+
       System.err.print("key: [");
       for (int j=0; j<key.length; j++) {
         System.err.print(key[j]);
@@ -161,7 +162,7 @@ public class MemoryDataMapTest extends TestCase {
       System.err.println("]");
     }
   }
-  
+
   private static void runAllClients(Runnable[] runnableClients) {
     Thread[] allClients = new Thread[runnableClients.length];
     for (int i=0; i<runnableClients.length; i++) {
@@ -169,24 +170,24 @@ public class MemoryDataMapTest extends TestCase {
       allClients[i].start();
     }
   }
-  
+
   private static class TestGetClient implements Runnable {
     private final CyclicBarrier barrier;
     private final byte[] key;
     private final byte[] expectedValue;
     private final MemoryDataStoreClient client;
-    
+
     public TestGetClient(CyclicBarrier barrier, MemoryDataStoreClient client, byte[] key, byte[] expectedValue) {
       this.barrier = barrier;
       this.key = key;
       this.expectedValue = expectedValue;
       this.client = client;
     }
-    
+
     public void run() {
       byte[] value = client.get(key);
       Assert.assertEquals(expectedValue, value);
-      
+
       try {
         barrier.barrier();
       } catch (InterruptedException e) {
@@ -197,23 +198,23 @@ public class MemoryDataMapTest extends TestCase {
       System.err.println("Finish running get client");
     }
   }
-  
+
   private static class TestPutClient implements Runnable {
     private final CyclicBarrier barrier;
     private final byte[] key;
     private final byte[] value;
     private final MemoryDataStoreClient client;
-    
+
     public TestPutClient(CyclicBarrier barrier, MemoryDataStoreClient client, byte[] key, byte[] value) {
       this.barrier = barrier;
       this.key = key;
       this.value = value;
       this.client = client;
     }
-    
+
     public void run() {
       client.put(key, value);
-      
+
       try {
         barrier.barrier();
       } catch (InterruptedException e) {

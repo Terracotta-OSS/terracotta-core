@@ -29,24 +29,32 @@ import java.io.IOException;
 import java.util.Collections;
 
 public class MemoryDataStoreServer {
+  public static final int       DEFAULT_PORT                    = 9001;
+
   private static final String   MEMORY_DATA_STORE_REQUEST_STAGE = "memory_data_store_request_stage";
   private final static int      STARTED                         = 1;
   private final static int      STOPPED                         = 2;
-  
-  private static MemoryDataStoreServer instance = new MemoryDataStoreServer(9001); // TODO: temporary hardcoded
 
   private int                   serverPort;
   private int                   state;
   private NetworkListener       lsnr;
   private CommunicationsManager communicationManager;
-  
-  public static MemoryDataStoreServer getInstance() {
-    return instance;
+
+  public static MemoryDataStoreServer createInstance() {
+    return new MemoryDataStoreServer(DEFAULT_PORT);
   }
-  
+
+  public static MemoryDataStoreServer createInstance(int port) {
+    return new MemoryDataStoreServer(port);
+  }
+
   private MemoryDataStoreServer(int serverPort) {
     super();
     this.serverPort = serverPort;
+  }
+
+  public int getListenPort() {
+    return lsnr.getBindPort();
   }
 
   private StageManager getStageManager() {
@@ -69,14 +77,17 @@ public class MemoryDataStoreServer {
     lsnr.addClassMapping(TCMessageType.MEMORY_DATA_STORE_REQUEST_MESSAGE, MemoryDataStoreRequestMessage.class);
     lsnr.addClassMapping(TCMessageType.MEMORY_DATA_STORE_RESPONSE_MESSAGE, MemoryDataStoreResponseMessage.class);
 
-    Stage hydrateStage = stageManager.createStage("hydrate_message_stage", new HydrateHandler(), 1, 500); // temporary hardcoded
+    Stage hydrateStage = stageManager.createStage("hydrate_message_stage", new HydrateHandler(), 1, 500); // temporary
+    // hardcoded
 
     MemoryDataStoreRequestHandler memoryDataStoreRequestHandler = new MemoryDataStoreRequestHandler();
     Stage memoryDataStoreRequestStage = stageManager.createStage(MEMORY_DATA_STORE_REQUEST_STAGE,
         memoryDataStoreRequestHandler, 1, 1);
-    lsnr.routeMessageType(TCMessageType.MEMORY_DATA_STORE_REQUEST_MESSAGE, memoryDataStoreRequestStage.getSink(), hydrateStage.getSink());
+    lsnr.routeMessageType(TCMessageType.MEMORY_DATA_STORE_REQUEST_MESSAGE, memoryDataStoreRequestStage.getSink(),
+        hydrateStage.getSink());
 
-    stageManager.startAll(new NullContext(stageManager)); // temporary hack to start the stage
+    stageManager.startAll(new NullContext(stageManager)); // temporary hack to
+    // start the stage
     lsnr.start();
     this.state = STARTED;
   }
@@ -90,8 +101,7 @@ public class MemoryDataStoreServer {
   public int getState() {
     return this.state;
   }
-  
-  
+
   // Temporary hack
   private static class NullContext implements ConfigurationContext {
 
@@ -112,10 +122,10 @@ public class MemoryDataStoreServer {
   }
 
   public static void main(String[] args) {
-    MemoryDataStoreServer server = getInstance();
+    MemoryDataStoreServer server = createInstance(0);
     try {
       server.start();
-      
+
       while (server.getState() == STARTED) {
         Thread.sleep(Long.MAX_VALUE);
       }
