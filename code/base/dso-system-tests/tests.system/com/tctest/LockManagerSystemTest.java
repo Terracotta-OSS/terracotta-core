@@ -1,8 +1,16 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
+import com.tc.config.schema.NewCommonL2Config;
+import com.tc.config.schema.NewSystemConfig;
+import com.tc.config.schema.dynamic.BooleanConfigItem;
+import com.tc.config.schema.dynamic.ConfigItem;
+import com.tc.config.schema.dynamic.ConfigItemListener;
+import com.tc.config.schema.dynamic.IntConfigItem;
+import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
@@ -17,6 +25,8 @@ import com.tc.object.bytecode.NullManager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.config.schema.NewDSOApplicationConfig;
+import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ThreadID;
@@ -29,6 +39,7 @@ import com.tc.server.NullTCServerInfo;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,8 +58,10 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
     ManagedObjectStateFactory.disableSingleton(true);
     L2TVSConfigurationSetupManager l2Manager = factory.createL2TVSConfigurationSetupManager(null);
-    server = new DistributedObjectServer(l2Manager, new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(DistributedObjectServer.class))), new NullConnectionPolicy(), new NullTCServerInfo());
+    server = new DistributedObjectServer(new ConfigOverride(l2Manager),
+                                         new TCThreadGroup(new ThrowableHandler(TCLogging
+                                             .getLogger(DistributedObjectServer.class))), new NullConnectionPolicy(),
+                                         new NullTCServerInfo());
     server.start();
 
     makeClientUsePort(server.getListenPort());
@@ -309,6 +322,114 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     assertTrue(done[1]);
     lockManager.unlock(l3, tid1);
     lockManager.unlock(l3, tid2);
+  }
+
+  private static class ConfigOverride implements L2TVSConfigurationSetupManager {
+
+    private final L2TVSConfigurationSetupManager realConfig;
+
+    ConfigOverride(L2TVSConfigurationSetupManager realConfig) {
+      this.realConfig = realConfig;
+    }
+
+    public String[] allCurrentlyKnownServers() {
+      return realConfig.allCurrentlyKnownServers();
+    }
+
+    public String[] applicationNames() {
+      return realConfig.applicationNames();
+    }
+
+    public NewCommonL2Config commonl2Config() {
+      return realConfig.commonl2Config();
+    }
+
+    public NewCommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException {
+      return realConfig.commonL2ConfigFor(name);
+    }
+
+    public String describeSources() {
+      return realConfig.describeSources();
+    }
+
+    public NewDSOApplicationConfig dsoApplicationConfigFor(String applicationName) {
+      return realConfig.dsoApplicationConfigFor(applicationName);
+    }
+
+    public NewL2DSOConfig dsoL2Config() {
+      return new L2ConfigOverride(realConfig.dsoL2Config());
+    }
+
+    public NewL2DSOConfig dsoL2ConfigFor(String name) throws ConfigurationSetupException {
+      return realConfig.dsoL2ConfigFor(name);
+    }
+
+    public InputStream rawConfigFile() {
+      return realConfig.rawConfigFile();
+    }
+
+    public NewSystemConfig systemConfig() {
+      return realConfig.systemConfig();
+    }
+
+    private static class L2ConfigOverride implements NewL2DSOConfig {
+
+      private final NewL2DSOConfig config;
+
+      public L2ConfigOverride(NewL2DSOConfig config) {
+        this.config = config;
+      }
+
+      public void changesInItemForbidden(ConfigItem item) {
+        config.changesInItemForbidden(item);
+      }
+
+      public void changesInItemIgnored(ConfigItem item) {
+        config.changesInItemIgnored(item);
+      }
+
+      public IntConfigItem clientReconnectWindow() {
+        return config.clientReconnectWindow();
+      }
+
+      public BooleanConfigItem garbageCollectionEnabled() {
+        return config.garbageCollectionEnabled();
+      }
+
+      public IntConfigItem garbageCollectionInterval() {
+        return config.garbageCollectionInterval();
+      }
+
+      public BooleanConfigItem garbageCollectionVerbose() {
+        return config.garbageCollectionVerbose();
+      }
+
+      public IntConfigItem listenPort() {
+        return new IntConfigItem() {
+          public int getInt() {
+            return 0;
+          }
+
+          public void addListener(ConfigItemListener changeListener) {
+            //
+          }
+
+          public Object getObject() {
+            return new Integer(0);
+          }
+
+          public void removeListener(ConfigItemListener changeListener) {
+            //
+          }
+        };
+      }
+
+      public ConfigItem persistenceMode() {
+        return config.persistenceMode();
+      }
+
+    }
+
   }
 
 }
