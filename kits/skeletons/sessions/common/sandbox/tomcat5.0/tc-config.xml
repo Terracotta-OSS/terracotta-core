@@ -61,7 +61,7 @@
            available for all instances of our app that runs via DSO -->
       <roots>
         <root>
-          <field-name>service.ProductCatalog.catalog</field-name>
+          <field-name>demo.townsend.service.ProductCatalog.catalog</field-name>
           <root-name>ProductCatalog</root-name>
         </root>
       </roots>
