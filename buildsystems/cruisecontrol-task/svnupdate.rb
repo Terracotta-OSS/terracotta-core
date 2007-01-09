@@ -4,7 +4,9 @@
 require 'tmpdir'
 
 # clean up tmp folder
-`rm -rf #{Dir.tmpdir}/*`
+`rm -rf #{Dir.tmpdir}/terracotta*`
+`rm -rf #{Dir.tmpdir}/open*`
+`rm -rf #{Dir.tmpdir}/*.dat`
 
 topdir=File.join(File.expand_path(File.dirname(__FILE__)), "..", "..")
 if ENV['OS'] =~ /win/i
