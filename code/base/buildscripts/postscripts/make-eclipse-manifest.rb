@@ -14,8 +14,9 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     eclipse_directory    = FilePath.new(product_directory.to_s, 'eclipse')
     dso_directory        = FilePath.new(eclipse_directory.to_s, 'org.terracotta.dso')
     common_lib_directory = FilePath.new(dso_directory.to_s, *relative_libpath.split('/'))
-    version              = get_config(:version, "1.0.0")
-    plugin_version       = version+".0" if version.length == 3
+
+    plugin_version = version = get_config(:version, "1.0.0")
+    plugin_version += ".0" if /[0-9]+.[0-9]+.[0-9]+/ !~ version 
 
     meta_directory = FilePath.new(dso_directory, 'META-INF').ensure_directory
     manifest_path = FilePath.new(meta_directory, 'MANIFEST.MF')

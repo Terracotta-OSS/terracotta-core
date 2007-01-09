@@ -8,8 +8,8 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   # - create the eclipse update site
   protected
   def postscript(ant, build_environment, product_dir, *args)
-    prod_version   = get_config(:version, "1.0.0")
-    plugin_version = prod_version+".0" if prod_version.length == 3
+    plugin_version = prod_version = get_config(:version, "1.0.0")
+    plugin_version += ".0" if /[0-9]+.[0-9]+.[0-9]+/ !~ prod_version 
 
     eclipse_dir = FilePath.new(product_dir, 'eclipse')
     plugin_name = "org.terracotta.dso_" + plugin_version
