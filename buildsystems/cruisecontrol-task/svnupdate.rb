@@ -3,7 +3,8 @@
 # it will try to call "svn update" 3 times before crapping out
 require 'tmpdir'
 
-`rm -rf #{Dir.tmpdir}/terracotta*`
+# clean up tmp folder
+`rm -rf #{Dir.tmpdir}/*`
 
 topdir=File.join(File.expand_path(File.dirname(__FILE__)), "..", "..")
 if ENV['OS'] =~ /win/i
