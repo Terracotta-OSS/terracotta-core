@@ -39,6 +39,7 @@ public final class RequestCountTest extends AbstractAppServerTestCase {
 
   public void testRequestCount() throws Throwable {
     collectVmStats();
+    assertTimeDirection();
     List jvmArgs = new ArrayList(1);
     jvmArgs.add("-Dcom.sun.management.jmxremote");
     addDsoServerJvmArgs(jvmArgs);
