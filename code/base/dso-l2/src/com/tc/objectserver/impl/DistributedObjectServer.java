@@ -81,7 +81,9 @@ import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManagerImpl;
+import com.tc.objectserver.handler.ApplyCompleteTransactionHandler;
 import com.tc.objectserver.handler.ApplyTransactionChangeHandler;
+import com.tc.objectserver.handler.RecallObjectsHandler;
 import com.tc.objectserver.handler.TransactionLookupHandler;
 import com.tc.objectserver.handler.BroadcastChangeHandler;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
@@ -133,6 +135,8 @@ import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchManagerImpl;
 import com.tc.objectserver.tx.TransactionSequencer;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
+import com.tc.objectserver.tx.TransactionalStageCoordinator;
+import com.tc.objectserver.tx.TransactionalStagesCoordinatorImpl;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -427,24 +431,29 @@ public class DistributedObjectServer extends SEDA {
                                                           objectManager, taa, globalTxnCounter, channelStats);
     MessageRecycler recycler = new CommitTransactionMessageRecycler(transactionManager);
 
-    Stage lookupStage = stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE,
-                                                 new TransactionLookupHandler(), 1, maxStageSize);
-    
+    stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE, new TransactionLookupHandler(), 1,
+                             maxStageSize);
+
     // Lookup stage should never be blocked trying to add to apply stage
-    Stage applyStage = stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
-                                                new ApplyTransactionChangeHandler(instanceMonitor, gtxm), 1, -1);
-    
+    stageManager.createStage(ServerConfigurationContext.APPLY_CHANGES_STAGE,
+                             new ApplyTransactionChangeHandler(instanceMonitor, gtxm), 1, -1);
+
+    stageManager.createStage(ServerConfigurationContext.APPLY_COMPLETE_STAGE, new ApplyCompleteTransactionHandler(), 1,
+                             maxStageSize);
+
+    // Server initiated request processing stages should not be bounded
+    stageManager.createStage(ServerConfigurationContext.RECALL_OBJECTS_STAGE, new RecallObjectsHandler(), 1, -1);
+
     int commitThreads = (persistent ? 4 : 1);
-    Stage commitStage = stageManager.createStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE,
-                                                 new CommitTransactionChangeHandler(gtxm, transactionStorePTP),
-                                                 commitThreads, maxStageSize);
-    
+    stageManager
+        .createStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE,
+                     new CommitTransactionChangeHandler(gtxm, transactionStorePTP), commitThreads, maxStageSize);
+
+    TransactionalStageCoordinator txnStageCoordinator = new TransactionalStagesCoordinatorImpl(stageManager);
     TransactionalObjectManagerImpl txnObjectManager = new TransactionalObjectManagerImpl(objectManager,
                                                                                          new TransactionSequencer(),
-                                                                                         gtxm, lookupStage.getSink(),
-                                                                                         applyStage.getSink(),
-                                                                                         commitStage.getSink(),
-                                                                                         commitThreads);
+                                                                                         gtxm, txnStageCoordinator);
+    objectManager.setTransactionalObjectManager(txnObjectManager);
     Stage processTx = stageManager.createStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE,
                                                new ProcessTransactionHandler(transactionBatchManager, txnObjectManager,
                                                                              sequenceValidator, recycler), 1,

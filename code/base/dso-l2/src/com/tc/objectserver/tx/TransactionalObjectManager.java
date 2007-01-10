@@ -6,6 +6,8 @@ package com.tc.objectserver.tx;
 
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.ServerTransactionID;
+import com.tc.objectserver.context.CommitTransactionContext;
+import com.tc.objectserver.context.RecallObjectsContext;
 
 import java.util.Collection;
 import java.util.List;
@@ -17,7 +19,13 @@ public interface TransactionalObjectManager {
   public void lookupObjectsForTransactions();
 
   public boolean applyTransactionComplete(ServerTransactionID stxnID);
+  
+  public void processApplyComplete();
 
-  public void commitTransactionsComplete(Collection txns);
+  public void commitTransactionsComplete(CommitTransactionContext ctc);
+
+  public void recallAllCheckedoutObject();
+
+  public void recallCheckedoutObject(RecallObjectsContext roc);
 
 }

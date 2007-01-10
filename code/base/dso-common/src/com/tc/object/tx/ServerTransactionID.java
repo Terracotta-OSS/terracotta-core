@@ -36,6 +36,10 @@ public class ServerTransactionID implements Serializable {
   public TransactionID getClientTransactionID() {
     return txnID;
   }
+  
+  public boolean isNull() {
+    return channelID.isNull() && txnID.isNull();
+  }
 
   public String toString() {
     return new StringBuffer().append("ServerTransactionID{").append(channelID).append(',').append(txnID).append('}')

@@ -33,11 +33,9 @@ public interface ObjectManager extends ManagedObjectProvider, PrettyPrintable {
   public void release(PersistenceTransaction tx, ManagedObject object);
 
   /**
-   * release object so that if anyone needs it they can have it with null tx (for gc)
-   *
-   * @param object
+   * release all objects
    */
-  public void release(ManagedObject object);
+  public void releaseAll(Collection objects);
 
   /**
    * release for objects that can not have changed while checked out

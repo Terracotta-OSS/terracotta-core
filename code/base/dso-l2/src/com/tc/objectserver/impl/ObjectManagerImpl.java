@@ -38,6 +38,9 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
+import com.tc.objectserver.tx.NullTransactionalObjectManager;
+import com.tc.objectserver.tx.TransactionalObjectManager;
+import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
@@ -74,7 +77,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   // XXX:: Should go to property file
   private static final int                     INITIAL_SET_SIZE         = 1;
   private static final float                   LOAD_FACTOR              = 0.75f;
-  private static final int                     INITIAL_MAP_SIZE         = 10000;
   private static final int                     COMMIT_SIZE              = 5000;
   private static final int                     MAX_LOOKUP_OBJECTS_COUNT = 5000;
   private static final long                    REMOVE_THRESHOLD         = 300;
@@ -98,6 +100,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private final Sink                           faultSink;
   private final Sink                           flushSink;
   private final ObjectManagementMonitorMBean   objectManagementMonitor;
+  private TransactionalObjectManager           txnObjectMgr             = new NullTransactionalObjectManager();
 
   public ObjectManagerImpl(ObjectManagerConfig config, ThreadGroup gcThreadGroup, ClientStateManager stateManager,
                            ManagedObjectStore objectStore, EvictionPolicy cache,
@@ -112,7 +115,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.objectStore = objectStore;
     this.evictionPolicy = cache;
     this.persistenceTransactionProvider = persistenceTransactionProvider;
-    this.references = new HashMap(guessMapSize(evictionPolicy));
+    this.references = new HashMap(10000);
     this.objectManagementMonitor = objectManagementMonitor;
 
     final boolean doGC = config.doGC();
@@ -129,9 +132,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
   }
 
-  private int guessMapSize(EvictionPolicy ep) {
-    return (ep.getCacheCapacity() > INITIAL_MAP_SIZE || ep.getCacheCapacity() <= 0 ? INITIAL_MAP_SIZE : ep
-        .getCacheCapacity());
+  public void setTransactionalObjectManager(TransactionalObjectManagerImpl txnObjectManager) {
+    this.txnObjectMgr = txnObjectManager;
   }
 
   public void setStatsListener(ObjectManagerStatsListener statsListener) {
@@ -528,8 +530,16 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   }
 
-  public void release(ManagedObject object) {
-    release(persistenceTransactionProvider.nullTransaction(), object);
+  public synchronized void releaseAll(Collection objects) {
+    boolean processPending = false;
+    for (Iterator i = objects.iterator(); i.hasNext();) {
+      ManagedObject mo = (ManagedObject) i.next();
+      if (config.paranoid()) {
+        Assert.assertFalse(mo.isDirty());
+      }
+      processPending |= basicRelease(mo);
+    }
+    postRelease(processPending);
   }
 
   public void releaseAll(PersistenceTransaction persistenceTransaction, Collection managedObjects) {
@@ -541,7 +551,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       }
       postRelease(processPending);
     }
-
   }
 
   private void removeAllObjectsByID(Set toDelete) {
@@ -609,6 +618,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public synchronized void waitUntilReadyToGC() {
     checkAndNotifyGC();
+    txnObjectMgr.recallAllCheckedoutObject();
     while (!collector.isPaused()) {
       try {
         this.wait(10000);

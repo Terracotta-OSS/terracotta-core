@@ -9,7 +9,6 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Stage;
 import com.tc.async.impl.MockSink;
-import com.tc.async.impl.MockStage;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogger;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -24,6 +23,8 @@ import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
+import com.tc.objectserver.context.ApplyTransactionContext;
+import com.tc.objectserver.context.LookupEventContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
@@ -37,16 +38,16 @@ import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TestTransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchReader;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
+import com.tc.objectserver.tx.TransactionSequencer;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
-import com.tc.objectserver.tx.TransactionSequencer;
+import com.tc.objectserver.tx.TransactionalStageCoordinator;
 import com.tc.test.TCTestCase;
 import com.tc.util.SequenceID;
 import com.tc.util.SequenceValidator;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -55,7 +56,6 @@ import java.util.Map;
 public class ProcessTransactionHandlerTest extends TCTestCase {
 
   private TestServerConfigurationContext    cctxt;
-  private Map                               stageMap = new HashMap();
   private TestObjectManager                 objectManager;
   private ProcessTransactionHandler         handler;
   private TestTransactionBatchReaderFactory transactionBatchReaderFactory;
@@ -64,23 +64,16 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
   private TestGlobalTransactionManager      gtxm;
   private SequenceValidator                 sequenceValidator;
   private TransactionalObjectManager        txnObjectManager;
+  private TestTransactionalStageCoordinator txnStageCoordinator;
 
   public void setUp() throws Exception {
     objectManager = new TestObjectManager();
     transactionBatchManager = new TestTransactionBatchManager();
     gtxm = new TestGlobalTransactionManager();
     sequenceValidator = new SequenceValidator(0);
-    MockStage lookupStage;
-    stageMap.put(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE,
-                 (lookupStage = new MockStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE)));
-    MockStage applyStage;
-    stageMap.put(ServerConfigurationContext.APPLY_CHANGES_STAGE,
-                 (applyStage = new MockStage(ServerConfigurationContext.APPLY_CHANGES_STAGE)));
-    MockStage commitStage;
-    stageMap.put(ServerConfigurationContext.COMMIT_CHANGES_STAGE,
-                 (commitStage = new MockStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE)));
-    txnObjectManager = new TransactionalObjectManagerImpl(objectManager, new TransactionSequencer(), gtxm, lookupStage
-        .getSink(), applyStage.getSink(), commitStage.getSink(), 1);
+    txnStageCoordinator = new TestTransactionalStageCoordinator();
+    txnObjectManager = new TransactionalObjectManagerImpl(objectManager, new TransactionSequencer(), gtxm,
+                                                          txnStageCoordinator);
     handler = new ProcessTransactionHandler(transactionBatchManager, txnObjectManager, sequenceValidator,
                                             new NullMessageRecycler());
 
@@ -126,8 +119,7 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     assertTrue(transactionBatchManager.defineBatchContexts.isEmpty());
 
     // make sure that a lookup context is put into the lookup queue
-    MockSink lookupSink = (MockSink) ((Stage) stageMap.get(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE))
-        .getSink();
+    MockSink lookupSink = txnStageCoordinator.lookupSink;
     assertFalse(lookupSink.queue.isEmpty());
 
     EventContext context = (EventContext) lookupSink.queue.remove(0);
@@ -246,7 +238,7 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     }
 
     public Stage getStage(String name) {
-      return (Stage) stageMap.get(name);
+      throw new ImplementMe();
     }
 
     public TCLogger getLogger(Class clazz) {
@@ -264,6 +256,31 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     public TransactionalObjectManager getTransactionalObjectManager() {
       return txnObjectManager;
     }
-
   }
+
+  public static class TestTransactionalStageCoordinator implements TransactionalStageCoordinator {
+
+    public MockSink lookupSink = new MockSink();
+
+    public void addToApplyStage(ApplyTransactionContext context) {
+      throw new ImplementMe();
+    }
+
+    public void initiateApplyComplete() {
+      throw new ImplementMe();
+    }
+
+    public void initiateCommit() {
+      throw new ImplementMe();
+    }
+
+    public void initiateLookup() {
+      lookupSink.addLossy(new LookupEventContext());
+    }
+
+    public void initiateRecallAll() {
+      throw new ImplementMe();
+    }
+  }
+
 }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.impl;
 
@@ -64,7 +65,7 @@ public class TestObjectManager implements ObjectManager {
   }
 
   private boolean basicLookup(ChannelID channelID, Collection ids, ObjectManagerResultsContext context, int i) {
-    if(makePending) {
+    if (makePending) {
       context.makePending(channelID, ids);
     } else {
       context.setResults(channelID, ids, new ObjectManagerLookupResultsImpl(createLookResults(ids)));
@@ -73,14 +74,13 @@ public class TestObjectManager implements ObjectManager {
   }
 
   public void processPending(Object[] args) {
-    basicLookup((ChannelID)args[0], (Collection) args[1], (ObjectManagerResultsContext) args[2], -1);
+    basicLookup((ChannelID) args[0], (Collection) args[1], (ObjectManagerResultsContext) args[2], -1);
   }
-
 
   private Map createLookResults(Collection ids) {
     Map results = new HashMap();
     for (Iterator i = ids.iterator(); i.hasNext();) {
-      ObjectID  id = (ObjectID) i.next();
+      ObjectID id = (ObjectID) i.next();
       TestManagedObject tmo = new TestManagedObject(id);
       results.put(id, tmo);
     }
@@ -161,7 +161,7 @@ public class TestObjectManager implements ObjectManager {
     throw new ImplementMe();
   }
 
-  public void release(ManagedObject object) {
+  public void releaseAll(Collection objects) {
     throw new ImplementMe();
   }
 

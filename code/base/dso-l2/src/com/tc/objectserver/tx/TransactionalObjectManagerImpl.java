@@ -6,7 +6,6 @@ package com.tc.objectserver.tx;
 
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
-import com.tc.async.api.Sink;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.object.tx.ServerTransactionID;
@@ -14,13 +13,12 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.CommitTransactionContext;
-import com.tc.objectserver.context.LookupEventContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
+import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -30,10 +28,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * This class keeps track of locally checked out objects for applys and maintain the objects to txnid mapping in the
@@ -44,14 +42,9 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   private final ObjectManager                  objectManager;
   private final TransactionSequencer           sequencer;
   private final ServerGlobalTransactionManager gtxm;
-  private final Sink                           lookupSink;
-  private final Sink                           applySink;
-  private final Sink                           commitSink;
 
   private final Object                         completedTxnIdsLock     = new Object();
   private Set                                  completedTxnIDs         = new HashSet();
-
-  private final List                           processingCommits       = new LinkedList();
 
   /*
    * This map contains ObjectIDs to TxnObjectGrouping that contains these objects
@@ -65,34 +58,22 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   private final LinkedQueue                    processedPendingLookups = new LinkedQueue();
   private final LinkedQueue                    processedApplys         = new LinkedQueue();
 
-  private final int                            commitThreadsCount;
+  private final TransactionalStageCoordinator  txnStageCoordinator;
 
   public TransactionalObjectManagerImpl(ObjectManager objectManager, TransactionSequencer sequencer,
-                                        ServerGlobalTransactionManager gtxm, Sink lookupSink, Sink applySink,
-                                        Sink commitSink, int commitThreadsCount) {
+                                        ServerGlobalTransactionManager gtxm,
+                                        TransactionalStageCoordinator txnStageCoordinator) {
     this.objectManager = objectManager;
     this.sequencer = sequencer;
     this.gtxm = gtxm;
-    this.lookupSink = lookupSink;
-    this.applySink = applySink;
-    this.commitSink = commitSink;
-    this.commitThreadsCount = commitThreadsCount;
-    if (false) {
-      System.err.println("Starting the dumper");
-      Thread t = new Thread("TransactionObjectManager Dumper") {
-        public void run() {
-          ThreadUtil.reallySleep(60000);
-          dump();
-        }
-      };
-      t.start();
-    }
+    this.txnStageCoordinator = txnStageCoordinator;
   }
 
   // ProcessTransactionHandler Method
   public void addTransactions(ChannelID channelID, List txns, Collection completedTxnIds) {
     sequencer.addTransactions(txns);
     addCompletedTxnIds(completedTxnIds);
+    txnStageCoordinator.initiateLookup();
   }
 
   private void addCompletedTxnIds(Collection txnIds) {
@@ -113,8 +94,6 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   public void lookupObjectsForTransactions() {
     processPendingIfNecessary();
     while (true) {
-      processApplyComplete();
-      initiateCommitTransactions();
       ServerTransaction txn = sequencer.getNextTxnToProcess();
       if (txn == null) break;
       ServerTransactionID stxID = txn.getServerTransactionID();
@@ -122,10 +101,9 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
         lookupObjectsForApplyAndAddToSink(txn);
       } else {
         // These txns are already applied, hence just sending it to the next stage.
-        applySink.add(new ApplyTransactionContext(txn, Collections.EMPTY_MAP));
+        txnStageCoordinator.addToApplyStage(new ApplyTransactionContext(txn, Collections.EMPTY_MAP));
       }
     }
-    // log(shortDescription());
   }
 
   private void processPendingIfNecessary() {
@@ -174,13 +152,14 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       TxnObjectGrouping newGrouping = new TxnObjectGrouping(txnID, txn.getNewRoots());
       mergeTransactionGroupings(oids, newGrouping);
       applyPendingTxns.put(txnID, newGrouping);
-      applySink.add(new ApplyTransactionContext(txn, getRequiredObjectsMap(oids, newGrouping.getObjects())));
+      txnStageCoordinator.addToApplyStage(new ApplyTransactionContext(txn, getRequiredObjectsMap(oids, newGrouping
+          .getObjects())));
       makeUnpending(txn);
       // log("lookupObjectsForApplyAndAddToSink(): Success: " + txn.getServerTransactionID());
     }
   }
 
-  private String shortDescription() {
+  public String shortDescription() {
     return "TxnObjectManager : checked Out count = " + checkedOutObjects.size() + " apply pending txn = "
            + applyPendingTxns.size() + " commit pending = " + commitPendingTxns.size() + " pending txns = "
            + pendingTxnList.size() + " pending object requests = " + pendingObjectRequest.size();
@@ -274,17 +253,13 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     return processedPending;
   }
 
-  private void initiateLookup() {
-    lookupSink.addLossy(new LookupEventContext());
-  }
-
   private void addProcessedPending(LookupContext context) {
     try {
       processedPendingLookups.put(context);
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
-    initiateLookup();
+    txnStageCoordinator.initiateLookup();
   }
 
   private void processPendingTransactions() {
@@ -295,7 +270,19 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
   }
 
-  private void processApplyComplete() {
+  // ApplyTransaction stage method
+  public boolean applyTransactionComplete(ServerTransactionID stxnID) {
+    try {
+      processedApplys.put(stxnID);
+    } catch (InterruptedException e) {
+      throw new AssertionError(e);
+    }
+    txnStageCoordinator.initiateApplyComplete();
+    return true;
+  }
+
+  // Apply Complete stage method
+  public void processApplyComplete() {
     try {
       ServerTransactionID txnID;
       ArrayList txnIDs = new ArrayList();
@@ -308,17 +295,6 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
-  }
-
-  // ApplyTransaction stage method
-  public boolean applyTransactionComplete(ServerTransactionID stxnID) {
-    try {
-      processedApplys.put(stxnID);
-    } catch (InterruptedException e) {
-      throw new AssertionError(e);
-    }
-    initiateLookup();
-    return true;
   }
 
   private synchronized void processApplyTxnComplete(ArrayList txnIDs) {
@@ -338,62 +314,63 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       Assert.assertNull(applyPendingTxns.get(pTxnID));
       Object old = commitPendingTxns.put(pTxnID, grouping);
       Assert.assertNull(old);
+      txnStageCoordinator.initiateCommit();
     }
   }
-
-  private synchronized void initiateCommitTransactions() {
-    synchronized (processingCommits) {
-      while (processingCommits.size() < commitThreadsCount && commitPendingTxns.size() > 0) {
-        Map newRoots = new HashMap();
-        Map objects = new HashMap();
-        Collection txnIDs = new ArrayList();
-        for (Iterator i = commitPendingTxns.values().iterator(); i.hasNext();) {
-          TxnObjectGrouping tog = (TxnObjectGrouping) i.next();
-          newRoots.putAll(tog.getNewRoots());
-          txnIDs.addAll(tog.getTxnIDs());
-          objects.putAll(tog.getObjects());
-          i.remove();
-          if (objects.size() > 5000) {
-            break;
-          }
-        }
-        CommitTransactionContext ctc = new CommitTransactionContext(txnIDs, objects.values(), newRoots,
-                                                                    getCompletedTxnIds());
-        for (Iterator j = objects.keySet().iterator(); j.hasNext();) {
-          Object old = checkedOutObjects.remove(j.next());
-          Assert.assertNotNull(old);
-        }
-        commitSink.add(ctc);
-        processingCommits.add(ctc);
-      }
-    }
-  }
-
-  // This should be called from a thread already holding the monitor for this object
-  // private boolean addToCommitStage(TxnObjectGrouping grouping) {
-  // synchronized (processingCommits) {
-  // if (processingCommits.size() < commitThreadsCount) {
-  // Map objects = grouping.getObjects();
-  // CommitTransactionContext ctc = new CommitTransactionContext(grouping.getTxnIDs(), objects.values(), grouping
-  // .getNewRoots(), getCompletedTxnIds());
-  // for (Iterator j = objects.keySet().iterator(); j.hasNext();) {
-  // Object old = checkedOutObjects.remove(j.next());
-  // Assert.assertTrue(old == grouping);
-  // }
-  // commitSink.add(ctc);
-  // processingCommits.add(ctc);
-  // return true;
-  // }
-  // return false;
-  // }
-  // }
 
   // Commit Transaction stage method
-  public void commitTransactionsComplete(Collection txns) {
-    synchronized (processingCommits) {
-      processingCommits.remove(0);
+  public synchronized void commitTransactionsComplete(CommitTransactionContext ctc) {
+
+    if (commitPendingTxns.isEmpty()) return;
+
+    Map newRoots = new HashMap();
+    Map objects = new HashMap();
+    Collection txnIDs = new ArrayList();
+    for (Iterator i = commitPendingTxns.values().iterator(); i.hasNext();) {
+      TxnObjectGrouping tog = (TxnObjectGrouping) i.next();
+      newRoots.putAll(tog.getNewRoots());
+      txnIDs.addAll(tog.getTxnIDs());
+      objects.putAll(tog.getObjects());
+      i.remove();
+      if (objects.size() > 5000) {
+        break;
+      }
     }
-    initiateLookup();
+
+    ctc.initialize(txnIDs, objects.values(), newRoots, getCompletedTxnIds());
+
+    for (Iterator j = objects.keySet().iterator(); j.hasNext();) {
+      Object old = checkedOutObjects.remove(j.next());
+      Assert.assertNotNull(old);
+    }
+
+    if (!commitPendingTxns.isEmpty()) {
+      // More commits needed
+      txnStageCoordinator.initiateCommit();
+    }
+  }
+
+  // recall from ObjectManager on GC start
+  public void recallAllCheckedoutObject() {
+    txnStageCoordinator.initiateRecallAll();
+  }
+
+  // Recall Stage method
+  public synchronized void recallCheckedoutObject(RecallObjectsContext roc) {
+    if (roc.recallAll()) {
+      ArrayList recalled = new ArrayList();
+      for (Iterator i = checkedOutObjects.entrySet().iterator(); i.hasNext();) {
+        Entry e = (Entry) i.next();
+        TxnObjectGrouping tog = (TxnObjectGrouping) e.getValue();
+        if (tog.getServerTransactionID().isNull()) {
+          recalled.addAll(tog.getObjects().values());
+          i.remove();
+        }
+      }
+      if (!recalled.isEmpty()) {
+        objectManager.releaseAll(recalled);
+      }
+    }
   }
 
   public void dump() {

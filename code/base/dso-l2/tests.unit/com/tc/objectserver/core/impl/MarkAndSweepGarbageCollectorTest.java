@@ -286,8 +286,8 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     throw new ImplementMe();
   }
 
-  public void release(ManagedObject object) {
-    release(transactionProvider.nullTransaction(), object);
+  public void releaseAll(Collection objects) {
+    releaseAll(transactionProvider.nullTransaction(), objects);
   }
 
   public int getCheckedOutCount() {

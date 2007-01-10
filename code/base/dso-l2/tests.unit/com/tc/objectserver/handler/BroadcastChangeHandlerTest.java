@@ -38,7 +38,7 @@ import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
 import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.objectserver.tx.TestTransactionBatchManager;
-import com.tc.objectserver.tx.TestTransactionalObjectManagerImpl;
+import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -72,7 +72,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     TestServerConfigurationContext context = new TestServerConfigurationContext();
     context.transactionManager = transactionManager;
     context.channelManager = channelManager;
-    context.txnObjectManager = new TestTransactionalObjectManagerImpl();
+    context.txnObjectManager = new NullTransactionalObjectManager();
     context.clientStateManager = new TestClientStateManager();
     context.addStage(ServerConfigurationContext.MANAGED_OBJECT_REQUEST_STAGE, stageMOR);
     context.addStage(ServerConfigurationContext.RESPOND_TO_OBJECT_REQUEST_STAGE, stageRTO);

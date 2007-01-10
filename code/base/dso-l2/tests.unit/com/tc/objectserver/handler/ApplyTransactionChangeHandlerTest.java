@@ -26,7 +26,7 @@ import com.tc.objectserver.lockmanager.api.TestLockManager;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
 import com.tc.objectserver.tx.TestServerTransactionManager;
-import com.tc.objectserver.tx.TestTransactionalObjectManagerImpl;
+import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.util.SequenceID;
 
 import java.util.Collections;
@@ -59,7 +59,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     broadcastSink = stageBo.sink;
     TestServerConfigurationContext context = new TestServerConfigurationContext();
     context.transactionManager = transactionManager;
-    context.txnObjectManager = new TestTransactionalObjectManagerImpl();
+    context.txnObjectManager = new NullTransactionalObjectManager();
     context.addStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, stageBo);
     context.addStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE, stageCo);
     context.lockManager = lockManager;

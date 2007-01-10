@@ -13,17 +13,27 @@ import java.util.Set;
 
 public class CommitTransactionContext implements EventContext {
 
-  private final Collection txnIDs;
-  private final Collection objects;
-  private final Set        completedTxnIds;
-  private final Map        newRoots;
+  private Collection txnIDs;
+  private Collection objects;
+  private Set        completedTxnIds;
+  private Map        newRoots;
+  private boolean    isInitialized = false;
 
-  public CommitTransactionContext(Collection appliedTxnIDs, Collection appliedObjects, Map newRootsInAppliedTxns,
-                                  Set completedTxnIds) {
+  public CommitTransactionContext() {
+    // Empty constructor
+  }
+
+  public void initialize(Collection appliedTxnIDs, Collection appliedObjects, Map newRootsInAppliedTxns,
+                         Set completedTransactionIDs) {
     this.txnIDs = appliedTxnIDs;
     this.objects = appliedObjects;
     this.newRoots = newRootsInAppliedTxns;
-    this.completedTxnIds = completedTxnIds;
+    this.completedTxnIds = completedTransactionIDs;
+    isInitialized = true;
+  }
+
+  public boolean isInitialized() {
+    return isInitialized;
   }
 
   public Set getCompletedTransactionIDs() {

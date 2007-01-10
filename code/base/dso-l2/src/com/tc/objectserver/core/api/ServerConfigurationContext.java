@@ -20,6 +20,7 @@ import com.tc.objectserver.tx.TransactionalObjectManager;
 public interface ServerConfigurationContext extends ConfigurationContext {
 
   public final static String APPLY_CHANGES_STAGE                                = "apply_changes_stage";
+  public static final String APPLY_COMPLETE_STAGE                               = "apply_complete_stage";
   public final static String BROADCAST_CHANGES_STAGE                            = "broadcast_changes_stage";
   public final static String MANAGED_ROOT_REQUEST_STAGE                         = "send_managed_object_stage";
   public final static String RESPOND_TO_OBJECT_REQUEST_STAGE                    = "respond_to_request_stage";
@@ -41,6 +42,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String MANAGED_OBJECT_FLUSH_STAGE                         = "managed_object_flush_stage";
   public static final String JMXREMOTE_TUNNEL_STAGE                             = "jmxremote_tunnel_stage";
   public static final String JMXREMOTE_CONNECT_STAGE                            = "jmxremote_connect_stage";
+  public static final String RECALL_OBJECTS_STAGE                               = "recall_objects_stage";
 
   public ObjectManager getObjectManager();
 

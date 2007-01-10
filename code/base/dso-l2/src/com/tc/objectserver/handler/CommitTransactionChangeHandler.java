@@ -31,14 +31,16 @@ public class CommitTransactionChangeHandler extends AbstractEventHandler {
 
   public void handleEvent(EventContext context) {
     CommitTransactionContext ctc = (CommitTransactionContext) context;
-    Collection appliedTxns = ctc.getAppliedServerTransactionIDs();
-    PersistenceTransaction ptx = ptxp.newTransaction();
-    transactionManager.release(ptx, ctc.getObjects(), ctc.getNewRoots());
-    gtxm.commitAll(ptx, appliedTxns);
-    gtxm.completeTransactions(ptx, ctc.getCompletedTransactionIDs());
-    ptx.commit();
-    transactionManager.committed(appliedTxns);
-    txnObjectManager.commitTransactionsComplete(appliedTxns);
+    txnObjectManager.commitTransactionsComplete(ctc);
+    if (ctc.isInitialized()) {
+      Collection appliedTxns = ctc.getAppliedServerTransactionIDs();
+      PersistenceTransaction ptx = ptxp.newTransaction();
+      transactionManager.release(ptx, ctc.getObjects(), ctc.getNewRoots());
+      gtxm.commitAll(ptx, appliedTxns);
+      gtxm.completeTransactions(ptx, ctc.getCompletedTransactionIDs());
+      ptx.commit();
+      transactionManager.committed(appliedTxns);
+    }
   }
 
   public void initialize(ConfigurationContext context) {

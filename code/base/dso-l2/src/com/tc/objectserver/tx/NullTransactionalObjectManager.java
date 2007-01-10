@@ -6,11 +6,13 @@ package com.tc.objectserver.tx;
 
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.ServerTransactionID;
+import com.tc.objectserver.context.CommitTransactionContext;
+import com.tc.objectserver.context.RecallObjectsContext;
 
 import java.util.Collection;
 import java.util.List;
 
-public class TestTransactionalObjectManagerImpl implements TransactionalObjectManager {
+public class NullTransactionalObjectManager implements TransactionalObjectManager {
 
   public void addTransactions(ChannelID channelID, List txns, Collection completedTxnIds) {
     // Nop
@@ -25,7 +27,19 @@ public class TestTransactionalObjectManagerImpl implements TransactionalObjectMa
     // Nop
   }
 
-  public void commitTransactionsComplete(Collection txns) {
+  public void commitTransactionsComplete(CommitTransactionContext ctc) {
+    // Nop
+  }
+
+  public void processApplyComplete() {
+    // Nop
+  }
+
+  public void recallAllCheckedoutObject() {
+    // Nop
+  }
+
+  public void recallCheckedoutObject(RecallObjectsContext roc) {
     // Nop
   }
 
