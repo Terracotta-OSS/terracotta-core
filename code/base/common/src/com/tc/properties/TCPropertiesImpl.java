@@ -28,7 +28,7 @@ import java.util.Map.Entry;
  */
 public class TCPropertiesImpl implements TCProperties {
 
-  public static final String        SYSTEM_PROP_PREFIX         = "com.tc.properties";
+  public static final String        SYSTEM_PROP_PREFIX         = "com.tc";
 
   private static final LogBuffer    LOG_BUFFER                 = new LogBuffer();
 

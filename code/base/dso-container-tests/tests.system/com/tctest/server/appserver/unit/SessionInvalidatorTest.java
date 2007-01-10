@@ -201,8 +201,8 @@ public class SessionInvalidatorTest extends AbstractAppServerTestCase {
     final int defaultMaxIdleSeconds = 5;
     final int waitFactor = 4;
     final List props = new ArrayList();
-    props.add("-Dcom.tc.properties.session.invalidator.sleep=" + String.valueOf(invalidatorSleepSeconds));
-    props.add("-Dcom.tc.properties.session.maxidle.seconds=" + String.valueOf(defaultMaxIdleSeconds));
+    props.add("-Dcom.tc.session.invalidator.sleep=" + String.valueOf(invalidatorSleepSeconds));
+    props.add("-Dcom.tc.session.maxidle.seconds=" + String.valueOf(defaultMaxIdleSeconds));
     port = startAppServer(true, new Properties(), (String[]) props.toArray(new String[] {})).serverPort();
 
     HttpClient client = HttpUtil.createHttpClient();
