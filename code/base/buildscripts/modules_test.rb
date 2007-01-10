@@ -267,6 +267,7 @@ class SubtreeTestRun
     def initialize(subtree, static_resources, buildconfig, testrun_results, build_results, build_environment, config_source, jvm_set, ant, platform, test_patterns, aggregation_directory)
         @subtree = subtree
         @static_resources = static_resources
+        @buildconfig = buildconfig
         @testrun_results = testrun_results
         @test_patterns = test_patterns
         @build_results = build_results
@@ -282,6 +283,11 @@ class SubtreeTestRun
         @extra_jvmargs = buildconfig["jvmargs"] || [ ]
         @extra_jvmargs += config_source.as_array('jvmargs') unless config_source.as_array('jvmargs').nil?
         @jvm = tests_jvm(jvm_set)
+    end
+
+    # Returns true if this test run requires a container to run.
+    def requires_container?
+      @requires_container ||= @buildconfig['requires-container'] =~ /^\s*true\s*$/i
     end
 
     # Does all preparations necessary to run the given set of tests.
@@ -311,13 +317,10 @@ class SubtreeTestRun
             puts "This subtree requires a DSO boot JAR to run tests. Building one."
             module_set = @subtree.build_module.module_set
 
-            boot_jar   = BootJar.new(@build_results,
-            @jvm,
-            @testrun_results.boot_jar_directory(@subtree),
-            module_set,
-            @ant,
-            @platform,
-            @subtree.boot_jar_config_file(@static_resources).to_s)
+            boot_jar = BootJar.new(@build_results, @jvm,
+                @testrun_results.boot_jar_directory(@subtree),
+                module_set, @ant, @platform,
+                @subtree.boot_jar_config_file(@static_resources).to_s)
             boot_jar.ensure_created
         end
 

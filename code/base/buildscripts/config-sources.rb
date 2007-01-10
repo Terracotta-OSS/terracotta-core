@@ -11,6 +11,14 @@
 # methods that are implemented in terms of the base methods. Requires the class that
 # mixes this in to implement [] properly.
 module ConfigSource
+    include Enumerable
+
+    def each
+        for key in keys
+            yield(key, self[key])
+        end
+    end
+
     # An exception subclass for exceptions having to do with the configuration system.
     class ConfigError < StandardError
     end
@@ -56,23 +64,23 @@ end
 # it's typically placed first inside the CompositeConfigSource.
 class InternalConfigSource
     include ConfigSource
-    
+
     def initialize
         @properties = { }
     end
-    
+
     def []=(key, value)
         @properties[key] = value
     end
-    
+
     def [](key)
         @properties[key]
     end
-    
+
     def keys
         @properties.keys
     end
-    
+
     def to_s
         "internal configuration source"
     end
