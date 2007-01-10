@@ -8,7 +8,9 @@
 
 TOPDIR=`dirname "$0"`/../..
 . "${TOPDIR}"/libexec/tc-functions.sh
-. "${TOPDIR}"/bin/dso-env.sh -q tc-config.xml
+
+TC_CONFIG_PATH="tc-config.xml"
+. "${TOPDIR}"/bin/dso-env.sh
 
 tc_install_dir "${TOPDIR}"/.. true
 JAVA_OPTS="${TC_JAVA_OPTS} -Dcom.sun.management.jmxremote"
