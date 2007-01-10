@@ -21,20 +21,20 @@ import java.util.NoSuchElementException;
 import java.util.Map.Entry;
 
 public final class TxnObjectGrouping implements PrettyPrintable {
-  private static final int          MAX_OBJECTS_TO_COMMIT = TCPropertiesImpl.getProperties()
-                                                              .getInt("l2.objectmanager.maxObjectsToCommit");
-  private static final int          MAX_TXNS_TO_COMMIT    = TCPropertiesImpl.getProperties()
-                                                              .getInt("l2.objectmanager.maxTxnsToCommit");
+  private static final int          MAX_OBJECTS    = TCPropertiesImpl.getProperties()
+                                                       .getInt("l2.objectmanager.maxObjectsInTxnObjGrouping");
+  private static final int          MAX_TXNS       = TCPropertiesImpl.getProperties()
+                                                       .getInt("l2.objectmanager.maxTxnsInTxnObjectGrouping");
 
-  private static final State        APPLY_PENDING         = new State("APPLY_PENDING");
-  private static final State        COMMIT_PENDING        = new State("COMMIT_PENDING");
+  private static final State        APPLY_PENDING  = new State("APPLY_PENDING");
+  private static final State        COMMIT_PENDING = new State("COMMIT_PENDING");
 
   private final ServerTransactionID txID;
   private Map                       txns;
   private Map                       objects;
   private final Map                 newRootsMap;
   private int                       pendingApplys;
-  private boolean                   isActive              = true;
+  private boolean                   isActive       = true;
 
   public TxnObjectGrouping(ServerTransactionID sTxID, Map newRootsMap) {
     this.txID = sTxID;
@@ -106,7 +106,7 @@ public final class TxnObjectGrouping implements PrettyPrintable {
   }
 
   public boolean limitReached() {
-    return txns.size() > MAX_TXNS_TO_COMMIT || objects.size() > MAX_OBJECTS_TO_COMMIT;
+    return txns.size() > MAX_TXNS || objects.size() > MAX_OBJECTS;
   }
 
   public int hashCode() {

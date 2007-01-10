@@ -41,6 +41,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
@@ -74,10 +75,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private static final byte                    NEW_REQUEST              = 0x02;
   private static final byte                    REMOVE_ON_RELEASE        = 0x04;
 
+  private static final int                     MAX_COMMIT_SIZE              = TCPropertiesImpl
+                                                                            .getProperties()
+                                                                            .getInt(
+                                                                                    "l2.objectmanager.maxObjectsToCommit");
   // XXX:: Should go to property file
   private static final int                     INITIAL_SET_SIZE         = 1;
   private static final float                   LOAD_FACTOR              = 0.75f;
-  private static final int                     COMMIT_SIZE              = 5000;
   private static final int                     MAX_LOOKUP_OBJECTS_COUNT = 5000;
   private static final long                    REMOVE_THRESHOLD         = 300;
 
@@ -833,7 +837,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     for (Iterator i = toFlush.iterator(); i.hasNext();) {
       int count = 0;
       ManagedObjectFlushingContext mofc = new ManagedObjectFlushingContext();
-      while (count < COMMIT_SIZE && i.hasNext()) {
+      while (count < MAX_COMMIT_SIZE && i.hasNext()) {
         mofc.addObjectToFlush(i.next());
         count++;
         // i.remove();
