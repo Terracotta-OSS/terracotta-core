@@ -69,7 +69,7 @@ class Environment
     def username
         if @username.nil?
             if os_type(:nice, :not_extended) == 'Solaris'
-                @username = @platform.exec("/usr/ucb/whoami").strip # Fucking Solaris
+                @username = @platform.exec("/usr/ucb/whoami").strip
             else
                 @username = @platform.exec("whoami").strip
             end
@@ -101,7 +101,7 @@ class Environment
         end
         
         # Grab the Solaris version; turns '5.9' into '9', for example. (Solaris has a really
-        # fucked-up, bizarre numbering scheme.)
+        # bizarre numbering scheme.)
         #
         # FIXME: This should include patchlevel.
         if type =~ /Solaris/i
