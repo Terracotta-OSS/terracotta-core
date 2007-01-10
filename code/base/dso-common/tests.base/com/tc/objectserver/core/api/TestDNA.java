@@ -1,10 +1,11 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.core.api;
 
 import com.tc.object.ObjectID;
-//import com.tc.object.TCObject;
+// import com.tc.object.TCObject;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAException;
@@ -40,9 +41,9 @@ public class TestDNA implements DNA {
     this.isDelta = isDelta;
   }
 
-/*  public void setObject(TCObject object) throws DNAException {
-    return;
-  } */
+  /*
+   * public void setObject(TCObject object) throws DNAException { return; }
+   */
 
   public String getTypeName() {
     return typeName;
@@ -91,5 +92,9 @@ public class TestDNA implements DNA {
 
   public boolean isDelta() {
     return isDelta;
+  }
+
+  public String toString() {
+    return "TestDNA(" + objectID + ", version = " + version + ")";
   }
 }

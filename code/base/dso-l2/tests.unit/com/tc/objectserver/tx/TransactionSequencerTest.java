@@ -12,13 +12,21 @@ import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.test.TCTestCase;
+import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 public class TransactionSequencerTest extends TCTestCase {
 
@@ -71,7 +79,7 @@ public class TransactionSequencerTest extends TCTestCase {
     assertTrue(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
     // Nomore txns
     assertNull(sequencer.getNextTxnToProcess());
-    sequencer.processedPendingTxn(t1);
+    sequencer.makeUnpending(t1);
     assertFalse(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
     // Nomore txns
     assertNull(sequencer.getNextTxnToProcess());
@@ -92,7 +100,7 @@ public class TransactionSequencerTest extends TCTestCase {
     // Since locks are common no txn should be available
     assertNull(sequencer.getNextTxnToProcess());
     assertTrue(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
-    sequencer.processedPendingTxn(t1);
+    sequencer.makeUnpending(t1);
     assertFalse(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
     // Rest of the txns
     assertEquals(txns, getAllTxnsPossible());
@@ -113,7 +121,7 @@ public class TransactionSequencerTest extends TCTestCase {
     // Since locks are common no txn should be available
     assertNull(sequencer.getNextTxnToProcess());
     assertTrue(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
-    sequencer.processedPendingTxn(t1);
+    sequencer.makeUnpending(t1);
     assertFalse(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
     // Rest of the txns
     assertEquals(txns, getAllTxnsPossible());
@@ -134,7 +142,7 @@ public class TransactionSequencerTest extends TCTestCase {
     // Since locks are common no txn should be available
     assertNull(sequencer.getNextTxnToProcess());
     assertTrue(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
-    sequencer.processedPendingTxn(t1);
+    sequencer.makeUnpending(t1);
     assertFalse(sequencer.isPending(Arrays.asList(new Object[] { t1 })));
     // Rest of the txns
     assertEquals(txns, getAllTxnsPossible());
@@ -161,12 +169,215 @@ public class TransactionSequencerTest extends TCTestCase {
     ServerTransaction t2 = sequencer.getNextTxnToProcess();
     assertNotNull(t2);
     try {
-      sequencer.processedPendingTxn(t2);
+      sequencer.makeUnpending(t2);
       fail();
     } catch (Throwable t) {
       // expected
     }
-    sequencer.processedPendingTxn(t1);
+    sequencer.makeUnpending(t1);
+  }
+
+  public void testOrderingByOID() {
+    List txns = new ArrayList();
+
+    int lock = 0;
+
+    ServerTransaction txn1 = new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(1),
+                                                       new SequenceID(sqID++), createLocks(lock, lock++), channelID,
+                                                       createDNAs(1, 1), new ObjectStringSerializer(),
+                                                       Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList());
+
+    ServerTransaction txn2 = new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(2),
+                                                       new SequenceID(sqID++), createLocks(lock, lock++), channelID,
+                                                       createDNAs(2, 2), new ObjectStringSerializer(),
+                                                       Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList());
+
+    ServerTransaction txn3 = new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(3),
+                                                       new SequenceID(sqID++), createLocks(lock, lock++), channelID,
+                                                       createDNAs(2, 3), new ObjectStringSerializer(),
+                                                       Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList());
+
+    ServerTransaction txn4 = new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(4),
+                                                       new SequenceID(sqID++), createLocks(lock, lock++), channelID,
+                                                       createDNAs(1, 2), new ObjectStringSerializer(),
+                                                       Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList());
+
+    txns.add(txn1);
+    txns.add(txn2);
+    txns.add(txn3);
+    txns.add(txn4);
+    sequencer.addTransactions(txns);
+
+    sequencer.makePending(sequencer.getNextTxnToProcess());
+    sequencer.makePending(sequencer.getNextTxnToProcess());
+
+    Object o;
+    o = sequencer.getNextTxnToProcess();
+    Assert.assertNull(o);
+    o = sequencer.getNextTxnToProcess();
+    Assert.assertNull(o);
+
+    sequencer.makeUnpending(txn2);
+    sequencer.makeUnpending(txn1);
+
+    ServerTransaction shouldBe3 = sequencer.getNextTxnToProcess();
+    ServerTransaction shouldBe4 = sequencer.getNextTxnToProcess();
+
+    Assert.assertEquals(txn3, shouldBe3);
+    Assert.assertEquals(txn4, shouldBe4);
+  }
+
+  public void testOrderingByLock() {
+    List txns = new ArrayList();
+
+    int oid = 0;
+
+    ServerTransaction txn1 = new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(1),
+                                                       new SequenceID(sqID++), createLocks(1, 1), channelID,
+                                                       createDNAs(oid, oid++), new ObjectStringSerializer(),
+                                                       Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList());
+
+    ServerTransaction txn2 = new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(2),
+                                                       new SequenceID(sqID++), createLocks(2, 2), channelID,
+                                                       createDNAs(oid, oid++), new ObjectStringSerializer(),
+                                                       Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList());
+
+    ServerTransaction txn3 = new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(3),
+                                                       new SequenceID(sqID++), createLocks(2, 3), channelID,
+                                                       createDNAs(oid, oid++), new ObjectStringSerializer(),
+                                                       Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList());
+
+    ServerTransaction txn4 = new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(4),
+                                                       new SequenceID(sqID++), createLocks(1, 2), channelID,
+                                                       createDNAs(oid, oid++), new ObjectStringSerializer(),
+                                                       Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList());
+
+    txns.add(txn1);
+    txns.add(txn2);
+    txns.add(txn3);
+    txns.add(txn4);
+    sequencer.addTransactions(txns);
+
+    sequencer.makePending(sequencer.getNextTxnToProcess());
+    sequencer.makePending(sequencer.getNextTxnToProcess());
+
+    Object o;
+    o = sequencer.getNextTxnToProcess();
+    Assert.assertNull(o);
+    o = sequencer.getNextTxnToProcess();
+    Assert.assertNull(o);
+
+    sequencer.makeUnpending(txn2);
+    sequencer.makeUnpending(txn1);
+
+    ServerTransaction shouldBe3 = sequencer.getNextTxnToProcess();
+    ServerTransaction shouldBe4 = sequencer.getNextTxnToProcess();
+
+    Assert.assertEquals(txn3, shouldBe3);
+    Assert.assertEquals(txn4, shouldBe4);
+  }
+
+  public void testRandom() {
+    for (int i = 0; i < 100; i++) {
+      System.err.println("Running testRandom : " + i);
+      doRandom();
+      sequencer = new TransactionSequencer();
+    }
+  }
+
+  public void testRandomFailedSeed1() {
+    long seed = -7748167846395034562L;
+    System.err.println("Testing failed seed : " + seed);
+    doRandom(seed);
+  }
+
+  public void testRandomFailedSeed2() {
+    long seed = -149113776740941224L;
+    System.err.println("Testing failed seed : " + seed);
+    doRandom(seed);
+  }
+  
+  // XXX: multi-threaded version of this?
+  // XXX: add cases with locks in common between TXNs
+  private void doRandom() {
+    final long seed = new SecureRandom().nextLong();
+    System.err.println("seed is " + seed);
+    doRandom(seed);
+  }
+
+  private void doRandom(long seed) {
+    Random rnd = new Random(seed);
+
+    int lock = 0;
+    final int numObjects = 25;
+    long versionsIn[] = new long[numObjects];
+    long versionsRecv[] = new long[numObjects];
+
+    Set pending = new HashSet();
+
+    for (int loop = 0; loop < 10000; loop++) {
+      List txns = new ArrayList();
+      for (int i = 0, n = rnd.nextInt(3) + 1; i < n; i++) {
+        txns.add(createRandomTxn(rnd.nextInt(3) + 1, versionsIn, rnd, lock++));
+      }
+
+      sequencer.addTransactions(txns);
+
+      ServerTransaction next = null;
+      while ((next = sequencer.getNextTxnToProcess()) != null) {
+        if (rnd.nextInt(3) == 0) {
+          sequencer.makePending(next);
+          pending.add(next);
+          continue;
+        }
+
+        processTransaction(next, versionsRecv);
+
+        if (pending.size() > 0 && rnd.nextInt(4) == 0) {
+          for (int i = 0, n = rnd.nextInt(pending.size()); i < n; i++) {
+            Iterator iter = pending.iterator();
+            ServerTransaction pendingTxn = (ServerTransaction) iter.next();
+            iter.remove();
+            processTransaction(pendingTxn, versionsRecv);
+            sequencer.makeUnpending(pendingTxn);
+          }
+        }
+      }
+
+    }
+  }
+
+  private void processTransaction(ServerTransaction next, long[] versionsRecv) {
+    for (Iterator iter = next.getChanges().iterator(); iter.hasNext();) {
+      TestDNA dna = (TestDNA) iter.next();
+      int oid = (int) dna.getObjectID().toLong();
+      long ver = dna.version;
+      long expect = versionsRecv[oid] + 1;
+      if (expect != ver) {
+        //
+        throw new AssertionError(oid + " : Expected change to increment to version " + expect
+                                 + ", but change was to version " + ver);
+      }
+      versionsRecv[oid] = ver;
+    }
+  }
+
+  private ServerTransaction createRandomTxn(int numObjects, long[] versions, Random rnd, int lockID) {
+    Map dnas = new HashMap();
+    while (numObjects > 0) {
+      int i = rnd.nextInt(versions.length);
+      if (!dnas.containsKey(new Integer(i))) {
+        TestDNA dna = new TestDNA(new ObjectID(i));
+        dna.version = ++versions[i];
+        dnas.put(new Integer(i), dna);
+        numObjects--;
+      }
+    }
+
+    return new ServerTransactionImpl(new TxnBatchID(batchID), new TransactionID(txnID++), new SequenceID(sqID++),
+                                     createLocks(lockID, lockID), channelID, new ArrayList(dnas.values()),
+                                     new ObjectStringSerializer(), Collections.EMPTY_MAP, TxnType.NORMAL,
+                                     new LinkedList());
   }
 
   private List getAllTxnsPossible() {

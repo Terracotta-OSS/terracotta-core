@@ -5,30 +5,35 @@ package com.tc.objectserver.tx;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.lockmanager.api.LockID;
 import com.tc.util.Assert;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class TransactionSequencer {
 
   private static final TCLogger logger      = TCLogging.getLogger(TransactionSequencer.class);
-  private final Map             pendingTxns = new LinkedHashMap();
+
+  private final Set             pendingTxns = new HashSet();
+
   private final LinkedList      txnQ        = new LinkedList();
+  private final LinkedList      blockedQ    = new LinkedList();
+
+  private final BlockedSet      locks       = new BlockedSet();
+  private final BlockedSet      objects     = new BlockedSet();
 
   private int                   txnsCount;
+  private boolean               reconcile   = false;
 
   public synchronized void addTransactions(List txns) {
     if (false) log_incoming(txns);
     txnQ.addAll(txns);
-    txnsCount+= txns.size();
+    txnsCount += txns.size();
   }
 
   private void log_incoming(List txns) {
@@ -39,22 +44,43 @@ public class TransactionSequencer {
   }
 
   public synchronized ServerTransaction getNextTxnToProcess() {
+    reconcileIfNeeded();
     while (!txnQ.isEmpty()) {
+
       ServerTransaction txn = (ServerTransaction) txnQ.removeFirst();
-      if (toProcessOrMakePending(txn)) {
+      if (isBlocked(txn)) {
+        addBlocked(txn);
+      } else {
         if (false) log_outgoing(txn);
         txnsCount--;
         return txn;
       }
     }
-    if(false) log_no_txns_to_process();
+    if (false) log_no_txns_to_process();
     return null;
+  }
+
+  private void reconcileIfNeeded() {
+    if (reconcile) {
+      // Add to begining
+      txnQ.addAll(0, blockedQ);
+      blockedQ.clear();
+      locks.clearBlocked();
+      objects.clearBlocked();
+      reconcile = false;
+    }
+  }
+
+  private void addBlocked(ServerTransaction txn) {
+    locks.addBlocked(Arrays.asList(txn.getLockIDs()));
+    objects.addBlocked(txn.getObjectIDs());
+    blockedQ.add(txn);
   }
 
   private void log_no_txns_to_process() {
     if (txnsCount != 0) {
       int psize = pendingTxns.size();
-      logger.info("No More Txns that can be processed : txnCount = " + txnsCount + " of which pending txns = " + psize);
+      logger.info("No More Txns that can be processed : txnCount = " + txnsCount + " and pending txns = " + psize);
     }
   }
 
@@ -62,35 +88,22 @@ public class TransactionSequencer {
     logger.info("Outgoing : " + txn);
   }
 
-  private boolean toProcessOrMakePending(ServerTransaction txn) {
-    LockID[] locks = txn.getLockIDs();
-    Collection oids = txn.getObjectIDs();
-    for (Iterator i = pendingTxns.values().iterator(); i.hasNext();) {
-      PendingAccount pe = (PendingAccount) i.next();
-      if (pe.containsAnyLock(locks) || pe.containsAnyOids(oids)) {
-        pe.addPending(txn);
-        return false;
-      }
-    }
-    return true;
+  private boolean isBlocked(ServerTransaction txn) {
+    return locks.isBlocked(Arrays.asList(txn.getLockIDs())) || objects.isBlocked(txn.getObjectIDs());
   }
 
   public synchronized void makePending(ServerTransaction txn) {
-    Object old = pendingTxns.put(txn.getServerTransactionID(), new PendingAccount(txn));
-    txnsCount ++;
-    Assert.assertNull(old);
+    locks.makePending(Arrays.asList(txn.getLockIDs()));
+    objects.makePending(txn.getObjectIDs());
+    Assert.assertTrue(pendingTxns.add(txn.getServerTransactionID()));
     if (false) logger.info("Make Pending : " + txn);
   }
 
-  public synchronized void processedPendingTxn(ServerTransaction txn) {
-    PendingAccount pa = (PendingAccount) pendingTxns.remove(txn.getServerTransactionID());
-    if (pa == null) { throw new AssertionError("processedPendingTxn() called without calling makePending()"); }
-    txnsCount--;
-    LinkedList txns = pa.getPendingTxnList();
-    while (!txns.isEmpty()) {
-      // Order need to be maintained
-      txnQ.addFirst(txns.removeLast());
-    }
+  public synchronized void makeUnpending(ServerTransaction txn) {
+    Assert.assertTrue(pendingTxns.remove(txn.getServerTransactionID()));
+    locks.makeUnpending(Arrays.asList(txn.getLockIDs()));
+    objects.makeUnpending(txn.getObjectIDs());
+    reconcile = true;
     if (false) logger.info("Processed Pending : " + txn);
   }
 
@@ -100,61 +113,38 @@ public class TransactionSequencer {
   boolean isPending(List txns) {
     for (Iterator i = txns.iterator(); i.hasNext();) {
       ServerTransaction st = (ServerTransaction) i.next();
-      if (pendingTxns.containsKey(st.getServerTransactionID())) return true;
+      if (pendingTxns.contains(st.getServerTransactionID())) return true;
     }
     return false;
   }
 
-  private static final class PendingAccount {
+  private static final class BlockedSet {
 
-    private final ServerTransaction pendingTxn;
-    private final Set               locks = new HashSet();
-    private final LinkedList        txns  = new LinkedList();
-    private final Set               oids  = new HashSet();
+    Set cause  = new HashSet();
+    Set effect = new HashSet();
 
-    public PendingAccount(ServerTransaction txn) {
-      this.pendingTxn = txn;
-      addLocks(txn);
-      addObjectIds(txn);
-    }
-
-    public LinkedList getPendingTxnList() {
-      return txns;
-    }
-
-    public void addPending(ServerTransaction txn) {
-      addLocks(txn);
-      addObjectIds(txn);
-      txns.add(txn);
-    }
-
-    private void addObjectIds(ServerTransaction txn) {
-      oids.addAll(txn.getObjectIDs());
-    }
-
-    public boolean containsAnyLock(LockID[] lockIDs) {
-      for (int i = 0; i < lockIDs.length; i++) {
-        if (locks.contains(lockIDs[i])) return true;
+    public boolean isBlocked(Collection keys) {
+      for (Iterator i = keys.iterator(); i.hasNext();) {
+        Object o = i.next();
+        if (cause.contains(o) || effect.contains(o)) { return true; }
       }
       return false;
     }
 
-    public boolean containsAnyOids(Collection oidsList) {
-      for (Iterator i = oidsList.iterator(); i.hasNext();) {
-        if (oids.contains(i.next())) return true;
-      }
-      return false;
+    public void makePending(Collection keys) {
+      cause.addAll(keys);
     }
 
-    private void addLocks(ServerTransaction txn) {
-      LockID[] lockIDs = txn.getLockIDs();
-      for (int i = 0; i < lockIDs.length; i++) {
-        locks.add(lockIDs[i]);
-      }
+    public void makeUnpending(Collection keys) {
+      cause.removeAll(keys);
     }
 
-    public String toString() {
-      return "PendingAccount(" + pendingTxn + ") :  Locks = " + locks + " : txns : " + txns;
+    public void addBlocked(Collection keys) {
+      effect.addAll(keys);
+    }
+
+    public void clearBlocked() {
+      effect.clear();
     }
   }
 }

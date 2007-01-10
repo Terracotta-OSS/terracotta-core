@@ -235,7 +235,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   private void makeUnpending(ServerTransaction txn) {
     if (pendingTxnList.remove(txn)) {
-      sequencer.processedPendingTxn(txn);
+      sequencer.makeUnpending(txn);
     }
   }
 
