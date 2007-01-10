@@ -76,7 +76,7 @@ public class StageImpl implements Stage {
   }
 
   public String toString() {
-    return "StagImpl(" + name + ")";
+    return "StageImpl(" + name + ")";
   }
 
   private static class WorkerThread extends Thread {
