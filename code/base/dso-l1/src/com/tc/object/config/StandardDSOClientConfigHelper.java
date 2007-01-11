@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config;
 
@@ -897,10 +898,11 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
     addIncludePattern("com.tcspring.ComplexBeanId", true, true, true);
     // addIncludePattern("com.tcspring.BeanContainer", true, true, true);
-    getOrCreateSpec("com.tcspring.BeanContainer").addTransient("isInitialized"); //.setHonorTransient(true);
-    
+    getOrCreateSpec("com.tcspring.BeanContainer").addTransient("isInitialized"); // .setHonorTransient(true);
+
     // scoped beans
-    // addTransient("org.springframework.web.context.request.ServletRequestAttributes$DestructionCallbackBindingListener", "aw$MIXIN_0");
+    // addTransient("org.springframework.web.context.request.ServletRequestAttributes$DestructionCallbackBindingListener",
+    // "aw$MIXIN_0");
     addIncludePattern("com.tcspring.SessionProtocol$DestructionCallbackBindingListener", true, true, true);
     addIncludePattern("com.tcspring.ScopedBeanDestructionCallBack", true, true, true);
 
@@ -1406,12 +1408,8 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     return faultCount < 0 ? this.configSetupManager.dsoL1Config().faultCount().getInt() : faultCount;
   }
 
-  private synchronized boolean isInAdaptableCache(String name) {
-    return adaptableCache.containsKey(name);
-  }
-
-  private synchronized boolean isCachedAdaptable(String name) {
-    return ((Boolean) adaptableCache.get(name)).booleanValue();
+  private synchronized Boolean readAdaptableCache(String name) {
+    return (Boolean) adaptableCache.get(name);
   }
 
   private synchronized boolean cacheIsAdaptable(String name, boolean adaptable) {
@@ -1451,7 +1449,8 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   }
 
   public boolean shouldBeAdapted(String fullClassName) {
-    if (isInAdaptableCache(fullClassName)) { return isCachedAdaptable(fullClassName); }
+    Boolean cache = readAdaptableCache(fullClassName);
+    if (cache != null) { return cache.booleanValue(); }
 
     // @see isTCPatternMatchingHack() note elsewhere
     if (isTCPatternMatchingHack(fullClassName) || permanentExcludesMatcher.match(fullClassName)) {
