@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver.load;
 
@@ -27,14 +28,18 @@ public class Node implements Runnable {
   protected final long            duration;
   protected final int             numRequests[];
   protected final SynchronizedRef error  = new SynchronizedRef(null);
-  protected final URL             mutateUrl;
+  protected final URL[]           mutateUrls;
   protected final URL             validateUrl;
   protected final Random          random = new Random();
 
   public Node(URL mutateUrl, URL validateUrl, int numSessions, long duration) {
+    this(new URL[] { mutateUrl }, validateUrl, numSessions, duration);
+  }
+
+  public Node(URL[] mutateUrls, URL validateUrl, int numSessions, long duration) {
     this.client = new HttpClient();
     this.client.getHttpConnectionManager().getParams().setConnectionTimeout(60 * 1000);
-    this.mutateUrl = mutateUrl;
+    this.mutateUrls = mutateUrls;
     this.validateUrl = validateUrl;
     this.sessions = createStates(numSessions);
     this.duration = duration;
@@ -71,11 +76,14 @@ public class Node implements Runnable {
   }
 
   private void makeRequests() throws Exception {
+    final int numURLS = mutateUrls.length;
+
     int session = 0;
     final long end = System.currentTimeMillis() + duration;
     while (System.currentTimeMillis() <= end) {
       HttpState httpState = sessions[session];
       client.setState(httpState);
+      URL mutateUrl = numURLS == 1 ? mutateUrls[0] : mutateUrls[random.nextInt(mutateUrls.length)];
       int newVal = HttpUtil.getInt(mutateUrl, client);
       numRequests[session]++;
       Assert.assertEquals(getSessionID(httpState), numRequests[session], newVal);
