@@ -8,13 +8,14 @@ import com.tc.object.TCObject;
 import com.tc.object.bytecode.Clearable;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.TCMap;
 import com.tc.object.bytecode.hook.impl.Util;
 
 /*
  * This class will be merged with java.lang.HashMap in the bootjar. This HashMap can store ObjectIDs instead of Objects
  * to save memory and transparently fault Objects as needed. It can also clear references.
  */
-public class HashMapTC extends HashMap implements Manageable, Clearable {
+public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
 
   // General Rules to follow in this class
   // 1) Values could be ObjectIDs. In shared mode, always do a lookup before returning to outside world.
@@ -170,6 +171,21 @@ public class HashMapTC extends HashMap implements Manageable, Clearable {
       return super.remove(key);
     }
   }
+  
+  /**
+   * This method is only to be invoked from the applicator thread. This method does not need to check if the
+   * map is managed as it will always be managed when called by the applicator thread. In addition, this method
+   * does not need to be synchronized under getResolveLock() as the applicator thread is already under the
+   * scope of such synchronization.
+   */
+  public void __tc_applicator_remove(Object key) {
+    if (key == null) {
+      super.remove(key);
+    } else {
+      KeyWrapper kw = new KeyWrapper(key);
+      super.remove(kw);
+    }
+  }
 
   public Object clone() {
     Manageable clone = (Manageable) super.clone();
@@ -208,6 +224,16 @@ public class HashMapTC extends HashMap implements Manageable, Clearable {
     } else {
       return super.put(key, value);
     }
+  }
+  
+  /**
+   * This method is only to be invoked from the applicator thread. This method does not need to check if the
+   * map is managed as it will always be managed when called by the applicator thread. In addition, this method
+   * does not need to be synchronized under getResolveLock() as the applicator thread is already under the
+   * scope of such synchronization.
+   */
+  public void __tc_applicator_put(Object key, Object value) {
+    super.put(key, value);
   }
 
   public int size() {

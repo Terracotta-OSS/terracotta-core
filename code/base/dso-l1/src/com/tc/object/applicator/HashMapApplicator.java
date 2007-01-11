@@ -9,6 +9,7 @@ import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
 import com.tc.object.bytecode.Manageable;
+import com.tc.object.bytecode.TCMap;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
@@ -102,11 +103,21 @@ public class HashMapApplicator extends BaseApplicator {
 
         Object value = getObjectForValue(objectManager, v);
 
-        m.put(pkey, value);
+        if (m instanceof TCMap) {
+          ((TCMap)m).__tc_applicator_put(pkey, value);
+        } else {
+          m.put(pkey, value);
+        }
+
         break;
       case SerializationUtil.REMOVE:
         Object rkey = params[0] instanceof ObjectID ? objectManager.lookupObject((ObjectID) params[0]) : params[0];
-        m.remove(rkey);
+        if (m instanceof TCMap) {
+          ((TCMap)m).__tc_applicator_remove(rkey);
+        } else {
+          m.remove(rkey);
+        }
+
         break;
       case SerializationUtil.CLEAR:
         m.clear();
