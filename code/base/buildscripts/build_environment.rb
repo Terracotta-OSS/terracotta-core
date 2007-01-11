@@ -28,14 +28,14 @@ class BuildEnvironment < Environment
             @svninfo = YAML::load(platform.exec("svn", "info"))        
         rescue            
             @svninfo = {}
-            @svninfo["Revision"] = "00"
+            @svninfo["Last Changed Rev"] = "00"
             @svninfo["URL"] = "unknown-url"
         end
     end
 
     # What's the latest revision on the local source base?
     def current_revision
-        @svninfo["Revision"]      
+        @svninfo["Last Changed Rev"]      
     end
 
   # If the latest revision on the local source base is tagged, return it;
