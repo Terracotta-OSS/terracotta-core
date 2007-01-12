@@ -16,13 +16,12 @@ import java.util.List;
 import junit.framework.Assert;
 
 public class SingletonLoadTest extends AbstractDeploymentTest {
-
   private static final String REMOTE_SERVICE_NAME           = "Singleton";
   private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory.xml";
   private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/singleton-tc-config.xml";
   private static final int    NUM_ITERATION                 = 500;
+
   private String              CONTEXT                       = "test-singleton";
-  private String              URL                           = "/test-singleton";
 
   private Deployment          deployment;
 
@@ -50,36 +49,40 @@ public class SingletonLoadTest extends AbstractDeploymentTest {
   private void runNodes(int nodeCount) throws Exception {
     List servers = new ArrayList();
     List singletons = new ArrayList();
-    WebApplicationServer server;
 
-    for (int i = 0; i < nodeCount; i++) {
-      server = makeWebApplicationServer(CONFIG_FILE_FOR_TEST);
-      server.addWarDeployment(deployment, CONTEXT);
-      server.start();
-      servers.add(server);
-      singletons.add(server.getProxy(ISingleton.class, REMOTE_SERVICE_NAME));
+    try {
+      for (int i = 0; i < nodeCount; i++) {
+        WebApplicationServer server = makeWebApplicationServer(CONFIG_FILE_FOR_TEST);
+        server.addWarDeployment(deployment, CONTEXT);
+        server.start();
+        servers.add(server);
+        singletons.add(server.getProxy(ISingleton.class, REMOTE_SERVICE_NAME));
+      }
+  
+      // ((WebApplicationServer) servers.get(0)).ping(URL);
+  
+      long startTime = System.currentTimeMillis();
+      // round-robin
+      for (int i = 0; i < NUM_ITERATION; i++) {
+        ((ISingleton) singletons.get(i % nodeCount)).incrementCounter();
+      }
+      long endTime = System.currentTimeMillis();
+      long totalTime = (endTime - startTime);
+  
+      // check clustering
+      for (Iterator iter = servers.iterator(); iter.hasNext();) {
+        WebApplicationServer cur = (WebApplicationServer) iter.next();
+        ISingleton isp = (ISingleton) cur.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+        Assert.assertEquals(NUM_ITERATION, isp.getCounter());
+      }
+  
+      printData(nodeCount, totalTime);
+
+    } finally {
+      for (Iterator it = servers.iterator(); it.hasNext();) {
+        ((WebApplicationServer) it.next()).stopIgnoringExceptions();
+      }
     }
-
-//    ((WebApplicationServer) servers.get(0)).ping(URL);
-
-    long startTime = System.currentTimeMillis();
-    // round-robin
-    for (int i = 0; i < NUM_ITERATION; i++) {
-      ((ISingleton) singletons.get(i % nodeCount)).incrementCounter();
-    }
-    long endTime = System.currentTimeMillis();
-    long totalTime = (endTime - startTime);
-
-    // check clustering
-    WebApplicationServer cur = null;
-    ISingleton isp = null;
-    for (Iterator iter = servers.iterator(); iter.hasNext();) {
-      cur = (WebApplicationServer) iter.next();
-      isp = (ISingleton) cur.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
-      Assert.assertEquals(NUM_ITERATION, isp.getCounter());
-    }
-
-    printData(nodeCount, totalTime);
   }
 
   private Deployment makeDeployment() throws Exception {
@@ -103,10 +106,6 @@ public class SingletonLoadTest extends AbstractDeploymentTest {
     builder.addDirectoryContainingResource(CONFIG_FILE_FOR_TEST);
   }
 
-  // Causes a hang
-  // public void testSingleton2() throws Exception {
-  // testSingleton();
-  // }
 
   private void printData(int nodeCount, long totalTime) {
     System.out.println("**%% TERRACOTTA TEST STATISTICS %%**: nodes=" + nodeCount + " iteration=" + NUM_ITERATION

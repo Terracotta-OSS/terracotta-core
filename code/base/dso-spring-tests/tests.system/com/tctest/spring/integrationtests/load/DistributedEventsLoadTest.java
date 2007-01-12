@@ -15,7 +15,6 @@ import java.util.Iterator;
 import java.util.List;
 
 public class DistributedEventsLoadTest extends AbstractDeploymentTest {
-
   private static final boolean DEBUG                         = false;
   private static final int     NUM_ITERATION                 = 10;
 
@@ -24,6 +23,7 @@ public class DistributedEventsLoadTest extends AbstractDeploymentTest {
   private static final String  CONFIG_FILE_FOR_TEST          = "/tc-config-files/event-tc-config.xml";
   private static final String  CONTEXT                       = "distributed-events";
   private static final String  BEAN_NAME                     = "eventManager";
+  
   private Deployment           deployment;
 
   protected void setUp() throws Exception {
@@ -48,62 +48,67 @@ public class DistributedEventsLoadTest extends AbstractDeploymentTest {
   private void publishDistributedEvents(final int nodeCount) throws Throwable {
     List servers = new ArrayList();
     final List eventManagers = new ArrayList();
-    WebApplicationServer server;
 
-    for (int i = 0; i < nodeCount; i++) {
-      server = makeWebApplicationServer(CONFIG_FILE_FOR_TEST);
-      server.addWarDeployment(deployment, CONTEXT);
-      server.start();
-      servers.add(server);
-      eventManagers.add(server.getProxy(EventManager.class, REMOTE_SERVICE_NAME));
-    }
-
-    debugPrintln("publishDistributedEvents():  num_iteration per node = " + NUM_ITERATION);
-
-    long totalTime = 0;
-    long startTime = System.currentTimeMillis();
-
-    debugPrintln("publishDistributedEvents():  startTime = " + startTime);
-
-    for (int i = 0; i < NUM_ITERATION * nodeCount; i++) {
-      debugPrintln("publishDistributedEvents():  i % nodeCount = " + (i % nodeCount));
-
-      ((EventManager) eventManagers.get(i % nodeCount))
-          .publishEvent("foo" + i, "bar" + i);
-    }
-
-    waitForSuccess(8 * 60, new TestCallback() {
-      public void check() {
-        for (Iterator iter = eventManagers.iterator(); iter.hasNext();) {
-          EventManager em = (EventManager) iter.next();
-          assertEquals(NUM_ITERATION * nodeCount, em.size());
+    try {
+      for (int i = 0; i < nodeCount; i++) {
+        WebApplicationServer server = makeWebApplicationServer(CONFIG_FILE_FOR_TEST);
+        server.addWarDeployment(deployment, CONTEXT);
+        server.start();
+        servers.add(server);
+        eventManagers.add(server.getProxy(EventManager.class, REMOTE_SERVICE_NAME));
+      }
+  
+      debugPrintln("publishDistributedEvents():  num_iteration per node = " + NUM_ITERATION);
+  
+      long startTime = System.currentTimeMillis();
+  
+      debugPrintln("publishDistributedEvents():  startTime = " + startTime);
+  
+      for (int i = 0; i < NUM_ITERATION * nodeCount; i++) {
+        debugPrintln("publishDistributedEvents():  i % nodeCount = " + (i % nodeCount));
+  
+        ((EventManager) eventManagers.get(i % nodeCount))
+            .publishEvent("foo" + i, "bar" + i);
+      }
+  
+      waitForSuccess(8 * 60, new TestCallback() {
+        public void check() {
+          for (Iterator iter = eventManagers.iterator(); iter.hasNext();) {
+            EventManager em = (EventManager) iter.next();
+            assertEquals(NUM_ITERATION * nodeCount, em.size());
+          }
+        }
+      });
+  
+      long endTime = 0;
+      for (Iterator iter = eventManagers.iterator(); iter.hasNext();) {
+        EventManager em = (EventManager) iter.next();
+        Date date = em.getLastEventTime();
+  
+        debugPrintln("eventManager = " + em.toString() + " lastEventTime = " + date.getTime());
+  
+        if (date.getTime() > endTime) {
+          endTime = date.getTime();
         }
       }
-    });
-
-    long endTime = 0;
-
-    for (Iterator iter = eventManagers.iterator(); iter.hasNext();) {
-      EventManager em = (EventManager) iter.next();
-      Date date = em.getLastEventTime();
-
-      debugPrintln("eventManager = " + em.toString() + " lastEventTime = " + date.getTime());
-
-      if (date.getTime() > endTime) {
-        endTime = date.getTime();
+  
+      long totalTime = endTime - startTime;
+      
+      printData(nodeCount, totalTime);
+    
+    } finally {
+      for (Iterator it = servers.iterator(); it.hasNext();) {
+        ((WebApplicationServer) it.next()).stopIgnoringExceptions();
       }
     }
-
-    totalTime = endTime - startTime;
-
-    printData(nodeCount, totalTime);
   }
 
   private Deployment makeWAR() throws Exception {
-
-    return makeDeploymentBuilder(CONTEXT + ".war").addBeanDefinitionFile(BEAN_DEFINITION_FILE_FOR_TEST)
+    return makeDeploymentBuilder(CONTEXT + ".war")
+        .addBeanDefinitionFile(BEAN_DEFINITION_FILE_FOR_TEST)
         .addRemoteService(REMOTE_SERVICE_NAME, BEAN_NAME, EventManager.class)
-        .addDirectoryOrJARContainingClass(EventManager.class).addDirectoryContainingResource(CONFIG_FILE_FOR_TEST)
+        .addDirectoryOrJARContainingClass(EventManager.class)
+        .addDirectoryContainingResource(CONFIG_FILE_FOR_TEST)
         .makeDeployment();
   }
 
