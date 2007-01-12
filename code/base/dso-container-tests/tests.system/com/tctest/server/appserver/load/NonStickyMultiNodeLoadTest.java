@@ -6,10 +6,6 @@ package com.tctest.server.appserver.load;
 
 public class NonStickyMultiNodeLoadTest extends MultiNodeLoadTest {
 
-  public NonStickyMultiNodeLoadTest() {
-    disableAllUntil("2007-01-15");
-  }
-
   public void testFourNodeLoad() throws Throwable {
     runFourNodeLoad(false);
   }

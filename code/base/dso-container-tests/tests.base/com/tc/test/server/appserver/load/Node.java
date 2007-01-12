@@ -7,6 +7,7 @@ package com.tc.test.server.appserver.load;
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpState;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
@@ -37,8 +38,10 @@ public class Node implements Runnable {
   }
 
   public Node(URL[] mutateUrls, URL validateUrl, int numSessions, long duration) {
-    this.client = new HttpClient();
-    this.client.getHttpConnectionManager().getParams().setConnectionTimeout(60 * 1000);
+    MultiThreadedHttpConnectionManager connMgr = new MultiThreadedHttpConnectionManager();
+    connMgr.getParams().setConnectionTimeout(120 * 1000);
+    this.client = new HttpClient(connMgr);
+
     this.mutateUrls = mutateUrls;
     this.validateUrl = validateUrl;
     this.sessions = createStates(numSessions);
