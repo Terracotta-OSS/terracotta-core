@@ -23,8 +23,6 @@ import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
-import com.tc.objectserver.context.ApplyTransactionContext;
-import com.tc.objectserver.context.LookupEventContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
@@ -36,12 +34,12 @@ import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TestTransactionBatchManager;
+import com.tc.objectserver.tx.TestTransactionalStageCoordinator;
 import com.tc.objectserver.tx.TransactionBatchReader;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
 import com.tc.objectserver.tx.TransactionSequencer;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
-import com.tc.objectserver.tx.TransactionalStageCoordinator;
 import com.tc.test.TCTestCase;
 import com.tc.util.SequenceID;
 import com.tc.util.SequenceValidator;
@@ -255,31 +253,6 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
 
     public TransactionalObjectManager getTransactionalObjectManager() {
       return txnObjectManager;
-    }
-  }
-
-  public static class TestTransactionalStageCoordinator implements TransactionalStageCoordinator {
-
-    public MockSink lookupSink = new MockSink();
-
-    public void addToApplyStage(ApplyTransactionContext context) {
-      throw new ImplementMe();
-    }
-
-    public void initiateApplyComplete() {
-      throw new ImplementMe();
-    }
-
-    public void initiateCommit() {
-      throw new ImplementMe();
-    }
-
-    public void initiateLookup() {
-      lookupSink.addLossy(new LookupEventContext());
-    }
-
-    public void initiateRecallAll() {
-      throw new ImplementMe();
     }
   }
 

@@ -71,7 +71,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     Assert.assertNotNull(id);
     this.id = id;
   }
-
+  
   /**
    * This is here for testing, not production use.
    */

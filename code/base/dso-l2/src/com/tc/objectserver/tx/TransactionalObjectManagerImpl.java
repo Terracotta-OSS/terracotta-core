@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -366,17 +367,21 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   // Recall Stage method
   public synchronized void recallCheckedoutObject(RecallObjectsContext roc) {
     if (roc.recallAll()) {
-      ArrayList recalled = new ArrayList();
+      IdentityHashMap recalled = new IdentityHashMap();
+      HashMap recalledObjects = new HashMap();
       for (Iterator i = checkedOutObjects.entrySet().iterator(); i.hasNext();) {
         Entry e = (Entry) i.next();
         TxnObjectGrouping tog = (TxnObjectGrouping) e.getValue();
         if (tog.getServerTransactionID().isNull()) {
-          recalled.addAll(tog.getObjects().values());
           i.remove();
+          if (!recalled.containsKey(tog)) {
+            recalled.put(tog, null);
+            recalledObjects.putAll(tog.getObjects());
+          }
         }
       }
-      if (!recalled.isEmpty()) {
-        objectManager.releaseAll(recalled);
+      if (!recalledObjects.isEmpty()) {
+        objectManager.releaseAll(recalledObjects.values());
       }
     }
   }

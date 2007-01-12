@@ -162,7 +162,7 @@ public class TestObjectManager implements ObjectManager {
   }
 
   public void releaseAll(Collection objects) {
-    throw new ImplementMe();
+    releaseAll(null, objects);
   }
 
   public int getCheckedOutCount() {
