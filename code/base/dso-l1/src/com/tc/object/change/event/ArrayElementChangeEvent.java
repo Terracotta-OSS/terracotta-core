@@ -30,7 +30,7 @@ public class ArrayElementChangeEvent implements TCChangeBufferEvent {
 
   public void write(DNAWriter to) {
     if (isSubarray()) {
-      to.addSubArrayAction(index, value);
+      to.addSubArrayAction(index, value, length);
     } else {
       to.addArrayElementAction(index, value);
     }

@@ -44,7 +44,7 @@ public class FileSharingTestApp extends AbstractTransparentApp {
       notifyError(t);
     }
   }
-  
+
   /**
    * This is the basic test which only makes sure that the file object is shared. It
    * does not test the cross platform test.
@@ -62,7 +62,7 @@ public class FileSharingTestApp extends AbstractTransparentApp {
 
     barrier.barrier();
   }
-  
+
   /**
    * This test makes sure that the file separator is contained in the dna via dehydration.
    */
@@ -72,7 +72,7 @@ public class FileSharingTestApp extends AbstractTransparentApp {
       TCObject tcObject = managed.__tc_managed();
       MockDNAWriter dnaWriter = new MockDNAWriter();
       tcObject.dehydrate(dnaWriter);
-      
+
       List dna = dnaWriter.getDNA();
       boolean separatorFound = false;
       for (Iterator i=dna.iterator(); i.hasNext(); ) {
@@ -85,7 +85,7 @@ public class FileSharingTestApp extends AbstractTransparentApp {
       Assert.assertTrue(separatorFound);
     }
   }
-  
+
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     TransparencyClassSpec spec = config.getOrCreateSpec(CyclicBarrier.class.getName());
     config.addWriteAutolock("* " + CyclicBarrier.class.getName() + "*.*(..)");
@@ -101,7 +101,7 @@ public class FileSharingTestApp extends AbstractTransparentApp {
     spec.addRoot("fileRoot", "fileRoot");
     spec.addRoot("barrier", "barrier");
   }
-  
+
   private static class MockDNAWriter implements DNAWriter {
 
     public List dna = new ArrayList();
@@ -130,7 +130,7 @@ public class FileSharingTestApp extends AbstractTransparentApp {
     public void addEntireArray(Object value) {
       //
     }
-    
+
     public void addLiteralValue(Object value) {
       //
     }
@@ -153,10 +153,10 @@ public class FileSharingTestApp extends AbstractTransparentApp {
 
     public void addClassLoaderAction(String classLoaderFieldName, Object value) {
       //
-      
+
     }
 
-    public void addSubArrayAction(int start, Object array) {
+    public void addSubArrayAction(int start, Object array, int length) {
       //
     }
   }

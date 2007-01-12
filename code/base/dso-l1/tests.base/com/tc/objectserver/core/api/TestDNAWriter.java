@@ -34,7 +34,7 @@ public class TestDNAWriter implements DNAWriter {
   public void addEntireArray(Object value) {
     //
   }
-  
+
   public void addLiteralValue(Object value) {
     //
   }
@@ -53,10 +53,10 @@ public class TestDNAWriter implements DNAWriter {
 
   public void addClassLoaderAction(String classLoaderFieldName, Object value) {
     //
-    
+
   }
 
-  public void addSubArrayAction(int start, Object array) {
+  public void addSubArrayAction(int start, Object array, int length) {
     //
   }
 

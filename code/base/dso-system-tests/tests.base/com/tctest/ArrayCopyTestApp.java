@@ -12,85 +12,66 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.Arrays;
+import java.util.HashMap;
 
-public class ArrayCopyTestApp extends AbstractTransparentApp {
-  private final static int    ARRAY_LENGTH        = 20;
-  private final static int    BIG_ARRAY_LENGTH    = 10000;
-
-  private final int[]         unsharedIntArray    = new int[ARRAY_LENGTH];
-  private final Object[]      unsharedRefArray    = new Object[ARRAY_LENGTH];
-
-  private final int[]         bigUnsharedIntArray = new int[BIG_ARRAY_LENGTH];
-  private final Object[]      bigUnsharedRefArray = new Object[BIG_ARRAY_LENGTH];
-
-  private final DataRoot      root                = new DataRoot(ARRAY_LENGTH);
-  private final DataRoot      bigRoot             = new DataRoot(BIG_ARRAY_LENGTH);
-
-  private final Object[]      sharedArray         = makeArrayData();
-
-  private final CyclicBarrier barrier;
+public class ArrayCopyTestApp extends GenericTestApp {
+  private final static int ARRAY_LENGTH     = 20;
+  private final static int BIG_ARRAY_LENGTH = 10000;
 
   public ArrayCopyTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
-    super(appId, cfg, listenerProvider);
-    barrier = new CyclicBarrier(getParticipantCount());
+    super(appId, cfg, listenerProvider, Root.class);
   }
 
-  private static Object[] makeArrayData() {
-    return new Object[] { "dig", "this", "yo", new Thingy("!") };
+  protected Object getTestObject(String testName) {
+    return this.sharedMap.get("root");
   }
 
-  public void run() {
-    try {
-      long startTime = System.currentTimeMillis();
+  protected void setupTestObject(String testName) {
+    sharedMap.put("root", new Root(ARRAY_LENGTH, BIG_ARRAY_LENGTH));
+  }
 
-      basicCopyTest();
-      basicRefCopyTest();
-      copyRefToUnsharedTest();
-      copyToSameArrayTest();
-      copyRefToSameArrayTest();
-      copyToDifferentPrimitiveTypeArrayTest();
-      NullSrcTest();
-      NullDestTest();
-      SrcNotArrayTest();
-      DestNotArrayTest();
-      SrcAndDestNotCompatibleTest();
-      negativeLengthCopyTest();
-      copyNonCompatibleRefObject();
-      IndexOutOfBoundsCopyTest();
-      bigTimedBasicCopyTest();
-      bigTimedCopyToSameArrayTest();
-      multipleTimedBasicCopyTest();
-      multipleTimedCopyToSameArrayTest();
+  private static int[] makeUnsharedIntArray() {
+    return new int[ARRAY_LENGTH];
+  }
 
-      copyThenChangeTest();
-      overlapWitBiggerArrayTest();
+  private static int[] makeBigUnsharedIntArray() {
+    return new int[BIG_ARRAY_LENGTH];
+  }
 
-      System.err.println("%%%% Total Duration: " + (System.currentTimeMillis() - startTime));
+  private static TestObject[] makeUnsharedRefArray() {
+    return new TestObject[ARRAY_LENGTH];
+  }
 
-    } catch (Throwable t) {
-      notifyError(t);
+  public void testBasicCopy(Root r, boolean validate) {
+    int[] unshared = makeUnsharedIntArray();
+    initialize(unshared);
+
+    DataRoot root = r.getRoot();
+
+    if (validate) {
+      assertEqualIntArray(unshared, root.getDestIntArray(), 0, 5, 10);
+    } else {
+      synchronized (r) {
+        System.arraycopy(unshared, 0, root.getDestIntArray(), 5, 10);
+      }
     }
   }
 
-  private void overlapWitBiggerArrayTest() throws Exception {
-    clear();
+  public void testOverlapWithBiggerArray(Root r, boolean validate) throws Exception {
+    int[] bigUnsharedIntArray = makeBigUnsharedIntArray();
     initialize(bigUnsharedIntArray);
-    barrier.barrier();
 
-    int index = -1;
-    synchronized (bigRoot) {
-      index = bigRoot.getIndex();
-      bigRoot.setIndex(index + 1);
-    }
-    barrier.barrier();
+    final int destPos = 5;
+    final int destSize = 100;
 
-    int destPos = 5;
-    int destSize = 100;
+    DataRoot bigRoot = r.getBigRoot();
 
-    if (index == 0) {
+    if (validate) {
+      int[] destIntArray = bigRoot.destIntArray;
+      assertEqualIntArray(bigUnsharedIntArray, destIntArray, 0, destPos, destSize);
+    } else {
       synchronized (bigRoot) {
         int[] destIntArray = bigRoot.destIntArray;
         // elements 10..20 from bigUnsharedIntArray
@@ -99,424 +80,214 @@ public class ArrayCopyTestApp extends AbstractTransparentApp {
         System.arraycopy(bigUnsharedIntArray, 0, destIntArray, destPos, destSize);
       }
     }
-    barrier.barrier();
 
-    try {
-      if (index != 0) {
-        synchronized (bigRoot) {
-          int[] destIntArray = bigRoot.destIntArray;
-          assertEqualIntArray(bigUnsharedIntArray, destIntArray, 0, destPos, destSize);
-        }
-      }
-    } finally {
-      barrier.barrier();
-    }
   }
 
-  private void copyThenChangeTest() throws Exception {
-    clear();
+  public void testCopyThenChange(Root r, boolean validate) throws Exception {
+    int[] bigUnsharedIntArray = makeBigUnsharedIntArray();
     initialize(bigUnsharedIntArray);
-    barrier.barrier();
 
-    int index = -1;
-    synchronized (bigRoot) {
-      index = bigRoot.getIndex();
-      bigRoot.setIndex(index + 1);
-    }
-    barrier.barrier();
+    final int destPos = 5;
+    final int destSize = 100;
 
-    int destPos = 5;
-    int destSize = 100;
+    DataRoot bigRoot = r.getBigRoot();
 
-    if (index == 0) {
+    if (validate) {
+      int[] destIntArray = bigRoot.destIntArray;
+      bigUnsharedIntArray[1] = -5;
+      bigUnsharedIntArray[2] = -6;
+      assertEqualIntArray(bigUnsharedIntArray, destIntArray, 0, destPos, destSize);
+    } else {
       synchronized (bigRoot) {
         int[] destIntArray = bigRoot.destIntArray;
-        destIntArray[destPos + 3] = -10;
-        destIntArray[destPos + 4] = -11;
-        // elements 0..100 from bigUnsharedIntArray
+        // elements 0..100 from bigUnsharedIntArray to dest 5..105
         System.arraycopy(bigUnsharedIntArray, 0, destIntArray, destPos, destSize);
-        // elements 10..20 from bigUnsharedIntArray
-        System.arraycopy(bigUnsharedIntArray, 10, destIntArray, destPos, 10);
         destIntArray[destPos + 1] = -5;
         destIntArray[destPos + 2] = -6;
       }
     }
-    barrier.barrier();
-
-    try {
-      if (index != 0) {
-        synchronized (bigRoot) {
-          int[] destIntArray = bigRoot.destIntArray;
-          assertEqualIntArray(bigUnsharedIntArray, destIntArray, 13, destPos + 3, 10 - 3);
-          assertEqualIntArray(bigUnsharedIntArray, destIntArray, 13, destPos + 3 + 10, destSize - 3 - 10);
-          Assert.assertEquals(10, destIntArray[destPos]);
-          Assert.assertEquals(-5, destIntArray[destPos + 1]);
-          Assert.assertEquals(-6, destIntArray[destPos + 2]);
-        }
-      }
-    } finally {
-      barrier.barrier();
-    }
   }
 
-  private void bigTimedBasicCopyTest() throws Exception {
-    long startTime = 0;
-    clear();
+  public void testBigBasicCopy(Root r, boolean validate) throws Exception {
+    int[] bigUnsharedIntArray = makeBigUnsharedIntArray();
     initialize(bigUnsharedIntArray);
 
-    barrier.barrier();
+    DataRoot bigRoot = r.getBigRoot();
 
-    int index = -1;
-    synchronized (bigRoot) {
-      index = bigRoot.getIndex();
-      bigRoot.setIndex(index + 1);
-    }
-
-    barrier.barrier();
-
-    if (index == 0) {
-      startTime = System.currentTimeMillis();
+    if (validate) {
+      assertEqualIntArray(bigUnsharedIntArray, bigRoot.getDestIntArray(), 0, 5, (BIG_ARRAY_LENGTH - 5));
+    } else {
       synchronized (bigRoot) {
         System.arraycopy(bigUnsharedIntArray, 0, bigRoot.getDestIntArray(), 5, (BIG_ARRAY_LENGTH - 5));
-        System.err.println("%%%% bigTimedBasicCopyTest(), Duration: " + (System.currentTimeMillis() - startTime));
       }
     }
 
-    barrier.barrier();
-
-    try {
-      if (index != 0) {
-        assertEqualIntArray(bigUnsharedIntArray, bigRoot.getDestIntArray(), 0, 5, (BIG_ARRAY_LENGTH - 5));
-      }
-    } finally {
-      barrier.barrier();
-    }
   }
 
-  private void bigTimedCopyToSameArrayTest() throws Exception {
-    long startTime = 0;
-    clear();
+  public void testBigCopyToSameArray(Root r, boolean validate) throws Exception {
+    int[] bigUnsharedIntArray = makeBigUnsharedIntArray();
     initialize(bigUnsharedIntArray);
-    barrier.barrier();
 
-    int index = -1;
-    synchronized (bigRoot) {
-      index = bigRoot.getIndex();
-      bigRoot.setIndex(index + 1);
-    }
+    DataRoot bigRoot = r.getBigRoot();
 
-    barrier.barrier();
-
-    if (index == 0) {
+    if (validate) {
+      assertEqualIntArray(bigUnsharedIntArray, bigRoot.getSrcIntArray(), 0, 5, (BIG_ARRAY_LENGTH - 5));
+    } else {
       synchronized (bigRoot) {
         initialize(bigRoot.getSrcIntArray());
-      }
-    }
-
-    barrier.barrier();
-
-    if (index == 0) {
-      synchronized (bigRoot) {
-        startTime = System.currentTimeMillis();
         System.arraycopy(bigRoot.getSrcIntArray(), 0, bigRoot.getSrcIntArray(), 5, (BIG_ARRAY_LENGTH - 5));
-        System.err.println("%%%% bigTimedCopyToSameArrayTest(), Duration: " + (System.currentTimeMillis() - startTime));
       }
-    }
-
-    barrier.barrier();
-
-    try {
-      if (index != 0) {
-        assertEqualIntArray(bigUnsharedIntArray, bigRoot.getSrcIntArray(), 0, 5, (BIG_ARRAY_LENGTH - 5));
-      }
-    } finally {
-      barrier.barrier();
     }
   }
 
-  private void multipleTimedBasicCopyTest() throws Exception {
-    long startTime = 0;
-    clear();
+  public void testMultipleBasicCopyTest(Root r, boolean validate) throws Exception {
+    int[] unsharedIntArray = makeUnsharedIntArray();
     initialize(unsharedIntArray);
 
-    barrier.barrier();
+    DataRoot root = r.getRoot();
 
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
-
-    barrier.barrier();
-
-    if (index == 0) {
-      startTime = System.currentTimeMillis();
+    if (validate) {
+      assertEqualIntArray(unsharedIntArray, root.getDestIntArray(), 0, 5, 10);
+    } else {
       for (int i = 0; i < 100; i++) {
         synchronized (root) {
           System.arraycopy(unsharedIntArray, 0, root.getDestIntArray(), 5, 10);
         }
       }
-      System.err.println("%%%% multipleTimedBasicCopyTest(), Duration: " + (System.currentTimeMillis() - startTime));
-    }
-
-    barrier.barrier();
-
-    try {
-      if (index != 0) {
-        assertEqualIntArray(unsharedIntArray, root.getDestIntArray(), 0, 5, 10);
-      }
-    } finally {
-      barrier.barrier();
     }
   }
 
-  private void multipleTimedCopyToSameArrayTest() throws Exception {
-    long startTime = 0;
-    clear();
+  public void testMultipleCopyToSameArray(Root r, boolean validate) throws Exception {
+    int[] unsharedIntArray = makeUnsharedIntArray();
     initialize(unsharedIntArray);
-    barrier.barrier();
 
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
+    DataRoot root = r.getRoot();
 
-    barrier.barrier();
+    if (validate) {
+      for (int i = 0; i < 2; i++) {
+        System.arraycopy(unsharedIntArray, 0, unsharedIntArray, 5, 10);
+      }
 
-    if (index == 0) {
+      assertEqualIntArray(unsharedIntArray, root.getSrcIntArray(), 0, 5, 10);
+    } else {
       synchronized (root) {
         initialize(root.getSrcIntArray());
       }
-    }
 
-    barrier.barrier();
-
-    if (index == 0) {
-      startTime = System.currentTimeMillis();
       for (int i = 0; i < 100; i++) {
         synchronized (root) {
           System.arraycopy(root.getSrcIntArray(), 0, root.getSrcIntArray(), 5, 10);
         }
       }
-      System.err.println("%%%% multipleTimedCopyToSameArrayTest(), Duration: "
-                         + (System.currentTimeMillis() - startTime));
-    }
-
-    barrier.barrier();
-
-    try {
-      if (index != 0) {
-        for (int i = 0; i < 2; i++) {
-          System.arraycopy(unsharedIntArray, 0, unsharedIntArray, 5, 10);
-        }
-        assertEqualIntArray(unsharedIntArray, root.getSrcIntArray(), 0, 5, 10);
-      }
-    } finally {
-      barrier.barrier();
     }
   }
 
-  private void basicCopyTest() throws Exception {
-    clear();
-    initialize(unsharedIntArray);
-
-    barrier.barrier();
-
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
-
-    barrier.barrier();
-
-    if (index == 0) {
-      synchronized (root) {
-        System.arraycopy(unsharedIntArray, 0, root.getDestIntArray(), 5, 10);
-      }
-    }
-
-    barrier.barrier();
-
-    try {
-      if (index != 0) {
-        assertEqualIntArray(unsharedIntArray, root.getDestIntArray(), 0, 5, 10);
-      }
-    } finally {
-      barrier.barrier();
-    }
-  }
-
-  private void copyRefToUnsharedTest() throws Exception {
+  public void testCopyRefToUnshared(Root r, boolean validate) throws Exception {
     // There was bug when copying a shared source reference array to an unshared dest.
     // This method covers this case specifically
+
+    Object[] sharedArray = r.getSharedArray();
+
     int len = sharedArray.length;
     Object[] unsharedDest = new Object[len];
     System.arraycopy(sharedArray, 0, unsharedDest, 0, len);
 
-    try {
+    if (validate) {
       Assert.assertNoNullElements(unsharedDest);
       Assert.assertTrue(Arrays.equals(unsharedDest, makeArrayData()));
-    } finally {
-      barrier.barrier();
     }
   }
 
-  private void basicRefCopyTest() throws Exception {
-    clear();
+  public void testBasicRefCopyTest(Root r, boolean validate) throws Exception {
+    TestObject[] unsharedRefArray = makeUnsharedRefArray();
     initialize(unsharedRefArray);
-    root.initializeDestRefArray(unsharedRefArray);
 
-    barrier.barrier();
+    DataRoot root = r.getRoot();
 
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
-
-    barrier.barrier();
-
-    if (index == 0) {
+    if (validate) {
+      assertEqualRefArray(unsharedRefArray, root.getDestRefArray(), 0, 5, 10);
+    } else {
       synchronized (root) {
         System.arraycopy(unsharedRefArray, 0, root.getDestRefArray(), 5, 10);
       }
     }
-
-    barrier.barrier();
-
-    try {
-      if (index != 0) {
-        assertEqualRefArray(unsharedRefArray, root.getDestRefArray(), 0, 5, 10);
-      }
-    } finally {
-      barrier.barrier();
-    }
   }
 
-  private void copyToSameArrayTest() throws Exception {
-    clear();
+  public void testCopyToSameArray(Root r, boolean validate) throws Exception {
+    int[] unsharedIntArray = makeUnsharedIntArray();
     initialize(unsharedIntArray);
-    barrier.barrier();
 
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
+    DataRoot root = r.getRoot();
 
-    barrier.barrier();
-
-    if (index == 0) {
+    if (validate) {
+      assertEqualIntArray(unsharedIntArray, root.getSrcIntArray(), 0, 5, 10);
+    } else {
       synchronized (root) {
         initialize(root.getSrcIntArray());
       }
-    }
-
-    barrier.barrier();
-
-    if (index == 0) {
       synchronized (root) {
         System.arraycopy(root.getSrcIntArray(), 0, root.getSrcIntArray(), 5, 10);
       }
     }
-
-    barrier.barrier();
-
-    try {
-      if (index != 0) {
-        assertEqualIntArray(unsharedIntArray, root.getSrcIntArray(), 0, 5, 10);
-      }
-    } finally {
-      barrier.barrier();
-    }
   }
 
-  private void copyRefToSameArrayTest() throws Exception {
-    clear();
-    root.initializeSrcRefArray(unsharedRefArray);
-    barrier.barrier();
+  public void testCopyRefToSameArray(Root r, boolean validate) throws Exception {
+    TestObject[] unsharedRefArray = makeUnsharedRefArray();
+    initialize(unsharedRefArray);
 
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
+    DataRoot root = r.getRoot();
 
-    barrier.barrier();
-
-    if (index == 0) {
+    if (validate) {
+      assertEqualRefArray(unsharedRefArray, root.getSrcRefArray(), 0, 5, 10);
+    } else {
       synchronized (root) {
         root.initializeSrcRefArray(root.getSrcRefArray());
       }
-    }
 
-    barrier.barrier();
-
-    if (index == 0) {
       synchronized (root) {
         System.arraycopy(root.getSrcRefArray(), 0, root.getSrcRefArray(), 5, 10);
       }
     }
-
-    barrier.barrier();
-
-    try {
-      if (index != 0) {
-        assertEqualRefArray(unsharedRefArray, root.getSrcRefArray(), 0, 5, 10);
-      }
-    } finally {
-      barrier.barrier();
-    }
   }
 
-  private void copyToDifferentPrimitiveTypeArrayTest() throws Exception {
-    clear();
-    initialize(unsharedIntArray);
-    barrier.barrier();
+  public void testCopyToDifferentPrimitiveTypeArray(Root r, boolean validate) throws Exception {
+    DataRoot root = r.getRoot();
 
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
+    if (validate) {
+      long[] actual = root.getDestLongArray();
+      long[] expected = new long[actual.length];
+      Arrays.fill(expected, 42);
+      Assert.assertTrue(Arrays.equals(expected, actual));
+    } else {
+      synchronized (root) {
+        long[] l = root.getDestLongArray();
+        Arrays.fill(l, 42);
+      }
 
-    barrier.barrier();
-
-    try {
-      if (index == 0) {
-        synchronized (root) {
-          try {
-            System.arraycopy(unsharedIntArray, 0, root.getDestLongArray(), 5, 10);
-            throw new AssertionError("Should have thrown an ArrayStoreException.");
-          } catch (ArrayStoreException e) {
-            // Expected.
-          }
+      synchronized (root) {
+        try {
+          System.arraycopy(makeUnsharedIntArray(), 0, root.getDestLongArray(), 5, 10);
+          throw new AssertionError("Should have thrown an ArrayStoreException.");
+        } catch (ArrayStoreException e) {
+          // Expected. Shared array should not have been disturbed
         }
       }
-    } finally {
-      barrier.barrier();
     }
   }
 
-  private void NullSrcTest() throws Exception {
-    clear();
-    synchronized (root) {
-      initialize(root.getDestIntArray());
-    }
+  public void testNullSrc(Root r, boolean validate) throws Exception {
+    int[] unsharedIntArray = makeUnsharedIntArray();
     initialize(unsharedIntArray);
-    barrier.barrier();
 
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
+    DataRoot root = r.getRoot();
 
-    barrier.barrier();
+    if (validate) {
+      assertEqualIntArray(unsharedIntArray, root.getDestIntArray(), 0, 0, ARRAY_LENGTH);
+    } else {
+      synchronized (root) {
+        initialize(root.getDestIntArray());
+      }
 
-    if (index == 0) {
       synchronized (root) {
         try {
           System.arraycopy(null, 0, root.getDestIntArray(), 5, 10);
@@ -526,62 +297,37 @@ public class ArrayCopyTestApp extends AbstractTransparentApp {
         }
       }
     }
-
-    barrier.barrier();
-
-    try {
-      assertEqualIntArray(unsharedIntArray, root.getDestIntArray(), 0, 0, ARRAY_LENGTH);
-    } finally {
-      barrier.barrier();
-    }
   }
 
-  private void NullDestTest() throws Exception {
-    clear();
+  public void testNullDest(Root r, boolean validate) throws Exception {
+    int[] unsharedIntArray = makeUnsharedIntArray();
     initialize(unsharedIntArray);
-    barrier.barrier();
 
-    int index = -1;
+    DataRoot root = r.getRoot();
+
     synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
-
-    barrier.barrier();
-
-    try {
-      if (index == 0) {
-        synchronized (root) {
-          try {
-            System.arraycopy(unsharedIntArray, 0, null, 5, 10);
-            throw new AssertionError("Should have thrown an NullPointerException.");
-          } catch (NullPointerException e) {
-            // Expected
-          }
-        }
+      try {
+        System.arraycopy(unsharedIntArray, 0, null, 5, 10);
+        throw new AssertionError("Should have thrown an NullPointerException.");
+      } catch (NullPointerException e) {
+        // Expected
       }
-    } finally {
-      barrier.barrier();
     }
   }
 
-  private void SrcNotArrayTest() throws Exception {
-    clear();
-    synchronized (root) {
-      initialize(root.getDestIntArray());
-    }
+  public void testSrcNotArray(Root r, boolean validate) throws Exception {
+    int[] unsharedIntArray = makeUnsharedIntArray();
     initialize(unsharedIntArray);
-    barrier.barrier();
 
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
+    DataRoot root = r.getRoot();
 
-    barrier.barrier();
+    if (validate) {
+      assertEqualIntArray(unsharedIntArray, root.getDestIntArray(), 0, 0, ARRAY_LENGTH);
+    } else {
+      synchronized (root) {
+        initialize(root.getDestIntArray());
+      }
 
-    if (index == 0) {
       synchronized (root) {
         try {
           System.arraycopy(new Object(), 0, root.getDestIntArray(), 5, 10);
@@ -591,64 +337,31 @@ public class ArrayCopyTestApp extends AbstractTransparentApp {
         }
       }
     }
+  }
 
-    barrier.barrier();
-
+  public void testDestNotArray(Root r, boolean validate) throws Exception {
     try {
-      assertEqualIntArray(unsharedIntArray, root.getDestIntArray(), 0, 0, ARRAY_LENGTH);
-    } finally {
-      barrier.barrier();
+      System.arraycopy(makeUnsharedIntArray(), 0, new Object(), 5, 10);
+      throw new AssertionError("Should have thrown an ArrayStoreException.");
+    } catch (ArrayStoreException e) {
+      // Expected
     }
   }
 
-  private void DestNotArrayTest() throws Exception {
-    clear();
-    initialize(unsharedIntArray);
-    barrier.barrier();
-
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
-
-    barrier.barrier();
-
-    try {
-      if (index == 0) {
-        synchronized (root) {
-          try {
-            System.arraycopy(unsharedIntArray, 0, new Object(), 5, 10);
-            throw new AssertionError("Should have thrown an ArrayStoreException.");
-          } catch (ArrayStoreException e) {
-            // Expected
-          }
-        }
-      }
-    } finally {
-      barrier.barrier();
-    }
-  }
-
-  private void SrcAndDestNotCompatibleTest() throws Exception {
-    clear();
+  public void testSrcAndDestNotCompatibleTest(Root r, boolean validate) throws Exception {
+    TestObject[] unsharedRefArray = makeUnsharedRefArray();
     initialize(unsharedRefArray);
-    root.initializeDestRefArray();
-    root.initializeDestRefArray(unsharedRefArray);
-    barrier.barrier();
 
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
+    DataRoot root = r.getRoot();
 
-    barrier.barrier();
+    if (validate) {
+      assertEqualRefArray(unsharedRefArray, root.getDestRefArray(), 0, 0, ARRAY_LENGTH);
+    } else {
+      root.initializeDestRefArray();
 
-    if (index == 0) {
       synchronized (root) {
         try {
-          System.arraycopy(unsharedIntArray, 0, root.getDestRefArray(), 5, 10);
+          System.arraycopy(makeUnsharedIntArray(), 0, root.getDestRefArray(), 5, 10);
           throw new AssertionError("Should have thrown an ArrayStoreException.");
         } catch (ArrayStoreException e) {
           // Expected
@@ -656,200 +369,175 @@ public class ArrayCopyTestApp extends AbstractTransparentApp {
       }
     }
 
-    barrier.barrier();
+  }
 
-    try {
-      assertEqualRefArray(unsharedRefArray, root.getDestRefArray(), 0, 0, ARRAY_LENGTH);
-    } finally {
-      barrier.barrier();
+  public void testNegativeLengthCopyTest(Root r, boolean validate) throws Exception {
+    int[] unsharedIntArray = makeUnsharedIntArray();
+    initialize(unsharedIntArray);
+
+    DataRoot root = r.getRoot();
+
+    if (validate) {
+      assertEqualIntArray(unsharedIntArray, root.getDestIntArray(), 0, 0, ARRAY_LENGTH);
+    } else {
+      synchronized (root) {
+        System.arraycopy(unsharedIntArray, 0, root.getDestIntArray(), 0, ARRAY_LENGTH);
+      }
+
+      mutate(unsharedIntArray);
+      try {
+        System.arraycopy(unsharedIntArray, -1, root.getDestIntArray(), 0, 10);
+        throw new AssertionError("Should have thrown an IndexOutOfBoundsException.");
+      } catch (IndexOutOfBoundsException e) {
+        // Expected.
+      }
+
+      mutate(unsharedIntArray);
+      try {
+        System.arraycopy(unsharedIntArray, 0, root.getDestIntArray(), -1, 10);
+        throw new AssertionError("Should have thrown an IndexOutOfBoundsException.");
+      } catch (IndexOutOfBoundsException e) {
+        // Expected.
+      }
+
+      mutate(unsharedIntArray);
+      try {
+        System.arraycopy(unsharedIntArray, 0, root.getDestIntArray(), 0, -1);
+        throw new AssertionError("Should have thrown an IndexOutOfBoundsException.");
+      } catch (IndexOutOfBoundsException e) {
+        // Expected.
+      }
+    }
+
+  }
+
+  public void testIndexOutOfBoundsCopy(Root r, boolean validate) throws Exception {
+    int[] unsharedIntArray = makeUnsharedIntArray();
+    initialize(unsharedIntArray);
+
+    DataRoot root = r.getRoot();
+
+    if (validate) {
+      assertEqualIntArray(unsharedIntArray, root.getDestIntArray(), 0, 0, ARRAY_LENGTH);
+    } else {
+      synchronized (root) {
+        System.arraycopy(unsharedIntArray, 0, root.getDestIntArray(), 0, ARRAY_LENGTH);
+      }
+
+      mutate(unsharedIntArray);
+      try {
+        System.arraycopy(unsharedIntArray, 15, root.getDestIntArray(), 0, 10);
+        throw new AssertionError("Should have thrown an IndexOutOfBoundsException.");
+      } catch (IndexOutOfBoundsException e) {
+        // Expected.
+      }
+
+      mutate(unsharedIntArray);
+      try {
+        System.arraycopy(unsharedIntArray, 0, root.getDestIntArray(), 15, 10);
+        throw new AssertionError("Should have thrown an IndexOutOfBoundsException.");
+      } catch (IndexOutOfBoundsException e) {
+        // Expected.
+      }
     }
   }
 
-  private void negativeLengthCopyTest() throws Exception {
-    clear();
-
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
-
-    barrier.barrier();
-
-    if (index == 0) {
-      synchronized (root) {
-        try {
-          System.arraycopy(unsharedIntArray, -1, root.getDestIntArray(), 0, 10);
-          throw new AssertionError("Should have thrown an IndexOutOfBoundsException.");
-        } catch (IndexOutOfBoundsException e) {
-          // Expected.
-        }
-      }
-    }
-
-    barrier.barrier();
-
-    if (index == 0) {
-      synchronized (root) {
-        try {
-          System.arraycopy(unsharedIntArray, 0, root.getDestIntArray(), -1, 10);
-          throw new AssertionError("Should have thrown an IndexOutOfBoundsException.");
-        } catch (IndexOutOfBoundsException e) {
-          // Expected.
-        }
-      }
-    }
-
-    barrier.barrier();
-
-    try {
-      if (index == 0) {
-        synchronized (root) {
-          try {
-            System.arraycopy(unsharedIntArray, 0, root.getDestIntArray(), 0, -1);
-            throw new AssertionError("Should have thrown an IndexOutOfBoundsException.");
-          } catch (IndexOutOfBoundsException e) {
-            // Expected.
-          }
-        }
-      }
-    } finally {
-      barrier.barrier();
-    }
-  }
-
-  private void IndexOutOfBoundsCopyTest() throws Exception {
-    clear();
-
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
-
-    barrier.barrier();
-
-    if (index == 0) {
-      synchronized (root) {
-        try {
-          System.arraycopy(unsharedIntArray, 15, root.getDestIntArray(), 0, 10);
-          throw new AssertionError("Should have thrown an IndexOutOfBoundsException.");
-        } catch (IndexOutOfBoundsException e) {
-          // Expected.
-        }
-      }
-    }
-
-    barrier.barrier();
-
-    try {
-      if (index == 0) {
-        synchronized (root) {
-          try {
-            System.arraycopy(unsharedIntArray, 0, root.getDestIntArray(), 15, 10);
-            throw new AssertionError("Should have thrown an IndexOutOfBoundsException.");
-          } catch (IndexOutOfBoundsException e) {
-            // Expected.
-          }
-        }
-      }
-    } finally {
-      barrier.barrier();
-    }
-  }
-
-  private void copyNonCompatibleRefObject() throws Exception {
-    clear();
+  public void testCopyNonCompatibleRefObject(Root r, boolean validate) throws Exception {
+    TestObject[] unsharedRefArray = makeUnsharedRefArray();
     initialize(unsharedRefArray);
-    barrier.barrier();
 
-    for (int i = 0; i < 5; i++) {
-      unsharedRefArray[i] = new TestObject(i);
-    }
+    DataRoot root = r.getRoot();
 
-    barrier.barrier();
+    if (validate) {
+      assertEqualRefArray(unsharedRefArray, root.getDestRefArray(), 0, 0, 10);
+    } else {
+      synchronized (root) {
+        System.arraycopy(unsharedRefArray, 0, root.getDestRefArray(), 0, 10);
+      }
 
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
+      Double d[] = new Double[ARRAY_LENGTH];
+      for (int i = 0; i < d.length; i++) {
+        d[i] = new Double(i);
+      }
 
-    barrier.barrier();
-
-    if (index == 0) {
       synchronized (root) {
         try {
-          System.arraycopy(unsharedRefArray, 0, root.getDestRefArray(), 0, 10);
+          System.arraycopy(d, 0, root.getDestRefArray(), 0, 10);
           throw new AssertionError("Should have thrown an ArrayStoreException.");
         } catch (ArrayStoreException e) {
           // Expected.
         }
       }
     }
+  }
 
-    barrier.barrier();
+  public void testPartialCopy(Root r, boolean validate) throws Exception {
+    TestObject[] unsharedRefArray = makeUnsharedRefArray();
+    initialize(unsharedRefArray);
 
-    try {
-      if (index != 0) {
-        assertEqualRefArray(unsharedRefArray, root.getDestRefArray(), 0, 0, 5);
-        assertNotEqualRefArray(unsharedRefArray, root.getDestRefArray(), 5, 5, 5);
+    DataRoot root = r.getRoot();
+
+    TestObject[] dest = root.getDestRefArray();
+
+    if (validate) {
+      unsharedRefArray[0] = new TestObject(42);
+      unsharedRefArray[1] = null;
+      assertEqualRefArray(unsharedRefArray, dest, 0, 0, dest.length);
+    } else {
+      synchronized (root) {
+        System.arraycopy(unsharedRefArray, 0, dest, 0, dest.length);
       }
-    } finally {
-      barrier.barrier();
+
+      Object[] array = new Object[dest.length];
+      array[0] = new TestObject(42);
+      // element 1 is null
+      array[2] = new HashMap();
+
+      synchronized (root) {
+        try {
+          System.arraycopy(array, 0, dest, 0, dest.length);
+          throw new AssertionError();
+        } catch (ArrayStoreException ase) {
+          // expected, but first 2 elements should have been copied
+        }
+      }
     }
   }
 
-  private void assertEqualIntArray(int[] expected, int[] actual, int startExpectedPos, int startActualPos, int length) {
+  private static void mutate(int[] unsharedIntArray) {
+    for (int i = 0; i < unsharedIntArray.length; i++) {
+      unsharedIntArray[i]++;
+    }
+  }
+
+  private static void assertEqualIntArray(int[] expected, int[] actual, int startExpectedPos, int startActualPos,
+                                          int length) {
     for (int i = startExpectedPos, j = startActualPos; i < length; i++, j++) {
       Assert.assertEquals(expected[i], actual[j]);
     }
   }
 
-  private void assertEqualRefArray(Object[] expected, Object[] actual, int startExpectedPos, int startActualPos,
-                                   int length) {
+  private static void assertEqualRefArray(Object[] expected, Object[] actual, int startExpectedPos, int startActualPos,
+                                          int length) {
     for (int i = startExpectedPos, j = startActualPos; i < length; i++, j++) {
       Assert.assertEquals(expected[i], actual[j]);
     }
   }
 
-  private void assertNotEqualRefArray(Object[] expected, Object[] actual, int startExpectedPos, int startActualPos,
-                                      int length) {
-    for (int i = startExpectedPos, j = startActualPos; i < length; i++, j++) {
-      Assert.assertFalse(expected[i].equals(actual[j]));
-    }
-  }
-
-  private void clear() throws Exception {
-    for (int i = 0; i < ARRAY_LENGTH; i++) {
-      unsharedIntArray[i] = 0;
-      unsharedRefArray[i] = null;
-    }
-    for (int i = 0; i < BIG_ARRAY_LENGTH; i++) {
-      bigUnsharedIntArray[i] = 0;
-      bigUnsharedRefArray[i] = null;
-    }
-
-    synchronized (root) {
-      root.clear();
-    }
-    synchronized (bigRoot) {
-      bigRoot.clear();
-    }
-
-    barrier.barrier();
-  }
-
-  private void initialize(int[] array) {
+  private static void initialize(int[] array) {
     for (int i = 0; i < array.length; i++) {
       array[i] = i;
     }
   }
 
-  private void initialize(Object[] array) {
+  private static void initialize(TestObject[] array) {
     for (int i = 0; i < array.length; i++) {
-      array[i] = new Object();
+      array[i] = new TestObject(i);
     }
+  }
+
+  private static Object[] makeArrayData() {
+    return new Object[] { "dig", "this", "yo", new Thingy("!") };
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
@@ -899,24 +587,13 @@ public class ArrayCopyTestApp extends AbstractTransparentApp {
     private final TestObject[] destRefArray;
     private final int          size;
 
-    private int                index = 0;
-
     public DataRoot(int size) {
-      this.index = 0;
       this.size = size;
       srcIntArray = new int[size];
       srcRefArray = new TestObject[size];
       destIntArray = new int[size];
       destLongArray = new long[size];
       destRefArray = new TestObject[size];
-    }
-
-    public int getIndex() {
-      return index;
-    }
-
-    public void setIndex(int index) {
-      this.index = index;
     }
 
     public int[] getSrcIntArray() {
@@ -940,31 +617,12 @@ public class ArrayCopyTestApp extends AbstractTransparentApp {
     }
 
     public synchronized void initializeDestRefArray() {
-      for (int i = 0; i < size; i++) {
-        destRefArray[i] = new TestObject(i);
-      }
-    }
-
-    public void initializeDestRefArray(Object[] array) {
-      for (int i = 0; i < size; i++) {
-        array[i] = new TestObject(i);
-      }
+      initialize(destRefArray);
     }
 
     public void initializeSrcRefArray(Object[] array) {
       for (int i = 0; i < size; i++) {
         array[i] = new TestObject(i);
-      }
-    }
-
-    public void clear() {
-      this.index = 0;
-      for (int i = 0; i < size; i++) {
-        srcIntArray[i] = 0;
-        srcRefArray[i] = null;
-        destIntArray[i] = 0;
-        destLongArray[i] = 0;
-        destRefArray[i] = null;
       }
     }
   }
@@ -988,6 +646,30 @@ public class ArrayCopyTestApp extends AbstractTransparentApp {
     public String toString() {
       return getClass().getName() + "(" + val + ")";
     }
-
   }
+
+  private static class Root {
+
+    private final DataRoot root;
+    private final DataRoot bigRoot;
+    private final Object[] sharedArray = makeArrayData();
+
+    Root(int rootSize, int bigRootSize) {
+      this.root = new DataRoot(rootSize);
+      this.bigRoot = new DataRoot(bigRootSize);
+    }
+
+    DataRoot getBigRoot() {
+      return bigRoot;
+    }
+
+    DataRoot getRoot() {
+      return root;
+    }
+
+    Object[] getSharedArray() {
+      return sharedArray;
+    }
+  }
+
 }

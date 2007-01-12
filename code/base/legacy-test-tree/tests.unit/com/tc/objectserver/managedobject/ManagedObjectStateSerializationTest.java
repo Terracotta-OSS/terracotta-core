@@ -287,7 +287,7 @@ public class ManagedObjectStateSerializationTest extends TestCase {
     cursor.addLiteralAction(new Integer(2));
     cursor.addPhysicalAction(SEGMENT_FIELD_NAME+0, new ObjectID(2001), true);
     cursor.addPhysicalAction(SEGMENT_FIELD_NAME+1, new ObjectID(2002), true);
-    
+
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2003) });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2004), new ObjectID(2005) });
 
@@ -478,10 +478,10 @@ public class ManagedObjectStateSerializationTest extends TestCase {
 
     public void addClassLoaderAction(String classLoaderFieldName, Object value) {
       //
-      
+
     }
 
-    public void addSubArrayAction(int start, Object array) {
+    public void addSubArrayAction(int start, Object array, int length) {
       //
     }
   }

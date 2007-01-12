@@ -14,17 +14,17 @@ public interface DNAWriter {
   void addLogicalAction(int method, Object[] parameters);
 
   void addPhysicalAction(String fieldName, Object value);
-  
+
   void addPhysicalAction(String fieldName, Object value, boolean canBeReferenced);
-  
+
   void addArrayElementAction(int index, Object value);
-  
-  void addSubArrayAction(int start, Object array);
-  
+
+  void addSubArrayAction(int start, Object array, int length);
+
   void addClassLoaderAction(String classLoaderFieldName, Object value);
 
   void addEntireArray(Object value);
-  
+
   void addLiteralValue(Object value);
 
   void finalizeDNA();

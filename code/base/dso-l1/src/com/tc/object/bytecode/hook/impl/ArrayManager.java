@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode.hook.impl;
 
@@ -308,16 +309,33 @@ public class ArrayManager {
           System.arraycopy(src, srcPos, l2subset, 0, length);
         }
 
-        // make a second copy because the l2subset can be mutated (refs --> ObjectID)
-        Object[] localSubset = new Object[length];
-        System.arraycopy(l2subset, 0, localSubset, 0, length);
+        int actualLength = length;
+        // validate the assignments if necessary, potentially discovering that only a partial copy is legel
+        if (!destType.isAssignableFrom(srcType)) {
+          for (int i = 0, n = l2subset.length; i < n; i++) {
+            Object srcVal = l2subset[i];
+            if (srcVal != null) {
+              if (!destType.isAssignableFrom(srcVal.getClass())) {
+                actualLength = i;
+                break;
+              }
+            }
+          }
+        }
 
-        if (tcDest != null) {
-          tcDest.objectArrayChanged(destPos, l2subset, length);
+        // make a second copy because the l2subset can be mutated (refs --> ObjectID)
+        Object[] localSubset = new Object[actualLength];
+        System.arraycopy(l2subset, 0, localSubset, 0, actualLength);
+
+        if (tcDest != null && actualLength > 0) {
+          tcDest.objectArrayChanged(destPos, l2subset, actualLength);
         }
 
         // only mutate the local array once DSO has a chance to throw portability and TXN exceptions (above)
-        System.arraycopy(localSubset, 0, dest, destPos, length);
+        System.arraycopy(localSubset, 0, dest, destPos, actualLength);
+
+        if (actualLength != length) { throw new ArrayStoreException(); }
+
       }
     } else {
       // no managed arrays in the mix, just do a regular arraycopy

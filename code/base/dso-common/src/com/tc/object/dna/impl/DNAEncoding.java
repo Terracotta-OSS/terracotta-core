@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.dna.impl;
 
@@ -468,14 +469,17 @@ public class DNAEncoding {
   }
 
   public void encodeArray(Object value, TCDataOutput output) {
+    encodeArray(value, output, value == null ? -1 : Array.getLength(value));
+  }
+
+  public void encodeArray(Object value, TCDataOutput output, int length) {
     output.writeByte(TYPE_ID_ARRAY);
 
     if (value == null) {
       output.writeInt(-1);
       return;
     } else {
-      int len = Array.getLength(value);
-      output.writeInt(len);
+      output.writeInt(length);
     }
 
     Class type = value.getClass().getComponentType();
@@ -484,94 +488,97 @@ public class DNAEncoding {
       output.writeByte(ARRAY_TYPE_PRIMITIVE);
       switch (primitiveClassMap.get(type)) {
         case TYPE_ID_BOOLEAN:
-          encodeBooleanArray((boolean[]) value, output);
+          encodeBooleanArray((boolean[]) value, output, length);
           break;
         case TYPE_ID_BYTE:
-          encodeByteArray((byte[]) value, output);
+          encodeByteArray((byte[]) value, output, length);
           break;
         case TYPE_ID_CHAR:
-          encodeCharArray((char[]) value, output);
+          encodeCharArray((char[]) value, output, length);
           break;
         case TYPE_ID_SHORT:
-          encodeShortArray((short[]) value, output);
+          encodeShortArray((short[]) value, output, length);
           break;
         case TYPE_ID_INT:
-          encodeIntArray((int[]) value, output);
+          encodeIntArray((int[]) value, output, length);
           break;
         case TYPE_ID_LONG:
-          encodeLongArray((long[]) value, output);
+          encodeLongArray((long[]) value, output, length);
           break;
         case TYPE_ID_FLOAT:
-          encodeFloatArray((float[]) value, output);
+          encodeFloatArray((float[]) value, output, length);
           break;
         case TYPE_ID_DOUBLE:
-          encodeDoubleArray((double[]) value, output);
+          encodeDoubleArray((double[]) value, output, length);
           break;
         default:
           throw Assert.failure("unknown primitive array type: " + type);
       }
     } else {
       output.writeByte(ARRAY_TYPE_NON_PRIMITIVE);
-      encodeObjectArray((Object[]) value, output);
+      encodeObjectArray((Object[]) value, output, length);
     }
   }
 
-  private void encodeByteArray(byte[] value, TCDataOutput output) {
+  private void encodeByteArray(byte[] value, TCDataOutput output, int length) {
     output.writeByte(TYPE_ID_BYTE);
-    output.write(value);
+
+    for (int i = 0; i < length; i++) {
+      output.write(value[i]);
+    }
   }
 
-  private void encodeObjectArray(Object[] value, TCDataOutput output) {
-    for (int i = 0, n = value.length; i < n; i++) {
+  private void encodeObjectArray(Object[] value, TCDataOutput output, int length) {
+    for (int i = 0; i < length; i++) {
       encode(value[i], output);
     }
   }
 
-  private void encodeDoubleArray(double[] value, TCDataOutput output) {
+  private void encodeDoubleArray(double[] value, TCDataOutput output, int length) {
     output.writeByte(TYPE_ID_DOUBLE);
-    for (int i = 0, n = value.length; i < n; i++) {
+    for (int i = 0; i < length; i++) {
       output.writeDouble(value[i]);
     }
   }
 
-  private void encodeFloatArray(float[] value, TCDataOutput output) {
+  private void encodeFloatArray(float[] value, TCDataOutput output, int length) {
     output.writeByte(TYPE_ID_FLOAT);
-    for (int i = 0, n = value.length; i < n; i++) {
+    for (int i = 0; i < length; i++) {
       output.writeFloat(value[i]);
     }
   }
 
-  private void encodeLongArray(long[] value, TCDataOutput output) {
+  private void encodeLongArray(long[] value, TCDataOutput output, int length) {
     output.writeByte(TYPE_ID_LONG);
-    for (int i = 0, n = value.length; i < n; i++) {
+    for (int i = 0; i < length; i++) {
       output.writeLong(value[i]);
     }
   }
 
-  private void encodeIntArray(int[] value, TCDataOutput output) {
+  private void encodeIntArray(int[] value, TCDataOutput output, int length) {
     output.writeByte(TYPE_ID_INT);
-    for (int i = 0, n = value.length; i < n; i++) {
+    for (int i = 0; i < length; i++) {
       output.writeInt(value[i]);
     }
   }
 
-  private void encodeShortArray(short[] value, TCDataOutput output) {
+  private void encodeShortArray(short[] value, TCDataOutput output, int length) {
     output.writeByte(TYPE_ID_SHORT);
-    for (int i = 0, n = value.length; i < n; i++) {
+    for (int i = 0; i < length; i++) {
       output.writeShort(value[i]);
     }
   }
 
-  private void encodeCharArray(char[] value, TCDataOutput output) {
+  private void encodeCharArray(char[] value, TCDataOutput output, int length) {
     output.writeByte(TYPE_ID_CHAR);
-    for (int i = 0, n = value.length; i < n; i++) {
+    for (int i = 0; i < length; i++) {
       output.writeChar(value[i]);
     }
   }
 
-  private void encodeBooleanArray(boolean[] value, TCDataOutput output) {
+  private void encodeBooleanArray(boolean[] value, TCDataOutput output, int length) {
     output.writeByte(TYPE_ID_BOOLEAN);
-    for (int i = 0, n = value.length; i < n; i++) {
+    for (int i = 0; i < length; i++) {
       output.writeBoolean(value[i]);
     }
   }

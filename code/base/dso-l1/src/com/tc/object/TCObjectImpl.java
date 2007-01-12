@@ -318,7 +318,7 @@ public abstract class TCObjectImpl implements TCObject {
 
   public void objectArrayChanged(int startPos, Object[] array, int length) {
     this.markAccessed();
-    for (int i = 0; i < array.length; i++) {
+    for (int i = 0; i < length; i++) {
       clearArrayReference(startPos + i);
     }
     getObjectManager().getTransactionManager().arrayChanged(this, startPos, array, length);

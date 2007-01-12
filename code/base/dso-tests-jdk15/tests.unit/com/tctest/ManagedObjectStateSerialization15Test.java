@@ -245,7 +245,7 @@ public class ManagedObjectStateSerialization15Test extends TestCase {
       //
     }
 
-    public void addSubArrayAction(int start, Object array) {
+    public void addSubArrayAction(int start, Object array, int length) {
       //
     }
   }

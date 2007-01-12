@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -30,6 +31,7 @@ public abstract class GenericTestApp extends AbstractTransparentApp {
   // roots
   private final CyclicBarrier barrier;
   private final CyclicBarrier barrier2;
+  private final Exit          exit           = new Exit();
   protected final Map         sharedMap      = new HashMap();
 
   private final Class         type;
@@ -83,8 +85,19 @@ public abstract class GenericTestApp extends AbstractTransparentApp {
     for (Iterator i = tests.iterator(); i.hasNext();) {
       String name = (String) i.next();
       barrier.barrier();
-      runOp(name, true);
-      barrier2.barrier();
+
+      if (exit.shouldExit()) { return; }
+
+      try {
+        runOp(name, true);
+      } catch (Throwable t) {
+        exit.toggle();
+        throw t;
+      } finally {
+        barrier2.barrier();
+      }
+
+      if (exit.shouldExit()) { return; }
     }
   }
 
@@ -93,15 +106,28 @@ public abstract class GenericTestApp extends AbstractTransparentApp {
     for (Iterator i = tests.iterator(); i.hasNext();) {
       String name = (String) i.next();
       System.err.print("Running test: " + name + " ... ");
-      long start = System.currentTimeMillis();                                                                                                                                                                                                                                      
-      runOp(name, false);
-      runOp(name, true);
-      barrier.barrier();
-      barrier2.barrier();
+      long start = System.currentTimeMillis();
+
+      try {
+        runOp(name, false);
+        runOp(name, true);
+      } catch (Throwable t) {
+        exit.toggle();
+        throw t;
+      } finally {
+        barrier.barrier();
+
+        if (!exit.shouldExit()) {
+          barrier2.barrier();
+        }
+      }
+
       System.err.println(" took " + (System.currentTimeMillis() - start) + " millis");
+
+      if (exit.shouldExit()) { return; }
     }
   }
-  
+
   private void runOp(String op, boolean validate) throws Throwable {
     Method m = findMethod(op);
 
@@ -162,15 +188,29 @@ public abstract class GenericTestApp extends AbstractTransparentApp {
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = GenericTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+    config.getOrCreateSpec(Exit.class.getName());
 
     spec.addRoot("sharedMap", "sharedMap");
     spec.addRoot("barrier", "barrier");
     spec.addRoot("barrier2", "barrier2");
+    spec.addRoot("exit", "exit");
 
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
 
     new CyclicBarrierSpec().visit(visitor, config);
+  }
+
+  private static class Exit {
+    private boolean exit = false;
+
+    synchronized boolean shouldExit() {
+      return exit;
+    }
+
+    synchronized void toggle() {
+      exit = true;
+    }
   }
 
 }

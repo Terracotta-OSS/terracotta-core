@@ -529,7 +529,7 @@ private static final TCLogger          logger        = TCLogging.getLogger(Clien
 
       if (!ClassUtils.isPrimitiveArray(array)) {
         Object[] objArray = (Object[]) array;
-        for (int i = 0; i < objArray.length; i++) {
+        for (int i = 0; i < length; i++) {
 
           Object element = objArray[i];
           if (!literalValues.isLiteralInstance(element)) {

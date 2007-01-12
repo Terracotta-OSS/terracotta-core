@@ -53,11 +53,11 @@ public class DNAWriterImpl implements DNAWriter {
     }
   }
 
-  public void addSubArrayAction(int start, Object array) {
+  public void addSubArrayAction(int start, Object array, int length) {
     actionCount++;
     output.writeByte(DNAEncoding.SUB_ARRAY_ACTION_TYPE);
     output.writeInt(start);
-    encoding.encodeArray(array, output);
+    encoding.encodeArray(array, output, length);
   }
 
   public void addClassLoaderAction(String classLoaderFieldName, Object value) {
