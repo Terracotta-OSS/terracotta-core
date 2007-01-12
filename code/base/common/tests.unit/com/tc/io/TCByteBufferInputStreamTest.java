@@ -10,12 +10,13 @@ import com.tc.test.TCTestCase;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Random;
 
 public class TCByteBufferInputStreamTest extends TCTestCase {
 
   private Random random = new SecureRandom();
-  
+
   public void testExceptions() {
     try {
       new TCByteBufferInputStream((TCByteBuffer) null);
@@ -107,6 +108,7 @@ public class TCByteBufferInputStreamTest extends TCTestCase {
 
   public void testToArray() {
     for (int i = 0; i < 250; i++) {
+      log("testToArray(" + i + ")");
       TCByteBuffer[] data = getRandomDataNonZeroLength();
       TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
 
@@ -129,6 +131,7 @@ public class TCByteBufferInputStreamTest extends TCTestCase {
 
   public void testLimit() {
     for (int i = 0; i < 250; i++) {
+      log("testLimit(" + i + ")");
       TCByteBuffer[] data = getRandomDataNonZeroLength();
       TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
 
@@ -179,8 +182,8 @@ public class TCByteBufferInputStreamTest extends TCTestCase {
   }
 
   public void testDuplicateAndLimit() {
-
     for (int i = 0; i < 50; i++) {
+      log("testDuplicateAndLimit(" + i + ")");
       TCByteBuffer[] data = getRandomDataNonZeroLength();
       TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
 
@@ -207,6 +210,7 @@ public class TCByteBufferInputStreamTest extends TCTestCase {
 
   public void testDuplicate() {
     for (int i = 0; i < 250; i++) {
+      log("testDuplicate(" + i + ")");
       TCByteBuffer[] data = getRandomData();
       TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
       bbis.read();
@@ -239,6 +243,7 @@ public class TCByteBufferInputStreamTest extends TCTestCase {
 
   public void testOffsetReadArray() {
     for (int i = 0; i < 25; i++) {
+      log("testOffsetReadArray(" + i + ")");
       testOffsetReadArray(getRandomData());
     }
   }
@@ -304,12 +309,14 @@ public class TCByteBufferInputStreamTest extends TCTestCase {
 
   public void testReadBasics() {
     for (int i = 0; i < 250; i++) {
+      log("testReadBasics(" + i + ")");
       testReadBasics(getRandomData());
     }
   }
 
   public void testBasic() {
     for (int i = 0; i < 250; i++) {
+      log("testBasic(" + i + ")");
       TCByteBuffer[] data = getRandomDataNonZeroLength();
       TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
 
@@ -487,6 +494,7 @@ public class TCByteBufferInputStreamTest extends TCTestCase {
 
   public void testReadArrayBasics() {
     for (int i = 0; i < 50; i++) {
+      log("testReadArrayBasics(" + i + ")");
       testReadArrayBasics(getRandomData());
     }
   }
@@ -547,6 +555,7 @@ public class TCByteBufferInputStreamTest extends TCTestCase {
 
   public void testSkip() {
     for (int i = 0; i < 250; i++) {
+      log("testSkip(" + i + ")");
       TCByteBuffer[] data = getRandomDataNonZeroLength();
       TCByteBufferInputStream is = new TCByteBufferInputStream(data);
 
@@ -570,6 +579,10 @@ public class TCByteBufferInputStreamTest extends TCTestCase {
         // expected
       }
     }
+  }
+
+  private void log(String msg) {
+    System.err.println(new Date() + " - " + msg);
   }
 
   public void testZeroLength() {
