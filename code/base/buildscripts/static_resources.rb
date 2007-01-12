@@ -51,6 +51,14 @@ class StaticResources
       (flavor !~ /opensource/i) ? FilePath.new(@root_directory, '..', '..', '..', 'code', 'base') : @root_directory
     end
 
+    def build_cache_directory
+        FilePath.new(@root_directory, '.tc-build-cache')
+    end
+
+    def build_config_directory
+        FilePath.new(@root_directory, 'buildconfig')
+    end
+
     def distribution_config_directory(flavor)
       FilePath.new(source_root(flavor), 'buildconfig', 'distribution')
     end
