@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 public class TCMapThroughPutTestApp extends AbstractTransparentApp {
-  private int                 NUM_OF_ITERATIONS = 5000;
+  private int                 NUM_OF_ITERATIONS = 2000;
   private final static int    NUM_OF_KEYS       = 20;
   private final static int    NUM_OF_LEVELS     = 10;
   private final static int    NUM_OF_THREADS    = 1;
