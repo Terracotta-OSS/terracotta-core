@@ -275,7 +275,7 @@ accidental changes to our config schema.)
 END
         puts text % [ schema_dir.to_s, dest_jar.to_s ]
 
-        generated_source_dir.delete_recursively(ant)
+        generated_source_dir.delete
 
         # FIXME 2005-09-27 andrew - We really should be including:
         #
