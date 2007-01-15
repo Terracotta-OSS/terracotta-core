@@ -18,7 +18,7 @@ public class DSOServer extends AbstractStoppable {
   private static final String SPRING_TEST_CONFIG = "spring-test-config.xml";
 
   // XXX move this into the common place for all constants
-  private static final long DSO_SERVER_START_TIMEOUT = 120 * 1000L;
+  private static final long DSO_SERVER_START_TIMEOUT = 240 * 1000L;
 
   private ExtraProcessServerControl serverProc = null;
   private final boolean withPersistentStore;
