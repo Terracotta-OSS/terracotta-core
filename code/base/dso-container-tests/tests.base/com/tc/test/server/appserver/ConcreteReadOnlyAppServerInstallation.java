@@ -74,8 +74,11 @@ final class ConcreteReadOnlyAppServerInstallation {
   }
 
   private static URL appendPath(URL host, String serverType, String majorVersion, String minorVersion) throws Exception {
-    return new URL(host.getProtocol() + "://" + host.getHost() + "/" + host.getPath() + "/" + serverType + "/" + resolvePlatform() + "/" +
-		majorVersion + "/" + majorVersion + "." + minorVersion + "/" + serverType + "-" + majorVersion + "." + minorVersion + ".zip");
+    String baseUrl = host.toExternalForm();
+    String appendedPath = serverType + "/" + resolvePlatform() + "/" +
+        majorVersion + "/" + majorVersion + "." + minorVersion + "/" +
+        serverType + "-" + majorVersion + "." + minorVersion + ".zip";
+    return new URL(baseUrl + "/" + appendedPath);
   }
 
   private static void unzip(BufferedInputStream archive, File destDir) throws IOException {

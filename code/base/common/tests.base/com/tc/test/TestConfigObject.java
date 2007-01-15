@@ -315,7 +315,8 @@ public class TestConfigObject {
   }
 
   public String appserverServerInstallDir() {
-    return new File(effectiveShortPathNameTempDirectory(), "app-server-install").getAbsolutePath();
+    File buildDir = new File(System.getProperty(TC_BASE_DIR), "build");
+    return new File(buildDir, "app-server-install").getAbsolutePath();
   }
 
   public String appserverWorkingDir() {

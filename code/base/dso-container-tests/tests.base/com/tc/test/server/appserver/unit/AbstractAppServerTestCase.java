@@ -194,13 +194,13 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     String appserverURLBase = config.appserverURLBase();
     String appserverHome = config.appserverHome();
 
-    if (appserverURLBase != null && !appserverURLBase.trim().equals("")) {
-      URL host = new URL(appserverURLBase);
-      installation = appServerFactory.createInstallation(host, serverInstallDir, workingDir);
-
-    } else if (appserverHome != null && !appserverHome.trim().equals("")) {
+    if (appserverHome != null && !appserverHome.trim().equals("")) {
       File home = new File(appserverHome);
       installation = appServerFactory.createInstallation(home, workingDir);
+
+    } else if (appserverURLBase != null && !appserverURLBase.trim().equals("")) {
+      URL host = new URL(appserverURLBase);
+      installation = appServerFactory.createInstallation(host, serverInstallDir, workingDir);
 
     } else {
       throw new AssertionError(
