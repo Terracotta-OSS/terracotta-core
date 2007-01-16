@@ -31,10 +31,6 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
     return "";
   }
 
-  public String getDescriptionOfLicense() {
-    return "";
-  }
-
   public L2Info[] getL2Info() {
     return null;
   }

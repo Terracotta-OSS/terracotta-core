@@ -6,6 +6,8 @@ package com.tc.config.schema.setup;
 import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
 
+import com.tc.capabilities.AbstractCapabilitiesFactory;
+import com.tc.capabilities.Capabilities;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.NewCommonL2ConfigObject;
@@ -15,10 +17,6 @@ import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.repository.ChildBeanFetcher;
 import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.utils.XmlObjectComparator;
-import com.tc.license.InvalidLicenseException;
-import com.tc.license.NoLicense;
-import com.tc.license.ResolveLicense;
-import com.tc.license.TerracottaLicense;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.schema.NewL2DSOConfig;
@@ -232,19 +230,13 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       Set badServers = new HashSet();
 
       if (servers != null && servers.length > 1) {
-        // validate license restrictions for High Availability DSO
-        TerracottaLicense license;
-        try {
-          license = ResolveLicense.getLicense();
-        } catch (InvalidLicenseException e) {
-          throw new ConfigurationSetupException(e);
-        }
-        if (!license.dsoHAEnabled() && license.isModuleEnabled(TerracottaLicense.MODULE_DSO)) {
-          // formatting
-          throw new ConfigurationSetupException(
-                                                "Attempting to run multiple servers without license authorization of DSO High Availability.");
+        Capabilities capabilities = AbstractCapabilitiesFactory.getCapabilitiesManager();
 
+        if (!capabilities.hasHA() && capabilities.canClusterPOJOs()) {
+          throw new ConfigurationSetupException("Attempting to run multiple servers without license "+
+                                                "authorization of DSO High Availability.");
         }
+        
         // We have clustered DSO; they must all be in permanent-store mode
         for (int i = 0; i < servers.length; ++i) {
           String name = servers[i].getName();
@@ -277,28 +269,22 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   }
 
   private void validateLicenseModuleRestrictions() throws ConfigurationSetupException {
-    TerracottaLicense license;
-    try {
-      license = ResolveLicense.getLicense();
-    } catch (InvalidLicenseException e) {
-      throw new ConfigurationSetupException(e);
-    }
-    if (license == null) license = NoLicense.getInstance();
-
-    if (!license.isModuleEnabled(TerracottaLicense.MODULE_DSO)) {
+    Capabilities capabilities = AbstractCapabilitiesFactory.getCapabilitiesManager();
+  
+    if (!capabilities.canClusterPOJOs()) {
       Object result = this.dsoApplicationConfigFor(TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME)
           .roots().getObject();
       if (result != null && Array.getLength(result) > 0) {
         // formatting
         throw new ConfigurationSetupException(
                                               "Your Terracotta license, "
-                                                  + license.describe()
+                                                  + capabilities.describe()
                                                   + ", does not allow you to define DSO roots in your configuration file. Please remove them and try again.");
       }
     }
 
   }
-
+  
   public NewCommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException {
     return configDataFor(name).commonL2Config();
   }

@@ -44,8 +44,9 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager {
 
   public synchronized void shutdownClient(ChannelID channelID) {
     BatchStats bs = (BatchStats) map.get(channelID);
-    Assert.assertNotNull(bs);
-    bs.shutdownClient();
+    if (bs != null) {
+      bs.shutdownClient();
+    }
   }
 
   private void cleanUp(ChannelID channelID) {

@@ -104,7 +104,7 @@ public class DistributedTestRunner implements ResultsListener {
     L2TVSConfigurationSetupManager manager = configFactory.createL2TVSConfigurationSetupManager(null);
 
     this.server = new DistributedObjectServer(manager, new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(DistributedObjectServer.class))), new ConnectionPolicyImpl(-1), new NullTCServerInfo());
+        .getLogger(DistributedObjectServer.class))), new ConnectionPolicyImpl(Integer.MAX_VALUE), new NullTCServerInfo());
   }
 
   public void run() {

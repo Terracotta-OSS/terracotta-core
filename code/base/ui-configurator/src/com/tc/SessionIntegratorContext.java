@@ -3,14 +3,16 @@
  */
 package com.tc;
 
-import java.util.ResourceBundle;
 import org.dijon.DictionaryResource;
+
+import com.tc.util.BundleHelper;
+
 import java.util.prefs.Preferences;
 
 public class SessionIntegratorContext {
   public SessionIntegrator      client;
   public SessionIntegratorFrame frame;
-  public ResourceBundle         bundle;
+  public BundleHelper           bundleHelper;
   public DictionaryResource     topRes;
   public Preferences            prefs;
 
@@ -19,7 +21,7 @@ public class SessionIntegratorContext {
   }
 
   public String getString(String id) {
-    return bundle.getString(id);
+    return bundleHelper.getString(id);
   }
   
   public String[] getMessages(String[] ids) {
@@ -39,7 +41,7 @@ public class SessionIntegratorContext {
   }
 
   public Object getObject(String id) {
-    return bundle.getObject(id);
+    return bundleHelper.getObject(id);
   }
 
   public void toConsole(String msg) {

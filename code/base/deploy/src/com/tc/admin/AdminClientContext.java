@@ -3,16 +3,19 @@
  */
 package com.tc.admin;
 
-import java.util.ResourceBundle;
 import org.dijon.DictionaryResource;
+
+import com.tc.util.BundleHelper;
+
 import java.util.prefs.Preferences;
+
 import javax.swing.UIDefaults;
 
 public class AdminClientContext {
   public AdminClient           client;
   public AdminClientController controller;
   public UIDefaults            uiDefaults;
-  public ResourceBundle        bundle;
+  public BundleHelper          bundleHelper;
   public DictionaryResource    topRes;
   public Preferences           prefs;
 
@@ -27,7 +30,7 @@ public class AdminClientContext {
    * Load a string string from Resources.java.
    */
   public String getString(String id) {
-    return bundle.getString(id);
+    return bundleHelper.getString(id);
   }
   
   /**
@@ -54,7 +57,7 @@ public class AdminClientContext {
    * Load an object from Resources.java.
    */
   public Object getObject(String id) {
-    return bundle.getObject(id);
+    return bundleHelper.getObject(id);
   }
 
   /**

@@ -10,11 +10,12 @@ public class BundleHelper {
   private ResourceBundle bundle;
   
   public BundleHelper(Class clas) {
-    this(clas.getName()+"Bundle");
+    bundle = AbstractBundleFactory.getBundle(clas);
   }
   
-  public BundleHelper(String name) {
-    bundle = ResourceBundle.getBundle(name);
+  public Object getObject(final String key) {
+    Assert.assertNotNull(key);
+    return bundle.getObject(key);
   }
   
   public String getString(final String key) {

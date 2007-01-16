@@ -22,8 +22,6 @@ public interface TCServerInfoMBean extends TerracottaMBean {
 
   String getVersion();
 
-  String getDescriptionOfLicense();
-
   String getBuildID();
 
   String getCopyright();

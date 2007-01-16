@@ -106,17 +106,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return productInfo.toShortString();
   }
 
-  public String getDescriptionOfLicense() {
-    try {
-      return server.getLicense().describe();
-    } catch (Exception e) {
-      // license will have been resolved before this method is called
-      throw new RuntimeException(e);
-    }
-  }
-
   public String getBuildID() {
-
     return buildID;
   }
 

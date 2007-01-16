@@ -5,20 +5,6 @@
 #
 
 class BaseCodeTerracottaBuilder <  TerracottaBuilder
-  alias_method :__init, :init
-  
-  # HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK
-  def init
-    __init
-    srcdir  = FilePath.new(@static_resources.source_root(@flavor), '..', '..', 'overwrite', 'open').canonicalize.to_s
-    destdir = FilePath.new(@static_resources.root_dir, '..', '..').canonicalize.to_s
-    if File.exists?(srcdir)
-      ant.copy(:todir => destdir, :overwrite => true, :verbose => true) do
-        ant.fileset(:dir => srcdir, :excludes => "**/.svn/**")
-      end 
-    end
-  end
-
   # assemble the kit for the product code supplied
   def dist(product_code='DSO', flavor='OPENSOURCE')
     check_if_type_supplied(product_code, flavor)

@@ -35,13 +35,19 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     def initialize(arguments)
         super(:compile, arguments)
 
+        # Some more objects we need.
+        @build_environment = BuildEnvironment.new(platform, config_source)
+        @static_resources = StaticResources.new(basedir)
+        @archive_tag = ArchiveTag.new(@build_environment)
+
         # Load up our modules; allow definition of new modules by setting a configuration
         # property that points to additional module files to load. I believe that right now
         # this isn't used, but it was used in the past to (e.g.) let the Spring folks
         # define additional modules without making everybody else compile them (because
         # they did not, in fact, compile, IIRC).
         module_files = [ FilePath.new(basedir, 'modules.def.yml') ]
-        additional_files = config_source.as_array('additional_module_files')
+        additional_files = config_source.as_array('additional_module_files') || []
+        additional_files << @static_resources.enterprise_modules_file
         additional_files.each { |file| module_files << FilePath.new(file.to_s) } unless additional_files.nil?
 
         # Our BuildResults object.
@@ -51,11 +57,6 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
         built_data = BuildModuleSetBuilder.new(basedir, *module_files).build_modules
         @module_set = built_data[:module_set]
         @module_groups = built_data[:module_groups]
-
-        # Some more objects we need.
-        @build_environment = BuildEnvironment.new(platform, config_source)
-        @static_resources = StaticResources.new(basedir)
-        @archive_tag = ArchiveTag.new(@build_environment)
 
         # Load the XMLBeans task, so we can use it to process config files when needed by that target.
         ant.taskdef(:name => 'xmlbean', :classname => 'org.apache.xmlbeans.impl.tool.XMLBean')

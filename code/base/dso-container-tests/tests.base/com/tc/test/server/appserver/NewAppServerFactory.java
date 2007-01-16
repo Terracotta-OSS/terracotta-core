@@ -7,8 +7,6 @@ import org.apache.commons.io.CopyUtils;
 import org.apache.commons.io.IOUtils;
 
 import com.tc.config.Directories;
-import com.tc.license.NoLicense;
-import com.tc.license.ResolveLicense;
 import com.tc.test.TempDirectoryHelper;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.tomcat5x.Tomcat5xAppServerFactory;
@@ -78,25 +76,21 @@ public abstract class NewAppServerFactory {
   private final synchronized void copyLicenseIfAvailable() {
     if (this.licenseIsSet) return;
 
-    try {
-      if (ResolveLicense.getLicense() instanceof NoLicense) {
-        this.licenseIsSet = true;
-        return;
-      }
-    } catch (Exception e) {
-      throw new RuntimeException("No license available for container tests", e);
-    }
-
     InputStream original = null;
     OutputStream dest = null;
 
     try {
+      File licenseFile = new File(Directories.getLicenseLocation(), "license.lic");
+      
+      if(!licenseFile.exists()) {
+        this.licenseIsSet = true;
+        return;
+      }
+
       TempDirectoryHelper helper = new TempDirectoryHelper(getClass());
       File toDir = helper.getDirectory();
-      File toFile = new File(toDir, ResolveLicense.LICENSE);
-      File licenseDir = Directories.getLicenseLocation();
-      original = new FileInputStream(licenseDir + File.separator + ResolveLicense.LICENSE);
-      if (original == null) throw new java.io.FileNotFoundException("No resource '" + ResolveLicense.LICENSE + "'?");
+      File toFile = new File(toDir, licenseFile.getName());
+      original = new FileInputStream(licenseFile);
       dest = new FileOutputStream(toFile);
       CopyUtils.copy(original, dest);
       original.close();

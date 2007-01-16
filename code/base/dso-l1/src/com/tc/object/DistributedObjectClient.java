@@ -327,7 +327,7 @@ public class DistributedObjectClient extends SEDA {
         consoleLogger.warn("Connection refused from server: " + serverHost + ":" + serverPort);
         ThreadUtil.reallySleep(5000);
       } catch (MaxConnectionsExceededException e) {
-        consoleLogger.warn("Connection refused MAXIMUM CONNECTIONS TO SERVER FOR TRIAL VERSION EXCEEDED: " + serverHost
+        consoleLogger.warn("Connection refused MAXIMUM CONNECTIONS TO SERVER EXCEEDED: " + serverHost
                            + ":" + serverPort);
         ThreadUtil.reallySleep(5000);
       } catch (IOException ioe) {

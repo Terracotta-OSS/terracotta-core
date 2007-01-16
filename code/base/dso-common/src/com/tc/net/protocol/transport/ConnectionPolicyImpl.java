@@ -28,15 +28,14 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
   }
   
   public synchronized boolean maxConnectionsExceeded() {
-    return false;
+    return connectionCount > maxConnections;
   }
 
   public synchronized int getMaxConnections() {
-    return -1;
+    return maxConnections;
   }
 
   public synchronized void setMaxConnections(int i) {
     this.maxConnections = i;
   }
-  
 }

@@ -4,11 +4,11 @@
 package com.tc.admin;
 
 import org.apache.commons.io.IOUtils;
-
 import org.dijon.ApplicationManager;
 import org.dijon.DictionaryResource;
 import org.dijon.Image;
 
+import com.tc.util.BundleHelper;
 import com.tc.util.runtime.Os;
 
 import java.io.File;
@@ -17,7 +17,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -46,11 +45,11 @@ public class AdminClient extends ApplicationManager {
       System.setProperty("com.apple.mrj.application.growbox.intrudes", "false");
     }
 
-    m_cntx        = new AdminClientContext();
+    m_cntx = new AdminClientContext();
     m_cntx.client = m_client = this;
-    m_cntx.prefs  = loadPrefs();
+    m_cntx.prefs = loadPrefs();
     m_cntx.topRes = loadTopRes();
-    m_cntx.bundle = ResourceBundle.getBundle("com.tc.admin.Resources");
+    m_cntx.bundleHelper = new BundleHelper(getClass());
 
     if(!Boolean.getBoolean("com.tc.ui.java-icon")) {
       setIconImage(new Image(getBytes("/com/tc/admin/icons/logo_small.gif")));

@@ -4,10 +4,11 @@
 package com.tc;
 
 import org.apache.commons.io.IOUtils;
-
 import org.dijon.ApplicationManager;
 import org.dijon.DictionaryResource;
 import org.dijon.Image;
+
+import com.tc.util.BundleHelper;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,7 +16,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ResourceBundle;
 import java.util.prefs.Preferences;
 
 public class SessionIntegrator extends ApplicationManager {
@@ -28,11 +28,11 @@ public class SessionIntegrator extends ApplicationManager {
   public SessionIntegrator() {
     super(APP_NAME);
     
-    m_cntx         = new SessionIntegratorContext();
-    m_cntx.client  = m_client = this;
-    m_cntx.prefs   = loadPrefs();
-    m_cntx.topRes  = loadTopRes();
-    m_cntx.bundle  = ResourceBundle.getBundle("com.tc."+APP_NAME+"Resources");
+    m_cntx = new SessionIntegratorContext();
+    m_cntx.client = m_client = this;
+    m_cntx.prefs = loadPrefs();
+    m_cntx.topRes = loadTopRes();
+    m_cntx.bundleHelper = new BundleHelper(getClass());
 
     setIconImage(new Image(getBytes("/com/tc/admin/icons/logo_small.gif")));
   }

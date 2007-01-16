@@ -16,7 +16,6 @@ import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.config.Directories;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.NewSystemConfig;
@@ -25,25 +24,21 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
-import com.tc.license.InvalidLicenseException;
-import com.tc.license.ResolveLicense;
-import com.tc.license.TerracottaLicense;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfo;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
+import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.stats.DSO;
 import com.tc.stats.DSOMBean;
 import com.tc.util.Assert;
-import com.tc.util.TCTimerImpl;
 
 import java.util.Date;
-import java.util.TimerTask;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
@@ -107,10 +102,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     return out;
   }
 
-  public TerracottaLicense getLicense() throws InvalidLicenseException, ConfigurationSetupException {
-    return ResolveLicense.getLicense();
-  }
-  
   /**
    * I realize this is wrong, since the server can still be starting but we'll have to deal with the whole stopping
    * issue later, and there's the TCStop feature which should be removed.
@@ -260,7 +251,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   }
 
-  private void startServer() throws Exception {
+  protected void startServer() throws Exception {
     String logFile = TCLogging.getLogFileLocation();
 
     if (logFile != null) {
@@ -274,20 +265,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     startTime = System.currentTimeMillis();
 
     NewSystemConfig systemConfig = this.configurationSetupManager.systemConfig();
-
-    consoleLogger.info("Terracotta license: " + getLicense().describe());
-
-    long maxRuntime = getLicense().maxL2RuntimeMillis();
-    if (maxRuntime < Long.MAX_VALUE) setExpirationTimer(maxRuntime);
-
-    Date lastDate = getLicense().l2ExpiresOn();
-    if (lastDate != null && new Date().after(lastDate)) {
-      String text = "Your Terracotta license has expired. It is now " + new Date() + ", and your license expired on "
-                    + lastDate + ". This L2 will now exit.";
-      consoleLogger.fatal(text);
-      throw new Exception(text);
-    }
-
     terracottaConnector = new TerracottaConnector();
     startHTTPServer(systemConfig, terracottaConnector);
 
@@ -307,52 +284,13 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
-  private String describeTimeInterval(long maxTime) {
-    long hours = maxTime / (60L * 60L * 1000L);
-    long minutes = (maxTime / (60L * 1000L)) % 60;
-    long seconds = (maxTime / (1000L)) % 60;
-
-    String out = "";
-    if (hours > 0) out += pluralize(hours, "hour");
-    if (minutes > 0) {
-      if (hours > 0) out += ", ";
-      out += pluralize(minutes, "minute");
-    }
-    if (seconds > 0) {
-      if (hours > 0 || minutes > 0) out += ", ";
-      out += pluralize(seconds, "second");
-    }
-
-    return out;
+  protected ConnectionPolicy createConnectionPolicy() {
+    return new ConnectionPolicyImpl(Integer.MAX_VALUE);
   }
-
-  private String pluralize(long howMany, String unit) {
-    return howMany + " " + unit + (howMany != 1 ? "s" : "");
-  }
-
-  private class L2ExpiredTask extends TimerTask {
-    private final long maxTime;
-
-    public L2ExpiredTask(long maxTime) {
-      super();
-      this.maxTime = maxTime;
-    }
-
-    public void run() {
-      consoleLogger.fatal("This Terracotta Server has been running for at least " + describeTimeInterval(maxTime)
-                          + "; the current license restricts it to this length of operation. "
-                          + "This L2 will now shut down.");
-      shutdown();
-    }
-  }
-
-  private void setExpirationTimer(long maxRuntime) {
-    new TCTimerImpl("L2 Expiration", true).schedule(new L2ExpiredTask(maxRuntime), maxRuntime);
-  }
-
+  
   private void startDSOServer(Sink httpSink) throws Exception {
     dsoServer = new DistributedObjectServer(configurationSetupManager, getThreadGroup(),
-                                            new ConnectionPolicyImpl(getLicense().maxL2Connections()), httpSink,
+                                            createConnectionPolicy(), httpSink,
                                             new TCServerInfo(this));
     dsoServer.start();
 
@@ -366,7 +304,11 @@ public class TCServerImpl extends SEDA implements TCServer {
     WebAppContext context = new WebAppContext("", "/");
     ServletHandler servletHandler = new ServletHandler();
 
-    context.setResourceBase(Directories.getInstallationRoot().getAbsolutePath());
+    /**
+     * We don't serve up any files, just hook in a few servlets. It's required
+     * the ResourceBase be non-null.
+     */
+    context.setResourceBase(System.getProperty("user.dir"));
 
     ServletHolder holder;
     holder = servletHandler.addServletWithMapping(VersionServlet.class.getName(), "/version");

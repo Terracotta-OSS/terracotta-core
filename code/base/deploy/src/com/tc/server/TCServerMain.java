@@ -22,7 +22,8 @@ public class TCServerMain {
                                                                                                     new FatalIllegalConfigurationChangeHandler());
 
       final TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler);
-      final TCServer server = new TCServerImpl(factory.createL2TVSConfigurationSetupManager(null), threadGroup);
+      final AbstractServerFactory serverFactory = AbstractServerFactory.getFactory();
+      final TCServer server = serverFactory.createServer(factory.createL2TVSConfigurationSetupManager(null), threadGroup);
       server.start();
     } catch (Throwable t) {
       throwableHandler.handleThrowable(Thread.currentThread(), t);

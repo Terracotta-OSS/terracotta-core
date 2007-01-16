@@ -63,6 +63,15 @@ class StaticResources
       FilePath.new(source_root(flavor), 'buildconfig', 'distribution')
     end
 
+    def enterprise_modules_file
+      FilePath.new(@root_directory, '..', '..', '..', 'code', 'base', 'modules.def.yml')
+    end
+
+    def ia_project_directory(flavor)
+      (flavor !~ /opensource/i) ? FilePath.new(@root_directory, '..', '..', '..', 'kits', 'source', 'installer') :
+                                  FilePath.new(@root_directory, '..', '..',  'kits', 'source', 'installer')
+    end
+
     def jrefactory_config_directory
         FilePath.new(@root_directory, "buildconfig")
     end
