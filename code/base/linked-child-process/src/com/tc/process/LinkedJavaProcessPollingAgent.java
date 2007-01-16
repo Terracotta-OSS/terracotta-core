@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.process;
 
@@ -25,6 +26,7 @@ public class LinkedJavaProcessPollingAgent {
 
   public static final int        NORMAL_HEARTBEAT_INTERVAL = 60 * 1000;
   public static final byte[]     HEARTBEAT_DATA            = "Heartbeat".getBytes();
+  public static final byte[]     SHUTDOWN_DATA             = "shutdown".getBytes();
   private static final int       MAX_HEARTBEAT_DELAY       = 4 * NORMAL_HEARTBEAT_INTERVAL;
   public static final int        EXIT_CODE                 = 42;
   private static HeartbeatServer server                    = null;
@@ -32,7 +34,7 @@ public class LinkedJavaProcessPollingAgent {
 
   /**
    * Creates a server thread in the parent process posting a periodic heartbeat.
-   *
+   * 
    * @return server port - must be passed to {@link startClientWatchdogService()}
    */
   public static synchronized int getChildProcessHeartbeatServerPort() {
@@ -47,7 +49,7 @@ public class LinkedJavaProcessPollingAgent {
 
   /**
    * Creates a watchdog service thread in the child process which receives a heartbeart from the parent process.
-   *
+   * 
    * @param pingPort - this must come from {@link getChildProcessHeartbeatServerPort()}
    * @param childClass - used for debugging
    */
