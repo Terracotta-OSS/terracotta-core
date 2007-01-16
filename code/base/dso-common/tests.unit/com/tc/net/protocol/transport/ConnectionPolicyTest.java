@@ -9,7 +9,7 @@ public class ConnectionPolicyTest extends TestCase {
   private ConnectionPolicy policy;
   
   public void tests() throws Exception {
-    policy = new ConnectionPolicyImpl(-1);
+    policy = new ConnectionPolicyImpl(1);
 
     policy.clientConnected();
     assertFalse(policy.maxConnectionsExceeded());
