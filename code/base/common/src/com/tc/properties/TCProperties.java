@@ -3,6 +3,8 @@
  */
 package com.tc.properties;
 
+import java.util.Properties;
+
 public interface TCProperties {
 
   int getInt(String key);
@@ -18,5 +20,7 @@ public interface TCProperties {
   String getProperty(String key, boolean missingOkay);
 
   float getFloat(String key);
+
+  Properties addAllPropertiesTo(Properties properties);
 
 }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.persistence.sleepycat;
 
@@ -18,6 +19,7 @@ import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.Transaction;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,10 +29,12 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 public class DBEnvironment {
 
   private static final TCLogger            clogger                      = CustomerLogging.getDSOGenericLogger();
+  private static final TCLogger            logger                       = TCLogging.getLogger(DBEnvironment.class);
 
   private static final String              OBJECTID_SEQUENCE_NAME       = "objectids";
   private static final String              ROOT_DB_NAME                 = "roots";
@@ -72,8 +76,12 @@ public class DBEnvironment {
   private final boolean                    paranoid;
 
   public DBEnvironment(boolean paranoid, File envHome) throws IOException {
+    this(paranoid, envHome, new Properties());
+  }
+
+  public DBEnvironment(boolean paranoid, File envHome, Properties jeProperties) throws IOException {
     this(new HashMap(), new LinkedList(), paranoid, envHome);
-    this.ecfg = new EnvironmentConfig();
+    this.ecfg = new EnvironmentConfig(jeProperties);
     this.ecfg.setCachePercent(25);
     this.ecfg.setTransactional(true);
     this.ecfg.setAllowCreate(true);
@@ -84,8 +92,11 @@ public class DBEnvironment {
     this.dbcfg = new DatabaseConfig();
     this.dbcfg.setAllowCreate(true);
     this.dbcfg.setTransactional(true);
-  } // For tests
 
+    logger.info("Env config = " + this.ecfg + " DB Config = " + this.dbcfg + " JE Properties = " + jeProperties);
+  }
+
+  // For tests
   DBEnvironment(boolean paranoid, File envHome, EnvironmentConfig ecfg, DatabaseConfig dbcfg) throws IOException {
     this(new HashMap(), new LinkedList(), paranoid, envHome, ecfg, dbcfg);
   }
@@ -272,7 +283,7 @@ public class DBEnvironment {
     assertOpen();
     return (Database) databasesByName.get(CLASS_DB_NAME);
   }
-  
+
   public Database getMapsDatabase() throws DatabaseException {
     assertOpen();
     return (Database) databasesByName.get(MAP_DB_NAME);

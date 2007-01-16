@@ -255,6 +255,11 @@ public class ConfigPropertiesTest extends TestCase {
     public float getFloat(String key) {
       return Float.valueOf(getProperty(key)).floatValue();
     }
+
+    public Properties addAllPropertiesTo(Properties properties) {
+      properties.putAll(props);
+      return properties;
+    }
   }
 
 }

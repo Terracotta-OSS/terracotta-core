@@ -160,6 +160,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.management.MBeanServer;
@@ -288,7 +289,8 @@ public class DistributedObjectServer extends SEDA {
       }
       logger.debug("persistence database home: " + dbhome);
 
-      DBEnvironment dbenv = new DBEnvironment(persistent, dbhome);
+      DBEnvironment dbenv = new DBEnvironment(persistent, dbhome, l2Properties.getPropertiesFor("berkeleydb")
+          .addAllPropertiesTo(new Properties()));
       SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
       persistor = new SleepycatPersistor(TCLogging.getLogger(SleepycatPersistor.class), dbenv,
                                          serializationAdapterFactory);
