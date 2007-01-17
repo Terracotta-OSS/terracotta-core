@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test;
 
@@ -92,6 +93,7 @@ public class TCTestCase extends TestCase {
     String bar = "***************************************";
     System.err.println("\n" + bar + "\n+ TCTestCase timeout alarm going off at " + new Date() + "\n" + bar + "\n");
 
+    doDumpServerDetails();
     if (dumpThreadsOnTimeout) {
       try {
         doThreadDump();
@@ -106,6 +108,10 @@ public class TCTestCase extends TestCase {
     } catch (Throwable t) {
       this.beforeTimeoutException.set(t);
     }
+  }
+
+  protected void doDumpServerDetails() {
+    // NOP - Overridden by subclasses
   }
 
   // override this method if you want to do something before your test times out

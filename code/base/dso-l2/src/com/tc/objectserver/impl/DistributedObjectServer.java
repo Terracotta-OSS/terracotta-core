@@ -183,6 +183,7 @@ public class DistributedObjectServer extends SEDA {
   private CommunicationsManager                communicationsManager;
   private ServerConfigurationContext           context;
   private ObjectManagerImpl                    objectManager;
+  private TransactionalObjectManagerImpl       txnObjectManager;
   private SampledCounterManager                sampledCounterManager;
   private LockManager                          lockManager;
   private ServerManagementContext              managementContext;
@@ -222,6 +223,10 @@ public class DistributedObjectServer extends SEDA {
 
     if (this.objectManager != null) {
       this.objectManager.dump();
+    }
+
+    if (this.txnObjectManager != null) {
+      this.txnObjectManager.dump();
     }
 
     if (this.transactionManager != null) {
@@ -452,9 +457,8 @@ public class DistributedObjectServer extends SEDA {
                      new CommitTransactionChangeHandler(gtxm, transactionStorePTP), commitThreads, maxStageSize);
 
     TransactionalStageCoordinator txnStageCoordinator = new TransactionalStagesCoordinatorImpl(stageManager);
-    TransactionalObjectManagerImpl txnObjectManager = new TransactionalObjectManagerImpl(objectManager,
-                                                                                         new TransactionSequencer(),
-                                                                                         gtxm, txnStageCoordinator);
+    txnObjectManager = new TransactionalObjectManagerImpl(objectManager, new TransactionSequencer(), gtxm,
+                                                          txnStageCoordinator);
     objectManager.setTransactionalObjectManager(txnObjectManager);
     Stage processTx = stageManager.createStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE,
                                                new ProcessTransactionHandler(transactionBatchManager, txnObjectManager,
@@ -588,8 +592,9 @@ public class DistributedObjectServer extends SEDA {
   private void startBeanShell(int port) {
     try {
       Interpreter i = new Interpreter();
-      i.set("dsoserver", this);
-      i.set("objectmanager", objectManager);
+      i.set("dsoServer", this);
+      i.set("objectManager", objectManager);
+      i.set("txnObjectManager", txnObjectManager);
       i.set("portnum", port);
       i.eval("setAccessibility(true)"); // turn off access restrictions
       i.eval("server(portnum)");

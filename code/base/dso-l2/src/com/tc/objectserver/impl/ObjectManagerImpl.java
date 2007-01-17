@@ -75,7 +75,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private static final byte                    NEW_REQUEST              = 0x02;
   private static final byte                    REMOVE_ON_RELEASE        = 0x04;
 
-  private static final int                     MAX_COMMIT_SIZE              = TCPropertiesImpl
+  private static final int                     MAX_COMMIT_SIZE          = TCPropertiesImpl
                                                                             .getProperties()
                                                                             .getInt(
                                                                                     "l2.objectmanager.maxObjectsToCommit");

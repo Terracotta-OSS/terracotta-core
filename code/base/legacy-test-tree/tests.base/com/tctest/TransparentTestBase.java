@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -177,6 +178,18 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     } else {
       System.err.println("NOTE: " + getClass().getName() + " can't be run in mode '" + mode()
                          + "', and thus will be skipped.");
+    }
+  }
+
+  protected void doDumpServerDetails() {
+    try {
+      if (this.runner != null) {
+        this.runner.dumpServer();
+      } else {
+        System.err.println("Runner is null !!");
+      }
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
   }
 

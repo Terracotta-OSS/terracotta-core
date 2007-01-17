@@ -394,10 +394,10 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.println(getClass().getName());
-    out.indent().print("checkedOutObjects: ").println(checkedOutObjects);
+    out.indent().print("checkedOutObjects: ").visit(checkedOutObjects).println();
     out.indent().print("applyPendingTxns: ").visit(applyPendingTxns).println();
     out.indent().print("commitPendingTxns: ").visit(commitPendingTxns).println();
-    out.indent().println("pendingTxnList: " + pendingTxnList);
+    out.indent().print("pendingTxnList: ").visit(pendingTxnList).println();
     out.indent().print("pendingObjectRequest: ").visit(pendingObjectRequest).println();
     return out;
   }
