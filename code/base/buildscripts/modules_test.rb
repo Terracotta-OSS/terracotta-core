@@ -280,7 +280,10 @@ class SubtreeTestRun
         @use_dso_boot_jar = buildconfig['include-dso-boot-jar'] =~ /^\s*true\s*$/i
         @needs_dso_boot_jar = @use_dso_boot_jar || (buildconfig['build-dso-boot-jar'] =~ /^\s*true\s*$/i)
         @timeout = (config_source["test_timeout"] || buildconfig["timeout"] || DEFAULT_TEST_TIMEOUT_SECONDS.to_s).to_i * 1000
-        @extra_jvmargs = buildconfig["jvmargs"] || [ ]
+        @extra_jvmargs = []
+        if buildconfig['jvmargs']
+          @extra_jvmargs = buildconfig['jvmargs'].split(/\s*,\s*/)
+        end
         @extra_jvmargs += config_source.as_array('jvmargs') unless config_source.as_array('jvmargs').nil?
         @jvm = tests_jvm(jvm_set)
     end
