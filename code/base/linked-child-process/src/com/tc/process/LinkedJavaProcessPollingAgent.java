@@ -9,8 +9,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Creates a connection between a parent java process and it's child process.
@@ -22,13 +26,13 @@ import java.util.Date;
  * pages it's parent to make sure it's still alive. If the parent's heartbeat flatlines, the child's watchdog thread
  * will call <tt>System.exit(0)</tt>.
  */
-public class LinkedJavaProcessPollingAgent {
+public final class LinkedJavaProcessPollingAgent {
 
-  public static final int        NORMAL_HEARTBEAT_INTERVAL = 60 * 1000;
-  public static final byte[]     HEARTBEAT_DATA            = "Heartbeat".getBytes();
-  public static final byte[]     SHUTDOWN_DATA             = "shutdown".getBytes();
+  private static final int       NORMAL_HEARTBEAT_INTERVAL = 60 * 1000;
+  private static final byte[]    HEARTBEAT_DATA            = "Heartbeat".getBytes();       // must have same length
+  private static final byte[]    SHUTDOWN_DATA             = "shutdown0".getBytes();       // must have same length
   private static final int       MAX_HEARTBEAT_DELAY       = 4 * NORMAL_HEARTBEAT_INTERVAL;
-  public static final int        EXIT_CODE                 = 42;
+  private static final int       EXIT_CODE                 = 42;
   private static HeartbeatServer server                    = null;
   private static PingThread      client                    = null;
 
@@ -43,7 +47,6 @@ public class LinkedJavaProcessPollingAgent {
       server.start();
       System.err.println("Child-process heartbeat server started on port: " + server.getPort());
     }
-
     return server.getPort();
   }
 
@@ -52,13 +55,26 @@ public class LinkedJavaProcessPollingAgent {
    * 
    * @param pingPort - this must come from {@link getChildProcessHeartbeatServerPort()}
    * @param childClass - used for debugging
+   * @param honorShutdownMsg - false, will ignore the destroy() method and keep this client alive after the shutdown
+   *        message is broadcast
    */
-  public static synchronized void startClientWatchdogService(int pingPort, String childClass) {
+  public static synchronized void startClientWatchdogService(int pingPort, String childClass, boolean honorShutdownMsg) {
     if (client == null) {
-      client = new PingThread(pingPort, childClass);
+      client = new PingThread(pingPort, childClass, honorShutdownMsg);
       client.start();
       log("Child-process watchdog for class " + childClass + " monitoring server on port: " + pingPort);
     }
+  }
+
+  public static synchronized void startClientWatchdogService(int pingPort, String childClass) {
+    startClientWatchdogService(pingPort, childClass, false);
+  }
+
+  /**
+   * Sends a kill signal to the child process
+   */
+  public static synchronized void destroy() {
+    server.shutdown();
   }
 
   private static void log(String msg) {
@@ -81,6 +97,12 @@ public class LinkedJavaProcessPollingAgent {
   private static class PingThread extends Thread {
     private final int    pingPort;
     private final String forClass;
+    private boolean      honorShutdownMsg;
+
+    public PingThread(int port, String forClass, boolean honorShutdownMsg) {
+      this(port, forClass);
+      this.honorShutdownMsg = honorShutdownMsg;
+    }
 
     public PingThread(int port, String forClass) {
       if (!(port > 0)) throw new RuntimeException("Port not > 0");
@@ -104,7 +126,6 @@ public class LinkedJavaProcessPollingAgent {
 
         while (true) {
           int read = 0;
-
           long startTime = System.currentTimeMillis();
           while (read < data.length && System.currentTimeMillis() < (startTime + MAX_HEARTBEAT_DELAY)) {
             int thisRead = inStream.read(data, read, data.length - read);
@@ -115,6 +136,12 @@ public class LinkedJavaProcessPollingAgent {
           if (read != data.length) throw new IOException("Only got " + read + " bytes, not " + data.length
                                                          + " bytes, within " + (System.currentTimeMillis() - startTime)
                                                          + " ms.");
+
+          if (Arrays.equals(data, SHUTDOWN_DATA)) {
+            if (!honorShutdownMsg) continue;
+            log("Client received shutdown message from server. Shutting Down...");
+            System.exit(0);
+          }
 
           for (int i = 0; i < data.length; ++i) {
             if (data[i] != HEARTBEAT_DATA[i]) throw new IOException("Got invalid data; byte " + i
@@ -128,15 +155,16 @@ public class LinkedJavaProcessPollingAgent {
         log(e.getClass() + ": " + Arrays.asList(e.getStackTrace()));
         log("Didn't get heartbeat for at least " + MAX_HEARTBEAT_DELAY + " milliseconds. Killing self (port " + port
             + ").");
-        System.exit(EXIT_CODE);
       } finally {
         log("Ping thread exiting port (" + port + ")");
+        System.exit(EXIT_CODE);
       }
     }
   }
 
   private static class HeartbeatServer extends Thread {
-    private int port;
+    private int  port;
+    private List heartBeatThreads = new LinkedList();
 
     public HeartbeatServer() {
       this.port = -1;
@@ -151,8 +179,22 @@ public class LinkedJavaProcessPollingAgent {
           // whatever
         }
       }
-
       return this.port;
+    }
+
+    private synchronized void shutdown() {
+      synchronized (heartBeatThreads) {
+        HeartbeatThread ht;
+        try {
+          for (Iterator i = heartBeatThreads.iterator(); i.hasNext();) {
+            ht = (HeartbeatThread) i.next();
+            ht.shutdown();
+          }
+        } catch (IOException e) {
+          log("Heartbeat server couldn't shutdown clients -- they may have shutdown anyway");
+          log(e.getClass() + ": " + Arrays.asList(e.getStackTrace()));
+        }
+      }
     }
 
     public void run() {
@@ -167,7 +209,11 @@ public class LinkedJavaProcessPollingAgent {
         while (true) {
           Socket sock = serverSocket.accept();
           System.err.println("Got heartbeat connection from client; starting heartbeat.");
-          new HeartbeatThread(sock).start();
+          synchronized (heartBeatThreads) {
+            HeartbeatThread hbt = new HeartbeatThread(sock);
+            heartBeatThreads.add(hbt);
+            hbt.start();
+          }
         }
       } catch (Exception e) {
         log("Heartbeat server couldn't listen or accept a connection");
@@ -181,26 +227,43 @@ public class LinkedJavaProcessPollingAgent {
   private static class HeartbeatThread extends Thread {
     private final Socket socket;
     private final int    port;
+    private OutputStream out;
 
     public HeartbeatThread(Socket socket) {
       if (socket == null) throw new NullPointerException();
-
       this.socket = socket;
       this.port = socket.getPort();
       this.setDaemon(true);
     }
 
+    public synchronized void shutdown() throws IOException {
+      try {
+        out.write(SHUTDOWN_DATA);
+        out.flush();
+      } catch (SocketException e) {
+        log("Socket Exception: client may have already shutdown.");
+        //log(e.getClass() + ": " + Arrays.asList(e.getStackTrace()));
+      }
+    }
+
     public void run() {
       try {
-        OutputStream out = this.socket.getOutputStream();
+        out = this.socket.getOutputStream();
 
         while (true) {
-          out.write(HEARTBEAT_DATA);
-          out.flush();
+          synchronized (this) {
+            if (!socket.isOutputShutdown()) {
+              out.write(HEARTBEAT_DATA);
+              out.flush();
+            }
+          }
           // System.err.println("Wrote heartbeat to client.");
 
           reallySleep(NORMAL_HEARTBEAT_INTERVAL);
         }
+      } catch (SocketException e) {
+        log("Socket Exception: client may have already shutdown.");
+        log(e.getClass() + ": " + Arrays.asList(e.getStackTrace()));
       } catch (Exception e) {
         log("Heartbeat thread for child process (port " + port + ") got exception");
         log(e.getClass() + ": " + Arrays.asList(e.getStackTrace()));

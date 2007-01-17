@@ -41,7 +41,7 @@ public final class CargoLinkedChildProcess {
 
     System.out.println("JAVA VERSION: " + System.getProperty("java.version"));
 
-    LinkedJavaProcessPollingAgent.startClientWatchdogService(port, className);
+    LinkedJavaProcessPollingAgent.startClientWatchdogService(port, className, true);
     loadProperties();
 
     try {

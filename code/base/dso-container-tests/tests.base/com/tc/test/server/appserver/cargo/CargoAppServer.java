@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver.cargo;
 
@@ -37,6 +38,7 @@ public abstract class CargoAppServer extends AbstractAppServer {
 
   private InstalledLocalContainer container;
   private int                     port;
+  private int                     linkedPort;
 
   // System property used by cargo. This String is referenced in the CARGO patch, therefore it must not be changed
   public static final String      CARGO_JAVA       = "cargo_java";
@@ -85,7 +87,7 @@ public abstract class CargoAppServer extends AbstractAppServer {
       if (container.getState().equals(State.STARTED) || container.getState().equals(State.STARTING)
           || container.getState().equals(State.UNKNOWN)) {
         // System.err.println("Stopping " + ClassUtils.getShortClassName(getClass()) + " on port " + port + "...");
-        container.stop();
+        container.stop(); // NOTE: stop is not guaranteed to work
       }
     }
   }
@@ -105,12 +107,12 @@ public abstract class CargoAppServer extends AbstractAppServer {
 
   /**
    * Create a linked java process {@link LinkedJavaProcessPollingAgent}
-   *
+   * 
    * @throws InterruptedException
    */
   private void linkJavaProcess(File instance) throws InterruptedException {
-    int linkPort = LinkedJavaProcessPollingAgent.getChildProcessHeartbeatServerPort();
-    Link.put(new CargoJava.Args(linkPort, instance));
+    linkedPort = LinkedJavaProcessPollingAgent.getChildProcessHeartbeatServerPort();
+    Link.put(new CargoJava.Args(linkedPort, instance));
   }
 
   protected final InstalledLocalContainer container() {
