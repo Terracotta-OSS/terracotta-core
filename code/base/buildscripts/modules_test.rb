@@ -371,6 +371,13 @@ class SubtreeTestRun
             class_name = @build_results.class_name_for_class_file(@subtree, found_test)
             create_did_not_run_file(class_name, @testrun_results.results_file(@subtree, class_name)) unless FilePath.new(found_test).filename =~ /\$/
         end
+        
+        # Grep for current java processes for debugging
+        path = File.join(@cwd.to_s, "javaprocesses.txt")
+        File.open(path, "w") do |file|
+            file << ps_grep_java
+        end  
+        
         puts "Done."
 
         @setUp = true
@@ -519,8 +526,8 @@ class SubtreeTestRun
             @test_patterns.each do |pattern|
                 failure_property_name = "tests_failed_%d" % @@next_failure_property_sequence
                 @@next_failure_property_sequence += 1
-                failure_properties << failure_property_name
-
+                failure_properties << failure_property_name                
+                
                 @ant.batchtest(:todir => @testrun_results.results_dir(@subtree).to_s, :fork => true, :failureproperty => failure_property_name) {
                     @ant.formatter(:classname => "com.tc.test.TCXMLJUnitFormatter", :usefile => false)
                     @ant.fileset(:dir => @build_results.classes_directory(@subtree).to_s, :includes => "**/#{pattern}.class")
@@ -688,5 +695,22 @@ END
         out = @jvmargs || [ ]
         out += @extra_jvmargs unless @extra_jvmargs.empty?
         out
+    end
+    
+        # do a "ps auxwwww | grep java" 
+    # to be used in monkey environment ONLY
+    def ps_grep_java
+        ps_cmd = case @build_environment.os_type(:nice)
+            when /windows/i: 'pv.exe -l | grep java | grep -v grep'
+            when /linux/i:   'ps auxwwww | grep java | grep -v grep'
+            when /solaris/i: '/usr/ucb/ps auxwwww | grep java | grep -v grep'
+        end
+        
+        begin
+            java_processes = `#{ps_cmd}`
+        rescue
+            java_processes = ''
+        end
+        java_processes
     end
 end
