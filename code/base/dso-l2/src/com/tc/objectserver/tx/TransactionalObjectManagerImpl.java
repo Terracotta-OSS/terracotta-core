@@ -43,7 +43,8 @@ import java.util.Map.Entry;
  */
 public class TransactionalObjectManagerImpl implements TransactionalObjectManager, PrettyPrintable {
 
-  private static final TCLogger                logger                  = TCLogging.getLogger(ObjectManager.class);
+  private static final TCLogger                logger                  = TCLogging
+                                                                           .getLogger(TransactionalObjectManagerImpl.class);
   private static final int                     MAX_COMMIT_SIZE         = TCPropertiesImpl
                                                                            .getProperties()
                                                                            .getInt(
@@ -381,6 +382,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
         }
       }
       if (!recalledObjects.isEmpty()) {
+        logger.info("Recalling " + recalledObjects.size() + " Objects to ObjectManager");
         objectManager.releaseAll(recalledObjects.values());
       }
     }
