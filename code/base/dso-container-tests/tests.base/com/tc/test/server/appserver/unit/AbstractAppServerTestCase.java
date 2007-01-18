@@ -379,6 +379,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       }
       Thread.sleep(5000);
       LinkedJavaProcessPollingAgent.destroy();
+      Thread.sleep(5000);
       if (dsoServer != null && dsoServer.isRunning()) dsoServer.stop();
     } finally {
       VmStat.stop();

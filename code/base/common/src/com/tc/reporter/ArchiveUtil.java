@@ -34,6 +34,10 @@ import java.util.zip.ZipOutputStream;
 
 import javax.xml.namespace.QName;
 
+/**
+ * This utility is used to archive Terracotta execution environment information for debugging purposes. Run the
+ * <tt>main()</tt> with no arguments for usage.
+ */
 public final class ArchiveUtil {
 
   private final boolean       isFull;
@@ -114,7 +118,7 @@ public final class ArchiveUtil {
       escape("\tUnable to parse Terracotta configuration file\n", e);
     }
   }
-  
+
   // supports wildcards %i and %h
   private File[] resolveMultiLogs(String logStr) {
     int iIndex = logStr.indexOf("%i");
@@ -134,7 +138,7 @@ public final class ArchiveUtil {
     }
     return (File[]) logFiles.toArray(new File[0]);
   }
-  
+
   private File makeAbsolute(File file) {
     if (file.isAbsolute()) return file;
     return new File(tcConfig.getParent() + File.separator + file);
@@ -153,7 +157,7 @@ public final class ArchiveUtil {
         + "\n\tUnable to locate client log files at: " + clientLogs);
     return new File[] { clientLogsDir };
   }
-  
+
   private Server[] getServersElement(TcConfig configBeans) throws IOException, XmlException {
     Servers servers = configBeans.getServers();
     if (servers == null) throw new XmlException("The Terracotta config specified doesn't contain the <servers> element");
@@ -171,7 +175,7 @@ public final class ArchiveUtil {
       logFiles[i] = resolveMultiLogs(logs[i]);
       if (logFiles[i] == null) {
         File serverLogsDir = makeAbsolute(new File(logs[i]));
-        if (!serverLogsDir.exists()) throw new RuntimeException("\nError occured while parsing: " + tcConfig
+        if (!serverLogsDir.exists()) throw new XmlException("\nError occured while parsing: " + tcConfig
             + "\n\tUnable to locate server log files at: " + logs[i]);
         logFiles[i] = new File[] { serverLogsDir };
       }
@@ -179,17 +183,24 @@ public final class ArchiveUtil {
     return logFiles;
   }
 
-  // TODO: make []
-  // TODO: support null and defaults
-  private File getServerDataLocation(TcConfig configBeans) throws IOException, XmlException {
-    if (isFull) {
-      String serverData = resolveTokens(configBeans.getServers().getServerArray()[0].getData());
-      File serverDataDir = new File(serverData);
-      if (!serverDataDir.exists()) throw new RuntimeException("\nError occured while parsing: " + tcConfig
-          + "\n\tUnable to locate server data files at: " + serverData);
-      return serverDataDir;
+  private File[][] getServerDataLocation(TcConfig configBeans) throws IOException, XmlException {
+    if (!isFull) return null;
+    Server[] servers = getServersElement(configBeans);
+    String[] serverData = new String[servers.length];
+    File[][] dataFiles = new File[servers.length][];
+    for (int i = 0; i < servers.length; i++) {
+      serverData[i] = servers[i].getData();
+      if (serverData[i] == null) serverData[i] = Server.type.getElementProperty(QName.valueOf("data")).getDefaultText();
+      serverData[i] = resolveTokens(serverData[i]);
+      dataFiles[i] = resolveMultiLogs(serverData[i]);
+      if (dataFiles[i] == null) {
+        File serverDataDir = makeAbsolute(new File(serverData[i]));
+        if (!serverDataDir.exists()) throw new XmlException("\nError occured while parsing: " + tcConfig
+            + "\n\tUnable to locate server data files at: " + serverData[i]);
+        dataFiles[i] = new File[] { serverDataDir };
+      }
     }
-    return null;
+    return dataFiles;
   }
 
   private void createArchive() throws IOException, XmlException {
@@ -197,7 +208,7 @@ public final class ArchiveUtil {
     TcConfig configBeans = TcConfigDocument.Factory.parse(tcConfig).getTcConfig();
     File[] clientLogsDir = null;
     File[][] serverLogsDir = null;
-    File serverDataDir = null;
+    File[][] serverDataDir = null;
     if (isClient) {
       clientLogsDir = getClientLogsLocation(configBeans);
     } else {
@@ -215,9 +226,20 @@ public final class ArchiveUtil {
         for (int i = 0; i < clientLogsDir.length; i++) {
           putTraverseDirectory(zout, clientLogsDir[i], clientLogsDir[i].getName());
         }
+      } else {
+        for (int i = 0; i < serverLogsDir.length; i++) {
+          for (int j = 0; j < serverLogsDir[i].length; j++) {
+            putTraverseDirectory(zout, serverLogsDir[i][j], serverLogsDir[i][j].getName());
+          }
+        }
+        if (serverDataDir != null) {
+          for (int i = 0; i < serverDataDir.length; i++) {
+            for (int j = 0; j < serverDataDir[i].length; j++) {
+              putTraverseDirectory(zout, serverDataDir[i][j], serverDataDir[i][j].getName());
+            }
+          }
+        }
       }
-      //else putTraverseDirectory(zout, serverLogsDir, serverLogsDir.getName());
-      if (serverDataDir != null && !isClient) putTraverseDirectory(zout, serverDataDir, serverDataDir.getName());
       zout.close();
     } catch (IOException e) {
       System.out.println("Unexpected error - unable to write Terracotta archive: " + archiveFileName);
@@ -243,7 +265,7 @@ public final class ArchiveUtil {
   }
 
   private void putTraverseDirectory(ZipOutputStream zout, File dir, String dirName) throws IOException {
-    if (!dir.isDirectory()) throw new RuntimeException("Unexpected Exception: " + dir + "\nis not a directory");
+    if (!dir.isDirectory()) throw new IOException("Unexpected Exception: " + dir + "\nis not a directory");
     putDirEntry(zout, dirName);
     String[] files = dir.list();
     for (int i = 0; i < files.length; i++) {
