@@ -29,7 +29,7 @@ public class RequestRootHandler extends AbstractEventHandler {
     RequestRootMessage rrm = (RequestRootMessage) context;
     ObjectID rootID = objectManager.lookupRootID(rrm.getRootName());
     try {
-      MessageChannel channel = channelManager.getChannel(rrm.getChannelID());
+      MessageChannel channel = channelManager.getActiveChannel(rrm.getChannelID());
 
       RequestRootResponseMessage rrrm = (RequestRootResponseMessage) channel
           .createMessage(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE);

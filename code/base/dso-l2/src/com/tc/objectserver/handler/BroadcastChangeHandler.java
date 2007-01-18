@@ -35,7 +35,7 @@ import java.util.Set;
 
 /**
  * Broadcast the change to all connected clients
- * 
+ *
  * @author steve
  */
 public class BroadcastChangeHandler extends AbstractEventHandler {
@@ -56,7 +56,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
     final ChannelID committerID = bcc.getChannelID();
     final TransactionID txnID = bcc.getTransactionID();
 
-    final MessageChannel[] channels = channelManager.getChannels();
+    final MessageChannel[] channels = channelManager.getActiveChannels();
 
     for (int i = 0; i < channels.length; i++) {
       MessageChannel client = channels[i];

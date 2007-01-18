@@ -110,6 +110,10 @@ public class ServerClientHandshakeManager {
         return;
       }
 
+      if (state == STARTING) {
+        channelManager.makeChannelActive(handshake.getChannel());
+      }
+
       this.sequenceValidator.initSequence(handshake.getChannelID(), handshake.getTransactionSequenceIDs());
       this.transactionManager.setResentTransactionIDs(handshake.getChannelID(), handshake.getResentTransactionIDs());
 
@@ -167,6 +171,9 @@ public class ServerClientHandshakeManager {
         handshakeAck.initialize(0, 0, persistent);
       }
       handshakeAck.send();
+
+      channelManager.makeChannelActive(handshakeAck.getChannel());
+
     } catch (NoSuchChannelException e) {
       logger.warn("Not sending handshake message to disconnected client: " + channelID);
     }
@@ -190,7 +197,7 @@ public class ServerClientHandshakeManager {
     logger.info("Starting DSO services...");
     lockManager.start();
     objectManager.start();
-    for (Iterator i = channelManager.getAllChannelIDs().iterator(); i.hasNext();) {
+    for (Iterator i = channelManager.getRawChannelIDs().iterator(); i.hasNext();) {
       ChannelID channelID = (ChannelID) i.next();
       sendAckMessageFor(channelID);
     }

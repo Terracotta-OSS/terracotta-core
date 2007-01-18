@@ -25,7 +25,7 @@ public class TransactionAcknowledgeActionImpl implements TransactionAcknowledgeA
 
   public void acknowledgeTransaction(ServerTransactionID stxID) {
     try {
-      MessageChannel channel = channelManager.getChannel(stxID.getChannelID());
+      MessageChannel channel = channelManager.getActiveChannel(stxID.getChannelID());
       AcknowledgeTransactionMessage m = (AcknowledgeTransactionMessage) channel
           .createMessage(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE);
       m.initialize(stxID.getChannelID(), stxID.getClientTransactionID());

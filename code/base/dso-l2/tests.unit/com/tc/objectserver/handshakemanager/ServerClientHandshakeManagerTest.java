@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.handshakemanager;
 
@@ -7,6 +8,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.TestMessageChannel;
 import com.tc.object.ObjectID;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
@@ -17,6 +19,7 @@ import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.TestClientHandshakeMessage;
 import com.tc.object.net.DSOChannelManager;
+import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.tx.WaitInvocation;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.impl.TestObjectManager;
@@ -351,15 +354,15 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       closeAllCalls.add(theChannelIDs);
     }
 
-    public MessageChannel getChannel(ChannelID id) {
+    public MessageChannel getActiveChannel(ChannelID id) {
       return null;
     }
 
-    public MessageChannel[] getChannels() {
+    public MessageChannel[] getActiveChannels() {
       return null;
     }
 
-    public Collection getAllChannelIDs() {
+    public Collection getAllActiveChannelIDs() {
       return this.channelIDs;
     }
 
@@ -390,6 +393,22 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
+    public void addEventListener(DSOChannelManagerEventListener listener) {
+      throw new ImplementMe();
+    }
+
+    public Collection getRawChannelIDs() {
+      return getAllActiveChannelIDs();
+    }
+
+    public boolean isActiveID(ChannelID channelID) {
+      throw new ImplementMe();
+    }
+
+    public void makeChannelActive(MessageChannel channel) {
+      //
+    }
+
   }
 
   private static class TestClientHandshakeAckMessage implements ClientHandshakeAckMessage {
@@ -398,9 +417,12 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     public long                         start;
     public long                         end;
     private boolean                     persistent;
+    private final TestMessageChannel    channel;
 
     private TestClientHandshakeAckMessage(ChannelID channelID) {
       this.channelID = channelID;
+      this.channel = new TestMessageChannel();
+      this.channel.channelID = channelID;
     }
 
     public void send() {
@@ -423,6 +445,10 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       this.start = startOid;
       this.end = endOid;
       this.persistent = isPersistent;
+    }
+
+    public MessageChannel getChannel() {
+      return channel;
     }
 
   }

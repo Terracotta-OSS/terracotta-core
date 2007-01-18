@@ -3,13 +3,6 @@
  */
 package com.tc.management.remote.protocol.terracotta;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
-import javax.management.remote.message.Message;
-
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandlerException;
@@ -17,11 +10,18 @@ import com.tc.async.api.Sink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.net.DSOChannelManagerEventListener;
 
-public class ClientTunnelingEventHandler extends AbstractEventHandler implements ChannelManagerEventListener {
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
+import javax.management.remote.message.Message;
+
+public class ClientTunnelingEventHandler extends AbstractEventHandler implements DSOChannelManagerEventListener {
 
   public static final class L1ConnectionMessage implements EventContext {
     private final MBeanServer    mbs;
@@ -37,7 +37,7 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
       this.channelIdToJmxConnector = channelIdToJmxConnector;
       this.channelIdToMsgConnection = channelIdToMsgConnection;
       this.isConnectingMsg = isConnectingMsg;
-      
+
       if(isConnectingMsg && mbs == null) {
         throw new AssertionError("Attempting to create a L1-connecting-message without a valid mBeanServer.");
       }

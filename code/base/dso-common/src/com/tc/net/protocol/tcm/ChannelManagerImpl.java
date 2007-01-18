@@ -19,7 +19,7 @@ import java.util.Map;
 
 /**
  * provides the sessionIDs
- * 
+ *
  * @author steve
  */
 class ChannelManagerImpl implements ChannelManager, ChannelEventListener, ServerMessageChannelFactory {
@@ -72,7 +72,7 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
   public synchronized MessageChannelInternal[] getChannels() {
     return (MessageChannelInternal[]) channels.values().toArray(EMPTY_CHANNEL_ARARY);
   }
-  
+
   public synchronized Collection getAllChannelIDs() {
     return new HashSet(channels.keySet());
   }
@@ -88,14 +88,6 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
     }
 
     return true;
-  }
-
-  public TCMessageFactory getMessageFactory() {
-    return this.channelFactory.getMessageFactory();
-  }
-
-  public TCMessageRouter getMessageRouter() {
-    return this.channelFactory.getMessageRouter();
   }
 
   public void notifyChannelEvent(ChannelEvent event) {

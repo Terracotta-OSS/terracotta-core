@@ -168,7 +168,7 @@ import javax.management.NotCompliantMBeanException;
 
 /**
  * Startup and shutdown point. Builds and starts the server. This is a quick and dirty dirty way of doing this stuff
- * 
+ *
  * @author steve
  */
 public class DistributedObjectServer extends SEDA {
@@ -418,9 +418,9 @@ public class DistributedObjectServer extends SEDA {
                                                 httpSink);
 
     ClientTunnelingEventHandler cteh = new ClientTunnelingEventHandler();
-    lsnr.getChannelManager().addEventListener(cteh);
 
     DSOChannelManager channelManager = new DSOChannelManagerImpl(lsnr.getChannelManager());
+    channelManager.addEventListener(cteh);
 
     ChannelStats channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
 

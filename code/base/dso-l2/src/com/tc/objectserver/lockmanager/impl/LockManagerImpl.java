@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.lockmanager.impl;
 
@@ -41,7 +42,7 @@ import java.util.Map;
 /**
  * Server representation of lock management. We will need to keep track of what locks are checkedout, who has the lock
  * and who wants the lock
- * 
+ *
  * @author steve
  */
 public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimerCallback {
@@ -156,7 +157,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
 
   private synchronized boolean requestLock(LockID lockID, ChannelID channelID, ThreadID threadID, int requestedLevel,
                                            Sink lockResponseSink, boolean noBlock) {
-    if (!channelManager.isValidID(channelID)) return false;
+    if (!channelManager.isActiveID(channelID)) return false;
     if (isStarting()) {
       queueRequestLock(lockID, channelID, threadID, requestedLevel, lockResponseSink, noBlock);
       return false;

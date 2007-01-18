@@ -3,6 +3,8 @@
  */
 package com.tc.object.msg;
 
+import com.tc.net.protocol.tcm.MessageChannel;
+
 public interface ClientHandshakeAckMessage {
   public void send();
 
@@ -13,4 +15,6 @@ public interface ClientHandshakeAckMessage {
   public boolean getPersistentServer();
 
   public void initialize(long start, long end, boolean persistent);
+
+  public MessageChannel getChannel();
 }

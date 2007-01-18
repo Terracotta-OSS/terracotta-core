@@ -68,7 +68,7 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
     }
 
     try {
-      MessageChannel channel = channelManager.getChannel(morc.getChannelID());
+      MessageChannel channel = channelManager.getActiveChannel(morc.getChannelID());
 
       // Only send objects that are NOT already there in the client. Look at the comment below.
       Set newIds = stateManager.addReferences(morc.getChannelID(), ids);

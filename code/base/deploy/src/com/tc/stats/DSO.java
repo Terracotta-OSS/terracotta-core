@@ -8,10 +8,10 @@ import org.apache.commons.collections.set.ListOrderedSet;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2MBeanNames;
-import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
 import com.tc.object.net.ChannelStats;
+import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.NoSuchObjectException;
@@ -99,7 +99,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   public DoubleStatistic getCacheHitRatio() {
     return getStats().getCacheHitRatio();
   }
-  
+
   public CountStatistic getCacheMissRate() {
     return getStats().getCacheMissRate();
   }
@@ -175,7 +175,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   private void setupClients() {
-    MessageChannel[] channels = channelMgr.getChannels();
+    MessageChannel[] channels = channelMgr.getActiveChannels();
     for (int i = 0; i < channels.length; i++) {
       addClientMBean(channels[i]);
     }
@@ -275,7 +275,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
   }
 
-  private class ChannelManagerListener implements ChannelManagerEventListener {
+  private class ChannelManagerListener implements DSOChannelManagerEventListener {
 
     public void channelCreated(MessageChannel channel) {
       addClientMBean(channel);

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.tcm;
 
@@ -225,25 +226,17 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       public MessageChannelInternal createNewChannel(ChannelID id) {
         return new ServerMessageChannelImpl(id, msgRouter, msgFactory);
       }
-
-      public TCMessageFactory getMessageFactory() {
-        return msgFactory;
-      }
-
-      public TCMessageRouter getMessageRouter() {
-        return msgRouter;
-      }
     };
 
     final ChannelManagerImpl channelManager = new ChannelManagerImpl(transportDisconnectRemovesChannel, channelFactory);
 
-    return new NetworkListenerImpl(addr, this, channelManager, channelFactory.getMessageFactory(), channelFactory
-        .getMessageRouter(), reuseAddr, initialConnectionIDs, connectionIdFactory, httpSink);
+    return new NetworkListenerImpl(addr, this, channelManager, msgFactory, msgRouter, reuseAddr, initialConnectionIDs,
+                                   connectionIdFactory, httpSink);
   }
 
   TCListener createCommsListener(TCSocketAddress addr, final ServerMessageChannelFactory channelFactory,
-                                 boolean resueAddr, Set initialConnectionIDs, ConnectionIdFactory connectionIdFactory, Sink httpSink)
-      throws IOException {
+                                 boolean resueAddr, Set initialConnectionIDs, ConnectionIdFactory connectionIdFactory,
+                                 Sink httpSink) throws IOException {
 
     MessageTransportFactory transportFactory = new MessageTransportFactory() {
 

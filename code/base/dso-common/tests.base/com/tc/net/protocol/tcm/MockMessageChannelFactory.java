@@ -3,7 +3,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.exception.ImplementMe;
 
 public class MockMessageChannelFactory implements ServerMessageChannelFactory {
 
@@ -13,14 +12,6 @@ public class MockMessageChannelFactory implements ServerMessageChannelFactory {
   public MessageChannelInternal createNewChannel(ChannelID id) {
     callCount++;
     return channel;
-  }
-
-  public TCMessageFactory getMessageFactory() {
-    throw new ImplementMe();
-  }
-
-  public TCMessageRouter getMessageRouter() {
-    throw new ImplementMe();
   }
 
 }

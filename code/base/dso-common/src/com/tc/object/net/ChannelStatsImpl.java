@@ -61,7 +61,7 @@ public class ChannelStatsImpl implements ChannelStats {
 
   public void notifyTransaction(ChannelID channelID) {
     try {
-      MessageChannel channel = channelManager.getChannel(channelID);
+      MessageChannel channel = channelManager.getActiveChannel(channelID);
       getCounter(channel, TXN_RATE).increment();
     } catch (NoSuchChannelException e) {
       //

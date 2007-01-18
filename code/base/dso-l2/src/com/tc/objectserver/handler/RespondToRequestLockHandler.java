@@ -29,7 +29,7 @@ public class RespondToRequestLockHandler extends AbstractEventHandler {
 
     ChannelID cid = lrc.getChannelID();
     try {
-      MessageChannel channel = channelManager.getChannel(cid);
+      MessageChannel channel = channelManager.getActiveChannel(cid);
 
       LockResponseMessage responseMessage = null;
 
@@ -61,7 +61,7 @@ public class RespondToRequestLockHandler extends AbstractEventHandler {
       return;
     }
   }
-  
+
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;

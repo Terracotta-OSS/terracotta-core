@@ -173,7 +173,7 @@ public class LockTimer implements LockEventListener {
     public void run() {
       logger.warn("Lock timeout: " + this.awardContext);
       try {
-        MessageChannel channel = channelManager.getChannel(this.awardContext.getChannelID());
+        MessageChannel channel = channelManager.getActiveChannel(this.awardContext.getChannelID());
         logger.warn("Closing channel because of lock timeout.  Award context: " + this.awardContext + "; channel: "
                     + channel);
         channel.close();

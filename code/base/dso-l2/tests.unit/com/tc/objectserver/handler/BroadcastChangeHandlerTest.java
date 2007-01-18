@@ -21,6 +21,7 @@ import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.net.DSOChannelManager;
+import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
@@ -180,15 +181,15 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public MessageChannel getChannel(ChannelID id) {
+    public MessageChannel getActiveChannel(ChannelID id) {
       return (MessageChannel) allChannels.get(id);
     }
 
-    public MessageChannel[] getChannels() {
+    public MessageChannel[] getActiveChannels() {
       return (MessageChannel[]) allChannels.values().toArray(new MessageChannel[0]);
     }
 
-    public boolean isValidID(ChannelID channelID) {
+    public boolean isActiveID(ChannelID channelID) {
       throw new ImplementMe();
     }
 
@@ -211,7 +212,19 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public Collection getAllChannelIDs() {
+    public Collection getAllActiveChannelIDs() {
+      throw new ImplementMe();
+    }
+
+    public void addEventListener(DSOChannelManagerEventListener listener) {
+      throw new ImplementMe();
+    }
+
+    public void makeChannelActive(MessageChannel channel) {
+      throw new ImplementMe();
+    }
+
+    public Collection getRawChannelIDs() {
       throw new ImplementMe();
     }
   }

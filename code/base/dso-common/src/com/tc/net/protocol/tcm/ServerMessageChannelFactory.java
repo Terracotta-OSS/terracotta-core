@@ -7,8 +7,4 @@ public interface ServerMessageChannelFactory {
 
   MessageChannelInternal createNewChannel(ChannelID id);
 
-  TCMessageFactory getMessageFactory();
-
-  TCMessageRouter getMessageRouter();
-
 }

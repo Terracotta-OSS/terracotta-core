@@ -20,6 +20,7 @@ public class TestMessageChannel implements MessageChannel {
   public List                   createMessageContexts = new ArrayList();
   public NoExceptionLinkedQueue sendQueue             = new NoExceptionLinkedQueue();
   public TCMessage              message;
+  public ChannelID channelID;
 
   public void addListener(ChannelEventListener listener) {
     return;
@@ -47,7 +48,7 @@ public class TestMessageChannel implements MessageChannel {
   }
 
   public ChannelID getChannelID() {
-    return null;
+    return channelID;
   }
 
   public void setSendLayer(NetworkLayer layer) {
