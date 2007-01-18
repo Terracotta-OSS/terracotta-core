@@ -168,7 +168,7 @@ import javax.management.NotCompliantMBeanException;
 
 /**
  * Startup and shutdown point. Builds and starts the server. This is a quick and dirty dirty way of doing this stuff
- *
+ * 
  * @author steve
  */
 public class DistributedObjectServer extends SEDA {
@@ -240,13 +240,13 @@ public class DistributedObjectServer extends SEDA {
     try {
       startJMXServer();
     } catch (Throwable t) {
-      logger.error("Error starting jmx server", t);
+      logger.error("Unable to start the JMX server", t);
     }
 
     NIOWorkarounds.solaris10Workaround();
 
-    this.configSetupManager.commonl2Config().changesInItemIgnored(this.configSetupManager.commonl2Config().dataPath());
-    NewL2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
+    configSetupManager.commonl2Config().changesInItemIgnored(configSetupManager.commonl2Config().dataPath());
+    NewL2DSOConfig l2DSOConfig = configSetupManager.dsoL2Config();
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.persistenceMode());
     PersistenceMode persistenceMode = (PersistenceMode) l2DSOConfig.persistenceMode().getObject();
 
@@ -255,7 +255,7 @@ public class DistributedObjectServer extends SEDA {
     final boolean persistent = persistenceMode.equals(PersistenceMode.PERMANENT_STORE);
 
     TCFile location = new TCFileImpl(this.configSetupManager.commonl2Config().dataPath().getFile());
-    this.startupLock = new StartupLock(location);
+    startupLock = new StartupLock(location);
 
     if (!startupLock.canProceed(new TCRandomFileAccessImpl(), persistent)) {
       consoleLogger.error("Another L2 process is using the directory " + location + " as data directory.");
@@ -281,10 +281,8 @@ public class DistributedObjectServer extends SEDA {
     logger.debug("server swap enabled: " + swapEnabled);
     final ManagedObjectChangeListenerProviderImpl managedObjectChangeListenerProvider = new ManagedObjectChangeListenerProviderImpl();
     if (swapEnabled) {
-      File dbhome = new File(this.configSetupManager.commonl2Config().dataPath().getFile(), "objectdb");
-
+      File dbhome = new File(configSetupManager.commonl2Config().dataPath().getFile(), "objectdb");
       logger.debug("persistent: " + persistent);
-
       if (!persistent) {
         if (dbhome.exists()) {
           logger.debug("deleting persistence database...");
@@ -346,9 +344,8 @@ public class DistributedObjectServer extends SEDA {
 
     ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, persistor);
 
-    this.communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(),
-                                                               new PlainNetworkStackHarnessFactory(),
-                                                               this.connectionPolicy);
+    communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(),
+                                                          new PlainNetworkStackHarnessFactory(), connectionPolicy);
 
     final DSOApplicationEvents appEvents;
     try {
@@ -402,7 +399,7 @@ public class DistributedObjectServer extends SEDA {
 
     TCProperties cacheManagerProperties = l2Properties.getPropertiesFor("cachemanager");
     if (cacheManagerProperties.getBoolean("enabled")) {
-      this.cacheManager = new CacheManager(objectManager, new CacheConfigImpl(cacheManagerProperties));
+      cacheManager = new CacheManager(objectManager, new CacheConfigImpl(cacheManagerProperties));
       if (logger.isDebugEnabled()) {
         logger.debug("CacheManager Enabled : " + cacheManager);
       }
@@ -683,8 +680,8 @@ public class DistributedObjectServer extends SEDA {
   }
 
   private void basicStop() {
-    if (this.startupLock != null) {
-      this.startupLock.release();
+    if (startupLock != null) {
+      startupLock.release();
     }
   }
 
@@ -693,7 +690,7 @@ public class DistributedObjectServer extends SEDA {
   }
 
   public ServerManagementContext getManagementContext() {
-    return this.managementContext;
+    return managementContext;
   }
 
   public MBeanServer getMBeanServer() {
