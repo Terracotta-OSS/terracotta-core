@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management;
 
@@ -66,10 +67,13 @@ public final class L1Management extends TerracottaManagement {
         int attemptCounter = 0;
         while (!registered && attemptCounter++ < MAX_ATTEMPTS) {
           try {
+            logger.info("Attempt " + attemptCounter + " to register/find JMX server");
             attemptToRegister();
+            logger.info("Registration attempt " + attemptCounter + " to register/find JMX server was successful");
             registered = true;
           } catch (Exception e) {
             // Ignore and try again after 1 second, give the VM a chance to get started
+            logger.info("Registration attempt " + attemptCounter + " to register/find JMX server failed", e);
             try {
               Thread.sleep(1000);
             } catch (InterruptedException ie) {
