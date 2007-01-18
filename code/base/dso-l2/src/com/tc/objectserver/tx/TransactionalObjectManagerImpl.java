@@ -116,7 +116,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
   }
 
-  private void processPendingIfNecessary() {
+  private synchronized void processPendingIfNecessary() {
     if (addProcessedPendingLookups()) {
       processPendingTransactions();
     }
@@ -367,6 +367,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   // Recall Stage method
   public synchronized void recallCheckedoutObject(RecallObjectsContext roc) {
+    processPendingIfNecessary();
     if (roc.recallAll()) {
       IdentityHashMap recalled = new IdentityHashMap();
       HashMap recalledObjects = new HashMap();
