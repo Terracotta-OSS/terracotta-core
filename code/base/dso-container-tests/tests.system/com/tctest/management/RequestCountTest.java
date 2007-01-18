@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.management;
 
@@ -63,6 +64,14 @@ public final class RequestCountTest extends AbstractAppServerTestCase {
     Set beanSet = null;
     for (beanSet = TerracottaManagement.getAllSessionMonitorMBeans(mbs); beanSet.size() != nodeCount; beanSet = TerracottaManagement
         .getAllSessionMonitorMBeans(mbs)) {
+      if (!beanSet.isEmpty()) {
+        logger.info("Found some session beans but not all:");
+        for (final Iterator pos = beanSet.iterator(); pos.hasNext();) {
+          logger.info("Session bean[" + ((ObjectName) pos.next()).getCanonicalName() + "]");
+        }
+      } else {
+        logger.info("No session beans found, expecting " + nodeCount + " of them");
+      }
       if (System.currentTimeMillis() > beanCutoffTime) {
         final String errMsg = "Unable to find DSO client MBeans within 60 seconds of starting the node";
         logger.error(errMsg);
@@ -79,7 +88,7 @@ public final class RequestCountTest extends AbstractAppServerTestCase {
     }
     logger.info("We have all of our DSO client Mbeans after " + (beanCutoffTime - System.currentTimeMillis()) + ":");
     for (final Iterator pos = beanSet.iterator(); pos.hasNext();) {
-      logger.info("\t" + ((ObjectName) pos.next()).getCanonicalName());
+      logger.info("Session bean[" + ((ObjectName) pos.next()).getCanonicalName() + "]");
     }
     final SessionMonitorMBean[] mbeans = new SessionMonitorMBean[nodeCount];
     for (int i = 0; i < nodeCount; i++) {

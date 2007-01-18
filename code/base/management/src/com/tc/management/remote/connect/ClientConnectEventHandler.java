@@ -1,7 +1,22 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management.remote.connect;
+
+import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.EventContext;
+import com.tc.async.api.EventHandlerException;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
+import com.tc.management.TerracottaMBean;
+import com.tc.management.TerracottaManagement;
+import com.tc.management.remote.protocol.ProtocolProvider;
+import com.tc.management.remote.protocol.terracotta.ClientProvider;
+import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnection;
+import com.tc.management.remote.protocol.terracotta.ClientTunnelingEventHandler.L1ConnectionMessage;
+import com.tc.net.TCSocketAddress;
+import com.tc.net.protocol.tcm.MessageChannel;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -24,20 +39,6 @@ import javax.management.remote.JMXConnectionNotification;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
-
-import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.EventContext;
-import com.tc.async.api.EventHandlerException;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-import com.tc.management.TerracottaMBean;
-import com.tc.management.TerracottaManagement;
-import com.tc.management.remote.protocol.ProtocolProvider;
-import com.tc.management.remote.protocol.terracotta.ClientProvider;
-import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnection;
-import com.tc.management.remote.protocol.terracotta.ClientTunnelingEventHandler.L1ConnectionMessage;
-import com.tc.net.TCSocketAddress;
-import com.tc.net.protocol.tcm.MessageChannel;
 
 public class ClientConnectEventHandler extends AbstractEventHandler {
 
@@ -65,15 +66,17 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
     }
 
     final public void handleNotification(final Notification notification, final Object context) {
-      logger.info("Tunneled JMX connection to a DSO client has terminated, unregistering its beans");
+      logger.info("Tunneled JMX connection to a DSO client has terminated, unregistering its proxied beans:");
       for (Iterator beanNames = ((List) context).iterator(); beanNames.hasNext();) {
         final ObjectName dsoClientBeanName = (ObjectName) beanNames.next();
         try {
+          logger.info("\tUnregistering proxied DSO client bean[" + dsoClientBeanName + "] from the L2");
           mBeanServerConnection.unregisterMBean(dsoClientBeanName);
         } catch (Exception e) {
           logger.warn("Unable to unregister DSO client bean[" + dsoClientBeanName + "]", e);
         }
       }
+      logger.info("All proxied beans have been unregistered");
     }
   }
 
@@ -113,6 +116,8 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
         environment.put(ClientProvider.CONNECTION_LIST, channelIdToMsgConnection);
         final JMXConnector jmxConnector;
         try {
+          logger.info("An L1 has established a connection to the L2, attempting to connect to the client JMX server["
+                      + serviceURL.toString() + "]");
           jmxConnector = JMXConnectorFactory.connect(serviceURL, environment);
 
           final MBeanServerConnection l1MBeanServerConnection = jmxConnector.getMBeanServerConnection();
@@ -120,16 +125,20 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
           List modifiedObjectNames = new ArrayList();
           for (Iterator iter = mBeans.iterator(); iter.hasNext();) {
             ObjectName objName = (ObjectName) iter.next();
+            logger.info("Found L1 bean[" + objName.getCanonicalName() + "], attempting to register an L2 proxy for it");
             try {
               TerracottaMBean mBeanProxy = (TerracottaMBean) MBeanServerInvocationHandler
                   .newProxyInstance(l1MBeanServerConnection, objName, TerracottaMBean.class, false);
               ObjectName modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
               Class interfaceClass = Class.forName(mBeanProxy.getInterfaceClassName());
+              logger.info("\tRegistration details: L1(" + interfaceClass.getName() + ") -> L2: ["
+                          + objName.getCanonicalName() + "] -> [" + modifiedObjName.getCanonicalName() + "]");
               Object obj = MBeanServerInvocationHandler.newProxyInstance(l1MBeanServerConnection, objName,
                                                                          interfaceClass, mBeanProxy
                                                                              .isNotificationBroadcaster());
               l2MBeanServer.registerMBean(new StandardMBean(obj, interfaceClass), modifiedObjName);
               modifiedObjectNames.add(modifiedObjName);
+              logger.info("Registration[" + objName.getCanonicalName() + "] successful");
             } catch (Exception e) {
               logger.error("Unable to register remote DSO client MBean[" + objName.getCanonicalName() + "] for host["
                            + channel.getRemoteAddress() + "], this bean will not show up in monitoring tools!!", e);
