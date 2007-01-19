@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.runtime;
 
@@ -26,7 +27,14 @@ public class TCMemoryManagerImplTest extends TCTestCase implements MemoryEventsL
   public void test() throws Throwable {
     TCMemoryManager mm = new TCMemoryManagerImpl(usedThreshold, usedCriticalThreshold, sleepInterval, lc, true);
     mm.registerForMemoryEvents(this);
-    hogMemory();
+    try {
+      hogMemory();
+    } catch (Throwable e) {
+      System.err.println("Got Exception : " + e);
+      printStats();
+      e.printStackTrace();
+      throw e;
+    }
     assertTrue(callCount.get() > 0);
     if (errors.size() > 0) {
       System.err.println("Errors present in the run : " + errors.size());
@@ -34,6 +42,12 @@ public class TCMemoryManagerImplTest extends TCTestCase implements MemoryEventsL
       Throwable t = (Throwable) errors.get(0);
       throw t;
     }
+  }
+
+  private void printStats() {
+    System.err.println("Vector size = " + v.size());
+    Runtime r = Runtime.getRuntime();
+    System.err.println("Memory details = Max = " + r.maxMemory() + " Free =" + r.freeMemory());
   }
 
   private void hogMemory() {
@@ -44,7 +58,7 @@ public class TCMemoryManagerImplTest extends TCTestCase implements MemoryEventsL
         System.err.println("Created " + i + " byte arrays - currently in vector = " + v.size());
       }
       if (i % 50 == 0) {
-        ThreadUtil.reallySleep(0, 10);
+        ThreadUtil.reallySleep(1);
       }
     }
   }
@@ -94,16 +108,13 @@ public class TCMemoryManagerImplTest extends TCTestCase implements MemoryEventsL
   private void releaseSomeMemory(int used) {
     if (used < usedThreshold) {
       return;
-    } else if (used > 97) {
+    } else if (used > 90) {
       v.clear();
       return;
     }
-    int percentToDelete = (100 - usedThreshold) * 10 / (100 - used);
+    int percentToDelete = (100 - used) * 4;
     synchronized (v) {
       int toRemove = Math.min(v.size() * percentToDelete / 100, v.size());
-      // if (callCount.get() % 10 == 1) {
-      // System.err.println("Clearing " + toRemove + " of " + v.size() + " ie " + percentToDelete + " %");
-      //      }
       for (int i = 0; i < toRemove; i++) {
         v.remove(v.size() - 1);
       }

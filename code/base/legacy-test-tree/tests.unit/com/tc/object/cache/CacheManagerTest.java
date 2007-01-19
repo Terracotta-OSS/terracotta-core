@@ -1,14 +1,13 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.cache;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.test.TCTestCase;
-import com.tc.util.DebugUtil;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tc.util.runtime.Os;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,17 +16,15 @@ import java.util.Vector;
 
 public class CacheManagerTest extends TCTestCase implements Evictable {
 
-  int             usedT            = 50;
-  int             usedCritialT     = 90;
-  long            sleepInterval    = 500;
-  int             lc               = 2;
-  int             percentage2Evict = 10;
-  SynchronizedInt callCount        = new SynchronizedInt(0);
+  private static final int BYTES_SIZE       = 10240;
+  int                      usedT            = 50;
+  int                      usedCritialT     = 90;
+  long                     sleepInterval    = 500;
+  int                      lc               = 2;
+  int                      percentage2Evict = 10;
+  SynchronizedInt          callCount        = new SynchronizedInt(0);
 
-  Vector          v                = new Vector();
-
-  // XXX:: In solaris this test seems to fail a lot. trying out different sleep time to see the effect on it.
-  boolean         isSolaris        = Os.isSolaris();
+  Vector                   v                = new Vector();
 
   public void test() throws Exception {
     CacheManager cm = new CacheManager(this, new TestCacheConfig());
@@ -37,11 +34,11 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
   }
 
   private void log(String message) {
-    System.err.println(time() +" - " + thread() + " : " + message);
+    System.err.println(time() + " - " + thread() + " : " + message);
   }
 
   private String time() {
-   return new Date().toString(); 
+    return new Date().toString();
   }
 
   private String thread() {
@@ -50,9 +47,8 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
 
   private void hogMemory() {
     for (int i = 1; i < 500000; i++) {
-      byte[] b = new byte[10240];
+      byte[] b = new byte[BYTES_SIZE];
       v.add(b);
-      int size;
       if (i == 100) {
         // Sometimes in some platforms the memory manager thread is not given any time to start up, so
         ThreadUtil.reallySleep(2000);
@@ -60,38 +56,35 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
         log("Created " + i + " byte arrays - currently in vector = " + v.size());
         ThreadUtil.reallySleep(500);
       } else if (i % 50 == 0) {
-        if (isSolaris) {
-          ThreadUtil.reallySleep(1);
-        } else {
-          ThreadUtil.reallySleep(0, 10);
-        }
-      } else if (isSolaris && (size = v.size()) >= 5000 && size % 50 == 0) {
-        log("WARNING :: Vector Size reached " + size + ". Pathway to OOME when running with 64MB heap. Waiting till reaping.");
-        waitTillNotified();
+        ThreadUtil.reallySleep(1);
+      } else if (i % 100 == 1) {
+        waitTillNotifiedIfCritical();
       }
     }
   }
 
-  private void waitTillNotified() {
-    synchronized(v) {
-      //XXX::Explicitly not doing a spin lock
-      if(v.size() >= 5000) {
-        DebugUtil.DEBUG =true;
+  private void waitTillNotifiedIfCritical() {
+    synchronized (v) {
+      Runtime runtime = Runtime.getRuntime();
+      long max = runtime.maxMemory();
+      long total = runtime.totalMemory();
+      long free = runtime.freeMemory();
+      // XXX::Explicitly not doing a spin lock
+      if (total >= max * 0.97 && free < max * 0.05) {
+        // free memory is less than 5 % of max memory
+        log("WARNING :: Vector Size reached " + v.size() + " and free = " + free + " max = " + max + " total = "
+            + total + ". Pathway to OOME. Waiting for 5 sec or until reaping.");
         try {
-          v.wait();
+          v.wait(5000);
         } catch (InterruptedException e) {
           throw new RuntimeException(e);
         }
-        DebugUtil.DEBUG =false;
       }
     }
-    
+
   }
 
   public void evictCache(CacheStats stat) {
-    if(isSolaris) {
-      log("SOlaris : " + stat);
-    }
     synchronized (v) {
       int toEvict = stat.getObjectCountToEvict(v.size());
       int evicted = 0;
@@ -107,7 +100,7 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
         }
       }
       stat.objectEvicted(evicted, v.size(), targetObjects4GC);
-      if (callCount.increment() % 10 == 1 || isSolaris) {
+      if (callCount.increment() % 10 == 1) {
         log(stat.toString());
         log("Asked to evict - " + toEvict + " Evicted : " + evicted + " Vector Size : " + v.size());
       }

@@ -95,12 +95,17 @@ public class CacheManager implements MemoryEventsListener {
       return this.toEvict;
     }
 
+    //
+    // We recalibrate the calculatedCacheSize based on the current known details if one of the following is true.
+    // 0) Usage goes below threshold or
+    // 1) This is the first threshold crossing alarm or
+    // 2) A GC has taken place since the last time (we either base in on the collection count which is accurate in 1.5
+    // or in 1.4 we check to see if the usedMemory has gone down which is an indication of gc (not foolprove though)
+    //
     private void adjustCachedObjectCount(int currentCount) {
       if (type == MemoryEventType.BELOW_THRESHOLD || lastStat == null
-          || lastStat.usage.getCollectionCount() < usage.getCollectionCount()) {
-        // 0) Usage goes below threshold
-        // 1) This is the first threshold crossing alarm or
-        // 2) A GC has taken place since the last time, but the memory has not gone below the threshold. (danger)
+          || lastStat.usage.getCollectionCount() < usage.getCollectionCount()
+          || (usage.getCollectionCount() < 0 && lastStat.usage.getUsedMemory() > usage.getUsedMemory())) {
         double used = usage.getUsedPercentage();
         double threshold = config.getUsedThreshold();
         Assert.assertTrue((type == MemoryEventType.BELOW_THRESHOLD && threshold >= used) || threshold <= used);
