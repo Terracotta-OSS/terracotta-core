@@ -219,11 +219,14 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     threadDumpGroup();
 
     // make an archive of the workingDir since it will not be renamed when test times out
-    synchronized (workingDirLock) {
-      if (installation != null) {
+    archiveSandboxLogs();
+  }
 
+  private void archiveSandboxLogs() {
+    synchronized (workingDirLock) {
+      if (installation != null) {        
         String src = installation.getSandboxDirectory().getParentFile().getAbsolutePath();
-        String dest = new File(tempDir, "timeout-logs.zip").getAbsolutePath();
+        String dest = new File(tempDir, "archive-logs-" + System.currentTimeMillis() + ".zip").getAbsolutePath();
 
         String msg = "\n";
         msg += "*****************************\n";
@@ -241,6 +244,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       }
     }
   }
+
 
   /**
    * Starts a DSO server using a generated tc-config.xml
@@ -401,6 +405,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
         boolean renamed = workingDir.renameTo(dest);
         if (!renamed) {
           Banner.errorBanner("Could not rename " + workingDir + " to " + dest);
+          archiveSandboxLogs();
         }
       }
     }
