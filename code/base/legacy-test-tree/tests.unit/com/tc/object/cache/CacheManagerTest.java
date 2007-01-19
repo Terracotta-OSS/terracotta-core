@@ -46,7 +46,7 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
   }
 
   private void hogMemory() {
-    for (int i = 1; i < 500000; i++) {
+    for (int i = 1; i < 300000; i++) {
       byte[] b = new byte[BYTES_SIZE];
       v.add(b);
       if (i == 100) {
@@ -73,9 +73,9 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
       if (total >= max * 0.97 && free < max * 0.05) {
         // free memory is less than 5 % of max memory
         log("WARNING :: Vector Size reached " + v.size() + " and free = " + free + " max = " + max + " total = "
-            + total + ". Pathway to OOME. Waiting for 5 sec or until reaping.");
+            + total + ". Pathway to OOME. Waiting for 5O msec or until reaping.");
         try {
-          v.wait(5000);
+          v.wait(50);
         } catch (InterruptedException e) {
           throw new RuntimeException(e);
         }
