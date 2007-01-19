@@ -27,7 +27,7 @@ public class LockResponseHandler extends AbstractEventHandler {
     } else if (msg.isLockRecall()) {
       lockManager.recall(msg.getLockID(), msg.getThreadID(), msg.getLockLevel());
     } else if (msg.isLockWaitTimeout()) {
-      lockManager.waitTimedout(msg.getLockID(), msg.getThreadID());
+      lockManager.waitTimedOut(msg.getLockID(), msg.getThreadID());
     } else if (msg.isLockNotAwarded()) {
       lockManager.cannotAwardLock(msg.getLocalSessionID(), msg.getLockID(), msg.getThreadID(), msg.getLockLevel());
     } else if (msg.isLockInfo()) {

@@ -307,7 +307,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       return;
     }
 
-    public void waitTimedout(LockID lockID, ThreadID threadID) {
+    public void waitTimedOut(LockID lockID, ThreadID threadID) {
       return;
     }
 

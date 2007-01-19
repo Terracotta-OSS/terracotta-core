@@ -31,7 +31,7 @@ public interface DSOChannelManager {
 
   public void addEventListener(DSOChannelManagerEventListener listener);
 
-  public void makeChannelActive(MessageChannel channel);
+  public void makeChannelActive(MessageChannel channel, ClientHandshakeAckMessage ackMsg);
 
   public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(ChannelID channelID)
       throws NoSuchChannelException;

@@ -4,7 +4,6 @@
  */
 package com.tc.object.net;
 
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
 import com.tc.net.TCSocketAddress;
@@ -19,6 +18,7 @@ import com.tc.object.msg.ClientHandshakeAckMessage;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +30,7 @@ import java.util.Map;
 public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManagerMBean {
   private static final MessageChannel[] EMPTY_CHANNEL_ARRAY = new MessageChannel[] {};
 
-  private final Map                     activeChannels      = new ConcurrentReaderHashMap();
+  private final Map                     activeChannels      = new HashMap();
   private final List                    eventListeners      = new CopyOnWriteArrayList();
 
   private final ChannelManager          genericChannelManager;
@@ -41,7 +41,10 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   }
 
   public MessageChannel getActiveChannel(ChannelID id) throws NoSuchChannelException {
-    MessageChannel rv = (MessageChannel) activeChannels.get(id);
+    final MessageChannel rv;
+    synchronized (activeChannels) {
+      rv = (MessageChannel) activeChannels.get(id);
+    }
     if (rv == null) { throw new NoSuchChannelException("No such channel: " + id); }
     return rv;
   }
@@ -58,11 +61,15 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   }
 
   public MessageChannel[] getActiveChannels() {
-    return (MessageChannel[]) activeChannels.values().toArray(EMPTY_CHANNEL_ARRAY);
+    synchronized (activeChannels) {
+      return (MessageChannel[]) activeChannels.values().toArray(EMPTY_CHANNEL_ARRAY);
+    }
   }
 
   public boolean isActiveID(ChannelID channelID) {
-    return activeChannels.containsKey(channelID);
+    synchronized (activeChannels) {
+      return activeChannels.containsKey(channelID);
+    }
   }
 
   public String getChannelAddress(ChannelID channelID) {
@@ -88,11 +95,16 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   }
 
   public Collection getAllActiveChannelIDs() {
-    return Collections.unmodifiableCollection(activeChannels.keySet());
+    synchronized (activeChannels) {
+      return Collections.unmodifiableCollection(activeChannels.keySet());
+    }
   }
 
-  public void makeChannelActive(MessageChannel channel) {
-    activeChannels.put(channel.getChannelID(), channel);
+  public void makeChannelActive(MessageChannel channel, ClientHandshakeAckMessage ackMsg) {
+    synchronized (activeChannels) {
+      ackMsg.send();
+      activeChannels.put(channel.getChannelID(), channel);
+    }
     fireChannelCreatedEvent(channel);
   }
 
@@ -126,7 +138,9 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     }
 
     public void channelRemoved(MessageChannel channel) {
-      activeChannels.remove(channel.getChannelID());
+      synchronized (activeChannels) {
+        activeChannels.remove(channel.getChannelID());
+      }
       fireChannelRemovedEvent(channel);
     }
 

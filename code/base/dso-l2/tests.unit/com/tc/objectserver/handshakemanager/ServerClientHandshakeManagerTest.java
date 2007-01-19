@@ -405,8 +405,8 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void makeChannelActive(MessageChannel channel) {
-      //
+    public void makeChannelActive(MessageChannel channel, ClientHandshakeAckMessage ackMsg) {
+      ackMsg.send();
     }
 
   }

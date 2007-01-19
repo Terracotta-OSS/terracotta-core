@@ -249,7 +249,7 @@ public class LockTimerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public void makeChannelActive(MessageChannel channel) {
+    public void makeChannelActive(MessageChannel channel, ClientHandshakeAckMessage ackMsg) {
       throw new ImplementMe();
     }
 

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.handshakemanager;
 
@@ -7,6 +8,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.impl.NullSink;
 import com.tc.logging.TCLogger;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.WaitContext;
@@ -29,30 +31,31 @@ import java.util.TimerTask;
 
 public class ServerClientHandshakeManager {
 
-  private static final State             INIT                              = new State("INIT");
-  private static final State             STARTING                          = new State("STARTING");
-  private static final State             STARTED                           = new State("STARTED");
-  private static final int               BATCH_SEQUENCE_SIZE               = 10000;
+  private static final State              INIT                              = new State("INIT");
+  private static final State              STARTING                          = new State("STARTING");
+  private static final State              STARTED                           = new State("STARTED");
+  private static final int                BATCH_SEQUENCE_SIZE               = 10000;
 
-  public static final Sink               NULL_SINK                         = new NullSink();
+  public static final Sink                NULL_SINK                         = new NullSink();
 
-  private State                          state                             = INIT;
+  private State                           state                             = INIT;
 
-  private final TCTimer                  timer;
-  private final ReconnectTimerTask       reconnectTimerTask;
-  private final ClientStateManager       clientStateManager;
-  private final LockManager              lockManager;
-  private final Sink                     lockResponseSink;
-  private final long                     reconnectTimeout;
-  private final ObjectManager            objectManager;
-  private final Set                      existingUnconnectedClients;
-  private final DSOChannelManager        channelManager;
-  private final TCLogger                 logger;
-  private final SequenceValidator        sequenceValidator;
-  private final ServerTransactionManager transactionManager;
-  private final ObjectIDSequence         oidSequence;
-  private final Set                      clientsRequestingObjectIDSequence = new HashSet();
-  private final boolean                  persistent;
+  private final TCTimer                   timer;
+  private final ReconnectTimerTask        reconnectTimerTask;
+  private final ClientStateManager        clientStateManager;
+  private final LockManager               lockManager;
+  private final Sink                      lockResponseSink;
+  private final long                      reconnectTimeout;
+  private final ObjectManager             objectManager;
+  private final Set                       existingUnconnectedClients;
+  private final DSOChannelManager         channelManager;
+  private final TCLogger                  logger;
+  private final SequenceValidator         sequenceValidator;
+  private final ServerTransactionManager  transactionManager;
+  private final ObjectIDSequence          oidSequence;
+  private final Set                       clientsRequestingObjectIDSequence = new HashSet();
+  private final boolean                   persistent;
+  private final ClientHandshakeAckMessage nullAckMessage                    = new NullClientHandshakeAckMessage();
 
   public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager, ObjectManager objectManager,
                                       SequenceValidator sequenceValidator, ClientStateManager clientStateManager,
@@ -111,7 +114,7 @@ public class ServerClientHandshakeManager {
       }
 
       if (state == STARTING) {
-        channelManager.makeChannelActive(handshake.getChannel());
+        channelManager.makeChannelActive(handshake.getChannel(), nullAckMessage);
       }
 
       this.sequenceValidator.initSequence(handshake.getChannelID(), handshake.getTransactionSequenceIDs());
@@ -123,14 +126,14 @@ public class ServerClientHandshakeManager {
 
       for (Iterator i = handshake.getLockContexts().iterator(); i.hasNext();) {
         LockContext ctxt = (LockContext) i.next();
-        lockManager.reestablishLock(ctxt.getLockID(), ctxt.getChannelID(), ctxt.getThreadID(),
-                                    ctxt.getLockLevel(), lockResponseSink);
+        lockManager.reestablishLock(ctxt.getLockID(), ctxt.getChannelID(), ctxt.getThreadID(), ctxt.getLockLevel(),
+                                    lockResponseSink);
       }
 
       for (Iterator i = handshake.getWaitContexts().iterator(); i.hasNext();) {
         WaitContext ctxt = (WaitContext) i.next();
-        lockManager.reestablishWait(ctxt.getLockID(), ctxt.getChannelID(), ctxt.getThreadID(),
-                                    ctxt.getLockLevel(), ctxt.getWaitInvocation(), lockResponseSink);
+        lockManager.reestablishWait(ctxt.getLockID(), ctxt.getChannelID(), ctxt.getThreadID(), ctxt.getLockLevel(),
+                                    ctxt.getWaitInvocation(), lockResponseSink);
       }
 
       for (Iterator i = handshake.getPendingLockContexts().iterator(); i.hasNext();) {
@@ -165,14 +168,15 @@ public class ServerClientHandshakeManager {
       if (clientsRequestingObjectIDSequence.remove(channelID)) {
         long ids = oidSequence.nextObjectIDBatch(BATCH_SEQUENCE_SIZE);
         logger.debug("Giving out Object ID Sequences to " + channelID + " from " + ids + " to "
-                    + (ids + BATCH_SEQUENCE_SIZE));
+                     + (ids + BATCH_SEQUENCE_SIZE));
         handshakeAck.initialize(ids, ids + BATCH_SEQUENCE_SIZE, persistent);
       } else {
         handshakeAck.initialize(0, 0, persistent);
       }
-      handshakeAck.send();
 
-      channelManager.makeChannelActive(handshakeAck.getChannel());
+      // NOTE: handshake ack message send() must be done atomically with making the channel active
+      // and is thus done inside this channel manager call
+      channelManager.makeChannelActive(handshakeAck.getChannel(), handshakeAck);
 
     } catch (NoSuchChannelException e) {
       logger.warn("Not sending handshake message to disconnected client: " + channelID);
@@ -251,6 +255,34 @@ public class ServerClientHandshakeManager {
     public String toString() {
       return getClass().getName() + "[" + name + "]";
     }
+  }
+
+  public class NullClientHandshakeAckMessage implements ClientHandshakeAckMessage {
+
+    public MessageChannel getChannel() {
+      throw new UnsupportedOperationException();
+    }
+
+    public long getObjectIDSequenceEnd() {
+      throw new UnsupportedOperationException();
+    }
+
+    public long getObjectIDSequenceStart() {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean getPersistentServer() {
+      throw new UnsupportedOperationException();
+    }
+
+    public void initialize(long start, long end, boolean p) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void send() {
+      //
+    }
+
   }
 
 }

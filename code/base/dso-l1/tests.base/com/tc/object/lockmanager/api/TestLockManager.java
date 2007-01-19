@@ -87,7 +87,7 @@ public class TestLockManager implements ClientLockManager {
     return;
   }
 
-  public void waitTimedout(LockID lockID, ThreadID threadID) {
+  public void waitTimedOut(LockID lockID, ThreadID threadID) {
     return;
   }
 
@@ -129,6 +129,6 @@ public class TestLockManager implements ClientLockManager {
 
   public void cannotAwardLock(SessionID sessionID, LockID id, ThreadID threadID, int type) {
     throw new ImplementMe();
-    
+
   }
 }

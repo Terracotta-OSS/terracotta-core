@@ -11,7 +11,7 @@ import java.util.Collection;
 
 /**
  * Simple lock manager for the client
- * 
+ *
  * @author steve
  */
 public interface ClientLockManager {
@@ -26,16 +26,16 @@ public interface ClientLockManager {
 
   /**
    * obtain a lock
-   * 
+   *
    * @param obj
    */
   public void lock(LockID id, ThreadID threadID, int type);
-  
+
   public boolean tryLock(LockID id, ThreadID threadID, int type);
 
   /**
    * releases the lock so that others can have at it
-   * 
+   *
    * @param obj
    */
   public void unlock(LockID id, ThreadID threadID);
@@ -44,14 +44,14 @@ public interface ClientLockManager {
    * awards the lock to the threadID
    */
   public void awardLock(SessionID sessionID, LockID id, ThreadID threadID, int type);
-  
+
   public void cannotAwardLock(SessionID sessionID, LockID id, ThreadID threadID, int type);
 
   public LockID lockIDFor(String id);
 
   public void wait(LockID lockID, ThreadID threadID, WaitInvocation call, Object waitObject, WaitListener listener);
 
-  public void waitTimedout(LockID lockID, ThreadID threadID);
+  public void waitTimedOut(LockID lockID, ThreadID threadID);
 
   /**
    * Returns true if this notification should be send to the server for handling. This nofication is not needed to be
@@ -71,7 +71,7 @@ public interface ClientLockManager {
 
   /**
    * Adds all lock waits to the given collection and returns that collection.
-   * 
+   *
    * @param c
    */
   public Collection addAllWaitersTo(Collection c);
@@ -87,14 +87,14 @@ public interface ClientLockManager {
   public Collection addAllPendingLockRequestsTo(Collection c);
 
   public void runGC();
-  
+
   public int queueLength(LockID lockID, ThreadID threadID);
-  
+
   public int waitLength(LockID lockID, ThreadID threadID);
-  
+
   public int heldCount(LockID lockID, int lockLevel, ThreadID threadID);
 
   public boolean isLocked(LockID lockID, ThreadID threadID);
-  
+
   public void queryLockCommit(ThreadID threadID, GlobalLockInfo globalLockInfo);
 }

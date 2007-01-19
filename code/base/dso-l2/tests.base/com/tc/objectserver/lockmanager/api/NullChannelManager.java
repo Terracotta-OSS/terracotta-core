@@ -55,7 +55,7 @@ public class NullChannelManager implements DSOChannelManager {
     //
   }
 
-  public void makeChannelActive(MessageChannel channel) {
+  public void makeChannelActive(MessageChannel channel, ClientHandshakeAckMessage ackMsg) {
     //
   }
 
