@@ -28,23 +28,10 @@ GOTO end
 
 :located_java_home
 
-if "x%ANT_HOME%"=="x" GOTO no_ant_home
-
-echo --------------------------------------------------------------------------------
-echo RUNNING ANT+IVY
-
-call %ANT_HOME%\bin\ant.bat -buildfile %~p0buildconfig\resolve-dependencies\build.xml
-set TCBUILD_ERR=%ERRORLEVEL%
-IF NOT %TCBUILD_ERR%==0 GOTO end
-
 echo --------------------------------------------------------------------------------
 echo RUNNING TCBUILD"
 
 GOTO run_jruby
-
-:no_ant_home
-echo --------------------------------------------------------------------------------
-echo ANT_HOME not set. Skipping dependency resolution with ANT+IVY.
 
 :run_jruby
 
