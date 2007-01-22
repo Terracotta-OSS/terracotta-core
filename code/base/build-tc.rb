@@ -797,11 +797,16 @@ END
         configuration_data = {
             'host' => @build_environment.build_hostname,
             'branch' => @build_environment.current_branch,
-            'platform' => @build_environment.platform,
             'revision' => @build_environment.current_revision,
             'target' => config_source['tc.build-control.build.target'],
+            'platform' => @build_environment.platform,            
+            'appserver' => config_source['tc.tests.configuration.appserver.factory.name'] + "-"  +
+                           config_source['tc.tests.configuration.appserver.major-version'] + "." +
+                           config_source['tc.tests.configuration.appserver.minor-version']
+            
             'jvm-tests-1.4' => @jvm_set['tests-1.4'].short_description,
             'jvm-tests-1.5' => @jvm_set['tests-1.5'].short_description,
+                        
         }
 
         # Parameters data.
@@ -828,12 +833,13 @@ END
             file << "    <configuration>\n"
 
             write_keys(file, configuration_data, configuration_data.keys)
-            write_keys(file, test_config_data, test_config_data.keys)
+            
 
             file << "    </configuration>\n"
             file << "    <parameters>\n"
 
             write_keys(file, parameters_data, parameters_data.keys)
+            write_keys(file, test_config_data, test_config_data.keys)
 
             file << "    </parameters>\n"
             file << "    <extra>\n"
