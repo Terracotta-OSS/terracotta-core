@@ -795,22 +795,22 @@ END
     def write_build_info_file
         # Configuration data.
         configuration_data = {
+            'host' => @build_environment.build_hostname,
             'branch' => @build_environment.current_branch,
             'platform' => @build_environment.platform,
+            'revision' => @build_environment.current_revision,
             'target' => config_source['tc.build-control.build.target'],
             'jvm-tests-1.4' => @jvm_set['tests-1.4'].short_description,
             'jvm-tests-1.5' => @jvm_set['tests-1.5'].short_description,
         }
 
         # Parameters data.
-        parameters_data = {
-          'host' => @build_environment.build_hostname,
+        parameters_data = {          
           'monkey-name' => config_source['monkey-name']
         }
 
         # Extra data.
-        extra_environment_data = {
-            'revision' => @build_environment.current_revision,
+        extra_environment_data = {            
             'tc.build-archive.path.pattern' => build_archive_path_pattern.to_s
         }
 
