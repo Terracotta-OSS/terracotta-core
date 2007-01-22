@@ -32,7 +32,7 @@ public class DocumentParserTest extends TestCase {
     assertNotNull(resource);
     InputStream is = resource.openStream(); 
     
-    Set definitions = DocumentParser.parse(getClass().getClassLoader(), getDocument(new InputSource(is)));
+    Set definitions = DocumentParser.parse(getClass().getClassLoader(), XmlParser.createDocument(new InputSource(is)));
     
     assertTrue(!definitions.isEmpty());
   }

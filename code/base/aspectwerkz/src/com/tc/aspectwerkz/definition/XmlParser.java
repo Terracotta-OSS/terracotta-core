@@ -132,7 +132,7 @@ public class XmlParser {
     return createDocument(new InputSource(new StringReader(string)));
   }
 
-  private static Document createDocument(InputSource in) throws IOException {
+  public static Document createDocument(InputSource in) throws IOException {
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       DocumentBuilder builder = factory.newDocumentBuilder();
