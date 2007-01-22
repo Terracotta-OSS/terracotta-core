@@ -54,9 +54,11 @@ class FilePath
         if JavaSystem.getProperty('os.name').downcase =~ /^.*windows.*$/i
             # The extension for executable files; this variant is for Windows
             EXECUTABLE_EXTENSION = '.exe'
+            BATCH_EXTENSION = '.bat'
         else
             # The extension for executable files; this variant is for Unix
             EXECUTABLE_EXTENSION = ''
+            BATCH_EXTENSION = ''
         end
     else
         if ENV['OS'] =~ /windows/i
@@ -65,12 +67,14 @@ class FilePath
 
             # The extension for executable files; this variant is for Windows
             EXECUTABLE_EXTENSION = '.exe'
+            BATCH_EXTENSION = '.bat'
         else
             # The native directory separator; this variant is for Unix, normal Ruby
             NATIVE_DIRECTORY_SEPARATOR = File::SEPARATOR
 
             # The extension for executable files; this variant is for Unix
             EXECUTABLE_EXTENSION = ''
+            BATCH_EXTENSION = ''
         end
     end
 
@@ -221,6 +225,12 @@ class FilePath
     # nothing on Unix, but adds '.exe' on Windows.
     def executable_extension
         dup.add_extension(EXECUTABLE_EXTENSION)
+    end
+
+    # Returns a version of this FilePath object with the '.bat' extensions
+    # appended if and only if on Windows.
+    def batch_extension
+        dup.add_extension(BATCH_EXTENSION)
     end
 
     # Turns this FilePath into a string representation of itself. This is how you end up using a

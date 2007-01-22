@@ -33,7 +33,7 @@ class TerracottaAnt < Builder::AntBuilder
         super
         taskdef(:name => 'propertyselector', :classname => 'net.sf.antcontrib.property.PropertySelector')
     end
-    
+
     # Fetches the Ant property with the given name; raises an exception if it doesn't exist, unless
     # you specify a default. We also transform the key passed in to make sure it contains only
     # numbers, letters, and underscores; other characters will be replaced with underscores. This is
@@ -55,37 +55,37 @@ class TerracottaAnt < Builder::AntBuilder
         end
         out
     end
-    
+
     # Returns a hash of the current values of all Ant properties. This will always return the correct
     # values of properties, but will not pick up new properties that have been set for the first time
     # since the last time you called it, unless you set force_update to true.
     def all_ant_properties(force_update = false)
         out = { }
-        
+
         # If we don't have a cache, or are forcing an update, use the Ant 'propertyselector' task to
         # gin up a list of all property names.
         if force_update || $antCachedPropertyNames.nil?
             property_name = ANT_PROPERTY_LIST_PROPERTY_NAME_BASE + $antPropertyListPropertyNextIndex.to_s
             $antPropertyListPropertyNextIndex += 1
-    
+
             propertyselector(:property => property_name, :override => true, :match => '.*',
                 :casesensitive => false, :distinct => true)
-    
+
             property_list = get_ant_property(property_name)
             $antCachedPropertyNames = property_list.split(/\s*,\s*/)
         end
-        
+
         $antCachedPropertyNames.each do |name|
             out[name] = get_ant_property(name, "(unknown -- cannot fetch from Ant; this is not a valid Ruby identifier)")
         end
-        
+
         out
     end
-    
+
     # Sets an Ant property to a particular value. If you pass in a key that's not a valid Ruby
     # instance variable name, you will get an exception back -- you have been warned.
     #
-    # We have to use instance_eval here, too, because 
+    # We have to use instance_eval here, too, because
     def set_ant_property(key, value)
         instance_eval("@%s = '%s'" % [ key.to_s, value.to_s ])
     end
@@ -105,12 +105,16 @@ end
 # AntBuilder just does too many weird things with built-in Ruby methods to make that seem safe or
 # sane. Instead, we maintain an instance of AntBuilder as a member variable.
 class TerracottaBuilder
+    require 'optparse'
+
     attr_reader :ant, :platform, :basedir, :config_source
-    
+
     # Creates a new TerracottaBuilder instance with the given default target. arguments should be the
     # list of arguments passed on the command line; these will be parsed for targets, arguments to
     # targets, and configuration properties.
     def initialize(default_target, arguments)
+        option_parser = OptionParser.new
+        option_parser.on('--no-ivy') do @no_ivy = true end
         @start_time = Time.now
         @basedir = FilePath.new("").canonicalize
         puts "Building with base directory: '%s'." % @basedir.to_s
@@ -118,19 +122,20 @@ class TerracottaBuilder
         @default_target = default_target
         @ant = TerracottaAnt.new
         @platform = CrossPlatform.create_implementation(:ant => @ant)
-        
+
         # The CommandLineConfigSource actually parses its arguments, and returns only the ones
         # that aren't configuration property settings (e.g., of the form 'a=b').
+        arguments = option_parser.parse(arguments)
         @arguments, command_line_source = CommandLineConfigSource.from_args(arguments)
         @internal_config_source = InternalConfigSource.new
 
         @config_source = create_config_source(command_line_source, @internal_config_source)
 
         @script_results = ScriptResults.new
-        
+
         reset
     end
-    
+
     # Runs the builder -- that is, runs the targets specified on the command line, or the
     # default target if none were specified.
     def run
@@ -147,26 +152,26 @@ class TerracottaBuilder
             # buildsystem gets correctly reported as a failure.
             @script_results.failed("Received exception from the build system: %s\n%s" % [ e.to_s, e.backtrace.join("\n     ") ])
         end
-        
+
         end_time = Time.now
         # Print out the duration and the results at the end.
         puts ""
         puts "[%8.2f seconds] %s" % [ (end_time - @start_time), @script_results.to_s ]
-        
+
         # This is so that, even if the series of scripts leading from, say, CruiseControl to this
         # code doesn't correctly carry back the exit code (as it inexplicably seems not to on
         # Windows), the parent can tell if it passed or not.
         write_failure_file_if_necessary_at_end
-        
+
         # Support for making build archives.
         # archive only if "force-archive=true", or when the run fails
         if (@script_results.failed? || @config_source["force-archive"] =~ /true/)
             archive_build_if_necessary
         end
-        
+
         ExitCodeHelper.exit(@script_results.result_code)
     end
-    
+
     # Resets the dependency-tracking mechanism.
     def reset
         @targets_run = [ ]
@@ -236,7 +241,7 @@ class TerracottaBuilder
     def target_missing(target)
         raise RuntimeError, "No target named '%s' exists in this build file." % target
     end
-    
+
     # Called when you should archive the build; passes in the directory you should archive it to.
     # Subclasses should override this so it actually does something.
     def archive_build_if_necessary(target_directory)
@@ -248,13 +253,13 @@ class TerracottaBuilder
     # to that file. If not, does nothing.
     def with_optional_failures_filename(&proc)
         filename = config_source['failures_file']
-        
+
         unless filename.blank?
             path = FilePath.new(filename)
             proc.call(path)
         end
     end
-    
+
     # Writes out a failures file at the beginning. This is our deadman's switch -- pretty important.
     # If all we did was write this out at the end, sure, we could try to catch exceptions and all kinds
     # of stuff to make sure we really truly *always* wrote this out at the end, but certain things (like
@@ -269,7 +274,7 @@ class TerracottaBuilder
             end
         end
     end
-    
+
     # Writes out a failures file at the end, with any failures encountered during the build. If there
     # were no failures, deletes the failures file, if it exists.
     def write_failure_file_if_necessary_at_end
@@ -285,7 +290,7 @@ class TerracottaBuilder
             end
         end
     end
-    
+
     # Runs the specified targets. Assigns @remaining_arguments, which targets can get at
     # to pull variable numbers of arguments from the argument list. (This is necessary because,
     # among other things, JRuby has problems with methods that take variable numbers of
@@ -294,12 +299,12 @@ class TerracottaBuilder
         @remaining_arguments = actual_targets
         do_run_arguments
     end
-    
+
     # Runs the target specified by the first of the remaining arguments.
     def do_run_arguments
         unless @remaining_arguments.empty?
             target = next_argument.to_sym
-            
+
             if respond_to?(target, false)
                 already_run = @targets_run.include?(target)
                 @targets_run << target unless already_run

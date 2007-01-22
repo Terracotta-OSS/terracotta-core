@@ -96,6 +96,33 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
         write_build_info_file
     end
 
+    # Download and install dependencies as specified by the various ivy*.xml
+    # files in the individual modules.
+    def resolve_dependencies
+      depends :init
+
+      if (ant_home = ENV['ANT_HOME'])
+        if @no_ivy
+          puts "--------------------------------------------------------------------------------"
+          puts "Ivy support disabled.  Skipping dependency resolution."
+        else
+          puts "--------------------------------------------------------------------------------"
+          puts "Resolving dependencies."
+          build_file = FilePath.new(@static_resources.build_config_directory,
+                                    'resolve-dependencies', 'build.xml')
+          ant_command = FilePath.new(ant_home, 'bin', 'ant').batch_extension.to_s
+          args = ['-buildfile', "#{build_file.to_s}"]
+          @ant.exec(:executable => ant_command) do
+            @ant.arg(:value => '-buildfile')
+            @ant.arg(:file => build_file.to_s)
+          end
+        end
+      else
+        puts "--------------------------------------------------------------------------------"
+        puts "ANT_HOME not set. Skipping dependency resolution."
+      end
+    end
+
     # Show which modules have been defined. Useful for debugging the buildsystem.
     def show_modules
         puts "Module set: %s" % @module_set.to_s
@@ -126,7 +153,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
     # Yeah. That little thing.
     def compile
-        depends :init
+        depends :init, :resolve_dependencies
 
         @module_set.each do |build_module|
             build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
