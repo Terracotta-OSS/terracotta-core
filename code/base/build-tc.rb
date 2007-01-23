@@ -802,7 +802,7 @@ END
             'platform' => @build_environment.platform,            
             'appserver' => config_source['tc.tests.configuration.appserver.factory.name'] + "-"  +
                            config_source['tc.tests.configuration.appserver.major-version'] + "." +
-                           config_source['tc.tests.configuration.appserver.minor-version']
+                           config_source['tc.tests.configuration.appserver.minor-version'],
             
             'jvm-tests-1.4' => @jvm_set['tests-1.4'].short_description,
             'jvm-tests-1.5' => @jvm_set['tests-1.5'].short_description,
