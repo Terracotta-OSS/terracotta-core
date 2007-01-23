@@ -34,7 +34,6 @@ public class Cluster {
       Node n = new Node(nodesCurrentlyInCluster[i]);
       nodes.put(n.getNodeId(), n);
     }
-    log("thisNodeConnected", thisNodeId);
     fireThisNodeConnectedEvent();
   }
 
@@ -54,13 +53,8 @@ public class Cluster {
     if (thisNode != null) fireNodeDisconnectedEvent(nodeId);
   }
 
-  private void log(String event, String nodeId) {
-    System.err.println("\n\n###################################\n" + event + ": nodeId = " + nodeId + " cluster -> "
-                       + this + "\n" + "###################################\n\n");
-
-  }
-
   private void log(Throwable e, String nodeId) {
+    // FIXME: switch to a real logger
     CharArrayWriter caw = new CharArrayWriter();
     PrintWriter pw = new PrintWriter(caw);
     e.printStackTrace(pw);

@@ -57,7 +57,7 @@ public class TestDSOChannelManager implements DSOChannelManager {
   }
 
   public MessageChannel[] getActiveChannels() {
-    throw new ImplementMe();
+    return allChannels;
   }
 
   public Collection getAllActiveChannelIDs() {
