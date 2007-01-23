@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -17,6 +18,7 @@ import com.tc.logging.TCLogging;
 import com.tc.management.L1Management;
 import com.tc.management.beans.sessions.SessionMonitorMBean;
 import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
+import com.tc.management.remote.protocol.terracotta.L1JmxReady;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.core.ConnectionInfo;
@@ -99,11 +101,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Thing to startup a client.
- *
- * @author steve
+ * This is the main point of entry into the DSO client.
  */
-
 public class DistributedObjectClient extends SEDA {
 
   private static final TCLogger                    logger        = CustomerLogging.getDSOGenericLogger();
@@ -224,9 +223,10 @@ public class DistributedObjectClient extends SEDA {
       logger.warn("CacheManager is Disabled");
     }
 
-    // Set up the JMX management garbage
+    // Set up the JMX management stuff
     final TunnelingEventHandler teh = new TunnelingEventHandler(channel.channel());
     l1Management = new L1Management(teh);
+    l1Management.start();
 
     txManager = new ClientTransactionManagerImpl(channel.getChannelIDProvider(), objectManager,
                                                  new ThreadLockManagerImpl(lockManager), txFactory, rtxManager,
@@ -295,6 +295,7 @@ public class DistributedObjectClient extends SEDA {
     channel.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
     channel.addClassMapping(TCMessageType.JMX_MESSAGE, JMXMessage.class);
     channel.addClassMapping(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
+    channel.addClassMapping(TCMessageType.CLIENT_JMX_READY_MESSAGE, L1JmxReady.class);
 
     logger.debug("Added class mappings.");
 
@@ -327,8 +328,8 @@ public class DistributedObjectClient extends SEDA {
         consoleLogger.warn("Connection refused from server: " + serverHost + ":" + serverPort);
         ThreadUtil.reallySleep(5000);
       } catch (MaxConnectionsExceededException e) {
-        consoleLogger.warn("Connection refused MAXIMUM CONNECTIONS TO SERVER EXCEEDED: " + serverHost
-                           + ":" + serverPort);
+        consoleLogger.warn("Connection refused MAXIMUM CONNECTIONS TO SERVER EXCEEDED: " + serverHost + ":"
+                           + serverPort);
         ThreadUtil.reallySleep(5000);
       } catch (IOException ioe) {
         ioe.printStackTrace();

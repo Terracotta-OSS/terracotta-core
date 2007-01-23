@@ -27,6 +27,7 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.remote.connect.ClientConnectEventHandler;
 import com.tc.management.remote.protocol.terracotta.ClientTunnelingEventHandler;
 import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
+import com.tc.management.remote.protocol.terracotta.L1JmxReady;
 import com.tc.net.NIOWorkarounds;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
@@ -83,8 +84,6 @@ import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManagerImpl;
 import com.tc.objectserver.handler.ApplyCompleteTransactionHandler;
 import com.tc.objectserver.handler.ApplyTransactionChangeHandler;
-import com.tc.objectserver.handler.RecallObjectsHandler;
-import com.tc.objectserver.handler.TransactionLookupHandler;
 import com.tc.objectserver.handler.BroadcastChangeHandler;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handler.ClientHandshakeHandler;
@@ -94,12 +93,14 @@ import com.tc.objectserver.handler.ManagedObjectFaultHandler;
 import com.tc.objectserver.handler.ManagedObjectFlushHandler;
 import com.tc.objectserver.handler.ManagedObjectRequestHandler;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
+import com.tc.objectserver.handler.RecallObjectsHandler;
 import com.tc.objectserver.handler.RequestLockUnLockHandler;
 import com.tc.objectserver.handler.RequestObjectIDBatchHandler;
 import com.tc.objectserver.handler.RequestRootHandler;
 import com.tc.objectserver.handler.RespondToObjectRequestHandler;
 import com.tc.objectserver.handler.RespondToRequestLockHandler;
 import com.tc.objectserver.handler.TransactionAcknowledgementHandler;
+import com.tc.objectserver.handler.TransactionLookupHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
@@ -527,6 +528,7 @@ public class DistributedObjectServer extends SEDA {
     lsnr.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
     lsnr.addClassMapping(TCMessageType.JMX_MESSAGE, JMXMessage.class);
     lsnr.addClassMapping(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
+    lsnr.addClassMapping(TCMessageType.CLIENT_JMX_READY_MESSAGE, L1JmxReady.class);
 
     Sink hydrateSink = hydrateStage.getSink();
     lsnr.routeMessageType(TCMessageType.COMMIT_TRANSACTION_MESSAGE, processTx.getSink(), hydrateSink);
@@ -539,9 +541,7 @@ public class DistributedObjectServer extends SEDA {
     lsnr.routeMessageType(TCMessageType.JMX_MESSAGE, jmxEventsStage.getSink(), hydrateSink);
     lsnr.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage.getSink(),
                           hydrateSink);
-
-
-
+    lsnr.routeMessageType(TCMessageType.CLIENT_JMX_READY_MESSAGE, jmxRemoteTunnelStage.getSink(), hydrateSink);
 
     ObjectRequestManager objectRequestManager = new ObjectRequestManagerImpl(objectManager, transactionManager);
 

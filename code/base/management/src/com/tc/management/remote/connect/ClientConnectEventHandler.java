@@ -66,17 +66,14 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
     }
 
     final public void handleNotification(final Notification notification, final Object context) {
-      logger.info("Tunneled JMX connection to a DSO client has terminated, unregistering its proxied beans:");
       for (Iterator beanNames = ((List) context).iterator(); beanNames.hasNext();) {
         final ObjectName dsoClientBeanName = (ObjectName) beanNames.next();
         try {
-          logger.info("\tUnregistering proxied DSO client bean[" + dsoClientBeanName + "] from the L2");
           mBeanServerConnection.unregisterMBean(dsoClientBeanName);
         } catch (Exception e) {
           logger.warn("Unable to unregister DSO client bean[" + dsoClientBeanName + "]", e);
         }
       }
-      logger.info("All proxied beans have been unregistered");
     }
   }
 
@@ -107,7 +104,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
               .getPort());
         } catch (MalformedURLException murle) {
           logger.error("Unable to construct a JMX service URL using DSO client channel from host["
-                       + channel.getRemoteAddress() + "]; tunneled JMX connection will not be established", murle);
+              + channel.getRemoteAddress() + "]; tunneled JMX connection will not be established", murle);
           return;
         }
         Map environment = new HashMap();
@@ -116,8 +113,6 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
         environment.put(ClientProvider.CONNECTION_LIST, channelIdToMsgConnection);
         final JMXConnector jmxConnector;
         try {
-          logger.info("An L1 has established a connection to the L2, attempting to connect to the client JMX server["
-                      + serviceURL.toString() + "]");
           jmxConnector = JMXConnectorFactory.connect(serviceURL, environment);
 
           final MBeanServerConnection l1MBeanServerConnection = jmxConnector.getMBeanServerConnection();
@@ -125,42 +120,37 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
           List modifiedObjectNames = new ArrayList();
           for (Iterator iter = mBeans.iterator(); iter.hasNext();) {
             ObjectName objName = (ObjectName) iter.next();
-            logger.info("Found L1 bean[" + objName.getCanonicalName() + "], attempting to register an L2 proxy for it");
             try {
-              TerracottaMBean mBeanProxy = (TerracottaMBean) MBeanServerInvocationHandler
-                  .newProxyInstance(l1MBeanServerConnection, objName, TerracottaMBean.class, false);
+              TerracottaMBean mBeanProxy = (TerracottaMBean) MBeanServerInvocationHandler.newProxyInstance(
+                  l1MBeanServerConnection, objName, TerracottaMBean.class, false);
               ObjectName modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
               Class interfaceClass = Class.forName(mBeanProxy.getInterfaceClassName());
-              logger.info("\tRegistration details: L1(" + interfaceClass.getName() + ") -> L2: ["
-                          + objName.getCanonicalName() + "] -> [" + modifiedObjName.getCanonicalName() + "]");
               Object obj = MBeanServerInvocationHandler.newProxyInstance(l1MBeanServerConnection, objName,
-                                                                         interfaceClass, mBeanProxy
-                                                                             .isNotificationBroadcaster());
+                  interfaceClass, mBeanProxy.isNotificationBroadcaster());
               l2MBeanServer.registerMBean(new StandardMBean(obj, interfaceClass), modifiedObjName);
               modifiedObjectNames.add(modifiedObjName);
-              logger.info("Registration[" + objName.getCanonicalName() + "] successful");
             } catch (Exception e) {
               logger.error("Unable to register remote DSO client MBean[" + objName.getCanonicalName() + "] for host["
-                           + channel.getRemoteAddress() + "], this bean will not show up in monitoring tools!!", e);
+                  + channel.getRemoteAddress() + "], this bean will not show up in monitoring tools!!", e);
             }
           }
           try {
             jmxConnector.addConnectionNotificationListener(new ConnectorClosedListener(l2MBeanServer),
-                                                           new ConnectorClosedFilter(), modifiedObjectNames);
+                new ConnectorClosedFilter(), modifiedObjectNames);
           } catch (Exception e) {
             logger.error("Unable to register a JMX connection listener for the DSO client["
-                         + channel.getRemoteAddress()
-                         + "], if the DSO client disconnects the then its (dead) beans will not be unregistered", e);
+                + channel.getRemoteAddress()
+                + "], if the DSO client disconnects the then its (dead) beans will not be unregistered", e);
           }
         } catch (IOException ioe) {
           logger.error("Unable to create tunneled JMX connection to the DSO client on host["
-                       + channel.getRemoteAddress() + "], this DSO client will not show up in monitoring tools!!", ioe);
+              + channel.getRemoteAddress() + "], this DSO client will not show up in monitoring tools!!", ioe);
           return;
         }
         channelIdToJmxConnector.put(channel.getChannelID(), jmxConnector);
       } else {
         logger.warn("We are trying to create a new tunneled JMX connection but already have one for channel["
-                    + channel.getRemoteAddress() + "], ignoring new connection message");
+            + channel.getRemoteAddress() + "], ignoring new connection message");
       }
     }
   }
@@ -170,8 +160,6 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
     final Map channelIdToJmxConnector = msg.getChannelIdToJmxConnector();
     final Map channelIdToMsgConnection = msg.getChannelIdToMsgConnector();
 
-    logger.info("DSO client channel[" + channel.getChannelID().toLong() + "] removed, closing tunneled JMX connection");
-
     synchronized (channelIdToMsgConnection) {
       final TunnelingMessageConnection tmc = (TunnelingMessageConnection) channelIdToMsgConnection.remove(channel
           .getChannelID());
@@ -179,7 +167,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
         try {
           tmc.close();
         } catch (IOException ioe) {
-          logger.debug("Unable to close JMX tunneling message connection to DSO client[" + channel + "]", ioe);
+          logger.warn("Unable to close JMX tunneling message connection to DSO client[" + channel + "]", ioe);
         }
       }
     }
@@ -195,7 +183,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
           }
         }
       } else {
-        logger.debug("DSO client channel closed without a corresponding tunneled JMX connection");
+        logger.warn("DSO client channel closed without a corresponding tunneled JMX connection");
       }
     }
   }

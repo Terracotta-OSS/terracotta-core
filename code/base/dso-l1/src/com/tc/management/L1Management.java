@@ -17,6 +17,7 @@ import com.tc.management.exposed.SessionsProduct;
 import com.tc.management.remote.protocol.ProtocolProvider;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnectionServer;
+import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.runtime.Vm;
 
 import java.io.IOException;
@@ -39,6 +40,7 @@ public final class L1Management extends TerracottaManagement {
   private static final TCLogger       logger      = TCLogging.getLogger(L1Management.class);
   private static boolean              forceCreate = false;
 
+  private final SetOnceFlag           started;
   private final TunnelingEventHandler tunnelingHandler;
   private final Object                mBeanServerLock;
   private MBeanServer                 mBeanServer;
@@ -48,6 +50,7 @@ public final class L1Management extends TerracottaManagement {
 
   public L1Management(final TunnelingEventHandler tunnelingHandler) {
     super();
+    started = new SetOnceFlag();
     this.tunnelingHandler = tunnelingHandler;
     try {
       clientTxBean = new ClientTxMonitor();
@@ -59,7 +62,12 @@ public final class L1Management extends TerracottaManagement {
                                    ncmbe);
     }
     mBeanServerLock = new Object();
+  }
+
+  public synchronized void start() {
+    started.set();
     Thread registrationThread = new Thread(new Runnable() {
+
       private final int MAX_ATTEMPTS = 60 * 5;
 
       public void run() {
@@ -67,13 +75,10 @@ public final class L1Management extends TerracottaManagement {
         int attemptCounter = 0;
         while (!registered && attemptCounter++ < MAX_ATTEMPTS) {
           try {
-            logger.info("Attempt " + attemptCounter + " to register/find JMX server");
             attemptToRegister();
-            logger.info("Registration attempt " + attemptCounter + " to register/find JMX server was successful");
             registered = true;
           } catch (Exception e) {
             // Ignore and try again after 1 second, give the VM a chance to get started
-            logger.info("Registration attempt " + attemptCounter + " to register/find JMX server failed", e);
             try {
               Thread.sleep(1000);
             } catch (InterruptedException ie) {
@@ -82,9 +87,11 @@ public final class L1Management extends TerracottaManagement {
             }
           }
         }
-        if (!registered) {
-          logger
-              .error("Aborted attempts to register management beans after " + (MAX_ATTEMPTS / 60) + " min of trying.");
+        if (registered) {
+          tunnelingHandler.jmxIsReady();
+        } else {
+          logger.error("Aborted attempts to register management" + " beans after " + (MAX_ATTEMPTS / 60)
+                       + " min of trying.");
         }
       }
     }, "L1Management JMX registration");

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.tcm;
 
@@ -50,6 +51,7 @@ public final class TCMessageType {
   public static final int           TYPE_JMXREMOTE_MESSAGE_CONNECTION_MESSAGE     = 36;
   public static final int           TYPE_MEMORY_DATA_STORE_REQUEST_MESSAGE        = 37;
   public static final int           TYPE_MEMORY_DATA_STORE_RESPONSE_MESSAGE       = 38;
+  public static final int           TYPE_CLIENT_JMX_READY_MESSAGE                 = 39;
 
   public static final TCMessageType PING_MESSAGE                                  = new TCMessageType();
   public static final TCMessageType PONG_MESSAGE                                  = new TCMessageType();
@@ -75,6 +77,7 @@ public final class TCMessageType {
   public static final TCMessageType JMXREMOTE_MESSAGE_CONNECTION_MESSAGE          = new TCMessageType();
   public static final TCMessageType MEMORY_DATA_STORE_REQUEST_MESSAGE             = new TCMessageType();
   public static final TCMessageType MEMORY_DATA_STORE_RESPONSE_MESSAGE            = new TCMessageType();
+  public static final TCMessageType CLIENT_JMX_READY_MESSAGE                      = new TCMessageType();
 
   public static TCMessageType getInstance(int i) {
     return (TCMessageType) typeMap.get(i);

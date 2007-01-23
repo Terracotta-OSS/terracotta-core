@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management.remote.protocol.terracotta;
 
@@ -24,6 +25,7 @@ import javax.management.remote.message.Message;
 public class ClientTunnelingEventHandler extends AbstractEventHandler implements DSOChannelManagerEventListener {
 
   public static final class L1ConnectionMessage implements EventContext {
+
     private final MBeanServer    mbs;
     private final MessageChannel channel;
     private final Map            channelIdToJmxConnector;
@@ -31,15 +33,17 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
     private final boolean        isConnectingMsg;
 
     public L1ConnectionMessage(MBeanServer mbs, MessageChannel channel, Map channelIdToJmxConnector,
-                               Map channelIdToMsgConnection, boolean isConnectingMsg) {
+        Map channelIdToMsgConnection, boolean isConnectingMsg) {
       this.mbs = mbs;
       this.channel = channel;
       this.channelIdToJmxConnector = channelIdToJmxConnector;
       this.channelIdToMsgConnection = channelIdToMsgConnection;
       this.isConnectingMsg = isConnectingMsg;
 
-      if(isConnectingMsg && mbs == null) {
-        throw new AssertionError("Attempting to create a L1-connecting-message without a valid mBeanServer.");
+      if (isConnectingMsg && mbs == null) {
+        final AssertionError ae = new AssertionError("Attempting to create a L1-connecting-message without"
+            + " a valid mBeanServer.");
+        throw ae;
       }
     }
 
@@ -80,48 +84,59 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
   }
 
   public void handleEvent(final EventContext context) throws EventHandlerException {
-    final JmxRemoteTunnelMessage messageEnvelope = (JmxRemoteTunnelMessage) context;
-    if (messageEnvelope.getCloseConnection()) {
-      channelRemoved(messageEnvelope.getChannel());
-    } else if (messageEnvelope.getInitConnection()) {
-      logger
-          .warn("Received a JMX tunneled connection init from the remote JMX server, only the JMX client should do this");
+    if (context instanceof L1JmxReady) {
+      final L1JmxReady readyMessage = (L1JmxReady) context;
+      connectToL1JmxServer(readyMessage.getChannel());
     } else {
-      final Message message = messageEnvelope.getTunneledMessage();
-
-      final MessageChannel channel = messageEnvelope.getChannel();
-      final ChannelID channelID = channel.getChannelID();
-      final TunnelingMessageConnection tmc;
-
-      synchronized (channelIdToMsgConnection) {
-        tmc = (TunnelingMessageConnection) channelIdToMsgConnection.get(channelID);
-      }
-
-      if (tmc != null) {
-        tmc.incomingNetworkMessage(message);
+      final JmxRemoteTunnelMessage messageEnvelope = (JmxRemoteTunnelMessage) context;
+      if (messageEnvelope.getCloseConnection()) {
+        channelRemoved(messageEnvelope.getChannel());
+      } else if (messageEnvelope.getInitConnection()) {
+        logger.warn("Received a JMX tunneled connection init from the remote"
+            + " JMX server, only the JMX client should do this");
       } else {
-        logger
-            .warn("Received tunneled JMX message with no associated message connection, sending close() to remote JMX server");
-        final JmxRemoteTunnelMessage closeMessage = (JmxRemoteTunnelMessage) channel
-            .createMessage(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE);
-        closeMessage.setCloseConnection();
-        closeMessage.send();
+        routeTunneledMessage(messageEnvelope);
       }
     }
   }
 
-  public void channelCreated(final MessageChannel channel) {
+  private void connectToL1JmxServer(final MessageChannel channel) {
+    logger.info("L1[" + channel.getChannelID() + "] notified us that their JMX server is now available");
     EventContext msg = new L1ConnectionMessage(l2MBeanServer, channel, channelIdToJmxConnector,
-                                               channelIdToMsgConnection, true);
+        channelIdToMsgConnection, true);
     synchronized (sinkLock) {
       if (connectStageSink == null) { throw new AssertionError("ConnectStageSink was not set."); }
       connectStageSink.add(msg);
     }
   }
 
+  private void routeTunneledMessage(final JmxRemoteTunnelMessage messageEnvelope) {
+    final Message message = messageEnvelope.getTunneledMessage();
+    final MessageChannel channel = messageEnvelope.getChannel();
+    final ChannelID channelID = channel.getChannelID();
+    final TunnelingMessageConnection tmc;
+    synchronized (channelIdToMsgConnection) {
+      tmc = (TunnelingMessageConnection) channelIdToMsgConnection.get(channelID);
+    }
+    if (tmc != null) {
+      tmc.incomingNetworkMessage(message);
+    } else {
+      logger.warn("Received tunneled JMX message with no associated message connection,"
+          + " sending close() to remote JMX server");
+      final JmxRemoteTunnelMessage closeMessage = (JmxRemoteTunnelMessage) channel
+          .createMessage(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE);
+      closeMessage.setCloseConnection();
+      closeMessage.send();
+    }
+  }
+
+  public void channelCreated(final MessageChannel channel) {
+    // DEV-16: Instead of immediately interrogating an L1's JMX server as soon as it connects, we wait for the L1 client
+    // to send us a 'L1JmxReady' network message to avoid a startup race condition
+  }
+
   public void channelRemoved(final MessageChannel channel) {
     EventContext msg = new L1ConnectionMessage(null, channel, channelIdToJmxConnector, channelIdToMsgConnection, false);
-
     synchronized (sinkLock) {
       if (connectStageSink == null) { throw new AssertionError("ConnectStageSink was not set."); }
       connectStageSink.add(msg);
