@@ -18,8 +18,4 @@ public class NullDistributedMethodCallManager implements DistributedMethodCallMa
   public void stop(boolean immediate) {
     //
   }
-
-  public void start() {
-    //
-  }
 }

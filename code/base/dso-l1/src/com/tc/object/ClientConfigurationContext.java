@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -24,6 +25,7 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             CONFIG_MESSAGE_STAGE               = "config_message_stage";
   public static final String             CLIENT_PAUSE_STAGE                 = "client_pause_stage";
   public static final String             JMXREMOTE_TUNNEL_STAGE             = "jmxremote_tunnel_stage";
+  public static final String             CLUSTER_EVENT_STAGE                = "cluster_event_stage";
 
   private final ClientLockManager        lockManager;
   private final RemoteObjectManager      remoteObjectManager;

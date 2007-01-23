@@ -4,6 +4,7 @@
 package com.tc.object.handshakemanager;
 
 import com.tc.async.impl.NullSink;
+import com.tc.cluster.Cluster;
 import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
@@ -67,7 +68,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     mgr = new ClientHandshakeManager(TCLogging.getLogger(ClientHandshakeManager.class), cip, chmf, objectManager,
                                      remoteObjectManager, lockManager, rtxManager, gtxManager, new ArrayList(),
                                      new NullSink(), new NullSessionManager(), new NullPauseListener(),
-                                     new BatchSequence(new TestSequenceProvider(), 100));
+                                     new BatchSequence(new TestSequenceProvider(), 100), new Cluster());
     assertNotNull(gtxManager.pauseCalls.poll(0));
     assertNull(gtxManager.pauseCalls.poll(0));
     newMessage();

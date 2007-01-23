@@ -3,6 +3,7 @@
  */
 package com.tctest;
 
+import com.tc.cluster.Cluster;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
@@ -65,7 +66,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
                                                                  new TCThreadGroup(new ThrowableHandler(TCLogging
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(), components, NullManager
-                                                                     .getInstance());
+                                                                     .getInstance(), new Cluster());
     client.setPauseListener(pauseListener);
     client.start();
 

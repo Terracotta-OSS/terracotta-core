@@ -8,6 +8,8 @@ import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
+import com.tc.cluster.Cluster;
+import com.tc.cluster.ClusterEventHandler;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.ChannelIDLogger;
@@ -62,6 +64,7 @@ import com.tc.object.msg.BatchTransactionAcknowledgeMessageImpl;
 import com.tc.object.msg.BroadcastTransactionMessageImpl;
 import com.tc.object.msg.ClientHandshakeAckMessageImpl;
 import com.tc.object.msg.ClientHandshakeMessageImpl;
+import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.LockRequestMessage;
@@ -112,6 +115,7 @@ public class DistributedObjectClient extends SEDA {
   private final ClassProvider                      classProvider;
   private final PreparedComponentsFromL2Connection connectionComponents;
   private final Manager                            manager;
+  private final Cluster                            cluster;
 
   private DSOClientMessageChannel                  channel;
   private ClientLockManager                        lockManager;
@@ -127,7 +131,8 @@ public class DistributedObjectClient extends SEDA {
   private TCProperties                             l1Properties;
 
   public DistributedObjectClient(DSOClientConfigHelper config, TCThreadGroup threadGroup, ClassProvider classProvider,
-                                 PreparedComponentsFromL2Connection connectionComponents, Manager manager) {
+                                 PreparedComponentsFromL2Connection connectionComponents, Manager manager,
+                                 Cluster cluster) {
     super(threadGroup);
     Assert.assertNotNull(config);
     this.config = config;
@@ -135,6 +140,7 @@ public class DistributedObjectClient extends SEDA {
     this.connectionComponents = connectionComponents;
     this.pauseListener = new NullPauseListener();
     this.manager = manager;
+    this.cluster = cluster;
   }
 
   public void setPauseListener(PauseListener pauseListener) {
@@ -226,6 +232,7 @@ public class DistributedObjectClient extends SEDA {
     // Set up the JMX management stuff
     final TunnelingEventHandler teh = new TunnelingEventHandler(channel.channel());
     l1Management = new L1Management(teh);
+    cluster.addClusterEventListener(l1Management.getTerracottaCluster());
     l1Management.start();
 
     txManager = new ClientTransactionManagerImpl(channel.getChannelIDProvider(), objectManager,
@@ -260,6 +267,9 @@ public class DistributedObjectClient extends SEDA {
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ClientConfigurationContext.JMXREMOTE_TUNNEL_STAGE, teh,
                                                                 1, maxSize);
 
+    final Stage clusterEventStage = stageManager.createStage(ClientConfigurationContext.CLUSTER_EVENT_STAGE,
+                                                             new ClusterEventHandler(cluster), 1, maxSize);
+
     // This set is designed to give the handshake manager an opportunity to pause stages when it is pausing due to
     // disconnect. Unfortunately, the lock response stage can block, which I didn't realize at the time, so it's not
     // being used.
@@ -268,7 +278,7 @@ public class DistributedObjectClient extends SEDA {
         .getLogger(ClientHandshakeManager.class)), channel.getChannelIDProvider(), channel
         .getClientHandshakeMessageFactory(), objectManager, remoteObjectManager, lockManager, rtxManager, gtxManager,
                                                         stagesToPauseOnDisconnect, pauseStage.getSink(),
-                                                        sessionManager, pauseListener, sequence);
+                                                        sessionManager, pauseListener, sequence, cluster);
     channel.addListener(clientHandshakeManager);
 
     ClientConfigurationContext cc = new ClientConfigurationContext(stageManager, lockManager, remoteObjectManager,
@@ -295,6 +305,7 @@ public class DistributedObjectClient extends SEDA {
     channel.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
     channel.addClassMapping(TCMessageType.JMX_MESSAGE, JMXMessage.class);
     channel.addClassMapping(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
+    channel.addClassMapping(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
     channel.addClassMapping(TCMessageType.CLIENT_JMX_READY_MESSAGE, L1JmxReady.class);
 
     logger.debug("Added class mappings.");
@@ -314,6 +325,7 @@ public class DistributedObjectClient extends SEDA {
     channel.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, pauseStage.getSink(), hydrateSink);
     channel.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage.getSink(),
                              hydrateSink);
+    channel.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, clusterEventStage.getSink(), hydrateSink);
 
     while (true) {
       try {

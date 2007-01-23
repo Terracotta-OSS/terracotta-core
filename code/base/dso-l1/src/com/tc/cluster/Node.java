@@ -14,4 +14,18 @@ public class Node {
   public String getNodeId() {
     return nodeId;
   }
+
+  public boolean equals(Object obj) {
+    if (!(obj instanceof Node)) return false;
+    Node that = (Node) obj;
+    return this.nodeId.equals(that.nodeId);
+  }
+
+  public int hashCode() {
+    return nodeId.hashCode();
+  }
+
+  public String toString() {
+    return nodeId;
+  }
 }

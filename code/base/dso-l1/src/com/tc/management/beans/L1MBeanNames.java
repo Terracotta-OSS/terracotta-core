@@ -13,11 +13,14 @@ import javax.management.ObjectName;
 public class L1MBeanNames {
 
   public static final ObjectName SESSION_PRODUCT_PUBLIC;
+  public static final ObjectName CLUSTER_BEAN_PUBLIC;
 
   static {
     try {
       SESSION_PRODUCT_PUBLIC = TerracottaManagement.createObjectName(Type.Sessions, Subsystem.None, null,
                                                                      "Terracotta for Sessions", true);
+      CLUSTER_BEAN_PUBLIC = TerracottaManagement.createObjectName(Type.Cluster, Subsystem.None, null,
+                                                                     "Terracotta Cluster Bean", true);
     } catch (MalformedObjectNameException mone) {
       throw new RuntimeException(mone);
     } catch (NullPointerException npe) {

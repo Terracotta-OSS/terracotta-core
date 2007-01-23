@@ -1,9 +1,11 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.event;
 
 import com.tc.asm.Type;
+import com.tc.cluster.ClusterEventListener;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ClientObjectManager;
@@ -23,14 +25,14 @@ import com.tcclient.object.DistributedMethodCall;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 /**
  * Manages distributed method calls
  */
-public class DistributedMethodCallManagerImpl implements DistributedMethodCallManager {
+public class DistributedMethodCallManagerImpl implements DistributedMethodCallManager, ClusterEventListener {
   private static final LiteralValues     literals    = new LiteralValues();
   private static final TCLogger          logger      = TCLogging.getLogger(DistributedMethodCallManagerImpl.class);
 
@@ -83,7 +85,7 @@ public class DistributedMethodCallManagerImpl implements DistributedMethodCallMa
         runtimeLogger.distributedMethodCall(dmc.getReceiverClassName(), dmc.getMethodName(), dmc.getParameterDesc());
       }
 
-      for (Iterator i = clients.keySet().iterator(); i.hasNext();) {
+      for (Iterator i = clients.values().iterator(); i.hasNext();) {
         Client c = (Client) i.next();
         if (c != myClient) {
           c.add(dmc);
@@ -125,32 +127,6 @@ public class DistributedMethodCallManagerImpl implements DistributedMethodCallMa
     }
   }
 
-  public synchronized void start() {
-    if (invoker == null) {
-      begin(ROOT_NAME, LockLevel.WRITE);
-      try {
-        clients = (Map) objectManager.lookupOrCreateRoot(ROOT_NAME, new IdentityHashMap());
-        myClient = new Client();
-        clients.put(myClient, null);
-      } finally {
-        commit(ROOT_NAME);
-      }
-
-      invoker = new InvokerThread();
-      invoker.start();
-    }
-  }
-
-  private void cleanupTimedOutClients() {
-    for (Iterator i = clients.keySet().iterator(); i.hasNext();) {
-      Client c = (Client) i.next();
-      if (c.isTimedOut()) {
-        i.remove();
-        logger.debug("Removing client from clients list:" + c);
-      }
-    }
-  }
-
   private void begin(String lockName, int type) {
     txManager.begin(lockName, type);
   }
@@ -161,6 +137,39 @@ public class DistributedMethodCallManagerImpl implements DistributedMethodCallMa
 
   private void commit(String lockName) {
     txManager.commit(lockName);
+  }
+
+  public void nodeConnected(String nodeId) {
+    // NOTE: no-op
+  }
+
+  public void nodeDisconnected(String nodeId) {
+    begin(ROOT_NAME, LockLevel.WRITE);
+    try {
+      clients.remove(nodeId);
+    } finally {
+      commit(ROOT_NAME);
+    }
+  }
+
+  public synchronized void thisNodeConnected(String thisNodeId, String[] nodesCurrentlyInCluster) {
+    if (invoker == null) {
+      begin(ROOT_NAME, LockLevel.WRITE);
+      try {
+        clients = (Map) objectManager.lookupOrCreateRoot(ROOT_NAME, new HashMap());
+        myClient = new Client();
+        clients.put(thisNodeId, myClient);
+      } finally {
+        commit(ROOT_NAME);
+      }
+
+      invoker = new InvokerThread();
+      invoker.start();
+    }
+  }
+
+  public void thisNodeDisconnected(String thisNodeId) {
+    // NOTE: no-op
   }
 
   private class InvokerThread extends StoppableThread {
@@ -181,7 +190,6 @@ public class DistributedMethodCallManagerImpl implements DistributedMethodCallMa
           while (myClient.isEmpty()) {
             if (isStopRequested()) { return; }
             txManager.wait(ROOT_NAME, new WaitInvocation(WAIT_TIME), clients);
-            cleanupTimedOutClients();
           }
           dmc = myClient.next();
         } finally {

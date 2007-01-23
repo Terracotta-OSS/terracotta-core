@@ -3,6 +3,7 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.cluster.ClusterEventListener;
 import com.tc.logging.TCLogger;
 import com.tc.management.beans.sessions.SessionMonitorMBean;
 import com.tc.object.ObjectID;
@@ -380,6 +381,10 @@ public class ManagerUtil {
 
   public static TCProperties getTCProperties() {
     return getManager().getTCProperites();
+  }
+  
+  public static void addClusterEventListener(ClusterEventListener cel) {
+    getManager().addClusterEventListener(cel);
   }
 
 }

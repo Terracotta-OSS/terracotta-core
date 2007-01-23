@@ -1,10 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.handshakemanager;
 
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
+import com.tc.cluster.Cluster;
 import com.tc.logging.TCLogger;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
@@ -50,6 +52,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
   private final SessionManager                 sessionManager;
   private final PauseListener                  pauseListener;
   private final BatchSequenceReceiver          sequenceReceiver;
+  private final Cluster                        cluster;
 
   private State                                state              = PAUSED;
   private boolean                              stagesPaused       = false;
@@ -60,7 +63,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
                                 ClientLockManager lockManager, RemoteTransactionManager remoteTransactionManager,
                                 ClientGlobalTransactionManager gtxManager, Collection stagesToPauseOnDisconnect,
                                 Sink pauseSink, SessionManager sessionManager, PauseListener pauseListener,
-                                BatchSequenceReceiver sequenceReceiver) {
+                                BatchSequenceReceiver sequenceReceiver, Cluster cluster) {
     this.logger = logger;
     this.cidp = cidp;
     this.chmf = chmf;
@@ -73,6 +76,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
     this.sessionManager = sessionManager;
     this.pauseListener = pauseListener;
     this.sequenceReceiver = sequenceReceiver;
+    this.cluster = cluster;
     pauseManagers();
   }
 
@@ -126,6 +130,8 @@ public class ClientHandshakeManager implements ChannelEventListener {
       pauseSink.add(PauseContext.PAUSE);
     } else if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
       pauseSink.add(PauseContext.UNPAUSE);
+    } else if (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT) {
+      cluster.thisNodeDisconnected();
     }
   }
 

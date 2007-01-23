@@ -7,6 +7,7 @@ package com.tc.objectserver.handler;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.TestCommunicationsManager;
 import com.tc.net.protocol.tcm.TestMessageChannel;
+import com.tc.object.net.TestDSOChannelManager;
 import com.tc.objectserver.core.impl.TestServerConfigurationContext;
 import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.objectserver.tx.TestTransactionBatchManager;
@@ -24,7 +25,7 @@ public class ChannelLifeCycleHandlerTest extends TestCase {
     transactionManager = new TestServerTransactionManager();
     this.transactionBatchManager = new TestTransactionBatchManager();
     this.commsManager = new TestCommunicationsManager();
-    handler = new ChannelLifeCycleHandler(this.commsManager, this.transactionManager, this.transactionBatchManager);
+    handler = new ChannelLifeCycleHandler(this.commsManager, this.transactionManager, this.transactionBatchManager, new TestDSOChannelManager());
     TestServerConfigurationContext tscc = new TestServerConfigurationContext();
     handler.initialize(tscc);
   }

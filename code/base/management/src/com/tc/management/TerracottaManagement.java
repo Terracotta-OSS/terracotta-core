@@ -31,6 +31,7 @@ public abstract class TerracottaManagement {
     public static final Type DsoClient   = new Type(MANAGEMENT_RESOURCES.getDsoClientType());
     public static final Type Sessions    = new Type(MANAGEMENT_RESOURCES.getSessionsType());
     public static final Type Server      = new Type(MANAGEMENT_RESOURCES.getTerracottaServerType());
+    public static final Type Cluster      = new Type(MANAGEMENT_RESOURCES.getTerracottaClusterType());
 
     private final String     type;
 

@@ -5,6 +5,8 @@
 package com.tc.object.bytecode;
 
 import com.tc.asm.Type;
+import com.tc.cluster.Cluster;
+import com.tc.cluster.ClusterEventListener;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
@@ -52,13 +54,13 @@ public class ManagerImpl implements Manager {
   private final LiteralValues                      literals      = new LiteralValues();
 
   private final SetOnceFlag                        clientStarted = new SetOnceFlag();
-  private final DistributedMethodCallState         dmcState      = new DistributedMethodCallState();
   private final DSOClientConfigHelper              config;
   private final ClassProvider                      classProvider;
   private final boolean                            startClient;
   private final PreparedComponentsFromL2Connection connectionComponents;
   private final Thread                             shutdownAction;
   private final Portability                        portability;
+  private final Cluster                            cluster;
 
   private RuntimeLogger                            runtimeLogger = new NullRuntimeLogger();
   private ClientObjectManager                      objectManager;
@@ -93,7 +95,7 @@ public class ManagerImpl implements Manager {
     this.startClient = startClient;
     this.classProvider = classProvider;
     this.connectionComponents = connectionComponents;
-
+    this.cluster = new Cluster();
     if (shutdownActionRequired) {
       shutdownAction = new Thread(new ShutdownAction());
       // Register a shutdown hook for the DSO client
@@ -150,7 +152,7 @@ public class ManagerImpl implements Manager {
 
   private void startClient() {
     this.dso = new DistributedObjectClient(this.config, new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(DistributedObjectClient.class))), classProvider, this.connectionComponents, this);
+        .getLogger(DistributedObjectClient.class))), classProvider, this.connectionComponents, this, cluster);
     this.dso.start();
     this.objectManager = dso.getObjectManager();
     this.txManager = dso.getTransactionManager();
@@ -158,23 +160,13 @@ public class ManagerImpl implements Manager {
 
     this.optimisticTransactionManager = new OptimisticTransactionManagerImpl(objectManager, txManager);
 
-    if (dmcState.attemptInit()) {
-      if (!objectManager.enableDistributedMethods()) {
-        this.methodCallManager = new NullDistributedMethodCallManager();
-      } else {
-        this.methodCallManager = new DistributedMethodCallManagerImpl(objectManager, txManager, runtimeLogger,
-                                                                      classProvider);
-      }
-
-      final DistributedMethodCallManager dmcManager = methodCallManager;
-      Thread t = new Thread("Distributed Method Call Manager Starter Thread") {
-        public void run() {
-          dmcManager.start();
-          dmcState.initialized();
-        }
-      };
-      t.setDaemon(true);
-      t.start();
+    if (!objectManager.enableDistributedMethods()) {
+      this.methodCallManager = new NullDistributedMethodCallManager();
+    } else {
+      DistributedMethodCallManagerImpl tmp = new DistributedMethodCallManagerImpl(objectManager, txManager,
+                                                                                  runtimeLogger, classProvider);
+      cluster.addClusterEventListener(tmp);
+      this.methodCallManager = tmp;
     }
 
     this.shutdownManager = new ClientShutdownManager(objectManager, dso.getRemoteTransactionManager(), dso
@@ -652,7 +644,6 @@ public class ManagerImpl implements Manager {
   }
 
   private void distributedInvoke(Object receiver, TCObject tcObject, String method, Object[] params) {
-    dmcState.waitUntilInitialized();
     methodCallManager.distributedInvoke(receiver, tcObject, method, params);
   }
 
@@ -684,38 +675,6 @@ public class ManagerImpl implements Manager {
       // stop();
 
       shutdown(true);
-    }
-  }
-
-  private static class DistributedMethodCallState {
-    private static final int NOT_INITIALZIED = 0;
-    private static final int INITIALIZING    = 1;
-    private static final int INITIALIZED     = 2;
-
-    private int              state           = NOT_INITIALZIED;
-
-    synchronized boolean attemptInit() {
-      if (state == NOT_INITIALZIED) {
-        state = INITIALIZING;
-        return true;
-      }
-      return false;
-    }
-
-    synchronized void initialized() {
-      if (state != INITIALIZING) { throw new IllegalStateException("state is " + state); }
-      state = INITIALIZED;
-      notifyAll();
-    }
-
-    synchronized void waitUntilInitialized() {
-      while (state != INITIALIZED) {
-        try {
-          wait();
-        } catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-      }
     }
   }
 
@@ -812,6 +771,10 @@ public class ManagerImpl implements Manager {
       if (rv == null) { throw new AssertionError("missing display string for signature: " + methodSignature); }
       return rv;
     }
+  }
+
+  public void addClusterEventListener(ClusterEventListener cel) {
+    cluster.addClusterEventListener(cel);
   }
 
 }

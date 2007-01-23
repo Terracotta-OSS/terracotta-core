@@ -12,6 +12,9 @@ import com.tc.logging.TCLogger;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.msg.ClusterMembershipMessage;
+import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -26,12 +29,14 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler {
   private final TransactionBatchManager  transactionBatchManager;
   private TCLogger                       logger;
   private final CommunicationsManager    commsManager;
+  private final DSOChannelManager        channelMgr;
 
   public ChannelLifeCycleHandler(CommunicationsManager commsManager, ServerTransactionManager transactionManager,
-                                 TransactionBatchManager transactionBatchManager) {
+                                 TransactionBatchManager transactionBatchManager, DSOChannelManager channelManager) {
     this.commsManager = commsManager;
     this.transactionManager = transactionManager;
     this.transactionBatchManager = transactionBatchManager;
+    this.channelMgr = channelManager;
   }
 
   public void handleEvent(EventContext context) {
@@ -54,6 +59,7 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler {
 
   private void channelRemoved(MessageChannel channel) {
     ChannelID channelID = channel.getChannelID();
+    broadcastClusterMemebershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, channel.getChannelID());
     if (commsManager.isInShutdown()) {
       logger.info("Ignoring transport disconnect for " + channelID + " while shutting down.");
     } else {
@@ -66,7 +72,18 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler {
   }
 
   private void channelCreated(MessageChannel channel) {
-    //
+    broadcastClusterMemebershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, channel.getChannelID());
+  }
+
+  private void broadcastClusterMemebershipMessage(int eventType, ChannelID channelID) {
+    MessageChannel[] channels = channelMgr.getActiveChannels();
+    for (int i = 0; i < channels.length; i++) {
+      MessageChannel channel = channels[i];
+      ClusterMembershipMessage cmm = (ClusterMembershipMessage) channel
+          .createMessage(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE);
+      cmm.initialize(eventType, channelID, channels);
+      cmm.send();
+    }
   }
 
   public void initialize(ConfigurationContext context) {
@@ -76,8 +93,8 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler {
   }
 
   public static class Event implements EventContext {
-    public static final int     CREATE = 0;
-    public static final int     REMOVE = 1;
+    public static final int      CREATE = 0;
+    public static final int      REMOVE = 1;
 
     private final int            type;
     private final MessageChannel channel;

@@ -16,12 +16,21 @@ public interface TerracottaMBean {
    */
   boolean isNotificationBroadcaster();
   
+  /**
+   * A bean can be enabled to collect stats, or disabled to decrease overhead
+   */
   void enable();
   
+  /**
+   * A bean can be enabled to collect stats, or disabled to decrease overhead
+   */
   void disable();
   
   boolean isEnabled();
 
+  /**
+   * This method will be called each time the bean is enabled/disabled
+   */
   void reset();
 
 }

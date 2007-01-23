@@ -52,6 +52,7 @@ import com.tc.object.msg.BatchTransactionAcknowledgeMessageImpl;
 import com.tc.object.msg.BroadcastTransactionMessageImpl;
 import com.tc.object.msg.ClientHandshakeAckMessageImpl;
 import com.tc.object.msg.ClientHandshakeMessageImpl;
+import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.LockRequestMessage;
@@ -472,11 +473,10 @@ public class DistributedObjectServer extends SEDA {
                              new RespondToRequestLockHandler(), 1, maxStageSize);
     Stage requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE,
                                                  new RequestLockUnLockHandler(), 1, maxStageSize);
-    Stage channelLifecycleStage = stageManager.createStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE,
-                                                           new ChannelLifeCycleHandler(communicationsManager,
-                                                                                       transactionManager,
-                                                                                       transactionBatchManager), 1,
-                                                           maxStageSize);
+    Stage channelLifecycleStage = stageManager
+        .createStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE,
+                     new ChannelLifeCycleHandler(communicationsManager, transactionManager, transactionBatchManager,
+                                                 channelManager), 1, maxStageSize);
     channelManager.addEventListener(new ChannelLifeCycleHandler.EventListener(channelLifecycleStage.getSink()));
 
     SampledCounter globalObjectFaultCounter = sampledCounterManager.createCounter(new SampledCounterConfig(1, 300,
@@ -528,6 +528,7 @@ public class DistributedObjectServer extends SEDA {
     lsnr.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
     lsnr.addClassMapping(TCMessageType.JMX_MESSAGE, JMXMessage.class);
     lsnr.addClassMapping(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
+    lsnr.addClassMapping(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
     lsnr.addClassMapping(TCMessageType.CLIENT_JMX_READY_MESSAGE, L1JmxReady.class);
 
     Sink hydrateSink = hydrateStage.getSink();

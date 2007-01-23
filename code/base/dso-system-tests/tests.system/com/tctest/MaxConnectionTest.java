@@ -5,6 +5,7 @@ package com.tctest;
 
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
+import com.tc.cluster.Cluster;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
@@ -40,7 +41,7 @@ public class MaxConnectionTest extends BaseDSOTestCase {
 
     PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(manager);
     return new DistributedObjectClient(configHelper, new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(DistributedObjectClient.class))), new MockClassProvider(), components, NullManager.getInstance());
+        .getLogger(DistributedObjectClient.class))), new MockClassProvider(), components, NullManager.getInstance(), new Cluster());
   }
 
   public void testsMaxConnectionLimitAndClientDisconnectAccounting() throws Exception {

@@ -33,6 +33,10 @@ class ManagementResources {
     return TerracottaManagement.quoteIfNecessary(resources.getString("type.sessions"));
   }
 
+  public String getTerracottaClusterType() {
+	    return TerracottaManagement.quoteIfNecessary(resources.getString("type.cluster"));
+	}
+
   String getTerracottaServerType() {
     return TerracottaManagement.quoteIfNecessary(resources.getString("type.l2"));
   }
@@ -52,5 +56,6 @@ class ManagementResources {
   String getNoneSubsystem() {
     return TerracottaManagement.quoteIfNecessary(resources.getString("subsystem.none"));
   }
+
 
 }

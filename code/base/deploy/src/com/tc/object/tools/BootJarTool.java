@@ -19,6 +19,9 @@ import com.tc.asm.commons.SerialVersionUIDAdder;
 import com.tc.asm.tree.ClassNode;
 import com.tc.asm.tree.InnerClassNode;
 import com.tc.asm.tree.MethodNode;
+import com.tc.cluster.Cluster;
+import com.tc.cluster.ClusterEventListener;
+import com.tc.cluster.Node;
 import com.tc.config.Directories;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
@@ -211,7 +214,7 @@ public class BootJarTool {
       exit(e.getMessage(), e.getCause());
     }
 
-    if(!quiet) {
+    if (!quiet) {
       bootJarHandler.announceCreationStart();
     }
 
@@ -285,6 +288,9 @@ public class BootJarTool {
       loadTerracottaClass(Os.class.getName());
       loadTerracottaClass(NIOWorkarounds.class.getName());
       loadTerracottaClass(TCProperties.class.getName());
+      loadTerracottaClass(Cluster.class.getName());
+      loadTerracottaClass(Node.class.getName());
+      loadTerracottaClass(ClusterEventListener.class.getName());
 
       // These two classes need to be specified as literal in order to prevent
       // the static block of IdentityWeakHashMap from executing during generating
@@ -1836,7 +1842,8 @@ public class BootJarTool {
     // WAS: systemProvider = new RuntimeJarBytesProvider(...)
     ClassBytesProvider systemProvider = new ClassLoaderBytesProvider(ClassLoader.getSystemClassLoader());
 
-    new BootJarTool(new StandardDSOClientConfigHelper(config, false), outputFile, systemProvider, !verbose).generateJar();
+    new BootJarTool(new StandardDSOClientConfigHelper(config, false), outputFile, systemProvider, !verbose)
+        .generateJar();
   }
 
   public static class RuntimeJarBytesProvider implements ClassBytesProvider {

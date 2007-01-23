@@ -4,6 +4,7 @@
  */
 package com.tctest;
 
+import com.tc.cluster.Cluster;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.NewSystemConfig;
 import com.tc.config.schema.dynamic.BooleanConfigItem;
@@ -72,7 +73,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(manager);
 
     client = new DistributedObjectClient(configHelper, new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(DistributedObjectClient.class))), new MockClassProvider(), components, NullManager.getInstance());
+        .getLogger(DistributedObjectClient.class))), new MockClassProvider(), components, NullManager.getInstance(), new Cluster());
     client.start();
 
     lockManager = (ClientLockManagerImpl) client.getLockManager();
