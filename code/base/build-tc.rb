@@ -33,7 +33,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     # Creates a new instance. 'arguments' should just be the list of arguments passed on the
     # command line.
     def initialize(arguments)
-        super(:compile, arguments)
+        super(:help, arguments)
 
         # Some more objects we need.
         @build_environment = BuildEnvironment.new(platform, config_source)
@@ -713,7 +713,7 @@ END
 
         @jvm_set = JVMSet.new
         compile_14 = JVM.from_config(platform, config_source, "the JVM used to compile Java 1.4 code", "1.4.0_0", "1.4.999_999", "jvms.compile-1.4", "JAVA_HOME_14")
-        compile_15 = JVM.from_config(platform, config_source, "the JVM used to compile Java 1.4 code", "1.5.0_0", "1.5.999_999", "jvms.compile-1.5", "JAVA_HOME_15")
+        compile_15 = JVM.from_config(platform, config_source, "the JVM used to compile Java 1.5 code", "1.5.0_0", "1.5.999_999", "jvms.compile-1.5", "JAVA_HOME_15")
 
         raise RuntimeError, "You must specify a valid 1.4 JVM using the JAVA_HOME_14 configuration property (e.g., via the 'TC_JAVA_HOME_14' environment variable." if compile_14.nil?
         raise RuntimeError, "You must specify a valid 1.5 JVM using the JAVA_HOME_15 configuration property (e.g., via the 'TC_JAVA_HOME_15' environment variable." if compile_15.nil?
@@ -799,23 +799,23 @@ END
             'branch' => @build_environment.current_branch,
             'revision' => @build_environment.current_revision,
             'target' => config_source['tc.build-control.build.target'],
-            'platform' => @build_environment.platform,            
+            'platform' => @build_environment.platform,
             'appserver' => config_source['tc.tests.configuration.appserver.factory.name'] + "-"  +
                            config_source['tc.tests.configuration.appserver.major-version'] + "." +
                            config_source['tc.tests.configuration.appserver.minor-version'],
-            
+
             'jvm-tests-1.4' => @jvm_set['tests-1.4'].short_description,
             'jvm-tests-1.5' => @jvm_set['tests-1.5'].short_description,
-                        
+
         }
 
         # Parameters data.
-        parameters_data = {          
+        parameters_data = {
           'monkey-name' => config_source['monkey-name']
         }
 
         # Extra data.
-        extra_environment_data = {            
+        extra_environment_data = {
             'tc.build-archive.path.pattern' => build_archive_path_pattern.to_s
         }
 
@@ -833,7 +833,7 @@ END
             file << "    <configuration>\n"
 
             write_keys(file, configuration_data, configuration_data.keys)
-            
+
 
             file << "    </configuration>\n"
             file << "    <parameters>\n"

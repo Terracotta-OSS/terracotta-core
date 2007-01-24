@@ -18,6 +18,13 @@ clean
 clean_tests
     Removes all testruns (results of tests, temp files, etc.)
 
+resolve_dependencies
+    Invokes Ivy to download external libraries and install them into the
+    dependencies project.  The compile target depends on this target, and
+    therefore so do any targets that depend on compile.  To bypass the
+    dependency resolution process, pass the --no-ivy option anywhere on the
+    tcbuild command-line.
+
 compile
     Compiles all the code.
 
@@ -104,6 +111,11 @@ show_config
     Prints the configuration parameters that the build system
     itself is building with.
 
+
+NOTE: To bypass Ivy dependency resolution, pass the --no-ivy option anywhere
+on the tcbuild command-line.  For example:
+
+    ./tcbuild --no-ivy compile
 END_HELP_MESSAGE
 
 end # module Resources
