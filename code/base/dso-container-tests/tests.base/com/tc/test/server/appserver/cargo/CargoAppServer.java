@@ -4,6 +4,7 @@
  */
 package com.tc.test.server.appserver.cargo;
 
+import org.codehaus.cargo.container.ContainerException;
 import org.codehaus.cargo.container.InstalledLocalContainer;
 import org.codehaus.cargo.container.State;
 import org.codehaus.cargo.container.configuration.ConfigurationType;
@@ -87,7 +88,12 @@ public abstract class CargoAppServer extends AbstractAppServer {
       if (container.getState().equals(State.STARTED) || container.getState().equals(State.STARTING)
           || container.getState().equals(State.UNKNOWN)) {
         // System.err.println("Stopping " + ClassUtils.getShortClassName(getClass()) + " on port " + port + "...");
-        container.stop(); // NOTE: stop is not guaranteed to work
+        try {
+          container.stop(); // NOTE: stop is not guaranteed to work
+        } catch (ContainerException e) {
+          System.err.println(e.getMessage());
+          System.err.println("LinkedJavaProcess.destroy() will kill this process");
+        }
       }
     }
   }
