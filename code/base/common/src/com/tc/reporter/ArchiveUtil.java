@@ -6,6 +6,7 @@ package com.tc.reporter;
 
 import org.apache.xmlbeans.XmlException;
 
+import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.sysinfo.EnvStats;
 import com.terracottatech.configV2.Client;
 import com.terracottatech.configV2.Server;
@@ -23,11 +24,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -44,18 +41,25 @@ public final class ArchiveUtil {
   private final boolean       isClient;
   private final File          tcConfig;
   private final File          archiveFile;
-  private static final String archiveFileName = "tc-archive";
-  private static final CRC32  crc32           = new CRC32();
-  private static final String INVALID         = "Invalid Arguments:\n\n";
-  private static final String DASH_F          = "-f";
-  private static final String DASH_C          = "-c";
-  private static final String HELP            = "\tValid Arguments are:\n\n\t["
-                                                  + DASH_F
-                                                  + "] (Full, include data files)\n\t["
-                                                  + DASH_C
-                                                  + "] (Client, collect clent info vs. server)\n\t<path to terracotta config xml file (tc-config.xml)>\n\t[<output filename in .zip format>]\n\nexample:\n\n\t# java "
-                                                  + ArchiveUtil.class.getName() + " " + DASH_F
-                                                  + " tc-config.xml /home/foo/tc-archive_server.zip";
+  private static final String STDOUT            = "stdout:";
+  private static final String STDERR            = "stderr:";
+  private static final String ARCHIVE_FILE_NAME = "tc-archive";
+  private static final CRC32  crc32             = new CRC32();
+  private static final String INVALID           = "Invalid Arguments:\n\n";
+  private static final String DASH_F            = "-f";
+  private static final String DASH_C            = "-c";
+  private static final String HELP              = "\tValid Arguments are:\n\n\t["
+                                                    + DASH_F
+                                                    + "] (Full, include data files)\n\t["
+                                                    + DASH_C
+                                                    + "] (Client, collect clent info vs. server)\n\t<path to terracotta config xml file (tc-config.xml)>\n\t[<output filename in .zip format>]\n\nexample:\n\n\t# java "
+                                                    + ArchiveUtil.class.getName() + " " + DASH_F
+                                                    + " tc-config.xml /home/foo/tc-archive_server.zip";
+  private static final Set    validDashArgs          = new HashSet();
+  static {
+    validDashArgs.add(DASH_F);
+    validDashArgs.add(DASH_C);
+  }
 
   private ArchiveUtil(boolean isFull, boolean isClient, File tcConfig, File fileName) {
     this.isFull = isFull;
@@ -66,7 +70,7 @@ public final class ArchiveUtil {
       if (!userDir.exists()) throw new RuntimeException(
           "Unexpected error - system property user.dir does not resolve to an actual directory: " + userDir);
       DateFormat df = new SimpleDateFormat("y-M-d");
-      String name = archiveFileName + "_" + df.format(new Date(System.currentTimeMillis())) + ".zip";
+      String name = ARCHIVE_FILE_NAME + "_" + df.format(new Date(System.currentTimeMillis())) + ".zip";
       this.archiveFile = new File(userDir + File.separator + name);
     } else {
       this.archiveFile = fileName;
@@ -88,7 +92,8 @@ public final class ArchiveUtil {
     for (int i = 0; i < args.length; i++) {
       if (args[i].startsWith("-")) {
         if (!dashArgs) escape(HELP, null);
-        dashSet.add(args[i]);
+        if (validDashArgs.contains(args[i])) dashSet.add(args[i]);
+        else escape(HELP, null);
       } else {
         dashArgs = false;
         if (fileArg + configArg > 0) escape(HELP, null);
@@ -119,43 +124,27 @@ public final class ArchiveUtil {
     }
   }
 
-  // supports wildcards %i and %h
-  private File[] resolveMultiLogs(String logStr) {
-    int iIndex = logStr.indexOf("%i");
-    int hIndex = logStr.indexOf("%h");
-    if (iIndex + hIndex == -2) return null;
-    int index = (iIndex > hIndex) ? iIndex : hIndex;
-    File parentFile = makeAbsolute(new File(logStr.substring(0, index + 2))).getParentFile();
-    String[] logs = parentFile.list();
-    if (logs.length == 0) return null;
-    List logFiles = new LinkedList();
-    String prefix = logStr.substring(0, index);
-    for (int i = 0; i < logs.length; i++) {
-      if (logs[i].startsWith(prefix)) {
-        File logDir = new File(parentFile + File.separator + logs[i]);
-        if (logDir.isDirectory()) logFiles.add(logDir);
-      }
-    }
-    return (File[]) logFiles.toArray(new File[0]);
-  }
-
   private File makeAbsolute(File file) {
     if (file.isAbsolute()) return file;
     return new File(tcConfig.getParent() + File.separator + file);
   }
 
-  private File[] getClientLogsLocation(TcConfig configBeans) throws IOException, XmlException {
+  private File getClientLogsLocation(TcConfig configBeans) throws IOException, XmlException {
     Client clients = configBeans.getClients();
     if (clients == null) throw new XmlException("The Terracotta config specified doesn't contain the <clients> element");
     String logs = clients.getLogs();
+    if (isStdX(logs)) return null;
     if (logs == null) logs = Client.type.getElementProperty(QName.valueOf("logs")).getDefaultText();
-    String clientLogs = resolveTokens(logs);
-    File[] logFiles = resolveMultiLogs(clientLogs);
-    if (logFiles != null) return logFiles;
+    String clientLogs = ParameterSubstituter.substitute(logs);
     File clientLogsDir = makeAbsolute(new File(clientLogs));
     if (!clientLogsDir.exists()) throw new RuntimeException("\nError occured while parsing: " + tcConfig
         + "\n\tUnable to locate client log files at: " + clientLogs);
-    return new File[] { clientLogsDir };
+    return clientLogsDir;
+  }
+
+  private boolean isStdX(String value) {
+    if (value == null) return false;
+    return (value.equals(STDOUT) || value.equals(STDERR));
   }
 
   private Server[] getServersElement(TcConfig configBeans) throws IOException, XmlException {
@@ -164,41 +153,36 @@ public final class ArchiveUtil {
     return servers.getServerArray();
   }
 
-  private File[][] getServerLogsLocation(TcConfig configBeans) throws IOException, XmlException {
+  private File[] getServerLogsLocation(TcConfig configBeans) throws IOException, XmlException {
     Server[] servers = getServersElement(configBeans);
     String[] logs = new String[servers.length];
-    File[][] logFiles = new File[servers.length][];
+    File[] logFiles = new File[servers.length];
     for (int i = 0; i < servers.length; i++) {
       logs[i] = servers[i].getLogs();
+      if (isStdX(logs[i])) logs[i] = null;
       if (logs[i] == null) logs[i] = Server.type.getElementProperty(QName.valueOf("logs")).getDefaultText();
-      logs[i] = resolveTokens(logs[i]);
-      logFiles[i] = resolveMultiLogs(logs[i]);
-      if (logFiles[i] == null) {
-        File serverLogsDir = makeAbsolute(new File(logs[i]));
-        if (!serverLogsDir.exists()) throw new XmlException("\nError occured while parsing: " + tcConfig
-            + "\n\tUnable to locate server log files at: " + logs[i]);
-        logFiles[i] = new File[] { serverLogsDir };
-      }
+      logs[i] = ParameterSubstituter.substitute(logs[i]);
+      File serverLogsDir = makeAbsolute(new File(logs[i]));
+      if (!serverLogsDir.exists()) throw new XmlException("\nError occured while parsing: " + tcConfig
+          + "\n\tUnable to locate server log files at: " + logs[i]);
+      logFiles[i] = serverLogsDir;
     }
     return logFiles;
   }
 
-  private File[][] getServerDataLocation(TcConfig configBeans) throws IOException, XmlException {
+  private File[] getServerDataLocation(TcConfig configBeans) throws IOException, XmlException {
     if (!isFull) return null;
     Server[] servers = getServersElement(configBeans);
     String[] serverData = new String[servers.length];
-    File[][] dataFiles = new File[servers.length][];
+    File[] dataFiles = new File[servers.length];
     for (int i = 0; i < servers.length; i++) {
       serverData[i] = servers[i].getData();
       if (serverData[i] == null) serverData[i] = Server.type.getElementProperty(QName.valueOf("data")).getDefaultText();
-      serverData[i] = resolveTokens(serverData[i]);
-      dataFiles[i] = resolveMultiLogs(serverData[i]);
-      if (dataFiles[i] == null) {
-        File serverDataDir = makeAbsolute(new File(serverData[i]));
-        if (!serverDataDir.exists()) throw new XmlException("\nError occured while parsing: " + tcConfig
-            + "\n\tUnable to locate server data files at: " + serverData[i]);
-        dataFiles[i] = new File[] { serverDataDir };
-      }
+      serverData[i] = ParameterSubstituter.substitute(serverData[i]);
+      File serverDataDir = makeAbsolute(new File(serverData[i]));
+      if (!serverDataDir.exists()) throw new XmlException("\nError occured while parsing: " + tcConfig
+          + "\n\tUnable to locate server data files at: " + serverData[i]);
+      dataFiles[i] = serverDataDir;
     }
     return dataFiles;
   }
@@ -206,9 +190,9 @@ public final class ArchiveUtil {
   private void createArchive() throws IOException, XmlException {
     String envStats = EnvStats.report();
     TcConfig configBeans = TcConfigDocument.Factory.parse(tcConfig).getTcConfig();
-    File[] clientLogsDir = null;
-    File[][] serverLogsDir = null;
-    File[][] serverDataDir = null;
+    File clientLogsDir = null;
+    File[] serverLogsDir = null;
+    File[] serverDataDir = null;
     if (isClient) {
       clientLogsDir = getClientLogsLocation(configBeans);
     } else {
@@ -223,45 +207,24 @@ public final class ArchiveUtil {
       putEntry(zout, EnvStats.filename, envStats.getBytes());
       putEntry(zout, tcConfig.getName(), readFile(tcConfig));
       if (isClient) {
-        for (int i = 0; i < clientLogsDir.length; i++) {
-          putTraverseDirectory(zout, clientLogsDir[i], clientLogsDir[i].getName());
-        }
+        if (clientLogsDir != null) putTraverseDirectory(zout, clientLogsDir, clientLogsDir.getName());
       } else {
         for (int i = 0; i < serverLogsDir.length; i++) {
-          for (int j = 0; j < serverLogsDir[i].length; j++) {
-            putTraverseDirectory(zout, serverLogsDir[i][j], serverLogsDir[i][j].getName());
-          }
+          if (serverLogsDir[i] != null) putTraverseDirectory(zout, serverLogsDir[i], serverLogsDir[i].getName());
         }
         if (serverDataDir != null) {
           for (int i = 0; i < serverDataDir.length; i++) {
-            for (int j = 0; j < serverDataDir[i].length; j++) {
-              putTraverseDirectory(zout, serverDataDir[i][j], serverDataDir[i][j].getName());
-            }
+            putTraverseDirectory(zout, serverDataDir[i], serverDataDir[i].getName());
           }
         }
       }
       zout.close();
     } catch (IOException e) {
-      System.out.println("Unexpected error - unable to write Terracotta archive: " + archiveFileName);
+      System.out.println("Unexpected error - unable to write Terracotta archive: " + ARCHIVE_FILE_NAME);
       e.printStackTrace();
       System.exit(1);
     }
     System.out.println("\n\nWrote archive to:" + archiveFile);
-  }
-
-  private String resolveTokens(String virtualPath) {
-    if (virtualPath == null) throw new NullPointerException();
-    StringBuffer replacePath = new StringBuffer();
-    Pattern pattern = Pattern.compile("(%\\([^\\(]+\\))");
-    Matcher matcher = pattern.matcher(virtualPath);
-    while (matcher.find()) {
-      for (int i = 1; i <= matcher.groupCount(); i++) {
-        String groupStr = matcher.group(i);
-        matcher.appendReplacement(replacePath, System.getProperty(groupStr.substring(2, groupStr.length() - 1)));
-      }
-    }
-    matcher.appendTail(replacePath);
-    return replacePath.toString();
   }
 
   private void putTraverseDirectory(ZipOutputStream zout, File dir, String dirName) throws IOException {
