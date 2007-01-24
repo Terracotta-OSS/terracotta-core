@@ -525,6 +525,40 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
     public RemoveMethodAdapter(MethodVisitor mv) {
       super(mv);
     }
+    
+    public void visitCode() {
+      super.visitCode();
+      Label l0 = new Label();
+      mv.visitFieldInsn(GETSTATIC, "com/tc/util/DebugUtil", "DEBUG", "Z");
+      mv.visitJumpInsn(IFEQ, l0);
+      Label l5 = new Label();
+      mv.visitLabel(l5);
+      mv.visitLineNumber(479, l5);
+      mv.visitFieldInsn(GETSTATIC, "java/lang/System", "err", "Ljava/io/PrintStream;");
+      mv.visitTypeInsn(NEW, "java/lang/StringBuilder");
+      mv.visitInsn(DUP);
+      mv.visitLdcInsn("Segment.remove: client id: ");
+      mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "(Ljava/lang/String;)V");
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "getClientID", "()Ljava/lang/String;");
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
+      mv.visitLdcInsn(", key: ");
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
+      mv.visitVarInsn(ALOAD, 1);
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/Object;)Ljava/lang/StringBuilder;");
+      mv.visitLdcInsn(", hash: ");
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
+      Label l6 = new Label();
+      mv.visitLabel(l6);
+      mv.visitLineNumber(480, l6);
+      mv.visitVarInsn(ILOAD, 2);
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;");
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
+      Label l7 = new Label();
+      mv.visitLabel(l7);
+      mv.visitLineNumber(479, l7);
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
+      mv.visitLabel(l0);
+    }
 
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {
       super.visitFieldInsn(opcode, owner, name, desc);

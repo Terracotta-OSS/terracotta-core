@@ -4,6 +4,7 @@
 package com.tctest;
 
 import com.tc.object.bytecode.Manageable;
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -356,6 +357,7 @@ public class ConcurrentHashMapLoadTestApp extends AbstractTransparentApp {
   }
 
   private void testPutAndRemoveMany(int index) throws Exception {
+    DebugUtil.DEBUG = true;
     clearMapRoot(index);
 
     if (index == 0) {
@@ -377,9 +379,14 @@ public class ConcurrentHashMapLoadTestApp extends AbstractTransparentApp {
 
     barrier.await();
 
+    if (DebugUtil.DEBUG) {
+      System.err.println("Node id: " + ManagerUtil.getClientID() + " -- " + index + ", size of concurrentHashMap: " + mapRoot.size());
+    }
     Assert.assertTrue(mapRoot.isEmpty());
 
     barrier.await();
+    
+    DebugUtil.DEBUG = false;
   }
 
   private void clearMapRoot(int index) throws Exception {

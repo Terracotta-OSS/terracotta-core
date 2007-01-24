@@ -307,6 +307,7 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
 
   private void basicCancelTask(int index, FutureTask longTask) throws Exception {
     if (index == 0) {
+      DebugUtil.DEBUG = true;
       root.setTask(longTask);
     }
 
@@ -331,6 +332,12 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
       // Expected
     }
 
+    barrier.await();
+    
+    if (index == 0) {
+      DebugUtil.DEBUG = false;
+    }
+    
     barrier.await();
 
   }
