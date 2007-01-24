@@ -1,3 +1,4 @@
 ConcurrentHashMapGCTest
-LinkedBlockingQueueGCTest
+#LinkedBlockingQueueGCTest
+ConcurrentHashMapLoadTest
 FutureTaskTest
