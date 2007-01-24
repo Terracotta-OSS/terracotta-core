@@ -7,20 +7,21 @@ package com.tctest;
 import org.apache.commons.io.FileUtils;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
+import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.cluster.ClusterEventListener;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.spec.CyclicBarrierSpec;
+import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.File;
-import java.util.Hashtable;
-import java.util.Iterator;
 
 public class ClusterMembershipEventTestApp extends AbstractTransparentApp implements ClusterEventListener {
 
@@ -36,34 +37,34 @@ public class ClusterMembershipEventTestApp extends AbstractTransparentApp implem
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    TransparencyClassSpec spec = config.getOrCreateSpec(CyclicBarrier.class.getName());
-    config.addWriteAutolock("* " + CyclicBarrier.class.getName() + "*.*(..)");
+    new CyclicBarrierSpec().visit(visitor, config);
+    new SynchronizedIntSpec().visit(visitor, config);
 
     String testClass = ClusterMembershipEventTestApp.class.getName();
-    spec = config.getOrCreateSpec(testClass);
+    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
     config.addIncludePattern(testClass + "$*");
 
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
 
-    spec.addRoot("trueCluster", "trueCluster");
-    spec.addRoot("start", "start");
-    spec.addRoot("newClientUp", "newClientUp");
-    spec.addRoot("newClientDown", "newClientDown");
+    spec.addRoot("nodeBarrier", "nodeBarrier");
 
   }
 
-  private final Hashtable     trueCluster      = new Hashtable();
-  private final int           initialNodeCount = getParticipantCount();
-  private final CyclicBarrier start            = new CyclicBarrier(initialNodeCount);
-  private final CyclicBarrier newClientUp      = new CyclicBarrier(initialNodeCount);
+  private final int             initialNodeCount          = getParticipantCount();
+  private final CyclicBarrier   nodeBarrier               = new CyclicBarrier(initialNodeCount);
 
   // not shared..
-  private final Hashtable     myCluster        = new Hashtable();
-  private final CyclicBarrier nodeDisBarrier   = new CyclicBarrier(2);
-  private final CyclicBarrier nodeConnBarrier  = new CyclicBarrier(2);
-  private String              thisNode;
+  private final SynchronizedInt localNodeCount            = new SynchronizedInt(0);
+  private final SynchronizedInt localThisNodeConCallCount = new SynchronizedInt(0);
+
+  private final CyclicBarrier   callbackBarrier           = new CyclicBarrier(2);
+  private CyclicBarrier         localThisNodeConBarrier   = null;
+  private CyclicBarrier         localNodeConBarrier       = null;
+  private CyclicBarrier         localNodeDisBarrier       = null;
+
+  private String                thisNode;
 
   public void run() {
     try {
@@ -74,20 +75,105 @@ public class ClusterMembershipEventTestApp extends AbstractTransparentApp implem
   }
 
   private void runTest() throws Throwable {
+    final boolean isMasterNode = nodeBarrier.barrier() == 0;
+
+    // stage - all nodes are up
+    localThisNodeConBarrier = null;
     ManagerUtil.addClusterEventListener(this);
-    final int nodeToSpawn = start.barrier();
-    System.err.println("\n### passed start barrier.  thisNode=" + thisNode);
-    assertCluster();
-    if (nodeToSpawn == 0) {
+
+    // diff nodes will get a diff mix of thisNodeConnected + nodeConnected events.
+    // by checking that each node has a consitent view of the cluster we also ensure that
+    // all events generated so far have been consumed.
+    checkCountTimed(localThisNodeConCallCount, 1, 1, 0, "localThisNodeConCallCount");
+    checkCountTimed(localNodeCount, initialNodeCount, 10, 5 * 1000, "localNodeCount");
+    nodeBarrier.barrier();
+
+    // stage - all nodes got thisNodeConnected/nodeConnected callback, and all nodes have a consistent view of the
+    // cluster. Prepare to check nodeConnected
+    localThisNodeConBarrier = null;
+    localNodeConBarrier = callbackBarrier;
+
+    nodeBarrier.barrier();
+    if (isMasterNode) {
       spawnNewClient();
     }
-    newClientUp.barrier();
-    System.err.println("\n### passed newClientUp barrier.  thisNode=" + thisNode);
-    nodeConnBarrier.barrier();
-    System.err.println("\n### passed passedNodeConn barrier.  thisNode=" + thisNode);
-    nodeDisBarrier.barrier();
-    System.err.println("\n### passed nodeDisBarrier barrier.  thisNode=" + thisNode);
-    assertCluster();
+    callbackBarrier.barrier();
+    nodeBarrier.barrier();
+
+    // stage - all nodes got nodeConnected callback. prepare to test nodeDisconnected event
+    localNodeConBarrier = null;
+    localNodeDisBarrier = callbackBarrier;
+    nodeBarrier.barrier();
+
+    if (isMasterNode) {
+      spawnNewClient();
+    }
+    callbackBarrier.barrier();
+    nodeBarrier.barrier();
+
+  }
+
+  private void checkCountTimed(SynchronizedInt actualSI, final int expected, final int slices, final long sliceMillis,
+                               String msg) throws InterruptedException {
+    // wait until all nodes have the right picture of the cluster
+    int i;
+    for (i = 0; i < slices; i++) {
+      final int actual = actualSI.get();
+      if (actual > expected || actual < 0) {
+        notifyError("Wrong Count: expected=" + expected + ", actual=" + actual);
+      }
+      if (actual < expected) {
+        Thread.sleep(sliceMillis);
+      } else {
+        break;
+      }
+    }
+    System.err.println("\n### nodeId = " + thisNode + " -> check '" + msg + "' passed in " + i + " slices");
+  }
+
+  public void nodeConnected(String nodeId) {
+    System.err.println("\n### nodeConnected: thisNode=" + thisNode + ", nodeId=" + nodeId);
+    try {
+      localNodeCount.increment();
+      hurdleIfNeeded(localNodeConBarrier);
+    } catch (Exception e) {
+      //
+    }
+  }
+
+  public void nodeDisconnected(String nodeId) {
+    System.err.println("\n### nodeDisconnected: thisNode=" + thisNode + ", nodeId=" + nodeId);
+    try {
+      hurdleIfNeeded(localNodeDisBarrier);
+    } catch (Exception e) {
+      //
+    }
+  }
+
+  public void thisNodeConnected(String thisNodeId, String[] nodesCurrentlyInCluster) {
+    System.err.println("\n### thisNodeConnected->thisNodeId=" + thisNodeId);
+    localThisNodeConCallCount.increment();
+    localNodeCount.set(nodesCurrentlyInCluster.length);
+    thisNode = thisNodeId;
+    hurdleIfNeeded(localThisNodeConBarrier);
+  }
+
+  private void hurdleIfNeeded(CyclicBarrier cb) {
+    if (cb != null) try {
+      cb.barrier();
+    } catch (Exception e) {
+      notifyError(e);
+    }
+  }
+
+  public void thisNodeDisconnected(String thisNodeId) {
+    //
+  }
+
+  public static class L1Client {
+    public static void main(String args[]) {
+      // nothing to do
+    }
   }
 
   private ExtraL1ProcessControl spawnNewClient() throws Exception {
@@ -104,61 +190,4 @@ public class ClusterMembershipEventTestApp extends AbstractTransparentApp implem
     return client;
   }
 
-  public void nodeConnected(String nodeId) {
-    System.err.println("\n### nodeConnected: thisNode=" + thisNode + ", nodeId=" + nodeId);
-    myCluster.put(nodeId, nodeId);
-    try {
-      nodeConnBarrier.barrier();
-    } catch (Exception e) {
-      //
-    }
-  }
-
-  public void nodeDisconnected(String nodeId) {
-    System.err.println("\n### nodeDisconnected: thisNode=" + thisNode + ", nodeId=" + nodeId);
-    myCluster.remove(nodeId);
-    try {
-      nodeDisBarrier.barrier();
-    } catch (Exception e) {
-      //
-    }
-  }
-
-  public synchronized void thisNodeConnected(String thisNodeId, String[] nodesCurrentlyInCluster) {
-    System.err.println("\n### thisNodeConnected->thisNodeId=" + thisNodeId);
-
-    final String prevId;
-    synchronized (trueCluster) {
-      prevId = (String) trueCluster.put(thisNodeId, thisNodeId);
-      thisNode = thisNodeId;
-    }
-    if (prevId != null) { throw new AssertionError("Error"); }
-    for (int i = 0; i < nodesCurrentlyInCluster.length; i++) {
-      myCluster.put(nodesCurrentlyInCluster[i], nodesCurrentlyInCluster[i]);
-    }
-  }
-
-  public void thisNodeDisconnected(String thisNodeId) {
-    //
-  }
-
-  private void assertCluster() {
-    synchronized (trueCluster) {
-      if (trueCluster.size() != myCluster.size()) { throw new AssertionError("Error: size mismatch: trueCluster="
-                                                                             + trueCluster.size() + ", myCluster="
-                                                                             + myCluster.size()); }
-      for (Iterator i = myCluster.keySet().iterator(); i.hasNext();) {
-        if (trueCluster.get(i.next()) == null) { throw new AssertionError(
-                                                                          "Error: cluster membership mismatch: trueCluster: "
-                                                                              + trueCluster.keySet() + ", myCluster="
-                                                                              + myCluster.keySet()); }
-      }
-    }
-  }
-
-  public static class L1Client {
-    public static void main(String args[])  {
-      // nothing to do
-    }
-  }
 }
