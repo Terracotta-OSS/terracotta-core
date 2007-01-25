@@ -49,6 +49,10 @@ public final class ArchiveUtilTest extends TCTestCase {
     generateMockFiles(getTempDirectory());
     archiveFile = new File(mockDataDir + File.separator + ARCHIVE);
   }
+  
+  public void tearDown() {
+    clear();
+  }
 
   private File generateMockFiles(File tmpDir) throws IOException {
     mockDataDir = new File(tmpDir + File.separator + MK_DATA_DIR);
@@ -122,7 +126,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     ExternalProcessStreamWriter writeSys = new ExternalProcessStreamWriter();
     writeSys.printSys(process.getInputStream());
     ExternalProcessStreamWriter writeErr = new ExternalProcessStreamWriter();
-    writeErr.printErr(process.getInputStream());
+    writeErr.printErr(process.getErrorStream());
 
     int code = process.waitFor();
     if (writeSys.hasException()) throw writeSys.getException();
@@ -141,6 +145,7 @@ public final class ArchiveUtilTest extends TCTestCase {
   }
 
   public void testValidServerArchiveContents() throws Exception {
+    clear();
     log("<server> valid archive contents");
     String[] slogs = new String[] { MK_SERVER_LOG_DIR };
     String[] sdata = new String[] { MK_SERVER_DATA_DIR };

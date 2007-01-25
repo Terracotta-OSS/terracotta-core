@@ -250,25 +250,30 @@ public final class ArchiveUtil {
   }
 
   private void putDirEntry(ZipOutputStream zout, String file) throws IOException {
-    ZipEntry entry = new ZipEntry(file + "/");
+    ZipEntry entry = new ZipEntry(zipPath(file) + "/");
     entry.setSize(0);
     entry.setCrc(0);
     zout.putNextEntry(entry);
   }
 
   private void putEntry(ZipOutputStream zout, String file, byte[] bytes) throws IOException {
-    ZipEntry entry = new ZipEntry(file);
+    ZipEntry entry = new ZipEntry(zipPath(file));
     entry.setSize(bytes.length);
     entry.setCrc(getCrc32(bytes));
     zout.putNextEntry(entry);
     zout.write(bytes, 0, bytes.length);
     System.out.print(".");
   }
-
+  
   private long getCrc32(byte[] bytes) {
     crc32.update(bytes);
     long checksum = crc32.getValue();
     crc32.reset();
     return checksum;
+  }
+  
+  private String zipPath(String file) {
+    if (File.separator.equals("/")) return file;
+    return file.replaceAll("\\\\", "/");
   }
 }
