@@ -287,7 +287,7 @@ class SubtreeTestRun
 
         if test_props = buildconfig['test.tc.properties']
           props_file = FilePath.new(@build_results.classes_directory(@subtree), test_props).canonicalize
-          @extra_jvmargs << "'-Dcom.tc.properties=#{props_file.to_s}'"
+          @extra_jvmargs << "-Dcom.tc.properties=#{props_file.to_propertyfile_escaped_s}"
         end
 
         @extra_jvmargs += config_source.as_array('jvmargs') unless config_source.as_array('jvmargs').nil?
