@@ -186,6 +186,9 @@ public class ClusterMembershipEventTestApp extends AbstractTransparentApp implem
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class, configFile
         .getAbsolutePath(), new String[0], workingDir);
     client.start(20000);
+    client.mergeSTDERR();
+    client.mergeSTDOUT();
+    client.waitFor();
     System.err.println("\n### Started New Client");
     return client;
   }
