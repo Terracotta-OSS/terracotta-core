@@ -10,6 +10,8 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   
   protected
   def make_package(srcdir, destdir, filename, install_name, internal_name)
+    puts "install_name: " + install_name
+
     installer_directory = @static_resources.ia_project_directory(@flavor)
     tmpdir              = FilePath.new(File.dirname(srcdir.to_s), 'tmp').ensure_directory 
     
@@ -27,6 +29,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     ia_contents_directory = FilePath.new(ia_output_directory, 'Application Files')
 
     project_file = FilePath.new(ia_project_directory, 'install.iap_xml')
+    ant.replace(:file => project_file.to_s, :token => "@INSTALL_NAME@", :value => install_name)
 
     # HACK: This is a workaround, we have to tar and untar the source directory into IA's content folder
     # instead of a direct file copy because, ant.copy fails for some instances when running this script

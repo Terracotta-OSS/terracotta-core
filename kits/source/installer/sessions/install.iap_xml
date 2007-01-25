@@ -3889,13 +3889,13 @@ and any path to a file to read from that file]]></string>
 												<boolean>false</boolean>
 											</property>
 											<property name="sourcePath">
-												<string><![CDATA[$IA_PROJECT_DIR$\install_build_output\Application Files\terracotta-2.2]]></string>
+												<string><![CDATA[$IA_PROJECT_DIR$\install_build_output\Application Files\@INSTALL_NAME@]]></string>
 											</property>
 											<property name="shouldUninstall">
 												<boolean>false</boolean>
 											</property>
 											<property name="destinationName">
-												<string><![CDATA[terracotta-2.2]]></string>
+												<string><![CDATA[@INSTALL_NAME@]]></string>
 											</property>
 											<property name="removeRecursively">
 												<boolean>false</boolean>
