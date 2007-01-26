@@ -1,14 +1,19 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
+
+import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
+import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.spec.CyclicBarrierSpec;
+import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 /**
@@ -17,90 +22,97 @@ import com.tctest.runner.AbstractTransparentApp;
  */
 public class DistributedMethodCallExpressionTestApp extends AbstractTransparentApp {
 
-  private SharedModel model = new SharedModel();
+  private final SharedModel   model            = new SharedModel();
+  private final int           initialNodeCount = getParticipantCount();
+  private final CyclicBarrier nodeBarrier      = new CyclicBarrier(initialNodeCount);
 
   public DistributedMethodCallExpressionTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
   }
 
   public void run() {
-    callNonStaticMethod();
-    callStaticMethod();
+    try {
+      callNonStaticMethod();
+      callStaticMethod();
+    } catch (Throwable e) {
+      notifyError(e);
+    }
   }
 
-  public void callNonStaticMethod() {
-    moveToStageAndWait(1);
-    boolean called = false;
+  public void callNonStaticMethod() throws Throwable {
+    final boolean masterNode = nodeBarrier.barrier() == 0;
     synchronized (model) {
-      if (System.getProperty("calledNonStaticMethod") == null) {
+      if (masterNode) {
         model.nonStaticMethod(null, 0, 0, null, null, false);
-        called = true;
       }
     }
-    ThreadUtil.reallySleep(10000);
-    if (called) {
-      int i = Integer.parseInt((System.getProperty("calledNonStaticMethod")));
-      if (i != 3) {
-        notifyError("Wrong number of calls:" + i);
-      }
-    }
-  }
-  
-  public void callStaticMethod() {
-    moveToStageAndWait(1);
-    boolean called = false;
+    nodeBarrier.barrier();
     synchronized (model) {
-      if (System.getProperty("callStaticMethod") == null) {
-        SharedModel.staticMethod();
-        called = true;
-      }
-    }
-    ThreadUtil.reallySleep(10000);
-    if (called) {
-      int i = Integer.parseInt((System.getProperty("callStaticMethod")));
-      if (i != 1) {
-        notifyError("Wrong number of calls:" + i);
-      }
+      checkCountTimed(model.nonStaticCallCount, initialNodeCount, 10, 5, "Non-Static Call Count");
     }
   }
 
+  public void callStaticMethod() throws Throwable {
+    final boolean masterNode = nodeBarrier.barrier() == 0;
+    synchronized (model) {
+      if (masterNode) {
+        SharedModel.staticMethod();
+      }
+    }
+    nodeBarrier.barrier();
+    Thread.sleep(30000);
+    synchronized(model) {
+      checkCountTimed(model.nonStaticCallCount, initialNodeCount, 1, 1000, "Static Call Count");
+    }
+  }
 
   public static class SharedModel {
+    public final SynchronizedInt        nonStaticCallCount = new SynchronizedInt(0);
+    public static final SynchronizedInt staticCallCount    = new SynchronizedInt(0);
 
     public static void staticMethod() {
-      synchronized (System.getProperties()) {
-        String property = System.getProperty("callStaticMethod");
-        int num = 0;
-
-        if (property != null) {
-          num = Integer.parseInt(property);
-        }
-
-        System.setProperty("callStaticMethod", Integer.toString(++num));
-      }
+      staticCallCount.increment();
     }
 
-    public void nonStaticMethod(Object obj, int i, double d, FooObject[][] foos, int[][][] ints, boolean b) {
-      synchronized (System.getProperties()) {
-        String property = System.getProperty("calledNonStaticMethod");
-        int num = 0;
-        if (property != null) {
-          num = Integer.parseInt(property);
-        }
+    public void nonStaticMethod(Object obj, int i, double d, FooObject[][] foos, int[][][] ints, boolean b)
+        throws Throwable {
+      nonStaticCallCount.increment();
+    }
+  }
 
-        System.setProperty("calledNonStaticMethod", Integer.toString(++num));
+  private void checkCountTimed(SynchronizedInt actualSI, final int expected, final int slices, final long sliceMillis,
+                               String msg) throws InterruptedException {
+    // wait until all nodes have the right picture of the cluster
+    int actual = 0;
+    int i;
+    for (i = 0; i < slices; i++) {
+      actual = actualSI.get();
+      if (actual > expected || actual < 0) {
+        notifyError("Wrong Count: expected=" + expected + ", actual=" + actual);
+      }
+      if (actual < expected) {
+        Thread.sleep(sliceMillis);
+      } else {
+        break;
       }
     }
+    if (i == slices) {
+      notifyError("Wrong Count: expected=" + expected + ", actual=" + actual);
+    }
+    System.err.println("\n### -> check '" + msg + "' passed in " + i + " slices");
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     try {
+      new CyclicBarrierSpec().visit(visitor, config);
+      new SynchronizedIntSpec().visit(visitor, config);
+
       TransparencyClassSpec spec = config.getOrCreateSpec(FooObject.class.getName());
       String testClassName = DistributedMethodCallExpressionTestApp.class.getName();
       spec = config.getOrCreateSpec(testClassName);
       spec.addRoot("model", "model");
+      spec.addRoot("nodeBarrier", "nodeBarrier");
       String methodExpression = "* " + testClassName + "*.*(..)";
-      System.err.println("Adding autolock for: " + methodExpression);
       config.addWriteAutolock(methodExpression);
 
       spec = config.getOrCreateSpec(SharedModel.class.getName());
@@ -111,7 +123,8 @@ public class DistributedMethodCallExpressionTestApp extends AbstractTransparentA
       } catch (AssertionError e) {
         // Expected.
       }
-      config.addDistributedMethodCall("* com.tctest.DistributedMethodCallExpressionTestApp$SharedModel.nonStaticMethod(..)");
+      config
+          .addDistributedMethodCall("* com.tctest.DistributedMethodCallExpressionTestApp$SharedModel.nonStaticMethod(..)");
     } catch (Exception e) {
       throw new AssertionError(e);
     }

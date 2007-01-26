@@ -116,9 +116,10 @@ public class ClusterMembershipEventTestApp extends AbstractTransparentApp implem
   private void checkCountTimed(SynchronizedInt actualSI, final int expected, final int slices, final long sliceMillis,
                                String msg) throws InterruptedException {
     // wait until all nodes have the right picture of the cluster
+    int actual = 0;
     int i;
     for (i = 0; i < slices; i++) {
-      final int actual = actualSI.get();
+      actual = actualSI.get();
       if (actual > expected || actual < 0) {
         notifyError("Wrong Count: expected=" + expected + ", actual=" + actual);
       }
@@ -127,6 +128,9 @@ public class ClusterMembershipEventTestApp extends AbstractTransparentApp implem
       } else {
         break;
       }
+    }
+    if (i == slices) {
+      notifyError("Wrong Count: expected=" + expected + ", actual=" + actual);
     }
     System.err.println("\n### nodeId = " + thisNode + " -> check '" + msg + "' passed in " + i + " slices");
   }
