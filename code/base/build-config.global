@@ -8,8 +8,8 @@
 tc.build-control.version=2.3.0
 tc.build-control.branch=trunk
 tc.tests.configuration.appserver.factory.name=tomcat5
-tc.tests.configuration.appserver.major-version=5.5
-tc.tests.configuration.appserver.minor-version=20
+tc.tests.configuration.appserver.major-version=5.0
+tc.tests.configuration.appserver.minor-version=28
 tc.tests.configuration.appserver.repository=http://download.terracotta.org/appservers
 tc.tests.configuration.transparent-tests.mode=normal
 tc.tests.configuration.variants.selected.spring=20
