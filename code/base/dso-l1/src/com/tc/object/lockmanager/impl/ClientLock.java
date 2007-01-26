@@ -144,12 +144,21 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
       flush();
       recallCommit();
     }
+    
+    boolean isInterrupted = false;
     if (noBlock) {
-      waitForTryLock(requesterID, waitLock);
+      isInterrupted = waitForTryLock(requesterID, waitLock);
     } else {
-      waitForLock(requesterID, type, waitLock);
+      isInterrupted = waitForLock(requesterID, type, waitLock, false);
+    }
+    if (isInterrupted) {
+      selfInterrupt();
     }
     // debug("lock - GOT IT - ", requesterID, LockLevel.toString(type));
+  }
+  
+  private void selfInterrupt() {
+    Thread.currentThread().interrupt();
   }
 
   void unlock(ThreadID threadID) {
@@ -211,7 +220,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     return action;
   }
 
-  void wait(ThreadID threadID, WaitInvocation call, Object waitLock, WaitListener listener) {
+  void wait(ThreadID threadID, WaitInvocation call, Object waitLock, WaitListener listener) throws InterruptedException {
     Action action;
     boolean changed;
     int server_level = LockLevel.NIL_LOCK_LEVEL;
@@ -269,7 +278,9 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     } while (changed);
 
     listener.handleWaitEvent();
-    waitForLock(threadID, server_level, waitLock);
+    if (waitForLock(threadID, server_level, waitLock, true)) {
+      throw new InterruptedException();
+    }
   }
 
   private Action waitAction(ThreadID threadID) {
@@ -427,18 +438,20 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     return o;
   }
 
-  private void waitForTryLock(ThreadID threadID, Object waitLock) {
+  private boolean waitForTryLock(ThreadID threadID, Object waitLock) {
     // debug("waitForTryLock() - BEGIN - ", requesterID, LockLevel.toString(type));
+    boolean isInterrupted = false;
     synchronized (waitLock) {
       // We need to check if the respond has returned already before we do a wait
       while (!isLockRequestResponded(threadID)) {
         try {
           waitLock.wait();
         } catch (InterruptedException ioe) {
-          throw new TCRuntimeException(ioe);
+          isInterrupted = true;
         }
       }
     }
+    return isInterrupted;
   }
 
   private boolean isLockRequestResponded(ThreadID threadID) {
@@ -448,16 +461,23 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     }
   }
 
-  private void waitForLock(ThreadID threadID, int type, Object waitLock) {
+  private boolean waitForLock(ThreadID threadID, int type, Object waitLock, boolean returnIfInterrupted) {
     // debug("waitForLock() - BEGIN - ", requesterID, LockLevel.toString(type));
+    boolean isInterrupted = false;
     synchronized (waitLock) {
       while (!isHeldBy(threadID, type)) {
         try {
           waitLock.wait();
         } catch (InterruptedException ioe) {
-          throw new TCRuntimeException(ioe);
+          isInterrupted = true;
+          if (returnIfInterrupted) {
+            return isInterrupted;
+          }
+        } catch (Throwable e) {
+          throw new TCRuntimeException(e);
         }
       }
+      return isInterrupted;
     }
     // debug("waitForLock() - WAKEUP - ", requesterID, LockLevel.toString(type));
   }

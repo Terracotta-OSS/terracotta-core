@@ -231,6 +231,7 @@ public class BootJarTool {
       loadTerracottaClass(DebugUtil.class.getName());
       loadTerracottaClass(SessionSupport.class.getName());
       loadTerracottaClass(TCMap.class.getName());
+      loadTerracottaClass(com.tc.util.Stack.class.getName());
 
       loadTerracottaClass(THashMapCollectionWrapper.class.getName());
       loadTerracottaClass(THashMapCollectionWrapper.class.getName() + "$IteratorWrapper");

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -68,8 +69,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       basicLockTesting(root.getUnfairLock());
       lockSyncLockTesting(root.getUnfairLock());
 
-      // --
-      // threadInterruptedLockTesting(root.getUnfairLock());
+      threadInterruptedLockTesting(root.getUnfairLock());
 
       System.err.println("Testing fair lock ...");
 
@@ -79,8 +79,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       basicLockTesting(root.getFairLock());
       lockSyncLockTesting(root.getFairLock());
 
-      // --
-      // threadInterruptedLockTesting(root.getFairLock());
+      threadInterruptedLockTesting(root.getFairLock());
 
       barrier.await();
     } catch (Throwable t) {
@@ -259,10 +258,10 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
 
     barrier.await();
   }
-  
+
   private void singleNodeTryBeginLockTesting() throws Exception {
     clear();
-    
+
     int index = -1;
     synchronized (root) {
       index = root.getIndex();
@@ -274,20 +273,20 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
         root.setIndex(3);
       }
     }
-    
+
     barrier.await();
-    
+
     if (index == 0) {
       String lockId = "testLock";
       CyclicBarrier localBarrier = new CyclicBarrier(2);
       Thread thread1 = new Thread(new TestTryLockFailRunnable(lockId, localBarrier));
-      
+
       ManagerUtil.beginLock(lockId, LockLevel.WRITE);
       thread1.start();
       localBarrier.await();
       ManagerUtil.commitLock(lockId);
     }
-    
+
     barrier.await();
   }
 
@@ -591,12 +590,32 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
   /**
    * This test case tests if tryLock() will throw an InterruptedException when the thread is interrupted.
    */
-  /*
-   * private void threadInterruptedLockTesting(ReentrantLock lock) throws Exception { clear(); int index = -1;
-   * synchronized (root) { index = root.getIndex(); if (index == 0) { root.setIndex(1); } } barrier.await(); if (index ==
-   * 0) { lock.lock(); } barrier.await(); Thread thread1 = new Thread(new TestRunnable2(lock)); if (index != 0) {
-   * thread1.start(); } barrier.await(); if (index == 0) { lock.unlock(); } barrier.await(); }
-   */
+
+  private void threadInterruptedLockTesting(ReentrantLock lock) throws Exception {
+    clear();
+    int index = -1;
+    synchronized (root) {
+      index = root.getIndex();
+      if (index == 0) {
+        root.setIndex(1);
+      }
+    }
+    barrier.await();
+    if (index == 0) {
+      lock.lock();
+    }
+    barrier.await();
+    Thread thread = new Thread(new InterruptedRunnable(lock));
+    if (index == 0) {
+      thread.start();
+    }
+    barrier.await();
+    if (index == 0) {
+      thread.interrupt();
+      lock.unlock();
+    }
+    barrier.await();
+  }
 
   /**
    * This test case makes sure that data modifications within lock() and unlock() are reflected in the other client.
@@ -737,7 +756,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     spec.addRoot("queue", "queue");
     spec.addRoot("testLockObject", "testLockObject");
   }
-  
+
   private static class TestRunnable1 implements Runnable {
     private ReentrantLock lock;
     private Condition     conditionObject;
@@ -775,29 +794,58 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       } finally {
         lock.unlock();
         try {
-      barrier2.await();
-    } catch (InterruptedException e) {
-      throw new TCRuntimeException(e);
-    } catch (BrokenBarrierException e) {
-      throw new TCRuntimeException(e);
+          barrier2.await();
+        } catch (InterruptedException e) {
+          throw new TCRuntimeException(e);
+        } catch (BrokenBarrierException e) {
+          throw new TCRuntimeException(e);
         }
       }
     }
   }
-  
+
+  private class InterruptedRunnable implements Runnable {
+    private ReentrantLock lock;
+
+    public InterruptedRunnable(ReentrantLock lock) {
+      this.lock = lock;
+    }
+
+    public void run() {
+      try {
+        try {
+          lock.lock();
+        } catch (TCRuntimeException e) {
+          Assert.assertFalse(isCausedByInterruptedException(e));
+        }
+      } finally {
+        lock.unlock();
+      }
+
+    }
+  }
+
+  private boolean isCausedByInterruptedException(TCRuntimeException e) {
+    if (e.getCause() instanceof InterruptedException) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   private class TestTryLockFailRunnable implements Runnable {
-    private String lockId;
+    private String        lockId;
     private CyclicBarrier barrier;
-    
+
     public TestTryLockFailRunnable(String lockId, CyclicBarrier barrier) {
       this.lockId = lockId;
       this.barrier = barrier;
     }
-    
+
     public void run() {
       try {
         boolean locked = ManagerUtil.tryBeginLock(lockId, LockLevel.WRITE);
-      
+
         Assert.assertFalse(locked);
         this.barrier.await();
       } catch (Exception e) {

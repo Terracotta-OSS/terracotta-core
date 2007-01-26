@@ -49,7 +49,7 @@ public interface ClientLockManager {
 
   public LockID lockIDFor(String id);
 
-  public void wait(LockID lockID, ThreadID threadID, WaitInvocation call, Object waitObject, WaitListener listener);
+  public void wait(LockID lockID, ThreadID threadID, WaitInvocation call, Object waitObject, WaitListener listener) throws InterruptedException;
 
   public void waitTimedOut(LockID lockID, ThreadID threadID);
 

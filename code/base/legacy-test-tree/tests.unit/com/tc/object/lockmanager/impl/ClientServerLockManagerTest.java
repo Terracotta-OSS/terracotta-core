@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.lockmanager.impl;
 
@@ -96,17 +97,21 @@ public class ClientServerLockManagerTest extends TestCase {
     Thread waitCallThread = new Thread() {
 
       public void run() {
-        clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
+        try {
+          clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
 
-          public void handleWaitEvent() {
-            try {
-              barrier.barrier();
-            } catch (Exception e) {
-              e.printStackTrace();
-              throw new AssertionError(e);
+            public void handleWaitEvent() {
+              try {
+                barrier.barrier();
+              } catch (Exception e) {
+                e.printStackTrace();
+                throw new AssertionError(e);
+              }
             }
-          }
-        });
+          });
+        } catch (InterruptedException ie) {
+          handleExceptionForTest(ie);
+        }
       }
     };
     waitCallThread.start();
@@ -131,12 +136,16 @@ public class ClientServerLockManagerTest extends TestCase {
     Thread waitCallThread = new Thread() {
 
       public void run() {
-        clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
+        try {
+          clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
 
-          public void handleWaitEvent() {
-            // Formatter
-          }
-        });
+            public void handleWaitEvent() {
+              // Formatter
+            }
+          });
+        } catch (InterruptedException ie) {
+          handleExceptionForTest(ie);
+        }
       }
     };
     waitCallThread.start();
@@ -160,12 +169,16 @@ public class ClientServerLockManagerTest extends TestCase {
     Thread waitCallThread = new Thread() {
 
       public void run() {
-        clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
+        try {
+          clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
 
-          public void handleWaitEvent() {
-            // Formatter
-          }
-        });
+            public void handleWaitEvent() {
+              // Formatter
+            }
+          });
+        } catch (InterruptedException ie) {
+          handleExceptionForTest(ie);
+        }
       }
     };
     waitCallThread.start();
@@ -191,12 +204,16 @@ public class ClientServerLockManagerTest extends TestCase {
     Thread waitCallThread = new Thread() {
 
       public void run() {
-        clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
+        try {
+          clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
 
-          public void handleWaitEvent() {
-            // Formatter
-          }
-        });
+            public void handleWaitEvent() {
+              // Formatter
+            }
+          });
+        } catch (InterruptedException ie) {
+          handleExceptionForTest(ie);
+        }
       }
     };
     waitCallThread.start();
@@ -233,12 +250,16 @@ public class ClientServerLockManagerTest extends TestCase {
     Thread waitCallThread = new Thread() {
 
       public void run() {
-        clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
+        try {
+          clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
 
-          public void handleWaitEvent() {
-            // Formatter
-          }
-        });
+            public void handleWaitEvent() {
+              // Formatter
+            }
+          });
+        } catch (InterruptedException ie) {
+          handleExceptionForTest(ie);
+        }
       }
     };
     waitCallThread.start();
@@ -288,12 +309,16 @@ public class ClientServerLockManagerTest extends TestCase {
     Thread waitCallThread = new Thread() {
 
       public void run() {
-        clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
+        try {
+          clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
 
-          public void handleWaitEvent() {
-            // Formatter
-          }
-        });
+            public void handleWaitEvent() {
+              // Formatter
+            }
+          });
+        } catch (InterruptedException ie) {
+          handleExceptionForTest(ie);
+        }
       }
     };
     waitCallThread.start();
@@ -343,12 +368,16 @@ public class ClientServerLockManagerTest extends TestCase {
     Thread waitCallThread = new Thread() {
 
       public void run() {
-        clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
+        try {
+          clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
 
-          public void handleWaitEvent() {
-            // Formatter
-          }
-        });
+            public void handleWaitEvent() {
+              // Formatter
+            }
+          });
+        } catch (InterruptedException ie) {
+          handleExceptionForTest(ie);
+        }
       }
     };
     waitCallThread.start();
@@ -400,12 +429,16 @@ public class ClientServerLockManagerTest extends TestCase {
     Thread waitCallThread = new Thread() {
 
       public void run() {
-        clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
+        try {
+          clientLockManager.wait(lockID1, tx1, new WaitInvocation(), new Object(), new WaitListener() {
 
-          public void handleWaitEvent() {
-            // Formatter
-          }
-        });
+            public void handleWaitEvent() {
+              // Formatter
+            }
+          });
+        } catch (InterruptedException ie) {
+          handleExceptionForTest(ie);
+        }
       }
     };
     waitCallThread.start();
@@ -615,6 +648,11 @@ public class ClientServerLockManagerTest extends TestCase {
     } catch (InterruptedException e) {
       // NOP
     }
+  }
+
+  private void handleExceptionForTest(Exception e) {
+    e.printStackTrace();
+    throw new AssertionError(e);
   }
 
   protected void tearDown() throws Exception {

@@ -96,8 +96,8 @@ public class ThreadLockManagerTest extends TestCase {
 
     Runnable waiter = new Runnable() {
       public void run() {
-        tlm.wait(lockID, call, lockObject, waitListener);
         try {
+          tlm.wait(lockID, call, lockObject, waitListener);
           barrier.barrier();
         } catch (InterruptedException e) {
           e.printStackTrace();

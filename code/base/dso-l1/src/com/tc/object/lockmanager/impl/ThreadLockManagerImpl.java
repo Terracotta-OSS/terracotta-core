@@ -50,7 +50,7 @@ public class ThreadLockManagerImpl implements ThreadLockManager {
     return lockManager.tryLock(lockID, getThreadID(), lockLevel);
   }
 
-  public void wait(LockID lockID, WaitInvocation call, Object object, WaitListener waitListener) {
+  public void wait(LockID lockID, WaitInvocation call, Object object, WaitListener waitListener) throws InterruptedException {
     lockManager.wait(lockID, getThreadID(), call, object, waitListener);
   }
 

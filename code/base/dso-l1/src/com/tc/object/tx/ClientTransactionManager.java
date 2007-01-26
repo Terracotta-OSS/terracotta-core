@@ -51,7 +51,7 @@ public interface ClientTransactionManager {
 
   public void logicalInvoke(TCObject source, int method, String methodName, Object[] parameters);
 
-  public void wait(String lockName, WaitInvocation call, Object object) throws UnlockedSharedObjectException;
+  public void wait(String lockName, WaitInvocation call, Object object) throws UnlockedSharedObjectException,  InterruptedException;
 
   public void notify(String lockName, boolean all, Object object) throws UnlockedSharedObjectException;
 

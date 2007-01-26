@@ -252,7 +252,7 @@ public class FutureTask implements Future, Runnable {
         lock.unlock();
       }
       if (DebugUtil.DEBUG) {
-        System.err.println("In FutureTask innerRun: -- Client id: " + ManagerUtil.getClientID() + ", mayInterruptIfRunning: " + mayInterruptIfRunning);
+        System.err.println("In FutureTask innerCancel: -- Client id: " + ManagerUtil.getClientID() + ", mayInterruptIfRunning: " + mayInterruptIfRunning);
       }
       lock.lock();
       try {

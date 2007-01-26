@@ -378,6 +378,8 @@ public class ManagerImpl implements Manager {
           runtimeLogger.objectWait(call, obj, tco);
         }
         this.txManager.wait(generateAutolockName(tco), call, obj);
+      } catch (InterruptedException ie) {
+        throw ie;
       } catch (Throwable t) {
         Util.printLogAndRethrowError(t, logger);
       }
@@ -395,6 +397,8 @@ public class ManagerImpl implements Manager {
           runtimeLogger.objectWait(call, obj, tco);
         }
         this.txManager.wait(generateAutolockName(tco), call, obj);
+      } catch (InterruptedException ie) {
+        throw ie;
       } catch (Throwable t) {
         Util.printLogAndRethrowError(t, logger);
       }
@@ -413,6 +417,8 @@ public class ManagerImpl implements Manager {
           runtimeLogger.objectWait(call, obj, tco);
         }
         this.txManager.wait(generateAutolockName(tco), call, obj);
+      } catch (InterruptedException ie) {
+        throw ie;
       } catch (Throwable t) {
         Util.printLogAndRethrowError(t, logger);
       }

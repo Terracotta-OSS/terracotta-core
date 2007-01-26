@@ -256,7 +256,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     return new AssertionError(MISSING_LOCK_TEXT + " Missing lock ID is " + lockID);
   }
 
-  public void wait(LockID lockID, ThreadID threadID, WaitInvocation call, Object waitLock, WaitListener listener) {
+  public void wait(LockID lockID, ThreadID threadID, WaitInvocation call, Object waitLock, WaitListener listener) throws InterruptedException {
     final ClientLock myLock;
     synchronized (this) {
       waitUntilRunning();

@@ -13,7 +13,7 @@ public interface ThreadLockManager {
   
   public boolean tryLock(LockID lockID, int lockLevel);
 
-  public void wait(LockID lockID, WaitInvocation call, Object object, WaitListener waitListener);
+  public void wait(LockID lockID, WaitInvocation call, Object object, WaitListener waitListener) throws InterruptedException;
 
   public Notify notify(LockID lockID, boolean all);
 

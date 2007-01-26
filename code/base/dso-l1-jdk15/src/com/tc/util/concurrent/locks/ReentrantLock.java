@@ -9,6 +9,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.util.Assert;
+import com.tc.util.Stack;
 import com.tc.util.UnsafeUtil;
 
 import java.util.ArrayList;
@@ -17,7 +18,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 import java.util.concurrent.locks.Condition;
@@ -59,8 +59,9 @@ public class ReentrantLock implements Lock, java.io.Serializable {
   }
 
   public void lock() {
+    Thread currentThread = Thread.currentThread();
     synchronized (lock) {
-      while (owner != null && owner != Thread.currentThread() && lockInUnShared.contains(Boolean.TRUE)) {
+      while (owner != null && owner != currentThread && lockInUnShared.contains(Boolean.TRUE)) {
         try {
           lock.wait();
         } catch (InterruptedException e) {
@@ -68,7 +69,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         }
       }
 
-      waitingQueue.add(Thread.currentThread());
+      waitingQueue.add(currentThread);
       numQueued++;
     }
 
@@ -77,7 +78,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
 
     synchronized (lock) {
       innerSetLockState();
-      waitingQueue.remove(Thread.currentThread());
+      waitingQueue.remove(currentThread);
       numQueued--;
     }
   }
@@ -115,6 +116,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
   }
 
   public boolean tryLock(long timeout, TimeUnit unit) throws InterruptedException {
+    Thread currentThread = Thread.currentThread();
     if (!tryLock()) {
       long timeoutInNanos = TimeUnit.MICROSECONDS.toNanos(10);
       long totalTimeoutInNanos = unit.toNanos(timeout);
@@ -125,7 +127,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
       }
 
       synchronized (lock) {
-        waitingQueue.add(Thread.currentThread());
+        waitingQueue.add(currentThread);
         numQueued++;
         boolean locked = false;
 
@@ -136,7 +138,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
             locked = tryLock();
           }
         } finally {
-          waitingQueue.remove(Thread.currentThread());
+          waitingQueue.remove(currentThread);
           numQueued--;
         }
         return locked;
@@ -399,6 +401,8 @@ public class ReentrantLock implements Lock, java.io.Serializable {
     }
 
     public void await() throws InterruptedException {
+      Thread currentThread = Thread.currentThread();
+      
       if (!originalLock.isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
       if (Thread.interrupted()) { throw new InterruptedException(); }
 
@@ -410,15 +414,15 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         try {
           fullRelease();
 
-          waitingThreads.add(Thread.currentThread());
+          waitingThreads.add(currentThread);
           numOfWaitingThreards++;
 
           addWaitOnUnshared();
           try {
             ManagerUtil.objectWait0(realCondition);
           } finally {
-            waitOnUnshared.remove(Thread.currentThread());
-            waitingThreads.remove(Thread.currentThread());
+            waitOnUnshared.remove(currentThread);
+            waitingThreads.remove(currentThread);
             numOfWaitingThreards--;
           }
         } finally {
@@ -432,14 +436,15 @@ public class ReentrantLock implements Lock, java.io.Serializable {
       } finally {
         reacquireLock(numOfHolds);
       }
-
-      if (Thread.interrupted()) { throw new InterruptedException(); }
     }
 
     public void awaitUninterruptibly() {
+      Thread currentThread = Thread.currentThread();
+      
       if (!originalLock.isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
 
       int numOfHolds = originalLock.getHoldCount();
+      boolean isInterrupted = false;
       try {
         ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
         UnsafeUtil.monitorEnter(realCondition);
@@ -448,19 +453,17 @@ public class ReentrantLock implements Lock, java.io.Serializable {
           fullRelease();
           signal = NOT_SIGNALLED;
           while (signal == NOT_SIGNALLED) {
-            waitingThreads.add(Thread.currentThread());
+            waitingThreads.add(currentThread);
             numOfWaitingThreards++;
 
             addWaitOnUnshared();
             try {
               ManagerUtil.objectWait0(realCondition);
-            } catch (TCRuntimeException e) {
-              checkCauseAndIgnoreInterruptedException(e);
             } catch (InterruptedException e) {
-              // ignoring interrupt;
+              isInterrupted = true;
             } finally {
-              waitOnUnshared.remove(Thread.currentThread());
-              waitingThreads.remove(Thread.currentThread());
+              waitOnUnshared.remove(currentThread);
+              waitingThreads.remove(currentThread);
               numOfWaitingThreards--;
             }
           }
@@ -474,10 +477,14 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         reacquireLock(numOfHolds);
       }
 
-      Thread.interrupted(); // Clear interrupted flag if the thread is interrupted during wait.
+      if (isInterrupted) {
+        currentThread.interrupt();
+      }
     }
 
     public long awaitNanos(long nanosTimeout) throws InterruptedException {
+      Thread currentThread = Thread.currentThread();
+      
       if (!originalLock.isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
       if (Thread.interrupted()) { throw new InterruptedException(); }
 
@@ -488,7 +495,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         boolean isLockInUnshared = isLockRealConditionInUnshared();
         try {
           fullRelease();
-          waitingThreads.add(Thread.currentThread());
+          waitingThreads.add(currentThread);
           numOfWaitingThreards++;
 
           addWaitOnUnshared();
@@ -498,8 +505,8 @@ public class ReentrantLock implements Lock, java.io.Serializable {
             long remainingTime = nanosTimeout - (getSystemNanos() - startTime);
             return remainingTime;
           } finally {
-            waitOnUnshared.remove(Thread.currentThread());
-            waitingThreads.remove(Thread.currentThread());
+            waitOnUnshared.remove(currentThread);
+            waitingThreads.remove(currentThread);
             numOfWaitingThreards--;
           }
         } finally {

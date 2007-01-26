@@ -192,6 +192,9 @@ public class DistributedMethodCallManagerImpl implements DistributedMethodCallMa
             txManager.wait(ROOT_NAME, new WaitInvocation(WAIT_TIME), clients);
           }
           dmc = myClient.next();
+        } catch (InterruptedException ie) {
+          ie.printStackTrace();
+          throw new AssertionError(ie);
         } finally {
           commit(ROOT_NAME);
         }

@@ -202,7 +202,7 @@ private static final TCLogger          logger        = TCLogging.getLogger(Clien
     }
   }
 
-  public void wait(String lockName, WaitInvocation call, Object object) throws UnlockedSharedObjectException {
+  public void wait(String lockName, WaitInvocation call, Object object) throws UnlockedSharedObjectException, InterruptedException {
     final ClientTransaction topTxn = getTransaction();
 
     LockID lockID = lockManager.lockIDFor(lockName);

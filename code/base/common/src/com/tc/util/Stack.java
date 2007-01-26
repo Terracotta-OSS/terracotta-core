@@ -117,4 +117,11 @@ public class Stack {
     return empty();
   }
 
+  public boolean contains(Object o) {
+    return list.contains(o);
+  }
+  
+  public boolean remove(Object o) {
+    return list.remove(o);
+  }
 }
