@@ -256,6 +256,20 @@ public class TestConfigObject {
     return this.properties.getProperty(OS_NAME);
   }
 
+  public String platform() {
+    String osname = osName();
+    if (osname.startsWith("Windows")) {
+      return "windows";
+    }
+    else if (osname.startsWith("Linux")) {
+      return "linux";
+    }
+    else if (osname.startsWith("SunOS")) {
+      return "solaris";
+    }
+    else return osname;
+  }
+  
   public String dataDirectoryRoot() {
     String out = this.properties.getProperty(DATA_DIRECTORY_ROOT);
     Assert.assertNotBlank(out);
