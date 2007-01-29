@@ -36,7 +36,7 @@ public class DistributedEventsTest extends AbstractTwoServerDeploymentTest {
   }
 
   private void assertEventDistributed() throws Throwable {
-    waitForSuccess(60, new TestCallback() {
+    waitForSuccess(60 * 3, new TestCallback() {
       public void check() {
         assertEquals("Got local", 1, eventManager1.size());
         assertEquals("Should be distributed", 1, eventManager2.size());
