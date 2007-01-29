@@ -14,6 +14,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 import com.tc.object.config.schema.Lock;
 import com.tc.object.config.schema.Root;
 import com.tc.process.LinkedJavaProcessPollingAgent;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.Server;
@@ -89,26 +90,26 @@ import javax.servlet.http.HttpSessionListener;
  * the appserver)
  * </ul>
  * <p>
- * 
+ *
  * <pre>
- *        outer class:
- *        ...
- *        int port0 = startAppServer(false).serverPort();
- *        boolean[] values = HttpUtil.getBooleanValues(createUrl(port0, SimpleDsoSessionsTest.DsoPingPongServlet.class));
- *        assertTrue(values[0]);
- *        assertFalse(values[1]);
- *        ...
- *  
- *        inner class servlet:
- *        ...
- *        response.setContentType(&quot;text/html&quot;);
- *        PrintWriter out = response.getWriter();
- *  
- *        out.println(&quot;true&quot;);
- *        out.println(&quot;false&quot;);
- *        ...
+ *                outer class:
+ *                ...
+ *                int port0 = startAppServer(false).serverPort();
+ *                boolean[] values = HttpUtil.getBooleanValues(createUrl(port0, SimpleDsoSessionsTest.DsoPingPongServlet.class));
+ *                assertTrue(values[0]);
+ *                assertFalse(values[1]);
+ *                ...
+ *
+ *                inner class servlet:
+ *                ...
+ *                response.setContentType(&quot;text/html&quot;);
+ *                PrintWriter out = response.getWriter();
+ *
+ *                out.println(&quot;true&quot;);
+ *                out.println(&quot;false&quot;);
+ *                ...
  * </pre>
- * 
+ *
  * <p>
  * <h3>Debugging Information:</h3>
  * There are a number of locations and files to consider when debugging appserver unit tests. Below is a list followed
@@ -143,7 +144,7 @@ import javax.servlet.http.HttpSessionListener;
  * <p>
  * As a final note: the <tt>UttpUtil</tt> class should be used (and added to as needed) to page servlets and validate
  * assertions.
- * 
+ *
  * @author eellis
  */
 public abstract class AbstractAppServerTestCase extends TCTestCase {
@@ -224,7 +225,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
   private void archiveSandboxLogs() {
     synchronized (workingDirLock) {
-      if (installation != null) {        
+      if (installation != null) {
         String src = installation.getSandboxDirectory().getParentFile().getAbsolutePath();
         String dest = new File(tempDir, "archive-logs-" + System.currentTimeMillis() + ".zip").getAbsolutePath();
 
@@ -244,7 +245,6 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       }
     }
   }
-
 
   /**
    * Starts a DSO server using a generated tc-config.xml
@@ -296,7 +296,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   /**
    * Starts an instance of the assigned default application server listed in testconfig.properties. Servlets and the WAR
    * are dynamically generated using the convention listed in the header of this document.
-   * 
+   *
    * @param dsoEnabled - enable or disable dso for this instance
    * @return AppServerResult - series of return values including the server port assigned to this instance
    */
@@ -335,7 +335,12 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       }
       // params.appendJvmArgs("-Dtc.classloader.writeToDisk=true");
 
-      params.appendJvmArgs("-D" + ConfigProperties.REQUEST_BENCHES + "=true");
+      params.appendJvmArgs("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + "." + ConfigProperties.REQUEST_BENCHES
+                           + "=true");
+
+      params.appendJvmArgs("-verbose:gc");
+      params.appendJvmArgs("-Xloggc:" + new File(this.workingDir, "node-" + nodeNumber + ".gc.log"));
+      params.appendJvmArgs("-XX:+PrintGCDetails");
 
       params.addWar(warFile());
       return (AppServerResult) appServer.start(params);
@@ -372,7 +377,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
   /**
    * If overridden <tt>super.tearDown()</tt> must be called to ensure that servers are all shutdown properly
-   * 
+   *
    * @throws Exception
    */
   protected void tearDown() throws Exception {

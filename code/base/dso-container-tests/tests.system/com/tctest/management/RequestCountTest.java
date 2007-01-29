@@ -147,7 +147,12 @@ public final class RequestCountTest extends AbstractAppServerTestCase {
       for (int i = 0; i < numRequests.length; i++) {
         totalRequests += numRequests[i];
       }
+
       assertEquals(totalRequests, sessionMonitorMBean.getRequestCount());
+
+      assertEquals(1, validateUrls.length);
+      final URL validateUrl = validateUrls[0];
+
       System.err.println("validated value of " + totalRequests + " for client " + validateUrl);
     }
   }

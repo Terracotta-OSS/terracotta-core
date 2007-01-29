@@ -338,6 +338,11 @@ public class TerracottaSessionManager {
       int evaled = 0;
       int notEvaled = 0;
       int errors = 0;
+
+      if (invalidatorLogEnabled) {
+        logger.info("SESSION INVALIDATOR: started");
+      }
+
       for (int i = 0, n = keys.length; i < n; i++) {
         final String key = keys[i];
         try {

@@ -11,6 +11,8 @@ import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.test.server.util.HttpUtil;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -24,26 +26,27 @@ import java.util.Random;
 import junit.framework.Assert;
 
 public class Node implements Runnable {
+  protected static final TCLogger logger = TCLogging.getLogger(Node.class);
   protected final HttpClient      client;
   protected final HttpState[]     sessions;
   protected final long            duration;
   protected final int             numRequests[];
   protected final SynchronizedRef error  = new SynchronizedRef(null);
   protected final URL[]           mutateUrls;
-  protected final URL             validateUrl;
+  protected final URL[]           validateUrls;
   protected final Random          random = new Random();
 
   public Node(URL mutateUrl, URL validateUrl, int numSessions, long duration) {
-    this(new URL[] { mutateUrl }, validateUrl, numSessions, duration);
+    this(new URL[] { mutateUrl }, new URL[] { validateUrl }, numSessions, duration);
   }
 
-  public Node(URL[] mutateUrls, URL validateUrl, int numSessions, long duration) {
+  public Node(URL[] mutateUrls, URL[] validateUrls, int numSessions, long duration) {
     MultiThreadedHttpConnectionManager connMgr = new MultiThreadedHttpConnectionManager();
     connMgr.getParams().setConnectionTimeout(120 * 1000);
     this.client = new HttpClient(connMgr);
 
     this.mutateUrls = mutateUrls;
-    this.validateUrl = validateUrl;
+    this.validateUrls = validateUrls;
     this.sessions = createStates(numSessions);
     this.duration = duration;
     this.numRequests = new int[sessions.length];
@@ -59,7 +62,7 @@ public class Node implements Runnable {
       makeRequests();
       validate();
     } catch (Throwable t) {
-      t.printStackTrace();
+      logger.error(t);
       error.set(t);
     }
   }
@@ -70,11 +73,14 @@ public class Node implements Runnable {
       if (expect == 0) { throw new AssertionError("No requests were ever made for client " + i); }
       HttpState httpState = sessions[i];
       client.setState(httpState);
-      int actual = HttpUtil.getInt(validateUrl, client);
-      Assert.assertEquals(getSessionID(httpState), expect, actual);
-      System.err.println("validated value of " + expect + " for client " + i + " on " + validateUrl);
-      // Recording the request that was just made. This is needed for RequestCountTest.
-      numRequests[i]++;
+
+      for (int u = 0; u < validateUrls.length; u++) {
+        int actual = HttpUtil.getInt(validateUrls[u], client);
+        Assert.assertEquals(getSessionID(httpState), expect, actual);
+        logger.info("validated value of " + expect + " for client " + i + " on " + validateUrls[u]);
+        // Recording the request that was just made. This is needed for RequestCountTest.
+        numRequests[i]++;
+      }
     }
   }
 

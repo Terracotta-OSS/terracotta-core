@@ -47,16 +47,20 @@ public class MultiNodeLoadTest extends AbstractAppServerTestCase {
       allUrls[i] = createUrl(ports[i], CounterServlet.class);
     }
 
+    URL[] validateUrls = new URL[nodeCount];
     for (int i = 0; i < nodeCount; i++) {
-      URL validateUrl = createUrl(ports[(i + 1) % nodeCount], CounterServlet.class, "read=true");
+      validateUrls[i] = createUrl(ports[i], CounterServlet.class, "read=true");
+    }
 
+    for (int i = 0; i < nodeCount; i++) {
       if (sticky) {
+        URL validateUrl = createUrl(ports[(i + 1) % nodeCount], CounterServlet.class, "read=true");
         nodes[i] = new Node(allUrls[i], validateUrl, SESSIONS_PER_NODE, TEST_DURATION);
       } else {
-        nodes[i] = new Node(allUrls, validateUrl, SESSIONS_PER_NODE, TEST_DURATION);
+        nodes[i] = new Node(allUrls, validateUrls, SESSIONS_PER_NODE, TEST_DURATION);
       }
 
-      nodeRunners[i] = new Thread(nodes[i], "Runner for server at port " + ports[i]);
+      nodeRunners[i] = new Thread(nodes[i], "Runner[" + ports[i] + "]");
     }
 
     for (int i = 0; i < nodeCount; i++) {

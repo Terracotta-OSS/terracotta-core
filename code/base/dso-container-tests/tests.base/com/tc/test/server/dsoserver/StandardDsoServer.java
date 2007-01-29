@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.dsoserver;
 
@@ -7,12 +8,9 @@ import com.tc.config.Directories;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.test.server.ServerParameters;
 import com.tc.test.server.ServerResult;
-import com.tc.util.runtime.Os;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Delegates to {@link ExtraProcessServerControl}
@@ -26,23 +24,8 @@ public final class StandardDsoServer implements DsoServer {
   public ServerResult start(ServerParameters rawParams) throws Exception {
     DsoServerParameters params = (DsoServerParameters) rawParams;
     jvmArgs.add("-Xmx128m");
-    // jvmArgs.add("-verbose:gc");
+    jvmArgs.add("-verbose:gc");
     // jvmArgs.add("-Dtc.classloader.writeToDisk=true");
-
-    // XXX: remove me once done debugging
-    if (Os.isSolaris()) {
-      String javaVer = System.getProperty("java.version", "");
-      Pattern p = Pattern.compile("^1\\.(\\d)\\.\\d_(\\d\\d)$");
-      Matcher m = p.matcher(javaVer);
-      if (m.matches()) {
-        int major = Integer.parseInt(m.group(1));
-        int minor = Integer.parseInt(m.group(2));
-        if ((major == 4 && minor >= 12) || (major == 5 && minor >= 7)) {
-          System.err.println("**** Adding heap dump option for L2 ****");
-          jvmArgs.add("-XX:+HeapDumpOnOutOfMemoryError");
-        }
-      }
-    }
 
     dsoServer = new ExtraProcessServerControl(new ExtraProcessServerControl.DebugParams(), domain, params.dsoPort(),
                                               params.jmxPort(), params.configFile().toString(), params.workingDir(),
