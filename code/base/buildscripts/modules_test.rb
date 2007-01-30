@@ -281,8 +281,17 @@ class SubtreeTestRun
         @needs_dso_boot_jar = @use_dso_boot_jar || (buildconfig['build-dso-boot-jar'] =~ /^\s*true\s*$/i)
         @timeout = (config_source["test_timeout"] || buildconfig["timeout"] || DEFAULT_TEST_TIMEOUT_SECONDS.to_s).to_i * 1000
         @extra_jvmargs = []
+        @extra_jvmargs += config_source.as_array('jvmargs') unless config_source.as_array('jvmargs').nil?
         if buildconfig['jvmargs']
-          @extra_jvmargs += buildconfig['jvmargs'].split(/\s*,\s*/)
+          jvmargs = buildconfig['jvmargs'].split(/\s*,\s*/)
+          # Make sure the heap size settings in the buildconfig override the
+          # global heap size settings.
+          jvmargs.each do |jvmarg|
+            if match = /-Xm([sx])/.match(jvmarg)
+              @extra_jvmargs.delete_if { |arg| arg =~ /-Xm#{match[1]}/ }
+            end
+            @extra_jvmargs << jvmarg
+          end
         end
 
         if test_props = buildconfig['test.tc.properties']
@@ -290,7 +299,6 @@ class SubtreeTestRun
           @extra_jvmargs << "-Dcom.tc.properties=#{props_file.to_propertyfile_escaped_s}"
         end
 
-        @extra_jvmargs += config_source.as_array('jvmargs') unless config_source.as_array('jvmargs').nil?
         @jvm = tests_jvm(jvm_set)
     end
 
