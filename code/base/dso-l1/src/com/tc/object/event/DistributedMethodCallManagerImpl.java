@@ -13,12 +13,14 @@ import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.ReadOnlyException;
 import com.tc.object.tx.WaitInvocation;
+import com.tc.util.DebugUtil;
 import com.tc.util.concurrent.StoppableThread;
 import com.tcclient.object.Client;
 import com.tcclient.object.DistributedMethodCall;
@@ -222,6 +224,10 @@ public class DistributedMethodCallManagerImpl implements DistributedMethodCallMa
 
         monitorEnter(dmc, LockLevel.READ);
         try {
+          
+          if (DebugUtil.DEBUG) {
+            System.err.println("In DistributedMethodCallManager -- client id: " + ManagerUtil.getClientID() + " running method " + dmc.getMethodName());
+          }
           invokeMethod(dmc, receiver, parameters);
         } catch (Throwable e) {
           runtimeLogger.distributedMethodCallError(dmc.getReceiverClassName(), dmc.getMethodName(), dmc
