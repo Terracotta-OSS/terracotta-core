@@ -858,6 +858,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   private class NewObjectTraverseTest implements TraverseTest {
 
     public boolean shouldTraverse(Object object) {
+      // literals should be skipped -- without this check, literal members (field values, array element values, in
+      // collection, etc) of newly shared instances would get TCObjects and ObjectIDs assigned to them.
+      if (literals.isLiteralInstance(object)) { return false; }
+
       TCObject tco = basicLookup(object);
       if (tco == null) { return true; }
       return tco.isNew();

@@ -121,5 +121,10 @@ public class VersionizedDNAWrapper implements DNA {
     public Object getAction() {
       return (index < actions.size() ? actions.get(index) : cursor.getAction());
     }
+
+    public String toString() {
+      return cursor.toString();
+    }
+
   }
 }

@@ -748,7 +748,7 @@ public class DNAEncoding {
       return enumValueOf(enumType, enumName);
     } else {
       ClassInstance clazzInstance = new ClassInstance(name, def);
-      Object enumName = new UTF8ByteDataHolder(data);
+      UTF8ByteDataHolder enumName = new UTF8ByteDataHolder(data);
       return new EnumInstance(clazzInstance, enumName);
     }
   }

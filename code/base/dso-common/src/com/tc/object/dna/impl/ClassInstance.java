@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.dna.impl;
 
@@ -16,7 +17,7 @@ public class ClassInstance implements Serializable {
   ClassInstance(String className, String loaderDefinition) {
     this(new UTF8ByteDataHolder(className), new UTF8ByteDataHolder(loaderDefinition));
   }
-  
+
   public ClassInstance(UTF8ByteDataHolder className, UTF8ByteDataHolder loaderDefinition) {
     name = className;
     loaderDef = loaderDefinition;
@@ -49,6 +50,10 @@ public class ClassInstance implements Serializable {
 
   public UTF8ByteDataHolder getName() {
     return name;
+  }
+
+  public String toString() {
+    return "Class(" + name.asString() + "," + loaderDef.asString() + ")";
   }
 
 }

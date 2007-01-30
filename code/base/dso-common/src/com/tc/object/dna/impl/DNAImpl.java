@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.dna.impl;
 
@@ -28,6 +29,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   protected TCByteBuffer[]             dataOut;
 
   private int                          actionCount          = 0;
+  private int                          origActionCount;
   private boolean                      isDelta;
 
   // Header info; parsed on deserializeFrom()
@@ -39,6 +41,8 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
 
   // XXX: cleanup type of this field
   private Object                       currentAction;
+
+  private boolean                      wasDeserialized      = false;
 
   public DNAImpl(ObjectStringSerializer serializer, boolean createOutput) {
     this.serializer = serializer;
@@ -112,11 +116,11 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
 
     // unreachable
   }
-  
+
   private void parseSubArray(DNAEncoding encoding) throws IOException, ClassNotFoundException {
     int startPos = input.readInt();
     Object subArray = encoding.decode(input);
-    currentAction = new PhysicalAction(subArray, startPos); 
+    currentAction = new PhysicalAction(subArray, startPos);
   }
 
   private void parseEntireArray(DNAEncoding encoding) throws IOException, ClassNotFoundException {
@@ -135,8 +139,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
     currentAction = new PhysicalAction(index, value, value instanceof ObjectID);
   }
 
-  private void parsePhysical(DNAEncoding encoding, boolean isReference) throws IOException,
-      ClassNotFoundException {
+  private void parsePhysical(DNAEncoding encoding, boolean isReference) throws IOException, ClassNotFoundException {
     String fieldName = serializer.readFieldName(input);
 
     Object value = encoding.decode(input);
@@ -175,6 +178,9 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
       buf.append("  id->" + getObjectID() + "\n");
       buf.append("  version->" + getVersion() + "\n");
       buf.append("  isDelta->" + isDelta() + "\n");
+      buf.append("  actionCount->" + actionCount + "\n");
+      buf.append("  actionCount (orig)->" + origActionCount + "\n");
+      buf.append("  deserialized?->" + wasDeserialized + "\n");
       buf.append("}\n");
       return buf.toString();
     } catch (Exception e) {
@@ -199,6 +205,8 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   }
 
   public Object deserializeFrom(TCByteBufferInputStream serialInput) throws IOException {
+    this.wasDeserialized = true;
+
     serialInput.mark();
     int dnaLength = serialInput.readInt();
     if (dnaLength <= 0) throw new IOException("Invalid length:" + dnaLength);
@@ -217,6 +225,8 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
     input.readInt();
 
     this.actionCount = input.readInt();
+    this.origActionCount = actionCount;
+
     if (actionCount < 0) throw new IOException("Invalid action count:" + actionCount);
 
     this.isDelta = input.readBoolean();

@@ -40,12 +40,10 @@ public class LiteralTypesApplicator extends BaseApplicator {
       LiteralAction a = (LiteralAction) cursor.getAction();
       Object value = a.getObject();
 
-      Assert.assertEquals(value.getClass().getName(), dna.getTypeName());
-
       tcObject.setLiteralValue(value);
     }
   }
-
+  
   public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
     if (!objectManager.isPortableInstance(pojo)) { return; }
     writer.addLiteralValue(pojo);
@@ -58,8 +56,6 @@ public class LiteralTypesApplicator extends BaseApplicator {
     cursor.next(encoding);
     LiteralAction a = (LiteralAction) cursor.getAction();
     Object value = a.getObject();
-
-    Assert.assertEquals(value.getClass().getName(), dna.getTypeName());
 
     return value;
   }

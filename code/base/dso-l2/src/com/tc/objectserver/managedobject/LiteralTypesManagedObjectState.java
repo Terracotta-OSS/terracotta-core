@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.managedobject;
 
@@ -41,12 +42,18 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
   }
 
   public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException {
-    Assert.assertEquals(1, cursor.getActionCount());
+    final int actionCount = cursor.getActionCount();
+    if (actionCount != 1) {
+      // At one point in time, this assertion was getting tripped by concurrent txns in the same client to commit the
+      // same newly shared literal instance
+      throw new AssertionError("Invalid action count: " + actionCount + "\nThis object is " + toString() + "\nDNA is "
+                               + cursor.toString() + "\nApply object ID: " + objectID);
+    }
 
     cursor.next();
-    LiteralAction a = (LiteralAction)cursor.getAction();
-    //PhysicalAction a = cursor.getPhysicalAction();
-    //Assert.assertTrue(a.isLiteralType());
+    LiteralAction a = (LiteralAction) cursor.getAction();
+    // PhysicalAction a = cursor.getPhysicalAction();
+    // Assert.assertTrue(a.isLiteralType());
     references = a.getObject();
   }
 
@@ -114,9 +121,7 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
       return "java.lang.Class";
     } else if (references instanceof ClassLoaderInstance) {
       return "java.lang.ClassLoader";
-    } else if (references instanceof UTF8ByteDataHolder) {
-      return "java.lang.String";
-    }
+    } else if (references instanceof UTF8ByteDataHolder) { return "java.lang.String"; }
 
     return references.getClass().getName();
   }

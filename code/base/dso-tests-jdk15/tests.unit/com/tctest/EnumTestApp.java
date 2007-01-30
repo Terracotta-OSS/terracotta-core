@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -12,12 +13,17 @@ import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CyclicBarrier;
 
 public class EnumTestApp extends AbstractTransparentApp {
 
   private final DataRoot      dataRoot = new DataRoot();
   private final CyclicBarrier barrier;
+  private final Map           raceRoot = new HashMap();
+
+  private State               stateRoot;
 
   public EnumTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -27,6 +33,8 @@ public class EnumTestApp extends AbstractTransparentApp {
   public void run() {
     try {
       int index = barrier.await();
+
+      rootEnumTest(index);
 
       if (index == 0) {
         dataRoot.setState(State.START);
@@ -76,9 +84,88 @@ public class EnumTestApp extends AbstractTransparentApp {
       Assert.assertEquals(3, dataRoot.getStates().length);
       Assert.assertTrue(Arrays.equals(State.values(), dataRoot.getStates()));
 
+      if (index == 0) {
+        testRace();
+      }
+
     } catch (Throwable t) {
       notifyError(t);
     }
+  }
+
+  // Don't reference this enum in any other methods except testRace() please
+  enum EnumForRace {
+    V1, V2, V3;
+  }
+
+  private static class Ref {
+    private final EnumForRace e;
+
+    Ref(EnumForRace e) {
+      this.e = e;
+    }
+
+    public String toString() {
+      return "ref(" + e + ")";
+    }
+  }
+
+  private void testRace() throws InterruptedException {
+    final Object lock1 = new Object();
+    final Object lock2 = new Object();
+
+    synchronized (raceRoot) {
+      raceRoot.put("lock1", lock1);
+      raceRoot.put("lock1", lock2);
+    }
+
+    final CyclicBarrier cb = new CyclicBarrier(2);
+    final EnumForRace enumInstance = EnumForRace.V1;
+
+    Thread other = new Thread() {
+      public void run() {
+        shareWithLock(lock1, new Ref(enumInstance), raceRoot, cb);
+      }
+    };
+    other.start();
+
+    shareWithLock(lock2, new Ref(enumInstance), raceRoot, cb);
+
+    other.join();
+  }
+
+  private static void shareWithLock(Object lock, Object toShare, Map root, CyclicBarrier barrier) {
+    synchronized (lock) {
+      root.put(String.valueOf(System.identityHashCode(lock)), toShare);
+
+      try {
+        barrier.await();
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  private void rootEnumTest(int index) throws Exception {
+    if (index == 0) {
+      stateRoot = State.START;
+    }
+
+    barrier.await();
+
+    Assert.assertEquals(State.START, stateRoot);
+
+    barrier.await();
+
+    if (index == 1) {
+      stateRoot = State.RUN;
+    }
+
+    barrier.await();
+
+    Assert.assertEquals(State.RUN, stateRoot);
+
+    barrier.await();
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
@@ -95,6 +182,13 @@ public class EnumTestApp extends AbstractTransparentApp {
 
     spec.addRoot("barrier", "barrier");
     spec.addRoot("dataRoot", "dataRoot");
+    spec.addRoot("stateRoot", "stateRoot", false);
+    spec.addRoot("raceRoot", "raceRoot");
+
+    // explicitly including the enum class here exposes a bug,
+    // generally an enum type doesn't need to be included to be shared
+    config.addIncludePattern(EnumForRace.class.getName());
+    config.addIncludePattern(Ref.class.getName());
   }
 
   public enum State {
