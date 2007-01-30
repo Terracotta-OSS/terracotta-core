@@ -160,7 +160,7 @@ public class ConnectDialog extends Dialog {
         m_error = new InterruptedIOException("Interrupted");
       }
 
-      if(m_error != null && m_connectThread.isAlive()) {
+      if(m_error != null || m_connectThread.isAlive()) {
         m_connectThread.interrupt();
         m_error = new InterruptedIOException("Connection timed out");
       }
