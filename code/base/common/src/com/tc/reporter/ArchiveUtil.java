@@ -7,7 +7,6 @@ package com.tc.reporter;
 import org.apache.xmlbeans.XmlException;
 
 import com.tc.config.schema.dynamic.ParameterSubstituter;
-import com.tc.sysinfo.EnvStats;
 import com.terracottatech.configV2.Client;
 import com.terracottatech.configV2.Server;
 import com.terracottatech.configV2.Servers;
@@ -188,7 +187,6 @@ public final class ArchiveUtil {
   }
 
   private void createArchive() throws IOException, XmlException {
-    String envStats = EnvStats.report();
     TcConfig configBeans = TcConfigDocument.Factory.parse(tcConfig).getTcConfig();
     File clientLogsDir = null;
     File[] serverLogsDir = null;
@@ -204,7 +202,6 @@ public final class ArchiveUtil {
       zout.setMethod(ZipEntry.DEFLATED);
       zout.setLevel(9);
       System.out.println("Archiving:");
-      putEntry(zout, EnvStats.filename, envStats.getBytes());
       putEntry(zout, tcConfig.getName(), readFile(tcConfig));
       if (isClient) {
         if (clientLogsDir != null) putTraverseDirectory(zout, clientLogsDir, clientLogsDir.getName());

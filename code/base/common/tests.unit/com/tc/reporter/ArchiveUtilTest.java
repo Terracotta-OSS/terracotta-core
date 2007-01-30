@@ -9,7 +9,6 @@ import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.L2SConfigBuilder;
 import com.tc.config.schema.test.SystemConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
-import com.tc.sysinfo.EnvStats;
 import com.tc.test.TCTestCase;
 import com.tc.util.ExternalProcessStreamWriter;
 
@@ -158,7 +157,6 @@ public final class ArchiveUtilTest extends TCTestCase {
         + df.format(new Date(System.currentTimeMillis())) + ".zip");
     Set contents = listArchiveContents(defaultArchive);
     assertTrue(contents.contains(TC_CONFIG));
-    assertTrue(contents.contains(EnvStats.filename));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/"));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/" + MK_SERVER_LOG0));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/" + MK_SERVER_LOG1));
@@ -179,7 +177,6 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertEquals(0, executeArchiveUtil(args));
     Set contents = listArchiveContents(archiveFile);
     assertTrue(contents.contains(TC_CONFIG));
-    assertTrue(contents.contains(EnvStats.filename));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/"));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/" + MK_SERVER_LOG0));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/" + MK_SERVER_LOG1));
@@ -199,7 +196,6 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertEquals(0, executeArchiveUtil(args));
     Set contents = listArchiveContents(archiveFile);
     assertTrue(contents.contains(TC_CONFIG));
-    assertTrue(contents.contains(EnvStats.filename));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/"));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/" + MK_SERVER_LOG0));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/" + MK_SERVER_LOG1));
@@ -219,7 +215,6 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertEquals(0, executeArchiveUtil(args));
     Set contents = listArchiveContents(archiveFile);
     assertTrue(contents.contains(TC_CONFIG));
-    assertTrue(contents.contains(EnvStats.filename));
     assertTrue(contents.contains(MK_CLIENT_DIR + "/"));
     assertTrue(contents.contains(MK_CLIENT_DIR + "/" + MK_CLIENT_LOG0));
     assertTrue(contents.contains(MK_CLIENT_DIR + "/" + MK_CLIENT_LOG1));
