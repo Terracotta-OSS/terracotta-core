@@ -714,13 +714,13 @@ END
         out
     end
 
-        # do a "ps auxwwww | grep java"
+    # do a "ps auxwwww | grep java"
     # to be used in monkey environment ONLY
     def ps_grep_java
         ps_cmd = case @build_environment.os_type(:nice)
             when /windows/i: 'pv.exe -l | grep java | grep -v grep'
-            when /linux/i:   'ps auxwwww | grep java | grep -v grep'
             when /solaris/i: '/usr/ucb/ps auxwwww | grep java | grep -v grep'
+            else 'ps auxwwww | grep java | grep -v grep'
         end
 
         begin
