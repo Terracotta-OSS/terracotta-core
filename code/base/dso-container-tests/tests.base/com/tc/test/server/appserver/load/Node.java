@@ -93,11 +93,19 @@ public class Node implements Runnable {
       HttpState httpState = sessions[session];
       client.setState(httpState);
       URL mutateUrl = numURLS == 1 ? mutateUrls[0] : mutateUrls[random.nextInt(mutateUrls.length)];
-      int newVal = HttpUtil.getInt(mutateUrl, client);
-      numRequests[session]++;
-      Assert.assertEquals(getSessionID(httpState), numRequests[session], newVal);
-      session = (session + 1) % sessions.length;
-      ThreadUtil.reallySleep(random.nextInt(5) + 1);
+
+      final long start = System.currentTimeMillis();
+      try {
+        int newVal = HttpUtil.getInt(mutateUrl, client);
+        numRequests[session]++;
+        Assert.assertEquals(getSessionID(httpState), numRequests[session], newVal);
+        session = (session + 1) % sessions.length;
+        ThreadUtil.reallySleep(random.nextInt(5) + 1);
+      } catch (Exception e) {
+        logger.error("Elapsed time for failed request was " + (System.currentTimeMillis() - start) + " millis, url = "
+                     + mutateUrl);
+        throw e;
+      }
     }
   }
 
