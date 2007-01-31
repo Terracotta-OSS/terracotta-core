@@ -10,7 +10,7 @@
    <feature url="features/org.terracotta.dso_VERSION.jar" id="org.terracotta.dso" version="VERSION">
       <category name="dso"/>
    </feature>
-   <archive path="plugins/org.terracotta.dso_2.2.0.jar" url="http://download.terracotta.org/org.terracotta.dso_2.2.0.jar"/>
+   <archive path="plugins/org.terracotta.dso_VERSION.jar" url="http://download.terracotta.org/org.terracotta.dso_VERSION.jar"/>
    <category-def name="dso" label="Terracotta DSO">
       <description>
          Features related to Terracotta DSO.
