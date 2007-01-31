@@ -77,9 +77,6 @@ public class TCTestCase extends TestCase {
   // a way to ensure that system clock moves forward...
   private long                             previousSystemMillis      = 0;
 
-  // timeout value, in seconds. Not to be used directly, use getter instead
-  private int                              timeoutValueInSeconds     = 0;
-
   public TCTestCase() {
     super();
 
@@ -273,21 +270,21 @@ public class TCTestCase extends TestCase {
   }
 
   /**
-   * Disable ALL tests until the given date. This method should be called in the constructor of your unit test
-   * Only specified platforms ("windows", "linux", "solaris") will take effect.
+   * Disable ALL tests until the given date. This method should be called in the constructor of your unit test Only
+   * specified platforms ("windows", "linux", "solaris") will take effect.
    */
   protected final void disableAllUntil(String theDate, String[] platforms) {
     List platform_list = Arrays.asList(platforms);
     try {
-      String platform = TestConfigObject.getInstance().platform();      
+      String platform = TestConfigObject.getInstance().platform();
       if (platform_list.contains(platform)) {
         disableAllUntil(parseDate(theDate));
       }
     } catch (IOException e) {
       e.printStackTrace();
-    }    
+    }
   }
-  
+
   /**
    * Disable the given test method until the given date. This method should be called in the constructor of your unit
    * test
@@ -295,24 +292,22 @@ public class TCTestCase extends TestCase {
   protected final void disableTestUntil(String method, String date) {
     this.disabledUntil.put(method, parseDate(date));
   }
-  
+
   /**
    * Disable the given test method until the given date. This method should be called in the constructor of your unit
-   * test.
-   * Only specified platforms ("windows", "linux", "solaris") take effect.
+   * test. Only specified platforms ("windows", "linux", "solaris") take effect.
    */
   protected final void disableTestUntil(String method, String date, String[] platforms) {
     List platform_list = Arrays.asList(platforms);
     try {
-      String platform = TestConfigObject.getInstance().platform();      
-      if (platform_list.contains(platform)) {        
+      String platform = TestConfigObject.getInstance().platform();
+      if (platform_list.contains(platform)) {
         this.disabledUntil.put(method, parseDate(date));
       }
     } catch (IOException e) {
       e.printStackTrace();
-    }    
+    }
   }
-  
 
   /**
    * Disable the given test method until the given date. This method should be called in the constructor of your unit
@@ -542,25 +537,10 @@ public class TCTestCase extends TestCase {
    * Returns the timeout value
    */
   public int getTimeoutValueInSeconds() {
-    if (timeoutValueInSeconds > 0)
-      return timeoutValueInSeconds;
-    else {      
-        try {
-          timeoutValueInSeconds = TestConfigObject.getInstance()
-          .getJunitTimeoutInSeconds();
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-    }    
-    return timeoutValueInSeconds;
+    try {
+      return TestConfigObject.getInstance().getJunitTimeoutInSeconds();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
-
-  /**
-   * Set the timeout value for this whole testsuite.
-   * This method has be called in constructor to take effect. (setup() is too late)
-   */
-  public void setTimeoutValueInSeconds(int timeoutValueInSeconds) {
-    this.timeoutValueInSeconds = timeoutValueInSeconds;
-  }
-
 }
