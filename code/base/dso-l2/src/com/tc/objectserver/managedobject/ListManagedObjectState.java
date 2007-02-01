@@ -15,9 +15,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Server representation of a list
@@ -135,8 +134,8 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
     }
   }
 
-  public Collection getAllReferences() {
-    return Collections.unmodifiableList(this.references);
+  protected void addAllObjectReferencesTo(Set refs) {
+    addAllObjectReferencesFromIteratorTo(references.iterator(), refs);
   }
 
   public void dehydrate(ObjectID objectID, DNAWriter writer) {

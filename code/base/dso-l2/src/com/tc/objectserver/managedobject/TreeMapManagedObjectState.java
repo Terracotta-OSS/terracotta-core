@@ -16,10 +16,10 @@ import com.tc.util.Assert;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 
 /**
@@ -60,12 +60,11 @@ public class TreeMapManagedObjectState extends MapManagedObjectState implements 
     super.dehydrate(objectID, writer);
   }
 
-  protected Collection getAllReferences() {
-    Collection refs = super.getAllReferences();
+  protected void addAllObjectReferencesTo(Set refs) {
+    super.addAllObjectReferencesTo(refs);
     if (comparator != null) {
       refs.add(comparator);
     }
-    return refs;
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {

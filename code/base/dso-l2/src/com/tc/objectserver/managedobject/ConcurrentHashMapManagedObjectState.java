@@ -15,10 +15,10 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 
 /**
@@ -84,14 +84,13 @@ public class ConcurrentHashMapManagedObjectState extends MapManagedObjectState {
     }
   }
 
-  protected Collection getAllReferences() {
-    Collection allReferences = super.getAllReferences();
+  protected void addAllObjectReferencesTo(Set refs) {
+    super.addAllObjectReferencesTo(refs);
     if (segments != null) {
       for (int i = 0; i < segments.length; i++) {
-        allReferences.add(segments[i]);
+        refs.add(segments[i]);
       }
     }
-    return allReferences;
   }
 
   public void dehydrate(ObjectID objectID, DNAWriter writer) {

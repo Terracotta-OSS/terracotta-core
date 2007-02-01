@@ -26,12 +26,21 @@ public abstract class LogicalManagedObjectState extends AbstractManagedObjectSta
     this.classID = in.readLong();
   }
 
-  protected abstract Collection getAllReferences();
+  protected abstract void addAllObjectReferencesTo(Set refs);
+
+  protected void addAllObjectReferencesFromIteratorTo(Iterator i, Set refs) {
+    for (; i.hasNext();) {
+      Object o = i.next();
+      if(o instanceof ObjectID) {
+        refs.add(o);
+      }
+    }
+  }
 
   public final Set getObjectReferences() {
-    // XXX: this is inefficient. I'm going to have to fix that
-
-    return getObjectReferencesFrom(getAllReferences());
+    HashSet refs = new HashSet();
+    addAllObjectReferencesTo(refs);
+    return refs;
   }
   
   protected Set getObjectReferencesFrom(Collection refs) {

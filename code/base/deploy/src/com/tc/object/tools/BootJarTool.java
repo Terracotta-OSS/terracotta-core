@@ -62,6 +62,7 @@ import com.tc.object.bytecode.JavaUtilConcurrentHashMapSegmentAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueClassAdapter;
 import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter;
+import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueNodeClassAdapter;
 import com.tc.object.bytecode.JavaUtilTreeMapAdapter;
 import com.tc.object.bytecode.LinkedListAdapter;
 import com.tc.object.bytecode.LogicalClassSerializationAdapter;
@@ -1388,6 +1389,7 @@ public class BootJarTool {
   private void addInstrumentedJavaUtilConcurrentLinkedBlockingQueue() {
     if (!isAtLeastJDK15()) { return; }
 
+    // Instrumentation for Itr inner class
     byte[] bytes = getSystemBytes("java.util.concurrent.LinkedBlockingQueue$Itr");
 
     ClassReader cr = new ClassReader(bytes);
@@ -1398,7 +1400,20 @@ public class BootJarTool {
 
     bytes = cw.toByteArray();
     bootJar.loadClassIntoJar("java.util.concurrent.LinkedBlockingQueue$Itr", bytes, true);
+    
+    // Instrumentation for Node inner class
+    bytes = getSystemBytes("java.util.concurrent.LinkedBlockingQueue$Node");
 
+    cr = new ClassReader(bytes);
+    cw = new ClassWriter(true);
+
+    cv = new JavaUtilConcurrentLinkedBlockingQueueNodeClassAdapter(cw);
+    cr.accept(cv, false);
+
+    bytes = cw.toByteArray();
+    bootJar.loadClassIntoJar("java.util.concurrent.LinkedBlockingQueue$Node", bytes, true);
+    
+    // Instrumentation for LinkedBlockingQueue class
     bytes = getSystemBytes("java.util.concurrent.LinkedBlockingQueue");
 
     cr = new ClassReader(bytes);
@@ -1411,12 +1426,6 @@ public class BootJarTool {
 
     TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.LinkedBlockingQueue",
                                                         "com.tc.object.applicator.LinkedBlockingQueueApplicator");
-    spec.addMethodAdapter(SerializationUtil.QUEUE_PUT_SIGNATURE,
-                          new JavaUtilConcurrentLinkedBlockingQueueAdapter.PutAdapter());
-    spec.addMethodAdapter(SerializationUtil.OFFER_SIGNATURE,
-                          new JavaUtilConcurrentLinkedBlockingQueueAdapter.PutAdapter());
-    spec.addMethodAdapter(SerializationUtil.OFFER_TIMEOUT_SIGNATURE,
-                          new JavaUtilConcurrentLinkedBlockingQueueAdapter.PutAdapter());
     spec.addMethodAdapter(SerializationUtil.TAKE_SIGNATURE,
                           new JavaUtilConcurrentLinkedBlockingQueueAdapter.TakeAdapter());
     spec.addMethodAdapter(SerializationUtil.POLL_TIMEOUT_SIGNATURE,

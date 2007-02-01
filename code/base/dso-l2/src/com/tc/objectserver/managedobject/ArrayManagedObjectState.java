@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.managedobject;
 
@@ -22,10 +23,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class ArrayManagedObjectState extends LogicalManagedObjectState implements PrettyPrintable {
   private static final LiteralValues LITERAL_VALUES = new LiteralValues();
@@ -124,9 +124,10 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
     }
   }
 
-  protected Collection getAllReferences() {
-    if (isPrimitive) { return Collections.EMPTY_LIST; }
-    return Arrays.asList((Object[]) arrayData);
+  protected void addAllObjectReferencesTo(Set refs) {
+    if (!isPrimitive) {
+      addAllObjectReferencesFromIteratorTo(Arrays.asList((Object[]) arrayData).iterator(), refs);
+    }
   }
 
   public void dehydrate(ObjectID objectID, DNAWriter writer) {

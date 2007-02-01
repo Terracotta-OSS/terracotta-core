@@ -19,11 +19,9 @@ import com.tc.text.PrettyPrinter;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 
 /**
@@ -116,11 +114,9 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     }
   }
 
-  protected Collection getAllReferences() {
-    List allReferences = new ArrayList(this.references.size() * 2 + 1); // +1 is done for the subclass, kind of yuck
-    allReferences.addAll(this.references.keySet());
-    allReferences.addAll(this.references.values());
-    return allReferences;
+  protected void addAllObjectReferencesTo(Set refs) {
+    addAllObjectReferencesFromIteratorTo(this.references.keySet().iterator(), refs);
+    addAllObjectReferencesFromIteratorTo(this.references.values().iterator(), refs);
   }
   
   public PrettyPrinter prettyPrint(PrettyPrinter out) {

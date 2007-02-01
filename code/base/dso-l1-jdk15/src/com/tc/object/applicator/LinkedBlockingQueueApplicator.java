@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.applicator;
 
@@ -86,14 +87,14 @@ public class LinkedBlockingQueueApplicator extends BaseApplicator {
     return addTo;
   }
 
-  public void getLogicalPortableObjects(Object pojo, TraversedReferences addTo) {
+  private void getLogicalPortableObjects(Object pojo, TraversedReferences addTo) {
     for (Iterator i = ((Queue) pojo).iterator(); i.hasNext();) {
       Object o = i.next();
       filterPortableObject(o, addTo);
     }
   }
 
-  public void getPhysicalPortableObjects(Object pojo, TraversedReferences addTo) {
+  private void getPhysicalPortableObjects(Object pojo, TraversedReferences addTo) {
     try {
       filterPortableObject(TAKE_LOCK_FIELD.get(pojo), addTo);
       filterPortableObject(PUT_LOCK_FIELD.get(pojo), addTo);
@@ -130,16 +131,7 @@ public class LinkedBlockingQueueApplicator extends BaseApplicator {
         int method = logicalAction.getMethod();
         Object[] params = logicalAction.getParameters();
 
-        for (int i = 0, n = params.length; i < n; i++) {
-          Object param = params[i];
-          if (param instanceof ObjectID) {
-            // System.out.println("Looking up: " + param);
-            // long startTime = System.currentTimeMillis();
-            params[i] = objectManager.lookupObject((ObjectID) param);
-            // long endtime = System.currentTimeMillis();
-            // System.err.println("Time to do a look up from applicator: " + (endtime - startTime));
-          }
-        }
+        // Since LinkedBlockingQueue supports partial collection, params is not inspected for containing object ids
 
         try {
           apply(queue, method, params);
@@ -215,22 +207,24 @@ public class LinkedBlockingQueueApplicator extends BaseApplicator {
         break;
       case SerializationUtil.REMOVE_FIRST_N:
         // This is caused by drainTo(), which requires a full lock.
-        try {
-          int n = ((Integer) params[0]).intValue();
-          for (int i = 0; i < n; i++) {
-            queue.take();
+        int count = ((Integer) params[0]).intValue();
+        for (int i = 0; i < count; i++) {
+          try {
+            TC_TAKE_METHOD.invoke(queue, new Object[0]);
+          } catch (InvocationTargetException e) {
+            throw new TCRuntimeException(e);
+          } catch (IllegalAccessException e) {
+            throw new TCRuntimeException(e);
           }
-        } catch (InterruptedException e) {
-          throw new TCRuntimeException(e);
         }
         break;
       case SerializationUtil.REMOVE_AT:
-        int n = ((Integer) params[0]).intValue();
-        Assert.assertTrue(queue.size() > n);
+        int index = ((Integer) params[0]).intValue();
+        Assert.assertTrue(queue.size() > index);
         int j = 0;
         for (Iterator i = queue.iterator(); i.hasNext();) {
           i.next();
-          if (j == n) {
+          if (j == index) {
             i.remove();
             break;
           }
@@ -273,15 +267,16 @@ public class LinkedBlockingQueueApplicator extends BaseApplicator {
 
     for (Iterator i = queue.iterator(); i.hasNext();) {
       Object value = i.next();
-      if (!objectManager.isPortableInstance(value)) {
+      if (!(value instanceof ObjectID)) {
+        if (!objectManager.isPortableInstance(value)) {
+          continue;
+        }
+        value = getDehydratableObject(value, objectManager);
+      }
+      if (value == null) {
         continue;
       }
-
-      final Object addValue = getDehydratableObject(value, objectManager);
-      if (addValue == null) {
-        continue;
-      }
-      writer.addLogicalAction(SerializationUtil.PUT, new Object[] { addValue });
+      writer.addLogicalAction(SerializationUtil.PUT, new Object[] { value });
     }
   }
 
@@ -289,6 +284,7 @@ public class LinkedBlockingQueueApplicator extends BaseApplicator {
     throw new UnsupportedOperationException();
   }
 
+  @SuppressWarnings("unchecked")
   public Map connectedCopy(Object source, Object dest, Map visited, ClientObjectManager objectManager,
                            OptimisticTransactionManager txManager) {
     Map cloned = new IdentityHashMap();

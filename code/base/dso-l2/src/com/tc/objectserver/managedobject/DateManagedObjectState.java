@@ -16,10 +16,10 @@ import com.tc.util.Assert;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * ManagedObjectState for sets.
@@ -63,8 +63,8 @@ public class DateManagedObjectState extends LogicalManagedObjectState {
     writer.addLogicalAction(SerializationUtil.SET_NANOS, new Object[] { new Integer(referenceNanoTime) });
   }
 
-  protected Collection getAllReferences() {
-    return null;
+  protected void addAllObjectReferencesTo(Set refs) {
+    return;
   }
 
   public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {

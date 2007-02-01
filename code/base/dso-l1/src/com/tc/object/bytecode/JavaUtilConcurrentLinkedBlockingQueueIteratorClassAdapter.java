@@ -8,6 +8,7 @@ import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.commons.LocalVariablesSorter;
+import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueClassAdapter.NodeMethodAdapter;
 
 public class JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter extends ClassAdapter implements Opcodes {
 
@@ -17,6 +18,7 @@ public class JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter extends C
   
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+    mv = new NodeMethodAdapter(mv);
     if ("remove".equals(name) && "()V".equals(desc)) {
       mv = new RemoveMethodAdapter(access, desc, mv);
     }

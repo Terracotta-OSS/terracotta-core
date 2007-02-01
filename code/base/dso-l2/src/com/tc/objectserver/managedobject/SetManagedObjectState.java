@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.managedobject;
 
@@ -15,8 +16,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -85,8 +84,8 @@ public class SetManagedObjectState extends LogicalManagedObjectState {
     }
   }
 
-  protected Collection getAllReferences() {
-    return Collections.unmodifiableSet(this.references);
+  protected void addAllObjectReferencesTo(Set refs) {
+    addAllObjectReferencesFromIteratorTo(this.references.iterator(), refs);
   }
 
   public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
