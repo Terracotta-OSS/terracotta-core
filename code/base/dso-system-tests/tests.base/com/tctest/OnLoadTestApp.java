@@ -12,12 +12,12 @@ import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tctest.runner.AbstractTransparentApp2;
+import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class OnLoadTestApp extends AbstractTransparentApp2 {
+public class OnLoadTestApp extends AbstractErrorCatchingTransparentApp {
   private final CyclicBarrier barrier;
 
   private MyObject            root;

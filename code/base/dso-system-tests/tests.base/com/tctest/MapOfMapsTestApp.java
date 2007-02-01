@@ -15,7 +15,7 @@ import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tctest.runner.AbstractTransparentApp2;
+import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
-public class MapOfMapsTestApp extends AbstractTransparentApp2 {
+public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
 
   private static final int LOOP_COUNT   = 10;
   private static final int DEPTH_COUNT  = 5;

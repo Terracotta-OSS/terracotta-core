@@ -12,7 +12,7 @@ import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tctest.runner.AbstractTransparentApp2;
+import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.awt.AWTException;
 import java.io.FileNotFoundException;
@@ -24,7 +24,7 @@ import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-public class ShareExceptionsTestApp extends AbstractTransparentApp2 {
+public class ShareExceptionsTestApp extends AbstractErrorCatchingTransparentApp {
 
   private static final int INITIAL      = 0;
   private static final int INTERMEDIATE = 1;

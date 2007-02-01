@@ -13,7 +13,7 @@ import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tctest.runner.AbstractTransparentApp2;
+import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -34,7 +34,7 @@ public class NewObjectCreationRaceTest extends TransparentTestBase {
     return NewObjectCreationRaceTestApp.class;
   }
 
-  public static class NewObjectCreationRaceTestApp extends AbstractTransparentApp2 {
+  public static class NewObjectCreationRaceTestApp extends AbstractErrorCatchingTransparentApp {
 
     // NOTE: it is very important to NOT reference
     // this root in the "fault" nodes, until after it has the new object in it

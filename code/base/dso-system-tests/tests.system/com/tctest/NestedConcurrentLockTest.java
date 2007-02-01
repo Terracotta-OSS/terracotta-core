@@ -9,7 +9,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tctest.runner.AbstractTransparentApp2;
+import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -29,7 +29,7 @@ public class NestedConcurrentLockTest extends TransparentTestBase {
     return NestedConcurrentLockTestApp.class;
   }
 
-  public static class NestedConcurrentLockTestApp extends AbstractTransparentApp2 {
+  public static class NestedConcurrentLockTestApp extends AbstractErrorCatchingTransparentApp {
     private static final int NUM            = 1000;
     private final Object     concurrentLock = new Object();
     private final List       list           = new ArrayList();

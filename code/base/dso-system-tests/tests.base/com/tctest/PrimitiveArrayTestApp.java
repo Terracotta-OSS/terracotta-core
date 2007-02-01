@@ -15,7 +15,7 @@ import com.tc.object.tx.ReadOnlyException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tctest.runner.AbstractTransparentApp2;
+import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import gnu.trove.TObjectIntHashMap;
 
@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class PrimitiveArrayTestApp extends AbstractTransparentApp2 {
+public class PrimitiveArrayTestApp extends AbstractErrorCatchingTransparentApp {
 
   private static final int               BOOLEAN         = 1;
   private static final int               BYTE            = 2;

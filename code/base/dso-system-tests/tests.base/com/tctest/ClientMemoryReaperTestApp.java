@@ -9,7 +9,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tctest.runner.AbstractTransparentApp2;
+import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.security.SecureRandom;
 import java.text.DateFormat;
@@ -24,7 +24,7 @@ import java.util.Vector;
  * All this test does is create many many objects so that if the Client side Memory Reaper doesnt run properly for some
  * reason then it forces an OOME This test needs some tuning
  */
-public class ClientMemoryReaperTestApp extends AbstractTransparentApp2 {
+public class ClientMemoryReaperTestApp extends AbstractErrorCatchingTransparentApp {
 
   private static final long OBJECT_COUNT              = 2000;
   private static final long MINIMUM_MEM_NEEDED        = 60 * 1024 * 1024;

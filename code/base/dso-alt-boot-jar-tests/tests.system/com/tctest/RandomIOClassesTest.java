@@ -12,7 +12,7 @@ import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tctest.runner.AbstractTransparentApp2;
+import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -37,7 +37,7 @@ public class RandomIOClassesTest extends TransparentTestBase {
     return RandomIOClassesTestApp.class;
   }
 
-  public static class RandomIOClassesTestApp extends AbstractTransparentApp2 {
+  public static class RandomIOClassesTestApp extends AbstractErrorCatchingTransparentApp {
 
     private final Map           map = new HashMap();
     private final CyclicBarrier barrier;

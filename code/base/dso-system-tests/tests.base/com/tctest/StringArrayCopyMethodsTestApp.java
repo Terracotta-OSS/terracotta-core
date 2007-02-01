@@ -11,13 +11,13 @@ import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tctest.runner.AbstractTransparentApp2;
+import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StringArrayCopyMethodsTestApp extends AbstractTransparentApp2 {
+public class StringArrayCopyMethodsTestApp extends AbstractErrorCatchingTransparentApp {
 
   private final Map           map = new HashMap();
   private final CyclicBarrier barrier;

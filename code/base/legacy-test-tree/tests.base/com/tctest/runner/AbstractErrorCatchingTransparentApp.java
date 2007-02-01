@@ -12,9 +12,9 @@ import com.tc.simulator.listener.ListenerProvider;
  * This is a different flavor of AbstractTransparentApp that takes care of catching any exceptions and reporting them. I
  * found myself writing this pattern far too often in individual test cases
  */
-public abstract class AbstractTransparentApp2 extends AbstractTransparentApp {
+public abstract class AbstractErrorCatchingTransparentApp extends AbstractTransparentApp {
 
-  public AbstractTransparentApp2(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public AbstractErrorCatchingTransparentApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
   }
 
@@ -27,7 +27,7 @@ public abstract class AbstractTransparentApp2 extends AbstractTransparentApp {
   }
   
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    config.addIncludePattern(AbstractTransparentApp2.class.getName());
+    config.addIncludePattern(AbstractErrorCatchingTransparentApp.class.getName());
   }
 
 

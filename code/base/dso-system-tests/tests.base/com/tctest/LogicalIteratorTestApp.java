@@ -13,7 +13,7 @@ import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.object.tx.ReadOnlyException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tctest.runner.AbstractTransparentApp2;
+import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
-public class LogicalIteratorTestApp extends AbstractTransparentApp2 {
+public class LogicalIteratorTestApp extends AbstractErrorCatchingTransparentApp {
 
   private final Set           set       = new HashSet();
   private final Map           map       = new HashMap();

@@ -12,7 +12,7 @@ import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tctest.runner.AbstractTransparentApp2;
+import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,7 +50,7 @@ public class CollectionsWrappersTest extends TransparentTestBase {
     return CollectionsWrappersTestApp.class;
   }
 
-  public static class CollectionsWrappersTestApp extends AbstractTransparentApp2 {
+  public static class CollectionsWrappersTestApp extends AbstractErrorCatchingTransparentApp {
 
     private static final Map    root = new HashMap();
     private final CyclicBarrier barrier;

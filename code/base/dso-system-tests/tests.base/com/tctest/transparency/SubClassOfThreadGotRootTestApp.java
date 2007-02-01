@@ -11,14 +11,14 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tctest.runner.AbstractTransparentApp2;
+import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-public class SubClassOfThreadGotRootTestApp extends AbstractTransparentApp2 {
+public class SubClassOfThreadGotRootTestApp extends AbstractErrorCatchingTransparentApp {
 
   private static final int WORKER_COUNT    = 5;
   private static final int WORK_COUNT      = 10;
