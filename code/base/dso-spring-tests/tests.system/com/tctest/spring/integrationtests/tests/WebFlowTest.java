@@ -37,10 +37,6 @@ import junit.framework.Test;
  */
 public class WebFlowTest extends AbstractTwoServerDeploymentTest {
 
-  public WebFlowTest() {
-//    this.disableAllUntil("2006-12-01");
-  }
-
   protected void tearDown() throws Exception {
     super.tearDown();
     stopAllWebServers();
