@@ -22,9 +22,10 @@ import com.tctest.runner.AbstractTransparentApp;
  */
 public class DistributedMethodCallExpressionTestApp extends AbstractTransparentApp {
 
-  private final SharedModel   model            = new SharedModel();
-  private final int           initialNodeCount = getParticipantCount();
-  private final CyclicBarrier nodeBarrier      = new CyclicBarrier(initialNodeCount);
+  private final SharedModel   model             = new SharedModel();
+  private final int           initialNodeCount  = getParticipantCount();
+  private final CyclicBarrier nodeBarrier       = new CyclicBarrier(initialNodeCount);
+  private final CyclicBarrier staticNodeBarrier = new CyclicBarrier(initialNodeCount);
 
   public DistributedMethodCallExpressionTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -48,22 +49,25 @@ public class DistributedMethodCallExpressionTestApp extends AbstractTransparentA
     }
     nodeBarrier.barrier();
     synchronized (model) {
-      checkCountTimed(model.nonStaticCallCount, initialNodeCount, 10, 5, "Non-Static Call Count");
+      checkCountTimed(model.nonStaticCallCount, initialNodeCount, 10, 5 * 1000, "Non-Static Call Count");
     }
+    nodeBarrier.barrier();
   }
 
   public void callStaticMethod() throws Throwable {
-    final boolean masterNode = nodeBarrier.barrier() == 0;
+    final boolean masterNode = staticNodeBarrier.barrier() == 0;
     synchronized (model) {
       if (masterNode) {
         SharedModel.staticMethod();
       }
     }
-    nodeBarrier.barrier();
+    staticNodeBarrier.barrier();
+    System.err.println("### -> sleeping before checking static method calls");
     Thread.sleep(30000);
-    synchronized(model) {
-      checkCountTimed(model.nonStaticCallCount, initialNodeCount, 1, 1000, "Static Call Count");
+    synchronized (model) {
+      checkCountTimed(SharedModel.staticCallCount, (masterNode) ? 1 : 0, 1, 10000, "Static Call Count");
     }
+    staticNodeBarrier.barrier();
   }
 
   public static class SharedModel {
@@ -112,6 +116,7 @@ public class DistributedMethodCallExpressionTestApp extends AbstractTransparentA
       spec = config.getOrCreateSpec(testClassName);
       spec.addRoot("model", "model");
       spec.addRoot("nodeBarrier", "nodeBarrier");
+      spec.addRoot("staticNodeBarrier", "staticNodeBarrier");
       String methodExpression = "* " + testClassName + "*.*(..)";
       config.addWriteAutolock(methodExpression);
 
