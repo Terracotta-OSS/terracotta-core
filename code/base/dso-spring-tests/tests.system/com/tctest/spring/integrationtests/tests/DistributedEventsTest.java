@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.spring.integrationtests.tests;
 
@@ -11,7 +12,6 @@ import com.tctest.spring.integrationtests.framework.TestCallback;
 import junit.extensions.TestSetup;
 import junit.framework.Test;
 
-
 public class DistributedEventsTest extends AbstractTwoServerDeploymentTest {
 
   private static final String REMOTE_SERVICE_NAME           = "EventManager";
@@ -21,6 +21,10 @@ public class DistributedEventsTest extends AbstractTwoServerDeploymentTest {
   private static EventManager eventManager1;
   private static EventManager eventManager2;
 
+  public DistributedEventsTest() {
+    disableAllUntil("2007-02-09");
+  }
+
   protected void setUp() throws Exception {
     super.setUp();
     eventManager1.clear();
@@ -28,7 +32,7 @@ public class DistributedEventsTest extends AbstractTwoServerDeploymentTest {
     assertEquals(0, eventManager1.size());
     assertEquals(0, eventManager2.size());
   }
-  
+
   private void assertEventNotDistributed() throws InterruptedException {
     Thread.sleep(1000L * 5);
     assertEquals("Got local", 1, eventManager1.size());
@@ -54,25 +58,24 @@ public class DistributedEventsTest extends AbstractTwoServerDeploymentTest {
     assertEventNotDistributed();
   }
 
-//  Not sure what is tested here. Parent class does not have any fields. So, it should be ok  
-//  public void testPublishEventWithUninstrumentedSuperclass() throws Throwable {
-//    publishDistributedEvent(new AnotherEventExpectedToBeDistributed("foo", "bar"));
-//  }
+  // Not sure what is tested here. Parent class does not have any fields. So, it should be ok
+  // public void testPublishEventWithUninstrumentedSuperclass() throws Throwable {
+  // publishDistributedEvent(new AnotherEventExpectedToBeDistributed("foo", "bar"));
+  // }
 
-//  These are covered by the unit test  
-//  public void testPublishWildcardAtEnd() throws Throwable {
-//    publishDistributedEvent(new WildcardAtEndEvent("foo", "bar"));
-//  }
-//
-//  public void testPublishWildcardAtStart() throws Throwable {
-//    publishDistributedEvent(new WildcardAtStartEvent("foo", "bar"));
-//  }
-//
-//  public void testPublishWildcardAtBothEnds() throws Throwable {
-//    publishDistributedEvent(new WildcardAtBothEndsEvent("foo", "bar"));
-//  }
+  // These are covered by the unit test
+  // public void testPublishWildcardAtEnd() throws Throwable {
+  // publishDistributedEvent(new WildcardAtEndEvent("foo", "bar"));
+  // }
+  //
+  // public void testPublishWildcardAtStart() throws Throwable {
+  // publishDistributedEvent(new WildcardAtStartEvent("foo", "bar"));
+  // }
+  //
+  // public void testPublishWildcardAtBothEnds() throws Throwable {
+  // publishDistributedEvent(new WildcardAtBothEndsEvent("foo", "bar"));
+  // }
 
-  
   private static class SingletonTestSetup extends TwoSvrSetup {
 
     private SingletonTestSetup() {
