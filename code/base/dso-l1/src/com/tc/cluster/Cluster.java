@@ -14,6 +14,8 @@ import java.util.Map;
 
 public class Cluster {
 
+  private static final boolean  debug     = false;
+
   private final Map             nodes     = new HashMap();        // <String, Node>
   private final IdentityHashMap listeners = new IdentityHashMap(); // <ClusterEventListener>
 
@@ -34,36 +36,29 @@ public class Cluster {
       Node n = new Node(nodesCurrentlyInCluster[i]);
       nodes.put(n.getNodeId(), n);
     }
+    log("### Cluster: thisNodeConnected -> " + this);
     fireThisNodeConnectedEvent();
   }
 
   public synchronized void thisNodeDisconnected() {
     nodes.clear();
+    log("### Cluster: thisNodeDisconnected -> " + this);
     if (thisNode != null) fireThisNodeDisconnectedEvent();
   }
 
   public synchronized void nodeConnected(String nodeId) {
     Node n = new Node(nodeId);
     nodes.put(n.getNodeId(), n);
-    if (thisNode != null) fireNodeConnectedEvent(nodeId);
+    log("### Cluster: nodeConnected -> " + this);
+    if (thisNode != null) {
+      fireNodeConnectedEvent(nodeId);
+    }
   }
 
   public synchronized void nodeDisconnected(String nodeId) {
     nodes.remove(nodeId);
+    log("### Cluster: nodeDisconnected -> " + this);
     if (thisNode != null) fireNodeDisconnectedEvent(nodeId);
-  }
-
-  private void log(Throwable e, String nodeId) {
-    // FIXME: switch to a real logger
-    CharArrayWriter caw = new CharArrayWriter();
-    PrintWriter pw = new PrintWriter(caw);
-    e.printStackTrace(pw);
-    pw.flush();
-    final String stack = new String(caw.toString());
-    System.err.println("\n\n###################################\n" + "Got Exception -> nodeId = " + nodeId
-                       + " cluster -> " + this + "\n" + "Exception = " + stack + "\n"
-                       + "###################################\n\n");
-
   }
 
   public synchronized String toString() {
@@ -135,5 +130,22 @@ public class Cluster {
     nodes.keySet().toArray(rv);
     Arrays.sort(rv);
     return rv;
+  }
+
+  private static void log(String string) {
+    if (debug) System.err.println(string);
+  }
+
+  private void log(Throwable e, String nodeId) {
+    // FIXME: switch to a real logger
+    CharArrayWriter caw = new CharArrayWriter();
+    PrintWriter pw = new PrintWriter(caw);
+    e.printStackTrace(pw);
+    pw.flush();
+    final String stack = new String(caw.toString());
+    System.err.println("\n\n###################################\n" + "Got Exception -> nodeId = " + nodeId
+                       + " cluster -> " + this + "\n" + "Exception = " + stack + "\n"
+                       + "###################################\n\n");
+
   }
 }
