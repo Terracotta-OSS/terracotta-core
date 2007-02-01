@@ -48,12 +48,22 @@ public class ClusterMembershipEventTestApp extends AbstractTransparentApp implem
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
 
-    spec.addRoot("nodeBarrier", "nodeBarrier");
+    spec.addRoot("stage1", "stage1");
+    spec.addRoot("stage2", "stage2");
+    spec.addRoot("stage3", "stage3");
+    spec.addRoot("stage4", "stage4");
+    spec.addRoot("stage5", "stage5");
+    spec.addRoot("stage6", "stage6");
 
   }
 
   private final int             initialNodeCount          = getParticipantCount();
-  private final CyclicBarrier   nodeBarrier               = new CyclicBarrier(initialNodeCount);
+  private final CyclicBarrier   stage1                    = new CyclicBarrier(initialNodeCount);
+  private final CyclicBarrier   stage2                    = new CyclicBarrier(initialNodeCount);
+  private final CyclicBarrier   stage3                    = new CyclicBarrier(initialNodeCount);
+  private final CyclicBarrier   stage4                    = new CyclicBarrier(initialNodeCount);
+  private final CyclicBarrier   stage5                    = new CyclicBarrier(initialNodeCount);
+  private final CyclicBarrier   stage6                    = new CyclicBarrier(initialNodeCount);
 
   // not shared..
   private final SynchronizedInt localNodeCount            = new SynchronizedInt(0);
@@ -75,8 +85,8 @@ public class ClusterMembershipEventTestApp extends AbstractTransparentApp implem
   }
 
   private void runTest() throws Throwable {
-    final boolean isMasterNode = nodeBarrier.barrier() == 0;
-
+    final boolean isMasterNode = stage1.barrier() == 0;
+    System.err.println("### thisNode=" + thisNode + " -> stage # 1");
     // stage - all nodes are up
     localThisNodeConBarrier = null;
     ManagerUtil.addClusterEventListener(this);
@@ -86,30 +96,37 @@ public class ClusterMembershipEventTestApp extends AbstractTransparentApp implem
     // all events generated so far have been consumed.
     checkCountTimed(localThisNodeConCallCount, 1, 1, 0, "localThisNodeConCallCount");
     checkCountTimed(localNodeCount, initialNodeCount, 10, 5 * 1000, "localNodeCount");
-    nodeBarrier.barrier();
+    stage2.barrier();
+    System.err.println("### thisNode=" + thisNode + " -> stage # 2");
 
     // stage - all nodes got thisNodeConnected/nodeConnected callback, and all nodes have a consistent view of the
     // cluster. Prepare to check nodeConnected
     localThisNodeConBarrier = null;
     localNodeConBarrier = callbackBarrier;
 
-    nodeBarrier.barrier();
+    stage3.barrier();
+    System.err.println("### thisNode=" + thisNode + " -> stage # 3");
+
     if (isMasterNode) {
       spawnNewClient();
     }
     callbackBarrier.barrier();
-    nodeBarrier.barrier();
+    stage4.barrier();
+    System.err.println("### thisNode=" + thisNode + " -> stage # 4");
+
 
     // stage - all nodes got nodeConnected callback. prepare to test nodeDisconnected event
     localNodeConBarrier = null;
     localNodeDisBarrier = callbackBarrier;
-    nodeBarrier.barrier();
+    stage5.barrier();
+    System.err.println("### thisNode=" + thisNode + " -> stage # 5");
 
     if (isMasterNode) {
       spawnNewClient();
     }
     callbackBarrier.barrier();
-    nodeBarrier.barrier();
+    stage6.barrier();
+    System.err.println("### thisNode=" + thisNode + " -> stage # 6");
 
   }
 
