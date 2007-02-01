@@ -44,8 +44,7 @@ public class SessionsHelper {
       }
     } else {
       File installRoot = ClassProcessorHelper.getTCInstallDir(false);
-      File sessionsDir = new File(installRoot, "common");
-      File sessionsLib = new File(sessionsDir, "lib");
+      File sessionsLib = new File(installRoot, "lib");
       File tcSessionLib = new File(sessionsLib, "session");
 
       if (!tcSessionLib.exists() || !tcSessionLib.isDirectory() || !tcSessionLib.canRead()) {

@@ -7,10 +7,10 @@ rem  All rights reserved.
 rem
 
 setlocal
-set topdir=%~d0%~p0..\..
+set topdir=%~d0%~p0..\..\..
 if "x%tc_install_dir%"=="x" set tc_install_dir=%topdir%\..
 cd %~d0%~p0
-call "%topdir%\libexec\tc-functions.bat" tc_install_dir "%tc_install_dir%" true
+call "%topdir%\bin\tc-functions.bat" tc_install_dir "%tc_install_dir%" true
 call "%topdir%\bin\dso-env.bat" -q tc-config.xml
-start call "%topdir%\libexec\tc-functions.bat" tc_java %tc_java_opts% -cp "classes" demo.inventory.Main %*
+start call "%topdir%\bin\tc-functions.bat" tc_java %tc_java_opts% -cp "classes" demo.inventory.Main %*
 endlocal

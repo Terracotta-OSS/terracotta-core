@@ -141,7 +141,7 @@ class StaticResources
     end
 
     def supported_documentation_formats
-        ['pdf', 'html', 'html.zip', 'txt']
+        ['pdf', 'html', 'html.zip', 'txt', 'xml']
     end
 
     def supported_platforms(build_environment)

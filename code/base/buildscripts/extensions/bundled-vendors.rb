@@ -15,7 +15,8 @@ module BundledVendors
         non_native = @build_environment.is_unix_like? ? ['*.bat', '*.cmd', '*.exe'] : '*.sh'
         destdir    = FilePath.new(product_directory, directory).ensure_directory
         ant.copy(:todir => destdir.to_s) do
-          ant.fileset(:dir => srcdir.to_s, :excludes => "**/.svn/**, **/.*, **/**/#{non_native.to_a.join(', **/**/')}")
+          #ant.fileset(:dir => srcdir.to_s, :excludes => "**/.svn/**, **/.*, **/**/#{non_native.to_a.join(', **/**/')}")
+          ant.fileset(:dir => srcdir.to_s, :excludes => "**/.svn/**, **/.*")
         end
     end
 

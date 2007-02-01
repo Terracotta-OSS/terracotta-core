@@ -12,7 +12,7 @@ public class WelcomeFrameBundle extends ListResourceBundle {
 
   static final Object[][] contents = {
     {"welcome.title", "Terracotta Welcome"},
-    {"dso.welcome.title", "Terracotta DSO Welcome"},
+    {"pojos.welcome.title", "Terracotta POJO's Welcome"},
     {"sessions.welcome.title", "Terracotta Sessions Welcome"},
     {"spring.welcome.title", "Terracotta for Spring Welcome"}
   };

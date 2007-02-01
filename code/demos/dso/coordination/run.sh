@@ -6,8 +6,8 @@
 #  All rights reserved.
 #
 
-TOPDIR=`dirname "$0"`/../..
-. "${TOPDIR}"/libexec/tc-functions.sh
+TOPDIR=`dirname "$0"`/../../..
+. "${TOPDIR}"/bin/tc-functions.sh
 
 TC_CONFIG_PATH="tc-config.xml"
 . "${TOPDIR}"/bin/dso-env.sh

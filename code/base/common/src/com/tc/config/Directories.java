@@ -69,7 +69,7 @@ public class Directories {
                                         + TC_INSTALL_ROOT_PROPERTY_NAME + "', does not actually exist.");
       }
 
-      File searchFile = new File(new File(new File(theFile, "common"), "lib"), "tc.jar");
+      File searchFile = new File(new File(theFile, "lib"), "tc.jar");
 
       if (!searchFile.exists() || !searchFile.isFile()) {
         // This is just so we don't have to have tc.jar around in development configurations.

@@ -181,7 +181,7 @@ public class SessionIntegratorFrame extends Frame {
   private static final String FS                        = System.getProperty("file.separator");
   private static final String DEFAULT_TC_INSTALL_DIR    = getDefaultInstallDir();
   private static final String TC_INSTALL_DIR            = System.getProperty("tc.install.dir", DEFAULT_TC_INSTALL_DIR);
-  private static final String DEFAULT_SANDBOX_ROOT      = TC_INSTALL_DIR+FS+"sessions"+FS+"sandbox";
+  private static final String DEFAULT_SANDBOX_ROOT      = TC_INSTALL_DIR+FS+"tools"+FS+"sessions"+FS+"configurator-sandbox";
   private static final String SANDBOX_ROOT              = System.getProperty("configurator.sandbox", DEFAULT_SANDBOX_ROOT);
   private static final String L2_LABEL                  = "Terracotta Server";
   private static final String L2_STARTUP_SCRIPT         = "start-tc-server"+SCRIPT_EXTENSION;
@@ -191,7 +191,7 @@ public class SessionIntegratorFrame extends Frame {
   private static final String WEBSERVER_STARTUP_SCRIPT  = "start-web-server"+SCRIPT_EXTENSION;
   private static final String WEBSERVER_SHUTDOWN_SCRIPT = "stop-web-server"+SCRIPT_EXTENSION;
   private static final int    SERVER2_PORT              = 9082;
-  private static final String HELP_DOC                  = TC_INSTALL_DIR+FS+"sessions"+FS+"docs"+FS+"TerracottaSessionsQuickStart.html";
+  private static final String HELP_DOC                  = TC_INSTALL_DIR+FS+"docs"+FS+"TerracottaSessionsQuickStart.html";
   
   private static final Cursor LINK_CURSOR     = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
   private static final Cursor STANDARD_CURSOR = Cursor.getDefaultCursor();

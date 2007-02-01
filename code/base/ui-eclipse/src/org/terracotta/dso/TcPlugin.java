@@ -245,7 +245,7 @@ public class TcPlugin extends AbstractUIPlugin
   }
 
   public IPath getLibDirPath() {
-    return getLocation().append("common").append("lib");
+    return getLocation().append("lib");
   }
   
   public void start(BundleContext context) throws Exception {

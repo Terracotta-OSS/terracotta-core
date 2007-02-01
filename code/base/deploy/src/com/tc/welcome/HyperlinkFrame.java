@@ -57,13 +57,15 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
   private TextPane            m_textPane;
   private String              m_product;
   private File                m_productDir;
+  private File                m_installRoot;
   private SimpleAttributeSet  m_underlineAttrSet;
     
   public HyperlinkFrame() {
     super();
     
-    m_product    = System.getProperty("tc.welcome.product", "dso");
-    m_productDir = new File(System.getProperty("tc.install-root"), m_product.toLowerCase());
+    m_installRoot = new File(System.getProperty("tc.install-root"));
+    m_product     = System.getProperty("tc.welcome.product", "Pojos");
+    m_productDir  = new File(getSamplesDir(), m_product.toLowerCase());
   
     MenuBar menubar = new MenuBar();
     Menu    menu;
@@ -199,13 +201,13 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
   private File m_bootPath;
   protected String getBootPath() throws UnsupportedVMException {
     if(m_bootPath == null) {
-      File bootPath = new File(System.getProperty("tc.install-root"), "common");
+      File bootPath = new File(System.getProperty("tc.install-root"));
       bootPath = new File(bootPath, "lib");
       bootPath = new File(bootPath, "dso-boot");
       bootPath = new File(bootPath, BootJarSignature.getBootJarNameForThisVM());
       m_bootPath = bootPath;
     }
-    
+
     return m_bootPath.getAbsolutePath();
   }
 
@@ -249,7 +251,7 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
   private File m_tcLib;
   protected File getTCLib() {
     if(m_tcLib == null) {
-      File file = new File(System.getProperty("tc.install-root"), "common");
+      File file = new File(System.getProperty("tc.install-root"));
       file = new File(file, "lib");
       file = new File(file, "tc.jar");
       m_tcLib = file;
@@ -260,7 +262,7 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
   private File m_samplesDir;
   protected File getSamplesDir() {
     if(m_samplesDir == null) {
-      m_samplesDir = new File(getProductDirectory(), "samples");
+      m_samplesDir = new File(m_installRoot, "samples");
     }
     return m_samplesDir;
   }
@@ -296,7 +298,8 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
   protected void runSampleScript(String scriptPath) {
     setTextPaneCursor(Cursor.WAIT_CURSOR);
     
-    File     dir  = new File(m_productDir, "samples");
+    //File     dir  = new File(m_productDir, "samples");
+    File     dir = m_productDir;
     String   ext  = Os.isWindows() ? ".bat" : ".sh";
     File     file = new File(dir, scriptPath+ext);
     String[] cmd  = {file.getAbsolutePath()};
@@ -317,9 +320,13 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
   }
   
   protected void runScript(String scriptName) {
+     runScript(scriptName, "bin");
+  }
+  
+  protected void runScript(String scriptName, String scriptRoot) {
     setTextPaneCursor(Cursor.WAIT_CURSOR);
     
-    File     dir  = new File(m_productDir, "bin");
+    File     dir  = new File(m_installRoot, scriptRoot);
     String   ext  = Os.isWindows() ? ".bat" : ".sh";
     File     file = new File(dir, scriptName+ext);
     String[] cmd  = {file.getAbsolutePath()};

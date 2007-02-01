@@ -4,12 +4,12 @@ short_internal_name: os.dso
 root_directory: terracotta
 bundled_jres:
   - jre15:
-      assert: '@build_environment.os_type !~ /^\s*darwin\s*$/i'
+      assert: '@build_environment.os_type =~ /^\s*windows\s*$/i'
       install_directory: jre
-      version: 1.5.0_09
+      version: 1.5.0_10
 bundled_demos:
   - dso:
-      install_directory: dso/samples
+      install_directory: samples/pojos
       manifest:
         - chatter
         - coordination
@@ -17,19 +17,41 @@ bundled_demos:
         - jtable
         - sharededitor
         - sharedqueue
+  - spring:
+      install_directory: samples/spring
+      manifest:
+        - coordination
+        - events
+        - jmx
+        - webflow
+  - sessions:
+      install_directory: samples/sessions
+      manifest:
+        - cart
+        - tasklist
+        - townsend
+bundled_vendors:
+   - tomcat-5.5.20:
+       install_directory: vendors/tomcat5.5
 bundled_components:
   - base:
       documentations:
-        distribute/notices:
+        notices:
           - readme
           - releasenotes
           - thirdpartylicenses
           - disclaimer
           - license
   - shared-base:
-      install_directory: dso
+      documentations:
+        install_directory: docs
+        guides:
+          - TerracottaDSOGuide
+          - TerracottaSpringGuide
+          - TerracottaSessionsQuickStart
+        references:
+          - tc-config-reference
   - common:
-      install_directory: common
       bootjar:
         install_directory: lib/dso-boot
         compiler_versions:
@@ -66,11 +88,6 @@ bundled_components:
         - management
         - thirdparty
         - ui-configurator 
-  - dso:
-      install_directory: dso
-      documentations:
-        distribute:
-          - TerracottaDSOGuide
 packaging:
   - tar:
       assert: '@build_environment.os_type !~ /^\s*windows\s*$/i'
@@ -80,10 +97,12 @@ packaging:
       assert: '@build_environment.has_installanywhere && (@build_environment.os_type =~ /^\s*windows\s*$/i)'
 postscripts:
   - fix-bin-perms
+  - inject-copyright
   - include-schemas:
       args:
-        - common/schema
-  - inject-copyright
+        - schema
   - make-srcdocs:
       args:
-        - dso/samples
+        - samples/pojos
+        - samples/spring
+        - samples/sessions

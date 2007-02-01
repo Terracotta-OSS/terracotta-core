@@ -43,7 +43,7 @@ public class ConfigHelper {
   private static final String FS = System.getProperty("file.separator");
   
   private static final String CUSTOM_BOOT_JAR_PATH =
-    TC_INSTALL_DIR+FS+"common"+FS+"lib"+FS+"dso-boot"+FS+getBootJarNameForThisVM();
+    TC_INSTALL_DIR+FS+"lib"+FS+"dso-boot"+FS+getBootJarNameForThisVM();
   
   private static final int DEFAULT_JMX_PORT = 9520;
   

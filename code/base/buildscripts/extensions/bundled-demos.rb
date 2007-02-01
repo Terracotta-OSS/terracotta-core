@@ -19,10 +19,12 @@ module BundledDemos
       non_native = @build_environment.is_unix_like? ? ['*.bat', '*.cmd', '*.exe'] : ['*.sh']
       destdir    = FilePath.new(product_directory, directory).ensure_directory
       includes   = ["#{manifest}#{wildcard}", (Dir.entries(srcdir.to_s).delete_if { |entry|
-          File.directory?(FilePath.new(srcdir, entry).to_s) || non_native.include?(entry.gsub(/.+\./, '*.'))
+          #File.directory?(FilePath.new(srcdir, entry).to_s) || non_native.include?(entry.gsub(/.+\./, '*.'))
+          File.directory?(FilePath.new(srcdir, entry).to_s)
         }).join(", ")].join(", ").sub(/, $/, "")
       ant.copy(:todir => destdir.to_s) do
-        ant.fileset(:dir => srcdir.to_s, :excludes => "**/.svn/**, **/.*, **/*/#{non_native.join(', **/*/')}", :includes => includes)
+        #ant.fileset(:dir => srcdir.to_s, :excludes => "**/.svn/**, **/.*, **/*/#{non_native.join(', **/*/')}", :includes => includes)
+        ant.fileset(:dir => srcdir.to_s, :excludes => "**/.svn/**, **/.*", :includes => includes)
       end
 
       # check that every demo listed in the manifest was copied

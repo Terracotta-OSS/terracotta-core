@@ -64,7 +64,7 @@ public class DSOSamplesFrame extends HyperlinkFrame {
   }
   
   protected URL getPage() {
-    return getClass().getResource("SamplesDSO.html");
+    return getClass().getResource("SamplesPojos.html");
   }
   
   private StreamReader createStreamReader(InputStream stream) {
@@ -143,7 +143,7 @@ public class DSOSamplesFrame extends HyperlinkFrame {
                            "-cp", "classes",
                            className};
 
-      Process      p          = exec(cmdarray, null, new File(getSamplesDir(), dirName));
+      Process      p          = exec(cmdarray, null, new File(getProductDirectory(), dirName));
       StreamReader errDrainer = createStreamReader(p.getErrorStream());
       StreamReader outDrainer = createStreamReader(p.getInputStream());
       
@@ -161,7 +161,7 @@ public class DSOSamplesFrame extends HyperlinkFrame {
     setTextPaneCursor(Cursor.WAIT_CURSOR);
     try {
       String   bootPath  = getBootPath();
-      File     dir       = new File(getSamplesDir(), "coordination");
+      File     dir       = new File(getProductDirectory(), "coordination");
       File     lib       = new File(dir, "lib");
       File     oswego    = new File(lib, "concurrent-1.3.4.jar");
       String   classpath = "classes"+System.getProperty("path.separator")+oswego.getAbsolutePath();
@@ -205,7 +205,7 @@ public class DSOSamplesFrame extends HyperlinkFrame {
     setTextPaneCursor(Cursor.WAIT_CURSOR);
     try {
       String   bootPath  = getBootPath();
-      File     dir       = new File(getSamplesDir(), "sharedqueue");
+      File     dir       = new File(getProductDirectory(), "sharedqueue");
       File     lib       = new File(dir, "lib");
       File     servlet   = new File(lib, "javax.servlet.jar");
       File     jetty     = new File(lib, "org.mortbay.jetty-4.2.20.jar");
@@ -270,18 +270,18 @@ public class DSOSamplesFrame extends HyperlinkFrame {
     }
     else if(action.equals("view_readme")) {
       String name = (String)anchor.getAttribute(HTML.Attribute.NAME);
-      File   dir  = new File(getSamplesDir(), name);
+      File   dir  = new File(getProductDirectory(), name);
       File   file = new File(dir, "readme.html");
       
-      openURL(file.getAbsolutePath());
+      openURL("file://" + file.getAbsolutePath());
     }
     else if(action.equals("browse_source")) {
       String name       = (String)anchor.getAttribute(HTML.Attribute.NAME);
-      File   sampleDir  = new File(getSamplesDir(), name);
+      File   sampleDir  = new File(getProductDirectory(), name);
       File   sampleDocs = new File(sampleDir, "docs");
       File   index      = new File(sampleDocs, "source.html");
       
-      openURL(index.getAbsolutePath());
+      openURL("file://" + index.getAbsolutePath());
     }
     else {
       openURL(action);

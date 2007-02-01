@@ -69,7 +69,7 @@
 	</target>
 
 	<target name="deploy.to.sandbox" if="is.live">
-		<property name="sandbox.home" value="${basedir}/../../sandbox"/>
+		<property name="sandbox.home" value="${basedir}/../../../tools/sessions/configurator-sandbox"/>
 		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/tomcat5.0/9081/webapps"   verbose="true"/>
 		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/tomcat5.0/9082/webapps"   verbose="true"/>
 		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/tomcat5.5/9081/webapps"   verbose="true"/>

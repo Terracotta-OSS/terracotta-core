@@ -2,85 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>currentDocument</key>
-	<string>buildscripts/extensions/distribution.rb</string>
 	<key>documents</key>
-	<array>
-		<dict>
-			<key>name</key>
-			<string>buildconfig</string>
-			<key>regexFolderFilter</key>
-			<string>!.*/(\.[^/]*|CVS|_darcs|_MTN|\{arch\}|blib|.*~\.nib|.*\.(framework|app|pbproj|pbxproj|xcode(proj)?|bundle))$</string>
-			<key>sourceDirectory</key>
-			<string>buildconfig</string>
-		</dict>
-		<dict>
-			<key>name</key>
-			<string>buildscripts</string>
-			<key>regexFolderFilter</key>
-			<string>!.*/(\.[^/]*|CVS|_darcs|_MTN|\{arch\}|blib|.*~\.nib|.*\.(framework|app|pbproj|pbxproj|xcode(proj)?|bundle))$</string>
-			<key>sourceDirectory</key>
-			<string>buildscripts</string>
-		</dict>
-		<dict>
-			<key>filename</key>
-			<string>appservers.yml</string>
-		</dict>
-		<dict>
-			<key>filename</key>
-			<string>build-tc.rb</string>
-		</dict>
-		<dict>
-			<key>filename</key>
-			<string>modules.def.yml</string>
-		</dict>
-		<dict>
-			<key>filename</key>
-			<string>services.modules.yml</string>
-		</dict>
-	</array>
+	<array/>
 	<key>fileHierarchyDrawerWidth</key>
 	<integer>200</integer>
 	<key>metaData</key>
-	<dict>
-		<key>buildscripts/extensions/distribution.rb</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>158</integer>
-			</dict>
-			<key>columnSelection</key>
-			<false/>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>107</integer>
-			<key>selectFrom</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>141</integer>
-			</dict>
-			<key>selectTo</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>158</integer>
-			</dict>
-		</dict>
-	</dict>
-	<key>openDocuments</key>
-	<array>
-		<string>buildscripts/extensions/distribution.rb</string>
-	</array>
+	<dict/>
 	<key>showFileHierarchyDrawer</key>
-	<true/>
+	<false/>
 	<key>windowFrame</key>
-	<string>{{203, 0}, {1177, 878}}</string>
+	<string>{{486, 201}, {348, 394}}</string>
 </dict>
 </plist>

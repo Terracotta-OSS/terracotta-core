@@ -13,7 +13,8 @@ module BundledComponents
         non_native = @build_environment.is_unix_like? ? ['*.bat', '*.cmd', '*.exe'] : ['*.sh']
         destdir    = FilePath.new(product_directory, directory).ensure_directory
         ant.copy(:todir => destdir.to_s) do
-          ant.fileset(:dir => srcdir, :excludes => "**/.svn/**, **/.*, **/*/#{non_native.join(', **/*/')}")
+          #ant.fileset(:dir => srcdir, :excludes => "**/.svn/**, **/.*, **/*/#{non_native.join(', **/*/')}")
+          ant.fileset(:dir => srcdir, :excludes => "**/.svn/**, **/.*")
         end
       end
     end
@@ -92,12 +93,14 @@ module BundledComponents
   end
 
   def add_documentations(component)
-    (component[:documentations] || {}).keys.each do |document_set|
+    documentations    = (component[:documentations] || {})
+    install_directory = documentations.delete(:install_directory.to_s)
+    documentations.keys.each do |document_set|
       document_set.each do |name|
         component[:documentations][name].each do |document|
           @static_resources.supported_documentation_formats.each do |format|
             srcfile = FilePath.new(@static_resources.documentations_directory, *(name.split('/') << "#{document}.#{format}")).to_s
-            destdir = docspath(component)
+            destdir = docspath(component, install_directory)
             case format
             when /html\.zip/
               # This has been moved to the new wiki

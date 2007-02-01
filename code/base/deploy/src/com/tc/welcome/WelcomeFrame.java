@@ -37,7 +37,7 @@ public class WelcomeFrame extends HyperlinkFrame {
                            "-cp", getTCLib().getAbsolutePath(),
                            "com.tc.welcome.DSOSamplesFrame"};
 
-      Process            p          = exec(cmdarray, null, getSamplesDir());
+      Process            p          = exec(cmdarray, null, getProductDirectory());
       InputStreamDrainer errDrainer = new InputStreamDrainer(p.getErrorStream());
       InputStreamDrainer outDrainer = new InputStreamDrainer(p.getInputStream());
       
@@ -51,22 +51,21 @@ public class WelcomeFrame extends HyperlinkFrame {
 
   protected void hyperlinkActivated(AttributeSet anchor, String action) {
     if(action.equals("show_samples")) {
-      if("DSO".equals(getProduct())) {
+      if("Pojos".equals(getProduct())) {
         runDSOSampleLauncher();
       } else {
-        File file = new File(getProductDirectory(), "samples");
-        file = new File(file, "samples.html");
+        File file = new File(getProductDirectory(), "samples.html");
         
-        openURL(file.getAbsolutePath());
+        openURL("file://" + file.getAbsolutePath());
       }
     }
     else if(action.equals("run_console")) {
       startFakeWaitPeriod();
-      runScript("tc-admin");
+      runScript("admin");
     }
     else if(action.equals("run_configurator")) {
       startFakeWaitPeriod();
-      runScript("tc-configurator");
+      runScript("sessions-configurator", "tools" + System.getProperty("file.separator") + "sessions");
     }
     else if(action.equals("show_guide")) {
       File   file = new File(getProductDirectory(), "docs");
@@ -82,7 +81,10 @@ public class WelcomeFrame extends HyperlinkFrame {
   }
 
   public static void main(String[] args) {
-    ApplicationManager.parseLAFArgs(args);
+    args = ApplicationManager.parseLAFArgs(args);
+    if(args.length > 0) {
+      System.setProperty("tc.welcome.product", args[0]);
+    }
     WelcomeFrame frame = new WelcomeFrame();
     frame.setResizable(false);
   }
