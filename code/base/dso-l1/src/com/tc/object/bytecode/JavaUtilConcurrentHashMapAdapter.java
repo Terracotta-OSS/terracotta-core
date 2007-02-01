@@ -9,6 +9,7 @@ import com.tc.asm.Label;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.asm.Type;
 import com.tc.asm.commons.LocalVariablesSorter;
 
 public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Opcodes {
@@ -25,12 +26,37 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
   private final static String SEGMENT_TC_PUT_METHOD_DESC          = "(Ljava/lang/Object;ILjava/lang/Object;Z)Ljava/lang/Object;";
   private final static String TC_IS_DSO_HASH_REQUIRED_METHOD_NAME = ByteCodeUtil.TC_METHOD_PREFIX + "isDsoHashRequired";
   private final static String TC_IS_DSO_HASH_REQUIRED_METHOD_DESC = "(Ljava/lang/Object;)Z";
+  private final static String TC_FULLY_LOCK_METHOD_NAME = ByteCodeUtil.TC_METHOD_PREFIX + "fullyLock";
+  private final static String TC_FULLY_LOCK_METHOD_DESC = "()V";
+  private final static String TC_FULLY_UNLOCK_METHOD_NAME = ByteCodeUtil.TC_METHOD_PREFIX + "fullyUnLock";
+  private final static String TC_FULLY_UNLOCK_METHOD_DESC = "()V";
 
   public JavaUtilConcurrentHashMapAdapter(ClassVisitor cv) {
     super(cv);
   }
 
+  /**
+   * We need to instrument the size(), isEmpty(), and containsValue() methods because the original implementation in
+   * jdk 1.5 has an optimization which uses a volatile variable and does not require locking of the segments. It
+   * resorts to locking only after several unsucessful attempts. For instance, the original implementation of the
+   * size() method looks at the count and mod_count volatile variables of each segment and makes sure that there
+   * is no update during executing the size() method. If it detects any update while the size() method is being executed,
+   * it will resort to locking.
+   * 
+   * Since ConcurrentHashMap is supported logically, it is possible that while the application is obtaining the size of the
+   * map while there are still pending updates. Therefore, when ConcurrentHashMap is shared, the instrumented code will
+   * always use an locking scheme to make sure all updates are applied before returing the size. The same is true for
+   * isEmpty() and containsValue methods().
+   */
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+    if ("size".equals(name) && "()I".equals(desc)) {
+      return addWrapperMethod(access, name, desc, signature, exceptions);
+    } else if ("isEmpty".equals(name) && "()Z".equals(desc)) {
+      return addWrapperMethod(access, name, desc, signature, exceptions);
+    } else if ("containsValue".equals(name) && "(Ljava/lang/Object;)Z".equals(desc)) {
+      return addWrapperMethod(access, name, desc, signature, exceptions);
+    }
+    
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
     if ("entrySet".equals(name) && "()Ljava/util/Set;".equals(desc)) {
       return new EntrySetMethodAdapter(mv);
@@ -48,11 +74,7 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
       mv = new SimpleReplaceMethodAdapter(mv);
     } else if ("replace".equals(name) && "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z".equals(desc)) {
       mv = new ReplaceMethodAdapter(mv);
-    } else if ("size".equals(name) && "()I".equals(desc)) {
-      rewriteSizeMethod(mv);
-    } else if ("isEmpty".equals(name) && "()Z".equals(desc)) {
-      rewriteIsEmpty(mv);
-    }
+    } 
     
     return new ConcurrentHashMapMethodAdapter(access, desc, mv);
   }
@@ -63,403 +85,94 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     createTCForcedHashMethod();
     createTCDsoRequiredMethod();
     createTCRehashAndSupportMethods();
+    createTCFullyLockMethod();
+    createTCFullyUnLockMethod();
     super.visitEnd();
   }
   
-  private void rewriteIsEmpty(MethodVisitor mv) {
+  private String getNewName(String methodName) {
+    return ByteCodeUtil.TC_METHOD_PREFIX + methodName;
+  }
+  
+  private MethodVisitor addWrapperMethod(int access, String name, String desc, String signature, String[] exceptions) {
+    createWrapperMethod(access, name, desc, signature, exceptions);
+    return cv.visitMethod(ACC_PRIVATE, getNewName(name), desc, signature, exceptions);
+  }
+  
+  private void createWrapperMethod(int access, String name, String desc, String signature, String[] exceptions) {
+    Type[] params = Type.getArgumentTypes(desc);
+    
+    MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions);
     mv.visitCode();
     Label l0 = new Label();
-    mv.visitLabel(l0);
-    mv.visitLineNumber(675, l0);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap", "segments", "[Ljava/util/concurrent/ConcurrentHashMap$Segment;");
-    mv.visitVarInsn(ASTORE, 1);
     Label l1 = new Label();
-    mv.visitLabel(l1);
-    mv.visitLineNumber(682, l1);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitInsn(ARRAYLENGTH);
-    mv.visitIntInsn(NEWARRAY, T_INT);
-    mv.visitVarInsn(ASTORE, 2);
     Label l2 = new Label();
-    mv.visitLabel(l2);
-    mv.visitLineNumber(683, l2);
-    mv.visitInsn(ICONST_0);
-    mv.visitVarInsn(ISTORE, 3);
+    mv.visitTryCatchBlock(l0, l1, l2, null);
     Label l3 = new Label();
     mv.visitLabel(l3);
-    mv.visitLineNumber(684, l3);
-    mv.visitInsn(ICONST_0);
-    mv.visitVarInsn(ISTORE, 4);
+    mv.visitLineNumber(805, l3);
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "isManaged", "(Ljava/lang/Object;)Z");
+    mv.visitVarInsn(ISTORE, 2);
     Label l4 = new Label();
     mv.visitLabel(l4);
+    mv.visitLineNumber(806, l4);
+    mv.visitVarInsn(ILOAD, 2);
+    mv.visitJumpInsn(IFEQ, l0);
     Label l5 = new Label();
-    mv.visitJumpInsn(GOTO, l5);
+    mv.visitLabel(l5);
+    mv.visitLineNumber(807, l5);
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitMethodInsn(INVOKESPECIAL, "java/util/concurrent/ConcurrentHashMap", TC_FULLY_LOCK_METHOD_NAME, TC_FULLY_LOCK_METHOD_DESC);
+    mv.visitLabel(l0);
+    mv.visitLineNumber(810, l0);
+    mv.visitVarInsn(ALOAD, 0);
+    for (int i = 0; i < params.length; i++) {
+      mv.visitVarInsn(params[i].getOpcode(ILOAD), i + 1);
+    }
+    mv.visitMethodInsn(INVOKESPECIAL, "java/util/concurrent/ConcurrentHashMap", getNewName(name), desc);
+    mv.visitVarInsn(ISTORE, 4);
+    mv.visitLabel(l1);
+    mv.visitLineNumber(812, l1);
+    mv.visitVarInsn(ILOAD, 2);
     Label l6 = new Label();
-    mv.visitLabel(l6);
-    mv.visitLineNumber(685, l6);
-    mv.visitFieldInsn(GETSTATIC, "com/tc/util/DebugUtil", "DEBUG", "Z");
+    mv.visitJumpInsn(IFEQ, l6);
     Label l7 = new Label();
-    mv.visitJumpInsn(IFEQ, l7);
+    mv.visitLabel(l7);
+    mv.visitLineNumber(813, l7);
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitMethodInsn(INVOKESPECIAL, "java/util/concurrent/ConcurrentHashMap", TC_FULLY_UNLOCK_METHOD_NAME, TC_FULLY_UNLOCK_METHOD_DESC);
+    mv.visitLabel(l6);
+    mv.visitLineNumber(810, l6);
+    mv.visitVarInsn(ILOAD, 4);
+    mv.visitInsn(IRETURN);
+    mv.visitLabel(l2);
+    mv.visitLineNumber(811, l2);
+    mv.visitVarInsn(ASTORE, 3);
     Label l8 = new Label();
     mv.visitLabel(l8);
-    mv.visitLineNumber(686, l8);
-    mv.visitFieldInsn(GETSTATIC, "java/lang/System", "err", "Ljava/io/PrintStream;");
-    mv.visitTypeInsn(NEW, "java/lang/StringBuilder");
-    mv.visitInsn(DUP);
-    mv.visitLdcInsn("Node id: ");
-    mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "(Ljava/lang/String;)V");
-    mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "getClientID", "()Ljava/lang/String;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-    mv.visitLdcInsn(" segment ");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-    mv.visitVarInsn(ILOAD, 4);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;");
-    mv.visitLdcInsn(".count: ");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ILOAD, 4);
-    mv.visitInsn(AALOAD);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$Segment", "count", "I");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
-    mv.visitLabel(l7);
-    mv.visitLineNumber(688, l7);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ILOAD, 4);
-    mv.visitInsn(AALOAD);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$Segment", "count", "I");
+    mv.visitLineNumber(812, l8);
+    mv.visitVarInsn(ILOAD, 2);
     Label l9 = new Label();
     mv.visitJumpInsn(IFEQ, l9);
-    mv.visitInsn(ICONST_0);
-    mv.visitInsn(IRETURN);
-    mv.visitLabel(l9);
-    mv.visitLineNumber(689, l9);
-    mv.visitVarInsn(ILOAD, 3);
-    mv.visitVarInsn(ALOAD, 2);
-    mv.visitVarInsn(ILOAD, 4);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ILOAD, 4);
-    mv.visitInsn(AALOAD);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$Segment", "modCount", "I");
-    mv.visitInsn(DUP_X2);
-    mv.visitInsn(IASTORE);
-    mv.visitInsn(IADD);
-    mv.visitVarInsn(ISTORE, 3);
     Label l10 = new Label();
     mv.visitLabel(l10);
-    mv.visitLineNumber(684, l10);
-    mv.visitIincInsn(4, 1);
-    mv.visitLabel(l5);
-    mv.visitVarInsn(ILOAD, 4);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitInsn(ARRAYLENGTH);
-    mv.visitJumpInsn(IF_ICMPLT, l6);
+    mv.visitLineNumber(813, l10);
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitMethodInsn(INVOKESPECIAL, "java/util/concurrent/ConcurrentHashMap", TC_FULLY_UNLOCK_METHOD_NAME, TC_FULLY_UNLOCK_METHOD_DESC);
+    mv.visitLabel(l9);
+    mv.visitLineNumber(815, l9);
+    mv.visitVarInsn(ALOAD, 3);
+    mv.visitInsn(ATHROW);
     Label l11 = new Label();
     mv.visitLabel(l11);
-    mv.visitLineNumber(694, l11);
-    mv.visitVarInsn(ILOAD, 3);
-    Label l12 = new Label();
-    mv.visitJumpInsn(IFEQ, l12);
-    Label l13 = new Label();
-    mv.visitLabel(l13);
-    mv.visitLineNumber(695, l13);
-    mv.visitInsn(ICONST_0);
-    mv.visitVarInsn(ISTORE, 4);
-    Label l14 = new Label();
-    mv.visitLabel(l14);
-    Label l15 = new Label();
-    mv.visitJumpInsn(GOTO, l15);
-    Label l16 = new Label();
-    mv.visitLabel(l16);
-    mv.visitLineNumber(696, l16);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ILOAD, 4);
-    mv.visitInsn(AALOAD);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$Segment", "count", "I");
-    Label l17 = new Label();
-    mv.visitJumpInsn(IFNE, l17);
-    mv.visitVarInsn(ALOAD, 2);
-    mv.visitVarInsn(ILOAD, 4);
-    mv.visitInsn(IALOAD);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ILOAD, 4);
-    mv.visitInsn(AALOAD);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$Segment", "modCount", "I");
-    Label l18 = new Label();
-    mv.visitJumpInsn(IF_ICMPEQ, l18);
-    mv.visitLabel(l17);
-    mv.visitInsn(ICONST_0);
-    mv.visitInsn(IRETURN);
-    mv.visitLabel(l18);
-    mv.visitLineNumber(695, l18);
-    mv.visitIincInsn(4, 1);
-    mv.visitLabel(l15);
-    mv.visitVarInsn(ILOAD, 4);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitInsn(ARRAYLENGTH);
-    mv.visitJumpInsn(IF_ICMPLT, l16);
-    mv.visitLabel(l12);
-    mv.visitLineNumber(699, l12);
-    mv.visitInsn(ICONST_1);
-    mv.visitInsn(IRETURN);
-    Label l19 = new Label();
-    mv.visitLabel(l19);
-    mv.visitLocalVariable("this", "Ljava/util/concurrent/ConcurrentHashMap;", "Ljava/util/concurrent/ConcurrentHashMap<TK;TV;>;", l0, l19, 0);
-    mv.visitLocalVariable("segments", "[Ljava/util/concurrent/ConcurrentHashMap$Segment;", null, l1, l19, 1);
-    mv.visitLocalVariable("mc", "[I", null, l2, l19, 2);
-    mv.visitLocalVariable("mcsum", "I", null, l3, l19, 3);
-    mv.visitLocalVariable("i", "I", null, l4, l11, 4);
-    mv.visitLocalVariable("i", "I", null, l14, l12, 4);
-    mv.visitMaxs(5, 5);
+    mv.visitLocalVariable("this", "Ljava/util/concurrent/ConcurrentHashMap;", "Ljava/util/concurrent/ConcurrentHashMap<TK;TV;>;", l3, l11, 0);
+    mv.visitLocalVariable("value", "Ljava/lang/Object;", null, l3, l11, 1);
+    mv.visitLocalVariable("isManaged", "Z", null, l4, l11, 2);
+    mv.visitMaxs(2, 5);
     mv.visitEnd();
   }
   
-  private void rewriteSizeMethod(MethodVisitor mv) {
-    mv.visitCode();
-    Label l0 = new Label();
-    mv.visitLabel(l0);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap", "segments", "[Ljava/util/concurrent/ConcurrentHashMap$Segment;");
-    mv.visitVarInsn(ASTORE, 1);
-    Label l1 = new Label();
-    mv.visitLabel(l1);
-    mv.visitInsn(LCONST_0);
-    mv.visitVarInsn(LSTORE, 2);
-    Label l2 = new Label();
-    mv.visitLabel(l2);
-    mv.visitInsn(LCONST_0);
-    mv.visitVarInsn(LSTORE, 4);
-    Label l3 = new Label();
-    mv.visitLabel(l3);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitInsn(ARRAYLENGTH);
-    mv.visitIntInsn(NEWARRAY, T_INT);
-    mv.visitVarInsn(ASTORE, 6);
-    Label l4 = new Label();
-    mv.visitLabel(l4);
-    mv.visitInsn(ICONST_0);
-    mv.visitVarInsn(ISTORE, 7);
-    Label l5 = new Label();
-    mv.visitLabel(l5);
-    Label l6 = new Label();
-    mv.visitJumpInsn(GOTO, l6);
-    Label l7 = new Label();
-    mv.visitLabel(l7);
-    mv.visitInsn(LCONST_0);
-    mv.visitVarInsn(LSTORE, 4);
-    Label l8 = new Label();
-    mv.visitLabel(l8);
-    mv.visitInsn(LCONST_0);
-    mv.visitVarInsn(LSTORE, 2);
-    Label l9 = new Label();
-    mv.visitLabel(l9);
-    mv.visitInsn(ICONST_0);
-    mv.visitVarInsn(ISTORE, 8);
-    Label l10 = new Label();
-    mv.visitLabel(l10);
-    mv.visitInsn(ICONST_0);
-    mv.visitVarInsn(ISTORE, 9);
-    Label l11 = new Label();
-    mv.visitLabel(l11);
-    Label l12 = new Label();
-    mv.visitJumpInsn(GOTO, l12);
-    Label l13 = new Label();
-    mv.visitLabel(l13);
-    mv.visitVarInsn(LLOAD, 2);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ILOAD, 9);
-    mv.visitInsn(AALOAD);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$Segment", "count", "I");
-    mv.visitInsn(I2L);
-    mv.visitInsn(LADD);
-    mv.visitVarInsn(LSTORE, 2);
-    Label l16 = new Label();
-    mv.visitLabel(l16);
-    mv.visitVarInsn(ILOAD, 8);
-    mv.visitVarInsn(ALOAD, 6);
-    mv.visitVarInsn(ILOAD, 9);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ILOAD, 9);
-    mv.visitInsn(AALOAD);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$Segment", "modCount", "I");
-    mv.visitInsn(DUP_X2);
-    mv.visitInsn(IASTORE);
-    mv.visitInsn(IADD);
-    mv.visitVarInsn(ISTORE, 8);
-    Label l17 = new Label();
-    mv.visitLabel(l17);
-    mv.visitIincInsn(9, 1);
-    mv.visitLabel(l12);
-    mv.visitVarInsn(ILOAD, 9);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitInsn(ARRAYLENGTH);
-    mv.visitJumpInsn(IF_ICMPLT, l13);
-    Label l18 = new Label();
-    mv.visitLabel(l18);
-    mv.visitVarInsn(ILOAD, 8);
-    Label l19 = new Label();
-    mv.visitJumpInsn(IFEQ, l19);
-    Label l20 = new Label();
-    mv.visitLabel(l20);
-    mv.visitInsn(ICONST_0);
-    mv.visitVarInsn(ISTORE, 9);
-    Label l21 = new Label();
-    mv.visitLabel(l21);
-    Label l22 = new Label();
-    mv.visitJumpInsn(GOTO, l22);
-    Label l23 = new Label();
-    mv.visitLabel(l23);
-    mv.visitVarInsn(LLOAD, 4);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ILOAD, 9);
-    mv.visitInsn(AALOAD);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$Segment", "count", "I");
-    mv.visitInsn(I2L);
-    mv.visitInsn(LADD);
-    mv.visitVarInsn(LSTORE, 4);
-    Label l24 = new Label();
-    mv.visitLabel(l24);
-    mv.visitVarInsn(ALOAD, 6);
-    mv.visitVarInsn(ILOAD, 9);
-    mv.visitInsn(IALOAD);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ILOAD, 9);
-    mv.visitInsn(AALOAD);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$Segment", "modCount", "I");
-    Label l25 = new Label();
-    mv.visitJumpInsn(IF_ICMPEQ, l25);
-    Label l26 = new Label();
-    mv.visitLabel(l26);
-    mv.visitLdcInsn(new Long(-1L));
-    mv.visitVarInsn(LSTORE, 4);
-    Label l27 = new Label();
-    mv.visitLabel(l27);
-    mv.visitJumpInsn(GOTO, l19);
-    mv.visitLabel(l25);
-    mv.visitIincInsn(9, 1);
-    mv.visitLabel(l22);
-    mv.visitVarInsn(ILOAD, 9);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitInsn(ARRAYLENGTH);
-    mv.visitJumpInsn(IF_ICMPLT, l23);
-    mv.visitLabel(l19);
-    mv.visitVarInsn(LLOAD, 4);
-    mv.visitVarInsn(LLOAD, 2);
-    mv.visitInsn(LCMP);
-    Label l28 = new Label();
-    mv.visitJumpInsn(IFNE, l28);
-    Label l29 = new Label();
-    mv.visitLabel(l29);
-    Label l30 = new Label();
-    mv.visitJumpInsn(GOTO, l30);
-    mv.visitLabel(l28);
-    mv.visitIincInsn(7, 1);
-    mv.visitLabel(l6);
-    mv.visitVarInsn(ILOAD, 7);
-    mv.visitInsn(ICONST_2);
-    mv.visitJumpInsn(IF_ICMPLT, l7);
-    mv.visitLabel(l30);
-    mv.visitVarInsn(LLOAD, 4);
-    mv.visitVarInsn(LLOAD, 2);
-    mv.visitInsn(LCMP);
-    Label l31 = new Label();
-    mv.visitJumpInsn(IFEQ, l31);
-    Label l32 = new Label();
-    mv.visitLabel(l32);
-    mv.visitInsn(LCONST_0);
-    mv.visitVarInsn(LSTORE, 2);
-    Label l33 = new Label();
-    mv.visitLabel(l33);
-    mv.visitInsn(ICONST_0);
-    mv.visitVarInsn(ISTORE, 7);
-    Label l34 = new Label();
-    mv.visitLabel(l34);
-    Label l35 = new Label();
-    mv.visitJumpInsn(GOTO, l35);
-    Label l36 = new Label();
-    mv.visitLabel(l36);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ILOAD, 7);
-    mv.visitInsn(AALOAD);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/ConcurrentHashMap$Segment", "lock", "()V");
-    Label l37 = new Label();
-    mv.visitLabel(l37);
-    mv.visitIincInsn(7, 1);
-    mv.visitLabel(l35);
-    mv.visitVarInsn(ILOAD, 7);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitInsn(ARRAYLENGTH);
-    mv.visitJumpInsn(IF_ICMPLT, l36);
-    Label l38 = new Label();
-    mv.visitLabel(l38);
-    mv.visitInsn(ICONST_0);
-    mv.visitVarInsn(ISTORE, 7);
-    Label l39 = new Label();
-    mv.visitLabel(l39);
-    Label l40 = new Label();
-    mv.visitJumpInsn(GOTO, l40);
-    Label l41 = new Label();
-    mv.visitLabel(l41);
-    mv.visitVarInsn(LLOAD, 2);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ILOAD, 7);
-    mv.visitInsn(AALOAD);
-    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$Segment", "count", "I");
-    mv.visitInsn(I2L);
-    mv.visitInsn(LADD);
-    mv.visitVarInsn(LSTORE, 2);
-    Label l42 = new Label();
-    mv.visitLabel(l42);
-    mv.visitIincInsn(7, 1);
-    mv.visitLabel(l40);
-    mv.visitVarInsn(ILOAD, 7);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitInsn(ARRAYLENGTH);
-    mv.visitJumpInsn(IF_ICMPLT, l41);
-    Label l45 = new Label();
-    mv.visitLabel(l45);
-    mv.visitInsn(ICONST_0);
-    mv.visitVarInsn(ISTORE, 7);
-    Label l46 = new Label();
-    mv.visitLabel(l46);
-    Label l47 = new Label();
-    mv.visitJumpInsn(GOTO, l47);
-    Label l48 = new Label();
-    mv.visitLabel(l48);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ILOAD, 7);
-    mv.visitInsn(AALOAD);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/ConcurrentHashMap$Segment", "unlock", "()V");
-    Label l49 = new Label();
-    mv.visitLabel(l49);
-    mv.visitIincInsn(7, 1);
-    mv.visitLabel(l47);
-    mv.visitVarInsn(ILOAD, 7);
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitInsn(ARRAYLENGTH);
-    mv.visitJumpInsn(IF_ICMPLT, l48);
-    mv.visitLabel(l31);
-    mv.visitVarInsn(LLOAD, 2);
-    mv.visitLdcInsn(new Long(2147483647L));
-    mv.visitInsn(LCMP);
-    Label l50 = new Label();
-    mv.visitJumpInsn(IFLE, l50);
-    Label l51 = new Label();
-    mv.visitLabel(l51);
-    mv.visitLdcInsn(new Integer(2147483647));
-    mv.visitInsn(IRETURN);
-    mv.visitLabel(l50);
-    mv.visitVarInsn(LLOAD, 2);
-    mv.visitInsn(L2I);
-    mv.visitInsn(IRETURN);
-    Label l52 = new Label();
-    mv.visitLabel(l52);
-    mv.visitMaxs(0, 0);
-    mv.visitEnd();
-  }
-
   private void rewriteSegmentForMethod(MethodVisitor mv) {
     mv.visitCode();
     Label l0 = new Label();
@@ -483,6 +196,100 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
     Label l2 = new Label();
     mv.visitLabel(l2);
     mv.visitMaxs(0, 0);
+    mv.visitEnd();
+  }
+  
+  private void createTCFullyLockMethod() {
+    MethodVisitor mv = cv.visitMethod(ACC_PRIVATE, TC_FULLY_LOCK_METHOD_NAME, TC_FULLY_LOCK_METHOD_DESC, null, null);
+    mv.visitCode();
+    Label l0 = new Label();
+    mv.visitLabel(l0);
+    mv.visitLineNumber(789, l0);
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap", "segments", "[Ljava/util/concurrent/ConcurrentHashMap$Segment;");
+    mv.visitVarInsn(ASTORE, 1);
+    Label l1 = new Label();
+    mv.visitLabel(l1);
+    mv.visitLineNumber(790, l1);
+    mv.visitInsn(ICONST_0);
+    mv.visitVarInsn(ISTORE, 2);
+    Label l2 = new Label();
+    mv.visitLabel(l2);
+    Label l3 = new Label();
+    mv.visitJumpInsn(GOTO, l3);
+    Label l4 = new Label();
+    mv.visitLabel(l4);
+    mv.visitLineNumber(791, l4);
+    mv.visitVarInsn(ALOAD, 1);
+    mv.visitVarInsn(ILOAD, 2);
+    mv.visitInsn(AALOAD);
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/ConcurrentHashMap$Segment", "lock", "()V");
+    Label l5 = new Label();
+    mv.visitLabel(l5);
+    mv.visitLineNumber(790, l5);
+    mv.visitIincInsn(2, 1);
+    mv.visitLabel(l3);
+    mv.visitVarInsn(ILOAD, 2);
+    mv.visitVarInsn(ALOAD, 1);
+    mv.visitInsn(ARRAYLENGTH);
+    mv.visitJumpInsn(IF_ICMPLT, l4);
+    Label l6 = new Label();
+    mv.visitLabel(l6);
+    mv.visitLineNumber(792, l6);
+    mv.visitInsn(RETURN);
+    Label l7 = new Label();
+    mv.visitLabel(l7);
+    mv.visitLocalVariable("this", "Ljava/util/concurrent/ConcurrentHashMap;", "Ljava/util/concurrent/ConcurrentHashMap<TK;TV;>;", l0, l7, 0);
+    mv.visitLocalVariable("segments", "[Ljava/util/concurrent/ConcurrentHashMap$Segment;", null, l1, l7, 1);
+    mv.visitLocalVariable("i", "I", null, l2, l6, 2);
+    mv.visitMaxs(2, 3);
+    mv.visitEnd();
+  }
+  
+  private void createTCFullyUnLockMethod() {
+    MethodVisitor mv = cv.visitMethod(ACC_PRIVATE, TC_FULLY_UNLOCK_METHOD_NAME, TC_FULLY_UNLOCK_METHOD_DESC, null, null);
+    mv.visitCode();
+    Label l0 = new Label();
+    mv.visitLabel(l0);
+    mv.visitLineNumber(795, l0);
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap", "segments", "[Ljava/util/concurrent/ConcurrentHashMap$Segment;");
+    mv.visitVarInsn(ASTORE, 1);
+    Label l1 = new Label();
+    mv.visitLabel(l1);
+    mv.visitLineNumber(796, l1);
+    mv.visitInsn(ICONST_0);
+    mv.visitVarInsn(ISTORE, 2);
+    Label l2 = new Label();
+    mv.visitLabel(l2);
+    Label l3 = new Label();
+    mv.visitJumpInsn(GOTO, l3);
+    Label l4 = new Label();
+    mv.visitLabel(l4);
+    mv.visitLineNumber(797, l4);
+    mv.visitVarInsn(ALOAD, 1);
+    mv.visitVarInsn(ILOAD, 2);
+    mv.visitInsn(AALOAD);
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/ConcurrentHashMap$Segment", "unlock", "()V");
+    Label l5 = new Label();
+    mv.visitLabel(l5);
+    mv.visitLineNumber(796, l5);
+    mv.visitIincInsn(2, 1);
+    mv.visitLabel(l3);
+    mv.visitVarInsn(ILOAD, 2);
+    mv.visitVarInsn(ALOAD, 1);
+    mv.visitInsn(ARRAYLENGTH);
+    mv.visitJumpInsn(IF_ICMPLT, l4);
+    Label l6 = new Label();
+    mv.visitLabel(l6);
+    mv.visitLineNumber(798, l6);
+    mv.visitInsn(RETURN);
+    Label l7 = new Label();
+    mv.visitLabel(l7);
+    mv.visitLocalVariable("this", "Ljava/util/concurrent/ConcurrentHashMap;", "Ljava/util/concurrent/ConcurrentHashMap<TK;TV;>;", l0, l7, 0);
+    mv.visitLocalVariable("segments", "[Ljava/util/concurrent/ConcurrentHashMap$Segment;", null, l1, l7, 1);
+    mv.visitLocalVariable("i", "I", null, l2, l6, 2);
+    mv.visitMaxs(2, 3);
     mv.visitEnd();
   }
 
