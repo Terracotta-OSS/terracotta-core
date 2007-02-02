@@ -6,7 +6,6 @@ package com.tctest.spring.integrationtests.framework;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.tc.process.LinkedJavaProcessPollingAgent;
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
@@ -56,17 +55,6 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
 
   protected void tearDown() throws Exception {
     ServerManagerUtil.stop(serverManager);
-    try {
-      Thread.sleep(5000);
-    } catch (InterruptedException e) {
-      // ignore
-    }
-    LinkedJavaProcessPollingAgent.destroy();
-    try {
-      Thread.sleep(5000);
-    } catch (InterruptedException e) {
-      // ignore
-    }
     super.tearDown();
   }
 
