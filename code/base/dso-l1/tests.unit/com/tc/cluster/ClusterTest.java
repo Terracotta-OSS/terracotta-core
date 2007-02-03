@@ -20,18 +20,6 @@ public class ClusterTest extends TestCase {
   }
 
   public void testGetThisNode() {
-    // 0
-    assertNull(cluster.getThisNode());
-
-    // 1
-    cluster.nodeConnected("someNode");
-    assertNull(cluster.getThisNode());
-
-    // 2
-    cluster.nodeDisconnected("someNode");
-    assertNull(cluster.getThisNode());
-
-    // 3
     final String thisNodeId = "xxxyyyzzz";
     cluster.thisNodeConnected(thisNodeId, new String[] { "someNode" });
     assertNotNull(cluster.getThisNode());
@@ -73,14 +61,12 @@ public class ClusterTest extends TestCase {
   }
 
   public void testThisNodeDisconnected() {
-    cluster.addClusterEventListener(cel);
-    cluster.thisNodeDisconnected();
-    // no callbacks should be made if thisNode has not been connected yet
-    assertNull(cel.getLastMethodCalled());
-
     final String thisNodeId = "1";
     final String[] nodeIds = new String[] { thisNodeId };
     cluster.thisNodeConnected(thisNodeId, nodeIds);
+
+    cluster.addClusterEventListener(cel);
+
     assertEquals("thisNodeConnected", cel.getLastMethodCalled());
     assertEquals(thisNodeId, cel.getLastString());
     assertTrue(Arrays.equals(nodeIds, cel.getLastStringArray()));
@@ -117,89 +103,115 @@ public class ClusterTest extends TestCase {
 
   }
 
-  public void testNodeDisconnected() {
-    // no callbacks should be made if this node has not been connected
-    cluster.addClusterEventListener(cel);
-    final String nodeId = "1";
-    cluster.nodeDisconnected(nodeId);
-    assertNull(cel.getLastMethodCalled());
-    assertNull(cel.getLastStringArray());
-    assertNull(cel.getLastString());
+  public void testAddSameListenerTwice() {
+    final String thisNodeId = "1";
+    final String[] nodesCurrentlyInCluster = new String[] { thisNodeId };
+    cluster.thisNodeConnected(thisNodeId, nodesCurrentlyInCluster);
+
+    TestEventListener listener = new TestEventListener();
+    cluster.addClusterEventListener(listener);
+
+    assertEquals("thisNodeConnected", listener.getLastMethodCalled());
+
+    listener.reset();
+    cluster.addClusterEventListener(listener);
+
+    assertNull(listener.getLastMethodCalled());
+  }
+
+  public void testCallbackOnluOnNewListener() {
+    final String thisNodeId = "1";
+    final String[] nodesCurrentlyInCluster = new String[] { thisNodeId };
+    cluster.thisNodeConnected(thisNodeId, nodesCurrentlyInCluster);
+
+    TestEventListener listener = new TestEventListener();
+    cluster.addClusterEventListener(listener);
+
+    assertEquals("thisNodeConnected", listener.getLastMethodCalled());
+
+    listener.reset();
+    TestEventListener listener2 = new TestEventListener();
+    cluster.addClusterEventListener(listener2);
+
+    assertNull(listener.getLastMethodCalled());
+    assertEquals("thisNodeConnected", listener2.getLastMethodCalled());
   }
 
   public void testClientExceptionSafety() {
-    cluster.addClusterEventListener(new TestEventListenerWithExceptions());
     final String thisNodeId = "1";
-    final String[] nodesCurrentlyInCluster = new String[] {thisNodeId};
-    cluster.thisNodeConnected(thisNodeId , nodesCurrentlyInCluster );
+    final String[] nodesCurrentlyInCluster = new String[] { thisNodeId };
+    cluster.thisNodeConnected(thisNodeId, nodesCurrentlyInCluster);
+
+    cluster.addClusterEventListener(new TestEventListenerWithExceptions());
+
     cluster.thisNodeDisconnected();
-    cluster.nodeConnected(thisNodeId);
+    cluster.nodeConnected("2");
     cluster.nodeDisconnected(thisNodeId);
   }
-}
 
-class TestEventListener implements ClusterEventListener {
+  private static class TestEventListener implements ClusterEventListener {
 
-  private String   lastString       = null;
-  private String[] lastStringArray  = null;
-  private String   lastMethodCalled = null;
+    private String   lastString       = null;
+    private String[] lastStringArray  = null;
+    private String   lastMethodCalled = null;
 
-  public void nodeConnected(String nodeId) {
-    lastString = nodeId;
-    lastMethodCalled = "nodeConnected";
+    public void nodeConnected(String nodeId) {
+      lastString = nodeId;
+      lastMethodCalled = "nodeConnected";
+    }
+
+    public void nodeDisconnected(String nodeId) {
+      lastString = nodeId;
+      lastMethodCalled = "nodeDisconnected";
+    }
+
+    public void thisNodeConnected(String thisNodeId, String[] nodesCurrentlyInCluster) {
+      lastString = thisNodeId;
+      lastStringArray = nodesCurrentlyInCluster;
+      lastMethodCalled = "thisNodeConnected";
+    }
+
+    public void thisNodeDisconnected(String thisNodeId) {
+      lastString = thisNodeId;
+      lastMethodCalled = "thisNodeDisconnected";
+    }
+
+    public String getLastMethodCalled() {
+      return lastMethodCalled;
+    }
+
+    public String getLastString() {
+      return lastString;
+    }
+
+    public String[] getLastStringArray() {
+      return lastStringArray;
+    }
+
+    public void reset() {
+      lastString = null;
+      lastStringArray = null;
+      lastMethodCalled = null;
+    }
+
   }
 
-  public void nodeDisconnected(String nodeId) {
-    lastString = nodeId;
-    lastMethodCalled = "nodeDisconnected";
-  }
+  private static class TestEventListenerWithExceptions implements ClusterEventListener {
 
-  public void thisNodeConnected(String thisNodeId, String[] nodesCurrentlyInCluster) {
-    lastString = thisNodeId;
-    lastStringArray = nodesCurrentlyInCluster;
-    lastMethodCalled = "thisNodeConnected";
-  }
+    public void nodeConnected(String nodeId) {
+      throw new RuntimeException("nodeConnected");
+    }
 
-  public void thisNodeDisconnected(String thisNodeId) {
-    lastString = thisNodeId;
-    lastMethodCalled = "thisNodeDisconnected";
-  }
+    public void nodeDisconnected(String nodeId) {
+      throw new RuntimeException("nodeDisconnected");
+    }
 
-  public String getLastMethodCalled() {
-    return lastMethodCalled;
-  }
+    public void thisNodeConnected(String thisNodeId, String[] nodesCurrentlyInCluster) {
+      throw new RuntimeException("thisNodeConnected");
+    }
 
-  public String getLastString() {
-    return lastString;
-  }
-
-  public String[] getLastStringArray() {
-    return lastStringArray;
-  }
-
-  public void reset() {
-    lastString = null;
-    lastStringArray = null;
-    lastMethodCalled = null;
-  }
-
-}
-
-class TestEventListenerWithExceptions implements ClusterEventListener {
-
-  public void nodeConnected(String nodeId) {
-    throw new RuntimeException("nodeConnected");
-  }
-
-  public void nodeDisconnected(String nodeId) {
-    throw new RuntimeException("nodeDisconnected");
-  }
-
-  public void thisNodeConnected(String thisNodeId, String[] nodesCurrentlyInCluster) {
-    throw new RuntimeException("thisNodeConnected");
-  }
-
-  public void thisNodeDisconnected(String thisNodeId) {
-    throw new RuntimeException("thisNodeDisconnected");
+    public void thisNodeDisconnected(String thisNodeId) {
+      throw new RuntimeException("thisNodeDisconnected");
+    }
   }
 }
