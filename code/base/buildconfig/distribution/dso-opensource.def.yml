@@ -52,11 +52,6 @@ bundled_components:
         references:
           - tc-config-reference
   - common:
-      bootjar:
-        install_directory: lib/dso-boot
-        compiler_versions:
-          - 1.4
-          - 1.5
       module_bootjars:
         - tc-session:
             install_directory: lib/session
