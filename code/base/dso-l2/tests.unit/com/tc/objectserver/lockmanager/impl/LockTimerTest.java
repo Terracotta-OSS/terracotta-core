@@ -10,7 +10,6 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MockMessageChannel;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
-import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.lockmanager.api.LockAwardContext;
@@ -237,10 +236,6 @@ public class LockTimerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public ClientHandshakeAckMessage newClientHandshakeAckMessage(ChannelID channelID) {
-      throw new ImplementMe();
-    }
-
     public Collection getAllActiveChannelIDs() {
       throw new ImplementMe();
     }
@@ -249,13 +244,18 @@ public class LockTimerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public void makeChannelActive(MessageChannel channel, ClientHandshakeAckMessage ackMsg) {
+    public void makeChannelActive(ChannelID channelID, long startIDs, long endIDs, boolean persistent) {
       throw new ImplementMe();
     }
 
     public Collection getRawChannelIDs() {
       throw new ImplementMe();
     }
+
+    public void makeChannelActiveNoAck(MessageChannel channel) {
+      throw new ImplementMe();
+    }
+
   }
 
 }

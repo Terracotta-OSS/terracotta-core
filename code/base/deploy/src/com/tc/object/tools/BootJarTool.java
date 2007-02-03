@@ -19,9 +19,7 @@ import com.tc.asm.commons.SerialVersionUIDAdder;
 import com.tc.asm.tree.ClassNode;
 import com.tc.asm.tree.InnerClassNode;
 import com.tc.asm.tree.MethodNode;
-import com.tc.cluster.Cluster;
 import com.tc.cluster.ClusterEventListener;
-import com.tc.cluster.Node;
 import com.tc.config.Directories;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
@@ -290,8 +288,6 @@ public class BootJarTool {
       loadTerracottaClass(Os.class.getName());
       loadTerracottaClass(NIOWorkarounds.class.getName());
       loadTerracottaClass(TCProperties.class.getName());
-      loadTerracottaClass(Cluster.class.getName());
-      loadTerracottaClass(Node.class.getName());
       loadTerracottaClass(ClusterEventListener.class.getName());
 
       // These two classes need to be specified as literal in order to prevent
@@ -1312,7 +1308,7 @@ public class BootJarTool {
     bytes = doDSOTransform(spec.getClassName(), bytes);
     bootJar.loadClassIntoJar("java.util.concurrent.CyclicBarrier", bytes, true);
   }
-  
+
   private void addInstrumentedJavaUtilConcurrentHashMap() {
     if (!isAtLeastJDK15()) { return; }
 
@@ -1395,7 +1391,7 @@ public class BootJarTool {
 
     bytes = cw.toByteArray();
     bootJar.loadClassIntoJar("java.util.concurrent.LinkedBlockingQueue$Itr", bytes, true);
-    
+
     // Instrumentation for Node inner class
     bytes = getSystemBytes("java.util.concurrent.LinkedBlockingQueue$Node");
 
@@ -1407,7 +1403,7 @@ public class BootJarTool {
 
     bytes = cw.toByteArray();
     bootJar.loadClassIntoJar("java.util.concurrent.LinkedBlockingQueue$Node", bytes, true);
-    
+
     // Instrumentation for LinkedBlockingQueue class
     bytes = getSystemBytes("java.util.concurrent.LinkedBlockingQueue");
 

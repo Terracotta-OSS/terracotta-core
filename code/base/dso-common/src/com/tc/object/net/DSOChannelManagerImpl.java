@@ -6,6 +6,8 @@ package com.tc.object.net;
 
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ChannelManager;
@@ -28,6 +30,7 @@ import java.util.Map;
  * channels
  */
 public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManagerMBean {
+  private static final TCLogger         logger              = TCLogging.getLogger(DSOChannelManager.class);
   private static final MessageChannel[] EMPTY_CHANNEL_ARRAY = new MessageChannel[] {};
 
   private final Map                     activeChannels      = new HashMap();
@@ -88,7 +91,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
         .createMessage(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE);
   }
 
-  public ClientHandshakeAckMessage newClientHandshakeAckMessage(ChannelID channelID) throws NoSuchChannelException {
+  private ClientHandshakeAckMessage newClientHandshakeAckMessage(ChannelID channelID) throws NoSuchChannelException {
     MessageChannelInternal channel = genericChannelManager.getChannel(channelID);
     if (channel == null) { throw new NoSuchChannelException(); }
     return (ClientHandshakeAckMessage) channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE);
@@ -100,12 +103,26 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     }
   }
 
-  public void makeChannelActive(MessageChannel channel, ClientHandshakeAckMessage ackMsg) {
+  public void makeChannelActive(ChannelID channelID, long startIDs, long endIDs, boolean persistent) {
+    try {
+      ClientHandshakeAckMessage ackMsg = newClientHandshakeAckMessage(channelID);
+      MessageChannel channel = ackMsg.getChannel();
+      synchronized (activeChannels) {
+        activeChannels.put(channel.getChannelID(), channel);
+        ackMsg.initialize(startIDs, endIDs, persistent, getActiveChannels());
+        ackMsg.send();
+
+      }
+      fireChannelCreatedEvent(channel);
+    } catch (NoSuchChannelException nsce) {
+      logger.warn("Not sending handshake message to disconnected client: " + channelID);
+    }
+  }
+
+  public void makeChannelActiveNoAck(MessageChannel channel) {
     synchronized (activeChannels) {
-      ackMsg.send();
       activeChannels.put(channel.getChannelID(), channel);
     }
-    fireChannelCreatedEvent(channel);
   }
 
   public void addEventListener(DSOChannelManagerEventListener listener) {

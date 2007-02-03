@@ -9,7 +9,6 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.cluster.Cluster;
-import com.tc.cluster.ClusterEventHandler;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.ChannelIDLogger;
@@ -43,7 +42,7 @@ import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.gtx.ClientGlobalTransactionManagerImpl;
 import com.tc.object.handler.BatchTransactionAckHandler;
 import com.tc.object.handler.LockResponseHandler;
-import com.tc.object.handler.PauseHandler;
+import com.tc.object.handler.ClientCoordinationHandler;
 import com.tc.object.handler.ReceiveObjectHandler;
 import com.tc.object.handler.ReceiveRootIDHandler;
 import com.tc.object.handler.ReceiveTransactionCompleteHandler;
@@ -232,7 +231,6 @@ public class DistributedObjectClient extends SEDA {
     // Set up the JMX management stuff
     final TunnelingEventHandler teh = new TunnelingEventHandler(channel.channel());
     l1Management = new L1Management(teh);
-    cluster.addClusterEventListener(l1Management.getTerracottaCluster());
     l1Management.start();
 
     txManager = new ClientTransactionManagerImpl(channel.getChannelIDProvider(), objectManager,
@@ -262,13 +260,15 @@ public class DistributedObjectClient extends SEDA {
                                                   new HydrateHandler(), 1, maxSize);
     Stage batchTxnAckStage = stageManager.createStage(ClientConfigurationContext.BATCH_TXN_ACK_STAGE,
                                                       new BatchTransactionAckHandler(), 1, maxSize);
-    Stage pauseStage = stageManager.createStage(ClientConfigurationContext.CLIENT_PAUSE_STAGE, new PauseHandler(), 1,
-                                                maxSize);
+
+    // By design this stage needs to be single threaded. If it wasn't then cluster memebership messages could get
+    // processed before the client handshake ack, and this client would get a faulty view of the cluster at best, or
+    // more likely an AssertionError
+    Stage pauseStage = stageManager.createStage(ClientConfigurationContext.CLIENT_COORDINATION_STAGE,
+                                                new ClientCoordinationHandler(cluster), 1, maxSize);
+
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ClientConfigurationContext.JMXREMOTE_TUNNEL_STAGE, teh,
                                                                 1, maxSize);
-
-    final Stage clusterEventStage = stageManager.createStage(ClientConfigurationContext.CLUSTER_EVENT_STAGE,
-                                                             new ClusterEventHandler(cluster), 1, maxSize);
 
     // This set is designed to give the handshake manager an opportunity to pause stages when it is pausing due to
     // disconnect. Unfortunately, the lock response stage can block, which I didn't realize at the time, so it's not
@@ -325,7 +325,7 @@ public class DistributedObjectClient extends SEDA {
     channel.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, pauseStage.getSink(), hydrateSink);
     channel.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage.getSink(),
                              hydrateSink);
-    channel.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, clusterEventStage.getSink(), hydrateSink);
+    channel.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, pauseStage.getSink(), hydrateSink);
 
     while (true) {
       try {
@@ -348,6 +348,10 @@ public class DistributedObjectClient extends SEDA {
         throw new RuntimeException(ioe);
       }
     }
+
+    clientHandshakeManager.waitForHandshake();
+
+    cluster.addClusterEventListener(l1Management.getTerracottaCluster());
   }
 
   public void stop() {

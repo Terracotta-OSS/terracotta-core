@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.handshakemanager;
 
@@ -159,7 +160,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     assertTrue(lockManager.unpauseContexts.isEmpty());
     assertTrue(gtxManager.resendOutstandingCalls.isEmpty());
 
-    mgr.acknowledgeHandshake(0, 0, false);
+    mgr.acknowledgeHandshake(0, 0, false, "1", new String[] {});
 
     // make sure the remote object manager was told to requestOutstanding()
     remoteObjectManager.requestOutstandingContexts.take();

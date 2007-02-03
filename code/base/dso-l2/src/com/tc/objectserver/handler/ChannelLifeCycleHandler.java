@@ -79,10 +79,13 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler {
     MessageChannel[] channels = channelMgr.getActiveChannels();
     for (int i = 0; i < channels.length; i++) {
       MessageChannel channel = channels[i];
-      ClusterMembershipMessage cmm = (ClusterMembershipMessage) channel
-          .createMessage(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE);
-      cmm.initialize(eventType, channelID, channels);
-      cmm.send();
+
+      if (!channel.getChannelID().equals(channelID)) {
+        ClusterMembershipMessage cmm = (ClusterMembershipMessage) channel
+            .createMessage(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE);
+        cmm.initialize(eventType, channelID, channels);
+        cmm.send();
+      }
     }
   }
 

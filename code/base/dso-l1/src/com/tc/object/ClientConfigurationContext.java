@@ -21,11 +21,9 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public final static String             RECEIVE_TRANSACTION_COMPLETE_STAGE = "receive_transaction_complete_stage";
   public final static String             HYDRATE_MESSAGE_STAGE              = "hydrate_message_stage";
   public final static String             BATCH_TXN_ACK_STAGE                = "batch_txn_ack_stage";
-  // public static final String CLIENT_HANDSHAKE_ACK_STAGE = "client_handshake_ack_stage";
   public static final String             CONFIG_MESSAGE_STAGE               = "config_message_stage";
-  public static final String             CLIENT_PAUSE_STAGE                 = "client_pause_stage";
+  public static final String             CLIENT_COORDINATION_STAGE          = "client_coordination_stage";
   public static final String             JMXREMOTE_TUNNEL_STAGE             = "jmxremote_tunnel_stage";
-  public static final String             CLUSTER_EVENT_STAGE                = "cluster_event_stage";
 
   private final ClientLockManager        lockManager;
   private final RemoteObjectManager      remoteObjectManager;

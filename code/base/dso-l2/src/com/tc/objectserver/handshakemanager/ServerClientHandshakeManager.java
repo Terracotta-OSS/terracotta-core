@@ -8,14 +8,11 @@ import com.tc.async.api.Sink;
 import com.tc.async.impl.NullSink;
 import com.tc.logging.TCLogger;
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.WaitContext;
-import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.object.net.NoSuchChannelException;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.lockmanager.api.LockManager;
@@ -55,7 +52,6 @@ public class ServerClientHandshakeManager {
   private final ObjectIDSequence          oidSequence;
   private final Set                       clientsRequestingObjectIDSequence = new HashSet();
   private final boolean                   persistent;
-  private final ClientHandshakeAckMessage nullAckMessage                    = new NullClientHandshakeAckMessage();
 
   public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager, ObjectManager objectManager,
                                       SequenceValidator sequenceValidator, ClientStateManager clientStateManager,
@@ -114,7 +110,7 @@ public class ServerClientHandshakeManager {
       }
 
       if (state == STARTING) {
-        channelManager.makeChannelActive(handshake.getChannel(), nullAckMessage);
+        channelManager.makeChannelActiveNoAck(handshake.getChannel());
       }
 
       this.sequenceValidator.initSequence(handshake.getChannelID(), handshake.getTransactionSequenceIDs());
@@ -162,25 +158,24 @@ public class ServerClientHandshakeManager {
   }
 
   private void sendAckMessageFor(ChannelID channelID) {
-    try {
-      logger.debug("Sending handshake acknowledgement to " + channelID);
-      ClientHandshakeAckMessage handshakeAck = channelManager.newClientHandshakeAckMessage(channelID);
-      if (clientsRequestingObjectIDSequence.remove(channelID)) {
-        long ids = oidSequence.nextObjectIDBatch(BATCH_SEQUENCE_SIZE);
-        logger.debug("Giving out Object ID Sequences to " + channelID + " from " + ids + " to "
-                     + (ids + BATCH_SEQUENCE_SIZE));
-        handshakeAck.initialize(ids, ids + BATCH_SEQUENCE_SIZE, persistent);
-      } else {
-        handshakeAck.initialize(0, 0, persistent);
-      }
+    logger.debug("Sending handshake acknowledgement to " + channelID);
 
-      // NOTE: handshake ack message send() must be done atomically with making the channel active
-      // and is thus done inside this channel manager call
-      channelManager.makeChannelActive(handshakeAck.getChannel(), handshakeAck);
+    final long startIDs;
+    final long endIDs;
+    if (clientsRequestingObjectIDSequence.remove(channelID)) {
+      final long ids = oidSequence.nextObjectIDBatch(BATCH_SEQUENCE_SIZE);
+      logger.debug("Giving out Object ID Sequences to " + channelID + " from " + ids + " to "
+                   + (ids + BATCH_SEQUENCE_SIZE));
 
-    } catch (NoSuchChannelException e) {
-      logger.warn("Not sending handshake message to disconnected client: " + channelID);
+      startIDs = ids;
+      endIDs = ids + BATCH_SEQUENCE_SIZE;
+    } else {
+      startIDs = endIDs = 0;
     }
+
+    // NOTE: handshake ack message initialize()/send() must be done atomically with making the channel active
+    // and is thus done inside this channel manager call
+    channelManager.makeChannelActive(channelID, startIDs, endIDs, persistent);
   }
 
   public synchronized void notifyTimeout() {
@@ -255,34 +250,6 @@ public class ServerClientHandshakeManager {
     public String toString() {
       return getClass().getName() + "[" + name + "]";
     }
-  }
-
-  public class NullClientHandshakeAckMessage implements ClientHandshakeAckMessage {
-
-    public MessageChannel getChannel() {
-      throw new UnsupportedOperationException();
-    }
-
-    public long getObjectIDSequenceEnd() {
-      throw new UnsupportedOperationException();
-    }
-
-    public long getObjectIDSequenceStart() {
-      throw new UnsupportedOperationException();
-    }
-
-    public boolean getPersistentServer() {
-      throw new UnsupportedOperationException();
-    }
-
-    public void initialize(long start, long end, boolean p) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void send() {
-      //
-    }
-
   }
 
 }

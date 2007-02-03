@@ -7,7 +7,6 @@ package com.tc.objectserver.lockmanager.api;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
-import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 
@@ -43,10 +42,6 @@ public class NullChannelManager implements DSOChannelManager {
     throw new UnsupportedOperationException();
   }
 
-  public ClientHandshakeAckMessage newClientHandshakeAckMessage(ChannelID channelID) {
-    throw new UnsupportedOperationException();
-  }
-
   public Collection getAllActiveChannelIDs() {
     return Collections.EMPTY_LIST;
   }
@@ -55,12 +50,16 @@ public class NullChannelManager implements DSOChannelManager {
     //
   }
 
-  public void makeChannelActive(MessageChannel channel, ClientHandshakeAckMessage ackMsg) {
+  public void makeChannelActive(ChannelID channelID, long startIDs, long endIDs, boolean persistent) {
     //
   }
 
   public Collection getRawChannelIDs() {
     return Collections.EMPTY_LIST;
+  }
+
+  public void makeChannelActiveNoAck(MessageChannel channel) {
+    //
   }
 
 }

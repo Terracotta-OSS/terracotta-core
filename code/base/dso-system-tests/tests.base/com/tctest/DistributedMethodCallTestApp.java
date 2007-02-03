@@ -35,8 +35,9 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
 
   private void runTest() throws Throwable {
     final boolean callInitiator = sharedBarrier.barrier() == 0;
-    synchronized (model) {
-      if (callInitiator) {
+
+    if (callInitiator) {
+      synchronized (model) {
         FooObject[][] foos = new FooObject[2][3];
         for (int i = 0; i < foos.length; i++) {
           Arrays.fill(foos[i], new FooObject());
@@ -56,6 +57,7 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
         model.addObject(new FooObject(), 1, 2, foos, ints, true);
       }
     }
+
     sharedBarrier.barrier();
   }
 

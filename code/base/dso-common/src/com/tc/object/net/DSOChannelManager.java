@@ -7,7 +7,6 @@ package com.tc.object.net;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
-import com.tc.object.msg.ClientHandshakeAckMessage;
 
 import java.util.Collection;
 
@@ -31,13 +30,12 @@ public interface DSOChannelManager {
 
   public void addEventListener(DSOChannelManagerEventListener listener);
 
-  public void makeChannelActive(MessageChannel channel, ClientHandshakeAckMessage ackMsg);
-
   public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(ChannelID channelID)
       throws NoSuchChannelException;
 
-  public ClientHandshakeAckMessage newClientHandshakeAckMessage(ChannelID channelID) throws NoSuchChannelException;
-
   public Collection getRawChannelIDs();
 
+  public void makeChannelActive(ChannelID channelID, long startIDs, long endIDs, boolean persistent);
+
+  public void makeChannelActiveNoAck(MessageChannel channel);
 }

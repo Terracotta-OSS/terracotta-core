@@ -19,7 +19,6 @@ import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
-import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.NoSuchChannelException;
@@ -35,11 +34,11 @@ import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.lockmanager.api.NotifiedWaiters;
 import com.tc.objectserver.lockmanager.api.TestLockManager;
 import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
 import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.objectserver.tx.TestTransactionBatchManager;
-import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -208,10 +207,6 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       return btamsg;
     }
 
-    public ClientHandshakeAckMessage newClientHandshakeAckMessage(ChannelID channelID) {
-      throw new ImplementMe();
-    }
-
     public Collection getAllActiveChannelIDs() {
       throw new ImplementMe();
     }
@@ -220,11 +215,15 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void makeChannelActive(MessageChannel channel, ClientHandshakeAckMessage ackMsg) {
+    public void makeChannelActive(ChannelID channelID, long startIDs, long endIDs, boolean persistent) {
       throw new ImplementMe();
     }
 
     public Collection getRawChannelIDs() {
+      throw new ImplementMe();
+    }
+
+    public void makeChannelActiveNoAck(MessageChannel channel) {
       throw new ImplementMe();
     }
   }

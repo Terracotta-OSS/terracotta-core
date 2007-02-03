@@ -8,7 +8,6 @@ import com.tc.exception.ImplementMe;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
-import com.tc.object.msg.ClientHandshakeAckMessage;
 
 import java.util.Collection;
 
@@ -44,15 +43,11 @@ public class TestDSOChannelManager implements DSOChannelManager {
     throw new ImplementMe();
   }
 
-  public ClientHandshakeAckMessage newClientHandshakeAckMessage(ChannelID channelID) {
-    throw new ImplementMe();
-  }
-
   public void addEventListener(DSOChannelManagerEventListener listener) {
     throw new ImplementMe();
   }
 
-  public MessageChannel getActiveChannel(ChannelID id)  {
+  public MessageChannel getActiveChannel(ChannelID id) {
     throw new ImplementMe();
   }
 
@@ -72,7 +67,11 @@ public class TestDSOChannelManager implements DSOChannelManager {
     throw new ImplementMe();
   }
 
-  public void makeChannelActive(MessageChannel channel, ClientHandshakeAckMessage ackMsg) {
+  public void makeChannelActive(ChannelID channelID, long startIDs, long endIDs, boolean persistent) {
+    throw new ImplementMe();
+  }
+
+  public void makeChannelActiveNoAck(MessageChannel channel) {
     throw new ImplementMe();
   }
 

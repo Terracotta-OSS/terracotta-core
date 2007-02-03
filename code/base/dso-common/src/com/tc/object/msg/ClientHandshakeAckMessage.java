@@ -14,7 +14,12 @@ public interface ClientHandshakeAckMessage {
 
   public boolean getPersistentServer();
 
-  public void initialize(long start, long end, boolean persistent);
+  public void initialize(long start, long end, boolean persistent, MessageChannel[] channels);
 
   public MessageChannel getChannel();
+
+  public String[] getAllNodes();
+
+  public String getThisNodeId();
+
 }

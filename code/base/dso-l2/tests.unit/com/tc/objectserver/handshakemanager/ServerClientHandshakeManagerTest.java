@@ -88,7 +88,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     assertStarted();
   }
 
-  public void testTimout() throws Exception {
+  public void testTimeout() throws Exception {
     ChannelID channelID1 = new ChannelID(100);
 
     existingUnconnectedClients.add(channelID1);
@@ -383,7 +383,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return msgs;
     }
 
-    public ClientHandshakeAckMessage newClientHandshakeAckMessage(ChannelID channelID) {
+    private ClientHandshakeAckMessage newClientHandshakeAckMessage(ChannelID channelID) {
       ClientHandshakeAckMessage msg = new TestClientHandshakeAckMessage(channelID);
       getMessages(channelID).add(msg);
       return msg;
@@ -405,8 +405,14 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void makeChannelActive(MessageChannel channel, ClientHandshakeAckMessage ackMsg) {
+    public void makeChannelActive(ChannelID channelID, long startIDs, long endIDs, boolean persistent) {
+      ClientHandshakeAckMessage ackMsg = newClientHandshakeAckMessage(channelID);
+      ackMsg.initialize(startIDs, endIDs, persistent, getActiveChannels());
       ackMsg.send();
+    }
+
+    public void makeChannelActiveNoAck(MessageChannel channel) {
+      //
     }
 
   }
@@ -441,7 +447,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return persistent;
     }
 
-    public void initialize(long startOid, long endOid, boolean isPersistent) {
+    public void initialize(long startOid, long endOid, boolean isPersistent, MessageChannel[] channels) {
       this.start = startOid;
       this.end = endOid;
       this.persistent = isPersistent;
@@ -449,6 +455,14 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
     public MessageChannel getChannel() {
       return channel;
+    }
+
+    public String[] getAllNodes() {
+      throw new ImplementMe();
+    }
+
+    public String getThisNodeId() {
+      throw new ImplementMe();
     }
 
   }

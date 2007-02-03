@@ -44,8 +44,8 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
   }
 
   public void init() {
-    manager.init();
     ClassProcessorHelper.setContext(this, DSOContextImpl.createContext(config, manager));
+    manager.init();
   }
 
   private static URL[] getSystemURLS() {

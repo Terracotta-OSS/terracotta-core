@@ -35,7 +35,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 public class ClientHandshakeManager implements ChannelEventListener {
-  // private static final State INIT = new State("INIT");
   private static final State                   PAUSED             = new State("PAUSED");
   private static final State                   STARTING           = new State("STARTING");
   private static final State                   RUNNING            = new State("RUNNING");
@@ -82,7 +81,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
 
   public void initiateHandshake() {
     logger.debug("Initiating handshake...");
-    state = STARTING;
+    changeState(STARTING);
     notifyManagersStarting();
 
     ClientHandshakeMessage handshakeMessage = chmf.newClientHandshakeMessage();
@@ -126,6 +125,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
 
   public void notifyChannelEvent(ChannelEvent event) {
     if (event.getType() == ChannelEventType.TRANSPORT_DISCONNECTED_EVENT) {
+      cluster.thisNodeDisconnected();
       sessionManager.newSession();
       pauseSink.add(PauseContext.PAUSE);
     } else if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
@@ -136,35 +136,37 @@ public class ClientHandshakeManager implements ChannelEventListener {
   }
 
   public void pause() {
-    logger.info("Pause " + state);
-    if (state == PAUSED) {
+    logger.info("Pause " + getState());
+    if (getState() == PAUSED) {
       logger.warn("pause called while already PAUSED");
       return;
     }
     pauseStages();
     pauseManagers();
-    state = PAUSED;
+    changeState(PAUSED);
   }
 
   public void unpause() {
-    logger.info("Unpause " + state);
-    if (state != PAUSED) {
-      logger.warn("unpause called while not PAUSED: " + state);
+    logger.info("Unpause " + getState());
+    if (getState() != PAUSED) {
+      logger.warn("unpause called while not PAUSED: " + getState());
       return;
     }
     unpauseStages();
     initiateHandshake();
   }
 
-  public void acknowledgeHandshake(long objectIDStart, long objectIDEnd, boolean persistentServer) {
-    if (state != STARTING) {
-      logger.warn("Handshake acknowledged while not STARTING: " + state);
+  public void acknowledgeHandshake(long objectIDStart, long objectIDEnd, boolean persistentServer, String thisNodeId,
+                                   String[] clusterMembers) {
+    if (getState() != STARTING) {
+      logger.warn("Handshake acknowledged while not STARTING: " + getState());
       return;
     }
 
     this.serverIsPersistent = persistentServer;
 
-    state = RUNNING;
+    cluster.thisNodeConnected(thisNodeId, clusterMembers);
+
     if (objectIDStart < objectIDEnd) {
       logger.debug("Setting the ObjectID sequence to: " + objectIDStart + " , " + objectIDEnd);
       sequenceReceiver.setNextBatch(objectIDStart, objectIDEnd);
@@ -176,6 +178,8 @@ public class ClientHandshakeManager implements ChannelEventListener {
     logger.debug("Handshake acknowledged.  Resending incomplete transactions...");
     gtxManager.resendOutstandingAndUnpause();
     unpauseManagers();
+
+    changeState(RUNNING);
   }
 
   private void pauseManagers() {
@@ -231,6 +235,25 @@ public class ClientHandshakeManager implements ChannelEventListener {
    */
   public boolean serverIsPersistent() {
     return this.serverIsPersistent;
+  }
+
+  public synchronized void waitForHandshake() {
+    while (state != RUNNING) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        logger.error("Interrupted while waiting for handshake");
+      }
+    }
+  }
+
+  private synchronized void changeState(State newState) {
+    state = newState;
+    notifyAll();
+  }
+
+  private synchronized State getState() {
+    return state;
   }
 
 }
