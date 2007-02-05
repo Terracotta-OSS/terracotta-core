@@ -9,6 +9,7 @@ import org.apache.commons.io.IOUtils;
 import com.tc.config.Directories;
 import com.tc.test.TempDirectoryHelper;
 import com.tc.test.TestConfigObject;
+import com.tc.test.server.appserver.jboss4x.JBoss4xAppServerFactory;
 import com.tc.test.server.appserver.tomcat5x.Tomcat5xAppServerFactory;
 import com.tc.test.server.appserver.war.War;
 import com.tc.test.server.appserver.wasce1x.Wasce1xAppServerFactory;
@@ -68,6 +69,8 @@ public abstract class NewAppServerFactory {
       return new Weblogic8xAppServerFactory(new ProtectedKey(), config);
     } else if (Wasce1xAppServerFactory.NAME.equals(factoryName)) {
       return new Wasce1xAppServerFactory(new ProtectedKey(), config);
+    } else if (JBoss4xAppServerFactory.NAME.equals(factoryName)) {
+      return new JBoss4xAppServerFactory(new ProtectedKey(), config);
     }
 
     else throw new RuntimeException("The code doesn't know anything about an app server named '" + factoryName + "'.");

@@ -284,18 +284,3 @@ diff -ruN cargo-0.8/src/0.8/core/api/container/src/main/java/org/codehaus/cargo/
  
      /**
       * @see org.codehaus.cargo.container.spi.AbstractLocalContainer#verify()
-diff -ruN cargo-0.8/src/0.8/core/containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic8x/config.xml tc_cargo-0.8/src/0.8/core/containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic8x/config.xml
---- cargo-0.8/src/0.8/core/containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic8x/config.xml	2007-01-29 12:19:54.906465000 -0800
-+++ tc_cargo-0.8/src/0.8/core/containers/weblogic/src/main/resources/org/codehaus/cargo/container/internal/resources/weblogic8x/config.xml	2007-01-29 12:29:04.684196400 -0800
-@@ -2,6 +2,10 @@
- 
- <Domain Name="domain">
-   <Server Name="server" ListenPort="@cargo.servlet.port@"
--    NativeIOEnabled="false"/>
-+          NativeIOEnabled="false"
-+          SocketReaderTimeoutMaxMillis="1000"
-+          SocketReaderTimeoutMinMillis="1000"
-+          StdoutDebugEnabled="true"
-+          StdoutSeverityLevel="64"/>
-   @weblogic.apps@
- </Domain>

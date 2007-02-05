@@ -7,26 +7,21 @@ package com.tc.reporter;
 import org.apache.xmlbeans.XmlException;
 
 import com.tc.config.schema.dynamic.ParameterSubstituter;
+import com.tc.util.ArchiveBuilder;
+import com.tc.util.ZipBuilder;
 import com.terracottatech.configV2.Client;
 import com.terracottatech.configV2.Server;
 import com.terracottatech.configV2.Servers;
 import com.terracottatech.configV2.TcConfigDocument;
 import com.terracottatech.configV2.TcConfigDocument.TcConfig;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.zip.CRC32;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import javax.xml.namespace.QName;
 
@@ -43,7 +38,6 @@ public final class ArchiveUtil {
   private static final String STDOUT            = "stdout:";
   private static final String STDERR            = "stderr:";
   private static final String ARCHIVE_FILE_NAME = "tc-archive";
-  private static final CRC32  crc32             = new CRC32();
   private static final String INVALID           = "Invalid Arguments:\n\n";
   private static final String DASH_F            = "-f";
   private static final String DASH_C            = "-c";
@@ -198,79 +192,27 @@ public final class ArchiveUtil {
       serverDataDir = getServerDataLocation(configBeans);
     }
     try {
-      ZipOutputStream zout = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(archiveFile)));
-      zout.setMethod(ZipEntry.DEFLATED);
-      zout.setLevel(9);
+      ArchiveBuilder zip = new ZipBuilder(archiveFile, true);
       System.out.println("Archiving:");
-      putEntry(zout, tcConfig.getName(), readFile(tcConfig));
+      zip.putEntry(tcConfig.getName(), zip.readFile(tcConfig));
       if (isClient) {
-        if (clientLogsDir != null) putTraverseDirectory(zout, clientLogsDir, clientLogsDir.getName());
+        if (clientLogsDir != null) zip.putTraverseDirectory(clientLogsDir, clientLogsDir.getName());
       } else {
         for (int i = 0; i < serverLogsDir.length; i++) {
-          if (serverLogsDir[i] != null) putTraverseDirectory(zout, serverLogsDir[i], serverLogsDir[i].getName());
+          if (serverLogsDir[i] != null) zip.putTraverseDirectory(serverLogsDir[i], serverLogsDir[i].getName());
         }
         if (serverDataDir != null) {
           for (int i = 0; i < serverDataDir.length; i++) {
-            putTraverseDirectory(zout, serverDataDir[i], serverDataDir[i].getName());
+            zip.putTraverseDirectory(serverDataDir[i], serverDataDir[i].getName());
           }
         }
       }
-      zout.close();
+      zip.finish();
     } catch (IOException e) {
       System.out.println("Unexpected error - unable to write Terracotta archive: " + ARCHIVE_FILE_NAME);
       e.printStackTrace();
       System.exit(1);
     }
     System.out.println("\n\nWrote archive to:" + archiveFile);
-  }
-
-  private void putTraverseDirectory(ZipOutputStream zout, File dir, String dirName) throws IOException {
-    if (!dir.isDirectory()) throw new IOException("Unexpected Exception: " + dir + "\nis not a directory");
-    putDirEntry(zout, dirName);
-    String[] files = dir.list();
-    for (int i = 0; i < files.length; i++) {
-      File file = new File(dir + File.separator + files[i]);
-      if (file.isDirectory()) {
-        putTraverseDirectory(zout, file, dirName + File.separator + file.getName());
-        continue;
-      }
-      putEntry(zout, dirName + File.separator + files[i], readFile(file));
-    }
-  }
-
-  private byte[] readFile(File file) throws IOException {
-    BufferedInputStream in = new BufferedInputStream(new FileInputStream(file));
-    byte[] bytes = new byte[in.available()];
-    in.read(bytes);
-    in.close();
-    return bytes;
-  }
-
-  private void putDirEntry(ZipOutputStream zout, String file) throws IOException {
-    ZipEntry entry = new ZipEntry(zipPath(file) + "/");
-    entry.setSize(0);
-    entry.setCrc(0);
-    zout.putNextEntry(entry);
-  }
-
-  private void putEntry(ZipOutputStream zout, String file, byte[] bytes) throws IOException {
-    ZipEntry entry = new ZipEntry(zipPath(file));
-    entry.setSize(bytes.length);
-    entry.setCrc(getCrc32(bytes));
-    zout.putNextEntry(entry);
-    zout.write(bytes, 0, bytes.length);
-    System.out.print(".");
-  }
-  
-  private long getCrc32(byte[] bytes) {
-    crc32.update(bytes);
-    long checksum = crc32.getValue();
-    crc32.reset();
-    return checksum;
-  }
-  
-  private String zipPath(String file) {
-    if (File.separator.equals("/")) return file;
-    return file.replaceAll("\\\\", "/");
   }
 }

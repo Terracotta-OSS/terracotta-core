@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver;
 
@@ -26,12 +27,13 @@ public abstract class AbstractAppServer implements AppServer {
     this.installation = (AppServerStartupEnvironment) installation;
   }
 
-  protected final synchronized File createInstance(AppServerParameters params) throws IOException {
+  protected final synchronized File createInstance(AppServerParameters params) throws Exception {
     instance = new File(installation.getSandboxDirectory() + File.separator + params.instanceName());
     if (instance.exists()) {
       FileUtils.deleteDirectory(instance);
     }
     instance.mkdir();
+    initiateStartupAppender(installation.getSandboxDirectory());
     return instance;
   }
 
@@ -60,6 +62,14 @@ public abstract class AbstractAppServer implements AppServer {
 
   protected final String minorVersion() {
     return installation.minorVersion();
+  }
+
+  /**
+   * Subclasses may provide implementations to allow preprocessing to take place in the appserver child process JVM.
+   * Appenders must implement <tt>StartupAppender</tt>.
+   */
+  protected void initiateStartupAppender(File sandboxDir) throws Exception {
+    // not implemented
   }
 
   /**

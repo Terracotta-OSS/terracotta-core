@@ -37,4 +37,8 @@ public final class Weblogic8xAppServer extends CargoAppServer {
   protected void setConfigProperties(LocalConfiguration config) throws Exception {
     config.setProperty(WebLogicPropertySet.DOMAIN, "domain");
   }
+  
+  protected void initiateStartupAppender(File sandboxDir) throws Exception {
+    new Weblogic8xStartupAppender().pack(sandboxDir);
+  }
 }
