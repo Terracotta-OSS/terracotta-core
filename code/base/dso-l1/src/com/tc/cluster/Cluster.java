@@ -27,6 +27,7 @@ public class Cluster {
     return thisNode;
   }
 
+  // for tests
   Map getNodes() {
     return nodes;
   }
@@ -47,7 +48,6 @@ public class Cluster {
   }
 
   public synchronized void thisNodeDisconnected() {
-    assertPre(thisNode != null);
     debug("### Cluster: thisNodeDisconnected -> " + this);
     fireThisNodeDisconnectedEvent();
   }
@@ -94,7 +94,7 @@ public class Cluster {
     }
   }
 
-  private synchronized void fireThisNodeConnectedEvent() {
+  private void fireThisNodeConnectedEvent() {
     assertPre(thisNode != null);
     final String ids[] = getCurrentNodeIds();
     for (Iterator i = listeners.keySet().iterator(); i.hasNext();) {
@@ -103,8 +103,11 @@ public class Cluster {
     }
   }
 
-  private synchronized void fireThisNodeDisconnectedEvent() {
-    assertPre(thisNode != null);
+  private void fireThisNodeDisconnectedEvent() {
+    if (thisNode == null) {
+      // client channels be closed before we know thisNodeID. Skip the disconnect event in this case
+      return;
+    }
     for (Iterator i = listeners.keySet().iterator(); i.hasNext();) {
       ClusterEventListener l = (ClusterEventListener) i.next();
       try {
@@ -115,7 +118,7 @@ public class Cluster {
     }
   }
 
-  private synchronized void fireNodeConnectedEvent(String newNodeId) {
+  private void fireNodeConnectedEvent(String newNodeId) {
     assertPre(thisNode != null);
     for (Iterator i = listeners.keySet().iterator(); i.hasNext();) {
       ClusterEventListener l = (ClusterEventListener) i.next();
@@ -127,7 +130,7 @@ public class Cluster {
     }
   }
 
-  private synchronized void fireNodeDisconnectedEvent(String nodeId) {
+  private void fireNodeDisconnectedEvent(String nodeId) {
     assertPre(thisNode != null);
     for (Iterator i = listeners.keySet().iterator(); i.hasNext();) {
       ClusterEventListener l = (ClusterEventListener) i.next();
@@ -143,7 +146,7 @@ public class Cluster {
     if (!b) throw new AssertionError("Pre-condition failed!");
   }
 
-  private synchronized String[] getCurrentNodeIds() {
+  private String[] getCurrentNodeIds() {
     final String[] rv = new String[nodes.size()];
     nodes.keySet().toArray(rv);
     Arrays.sort(rv);

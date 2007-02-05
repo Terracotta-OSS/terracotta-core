@@ -11,9 +11,12 @@ import com.tc.logging.TCLogging;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
+import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.logging.RuntimeLogger;
@@ -161,6 +164,15 @@ public class DistributedMethodCallManagerImpl implements DistributedMethodCallMa
         clients = (Map) objectManager.lookupOrCreateRoot(ROOT_NAME, new HashMap());
         myClient = new Client();
         clients.put(thisNodeId, myClient);
+
+        // XXX: This is a complete hack. Within the context of the DSO test framework, the calling thread
+        // will not have it's DSO context established yet and will thus call on NullManager which will
+        // discard the logicalInvoke
+        if (ClassProcessorHelper.getManager(Thread.currentThread().getContextClassLoader()) == null) {
+          txManager.logicalInvoke(((Manageable) clients).__tc_managed(), SerializationUtil.PUT, "put(Object,Object)",
+                                  new Object[] { thisNodeId, myClient });
+        }
+
       } finally {
         commit(ROOT_NAME);
       }
@@ -224,9 +236,10 @@ public class DistributedMethodCallManagerImpl implements DistributedMethodCallMa
 
         monitorEnter(dmc, LockLevel.READ);
         try {
-          
+
           if (DebugUtil.DEBUG) {
-            System.err.println("In DistributedMethodCallManager -- client id: " + ManagerUtil.getClientID() + " running method " + dmc.getMethodName());
+            System.err.println("In DistributedMethodCallManager -- client id: " + ManagerUtil.getClientID()
+                               + " running method " + dmc.getMethodName());
           }
           invokeMethod(dmc, receiver, parameters);
         } catch (Throwable e) {
