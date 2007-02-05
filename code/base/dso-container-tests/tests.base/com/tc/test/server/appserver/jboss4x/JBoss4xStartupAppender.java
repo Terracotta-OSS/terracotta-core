@@ -13,7 +13,7 @@ import java.io.File;
 public class JBoss4xStartupAppender extends CargoStartupAppender {
 
   public void append() throws Exception {
-    ReplaceLine.Token[] tokens = new ReplaceLine.Token[6];
+    ReplaceLine.Token[] tokens = new ReplaceLine.Token[9];
     int rmiPort = new PortChooser().chooseRandomPort();
     tokens[0] = new ReplaceLine.Token(14, "(RmiPort\">[0-9]+)", "RmiPort\">" + rmiPort);
     tokens[1] = new ReplaceLine.Token(50, "(port=\"[0-9]+)", "port=\"" + rmiPort);
@@ -22,6 +22,9 @@ public class JBoss4xStartupAppender extends CargoStartupAppender {
     tokens[3] = new ReplaceLine.Token(32, "(port=\"[0-9]+)", "port=\"" + rmiObjPort);
     tokens[4] = new ReplaceLine.Token(64, "(port=\"[0-9]+)", "port=\"" + rmiObjPort);
     tokens[5] = new ReplaceLine.Token(40, "(port=\"[0-9]+)", "port=\"" + new PortChooser().chooseRandomPort());
+    tokens[6] = new ReplaceLine.Token(94, "(port=\"[0-9]+)", "port=\"" + new PortChooser().chooseRandomPort());
+    tokens[7] = new ReplaceLine.Token(101, "(port=\"[0-9]+)", "port=\"" + new PortChooser().chooseRandomPort());
+    tokens[8] = new ReplaceLine.Token(112, "(port=\"[0-9]+)", "port=\"" + new PortChooser().chooseRandomPort());
     ReplaceLine.parseFile(tokens, new File("conf/cargo-binding.xml"));
   }
 }
