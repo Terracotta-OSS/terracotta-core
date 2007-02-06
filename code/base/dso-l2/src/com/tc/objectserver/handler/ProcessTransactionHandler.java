@@ -7,14 +7,13 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
-import com.tc.async.api.EventHandlerException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.tx.BatchDefinedException;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchReader;
@@ -22,7 +21,6 @@ import com.tc.objectserver.tx.TransactionBatchReaderFactory;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.util.SequenceValidator;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -52,14 +50,11 @@ public class ProcessTransactionHandler extends AbstractEventHandler {
     this.messageRecycler = messageRecycler;
   }
 
-  public void handleEvent(EventContext context) throws EventHandlerException {
+  public void handleEvent(EventContext context) {
+    final CommitTransactionMessageImpl ctm = (CommitTransactionMessageImpl) context;
     try {
-      final TransactionBatchReader reader = batchReaderFactory.newTransactionBatchReader(context);
-      try {
-        transactionBatchManager.defineBatch(reader.getChannelID(), reader.getBatchID(), reader.getNumTxns());
-      } catch (BatchDefinedException e) {
-        throw new EventHandlerException(e);
-      }
+      final TransactionBatchReader reader = batchReaderFactory.newTransactionBatchReader(ctm);
+      transactionBatchManager.defineBatch(reader.getChannelID(), reader.getBatchID(), reader.getNumTxns());
       Collection completedTxnIds = reader.addAcknowledgedTransactionIDsTo(new HashSet());
       ServerTransaction txn;
 
@@ -73,8 +68,11 @@ public class ProcessTransactionHandler extends AbstractEventHandler {
       }
       messageRecycler.addMessage((CommitTransactionMessageImpl) context, serverTxnIDs);
       txnObjectManager.addTransactions(reader.getChannelID(), txns, completedTxnIds);
-    } catch (IOException e) {
-      logger.error("Error reading transaction batch. Discarding remaining changes in this batch", e);
+    } catch (Exception e) {
+      logger.error("Error reading transaction batch. : ", e);
+      MessageChannel c = ctm.getChannel();
+      logger.error("Closing channel " + c.getChannelID() + " due to previous errors !");
+      c.close();
     }
   }
 

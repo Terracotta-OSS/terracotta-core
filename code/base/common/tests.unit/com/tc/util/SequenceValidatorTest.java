@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -10,8 +11,8 @@ import junit.framework.TestCase;
 
 public class SequenceValidatorTest extends TestCase {
 
-  private static final int INITIAL_VALUE = 0;
-  
+  private static final int  INITIAL_VALUE = 0;
+
   private SequenceValidator sv;
 
   public void setUp() throws Exception {
@@ -46,9 +47,9 @@ public class SequenceValidatorTest extends TestCase {
     assertTrue(sv.isNext(key1, one));
     assertTrue(sv.isNext(key2, one));
   }
-  
+
   public void testSetCurrent() throws Exception {
-    
+
     Object key = new Object();
     SequenceID sid = new SequenceID(1);
     for (int i = 0; i < 50; i++) {
@@ -58,7 +59,7 @@ public class SequenceValidatorTest extends TestCase {
       try {
         sv.setCurrent(key, sid.next());
         fail();
-      } catch(AssertionError er) {
+      } catch (InvalidSequenceIDException er) {
         // expected
       }
     }

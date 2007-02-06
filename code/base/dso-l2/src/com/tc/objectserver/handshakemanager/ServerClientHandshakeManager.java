@@ -84,7 +84,7 @@ public class ServerClientHandshakeManager {
     return state == STARTED;
   }
 
-  public void notifyClientConnect(ClientHandshakeMessage handshake) {
+  public void notifyClientConnect(ClientHandshakeMessage handshake) throws ClientHandshakeException {
     ChannelID channelID = handshake.getChannelID();
     logger.info("Client connected " + channelID);
     synchronized (this) {
@@ -94,11 +94,12 @@ public class ServerClientHandshakeManager {
       } else if (state == STARTED) {
         if (handshake.getObjectIDs().size() > 0) {
           //
-          throw new AssertionError("Clients connected after startup should have no existing object references.");
+          throw new ClientHandshakeException(
+                                             "Clients connected after startup should have no existing object references.");
         }
         if (handshake.getWaitContexts().size() > 0) {
           //
-          throw new AssertionError("Clients connected after startup should have no existing wait contexts.");
+          throw new ClientHandshakeException("Clients connected after startup should have no existing wait contexts.");
         }
         if (handshake.isObjectIDsRequested()) {
           logger.debug("Client " + channelID + " requested Object ID Sequences ");
@@ -220,7 +221,7 @@ public class ServerClientHandshakeManager {
 
   /**
    * Notifies handshake manager that the reconnect time has passed.
-   *
+   * 
    * @author orion
    */
   private static class ReconnectTimerTask extends TimerTask {

@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -23,18 +24,20 @@ public class SequenceValidator {
     this.start = start;
   }
 
+  // Used in tests
   public synchronized boolean isNext(Object key, SequenceID candidate) {
     if (candidate.isNull()) return true;
     Sequencer sequencer = getOrCreate(key);
     return sequencer.isNext(candidate);
   }
 
-  public synchronized void setCurrent(Object key, SequenceID next) {
+  public synchronized void setCurrent(Object key, SequenceID next) throws InvalidSequenceIDException {
     if (key == null || SequenceID.NULL_ID.equals(next)) return;
     Sequencer s = getOrCreate(key);
     s.setCurrent(next);
   }
 
+  // Used in tests
   public synchronized SequenceID getCurrent(Object key) {
     Sequencer s = (Sequencer) sequences.get(key);
     Assert.assertNotNull(s);
@@ -77,7 +80,6 @@ public class SequenceValidator {
       } else {
         throw new AssertionError("Sequencer should be set to a valid SequenceID Sequence !!!");
       }
-      //TODO:: Move to debug once problem is fixed.
       logger.info("Setting initial Sequence IDs for " + key + " current = " + current + " next = " + this.sequenceIDs);
     }
 
@@ -88,8 +90,8 @@ public class SequenceValidator {
 
     public boolean isNext(SequenceID candidate) {
       if (candidate.toLong() <= current.toLong()) {
-        logger.error("Sequence IDs = " + sequenceIDs + " current = " + current + " but candidate = " + candidate);
-        throw new AssertionError("Candidate " + candidate + " is <= current " + current);
+        logger.warn("Sequence IDs = " + sequenceIDs + " current = " + current + " but candidate = " + candidate);
+        return false;
       }
       if (sequenceIDs == null) {
         return current.toLong() + 1 == candidate.toLong();
@@ -98,13 +100,11 @@ public class SequenceValidator {
       }
     }
 
-    public void setCurrent(SequenceID next) {
-      if(!isNext(next)) {
-        throw new AssertionError("Trying to set to " + next + " but current = " + current);
-      }
+    public void setCurrent(SequenceID next) throws InvalidSequenceIDException {
+      if (!isNext(next)) { throw new InvalidSequenceIDException("Trying to set to " + next + " but current = "
+                                                                + current); }
       if (sequenceIDs != null) {
-      //TODO:: Remove once problem is fixed.
-      logger.info("Setting current Sequence IDs from current = " + current + " to next = " + next);
+        logger.info("Setting current Sequence IDs from current = " + current + " to next = " + next);
         sequenceIDs.headSet(next.next()).clear();
         if (sequenceIDs.size() == 0) {
           sequenceIDs = null;
