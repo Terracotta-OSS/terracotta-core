@@ -133,6 +133,10 @@ public class DistributableBeanFactoryMixinTest extends MockObjectTestCase {
     mockManagerUtilWrapper.expects(once()).method("lookupOrCreateRoot").with(ANYTHING, ANYTHING)
         .will(returnValue(singletonCache));
     mockManagerUtilWrapper.expects(once()).method("commitLock").with(ANYTHING);
+
+    mockSpringConfigHelper.expects(atLeastOnce()).method("getRootName").will(returnValue(null));
+    mockSpringConfigHelper.expects(atLeastOnce()).method("isLocationInfoEnabled").will(returnValue(false));
+    
     distributableBeanFactoryMixin.registerBeanDefinitions(Collections.singletonMap("bean",
                                                                   new RootBeanDefinition(SimplePropertyBean.class)));
   }
