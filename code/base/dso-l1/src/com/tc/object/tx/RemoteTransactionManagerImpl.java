@@ -8,6 +8,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.object.lockmanager.api.LockFlushCallback;
 import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesImpl;
@@ -58,15 +59,17 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   private State                            status;
   private final SessionManager             sessionManager;
-  private final TransactionSequencer       sequencer;
+  private final TransactionSequencer               sequencer;
+  private final DSOClientMessageChannel            channel;
 
   public RemoteTransactionManagerImpl(TCLogger logger, final TransactionBatchFactory batchFactory,
                                       TransactionBatchAccounting batchAccounting, LockAccounting lockAccounting,
-                                      SessionManager sessionManager) {
+                                      SessionManager sessionManager, DSOClientMessageChannel channel) {
     this.logger = logger;
     this.batchAccounting = batchAccounting;
     this.lockAccounting = lockAccounting;
     this.sessionManager = sessionManager;
+    this.channel = channel;
     this.status = RUNNING;
     this.sequencer = new TransactionSequencer(batchFactory);
   }
@@ -111,6 +114,11 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
    */
   public int getMaxOutStandingBatches() {
     return MAX_OUTSTANDING_BATCHES;
+  }
+
+  public void stopProcessing() {
+    sequencer.shutdown();
+    channel.close();
   }
 
   public void stop() {

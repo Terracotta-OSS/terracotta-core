@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.tx;
 
@@ -8,15 +9,28 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
+import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.protocol.tcm.ChannelEventListener;
+import com.tc.net.protocol.tcm.ChannelIDProvider;
+import com.tc.net.protocol.tcm.ClientMessageChannel;
+import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.logging.NullRuntimeLogger;
+import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
+import com.tc.object.msg.ClientHandshakeMessageFactory;
+import com.tc.object.msg.CommitTransactionMessageFactory;
+import com.tc.object.msg.LockRequestMessageFactory;
+import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
+import com.tc.object.msg.RequestManagedObjectMessageFactory;
+import com.tc.object.msg.RequestRootMessageFactory;
+import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
 import com.tc.util.SequenceID;
@@ -36,8 +50,8 @@ import java.util.Set;
 import junit.framework.TestCase;
 
 public class RemoteTransactionManagerTest extends TestCase {
-  
-  private static final TCLogger logger = TCLogging.getLogger(RemoteTransactionManagerTest.class);
+
+  private static final TCLogger        logger = TCLogging.getLogger(RemoteTransactionManagerTest.class);
 
   private RemoteTransactionManagerImpl manager;
   private TestTransactionBatchFactory  batchFactory;
@@ -52,8 +66,8 @@ public class RemoteTransactionManagerTest extends TestCase {
     batchFactory = new TestTransactionBatchFactory();
     batchAccounting = new TransactionBatchAccounting();
     lockAccounting = new LockAccounting();
-    manager = new RemoteTransactionManagerImpl(logger, batchFactory,
-                                               batchAccounting, lockAccounting, new NullSessionManager());
+    manager = new RemoteTransactionManagerImpl(logger, batchFactory, batchAccounting, lockAccounting,
+                                               new NullSessionManager(), new MockChannel());
     number = new SynchronizedInt(0);
     error = new SynchronizedRef(null);
     threads = new HashMap();
@@ -544,6 +558,70 @@ public class RemoteTransactionManagerTest extends TestCase {
       }
       return rv;
     }
+  }
+
+  private static class MockChannel implements DSOClientMessageChannel {
+
+    public void addClassMapping(TCMessageType messageType, Class messageClass) {
+      throw new ImplementMe();
+    }
+
+    public void addListener(ChannelEventListener listener) {
+      throw new ImplementMe();
+    }
+
+    public ClientMessageChannel channel() {
+      throw new ImplementMe();
+    }
+
+    public void close() {
+      throw new ImplementMe();
+    }
+
+    public AcknowledgeTransactionMessageFactory getAcknowledgeTransactionMessageFactory() {
+      throw new ImplementMe();
+    }
+
+    public ChannelIDProvider getChannelIDProvider() {
+      throw new ImplementMe();
+    }
+
+    public ClientHandshakeMessageFactory getClientHandshakeMessageFactory() {
+      throw new ImplementMe();
+    }
+
+    public CommitTransactionMessageFactory getCommitTransactionMessageFactory() {
+      throw new ImplementMe();
+    }
+
+    public LockRequestMessageFactory getLockRequestMessageFactory() {
+      throw new ImplementMe();
+    }
+
+    public ObjectIDBatchRequestMessageFactory getObjectIDBatchRequestMessageFactory() {
+      throw new ImplementMe();
+    }
+
+    public RequestManagedObjectMessageFactory getRequestManagedObjectMessageFactory() {
+      throw new ImplementMe();
+    }
+
+    public RequestRootMessageFactory getRequestRootMessageFactory() {
+      throw new ImplementMe();
+    }
+
+    public boolean isConnected() {
+      throw new ImplementMe();
+    }
+
+    public void open() {
+      throw new ImplementMe();
+    }
+
+    public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink) {
+      throw new ImplementMe();
+    }
+    //
   }
 
 }

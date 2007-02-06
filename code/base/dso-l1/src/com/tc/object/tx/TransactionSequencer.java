@@ -27,7 +27,8 @@ public class TransactionSequencer {
     LOGGING_ENABLED = TCPropertiesImpl.getProperties().getBoolean("l1.transactionmanager.logging.enabled");
     MAX_BYTE_SIZE_FOR_BATCH = TCPropertiesImpl.getProperties().getInt("l1.transactionmanager.maxBatchSizeInKiloBytes") * 1024;
     MAX_PENDING_BATCHES = TCPropertiesImpl.getProperties().getInt("l1.transactionmanager.maxPendingBatches");
-    MAX_SLEEP_TIME_BEFORE_HALT = TCPropertiesImpl.getProperties().getLong("l1.transactionmanager.maxSleepTimeBeforeHalt");
+    MAX_SLEEP_TIME_BEFORE_HALT = TCPropertiesImpl.getProperties()
+        .getLong("l1.transactionmanager.maxSleepTimeBeforeHalt");
   }
 
   private final SequenceGenerator       sequence       = new SequenceGenerator(1);
@@ -40,6 +41,7 @@ public class TransactionSequencer {
   private int                           slowDownStartsAt;
   private double                        sleepTimeIncrements;
   private int                           txnsPerBatch   = 0;
+  private boolean                       shutdown       = false;
 
   public TransactionSequencer(TransactionBatchFactory batchFactory) {
     this.batchFactory = batchFactory;
@@ -64,13 +66,35 @@ public class TransactionSequencer {
     batch.addTransaction(txn);
   }
 
+  public synchronized void addTransaction(ClientTransaction txn) {
+    if (shutdown) {
+      logger.error("Sequencer shutdown. Not committing " + txn);
+      return;
+    }
+
+    try {
+      addTxnInternal(txn);
+    } catch (Throwable t) {
+      // logging of exceptions is done at a higher level
+      shutdown = true;
+      if (t instanceof Error) { throw (Error) t; }
+      if (t instanceof RuntimeException) { throw (RuntimeException) t; }
+      throw new RuntimeException(t);
+    }
+  }
+
+  public synchronized void shutdown() {
+    shutdown = true;
+  }
+
   /**
    * XXX::Note : There is automatic throttling built in by adding to a BoundedLinkedQueue from within a synch block
    */
-  public synchronized void addTransaction(ClientTransaction txn) {
+  private void addTxnInternal(ClientTransaction txn) {
     SequenceID sequenceID = new SequenceID(sequence.getNextSequence());
     txn.setSequenceID(sequenceID);
     txnsPerBatch++;
+
     addTransactionToBatch(txn, currentBatch);
     if (currentBatch.byteSize() > MAX_BYTE_SIZE_FOR_BATCH) {
       put(currentBatch);

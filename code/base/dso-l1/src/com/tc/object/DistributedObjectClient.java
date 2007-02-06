@@ -189,7 +189,7 @@ public class DistributedObjectClient extends SEDA {
 
     rtxManager = new RemoteTransactionManagerImpl(new ChannelIDLogger(channel.getChannelIDProvider(), TCLogging
         .getLogger(RemoteTransactionManagerImpl.class)), txBatchFactory, new TransactionBatchAccounting(),
-                                                  new LockAccounting(), sessionManager);
+                                                  new LockAccounting(), sessionManager, channel);
 
     ClientGlobalTransactionManager gtxManager = new ClientGlobalTransactionManagerImpl(rtxManager);
 

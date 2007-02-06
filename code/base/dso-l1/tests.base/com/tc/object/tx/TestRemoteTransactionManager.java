@@ -95,4 +95,8 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public boolean isTransactionsForLockFlushed(LockID lockID, LockFlushCallback callback) {
     throw new ImplementMe();
   }
+
+  public void stopProcessing() {
+    throw new ImplementMe();
+  }
 }

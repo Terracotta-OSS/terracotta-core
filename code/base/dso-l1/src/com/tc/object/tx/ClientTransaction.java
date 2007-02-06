@@ -61,9 +61,7 @@ public interface ClientTransaction {
 
   public boolean isConcurrent();
 
-  public boolean isAlreadyCommitted();
-
-  public void setAlreadyCommitted(boolean alreadyCommittedFlag);
+  public void setAlreadyCommitted();
 
   public boolean hasChanges();
 

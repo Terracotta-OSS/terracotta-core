@@ -105,11 +105,7 @@ public class TestClientTransaction implements ClientTransaction {
     throw new ImplementMe();
   }
 
-  public boolean isAlreadyCommitted() {
-    throw new ImplementMe();
-  }
-
-  public void setAlreadyCommitted(boolean alreadyCommittedFlag) {
+  public void setAlreadyCommitted() {
     throw new ImplementMe();
   }
 

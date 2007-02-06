@@ -44,4 +44,6 @@ public interface RemoteTransactionManager {
   public void resendOutstandingAndUnpause();
 
   public boolean isTransactionsForLockFlushed(LockID lockID, LockFlushCallback callback);
+
+  public void stopProcessing();
 }
