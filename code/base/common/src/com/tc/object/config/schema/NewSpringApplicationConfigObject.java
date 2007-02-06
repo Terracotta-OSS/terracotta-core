@@ -44,13 +44,9 @@ public class NewSpringApplicationConfigObject extends BaseNewConfigObject implem
     NonDistributedFields[] springBeans = ((SpringBean) xmlObject).getBeanArray();
     SpringContextBean[] beans = new SpringContextBean[springBeans.length];
 
-    String[] fields;
-    String name;
-
     for (int i = 0; i < springBeans.length; i++) {
-      name = springBeans[i].getName();
-      fields = springBeans[i].getNonDistributedFieldArray();
-
+      String name = springBeans[i].getName();
+      String[] fields = springBeans[i].getNonDistributedFieldArray();
       beans[i] = new SpringContextBean(name, fields);
     }
 
@@ -63,19 +59,22 @@ public class NewSpringApplicationConfigObject extends BaseNewConfigObject implem
     SpringAppContext[] springAppContexts = ((SpringAppContexts) xmlObject).getApplicationContextArray();
     AppContext[] appContexts = new AppContext[springAppContexts.length];
 
-    String[] paths;
-    String[] distributedEvents = null;
-    SpringDistributedEvent distributedEvent;
-    SpringContextBean[] beans;
-
     for (int i = 0; i < springAppContexts.length; i++) {
-      paths = springAppContexts[i].getPaths().getPathArray();
-      distributedEvent = springAppContexts[i].getDistributedEvents();
-      if (distributedEvent != null) distributedEvents = distributedEvent.getDistributedEventArray();
-      beans = (SpringContextBean[]) NewSpringApplicationConfigObject.translateSpringBeans(springAppContexts[i]
+      SpringAppContext ctx = springAppContexts[i];
+      String[] paths = ctx.getPaths().getPathArray();
+      SpringDistributedEvent distributedEvent = ctx.getDistributedEvents();
+      String[] distributedEvents = null;
+      if (distributedEvent != null) {
+        distributedEvents = distributedEvent.getDistributedEventArray();
+      }
+      SpringContextBean[] beans = (SpringContextBean[]) NewSpringApplicationConfigObject.translateSpringBeans(ctx
           .getBeans());
-
-      appContexts[i] = new AppContext(paths, distributedEvents, beans);
+      
+      String rootName = ctx.getRootName();
+      
+      boolean locationInfoEnabled = ctx.getEnableLocationInfo();
+      
+      appContexts[i] = new AppContext(paths, distributedEvents, beans, rootName, locationInfoEnabled);
     }
 
     return appContexts;
@@ -87,30 +86,24 @@ public class NewSpringApplicationConfigObject extends BaseNewConfigObject implem
     SpringApps[] springApps = ((SpringApplication) xmlObject).getJeeApplicationArray();
     SpringApp[] springApp = new SpringApp[springApps.length];
 
-    Lock[] locks;
-    InstrumentedClass[] includes;
-    AppContext[] appContexts;
-    String name;
-    String[] transientFields;
-    boolean sessionSupport;
-    boolean fastProxy;
-
     for (int i = 0; i < springApps.length; i++) {
-      name = springApps[i].getName();
-      sessionSupport = springApps[i].getSessionSupport();
-      locks = (Lock[]) ConfigTranslationHelper.translateLocks(springApps[i].getLocks());
-      includes = (InstrumentedClass[]) ConfigTranslationHelper
-          .translateIncludes(springApps[i].getInstrumentedClasses());
-      
-      transientFields = null;
-      if (springApps[i].getTransientFields() != null) {
-        transientFields = springApps[i].getTransientFields().getFieldNameArray();
+      SpringApps app = springApps[i];
+      String name = app.getName();
+      boolean sessionSupport = app.getSessionSupport();
+      Lock[] locks = (Lock[]) ConfigTranslationHelper.translateLocks(app.getLocks());
+      InstrumentedClass[] includes = (InstrumentedClass[]) ConfigTranslationHelper.translateIncludes(app
+          .getInstrumentedClasses());
+
+      String[] transientFields = null;
+      if (app.getTransientFields() != null) {
+        transientFields = app.getTransientFields().getFieldNameArray();
       }
       if (transientFields == null) transientFields = new String[0];
-      
-      appContexts = (AppContext[]) NewSpringApplicationConfigObject.translateAppContexts(springApps[i]
+
+      AppContext[] appContexts = (AppContext[]) NewSpringApplicationConfigObject.translateAppContexts(app
           .getApplicationContexts());
-      fastProxy = springApps[i].getFastProxy();
+
+      boolean fastProxy = app.getFastProxy();
 
       springApp[i] = new SpringApp(sessionSupport, locks, includes, appContexts, name, fastProxy, transientFields);
     }

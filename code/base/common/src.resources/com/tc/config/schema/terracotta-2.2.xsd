@@ -352,6 +352,8 @@
   
   <xs:complexType name="spring-app-context">
     <xs:all>
+      <xs:element name="root-name" type="java-identifier" minOccurs="0"/>
+      <xs:element name="enable-location-info" type="xs:boolean" minOccurs="0"/>
       <xs:element name="paths" type="spring-path" />
       <xs:element name="distributed-events" type="spring-distributed-event" minOccurs="0" />
       <xs:element name="beans" type="spring-bean" minOccurs="0" />

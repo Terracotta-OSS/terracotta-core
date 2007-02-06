@@ -63,6 +63,7 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
 
   private Set                 nonDistributables;
 
+
   public DistributableBeanFactoryMixin() {
     ApplicationHelper applicationHelper = new ApplicationHelper(getClass());
     if (applicationHelper.isDSOApplication()) {
@@ -151,9 +152,11 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
     this.locations.add(location);
   }
 
-  private void calculateId() {
-    if (this.appName == null) { return; }
-
+  private String calculateId(DSOSpringConfigHelper config) {
+    if(config!=null && config.getRootName()!=null) {
+      return config.getRootName();
+    }
+    
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     pw.println("app " + this.appName);
@@ -161,9 +164,12 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
       String loc = (String) iter.next();
       pw.println("params " + loc);
     }
-    // Should not do this
-    new Throwable().printStackTrace(pw);
-    this.id = getDigest(sw.toString());
+
+    if(config!=null && config.isLocationInfoEnabled()) {
+      new Throwable().printStackTrace(pw);
+    }
+    
+    return getDigest(sw.toString());
   }
 
   private void determineIfClustered() {
@@ -172,13 +178,15 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
       if (config.isMatchingApplication(this.appName) && isMatchingLocations(config)) {
         this.springConfigHelpers.add(config);
         this.isClustered = true;
-        logger.info(id + " found matching configuration for " + locations);
+        this.id = calculateId(config);
+        logger.info(id + " Matching locations:" + locations);
       }
     }
 
     if (this.isClustered) {
       logger.info(id + " Context is distributed");
     } else {
+      this.id = calculateId(null);
       logger.info(id + " Context is NOT distributed");
     }
   }
@@ -194,7 +202,6 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
   }
    
   public void registerBeanDefinitions(Map beanMap) {
-    calculateId();
     determineIfClustered();
 
     if (!this.isClustered) { return; }

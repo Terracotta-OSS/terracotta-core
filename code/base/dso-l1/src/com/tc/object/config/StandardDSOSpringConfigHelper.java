@@ -12,11 +12,30 @@ import java.util.Map;
 import java.util.Set;
 
 public class StandardDSOSpringConfigHelper implements DSOSpringConfigHelper {
+  private String     rootName;
+  private boolean    locationInfoEnabled     = false;
+  private boolean    fastProxyEnabled        = false;
+  
   private final List applicationNamePatterns = new ArrayList();
   private final List configPatterns          = new ArrayList();
-  private boolean    fastProxyEnabled        = false;
   private final List distributedEvents       = new ArrayList();
 
+  public boolean isLocationInfoEnabled() {
+    return locationInfoEnabled;
+  }
+
+  public String getRootName() {
+    return rootName;
+  }
+
+  public void setRootName(String rootName) {
+    this.rootName = rootName;
+  }
+
+  public void setLocationInfoEnabled(boolean locationInfoEnabled) {
+    this.locationInfoEnabled = locationInfoEnabled;
+  }
+  
   /**
    * Map of <code>String</code> bean name to <code>Set</code> of the excluded fields.
    */

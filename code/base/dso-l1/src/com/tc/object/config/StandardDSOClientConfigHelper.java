@@ -320,6 +320,9 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
       DSOSpringConfigHelper springConfigHelper = new StandardDSOSpringConfigHelper();
       springConfigHelper.addApplicationNamePattern(springApp.name());
       springConfigHelper.setFastProxyEnabled(springApp.fastProxy()); // copy flag to all subcontexts
+      
+      springConfigHelper.setRootName(appContext.rootName());
+      springConfigHelper.setLocationInfoEnabled(appContext.locationInfoEnabled());
 
       String[] distributedEvents = appContext.distributedEvents();
       for (int k = 0; distributedEvents != null && k < distributedEvents.length; k++) {

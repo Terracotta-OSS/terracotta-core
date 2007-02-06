@@ -10,14 +10,19 @@ import java.util.Arrays;
  */
 public class AppContext {
 
-  private String[]            paths;
-  private String[]            distributedEvents;
-  private SpringContextBean[] beans;
+  private final String[]            paths;
+  private final String[]            distributedEvents;
+  private final SpringContextBean[] beans;
+  private final String              rootName;
+  private final boolean             locationInfoEnabled;
 
-  public AppContext(String[] paths, String[] distributedEvents, SpringContextBean[] beans) {
+  public AppContext(String[] paths, String[] distributedEvents, SpringContextBean[] beans, String rootName,
+                    boolean locationInfoEnabled) {
     this.paths = paths;
     this.distributedEvents = distributedEvents;
     this.beans = beans;
+    this.rootName = rootName;
+    this.locationInfoEnabled = locationInfoEnabled;
   }
 
   public String[] paths() {
@@ -32,6 +37,14 @@ public class AppContext {
     return beans;
   }
 
+  public String rootName() {
+    return rootName;
+  }
+  
+  public boolean locationInfoEnabled() {
+    return locationInfoEnabled;
+  }
+  
   public String toString() {
     return "APP-CONTEXT: \nDIST-EVENTS: " + Arrays.asList(distributedEvents) + "\nPATHS\n\n" + Arrays.asList(paths)
         + "\n" + Arrays.asList(beans);

@@ -8,6 +8,10 @@ import java.util.Map;
 
 public interface DSOSpringConfigHelper {
 
+  String getRootName();
+  
+  boolean isLocationInfoEnabled();
+  
   // accessors
   boolean isMatchingApplication(String applicationName);
 
@@ -43,4 +47,8 @@ public interface DSOSpringConfigHelper {
   void excludeField(String beanName, String fieldName);
 
   void setFastProxyEnabled(boolean b);
+
+  void setRootName(String rootName);
+
+  void setLocationInfoEnabled(boolean locationInfoEnabled);
 }
