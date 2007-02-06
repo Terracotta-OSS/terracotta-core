@@ -17,7 +17,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.terracotta.dso.ConfigurationHelper;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.editors.ConfigurationEditor;
-import com.terracottatech.config.TcConfigDocument.TcConfig;
+import com.terracottatech.configV2.TcConfigDocument.TcConfig;
 
 public class DeleteTypeChange extends CompositeChange {
   private IType    fType;

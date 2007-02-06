@@ -5,7 +5,7 @@ package com.tctest;
 
 import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
-import com.terracottatech.config.PersistenceMode;
+import com.terracottatech.configV2.PersistenceMode;
 
 public abstract class GCTestBase extends TransparentTestBase implements TestConfigurator {
 

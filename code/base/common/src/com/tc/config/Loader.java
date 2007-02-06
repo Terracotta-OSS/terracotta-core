@@ -25,49 +25,49 @@ public class Loader {
     v1toV2Converter = new V1toV2();
   }
   
-  public com.terracottatech.config.TcConfigDocument parse(File file)
+  public com.terracottatech.configV2.TcConfigDocument parse(File file)
     throws IOException, XmlException
   {
     return v1toV2Converter.parse(file);
   }
   
-  public com.terracottatech.config.TcConfigDocument parse(File file, XmlOptions xmlOptions)
+  public com.terracottatech.configV2.TcConfigDocument parse(File file, XmlOptions xmlOptions)
     throws IOException, XmlException
   {
     return v1toV2Converter.parse(file, xmlOptions);
   }
 
-  public com.terracottatech.config.TcConfigDocument parse(String xmlText)
+  public com.terracottatech.configV2.TcConfigDocument parse(String xmlText)
     throws IOException, XmlException
   {
     return v1toV2Converter.parse(xmlText);
   }
 
-  public com.terracottatech.config.TcConfigDocument parse(String xmlText, XmlOptions xmlOptions)
+  public com.terracottatech.configV2.TcConfigDocument parse(String xmlText, XmlOptions xmlOptions)
     throws XmlException
   {
     return v1toV2Converter.parse(xmlText, xmlOptions);
   }
 
-  public com.terracottatech.config.TcConfigDocument parse(InputStream stream)
+  public com.terracottatech.configV2.TcConfigDocument parse(InputStream stream)
     throws IOException, XmlException
   {
     return v1toV2Converter.parse(stream);
   }
   
-  public com.terracottatech.config.TcConfigDocument parse(InputStream stream, XmlOptions xmlOptions)
+  public com.terracottatech.configV2.TcConfigDocument parse(InputStream stream, XmlOptions xmlOptions)
     throws IOException, XmlException
   {
     return v1toV2Converter.parse(stream, xmlOptions);
   }
 
-  public com.terracottatech.config.TcConfigDocument parse(URL url)
+  public com.terracottatech.configV2.TcConfigDocument parse(URL url)
     throws IOException, XmlException
   {
     return v1toV2Converter.parse(url);
   }
   
-  public com.terracottatech.config.TcConfigDocument parse(URL url, XmlOptions xmlOptions)
+  public com.terracottatech.configV2.TcConfigDocument parse(URL url, XmlOptions xmlOptions)
     throws IOException, XmlException
   {
     return v1toV2Converter.parse(url, xmlOptions);

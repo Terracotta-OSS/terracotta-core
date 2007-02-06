@@ -20,8 +20,8 @@ import com.tc.object.config.schema.NewDSOApplicationConfig;
 import com.tc.object.config.schema.NewL1DSOConfig;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.util.Assert;
-import com.terracottatech.config.Application;
-import com.terracottatech.config.Server;
+import com.terracottatech.configV2.Application;
+import com.terracottatech.configV2.Server;
 
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;

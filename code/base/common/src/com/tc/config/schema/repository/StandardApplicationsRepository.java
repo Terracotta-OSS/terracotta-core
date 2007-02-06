@@ -5,7 +5,7 @@ package com.tc.config.schema.repository;
 
 import com.tc.config.schema.validate.ConfigurationValidator;
 import com.tc.util.Assert;
-import com.terracottatech.config.Application;
+import com.terracottatech.configV2.Application;
 
 import java.util.Arrays;
 import java.util.HashMap;

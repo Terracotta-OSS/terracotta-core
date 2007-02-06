@@ -12,8 +12,8 @@ import org.dijon.ContainerResource;
 import org.terracotta.dso.TcPlugin;
 import com.tc.admin.common.XTable;
 import org.terracotta.dso.editors.chooser.MethodChooser;
-import com.terracottatech.config.DistributedMethods;
-import com.terracottatech.config.DsoApplication;
+import com.terracottatech.configV2.DistributedMethods;
+import com.terracottatech.configV2.DsoApplication;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;

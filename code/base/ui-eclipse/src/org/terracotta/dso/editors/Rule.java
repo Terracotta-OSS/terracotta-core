@@ -5,8 +5,8 @@ package org.terracotta.dso.editors;
 
 import org.apache.xmlbeans.XmlObject;
 
-import com.terracottatech.config.ClassExpression;
-import com.terracottatech.config.Include;
+import com.terracottatech.configV2.ClassExpression;
+import com.terracottatech.configV2.Include;
 
 public abstract class Rule {
   public static final int INCLUDE_RULE = 0;

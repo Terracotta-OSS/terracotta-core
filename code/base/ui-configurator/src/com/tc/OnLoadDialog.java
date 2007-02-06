@@ -12,8 +12,8 @@ import org.dijon.PagedView;
 
 import com.tc.admin.common.XTextField;
 import com.tc.admin.common.XTextPane;
-import com.terracottatech.config.Include;
-import com.terracottatech.config.OnLoad;
+import com.terracottatech.configV2.Include;
+import com.terracottatech.configV2.OnLoad;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

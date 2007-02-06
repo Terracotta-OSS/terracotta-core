@@ -18,8 +18,8 @@ import com.tc.admin.common.XComboBox;
 import com.tc.admin.common.XObjectTable;
 import com.tc.admin.common.XTableCellRenderer;
 import org.terracotta.dso.dialogs.OnLoadDialog;
-import com.terracottatech.config.Include;
-import com.terracottatech.config.OnLoad;
+import com.terracottatech.configV2.Include;
+import com.terracottatech.configV2.OnLoad;
 
 import java.awt.Color;
 import java.awt.Frame;

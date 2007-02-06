@@ -9,9 +9,9 @@ import com.tc.object.config.schema.Lock;
 import com.tc.object.config.schema.LockLevel;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
-import com.terracottatech.config.Autolock;
-import com.terracottatech.config.Locks;
-import com.terracottatech.config.NamedLock;
+import com.terracottatech.configV2.Autolock;
+import com.terracottatech.configV2.Locks;
+import com.terracottatech.configV2.NamedLock;
 
 import java.io.File;
 
@@ -74,10 +74,10 @@ public class TestTVSConfigurationSetupManagerFactoryTest extends TCTestCase {
     assertTrue(this.l1Manager.dsoL1Config().instrumentationLoggingOptions().logDistributedMethods().getBoolean());
   }
 
-  private com.terracottatech.config.LockLevel.Enum level(LockLevel in) {
-    if (in.equals(LockLevel.CONCURRENT)) return com.terracottatech.config.LockLevel.CONCURRENT;
-    if (in.equals(LockLevel.READ)) return com.terracottatech.config.LockLevel.READ;
-    if (in.equals(LockLevel.WRITE)) return com.terracottatech.config.LockLevel.WRITE;
+  private com.terracottatech.configV2.LockLevel.Enum level(LockLevel in) {
+    if (in.equals(LockLevel.CONCURRENT)) return com.terracottatech.configV2.LockLevel.CONCURRENT;
+    if (in.equals(LockLevel.READ)) return com.terracottatech.configV2.LockLevel.READ;
+    if (in.equals(LockLevel.WRITE)) return com.terracottatech.configV2.LockLevel.WRITE;
     throw Assert.failure("Unknown lock level " + in);
   }
 

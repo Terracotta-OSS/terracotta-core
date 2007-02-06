@@ -15,9 +15,9 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.ext.LexicalHandler;
 
 import com.tc.exception.ImplementMe;
-import com.terracottatech.config.Client;
-import com.terracottatech.config.DsoClientData;
-import com.terracottatech.config.Path;
+import com.terracottatech.configV2.Client;
+import com.terracottatech.configV2.DsoClientData;
+import com.terracottatech.configV2.Path;
 
 import java.io.File;
 import java.io.InputStream;

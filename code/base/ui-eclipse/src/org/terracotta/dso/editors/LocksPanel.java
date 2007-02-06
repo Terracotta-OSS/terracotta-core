@@ -16,11 +16,11 @@ import com.tc.admin.common.XObjectTableModel;
 import com.tc.admin.common.XTable;
 import com.tc.admin.common.XTableCellRenderer;
 import org.terracotta.dso.editors.chooser.MethodChooser;
-import com.terracottatech.config.Autolock;
-import com.terracottatech.config.DsoApplication;
-import com.terracottatech.config.LockLevel;
-import com.terracottatech.config.Locks;
-import com.terracottatech.config.NamedLock;
+import com.terracottatech.configV2.Autolock;
+import com.terracottatech.configV2.DsoApplication;
+import com.terracottatech.configV2.LockLevel;
+import com.terracottatech.configV2.Locks;
+import com.terracottatech.configV2.NamedLock;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;

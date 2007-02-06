@@ -8,8 +8,8 @@ import org.dijon.ContainerResource;
 
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XTable;
-import com.terracottatech.config.AdditionalBootJarClasses;
-import com.terracottatech.config.DsoApplication;
+import com.terracottatech.configV2.AdditionalBootJarClasses;
+import com.terracottatech.configV2.DsoApplication;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

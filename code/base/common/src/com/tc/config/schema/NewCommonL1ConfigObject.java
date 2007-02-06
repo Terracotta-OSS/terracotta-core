@@ -6,7 +6,7 @@ package com.tc.config.schema;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.FileConfigItem;
 import com.tc.util.Assert;
-import com.terracottatech.config.Client;
+import com.terracottatech.configV2.Client;
 
 /**
  * The standard implementation of {@link NewCommonL1Config}.

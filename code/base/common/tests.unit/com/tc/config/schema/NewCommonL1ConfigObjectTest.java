@@ -5,8 +5,8 @@ package com.tc.config.schema;
 
 import org.apache.xmlbeans.XmlObject;
 
-import com.terracottatech.config.Client;
-import com.terracottatech.config.TcConfigDocument.TcConfig;
+import com.terracottatech.configV2.Client;
+import com.terracottatech.configV2.TcConfigDocument.TcConfig;
 
 import java.io.File;
 
