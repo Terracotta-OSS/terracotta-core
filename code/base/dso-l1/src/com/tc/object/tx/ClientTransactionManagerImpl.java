@@ -204,7 +204,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
   }
 
-  public void wait(String lockName, WaitInvocation call, Object object) throws UnlockedSharedObjectException, InterruptedException {
+  public void wait(String lockName, WaitInvocation call, Object object) throws UnlockedSharedObjectException,
+      InterruptedException {
     final ClientTransaction topTxn = getTransaction();
 
     LockID lockID = lockManager.lockIDFor(lockName);
@@ -215,8 +216,11 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
     commit(lockID, topTxn, true);
 
-    lockManager.wait(lockID, call, object, waitListener);
-    createTxAndInitContext();
+    try {
+      lockManager.wait(lockID, call, object, waitListener);
+    } finally {
+      createTxAndInitContext();
+    }
   }
 
   public void notify(String lockName, boolean all, Object object) throws UnlockedSharedObjectException {

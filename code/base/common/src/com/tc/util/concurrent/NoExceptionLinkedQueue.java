@@ -1,29 +1,31 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util.concurrent;
 
 import EDU.oswego.cs.dl.util.concurrent.Channel;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
-import com.tc.exception.TCRuntimeException;
-
 public class NoExceptionLinkedQueue implements Channel {
   public final LinkedQueue queue = new LinkedQueue();
-  
+
   public void put(Object o) {
-    try {
-      queue.put(o);
-    } catch (InterruptedException e) {
-      throw new TCRuntimeException(e);
+    while (true) {
+      try {
+        queue.put(o);
+        return;
+      } catch (InterruptedException e) {
+        //
+      }
     }
   }
-  
+
   public boolean offer(Object o, long l) {
     try {
       return queue.offer(o, l);
     } catch (InterruptedException e) {
-      throw new TCRuntimeException(e);
+      return false;
     }
   }
 
@@ -39,15 +41,17 @@ public class NoExceptionLinkedQueue implements Channel {
     try {
       return queue.poll(arg0);
     } catch (InterruptedException e) {
-      throw new TCRuntimeException(e);
+      return null;
     }
   }
 
   public Object take() {
-    try {
-      return queue.take();
-    } catch (InterruptedException e) {
-      throw new TCRuntimeException(e);
+    while (true) {
+      try {
+        return queue.take();
+      } catch (InterruptedException e) {
+        //
+      }
     }
   }
 

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -40,7 +41,7 @@ public class CyclicBarrierTestApp extends AbstractTransparentApp {
   }
 
   private void clear() throws Exception {
-    synchronized(dataRoot) {
+    synchronized (dataRoot) {
       dataRoot.clear();
     }
 
@@ -63,7 +64,7 @@ public class CyclicBarrierTestApp extends AbstractTransparentApp {
     int index = -1;
     synchronized (dataRoot) {
       index = dataRoot.getIndex();
-      dataRoot.setIndex(index+1);
+      dataRoot.setIndex(index + 1);
     }
 
     barrier.await();
@@ -102,18 +103,17 @@ public class CyclicBarrierTestApp extends AbstractTransparentApp {
     int index = -1;
     synchronized (dataRoot) {
       index = dataRoot.getIndex();
-      dataRoot.setIndex(index+1);
+      dataRoot.setIndex(index + 1);
     }
 
     barrier.await();
 
-    Thread thread = new Thread(new BarrierRunnable(testBarrier));
+    Thread thread = null;
 
     if (index == 0) {
+      thread = new Thread(new BarrierRunnable(testBarrier));
       thread.start();
     }
-
-    barrier.await();
 
     if (index == 1) {
       while (testBarrier.getNumberWaiting() == 0) {
@@ -125,6 +125,12 @@ public class CyclicBarrierTestApp extends AbstractTransparentApp {
 
     if (index == 0) {
       thread.interrupt();
+    }
+
+    barrier.await();
+
+    if (index == 0) {
+      thread.join();
     }
 
     barrier.await();
@@ -145,7 +151,7 @@ public class CyclicBarrierTestApp extends AbstractTransparentApp {
   }
 
   private static class BarrierAction implements Runnable {
-    private DataRoot dataRoot;
+    private final DataRoot dataRoot;
 
     public BarrierAction(DataRoot dataRoot) {
       this.dataRoot = dataRoot;
@@ -156,26 +162,34 @@ public class CyclicBarrierTestApp extends AbstractTransparentApp {
     }
   }
 
-  private static class BarrierRunnable implements Runnable {
-    private CyclicBarrier barrier;
+  private class BarrierRunnable implements Runnable {
+    private CyclicBarrier b;
 
-    public BarrierRunnable(CyclicBarrier barrier) {
-      this.barrier = barrier;
+    public BarrierRunnable(CyclicBarrier b) {
+      this.b = b;
     }
 
     public void run() {
       try {
-        barrier.await();
+        run0();
+      } catch (Throwable t) {
+        notifyError(t);
+      }
+    }
+
+    private void run0() {
+      try {
+        b.await();
       } catch (InterruptedException e) {
-        Assert.assertTrue(barrier.isBroken());
+        Assert.assertTrue(b.isBroken());
       } catch (BrokenBarrierException e) {
-        Assert.assertTrue(barrier.isBroken());
+        Assert.assertTrue(b.isBroken());
       }
     }
   }
 
   private static class DataRoot {
-    private int index;
+    private int          index;
     private volatile int data;
 
     public DataRoot() {

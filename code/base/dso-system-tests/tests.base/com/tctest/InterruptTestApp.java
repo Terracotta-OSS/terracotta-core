@@ -14,14 +14,21 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
 
 public class InterruptTestApp extends AbstractTransparentApp {
-  private boolean interruptedFlag = false;
-  private final Object lockObject = new Object();
-  
+  private volatile boolean    interruptedFlag = false;
+  private final Object        lockObject      = new Object();
+
   private final CyclicBarrier barrier;
 
   public InterruptTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     barrier = new CyclicBarrier(getParticipantCount());
+
+    if (getParticipantCount() != 1) {
+      // Feel free to remove this assertion when and if this test ever needs more than one node
+      // As it stands now, only one node will do anything in this test
+      throw new AssertionError("more than one participant");
+    }
+
   }
 
   public void run() {
@@ -39,18 +46,21 @@ public class InterruptTestApp extends AbstractTransparentApp {
       Thread t = new Thread(new Runnable() {
         public void run() {
           try {
-            synchronized(lockObject) {
+            synchronized (lockObject) {
               localBarrier.barrier();
               lockObject.wait();
+              throw new AssertionError();
             }
           } catch (InterruptedException e) {
             interruptedFlag = true;
+          } catch (Throwable e) {
+            notifyError(e);
           }
         }
       });
       t.start();
       localBarrier.barrier();
-      while (!interruptedFlag) {
+      while (!interruptedFlag && t.isAlive()) {
         t.interrupt();
       }
     }
