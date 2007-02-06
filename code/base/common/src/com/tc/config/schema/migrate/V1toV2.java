@@ -59,14 +59,14 @@ public class V1toV2 {
     addSchemaLocation = false;
   }
   
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   convert(com.terracottatech.configV1.TcConfigDocument v1Doc)
     throws XmlException
   {
     return convert(v1Doc, defaultXmlOptions);
   }
   
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   convert(com.terracottatech.configV1.TcConfigDocument v1Doc, XmlOptions xmlOptions)
     throws XmlException
   {
@@ -202,47 +202,47 @@ public class V1toV2 {
     return null;
   }
 
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   convert(File file) throws IOException, XmlException {
     return convert(loadV1(file));
   }
   
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   convert(File file, XmlOptions xmlOptions) throws IOException, XmlException {
     return convert(loadV1(file, xmlOptions));
   }
 
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   convert(String xmlText) throws XmlException {
     return convert(loadV1(xmlText));
   }
   
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   convert(String xmlText, XmlOptions xmlOptions) throws XmlException {
     return convert(loadV1(xmlText, xmlOptions));
   }
 
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   convert(InputStream stream) throws IOException, XmlException {
     return convert(loadV1(stream));
   }
   
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   convert(InputStream stream, XmlOptions xmlOptions) throws IOException, XmlException {
     return convert(loadV1(stream, xmlOptions));
   }
 
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   convert(URL url) throws IOException, XmlException {
     return convert(loadV1(url));
   }
   
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   convert(URL url, XmlOptions xmlOptions) throws IOException, XmlException {
     return convert(loadV1(url, xmlOptions));
   }
   
-  private void informTranslated(com.terracottatech.configV2.TcConfigDocument v2Doc) {
+  private void informTranslated(com.terracottatech.config.TcConfigDocument v2Doc) {
     TCLogger logger = CustomerLogging.getConsoleLogger();
     
     logger.info("Configuration was translated to current version.");
@@ -250,14 +250,14 @@ public class V1toV2 {
     logger.info(v2Doc.xmlText(defaultXmlOptions));
   }
   
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   parse(File file) throws IOException, XmlException {
     return parse(file, defaultXmlOptions);
   }
   
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   parse(File file, XmlOptions xmlOptions) throws IOException, XmlException {
-    com.terracottatech.configV2.TcConfigDocument v2Doc = null;
+    com.terracottatech.config.TcConfigDocument v2Doc = null;
   
     try {
       v2Doc = loadV2(file, xmlOptions);
@@ -273,14 +273,14 @@ public class V1toV2 {
     return v2Doc;
   }
   
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   parse(String xmlText) throws XmlException {
     return parse(xmlText, defaultXmlOptions);
   }
 
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   parse(String xmlText, XmlOptions xmlOptions) throws XmlException {
-    com.terracottatech.configV2.TcConfigDocument v2Doc = null;
+    com.terracottatech.config.TcConfigDocument v2Doc = null;
   
     try {
       v2Doc = loadV2(xmlText, xmlOptions);
@@ -296,14 +296,14 @@ public class V1toV2 {
     return v2Doc;
   }
 
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   parse(InputStream stream) throws IOException, XmlException {
     return parse(stream, defaultXmlOptions);
   }
   
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   parse(InputStream stream, XmlOptions xmlOptions) throws IOException, XmlException {
-    com.terracottatech.configV2.TcConfigDocument v2Doc = null;
+    com.terracottatech.config.TcConfigDocument v2Doc = null;
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     
     CopyUtils.copy(stream, baos);
@@ -322,14 +322,14 @@ public class V1toV2 {
     return v2Doc;
   }
 
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   parse(URL url) throws IOException, XmlException {
     return parse(url, defaultXmlOptions);
   }
   
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   parse(URL url, XmlOptions xmlOptions) throws IOException, XmlException {
-    com.terracottatech.configV2.TcConfigDocument v2Doc = null;
+    com.terracottatech.config.TcConfigDocument v2Doc = null;
   
     try {
       v2Doc = loadV2(url, xmlOptions);
@@ -385,55 +385,55 @@ public class V1toV2 {
     return com.terracottatech.configV1.TcConfigDocument.Factory.parse(url, xmlOptions);
   }
 
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   loadV2(File file) throws IOException, XmlException {
     return loadV2(file, defaultXmlOptions);
   }
 
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   loadV2(File file, XmlOptions xmlOptions) throws IOException, XmlException {
-    return com.terracottatech.configV2.TcConfigDocument.Factory.parse(file, xmlOptions);
+    return com.terracottatech.config.TcConfigDocument.Factory.parse(file, xmlOptions);
   }
 
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   loadV2(String xmlText) throws XmlException {
     return loadV2(xmlText, defaultXmlOptions);
   }
 
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   loadV2(String xmlText, XmlOptions xmlOptions) throws XmlException {
-    return com.terracottatech.configV2.TcConfigDocument.Factory.parse(xmlText, xmlOptions);
+    return com.terracottatech.config.TcConfigDocument.Factory.parse(xmlText, xmlOptions);
   }
 
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   loadV2(InputStream stream) throws IOException, XmlException {
     return loadV2(stream, defaultXmlOptions);
   }
 
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   loadV2(InputStream stream, XmlOptions xmlOptions) throws IOException, XmlException {
-    return com.terracottatech.configV2.TcConfigDocument.Factory.parse(stream, xmlOptions);
+    return com.terracottatech.config.TcConfigDocument.Factory.parse(stream, xmlOptions);
   }
 
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   loadV2(URL url) throws IOException, XmlException {
     return loadV2(url, defaultXmlOptions);
   }
 
-  public com.terracottatech.configV2.TcConfigDocument
+  public com.terracottatech.config.TcConfigDocument
   loadV2(URL url, XmlOptions xmlOptions) throws IOException, XmlException {
-    return com.terracottatech.configV2.TcConfigDocument.Factory.parse(url, xmlOptions);
+    return com.terracottatech.config.TcConfigDocument.Factory.parse(url, xmlOptions);
   }
 
   public void save(File file,
-                   com.terracottatech.configV2.TcConfigDocument v2Doc)
+                   com.terracottatech.config.TcConfigDocument v2Doc)
     throws IOException
   {
     save(file, v2Doc, defaultXmlOptions);
   }
  
   public void save(File file,
-                   com.terracottatech.configV2.TcConfigDocument v2Doc,
+                   com.terracottatech.config.TcConfigDocument v2Doc,
                    XmlOptions xmlOptions)
     throws IOException
   {
@@ -441,14 +441,14 @@ public class V1toV2 {
   }
 
   public void save(OutputStream stream,
-                   com.terracottatech.configV2.TcConfigDocument v2Doc)
+                   com.terracottatech.config.TcConfigDocument v2Doc)
     throws IOException
   {
     save(stream, v2Doc, defaultXmlOptions);
   }
   
   public void save(OutputStream stream,
-                   com.terracottatech.configV2.TcConfigDocument v2Doc,
+                   com.terracottatech.config.TcConfigDocument v2Doc,
                    XmlOptions xmlOptions)
     throws IOException
   {

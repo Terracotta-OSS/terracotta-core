@@ -10,7 +10,7 @@ import org.xml.sax.SAXException;
 
 import com.tc.config.Loader;
 import com.tc.util.Assert;
-import com.terracottatech.configV2.TcConfigDocument;
+import com.terracottatech.config.TcConfigDocument;
 
 import java.io.IOException;
 import java.io.InputStream;

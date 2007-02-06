@@ -5,10 +5,10 @@ package com.tc.config.schema;
 
 import org.apache.xmlbeans.XmlBoolean;
 
-import com.terracottatech.configV2.ConfigurationModel;
-import com.terracottatech.configV2.License;
-import com.terracottatech.configV2.System;
-import com.terracottatech.configV2.ConfigurationModel.Enum;
+import com.terracottatech.config.ConfigurationModel;
+import com.terracottatech.config.License;
+import com.terracottatech.config.System;
+import com.terracottatech.config.ConfigurationModel.Enum;
 
 /**
  * A mock {@link System}, for use in tests.

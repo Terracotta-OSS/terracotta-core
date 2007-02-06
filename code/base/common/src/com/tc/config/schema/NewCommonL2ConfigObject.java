@@ -7,7 +7,7 @@ import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.FileConfigItem;
 import com.tc.config.schema.dynamic.IntConfigItem;
 import com.tc.config.schema.dynamic.StringConfigItem;
-import com.terracottatech.configV2.Server;
+import com.terracottatech.config.Server;
 
 /**
  * The standard implementation of {@link NewCommonL2Config}.

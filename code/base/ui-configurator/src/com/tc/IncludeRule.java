@@ -3,8 +3,8 @@
  */
 package com.tc;
 
-import com.terracottatech.configV2.Include;
-import com.terracottatech.configV2.OnLoad;
+import com.terracottatech.config.Include;
+import com.terracottatech.config.OnLoad;
 
 public class IncludeRule extends Rule {
   public IncludeRule(Include include) {

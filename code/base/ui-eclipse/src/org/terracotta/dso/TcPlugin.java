@@ -89,10 +89,10 @@ import org.terracotta.dso.wizards.ProjectWizard;
 
 import com.tc.admin.common.InputStreamDrainer;
 import com.tc.config.Loader;
-import com.terracottatech.configV2.Server;
-import com.terracottatech.configV2.Servers;
-import com.terracottatech.configV2.TcConfigDocument;
-import com.terracottatech.configV2.TcConfigDocument.TcConfig;
+import com.terracottatech.config.Server;
+import com.terracottatech.config.Servers;
+import com.terracottatech.config.TcConfigDocument;
+import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -154,8 +154,8 @@ import javax.swing.UIManager;
  *  @see updateDecorators()
  *   
  * @see org.eclipse.ui.plugin.AbstractUIPlugin
- * @see com.terracottatech.configV2.TerracottaDomainConfigurationDocument
- * @see com.terracottatech.configV2.TerracottaDomainConfigurationDocument.TerracottaDomainConfiguration
+ * @see com.terracottatech.config.TerracottaDomainConfigurationDocument
+ * @see com.terracottatech.config.TerracottaDomainConfigurationDocument.TerracottaDomainConfiguration
  */
 
 public class TcPlugin extends AbstractUIPlugin

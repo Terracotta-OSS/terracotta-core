@@ -9,11 +9,11 @@ import org.apache.xmlbeans.XmlException;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.util.ArchiveBuilder;
 import com.tc.util.ZipBuilder;
-import com.terracottatech.configV2.Client;
-import com.terracottatech.configV2.Server;
-import com.terracottatech.configV2.Servers;
-import com.terracottatech.configV2.TcConfigDocument;
-import com.terracottatech.configV2.TcConfigDocument.TcConfig;
+import com.terracottatech.config.Client;
+import com.terracottatech.config.Server;
+import com.terracottatech.config.Servers;
+import com.terracottatech.config.TcConfigDocument;
+import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
 import java.io.IOException;

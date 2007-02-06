@@ -5,7 +5,7 @@ package com.tctest;
 
 import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
-import com.terracottatech.configV2.PersistenceMode;
+import com.terracottatech.config.PersistenceMode;
 
 public class TransparentLinkedListTest extends TransparentTestBase implements TestConfigurator {
   private static final int NODE_COUNT           = 3;

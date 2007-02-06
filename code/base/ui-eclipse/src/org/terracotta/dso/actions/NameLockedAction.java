@@ -12,7 +12,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.dialogs.LockAttributesDialog;
 import org.terracotta.dso.editors.ConfigurationEditor;
-import com.terracottatech.configV2.LockLevel;
+import com.terracottatech.config.LockLevel;
 
 /**
  * Marks the currently selected method as being name-locked.
