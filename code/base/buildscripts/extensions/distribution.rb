@@ -143,7 +143,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     #destdir = archive_dir || FilePath.new(config_source['build-archive-dir'] || ".", "kits", @build_environment.current_branch, @build_environment.os_type(:nice).downcase).ensure_directory    
     destdir = archive_dir                             || 
       FilePath.new(config_source['build-archive-dir'] || 
-      ".", "kits", @build_environment.current_branch, "rev#{@build_environment.current_revision}", @build_environment.os_type(:nice).downcase).ensure_directory
+      ".", "kits", @build_environment.current_branch, "rev#{@build_environment.current_revision}", @build_environment.family.downcase).ensure_directory
       
     incomplete_tag = "__incomplete__"
     Dir.glob("#{@distribution_results.build_dir.to_s}/*").each do | entry |
