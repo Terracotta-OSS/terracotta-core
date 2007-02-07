@@ -9,16 +9,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 
+ *
  */
 public class ClassInfoFactory {
     private final Map classInfoCache = new HashMap();
-
-    public void setClassInfo(ClassInfo classInfo) {
-        synchronized (classInfoCache) {
-            classInfoCache.put(classInfo.getName(), classInfo);
-        }
-    }
 
     public ClassInfo getClassInfo(String className) {
         ClassInfo info;
