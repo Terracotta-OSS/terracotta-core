@@ -165,14 +165,11 @@ public class DistributedMethodCallManagerImpl implements DistributedMethodCallMa
         myClient = new Client();
         clients.put(thisNodeId, myClient);
 
-        // XXX: This is a complete hack. Within the context of the DSO test framework, the calling thread
-        // will not have it's DSO context established yet and will thus call on NullManager which will
-        // discard the logicalInvoke
-        if (ClassProcessorHelper.getManager(Thread.currentThread().getContextClassLoader()) == null) {
-          txManager.logicalInvoke(((Manageable) clients).__tc_managed(), SerializationUtil.PUT, "put(Object,Object)",
-                                  new Object[] { thisNodeId, myClient });
-        }
-
+        // XXX: This is a complete hack. The calling thread will not have it's DSO context 
+        // established yet and will thus call on NullManager which will discard the logicalInvoke that
+        // is underneath the map.put() above
+        txManager.logicalInvoke(((Manageable) clients).__tc_managed(), SerializationUtil.PUT, "put(Object,Object)",
+                                new Object[] { thisNodeId, myClient });
       } finally {
         commit(ROOT_NAME);
       }
