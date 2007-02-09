@@ -623,12 +623,25 @@ END
     def tests_jvm(jvm_set = Registry[:jvm_set])
       return @jvm if @jvm
 
-      candidate_jvm = jvm_set['tests-jdk'] || jvm_set['jdk'] ||
-                      jvm_set[@buildconfig['tests-jdk']] || jvm_set[@buildconfig['jdk']]
+      if candidate = jvm_set['tests-jdk']
+        candidate_jvm = candidate
+        candidate_source = "'tests-jdk' config override"
+      elsif candidate = jvm_set['jdk']
+        candidate = candidate
+        candidate_source = "'jdk' config override"
+      elsif candidate_name = @buildconfig['tests-jdk']
+        candidate_jvm = jvm_set[candidate_name]
+        candidate_source = "'tests-jdk' override from subtree buildconfig (#{candidate_name})"
+      elsif candidate_name = @buildconfig['jdk']
+        candidate_jvm = jvm_set[candidate_name]
+        candidate_source = "'jdk' override from subtree buildconfig (#{candidate_name})"
+      end
+
       if candidate_jvm
         override = true
       else
         candidate_jvm = @build_module.jdk
+        candidate_source = "modules.def.yml entry for module"
         override = false
       end
 
@@ -642,15 +655,15 @@ END
         max_version = JavaVersion.new(compatibility['max_version'])
         if candidate_jvm.version < min_version || candidate_jvm.version > max_version
           if override
-            raise(JvmVersionMismatchException,
-                  "JDK specified is incompatible with #{Registry[:appserver]},\n " +
-                  "which requires minimum version #{min_version} and maximum " +
-                  "version #{max_version}")
+            jvm_version_mismatch(candidate_jvm, candidate_source,
+                                 "appserver #{Registry[:appserver]}",
+                                 compatibility)
           else
             if appserver_candidate_jvm = jvm_set.find_jvm(
                   :min_version => compatibility['min_version'],
                   :max_version => compatibility['max_version'])
               candidate_jvm = appserver_candidate_jvm
+              candidate_source = "appservers.yml entry for #{current_appserver}"
             else
               raise(JvmVersionMismatchException,
                     "Could not find JDK compatible with #{Registry[:appserver]},\n" +
@@ -662,14 +675,27 @@ END
       end
 
       if candidate_jvm.version < @build_module.jdk.min_version
-        raise(JvmVersionMismatchException,
-              "JDK specified\n\t#{candidate_jvm}\nis incompatible with module " +
-              "\n\t#{@build_module}\n which requires minimum version #{@build_module.jdk.min_version}")
+        jvm_version_mismatch(candidate_jvm, candidate_source,
+                              "module #{@build_module.name}",
+                              {
+                                'min_version' => @build_module.jdk.min_version,
+                                'max_version' => @build_module.jdk.max_version
+                              })
       end
+      puts("Using JDK\n\t#{candidate_jvm}\nfrom source\n\t#{candidate_source}")
       @jvm = candidate_jvm
     end
 
   private
+
+    def jvm_version_mismatch(candidate_jvm, candidate_source, thing, compatibility)
+      raise(JvmVersionMismatchException,
+            "\nActive JDK #{candidate_jvm}\nfrom source #{candidate_source}\n" +
+            "is incompatible with #{thing} which requires minimum version " +
+            "#{compatibility['min_version']} and maximum version " +
+            "#{compatibility['max_version']}")
+    end
+
     # Splice the appropriate elements (CLASSPATH, JVM arguments, system properties,
     # and so on) into Ant.
     def splice_into_ant_junit
