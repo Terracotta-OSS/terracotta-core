@@ -660,11 +660,11 @@ END
           end
         end
       end
-      
+
       if candidate_jvm.version < @build_module.jdk.min_version
         raise(JvmVersionMismatchException,
-              "JDK specified is incompatible with module #{@build_module},\n" +
-              "which requires minimum version #{@build_module.jdk.min_version}")
+              "JDK specified\n\t#{candidate_jvm}\nis incompatible with module " +
+              "\n\t#{@build_module}\n which requires minimum version #{@build_module.jdk.min_version}")
       end
       @jvm = candidate_jvm
     end
