@@ -410,6 +410,7 @@ end
 # The results of all test runs for an entire module. This will therefore incorporate zero
 # or more SubtreeTestRunRecord objects.
 class ModuleTestRunRecord
+    
     # Creates a new instance. testrun_directory is the directory for the entire test run;
     # module_name is the name of the module this object should represent.
     def initialize(testrun_directory, module_name)
@@ -434,7 +435,7 @@ class ModuleTestRunRecord
     def failed?
         @failed
     end
-
+      
     # A human-readable string, summarizing the contents of this record.
     def to_s
         read

@@ -16,6 +16,12 @@ require 'open-uri'
 
 require 'buildscripts/autorequire'
 
+# Universally accessible Hash that can be used as a service registry.  This can
+# be useful to avoid passing a bunch of parameters around.  To add a service to
+# the registry, just add an entry to the Hash, such as
+#   Registry[:my_service] = my_service_object
+Registry = Hash.new
+
 # Get all our shared Ruby code.
 #AutoRequire.all_in_directory(File.join("..", "..", "buildsystems", "lib", "ruby", "shared"))
 
@@ -35,10 +41,16 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     def initialize(arguments)
         super(:help, arguments)
 
+        # Figure out which JVMs we're using.
+        find_jvms
+
         # Some more objects we need.
         @build_environment = BuildEnvironment.new(platform, config_source)
         @static_resources = StaticResources.new(basedir)
         @archive_tag = ArchiveTag.new(@build_environment)
+
+        Registry[:build_environment] = @build_environment
+        Registry[:static_resources] = @static_resources
 
         # Load up our modules; allow definition of new modules by setting a configuration
         # property that points to additional module files to load. I believe that right now
@@ -60,10 +72,11 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
         # Load the XMLBeans task, so we can use it to process config files when needed by that target.
         ant.taskdef(:name => 'xmlbean', :classname => 'org.apache.xmlbeans.impl.tool.XMLBean')
+    end
 
-        # Figure out which JVMs we're using.
-        find_jvms
-      end
+    def monkey?
+      config_source['monkey-name']
+    end
 
       # Prints a help message.
       def help
@@ -93,7 +106,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
     # Used by every other target, basically.
     def init
-        write_build_info_file
+        write_build_info_file if monkey?
     end
 
     # Download and install dependencies as specified by the various ivy*.xml
@@ -103,8 +116,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
       if (ant_home = ENV['ANT_HOME'])
         if @no_ivy
-          puts "--------------------------------------------------------------------------------"
-          puts "Ivy support disabled.  Skipping dependency resolution."
+          loud_message("Ivy support disabled.  Skipping dependency resolution.")
         else
           puts "--------------------------------------------------------------------------------"
           puts "Resolving dependencies."
@@ -118,8 +130,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
           end
         end
       else
-        puts "--------------------------------------------------------------------------------"
-        puts "ANT_HOME not set. Skipping dependency resolution."
+        loud_message("ANT_HOME not set. Skipping dependency resolution.")
       end
     end
 
@@ -155,8 +166,12 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     def compile
         depends :init, :resolve_dependencies
 
-        @module_set.each do |build_module|
-            build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
+        if @no_compile
+          loud_message("--no-compile option found.  Skipping compilation.")
+        else
+          @module_set.each do |build_module|
+              build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
+          end
         end
     end
 
@@ -170,8 +185,8 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     # Runs a single test, as named by its one argument. This is actually a pattern;
     # 'tcbuild check_one *Test' will, in fact, run all tests -- but that's just a weird thing to do...
     def check_one(test)
-        depends :init, :compile
-        run_tests(SingleTestSet.new(test))
+      depends :init, :compile
+      run_tests(SingleTestSet.new(test))
     end
 
     # Runs all test patterns named in the specified file, which typically would be just a list of
@@ -191,11 +206,17 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     # Runs a distributed test; the rest of the arguments on the command line are passed as arguments
     # to the ControlSetup class.
     def run_disttest
-        jvm = to_jvm(config_source['jvm'] || '1.5', 'tests')
+        if jdk = config_source['jdk']
+          jvm = @jvm_set[jdk]
+        else
+          jvm = @module_set['dso-performance-tests'].subtree('tests.base').tests_jvm(@jvm_set)
+        end
         args = all_remaining_arguments
         args << 'javahome=%s' % jvm.home.to_s unless args.find { |arg| arg.starts_with?('javahome=') }
-        do_run_class(jvm, 'com.tc.simulator.distrunner.ControlSetup', args, config_source.as_array('jvmargs') || [ ],
-            @module_set['dso-performance-tests'].subtree('tests.base'))
+        # do_run_class(jvm, classname, arguments, jvmargs, subtree)
+        do_run_class(jvm, 'com.tc.simulator.distrunner.ControlSetup', args,
+                     config_source.as_array('jvmargs') || [ ],
+                     @module_set['dso-performance-tests'].subtree('tests.base'))
     end
 
     # Runs the 'short' test list. (For a quick 'sanity check' of our software.)
@@ -225,27 +246,6 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
         run_tests(test_set) unless @script_results.failed?
     end
-
-    # Refreshes the CruiseControl config; this is called by the monkey so that changes in the
-    # CruiseControl configuration can get automatically picked up. Uses a separate properties
-    # file for overrides that are given on the command line to the Ruby 'monkey' tool, since
-    # otherwise they'll be lost when we regenerate the configuration.
-    def refresh_cruisecontrol_config
-      depends :init
-
-      raise RuntimeError, "You must specify a monkey name via the 'monkey-name' configuration property" if config_source['monkey-name'].nil?
-      command = 'ruby'
-      args = [ FilePath.new(config_source['tc.build-control.cruise-control.monkey-root'], "monkey.rb").canonicalize.to_s, 'generate-config', config_source['monkey-name'], '--source=' + File.join(File.dirname(__FILE__), "..", "..") ]
-
-      overrides_file = config_source['cruise-control.command-line-data-file']
-      unless overrides_file.blank?
-          File.open(overrides_file, "r") do |file|
-              file.each { |line| args << "%s=%s" % [ $1, $2 ] if line =~ /^\s*([^=]+?)\s*=\s*(.*?)\s*$/ }
-          end
-      end
-
-      @platform.exec('ruby', *args)
-   end
 
     # Runs the crash tests. Uses the internal configuration source to set the required property.
     def check_crashtests
@@ -339,7 +339,11 @@ END
         build_module = @module_set[build_module_name]
         subtree = build_module.subtree(subtree_name)
 
-        jvm = to_jvm(config_source['jvm'] || 'compile-%s' % build_module.compiler_version.to_s, 'compile')
+        if config_jre = config_source['jdk']
+          jvm = @jvm_set[config_jre]
+        else
+          jvm = build_module.jdk
+        end
         arguments = all_remaining_arguments
         jvmargs = config_source.as_array('jvmargs') || [ ]
 
@@ -386,8 +390,17 @@ END
         lib_directory = FilePath.new(home.dir, "common", "lib").ensure_directory
         FileUtils.touch(FilePath.new(lib_directory, "tc.jar").to_s)
 
-        subtree.run_java(ant, 'com.tc.server.TCServerMain', home.dir.to_s, @jvm_set['compile-%s' % build_module.compiler_version],
-            config_source.as_array('jvmargs'), all_remaining_arguments, { 'tc.install-root' => home.dir.to_s }, @build_results, @build_environment)
+        if config_jre = config_source['jdk']
+          jvm = @jvm_set[config_jre]
+        else
+          jvm = build_module.jdk
+        end
+
+        subtree.run_java(ant, 'com.tc.server.TCServerMain', home.dir.to_s,
+                         jvm, config_source.as_array('jvmargs'),
+                         all_remaining_arguments,
+                         { 'tc.install-root' => home.dir.to_s },
+                         @build_results, @build_environment)
     end
 
     # Re-runs only those tests that failed on the last test run (or on the one specified by
@@ -457,7 +470,7 @@ END
     def create_boot_jar(jvm_spec)
         depends :init, :compile
 
-        jvm = to_jvm(jvm_spec, 'tests')
+        jvm = @jvm_set[jvm_spec]
         output_path = @build_results.tools_home
         output_path = FilePath.new(config_source['dest']) unless config_source['dest'].nil?
         boot_jar = BootJar.new(@build_results, jvm, output_path, @module_set, ant, @platform, @static_resources.dso_boot_jar_config_file)
@@ -487,7 +500,7 @@ END
     def show_config
         puts "Building with configuration:"
         puts "========================================================================"
-        puts ""
+        puts
         puts configuration_summary
     end
 
@@ -496,6 +509,9 @@ END
       # do a whole lot of nothing
     end
 
+    def test_find_jvm
+      puts(@jvm_set.find_jvm(:path => '/usr/lib/j2sdk1.5-sun'))
+    end
 
     protected
     # Overrides superclass method to provide for implicit targets.
@@ -565,7 +581,20 @@ END
         end
     end
 
-    private
+  private
+
+    # Prints a "loud", very visible message to the console.  This is used for
+    # warning messages that, even while the scroll by quickly on the console,
+    # should call out for the user's attention.
+    def loud_message(message)
+      banner_char = "*"
+      puts(banner_char * 80)
+      puts(banner_char)
+      puts("#{banner_char} #{message}")
+      puts(banner_char)
+      puts(banner_char * 80)
+    end
+
     # The full path to the build archive, including directory.
     def full_build_archive_path
         FilePath.new(build_archive_dir, short_build_archive_path.to_s)
@@ -582,25 +611,6 @@ END
     # control of the archive path, making it very easy to change in the future.
     def build_archive_path_pattern
         @archive_tag.to_path("${FILENAME}", "${EXTENSION}")
-    end
-
-    # Given a 'JVM key', which can be either a pathname on the filesystem, a string like 'compile-1.4', or
-    # a simple name like '1.4', finds the appropriate JVM. (If it's a simple name like '1.4', uses the
-    # specified default_prefix as a prefix -- e.g., if the default_prefix is 'compile', it will look for
-    # a JVM named 'compile-1.4'.)
-    def to_jvm(jvm_key, default_prefix)
-        if FileTest.directory?(FilePath.new(jvm_key).to_s)
-            jvm = JVM.new(platform, FilePath.new(jvm_key).to_s)
-            jvm.validate("the specified JVM")
-        elsif @jvm_set.has?(jvm_key)
-            jvm = @jvm_set[jvm_key]
-        elsif @jvm_set.has?('%s-%s' % [ default_prefix, jvm_key ])
-            jvm = @jvm_set['%s-%s' % [ default_prefix, jvm_key ]]
-        else
-            raise RuntimeError, "The JVM you specified, '%s', is neither a valid Java home, nor a valid JDK we already know about. We know about JDKs: %s" %
-                [ jvm_key, @jvm_set.keys.join(", ") ]
-        end
-        jvm
     end
 
     # Runs the given class, using the given JVM, with the given arguments and JVM arguments, against the
@@ -653,10 +663,8 @@ END
             prepare_and_run_block_on_tests(test_set, testrun_results, Proc.new do |testrun|
                 have_started_at_least_one_test = true
                 testrun.run(@script_results)
-            end)
+              end, testrun_record)
         ensure
-            raise unless have_started_at_least_one_test
-
             testrun_record.tearDown
 
             puts "\n\n"
@@ -669,12 +677,11 @@ END
             if testrun_record.failed?
                 puts "     Tests FAILED. See results above."
             elsif testrun_record.total_suites == 0
-                puts "     No tests ran at all! Something's wrong -- check your configuration or call."
-                @script_results.failed("No tests ran at all! Something's wrong -- check your configuration or call.")
+                puts "     No tests ran."
             else
                 puts "     Tests passed."
             end
-            puts "  Testrun directory: %s" % testrun_results.root_dir.to_s
+            puts "  Testrun directory: #{testrun_results.root_dir}"
             puts ""
         end
     end
@@ -687,75 +694,88 @@ END
     # odd/nonsensical leafcutter error messages. (On the other hand, if you can manage to make it work,
     # and you're sure it works in all cases, by all means, go ahead and change it. It certainly is gross
     # the way it is right now.)
-    def prepare_and_run_block_on_tests(test_set, testrun_results, testrun_proc)
+    def prepare_and_run_block_on_tests(test_set, testrun_results, testrun_proc, testrun_record = nil)
         test_runs = { }
 
         test_set.run_on_subtrees(@module_set) do |subtree, test_patterns|
-            test_runs[subtree] = subtree.test_run(@static_resources, testrun_results, @build_results, @build_environment, config_source,
-                @jvm_set, ant, platform, test_patterns, tests_aggregation_directory)
+            test_runs[subtree] =
+                subtree.test_run(@static_resources, testrun_results,
+                                 @build_results, @build_environment, config_source,
+                                 @jvm_set, ant, platform, test_patterns,
+                                 tests_aggregation_directory)
 
-            test_runs[subtree].setUp
-        end
-
-        test_set.run_on_subtrees(@module_set) do |subtree, test_patterns|
             begin
-                testrun_proc.call(test_runs[subtree])
+              test_runs[subtree].setUp
+              testrun_proc.call(test_runs[subtree])
+            rescue JvmVersionMismatchException => e
+              if monkey?
+                STDERR.puts("#{e.message}\n...skipping subtree #{subtree}")
+              else
+                raise e
+              end
             ensure
-                test_runs[subtree].tearDown
+              test_runs[subtree].tearDown
             end
         end
+
+        #~ test_set.run_on_subtrees(@module_set) do |subtree, test_patterns|
+            #~ begin
+              #~ testrun_proc.call(test_runs[subtree]) unless failed_setUpSet.member?(subtree)
+            #~ ensure
+              #~ test_runs[subtree].tearDown
+            #~ end
+        #~ end
+
+
     end
 
     # Finds the JVMs that we need to use -- one each for compiling and testing, for 1.4 and 1.5.
     # This is where the 'run-1.4-tests-with-1.5' property comes into play; we assign the
     # 'tests-1.4' JVM to a 1.4 or 1.5 JVM, based on how this property is set.
     def find_jvms
-
         @jvm_set = JVMSet.new
-        compile_14 = JVM.from_config(platform, config_source, "the JVM used to compile Java 1.4 code", "1.4.0_0", "1.4.999_999", "jvms.compile-1.4", "JAVA_HOME_14")
-        compile_15 = JVM.from_config(platform, config_source, "the JVM used to compile Java 1.5 code", "1.5.0_0", "1.5.999_999", "jvms.compile-1.5", "JAVA_HOME_15")
 
-        raise RuntimeError, "You must specify a valid 1.4 JVM using the JAVA_HOME_14 configuration property (e.g., via the 'TC_JAVA_HOME_14' environment variable." if compile_14.nil?
-        raise RuntimeError, "You must specify a valid 1.5 JVM using the JAVA_HOME_15 configuration property (e.g., via the 'TC_JAVA_HOME_15' environment variable." if compile_15.nil?
+        jdk_defs = YAML.load_file('jdk.def.yml')
+        jdk_defs.each do |name, attributes|
+          min_version = attributes['min_version']
+          max_version = attributes['max_version']
+          search_names = attributes['env']
 
-        @jvm_set.set('compile-1.4', compile_14)
-        @jvm_set.set('compile-1.5', compile_15)
+          unless min_version && max_version && search_names
+            raise "Invalid JVM specification: #{name}"
+          end
 
-        tests_15 = JVM.from_config(platform, config_source, "the JVM used to run tests against Java 1.5 code", '1.5.0_0', '1.5.999_999', "jvms.tests-1.5", "JAVA_HOME_TESTS_15")
-        if tests_15.nil?
-            @jvm_set.alias('tests-1.5', 'compile-1.5')
-        else
-            @jvm_set.set('tests-1.5', tests_15)
-        end
+          search_names = [search_names].flatten
 
-        run14_tests_with_15 = config_source['run-1.4-tests-with-1.5']
-
-        # here we want to check if an appserver only run swith certain JDK, ie. tomcat55 only runs with jdk15,
-        # weblogic8 only with jdk14
-        #tc.tests.configuration.appserver.factory.name=tomcat5
-        #tc.tests.configuration.appserver.major-version=5.0
-        #tc.tests.configuration.appserver.minor-version=28
-
-        appservers_jdk = YAML::load(File.open("appservers.yml"))
-        theappserver = "%s-%s.%s" % [ config_source["tc.tests.configuration.appserver.factory.name"],
-                              config_source["tc.tests.configuration.appserver.major-version"],
-                              config_source["tc.tests.configuration.appserver.minor-version"] ]
-
-        if appservers_jdk.has_key?(theappserver)
-            run14_tests_with_15 = appservers_jdk[theappserver] == 1.5 ? 'true' : 'false'
-        end
-
-        if run14_tests_with_15 =~ /^\s*true\s*$/i
-            @jvm_set.alias('tests-1.4', 'tests-1.5')
-        else
-            tests_14 = JVM.from_config(platform, config_source, "the JVM used to run tests against Java 1.4 code", '1.4.0_0', '1.5.999_999', "jvms.tests-1.4", "JAVA_HOME_TESTS_14")
-            if tests_14.nil?
-                @jvm_set.alias('tests-1.4', 'compile-1.4')
-            else
-                @jvm_set.set('tests-1.4', tests_14)
+          jvm = JVM.from_config(platform, config_source, name,
+                                min_version, max_version, *search_names)
+          if jvm
+            @jvm_set.set(name, jvm)
+            if aliases = attributes['alias']
+              [aliases].flatten.each do |jvm_alias|
+                @jvm_set.alias(jvm_alias, name)
+              end
             end
+          else
+            msg = "You must specify a valid #{name} JRE using one of the " +
+                  "following configuration properties: " +
+                  search_names.join(', ')
+            raise(msg)
+          end
         end
-    end
+
+        @jvm_set.add_config_jvm('tests-jdk')
+        @jvm_set.add_config_jvm('jdk')
+
+        appserver_compatibility = YAML::load_file("appservers.yml")
+        Registry[:appserver_compatibility] = appserver_compatibility
+        factory, major, minor = %w(factory.name major-version minor-version).map { |key|
+          config_source["tc.tests.configuration.appserver.#{key}"]
+        }
+        Registry[:appserver_generic] = "#{factory}-#{major}"
+        Registry[:appserver] = "#{Registry[:appserver_generic]}.#{minor}"
+        Registry[:jvm_set] = @jvm_set
+      end
 
     # Writes out the given set of keys, and corresponding values, from the given hash to the given
     # file, as XML property elements (as is required by the XML build-information file we generate
@@ -793,25 +813,34 @@ END
     # * *Parameters* is that data which should not affect the results of tests, but which may well be common to many test runs. This is put in the database in a manner that allows us to share it between many monkey runs. (Note that this includes, among other things, hostname -- if two hosts have the same JVM, the same OS, architecture, etc., they really, truly should produce the same results.)
     # * *Extra* data is that data which likely differs between every run of the monkey, and so which is simply stored directly associated with the monkey run. This is things like build date and time, revision number, etc.
     def write_build_info_file
+
         # Configuration data.
         configuration_data = {
-            'host' => @build_environment.build_hostname,
-            'branch' => @build_environment.current_branch,
-            'revision' => @build_environment.current_revision,
-            'target' => config_source['tc.build-control.build.target'],
-            'platform' => @build_environment.platform,
-            'appserver' => config_source['tc.tests.configuration.appserver.factory.name'] + "-"  +
-                           config_source['tc.tests.configuration.appserver.major-version'] + "." +
-                           config_source['tc.tests.configuration.appserver.minor-version'],
+            'build-target' => config_source['tc.build-control.build.target'],
 
-            'jvm-tests-1.4' => @jvm_set['tests-1.4'].short_description,
-            'jvm-tests-1.5' => @jvm_set['tests-1.5'].short_description,
+            'monkey-host' => @build_environment.build_hostname,
+            'monkey-name' => config_source['monkey-name'],
+            'monkey-platform' => @build_environment.platform,
+
+            'source-branch' => @build_environment.current_branch,
+            'source-revision' => @build_environment.current_revision,
+
+            'appserver' => config_source['tc.tests.configuration.appserver.factory.name'] + "-"  +
+                            config_source['tc.tests.configuration.appserver.major-version'] + "." +
+                            config_source['tc.tests.configuration.appserver.minor-version'],
+            'jvmargs'  => config_source['jvmargs'],
+
+            'appointed-tests-jdk' => @jvm_set['tests-jdk'].short_description,
+            'jdk-1.4-compile' => @jvm_set['J2SE-1.4'].short_description,
+            'jdk-1.5-compile' => @jvm_set['J2SE-1.5'].short_description
 
         }
 
+
+
         # Parameters data.
         parameters_data = {
-          'monkey-name' => config_source['monkey-name']
+          # nothing right now
         }
 
         # Extra data.
@@ -822,6 +851,7 @@ END
         # Test configuration data, which goes in the configuration section.
         test_config_data = { }
         config_source.keys.each do |key|
+            next if key =~ /appserver/
             test_config_data[key] = config_source[key] if key =~ /^tc\.tests\.configuration\..*/i
         end
 

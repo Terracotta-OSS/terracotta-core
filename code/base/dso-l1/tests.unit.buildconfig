@@ -1,1 +1,2 @@
 include-dso-boot-jar=true
+jdk=J2SE-1.5

@@ -8,9 +8,15 @@
 # keep track of a set of JVMs, and find various commands from a JVM, specify
 # necessary versions, and so on.
 
+class JvmVersionMismatchException < StandardError
+end
+
 # Represents the version of a JVM. This is typically something like '1.4.2_07', but
 # some JVMs (like IBM's) can be just '1.4.2', too.
 class JavaVersion
+    JAVA_MIN_VERSION = '0.0.0'
+    JAVA_MAX_VERSION = '99999.999.999_999'
+
     attr_reader :major, :minor, :patch, :release
 
     # Creates a new representation of a version, as specified by a string. This can
@@ -55,6 +61,20 @@ class JavaVersion
         major == other.major && minor == other.minor && patch == other.patch && release == other.release
     end
 
+    # Is this version the same as the other version up to and including the
+    # minor version, but not including the patch or release?
+    def same_minor_version?(other)
+      major == other.major && minor == other.minor
+    end
+
+    # Returns a new JavaVersion object that is the same as the major and minor
+    # version of this JavaVersion.  For example, if this JavaVersion object has
+    # version 1.4.2_11, then this method will return a JavaVersion object that
+    # has version 1.4.0.
+    def release_version
+      JavaVersion.new("#{@major}.#{@minor}.0")
+    end
+
     # Returns a number less than zero, zero, or a number greater than zero as this
     # version is less than, exactly equal to, or greater than the other supplied version.
     def <=>(other)
@@ -81,8 +101,14 @@ class JVMSet
 
     # Returns the JVM that's bound to the given key.
     def [](key)
-        raise "No JVM for '%s'." % key unless @jvms.has_key?(key)
+      if @jvms.has_key?(key)
         @jvms[key]
+      else
+        jvm = find_jvm(:path => key) ||
+              find_jvm(:name_like => /#{key}/) ||
+              find_jvm(:version_like => /#{key}/)
+        jvm
+      end
     end
 
     # Sets a JVM for a the given key.
@@ -106,13 +132,94 @@ class JVMSet
         @jvms.keys
     end
 
+    # Return a JVM object matching the given criteria, or nil if there is no
+    # matching JVM.  If there is more than one matching JVM, an arbitrary JVM is
+    # selected from among the matching JVMs.
+    #
+    # The following options may be passed as the criteria argument:
+    #
+    #   :name_like:: A regular expression that the name of the JVM must match
+    #   :min_version:: The minumum version as a string
+    #   :max_version:: The maximum version as a string
+    #   :version_like:: A regular expression that the JVM version string must match
+    #   :path:: The path to the JVM root directory.  This criteria is special in
+    #           that if it cannot find a matching existing JVM, it will attempt
+    #           to create one with the given path as the JAVA_HOME.  If it succeeds
+    #           in creating it, the newly-created JVM will be returned, otherwise
+    #           nil is returned.
+    #
+    # All criteria given are logically ANDed together.
+    def find_jvm(criteria)
+      name_like = criteria[:name_like] || /.*/
+      min_version = JavaVersion.new(criteria[:min_version] || JavaVersion::JAVA_MIN_VERSION)
+      max_version = JavaVersion.new(criteria[:max_version] || JavaVersion::JAVA_MAX_VERSION)
+      path = criteria[:path]
+      version_like = criteria[:version_like]
+
+      @jvms.each do |key, jvm|
+        unless jvm
+          puts("Skipping nil JVM #{key}")
+          next
+        end
+        meets_criteria = false
+        jvm_version = JavaVersion.new(jvm.actual_version)
+        if key =~ name_like && jvm_version > min_version && jvm_version < max_version
+          meets_criteria = true
+
+          if meets_criteria && version_like
+            meets_criteria = jvm_version.to_s =~ version_like
+          end
+        end
+
+        if meets_criteria && path
+          path_string = FilePath.new(path).canonicalize.to_s
+          jvm_path = jvm.home.canonicalize.to_s
+          meets_criteria = jvm_path == path_string
+        end
+
+        if meets_criteria
+          return jvm
+        end
+      end
+
+      if path
+        if FileTest.directory?(path)
+          created_jvm = JVM.new(path, :minimum_version => min_version.to_s,
+                                      :maximum_version => max_version.to_s)
+          begin
+            created_jvm.check_version("created_jvm")
+            created_jvm.validate("created_jvm")
+          rescue
+            created_jvm = nil
+          end
+        end
+      end
+
+      created_jvm
+    end
+    
+    def add_config_jvm(config_jvm_name, build_config = Hash.new)
+      config_source = Registry[:config_source]
+      if config_jvm_value = config_source[config_jvm_name] || build_config[config_jvm_name]
+        if has?(config_jvm_value)
+          self.alias(config_jvm_name, config_jvm_value)
+        else
+          if created_jvm = find_jvm(:path => config_jvm_value)
+            set(config_jvm_name, created_jvm)
+          else
+            raise("Value of '#{config_jvm_name}' is not valid")
+          end
+        end
+      end
+    end
+
     # A human-readable string representation of this JVMSet.
     def to_s
-        sorted_keys = @jvms.keys.sort
         out = "<JVMSet:\n"
-        sorted_keys.each { |key| out += "  '%s': %s\n" % [ key, @jvms[key] ] }
+        @jvms.keys.sort.each do |key|
+          out += "  '#{key}': #{@jvms[key]}\n"
+        end
         out += ">"
-        out
     end
 end
 
@@ -134,7 +241,7 @@ class JVM
     #
     # Note: if you pass a minimum and/or maximum version, they are only checked when
     # you call #validate -- not at object-creation time.
-    def initialize(platform, java_home, data={ })
+    def initialize(java_home, data={ })
         @java_home = FilePath.new(java_home).canonicalize
         @java_path = FilePath.new(@java_home, "bin", "java").executable_extension
         @javac_path = FilePath.new(@java_home, "bin", "javac").executable_extension
@@ -143,8 +250,14 @@ class JVM
         @max_version = data[:maximum_version]
 
         @actual_version = nil
+    end
+    
+    def min_version
+        JavaVersion.new(@min_version)
+    end
 
-        @platform = platform
+    def max_version
+        JavaVersion.new(@max_version)
     end
 
     # What's the path to the 'java' executable in this JVM? Returns a string.
@@ -177,7 +290,7 @@ class JVM
 
         out = nil
         unless root.nil?
-            out = JVM.new(platform, root, { :minimum_version => min_version, :maximum_version => max_version })
+            out = JVM.new(root, { :minimum_version => min_version, :maximum_version => max_version })
             out.validate(descrip)
             out.check_version(descrip)
         end
@@ -228,7 +341,7 @@ class JVM
     # A short description of this JVM -- the type followed by the version. Therefore, something
     # like 'hotspot-1.4.2_07'.
     def short_description
-        "%s-%s" % [ actual_type, actual_version ]
+        "#{actual_type}-#{actual_version}"
     end
 
     # The type of this JVM -- something like 'hotspot' or 'jrockit'.
@@ -237,22 +350,33 @@ class JVM
         @actual_type
     end
 
+    # The release of this JVM, something like '1.4' or '1.6'.
+    def release
+      "#{version.major}.#{version.minor}"
+    end
+
     # The actual version of this JVM, as a string. something like '1.4.2_07'.
     def actual_version
         ensure_have_version
         @actual_version
     end
 
-    # A human-readable string representation of this JVM.
-    def to_s
-        "<JVM at '%s', version '%s'>" % [ @java_home, @actual_version ]
+    # A JavaVersion object representing the version of this JVM.
+    def version
+      @version ||= JavaVersion.new(actual_version)
     end
 
-    private
+    # A human-readable string representation of this JVM.
+    def to_s
+      "<JVM at '#@java_home', version '#@actual_version'>"
+    end
+
+  private
+
     # Makes sure the @actual_version and @actual_type member variables are set.
     def ensure_have_version
-        if @actual_version.nil?
-	    output, error = @platform.exec(@java_path, "-version")
+        unless @actual_version
+	    output, error = Registry[:platform].exec(@java_path, "-version")
 
             @actual_version = nil
             [ output, error ].each do |val|

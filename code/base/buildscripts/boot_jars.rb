@@ -75,6 +75,7 @@ class BootJar
     # a given instance of this object, so you don't have to worry about repeating work.
     def ensure_created
         unless @created
+            puts("Creating boot JAR with #{@jvm}")
             File.delete(path.to_s) if FileTest.exist?(path.to_s)
             @ant.java(
             :classname   => 'com.tc.object.tools.BootJarTool',

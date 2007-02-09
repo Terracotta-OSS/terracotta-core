@@ -164,11 +164,11 @@ class SingleFileConfigSource
     end
 
     def keys
-       @properties.keys
+      @properties.keys
     end
 
     def to_s
-        "file at '%s'" % @filename
+      "file at '#{@filename}'"
     end
 end
 
@@ -221,7 +221,9 @@ class CommandLineConfigSource
 end
 
 # A ConfigSource that gets its settings from the environment. For a key 'foo',
-# it will return the value of the environment variable 'TC_foo', if present.
+# it will return the value of the environment variable 'TC_foo', if present.  If
+# 'TC_foo' is not present, it will return the value of the environment variable
+# 'foo', or nil if it does not exist.
 class EnvironmentConfigSource
     include ConfigSource
 
@@ -232,7 +234,7 @@ class EnvironmentConfigSource
 
     def [](key)
         key = key.gsub(/[- \.]/, "_")
-        @ant.instance_eval("@env_TC_%s" % key)
+        @ant.instance_eval("@env_TC_#{key}") || @ant.instance_eval("@env_#{key}")
     end
 
     def keys
