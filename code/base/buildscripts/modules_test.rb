@@ -627,7 +627,7 @@ END
         candidate_jvm = candidate
         candidate_source = "'tests-jdk' config override"
       elsif candidate = jvm_set['jdk']
-        candidate = candidate
+        candidate_jvm = candidate
         candidate_source = "'jdk' config override"
       elsif candidate_name = @buildconfig['tests-jdk']
         candidate_jvm = jvm_set[candidate_name]
