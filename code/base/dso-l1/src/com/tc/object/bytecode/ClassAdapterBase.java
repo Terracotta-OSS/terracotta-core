@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
 
@@ -57,7 +58,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
     return LOGICAL_TYPE_DELEGATE_FIELD_NAME_PREFIX
            + logicalExtendingClassName.replace('.', '_').replace('/', '_').replace('$', '_');
   }
-  
+
   public static boolean isDelegateFieldName(String fieldName) {
     return fieldName.startsWith(LOGICAL_TYPE_DELEGATE_FIELD_NAME_PREFIX);
   }
@@ -108,19 +109,12 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
 
   private String[] getNewInterfacesForPortableObject(String[] interfaces) {
     Set ifaces = new LinkedHashSet(Arrays.asList(interfaces));
+    if (!ifaces.contains(Manageable.CLASS)) {
+      ifaces.add(Manageable.CLASS);
+    }
 
-    if (spec.isLogical()) {
-      if (!ifaces.contains(Manageable.CLASS)) {
-        ifaces.add(Manageable.CLASS);
-      }
-    } else {
-      if (!ifaces.contains(Manageable.CLASS)) {
-        ifaces.add(Manageable.CLASS);
-      }
-
-      if (!ifaces.contains(TransparentAccess.CLASS)) {
-        ifaces.add(TransparentAccess.CLASS);
-      }
+    if (!spec.isLogical() && !ifaces.contains(TransparentAccess.CLASS)) {
+      ifaces.add(TransparentAccess.CLASS);
     }
 
     return (String[]) ifaces.toArray(interfaces);
@@ -153,7 +147,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
       super(access, methodDesc, mv);
 
     }
-    
+
     private void storeStackValuesToLocalVariables(String methodInsnDesc) {
       Type[] types = Type.getArgumentTypes(methodInsnDesc);
       localVariablesForMethodCall = new int[types.length];
@@ -206,8 +200,8 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
       mv = basicVisitMethod(access, name, desc, signature, exceptions);
       if (spec.hasDelegatedToLogicalClass()) {
         String logicalExtendingClassName = spec.getSuperClassNameSlashes();
-        mv = new LogicalClassSerializationAdapter.LogicalSubclassSerializationMethodAdapter(mv, name+desc, spec.getClassNameSlashes(),
-                                                                                            logicalExtendingClassName, getDelegateFieldName(logicalExtendingClassName));
+        mv = new LogicalClassSerializationAdapter.LogicalSubclassSerializationMethodAdapter(mv, name + desc, spec
+            .getClassNameSlashes(), logicalExtendingClassName, getDelegateFieldName(logicalExtendingClassName));
       }
     } else {
       mv = super.visitMethod(access, name, desc, signature, exceptions);
@@ -301,7 +295,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
       addSerializationOverrideMethod();
     }
   }
-  
+
   private void addSerializationOverrideMethod() {
     LogicalClassSerializationAdapter.addCheckSerializationOverrideMethod(cv, true);
   }
@@ -313,7 +307,9 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
     MethodVisitor mv = cv.visitMethod(ACC_PRIVATE, "writeObject", "(Ljava/io/ObjectOutputStream;)V", null,
                                       new String[] { "java/io/IOException" });
     mv.visitCode();
-    LogicalClassSerializationAdapter.addDelegateFieldWriteObjectCode(mv, spec.getClassNameSlashes(), logicalExtendingClassName, getDelegateFieldName(logicalExtendingClassName));
+    LogicalClassSerializationAdapter.addDelegateFieldWriteObjectCode(mv, spec.getClassNameSlashes(),
+                                                                     logicalExtendingClassName,
+                                                                     getDelegateFieldName(logicalExtendingClassName));
     mv.visitInsn(RETURN);
     mv.visitMaxs(0, 0);
     mv.visitEnd();
@@ -326,7 +322,9 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
     MethodVisitor mv = cv.visitMethod(ACC_PRIVATE, "readObject", "(Ljava/io/ObjectInputStream;)V", null, new String[] {
         "java/io/IOException", "java/lang/ClassNotFoundException" });
     mv.visitCode();
-    LogicalClassSerializationAdapter.addDelegateFieldReadObjectCode(mv, spec.getClassNameSlashes(), logicalExtendingClassName, getDelegateFieldName(logicalExtendingClassName));
+    LogicalClassSerializationAdapter.addDelegateFieldReadObjectCode(mv, spec.getClassNameSlashes(),
+                                                                    logicalExtendingClassName,
+                                                                    getDelegateFieldName(logicalExtendingClassName));
     mv.visitInsn(RETURN);
     mv.visitMaxs(0, 0);
     mv.visitEnd();
@@ -359,7 +357,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
         mv.visitInsn(RETURN);
         mv.visitMaxs(0, 0);
       }
-      
+
       // add isManaged() method
       // XXX::FIXME:: This method need to handle TCClonableObjects and TCNonDistributableObjects
       mv = visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, IS_MANAGED_METHOD, IS_MANAGED_DESCRIPTION, null, null);
