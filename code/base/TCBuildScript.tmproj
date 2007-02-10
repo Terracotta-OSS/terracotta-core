@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>Work/TCProjects/opensource/trunk/code/base/buildscripts/extensions/packaging.rb</string>
+	<string>buildscripts/extensions/bundled-components.rb</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -49,95 +49,35 @@
 	<integer>200</integer>
 	<key>metaData</key>
 	<dict>
-		<key>Work/TCProjects/opensource/trunk/code/base/buildscripts/environment.rb</key>
+		<key>buildconfig/distribution/dso-opensource.def.yml</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>8</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>131</integer>
+				<integer>56</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>62</integer>
+			<integer>10</integer>
 		</dict>
-		<key>Work/TCProjects/opensource/trunk/code/base/buildscripts/extensions/distribution-utils.rb</key>
+		<key>buildscripts/extensions/bundled-components.rb</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>5</integer>
+				<integer>68</integer>
 				<key>line</key>
-				<integer>61</integer>
+				<integer>60</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>14</integer>
+			<integer>13</integer>
 		</dict>
-		<key>Work/TCProjects/opensource/trunk/code/base/buildscripts/extensions/distribution.rb</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>97</integer>
-				<key>line</key>
-				<integer>26</integer>
-			</dict>
-			<key>columnSelection</key>
-			<false/>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>0</integer>
-			<key>selectFrom</key>
-			<dict>
-				<key>column</key>
-				<integer>81</integer>
-				<key>line</key>
-				<integer>26</integer>
-			</dict>
-			<key>selectTo</key>
-			<dict>
-				<key>column</key>
-				<integer>97</integer>
-				<key>line</key>
-				<integer>26</integer>
-			</dict>
-		</dict>
-		<key>Work/TCProjects/opensource/trunk/code/base/buildscripts/extensions/packaging.rb</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>64</integer>
-				<key>line</key>
-				<integer>11</integer>
-			</dict>
-			<key>columnSelection</key>
-			<false/>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>0</integer>
-			<key>selectFrom</key>
-			<dict>
-				<key>column</key>
-				<integer>48</integer>
-				<key>line</key>
-				<integer>11</integer>
-			</dict>
-			<key>selectTo</key>
-			<dict>
-				<key>column</key>
-				<integer>64</integer>
-				<key>line</key>
-				<integer>11</integer>
-			</dict>
-		</dict>
-		<key>Work/TCProjects/opensource/trunk/code/base/services.modules.yml</key>
+		<key>buildscripts/extensions/bundled-vendors.rb</key>
 		<dict>
 			<key>caret</key>
 			<dict>
@@ -150,19 +90,32 @@
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
+		</dict>
+		<key>buildscripts/extensions/distribution.rb</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>24</integer>
+				<key>line</key>
+				<integer>100</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>88</integer>
 		</dict>
 	</dict>
 	<key>openDocuments</key>
 	<array>
-		<string>Work/TCProjects/opensource/trunk/code/base/services.modules.yml</string>
-		<string>Work/TCProjects/opensource/trunk/code/base/buildscripts/environment.rb</string>
-		<string>Work/TCProjects/opensource/trunk/code/base/buildscripts/extensions/distribution-utils.rb</string>
-		<string>Work/TCProjects/opensource/trunk/code/base/buildscripts/extensions/distribution.rb</string>
-		<string>Work/TCProjects/opensource/trunk/code/base/buildscripts/extensions/packaging.rb</string>
+		<string>buildscripts/extensions/distribution.rb</string>
+		<string>buildscripts/extensions/bundled-components.rb</string>
+		<string>buildscripts/extensions/bundled-vendors.rb</string>
+		<string>buildconfig/distribution/dso-opensource.def.yml</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>
-	<string>{{259, 0}, {1177, 878}}</string>
+	<string>{{210, 0}, {1226, 878}}</string>
 </dict>
 </plist>
