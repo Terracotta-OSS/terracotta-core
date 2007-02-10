@@ -10,8 +10,8 @@ import org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle;
 import org.terracotta.dso.editors.xmlbeans.XmlIntegerSpinner;
 import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureChangeEvent;
 import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureListener;
-import com.terracottatech.configV2.DsoServerData;
-import com.terracottatech.configV2.GarbageCollection;
+import com.terracottatech.config.DsoServerData;
+import com.terracottatech.config.GarbageCollection;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

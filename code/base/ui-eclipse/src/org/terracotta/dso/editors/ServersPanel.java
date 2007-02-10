@@ -14,9 +14,9 @@ import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XObjectTable;
 import com.tc.admin.common.XObjectTableModel;
 import com.tc.admin.common.XTable.PortNumberRenderer;
-import com.terracottatech.configV2.Server;
-import com.terracottatech.configV2.Servers;
-import com.terracottatech.configV2.TcConfigDocument.TcConfig;
+import com.terracottatech.config.Server;
+import com.terracottatech.config.Servers;
+import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.awt.event.ActionEvent;
 

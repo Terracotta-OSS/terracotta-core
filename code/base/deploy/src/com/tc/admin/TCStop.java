@@ -166,7 +166,7 @@ public class TCStop {
   }
 
   private JMXConnector getJMXConnector() throws Exception {
-    String uri = "service:jmx:jmxmp://" + m_host + ":" + m_port;
+    String uri = "service:jmx:rmi:///jndi/rmi://" + m_host + ":" + m_port + "/jmxrmi"; 
     JMXServiceURL url = new JMXServiceURL(uri);
 
     return JMXConnectorFactory.connect(url, null);

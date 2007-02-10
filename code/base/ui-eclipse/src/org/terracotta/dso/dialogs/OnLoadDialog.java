@@ -13,8 +13,8 @@ import org.dijon.PagedView;
 import org.terracotta.dso.TcPlugin;
 import com.tc.admin.common.XTextField;
 import com.tc.admin.common.XTextPane;
-import com.terracottatech.configV2.Include;
-import com.terracottatech.configV2.OnLoad;
+import com.terracottatech.config.Include;
+import com.terracottatech.config.OnLoad;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;

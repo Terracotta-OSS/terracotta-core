@@ -22,7 +22,7 @@ import org.dijon.TextField;
 import org.terracotta.dso.PatternHelper;
 import org.terracotta.dso.TcPlugin;
 import com.tc.admin.common.XAbstractAction;
-import com.terracottatech.configV2.LockLevel;
+import com.terracottatech.config.LockLevel;
 
 import java.awt.BorderLayout;
 import java.awt.Frame;

@@ -37,7 +37,10 @@ public class AdminClientBundle extends ListResourceBundle {
 
     {"cannot.connect.to.extended",
      "Unable to connect to {0}: {1}"},
-    
+     
+    {"service.unavailable",
+     "Service Unavailable: {0}"},
+     
     {"unknown.host",
      "Unknown host: {0}"},
        

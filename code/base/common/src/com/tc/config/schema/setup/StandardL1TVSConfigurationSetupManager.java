@@ -19,8 +19,8 @@ import com.tc.logging.TCLogging;
 import com.tc.object.config.schema.NewL1DSOConfig;
 import com.tc.object.config.schema.NewL1DSOConfigObject;
 import com.tc.util.Assert;
-import com.terracottatech.configV2.Client;
-import com.terracottatech.configV2.DsoClientData;
+import com.terracottatech.config.Client;
+import com.terracottatech.config.DsoClientData;
 
 /**
  * The standard implementation of {@link com.tc.config.schema.setup.L1TVSConfigurationSetupManager}.

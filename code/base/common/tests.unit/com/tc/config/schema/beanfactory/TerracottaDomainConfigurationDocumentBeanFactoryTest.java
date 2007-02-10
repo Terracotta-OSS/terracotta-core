@@ -7,7 +7,7 @@ import org.apache.xmlbeans.XmlException;
 
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.test.TCTestCase;
-import com.terracottatech.configV2.TcConfigDocument;
+import com.terracottatech.config.TcConfigDocument;
 
 import java.io.ByteArrayInputStream;
 
