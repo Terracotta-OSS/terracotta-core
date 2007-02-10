@@ -56,23 +56,20 @@ module BundledComponents
 
   def add_dso_bootjar(component, destdir=libpath(component))
     bootjar_spec = component[:bootjar]
-    unless bootjar_spec.nil? 
+    unless bootjar_spec.nil?
       bootjar_dir = FilePath.new(File.dirname(destdir.to_s), *bootjar_spec['install_directory'].split('/')).ensure_directory
       if bootjar_spec['assert'].nil? || eval(bootjar_spec['assert'])
         bootjar_spec['compiler_versions'].each do |version|
-          jvm = JVM.from_config(@platform, @config_source,
-            "the specified JVM for Java #{version}", "#{version}.0_0",
-            "#{version}.999_999",
-            "JAVA_HOME_#{version.to_s.gsub(/\./, '')}")
-          bootjar     = BootJar.new(
-            @build_results,
-            jvm,
-            bootjar_dir,
-            @module_set,
-            ant,
-            @platform,
-            @static_resources.dso_boot_jar_config_file.to_s)
-          bootjar.ensure_created
+          jvm = Registry[:jvm_set][version.to_s]
+          if jvm
+            puts("Building boot JAR with #{jvm}")
+            bootjar = BootJar.new(@build_results, jvm, bootjar_dir, @module_set,
+                                  ant, @platform,
+                                  @static_resources.dso_boot_jar_config_file.to_s)
+            bootjar.ensure_created
+          else
+            puts("Couldn't find suitable JVM for building boot JAR")
+          end
         end
       end
     end
