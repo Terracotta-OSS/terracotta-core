@@ -13,7 +13,6 @@
 -->
 
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.terracotta.org/config http://www.terracotta.org/config/terracotta-2.2.xsd">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	
 </tc:tc-config>
