@@ -26,7 +26,7 @@ import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.InstrumentationLoggerImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
-import com.terracottatech.config.ConfigurationModel;
+import com.terracottatech.configV2.ConfigurationModel;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

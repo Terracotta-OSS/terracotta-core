@@ -3,7 +3,7 @@
  */
 package com.tc;
 
-import com.terracottatech.config.ClassExpression;
+import com.terracottatech.configV2.ClassExpression;
 
 public class ExcludeRule extends Rule {
   public ExcludeRule(ClassExpression expression) {

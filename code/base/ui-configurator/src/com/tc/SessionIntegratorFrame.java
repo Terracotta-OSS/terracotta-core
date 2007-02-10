@@ -40,8 +40,8 @@ import com.tc.servers.ServerSelection;
 import com.tc.servers.ServersDialog;
 import com.tc.util.NonPortableReason;
 import com.tc.util.runtime.Os;
-import com.terracottatech.config.DsoApplication;
-import com.terracottatech.config.TcConfigDocument.TcConfig;
+import com.terracottatech.configV2.DsoApplication;
+import com.terracottatech.configV2.TcConfigDocument.TcConfig;
 
 import java.awt.Color;
 import java.awt.Cursor;

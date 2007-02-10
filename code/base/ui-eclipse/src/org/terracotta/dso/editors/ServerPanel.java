@@ -14,7 +14,7 @@ import org.terracotta.dso.editors.chooser.ProjectFolderNavigator;
 import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureChangeEvent;
 import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureListener;
 import org.terracotta.dso.editors.xmlbeans.XmlStringField;
-import com.terracottatech.config.Server;
+import com.terracottatech.configV2.Server;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;

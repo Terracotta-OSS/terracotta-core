@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/src.classes" path="src"/>
-	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/src.classes" path="src.resources"/>
-	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.unit.classes" path="tests.unit"/>
-	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.base.classes" path="tests.base"/>
+	<classpathentry excluding="**/SCCS/**" output="build.eclipse/src.classes" kind="src" path="src"/>
+	<classpathentry excluding="**/SCCS/**" output="build.eclipse/src.classes" kind="src" path="src.resources"/>
+	<classpathentry excluding="**/SCCS/**" output="build.eclipse/tests.unit.classes" kind="src" path="tests.unit"/>
+	<classpathentry excluding="**/SCCS/**" output="build.eclipse/tests.base.classes" kind="src" path="tests.base"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/linked-child-process"/>
+	<classpathentry exported="true" kind="lib" path="lib/tcconfig-xmlbeans-generated.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/tcconfigV1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib.tests.unit/tctest-xmlbeans-generated.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xmlbeans-jsr173_1.0_api.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/junit-addons-1.4.jar"/>
@@ -37,8 +39,5 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/servlet-api-2.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/serializer-2.7.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/log4j-1.2.9.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/tcconfigV1.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/tcconfig-xmlbeans-generated.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/tcconfigV2.jar"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>

@@ -4,13 +4,12 @@
 package com.tc.config.schema.setup;
 
 import com.tc.exception.ImplementMe;
-import com.terracottatech.config.Authentication;
-import com.terracottatech.config.DsoServerData;
-import com.terracottatech.config.Host;
-import com.terracottatech.config.NonBlankToken;
-import com.terracottatech.config.Path;
-import com.terracottatech.config.Port;
-import com.terracottatech.config.Server;
+import com.terracottatech.configV2.DsoServerData;
+import com.terracottatech.configV2.Host;
+import com.terracottatech.configV2.NonBlankToken;
+import com.terracottatech.configV2.Path;
+import com.terracottatech.configV2.Port;
+import com.terracottatech.configV2.Server;
 
 public class TestL2 extends TestXmlObject implements Server {
 
@@ -227,26 +226,6 @@ public class TestL2 extends TestXmlObject implements Server {
   }
 
   public void xsetLogs(Path arg0) {
-    throw new ImplementMe();
-  }
-
-  public Authentication addNewAuthentication() {
-    throw new ImplementMe();
-  }
-
-  public Authentication getAuthentication() {
-    throw new ImplementMe();
-  }
-
-  public boolean isSetAuthentication() {
-    throw new ImplementMe();
-  }
-
-  public void setAuthentication(Authentication arg0) {
-    throw new ImplementMe();
-  }
-
-  public void unsetAuthentication() {
     throw new ImplementMe();
   }
 }

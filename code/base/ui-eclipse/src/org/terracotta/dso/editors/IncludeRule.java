@@ -3,8 +3,8 @@
  */
 package org.terracotta.dso.editors;
 
-import com.terracottatech.config.Include;
-import com.terracottatech.config.OnLoad;
+import com.terracottatech.configV2.Include;
+import com.terracottatech.configV2.OnLoad;
 
 public class IncludeRule extends Rule {
   public IncludeRule(Include include) {

@@ -1,6 +1,5 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
 package com.tc.admin;
 
@@ -33,18 +32,23 @@ public class ConnectDialog extends Dialog {
   private Timer              m_timer;
   private Exception          m_error;
 
-  public ConnectDialog(JMXServiceURL url, Map env, long timeout, ConnectionListener listener) {
+  public ConnectDialog(
+    JMXServiceURL      url,
+    Map                env,
+    long               timeout,
+    ConnectionListener listener)
+  {
     super();
 
-    m_url = url;
-    m_env = env;
-    m_timeout = timeout;
+    m_url      = url;
+    m_env      = env;
+    m_timeout  = timeout;
     m_listener = listener;
 
     AdminClientContext acc = AdminClient.getContext();
-    load((DialogResource) acc.topRes.child("ConnectDialog"));
+    load((DialogResource)acc.topRes.child("ConnectDialog"));
 
-    m_cancelButton = (Button) findComponent("CancelButton");
+    m_cancelButton = (Button)findComponent("CancelButton");
     m_cancelButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
         m_cancelButton.setEnabled(false);
@@ -110,12 +114,13 @@ public class ConnectDialog extends Dialog {
     public void hierarchyChanged(HierarchyEvent e) {
       long flags = e.getChangeFlags();
 
-      if ((flags & HierarchyEvent.SHOWING_CHANGED) != 0) {
-        if (isShowing()) {
+      if((flags & HierarchyEvent.SHOWING_CHANGED) != 0) {
+        if(isShowing()) {
           m_cancelButton.setEnabled(true);
           m_mainThread = new MainThread();
           m_mainThread.start();
-        } else {
+        }
+        else {
           fireHandleConnect();
         }
       }
@@ -123,14 +128,15 @@ public class ConnectDialog extends Dialog {
   }
 
   protected void fireHandleConnect() {
-    if (m_listener != null) {
+    if(m_listener != null) {
       try {
-        if (m_error == null) {
+        if(m_error == null) {
           m_listener.handleConnection();
-        } else {
+        }
+        else {
           m_listener.handleException();
         }
-      } catch (RuntimeException rte) {
+      } catch(RuntimeException rte) {
         rte.printStackTrace();
       }
     }
@@ -142,22 +148,23 @@ public class ConnectDialog extends Dialog {
 
       try {
         m_error = null;
-        m_jmxc = JMXConnectorFactory.newJMXConnector(m_url, m_env);
+        m_jmxc  = JMXConnectorFactory.newJMXConnector(m_url, m_env);
 
-        if (m_jmxc != null && m_error == null) {
+        if(m_jmxc != null && m_error == null) {
           m_connectThread.start();
           m_connectThread.join(m_timeout);
         }
-      } catch (IOException e) {
+      } catch(IOException e) {
         m_error = e;
-      } catch (InterruptedException e) {
+      } catch(InterruptedException e) {
         m_error = new InterruptedIOException("Interrupted");
       }
 
-      if (m_error == null && m_connectThread.isAlive()) {
+      if(m_error != null || m_connectThread.isAlive()) {
         m_connectThread.interrupt();
         m_error = new InterruptedIOException("Connection timed out");
       }
+
       m_timer.start();
     }
   }
@@ -166,27 +173,27 @@ public class ConnectDialog extends Dialog {
     public void run() {
       try {
         m_jmxc.connect(m_env);
-      } catch (IOException e) {
+      } catch(IOException e) {
         m_error = e;
-      } catch (RuntimeException e) {
+      } catch(RuntimeException e) {
         m_error = e;
       }
     }
   }
-
+  
   void tearDown() {
-    if (m_env != null) {
+    if(m_env != null) {
       m_env.clear();
     }
-
-    m_url = null;
-    m_env = null;
-    m_listener = null;
-    m_jmxc = null;
-    m_mainThread = null;
+    
+    m_url           = null;
+    m_env           = null;
+    m_listener      = null;
+    m_jmxc          = null;
+    m_mainThread    = null;
     m_connectThread = null;
-    m_cancelButton = null;
-    m_timer = null;
-    m_error = null;
-  }
+    m_cancelButton  = null;
+    m_timer         = null;
+    m_error         = null;
+  } 
 }

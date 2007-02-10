@@ -17,12 +17,7 @@ public interface NewCommonL2Config extends NewConfig {
   FileConfigItem logsPath();
   
   IntConfigItem jmxPort();
-  
-  StringConfigItem host();
 
-  boolean authentication();
+  StringConfigItem host();
   
-  String authenticationPasswordFile();
-  
-  String authenticationAccessFile();
 }

@@ -1,6 +1,5 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
 package com.tc.management;
 
@@ -16,11 +15,7 @@ import com.tc.util.PortChooser;
 
 import java.io.IOException;
 import java.net.BindException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
@@ -30,9 +25,8 @@ import javax.management.MBeanServerFactory;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnectorServer;
+import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
-import javax.management.remote.rmi.RMIConnectorServer;
-import javax.management.remote.rmi.RMIJRMPServerImpl;
 
 public class L2Management extends TerracottaManagement {
 
@@ -68,33 +62,16 @@ public class L2Management extends TerracottaManagement {
     registerMBeans();
   }
 
-  // service:jmx:rmi:///jndi/rmi://localhost:9519/jmxrmi
   public synchronized void start() throws Exception {
     int jmxPort = configurationSetupManager.commonl2Config().jmxPort().getInt();
     if (jmxPort == 0) {
       jmxPort = new PortChooser().chooseRandomPort();
     }
     try {
-      JMXServiceURL url;
-      Map env = new HashMap();
-      if (configurationSetupManager.commonl2Config().authentication()) {
-        env.put("jmx.remote.x.password.file", configurationSetupManager.commonl2Config().authenticationPasswordFile());
-        env.put("jmx.remote.x.access.file", configurationSetupManager.commonl2Config().authenticationAccessFile());
-//        File javaMgmnt = new File(System.getProperty("java.home") + File.separator + "lib" + File.separator
-//                                  + "management");
-//        env.put("jmx.remote.x.password.file", javaMgmnt + File.separator + "jmxremote.password");
-//        env.put("jmx.remote.x.access.file", javaMgmnt + File.separator + "jmxremote.access");
-      }
-        Registry registry = LocateRegistry.createRegistry(jmxPort);
-        url = new JMXServiceURL("service:jmx:rmi://");
-        RMIJRMPServerImpl server = new RMIJRMPServerImpl(jmxPort, null, null, env);
-        jmxConnectorServer = new RMIConnectorServer(url, env, server, mBeanServer);
-        jmxConnectorServer.start();
-        registry.bind("jmxrmi", server);
-        CustomerLogging.getConsoleLogger().info(
-                                                "JMX Server started. Available at URL["
-                                                    + "service:jmx:rmi:///jndi/rmi://localhost:" + jmxPort + "/jmxrmi"
-                                                    + "]");
+      JMXServiceURL url = new JMXServiceURL("jmxmp", "localhost", jmxPort);
+      jmxConnectorServer = JMXConnectorServerFactory.newJMXConnectorServer(url, null, mBeanServer);
+      jmxConnectorServer.start();
+      CustomerLogging.getConsoleLogger().info("JMX Server started. Available at URL[" + url + "]");
     } catch (BindException be) {
       throw new Exception("Unable to bind JMX server on port " + jmxPort
                           + "; perhaps this port is already in use, or you don't have sufficient privileges?", be);

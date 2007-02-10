@@ -21,10 +21,10 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
-import com.terracottatech.config.Server;
-import com.terracottatech.config.Servers;
-import com.terracottatech.config.TcConfigDocument;
-import com.terracottatech.config.TcConfigDocument.TcConfig;
+import com.terracottatech.configV2.Server;
+import com.terracottatech.configV2.Servers;
+import com.terracottatech.configV2.TcConfigDocument;
+import com.terracottatech.configV2.TcConfigDocument.TcConfig;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -358,7 +358,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     } catch (XmlException xmle) {
       throw new ConfigurationSetupException("The configuration data in the " + descrip + " does not obey the "
                                             + "Terracotta schema: " + xmle.getLocalizedMessage(), xmle);
-    } 
+    }
   }
 
   public File directoryConfigurationLoadedFrom() {

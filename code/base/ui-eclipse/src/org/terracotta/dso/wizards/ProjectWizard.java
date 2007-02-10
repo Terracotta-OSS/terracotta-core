@@ -33,12 +33,12 @@ import org.eclipse.ui.PlatformUI;
 
 import org.terracotta.dso.ProjectNature;
 import org.terracotta.dso.TcPlugin;
-import com.terracottatech.config.ConfigurationModel;
-import com.terracottatech.config.Server;
-import com.terracottatech.config.Servers;
-import com.terracottatech.config.System;
-import com.terracottatech.config.TcConfigDocument;
-import com.terracottatech.config.TcConfigDocument.TcConfig;
+import com.terracottatech.configV2.ConfigurationModel;
+import com.terracottatech.configV2.Server;
+import com.terracottatech.configV2.Servers;
+import com.terracottatech.configV2.System;
+import com.terracottatech.configV2.TcConfigDocument;
+import com.terracottatech.configV2.TcConfigDocument.TcConfig;
 
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;

@@ -10,7 +10,7 @@ import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
 import org.terracotta.dso.TcPlugin;
-import com.terracottatech.config.TcConfigDocument.TcConfig;
+import com.terracottatech.configV2.TcConfigDocument.TcConfig;
 
 public class ConfigUndoneChange extends Change {
   private TcConfig fConfig;

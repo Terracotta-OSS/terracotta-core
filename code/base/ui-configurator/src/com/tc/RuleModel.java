@@ -9,9 +9,9 @@ import org.w3c.dom.NodeList;
 
 import com.tc.admin.common.XObjectTableModel;
 import com.tc.Rule;
-import com.terracottatech.config.ClassExpression;
-import com.terracottatech.config.Include;
-import com.terracottatech.config.InstrumentedClasses;
+import com.terracottatech.configV2.ClassExpression;
+import com.terracottatech.configV2.Include;
+import com.terracottatech.configV2.InstrumentedClasses;
 
 import java.util.ArrayList;
 

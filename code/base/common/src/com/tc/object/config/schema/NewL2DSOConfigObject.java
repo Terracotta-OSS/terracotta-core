@@ -12,8 +12,8 @@ import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.dynamic.IntConfigItem;
 import com.tc.config.schema.dynamic.XPathBasedConfigItem;
 import com.tc.util.Assert;
-import com.terracottatech.config.PersistenceMode;
-import com.terracottatech.config.Server;
+import com.terracottatech.configV2.PersistenceMode;
+import com.terracottatech.configV2.Server;
 
 /**
  * The standard implementation of {@link NewL2DSOConfig}.

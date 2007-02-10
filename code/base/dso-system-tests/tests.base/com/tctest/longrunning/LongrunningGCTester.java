@@ -8,7 +8,7 @@ import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tctest.TestConfigurator;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
-import com.terracottatech.config.PersistenceMode;
+import com.terracottatech.configV2.PersistenceMode;
 
 public class LongrunningGCTester extends TransparentTestBase implements TestConfigurator {
 

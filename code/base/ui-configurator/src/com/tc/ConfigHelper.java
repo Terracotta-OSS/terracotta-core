@@ -9,20 +9,18 @@ import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.config.Loader;
-import com.tc.config.schema.migrate.ConfigUpdateException;
 import com.tc.object.tools.BootJarSignature;
 import com.tc.servers.ServerSelection;
-import com.terracottatech.config.Application;
-import com.terracottatech.config.DsoApplication;
-import com.terracottatech.config.Server;
-import com.terracottatech.config.Servers;
-import com.terracottatech.config.TcConfigDocument;
-import com.terracottatech.config.WebApplications;
-import com.terracottatech.config.TcConfigDocument.TcConfig;
+import com.terracottatech.configV2.Application;
+import com.terracottatech.configV2.DsoApplication;
+import com.terracottatech.configV2.Server;
+import com.terracottatech.configV2.Servers;
+import com.terracottatech.configV2.TcConfigDocument;
+import com.terracottatech.configV2.WebApplications;
+import com.terracottatech.configV2.TcConfigDocument.TcConfig;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -68,8 +66,6 @@ public class ConfigHelper {
           m_configLoader.updateToCurrent(m_configFile);
         }
       }
-    } catch(ConfigUpdateException cue) {
-      // TODO: we need to handle this
     } catch(Exception e) {/**/}
   }
   
@@ -159,7 +155,7 @@ public class ConfigHelper {
     return m_config;
   }
 
-  public List validate(String xmlText) throws IOException, XmlException {
+  public List validate(String xmlText) throws XmlException {
     TcConfigDocument configDoc = m_configLoader.parse(xmlText, m_xmlOptions);
     TcConfig         config    = configDoc.getTcConfig();
     List             errors    = new ArrayList();

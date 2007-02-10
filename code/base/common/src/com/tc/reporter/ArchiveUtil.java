@@ -7,14 +7,13 @@ package com.tc.reporter;
 import org.apache.xmlbeans.XmlException;
 
 import com.tc.config.schema.dynamic.ParameterSubstituter;
-import com.tc.sysinfo.EnvStats;
 import com.tc.util.ArchiveBuilder;
 import com.tc.util.ZipBuilder;
-import com.terracottatech.config.Client;
-import com.terracottatech.config.Server;
-import com.terracottatech.config.Servers;
-import com.terracottatech.config.TcConfigDocument;
-import com.terracottatech.config.TcConfigDocument.TcConfig;
+import com.terracottatech.configV2.Client;
+import com.terracottatech.configV2.Server;
+import com.terracottatech.configV2.Servers;
+import com.terracottatech.configV2.TcConfigDocument;
+import com.terracottatech.configV2.TcConfigDocument.TcConfig;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,44 +41,23 @@ public final class ArchiveUtil {
   private static final String INVALID           = "Invalid Arguments:\n\n";
   private static final String DASH_F            = "-f";
   private static final String DASH_C            = "-c";
-  private static final String USAGE             = "\tValid Arguments are:\n\n\t["
+  private static final String HELP              = "\tValid Arguments are:\n\n\t["
                                                     + DASH_F
-                                                    + "] (Full - include data files)\n\t["
+                                                    + "] (Full, include data files)\n\t["
                                                     + DASH_C
-                                                    + "] (Client - include files from the dso client)"
-                                                    + "\n\t<path to terracotta config xml file (tc-config.xml)>"
-                                                    + " | <path to data and/or logs directory>"
-                                                    + "\n\t[<output filename in .zip format>]\n\nExamples:\n\n\t"
-                                                    + "# java "
-                                                    + ArchiveUtil.class.getName()
-                                                    + " "
-                                                    + DASH_F
-                                                    + " tc-config.xml /home/someuser/tc-archive_server.zip"
-                                                    + "\n\tor\n\t# java "
-                                                    + ArchiveUtil.class.getName()
-                                                    + " /export1/terracotta/server-logs"
-                                                    + "\n\nUsage Summary:\n\n\tTypically you will use this tool to create a full "
-                                                    + "(-f) archive of the Terracotta server instance.\n\t"
-                                                    + "You may also want to create archives on the DSO client machines using"
-                                                    + " the -c option. There are two\n\tscenarios where you may "
-                                                    + "need to use the directory location instead of the config file path."
-                                                    + "\n\n\t\t1. The DSO client may not have a local copy of the tc-config.xml"
-                                                    + "\n\t\t2. The tc-config.xml logs and data elements may contain wildcards"
-                                                    + " which use timestamps or \n\t\t   environment variables which cannot be"
-                                                    + " resolved.\n\nNotes:\n\n\tThe execution command may vary:"
-                                                    + "\n\t\t# ./archive-util ...\n\n\tSpecifying a directory location as the"
-                                                    + " first command will recursively archive it's entire contents";
-
-  private static final Set    validDashArgs     = new HashSet();
+                                                    + "] (Client, collect clent info vs. server)\n\t<path to terracotta config xml file (tc-config.xml)>\n\t[<output filename in .zip format>]\n\nexample:\n\n\t# java "
+                                                    + ArchiveUtil.class.getName() + " " + DASH_F
+                                                    + " tc-config.xml /home/foo/tc-archive_server.zip";
+  private static final Set    validDashArgs          = new HashSet();
   static {
     validDashArgs.add(DASH_F);
     validDashArgs.add(DASH_C);
   }
 
-  private ArchiveUtil(boolean isFull, boolean isClient, File archivePath, File fileName) {
+  private ArchiveUtil(boolean isFull, boolean isClient, File tcConfig, File fileName) {
     this.isFull = isFull;
     this.isClient = isClient;
-    this.tcConfig = archivePath;
+    this.tcConfig = tcConfig;
     if (fileName == null) {
       File userDir = new File(System.getProperty("user.dir"));
       if (!userDir.exists()) throw new RuntimeException(
@@ -99,33 +77,31 @@ public final class ArchiveUtil {
   }
 
   public static void main(String[] args) {
-    if (args.length < 1) escape(USAGE, null);
+    if (args.length < 1) escape(HELP, null);
     boolean dashArgs = true;
-    int locationCmd = -1;
+    int configArg = -1;
     int fileArg = -1;
     Set dashSet = new HashSet(2);
     for (int i = 0; i < args.length; i++) {
       if (args[i].startsWith("-")) {
-        if (!dashArgs) escape(USAGE, null);
+        if (!dashArgs) escape(HELP, null);
         if (validDashArgs.contains(args[i])) dashSet.add(args[i]);
-        else escape(USAGE, null);
+        else escape(HELP, null);
       } else {
         dashArgs = false;
-        if (fileArg + locationCmd > 0) escape(USAGE, null);
-        if (locationCmd < 0) locationCmd = i;
+        if (fileArg + configArg > 0) escape(HELP, null);
+        if (configArg < 0) configArg = i;
         else if (fileArg < 0) fileArg = i;
-        if (fileArg + locationCmd == -2) escape(USAGE, null);
+        if (fileArg + configArg == -2) escape(HELP, null);
       }
     }
-    if (dashSet.size() > 2) escape(USAGE, null);
+    if (dashSet.size() > 2) escape(HELP, null);
     boolean dashC = dashSet.contains(DASH_C);
     boolean dashF = dashSet.contains(DASH_F);
 
-    if (locationCmd < 0) escape(
-        "Please specify the Terracotta config file location or logs/data directory location\n\n" + USAGE, null);
-    File tcConfigFile = new File(args[locationCmd]);
-    if (!tcConfigFile.exists()) escape("\tTerracotta Configuration file: " + tcConfigFile + "\n\tdoes not exist\n\n"
-        + USAGE, null);
+    if (configArg < 0) escape("Please specify where the Terracotta config file is located", null);
+    File tcConfigFile = new File(args[configArg]);
+    if (!tcConfigFile.exists()) escape("\tTerracotta Configuration file: " + tcConfigFile + "\n\tdoes not exist", null);
     File outputFile = null;
     if (fileArg > 0) {
       outputFile = new File(args[fileArg]);
@@ -204,26 +180,7 @@ public final class ArchiveUtil {
     return dataFiles;
   }
 
-  private void createPathArchive() {
-    try {
-      System.out.println("Archiving:");
-      ArchiveBuilder zip = new ZipBuilder(archiveFile, true);
-      zip.putEntry("env-stats", EnvStats.report().getBytes());
-      zip.putTraverseDirectory(tcConfig, tcConfig.getName());
-      zip.finish();
-    } catch (IOException e) {
-      System.out.println("Unexpected error - unable to write Terracotta archive: " + archiveFile);
-      e.printStackTrace();
-      System.exit(1);
-    }
-    System.out.println("\n\nWrote archive to:" + archiveFile);
-  }
-  
   private void createArchive() throws IOException, XmlException {
-    if (tcConfig.isDirectory()) {
-      createPathArchive();
-      return;
-    }
     TcConfig configBeans = TcConfigDocument.Factory.parse(tcConfig).getTcConfig();
     File clientLogsDir = null;
     File[] serverLogsDir = null;
@@ -252,7 +209,7 @@ public final class ArchiveUtil {
       }
       zip.finish();
     } catch (IOException e) {
-      System.out.println("Unexpected error - unable to write Terracotta archive: " + archiveFile);
+      System.out.println("Unexpected error - unable to write Terracotta archive: " + ARCHIVE_FILE_NAME);
       e.printStackTrace();
       System.exit(1);
     }

@@ -16,8 +16,8 @@ import org.eclipse.swt.widgets.Menu;
 import org.terracotta.dso.ConfigurationHelper;
 import org.terracotta.dso.ProjectNature;
 import org.terracotta.dso.TcPlugin;
-import com.terracottatech.config.Server;
-import com.terracottatech.config.Servers;
+import com.terracottatech.configV2.Server;
+import com.terracottatech.configV2.Servers;
 
 /**
  * Action providing server management menuitems.

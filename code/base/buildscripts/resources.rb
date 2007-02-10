@@ -111,9 +111,6 @@ show_config
     Prints the configuration parameters that the build system
     itself is building with.
 
-generate_config_classes
-    Generates XMLBeans against the Terracotta schema
-
 
 NOTE: To bypass Ivy dependency resolution, pass the --no-ivy option anywhere
 on the tcbuild command-line.  For example:

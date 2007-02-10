@@ -5,7 +5,7 @@ package com.tc.admin;
 
 import java.util.ListResourceBundle;
 
-public class AdminClientBundle extends ListResourceBundle {
+public class Resources extends ListResourceBundle {
   public Object[][] getContents() {
     return contents;
   }

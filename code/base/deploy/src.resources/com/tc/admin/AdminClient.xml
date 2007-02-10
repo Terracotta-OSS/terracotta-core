@@ -6,48 +6,21 @@
         <children>
           <container name="ServerControlsPanel">
             <border>
-              <etched-border type="lowered"/>
+              <etched-border type="raised"/>
             </border>
-						<children>
-							<container>
-								<children>
-									<button image-uri="/com/tc/admin/icons/newex_wiz.gif" name="ConnectButton" text="Connect" 
-										tip="Connect to server"/>
-									<textfield name="PortField" text="4756"/>
-									<label text="JMX Port:"/>
-									<textfield name="HostField" text="localhost"/>
-									<label text="Server Host:"/>
-								</children>
-								<connections>
-									<item bottom="-1,bottom:sn" height="n" left="1,right:n" right="-1,right:n" top="-1,top:sn" width="n"/>
-									<item bottom="-1,bottom:sn" height="n" left="2,right:n" right="0,left:n" top="-1,top:sn" width="sn"/>
-									<item bottom="-1,bottom:sn" height="n" left="3,right:n" right="1,left:n" top="-1,top:sn" width="n"/>
-									<item bottom="-1,bottom:sn" height="n" left="4,right:n" right="2,left:n" top="-1,top:sn" width="sn"/>
-									<item bottom="-1,bottom:sn" height="n" left="-1,left:n" right="3,left:n" top="-1,top:sn" width="n"/>
-								</connections>
-							</container>
-							<container name="CredentialsPanel">
-								<border>
-									<titled-border title="Credentials"/>
-								</border>
-								<children>
-									<label text="Username:"/>
-									<textfield name="UsernameField" text=""/>
-									<label text="Password:"/>
-									<textfield name="PasswordField" text=""/>
-								</children>
-								<connections>
-									<item bottom="2,top:s" height="n" left="-1,left:n" right="1,left:sn" top="-1,top:s" width="n"/>
-									<item bottom="3,top:n" height="n" left="0,right:n" right="-1,right:n" top="-1,top:n" width="sn"/>
-									<item bottom="-1,bottom:s" height="n" left="-1,left:n" right="3,left:s" top="0,bottom:s" width="n"/>
-									<item bottom="-1,bottom:n" height="n" left="1,left:0" right="1,right:0" top="1,bottom:n" 
-										width="sn"/>
-								</connections>
-							</container>
-						</children>
+            <children>
+              <button image-uri="/com/tc/admin/icons/newex_wiz.gif" name="ConnectButton" text="Connect" tip="Connect to server"/>
+              <textfield name="PortField" text="4756"/>
+              <label text="JMX Port:"/>
+              <textfield name="HostField" text="localhost"/>
+              <label text="Server Host:"/>
+            </children>
             <connections>
-              <item bottom="1,top:n" height="ns" left="-1,left:n" right="-1,right:n" top="-1,top:sn" width="ns"/>
-              <item bottom="-1,bottom:10" height="ns" left="-1,left:s" right="-1,right:s" top="0,bottom:sn" width="s"/>
+              <item bottom="-1,bottom:sn" height="n" left="1,right:n" right="-1,right:n" top="-1,top:sn" width="n"/>
+              <item bottom="-1,bottom:sn" height="n" left="2,right:n" right="0,left:n" top="-1,top:sn" width="sn"/>
+              <item bottom="-1,bottom:sn" height="n" left="3,right:n" right="1,left:n" top="-1,top:sn" width="n"/>
+              <item bottom="-1,bottom:sn" height="n" left="4,right:n" right="2,left:n" top="-1,top:sn" width="sn"/>
+              <item bottom="-1,bottom:sn" height="n" left="-1,left:n" right="3,left:n" top="-1,top:sn" width="n"/>
             </connections>
           </container>
           <label image-uri="/com/tc/admin/icons/logo.gif" name="ImageLabel"/>
@@ -264,7 +237,7 @@
     </children>
     <connections>
       <item bottom="-1,bottom:s" height="10" left="-1,left:n" right="1,left:n" top="-1,top:s" width="10"/>
-      <item bottom="-1,bottom:s" height="n" left="0,right:n" right="-1,right:s" top="-1,top:s" width="sn"/>
+      <item bottom="-1,bottom:s" height="n" left="0,right:n" right="-1,right:s" top="-1,top:s" width="n"/>
     </connections>
   </container>
   <container tag="ClientStatsPanel">

@@ -1,6 +1,5 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
 package com.tc.admin;
 
@@ -29,7 +28,6 @@ import java.util.prefs.Preferences;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXServiceURL;
-import javax.naming.ServiceUnavailableException;
 import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
@@ -40,12 +38,17 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 /**
- * All connection actions go through the ServerConnectionManager, which calls back through ConnectionListener. The
- * ServerConnectionManager handles auto-connecting, active-connection monitoring, and connection-state messaging. A JMX
- * notification handler (handleNotification) informs when the server goes from started->active state.
+ * All connection actions go through the ServerConnectionManager, which calls
+ * back through ConnectionListener.  The ServerConnectionManager handles
+ * auto-connecting, active-connection monitoring, and connection-state messaging.
+ * 
+ * A JMX notification handler (handleNotification) informs when the server goes
+ * from started->active state.
  */
 
-public class ServerNode extends ComponentNode implements ConnectionListener {
+public class ServerNode extends ComponentNode
+  implements ConnectionListener
+{
   private AdminClientContext      m_acc;
   private ServerConnectionManager m_connectManager;
   private Exception               m_connectException;
@@ -58,26 +61,26 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
   private AutoConnectAction       m_autoConnectAction;
   private JCheckBoxMenuItem       m_autoConnectMenuItem;
   private ShutdownAction          m_shutdownAction;
+  
+  private static final String CONNECT_ACTION      = "Connect";
+  private static final String DISCONNECT_ACTION   = "Disconnect";
+  private static final String DELETE_ACTION       = "Delete";
+  private static final String AUTO_CONNECT_ACTION = "AutoConnect";
 
-  private static final String     CONNECT_ACTION                 = "Connect";
-  private static final String     DISCONNECT_ACTION              = "Disconnect";
-  private static final String     DELETE_ACTION                  = "Delete";
-  private static final String     AUTO_CONNECT_ACTION            = "AutoConnect";
+  private static final String HOST         = ServersHelper.HOST;
+  private static final String PORT         = ServersHelper.PORT;
+  private static final String AUTO_CONNECT = ServersHelper.AUTO_CONNECT;
+  
+  private static final long DEFAULT_CONNECT_TIMEOUT_MILLIS = 8000;
 
-  private static final String     HOST                           = ServersHelper.HOST;
-  private static final String     PORT                           = ServersHelper.PORT;
-  private static final String     AUTO_CONNECT                   = ServersHelper.AUTO_CONNECT;
-
-  private static final long       DEFAULT_CONNECT_TIMEOUT_MILLIS = 8000;
-
-  private static final long       CONNECT_TIMEOUT_MILLIS         = Long
-                                                                     .getLong(
-                                                                              "com.tc.admin.ServerNode.connect-timeout",
-                                                                              DEFAULT_CONNECT_TIMEOUT_MILLIS)
-                                                                     .longValue();
+  private static final long CONNECT_TIMEOUT_MILLIS =
+    Long.getLong("com.tc.admin.ServerNode.connect-timeout",
+                 DEFAULT_CONNECT_TIMEOUT_MILLIS).longValue();
 
   ServerNode() {
-    this(ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT, ConnectionContext.DEFAULT_AUTO_CONNECT);
+    this(ConnectionContext.DEFAULT_HOST,
+         ConnectionContext.DEFAULT_PORT,
+         ConnectionContext.DEFAULT_AUTO_CONNECT);
   }
 
   ServerNode(final String host, final int port, final boolean autoConnect) {
@@ -92,69 +95,74 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
   }
 
   /**
-   * We need to use invokeLater here because this is being called from a background thread and all Swing stuff has to be
-   * done in the primary event loop.
+   * We need to use invokeLater here because this is being called from a
+   * background thread and all Swing stuff has to be done in the primary
+   * event loop.
    */
   private class AutoConnectionListener implements ConnectionListener {
     public void handleConnection() {
-      if (m_connectManager != null) {
+      if(m_connectManager != null) {
         final boolean isConnected = m_connectManager.isConnected();
-
-        if (SwingUtilities.isEventDispatchThread()) {
+      
+        if(SwingUtilities.isEventDispatchThread()) {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              if (m_connectManager != null) {
+              if(m_connectManager != null) {
                 setConnected(isConnected);
               }
             }
           });
-        } else {
+        }
+        else {
           try {
             SwingUtilities.invokeAndWait(new Runnable() {
               public void run() {
-                if (m_connectManager != null) {
+                if(m_connectManager != null) {
                   setConnected(isConnected);
                 }
               }
             });
-          } catch (InterruptedException ex) {/**/
-          } catch (InvocationTargetException ite) {
+          }
+          catch(InterruptedException ex) {/**/}
+          catch(InvocationTargetException ite) {
             m_acc.log(ite);
           }
         }
       }
     }
-
+    
     public void handleException() {
-      if (m_connectManager != null) {
+      if(m_connectManager != null) {
         final Exception e = m_connectManager.getConnectionException();
-
-        if (SwingUtilities.isEventDispatchThread()) {
+      
+        if(SwingUtilities.isEventDispatchThread()) {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              if (m_connectManager != null) {
+              if(m_connectManager != null) {
                 reportConnectionException(e);
               }
             }
           });
-        } else {
+        }
+        else {
           try {
             SwingUtilities.invokeAndWait(new Runnable() {
               public void run() {
-                if (m_connectManager != null) {
+                if(m_connectManager != null) {
                   reportConnectionException(e);
                 }
               }
             });
-          } catch (InterruptedException ex) {/**/
-          } catch (InvocationTargetException ite) {
+          }
+          catch(InterruptedException ex) {/**/}
+          catch(InvocationTargetException ite) {
             m_acc.log(ite);
           }
         }
       }
     }
   }
-
+  
   ConnectionContext getConnectionContext() {
     return m_connectManager.getConnectionContext();
   }
@@ -175,54 +183,50 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     return m_connectManager.getJMXPortNumber();
   }
 
-  void setUsername(String username) {
-    m_connectManager.setUsername(username);
-  }
-
-  void setPassword(String password) {
-    m_connectManager.setPassword(password);
-  }
-
   private void initMenu(boolean autoConnect) {
     m_popupMenu = new JPopupMenu("Server Actions");
 
-    m_connectAction = new ConnectAction();
-    m_disconnectAction = new DisconnectAction();
-    m_shutdownAction = new ShutdownAction();
-    m_deleteAction = new DeleteAction();
+    m_connectAction     = new ConnectAction();
+    m_disconnectAction  = new DisconnectAction();
+    m_shutdownAction    = new ShutdownAction();
+    m_deleteAction      = new DeleteAction();
     m_autoConnectAction = new AutoConnectAction();
-
-    addActionBinding(CONNECT_ACTION, m_connectAction);
-    addActionBinding(DISCONNECT_ACTION, m_disconnectAction);
-    addActionBinding(DELETE_ACTION, m_deleteAction);
+    
+    addActionBinding(CONNECT_ACTION,      m_connectAction);
+    addActionBinding(DISCONNECT_ACTION,   m_disconnectAction);
+    addActionBinding(DELETE_ACTION,       m_deleteAction);
     addActionBinding(AUTO_CONNECT_ACTION, m_autoConnectAction);
 
     m_popupMenu.add(m_connectAction);
     m_popupMenu.add(m_disconnectAction);
     m_popupMenu.add(new JSeparator());
-    // m_popupMenu.add(m_shutdownAction);
+    //m_popupMenu.add(m_shutdownAction);    
     m_popupMenu.add(m_deleteAction);
     m_popupMenu.add(new JSeparator());
-
+    
     m_popupMenu.add(m_autoConnectMenuItem = new JCheckBoxMenuItem(m_autoConnectAction));
     m_autoConnectMenuItem.setSelected(autoConnect);
   }
 
   private void setConnected(boolean connected) {
-    if (m_acc == null) { return; }
-
-    if (connected) {
+    if(m_acc == null) {
+      return;
+    }
+    
+    if(connected) {
       m_acc.controller.block();
 
       m_connectException = null;
-      if (m_connectManager.isActive()) {
+      if(m_connectManager.isActive()) {
         handleActivation();
-      } else if (m_connectManager.isStarted()) {
+      }
+      else if(m_connectManager.isStarted()) {
         handleStarting();
       }
-
+      
       m_acc.controller.unblock();
-    } else {
+    }
+    else {
       handleDisconnect();
     }
 
@@ -231,25 +235,34 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
   }
 
   boolean isConnected() {
-    return m_connectManager != null && m_connectManager.isConnected();
+    return m_connectManager != null &&
+           m_connectManager.isConnected();
   }
-
+  
   boolean isStarted() {
-    return m_connectManager != null && m_connectManager.isStarted();
+    return m_connectManager != null &&
+           m_connectManager.isStarted();
   }
-
+  
   boolean isActive() {
-    return m_connectManager != null && m_connectManager.isActive();
+    return m_connectManager != null &&
+           m_connectManager.isActive();
   }
-
+  
   boolean hasConnectionException() {
-    return m_connectException != null;
+    return m_connectException!= null;
   }
-
-  private ConnectDialog getConnectDialog(JMXServiceURL url, Map env, long timeout, ConnectionListener listener) {
-    if (m_connectDialog == null) {
+  
+  private ConnectDialog getConnectDialog(
+    JMXServiceURL      url,
+    Map                env,
+    long               timeout,
+    ConnectionListener listener)
+  {
+    if(m_connectDialog == null) {
       m_connectDialog = new ConnectDialog(url, env, timeout, listener);
-    } else {
+    }
+    else {
       m_connectDialog.setServiceURL(url);
       m_connectDialog.setEnvironment(env);
       m_connectDialog.setTimeout(timeout);
@@ -260,12 +273,12 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
   }
 
   /**
-   * Called when the user clicks the Connect button. Not used when auto-connect is enabled.
+   * Called when the user clicks the Connect button.  Not used when auto-connect is enabled.
    */
   void connect() {
     try {
       beginConnect();
-    } catch (Exception e) {
+    } catch(Exception e) {
       m_acc.controller.log(e);
     }
   }
@@ -274,13 +287,13 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     m_acc.controller.block();
 
     m_connectException = null;
-
+    
     JMXServiceURL url = m_connectManager.getJMXServiceURL();
-    Map env = m_connectManager.getConnectionEnvironment();
-    ConnectDialog cd = getConnectDialog(url, env, CONNECT_TIMEOUT_MILLIS, this);
+    Map           env = m_connectManager.getConnectionEnvironment();
+    ConnectDialog cd  = getConnectDialog(url, env, CONNECT_TIMEOUT_MILLIS, this);
 
-    AdminClientPanel topPanel = (AdminClientPanel) SwingUtilities.getAncestorOfClass(AdminClientPanel.class,
-                                                                                     m_serverPanel);
+    AdminClientPanel topPanel = (AdminClientPanel)
+      SwingUtilities.getAncestorOfClass(AdminClientPanel.class, m_serverPanel);
 
     cd.center(topPanel);
     cd.setVisible(true);
@@ -291,11 +304,11 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
    */
   public void handleConnection() {
     JMXConnector jmxc;
-
-    if ((jmxc = m_connectDialog.getConnector()) != null) {
+    
+    if((jmxc = m_connectDialog.getConnector()) != null) {
       try {
         m_connectManager.setJMXConnector(jmxc);
-      } catch (IOException ioe) {
+      } catch(IOException ioe) {
         reportConnectionException(ioe);
       }
     }
@@ -309,60 +322,56 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
   public void handleException() {
     Exception e = m_connectDialog.getError();
 
-    if (e != null) {
+    if(e != null) {
       reportConnectionException(e);
     }
 
     m_acc.controller.unblock();
   }
-
+  
   public static String getConnectionExceptionString(Exception e, Object connectionObject) {
     AdminClientContext acc = AdminClient.getContext();
-    String msg = null;
-
-    if (e.getCause() instanceof ServiceUnavailableException) {
-      String tmpl = acc.getMessage("service.unavailable");
+    String             msg = null;
+    
+    if(e instanceof ConnectException) {
+      String        tmpl = acc.getMessage("cannot.connect.to");
       MessageFormat form = new MessageFormat(tmpl);
-      Object[] args = new Object[] { connectionObject };
+      Object[]      args = new Object[] {connectionObject};
 
       msg = form.format(args);
-    } else if (e instanceof ConnectException) {
-      String tmpl = acc.getMessage("cannot.connect.to");
+    }
+    else if(e instanceof UnknownHostException) {
+      String        tmpl = acc.getMessage("unknown.host");
       MessageFormat form = new MessageFormat(tmpl);
-      Object[] args = new Object[] { connectionObject };
+      Object[]      args = new Object[] {e.getMessage()};
 
       msg = form.format(args);
-    } else if (e instanceof UnknownHostException
-               || (e.getCause() != null && e.getCause().getCause() instanceof java.rmi.UnknownHostException)) {
-      String tmpl = acc.getMessage("unknown.host");
-      MessageFormat form = new MessageFormat(tmpl);
-      Object[] args = new Object[] { connectionObject };
-
-      msg = form.format(args);
-    } else {
+    }
+    else {
       msg = e.getMessage();
     }
-
-    return "<html>" + msg + "</html>";
+    
+    return msg;
   }
-
+  
   private void reportConnectionException(Exception e) {
     String msg = getConnectionExceptionString(e, this);
 
     m_connectException = e;
-    if (msg != null && m_serverPanel != null) {
+    if(msg != null && m_serverPanel != null) {
       m_serverPanel.setStatusLabel(msg);
     }
     m_acc.controller.nodeChanged(ServerNode.this);
   }
 
   /**
-   * Called when the user clicks the Disconnect button. Used whether or not auto-connect is enabled.
+   * Called when the user clicks the Disconnect button.  Used whether or not
+   * auto-connect is enabled.
    */
   void disconnect() {
-    String msg = m_acc.getMessage("disconnecting.from");
+    String        msg  = m_acc.getMessage("disconnecting.from");
     MessageFormat form = new MessageFormat(msg);
-    Object[] args = new Object[] { this };
+    Object[]      args = new Object[]{this};
 
     m_acc.controller.setStatus(form.format(args));
     m_connectManager.setAutoConnect(false);
@@ -372,9 +381,9 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
   }
 
   void disconnectOnExit() {
-    String msg = m_acc.getMessage("disconnecting.from");
+    String        msg  = m_acc.getMessage("disconnecting.from");
     MessageFormat form = new MessageFormat(msg);
-    Object[] args = new Object[] { this };
+    Object[]      args = new Object[]{this};
 
     m_acc.controller.setStatus(form.format(args));
     m_connectManager.disconnectOnExit();
@@ -382,15 +391,15 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
 
   void shutdown() {
     try {
-      ConnectionContext cntx = getConnectionContext();
-      ObjectName serverInfo = getServerInfo(cntx);
-
+      ConnectionContext cntx       = getConnectionContext();
+      ObjectName        serverInfo = getServerInfo(cntx);
+      
       cntx.invoke(serverInfo, "stop", new Object[] {}, new String[] {});
-    } catch (Exception e) {
+    } catch(Exception e) {
       m_acc.log(e);
     }
   }
-
+  
   public Icon getIcon() {
     return ServersHelper.getHelper().getServerIcon();
   }
@@ -413,7 +422,10 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     ConnectAction() {
       super("Connect", ServersHelper.getHelper().getConnectIcon());
 
-      setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, MENU_SHORTCUT_KEY_MASK, true));
+      setAccelerator(
+        KeyStroke.getKeyStroke(KeyEvent.VK_C,
+                               MENU_SHORTCUT_KEY_MASK,
+                               true));
     }
 
     public void actionPerformed(ActionEvent ae) {
@@ -425,7 +437,10 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     DisconnectAction() {
       super("Disconnect", ServersHelper.getHelper().getDisconnectIcon());
 
-      setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, MENU_SHORTCUT_KEY_MASK, true));
+      setAccelerator(
+        KeyStroke.getKeyStroke(KeyEvent.VK_D,
+                               MENU_SHORTCUT_KEY_MASK,
+                               true));
       setEnabled(false);
     }
 
@@ -438,7 +453,10 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     ShutdownAction() {
       super("Shutdown", ServersHelper.getHelper().getShutdownIcon());
 
-      setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MENU_SHORTCUT_KEY_MASK, true));
+      setAccelerator(
+        KeyStroke.getKeyStroke(KeyEvent.VK_S,
+                               MENU_SHORTCUT_KEY_MASK,
+                               true));
       setEnabled(false);
     }
 
@@ -451,25 +469,28 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     DeleteAction() {
       super("Delete", ServersHelper.getHelper().getDeleteIcon());
 
-      setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, MENU_SHORTCUT_KEY_MASK, true));
+      setAccelerator(
+        KeyStroke.getKeyStroke(KeyEvent.VK_X,
+                               MENU_SHORTCUT_KEY_MASK,
+                               true));
     }
 
     public void actionPerformed(ActionEvent ae) {
-      if (isConnected()) {
+      if(isConnected()) {
         disconnectOnExit();
       }
 
       // Need to allow possible disconnect message from ServerConnectionManager to
       // come through.
-
-      SwingUtilities.invokeLater(new Runnable() {
+      
+      SwingUtilities.invokeLater(new Runnable () {
         public void run() {
           AdminClientController controller = m_acc.controller;
 
-          String name = ServerNode.this.toString();
+          String        name = ServerNode.this.toString();
           MessageFormat form = new MessageFormat(m_acc.getMessage("deleted.server"));
 
-          controller.setStatus(form.format(new Object[] { name }));
+          controller.setStatus(form.format(new Object[]{name}));
 
           // this must be last because as a side effect this node is tornDown (see tearDown)
           controller.remove(ServerNode.this);
@@ -489,9 +510,9 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     }
 
     public void actionPerformed(ActionEvent ae) {
-      JCheckBoxMenuItem menuitem = (JCheckBoxMenuItem) ae.getSource();
-      boolean autoConnect = menuitem.isSelected();
-
+      JCheckBoxMenuItem menuitem    = (JCheckBoxMenuItem)ae.getSource();
+      boolean           autoConnect = menuitem.isSelected();
+      
       m_connectManager.setAutoConnect(autoConnect);
       m_serverPanel.setupConnectButton();
       m_acc.controller.updateServerPrefs();
@@ -501,48 +522,48 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
   boolean isAutoConnect() {
     return m_connectManager.isAutoConnect();
   }
-
+  
   void handleStarting() {
     m_acc.controller.nodeChanged(ServerNode.this);
     m_serverPanel.started();
     m_shutdownAction.setEnabled(false);
   }
-
+  
   static ObjectName getServerInfo(ConnectionContext cntx) throws Exception {
     return ServerHelper.getHelper().getServerInfoMBean(cntx);
   }
 
   ProductInfo getProductInfo() {
     ProductInfo info;
-
+    
     try {
       info = getProductInfo(getConnectionContext());
-    } catch (Exception e) {
+    } catch(Exception e) {
       m_acc.log(e);
       info = new ProductInfo();
     }
-
+    
     return info;
   }
-
+  
   public static ProductInfo getProductInfo(ConnectionContext cntx) throws Exception {
     ObjectName serverInfo = getServerInfo(cntx);
 
-    String version = cntx.getStringAttribute(serverInfo, "Version");
-    String buildID = cntx.getStringAttribute(serverInfo, "BuildID");
-    String license = cntx.getStringAttribute(serverInfo, "DescriptionOfLicense");
+    String version   = cntx.getStringAttribute(serverInfo, "Version");
+    String buildID   = cntx.getStringAttribute(serverInfo, "BuildID");
+    String license   = cntx.getStringAttribute(serverInfo, "DescriptionOfLicense");
     String copyright = cntx.getStringAttribute(serverInfo, "Copyright");
 
     return new ProductInfo(version, buildID, license, copyright);
   }
-
+  
   long getStartTime() {
     try {
-      ConnectionContext cntx = getConnectionContext();
-      ObjectName serverInfo = getServerInfo(cntx);
+      ConnectionContext cntx       = getConnectionContext();
+      ObjectName        serverInfo = getServerInfo(cntx);
 
       return cntx.getLongAttribute(serverInfo, "StartTime");
-    } catch (Exception e) {
+    } catch(Exception e) {
       m_acc.log(e);
       return 0L;
     }
@@ -550,99 +571,105 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
 
   long getActivateTime() {
     try {
-      ConnectionContext cntx = getConnectionContext();
-      ObjectName serverInfo = getServerInfo(cntx);
+      ConnectionContext cntx       = getConnectionContext();
+      ObjectName        serverInfo = getServerInfo(cntx);
 
       return cntx.getLongAttribute(serverInfo, "ActivateTime");
-    } catch (Exception e) {
+    } catch(Exception e) {
       m_acc.log(e);
       return 0L;
     }
   }
-
+  
   void handleActivation() {
-    ConnectionContext cntx = getConnectionContext();
-    DSONode dsoNode = null;
-
-    if (DSOHelper.getHelper().getDSOMBean(cntx) != null) {
+    ConnectionContext  cntx         = getConnectionContext();
+    DSONode            dsoNode      = null;
+    
+    if(DSOHelper.getHelper().getDSOMBean(cntx) != null) {
       add(dsoNode = new DSONode(cntx));
     }
 
     /*
-     * ObjectName[] beanNames = SessionsHelper.getHelper().getSessionsProductMBeans(cntx); if(beanNames != null &&
-     * beanNames.length > 0) { add(new SessionsNode(cntx, beanNames)); }
-     */
-
+    ObjectName[] beanNames = SessionsHelper.getHelper().getSessionsProductMBeans(cntx);
+    if(beanNames != null && beanNames.length > 0) {
+      add(new SessionsNode(cntx, beanNames));
+    }
+    */
+    
     m_acc.controller.nodeStructureChanged(this);
 
-    if (dsoNode != null) {
+    if(dsoNode != null) {
       m_acc.controller.expand(dsoNode);
     }
 
     m_serverPanel.activated();
     m_shutdownAction.setEnabled(true);
   }
-
+  
   L2Info[] getClusterMembers() {
-    ConnectionContext cc = getConnectionContext();
-    L2Info[] result = null;
-
+    ConnectionContext cc     = getConnectionContext();
+    L2Info[]          result = null;
+    
     try {
-      result = (L2Info[]) cc.getAttribute(getServerInfo(cc), "L2Info");
-    } catch (Exception e) {
+      result  = (L2Info[])cc.getAttribute(getServerInfo(cc), "L2Info");
+    } catch(Exception e) {
       m_acc.log(e);
     }
 
     return result != null ? result : new L2Info[0];
   }
-
+  
   void handleDisconnect() {
-    for (int i = getChildCount() - 1; i >= 0; i--) {
-      ((XTreeNode) getChildAt(i)).tearDown();
+    for(int i = getChildCount()-1; i >= 0; i--) {
+      ((XTreeNode)getChildAt(i)).tearDown();
       remove(i);
     }
-
+    
     m_serverPanel.disconnected();
     m_acc.controller.nodeStructureChanged(ServerNode.this);
     m_acc.controller.select(this);
     m_shutdownAction.setEnabled(false);
   }
-
+  
   private class ServerNodeTreeCellRenderer extends AbstractTreeCellRenderer {
     protected StatusView m_statusView;
-
+      
     public ServerNodeTreeCellRenderer() {
       super();
-
+      
       m_statusView = new StatusView() {
         public void setForeground(Color fg) {
           super.setForeground(fg);
-          if (m_label != null) {
+          if(m_label != null) {
             m_label.setForeground(fg);
           }
         }
-
+        
         public void paint(Graphics g) {
           super.paint(g);
-          if (hasFocus) {
+          if(hasFocus) {
             paintFocus(g, 0, 0, getWidth(), getHeight());
           }
         }
       };
     }
-
+      
     public JComponent getComponent() {
       return m_statusView;
     }
-
-    public void setValue(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean focused) {
+    
+    public void setValue(JTree tree, Object value, boolean sel, boolean expanded,
+                         boolean leaf, int row,  boolean focused)
+    {
       Color bg = Color.LIGHT_GRAY;
-
-      if (isActive()) {
+      
+      if(isActive()) {
         bg = Color.GREEN;
-      } else if (isStarted()) {
+      }
+      else if(isStarted()) {
         bg = Color.YELLOW;
-      } else if (hasConnectionException()) {
+      }
+      else if(hasConnectionException()) {
         bg = Color.RED;
       }
 
@@ -650,22 +677,22 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
       m_statusView.setLabel(value.toString());
     }
   }
-
+  
   public void tearDown() {
-    if (m_connectDialog != null) {
+    if(m_connectDialog != null) {
       m_connectDialog.tearDown();
     }
     m_connectManager.tearDown();
 
-    m_acc = null;
-    m_connectManager = null;
-    m_serverPanel = null;
-    m_connectDialog = null;
-    m_popupMenu = null;
-    m_connectAction = null;
-    m_disconnectAction = null;
-    m_shutdownAction = null;
-    m_deleteAction = null;
+    m_acc               = null;
+    m_connectManager    = null;
+    m_serverPanel       = null;
+    m_connectDialog     = null;
+    m_popupMenu         = null;
+    m_connectAction     = null;
+    m_disconnectAction  = null;
+    m_shutdownAction    = null;
+    m_deleteAction      = null;
     m_autoConnectAction = null;
 
     super.tearDown();

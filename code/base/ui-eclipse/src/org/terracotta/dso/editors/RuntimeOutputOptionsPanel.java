@@ -8,8 +8,8 @@ import org.dijon.ContainerResource;
 import org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle;
 import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureChangeEvent;
 import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureListener;
-import com.terracottatech.config.DsoClientDebugging;
-import com.terracottatech.config.RuntimeOutputOptions;
+import com.terracottatech.configV2.DsoClientDebugging;
+import com.terracottatech.configV2.RuntimeOutputOptions;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

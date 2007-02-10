@@ -63,11 +63,11 @@ import org.terracotta.dso.decorator.TransientDecorator;
 import org.terracotta.dso.editors.xml.XMLEditor;
 
 import com.tc.admin.AdminClientPanel;
-import com.terracottatech.config.Application;
-import com.terracottatech.config.ConfigurationModel;
-import com.terracottatech.config.System;
-import com.terracottatech.config.TcConfigDocument;
-import com.terracottatech.config.TcConfigDocument.TcConfig;
+import com.terracottatech.configV2.Application;
+import com.terracottatech.configV2.ConfigurationModel;
+import com.terracottatech.configV2.System;
+import com.terracottatech.configV2.TcConfigDocument;
+import com.terracottatech.configV2.TcConfigDocument.TcConfig;
 
 import java.awt.Frame;
 import java.awt.Panel;

@@ -242,9 +242,7 @@ public class DistributedObjectServer extends SEDA {
     try {
       startJMXServer();
     } catch (Throwable t) {
-      String msg = "Unable to start the JMX server";
-      consoleLogger.error(msg);
-      logger.error(msg, t);
+      logger.error("Unable to start the JMX server", t);
     }
 
     NIOWorkarounds.solaris10Workaround();

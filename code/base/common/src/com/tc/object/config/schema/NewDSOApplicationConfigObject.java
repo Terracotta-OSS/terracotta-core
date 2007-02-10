@@ -16,9 +16,9 @@ import com.tc.config.schema.dynamic.XPathBasedConfigItem;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.terracottatech.config.DsoApplication;
-import com.terracottatech.config.Root;
-import com.terracottatech.config.Roots;
+import com.terracottatech.configV2.DsoApplication;
+import com.terracottatech.configV2.Root;
+import com.terracottatech.configV2.Roots;
 
 public class NewDSOApplicationConfigObject extends BaseNewConfigObject implements NewDSOApplicationConfig {
   private static final TCLogger logger = TCLogging.getLogger(NewDSOApplicationConfigObject.class);

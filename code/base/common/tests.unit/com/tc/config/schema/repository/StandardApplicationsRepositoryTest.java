@@ -6,7 +6,7 @@ package com.tc.config.schema.repository;
 import com.tc.config.schema.MockApplication;
 import com.tc.config.schema.validate.MockConfigurationValidator;
 import com.tc.test.TCTestCase;
-import com.terracottatech.config.Application;
+import com.terracottatech.configV2.Application;
 
 /**
  * Unit test for {@link StandardApplicationsRepository}.

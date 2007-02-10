@@ -15,7 +15,7 @@ import com.tc.management.L1Management;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.test.TCTestCase;
-import com.terracottatech.config.AdditionalBootJarClasses;
+import com.terracottatech.configV2.AdditionalBootJarClasses;
 
 import java.io.IOException;
 
