@@ -14,7 +14,7 @@ end
 # Represents the version of a JVM. This is typically something like '1.4.2_07', but
 # some JVMs (like IBM's) can be just '1.4.2', too.
 class JavaVersion
-    JAVA_MIN_VERSION = '0.0.0'
+    JAVA_MIN_VERSION = '0.0.0_000'
     JAVA_MAX_VERSION = '99999.999.999_999'
 
     attr_reader :major, :minor, :patch, :release
