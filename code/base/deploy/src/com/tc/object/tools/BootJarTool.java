@@ -29,6 +29,7 @@ import com.tc.exception.ExceptionWrapperImpl;
 import com.tc.exception.TCNotSupportedMethodException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.geronimo.GeronimoLoaderNaming;
+import com.tc.jboss.JBossLoaderNaming;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
@@ -263,6 +264,7 @@ public class BootJarTool {
       loadTerracottaClass(TLinkable.class.getName());
       loadTerracottaClass(SessionsHelper.class.getName());
       loadTerracottaClass(GeronimoLoaderNaming.class.getName());
+      loadTerracottaClass(JBossLoaderNaming.class.getName());
       loadTerracottaClass(Util.class.getName());
       loadTerracottaClass(TCLogger.class.getName());
       loadTerracottaClass(Banner.class.getName());

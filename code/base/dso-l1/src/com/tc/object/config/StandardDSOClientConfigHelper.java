@@ -26,6 +26,8 @@ import com.tc.geronimo.transform.HostGBeanAdapter;
 import com.tc.geronimo.transform.MultiParentClassLoaderAdapter;
 import com.tc.geronimo.transform.ProxyMethodInterceptorAdapter;
 import com.tc.geronimo.transform.TomcatClassLoaderAdapter;
+import com.tc.jboss.transform.MainAdapter;
+import com.tc.jboss.transform.UCLAdapter;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.object.LiteralValues;
@@ -63,13 +65,13 @@ import com.tc.object.config.schema.NewDSOApplicationConfig;
 import com.tc.object.config.schema.NewSpringApplicationConfig;
 import com.tc.object.config.schema.SpringApp;
 import com.tc.object.config.schema.SpringContextBean;
+import com.tc.object.loaders.NamedLoaderAdapter;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.tools.BootJar;
 import com.tc.tomcat.transform.BootstrapAdapter;
 import com.tc.tomcat.transform.CatalinaAdapter;
 import com.tc.tomcat.transform.ContainerBaseAdapter;
 import com.tc.tomcat.transform.JspWriterImplAdapter;
-import com.tc.tomcat.transform.TomcatLoaderAdapter;
 import com.tc.tomcat.transform.WebAppLoaderAdapter;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
@@ -320,7 +322,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
       DSOSpringConfigHelper springConfigHelper = new StandardDSOSpringConfigHelper();
       springConfigHelper.addApplicationNamePattern(springApp.name());
       springConfigHelper.setFastProxyEnabled(springApp.fastProxy()); // copy flag to all subcontexts
-      
+
       springConfigHelper.setRootName(appContext.rootName());
       springConfigHelper.setLocationInfoEnabled(appContext.locationInfoEnabled());
 
@@ -853,6 +855,11 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     addCustomAdapter("org.apache.geronimo.tomcat.HostGBean", HostGBeanAdapter.class);
     addCustomAdapter("org.apache.geronimo.tomcat.TomcatClassLoader", TomcatClassLoaderAdapter.class);
 
+    // JBoss adapters
+    addCustomAdapter("org.jboss.mx.loading.UnifiedClassLoader", UCLAdapter.class);
+    addCustomAdapter("org.jboss.Main", MainAdapter.class);
+    addCustomAdapter("org.jboss.system.server.NoAnnotationURLClassLoader", NamedLoaderAdapter.class);
+
     // TODO for the Event Swing sample only
     ld = new LockDefinition("setTextArea", ConfigLockLevel.WRITE);
     ld.commit();
@@ -1126,8 +1133,8 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     addCustomAdapter("org.apache.catalina.startup.Catalina", CatalinaAdapter.class);
     addCustomAdapter("org.apache.catalina.core.ContainerBase", ContainerBaseAdapter.class);
     addCustomAdapter("org.apache.catalina.startup.Bootstrap", BootstrapAdapter.class);
-    addCustomAdapter("org.apache.catalina.loader.WebappClassLoader", TomcatLoaderAdapter.class);
-    addCustomAdapter("org.apache.catalina.loader.StandardClassLoader", TomcatLoaderAdapter.class);
+    addCustomAdapter("org.apache.catalina.loader.WebappClassLoader", NamedLoaderAdapter.class);
+    addCustomAdapter("org.apache.catalina.loader.StandardClassLoader", NamedLoaderAdapter.class);
   }
 
   private void addWeblogicCustomAdapters() {

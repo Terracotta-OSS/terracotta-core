@@ -92,22 +92,22 @@ import javax.servlet.http.HttpSessionListener;
  * <p>
  *
  * <pre>
- *                outer class:
- *                ...
- *                int port0 = startAppServer(false).serverPort();
- *                boolean[] values = HttpUtil.getBooleanValues(createUrl(port0, SimpleDsoSessionsTest.DsoPingPongServlet.class));
- *                assertTrue(values[0]);
- *                assertFalse(values[1]);
- *                ...
+ *                           outer class:
+ *                           ...
+ *                           int port0 = startAppServer(false).serverPort();
+ *                           boolean[] values = HttpUtil.getBooleanValues(createUrl(port0, SimpleDsoSessionsTest.DsoPingPongServlet.class));
+ *                           assertTrue(values[0]);
+ *                           assertFalse(values[1]);
+ *                           ...
  *
- *                inner class servlet:
- *                ...
- *                response.setContentType(&quot;text/html&quot;);
- *                PrintWriter out = response.getWriter();
+ *                           inner class servlet:
+ *                           ...
+ *                           response.setContentType(&quot;text/html&quot;);
+ *                           PrintWriter out = response.getWriter();
  *
- *                out.println(&quot;true&quot;);
- *                out.println(&quot;false&quot;);
- *                ...
+ *                           out.println(&quot;true&quot;);
+ *                           out.println(&quot;false&quot;);
+ *                           ...
  * </pre>
  *
  * <p>
@@ -149,13 +149,12 @@ import javax.servlet.http.HttpSessionListener;
  */
 public abstract class AbstractAppServerTestCase extends TCTestCase {
 
-  private static final SynchronizedInt    nodeCounter            = new SynchronizedInt(-1);
-  private static final String             NODE                   = "node-";
-  private static final String             DOMAIN                 = "127.0.0.1";
-  private static final String             ALL_CLASSES_EXPRESSION = "*..*";
+  private static final SynchronizedInt    nodeCounter    = new SynchronizedInt(-1);
+  private static final String             NODE           = "node-";
+  private static final String             DOMAIN         = "127.0.0.1";
 
-  private final Object                    workingDirLock         = new Object();
-  private final List                      appservers             = new ArrayList();
+  private final Object                    workingDirLock = new Object();
+  private final List                      appservers     = new ArrayList();
   private TestConfigObject                config;
   private File                            serverInstallDir;
   private File                            workingDir;
@@ -333,6 +332,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
           params.appendJvmArgs(jvmargs[i]);
         }
       }
+
       // params.appendJvmArgs("-Dtc.classloader.writeToDisk=true");
 
       params.appendJvmArgs("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + "." + ConfigProperties.REQUEST_BENCHES
@@ -341,6 +341,13 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       params.appendJvmArgs("-verbose:gc");
       params.appendJvmArgs("-Xloggc:" + new File(this.workingDir, "node-" + nodeNumber + ".gc.log"));
       params.appendJvmArgs("-XX:+PrintGCDetails");
+
+      if (false && nodeNumber == 0) {
+        int debugPort = 8000 + nodeNumber;
+        System.out.println("Waiting for debugger connection on port " + debugPort);
+        params.appendJvmArgs("-Xdebug");
+        params.appendJvmArgs("-Xrunjdwp:server=y,transport=dt_socket,address=" + debugPort + ",suspend=y");
+      }
 
       params.addWar(warFile());
       return (AppServerResult) appServer.start(params);
@@ -487,30 +494,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     StandardTerracottaAppServerConfig configBuilder = appServerFactory.createTcConfig(installation.getDataDirectory());
     configBuilder.addWebApplication(testName());
 
-    configBuilder.addInclude(ALL_CLASSES_EXPRESSION);
-
-    // add some standard excludes
-    configBuilder.addExclude("org.apache.coyote..*");
-    configBuilder.addExclude("org.apache.catalina..*");
-    configBuilder.addExclude("org.apache.jasper..*");
-    configBuilder.addExclude("org.apache.tomcat..*");
-    configBuilder.addExclude("weblogic..*");
-    configBuilder.addExclude("com.rsa..*");
-    configBuilder.addExclude("$java..*");
-    configBuilder.addExclude("$javax..*");
-    configBuilder.addExclude("com.sun.crypto.provider..*");
-    configBuilder.addExclude("javax..*");
-    configBuilder.addExclude("mx4j..*");
-    configBuilder.addExclude("net.sf.cglib..*");
-    configBuilder.addExclude("org.apache..*");
-    configBuilder.addExclude("org.activeio..*");
-    configBuilder.addExclude("org.activemq..*");
-    configBuilder.addExclude("org.eclipse..*");
-    configBuilder.addExclude("org.objectweb..*");
-    configBuilder.addExclude("org.openejb..*");
-    configBuilder.addExclude("org.tranql..*");
-    configBuilder.addExclude("schemaorg_apache_xmlbeans..*");
-    configBuilder.addExclude("uk.ltd.getahead.dwr..*");
+    configBuilder.addInclude("com.tctest..*");
 
     if (roots != null && !roots.isEmpty()) {
       for (Iterator iter = roots.iterator(); iter.hasNext();) {

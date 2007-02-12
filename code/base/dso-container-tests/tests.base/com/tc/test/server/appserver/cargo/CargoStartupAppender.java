@@ -7,6 +7,7 @@ package com.tc.test.server.appserver.cargo;
 import com.tc.net.EphemeralPorts;
 import com.tc.process.StartupAppender;
 import com.tc.process.StreamCollector;
+import com.tc.process.StreamCopier;
 import com.tc.util.ArchiveBuilder;
 import com.tc.util.ClassListToFileList;
 import com.tc.util.JarBuilder;
@@ -28,7 +29,7 @@ public abstract class CargoStartupAppender implements StartupAppender {
     ArchiveBuilder jar = new JarBuilder(new File(appenderLocation + File.separator + StartupAppender.FILE_NAME));
     Class[] classes = new Class[] { this.getClass(), CargoStartupAppender.class, ArchiveBuilder.class,
         JarBuilder.class, ClassListToFileList.class, StartupAppender.class, PortChooser.class, EphemeralPorts.class,
-        StreamCollector.class, Os.class, ReplaceLine.class };
+        StreamCollector.class, Os.class, ReplaceLine.class, StreamCopier.class };
     File[][] files = ClassListToFileList.translate(classes);
     for (int i = 0; i < files[0].length; i++) {
       jar.putEntry(files[1][i].toString(), jar.readFile(files[0][i]));
