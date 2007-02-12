@@ -197,7 +197,7 @@ class JVMSet
 
       created_jvm
     end
-    
+
     def add_config_jvm(config_jvm_name, build_config = Hash.new)
       config_source = Registry[:config_source]
       if config_jvm_value = config_source[config_jvm_name] || build_config[config_jvm_name]
@@ -246,12 +246,12 @@ class JVM
         @java_path = FilePath.new(@java_home, "bin", "java").executable_extension
         @javac_path = FilePath.new(@java_home, "bin", "javac").executable_extension
 
-        @min_version = data[:minimum_version]
-        @max_version = data[:maximum_version]
+        @min_version = data[:minimum_version] || JavaVersion::JAVA_MIN_VERSION
+        @max_version = data[:maximum_version] || JavaVersion::JAVA_MAX_VERSION
 
         @actual_version = nil
     end
-    
+
     def min_version
         JavaVersion.new(@min_version)
     end
