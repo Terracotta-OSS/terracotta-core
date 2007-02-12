@@ -16,7 +16,7 @@
 #   alias: A list of alternative names for the JDK
 
 J2SE-1.4:
-    min_version: 1.4.2_11
+    min_version: 1.4.2_09
     max_version: 1.4.999_999
     env:
       - J2SE_14
