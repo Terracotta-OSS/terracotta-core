@@ -12,6 +12,8 @@ import com.tc.config.schema.dynamic.StringConfigItem;
 import com.terracottatech.config.Authentication;
 import com.terracottatech.config.Server;
 
+import java.io.File;
+
 import javax.xml.namespace.QName;
 
 /**
@@ -45,8 +47,8 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
     if (authentication) {
       pwd = server.getAuthentication().getPasswordFile();
       if (pwd == null) pwd = Authentication.type.getElementProperty(QName.valueOf("password-file")).getDefaultText();
-      pwd = ParameterSubstituter.substitute(pwd);
-      access = server.getAuthentication().getAccessFile();
+      pwd = new File(ParameterSubstituter.substitute(pwd)).getAbsolutePath();
+      access = new File(server.getAuthentication().getAccessFile()).getAbsolutePath();
       if (access == null) access = Authentication.type.getElementProperty(QName.valueOf("access-file"))
           .getDefaultText();
       access = ParameterSubstituter.substitute(access);
