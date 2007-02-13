@@ -38,10 +38,6 @@ public final class RequestCountTest extends AbstractAppServerTestCase {
   private static final long     TEST_DURATION      = 30 * 1000;
   private static final String   CLIENT_NAME_PREFIX = "client-";
 
-  public RequestCountTest() {
-      disableAllUntil("2007-02-19");      
-  }
-  
   public void testRequestCount() throws Throwable {
     collectVmStats();
     assertTimeDirection();
@@ -134,7 +130,7 @@ public final class RequestCountTest extends AbstractAppServerTestCase {
   }
 
   private JMXConnector getJMXConnector() throws IOException {
-    JMXServiceURL jmxServerUrl = new JMXServiceURL("jmxmp", "localhost", getJMXPort());
+    JMXServiceURL jmxServerUrl = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:" + getJMXPort() + "/jmxrmi");
     JMXConnector jmxConnector = JMXConnectorFactory.newJMXConnector(jmxServerUrl, null);
     jmxConnector.connect();
     return jmxConnector;
