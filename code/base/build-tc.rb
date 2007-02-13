@@ -510,8 +510,8 @@ END
       # do a whole lot of nothing
     end
 
-    def test_find_jvm
-      puts(@jvm_set.find_jvm(:path => '/usr/lib/j2sdk1.5-sun'))
+    def show_jvms
+      puts(find_jvms)
     end
 
     protected
@@ -734,6 +734,8 @@ END
     # This is where the 'run-1.4-tests-with-1.5' property comes into play; we assign the
     # 'tests-1.4' JVM to a 1.4 or 1.5 JVM, based on how this property is set.
     def find_jvms
+        return @jvm_set if @jvm_set
+
         @jvm_set = JVMSet.new
 
         jdk_defs = YAML.load_file('jdk.def.yml')

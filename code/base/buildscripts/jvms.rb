@@ -341,7 +341,7 @@ class JVM
     # A short description of this JVM -- the type followed by the version. Therefore, something
     # like 'hotspot-1.4.2_07'.
     def short_description
-        "#{actual_type}-#{actual_version}"
+        "#{actual_type}-#{JavaVersion.new(actual_version)}"
     end
 
     # The type of this JVM -- something like 'hotspot' or 'jrockit'.
