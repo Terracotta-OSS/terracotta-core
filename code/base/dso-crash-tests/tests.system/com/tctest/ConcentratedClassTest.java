@@ -5,7 +5,7 @@ package com.tctest;
 
 import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
-import com.terracottatech.configV2.PersistenceMode;
+import com.terracottatech.config.PersistenceMode;
 
 /**
  * This test makes heavy use of the same TCClass stuff underneath a particular class within a single VM. I'm hoping this // *

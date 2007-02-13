@@ -11,9 +11,9 @@ import org.dijon.DictionaryResource;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureChangeEvent;
 import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureListener;
-import com.terracottatech.configV2.Application;
-import com.terracottatech.configV2.DsoApplication;
-import com.terracottatech.configV2.TcConfigDocument.TcConfig;
+import com.terracottatech.config.Application;
+import com.terracottatech.config.DsoApplication;
+import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 public class DsoApplicationPanel extends ConfigurationEditorPanel
   implements ConfigurationEditorRoot,

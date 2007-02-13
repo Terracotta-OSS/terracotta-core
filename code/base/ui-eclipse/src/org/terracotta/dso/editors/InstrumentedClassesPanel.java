@@ -9,8 +9,8 @@ import org.dijon.Button;
 import org.dijon.ContainerResource;
 
 import org.terracotta.dso.editors.chooser.ClassChooser;
-import com.terracottatech.configV2.DsoApplication;
-import com.terracottatech.configV2.InstrumentedClasses;
+import com.terracottatech.config.DsoApplication;
+import com.terracottatech.config.InstrumentedClasses;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;

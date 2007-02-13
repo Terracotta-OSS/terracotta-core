@@ -4,8 +4,8 @@
 package com.tc.config.schema.setup;
 
 import com.tc.exception.ImplementMe;
-import com.terracottatech.configV2.Server;
-import com.terracottatech.configV2.Servers;
+import com.terracottatech.config.Server;
+import com.terracottatech.config.Servers;
 
 public class TestL2S extends TestXmlObject implements Servers {
 

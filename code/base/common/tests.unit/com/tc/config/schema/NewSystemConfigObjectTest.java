@@ -5,8 +5,8 @@ package com.tc.config.schema;
 
 import org.apache.xmlbeans.XmlObject;
 
-import com.terracottatech.configV2.System;
-import com.terracottatech.configV2.TcConfigDocument.TcConfig;
+import com.terracottatech.config.System;
+import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 /**
  * Unit/subsystem test for {@link NewSystemConfigObject}.

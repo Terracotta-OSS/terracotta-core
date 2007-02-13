@@ -11,8 +11,8 @@ import org.dijon.ContainerResource;
 import org.terracotta.dso.TcPlugin;
 import com.tc.admin.common.XTable;
 import org.terracotta.dso.editors.chooser.FieldChooser;
-import com.terracottatech.configV2.DsoApplication;
-import com.terracottatech.configV2.TransientFields;
+import com.terracottatech.config.DsoApplication;
+import com.terracottatech.config.TransientFields;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;

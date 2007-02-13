@@ -23,12 +23,12 @@ import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.object.config.schema.NewL2DSOConfigObject;
 import com.tc.object.config.schema.PersistenceMode;
 import com.tc.util.Assert;
-import com.terracottatech.configV2.Application;
-import com.terracottatech.configV2.Client;
-import com.terracottatech.configV2.Server;
-import com.terracottatech.configV2.Servers;
-import com.terracottatech.configV2.System;
-import com.terracottatech.configV2.TcConfigDocument;
+import com.terracottatech.config.Application;
+import com.terracottatech.config.Client;
+import com.terracottatech.config.Server;
+import com.terracottatech.config.Servers;
+import com.terracottatech.config.System;
+import com.terracottatech.config.TcConfigDocument;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

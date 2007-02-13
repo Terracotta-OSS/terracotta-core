@@ -11,9 +11,9 @@ import org.dijon.ContainerResource;
 import com.tc.admin.common.XObjectTableModel;
 import com.tc.admin.common.XTable;
 import org.terracotta.dso.editors.chooser.FieldChooser;
-import com.terracottatech.configV2.DsoApplication;
-import com.terracottatech.configV2.Root;
-import com.terracottatech.configV2.Roots;
+import com.terracottatech.config.DsoApplication;
+import com.terracottatech.config.Root;
+import com.terracottatech.config.Roots;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;

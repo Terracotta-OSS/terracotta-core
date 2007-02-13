@@ -377,6 +377,15 @@
     </xs:all>
     <xs:attribute name="name" type="xs:string" use="required" />
   </xs:complexType>
+	
+	<xs:complexType name="authentication">
+		<xs:all>
+			<xs:element name="password-file" type="path" minOccurs="0" 
+				default="%(java.home)/lib/management/jmxremote.password" />
+			<xs:element name="access-file" type="path" minOccurs="0" 
+				default="%(java.home)/lib/management/jmxremote.access" />
+		</xs:all>
+	</xs:complexType>
 
   <xs:complexType name="server">
     <xs:annotation>
@@ -385,6 +394,31 @@
       </xs:documentation>
     </xs:annotation>
     <xs:all>
+			<xs:element name="authentication" type="authentication" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation xmlns="http://www.w3.org/1999/xhtml"> Turn on authentication for the Terracotta server. An 
+						empty tag &lt;authentication/&gt; defaults to the standard Java JMX authentication mechanism referring 
+						to password and access files in: $JAVA_HOME/jre/lib/management.
+						<ul>
+							<li>$JAVA_HOME/jre/lib/management/jmxremote.password</li>
+							<li>$JAVA_HOME/jre/lib/management/jmxremote.access</li>
+						</ul>
+						You must modify these files as such (if none exist create them):
+						<p>jmxremote.password</p>
+						add a line to the end of the file declaring your username and password followed by a caridge return:
+						<p>secretusername secretpassword</p>
+						<p>jmxremote.access</p>
+						add the following line (with a caridge return) to the end of your file:
+						<p>secretusername      readwrite</p>
+						You must also:<br/>
+						$ chmod 500 jmxremote.password<br/>
+						$ chown &lt;user who will execute the tc-server&gt; jmxremote.password
+						<br/><br/>
+						NOTE: This will not work unless you're correctly running the Terracotta server with Java version >= 1.5
+							</xs:documentation>
+        </xs:annotation>
+			</xs:element>
+			
       <xs:element name="data" type="path" minOccurs="0"
         default="data">
         <xs:annotation>
@@ -496,8 +530,6 @@
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
-
-
 
   <xs:complexType name="client">
     <xs:annotation>

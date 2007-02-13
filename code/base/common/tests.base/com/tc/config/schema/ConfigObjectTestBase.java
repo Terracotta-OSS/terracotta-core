@@ -16,8 +16,8 @@ import com.tc.config.schema.repository.StandardBeanRepository;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
-import com.terracottatech.configV2.TcConfigDocument;
-import com.terracottatech.configV2.TcConfigDocument.TcConfig;
+import com.terracottatech.config.TcConfigDocument;
+import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.ByteArrayInputStream;
 

@@ -163,7 +163,31 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/"));
     assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA0));
     assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA1));
-    if (defaultArchive.exists()) defaultArchive.delete();
+  }
+  
+  public void testDirectoryArg() throws Exception {
+    clear();
+    log("<server> test directory argument contents");
+    String[] args = new String[] { mockDataDir + File.separator + MK_SERVER_LOG_DIR };
+    assertEquals(0, executeArchiveUtil(args));
+    DateFormat df = new SimpleDateFormat("y-M-d");
+    File defaultArchive = new File(mockDataDir + File.separator + "tc-archive" + "_"
+        + df.format(new Date(System.currentTimeMillis())) + ".zip");
+    Set contents = listArchiveContents(defaultArchive);
+    assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/"));
+    assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/" + MK_SERVER_LOG0));
+    assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/" + MK_SERVER_LOG1));
+  }
+  
+  public void testInvalidDirectoryArg() throws Exception {
+    clear();
+    log("<server> test invalid directory argument");
+    String[] args = new String[] { "foo" + File.separator + "baz" };
+    assertEquals(0, executeArchiveUtil(args));
+    DateFormat df = new SimpleDateFormat("y-M-d");
+    File defaultArchive = new File(mockDataDir + File.separator + "tc-archive" + "_"
+        + df.format(new Date(System.currentTimeMillis())) + ".zip");
+    assertFalse(defaultArchive.exists());
   }
 
   public void testFileArg() throws Exception {
@@ -225,7 +249,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA0));
     assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA1));
   }
-  
+
   public void testIgnoresFOptionForClient() throws Exception {
     clear();
     log("<client> ignores -f option");
@@ -252,7 +276,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertEquals(0, executeArchiveUtil(new String[] { configFile.toString(), archiveFile.toString(), "-c" }));
     assertFalse(archiveFile.exists());
   }
-  
+
   public void testInvalidArgsOrder3() throws Exception {
     clear();
     log("<server> invalid args: <config> -c <output file>");
@@ -261,14 +285,14 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertEquals(0, executeArchiveUtil(new String[] { configFile.toString(), "-c", archiveFile.toString() }));
     assertFalse(archiveFile.exists());
   }
-  
+
   public void testInvalidArgs1() throws Exception {
     clear();
     log("<server> invalid args: config");
     assertEquals(0, executeArchiveUtil(new String[] { "foo", archiveFile.toString() }));
     assertFalse(archiveFile.exists());
   }
-  
+
   public void testInvalidArgs2() throws Exception {
     clear();
     log("<server> invalid args: -x");
@@ -277,7 +301,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertEquals(0, executeArchiveUtil(new String[] { "-x", configFile.toString(), archiveFile.toString() }));
     assertFalse(archiveFile.exists());
   }
-  
+
   public void testInvalidConfig1() throws Exception {
     clear();
     log("<server> invalid config: <foo>");
@@ -285,7 +309,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertEquals(0, executeArchiveUtil(new String[] { configFile.toString(), archiveFile.toString() }));
     assertFalse(archiveFile.exists());
   }
-  
+
   public void testInvalidConfig2() throws Exception {
     clear();
     log("<server> invalid config: logs=foo");
@@ -295,7 +319,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertEquals(0, executeArchiveUtil(new String[] { configFile.toString(), archiveFile.toString() }));
     assertFalse(archiveFile.exists());
   }
-  
+
   public void testInvalidConfig3() throws Exception {
     clear();
     log("<server> invalid config: data=foo");
@@ -305,7 +329,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertEquals(0, executeArchiveUtil(new String[] { "-f", configFile.toString(), archiveFile.toString() }));
     assertFalse(archiveFile.exists());
   }
-  
+
   public void testInvalidConfig4() throws Exception {
     clear();
     log("<client> invalid config: logs=foo");
@@ -315,5 +339,5 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertFalse(archiveFile.exists());
   }
   
-  // TODO: wildcards will not be tested CDV-93 
+  // TODO: wildcards will not be tested CDV-93
 }
