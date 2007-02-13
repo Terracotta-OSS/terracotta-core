@@ -42,7 +42,11 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
     String pwd = null;
     String access = null;
     Server server = (Server) context.bean();
-    this.authentication = server.isSetAuthentication();
+    if (server != null) {
+      this.authentication = server.isSetAuthentication();
+    } else {
+      this.authentication = false;
+    }
 
     if (authentication) {
       pwd = server.getAuthentication().getPasswordFile();
