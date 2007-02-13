@@ -90,6 +90,7 @@ public final class ArchiveUtilTest extends TCTestCase {
   }
 
   private File writeConfig(byte[] data) throws IOException {
+    System.out.println(new String(data));
     File configFile = new File(mockDataDir + File.separator + TC_CONFIG);
     if (configFile.exists()) configFile.delete();
     FileOutputStream out = new FileOutputStream(configFile);
