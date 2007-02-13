@@ -151,7 +151,6 @@ public final class L1Management extends TerracottaManagement {
     mBeanServer.registerMBean(internalSessionBean, MBeanNames.SESSION_INTERNAL);
     mBeanServer.registerMBean(publicSessionBean, L1MBeanNames.SESSION_PRODUCT_PUBLIC);
     mBeanServer.registerMBean(clusterBean, L1MBeanNames.CLUSTER_BEAN_PUBLIC);
-    
   }
 
   private void addJMXConnectors() {
@@ -188,7 +187,7 @@ public final class L1Management extends TerracottaManagement {
     // We get called very early in the bootstrap process, and can outrun the creation of the default mbean server that
     // the 1.5 JDK and jconsole uses. If it looks like the default server should start up then return false, otherwise
     // (1.4 JDK or the com.sun.management.jmxremote property is not set) return true.
-    return forceCreate || !(Vm.isJDK15() && System.getProperty("com.sun.management.jmxremote") != null);
+    return forceCreate || Vm.isJDK14() || (Vm.getMajorVersion() > 4 && System.getProperty("com.sun.management.jmxremote") == null);
   }
 
 }
