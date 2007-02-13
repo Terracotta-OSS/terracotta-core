@@ -38,6 +38,10 @@ public final class RequestCountTest extends AbstractAppServerTestCase {
   private static final long     TEST_DURATION      = 30 * 1000;
   private static final String   CLIENT_NAME_PREFIX = "client-";
 
+  public RequestCountTest() {
+      disableAllUntil("2007-02-19");      
+  }
+  
   public void testRequestCount() throws Throwable {
     collectVmStats();
     assertTimeDirection();
