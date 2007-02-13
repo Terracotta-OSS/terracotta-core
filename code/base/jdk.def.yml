@@ -31,6 +31,8 @@ J2SE-1.5:
     env:
       - J2SE_15
       - JAVA_HOME_15
+      - JAVASE_16
+      - JAVA_HOME_16
     alias:
       - tests-1.5
       - "1.5"
