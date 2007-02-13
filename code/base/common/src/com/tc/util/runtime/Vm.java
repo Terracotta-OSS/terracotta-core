@@ -23,7 +23,7 @@ public class Vm {
   }
 
   private Vm() {
-    // Utility class
+  // Utility class
   }
 
   public static int getMegaVersion() {
@@ -54,6 +54,10 @@ public class Vm {
     return VERSION.isJDK16();
   }
 
+  public static boolean isJDK15Compliant() {
+    return VERSION.isJDK15() || VERSION.isJDK16();
+  }
+
   public static boolean isJRockit() {
     return VERSION.isJRockit();
   }
@@ -74,9 +78,9 @@ public class Vm {
     private final boolean isJRockit;
 
     public Version(final Properties properties) throws UnknownJvmVersionException {
-      this(properties.getProperty("java.version", "<error: java.version not specified in properties>"),
-           properties.getProperty("jrockit.version") != null
-               || properties.getProperty("java.vm.name", "").toLowerCase().indexOf("jrockit") >= 0);
+      this(properties.getProperty("java.version", "<error: java.version not specified in properties>"), properties
+          .getProperty("jrockit.version") != null
+          || properties.getProperty("java.vm.name", "").toLowerCase().indexOf("jrockit") >= 0);
     }
 
     public Version(final String vendorVersion, final boolean isJRockit) throws UnknownJvmVersionException {

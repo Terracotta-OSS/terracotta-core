@@ -22,7 +22,7 @@ public class TCRuntime {
   }
 
   private static void init() {
-    if (Vm.isJDK15()) {
+    if (Vm.isJDK15Compliant()) {
       memoryManager = getMemoryManagerJdk15();
     } else {
       memoryManager = new TCMemoryManagerJdk14();
