@@ -39,7 +39,7 @@ public class Main
       messageManager = new MessageManager();
 
       setDefaultLookAndFeelDecorated(true);
-      addWindowListener(new ExitListener());
+      setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       Container content = getContentPane();
 
       display = new JTextPane();
@@ -184,15 +184,11 @@ public class Main
 
    public static void main(String[] args) 
    {
-     new Main(Main.chatname(args.length == 0 ? "" : args[0]));
-   }
-
-   class ExitListener extends WindowAdapter 
-   {
-      public void windowClosing(WindowEvent event) 
-      {
-         Main.this.logout();
-         System.exit(0);
-      }
+      final String name = args.length == 0 ? "" : args[0];
+      javax.swing.SwingUtilities.invokeLater(new Runnable() {
+         public void run() {
+            new Main(Main.chatname(name));
+         }
+      });
    }
 }

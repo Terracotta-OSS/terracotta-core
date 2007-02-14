@@ -32,9 +32,14 @@ class Main extends JFrame {
     table.setFont(new Font("Courier New", Font.PLAIN, 14));
     getContentPane().add(new JScrollPane(table));
     setSize(500, 200);
+    setVisible(true);
   }
 
   public static void main(String[] args) {
-    (new Main()).setVisible(true);
+    javax.swing.SwingUtilities.invokeLater(new Runnable() {
+       public void run() {
+          new Main();
+       }
+    });
   }
 }
