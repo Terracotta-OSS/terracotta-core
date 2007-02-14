@@ -12,7 +12,6 @@ TOPDIR=`dirname "$0"`/../../..
 TC_CONFIG_PATH="tc-config.xml"
 . "${TOPDIR}"/bin/dso-env.sh
 
-tc_install_dir "${TOPDIR}" true
 JAVA_OPTS="${TC_JAVA_OPTS} -Dcom.sun.management.jmxremote"
 JAVA_OPTS="${JAVA_OPTS} -Dcom.sun.management.jmxremote.port=8092"
 JAVA_OPTS="${JAVA_OPTS} -Dcom.sun.management.jmxremote.authenticate=false"

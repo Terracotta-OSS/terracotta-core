@@ -24,6 +24,7 @@ import javax.swing.JTextPane;
 import javax.swing.text.Document;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
+import javax.swing.SwingUtilities;
 
 public class Main 
    extends JFrame implements MessageListener, ActionListener 
@@ -46,7 +47,7 @@ public class Main
       display.setEditable(false);
       display.setRequestFocusEnabled(false);
 
-      JTextField input = new JTextField();
+      final JTextField input = new JTextField();
       input.setFont(new Font("Lucida Sans Typewriter", Font.PLAIN, 9));
       input.addActionListener(this);
       JScrollPane scroll = new JScrollPane(display);
@@ -65,11 +66,15 @@ public class Main
       content.add(input, BorderLayout.SOUTH);
       pack();
 
-      setSize(new Dimension(300, 400));
-      input.requestFocus();
-      setVisible(true);
       this.username = username;
-      login();
+      setSize(new Dimension(300, 400));
+      setVisible(true);
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          input.requestFocus();
+          login();
+        }
+      });
    }  
   
    public void read(Message message) 
