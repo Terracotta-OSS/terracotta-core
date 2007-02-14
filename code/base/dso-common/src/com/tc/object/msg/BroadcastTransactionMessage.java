@@ -1,9 +1,11 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.lockmanager.api.LockID;
@@ -19,7 +21,8 @@ public interface BroadcastTransactionMessage {
 
   public void initialize(List chges, Set lookupObjectIDs, ObjectStringSerializer aSerializer, LockID[] lids, long cid,
                          TransactionID txID, ChannelID commitID, GlobalTransactionID gtx, TxnType txnType,
-                         GlobalTransactionID lowGlobalTransactionIDWatermark, Collection notifies, Map newRoots);
+                         GlobalTransactionID lowGlobalTransactionIDWatermark, Collection notifies, Map newRoots,
+                         DmiDescriptor[] dmis);
 
   public LockID[] getLockIDs();
 
@@ -40,8 +43,10 @@ public interface BroadcastTransactionMessage {
   public GlobalTransactionID getLowGlobalTransactionIDWatermark();
 
   public Collection addNotifiesTo(List c);
-  
+
   public Map getNewRoots();
+
+  public List getDmiDescriptors();
 
   public void send();
 

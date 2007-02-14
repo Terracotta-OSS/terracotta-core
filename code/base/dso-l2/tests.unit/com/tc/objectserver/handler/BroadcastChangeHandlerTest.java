@@ -15,6 +15,7 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.lockmanager.api.LockID;
@@ -93,7 +94,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     TxnType txnType = TxnType.NORMAL;
     SequenceID sequenceID = new SequenceID(1);
     ServerTransaction tx = new ServerTransactionImpl(batchID, txID, sequenceID, lockIDs, channelID, dnas, serializer,
-                                                     newRoots, txnType, new LinkedList());
+                                                     newRoots, txnType, new LinkedList(), DmiDescriptor.EMPTY_ARRAY);
 
     assertTrue(transactionBatchManager.batchComponentCompleteCalls.isEmpty());
     assertFalse(transactionBatchManager.isBatchComponentComplete.get());

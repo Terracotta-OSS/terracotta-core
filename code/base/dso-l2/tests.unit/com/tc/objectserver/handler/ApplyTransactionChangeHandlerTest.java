@@ -7,6 +7,7 @@ package com.tc.objectserver.handler;
 import com.tc.async.impl.MockSink;
 import com.tc.async.impl.MockStage;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.Notify;
@@ -23,10 +24,10 @@ import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
 import com.tc.objectserver.lockmanager.api.NotifiedWaiters;
 import com.tc.objectserver.lockmanager.api.TestLockManager;
+import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
 import com.tc.objectserver.tx.TestServerTransactionManager;
-import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.util.SequenceID;
 
 import java.util.Collections;
@@ -83,7 +84,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     }
     SequenceID sequenceID = new SequenceID(1);
     ServerTransaction tx = new ServerTransactionImpl(batchID, txID, sequenceID, lockIDs, channelID, dnas, serializer,
-                                                     newRoots, txnType, notifies);
+                                                     newRoots, txnType, notifies, DmiDescriptor.EMPTY_ARRAY);
     // call handleEvent with the global transaction reporting that it doesn't need an apply...
     assertTrue(lockManager.notifyCalls.isEmpty());
     assertTrue(broadcastSink.queue.isEmpty());

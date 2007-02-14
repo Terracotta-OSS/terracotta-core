@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.tx;
 
@@ -9,6 +10,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.change.TCChangeBuffer;
 import com.tc.object.change.TCChangeBufferImpl;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.util.Assert;
@@ -31,6 +33,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   private final Map           objectChanges = new HashMap();
   private final Map           newRoots      = new HashMap();
   private final List          notifies      = new LinkedList();
+  private final List          dmis          = new LinkedList();
 
   // used to keep things referenced until the transaction is completely ACKED
   private final Map           referenced    = new IdentityHashMap();
@@ -123,7 +126,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   public Collection getReferencesOfObjectsInTxn() {
     return referenced.keySet();
   }
-  
+
   public void addNotify(Notify notify) {
     if (!notify.isNull()) notifies.add(notify);
   }
@@ -168,6 +171,14 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     }
     txMBean.committedWriteTransaction(getNotifiesCount(), modifiedObjectCount, writesPerObject.toNativeArray(),
                                       creationCountByClass);
+  }
+
+  public void addDmiDescritor(DmiDescriptor dd) {
+    dmis.add(dd);
+  }
+  
+  public List getDmiDescriptors() {
+    return dmis;
   }
 
 }

@@ -24,6 +24,7 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             CONFIG_MESSAGE_STAGE               = "config_message_stage";
   public static final String             CLIENT_COORDINATION_STAGE          = "client_coordination_stage";
   public static final String             JMXREMOTE_TUNNEL_STAGE             = "jmxremote_tunnel_stage";
+  public static final String             DMI_STAGE                          = "dmi_stage";
 
   private final ClientLockManager        lockManager;
   private final RemoteObjectManager      remoteObjectManager;

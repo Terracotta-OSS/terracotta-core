@@ -13,6 +13,7 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectRequestID;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
 import com.tc.object.msg.BroadcastTransactionMessage;
 import com.tc.object.net.DSOChannelManager;
@@ -35,7 +36,7 @@ import java.util.Set;
 
 /**
  * Broadcast the change to all connected clients
- *
+ * 
  * @author steve
  */
 public class BroadcastChangeHandler extends AbstractEventHandler {
@@ -71,8 +72,9 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
         prunedChanges = clientStateManager.createPrunedChangesAndAddObjectIDTo(bcc.getChanges(), bcc.getIncludeIDs(),
                                                                                clientID, lookupObjectIDs);
       }
-
-      if (!prunedChanges.isEmpty() || !lookupObjectIDs.isEmpty() || !notifiedWaiters.isEmpty() || !newRoots.isEmpty()) {
+      final boolean includeDmi = !clientID.equals(committerID) && bcc.getDmiDescriptors().length > 0;
+      if (!prunedChanges.isEmpty() || !lookupObjectIDs.isEmpty() || !notifiedWaiters.isEmpty() || !newRoots.isEmpty()
+          || includeDmi) {
         transactionManager.addWaitingForAcknowledgement(committerID, txnID, clientID);
         if (lookupObjectIDs.size() > 0) {
           // TODO:: Request ID is not used anywhere. RemoveIT.
@@ -82,12 +84,13 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
                                                                             lookupObjectIDs, -1,
                                                                             this.respondObjectRequestSink));
         }
+        final DmiDescriptor[] dmi = (includeDmi) ? bcc.getDmiDescriptors() : DmiDescriptor.EMPTY_ARRAY;
         BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client
             .createMessage(TCMessageType.BROADCAST_TRANSACTION_MESSAGE);
         responseMessage.initialize(prunedChanges, lookupObjectIDs, bcc.getSerializer(), bcc.getLockIDs(),
                                    getNextChangeIDFor(clientID), txnID, committerID, bcc.getGlobalTransactionID(), bcc
                                        .getTransactionType(), bcc.getLowGlobalTransactionIDWatermark(),
-                                   notifiedWaiters, newRoots);
+                                   notifiedWaiters, newRoots, dmi);
 
         responseMessage.send();
       }

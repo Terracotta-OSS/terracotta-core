@@ -264,6 +264,13 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
+//  protected void basicVisitEnd() {
+//    // if adaptee has DMI
+//    boolean hasCustomMethodAdapter = getTransparencyClassSpec().hasCustomMethodAdapter(access, originalName, desc,
+//                                                                                       exceptions);
+//    super.basicVisitEnd();
+//  }
+
   private void logCustomerLockMethod(String name, final String desc, LockDefinition[] locks) {
     if (instrumentationLogger.lockInsertion()) {
       instrumentationLogger.lockInserted(this.spec.getClassNameDots(), name, desc, locks);

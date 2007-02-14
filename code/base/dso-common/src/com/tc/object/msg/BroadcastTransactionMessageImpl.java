@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
@@ -13,6 +14,7 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -53,9 +55,11 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   private final static byte      NOTIFIED              = 10;
   private final static byte      LOOKUP_OBJECT_IDS     = 11;
   private final static byte      ROOT_NAME_ID_PAIR     = 12;
+  private final static byte      DMI_ID                = 13;
 
   private List                   changes               = new LinkedList();
   private List                   lockIDs               = new LinkedList();
+  private List                   dmis                  = new LinkedList();
   private Set                    lookupObjectIDs       = new HashSet();
   private Collection             notifies              = new LinkedList();
   private Map                    newRoots              = new HashMap();
@@ -111,6 +115,10 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
       ObjectID value = (ObjectID) newRoots.get(key);
       putNVPair(ROOT_NAME_ID_PAIR, new RootIDPair(key, value));
     }
+    for (Iterator i = dmis.iterator(); i.hasNext();) {
+      DmiDescriptor dd = (DmiDescriptor) i.next();
+      putNVPair(DMI_ID, dd);
+    }
   }
 
   protected boolean hydrateValue(byte name) throws IOException {
@@ -152,6 +160,10 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
         RootIDPair rootIDPair = (RootIDPair) getObject(new RootIDPair());
         this.newRoots.put(rootIDPair.getRootName(), rootIDPair.getRootID());
         return true;
+      case DMI_ID:
+        DmiDescriptor dd = (DmiDescriptor) getObject(new DmiDescriptor());
+        dmis.add(dd);
+        return true;
       default:
         return false;
     }
@@ -159,7 +171,8 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
 
   public void initialize(List chges, Set objectIDs, ObjectStringSerializer aSerializer, LockID[] lids, long cid,
                          TransactionID txID, ChannelID commitID, GlobalTransactionID gtx, TxnType txnType,
-                         GlobalTransactionID lowGlobalTransactionIDWatermark, Collection theNotifies, Map roots) {
+                         GlobalTransactionID lowGlobalTransactionIDWatermark, Collection theNotifies, Map roots,
+                         DmiDescriptor[] dmiDescs) {
     Assert.eval(lids.length > 0);
     Assert.assertNotNull(txnType);
 
@@ -175,6 +188,9 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     this.notifies.addAll(theNotifies);
     this.lookupObjectIDs.addAll(objectIDs);
     this.newRoots.putAll(roots);
+    for (int i = 0; i < dmiDescs.length; i++) {
+      this.dmis.add(dmiDescs[i]);
+    }
   }
 
   public LockID[] getLockIDs() {
@@ -274,4 +290,9 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
       return rootName;
     }
   }
+
+  public List getDmiDescriptors() {
+    return dmis;
+  }
+
 }

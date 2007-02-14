@@ -198,10 +198,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     if (state == PAUSED) throw new AssertionError(message + ": " + state);
   }
 
-  public boolean enableDistributedMethods() {
-    return true;
-  }
-
   public TraversedReferences getPortableObjects(Class clazz, Object start, TraversedReferences addTo) {
     TCClass tcc = clazzFactory.getOrCreate(clazz, this);
     return tcc.getPortableObjects(start, addTo);

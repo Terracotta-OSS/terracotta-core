@@ -43,7 +43,6 @@ import com.tc.object.bytecode.JavaUtilWeakHashMapAdapter;
 import com.tc.object.bytecode.ManagerHelper;
 import com.tc.object.bytecode.ManagerHelperFactory;
 import com.tc.object.bytecode.THashMapAdapter;
-import com.tc.object.bytecode.TableModelMethodAdapter;
 import com.tc.object.bytecode.TransparencyClassAdapter;
 import com.tc.object.bytecode.TreeMapAdapter;
 import com.tc.object.bytecode.UnsafeAdapter;
@@ -505,9 +504,12 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
   private void doAutoconfig(boolean interrogateBootJar) {
     // Table model stuff
+    addIncludePattern("javax.swing.event.TableModelEvent", true);
+    TransparencyClassSpec spec = getOrCreateSpec("javax.swing.event.TableModelEvent");
+    
     addIncludePattern("javax.swing.table.AbstractTableModel", true);
-    TransparencyClassSpec spec = getOrCreateSpec("javax.swing.table.AbstractTableModel");
-    spec.addMethodAdapter(TableModelMethodAdapter.METHOD, new TableModelMethodAdapter());
+    spec = getOrCreateSpec("javax.swing.table.AbstractTableModel");
+    spec.addDistributedMethodCall("fireTableChanged", "(Ljavax/swing/event/TableModelEvent;)V");
     spec.addTransient("listenerList");
 
     spec = getOrCreateSpec("javax.swing.table.DefaultTableModel");

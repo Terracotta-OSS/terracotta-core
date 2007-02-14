@@ -1,10 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.tx;
 
 import com.tc.exception.ImplementMe;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.tx.ServerTransactionID;
@@ -76,6 +78,10 @@ public final class TestServerTransaction implements ServerTransaction {
 
   public TxnBatchID getBatchID() {
     return bid;
+  }
+
+  public DmiDescriptor[] getDmiDescriptors() {
+    throw new ImplementMe();
   }
 
 }

@@ -23,9 +23,7 @@ import com.tc.object.TCObject;
 import com.tc.object.TraverseTest;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.event.DistributedMethodCallManager;
-import com.tc.object.event.DistributedMethodCallManagerImpl;
-import com.tc.object.event.NullDistributedMethodCallManager;
+import com.tc.object.event.DmiManager;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.logging.NullRuntimeLogger;
@@ -67,7 +65,7 @@ public class ManagerImpl implements Manager {
   private ClientShutdownManager                    shutdownManager;
   private ClientTransactionManager                 txManager;
   private DistributedObjectClient                  dso;
-  private DistributedMethodCallManager             methodCallManager;
+  private DmiManager                               methodCallManager;
   private OptimisticTransactionManager             optimisticTransactionManager;
   private SerializationUtil                        serializer    = new SerializationUtil();
   private MethodDisplayNames                       methodDisplay = new MethodDisplayNames(serializer);
@@ -160,18 +158,11 @@ public class ManagerImpl implements Manager {
 
     this.optimisticTransactionManager = new OptimisticTransactionManagerImpl(objectManager, txManager);
 
-    if (!objectManager.enableDistributedMethods()) {
-      this.methodCallManager = new NullDistributedMethodCallManager();
-    } else {
-      DistributedMethodCallManagerImpl tmp = new DistributedMethodCallManagerImpl(objectManager, txManager,
-                                                                                  runtimeLogger, classProvider);
-      cluster.addClusterEventListener(tmp);
-      this.methodCallManager = tmp;
-    }
+    this.methodCallManager = dso.getDmiManager();
 
     this.shutdownManager = new ClientShutdownManager(objectManager, dso.getRemoteTransactionManager(), dso
-        .getStageManager(), methodCallManager, dso.getCommunicationsManager(), dso.getChannel(), dso
-        .getClientHandshakeManager(), connectionComponents);
+        .getStageManager(), dso.getCommunicationsManager(), dso.getChannel(), dso.getClientHandshakeManager(),
+                                                     connectionComponents);
   }
 
   public void stop() {
@@ -591,16 +582,23 @@ public class ManagerImpl implements Manager {
     return this.objectManager.lookupObject(id);
   }
 
-  public void distributedMethodCall(Object receiver, String method, Object[] params) {
+  public boolean distributedMethodCall(Object receiver, String method, Object[] params) {
     TCObject tco = lookupExistingOrNull(receiver);
 
     try {
       if (tco != null) {
-        this.distributedInvoke(receiver, tco, method, params);
+        return methodCallManager.distributedInvoke(receiver, method, params);
+      } else {
+        return false;
       }
     } catch (Throwable t) {
       Util.printLogAndRethrowError(t, logger);
+      return false;
     }
+  }
+
+  public void distributedMethodCallCommit() {
+    methodCallManager.distributedInvokeCommit();
   }
 
   public void checkWriteAccess(Object context) {
@@ -647,10 +645,6 @@ public class ManagerImpl implements Manager {
   private static String generateLiteralLockName(Object obj) {
     Assert.assertNotNull(obj);
     return ByteCodeUtil.generateLiteralLockName(obj);
-  }
-
-  private void distributedInvoke(Object receiver, TCObject tcObject, String method, Object[] params) {
-    methodCallManager.distributedInvoke(receiver, tcObject, method, params);
   }
 
   public boolean isLogical(Object object) {
@@ -781,6 +775,10 @@ public class ManagerImpl implements Manager {
 
   public void addClusterEventListener(ClusterEventListener cel) {
     cluster.addClusterEventListener(cel);
+  }
+
+  public DmiManager getDmiManager() {
+    return this.methodCallManager;
   }
 
 }

@@ -50,10 +50,6 @@ public class TestClientObjectManager implements ClientObjectManager {
     return true;
   }
 
-  public boolean enableDistributedMethods() {
-    return false;
-  }
-
   public synchronized TCObject lookupOrCreate(Object obj) {
     // System.out.println(this + ".lookupOrCreate(" + obj + ")");
     TCObject rv = lookup(obj);

@@ -6,6 +6,7 @@ package com.tc.object.tx;
 import com.tc.management.beans.tx.ClientTxMonitorMBean;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.util.SequenceID;
@@ -70,5 +71,9 @@ public interface ClientTransaction {
   public void updateMBean(ClientTxMonitorMBean txMBean);
 
   public Collection getReferencesOfObjectsInTxn();
+  
+  public void addDmiDescritor(DmiDescriptor dd);
+  
+  public List getDmiDescriptors();
 
 }

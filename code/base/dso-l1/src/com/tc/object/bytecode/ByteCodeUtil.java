@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
 
@@ -153,7 +154,7 @@ public class ByteCodeUtil implements Opcodes {
     return Long.valueOf(lockName.substring(AUTOLOCK_PREFIX.length())).longValue();
 
   }
-  
+
   public static boolean isSynthetic(String fieldName) {
     return fieldName.indexOf("$") >= 0;
   }
@@ -161,7 +162,7 @@ public class ByteCodeUtil implements Opcodes {
   public static boolean isTCSynthetic(String fieldName) {
     return fieldName.startsWith(TC_FIELD_PREFIX) || isParent(fieldName);
   }
-  
+
   public static boolean isSynthetic(int access) {
     return (ACC_SYNTHETIC & access) > 0;
   }
@@ -265,6 +266,15 @@ public class ByteCodeUtil implements Opcodes {
       c.visitVarInsn(args[i].getOpcode(ILOAD), pos + localVariableOffset);
       pos += args[i].getSize();
     }
+  }
+
+  public static int getFirstLocalVariableOffset(int callingMethodModifier, String desc) {
+    int localVariableOffset = getLocalVariableOffset(callingMethodModifier);
+    Type[] args = Type.getArgumentTypes(desc);
+    for (int i = 0; i < args.length; i++) {
+      localVariableOffset += args[i].getSize();
+    }
+    return localVariableOffset;
   }
 
   public static void prepareStackForMethodCall(int callingMethodModifier, String desc, MethodVisitor c) {

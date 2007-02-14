@@ -75,8 +75,6 @@ public interface ClientObjectManager {
 
   public ReferenceQueue getReferenceQueue();
 
-  public boolean enableDistributedMethods();
-
   public void shutdown();
 
   public void unpause();

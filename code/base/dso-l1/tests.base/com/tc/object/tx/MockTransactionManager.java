@@ -9,6 +9,7 @@ import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.session.SessionID;
 
@@ -174,6 +175,10 @@ public class MockTransactionManager implements ClientTransactionManager {
   }
 
   public void arrayChanged(TCObject src, int startPos, Object array, int length) {
+    throw new ImplementMe();
+  }
+
+  public void addDmiDescriptor(DmiDescriptor d) {
     throw new ImplementMe();
   }
 }

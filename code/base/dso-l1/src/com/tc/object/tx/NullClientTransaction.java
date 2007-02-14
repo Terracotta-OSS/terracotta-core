@@ -7,6 +7,7 @@ import com.tc.management.beans.tx.ClientTxMonitorMBean;
 import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.lockmanager.api.Notify;
 
 import java.util.Collection;
@@ -85,6 +86,18 @@ public class NullClientTransaction extends AbstractClientTransaction {
   }
 
   public Collection getReferencesOfObjectsInTxn() {
+    return Collections.EMPTY_LIST;
+  }
+
+  public void addDmiDescritor(DmiDescriptor dd) {
+    return;
+  }
+
+  public boolean hasDmiDescriptors() {
+    return false;
+  }
+
+  public List getDmiDescriptors() {
     return Collections.EMPTY_LIST;
   }
 

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.tx;
 
@@ -7,6 +8,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.management.beans.tx.ClientTxMonitorMBean;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.util.SequenceID;
@@ -131,6 +133,18 @@ public class TestClientTransaction implements ClientTransaction {
 
   public Collection getReferencesOfObjectsInTxn() {
     return Collections.EMPTY_LIST;
+  }
+
+  public void addDmiDescritor(DmiDescriptor dd) {
+    throw new ImplementMe();
+  }
+
+  public List getDmiDescriptors() {
+    throw new ImplementMe();
+  }
+
+  public boolean hasDmiDescriptors() {
+    throw new ImplementMe();
   }
 
 }

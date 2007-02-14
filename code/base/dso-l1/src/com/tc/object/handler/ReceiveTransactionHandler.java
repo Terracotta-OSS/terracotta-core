@@ -1,13 +1,16 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
+import com.tc.async.api.Sink;
 import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.ClientConfigurationContext;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.lockmanager.api.ClientLockManager;
@@ -22,6 +25,7 @@ import com.tc.util.Assert;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author steve
@@ -33,23 +37,26 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
   private final ClientGlobalTransactionManager       gtxManager;
   private final AcknowledgeTransactionMessageFactory atmFactory;
   private final ChannelIDProvider                    cidProvider;
+  private final Sink                                 dmiSink;
 
   public ReceiveTransactionHandler(ChannelIDProvider provider, AcknowledgeTransactionMessageFactory atmFactory,
-                                   ClientGlobalTransactionManager gtxManager, SessionManager sessionManager) {
+                                   ClientGlobalTransactionManager gtxManager, SessionManager sessionManager,
+                                   Sink dmiSink) {
     this.cidProvider = provider;
     this.atmFactory = atmFactory;
     this.gtxManager = gtxManager;
     this.sessionManager = sessionManager;
+    this.dmiSink = dmiSink;
   }
 
   public void handleEvent(EventContext context) {
     final BroadcastTransactionMessageImpl btm = (BroadcastTransactionMessageImpl) context;
-    
+
     if (false) System.err.println(cidProvider.getChannelID() + ": ReceiveTransactionHandler: committer="
                                   + btm.getCommitterID() + ", " + btm.getTransactionID() + btm.getGlobalTransactionID()
                                   + ", notified: " + btm.addNotifiesTo(new LinkedList()) + ", lookup ObjectIDs: "
                                   + btm.getLookupObjectIDs());
-    
+
     Assert.eval(btm.getLockIDs().length > 0);
     GlobalTransactionID lowWaterMark = btm.getLowGlobalTransactionIDWatermark();
     if (!lowWaterMark.isNull()) {
@@ -57,11 +64,12 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
     }
     if (gtxManager.startApply(btm.getCommitterID(), btm.getTransactionID(), btm.getGlobalTransactionID())) {
       if (btm.getObjectChanges().size() > 0 || btm.getLookupObjectIDs().size() > 0 || btm.getNewRoots().size() > 0) {
-        
-        if (false) System.err.println(cidProvider.getChannelID() + " Applying - committer=" + btm.getCommitterID() + " , " + btm.getTransactionID() + " , "
-                                           + btm.getGlobalTransactionID());
-        
-        txManager.apply(btm.getTransactionType(), btm.getLockIDs(), btm.getObjectChanges(), btm.getLookupObjectIDs(), btm.getNewRoots());
+
+        if (false) System.err.println(cidProvider.getChannelID() + " Applying - committer=" + btm.getCommitterID()
+                                      + " , " + btm.getTransactionID() + " , " + btm.getGlobalTransactionID());
+
+        txManager.apply(btm.getTransactionType(), btm.getLockIDs(), btm.getObjectChanges(), btm.getLookupObjectIDs(),
+                        btm.getNewRoots());
       }
     }
 
@@ -71,7 +79,13 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
       lockManager.notified(lr.lockID(), lr.threadID());
     }
 
-    //XXX:: This is a potential race condition here 'coz after we decide to send an ACK
+    List dmis = btm.getDmiDescriptors();
+    for (Iterator i = dmis.iterator(); i.hasNext();) {
+      DmiDescriptor dd = (DmiDescriptor) i.next();
+      dmiSink.add(dd);
+    }
+    
+    // XXX:: This is a potential race condition here 'coz after we decide to send an ACK
     // and before we actually send it, the server may go down and come back up !
     if (sessionManager.isCurrentSession(btm.getLocalSessionID())) {
       AcknowledgeTransactionMessage ack = atmFactory.newAcknowledgeTransactionMessage();

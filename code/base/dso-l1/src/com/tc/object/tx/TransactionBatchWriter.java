@@ -8,6 +8,7 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.lang.Recyclable;
 import com.tc.object.ObjectID;
 import com.tc.object.change.TCChangeBuffer;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.DNAEncoding;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.lockmanager.api.LockID;
@@ -121,13 +122,20 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       n.serializeTo(out);
     }
 
+    List dmis = txn.getDmiDescriptors();
+    out.writeInt(dmis.size());
+    for (Iterator i = dmis.iterator(); i.hasNext();) {
+      DmiDescriptor dd = (DmiDescriptor) i.next();
+      dd.serializeTo(out);
+    }
+
     Map changes = txn.getChangeBuffers();
     out.writeInt(changes.size());
     for (Iterator i = changes.values().iterator(); i.hasNext();) {
       TCChangeBuffer buffer = (TCChangeBuffer) i.next();
       buffer.writeTo(out, serializer, encoding);
     }
-
+    
     bytesWritten += out.getBytesWritten();
     transactionData.put(txn.getTransactionID(), new TransactionDescriptor(sequenceID, out.toArray(), txn
         .getReferencesOfObjectsInTxn()));

@@ -4,6 +4,7 @@
 package com.tc.objectserver.tx;
 
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.tx.ServerTransactionID;
@@ -47,5 +48,7 @@ public interface ServerTransaction {
   public Collection getObjectIDs();
 
   public Collection addNotifiesTo(List list);
+
+  public DmiDescriptor[] getDmiDescriptors();
 
 }

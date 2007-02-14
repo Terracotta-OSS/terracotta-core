@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
@@ -14,6 +15,7 @@ import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;
 import com.tc.object.ObjectID;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.lockmanager.api.LockID;
@@ -67,8 +69,8 @@ public class BroadcastTransactionMessageTest extends TestCase {
       notified.add(new LockRequest(new LockID("" + (i + 1)), new ThreadID(i + 1), LockLevel.WRITE));
       lookupObjectIDs.add(new ObjectID(i));
     }
-    msg.initialize(changes, lookupObjectIDs, serializer, lockIDs, cid, txID, channelID, gtx, txnType, lowGlobalTransactionIDWatermark,
-                   notified, new HashMap());
+    msg.initialize(changes, lookupObjectIDs, serializer, lockIDs, cid, txID, channelID, gtx, txnType,
+                   lowGlobalTransactionIDWatermark, notified, new HashMap(), DmiDescriptor.EMPTY_ARRAY);
     msg.dehydrate();
 
     TCByteBuffer[] data = out.toArray();

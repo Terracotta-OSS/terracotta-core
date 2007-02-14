@@ -37,12 +37,15 @@ import com.tc.object.cache.CacheManager;
 import com.tc.object.cache.ClockEvictionPolicy;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.dna.impl.DNAEncoding;
+import com.tc.object.event.DmiManager;
+import com.tc.object.event.DmiManagerImpl;
 import com.tc.object.field.TCFieldFactory;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.gtx.ClientGlobalTransactionManagerImpl;
 import com.tc.object.handler.BatchTransactionAckHandler;
-import com.tc.object.handler.LockResponseHandler;
 import com.tc.object.handler.ClientCoordinationHandler;
+import com.tc.object.handler.DmiHandler;
+import com.tc.object.handler.LockResponseHandler;
 import com.tc.object.handler.ReceiveObjectHandler;
 import com.tc.object.handler.ReceiveRootIDHandler;
 import com.tc.object.handler.ReceiveTransactionCompleteHandler;
@@ -128,6 +131,7 @@ public class DistributedObjectClient extends SEDA {
   private CacheManager                             cacheManager;
   private L1Management                             l1Management;
   private TCProperties                             l1Properties;
+  private DmiManager                               dmiManager;
 
   public DistributedObjectClient(DSOClientConfigHelper config, TCThreadGroup threadGroup, ClassProvider classProvider,
                                  PreparedComponentsFromL2Connection connectionComponents, Manager manager,
@@ -248,10 +252,15 @@ public class DistributedObjectClient extends SEDA {
                                                    new ReceiveRootIDHandler(), 1, maxSize);
     Stage receiveObject = stageManager.createStage(ClientConfigurationContext.RECEIVE_OBJECT_STAGE,
                                                    new ReceiveObjectHandler(), 1, maxSize);
+    this.dmiManager = new DmiManagerImpl(classProvider, objectManager, runtimeLogger);
+    Stage dmiStage = stageManager.createStage(ClientConfigurationContext.DMI_STAGE, new DmiHandler(dmiManager), 1,
+                                              maxSize);
+
     Stage receiveTransaction = stageManager
-        .createStage(ClientConfigurationContext.RECEIVE_TRANSACTION_STAGE, new ReceiveTransactionHandler(channel
-            .getChannelIDProvider(), channel.getAcknowledgeTransactionMessageFactory(), gtxManager, sessionManager), 1,
-                     maxSize);
+        .createStage(ClientConfigurationContext.RECEIVE_TRANSACTION_STAGE,
+                     new ReceiveTransactionHandler(channel.getChannelIDProvider(), channel
+                         .getAcknowledgeTransactionMessageFactory(), gtxManager, sessionManager, dmiStage.getSink()),
+                     1, maxSize);
     Stage oidRequestResponse = stageManager.createStage(ClientConfigurationContext.OBJECT_ID_REQUEST_RESPONSE_STAGE,
                                                         remoteIDProvider, 1, maxSize);
     Stage transactionResponse = stageManager.createStage(ClientConfigurationContext.RECEIVE_TRANSACTION_COMPLETE_STAGE,
@@ -392,6 +401,10 @@ public class DistributedObjectClient extends SEDA {
 
   public SessionMonitorMBean getSessionMonitorMBean() {
     return l1Management.findSessionMonitorMBean();
+  }
+  
+  public DmiManager getDmiManager() {
+    return dmiManager;
   }
 
 }

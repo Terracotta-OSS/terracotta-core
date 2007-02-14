@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.tx;
 
@@ -7,6 +8,7 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.lockmanager.api.LockID;
@@ -89,6 +91,14 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
       notifies.add(n);
     }
 
+    final int dmiCount = in.readInt();
+    final DmiDescriptor[] dmis = new DmiDescriptor[dmiCount];
+    for (int i = 0; i < dmiCount; i++) {
+      DmiDescriptor dd = new DmiDescriptor();
+      dd.deserializeFrom(in);
+      dmis[i] = dd;
+    }
+
     List dnas = new ArrayList();
     final int numDNA = in.readInt();
     for (int i = 0; i < numDNA; i++) {
@@ -98,7 +108,8 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     }
 
     numTxns--;
-    return new ServerTransactionImpl(getBatchID(), txnID, sequenceID, locks, source, dnas, serializer, newRoots, txnType, notifies);
+    return new ServerTransactionImpl(getBatchID(), txnID, sequenceID, locks, source, dnas, serializer, newRoots,
+                                     txnType, notifies, dmis);
   }
 
   public TxnBatchID getBatchID() {

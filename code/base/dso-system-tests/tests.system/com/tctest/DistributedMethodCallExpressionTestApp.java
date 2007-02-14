@@ -48,6 +48,7 @@ public class DistributedMethodCallExpressionTestApp extends AbstractTransparentA
       }
     }
     nodeBarrier.barrier();
+    System.err.println("\n### initialNodeCount = " + initialNodeCount);
     synchronized (model) {
       checkCountTimed(model.nonStaticCallCount, initialNodeCount, 10, 5 * 1000, "Non-Static Call Count");
     }

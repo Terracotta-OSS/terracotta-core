@@ -12,7 +12,7 @@ import com.tc.object.ClientObjectManager;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
-import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.loaders.Namespace;
@@ -156,8 +156,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     final TxnType txnType = getTxnTypeFromLockLevel(lockLevel);
     ClientTransaction currentTransaction = getTransactionOrNull();
 
-    if ((currentTransaction != null) && lockLevel == LockLevel.CONCURRENT) { throw nestedConcurrentLockAssertion(currentTransaction); }
-
     final LockID lockID = lockManager.lockIDFor(lockName);
 
     pushTxContext(lockID, txnType);
@@ -169,26 +167,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
 
     lockManager.lock(lockID, lockLevel);
-  }
-
-  private AssertionError nestedConcurrentLockAssertion(ClientTransaction currentTransaction) {
-    StringBuffer message = new StringBuffer("Can't acquire concurrent locks in a nested lock context.");
-
-    LockID[] allLockIDs = currentTransaction.getAllLockIDs();
-    if (allLockIDs != null && allLockIDs.length > 0) {
-      message.append(" Locks held by thread:\n");
-    }
-    for (int i = 0; i < allLockIDs.length; i++) {
-      LockID lockID = allLockIDs[i];
-      message.append("\t").append(lockID.asString());
-      if (ByteCodeUtil.isAutolockName(lockID.asString())) {
-        ObjectID id = new ObjectID(ByteCodeUtil.objectIdFromLockName(lockID.asString()));
-        message.append(", an instance of " + objectManager.lookupObject(id).getClass().toString());
-      }
-      message.append("\n");
-    }
-
-    return new AssertionError(message.toString());
   }
 
   private TxnType getTxnTypeFromLockLevel(int lockLevel) {
@@ -660,6 +638,10 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     int get() {
       return callCount;
     }
+  }
+
+  public void addDmiDescriptor(DmiDescriptor dd) {
+    getTransaction().addDmiDescritor(dd);
   }
 
 }

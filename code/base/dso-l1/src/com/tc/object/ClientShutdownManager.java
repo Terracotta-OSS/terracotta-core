@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -10,7 +11,6 @@ import com.tc.logging.TCLogging;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
-import com.tc.object.event.DistributedMethodCallManager;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.tx.RemoteTransactionManager;
@@ -19,7 +19,6 @@ public class ClientShutdownManager {
   private static final TCLogger                    logger = TCLogging.getLogger(ClientShutdownManager.class);
   private final RemoteTransactionManager           rtxManager;
   private final StageManager                       stageManager;
-  private final DistributedMethodCallManager       methodCallManager;
   private final ClientObjectManager                objectManager;
   private final DSOClientMessageChannel            channel;
   private final CommunicationsManager              commsManager;
@@ -27,14 +26,12 @@ public class ClientShutdownManager {
   private final PreparedComponentsFromL2Connection connectionComponents;
 
   public ClientShutdownManager(ClientObjectManager objectManager, RemoteTransactionManager rtxManager,
-                               StageManager stageManager, DistributedMethodCallManager dmcManager,
-                               CommunicationsManager commsManager, DSOClientMessageChannel channel,
-                               ClientHandshakeManager handshakeManager,
+                               StageManager stageManager, CommunicationsManager commsManager,
+                               DSOClientMessageChannel channel, ClientHandshakeManager handshakeManager,
                                PreparedComponentsFromL2Connection connectionComponents) {
     this.objectManager = objectManager;
     this.rtxManager = rtxManager;
     this.stageManager = stageManager;
-    this.methodCallManager = dmcManager;
     this.commsManager = commsManager;
     this.channel = channel;
     this.handshakeManager = handshakeManager;
@@ -42,27 +39,16 @@ public class ClientShutdownManager {
   }
 
   public void execute(boolean fromShutdownHook) {
-    closeLocalWork(fromShutdownHook);
+    closeLocalWork();
 
     if (!fromShutdownHook) {
       shutdown();
     }
   }
 
-  private void closeLocalWork(boolean fromShutdownHook) {
+  private void closeLocalWork() {
 
     boolean immediate = isImmediate();
-
-    if (!fromShutdownHook) {
-      if (methodCallManager != null) {
-        try {
-          methodCallManager.stop(immediate);
-        } catch (Throwable t) {
-          logger.error("Error shutting down distributed method call manager", t);
-        }
-      }
-    }
-
     if (!immediate) {
       if (rtxManager != null) {
         try {

@@ -6,6 +6,7 @@ package com.tc.object.tx;
 import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
+import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.session.SessionID;
 
@@ -89,5 +90,7 @@ public interface ClientTransactionManager {
   public boolean isTransactionLoggingDisabled();
 
   public void arrayChanged(TCObject src, int startPos, Object array, int length);
+  
+  public void addDmiDescriptor(DmiDescriptor d);
 
 }
