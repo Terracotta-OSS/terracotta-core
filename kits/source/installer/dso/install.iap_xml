@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- This script was automatically generated using Macrovision's InstallAnywhere 8.0 Enterprise, Build 3063
      STATUS: Fully Functional LICENSED Edition
-     DATE:   Tue Jan 30 14:40:25 PST 2007 -->
-<InstallAnywhere_Deployment_Project increments="4178">
+     DATE:   Thu Feb 08 12:14:50 PST 2007 -->
+<InstallAnywhere_Deployment_Project increments="4106">
 	<!-- ** DO NOT EDIT ** Essential authorization and configuration data ** DO NOT EDIT ** -->
 	<essentialScriptInfo>
 		<versionID major="8" minor="0" revision="-1"/>
@@ -10,9 +10,9 @@
 		<scriptID>12,42,11,81,49,50,55,56,74,87,50,87,72,53,52,55</scriptID>
 		<buildID>3,13,71,87,105,110,100,111,119,115,32,88,80,44,32,53,46,49,44,32,120,56,54,59,32,74,97,118,97,32,49,46,53,46,48,44,32,83,117,110,32,77,105,99,114,111,115,121,115,116,101,109,115,32,73,110,99,46,44,32,104,116,116,112,58,47,47,106,97,118,97,46,115,117,110,46,99,111,109,47,59,32,101,110,44,32,85,110,107,110,111,119,110,59,32,67,112,49,50,53,50</buildID>
 		<!-- The authorizationID may change between project saves and builds.  This does not effect the integrity of the project, nor do changes in this value represent changes in the actual InstallAnywhere project. -->
-		<authorizationID>1,0,0,16,115,42,-124,-112,80,112,117,106,83,99,113,97,113,65,67,66,74,67,78,70,91,65,64,69,66,69,64,95,87,5,2,12,5,-54,101,0,1,0,0</authorizationID>
+		<authorizationID>1,0,0,16,-93,-13,116,112,80,112,117,106,83,99,113,97,113,65,67,66,74,67,78,70,91,65,64,69,66,69,64,95,87,5,2,0,9,-50,98,0,1,0,0</authorizationID>
 	</essentialScriptInfo>
-	<installationObjects uniqueObjects="288">
+	<installationObjects uniqueObjects="281">
 		<object class="com.zerog.ia.installer.Installer" objectID="042cbab2a668">
 			<property name="wizardME">
 				<object class="com.zerog.ia.installer.actions.MakeExecutable" objectID="f7a39581b025">
@@ -153,6 +153,16 @@ it will search for ones in this list]]></string>
 								</object>
 							</method>
 							<method name="addElement">
+								<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="0740ed0989f3">
+									<property name="propertyValue">
+										<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
+									</property>
+									<property name="propertyName">
+										<string><![CDATA[tc.install-root]]></string>
+									</property>
+								</object>
+							</method>
+							<method name="addElement">
 								<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7a3a8cbb02a">
 									<property name="propertyValue">
 										<string><![CDATA[8.0]]></string>
@@ -166,17 +176,7 @@ it will search for ones in this list]]></string>
 								</object>
 							</method>
 							<method name="addElement">
-								<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="0740ed0989f3">
-									<property name="propertyValue">
-										<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
-									</property>
-									<property name="propertyName">
-										<string><![CDATA[tc.install-root]]></string>
-									</property>
-								</object>
-							</method>
-							<method name="addElement">
-								<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="88a5952487df">
+								<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="b67e2f0b87df">
 									<property name="propertyValue">
 										<string><![CDATA[com.tc.welcome.DSOSamplesFrame]]></string>
 									</property>
@@ -2443,16 +2443,6 @@ Can be separated by colons (Mac OS/Unix) or semicolons (Windows)]]></string>
 												</object>
 											</method>
 											<method name="addElement">
-												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="4d35fa2fa700">
-													<property name="propertyValue">
-														<string><![CDATA[Pojos]]></string>
-													</property>
-													<property name="propertyName">
-														<string><![CDATA[tc.welcome.product]]></string>
-													</property>
-												</object>
-											</method>
-											<method name="addElement">
 												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="4d3439a2a6e4">
 													<property name="propertyValue">
 														<string><![CDATA[J2]]></string>
@@ -2491,7 +2481,7 @@ it will search for ones in this list]]></string>
 												</object>
 											</method>
 											<method name="addElement">
-												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="88a595e08826">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="b67f255f8c56">
 													<property name="propertyValue">
 														<string><![CDATA[com.tc.welcome.WelcomeFrame]]></string>
 													</property>
@@ -2533,7 +2523,7 @@ and any path to a file to read from that file]]></string>
 										<boolean>true</boolean>
 									</property>
 									<property name="destinationName">
-										<string><![CDATA[WelcomeFrame]]></string>
+										<string><![CDATA[Welcome]]></string>
 									</property>
 									<property name="executableIcon">
 										<object class="com.zerog.ia.installer.util.BindingWin32" objectID="4d34b589a6e5">
@@ -2791,7 +2781,7 @@ and any path to a file to read from that file]]></string>
 					</method>
 					<method name="put">
 						<string><![CDATA[com.zerog.ia.project.save.last.date]]></string>
-						<string><![CDATA[January 30, 2007 2:40:25 PM PST]]></string>
+						<string><![CDATA[February 8, 2007 12:14:50 PM PST]]></string>
 					</method>
 					<method name="put">
 						<string><![CDATA[com.zerog.ia.build.options.optimization.platform.cdrom]]></string>
@@ -3801,6 +3791,16 @@ it will search for ones in this list]]></string>
 														</object>
 													</method>
 													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15dce97f97ac">
+															<property name="propertyValue">
+																<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[tc.install-root]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
 														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15dbf4b0976f">
 															<property name="propertyValue">
 																<string><![CDATA[8.0]]></string>
@@ -3814,17 +3814,7 @@ it will search for ones in this list]]></string>
 														</object>
 													</method>
 													<method name="addElement">
-														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15dce97f97ac">
-															<property name="propertyValue">
-																<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
-															</property>
-															<property name="propertyName">
-																<string><![CDATA[tc.install-root]]></string>
-															</property>
-														</object>
-													</method>
-													<method name="addElement">
-														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="88a5963e884a">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="b67e3051884a">
 															<property name="propertyValue">
 																<string><![CDATA[com.tc.admin.AdminClient]]></string>
 															</property>
@@ -4097,105 +4087,6 @@ and any path to a file to read from that file]]></string>
 											<property name="target64BitReg">
 												<boolean>false</boolean>
 											</property>
-										</object>
-										<object class="com.zerog.ia.installer.actions.CreateShortcut" objectID="747678ed8b48">
-											<property name="targetAction">
-												<object refID="4d343993a6e0"/>
-											</property>
-											<property name="useInstalledFile">
-												<boolean>true</boolean>
-											</property>
-											<property name="workingDir">
-												<string><![CDATA[]]></string>
-											</property>
-											<property name="shouldUninstall">
-												<boolean>true</boolean>
-											</property>
-											<property name="destinationName">
-												<string><![CDATA[Terracotta Pojos Welcome]]></string>
-											</property>
-											<property name="args">
-												<string><![CDATA[]]></string>
-											</property>
-											<rules logicalOperation="AND">
-												<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="74ac442ba5ef">
-													<property name="operation">
-														<string><![CDATA[equals]]></string>
-													</property>
-													<property name="operandOne">
-														<string><![CDATA[$STARTMENU_SHORTCUT_RESULT$]]></string>
-													</property>
-													<property name="operandTwo">
-														<string><![CDATA[1]]></string>
-													</property>
-												</object>
-											</rules>
-										</object>
-										<object class="com.zerog.ia.installer.actions.CreateShortcut" objectID="74852f298dc5">
-											<property name="targetAction">
-												<object refID="4d343993a6e0"/>
-											</property>
-											<property name="useInstalledFile">
-												<boolean>true</boolean>
-											</property>
-											<property name="workingDir">
-												<string><![CDATA[]]></string>
-											</property>
-											<property name="shouldUninstall">
-												<boolean>true</boolean>
-											</property>
-											<property name="destinationName">
-												<string><![CDATA[Terracotta Sessions Welcome]]></string>
-											</property>
-											<property name="args">
-												<string><![CDATA[Sessions]]></string>
-											</property>
-											<rules logicalOperation="AND">
-												<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="74acfd88a600">
-													<property name="operation">
-														<string><![CDATA[equals]]></string>
-													</property>
-													<property name="operandOne">
-														<string><![CDATA[$STARTMENU_SHORTCUT_RESULT$]]></string>
-													</property>
-													<property name="operandTwo">
-														<string><![CDATA[1]]></string>
-													</property>
-												</object>
-											</rules>
-										</object>
-										<object class="com.zerog.ia.installer.actions.CreateShortcut" objectID="7485949a8df4">
-											<property name="targetAction">
-												<object refID="4d343993a6e0"/>
-											</property>
-											<property name="useInstalledFile">
-												<boolean>true</boolean>
-											</property>
-											<property name="workingDir">
-												<string><![CDATA[]]></string>
-											</property>
-											<property name="shouldUninstall">
-												<boolean>true</boolean>
-											</property>
-											<property name="destinationName">
-												<string><![CDATA[Terracotta for Spring Welcome]]></string>
-											</property>
-											<property name="args">
-												<string><![CDATA[Spring]]></string>
-											</property>
-											<rules logicalOperation="AND">
-												<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="74ad7caba614">
-													<property name="operation">
-														<string><![CDATA[equals]]></string>
-													</property>
-													<property name="operandOne">
-														<string><![CDATA[$STARTMENU_SHORTCUT_RESULT$]]></string>
-													</property>
-													<property name="operandTwo">
-														<string><![CDATA[1]]></string>
-													</property>
-												</object>
-											</rules>
 										</object>
 										<object class="com.zerog.ia.installer.actions.CreateShortcut" objectID="748951068fce">
 											<property name="useInstalledFile">
@@ -4533,6 +4424,16 @@ it will search for ones in this list]]></string>
 														</object>
 													</method>
 													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="880510018ef4">
+															<property name="propertyValue">
+																<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[tc.install-root]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
 														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="7486c0e68eea">
 															<property name="propertyValue">
 																<string><![CDATA[8.0]]></string>
@@ -4546,17 +4447,7 @@ it will search for ones in this list]]></string>
 														</object>
 													</method>
 													<method name="addElement">
-														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="880510018ef4">
-															<property name="propertyValue">
-																<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
-															</property>
-															<property name="propertyName">
-																<string><![CDATA[tc.install-root]]></string>
-															</property>
-														</object>
-													</method>
-													<method name="addElement">
-														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="88a5965d8862">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="b67e30618862">
 															<property name="propertyValue">
 																<string><![CDATA[com.tc.SessionIntegrator]]></string>
 															</property>
@@ -4888,7 +4779,6 @@ and any path to a file to read from that file]]></string>
 						<string><![CDATA[775]]></string>
 					</property>
 					<visualChildren>
-						<object refID="747678ed8b48"/>
 						<object refID="748951068fce"/>
 						<object refID="748e84ef9389"/>
 						<object refID="748f99f89527"/>
@@ -4905,7 +4795,6 @@ and any path to a file to read from that file]]></string>
 						<string><![CDATA[775]]></string>
 					</property>
 					<visualChildren>
-						<object refID="74852f298dc5"/>
 						<object refID="7491e8ab9b47"/>
 						<object refID="748b0638904b"/>
 					</visualChildren>
@@ -4921,7 +4810,6 @@ and any path to a file to read from that file]]></string>
 						<string><![CDATA[775]]></string>
 					</property>
 					<visualChildren>
-						<object refID="7485949a8df4"/>
 						<object refID="748b9bd190ad"/>
 						<object refID="748cd86790e9"/>
 					</visualChildren>
