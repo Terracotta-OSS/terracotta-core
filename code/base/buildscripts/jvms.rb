@@ -14,6 +14,8 @@ end
 # Represents the version of a JVM. This is typically something like '1.4.2_07', but
 # some JVMs (like IBM's) can be just '1.4.2', too.
 class JavaVersion
+    include Comparable
+
     JAVA_MIN_VERSION = '0.0.0_000'
     JAVA_MAX_VERSION = '99999.999.999_999'
 
@@ -28,37 +30,6 @@ class JavaVersion
         else
             raise "Version '#{version_string}' isn't a valid Java version"
         end
-    end
-
-    # Is this version less than another version?
-    def <(other)
-        [ :major, :minor, :patch, :release ].each do |part|
-            this_part = method(part).call
-            that_part = other.method(part).call
-
-            return true if this_part < that_part
-            return false if this_part > that_part
-        end
-
-        return false
-    end
-
-    # Is this version greater than another version?
-    def >(other)
-        [ :major, :minor, :patch, :release ].each do |part|
-            this_part = method(part).call
-            that_part = other.method(part).call
-
-            return true if this_part > that_part
-            return false if this_part < that_part
-        end
-
-        return false
-    end
-
-    # Is this version exactly equal to another version?
-    def ==(other)
-        major == other.major && minor == other.minor && patch == other.patch && release == other.release
     end
 
     # Is this version the same as the other version up to and including the
@@ -341,7 +312,7 @@ class JVM
     # A short description of this JVM -- the type followed by the version. Therefore, something
     # like 'hotspot-1.4.2_07'.
     def short_description
-        "#{actual_type}-#{JavaVersion.new(actual_version)}"
+        "#{self.actual_type}-#{self.version}"
     end
 
     # The type of this JVM -- something like 'hotspot' or 'jrockit'.
@@ -368,7 +339,7 @@ class JVM
 
     # A human-readable string representation of this JVM.
     def to_s
-      "<JVM at '#@java_home', version '#@actual_version'>"
+      "<JVM at '#@java_home', version '#{actual_version}'>"
     end
 
   private

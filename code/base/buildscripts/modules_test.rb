@@ -623,6 +623,8 @@ END
     def tests_jvm(jvm_set = Registry[:jvm_set])
       return @jvm if @jvm
 
+      candidate_source = "[unknown]"
+
       if candidate = jvm_set['tests-jdk']
         candidate_jvm = candidate
         candidate_source = "'tests-jdk' config override"
@@ -630,11 +632,11 @@ END
         candidate_jvm = candidate
         candidate_source = "'jdk' config override"
       elsif candidate_name = @buildconfig['tests-jdk']
-        candidate_jvm = jvm_set[candidate_name]
-        candidate_source = "'tests-jdk' override from subtree buildconfig (#{candidate_name})"
+        candidate_source = "'tests-jdk' override from subtree buildconfig [#{candidate_name}]"
+        candidate_jvm = get_required_jvm(candidate_name, candidate_source)
       elsif candidate_name = @buildconfig['jdk']
-        candidate_jvm = jvm_set[candidate_name]
-        candidate_source = "'jdk' override from subtree buildconfig (#{candidate_name})"
+        candidate_source = "'jdk' override from subtree buildconfig [#{candidate_name}]"
+        candidate_jvm = get_required_jvm(candidate_name, candidate_source)
       end
 
       if candidate_jvm
@@ -681,8 +683,11 @@ END
                                 'min_version' => @build_module.jdk.min_version,
                                 'max_version' => @build_module.jdk.max_version
                               })
+      else
+        puts("JDK version #{candidate_jvm.version} is compatible with module " +
+             "#{@build_module.name}, which has minimum version #{@build_module.jdk.min_version}")
       end
-      puts("Using JDK\n\t#{candidate_jvm}\nfrom source\n\t#{candidate_source}")
+      puts("Using JDK #{candidate_jvm} from source #{candidate_source}")
       @jvm = candidate_jvm
     end
 
@@ -694,6 +699,12 @@ END
             "is incompatible with #{thing} which requires minimum version " +
             "#{compatibility['min_version']} and maximum version " +
             "#{compatibility['max_version']}")
+    end
+
+    def get_required_jvm(name, source)
+      jvm = Registry[:jvm_set][name]
+      raise("The JDK '#{name}' (from source #{source}) does not exist") unless jvm
+      jvm
     end
 
     # Splice the appropriate elements (CLASSPATH, JVM arguments, system properties,
