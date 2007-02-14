@@ -10,7 +10,6 @@ public class TransactionBatchManagerImplTest extends TCTestCase {
 
   public TransactionBatchManagerImplTest() {
     super();
-    disableAllUntil("2007-01-03");
   }
 
   // private TransactionBatchManagerImpl mgr;
