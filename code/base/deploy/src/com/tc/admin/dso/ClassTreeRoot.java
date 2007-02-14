@@ -28,17 +28,19 @@ public class ClassTreeRoot extends XRootNode implements ClassTreeNode {
 
     tearDownChildren();
 
-    for(int i = 0; i < classInfo.length; i++) {
-      String        className = classInfo[i].getClassName();
-      String[]      names     = className.split("\\.");
-      ClassTreeNode node      = this;
-
-      for(int j = 0; j < names.length-1; j++) {
-        node = node.testGetBranch(names[j]);
+    if(classInfo != null) {
+      for(int i = 0; i < classInfo.length; i++) {
+        String        className = classInfo[i].getClassName();
+        String[]      names     = className.split("\\.");
+        ClassTreeNode node      = this;
+  
+        for(int j = 0; j < names.length-1; j++) {
+          node = node.testGetBranch(names[j]);
+        }
+  
+        ClassTreeLeaf leaf = node.testGetLeaf(names[names.length-1]);
+        leaf.setInstanceCount(classInfo[i].getInstanceCount());
       }
-
-      ClassTreeLeaf leaf = node.testGetLeaf(names[names.length-1]);
-      leaf.setInstanceCount(classInfo[i].getInstanceCount());
     }
   }
 
