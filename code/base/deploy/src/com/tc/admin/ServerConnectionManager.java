@@ -164,7 +164,7 @@ public class ServerConnectionManager implements NotificationListener {
   Map getConnectionEnvironment() {
     if (m_connectEnv == null) {
       m_connectEnv = new HashMap();
-      m_connectEnv.put("jmx.remote.x.server.connection.timeout", new Long(0));
+      //m_connectEnv.put("jmx.remote.x.server.connection.timeout", new Long(0));
       m_connectEnv.put("jmx.remote.x.client.connection.check.period", new Long(0));
       m_connectEnv.put(JMXConnectorFactory.PROTOCOL_PROVIDER_CLASS_LOADER, getClass().getClassLoader());
     }
