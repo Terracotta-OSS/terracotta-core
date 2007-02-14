@@ -10,7 +10,7 @@ short_internal_name: os.web
 root_directory: web
 bundled_components:
   - common:
-      install_directory: eclipse/org.terracotta.dso/common
+      install_directory: eclipse/org.terracotta.dso
       bootjar:
         install_directory: lib/dso-boot
         compiler_versions:
@@ -46,6 +46,6 @@ postscripts:
         - schema
   - make-eclipse-manifest:
       args:
-        - common/lib
+        - lib
   - make-update-site:
       args:
