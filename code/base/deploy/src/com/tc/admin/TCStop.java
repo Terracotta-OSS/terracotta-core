@@ -21,9 +21,11 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
@@ -34,6 +36,7 @@ public class TCStop {
 
   private String             m_host;
   private int                m_port;
+  private String             m_userName;
 
   public static final String DEFAULT_HOST = "localhost";
   public static final int    DEFAULT_PORT = 9520;
@@ -42,6 +45,11 @@ public class TCStop {
     Options options = StandardTVSConfigurationSetupManagerFactory.createOptions(true);
     CommandLine commandLine = null;
     
+    Option userNameOption = new Option("u", "username", true, "user name");
+    userNameOption.setType(String.class);
+    userNameOption.setRequired(false);
+    options.addOption(userNameOption);
+
     Option helpOption = new Option("h", "help");
     helpOption.setType(String.class);
     helpOption.setRequired(false);
@@ -66,10 +74,16 @@ public class TCStop {
       System.exit(1);
     }
     
-    String  defaultName     = StandardTVSConfigurationSetupManagerFactory.DEFAULT_CONFIG_SPEC_FOR_L2;
-    File    configFile      = new File(System.getProperty("user.dir"), defaultName);
-    boolean configSpecified = commandLine.hasOption('f');
-    boolean nameSpecified   = commandLine.hasOption('n');
+    String  defaultName       = StandardTVSConfigurationSetupManagerFactory.DEFAULT_CONFIG_SPEC_FOR_L2;
+    File    configFile        = new File(System.getProperty("user.dir"), defaultName);
+    boolean configSpecified   = commandLine.hasOption('f');
+    boolean nameSpecified     = commandLine.hasOption('n');
+    boolean userNameSpecified = commandLine.hasOption('u');
+    
+    String userName = null;
+    if(userNameSpecified) {
+      userName = commandLine.getOptionValue('u');
+    }
     
     if (configSpecified || System.getProperty("tc.config") != null || configFile.exists()) {
       if (!configSpecified && System.getProperty("tc.config") == null) {
@@ -122,19 +136,19 @@ public class TCStop {
       } else if (commandLine.getArgs().length == 1) {
         host = DEFAULT_HOST;
         port = Integer.parseInt(commandLine.getArgs()[0]);
-        System.err.println("Stopping the Terracotta server at '" + host + "', port " + port + ".");
       } else {
         host = commandLine.getArgs()[0];
         port = Integer.parseInt(commandLine.getArgs()[1]);
-        System.err.println("Stopping the Terracotta server at '" + host + "', port " + port + ".");
       }
     }
 
     try {
-      new TCStop(host, port).stop();
+      new TCStop(host, port, userName).stop();
     } catch (ConnectException ce) {
       System.err.println("Unable to connect to host '" + host + "', port " + port
                          + ". Are you sure there is a Terracotta server running there?");
+    } catch(Exception e) {
+      System.err.println(e.getMessage());
     }
   }
 
@@ -148,6 +162,11 @@ public class TCStop {
     m_port = port;
   }
 
+  public TCStop(String host, int port, String userName) {
+    this(host, port);
+    m_userName = userName;
+  }
+
   public void stop() throws Exception {
     JMXConnector jmxc = getJMXConnector();
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
@@ -157,18 +176,46 @@ public class TCStop {
                                                                                 TCServerInfoMBean.class, mbsc);
       try {
         tcServerInfo.shutdown();
-      } catch (Exception e) { /* ignore */
-        e.printStackTrace();
+      } catch (Exception e) {
+        jmxc.close();
+        throw e;
       } finally {
         jmxc.close();
       }
     }
   }
 
+  private static String getPassword() {
+    try {
+      Method m = System.class.getMethod("console", new Class[]{});
+      Object console = m.invoke(null, null);
+      if(console != null) {
+        m = console.getClass().getMethod("readPassword", new Class[] {String.class, Object[].class});
+        if(m != null) {
+          byte[] pw = (byte[])m.invoke(console, new Object[] {"[%s]", "[console] Enter Password: "});
+          return new String(pw);
+        }
+      }
+    } catch(Exception e) {/**/}
+    
+    try {
+      System.out.print("Enter password: ");
+      return new jline.ConsoleReader().readLine(new Character('*'));
+    } catch(Exception e) {/**/}
+    
+    return null;
+  }
+  
   private JMXConnector getJMXConnector() throws Exception {
-    String uri = "service:jmx:rmi:///jndi/rmi://" + m_host + ":" + m_port + "/jmxrmi"; 
+    String uri = "service:jmx:rmi:///jndi/rmi://" + m_host + ":" + m_port + "/jmxrmi";
     JMXServiceURL url = new JMXServiceURL(uri);
+    HashMap env = new HashMap();
+    
+    if(m_userName != null) {
+      String[] creds = {m_userName, getPassword()};
+      env.put("jmx.remote.credentials", creds);
+    }
 
-    return JMXConnectorFactory.connect(url, null);
+    return JMXConnectorFactory.connect(url, env);
   }
 }

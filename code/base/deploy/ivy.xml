@@ -7,5 +7,6 @@
 	<dependency name="jmxremote" rev="1.0.1_04" org="terracotta"/>
 	<dependency name="appframe" rev="1.0" org="terracotta"/>
 	<dependency name="treemap" rev="tc-1.0" org="terracotta"/>
+	<dependency name="jline" rev="0.9.9" org="terracotta"/>
   </dependencies>
 </ivy-module>
