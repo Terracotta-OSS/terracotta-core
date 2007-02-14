@@ -1832,6 +1832,9 @@ public class BootJarTool {
     if (!commandLine.hasOption(OUTPUT_FILE_OPTION)) {
       File libDir = new File(installDir, "lib");
       outputFile = new File(libDir, "dso-boot");
+      if(!outputFile.exists()) {
+        outputFile.mkdirs();
+      }
     } else {
       outputFile = new File(commandLine.getOptionValue(OUTPUT_FILE_OPTION)).getAbsoluteFile();
     }
