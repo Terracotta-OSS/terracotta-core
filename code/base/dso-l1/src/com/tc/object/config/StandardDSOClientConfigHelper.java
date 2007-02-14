@@ -614,6 +614,9 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     spec.addDistributedMethodCall("fireIntervalRemoved", "(Ljava/lang/Object;II)V");
 
     spec = getOrCreateSpec("java.util.Arrays");
+    spec.addDoNotInstrument("copyOfRange");
+    spec.addDoNotInstrument("copyOf");
+
     spec = getOrCreateSpec("java.util.Arrays$ArrayList");
 
     spec = getOrCreateSpec("java.util.TreeMap", "com.tc.object.applicator.TreeMapApplicator");

@@ -19,6 +19,7 @@
       
       <additional-boot-jar-classes>
         <include>java.lang.StringBuffer</include>
+        <include>java.lang.StringBuilder</include>
 
         <include>java.io.BufferedWriter</include>
         <include>java.io.DataOutputStream</include>

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config;
 
@@ -16,6 +17,7 @@ import com.tc.object.config.schema.IncludeOnLoad;
 import com.tc.object.logging.InstrumentationLogger;
 
 import java.lang.reflect.Modifier;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -43,6 +45,7 @@ public class TransparencyClassSpec {
   private final Map                   flags                      = new HashMap();
   private final Set                   transients                 = new HashSet();
   private final Map                   codeSpecs                  = new HashMap();
+  private final Set                   nonInstrumentedMethods     = Collections.synchronizedSet(new HashSet());
   private String                      changeApplicatorClassName;
   private boolean                     isLogical;
   private final IncludeOnLoad         onLoad                     = new IncludeOnLoad();
@@ -91,6 +94,14 @@ public class TransparencyClassSpec {
   public TransparencyClassSpec addRoot(String variableName, String rootName, boolean dsoFinal) {
     configuration.addRoot(className, variableName, rootName, dsoFinal, false);
     return this;
+  }
+
+  public void addDoNotInstrument(String methodName) {
+    nonInstrumentedMethods.add(methodName);
+  }
+
+  public boolean doNotInstrument(String methodName) {
+    return nonInstrumentedMethods.contains(methodName);
   }
 
   public TransparencyClassSpec markPreInstrumented() {
@@ -258,11 +269,11 @@ public class TransparencyClassSpec {
   public String getChangeApplicatorClassName() {
     return changeApplicatorClassName;
   }
-  
+
   public String getLogicalExtendingClassName() {
     return this.logicalExtendingClassName;
   }
-  
+
   public void moveToLogical(TransparencyClassSpec superClassSpec) {
     this.isLogical = true;
     String superClassLogicalExtendingClassName = superClassSpec.getLogicalExtendingClassName();
@@ -420,7 +431,7 @@ public class TransparencyClassSpec {
   public boolean isHonorTransientSet() {
     return flags.containsKey(HONOR_TRANSIENT_KEY);
   }
-  
+
   public TransparencyCodeSpec getCodeSpec(String methodName, String description, boolean isAutolock) {
     Object o = codeSpecs.get(methodName + description);
     if (o == null) { return TransparencyCodeSpec.getDefaultCodeSpec(className, isLogical, isAutolock); }

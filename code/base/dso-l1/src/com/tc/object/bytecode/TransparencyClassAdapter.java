@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
 
@@ -33,7 +34,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   private final InstrumentationLogger      instrumentationLogger;
 
   public TransparencyClassAdapter(TransparencyClassSpec spec, final ClassVisitor cv, ManagerHelper mgrHelper,
-                                  InstrumentationLogger instrumentationLogger, ClassLoader caller, Portability portability) {
+                                  InstrumentationLogger instrumentationLogger, ClassLoader caller,
+                                  Portability portability) {
     super(spec, cv, mgrHelper, caller, portability);
     this.instrumentationLogger = instrumentationLogger;
     this.physicalClassLogger = new PhysicalClassAdapterLogger(logger);
@@ -190,7 +192,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     try {
       physicalClassLogger.logVisitMethodBegin(access, name, desc, signature, exceptions);
 
-      if (name.startsWith(ByteCodeUtil.TC_METHOD_PREFIX) || doNotInstrument.contains(name + desc)) {
+      if (name.startsWith(ByteCodeUtil.TC_METHOD_PREFIX) || doNotInstrument.contains(name + desc)
+          || getTransparencyClassSpec().doNotInstrument(name)) {
         if (!getTransparencyClassSpec().hasCustomMethodAdapter(access, name, desc, exceptions)) {
           physicalClassLogger.logVisitMethodIgnoring(name, desc);
           return cv.visitMethod(access, name, desc, signature, exceptions);
@@ -507,7 +510,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     gv.visitMaxs(0, 0);
   }
 
-  private void checkReturnObjectType(String fieldName, String rootName, String targetType, int loadVariableNumber, Label matchLabel, MethodVisitor mv) {
+  private void checkReturnObjectType(String fieldName, String rootName, String targetType, int loadVariableNumber,
+                                     Label matchLabel, MethodVisitor mv) {
     mv.visitVarInsn(ALOAD, loadVariableNumber);
     mv.visitTypeInsn(INSTANCEOF, targetType);
     mv.visitJumpInsn(IFNE, matchLabel);
@@ -518,25 +522,34 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     mv.visitLdcInsn("The field '");
     mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuffer", "<init>", "(Ljava/lang/String;)V");
     mv.visitLdcInsn(fieldName);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append",
+                       "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
     mv.visitLdcInsn("' with root name '");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append",
+                       "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
     mv.visitLdcInsn(rootName);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append",
+                       "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
     mv.visitLdcInsn("' cannot be assigned to a variable of type ");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append",
+                       "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
     mv.visitLdcInsn(targetType);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append",
+                       "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
     mv.visitLdcInsn(". This root has a type ");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append",
+                       "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
     mv.visitVarInsn(ALOAD, loadVariableNumber);
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;");
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getName", "()Ljava/lang/String;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append",
+                       "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
     mv.visitLdcInsn(". ");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append",
+                       "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
     mv.visitLdcInsn("Perhaps you have the same root name assigned more than once to variables of different types.");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append",
+                       "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "toString", "()Ljava/lang/String;");
     mv.visitMethodInsn(INVOKESPECIAL, "java/lang/ClassCastException", "<init>", "(Ljava/lang/String;)V");
     mv.visitInsn(ATHROW);
