@@ -166,7 +166,7 @@ class BuildModule
         @name = data[:name]
         @root = FilePath.new(root_dir, @name).canonicalize
         jdk = data[:jdk]
-        assert("JDK must be specified.") { ! jdk.nil? }
+        assert("modules.def.yml: module #{@name} does not have required jdk: attribute") { ! jdk.nil? }
         @jdk = Registry[:jvm_set][jdk]
         @aspectj = data[:aspectj] || false
         @dependencies = data[:dependencies] || [ ]

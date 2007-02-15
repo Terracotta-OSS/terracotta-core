@@ -20,26 +20,29 @@ class BuildModuleSetBuilder
     # specified in the constructor, and returns them. Returns a hash with values under
     # :module_set (the BuildModuleSet object) and :module_groups (a hash, whose keys
     # are names of module groups and whose values are arrays of the names of the
-    # modules in that group). 
+    # modules in that group).
     def build_modules
         module_set = BuildModuleSet.new(@root_dir)
         module_groups = { }
-        
+
         @filenames.each do |filename|
             if FileTest.file?(filename.to_s)
                 File.open(filename.to_s) do |file|
                     yaml = YAML.load(file)
-            
+
                     modules = yaml['modules']
                     modules.each do |a_module|
                         options = {}
-                        data    = a_module.values[0]
-                        data['options'].each_pair { |k, v| options[k.to_sym] = v }
-                        options[:name]         = a_module.keys[0]
-                        options[:dependencies] = data['dependencies'] || []
+                        if data = a_module.values[0]
+                          if module_options = data['options']
+                            module_options.each_pair { |k, v| options[k.to_sym] = v }
+                            options[:name]         = a_module.keys[0]
+                            options[:dependencies] = data['dependencies'] || []
+                          end
+                        end
                         module_set.add(options)
                     end
-            
+
                     module_groups_source = yaml['module-groups']
                     unless module_groups_source.nil?
                         module_groups_source.each do |module_group_name, module_group_contents|
@@ -62,3 +65,4 @@ class BuildModuleSetBuilder
         { :module_set => module_set, :module_groups => module_groups }
     end
 end
+
