@@ -140,7 +140,7 @@ public class TestClientTransaction implements ClientTransaction {
   }
 
   public List getDmiDescriptors() {
-    throw new ImplementMe();
+    return Collections.EMPTY_LIST;
   }
 
   public boolean hasDmiDescriptors() {
