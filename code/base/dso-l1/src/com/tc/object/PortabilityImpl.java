@@ -29,9 +29,8 @@ public class PortabilityImpl implements Portability {
     nonInstrumentedClass.add("java.util.AbstractCollection");
     nonInstrumentedClass.add("java.lang.Enum");
     nonInstrumentedClass.add("java.lang.reflect.AccessibleObject");
+    nonInstrumentedClass.add("java.util.concurrent.locks.AbstractQueuedSynchronizer");
     nonInstrumentedClass.add("java.util.concurrent.locks.AbstractQueuedSynchronizer$Node");
-    // nonInstrumentedClass.add("java.util.concurrent.ConcurrentHashMap$SimpleEntry");
-    // nonInstrumentedClass.add("java.util.concurrent.ConcurrentHashMap$EntryIterator");
   }
 
   private final LiteralValues         literalValues        = new LiteralValues();

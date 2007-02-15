@@ -123,4 +123,8 @@ public class TestLockManager implements LockManager {
   public boolean tryRequestLock(LockID lockID, ChannelID channelID, ThreadID threadID, int level, Sink awardLockSink) {
     throw new ImplementMe();
   }
+
+  public void interrupt(LockID lockID, ChannelID channelID, ThreadID threadID) {
+    throw new ImplementMe();
+  }
 }

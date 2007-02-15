@@ -32,6 +32,8 @@ public interface LockManager {
   public void unlock(LockID id, ChannelID receiverID, ThreadID threadID);
 
   public void queryLock(LockID lockID, ChannelID channelID, ThreadID threadID, Sink lockResponseSink);
+  
+  public void interrupt(LockID lockID, ChannelID channelID, ThreadID threadID);
 
   public boolean hasPending(LockID id);
 

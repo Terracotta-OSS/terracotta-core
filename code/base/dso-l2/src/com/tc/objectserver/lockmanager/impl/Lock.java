@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.lockmanager.impl;
 
@@ -369,6 +370,16 @@ public class Lock {
     }
   }
 
+  synchronized void interrupt(ServerThreadContext txn) {
+    if (waiters.size() == 0 || !waiters.containsKey(txn)) {
+      logger.warn("Cannot interrupt: " + txn + " is not waiting.");
+      return;
+    }
+    LockWaitContext wait = (LockWaitContext)waiters.remove(txn);
+    removeAndCancelWaitTimer(wait);
+    createPendingFromWaiter(wait);
+  }
+
   private void removeAndCancelWaitTimer(LockWaitContext wait) {
     TimerTask task = (TimerTask) waitTimers.remove(wait);
     if (task != null) task.cancel();
@@ -376,7 +387,8 @@ public class Lock {
 
   private void createPendingFromWaiter(LockWaitContext wait) {
     // XXX: This cast to WaitContextImpl is lame. I'm not sure how to refactor it right now.
-    Request request = new Request(((LockWaitContextImpl) wait).getThreadContext(), wait.lockLevel(), wait.getLockResponseSink());
+    Request request = new Request(((LockWaitContextImpl) wait).getThreadContext(), wait.lockLevel(), wait
+        .getLockResponseSink());
     pendingLockRequests.add(request);
     if (isPolicyGreedy() && hasGreedyHolders()) {
       recall(LockLevel.WRITE);

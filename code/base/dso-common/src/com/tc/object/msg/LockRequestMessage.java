@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
@@ -32,44 +33,45 @@ import java.util.Set;
  */
 public class LockRequestMessage extends DSOMessageBase {
 
-  private static final WaitInvocationFactory waitInvocationFactory           = new WaitInvocationFactory();
+  private static final WaitInvocationFactory waitInvocationFactory             = new WaitInvocationFactory();
 
-  private final static byte                  LOCK_ID                         = 1;
-  private final static byte                  LOCK_LEVEL                      = 2;
-  private final static byte                  THREAD_ID                       = 3;
-  private final static byte                  REQUEST_TYPE                    = 4;
-  private final static byte                  WITH_WAIT                       = 5;
-  private final static byte                  WAIT_MILLIS                     = 6;
-  private final static byte                  WAIT_NANOS                      = 7;
-  private final static byte                  NOTIFY_ALL                      = 8;
-  private static final byte                  WAIT_ARG_COUNT                  = 9;
-  private static final byte                  WAIT_CONTEXT                    = 10;
-  private static final byte                  LOCK_CONTEXT                    = 11;
-  private static final byte                  PENDING_LOCK_CONTEXT            = 12;
+  private final static byte                  LOCK_ID                           = 1;
+  private final static byte                  LOCK_LEVEL                        = 2;
+  private final static byte                  THREAD_ID                         = 3;
+  private final static byte                  REQUEST_TYPE                      = 4;
+  private final static byte                  WITH_WAIT                         = 5;
+  private final static byte                  WAIT_MILLIS                       = 6;
+  private final static byte                  WAIT_NANOS                        = 7;
+  private final static byte                  NOTIFY_ALL                        = 8;
+  private static final byte                  WAIT_ARG_COUNT                    = 9;
+  private static final byte                  WAIT_CONTEXT                      = 10;
+  private static final byte                  LOCK_CONTEXT                      = 11;
+  private static final byte                  PENDING_LOCK_CONTEXT              = 12;
 
   // request types
-  private final static byte                  UNITIALIZED_REQUEST_TYPE        = -1;
-  private final static byte                  OBTAIN_LOCK_REQUEST_TYPE        = 1;
-  private final static byte                  RELEASE_LOCK_REQUEST_TYPE       = 2;
-  private final static byte                  RECALL_COMMIT_LOCK_REQUEST_TYPE = 3;
-  private final static byte                  QUERY_LOCK_REQUEST_TYPE         = 4;
-  private final static byte                  TRY_OBTAIN_LOCK_REQUEST_TYPE    = 5;
+  private final static byte                  UNITIALIZED_REQUEST_TYPE          = -1;
+  private final static byte                  OBTAIN_LOCK_REQUEST_TYPE          = 1;
+  private final static byte                  RELEASE_LOCK_REQUEST_TYPE         = 2;
+  private final static byte                  RECALL_COMMIT_LOCK_REQUEST_TYPE   = 3;
+  private final static byte                  QUERY_LOCK_REQUEST_TYPE           = 4;
+  private final static byte                  TRY_OBTAIN_LOCK_REQUEST_TYPE      = 5;
+  private final static byte                  INTERRUPT_WAIT_REQUEST_TYPE = 6;
 
-  public final static int                    UNITIALIZED_WAIT_TIME           = -1;
+  public final static int                    UNITIALIZED_WAIT_TIME             = -1;
 
-  private final Set                          lockContexts                    = new HashSet();
-  private final Set                          waitContexts                    = new HashSet();
-  private final Set                          pendingLockContexts             = new HashSet();
+  private final Set                          lockContexts                      = new HashSet();
+  private final Set                          waitContexts                      = new HashSet();
+  private final Set                          pendingLockContexts               = new HashSet();
 
-  private LockID                             lockID                          = LockID.NULL_ID;
-  private int                                lockLevel                       = LockLevel.NIL_LOCK_LEVEL;
-  private ThreadID                           threadID                        = ThreadID.NULL_ID;
-  private byte                               requestType                     = UNITIALIZED_REQUEST_TYPE;
+  private LockID                             lockID                            = LockID.NULL_ID;
+  private int                                lockLevel                         = LockLevel.NIL_LOCK_LEVEL;
+  private ThreadID                           threadID                          = ThreadID.NULL_ID;
+  private byte                               requestType                       = UNITIALIZED_REQUEST_TYPE;
   private boolean                            withWait;
-  private long                               waitMillis                      = UNITIALIZED_WAIT_TIME;
-  private int                                waitNanos                       = UNITIALIZED_WAIT_TIME;
+  private long                               waitMillis                        = UNITIALIZED_WAIT_TIME;
+  private int                                waitNanos                         = UNITIALIZED_WAIT_TIME;
   private boolean                            notifyAll;
-  private int                                waitArgCount                    = -1;
+  private int                                waitArgCount                      = -1;
 
   public LockRequestMessage(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
     super(monitor, out, channel, type);
@@ -114,7 +116,7 @@ public class LockRequestMessage extends DSOMessageBase {
   private static boolean isValidRequestType(byte type) {
     if ((type == RELEASE_LOCK_REQUEST_TYPE) || (type == OBTAIN_LOCK_REQUEST_TYPE)
         || (type == RECALL_COMMIT_LOCK_REQUEST_TYPE) || (type == QUERY_LOCK_REQUEST_TYPE)
-        || (type == TRY_OBTAIN_LOCK_REQUEST_TYPE)) { return true; }
+        || (type == TRY_OBTAIN_LOCK_REQUEST_TYPE) || (type == INTERRUPT_WAIT_REQUEST_TYPE)) { return true; }
 
     return false;
   }
@@ -131,6 +133,8 @@ public class LockRequestMessage extends DSOMessageBase {
         return "Query Lock";
       case TRY_OBTAIN_LOCK_REQUEST_TYPE:
         return "Try Obtain Lock";
+      case INTERRUPT_WAIT_REQUEST_TYPE:
+        return "Interrupt Wait";
       default:
         return "UNKNOWN (" + type + ")";
     }
@@ -258,6 +262,11 @@ public class LockRequestMessage extends DSOMessageBase {
       return new HashSet(pendingLockContexts);
     }
   }
+  
+  public boolean isInterruptWaitRequest() {
+    if (!isValidRequestType(requestType)) { throw new AssertionError("Invalid request type: " + requestType); }
+    return requestType == INTERRUPT_WAIT_REQUEST_TYPE;
+  }
 
   public boolean isQueryLockRequest() {
     if (!isValidRequestType(requestType)) { throw new AssertionError("Invalid request type: " + requestType); }
@@ -293,19 +302,23 @@ public class LockRequestMessage extends DSOMessageBase {
     return this.withWait;
   }
 
+  public void initializeInterruptWait(LockID lid, ThreadID id) {
+    initialize(lid, id, LockLevel.NIL_LOCK_LEVEL, INTERRUPT_WAIT_REQUEST_TYPE, false, false, UNITIALIZED_WAIT_TIME,
+               UNITIALIZED_WAIT_TIME, -1);
+  }
+
   public void initializeQueryLock(LockID lid, ThreadID id) {
     initialize(lid, id, LockLevel.NIL_LOCK_LEVEL, QUERY_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_WAIT_TIME,
                UNITIALIZED_WAIT_TIME, -1);
   }
 
   public void initializeObtainLock(LockID lid, ThreadID id, int type) {
-    initialize(lid, id, type, OBTAIN_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_WAIT_TIME,
-               UNITIALIZED_WAIT_TIME, -1);
+    initialize(lid, id, type, OBTAIN_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_WAIT_TIME, UNITIALIZED_WAIT_TIME, -1);
   }
 
   public void initializeTryObtainLock(LockID lid, ThreadID id, int type) {
-    initialize(lid, id, type, TRY_OBTAIN_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_WAIT_TIME,
-               UNITIALIZED_WAIT_TIME, -1);
+    initialize(lid, id, type, TRY_OBTAIN_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_WAIT_TIME, UNITIALIZED_WAIT_TIME,
+               -1);
   }
 
   public void initializeLockRelease(LockID lid, ThreadID id) {
@@ -323,8 +336,8 @@ public class LockRequestMessage extends DSOMessageBase {
                UNITIALIZED_WAIT_TIME, UNITIALIZED_WAIT_TIME, -1);
   }
 
-  private void initialize(LockID lid, ThreadID id, int level, byte reqType, boolean wait, boolean all,
-                          long millis, int nanos, int waitArgs) {
+  private void initialize(LockID lid, ThreadID id, int level, byte reqType, boolean wait, boolean all, long millis,
+                          int nanos, int waitArgs) {
     this.lockID = lid;
     this.lockLevel = level;
     this.threadID = id;
@@ -343,13 +356,11 @@ public class LockRequestMessage extends DSOMessageBase {
     this.notifyAll = all;
 
     if (wait) {
-      if ((waitArgs < 0) || (waitArgs > 2)) {
-        throw new IllegalArgumentException("Wait argument count must be 0, 1 or 2");
-      }
+      if ((waitArgs < 0) || (waitArgs > 2)) { throw new IllegalArgumentException(
+                                                                                 "Wait argument count must be 0, 1 or 2"); }
 
-      if (requestType != RELEASE_LOCK_REQUEST_TYPE) {
-        throw new IllegalArgumentException("Can't include withWait option for non lock release requests");
-      }
+      if (requestType != RELEASE_LOCK_REQUEST_TYPE) { throw new IllegalArgumentException(
+                                                                                         "Can't include withWait option for non lock release requests"); }
 
       this.waitArgCount = waitArgs;
       this.waitMillis = millis;

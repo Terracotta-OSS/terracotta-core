@@ -204,6 +204,15 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, WaitTimer
     ServerThreadContext threadContext = threadContextFactory.getOrCreate(channelID, threadID);
     lock.queryLock(threadContext, lockResponseSink);
   }
+  
+  public synchronized void interrupt(LockID lockID, ChannelID channelID, ThreadID threadID) {
+    assertNotStarting();
+    if (!isStarted()) return;
+    
+    Lock lock = getLockFor(lockID);
+    ServerThreadContext threadContext = threadContextFactory.getOrCreate(channelID, threadID);
+    lock.interrupt(threadContext);
+  }
 
   public synchronized void unlock(LockID id, ChannelID channelID, ThreadID threadID) {
     assertNotStarting();

@@ -144,19 +144,19 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
       flush();
       recallCommit();
     }
-    
+
     boolean isInterrupted = false;
     if (noBlock) {
       isInterrupted = waitForTryLock(requesterID, waitLock);
     } else {
-      isInterrupted = waitForLock(requesterID, type, waitLock, false);
+      isInterrupted = waitForLock(requesterID, type, waitLock);
     }
     if (isInterrupted) {
       selfInterrupt();
     }
     // debug("lock - GOT IT - ", requesterID, LockLevel.toString(type));
   }
-  
+
   private void selfInterrupt() {
     Thread.currentThread().interrupt();
   }
@@ -249,6 +249,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
           LockHold holder = (LockHold) this.holders.get(threadID);
           Assert.assertNotNull(holder);
           server_level = holder.goToWaitState();
+
           Object prev = waitLocksByRequesterID.put(threadID, waitLock);
           Assert.eval(prev == null);
 
@@ -278,9 +279,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     } while (changed);
 
     listener.handleWaitEvent();
-    if (waitForLock(threadID, server_level, waitLock, true)) {
-      throw new InterruptedException();
-    }
+    if (waitForLock(threadID, server_level, waitLock)) { throw new InterruptedException(); }
   }
 
   private Action waitAction(ThreadID threadID) {
@@ -308,8 +307,23 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
 
   }
 
-  synchronized void notified(ThreadID threadID) {
-    waitUntillRunning();
+  private synchronized void handleInteruptIfWait(ThreadID threadID) {
+    LockRequest lockRequest = (LockRequest) pendingLockRequests.get(threadID);
+    if (!(lockRequest instanceof WaitLockRequest)) { return; }
+    movedToPending(threadID);
+    if (canAwardGreedilyNow(threadID, lockRequest.lockLevel())) {
+      awardLock(threadID, lockRequest.lockLevel());
+      return;
+    }
+    if (greediness.isNotGreedy()) {
+      // If the lock is not greedily awarded, we need to notify the server to move
+      // the lock to the pending state.
+      this.remoteLockManager.interrruptWait(lockID, threadID);
+    }
+  }
+
+  // This method needs to be called from a synchronized(this) context.
+  private void movedToPending(ThreadID threadID) {
     LockHold holder = (LockHold) this.holders.get(threadID);
     Assert.assertNotNull(holder);
     int server_level = holder.goToPending();
@@ -325,6 +339,11 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
       logger.warn("Pending request " + pending + " is not a waiter: " + waiter);
     }
     this.pendingLockRequests.put(threadID, pending);
+  }
+
+  synchronized void notified(ThreadID threadID) {
+    waitUntillRunning();
+    movedToPending(threadID);
   }
 
   /*
@@ -373,9 +392,9 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
       waitLock.notifyAll();
     }
   }
-  
+
   private void reject(ThreadID threadID) {
-    synchronized(rejectedLockRequesterIDs) {
+    synchronized (rejectedLockRequesterIDs) {
       rejectedLockRequesterIDs.add(threadID);
     }
   }
@@ -461,24 +480,26 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     }
   }
 
-  private boolean waitForLock(ThreadID threadID, int type, Object waitLock, boolean returnIfInterrupted) {
+  private boolean waitForLock(ThreadID threadID, int type, Object waitLock) {
     // debug("waitForLock() - BEGIN - ", requesterID, LockLevel.toString(type));
     boolean isInterrupted = false;
-    synchronized (waitLock) {
-      while (!isHeldBy(threadID, type)) {
-        try {
-          waitLock.wait();
-        } catch (InterruptedException ioe) {
-          isInterrupted = true;
-          if (returnIfInterrupted) {
-            return isInterrupted;
+    while (!isHeldBy(threadID, type)) {
+      try {
+        synchronized (waitLock) {
+          if (!isHeldBy(threadID, type)) {
+            waitLock.wait();
           }
-        } catch (Throwable e) {
-          throw new TCRuntimeException(e);
         }
+      } catch (InterruptedException ioe) {
+        if (!isInterrupted) {
+          isInterrupted = true;
+          handleInteruptIfWait(threadID);
+        }
+      } catch (Throwable e) {
+        throw new TCRuntimeException(e);
       }
-      return isInterrupted;
     }
+    return isInterrupted;
     // debug("waitForLock() - WAKEUP - ", requesterID, LockLevel.toString(type));
   }
 

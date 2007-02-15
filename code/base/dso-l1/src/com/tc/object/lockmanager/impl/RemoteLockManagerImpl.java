@@ -63,6 +63,12 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     req.initializeQueryLock(lockID, threadID);
     req.send();
   }
+  
+  public void interrruptWait(LockID lockID, ThreadID threadID) {
+    LockRequestMessage req = createRequest();
+    req.initializeInterruptWait(lockID, threadID);
+    req.send();
+  }
 
   private LockRequestMessage createRequest() {
     // return (LockRequestMessage) channel.createMessage(TCMessageType.LOCK_REQUEST_MESSAGE);

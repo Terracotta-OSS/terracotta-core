@@ -50,6 +50,8 @@ public class RequestLockUnLockHandler extends AbstractEventHandler {
                                lockResponseSink);
     } else if (lrm.isQueryLockRequest()) {
       lockManager.queryLock(lid, cid, tid, lockResponseSink);
+    } else if (lrm.isInterruptWaitRequest()) {
+      lockManager.interrupt(lid, cid, tid);
     } else {
       logger.error("Unknown lock request message: " + lrm);
     }

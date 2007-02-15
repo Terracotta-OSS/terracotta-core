@@ -173,4 +173,9 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
   public void tryRequestLock(LockID lockID, ThreadID threadID, int lockType) {
     serverLockManager.tryRequestLock(lockID, channelID, threadID, lockType, sink);
   }
+
+  public void interrruptWait(LockID lockID, ThreadID threadID) {
+    serverLockManager.interrupt(lockID, channelID, threadID);
+    
+  }
 }

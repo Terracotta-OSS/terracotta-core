@@ -1118,12 +1118,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock");
       spec.setHonorTransient(true);
       spec.setCallConstructorOnLoad(true);
-      spec = getOrCreateSpec("java.util.concurrent.locks.AbstractQueuedSynchronizer");
-      spec.setHonorTransient(true);
-      spec.setCallConstructorOnLoad(true);
-      spec = getOrCreateSpec("java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject");
-      spec.setHonorTransient(true);
-      spec.setCallConstructorOnLoad(true);
 
       /*****************************************************************************************************************
        * This section of spec are specified in the BootJarTool also. They are placed again so that the honorTransient *

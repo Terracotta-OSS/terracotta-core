@@ -17,6 +17,8 @@ public interface RemoteLockManager {
   
   public void queryLock(LockID lockID, ThreadID threadID);
   
+  public void interrruptWait(LockID lockID, ThreadID threadID);
+  
   public void requestLock(LockID lockID, ThreadID threadID, int lockType);
   
   public void tryRequestLock(LockID lockID, ThreadID threadID, int lockType);
