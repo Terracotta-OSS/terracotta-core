@@ -69,12 +69,9 @@ public class Main
       this.username = username;
       setSize(new Dimension(300, 400));
       setVisible(true);
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          input.requestFocus();
-          login();
-        }
-      });
+      
+      input.requestFocus();
+      login();
    }  
   
    public void read(Message message) 
