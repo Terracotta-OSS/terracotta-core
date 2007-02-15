@@ -28,10 +28,6 @@ public class ClusterMembershipEventJMXTest extends TransparentTestBase {
   private int              port;
   private File             configFile;
 
-  protected boolean canRunCrash() {
-    return true;
-  }
-
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
