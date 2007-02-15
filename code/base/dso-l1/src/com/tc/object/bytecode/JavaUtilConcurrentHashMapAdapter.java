@@ -12,6 +12,7 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
 import com.tc.asm.commons.LocalVariablesSorter;
+import com.tc.util.runtime.Vm;
 
 public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Opcodes {
   private final static String CONCURRENT_HASH_MAP_SLASH           = "java/util/concurrent/ConcurrentHashMap";
@@ -33,11 +34,8 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
   private final static String TC_FULLY_UNLOCK_METHOD_DESC         = "()V";
   private final static String HASH_METHOD_NAME                    = "hash";
 
-  private final boolean       isJdk16;
-
-  public JavaUtilConcurrentHashMapAdapter(ClassVisitor cv, boolean isJdk16) {
+  public JavaUtilConcurrentHashMapAdapter(ClassVisitor cv) {
     super(cv);
-    this.isJdk16 = isJdk16;
   }
 
   /**
@@ -984,7 +982,7 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
 
   private void invokeJdkHashMethod(MethodVisitor mv, int objectVarNumber) {
     mv.visitVarInsn(ALOAD, objectVarNumber);
-    if (isJdk16) {
+    if (Vm.isJDK16()) {
       mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "hashCode", "()I");
       mv.visitMethodInsn(INVOKESTATIC, CONCURRENT_HASH_MAP_SLASH, HASH_METHOD_NAME, "(I)I");
     } else {

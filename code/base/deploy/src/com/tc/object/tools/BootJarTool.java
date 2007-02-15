@@ -1321,7 +1321,7 @@ public class BootJarTool {
 
     ClassReader cr = new ClassReader(bytes);
     ClassWriter cw = new ClassWriter(true);
-    ClassVisitor cv = new JavaUtilConcurrentHashMapAdapter(cw, Vm.isJDK16());
+    ClassVisitor cv = new JavaUtilConcurrentHashMapAdapter(cw);
 
     cr.accept(cv, false);
 
