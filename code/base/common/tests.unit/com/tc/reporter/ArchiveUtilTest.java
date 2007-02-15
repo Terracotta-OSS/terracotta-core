@@ -45,7 +45,7 @@ public final class ArchiveUtilTest extends TCTestCase {
   private File                archiveFile;
 
   public ArchiveUtilTest() {
-    disableAllUntil("2007-02-28");
+    //disableAllUntil("2007-02-28");
   }
   
   public void setUp() throws Exception {
@@ -156,7 +156,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     String config = createConfig(NONE, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
     String[] args = new String[] { configFile.toString() };
-    assertEquals(0, executeArchiveUtil(args));
+    executeArchiveUtil(args);
     DateFormat df = new SimpleDateFormat("y-M-d");
     File defaultArchive = new File(mockDataDir + File.separator + "tc-archive" + "_"
         + df.format(new Date(System.currentTimeMillis())) + ".zip");
@@ -174,7 +174,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     clear();
     log("<server> test directory argument contents");
     String[] args = new String[] { mockDataDir + File.separator + MK_SERVER_LOG_DIR };
-    assertEquals(0, executeArchiveUtil(args));
+    executeArchiveUtil(args);
     DateFormat df = new SimpleDateFormat("y-M-d");
     File defaultArchive = new File(mockDataDir + File.separator + "tc-archive" + "_"
         + df.format(new Date(System.currentTimeMillis())) + ".zip");
@@ -188,7 +188,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     clear();
     log("<server> test invalid directory argument");
     String[] args = new String[] { "foo" + File.separator + "baz" };
-    assertEquals(0, executeArchiveUtil(args));
+    executeArchiveUtil(args);
     DateFormat df = new SimpleDateFormat("y-M-d");
     File defaultArchive = new File(mockDataDir + File.separator + "tc-archive" + "_"
         + df.format(new Date(System.currentTimeMillis())) + ".zip");
@@ -203,7 +203,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     String config = createConfig(NONE, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
     String[] args = new String[] { configFile.toString(), archiveFile.toString() };
-    assertEquals(0, executeArchiveUtil(args));
+    executeArchiveUtil(args);
     Set contents = listArchiveContents(archiveFile);
     assertTrue(contents.contains(TC_CONFIG));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/"));
@@ -222,7 +222,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     String config = createConfig(NONE, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
     String[] args = new String[] { "-f", configFile.toString(), archiveFile.toString() };
-    assertEquals(0, executeArchiveUtil(args));
+    executeArchiveUtil(args);
     Set contents = listArchiveContents(archiveFile);
     assertTrue(contents.contains(TC_CONFIG));
     assertTrue(contents.contains(MK_SERVER_LOG_DIR + "/"));
@@ -241,7 +241,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     String config = createConfig(MK_CLIENT_DIR, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
     String[] args = new String[] { "-c", configFile.toString(), archiveFile.toString() };
-    assertEquals(0, executeArchiveUtil(args));
+    executeArchiveUtil(args);
     Set contents = listArchiveContents(archiveFile);
     assertTrue(contents.contains(TC_CONFIG));
     assertTrue(contents.contains(MK_CLIENT_DIR + "/"));
@@ -260,7 +260,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     log("<client> ignores -f option");
     String config = createConfig(NONE, new String[] { NONE }, new String[] { NONE });
     File configFile = writeConfig(config.getBytes());
-    assertEquals(0, executeArchiveUtil(new String[] { "-c", "-f", configFile.toString(), archiveFile.toString() }));
+    executeArchiveUtil(new String[] { "-c", "-f", configFile.toString(), archiveFile.toString() });
     assertFalse(archiveFile.exists());
   }
 
@@ -269,7 +269,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     log("<server> invalid args: <output file> <config>");
     String config = createConfig(NONE, new String[] { NONE }, new String[] { NONE });
     File configFile = writeConfig(config.getBytes());
-    assertEquals(0, executeArchiveUtil(new String[] { archiveFile.toString(), configFile.toString() }));
+    executeArchiveUtil(new String[] { archiveFile.toString(), configFile.toString() });
     assertFalse(archiveFile.exists());
   }
 
@@ -278,7 +278,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     log("<server> invalid args: <config> <output file> -c");
     String config = createConfig(NONE, new String[] { NONE }, new String[] { NONE });
     File configFile = writeConfig(config.getBytes());
-    assertEquals(0, executeArchiveUtil(new String[] { configFile.toString(), archiveFile.toString(), "-c" }));
+    executeArchiveUtil(new String[] { configFile.toString(), archiveFile.toString(), "-c" });
     assertFalse(archiveFile.exists());
   }
 
@@ -287,14 +287,14 @@ public final class ArchiveUtilTest extends TCTestCase {
     log("<server> invalid args: <config> -c <output file>");
     String config = createConfig(NONE, new String[] { NONE }, new String[] { NONE });
     File configFile = writeConfig(config.getBytes());
-    assertEquals(0, executeArchiveUtil(new String[] { configFile.toString(), "-c", archiveFile.toString() }));
+    executeArchiveUtil(new String[] { configFile.toString(), "-c", archiveFile.toString() });
     assertFalse(archiveFile.exists());
   }
 
   public void testInvalidArgs1() throws Exception {
     clear();
     log("<server> invalid args: config");
-    assertEquals(0, executeArchiveUtil(new String[] { "foo", archiveFile.toString() }));
+    executeArchiveUtil(new String[] { "foo", archiveFile.toString() });
     assertFalse(archiveFile.exists());
   }
 
@@ -303,7 +303,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     log("<server> invalid args: -x");
     String config = createConfig(NONE, new String[] { NONE }, new String[] { NONE });
     File configFile = writeConfig(config.getBytes());
-    assertEquals(0, executeArchiveUtil(new String[] { "-x", configFile.toString(), archiveFile.toString() }));
+    executeArchiveUtil(new String[] { "-x", configFile.toString(), archiveFile.toString() });
     assertFalse(archiveFile.exists());
   }
 
@@ -311,7 +311,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     clear();
     log("<server> invalid config: <foo>");
     File configFile = writeConfig("foo".getBytes());
-    assertEquals(0, executeArchiveUtil(new String[] { configFile.toString(), archiveFile.toString() }));
+    executeArchiveUtil(new String[] { configFile.toString(), archiveFile.toString() });
     assertFalse(archiveFile.exists());
   }
 
@@ -321,7 +321,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     String[] slogs = new String[] { "foo" };
     String config = createConfig(MK_CLIENT_DIR, slogs, new String[] { NONE });
     File configFile = writeConfig(config.getBytes());
-    assertEquals(0, executeArchiveUtil(new String[] { configFile.toString(), archiveFile.toString() }));
+    executeArchiveUtil(new String[] { configFile.toString(), archiveFile.toString() });
     assertFalse(archiveFile.exists());
   }
 
@@ -331,7 +331,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     String[] sdata = new String[] { "foo" };
     String config = createConfig(MK_CLIENT_DIR, new String[] { NONE }, sdata);
     File configFile = writeConfig(config.getBytes());
-    assertEquals(0, executeArchiveUtil(new String[] { "-f", configFile.toString(), archiveFile.toString() }));
+    executeArchiveUtil(new String[] { "-f", configFile.toString(), archiveFile.toString() });
     assertFalse(archiveFile.exists());
   }
 
@@ -340,7 +340,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     log("<client> invalid config: logs=foo");
     String config = createConfig("foo", new String[] { NONE }, new String[] { NONE });
     File configFile = writeConfig(config.getBytes());
-    assertEquals(1, executeArchiveUtil(new String[] { "-c", configFile.toString(), archiveFile.toString() }));
+    executeArchiveUtil(new String[] { "-c", configFile.toString(), archiveFile.toString() });
     assertFalse(archiveFile.exists());
   }
   
