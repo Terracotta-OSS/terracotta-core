@@ -53,21 +53,24 @@ public class ZipBuilder implements ArchiveBuilder {
   public final void putDirEntry(String file) throws IOException {
     if (dirSet.contains(file)) return;
     dirSet.add(file);
-    ZipEntry entry = createEntry(archivePath(file) + "/");
+    String dirEntry = archivePath(file) + "/";
+    ZipEntry entry = createEntry(dirEntry);
     entry.setSize(0);
     entry.setCrc(0);
     zout.putNextEntry(entry);
+    System.out.println(dirEntry);
   }
 
   public final void putEntry(String file, byte[] bytes) throws IOException {
     if (entrySet.contains(file.toString())) return;
     entrySet.add(file.toString());
-    ZipEntry entry = createEntry(archivePath(file));
+    String fileEntry = archivePath(file);
+    ZipEntry entry = createEntry(fileEntry);
     entry.setSize(bytes.length);
     entry.setCrc(getCrc32(bytes));
     zout.putNextEntry(entry);
     zout.write(bytes, 0, bytes.length);
-    System.out.print(".");
+    System.out.println(fileEntry);
   }
 
   public final void finish() throws IOException {

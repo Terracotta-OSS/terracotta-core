@@ -40,11 +40,13 @@ public final class ArchiveUtil {
   private static final String STDERR            = "stderr:";
   private static final String ARCHIVE_FILE_NAME = "tc-archive";
   private static final String INVALID           = "Invalid Arguments:\n\n";
-  private static final String DASH_F            = "-f";
+  private static final String DASH_N            = "-n";
   private static final String DASH_C            = "-c";
-  private static final String USAGE             = "\tValid Arguments are:\n\n\t["
-                                                    + DASH_F
-                                                    + "] (Full - include data files)\n\t["
+  private static final String USAGE             = "** Terracotta Archive Tool **\n\n"
+                                                    + "A utility for archiving Terracotta environment information.\n\n"
+                                                    + "\tValid Arguments are:\n\n\t["
+                                                    + DASH_N
+                                                    + "] (No Data - excludes data files)\n\t["
                                                     + DASH_C
                                                     + "] (Client - include files from the dso client)"
                                                     + "\n\t<path to terracotta config xml file (tc-config.xml)>"
@@ -52,14 +54,12 @@ public final class ArchiveUtil {
                                                     + "\n\t[<output filename in .zip format>]\n\nExamples:\n\n\t"
                                                     + "# java "
                                                     + ArchiveUtil.class.getName()
-                                                    + " "
-                                                    + DASH_F
                                                     + " tc-config.xml /home/someuser/tc-archive_server.zip"
                                                     + "\n\tor\n\t# java "
                                                     + ArchiveUtil.class.getName()
                                                     + " /export1/terracotta/server-logs"
                                                     + "\n\nUsage Summary:\n\n\tTypically you will use this tool to create a full "
-                                                    + "(-f) archive of the Terracotta server instance.\n\t"
+                                                    + "archive of the Terracotta server instance.\n\t"
                                                     + "You may also want to create archives on the DSO client machines using"
                                                     + " the -c option. There are two\n\tscenarios where you may "
                                                     + "need to use the directory location instead of the config file path."
@@ -72,7 +72,7 @@ public final class ArchiveUtil {
 
   private static final Set    validDashArgs     = new HashSet();
   static {
-    validDashArgs.add(DASH_F);
+    validDashArgs.add(DASH_N);
     validDashArgs.add(DASH_C);
   }
 
@@ -119,7 +119,7 @@ public final class ArchiveUtil {
     }
     if (dashSet.size() > 2) escape(USAGE, null);
     boolean dashC = dashSet.contains(DASH_C);
-    boolean dashF = dashSet.contains(DASH_F);
+    boolean dashN = dashSet.contains(DASH_N);
 
     if (locationCmd < 0) escape(
         "Please specify the Terracotta config file location or logs/data directory location\n\n" + USAGE, null);
@@ -133,7 +133,7 @@ public final class ArchiveUtil {
           "\tThe directory specified for the output file does not exist", null);
     }
     try {
-      new ArchiveUtil(dashF, dashC, tcConfigFile, outputFile).createArchive();
+      new ArchiveUtil(!dashN, dashC, tcConfigFile, outputFile).createArchive();
     } catch (IOException e) {
       escape("\tUnable to read Terracotta configuration file\n", e);
     } catch (XmlException e) {
@@ -206,7 +206,7 @@ public final class ArchiveUtil {
 
   private void createPathArchive() {
     try {
-      System.out.println("Archiving:");
+      System.out.println("Archiving:\n----------------------------------------");
       ArchiveBuilder zip = new ZipBuilder(archiveFile, true);
       zip.putEntry("env-stats", EnvStats.report().getBytes());
       zip.putTraverseDirectory(tcConfig, tcConfig.getName());
@@ -218,7 +218,7 @@ public final class ArchiveUtil {
     }
     System.out.println("\n\nWrote archive to:" + archiveFile);
   }
-  
+
   private void createArchive() throws IOException, XmlException {
     if (tcConfig.isDirectory()) {
       createPathArchive();

@@ -150,12 +150,12 @@ public final class ArchiveUtilTest extends TCTestCase {
 
   public void testValidServerArchiveContents() throws Exception {
     clear();
-    log("<server> valid archive contents");
+    log("<server> -n valid archive contents");
     String[] slogs = new String[] { MK_SERVER_LOG_DIR };
     String[] sdata = new String[] { MK_SERVER_DATA_DIR };
     String config = createConfig(NONE, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
-    String[] args = new String[] { configFile.toString() };
+    String[] args = new String[] { "-n", configFile.toString() };
     executeArchiveUtil(args);
     DateFormat df = new SimpleDateFormat("y-M-d");
     File defaultArchive = new File(mockDataDir + File.separator + "tc-archive" + "_"
@@ -202,7 +202,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     String[] sdata = new String[] { MK_SERVER_DATA_DIR };
     String config = createConfig(NONE, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
-    String[] args = new String[] { configFile.toString(), archiveFile.toString() };
+    String[] args = new String[] { "-n", configFile.toString(), archiveFile.toString() };
     executeArchiveUtil(args);
     Set contents = listArchiveContents(archiveFile);
     assertTrue(contents.contains(TC_CONFIG));
@@ -216,12 +216,12 @@ public final class ArchiveUtilTest extends TCTestCase {
 
   public void testValidServerFullArchiveContents() throws Exception {
     clear();
-    log("<server> -f valid archive contents");
+    log("<server> valid archive contents");
     String[] slogs = new String[] { MK_SERVER_LOG_DIR };
     String[] sdata = new String[] { MK_SERVER_DATA_DIR };
     String config = createConfig(NONE, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
-    String[] args = new String[] { "-f", configFile.toString(), archiveFile.toString() };
+    String[] args = new String[] { configFile.toString(), archiveFile.toString() };
     executeArchiveUtil(args);
     Set contents = listArchiveContents(archiveFile);
     assertTrue(contents.contains(TC_CONFIG));
@@ -257,10 +257,10 @@ public final class ArchiveUtilTest extends TCTestCase {
 
   public void testIgnoresFOptionForClient() throws Exception {
     clear();
-    log("<client> ignores -f option");
+    log("<client> ignores -n option");
     String config = createConfig(NONE, new String[] { NONE }, new String[] { NONE });
     File configFile = writeConfig(config.getBytes());
-    executeArchiveUtil(new String[] { "-c", "-f", configFile.toString(), archiveFile.toString() });
+    executeArchiveUtil(new String[] { "-c", "-n", configFile.toString(), archiveFile.toString() });
     assertFalse(archiveFile.exists());
   }
 
@@ -331,7 +331,7 @@ public final class ArchiveUtilTest extends TCTestCase {
     String[] sdata = new String[] { "foo" };
     String config = createConfig(MK_CLIENT_DIR, new String[] { NONE }, sdata);
     File configFile = writeConfig(config.getBytes());
-    executeArchiveUtil(new String[] { "-f", configFile.toString(), archiveFile.toString() });
+    executeArchiveUtil(new String[] { configFile.toString(), archiveFile.toString() });
     assertFalse(archiveFile.exists());
   }
 
