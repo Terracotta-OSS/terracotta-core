@@ -52,10 +52,11 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
       pwd = server.getAuthentication().getPasswordFile();
       if (pwd == null) pwd = Authentication.type.getElementProperty(QName.valueOf("password-file")).getDefaultText();
       pwd = new File(ParameterSubstituter.substitute(pwd)).getAbsolutePath();
-      access = new File(server.getAuthentication().getAccessFile()).getAbsolutePath();
+
+      access = server.getAuthentication().getAccessFile();
       if (access == null) access = Authentication.type.getElementProperty(QName.valueOf("access-file"))
           .getDefaultText();
-      access = ParameterSubstituter.substitute(access);
+      access = new File(ParameterSubstituter.substitute(access)).getAbsolutePath();
     }
     this.passwordFile = pwd;
     this.accessFile = access;
