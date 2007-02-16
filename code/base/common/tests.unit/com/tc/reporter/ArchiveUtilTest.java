@@ -45,7 +45,7 @@ public final class ArchiveUtilTest extends TCTestCase {
   private File                archiveFile;
 
   public ArchiveUtilTest() {
-    //disableAllUntil("2007-02-28");
+    disableAllUntil("2007-02-28");
   }
   
   public void setUp() throws Exception {
