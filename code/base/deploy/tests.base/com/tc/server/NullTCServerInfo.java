@@ -59,4 +59,8 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
     //
   }
 
+  public String getHealthStatus() {
+    return "";
+  }
+
 }

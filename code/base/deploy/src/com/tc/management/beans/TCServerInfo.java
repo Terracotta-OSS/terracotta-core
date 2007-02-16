@@ -129,4 +129,10 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
            + branch + ")";
   }
 
+  public String getHealthStatus() {
+    // FIXME: the returned value should eventually contain a true representative status of L2 server.
+    // for now just return 'OK' to indicate that the process is up-and-running..
+    return "OK";
+  }
+
 }
