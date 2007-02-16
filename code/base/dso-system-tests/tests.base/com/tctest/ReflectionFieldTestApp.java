@@ -520,20 +520,6 @@ public class ReflectionFieldTestApp extends GenericTestApp {
       Assert.assertEquals(5, i);
 
     } else {
-      try {
-        sizeField.setInt(map, 42);
-        throw new RuntimeException("modify allowed");
-      } catch (IllegalAccessException iae) {
-        // expected
-      }
-
-      try {
-        sizeField.setInt(subMap, 42);
-        throw new RuntimeException("modify allowed");
-      } catch (IllegalAccessException iae) {
-        // expected
-      }
-
       int i = iField.getInt(subMap);
       Assert.assertEquals(3, i);
 

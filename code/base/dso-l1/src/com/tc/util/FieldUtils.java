@@ -30,26 +30,19 @@ public class FieldUtils {
   }
 
   public static Object get(Object obj, Field field, FieldAccessor fieldAccessor) {
-    if (isTCField(field)) { return null; }
-
-    if (isStaticAndNonRootField(field)) { return fieldAccessor.get(obj); }
-
-    if (ManagerUtil.isRoot(field.getDeclaringClass().getName(), field.getName())) {
-      if ((obj instanceof TransparentAccess) && !isStaticField(field)) {
-        return resolveReference((TransparentAccess) obj, field);
-      } else {
-        return resolveReference(obj, field);
+    if (isTCField(field)) {
+      return null;
+    } else if (!isStaticAndNonRootField(field)) {
+      if (ManagerUtil.isRoot(field.getDeclaringClass().getName(), field.getName())
+          || ManagerUtil.isPhysicallyInstrumented(field.getDeclaringClass())) {
+        if ((obj instanceof TransparentAccess) && !isStaticField(field)) {
+          return resolveReference((TransparentAccess) obj, field);
+        } else {
+          return resolveReference(obj, field);
+        }
       }
     }
-
-    if (TransparentAccess.class.isAssignableFrom(field.getDeclaringClass()) && (obj instanceof TransparentAccess)
-        && (obj instanceof Manageable) && (((Manageable) obj).__tc_managed() != null)) {
-      // field of physically managed object
-      return resolveReference((TransparentAccess) obj, field);
-    }
-
     // XXX: disallow field reads of shared logical objects?
-
     return fieldAccessor.get(obj);
   }
 
