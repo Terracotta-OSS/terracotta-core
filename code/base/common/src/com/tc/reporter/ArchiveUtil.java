@@ -6,6 +6,7 @@ package com.tc.reporter;
 
 import org.apache.xmlbeans.XmlException;
 
+import com.tc.config.Loader;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.sysinfo.EnvStats;
 import com.tc.util.ArchiveBuilder;
@@ -13,7 +14,6 @@ import com.tc.util.ZipBuilder;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
-import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
@@ -224,7 +224,7 @@ public final class ArchiveUtil {
       createPathArchive();
       return;
     }
-    TcConfig configBeans = TcConfigDocument.Factory.parse(tcConfig).getTcConfig();
+    TcConfig configBeans = new Loader().parse(tcConfig).getTcConfig();
     File clientLogsDir = null;
     File[] serverLogsDir = null;
     File[] serverDataDir = null;
