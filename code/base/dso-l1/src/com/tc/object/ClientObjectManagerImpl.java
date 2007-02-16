@@ -4,10 +4,6 @@
  */
 package com.tc.object;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-import bsh.ParseException;
-
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.ChannelIDLogger;
@@ -51,6 +47,8 @@ import java.io.Writer;
 import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -335,28 +333,23 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
    * This method is created for situations in which a method needs to be taken place when an object moved from
    * non-shared to shared. The method could be an instrumented method. For instance, for ConcurrentHashMap, we need to
    * re-hash the objects already in the map because the hashing algorithm is different when a ConcurrentHashMap is
-   * shared. The rehash method is an instrumented method. This should be executed only once. TODO: Check if using
-   * reflection will be faster.
+   * shared. The rehash method is an instrumented method. This should be executed only once.
    */
   private void executePostCreateMethod(Object pojo) {
+    // This method used to use beanshell, but I changed it to reflection to hopefully avoid a deadlock -- CDV-130
+
     String onLookupMethodName = clientConfiguration.getPostCreateMethodIfDefined(pojo.getClass().getName());
     if (onLookupMethodName != null) {
-      onLookupMethodName = "self." + onLookupMethodName + "()";
       try {
-        Interpreter i = new Interpreter();
-        i.setClassLoader(pojo.getClass().getClassLoader());
-        i.set("self", pojo);
-        i.eval("setAccessibility(true)");
-        i.eval(onLookupMethodName);
-      } catch (ParseException e) { // Error Parsing script.
-        // Use e.getMessage() instead of e.getErrorText() when there is a ParseException because
-        // expectedTokenSequences in ParseException could be null and thus, may throw a NullPointerException when
-        // calling e.getErrorText().
-        logger.warn("Unable to parse OnLoad script: " + pojo.getClass() + " error: " + e.getMessage() + " line: "
-                    + "    stack: " + e.getScriptStackTrace());
-      } catch (EvalError e) { // General Error evaluating script
-        logger.warn("OnLoad execute script failed for: " + pojo.getClass() + " error: " + e.getErrorText() + " line: "
-                    + e.getErrorLineNumber() + "; " + e.getMessage() + "; stack: " + e.getScriptStackTrace());
+        Method m = pojo.getClass().getDeclaredMethod(onLookupMethodName, new Class[] {});
+        m.setAccessible(true);
+        m.invoke(pojo, new Object[] {});
+      } catch (Throwable t) {
+        if (t instanceof InvocationTargetException) {
+          t = t.getCause();
+        }
+        logger.warn("postCreate method (" + onLookupMethodName + ") failed on object of " + pojo.getClass(), t);
+        throw new RuntimeException(t);
       }
     }
   }
