@@ -11,6 +11,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.FileNotFoundException;
+import java.nio.channels.FileLock;
+import java.nio.channels.FileChannel;
 import java.lang.reflect.Array;
 
 /**
@@ -29,9 +31,12 @@ public class Util {
       
    		InputStream in   = null;  
    		OutputStream out = null;
+   		FileLock lock    = null;
    		try {
       		in  = new FileInputStream(src);
       		out = new FileOutputStream(destpath);
+      		FileChannel channel = ((FileOutputStream)out).getChannel();
+      		lock = channel.lock();
    		
       		byte[] buffer = new byte[4096];
       		int bytesRead;
@@ -50,8 +55,9 @@ public class Util {
    	   }
    	   finally {
    	      try {
-      		   if (out != null) out.close();
-      		   if (in  != null) in.close();
+   	         if (lock != null) lock.release();
+      		   if (out  != null) out.close();
+      		   if (in   != null) in.close();
    	      } catch (IOException ioex) {
       	      System.err.println(ioex.getMessage());
       	      ioex.printStackTrace();
