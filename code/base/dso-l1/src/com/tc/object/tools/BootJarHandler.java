@@ -55,11 +55,7 @@ public class BootJarHandler {
   }
   
   public void announceCreationStart() {
-    if (write_out_temp_file) {
-      announce("Creating temp boot JAR at '" + tempOutputFileAbsPath + "...");
-    } else {
-      announce("Creating boot JAR at '" + outputFileAbsPath + "...");
-    }
+    announce("Creating boot JAR at '" + outputFileAbsPath + "...");
   }
  
   public BootJar getBootJar() throws UnsupportedVMException {
@@ -86,23 +82,24 @@ public class BootJarHandler {
   
   public void announceCreationEnd() throws BootJarHandlerException {
     if (write_out_temp_file) {
-      announce("Successfully created temp boot JAR file at '" + tempOutputFileAbsPath + "'.");
       createFinalBootJar();
-    } else {
-      announce("Successfully created boot JAR file at '" + outputFileAbsPath + "'.");
-    }
+    } 
+    announce("Successfully created boot JAR file at '" + outputFileAbsPath + "'.");
   }
   
   private void createFinalBootJar() throws BootJarHandlerException {
     announce("Creating boot JAR at '" + outputFileAbsPath + "...");
     try {
       JarInputStream jarIn = new JarInputStream(new FileInputStream(tempOutputFile.getAbsolutePath()));
-
       Manifest manifest = jarIn.getManifest();
       if (manifest == null) {
         manifest = new Manifest();
       }
-      JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(outputFile.getAbsolutePath()), manifest);
+      
+      File tempFile = File.createTempFile("terracotta", "bootjar.tmp");
+      tempFile.deleteOnExit();
+      
+      JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(tempFile.getAbsolutePath()), manifest);
       byte[] buffer = new byte[4096];
       JarEntry entry;
       while ((entry = jarIn.getNextJarEntry()) != null) {
@@ -119,14 +116,15 @@ public class BootJarHandler {
       jarOut.flush();
       jarOut.close();
       jarIn.close();
+      
+      if (!com.tc.util.Util.copyFile(tempFile, outputFile)) {
+         throw new Exception("Unable to copy boot jar file to final output location: " + outputFile.getAbsolutePath());
+      }
+      
     } catch (Exception e) {
       throw new BootJarHandlerException("ERROR creating boot jar", e);
     }
-    announce("Successfully created boot JAR file at '" + outputFileAbsPath + "'.");
-    announce("Deleting temp boot JAR file at '" + tempOutputFileAbsPath + "'.");
-    if (tempOutputFile.delete()) {
-      announce("Successfully deleted temp boot JAR file at '" + tempOutputFileAbsPath + "'.");
-    } else {
+    if (!tempOutputFile.delete()) {
       announce("Warning: Unsuccessful deletion of temp boot JAR file at '" + tempOutputFileAbsPath + "'.");
     }  
   }

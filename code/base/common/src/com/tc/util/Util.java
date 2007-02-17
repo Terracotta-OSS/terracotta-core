@@ -4,7 +4,13 @@
 package com.tc.util;
 
 import com.tc.logging.TCLogger;
-
+import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.lang.reflect.Array;
 
 /**
@@ -14,6 +20,50 @@ public class Util {
   private static final Error FATAL_ERROR = new Error(
                                                      "Fatal error -- Please refer to console output and Terracotta log files for more information");
 
+  public static boolean copyFile(File src, File dest) {
+      if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+         File destpath = dest;
+         if (dest.isDirectory()) {
+            destpath = new File(dest, src.getName());
+         }
+      
+   		InputStream in   = null;  
+   		OutputStream out = null;
+   		try {
+      		in  = new FileInputStream(src);
+      		out = new FileOutputStream(destpath);
+   		
+      		byte[] buffer = new byte[4096];
+      		int bytesRead;
+   		
+      		while ((bytesRead = in.read(buffer)) >= 0) {
+      			out.write(buffer, 0, bytesRead);
+      		}
+   	   }
+   	   catch (FileNotFoundException fnfex) {
+   	      System.err.println(fnfex.getMessage());
+   	      return false;
+   	   }
+   	   catch (IOException ioex) {
+   	      System.err.println(ioex.getMessage());
+   	      return false;
+   	   }
+   	   finally {
+   	      try {
+      		   if (out != null) out.close();
+      		   if (in  != null) in.close();
+   	      } catch (IOException ioex) {
+      	      System.err.println(ioex.getMessage());
+      	      ioex.printStackTrace();
+            }
+   	   }
+   	   return true;
+      } else {
+        return src.renameTo(dest);
+      }
+  }
+  
+  
   /**
    * Enumerates the argument, provided that it is an array, in a nice, human-readable format.
    * 

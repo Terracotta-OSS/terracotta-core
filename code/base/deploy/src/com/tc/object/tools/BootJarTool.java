@@ -144,7 +144,7 @@ import java.util.zip.ZipEntry;
  */
 public class BootJarTool {
   private final static String         OUTPUT_FILE_OPTION           = "o";
-  private final static boolean        WRITE_OUT_TEMP_FILE          = false;
+  private final static boolean        WRITE_OUT_TEMP_FILE          = true;
 
   private static final String         DEFAULT_CONFIG_PATH          = "default-config.xml";
   private static final String         DEFAULT_CONFIG_SPEC          = "tc-config.xml";
@@ -207,6 +207,7 @@ public class BootJarTool {
   public void generateJar() {
     instrumentationLogger = new InstrumentationLoggerImpl(config.getInstrumentationLoggingOptions());
 
+    //bootJarHandler.setOverwriteMode(commandLine.hasOption("x"));
     try {
       bootJarHandler.validateDirectoryExists();
     } catch (BootJarHandlerException e) {
@@ -1840,14 +1841,20 @@ public class BootJarTool {
     if (outputFile.isDirectory()) {
       outputFile = new File(outputFile, BootJarSignature.getBootJarNameForThisVM());
     }
+    
 
     // This used to be a provider that read from a specified rt.jar (to let us create boot jars for other platforms).
     // That requirement is no more, but might come back, so I'm leaving at least this much scaffolding in place
     // WAS: systemProvider = new RuntimeJarBytesProvider(...)
-    ClassBytesProvider systemProvider = new ClassLoaderBytesProvider(ClassLoader.getSystemClassLoader());
 
-    new BootJarTool(new StandardDSOClientConfigHelper(config, false), outputFile, systemProvider, !verbose)
-        .generateJar();
+       ClassBytesProvider systemProvider = new ClassLoaderBytesProvider(ClassLoader.getSystemClassLoader());
+       new BootJarTool(new StandardDSOClientConfigHelper(config, false), outputFile, systemProvider, !verbose)
+           .generateJar();
+
+//File tempOutputFile = File.createTempFile("terracotta", "bootjar.tmp");
+//tempOutputFile.deleteOnExit();
+//
+//com.tc.util.Util.copyFile(tempOutputFile, outputFile);
   }
 
   public static class RuntimeJarBytesProvider implements ClassBytesProvider {
