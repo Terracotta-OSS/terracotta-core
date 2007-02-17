@@ -44,6 +44,7 @@ public class Util {
       		while ((bytesRead = in.read(buffer)) >= 0) {
       			out.write(buffer, 0, bytesRead);
       		}
+      		return true;
    	   }
    	   catch (FileNotFoundException fnfex) {
    	      System.err.println(fnfex.getMessage());
@@ -63,7 +64,6 @@ public class Util {
       	      ioex.printStackTrace();
             }
    	   }
-   	   return true;
       } else {
         return src.renameTo(dest);
       }
