@@ -1,3 +1,4 @@
 # specify test pattern here, one per line
 #MultiNodeDsoSessionsLoadTest
+SessionInvalidatorTest
 
