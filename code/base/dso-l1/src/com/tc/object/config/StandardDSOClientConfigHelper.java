@@ -590,8 +590,13 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     spec = getOrCreateSpec("java.awt.geom.Dimension2D");
     // end java.awt.Dimension
 
-    spec = getOrCreateSpec("javax.swing.tree.DefaultTreeModel");
+    addIncludePattern("javax.swing.tree.TreePath", false);
+    spec = getOrCreateSpec("javax.swing.tree.TreePath");
+
     addIncludePattern("javax.swing.tree.DefaultMutableTreeNode", false);
+    spec = getOrCreateSpec("javax.swing.tree.DefaultMutableTreeNode");
+    
+    spec = getOrCreateSpec("javax.swing.tree.DefaultTreeModel");
     ld = new LockDefinition("tctreeLock", ConfigLockLevel.WRITE);
     ld.commit();
     addLock("* javax.swing.tree.DefaultTreeModel.get*(..)", ld);

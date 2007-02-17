@@ -35,8 +35,12 @@ public class DistributedMethodCall {
 
   public final Object[] getParameters() {
     Object[] rv = new Object[parameters.length];
-    for (int i = 0; i < parameters.length; i++) 
+    for (int i = 0; i < parameters.length; i++)
       rv[i] = parameters[i];
     return rv;
+  }
+
+  public String toString() {
+    return receiver.getClass().getName() + "." + methodName + paramDesc;
   }
 }
