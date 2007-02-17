@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -18,7 +19,7 @@ import java.util.Map;
  * @author steve
  */
 public class Traverser {
-  private static final TraverseTest[]  NULL_TEST = new TraverseTest[] { new NullTraverseTest() };
+  private static final TraverseTest    NULL_TEST = new NullTraverseTest();
   private final TraversalAction        action;
   private final PortableObjectProvider portableObjectProvider;
   private NonPortableEventContext      context;
@@ -28,7 +29,7 @@ public class Traverser {
     this.portableObjectProvider = portableObjectProvider;
   }
 
-  private void addReferencedObjects(Map toBeVisited, Object start, Map visited, TraverseTest[] traverseTests) {
+  private void addReferencedObjects(Map toBeVisited, Object start, Map visited, TraverseTest traverseTest) {
     Class clazz = start.getClass();
 
     while (clazz != null) {
@@ -40,13 +41,11 @@ public class Traverser {
           TraversedReference currentReference = (TraversedReference) i.next();
           Object currentObject = currentReference.getValue();
 
-          if (doNotTraverse(traverseTests, visited, currentObject)) {
+          if (doNotTraverse(traverseTest, visited, currentObject)) {
             continue;
           }
 
-          for (int j = 0, n = traverseTests.length; j < n; j++) {
-            traverseTests[j].checkPortability(currentReference, start.getClass(), context);
-          }
+          traverseTest.checkPortability(currentReference, start.getClass(), context);
 
           toBeVisited.put(currentObject, null);
         } catch (IllegalArgumentException e) {
@@ -58,14 +57,12 @@ public class Traverser {
 
   }
 
-  private boolean doNotTraverse(TraverseTest[] traverseTests, Map visited, Object current) {
+  private boolean doNotTraverse(TraverseTest traverseTest, Map visited, Object current) {
     if (current == null) { return true; }
 
     if (visited.containsKey(current)) { return true; }
 
-    for (int i = 0, n = traverseTests.length; i < n; i++) {
-      if (!traverseTests[i].shouldTraverse(current)) { return true; }
-    }
+    if (!traverseTest.shouldTraverse(current)) { return true; }
 
     return false;
   }
@@ -74,19 +71,15 @@ public class Traverser {
     traverse(object, NULL_TEST, null);
   }
 
-  public void traverse(Object object, TraverseTest[] traverseTests, NonPortableEventContext ctx) {
+  public void traverse(Object object, TraverseTest traverseTest, NonPortableEventContext ctx) {
     this.context = ctx;
     Map visited = new IdentityHashMap();
     List toAdd = new ArrayList();
-    
-//    if (doNotTraverse(traverseTests, visited, object)) { // this test is added for the non-distributable logic
-//      return;
-//    }
-    
+
     visited.put(object, null);
 
     IdentityHashMap toBeVisited = new IdentityHashMap();
-    addReferencedObjects(toBeVisited, object, visited, traverseTests);
+    addReferencedObjects(toBeVisited, object, visited, traverseTest);
     toAdd.add(object);
 
     while (!toBeVisited.isEmpty()) {
@@ -94,7 +87,7 @@ public class Traverser {
         Object obj = i.next();
         visited.put(obj, null);
         toBeVisited.remove(obj);
-        addReferencedObjects(toBeVisited, obj, visited, traverseTests);
+        addReferencedObjects(toBeVisited, obj, visited, traverseTest);
         toAdd.add(obj); // action.visit() to be taken place after addReferencedObjects() so that
         // the manager of the referenced objects will only be set after the referenced
         // objects are obtained.

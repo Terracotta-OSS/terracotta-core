@@ -20,7 +20,6 @@ import com.tc.object.ObjectID;
 import com.tc.object.Portability;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
-import com.tc.object.TraverseTest;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.event.DmiManager;
@@ -688,10 +687,6 @@ public class ManagerImpl implements Manager {
 
   public void optimisticRollback() {
     this.optimisticTransactionManager.rollback();
-  }
-
-  public boolean addTraverseTest(TraverseTest test) {
-    return this.objectManager.addTraverseTest(test);
   }
 
   public boolean isPhysicallyInstrumented(Class clazz) {

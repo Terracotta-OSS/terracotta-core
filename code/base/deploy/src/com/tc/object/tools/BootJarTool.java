@@ -42,7 +42,6 @@ import com.tc.object.PortabilityImpl;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
-import com.tc.object.TraverseTest;
 import com.tc.object.bytecode.AbstractStringBuilderAdapter;
 import com.tc.object.bytecode.BufferedWriterAdapter;
 import com.tc.object.bytecode.ChangeClassNameHierarchyAdapter;
@@ -286,7 +285,6 @@ public class BootJarTool {
       loadTerracottaClass(TCNotSupportedMethodException.class.getName());
       loadTerracottaClass(ExceptionWrapper.class.getName());
       loadTerracottaClass(ExceptionWrapperImpl.class.getName());
-      loadTerracottaClass(TraverseTest.class.getName());
       loadTerracottaClass(Os.class.getName());
       loadTerracottaClass(NIOWorkarounds.class.getName());
       loadTerracottaClass(TCProperties.class.getName());

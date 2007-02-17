@@ -1,14 +1,13 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.exception.ImplementMe;
-import com.tc.exception.TCNonPortableObjectError;
 import com.tc.net.protocol.tcm.TestChannelIDProvider;
-import com.tc.object.appevent.NonPortableEventContext;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.cache.EvictionPolicy;
 import com.tc.object.cache.NullCache;
@@ -60,25 +59,6 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
                                       new TestChannelIDProvider(), classProvider, classFactory, objectFactory,
                                       new PortabilityImpl(clientConfiguration));
     mgr.setTransactionManager(new MockTransactionManager());
-  }
-
-  public void testAddTraverseTest() {
-    TraverseTest t1 = new TraverseTest() {
-      public void checkPortability(TraversedReference obj, Class referringClass, NonPortableEventContext context)
-          throws TCNonPortableObjectError {
-        throw new ImplementMe();
-      }
-
-      public boolean shouldTraverse(Object obj) {
-        throw new ImplementMe();
-      }
-    };
-
-    boolean b = this.mgr.addTraverseTest(t1);
-    assertTrue(b);
-
-    b = this.mgr.addTraverseTest(t1);
-    assertFalse(b);
   }
 
   /**

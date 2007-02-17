@@ -90,7 +90,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   private final EvictionPolicy                 cache;
   private final Traverser                      traverser;
   private final Traverser                      shareObjectsTraverser;
-  private TraverseTest[]                       traverseTests;
+  private final TraverseTest                   traverseTest;
   private final DSOClientConfigHelper          clientConfiguration;
   private final TCClassFactory                 clazzFactory;
   private final Set                            objectLookupsInProgress = new HashSet();
@@ -121,8 +121,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     this.portability = portability;
     this.logger = new ChannelIDLogger(provider, TCLogging.getLogger(ClientObjectManager.class));
     this.classProvider = classProvider;
-    this.traverseTests = new TraverseTest[1];
-    this.traverseTests[0] = new NewObjectTraverseTest();
+    this.traverseTest = new NewObjectTraverseTest();
     this.traverser = new Traverser(new AddManagedObjectAction(), this);
     this.shareObjectsTraverser = new Traverser(new SharedObjectsAction(), this);
     this.clazzFactory = classFactory;
@@ -783,25 +782,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     }
   }
 
-  public synchronized boolean addTraverseTest(TraverseTest additionalTest) {
-    if (additionalTest == null) { throw new AssertionError("null traverse test"); }
-    for (int i = 0; i < this.traverseTests.length; i++) {
-      if (this.traverseTests[i] == additionalTest) {
-        // already here
-        return false;
-      }
-    }
-
-    TraverseTest[] newList = new TraverseTest[this.traverseTests.length + 1];
-    System.arraycopy(this.traverseTests, 0, newList, 0, this.traverseTests.length);
-    newList[newList.length - 1] = additionalTest;
-    this.traverseTests = newList;
-    return true;
-  }
-
   private void addToManagedFromRoot(Object root, NonPortableEventContext context) {
     try {
-      traverser.traverse(root, traverseTests, context);
+      traverser.traverse(root, traverseTest, context);
     } catch (TCNonPortableObjectError e) {
       if (DUMP_OBJECT_HIERARCHY) {
         dumpObjectHierarchy(root);
@@ -826,7 +809,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   }
 
   private void addToSharedFromRoot(Object root, NonPortableEventContext context) {
-    shareObjectsTraverser.traverse(root, traverseTests, context);
+    shareObjectsTraverser.traverse(root, traverseTest, context);
   }
 
   private class AddManagedObjectAction implements TraversalAction {

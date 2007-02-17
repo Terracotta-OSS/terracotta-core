@@ -9,7 +9,6 @@ import com.tc.logging.TCLogger;
 import com.tc.management.beans.sessions.SessionMonitorMBean;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
-import com.tc.object.TraverseTest;
 import com.tc.object.bytecode.hook.impl.ArrayManager;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.lockmanager.api.LockLevel;
@@ -60,10 +59,6 @@ public class ManagerUtil {
     beginLock("test", LockLevel.WRITE);
     getManager().optimisticCommit();
     commitLock("test");
-  }
-
-  public static boolean addTraverseTest(TraverseTest test) {
-    return getManager().addTraverseTest(test);
   }
 
   public static void optimisticRollback() {

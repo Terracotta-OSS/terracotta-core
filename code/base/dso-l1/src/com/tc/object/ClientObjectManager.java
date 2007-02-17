@@ -17,8 +17,6 @@ import java.util.Map;
  */
 public interface ClientObjectManager {
 
-  public boolean addTraverseTest(TraverseTest additionalTest);
-
   public Class getClassFor(String className, String loaderDesc) throws ClassNotFoundException;
 
   public boolean isManaged(Object pojo);
@@ -97,6 +95,6 @@ public interface ClientObjectManager {
   public void addPendingCreateObjectsToTransaction();
 
   public boolean hasPendingCreateObjects();
-  
+
   public Object createOrReplaceRoot(String rootName, Object root);
 }

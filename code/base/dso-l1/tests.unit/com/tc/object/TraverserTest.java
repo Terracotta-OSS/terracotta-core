@@ -1,11 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.exception.TCNonPortableObjectError;
-import com.tc.object.appevent.NonPortableEventContext;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.field.TCFieldFactory;
@@ -19,101 +18,6 @@ import java.util.List;
  * @author steve
  */
 public class TraverserTest extends BaseDSOTestCase {
-
-  /**
-   * Constructor for TraverserTest.
-   * 
-   * @param arg0
-   */
-  public TraverserTest(String arg0) {
-    super(arg0);
-  }
-
-  private static class MyTraverseTester implements TraverseTest {
-
-    private boolean shouldTraverse;
-
-    public MyTraverseTester(boolean should) {
-      this.shouldTraverse = should;
-    }
-
-    public void checkPortability(TraversedReference obj, Class referringClass, NonPortableEventContext context)
-        throws TCNonPortableObjectError {
-      //
-    }
-
-    public boolean shouldTraverse(Object object) {
-      return shouldTraverse;
-    }
-
-    void setShouldTraverse(boolean should) {
-      this.shouldTraverse = should;
-    }
-  }
-
-  private static class Ref {
-    Object ref;
-
-    Object getRef() {
-      return this.ref;
-    }
-
-    void setRef(Object ref) {
-      this.ref = ref;
-    }
-  }
-
-  private class MyPortableObjectProvider implements PortableObjectProvider {
-
-    public TraversedReferences getPortableObjects(Class clazz, Object start, TraversedReferences addTo) {
-      Ref ref = (Ref) start;
-      Object next = ref.getRef();
-      if (next != null) {
-        addTo.addAnonymousReference(next);
-      }
-      return addTo;
-    }
-  }
-
-  private static TraverseTest[] makeTests(boolean test1, boolean test2) {
-    return new TraverseTest[] { new MyTraverseTester(test1), new MyTraverseTester(test2) };
-  }
-
-  public void testMultipleTraverseTest() {
-    final Ref o1 = new Ref();
-    final Ref o2 = new Ref();
-    o1.setRef(o2);
-    o2.setRef(null);
-
-    new Traverser(new TraversalAction() {
-      public void visit(List objects) {
-        // expected
-        if (!objects.contains(o1)) throw new AssertionError();
-        if (!objects.contains(o2)) throw new AssertionError();
-      }
-    }, new MyPortableObjectProvider()).traverse(o1, makeTests(true, true), null);
-
-    new Traverser(new TraversalAction() {
-      public void visit(List objects) {
-        if (!objects.contains(o1)) throw new AssertionError();
-        if (objects.contains(o2)) throw new AssertionError();
-      }
-    }, new MyPortableObjectProvider()).traverse(o1, makeTests(true, false), null);
-
-    new Traverser(new TraversalAction() {
-      public void visit(List objects) {
-        if (objects.contains(o2)) throw new AssertionError();
-        if (!objects.contains(o1)) throw new AssertionError();
-      }
-    }, new MyPortableObjectProvider()).traverse(o1, makeTests(false, true), null);
-
-    new Traverser(new TraversalAction() {
-      public void visit(List objects) {
-        if (objects.contains(o2)) throw new AssertionError();
-        if (!objects.contains(o1)) throw new AssertionError();
-      }
-    }, new MyPortableObjectProvider()).traverse(o1, makeTests(false, false), null);
-  }
 
   public void testTraverse() throws Exception {
     System.out.println("Starting");

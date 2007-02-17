@@ -194,10 +194,6 @@ public class TestClientObjectManager implements ClientObjectManager {
     throw new ImplementMe();
   }
 
-  public boolean addTraverseTest(TraverseTest additionalTest) {
-    throw new ImplementMe();
-  }
-
   public TCObject lookupOrShare(Object pojo) {
     throw new ImplementMe();
   }
@@ -222,7 +218,7 @@ public class TestClientObjectManager implements ClientObjectManager {
     throw new ImplementMe();
   }
 
-  public Object createOrReplaceRoot(String rootName, Object root) {
+  public Object createOrReplaceRoot(String rootName, Object r) {
     throw new ImplementMe();
   }
 }

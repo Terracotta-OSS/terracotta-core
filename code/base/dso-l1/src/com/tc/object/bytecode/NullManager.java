@@ -9,7 +9,6 @@ import com.tc.logging.TCLogger;
 import com.tc.management.beans.sessions.SessionMonitorMBean;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
-import com.tc.object.TraverseTest;
 import com.tc.object.event.DmiManager;
 import com.tc.properties.TCProperties;
 
@@ -158,10 +157,6 @@ public final class NullManager implements Manager {
 
   public final int waitLength(Object obj) {
     return 0;
-  }
-
-  public final boolean addTraverseTest(TraverseTest test) {
-    throw new UnsupportedOperationException();
   }
 
   public final boolean isHeldByCurrentThread(Object obj, int lockLevel) {
