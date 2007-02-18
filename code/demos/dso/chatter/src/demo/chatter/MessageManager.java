@@ -18,10 +18,9 @@ class MessageManager
 	   messages = Collections.synchronizedList(new ArrayList());
 	}
 
-	public synchronized void send(String sender, String message)
+	public void send(String sender, String message)
 	{
 	   Message msg = new Message(sender, message); 
-	   messages.add(msg);
 	   notifyListeners(msg);
 	}
 
@@ -37,11 +36,12 @@ class MessageManager
 
 	private synchronized void notifyListeners(Message message) 
 	{
+	   messages.add(message);
 	   for (Iterator iterator=listeners.iterator(); iterator.hasNext();) 
 	   {
 	      MessageListener l = (MessageListener)iterator.next();
-              l.read(message);
-           }
+         l.read(message);
+      }
 	}
 	
 	public Message[] getMessages()
