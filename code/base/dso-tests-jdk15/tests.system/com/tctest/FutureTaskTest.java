@@ -8,7 +8,7 @@ public class FutureTaskTest extends TransparentTestBase {
   private static final int NODE_COUNT = 3;
 
   public FutureTaskTest() {
-    disableAllUntil("2007-02-18");
+    disableAllUntil("2007-02-20");
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
