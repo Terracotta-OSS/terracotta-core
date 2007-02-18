@@ -144,11 +144,18 @@ public class Main
       }
    }
   
-   public synchronized void actionPerformed(ActionEvent e) 
+   public void actionPerformed(ActionEvent e) 
    {
-      JTextField input = (JTextField)e.getSource();
-      messageManager.send(username, input.getText());
+      JTextField input     = (JTextField) e.getSource();
+      final String message =  input.getText();
       input.setText("");
+      Thread sender = new Thread(
+         new Runnable() {
+            public void run() {
+               messageManager.send(username, message);
+            }
+         });
+      sender.start();
    }
 
    synchronized void login() 

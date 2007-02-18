@@ -27,21 +27,21 @@ class MessageManager
 
 	public void addListener(MessageListener l) 
 	{
-		listeners.add(l);
+	   listeners.add(l);
 	}
 
 	public void removeListener(MessageListener l) 
 	{
-		listeners.remove(l);
+           listeners.remove(l);
 	}
 
-	private void notifyListeners(Message message) 
+	private synchronized void notifyListeners(Message message) 
 	{
-		for (Iterator iterator=listeners.iterator(); iterator.hasNext();) 
-		{
-			MessageListener l = (MessageListener)iterator.next();
-			l.read(message);
-		}
+	   for (Iterator iterator=listeners.iterator(); iterator.hasNext();) 
+	   {
+	      MessageListener l = (MessageListener)iterator.next();
+              l.read(message);
+           }
 	}
 	
 	public Message[] getMessages()
