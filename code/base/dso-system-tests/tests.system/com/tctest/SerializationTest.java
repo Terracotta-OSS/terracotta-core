@@ -277,7 +277,7 @@ public class SerializationTest extends BaseDSOTestCase {
   private void verifyStringifiedVersion(Object o, Object n) {
     String so = String.valueOf(o);
     String sn = String.valueOf(n);
-    if (so.startsWith(o.getClass().getName() + "@")) {
+    if (so != null && so.startsWith(o.getClass().getName() + "@")) {
       // This is a result from Object.toString()
       assertTrue(sn.startsWith(o.getClass().getName() + "@"));
     } else {
