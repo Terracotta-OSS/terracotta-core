@@ -404,17 +404,13 @@ GOTO END
             GOTO END
 
          :tc_set_dso_boot_jar__1_2_2
-            SET DSO_BOOT_JAR=%TC_INSTALL_DIR%\lib\\dso-boot\%DSO_BOOT_JAR_NAME%
+            SET DSO_BOOT_JAR=%TC_INSTALL_DIR%\lib\dso-boot\%DSO_BOOT_JAR_NAME%
 
             IF NOT EXIST "%DSO_BOOT_JAR%" GOTO tc_set_dso_boot_jar__1_2_2_1
             GOTO END
 
             :tc_set_dso_boot_jar__1_2_2_1
-               echo The DSO boot JAR you need for this platform,
-               echo %DSO_BOOT_JAR%,
-               echo does not exist. You may need to run the 'make-boot-jar' script,
-               echo or consult the Terracotta documentation for more information.
-               SET EXITFLAG=TRUE
+              "%TC_JAVA%" -classpath "%TC_INSTALL_DIR%\lib\tc.jar" com.tc.object.tools.BootJarTool -o %DSO_BOOT_JAR%
                GOTO END
 
 GOTO END
