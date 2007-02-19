@@ -4,6 +4,7 @@
 require 'tmpdir'
 
 `rm -rf #{Dir.tmpdir}/terracotta*`
+`rm -rf /var/tmp/terracotta*`
 `rm -rf #{Dir.tmpdir}/open*`
 `rm -rf #{Dir.tmpdir}/*.dat`
 `rm -rf #{Dir.tmpdir}/sprint*`
