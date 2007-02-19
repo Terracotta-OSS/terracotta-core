@@ -129,16 +129,16 @@ public abstract class TCObjectImpl implements TCObject {
         // expectedTokenSequences in ParseException could be null and thus, may throw a NullPointerException when
         // calling
         // e.getErrorText().
-        consoleLogger.warn("Unable to parse OnLoad script: " + pojo.getClass() + " error: " + e.getMessage()
+        consoleLogger.error("Unable to parse OnLoad script: " + pojo.getClass() + " error: " + e.getMessage()
                            + " stack: " + e.getScriptStackTrace());
-        logger.warn("Unable to parse OnLoad script: " + pojo.getClass() + " error: " + e.getMessage() + " line: "
+        logger.error("Unable to parse OnLoad script: " + pojo.getClass() + " error: " + e.getMessage() + " line: "
                     + " stack: " + e.getScriptStackTrace());
       } catch (EvalError e) {
         // General Error evaluating script
-        consoleLogger.warn("OnLoad execute script failed for: " + pojo.getClass() + " error: " + e.getErrorText()
+        consoleLogger.error("OnLoad execute script failed for: " + pojo.getClass() + " error: " + e.getErrorText()
                            + " line: " + e.getErrorLineNumber() + "; " + e.getMessage() + "; stack: "
                            + e.getScriptStackTrace());
-        logger.warn("OnLoad execute script failed for: " + pojo.getClass() + " error: " + e.getErrorText() + " line: "
+        logger.error("OnLoad execute script failed for: " + pojo.getClass() + " error: " + e.getErrorText() + " line: "
                     + e.getErrorLineNumber() + "; " + e.getMessage() + "; stack: " + e.getScriptStackTrace());
       } finally {
         Thread.currentThread().setContextClassLoader(prevLoader);
