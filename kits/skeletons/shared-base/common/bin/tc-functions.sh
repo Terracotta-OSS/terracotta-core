@@ -375,7 +375,7 @@ tc_set_dso_boot_jar() {
 
       DSO_BOOT_JAR="${TC_INSTALL_DIR}/lib/dso-boot/${DSO_BOOT_JAR_NAME}"
       if test \! -f "${DSO_BOOT_JAR}"; then
-         ${TC_JAVA} -classpath "${TC_INSTALL_DIR}/lib/tc.jar" ${TC_ALL_JAVA_OPTS} com.tc.object.tools.BootJarTool
+         ${TC_JAVA} -classpath "${TC_INSTALL_DIR}/lib/tc.jar" ${TC_ALL_JAVA_OPTS} com.tc.object.tools.BootJarTool -o "${DSO_BOOT_JAR}"
       fi
    fi
 }
