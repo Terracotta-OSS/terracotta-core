@@ -23,50 +23,46 @@ public class Util {
                                                      "Fatal error -- Please refer to console output and Terracotta log files for more information");
 
   public static boolean copyFile(File src, File dest) {
-      if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-         File destpath = dest;
-         if (dest.isDirectory()) {
-            destpath = new File(dest, src.getName());
-         }
-      
-   		InputStream in   = null;  
-   		OutputStream out = null;
-   		FileLock lock    = null;
-   		try {
-      		in  = new FileInputStream(src);
-      		out = new FileOutputStream(destpath);
-      		FileChannel channel = ((FileOutputStream)out).getChannel();
-      		lock = channel.lock();
-   		
-      		byte[] buffer = new byte[4096];
-      		int bytesRead;
-   		
-      		while ((bytesRead = in.read(buffer)) >= 0) {
-      			out.write(buffer, 0, bytesRead);
-      		}
-      		return true;
-   	   }
-   	   catch (FileNotFoundException fnfex) {
-   	      System.err.println(fnfex.getMessage());
-   	      return false;
-   	   }
-   	   catch (IOException ioex) {
-   	      System.err.println(ioex.getMessage());
-   	      return false;
-   	   }
-   	   finally {
-   	      try {
-   	         if (lock != null) lock.release();
-      		   if (out  != null) out.close();
-      		   if (in   != null) in.close();
-   	      } catch (IOException ioex) {
-      	      System.err.println(ioex.getMessage());
-      	      ioex.printStackTrace();
-            }
-   	   }
-      } else {
-        return src.renameTo(dest);
+      File destpath = dest;
+      if (dest.isDirectory()) {
+         destpath = new File(dest, src.getName());
       }
+   
+		InputStream in   = null;  
+		OutputStream out = null;
+		FileLock lock    = null;
+		try {
+   		in  = new FileInputStream(src);
+   		out = new FileOutputStream(destpath);
+   		FileChannel channel = ((FileOutputStream)out).getChannel();
+   		lock = channel.lock();
+		
+   		byte[] buffer = new byte[4096];
+   		int bytesRead;
+		
+   		while ((bytesRead = in.read(buffer)) >= 0) {
+   			out.write(buffer, 0, bytesRead);
+   		}
+   		return true;
+	   }
+	   catch (FileNotFoundException fnfex) {
+	      System.err.println(fnfex.getMessage());
+	      return false;
+	   }
+	   catch (IOException ioex) {
+	      System.err.println(ioex.getMessage());
+	      return false;
+	   }
+	   finally {
+	      try {
+	         if (lock != null) lock.release();
+   		   if (out  != null) out.close();
+   		   if (in   != null) in.close();
+	      } catch (IOException ioex) {
+   	      System.err.println(ioex.getMessage());
+   	      ioex.printStackTrace();
+         }
+	   }
   }
   
   

@@ -145,7 +145,7 @@ import java.util.zip.ZipEntry;
  */
 public class BootJarTool {
   private final static String         OUTPUT_FILE_OPTION           = "o";
-  private final static boolean        WRITE_OUT_TEMP_FILE          = false;
+  private final static boolean        WRITE_OUT_TEMP_FILE          = true;
 
   private static final String         DEFAULT_CONFIG_PATH          = "default-config.xml";
   private static final String         DEFAULT_CONFIG_SPEC          = "tc-config.xml";
