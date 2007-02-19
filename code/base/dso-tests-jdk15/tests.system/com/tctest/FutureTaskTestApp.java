@@ -4,6 +4,7 @@
 package com.tctest;
 
 import com.tc.exception.TCRuntimeException;
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -87,7 +88,6 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
     if (index == 1) {
       ExecutorService service = new ThreadPoolExecutor(10, 10, 10L, TimeUnit.SECONDS, new LinkedBlockingQueue());
       List futures = service.invokeAll(root.getList());
-      System.err.println("After invokeAll");
       root.setTasksList(futures);
     } else {
       List tasksList = root.getTasksList();
@@ -280,12 +280,21 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
     barrier.await();
 
     if (index == 1) {
+      if (DebugUtil.DEBUG) {
+        System.err.println("timeoutGet client: " + ManagerUtil.getClientID() + " run");
+      }
       root.getTask().run();
     } else if (index == 0) {
       try {
+        if (DebugUtil.DEBUG) {
+          System.err.println("timeoutGet client: " + ManagerUtil.getClientID() + " get");
+        }
         root.getTask().get(10000, TimeUnit.MILLISECONDS);
         throw new AssertionError("Should have thrown a TimeoutException.");
       } catch (TimeoutException e) {
+        if (DebugUtil.DEBUG) {
+          System.err.println("timeoutGet client: " + ManagerUtil.getClientID() + " cancel");
+        }
         root.getTask().cancel(true);
       }
     }

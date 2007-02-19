@@ -1,7 +1,7 @@
 /*
  * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
-package com.tc.util.concurrent;
+package java.util.concurrent;
 
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.util.DebugUtil;
@@ -16,15 +16,15 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class FutureTask implements Future, Runnable {
+public class FutureTaskTC implements Future, Runnable {
   private final Sync sync;
 
-  public FutureTask(Callable callable) {
+  public FutureTaskTC(Callable callable) {
     if (callable == null) throw new NullPointerException();
     sync = new Sync(callable);
   }
 
-  public FutureTask(Runnable runnable, Object result) {
+  public FutureTaskTC(Runnable runnable, Object result) {
     sync = new Sync(Executors.callable(runnable, result));
   }
 
@@ -225,7 +225,7 @@ public class FutureTask implements Future, Runnable {
         lock.unlock();
       }
     }
-
+    
     private void managedInnerCancel() {
       Thread r = null;
       lock.lock();
@@ -282,7 +282,7 @@ public class FutureTask implements Future, Runnable {
         }
         if (isRunning) {
           if (DebugUtil.DEBUG) {
-            System.err.println("In FutureTask innerRun: -- Client id: " + ManagerUtil.getClientID() + ", state: " + state);
+            System.err.println("In FutureTask innerRun: -- Client id: " + ManagerUtil.getClientID() + ", state: " + state + ", proxyRunner: " + proxyRunner + ", runner: " + runner);
           }
           Object o = callable.call();
           lock.lock();
@@ -294,6 +294,9 @@ public class FutureTask implements Future, Runnable {
         } else {
           lock.lock();
           try {
+            if (DebugUtil.DEBUG) {
+              System.err.println("In FutureTask innerRun: -- Client id: " + ManagerUtil.getClientID() + ", finish");
+            }
             managedTryReleaseShared();
           } finally {
             lock.unlock();
