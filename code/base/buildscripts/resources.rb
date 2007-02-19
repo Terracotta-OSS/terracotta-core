@@ -69,18 +69,21 @@ show_test_results <test_run_name>
 
 PACKAGING & DISTRIBUTION
 
-dist <product_code>
-    Assembles the kit for the <product_code> specified.  <product_code> must be
-    one of 'DSO', 'SPR', or 'TST' and defaults to DSO if not specified.
+dist <product_code> <distribution_type>
+    Assembles the kit. It takes 2 arguments: <product_code> <distribution_type> It
+    uses these values to locate the appropriate kit definition file used to build the 
+    kit. By default, <product_code> is DSO and <distribution_type> is OPENSOURCE - 
+    so it looks for the kit definition file named 'dso-opensource.def.yml' in 
+    the code/base/buildconfig/distribution - if you want to know what values are 
+    appropriate for these arguments, list the contents of this directory.
 
-create_package <product_code>
-    Assembles and packages the kit for the <product_code> specified.
-    <product_code> must be one of 'DSO', 'SPR', or 'TST' and defaults to DSO if
-    not specified.
+create_package <product_code> <distribution_type>
+    Assembles and packages the kit. Takes the same argument as the dist target.
 
 create_all_packages
     Assembles, packages, and publishes all possible kits, based on the
-    configuration files found under buildconfig/distribution directory.
+    configuration files found under the code/base/buildconfig/distribution 
+    directory.
 
 
 RUNNING SERVERS, CLASSES, ETC.
