@@ -85,6 +85,9 @@ create_all_packages
     configuration files found under the code/base/buildconfig/distribution 
     directory.
 
+dist_jars <product_code> <distribution_type>
+    Acts like the dist target but will only build the jar files that will be found
+    in a kit.
 
 RUNNING SERVERS, CLASSES, ETC.
 
