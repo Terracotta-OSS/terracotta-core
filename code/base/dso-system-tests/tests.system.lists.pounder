@@ -4,3 +4,4 @@ LinkedQueueTest
 FastReadSlowWriteTest
 SimplePrimitiveArrayTest
 MaxConnectionTest
+ObjectDataRestartTest
