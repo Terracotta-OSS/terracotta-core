@@ -22,6 +22,7 @@ import org.eclipse.debug.core.model.IStreamsProxy;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
@@ -33,7 +34,6 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
-
 import org.terracotta.dso.BootJarHelper;
 import org.terracotta.dso.ExceptionDialog;
 import org.terracotta.dso.ProjectNature;
@@ -52,6 +52,7 @@ public class BuildBootJarAction extends Action
 {
   private IJavaProject m_javaProject;
   private IAction      m_action;
+  private String       m_jreContainerPath;
   
   private static final String LAUNCH_LABEL       = "DSO BootJar Creator";
   private static final String MAIN_TYPE          = "com.tc.object.tools.BootJarTool";
@@ -65,6 +66,10 @@ public class BuildBootJarAction extends Action
   public BuildBootJarAction(IJavaProject javaProject) {
     super("Build BootJar...");
     m_javaProject = javaProject;
+  }
+  
+  public void setJREContainerPath(String path) {
+    m_jreContainerPath = path;
   }
   
   public void run(IAction action) {
@@ -141,10 +146,18 @@ public class BuildBootJarAction extends Action
     ILaunchConfigurationWorkingCopy wc      = type.newInstance(null, LAUNCH_LABEL);
     IProject                        project = m_javaProject.getProject();
     
+    String portablePath = m_jreContainerPath;
+    if(portablePath == null) {
+      IPath jrePath = JavaRuntime.computeJREEntry(m_javaProject).getPath();
+      if(jrePath != null) {
+        portablePath = jrePath.toPortableString();
+      }
+    }
+
     TcPlugin plugin      = TcPlugin.getDefault();
     IFile    configFile  = plugin.getConfigurationFile(project);
     IPath    configPath  = configFile.getLocation();
-    String   bootJarName = BootJarHelper.getHelper().getBootJarName();
+    String   bootJarName = BootJarHelper.getHelper().getBootJarName(portablePath);
     IPath    outPath     = project.getLocation().append(bootJarName);
     String   args        = "-o " + toOSString(outPath) + " -f " + toOSString(configPath);
     
@@ -159,6 +172,7 @@ public class BuildBootJarAction extends Action
     wc.setAttribute(ATTR_MAIN_TYPE_NAME, MAIN_TYPE);
     wc.setAttribute(ATTR_PROGRAM_ARGUMENTS, args);
     wc.setAttribute(ATTR_CLASSPATH_PROVIDER, CLASSPATH_PROVIDER);
+    wc.setAttribute(ATTR_JRE_CONTAINER_PATH, portablePath);
     
     String             runMode  = ILaunchManager.RUN_MODE;
     JavaLaunchDelegate delegate = new JavaLaunchDelegate();

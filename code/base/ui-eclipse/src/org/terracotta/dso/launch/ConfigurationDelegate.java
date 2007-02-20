@@ -84,7 +84,7 @@ public class ConfigurationDelegate extends JavaLaunchDelegate
       IFile localBootJar = project.getFile(bootJarName);
       IPath bootPath;
       
-      testEnsureBootJar(plugin, javaProject, localBootJar);
+      testEnsureBootJar(plugin, javaProject, localBootJar, jreContainerPath);
       
       if(localBootJar.exists()) {
         bootPath = localBootJar.getLocation();
@@ -135,7 +135,8 @@ public class ConfigurationDelegate extends JavaLaunchDelegate
   private void testEnsureBootJar(
     final TcPlugin     plugin,
     final IJavaProject javaProject,
-    final IFile        bootJar)
+    final IFile        bootJar,
+    final String       jreContainerPath)
   {
     IProject            project                 = javaProject.getProject();
     ConfigurationHelper configHelper            = plugin.getConfigurationHelper(project);
@@ -154,6 +155,7 @@ public class ConfigurationDelegate extends JavaLaunchDelegate
         Display.getDefault().syncExec(new Runnable() {
           public void run() {
             BuildBootJarAction bbja = new BuildBootJarAction(javaProject);
+            bbja.setJREContainerPath(jreContainerPath);
             bbja.run(null);
           }
         });
