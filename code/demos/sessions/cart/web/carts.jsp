@@ -1,3 +1,6 @@
+<%
+final String contextPath=request.getContextPath();
+%>
 <html>
 <!--
   Copyright 2004 The Apache Software Foundation
@@ -50,7 +53,7 @@
 
 <font size = 5 color="#CC0000">
 
-<form type=POST action=/Cart>
+<form type=POST action="<%=contextPath%>">
 <BR>
 Please enter item to add or remove:
 <br>
@@ -120,7 +123,7 @@ document.writeln(
       (dsoEnabled ? 'On' : 'Off') + rowEnd +
    rowStart + 'Items in Cart:' + rowMiddle + cartSize + rowEnd +
    rowStart + 'Go to:' + rowMiddle + '<a href="http://' + location.hostname +
-      ':' + otherServer + '/Cart"><b>Server ' + otherServer + '</b></a>' + rowEnd +
+      ':' + otherServer + '<%=contextPath%>"><b>Server ' + otherServer + '</b></a>' + rowEnd +
    '</table></td><td style="padding-left: 15px">' +
    getMsg() + '</td></tr></table></div>');
 </script>
