@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -46,9 +47,13 @@ public class TCObjectPhysical extends TCObjectImpl {
 
   public void resolveAllReferences() {
     TCClass tcc = getTCClass();
-    TCField[] fields = tcc.getPortableFields();
-    for (int i = 0; i < fields.length; i++) {
-      if (fields[i].canBeReference()) resolveReference(fields[i].getName());
+
+    while (tcc != null) {
+      TCField[] fields = tcc.getPortableFields();
+      for (int i = 0; i < fields.length; i++) {
+        if (fields[i].canBeReference()) resolveReference(fields[i].getName());
+      }
+      tcc = tcc.getSuperclass();
     }
   }
 
@@ -110,20 +115,20 @@ public class TCObjectPhysical extends TCObjectImpl {
   public void logicalInvoke(int method, String methodSignature, Object[] params) {
     throw new UnsupportedOperationException();
   }
-  
+
   public void literalValueChanged(Object newValue, Object oldValue) {
     getObjectManager().getTransactionManager().literalValueChanged(this, newValue, oldValue);
     setPeerObject(new WeakObjectReference(getObjectID(), newValue, getObjectManager().getReferenceQueue()));
   }
-  
+
   /**
-   * Unlike literalValueChange, this method is not synchronized on getResolveLock() because this method is called
-   * by the applicator thread which has been synchronized on getResolveLock() in TCObjectImpl.hydrate().
+   * Unlike literalValueChange, this method is not synchronized on getResolveLock() because this method is called by the
+   * applicator thread which has been synchronized on getResolveLock() in TCObjectImpl.hydrate().
    */
   public void setLiteralValue(Object newValue) {
     setPeerObject(new WeakObjectReference(getObjectID(), newValue, getObjectManager().getReferenceQueue()));
   }
-  
+
   protected boolean isEvictable() {
     return true;
   }
