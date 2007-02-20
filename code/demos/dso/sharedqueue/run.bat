@@ -10,5 +10,5 @@ setlocal
 set topdir=%~d0%~p0..\..\..
 cd %~d0%~p0
 call "%topdir%\bin\dso-env.bat" -q tc-config.xml
-start call "%topdir%\bin\tc-functions.bat" tc_java %tc_java_opts% -cp "classes;lib\org.mortbay.jetty-4.2.20.jar;lib\javax.servlet.jar" demo.sharedqueue.Main %*
+start call "%topdir%\bin\tc-functions.bat" tc_java %tc_java_opts% -Dcom.sun.management.jmxremote -cp "classes;lib\org.mortbay.jetty-4.2.20.jar;lib\javax.servlet.jar" demo.sharedqueue.Main %*
 endlocal

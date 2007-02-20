@@ -12,4 +12,4 @@ TOPDIR=`dirname "$0"`/../../..
 TC_CONFIG_PATH="tc-config.xml"
 . "${TOPDIR}"/bin/dso-env.sh
 
-tc_java ${TC_JAVA_OPTS} -cp "classes:lib/org.mortbay.jetty-4.2.20.jar:lib/javax.servlet.jar" demo.sharedqueue.Main "$@"
+tc_java ${TC_JAVA_OPTS} -Dcom.sun.management.jmxremote -cp "classes:lib/org.mortbay.jetty-4.2.20.jar:lib/javax.servlet.jar" demo.sharedqueue.Main "$@"
