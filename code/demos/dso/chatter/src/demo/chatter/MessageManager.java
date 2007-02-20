@@ -36,7 +36,7 @@ class MessageManager
 
 	private synchronized void notifyListeners(Message message) 
 	{
-	   messages.add(message);
+	   synchronized(messages) { messages.add(message); }
 	   for (Iterator iterator=listeners.iterator(); iterator.hasNext();) 
 	   {
 	      MessageListener l = (MessageListener)iterator.next();
