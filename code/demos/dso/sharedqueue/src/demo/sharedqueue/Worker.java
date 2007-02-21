@@ -54,7 +54,7 @@ class Worker
       }
    }
 
-   public boolean attemptKill() {
+   public boolean expire() {
       if (HEALTH_DYING == health) {
          if (jobs.size() > 0) {
             queue.addJob((Job) jobs.remove(0));
@@ -64,7 +64,7 @@ class Worker
       return HEALTH_DEAD == health;
    }
    
-   public void markForDeath() {
+   public void markForExpiration() {
       setHealth(HEALTH_DYING);
    }
 

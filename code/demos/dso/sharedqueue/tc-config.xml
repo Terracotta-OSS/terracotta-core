@@ -47,14 +47,14 @@
           <method-expression>* *..*.*(..)</method-expression>
         </autolock>
         <named-lock>
-          <lock-name>WorkerKeepAlive</lock-name>
-          <method-expression>* demo.sharedqueue.Worker.keepAlive(..)</method-expression>
-          <lock-level>write</lock-level>
-        </named-lock>
-        <named-lock>
           <lock-name>WorkerSetHealth</lock-name>
           <method-expression>* demo.sharedqueue.Worker.setHealth(..)</method-expression>
           <lock-level>write</lock-level>
+        </named-lock>
+        <named-lock>
+          <lock-name>WorkerExpire</lock-name>
+          <method-expression>* demo.sharedqueue.Worker.expire(..)</method-expression>
+          <lock-level>read</lock-level>
         </named-lock>
       </locks>
 

@@ -114,7 +114,7 @@ public class Queue {
          ListIterator i = workers.listIterator();
          while (i.hasNext()) {
             Worker worker = (Worker) i.next();
-            if (worker.attemptKill()) {
+            if (worker.expire()) {
                i.remove();
             }
          }

@@ -184,7 +184,7 @@ public class Main {
             String nodeId = notification.getMessage();
             Worker worker = Main.this.queue.getWorker(nodeId);
             if (worker != null) {
-               worker.markForDeath();
+               worker.markForExpiration();
             } else {
                System.err.println("Worker for nodeId: " + nodeId + " not found.");
             }
