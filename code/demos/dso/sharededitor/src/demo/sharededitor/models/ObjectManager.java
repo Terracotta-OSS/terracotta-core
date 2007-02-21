@@ -33,63 +33,77 @@ public class ObjectManager
 
 	public void addListener(IListListener listListener)
 	{
-		if (!listeners.contains(listListener))
-		{
-			listeners.add(listListener);
-			listListener.changed(this, null);
-		}
+	   synchronized(listeners) { 
+   		if (!listeners.contains(listListener))
+   		{
+   			listeners.add(listListener);
+   			listListener.changed(this, null);
+   		}
+	   }
 	}
 
 	public void removeListener(IListListener listListener)
 	{
-		if (listeners.contains(listListener))
-			listeners.remove(listListener);
+	   synchronized(objList) { 
+   		if (listeners.contains(listListener))
+   			listeners.remove(listListener);
+		}
 	}
 
 	private void notifyListeners(Object obj)
 	{
-		Iterator i = listeners.iterator();
-		while (i.hasNext())
-		{
-			IListListener listListener = (IListListener)i.next();
-			listListener.changed(this, obj);
-		}
+	   synchronized(objList) { 
+   		Iterator i = listeners.iterator();
+   		while (i.hasNext())
+   		{
+   			IListListener listListener = (IListListener)i.next();
+   			listListener.changed(this, obj);
+   		}
+	   }
 	}
 
 	public synchronized void add(BaseObject obj)
 	{
-		if (objList.contains(obj))
-			return;
+	   synchronized(objList) { 
+      	if (objList.contains(obj))
+      		return;
 
-		obj.addListener(this);
-		objList.add(obj);
-		obj.notifyListeners(obj);
+      	obj.addListener(this);
+      	objList.add(obj);
+      	obj.notifyListeners(obj);
 
-		notifyListeners(obj);
+      	notifyListeners(obj);
+	   }
 	}
 
 	public synchronized void remove(BaseObject obj)
 	{
-		if (!objList.contains(obj))
-			return;
+	   synchronized(objList) { 
+   		if (!objList.contains(obj))
+   			return;
 
-		objList.remove(obj);
-		obj.notifyListeners(obj);
-		obj.removeListener(this);
+   		objList.remove(obj);
+   		obj.notifyListeners(obj);
+   		obj.removeListener(this);
 
-		notifyListeners(obj);
+   		notifyListeners(obj);
+	   }
 	}
 
 	public BaseObject[] reversedList()
 	{
-		List list = Collections.synchronizedList(new ArrayList(objList));
-		Collections.reverse(list);
-		return (BaseObject[])list.toArray(new BaseObject[0]);
+	   synchronized(objList) { 
+   		List list = new ArrayList(objList);
+   		Collections.reverse(list);
+   		return (BaseObject[])list.toArray(new BaseObject[0]);
+	   }
 	}
 
 	public BaseObject[] list()
 	{
-		return (BaseObject[])objList.toArray(new BaseObject[0]);
+	   synchronized(objList) { 
+		   return (BaseObject[])objList.toArray(new BaseObject[0]);
+	   }
 	}
 
 	public boolean canGrabAt(int x, int y)
@@ -140,53 +154,63 @@ public class ObjectManager
 
 	private void ungrabAll()
 	{
-		lastGrabbed = null;
-		grabList.clear();
-		notifyListeners(null);
+	   synchronized(grabList) { 
+   		lastGrabbed = null;
+   		grabList.clear();
+   		notifyListeners(null);
+	   }
 	}
 
 	private void grab(BaseObject obj, int x, int y)
 	{
-		obj.selectAction(true);
+	   synchronized(grabList) { 
+   		obj.selectAction(true);
 		
-		if (grabList.contains(obj))
-			return;
+   		if (grabList.contains(obj))
+   			return;
 
-		grabList.add(obj);
-		obj.setGrabbedAnchorAt(x, y);
+   		grabList.add(obj);
+   		obj.setGrabbedAnchorAt(x, y);
 
-		notifyListeners(obj);
-		lastGrabbed = obj;
+   		notifyListeners(obj);
+   		lastGrabbed = obj;
+	   }
 	}
 
 	private void ungrab(BaseObject obj)
 	{
-		obj.selectAction(false);
+	   synchronized(grabList) { 
+   		obj.selectAction(false);
 		
-		if (!grabList.contains(obj))
-			return;
+   		if (!grabList.contains(obj))
+   			return;
 
-		grabList.remove(obj);
-		notifyListeners(obj);
-		lastGrabbed = null;
+   		grabList.remove(obj);
+   		notifyListeners(obj);
+   		lastGrabbed = null;
+	   }
 	}
 
 	private void grab(BaseObject obj)
 	{
-		if (grabList.contains(obj))
-			return;
+	   synchronized(grabList) { 
+   		if (grabList.contains(obj))
+   			return;
 
-		obj.selectAction(true);
-		grabList.add(obj);
-		notifyListeners(obj);
-		lastGrabbed = obj;
+   		obj.selectAction(true);
+   		grabList.add(obj);
+   		notifyListeners(obj);
+   		lastGrabbed = obj;
+	   }
 	}
 
 	public void deleteSelection()
 	{
-		Iterator i = grabList.iterator();
-		while (i.hasNext())
-			remove((BaseObject)i.next());
+	   synchronized(grabList) { 
+   		Iterator i = grabList.iterator();
+   		while (i.hasNext())
+   			remove((BaseObject)i.next());
+		}
 	}
 
 	public void selectAll()
@@ -230,15 +254,21 @@ public class ObjectManager
 
 	public void toggleSelection()
 	{
-		if (objList.size() == grabList.size())
-			clearSelection();
-		else
-			selectAll();
+	   synchronized(objList) { 
+	      synchronized(grabList) {
+      		if (objList.size() == grabList.size())
+      			clearSelection();
+      		else
+      			selectAll();
+			}
+		}
 	}
 
 	public boolean isGrabbed(BaseObject obj)
 	{
-		return grabList.contains(obj);
+	   synchronized(grabList) { 
+   		return grabList.contains(obj);
+	   }
 	}
 
 	public void changed(Object source, Object obj)

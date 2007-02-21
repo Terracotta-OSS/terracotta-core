@@ -35,28 +35,35 @@ public abstract class BaseObject implements IFillStyleConsts
 
 	public void addListener(IListListener listListener)
 	{
-		if (listeners == null)
-			listeners = Collections.synchronizedList(new ArrayList());
+	   if (listeners == null)
+		   listeners = Collections.synchronizedList(new ArrayList());
 
-		if (!listeners.contains(listListener)) listeners.add(listListener);
+      synchronized(listeners) { 
+         if (!listeners.contains(listListener)) 
+            listeners.add(listListener); 
+      }
 	}
 
 	public void removeListener(IListListener listListener)
 	{
-		if ((listeners != null) && (listeners.contains(listListener)))
-			listeners.remove(listListener);
+	   if ((listeners != null) && (listeners.contains(listListener)))
+	   synchronized(listeners) {
+		   listeners.remove(listListener);
+      }
 	}
 
 	protected void notifyListeners(Object obj)
 	{
 		if (listeners == null) return;
 
-		Iterator i = listeners.iterator();
-		while (i.hasNext())
-		{
-			IListListener listListener = (IListListener) i.next();
-			listListener.changed(this, this);
-		}
+      synchronized(listeners) { 
+   		Iterator i = listeners.iterator();
+   		while (i.hasNext())
+   		{
+   			IListListener listListener = (IListListener) i.next();
+   			listListener.changed(this, this);
+   		}
+	   }
 	}
 
 	private boolean isReady()

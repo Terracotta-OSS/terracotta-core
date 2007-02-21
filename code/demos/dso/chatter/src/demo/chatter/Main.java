@@ -26,15 +26,13 @@ import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.SwingUtilities;
 
-public class Main 
-   extends JFrame implements MessageListener, ActionListener 
-{
+public class Main
+       extends JFrame implements ActionListener, MessageListener {
    private MessageManager messageManager;
    private String username;
    private JTextPane display;
 
-   public Main(String username) 
-   {
+   public Main(String username) {
       super("Chatter: " + username);
       messageManager = new MessageManager();
 
@@ -51,8 +49,8 @@ public class Main
       input.setFont(new Font("Lucida Sans Typewriter", Font.PLAIN, 9));
       input.addActionListener(this);
       JScrollPane scroll = new JScrollPane(display);
-      Random r           = new Random();
-      JLabel buddy       = new JLabel(username, new ImageIcon("images/buddy" + r.nextInt(10) + ".gif"), JLabel.LEFT);
+      Random r = new Random();
+      JLabel buddy = new JLabel(username, new ImageIcon("images/buddy" + r.nextInt(10) + ".gif"), JLabel.LEFT);
       buddy.setFont(new Font("Lucida Sans Typewriter", Font.PLAIN, 16));
       buddy.setVerticalTextPosition(JLabel.CENTER);
       JPanel buddypanel = new JPanel();
@@ -69,41 +67,36 @@ public class Main
       this.username = username;
       setSize(new Dimension(300, 400));
       setVisible(true);
-      
+
       input.requestFocus();
       login();
-   }  
-  
-   public void read(Message message) 
-   {
-      String sender = message.getSender();
-      String text   = message.getMessage();
-      try 
-      { 
-         Document doc = display.getDocument();
-         Style style  = display.addStyle("Style", null);
+   }
 
-         if (sender.equals("")) 
-         {
+   public void read(Message message) {
+      String sender = message.getSender();
+      String text = message.getMessage();
+      try {
+         Document doc = display.getDocument();
+         Style style = display.addStyle("Style", null);
+
+         if (sender.equals("")) {
             StyleConstants.setItalic(style, true);
             StyleConstants.setForeground(style, Color.LIGHT_GRAY);
             StyleConstants.setFontSize(style, 9);
          }
-         else 
-         {
-            if (sender.equals(username)) 
-            {
+         else {
+            if (sender.equals(username)) {
                StyleConstants.setItalic(style, true);
                StyleConstants.setForeground(style, Color.GRAY);
-            }            
+            }
             StyleConstants.setBold(style, true);
-            doc.insertString(doc.getLength(), sender + ": ", style); 
+            doc.insertString(doc.getLength(), sender + ": ", style);
          }
 
          StyleConstants.setBold(style, false);
          int offset = doc.getLength();
-         doc.insertString(doc.getLength(), text, style); 
-         doc.insertString(doc.getLength(), "\n", style); 
+         doc.insertString(doc.getLength(), text, style);
+         doc.insertString(doc.getLength(), "\n", style);
 
          java.util.Hashtable emoticons = new java.util.Hashtable();
          emoticons.put(":P", "belat");
@@ -121,16 +114,16 @@ public class Main
          emoticons.put(":)", "smile");
          emoticons.put(";)", "wink");
 
-         for (java.util.Enumeration e=emoticons.keys(); e.hasMoreElements();) 
-         {
+         for (java.util.Enumeration e = emoticons.keys(); e.hasMoreElements(); ) {
             String symbol = e.nextElement().toString();
-            String icon   = emoticons.get(symbol).toString();
+            String icon = emoticons.get(symbol).toString();
 
-            while (true) 
-            {
-               text    = doc.getText(offset, text.length());
+            while (true) {
+               text = doc.getText(offset, text.length());
                int pos = text.indexOf(symbol);
-               if (pos < 0) break;
+               if (pos < 0) {
+                  break;
+               }
                StyleConstants.setIcon(style, new ImageIcon("images/" + icon + ".gif"));
                doc.insertString(offset + pos, ".", style);
                doc.remove(offset + pos + 1, symbol.length());
@@ -138,61 +131,59 @@ public class Main
          }
          display.setCaretPosition(doc.getLength());
       }
-      catch (javax.swing.text.BadLocationException ble) 
-      { 
-         System.err.println(ble.getMessage()); 
+      catch (javax.swing.text.BadLocationException ble) {
+         System.err.println(ble.getMessage());
       }
    }
-  
-   public void actionPerformed(ActionEvent e) 
-   {
-      JTextField input     = (JTextField) e.getSource();
-      final String message =  input.getText();
+
+   public void actionPerformed(ActionEvent e) {
+      JTextField input = (JTextField) e.getSource();
+      final String message = input.getText();
       input.setText("");
       Thread sender = new Thread(
-         new Runnable() {
-            public void run() {
-               messageManager.send(username, message);
-            }
-         });
+               new Runnable() {
+                  public void run() {
+                     messageManager.send(username, message);
+                  }
+               });
       sender.start();
    }
 
-   synchronized void login() 
-   {
+   synchronized void login() {
       messageManager.send("", username + " entered the chat");
       Message[] messages = messageManager.getMessages();
-      for(int i=0; i<messages.length; i++)
+      for (int i = 0; i < messages.length; i++) {
          read(messages[i]);
+      }
       messageManager.addListener(this);
    }
-  
-   synchronized void logout() 
-   {
-      messageManager.removeListener(this); 
+
+   synchronized void logout() {
+      messageManager.removeListener(this);
       messageManager.send("", username + " left the chat");
    }
 
-   private static String chatname(String name) 
-   {
-      Random r = new Random();
-      if (name.length() > 0) return name + r.nextInt(10000);
-
-      String[] cool = 
-      { 
-         "Miles", "Ella", "Nina", "Duke", "Charlie", "Billie", "Louis", "Fats", "Thelonious", "Dizzy",
-         "Davis", "Fitzgerald", "Simone", "Ellington", "Parker", "Holiday", "Armstrong", "Waller", "Monk", "Gillespie"
-      };
-      return cool[r.nextInt(10)] + cool[r.nextInt(10) + 10];
+   public static void main(String[] args) {
+      final String name = args.length == 0 ? "" : args[0];
+      javax.swing.SwingUtilities.invokeLater(
+               new Runnable() {
+                  public void run() {
+                     new Main(Main.chatname(name));
+                  }
+               });
    }
 
-   public static void main(String[] args) 
-   {
-      final String name = args.length == 0 ? "" : args[0];
-      javax.swing.SwingUtilities.invokeLater(new Runnable() {
-         public void run() {
-            new Main(Main.chatname(name));
-         }
-      });
+   private static String chatname(String name) {
+      Random r = new Random();
+      if (name.length() > 0) {
+         return name + r.nextInt(10000);
+      }
+
+      String[] cool =
+            {
+            "Miles", "Ella", "Nina", "Duke", "Charlie", "Billie", "Louis", "Fats", "Thelonious", "Dizzy",
+            "Davis", "Fitzgerald", "Simone", "Ellington", "Parker", "Holiday", "Armstrong", "Waller", "Monk", "Gillespie"
+            };
+      return cool[r.nextInt(10)] + cool[r.nextInt(10) + 10];
    }
 }

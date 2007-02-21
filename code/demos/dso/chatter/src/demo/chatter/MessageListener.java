@@ -3,7 +3,6 @@
 */
 package demo.chatter;
 
-interface MessageListener 
-{
-	public void read(Message message);
+interface MessageListener {
+   public void read(Message message);
 }
