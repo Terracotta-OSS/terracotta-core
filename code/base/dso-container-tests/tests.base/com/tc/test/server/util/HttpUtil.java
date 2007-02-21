@@ -21,7 +21,7 @@ import java.net.URL;
  */
 public final class HttpUtil {
 
-  private static final int     DEFAULT_TIMEOUT  = 30 * 1000;
+  private static final int     DEFAULT_TIMEOUT  = 60 * 1000;
   private static final int     DEFAULT_MAX_CONN = 1000;
 
   private static final boolean DEBUG            = false;
