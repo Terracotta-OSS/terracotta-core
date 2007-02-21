@@ -2,20 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>currentDocument</key>
-	<string>buildscripts/extensions/bundled-components.rb</string>
 	<key>documents</key>
 	<array>
-		<dict>
-			<key>filename</key>
-			<string>modules.def.yml</string>
-		</dict>
-		<dict>
-			<key>filename</key>
-			<string>services.modules.yml</string>
-			<key>lastUsed</key>
-			<date>2007-02-03T00:03:39Z</date>
-		</dict>
 		<dict>
 			<key>filename</key>
 			<string>appservers.yml</string>
@@ -23,6 +11,10 @@
 		<dict>
 			<key>filename</key>
 			<string>build-tc.rb</string>
+			<key>lastUsed</key>
+			<date>2007-02-21T21:16:07Z</date>
+			<key>selected</key>
+			<true/>
 		</dict>
 		<dict>
 			<key>expanded</key>
@@ -35,87 +27,41 @@
 			<string>buildscripts</string>
 		</dict>
 		<dict>
-			<key>expanded</key>
-			<true/>
 			<key>name</key>
 			<string>buildconfig</string>
 			<key>regexFolderFilter</key>
 			<string>!.*/(\.[^/]*|CVS|_darcs|_MTN|\{arch\}|blib|.*~\.nib|.*\.(framework|app|pbproj|pbxproj|xcode(proj)?|bundle))$</string>
 			<key>sourceDirectory</key>
 			<string>buildconfig</string>
+		</dict>
+		<dict>
+			<key>filename</key>
+			<string>jdk.def.yml</string>
+		</dict>
+		<dict>
+			<key>filename</key>
+			<string>modules.def.yml</string>
+		</dict>
+		<dict>
+			<key>filename</key>
+			<string>services.modules.yml</string>
+		</dict>
+		<dict>
+			<key>filename</key>
+			<string>build-config.global</string>
+		</dict>
+		<dict>
+			<key>filename</key>
+			<string>build-config.global.win32</string>
 		</dict>
 	</array>
 	<key>fileHierarchyDrawerWidth</key>
 	<integer>200</integer>
 	<key>metaData</key>
-	<dict>
-		<key>buildconfig/distribution/dso-opensource.def.yml</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>56</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>10</integer>
-		</dict>
-		<key>buildscripts/extensions/bundled-components.rb</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>68</integer>
-				<key>line</key>
-				<integer>60</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>13</integer>
-		</dict>
-		<key>buildscripts/extensions/bundled-vendors.rb</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>0</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>0</integer>
-		</dict>
-		<key>buildscripts/extensions/distribution.rb</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>24</integer>
-				<key>line</key>
-				<integer>100</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>88</integer>
-		</dict>
-	</dict>
-	<key>openDocuments</key>
-	<array>
-		<string>buildscripts/extensions/distribution.rb</string>
-		<string>buildscripts/extensions/bundled-components.rb</string>
-		<string>buildscripts/extensions/bundled-vendors.rb</string>
-		<string>buildconfig/distribution/dso-opensource.def.yml</string>
-	</array>
+	<dict/>
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>
-	<string>{{210, 0}, {1226, 878}}</string>
+	<string>{{0, 0}, {1226, 878}}</string>
 </dict>
 </plist>
