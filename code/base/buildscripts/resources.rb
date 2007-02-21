@@ -44,6 +44,9 @@ check_one <test_name>
 check
     Runs all tests
 
+check_prep <module> <type>
+    Prepare to run tests from an external tool (eg: Eclipse)
+
 check_file <file>
     Runs set of tests specified in <file>.  Each line of the <file>
     can be blank, a comment (starting with '#'), or the fully
