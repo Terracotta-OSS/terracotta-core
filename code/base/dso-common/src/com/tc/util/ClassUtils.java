@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -11,6 +12,23 @@ public class ClassUtils {
     ClassSpecImpl rv = new ClassSpecImpl();
     rv.parseFullyQualifiedFieldName(fieldName);
     return rv;
+  }
+
+  public static int arrayDimensions(Class arrayClass) {
+    if (arrayClass == null) { throw new NullPointerException(); }
+    if (!arrayClass.isArray()) { throw new IllegalArgumentException(arrayClass + " is not an array type"); }
+    return arrayClass.getName().lastIndexOf("[") + 1;
+  }
+
+  public static Class baseComponetType(Class c) {
+    if (c == null) { throw new NullPointerException(); }
+    if (!c.isArray()) { throw new IllegalArgumentException(c + " is not an array type"); }
+
+    while (c.isArray()) {
+      c = c.getComponentType();
+    }
+
+    return c;
   }
 
   public static boolean isPrimitiveArray(Object test) {
@@ -64,4 +82,5 @@ public class ClassUtils {
       return "ClassSpec[classname=" + fullyQualifiedClassName + ", shortFieldName=" + shortFieldName + "]";
     }
   }
+
 }

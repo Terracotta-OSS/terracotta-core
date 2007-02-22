@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -50,6 +51,43 @@ public class ClassUtilsTest extends TestCase {
     // stringWriter = new StringWriter();
     // printWriter = new PrintWriter(stringWriter);
     // reasonFormatter = newFormatter(printWriter);
+  }
+
+  public void testArrayMethods() {
+    assertEquals(int.class, ClassUtils.baseComponetType(int[][][][][].class));
+    assertEquals(Object.class, ClassUtils.baseComponetType(Object[].class));
+
+    try {
+      ClassUtils.baseComponetType(null);
+      fail();
+    } catch (NullPointerException e) {
+      // expected
+    }
+
+    try {
+      ClassUtils.baseComponetType(int.class);
+      fail();
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+
+    assertEquals(5, ClassUtils.arrayDimensions(int[][][][][].class));
+    assertEquals(1, ClassUtils.arrayDimensions(Object[].class));
+
+    try {
+      ClassUtils.arrayDimensions(null);
+      fail();
+    } catch (NullPointerException e) {
+      // expected
+    }
+
+    try {
+      ClassUtils.arrayDimensions(int.class);
+      fail();
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+
   }
 
   public void testNonPortableReason() {
@@ -614,7 +652,9 @@ public class ClassUtilsTest extends TestCase {
       return null;
     }
 
-    public TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, String className, InstrumentationLogger lgr, ClassLoader caller, boolean forcePortable) {
+    public TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, String className,
+                                                             InstrumentationLogger lgr, ClassLoader caller,
+                                                             boolean forcePortable) {
       return null;
     }
   }
