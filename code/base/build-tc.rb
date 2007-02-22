@@ -236,9 +236,9 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
       @no_compile = false # override this if it's turned on
       compile
       mark_this_revision_as_good(@build_environment.current_revision)
-    rescue
+    rescue StandardError => e
       mark_this_revision_as_bad(@build_environment.current_revision)
-      raise $!
+      raise e
     end
   end
   
@@ -612,7 +612,7 @@ END
   def mark_this_revision_as_good(revision)
     STDERR.puts("Revision #{revision} is good to go.")
     File.open(File.join(build_archive_dir.to_s, "currently_good_rev.txt"), "w") do | f |
-      f << revision + "\n"
+      f << revision.to_s + "\n"
     end
   end
   

@@ -41,7 +41,7 @@ begin
     STDERR.puts "Currently good revision: #{currently_good_revision}"
   end
 rescue
-  # ignore
+  currently_good_rev = 0
 end
 
 while true
