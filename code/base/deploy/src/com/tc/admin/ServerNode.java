@@ -312,8 +312,6 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     AdminClientContext acc = AdminClient.getContext();
     String msg = null;
     
-    e.printStackTrace(); // XXX
-
     if (e instanceof ServiceUnavailableException || e.getCause() instanceof ServiceUnavailableException) {
       String tmpl = acc.getMessage("service.unavailable");
       MessageFormat form = new MessageFormat(tmpl);

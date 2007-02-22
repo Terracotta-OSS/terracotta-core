@@ -42,6 +42,7 @@ public class ConnectDialog extends Dialog {
   private final JTextField     m_usernameField;
   private final JPasswordField m_passwordField;
   private final Button         m_okButton;
+  private final Button         m_authCancelButton;
   private final Container      m_emptyPanel;
   private final Container      m_authPanel;
 
@@ -83,6 +84,7 @@ public class ConnectDialog extends Dialog {
     m_authPanel.setVisible(false);
     this.m_usernameField = (JTextField) credentialsPanel.findComponent("UsernameField");
     this.m_okButton = (Button) m_authPanel.findComponent("OKButton");
+    this.m_authCancelButton = (Button) m_authPanel.findComponent("CancelButton");
 
     // must be found last because JPasswordField is not a Dijon Component
     TextField passwordField = (TextField) credentialsPanel.findComponent("PasswordField");
@@ -102,6 +104,11 @@ public class ConnectDialog extends Dialog {
         });
       }
     });
+    m_authCancelButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        m_cancelButton.doClick();
+      }
+    });
 
     m_timer = new Timer(delay, taskPerformer);
     m_timer.setRepeats(false);
@@ -114,11 +121,15 @@ public class ConnectDialog extends Dialog {
     m_usernameField.setText("");
     m_passwordField.setText("");
     m_authPanel.setVisible(false);
+    m_authCancelButton.setVisible(false);
+    m_cancelButton.setVisible(true);
     pack();
   }
 
   private void enableAuthenticationDialog() {
     m_emptyPanel.add(m_authPanel);
+    m_cancelButton.setVisible(false);
+    m_authCancelButton.setVisible(true);
     m_usernameField.setEnabled(true);
     m_passwordField.setEnabled(true);
     m_authPanel.setVisible(true);
