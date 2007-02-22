@@ -6,7 +6,6 @@ package com.tc.admin;
 
 import org.dijon.Container;
 import org.dijon.ContainerResource;
-import org.dijon.TextField;
 
 import com.tc.admin.common.StatusRenderer;
 import com.tc.admin.common.StatusView;
@@ -14,25 +13,18 @@ import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XObjectTable;
 import com.tc.config.schema.L2Info;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.text.DateFormat;
 import java.util.Date;
 
-import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JPasswordField;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
 import javax.swing.table.TableColumnModel;
 
 public class ServerPanel extends XContainer {
@@ -40,8 +32,6 @@ public class ServerPanel extends XContainer {
   private ServerNode              m_serverNode;
   private JTextField              m_hostField;
   private JTextField              m_portField;
-  private JPasswordField          m_passwordField;
-  private JTextField              m_usernameField;
   private JButton                 m_connectButton;
   static private ImageIcon        m_connectIcon;
   static private ImageIcon        m_disconnectIcon;
@@ -69,24 +59,12 @@ public class ServerPanel extends XContainer {
     m_hostField = (JTextField) findComponent("HostField");
     m_portField = (JTextField) findComponent("PortField");
     m_connectButton = (JButton) findComponent("ConnectButton");
-    m_usernameField = (JTextField) findComponent("UsernameField");
     m_runtimeInfoPanel = (Container) findComponent("RuntimeInfoPanel");
     m_statusView = (StatusView) findComponent("StatusIndicator");
     m_productInfoPanel = (ProductInfoPanel) findComponent("ProductInfoPanel");
     m_clusterMemberTable = (XObjectTable) findComponent("ClusterMembersTable");
     m_clusterMemberTableModel = new ClusterMemberTableModel();
     m_clusterMemberListener = new ClusterMemberListener();
-
-    Container credentialsPanel = (Container) findComponent("CredentialsPanel");
-    TitledBorder border = BorderFactory.createTitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Credentials");
-    credentialsPanel.setBorder(border);
-    
-    TextField passwordField = (TextField) findComponent("PasswordField");
-    Container passwdHolder = new Container();
-    passwdHolder.setLayout(new BorderLayout());
-    passwdHolder.add(m_passwordField = new JPasswordField());
-    credentialsPanel.replaceChild(passwordField, passwdHolder);
-
     m_clusterMemberTable.setModel(m_clusterMemberTableModel);
     TableColumnModel colModel = m_clusterMemberTable.getColumnModel();
     colModel.getColumn(0).setCellRenderer(new ClusterMemberStatusRenderer());
@@ -118,26 +96,6 @@ public class ServerPanel extends XContainer {
           m_acc.controller.log("'" + port + "' not a number");
           m_portField.setText(Integer.toString(m_serverNode.getPort()));
         }
-      }
-    });
-    
-    m_usernameField.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        String username = m_usernameField.getText().trim();
-        
-        m_serverNode.setUsername(username);
-        m_acc.controller.nodeChanged(m_serverNode);
-        m_acc.controller.updateServerPrefs();
-      }
-    });
-    
-    m_passwordField.addFocusListener(new FocusAdapter() {
-      public void focusLost(FocusEvent e) {
-        String password = new String(m_passwordField.getPassword()).trim();
-
-        m_serverNode.setPassword(password);
-        m_acc.controller.nodeChanged(m_serverNode);
-        m_acc.controller.updateServerPrefs();
       }
     });
 
@@ -188,8 +146,6 @@ public class ServerPanel extends XContainer {
   void activated() {
     m_hostField.setEditable(false);
     m_portField.setEditable(false);
-    m_usernameField.setEditable(false);
-    m_passwordField.setEditable(false);
 
     setupConnectButton();
 
@@ -211,8 +167,6 @@ public class ServerPanel extends XContainer {
   void started() {
     m_hostField.setEditable(false);
     m_portField.setEditable(false);
-    m_usernameField.setEditable(false);
-    m_passwordField.setEditable(false);
 
     Date startDate = new Date(m_serverNode.getStartTime());
     String startTime = DateFormat.getTimeInstance().format(startDate);
@@ -232,8 +186,6 @@ public class ServerPanel extends XContainer {
   void disconnected() {
     m_hostField.setEditable(true);
     m_portField.setEditable(true);
-    m_usernameField.setEditable(true);
-    m_passwordField.setEditable(true);
 
     String startTime = DateFormat.getTimeInstance().format(new Date());
     String statusMsg = "Disconnected at " + startTime;

@@ -15,6 +15,7 @@ import com.tc.admin.dso.DSONode;
 import com.tc.config.schema.L2Info;
 
 import java.awt.Color;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -175,14 +176,6 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     return m_connectManager.getJMXPortNumber();
   }
 
-  void setUsername(String username) {
-    m_connectManager.setUsername(username);
-  }
-
-  void setPassword(String password) {
-    m_connectManager.setPassword(password);
-  }
-
   private void initMenu(boolean autoConnect) {
     m_popupMenu = new JPopupMenu("Server Actions");
 
@@ -210,7 +203,6 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
 
   private void setConnected(boolean connected) {
     if (m_acc == null) { return; }
-
     if (connected) {
       m_acc.controller.block();
 
@@ -248,7 +240,8 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
 
   private ConnectDialog getConnectDialog(JMXServiceURL url, Map env, long timeout, ConnectionListener listener) {
     if (m_connectDialog == null) {
-      m_connectDialog = new ConnectDialog(url, env, timeout, listener);
+      m_connectDialog = new ConnectDialog((Frame) m_serverPanel.getAncestorOfClass(java.awt.Frame.class), url, env,
+                                          timeout, listener);
     } else {
       m_connectDialog.setServiceURL(url);
       m_connectDialog.setEnvironment(env);
@@ -291,7 +284,6 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
    */
   public void handleConnection() {
     JMXConnector jmxc;
-
     if ((jmxc = m_connectDialog.getConnector()) != null) {
       try {
         m_connectManager.setJMXConnector(jmxc);
@@ -319,20 +311,22 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
   public static String getConnectionExceptionString(Exception e, Object connectionObject) {
     AdminClientContext acc = AdminClient.getContext();
     String msg = null;
+    
+    e.printStackTrace(); // XXX
 
-    if (e.getCause() instanceof ServiceUnavailableException) {
+    if (e instanceof ServiceUnavailableException || e.getCause() instanceof ServiceUnavailableException) {
       String tmpl = acc.getMessage("service.unavailable");
       MessageFormat form = new MessageFormat(tmpl);
       Object[] args = new Object[] { connectionObject };
 
       msg = form.format(args);
-    } else if (e instanceof ConnectException) {
+    } else if (e.getCause() instanceof ConnectException) {
       String tmpl = acc.getMessage("cannot.connect.to");
       MessageFormat form = new MessageFormat(tmpl);
       Object[] args = new Object[] { connectionObject };
 
       msg = form.format(args);
-    } else if (e instanceof UnknownHostException
+    } else if (e.getCause() instanceof UnknownHostException
                || (e.getCause() != null && e.getCause().getCause() instanceof java.rmi.UnknownHostException)) {
       String tmpl = acc.getMessage("unknown.host");
       MessageFormat form = new MessageFormat(tmpl);

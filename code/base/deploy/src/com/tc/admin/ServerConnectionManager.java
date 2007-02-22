@@ -28,8 +28,6 @@ public class ServerConnectionManager implements NotificationListener {
   private ConnectionListener      m_connectListener;
   private JMXServiceURL           m_serviceURL;
   private HashMap                 m_connectEnv;
-  private String                  m_username;
-  private String                  m_password;
   private ServerHelper            m_serverHelper;
   private boolean                 m_connected;
   private boolean                 m_started;
@@ -76,22 +74,6 @@ public class ServerConnectionManager implements NotificationListener {
     setL2Info(new L2Info(m_l2Info.name(), m_l2Info.host(), port));
   }
 
-  public void setUsername(String username) {
-    m_username = username;
-  }
-
-  public void setPassword(String password) {
-    m_password = password;
-  }
-  
-  private String getUsername() {
-    return m_username;
-  }
-  
-  private String getPassword() {
-    return m_password;
-  }
-
   public void setAutoConnect(boolean autoConnect) {
     if ((m_autoConnect = autoConnect) == true) {
       if (!m_connected) {
@@ -123,7 +105,6 @@ public class ServerConnectionManager implements NotificationListener {
   protected void setConnected(boolean connected) {
     if (m_connected != connected) {
       m_connected = connected;
-
       if (m_connected == false) {
         cancelActiveServices();
         m_active = m_started = false;
@@ -168,12 +149,13 @@ public class ServerConnectionManager implements NotificationListener {
       m_connectEnv.put("jmx.remote.x.client.connection.check.period", new Long(0));
       m_connectEnv.put(JMXConnectorFactory.PROTOCOL_PROVIDER_CLASS_LOADER, getClass().getClassLoader());
     }
-    m_connectEnv.put("jmx.remote.credentials", new String[] { getUsername(), getPassword() });
+    //m_connectEnv.put("jmx.remote.credentials", new String[] { getUsername(), getPassword() }); XXX: remove getUsername etc.
     return m_connectEnv;
   }
 
   private void initConnector() throws Exception {
-    m_connectCntx.jmxc = JMXConnectorFactory.newJMXConnector(m_serviceURL, getConnectionEnvironment());
+    // TODO: implement this call correctly (this code is not complete)
+    m_connectCntx.jmxc = new AuthenticatingJMXConnector(m_serviceURL, getConnectionEnvironment());
   }
 
   private void startConnect() {
