@@ -30,6 +30,7 @@ import java.util.prefs.Preferences;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXServiceURL;
+import javax.naming.CommunicationException;
 import javax.naming.ServiceUnavailableException;
 import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
@@ -190,6 +191,36 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     addActionBinding(DELETE_ACTION, m_deleteAction);
     addActionBinding(AUTO_CONNECT_ACTION, m_autoConnectAction);
 
+    m_connectManager.addToggleAutoConnectListener(new ServerConnectionManager.AutoConnectListener() {
+      public void handleEvent() {
+        m_autoConnectMenuItem.setSelected(false);
+        Thread reActivator = new Thread() {
+          public void run() {
+            boolean ready = false;
+            try {
+              while (!ready) {
+                Thread.sleep(500);
+                if (m_serverPanel != null && m_serverPanel.getConnectButton() != null && m_acc.controller != null) {
+                  ready = true;
+                }
+              }
+            } catch (InterruptedException e) {
+              try {
+                Thread.sleep(2000);
+              } catch (InterruptedException ie) {
+                ie.printStackTrace();
+                System.exit(0);
+                // let's hope it never comes to this
+              }
+            }
+            m_serverPanel.getConnectButton().setEnabled(true);
+            m_acc.controller.updateServerPrefs();
+          }
+        };
+        reActivator.start();
+      }
+    });
+
     m_popupMenu.add(m_connectAction);
     m_popupMenu.add(m_disconnectAction);
     m_popupMenu.add(new JSeparator());
@@ -311,7 +342,7 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
   public static String getConnectionExceptionString(Exception e, Object connectionObject) {
     AdminClientContext acc = AdminClient.getContext();
     String msg = null;
-    
+
     if (e instanceof ServiceUnavailableException || e.getCause() instanceof ServiceUnavailableException) {
       String tmpl = acc.getMessage("service.unavailable");
       MessageFormat form = new MessageFormat(tmpl);
@@ -331,6 +362,13 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
       Object[] args = new Object[] { connectionObject };
 
       msg = form.format(args);
+    } else if (e.getCause() instanceof CommunicationException) {
+      String tmpl = acc.getMessage("cannot.connect.to");
+      MessageFormat form = new MessageFormat(tmpl);
+      Object[] args = new Object[] { connectionObject };
+
+      msg = form.format(args);
+
     } else {
       msg = e.getMessage();
     }

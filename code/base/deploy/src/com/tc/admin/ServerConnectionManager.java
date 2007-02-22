@@ -9,6 +9,7 @@ import com.tc.config.schema.L2Info;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.EventListener;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,6 +37,7 @@ public class ServerConnectionManager implements NotificationListener {
   private ConnectThread           m_connectThread;
   private ConnectionMonitorAction m_connectMonitorAction;
   private Timer                   m_connectMonitorTimer;
+  private AutoConnectListener     m_autoConnectListener;
 
   private static final int        CONNECT_MONITOR_PERIOD = 1000;
 
@@ -145,17 +147,14 @@ public class ServerConnectionManager implements NotificationListener {
   Map getConnectionEnvironment() {
     if (m_connectEnv == null) {
       m_connectEnv = new HashMap();
-      //m_connectEnv.put("jmx.remote.x.server.connection.timeout", new Long(0));
       m_connectEnv.put("jmx.remote.x.client.connection.check.period", new Long(0));
       m_connectEnv.put(JMXConnectorFactory.PROTOCOL_PROVIDER_CLASS_LOADER, getClass().getClassLoader());
     }
-    //m_connectEnv.put("jmx.remote.credentials", new String[] { getUsername(), getPassword() }); XXX: remove getUsername etc.
     return m_connectEnv;
   }
 
   private void initConnector() throws Exception {
-    // TODO: implement this call correctly (this code is not complete)
-    m_connectCntx.jmxc = new AuthenticatingJMXConnector(m_serviceURL, getConnectionEnvironment());
+    m_connectCntx.jmxc = JMXConnectorFactory.newJMXConnector(m_serviceURL, getConnectionEnvironment());
   }
 
   private void startConnect() {
@@ -206,6 +205,13 @@ public class ServerConnectionManager implements NotificationListener {
           return;
         } catch (Exception e) {
           if (m_connectListener != null) {
+            if (e instanceof SecurityException) {
+              setAutoConnect(false);
+              fireToggleAutoConnectEvent();
+              m_connectException = e;
+              m_connectListener.handleException();
+              return;
+            }
             m_connectException = e;
             m_connectListener.handleException();
           }
@@ -223,10 +229,18 @@ public class ServerConnectionManager implements NotificationListener {
     }
   }
 
+  void addToggleAutoConnectListener(AutoConnectListener listener) {
+    m_autoConnectListener = listener;
+  }
+
+  private void fireToggleAutoConnectEvent() {
+    if (m_autoConnectListener != null) m_autoConnectListener.handleEvent();
+  }
+
   JMXServiceURL getJMXServiceURL() {
     return m_serviceURL;
   }
-  
+
   private String getSecureJMXServicePath() {
     return "service:jmx:rmi:///jndi/rmi://" + this + "/jmxrmi";
   }
@@ -364,5 +378,11 @@ public class ServerConnectionManager implements NotificationListener {
     m_connectListener = null;
     m_serviceURL = null;
     m_connectThread = null;
+  }
+
+  // --------------------------------------------------------------------------------
+
+  public static interface AutoConnectListener extends EventListener {
+    void handleEvent();
   }
 }

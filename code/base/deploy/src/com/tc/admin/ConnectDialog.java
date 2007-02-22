@@ -27,7 +27,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
-public class ConnectDialog extends Dialog {
+public final class ConnectDialog extends Dialog {
 
   private JMXServiceURL        m_url;
   private Map                  m_env;
@@ -206,35 +206,57 @@ public class ConnectDialog extends Dialog {
     }
   }
 
+  // --------------------------------------------------------------------------------
+
   class MainThread extends Thread {
+
+    private boolean               m_isConnecting    = true;
+    private boolean               m_join;
+    private final ConnectionTimer m_connectionTimer = new ConnectionTimer();
+
     public void run() {
       m_connectThread = new ConnectThread();
-
       try {
         m_error = null;
         m_jmxc = new AuthenticatingJMXConnector(m_url, m_env);
         ((AuthenticatingJMXConnector) m_jmxc)
             .addAuthenticationListener(new AuthenticatingJMXConnector.AuthenticationListener() {
               public void handleEvent() {
+                m_connectionTimer.stopTimer();
+                m_connectionTimer.interrupt();
                 enableAuthenticationDialog();
               }
             });
         ((AuthenticatingJMXConnector) m_jmxc)
             .addCollapseListener(new AuthenticatingJMXConnector.AuthenticationListener() {
               public void handleEvent() {
+                m_connectionTimer.setTimer();
+                disableAuthenticationDialog();
+              }
+            });
+        ((AuthenticatingJMXConnector) m_jmxc)
+            .addExceptionListener(new AuthenticatingJMXConnector.AuthenticationListener() {
+              public void handleEvent() {
+                m_connectionTimer.setTimer();
+                m_connectionTimer.interrupt();
                 disableAuthenticationDialog();
               }
             });
 
         if (m_jmxc != null && m_error == null) {
           m_connectThread.start();
-          // m_connectThread.join(m_timeout); XXX
-          m_connectThread.join();
+          m_connectionTimer.start();
+          synchronized (this) {
+            while (m_isConnecting)
+              wait();
+            if (m_join) m_connectThread.join(m_timeout);
+          }
         }
       } catch (IOException e) {
         m_error = e;
       } catch (InterruptedException e) {
         m_connectThread.interrupt();
+        m_connectionTimer.interrupt();
         disableAuthenticationDialog();
         m_error = new InterruptedIOException("Interrupted");
         return;
@@ -251,17 +273,31 @@ public class ConnectDialog extends Dialog {
 
       m_timer.start();
     }
+
+    private synchronized void connectionJoin() {
+      m_join = true;
+      m_isConnecting = false;
+      notifyAll();
+    }
+
+    private synchronized void connectionTimeout() {
+      m_isConnecting = false;
+      notifyAll();
+    }
   }
 
+  // --------------------------------------------------------------------------------
+
   class ConnectThread extends Thread {
-    
+
     public ConnectThread() {
       setDaemon(true);
     }
-    
+
     public void run() {
       try {
         m_jmxc.connect(m_env);
+        ((MainThread) m_mainThread).connectionJoin();
       } catch (IOException e) {
         m_error = e;
       } catch (RuntimeException e) {
@@ -269,6 +305,56 @@ public class ConnectDialog extends Dialog {
       }
     }
   }
+
+  // --------------------------------------------------------------------------------
+
+  private class ConnectionTimer extends Thread {
+
+    private boolean isSet;
+
+    private ConnectionTimer() {
+      setDaemon(true);
+    }
+
+    public void run() {
+      try {
+        startTimer();
+      } catch (InterruptedException e) {
+        // do nothing
+      }
+    }
+
+    private void startTimer() throws InterruptedException {
+      isSet = true;
+      try {
+        Thread.sleep(m_timeout);
+      } catch (InterruptedException e) {
+        // do nothing
+      }
+      if (isSet) {
+        ((MainThread) m_mainThread).connectionTimeout();
+        return;
+      }
+      while (!isSet) {
+        synchronized (this) {
+          wait();
+        }
+      }
+      ((MainThread) m_mainThread).connectionJoin();
+    }
+
+    private synchronized void setTimer() {
+      isSet = true;
+      notifyAll();
+    }
+
+    private synchronized void stopTimer() {
+      isSet = false;
+      notifyAll();
+    }
+  }
+
+  // --------------------------------------------------------------------------------
 
   void tearDown() {
     if (m_env != null) {

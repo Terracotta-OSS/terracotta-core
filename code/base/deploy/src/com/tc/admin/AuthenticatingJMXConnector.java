@@ -26,6 +26,7 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
   private JMXConnector           m_connector;
   private AuthenticationListener m_authListener;
   private AuthenticationListener m_collapseListener;
+  private AuthenticationListener m_exceptionListener;
   private boolean                m_authenticating;
   private final Object           m_error_lock = new Object();
   private Exception              m_error;
@@ -53,14 +54,23 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
   public void addAuthenticationListener(AuthenticationListener listener) {
     this.m_authListener = listener;
   }
-  
+
   private void fireCollapseEvent() {
     if (m_collapseListener != null) m_collapseListener.handleEvent();
   }
-  
-  //does not support multicast
+
+  // does not support multicast
   public void addCollapseListener(AuthenticationListener listener) {
     this.m_collapseListener = listener;
+  }
+
+  private void fireExceptionEvent() {
+    if (m_exceptionListener != null) m_exceptionListener.handleEvent();
+  }
+
+  // does not support multicast
+  public void addExceptionListener(AuthenticationListener listener) {
+    this.m_exceptionListener = listener;
   }
 
   public void addConnectionNotificationListener(NotificationListener arg0, NotificationFilter arg1, Object arg2) {
@@ -83,7 +93,7 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
     } catch (RuntimeException e) {
       if (e instanceof SecurityException) {
         try {
-          Thread.sleep(1000);
+          Thread.sleep(500);
         } catch (InterruptedException ie) {
           fireCollapseEvent();
           return;
@@ -94,12 +104,15 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
           while (m_authenticating)
             wait();
         } catch (InterruptedException ie) {
-          fireCollapseEvent();
+          fireExceptionEvent();
           return;
         }
       } else {
         throw e;
       }
+    } catch (IOException e) {
+      fireExceptionEvent();
+      throw e;
     }
     throwExceptions();
   }
@@ -107,6 +120,7 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
   private void throwExceptions() throws IOException {
     synchronized (m_error_lock) {
       if (m_error != null) {
+        fireExceptionEvent();
         if (m_error instanceof IOException) throw (IOException) m_error;
         else if (m_error instanceof RuntimeException) throw (RuntimeException) m_error;
       }
