@@ -229,6 +229,21 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
         check_list('pounder')
     end
 
+    # To be used in stage monkey to check if a revision is good
+    # for other monkeys to run test
+    def check_compile
+      begin
+        @no_compile = false # override this if it's turned on
+        compile
+        mark_this_revision_as_good(@build_environment.current_revision)
+      rescue
+        puts "*" * 80
+        puts $!.message
+        puts "*" * 80
+        mark_this_revision_as_bad(@build_environment.current_revision)
+      end
+    end
+
     # A helper method to validate and run a test set. (Validation lets us avoid the case where,
     # for example, you misspell a test name in a list and don't realize it.)
     def validate_and_run(test_set)
@@ -594,6 +609,21 @@ END
       puts("#{banner_char} #{message}")
       puts(banner_char)
       puts(banner_char * 80)
+    end
+    
+    def mark_this_revision_as_good(revision)
+      puts("Revision #{revision} is good to go.")
+      FileUtils.touch(build_archive_dir.to_s + "/#{revision}")
+    end
+
+    def mark_this_revision_as_bad(revision)
+      puts("Revision #{revision} is bad!")
+      FileUtils.mkdir_p ".tc-build-cache" unless File.exist?(".tc-build-cache")
+      bad_rev_file = ".tc-build-cache/bad_#{revision}"
+      unless File.exist?(bad_rev_file)
+        FileUtils.touch(bad_rev_file)
+        puts("Please let #{@build_environment.last_changed_author} know.")
+      end
     end
 
     # The full path to the build archive, including directory.
