@@ -28,6 +28,7 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
   private AuthenticationListener m_collapseListener;
   private AuthenticationListener m_exceptionListener;
   private boolean                m_authenticating;
+  private boolean                m_securityEnabled;
   private final Object           m_error_lock = new Object();
   private Exception              m_error;
 
@@ -92,6 +93,7 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
       getConnector().connect(m_conEnv);
     } catch (RuntimeException e) {
       if (e instanceof SecurityException) {
+        m_securityEnabled = true;
         try {
           Thread.sleep(500);
         } catch (InterruptedException ie) {
@@ -125,6 +127,7 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
         else if (m_error instanceof RuntimeException) throw (RuntimeException) m_error;
       }
     }
+    if (m_securityEnabled) throw new SecurityException();
   }
 
   public synchronized void handleOkClick(String username, String password) {

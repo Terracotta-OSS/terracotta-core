@@ -301,6 +301,9 @@ public final class ConnectDialog extends Dialog {
       } catch (IOException e) {
         m_error = e;
       } catch (RuntimeException e) {
+        if (e instanceof SecurityException) {
+          return;
+        }
         m_error = e;
       }
     }
