@@ -234,7 +234,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   def check_compile
     begin
       @no_compile = false # override this if it's turned on
-      compile
+      check_short
       mark_this_revision_as_good(@build_environment.current_revision)
     rescue StandardError => e
       mark_this_revision_as_bad(@build_environment.current_revision)
