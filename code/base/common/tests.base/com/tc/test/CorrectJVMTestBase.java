@@ -27,7 +27,7 @@ public class CorrectJVMTestBase extends TCTestCase {
   }
 
   public void testType() throws Exception {
-    String vmName = System.getProperty("java.vm.name").toLowerCase();
+    tring vmName = System.getProperty("java.vm.name").toLowerCase();
     String expectedType = TestConfigObject.getInstance().jvmType().trim().toLowerCase();
 
     System.err.println("Actual JVM type: '" + vmName + "'; expected JVM type: '" + expectedType + "'");
