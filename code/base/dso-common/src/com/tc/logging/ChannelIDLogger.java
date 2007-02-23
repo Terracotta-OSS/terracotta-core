@@ -9,12 +9,12 @@ public class ChannelIDLogger implements TCLogger {
 
   private final ChannelIDProvider cidp;
   private final TCLogger logger;
-  
+
   public ChannelIDLogger(ChannelIDProvider channelIDProvider, TCLogger logger) {
     this.cidp = channelIDProvider;
     this.logger = logger;
   }
-  
+
   public void debug(Object message) {
     logger.debug(msg(message));
   }
@@ -60,7 +60,7 @@ public class ChannelIDLogger implements TCLogger {
   }
 
   public void log(LogLevel level, Object message, Throwable t) {
-    logger.log(level, msg(message), t);    
+    logger.log(level, msg(message), t);
   }
 
   public boolean isDebugEnabled() {
@@ -72,7 +72,7 @@ public class ChannelIDLogger implements TCLogger {
   }
 
   public void setLevel(LogLevel level) {
-    logger.setLevel(level);    
+    logger.setLevel(level);
   }
 
   public LogLevel getLevel() {
@@ -82,5 +82,9 @@ public class ChannelIDLogger implements TCLogger {
   private Object msg(Object msg) {
     return cidp.getChannelID() + ": " + msg;
   }
-  
+
+  public String getName() {
+    return logger.getName();
+  }
+
 }

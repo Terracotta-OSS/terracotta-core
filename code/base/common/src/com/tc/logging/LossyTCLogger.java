@@ -1,11 +1,11 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.logging;
 
 /*
- * Useful while developement
- * Note:: This class is not synchronized
+ * Useful while developement Note:: This class is not synchronized
  */
 public class LossyTCLogger implements TCLogger {
 
@@ -125,6 +125,10 @@ public class LossyTCLogger implements TCLogger {
     return logger.getLevel();
   }
 
+  public String getName() {
+    return logger.getName();
+  }
+
   interface LogOrNot {
     boolean canLog();
   }
@@ -163,4 +167,5 @@ public class LossyTCLogger implements TCLogger {
       return false;
     }
   }
+
 }

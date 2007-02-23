@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.logging;
 
@@ -30,7 +31,7 @@ import java.util.Properties;
 
 /**
  * Factory class for obtaining TCLogger instances.
- * 
+ *
  * @author teck
  */
 public class TCLogging {
@@ -63,7 +64,7 @@ public class TCLogging {
   private static final String       FILE_AND_JMX_PATTERN               = "%d [%t] %p %c - %m%n";
 
   private static TCLogger           console;
-  private static TCAppender         tcAppender;
+  private static JMXAppender         jmxAppender;
   private static Appender           consoleAppender;
   private static String             logFile;
   private static DelegatingAppender delegateFileAppender;
@@ -76,8 +77,8 @@ public class TCLogging {
   private static FileLock           currentLoggingDirectoryFileLock    = null;
   private static boolean            lockingDisabled                    = false;
 
-  public static TCAppender getAppender() {
-    return tcAppender;
+  public static JMXAppender getJMXAppender() {
+    return jmxAppender;
   }
 
   public static String getLogFileLocation() {
@@ -93,7 +94,7 @@ public class TCLogging {
     if ((name == null) || !name.startsWith(INTERNAL_LOGGER_NAMESPACE_WITH_DOT)) {
       // this comment here to make formatter sane
       throw new IllegalArgumentException("Logger not in valid namepsace (ie. '" + INTERNAL_LOGGER_NAMESPACE_WITH_DOT
-                                         + "' ): " + name);
+          + "' ): " + name);
     }
 
     return new TCLoggerImpl(name);
@@ -239,7 +240,7 @@ public class TCLogging {
       FileUtils.forceMkdir(theDirectory);
     } catch (IOException ioe) {
       reportLoggingError("We can't create the directory '" + theDirectory.getAbsolutePath()
-                         + "' that you specified for your logs.", ioe);
+          + "' that you specified for your logs.", ioe);
       return;
     }
 
@@ -262,8 +263,8 @@ public class TCLogging {
 
         if (thisDirectoryLock == null) {
           reportLoggingError("The log directory, '" + theDirectory.getAbsolutePath()
-                             + "', is already in use by another "
-                             + "Terracotta process. Logging will proceed to the console only.", null);
+              + "', is already in use by another " + "Terracotta process. Logging will proceed to the console only.",
+              null);
           return;
         }
 
@@ -271,8 +272,8 @@ public class TCLogging {
         // This VM already holds the lock; no problem
       } catch (IOException ioe) {
         reportLoggingError("We can't lock the file '" + lockFile.getAbsolutePath() + "', to make sure that only one "
-                           + "Terracotta process is using this directory for logging. This may be a permission "
-                           + "issue, or some unexpected error. Logging will proceed to the console only.", ioe);
+            + "Terracotta process is using this directory for logging. This may be a permission "
+            + "issue, or some unexpected error. Logging will proceed to the console only.", ioe);
         return;
       }
     }
@@ -348,7 +349,7 @@ public class TCLogging {
 
       Logger jettyLogger = Logger.getLogger("org.mortbay");
       jettyLogger.setLevel(Level.OFF);
-      
+
       Logger internalLogger = Logger.getLogger(INTERNAL_LOGGER_NAMESPACE);
       Logger customerLogger = Logger.getLogger(CUSTOMER_LOGGER_NAMESPACE);
       Logger consoleLogger = Logger.getLogger(CONSOLE_LOGGER_NAME);
@@ -387,10 +388,10 @@ public class TCLogging {
       buffering = true;
 
       // all logging goes to JMX based appender
-      tcAppender = new TCAppender();
-      tcAppender.setLayout(new PatternLayout(FILE_AND_JMX_PATTERN));
-      tcAppender.setName("JMX appender");
-      addToAllLoggers(tcAppender);
+      jmxAppender = new JMXAppender();
+      jmxAppender.setLayout(new PatternLayout(FILE_AND_JMX_PATTERN));
+      jmxAppender.setName("JMX appender");
+      addToAllLoggers(jmxAppender);
 
       if (!isDev) {
         CustomerLogging.getGenericCustomerLogger().info("New logging session started.");
@@ -404,6 +405,12 @@ public class TCLogging {
     }
   }
 
+  // for test use only!
+  public static void addAppender(String loggerName, Appender appender) {
+    TCLoggerImpl logger = (TCLoggerImpl) getLogger(loggerName);
+    logger.getLogger().addAppender(appender);
+  }
+
   private static void addToAllLoggers(Appender appender) {
     for (int i = 0; i < allLoggers.length; ++i)
       allLoggers[i].addAppender(appender);
@@ -412,10 +419,9 @@ public class TCLogging {
   private static void writeVersion() {
     ProductInfo info = ProductInfo.getThisProductInfo();
     String moniker = info.moniker();
-    
-    CustomerLogging.getConsoleLogger().info(moniker + 
-                                            ", version " + info.rawVersion() + " as of "
-                                                + info.buildTimestampAsString() + ".");
+
+    CustomerLogging.getConsoleLogger().info(
+        moniker + ", version " + info.rawVersion() + " as of " + info.buildTimestampAsString() + ".");
     getLogger(TCLogging.class).info(moniker + " version: " + info.toLongString());
   }
 

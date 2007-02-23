@@ -131,7 +131,7 @@ public class L2Management extends TerracottaManagement {
   private void registerMBeans() throws MBeanRegistrationException, NotCompliantMBeanException,
       InstanceAlreadyExistsException {
     mBeanServer.registerMBean(tcServerInfo, L2MBeanNames.TC_SERVER_INFO);
-    mBeanServer.registerMBean(TCLogging.getAppender().getMBean(), L2MBeanNames.LOGGER);
+    mBeanServer.registerMBean(TCLogging.getJMXAppender().getMBean(), L2MBeanNames.LOGGER);
     mBeanServer.registerMBean(objectManagementBean, L2MBeanNames.OBJECT_MANAGEMENT);
   }
 

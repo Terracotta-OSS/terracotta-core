@@ -197,5 +197,9 @@ public class OptionsTest extends TestCase {
     public LogLevel getLevel() {
       throw new ImplementMe();
     }
+
+    public String getName() {
+      throw new ImplementMe();
+    }
   }
 }

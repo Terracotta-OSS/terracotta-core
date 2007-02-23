@@ -19,11 +19,11 @@ import javax.management.NotCompliantMBeanException;
  * @see TCLoggingBroadcasterMBean
  * @author gkeim
  */
-public class TCAppender extends AppenderSkeleton {
+public class JMXAppender extends AppenderSkeleton {
 
   private final TCLoggingBroadcaster broadcastingBean;
 
-  public TCAppender() {
+  public JMXAppender() {
     try {
       broadcastingBean = new TCLoggingBroadcaster();
     } catch (NotCompliantMBeanException ncmbe) {

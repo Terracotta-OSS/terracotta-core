@@ -118,6 +118,11 @@ public class LongrunningGCTestApp implements Application {
                                                    return null;
                                                  }
 
+                                                 public String getName() {
+                                                   return getClass().getName();
+                                                 }
+
+
                                                };
 
   private static final long   TEST_DURATION    = 1000 * 60 * 60 * 24 * 7;

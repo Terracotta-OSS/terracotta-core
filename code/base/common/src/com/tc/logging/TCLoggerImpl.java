@@ -11,7 +11,7 @@ import org.apache.log4j.Logger;
  * <code>Object</code> parameter (eg. <code>debug(Object message)</code>), if an instance of <code>Throwable</code>
  * is passed as the message paramater, the call will be translated to the <code>xxx(Object Message, Throwable t)</code>
  * signature
- * 
+ *
  * @author teck
  */
 class TCLoggerImpl implements TCLogger {
@@ -21,6 +21,10 @@ class TCLoggerImpl implements TCLogger {
   TCLoggerImpl(String name) {
     if (name == null) { throw new IllegalArgumentException("Logger name cannot be null"); }
     logger = Logger.getLogger(name);
+  }
+
+  Logger getLogger() {
+    return logger;
   }
 
   public void debug(Object message) {
@@ -158,5 +162,9 @@ class TCLoggerImpl implements TCLogger {
 
   public LogLevel getLevel() {
     return LogLevel.fromLog4JLevel(logger.getLevel());
+  }
+
+  public String getName() {
+    return logger.getName();
   }
 }

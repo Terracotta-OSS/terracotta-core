@@ -5,7 +5,7 @@ package com.tc.logging;
 
 /**
  * Common TC logger interface (mostly a copy of the log4j logger interface)
- * 
+ *
  * @author teck
  */
 public interface TCLogger {
@@ -40,4 +40,6 @@ public interface TCLogger {
   void setLevel(LogLevel level);
 
   LogLevel getLevel();
+
+  String getName();
 }
