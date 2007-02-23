@@ -13,7 +13,6 @@ import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.appevent.NonPortableEventContext;
 import com.tc.object.appevent.NonPortableEventContextFactory;
 import com.tc.object.appevent.NonPortableFieldSetContext;
-import com.tc.object.appevent.NonPortableObjectEvent;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.TransparentAccess;
@@ -30,6 +29,7 @@ import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.TCObjectClone;
 import com.tc.object.util.IdentityWeakHashMap;
+import com.tc.object.walker.ObjectGraphWalker;
 import com.tc.text.ConsoleNonPortableReasonFormatter;
 import com.tc.text.ConsoleParagraphFormatter;
 import com.tc.text.NonPortableReasonFormatter;
@@ -40,10 +40,10 @@ import com.tc.util.NonPortableReason;
 import com.tc.util.State;
 import com.tc.util.concurrent.StoppableThread;
 
-import java.io.IOException;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationHandler;
@@ -75,9 +75,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
 
   private static final int                     NO_DEPTH                = 0;
 
-  // debug option to dump object hierarchy on TCNonPortableObjectException
-  private static final boolean                 DUMP_OBJECT_HIERARCHY   = Boolean
-                                                                           .getBoolean("tc.objectmanager.dumpHierarchy");
   private static final int                     COMMIT_SIZE             = 100;
 
   private State                                state                   = RUNNING;
@@ -576,7 +573,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     if (reason != null) {
       NonPortableFieldSetContext context = this.nonPortableContextFactory.createNonPortableFieldSetContext(rootType
           .getName(), rootName, true);
-
+      dumpObjectHierarchy(root);
       throwNonPortableException(root, reason, context,
                                 "Attempt to share an instance of a non-portable class by assigning it to a root.");
     }
@@ -588,6 +585,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     if (reason != null) {
       NonPortableFieldSetContext context = this.nonPortableContextFactory.createNonPortableFieldSetContext(targetClass
           .getName(), fieldName, false);
+      dumpObjectHierarchy(value);
       throwNonPortableException(value, reason, context,
                                 "Attempt to set the field of a shared object to an instance of a non-portable class.");
     }
@@ -597,6 +595,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
       throws TCNonPortableObjectError {
     NonPortableReason reason = checkPortabilityOf(param);
     if (reason != null) {
+      dumpObjectHierarchy(param);
       NonPortableEventContext context = this.nonPortableContextFactory
           .createNonPortableLogicalInvokeContext(logicalType.getName(), methodName);
       throwNonPortableException(param, reason, context,
@@ -611,10 +610,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     reason.setMessage(message);
     context.addDetailsTo(reason);
 
-    if (runtimeLogger.nonPortableObjectWarning()) {
-      NonPortableObjectEvent event = new NonPortableObjectEvent(context, reason);
-      runtimeLogger.nonPortableObjectWarning(obj, event);
-    }
     StringWriter formattedReason = new StringWriter();
     PrintWriter out = new PrintWriter(formattedReason);
     StringFormatter sf = new StringFormatter();
@@ -786,25 +781,33 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     try {
       traverser.traverse(root, traverseTest, context);
     } catch (TCNonPortableObjectError e) {
-      if (DUMP_OBJECT_HIERARCHY) {
-        dumpObjectHierarchy(root);
-      }
+      dumpObjectHierarchy(root);
       throw e;
     }
   }
 
   private void dumpObjectHierarchy(Object root) {
-    Writer w = new PrintWriter(System.err);
-    try {
-      InstanceWalker.hierarchy(root, w);
-    } catch (IOException ex) {
-      logger.error(ex);
-    } finally {
+    if (runtimeLogger.nonPortableDump()) {
+      // XXX: The hierarchy report is buffered in memory here so that it can logged as a single message
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      PrintStream ps = new PrintStream(baos);
+
       try {
-        w.flush();
-      } catch (IOException e) {
-        logger.error(e);
+        ps.println("Dumping object graph of non-portable instance of type " + root.getClass().getName());
+        ps.println();
+        ps.println("  (lines that start with " + NonPortableWalkVisitor.MARKER + " are non-portable types)");
+        ps.println();
+        NonPortableWalkVisitor visitor = new NonPortableWalkVisitor(ps, this, this.clientConfiguration);
+        ObjectGraphWalker walker = new ObjectGraphWalker(root, visitor, visitor);
+        walker.walk();
+      } catch (Throwable t) {
+        logger.error("error walking non-portable object instance of type " + root.getClass().getName(), t);
+        return;
+      } finally {
+        ps.flush();
       }
+
+      runtimeLogger.logNonPortableDump(new String(baos.toByteArray()));
     }
   }
 

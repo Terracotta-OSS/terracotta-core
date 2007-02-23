@@ -228,10 +228,16 @@
 
   <xs:complexType name="runtime-logging">
     <xs:all>
-      <xs:element name="lock-debug" type="xs:boolean" minOccurs="0" default="false" />
-      <xs:element name="partial-instrumentation" type="xs:boolean" minOccurs="0" default="true" />
+      <xs:element name="non-portable-dump" type="xs:boolean" minOccurs="0" default="true">
+        <xs:annotation>
+          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+            When an attempt is made to distribute a non-portable object, the object (and any objects
+            to which it refers) will be logged in the terracotta log file.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="lock-debug" type="xs:boolean" minOccurs="0" default="false" />      
       <xs:element name="field-change-debug" type="xs:boolean" minOccurs="0" default="false" />
-      <xs:element name="non-portable-warning" type="xs:boolean" minOccurs="0" default="true" />
       <xs:element name="wait-notify-debug" type="xs:boolean" minOccurs="0" default="false" />
       <xs:element name="distributed-method-debug" type="xs:boolean" minOccurs="0" default="false" />
       <xs:element name="new-object-debug" type="xs:boolean" minOccurs="0" default="false" />
@@ -255,7 +261,6 @@
       <xs:element name="auto-lock-details" type="xs:boolean" minOccurs="0" default="false" />
       <xs:element name="caller" type="xs:boolean" minOccurs="0" default="false" />
       <xs:element name="full-stack" type="xs:boolean" minOccurs="0" default="false" />
-      <xs:element name="find-needed-includes" type="xs:boolean" minOccurs="0" default="true" />
     </xs:all>
   </xs:complexType>
 

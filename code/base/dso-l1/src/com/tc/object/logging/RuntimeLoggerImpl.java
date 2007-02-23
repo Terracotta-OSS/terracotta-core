@@ -1,22 +1,18 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.logging;
 
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.tcm.ClientMessageChannel;
-import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.TCObject;
-import com.tc.object.appevent.NonPortableObjectEvent;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.schema.DSORuntimeLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeOutputOptions;
 import com.tc.object.lockmanager.api.LockLevel;
-import com.tc.object.msg.JMXMessage;
-import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.tx.WaitInvocation;
 import com.tc.util.Util;
 
@@ -26,10 +22,8 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
   private final DSORuntimeLoggingOptions configuration;
   private final DSORuntimeOutputOptions  options;
   private final TCLogger                 logger;
-  private final ClientMessageChannel     channel;
 
-  public RuntimeLoggerImpl(DSOClientConfigHelper configHelper, DSOClientMessageChannel channel) {
-    this.channel = channel.channel();
+  public RuntimeLoggerImpl(DSOClientConfigHelper configHelper) {
     this.options = configHelper.runtimeOutputOptions();
     this.logger = CustomerLogging.getDSORuntimeLogger();
     this.configuration = configHelper.runtimeLoggingOptions();
@@ -47,10 +41,6 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     return this.configuration.logFieldChangeDebug().getBoolean();
   }
 
-  public boolean nonPortableObjectWarning() {
-    return this.configuration.logNonPortableWarning().getBoolean();
-  }
-
   public boolean newManagedObjectDebug() {
     return this.configuration.logNewObjectDebug().getBoolean();
   }
@@ -61,6 +51,10 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
 
   public boolean distributedMethodDebug() {
     return this.configuration.logDistributedMethodDebug().getBoolean();
+  }
+
+  public boolean nonPortableDump() {
+    return this.configuration.logNonPortableDump().getBoolean();
   }
 
   public void lockAcquired(String lockName, int level, Object instance, TCObject tcObject) {
@@ -117,7 +111,7 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     }
 
   }
-  
+
   public void literalValueChanged(TCObject source, Object newValue) {
     StringBuffer message = new StringBuffer("DSO object literal value changed\n");
     if (newValue != null) {
@@ -150,54 +144,9 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     StringBuffer message = new StringBuffer("DSO array changed\n");
     message.append("\n startPos: ").append(startPos);
     message.append("\n subset component types: \n").append(array.getClass().getComponentType());
-    
+
     logger.info(message.toString());
   }
-
-  // public void nonPortableObjectWarning(Object pojo, String fieldName, Object fieldValue) {
-  // StringBuffer message = new StringBuffer("Field [").append(fieldName).append("] of object ");
-  // message.append(baseToString(pojo));
-  // message.append(" set to a non-portable value of type ").append(fieldValue.getClass().getName());
-  // printNeededIncludes(message, fieldValue);
-  // logger.warn(message.toString());
-  // }
-
-  public void nonPortableObjectWarning(Object pojo, NonPortableObjectEvent event) {
-    // XXX: do needed includes stuff (optionally)
-    // XXX: include this in the "reason" and the log message
-
-    // Send this event to L2
-    JMXMessage jmxMsg = (JMXMessage) channel.createMessage(TCMessageType.JMX_MESSAGE);
-    jmxMsg.setJMXObject(event);
-    jmxMsg.send();
-
-    StringBuffer message = new StringBuffer("Non Portable Object ");
-    message.append(baseToString(pojo));
-    message.append(" is added to the Shared graph.");
-    logger.warn(message.toString());
-  }
-
-  // private void printNeededIncludes(StringBuffer message, Object pojo) {
-  // if (!options.doFindNeededIncludes().getBoolean()) { return; }
-  //
-  // IncludesCollector ic = new IncludesCollector();
-  // Set includesClasses = ic.includesFor(configHelper, pojo);
-  // message.append(" The following classes need to be included to support this object tree: ");
-  // for (Iterator i = includesClasses.iterator(); i.hasNext();) {
-  // message.append(i.next());
-  // if (i.hasNext()) {
-  // message.append(",");
-  // }
-  // }
-  // }
-  //
-  // public void nonPortableObjectWarning(Object logicalPojo, Object fieldValue) {
-  // StringBuffer message = new StringBuffer("Non-portable value of type ");
-  // message.append(fieldValue.getClass().getName()).append(" present in logical object ");
-  // message.append(baseToString(logicalPojo));
-  // printNeededIncludes(message, fieldValue);
-  // logger.warn(message.toString());
-  // }
 
   public void newManagedObject(TCObject object) {
     StringBuffer message = new StringBuffer("New DSO Object instance created\n");
@@ -277,4 +226,9 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
 
     // unreachable
   }
+
+  public void logNonPortableDump(String objectDump) {
+    logger.warn(objectDump);
+  }
+
 }

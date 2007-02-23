@@ -406,9 +406,8 @@ public class TCLogging {
   }
 
   // for test use only!
-  public static void addAppender(String loggerName, Appender appender) {
-    TCLoggerImpl logger = (TCLoggerImpl) getLogger(loggerName);
-    logger.getLogger().addAppender(appender);
+  public static void addAppender(String loggerName, TCAppender appender) {
+    new TCLoggerImpl(loggerName).getLogger().addAppender(new Log4JAappenderToTCAppender(appender));
   }
 
   private static void addToAllLoggers(Appender appender) {

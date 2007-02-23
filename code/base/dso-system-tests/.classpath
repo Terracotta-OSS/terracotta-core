@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="**/SCCS/**" output="build.eclipse/tests.base.classes" kind="src" path="tests.base"/>
-	<classpathentry excluding="**/SCCS/**" output="build.eclipse/tests.system.classes" kind="src" path="tests.system"/>
+	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.base.classes" path="tests.base"/>
+	<classpathentry kind="src" path="tests.system.resources"/>
+	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.system.classes" path="tests.system"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/linked-child-process"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
@@ -14,6 +15,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/legacy-test-tree"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common-jdk15"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
-        <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
 </classpath>

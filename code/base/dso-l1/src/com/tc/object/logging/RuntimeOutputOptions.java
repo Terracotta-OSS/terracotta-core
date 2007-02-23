@@ -16,6 +16,4 @@ public interface RuntimeOutputOptions {
 
   boolean includeCaller();
 
-  boolean findNeededIncludes();
-
 }

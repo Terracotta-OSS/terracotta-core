@@ -1,10 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.logging;
 
 import com.tc.object.TCObject;
-import com.tc.object.appevent.NonPortableObjectEvent;
 import com.tc.object.tx.WaitInvocation;
 
 public class NullRuntimeLogger implements RuntimeLogger {
@@ -27,10 +27,6 @@ public class NullRuntimeLogger implements RuntimeLogger {
 
   public void fieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index) {
     return;
-  }
-
-  public boolean nonPortableObjectWarning() {
-    return false;
   }
 
   public boolean newManagedObjectDebug() {
@@ -65,11 +61,6 @@ public class NullRuntimeLogger implements RuntimeLogger {
     return;
   }
 
-
-  public void nonPortableObjectWarning(Object pojo, NonPortableObjectEvent event) {
-    return;
-  }
-
   public boolean arrayChangeDebug() {
     return false;
   }
@@ -80,6 +71,14 @@ public class NullRuntimeLogger implements RuntimeLogger {
 
   public void literalValueChanged(TCObject source, Object newValue) {
     return;
+  }
+
+  public void logNonPortableDump(String objectDump) {
+    return;
+  }
+
+  public boolean nonPortableDump() {
+    return false;
   }
 
 }

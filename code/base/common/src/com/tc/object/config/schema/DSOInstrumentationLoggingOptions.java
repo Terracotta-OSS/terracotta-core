@@ -13,8 +13,6 @@ public interface DSOInstrumentationLoggingOptions extends NewConfig {
 
   BooleanConfigItem logClass();
 
-  BooleanConfigItem logHierarchy();
-
   BooleanConfigItem logLocks();
 
   BooleanConfigItem logTransientRoot();

@@ -21,7 +21,6 @@ public class InstrumentationLoggingPanel extends ConfigurationEditorPanel
   private DsoClientDebugging     m_dsoClientDebugging;
   private InstrumentationLogging m_instrumentationLogging;
   private XmlBooleanToggle       m_class;
-  private XmlBooleanToggle       m_hierarchy;
   private XmlBooleanToggle       m_locks;
   private XmlBooleanToggle       m_transientRoot;
   private XmlBooleanToggle       m_roots;
@@ -36,9 +35,6 @@ public class InstrumentationLoggingPanel extends ConfigurationEditorPanel
 
     m_class = (XmlBooleanToggle)findComponent("Class1");
     init(m_class, "class1");
-
-    m_hierarchy = (XmlBooleanToggle)findComponent("Heirarchy");
-    init(m_hierarchy, "hierarchy");
 
     m_locks = (XmlBooleanToggle)findComponent("Locks");
     init(m_locks, "locks");
@@ -106,9 +102,6 @@ public class InstrumentationLoggingPanel extends ConfigurationEditorPanel
     m_class.addActionListener(this);
     m_class.addXmlObjectStructureListener(this);
 
-    m_hierarchy.addActionListener(this);
-    m_hierarchy.addXmlObjectStructureListener(this);
-
     m_locks.addActionListener(this);
     m_locks.addXmlObjectStructureListener(this);
 
@@ -126,9 +119,6 @@ public class InstrumentationLoggingPanel extends ConfigurationEditorPanel
     m_class.removeActionListener(this);
     m_class.removeXmlObjectStructureListener(this);
 
-    m_hierarchy.removeActionListener(this);
-    m_hierarchy.removeXmlObjectStructureListener(this);
-
     m_locks.removeActionListener(this);
     m_locks.removeXmlObjectStructureListener(this);
 
@@ -144,7 +134,6 @@ public class InstrumentationLoggingPanel extends ConfigurationEditorPanel
 
   private void updateChildren() {
     setup(m_class);
-    setup(m_hierarchy);
     setup(m_locks);
     setup(m_transientRoot);
     setup(m_roots);
@@ -171,7 +160,6 @@ public class InstrumentationLoggingPanel extends ConfigurationEditorPanel
     m_instrumentationLogging = null;
 
     m_class.tearDown();
-    m_hierarchy.tearDown();
     m_locks.tearDown();
     m_transientRoot.tearDown();
     m_roots.tearDown();

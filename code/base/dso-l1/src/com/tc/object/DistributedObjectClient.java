@@ -179,8 +179,7 @@ public class DistributedObjectClient extends SEDA {
     channel = new DSOClientMessageChannelImpl(communicationsManager.createClientChannel(sessionProvider, -1,
                                                                                         serverHost, serverPort, 10000,
                                                                                         connectionInfoItem));
-    // XXX: pass along channel somehow?
-    this.runtimeLogger = new RuntimeLoggerImpl(config, channel);
+    this.runtimeLogger = new RuntimeLoggerImpl(config);
 
     logger.debug("Created channel.");
 
@@ -402,7 +401,7 @@ public class DistributedObjectClient extends SEDA {
   public SessionMonitorMBean getSessionMonitorMBean() {
     return l1Management.findSessionMonitorMBean();
   }
-  
+
   public DmiManager getDmiManager() {
     return dmiManager;
   }

@@ -15,7 +15,6 @@ public class StandardDSOInstrumentationLoggingOptions extends BaseNewConfigObjec
     DSOInstrumentationLoggingOptions {
 
   private final BooleanConfigItem logClass;
-  private final BooleanConfigItem logHierarchy;
   private final BooleanConfigItem logLocks;
   private final BooleanConfigItem logTransientRoot;
   private final BooleanConfigItem logRoots;
@@ -27,7 +26,6 @@ public class StandardDSOInstrumentationLoggingOptions extends BaseNewConfigObjec
     this.context.ensureRepositoryProvides(DsoClientData.class);
 
     this.logClass = this.context.booleanItem("debugging/instrumentation-logging/class");
-    this.logHierarchy = this.context.booleanItem("debugging/instrumentation-logging/hierarchy");
     this.logLocks = this.context.booleanItem("debugging/instrumentation-logging/locks");
     this.logTransientRoot = this.context.booleanItem("debugging/instrumentation-logging/transient-root");
     this.logRoots = this.context.booleanItem("debugging/instrumentation-logging/roots");
@@ -36,10 +34,6 @@ public class StandardDSOInstrumentationLoggingOptions extends BaseNewConfigObjec
 
   public BooleanConfigItem logClass() {
     return this.logClass;
-  }
-
-  public BooleanConfigItem logHierarchy() {
-    return this.logHierarchy;
   }
 
   public BooleanConfigItem logLocks() {
