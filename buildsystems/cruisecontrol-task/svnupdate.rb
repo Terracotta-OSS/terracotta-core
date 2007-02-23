@@ -5,7 +5,7 @@ require 'tmpdir'
 require 'yaml'
 
 def get_current_rev(topdir)
-  YAML::load(`svn info #{topdir}`)["Revision"].to_i
+  YAML::load(`svn info #{topdir}`)["Last Changed Rev"].to_i
 end
 
 def svn_update_with_error_tolerant(topdir)
