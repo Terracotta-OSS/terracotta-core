@@ -98,7 +98,7 @@ public class AdminClientPanel extends XContainer
     super();
 
     AdminClientContext acc = AdminClient.getContext();
-
+    
     acc.controller = this;
     
     FrameResource frameRes = acc.topRes.getFrame("MyFrame");

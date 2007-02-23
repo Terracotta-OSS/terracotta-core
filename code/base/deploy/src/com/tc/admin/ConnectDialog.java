@@ -80,6 +80,7 @@ public final class ConnectDialog extends Dialog {
     m_emptyPanel.setLayout(new BorderLayout());
 
     m_authPanel = (Container) AdminClient.getContext().topRes.resolve("AuthPanel");
+    
     Container credentialsPanel = (Container) m_authPanel.findComponent("CredentialsPanel");
     m_authPanel.setVisible(false);
     this.m_usernameField = (JTextField) credentialsPanel.findComponent("UsernameField");
@@ -133,7 +134,9 @@ public final class ConnectDialog extends Dialog {
     m_usernameField.setEnabled(true);
     m_passwordField.setEnabled(true);
     m_authPanel.setVisible(true);
+    m_authPanel.getRootPane().setDefaultButton(m_okButton);
     pack();
+    m_usernameField.grabFocus();
   }
 
   public void setServiceURL(JMXServiceURL url) {
@@ -301,7 +304,7 @@ public final class ConnectDialog extends Dialog {
       } catch (IOException e) {
         m_error = e;
       } catch (RuntimeException e) {
-        if (e instanceof SecurityException) {
+        if (e instanceof AuthenticatingJMXConnector.AuthenticationException) {
           return;
         }
         m_error = e;

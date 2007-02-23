@@ -127,7 +127,7 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
         else if (m_error instanceof RuntimeException) throw (RuntimeException) m_error;
       }
     }
-    if (m_securityEnabled) throw new SecurityException();
+    if (m_securityEnabled) throw new AuthenticationException();
   }
 
   public synchronized void handleOkClick(String username, String password) {
@@ -170,5 +170,13 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
 
   public static interface AuthenticationListener extends EventListener {
     void handleEvent();
+  }
+
+  // --------------------------------------------------------------------------------
+
+  public static class AuthenticationException extends RuntimeException {
+    public AuthenticationException() {
+      super();
+    }
   }
 }
