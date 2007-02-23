@@ -36,17 +36,4 @@ public class CorrectJVMTestBase extends TCTestCase {
         .indexOf(expectedType) >= 0);
   }
 
-  public void testMode() throws Exception {
-    String vmName = System.getProperty("java.vm.name");
-    String actualMode = vmName.toLowerCase().indexOf("server") >= 0 ? "server" : "client";
-    String expectedMode = TestConfigObject.getInstance().jvmMode();
-
-    System.err.println("java.vm.name=" + vmName);
-    System.err.println("Actual JVM mode (from '" + vmName + "'): '" + actualMode + "'; expected JVM mode: '"
-                       + expectedMode + "'");
-
-    assertTrue("Actual mode (from '" + vmName + "') of '" + actualMode + "' includes expected mode of '" + expectedMode
-               + "'", actualMode.indexOf(expectedMode) >= 0 || vmName.indexOf("64-Bit") >= 0);
-  }
-
 }
