@@ -14,7 +14,7 @@ import com.tc.util.FieldUtils;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JavaLangReflectFieldAdapter extends ClassAdapter implements Opcodes {
+public class JavaLangReflectFieldAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
 
   private static final Set setters = new HashSet();
   private static final Set getters = new HashSet();
@@ -33,10 +33,18 @@ public class JavaLangReflectFieldAdapter extends ClassAdapter implements Opcodes
     setters.add("setShort(Ljava/lang/Object;S)V");
   }
 
-  public JavaLangReflectFieldAdapter(ClassVisitor cv, ClassLoader caller) {
+  public JavaLangReflectFieldAdapter() {
+    super(null);
+  }
+  
+  private JavaLangReflectFieldAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
   }
 
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new JavaLangReflectFieldAdapter(visitor, loader);
+  }
+  
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 

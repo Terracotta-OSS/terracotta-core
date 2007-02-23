@@ -9,19 +9,28 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.bytecode.ClassAdapterFactory;
 
 /**
  * Adds the NamedClassLoader interface (and required impl) to Tomcat's internal loader implementations
  */
-public class NamedLoaderAdapter extends ClassAdapter implements Opcodes {
+public class NamedLoaderAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
 
   private static final String LOADER_NAME_FIELD = ByteCodeUtil.TC_FIELD_PREFIX + "loaderName";
   private String              owner;
 
-  public NamedLoaderAdapter(ClassVisitor cv, ClassLoader caller) {
+  public NamedLoaderAdapter() {
+    super(null);
+  }
+  
+  private NamedLoaderAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
   }
 
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new NamedLoaderAdapter(visitor, loader);
+  }
+  
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     interfaces = ByteCodeUtil.addInterfaces(interfaces, new String[] { NamedClassLoader.CLASS });
     super.visit(version, access, name, signature, superName, interfaces);

@@ -12,12 +12,20 @@ import com.tcclient.util.DSOUnsafe;
 
 import java.lang.reflect.Modifier;
 
-public class UnsafeAdapter extends ClassAdapter implements Opcodes {
+public class UnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
   private final static String UNSAFE_CLASS_SLASH   = "sun/misc/Unsafe";
   public final static String TC_UNSAFE_FIELD_NAME = ByteCodeUtil.TC_FIELD_PREFIX + "theUnsafe";
 
-  public UnsafeAdapter(ClassVisitor cv, ClassLoader caller) {
+  public UnsafeAdapter() {
+    super(null);
+  }
+  
+  private UnsafeAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
+  }
+  
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new UnsafeAdapter(visitor, loader);
   }
 
   public final void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {

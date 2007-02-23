@@ -1,8 +1,8 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.weblogic.transform;
-
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
@@ -11,16 +11,25 @@ import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.Namespace;
 
-public class GenericClassLoaderAdapter extends ClassAdapter implements Opcodes {
+public class GenericClassLoaderAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
 
   private static final String LOADER_DESC_FIELD = ByteCodeUtil.TC_FIELD_PREFIX + "loaderDesc";
 
-  public GenericClassLoaderAdapter(ClassVisitor cv, ClassLoader caller) {
+  public GenericClassLoaderAdapter() {
+    super(null);
+  }
+
+  private GenericClassLoaderAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
+  }
+
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new GenericClassLoaderAdapter(visitor, loader);
   }
 
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
@@ -106,7 +115,8 @@ public class GenericClassLoaderAdapter extends ClassAdapter implements Opcodes {
         mv.visitFieldInsn(PUTFIELD, "weblogic/utils/classloaders/GenericClassLoader", LOADER_DESC_FIELD,
                           "Ljava/lang/String;");
         mv.visitVarInsn(ALOAD, 0);
-        mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper", "registerGlobalLoader", "(Lcom/tc/object/loaders/NamedClassLoader;)V");
+        mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper",
+                           "registerGlobalLoader", "(Lcom/tc/object/loaders/NamedClassLoader;)V");
       }
       super.visitInsn(opcode);
     }
@@ -116,6 +126,5 @@ public class GenericClassLoaderAdapter extends ClassAdapter implements Opcodes {
   void foo() {
     ClassProcessorHelper.registerGlobalLoader((NamedClassLoader) this);
   }
-
 
 }

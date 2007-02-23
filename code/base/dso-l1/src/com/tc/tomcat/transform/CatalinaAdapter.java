@@ -11,13 +11,22 @@ import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.bytecode.ClassAdapterFactory;
 
-public class CatalinaAdapter extends ClassAdapter implements Opcodes {
+public class CatalinaAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
 
   private static final String INJECT_CLASSES = ByteCodeUtil.TC_METHOD_PREFIX + "injectClasses";
 
-  public CatalinaAdapter(ClassVisitor cv, ClassLoader caller) {
+  public CatalinaAdapter() {
+    super(null);
+  }
+
+  private CatalinaAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
+  }
+
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new CatalinaAdapter(visitor, loader);
   }
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {

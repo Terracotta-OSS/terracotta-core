@@ -9,21 +9,28 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.commons.LocalVariablesSorter;
+import com.tc.object.bytecode.ClassAdapterFactory;
 
-public class MainAdapter extends ClassAdapter {
+public class MainAdapter extends ClassAdapter implements ClassAdapterFactory {
 
-  public MainAdapter(ClassVisitor cv, ClassLoader caller) {
+  public MainAdapter() {
+    super(null);
+  }
+
+  private MainAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
   }
 
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new MainAdapter(visitor, loader);
+  }
+  
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-
-    if ("boot".equals(name)) {
-      mv = new BootAdapter(access, desc, mv);
+    if (!"boot".equals(name)) {
+      return mv;
     }
-
-    return mv;
+    return new BootAdapter(access, desc, mv);
   }
 
   private static class BootAdapter extends LocalVariablesSorter implements Opcodes {

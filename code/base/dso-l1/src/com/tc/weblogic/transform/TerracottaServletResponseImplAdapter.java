@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.weblogic.transform;
 
@@ -8,6 +9,7 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
+import com.tc.object.bytecode.ClassAdapterFactory;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -15,14 +17,25 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class TerracottaServletResponseImplAdapter extends ClassAdapter implements Opcodes {
+public class TerracottaServletResponseImplAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
+
+  private static final String CLASS_NAME = "weblogic.servlet.internal.ServletResponseImpl";
 
   private final Map nativeMethods;
   private String    thisClassname;
 
-  public TerracottaServletResponseImplAdapter(ClassVisitor cv, ClassLoader caller) throws Exception {
+  public TerracottaServletResponseImplAdapter() {
+    super(null);
+    this.nativeMethods = null;
+  }
+
+  private TerracottaServletResponseImplAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
     this.nativeMethods = getNativeMethods(caller);
+  }
+
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new TerracottaServletResponseImplAdapter(visitor, loader);
   }
 
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
@@ -77,10 +90,15 @@ public class TerracottaServletResponseImplAdapter extends ClassAdapter implement
     }
   }
 
-  private static Map getNativeMethods(ClassLoader caller) throws Exception {
-    Map rv = new HashMap();
-    Class c = Class.forName("weblogic.servlet.internal.ServletResponseImpl", false, caller);
+  private static Map getNativeMethods(ClassLoader caller) {
+    Class c;
+    try {
+      c = Class.forName(CLASS_NAME, false, caller);
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException("Unable to load class " + CLASS_NAME);
+    }
 
+    Map rv = new HashMap();
     Method[] methods = c.getDeclaredMethods();
     for (int i = 0; i < methods.length; i++) {
       Method m = methods[i];
@@ -98,7 +116,6 @@ public class TerracottaServletResponseImplAdapter extends ClassAdapter implement
       Object prev = rv.put(sig, m);
       if (prev != null) { throw new AssertionError("replaced mapping for " + sig); }
     }
-
     return rv;
   }
 }

@@ -8,22 +8,28 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.loaders.NamedClassLoader;
 
-public class WebAppLoaderAdapter extends ClassAdapter {
+public class WebAppLoaderAdapter extends ClassAdapter implements ClassAdapterFactory {
 
-  public WebAppLoaderAdapter(ClassVisitor cv, ClassLoader caller) {
+  public WebAppLoaderAdapter() {
+    super(null);
+  }
+  
+  private WebAppLoaderAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
+  }
+  
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new WebAppLoaderAdapter(visitor, loader);
   }
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-
-    if ("createClassLoader".equals(name) && "()Lorg/apache/catalina/loader/WebappClassLoader;".equals(desc)) { return new CreateClassLoaderAdapter(
-                                                                                                                                                   mv); }
-
+    if ("createClassLoader".equals(name) //
+        && "()Lorg/apache/catalina/loader/WebappClassLoader;".equals(desc)) { return new CreateClassLoaderAdapter(mv); }
     return mv;
-
   }
 
   private static class CreateClassLoaderAdapter extends MethodAdapter implements Opcodes {

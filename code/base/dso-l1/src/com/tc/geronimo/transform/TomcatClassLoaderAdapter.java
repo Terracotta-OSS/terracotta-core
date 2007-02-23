@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.geronimo.transform;
 
@@ -10,12 +11,21 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
 import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.loaders.NamedClassLoader;
 
-public class TomcatClassLoaderAdapter extends ClassAdapter implements Opcodes {
+public class TomcatClassLoaderAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
 
-  public TomcatClassLoaderAdapter(ClassVisitor cv, ClassLoader caller) {
+  public TomcatClassLoaderAdapter() {
+    super(null);
+  }
+
+  private TomcatClassLoaderAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
+  }
+
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new TomcatClassLoaderAdapter(visitor, loader);
   }
 
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.weblogic.transform;
 
@@ -7,11 +8,20 @@ import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.object.bytecode.ClassAdapterFactory;
 
-public class ServletResponseImplAdapter extends ClassAdapter implements Opcodes {
+public class ServletResponseImplAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
 
-  public ServletResponseImplAdapter(ClassVisitor cv, ClassLoader caller) {
+  public ServletResponseImplAdapter() {
+    super(null);
+  }
+
+  private ServletResponseImplAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
+  }
+
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new ServletResponseImplAdapter(visitor, loader);
   }
 
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {

@@ -9,7 +9,7 @@ import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 
-public class JavaUtilWeakHashMapAdapter extends ClassAdapter implements Opcodes {
+public class JavaUtilWeakHashMapAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
   private static final String HASH_MAP_CLASS          = "java/util/HashMap";
   private static final String WEAK_HASH_MAP_CLASS     = "java/util/WeakHashMap";
 
@@ -20,10 +20,18 @@ public class JavaUtilWeakHashMapAdapter extends ClassAdapter implements Opcodes 
   private static final String EQ_METHOD_NAME          = "eq";
   private static final String EQ_METHOD_DESCRIPTION   = "(Ljava/lang/Object;Ljava/lang/Object;)Z";
 
-  public JavaUtilWeakHashMapAdapter(ClassVisitor cv, ClassLoader caller) {
+  public JavaUtilWeakHashMapAdapter() {
+    super(null);
+  }
+  
+  private JavaUtilWeakHashMapAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
   }
 
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new JavaUtilWeakHashMapAdapter(visitor, loader);
+  }
+  
   public void visitEnd() {
     generateSyntheticHashMethod();
     generateSyntheticEqualMethod();

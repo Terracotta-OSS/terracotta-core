@@ -3,13 +3,23 @@
  */
 package com.tc.tomcat.transform;
 
+import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
+import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.StringGetCharsAdapter;
 
-public class JspWriterImplAdapter extends StringGetCharsAdapter {
+public class JspWriterImplAdapter extends StringGetCharsAdapter implements ClassAdapterFactory {
 
-  public JspWriterImplAdapter(ClassVisitor cv, ClassLoader caller) {
+  public JspWriterImplAdapter() {
+    super(null, null);
+  }
+  
+  private JspWriterImplAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv, new String[] { ".*" });
+  }
+
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new JspWriterImplAdapter(visitor, loader);
   }
 
 }

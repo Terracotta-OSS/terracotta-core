@@ -10,13 +10,22 @@ import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.bytecode.ClassAdapterFactory;
 
-public class ProxyMethodInterceptorAdapter extends ClassAdapter {
+public class ProxyMethodInterceptorAdapter extends ClassAdapter implements ClassAdapterFactory {
 
-  public ProxyMethodInterceptorAdapter(ClassVisitor cv, ClassLoader caller) {
+  public ProxyMethodInterceptorAdapter() {
+    super(null);
+  }
+  
+  private ProxyMethodInterceptorAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
   }
 
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new ProxyMethodInterceptorAdapter(visitor, loader);
+  }
+  
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     // public final Object intercept(Object object, Method method, Object args[], MethodProxy proxy)
 

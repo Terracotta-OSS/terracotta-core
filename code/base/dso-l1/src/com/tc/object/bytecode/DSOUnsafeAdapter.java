@@ -12,11 +12,20 @@ import com.tc.asm.Type;
 import com.tc.asm.commons.LocalVariablesSorter;
 import com.tc.object.lockmanager.api.LockLevel;
 
-public class DSOUnsafeAdapter extends ClassAdapter implements Opcodes {
-  public DSOUnsafeAdapter(ClassVisitor cv, ClassLoader loader) {
+public class DSOUnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
+
+  public DSOUnsafeAdapter() {
+    super(null);
+  }
+  
+  private DSOUnsafeAdapter(ClassVisitor cv, ClassLoader loader) {
     super(cv);
   }
 
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new DSOUnsafeAdapter(visitor, loader);
+  }
+  
   public final void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     superName = "sun/misc/Unsafe";
     super.visit(version, access, name, signature, superName, interfaces);

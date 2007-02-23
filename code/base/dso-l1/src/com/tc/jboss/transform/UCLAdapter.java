@@ -11,15 +11,24 @@ import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.loaders.NamedClassLoader;
 
-public class UCLAdapter extends ClassAdapter implements Opcodes {
+public class UCLAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
 
   private static final String LOADER_DESC_FIELD = ByteCodeUtil.TC_FIELD_PREFIX + "loaderDesc";
   private String              owner;
 
-  public UCLAdapter(ClassVisitor cv, ClassLoader caller) {
+  public UCLAdapter() {
+    super(null);
+  }
+
+  private UCLAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
+  }
+
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new UCLAdapter(visitor, loader);
   }
 
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {

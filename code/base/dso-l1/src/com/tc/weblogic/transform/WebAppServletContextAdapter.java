@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.weblogic.transform;
 
@@ -9,11 +10,20 @@ import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.bytecode.ClassAdapterFactory;
 
-public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes {
+public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
 
-  public WebAppServletContextAdapter(ClassVisitor cv, ClassLoader caller) {
+  public WebAppServletContextAdapter() {
+    super(null);
+  }
+
+  private WebAppServletContextAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
+  }
+
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new WebAppServletContextAdapter(visitor, loader);
   }
 
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
@@ -188,8 +198,7 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     MethodVisitor mv = cv.visitMethod(ACC_PUBLIC, "__tc_session_getSessionTimeoutSecs", "()I", null, null);
     mv.visitCode();
     mv.visitVarInsn(ALOAD, 0);
-    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionTimeoutSecs",
-                      "I");
+    mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "sessionTimeoutSecs", "I");
     mv.visitInsn(IRETURN);
     mv.visitMaxs(0, 0);
     mv.visitEnd();

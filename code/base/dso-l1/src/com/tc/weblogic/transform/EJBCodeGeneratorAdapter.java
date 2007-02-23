@@ -1,8 +1,8 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.weblogic.transform;
-
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
@@ -11,11 +11,20 @@ import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.bytecode.ClassAdapterFactory;
 
-public class EJBCodeGeneratorAdapter extends ClassAdapter {
+public class EJBCodeGeneratorAdapter extends ClassAdapter implements ClassAdapterFactory {
 
-  public EJBCodeGeneratorAdapter(ClassVisitor cv, ClassLoader caller) {
+  public EJBCodeGeneratorAdapter() {
+    super(null);
+  }
+
+  private EJBCodeGeneratorAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
+  }
+
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new EJBCodeGeneratorAdapter(visitor, loader);
   }
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {

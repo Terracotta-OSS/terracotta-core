@@ -13,7 +13,7 @@ import com.tc.exception.TCRuntimeException;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JavaLangReflectArrayAdapter extends ClassAdapter implements Opcodes {
+public class JavaLangReflectArrayAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
   private final static Set nonNativeMethods = new HashSet(2);
   private final static Set excludeMethods   = new HashSet(2);
 
@@ -32,10 +32,18 @@ public class JavaLangReflectArrayAdapter extends ClassAdapter implements Opcodes
     excludeMethods.add("getShort");
   }
 
-  public JavaLangReflectArrayAdapter(ClassVisitor cv, ClassLoader caller) {
+  public JavaLangReflectArrayAdapter() {
+    super(null);
+  }
+  
+  private JavaLangReflectArrayAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
   }
 
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new JavaLangReflectArrayAdapter(visitor, loader);
+  }
+  
   private boolean isNative(int access) {
     return (access & Opcodes.ACC_NATIVE) == Opcodes.ACC_NATIVE;
   }

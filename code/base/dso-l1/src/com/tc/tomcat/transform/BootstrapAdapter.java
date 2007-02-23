@@ -8,16 +8,25 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.loaders.NamedClassLoader;
 
 /**
  * All this adapter does is assign names to the three shared loaders in tomcat (common, catalina, and shared). See
  * http://tomcat.apache.org/tomcat-5.0-doc/class-loader-howto.html for more info about these loaders
  */
-public class BootstrapAdapter extends ClassAdapter {
+public class BootstrapAdapter extends ClassAdapter implements ClassAdapterFactory {
 
-  public BootstrapAdapter(ClassVisitor cv, ClassLoader caller) {
+  public BootstrapAdapter() {
+    super(null);
+  }
+  
+  private BootstrapAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
+  }
+  
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new BootstrapAdapter(visitor, loader);
   }
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {

@@ -9,11 +9,20 @@ import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
+import com.tc.object.bytecode.ClassAdapterFactory;
 
-public class HostGBeanAdapter extends ClassAdapter {
+public class HostGBeanAdapter extends ClassAdapter implements ClassAdapterFactory {
 
-  public HostGBeanAdapter(ClassVisitor cv, ClassLoader caller) {
+  public HostGBeanAdapter() {
+    super(null);
+  }
+  
+  private HostGBeanAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
+  }
+  
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new HostGBeanAdapter(visitor, loader);
   }
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {

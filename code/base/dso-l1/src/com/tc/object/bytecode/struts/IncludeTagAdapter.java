@@ -11,6 +11,7 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
 import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.bytecode.ClassAdapterFactory;
 
 /**
  * This is a work-around for a problem with the <bean:include> tag in struts. Basically the tag can create a new
@@ -18,10 +19,18 @@ import com.tc.object.bytecode.ByteCodeUtil;
  * the session object, this creates a deadlock. The solution implemented here is to release the session lock before
  * processing the tag
  */
-public class IncludeTagAdapter extends ClassAdapter implements Opcodes {
+public class IncludeTagAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
 
-  public IncludeTagAdapter(ClassVisitor cv, ClassLoader caller) {
+  public IncludeTagAdapter() {
+    super(null);
+  }
+  
+  private IncludeTagAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
+  }
+
+  public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+    return new IncludeTagAdapter(visitor, loader);
   }
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
