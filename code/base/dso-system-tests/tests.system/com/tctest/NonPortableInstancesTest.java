@@ -22,7 +22,6 @@ import com.tc.util.Assert;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
@@ -131,11 +130,8 @@ public class NonPortableInstancesTest extends TransparentTestBase {
       String expect = getExpected(i);
       String actual = (String) event.getMessage();
 
-
-       FileOutputStream fos = new FileOutputStream("C:\\out.txt");
-       fos.write(actual.getBytes());
-       fos.close();
-
+      expect = expect.replaceAll("\r", "");
+      actual = actual.replaceAll("\r", "");
 
       Assert.assertEquals(expect, actual);
     }
