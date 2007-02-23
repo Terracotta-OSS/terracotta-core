@@ -34,7 +34,7 @@ public class BasicWalkerTest extends TestCase {
     r.m.put("foo", new Foo());
     r.m.put("foo foo", new Foo(new Foo()));
 
-    MyWalkTest test = new MyWalkTest();
+    WalkTest test = new MyWalkTestImpl();
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintStream ps = new PrintStream(baos);
@@ -50,6 +50,10 @@ public class BasicWalkerTest extends TestCase {
 
   private void validate(String output) throws IOException {
     String expected = getExpected();
+
+    expected = expected.replaceAll("\r", "");
+    output = output.replaceAll("\r", "");
+
     assertEquals(expected, output);
   }
 
@@ -91,7 +95,7 @@ public class BasicWalkerTest extends TestCase {
 
   }
 
-  private static class MyWalkTest implements WalkTest {
+  private static class MyWalkTestImpl implements WalkTest {
 
     public boolean shouldTraverse(MemberValue value) {
       Object val = value.getValueObject();
