@@ -21,9 +21,8 @@
     <dso>
       <debugging>
         <runtime-logging>
+          <non-portable-dump>true</non-portable-dump>
           <lock-debug>false</lock-debug>
-          <partial-instrumentation>true</partial-instrumentation>
-          <non-portable-warning>true</non-portable-warning>
           <wait-notify-debug>false</wait-notify-debug>
           <distributed-method-debug>true</distributed-method-debug>
           <new-object-debug>false</new-object-debug>

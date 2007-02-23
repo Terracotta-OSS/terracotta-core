@@ -22,7 +22,7 @@ public class DistributedEventsTest extends AbstractTwoServerDeploymentTest {
   private static EventManager eventManager2;
 
   public DistributedEventsTest() {
-    disableAllUntil("2007-02-27");
+    // disableAllUntil("2007-02-27");
   }
 
   protected void setUp() throws Exception {
