@@ -25,6 +25,7 @@ Registry = Hash.new
 # Get all our shared Ruby code.
 #AutoRequire.all_in_directory(File.join("..", "..", "buildsystems", "lib", "ruby", "shared"))
 
+
 # Get all our buildscripts code.
 AutoRequire.all_in_directory('buildscripts')
 
@@ -45,7 +46,8 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     find_jvms
     
     # Some more objects we need.
-    @build_environment = BuildEnvironment.new(platform, config_source)
+    root_dir = File.expand_path(File.join("..", ".."))
+    @build_environment = BuildEnvironment.new(platform, config_source, root_dir)
     @static_resources = StaticResources.new(basedir)
     @archive_tag = ArchiveTag.new(@build_environment)
     

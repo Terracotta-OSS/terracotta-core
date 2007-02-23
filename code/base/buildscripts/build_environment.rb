@@ -20,12 +20,12 @@ class BuildEnvironment < Environment
   include_class('java.lang.System') { |p, name| "Java" + name }
 
   # Creates a new instance, given a Platform object and a configuration source.
-    def initialize(platform, config_source)
+    def initialize(platform, config_source, root_dir)
         super(platform)
         @config_source = config_source
         @build_timestamp = Time.now
         begin
-            @svninfo = YAML::load(platform.exec("svn", "info"))        
+            @svninfo = YAML::load(platform.exec("svn", "info", root_dir))
         rescue            
             @svninfo = {}
             @svninfo["Last Changed Rev"] = "00"
