@@ -4,15 +4,33 @@
 require 'tmpdir'
 require 'yaml'
 
+def get_current_rev(topdir)
+  YAML::load(`svn info #{topdir}`)["Revision"].to_i
+end
+
 def svn_update_with_error_tolerant(topdir)
   error_msg=''  
   3.downto(1) do 
     error_msg=`svn update #{topdir} -q --non-interactive 2>&1`
-    return if $? == 0
+    return get_current_rev(topdir) if $? == 0
     sleep(5*60)
   end  
   fail(error_msg)
 end
+
+def get_current_good_rev(file)
+  currently_good_rev = 0
+  begin
+    File.open(file, "r") do | f |
+      currently_good_rev = f.gets.to_i    
+    end
+  rescue
+    currently_good_rev = 0
+  end
+  currently_good_rev
+end
+
+
 
 # clean out temp dir
 `rm -rf #{Dir.tmpdir}/terracotta*`
@@ -33,22 +51,12 @@ if ENV['OS'] =~ /win/i
   build_archive_dir = "o:"    
 end
 
-currently_good_rev = 0
-unless ARGV[0] == 'general-monkey'
-  begin
-    good_rev_file = File.join(build_archive_dir, "currently_good_rev.txt")
-    File.open(good_rev_file, "r") do | f |
-      currently_good_rev = f.gets.to_i
-      puts "Currently good revision: #{currently_good_rev}"
-    end
-  rescue
-    currently_good_rev = 0
-  end
-end
+good_rev_file = File.join(build_archive_dir, "currently_good_rev.txt")
+monkey_name = ARGV[0]
 
-while true
-  svn_update_with_error_tolerant(topdir)
-  current_rev = YAML::load(`svn info #{topdir}`)["Revision"].to_i
-  exit(0) if currently_good_rev == 0 || current_rev <= currently_good_rev
+while true  
+  current_good_rev = (monkey_name == "general-monkey") ? 0 : get_current_good_rev(good_rev_file)
+  current_rev = svn_update_with_error_tolerant(topdir)
+  exit(0) if current_good_rev == 0 || current_rev <= current_good_rev
   sleep(5*60)
 end
