@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso;
 
@@ -181,7 +182,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
       parser.setSource(m_target);
       parser.setResolveBindings(true);
         
-      m_ast = (CompilationUnit)parser.createAST(null);
+      m_ast = (CompilationUnit)parser.createAST(monitor);
       m_ast.accept(CompilationUnitVisitor.this);
     }
   }
@@ -204,14 +205,30 @@ public class CompilationUnitVisitor extends ASTVisitor {
           String fullName = PatternHelper.getFullyQualifiedName(type);
   
           if(m_configHelper.isAdaptable(fullName)) {
-            addMarker("adaptedTypeMarker",
-                      "DSO Adapted Type",
-                      node.getName());
+            addMarker("adaptedTypeMarker", "DSO Adapted Type", node.getName());
+          } else if(m_configHelper.isExcluded(fullName)) {
+            addMarker("excludedTypeMarker", "DSO Excluded Type", node.getName());
           }
-          else if(m_configHelper.isExcluded(fullName)) {
-            addMarker("excludedTypeMarker",
-                      "DSO Excluded Type",
-                      node.getName());
+        }
+        
+        Type superType = node.getSuperclassType();
+        if(superType != null) {
+          binding  = superType.resolveBinding();
+          
+          if(binding != null && !binding.isPrimitive() && !binding.isTypeVariable()) {
+            type = (IType)binding.getJavaElement();
+            
+            if(type != null) {
+              String fullName = PatternHelper.getFullyQualifiedName(type);
+          
+              if(m_plugin.isBootClass(fullName)) {
+                addMarker("bootJarTypeMarker", "BootJar Type", superType);
+              } else if(m_configHelper.isAdaptable(fullName)) {
+                addMarker("adaptedTypeReferenceMarker", "DSO Instrumented Type Reference", superType);
+              } else if(m_configHelper.isExcluded(fullName)) {
+                addMarker("excludedTypeMarker", "DSO Excluded Type", superType);
+              }
+            }
           }
         }
       }
@@ -231,19 +248,11 @@ public class CompilationUnitVisitor extends ASTVisitor {
         String fullName = PatternHelper.getFullyQualifiedName(type);
   
         if(m_plugin.isBootClass(fullName)) {
-          addMarker("bootJarTypeMarker",
-                    "BootJar Type",
-                    typeNode);
-        }
-        else if(m_configHelper.isAdaptable(fullName)) {
-          addMarker("adaptedTypeReferenceMarker",
-                    "DSO Instrumented Type Reference",
-                    typeNode);
-        }
-        else if(m_configHelper.isExcluded(fullName)) {
-          addMarker("excludedTypeMarker",
-                    "DSO Excluded Type",
-                    typeNode);
+          addMarker("bootJarTypeMarker", "BootJar Type", typeNode);
+        } else if(m_configHelper.isAdaptable(fullName)) {
+          addMarker("adaptedTypeReferenceMarker", "DSO Instrumented Type Reference", typeNode);
+        } else if(m_configHelper.isExcluded(fullName)) {
+          addMarker("excludedTypeMarker", "DSO Excluded Type", typeNode);
         }
       }
     }
@@ -253,42 +262,27 @@ public class CompilationUnitVisitor extends ASTVisitor {
 
   public boolean visit(MethodDeclaration node) {
     if(m_configHelper.isAutolocked(node)) {
-      addMarker("autolockedMarker",
-                "DSO Auto-locked Method",
-                node.getName());
+      addMarker("autolockedMarker", "DSO Auto-locked Method", node.getName());
       
       if(!isDeclaringTypeAdaptable(node)) {
-        addProblemMarker("DeclaringTypeNotInstrumentedMarker",
-                         "Declaring type not instrumented",
-                         node.getName());
+        addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node.getName());
       }
       if(CHECK_SYNCHRONIZED && hasSynchronization(node)) {
-        addProblemMarker("ConfigProblemMarker",
-                         "Autolocked method without synchronization",
-                         node.getName());
+        addProblemMarker("ConfigProblemMarker", "Autolocked method without synchronization", node.getName());
       }
-    }
-    else if(m_configHelper.isNameLocked(node)) {
-      addMarker("nameLockedMarker",
-                "DSO Name-locked Method",
-                node.getName());
+    } else if(m_configHelper.isNameLocked(node)) {
+      addMarker("nameLockedMarker", "DSO Name-locked Method", node.getName());
       
       if(!isDeclaringTypeAdaptable(node)) {
-        addProblemMarker("DeclaringTypeNotInstrumentedMarker",
-                         "Declaring type not instrumented",
-                         node.getName());
+        addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node.getName());
       }
     }
 
     if(m_configHelper.isDistributedMethod(node)) {
-      addMarker("distributedMethodMarker",
-                "DSO Distributed Method",
-                node.getName());
+      addMarker("distributedMethodMarker", "DSO Distributed Method", node.getName());
 
       if(!isDeclaringTypeAdaptable(node)) {
-        addProblemMarker("DeclaringTypeNotInstrumentedMarker",
-                         "Declaring type not instrumented",
-                         node.getName());
+        addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node.getName());
       }
     }
 
@@ -303,14 +297,9 @@ public class CompilationUnitVisitor extends ASTVisitor {
       String       fullName      = declaringType.getQualifiedName();
 
       if(m_plugin.isBootClass(fullName)) {
-        addMarker("bootJarTypeMarker",
-                  "BootJar Type",
-                  node.getName());
-      }
-      else if(m_configHelper.isAdaptable(fullName)) {
-        addMarker("adaptedTypeReferenceMarker",
-                  "DSO Instrumented Type Reference",
-                  node.getName());
+        addMarker("bootJarTypeMarker", "BootJar Type", node.getName());
+      } else if(m_configHelper.isAdaptable(fullName)) {
+        addMarker("adaptedTypeReferenceMarker", "DSO Instrumented Type Reference", node.getName());
       }
     }
 
@@ -325,14 +314,9 @@ public class CompilationUnitVisitor extends ASTVisitor {
       String fullName = binding.getQualifiedName();
   
       if(m_plugin.isBootClass(fullName)) {
-        addMarker("bootJarTypeMarker",
-                  "BootJar Type",
-                  type);
-      }
-      else if(m_configHelper.isAdaptable(fullName)) {
-        addMarker("adaptedTypeReferenceMarker",
-                  "DSO Instrumented Type Reference",
-                  type);
+        addMarker("bootJarTypeMarker", "BootJar Type", type);
+      } else if(m_configHelper.isAdaptable(fullName)) {
+        addMarker("adaptedTypeReferenceMarker", "DSO Instrumented Type Reference", type);
       }
     }
     
@@ -359,33 +343,22 @@ public class CompilationUnitVisitor extends ASTVisitor {
         String fieldName   = parentClass+"."+binding.getName();
   
         if(m_configHelper.isRoot(fieldName)) {
-          addMarker("rootMarker",
-                    "DSO Root Field",
-                    node.getName());
+          addMarker("rootMarker", "DSO Root Field", node.getName());
           
           if(!m_configHelper.isAdaptable(parentClass)) {
-            addProblemMarker("DeclaringTypeNotInstrumentedMarker",
-                             "Declaring type not instrumented",
-                             node.getName());
+            addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node.getName());
           }
-        }
-        else if(m_configHelper.isTransient(fieldName)) {
-          addMarker("transientFieldMarker",
-                    "DSO Transient Field",
-                    node.getName());
+        } else if(m_configHelper.isTransient(fieldName)) {
+          addMarker("transientFieldMarker", "DSO Transient Field", node.getName());
           
           if(!m_configHelper.isAdaptable(parentClass)) {
-            addProblemMarker("DeclaringTypeNotInstrumentedMarker",
-                             "Declaring type not instrumented",
-                             node.getName());
+            addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node.getName());
           }
         }
       }
       
       if(m_plugin.isBootClass(binding.getType().getQualifiedName())) {
-        addMarker("bootJarTypeMarker",
-                  "BootJar Type",
-                  node.getType());
+        addMarker("bootJarTypeMarker", "BootJar Type", node.getType());
       }
     }
     
@@ -412,25 +385,16 @@ public class CompilationUnitVisitor extends ASTVisitor {
         String fieldName   = parentClass+"."+binding.getName();
   
         if(m_configHelper.isRoot(fieldName)) {
-          addMarker("rootMarker",
-                    "DSO Root Field",
-                    node.getName());
+          addMarker("rootMarker", "DSO Root Field", node.getName());
           
           if(!m_configHelper.isAdaptable(parentClass)) {
-            addProblemMarker("DeclaringTypeNotInstrumentedMarker",
-                             "Declaring type not instrumented",
-                             node);
+            addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node);
           }
-        }
-        else if(m_configHelper.isTransient(fieldName)) {
-          addMarker("transientFieldMarker",
-                    "DSO Transient Field",
-                    node.getName());
+        } else if(m_configHelper.isTransient(fieldName)) {
+          addMarker("transientFieldMarker", "DSO Transient Field", node.getName());
           
           if(!m_configHelper.isAdaptable(parentClass)) {
-            addProblemMarker("DeclaringTypeNotInstrumentedMarker",
-                             "Declaring type not instrumented",
-                             node);
+            addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node);
           }
         }
       }
@@ -438,14 +402,9 @@ public class CompilationUnitVisitor extends ASTVisitor {
       String typeName = binding.getType().getQualifiedName();
       
       if(m_plugin.isBootClass(typeName)) {
-        addMarker("bootJarTypeMarker",
-                  "BootJar Type",
-                  getType(node));
-      }
-      else if(m_configHelper.isAdaptable(typeName)) {
-        addMarker("adaptedTypeReferenceMarker",
-                  "DSO Instrumented Type Reference",
-                  getType(node));
+        addMarker("bootJarTypeMarker", "BootJar Type", getType(node));
+      } else if(m_configHelper.isAdaptable(typeName)) {
+        addMarker("adaptedTypeReferenceMarker", "DSO Instrumented Type Reference", getType(node));
       }
     }
     
@@ -457,8 +416,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
     
     if(parentNode instanceof FieldDeclaration) {
       return ((FieldDeclaration)node.getParent()).getType();
-    }
-    else if(parentNode instanceof VariableDeclarationStatement) {
+    } else if(parentNode instanceof VariableDeclarationStatement) {
       return ((VariableDeclarationStatement)node.getParent()).getType();
     }
     
@@ -497,29 +455,21 @@ public class CompilationUnitVisitor extends ASTVisitor {
   private static boolean hasSynchronization(Statement statement) {
     if(statement instanceof SynchronizedStatement) {
       return true;
-    }
-    else if(statement instanceof Block) {
+    } else if(statement instanceof Block) {
       return hasSynchronization((Block)statement);
-    }
-    else if(statement instanceof ForStatement) {
+    } else if(statement instanceof ForStatement) {
       return hasSynchronization(((ForStatement)statement).getBody());
-    }
-    else if(statement instanceof EnhancedForStatement) {
+    } else if(statement instanceof EnhancedForStatement) {
       return hasSynchronization(((EnhancedForStatement)statement).getBody());
-    }
-    else if(statement instanceof IfStatement) {
+    } else if(statement instanceof IfStatement) {
       return hasSynchronization((IfStatement)statement);
-    }
-    else if(statement instanceof WhileStatement) {
+    } else if(statement instanceof WhileStatement) {
       return hasSynchronization((WhileStatement)statement);
-    }
-    else if(statement instanceof DoStatement) {
+    } else if(statement instanceof DoStatement) {
       return hasSynchronization((DoStatement)statement);
-    }
-    else if(statement instanceof TryStatement) {
+    } else if(statement instanceof TryStatement) {
       return hasSynchronization((TryStatement)statement);
-    }
-    else if(statement instanceof SwitchStatement) {
+    } else if(statement instanceof SwitchStatement) {
       return hasSynchronization((SwitchStatement)statement);
     }
 

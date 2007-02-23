@@ -21,6 +21,7 @@ import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
@@ -99,6 +100,9 @@ public class ConfigurationHelper {
     else if(element instanceof IType) {
       return isAdaptable((IType)element);
     }
+    else if(element instanceof IPackageDeclaration) {
+      return isAdaptable((IPackageDeclaration)element);
+    }
     else if(element instanceof IPackageFragment) {
       return isAdaptable((IPackageFragment)element);
     }
@@ -126,6 +130,44 @@ public class ConfigurationHelper {
       return m_plugin.isBootClass(type) ||
              isAdaptable(PatternHelper.getFullyQualifiedName(type)); 
     }
+    return false;
+  }
+  
+  public boolean isAdaptable(IPackageDeclaration packageDecl) {
+    TcConfig config = getConfig();
+    
+    if(config != null) {
+      InstrumentedClasses classes = getInstrumentedClasses();
+      
+      if(classes != null) {
+        XmlObject[] objects = classes.selectPath("*");
+        
+        if(objects != null && objects.length > 0) {
+          XmlObject object;
+          String    expr;
+          
+          for(int i = objects.length-1; i >= 0; i--) {
+            object = objects[i];
+            
+            if(object instanceof Include) {
+              expr = ((Include)object).getClassExpression();
+              
+              if(m_patternHelper.matchesPackageDeclaration(expr, packageDecl)) {
+                return true;
+              }
+            }
+            else if(object instanceof ClassExpression) {
+              expr = ((ClassExpression)object).getStringValue();
+              
+              if(m_patternHelper.matchesPackageDeclaration(expr, packageDecl)) {
+                return false;
+              }
+            }
+          }
+        }
+      }
+    }
+    
     return false;
   }
   
@@ -233,6 +275,9 @@ public class ConfigurationHelper {
     else if(element instanceof IType) {
       ensureAdaptable((IType)element);
     }
+    else if(element instanceof IPackageDeclaration) {
+      ensureAdaptable((IPackageDeclaration)element);
+    }
     else if(element instanceof IPackageFragment) {
       ensureAdaptable((IPackageFragment)element);
     }
@@ -303,7 +348,7 @@ public class ConfigurationHelper {
     }
     
     ConfigurationEditor editor = getConfigurationEditor();
-    if(editor != null) {
+    if(false && editor != null) {
       editor.updateInstrumentedClassesPanel();
     }
     else {
@@ -323,12 +368,30 @@ public class ConfigurationHelper {
     }
   }
   
+  public void ensureAdaptable(IPackageDeclaration packageDecl) {
+    if(packageDecl != null && !isAdaptable(packageDecl)) {
+      internalEnsureAdaptable(packageDecl);
+      
+      ConfigurationEditor editor = getConfigurationEditor();
+      if(false && editor != null) {
+        editor.updateInstrumentedClassesPanel();
+      }
+      else {
+        persistConfiguration();
+      }
+    }
+  }
+  
+  private void internalEnsureAdaptable(IPackageDeclaration packageDecl) {
+    internalEnsureAdaptable(PatternHelper.getWithinPattern(packageDecl));
+  }
+
   public void ensureAdaptable(IPackageFragment fragment) {
     if(fragment != null && !isAdaptable(fragment)) {
       internalEnsureAdaptable(fragment);
       
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateInstrumentedClassesPanel();
       }
       else {
@@ -346,7 +409,7 @@ public class ConfigurationHelper {
       internalEnsureAdaptable(javaProject);
       
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateInstrumentedClassesPanel();
       }
       else {
@@ -370,7 +433,7 @@ public class ConfigurationHelper {
       internalEnsureAdaptable(classExpr);
       
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateInstrumentedClassesPanel();
       }
       else {
@@ -392,6 +455,9 @@ public class ConfigurationHelper {
     }
     else if(element instanceof IType) {
       ensureNotAdaptable((IType)element);
+    }
+    else if(element instanceof IPackageDeclaration) {
+      ensureNotAdaptable((IPackageDeclaration)element);
     }
     else if(element instanceof IPackageFragment) {
       ensureNotAdaptable((IPackageFragment)element);
@@ -420,7 +486,7 @@ public class ConfigurationHelper {
       baseEnsureNotAdaptable(type);
       
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateInstrumentedClassesPanel();
       }
       else {
@@ -465,15 +531,33 @@ public class ConfigurationHelper {
         }
       }
     } catch(JavaModelException jme) {/**/}
-
   }
 
+  public void ensureNotAdaptable(final IPackageDeclaration packageDecl) {
+    if(isAdaptable(packageDecl)) {
+      internalEnsureNotAdaptable(packageDecl);
+      
+      ConfigurationEditor editor = getConfigurationEditor();
+      if(false && editor != null) {
+        editor.updateInstrumentedClassesPanel();
+      }
+      else {
+        persistConfiguration();
+      }
+    }
+  }
+  
+  private void internalEnsureNotAdaptable(final IPackageDeclaration packageDecl) {
+    internalEnsureNotLocked(packageDecl);
+    internalEnsureNotAdaptable(PatternHelper.getWithinPattern(packageDecl));
+  }
+  
   public void ensureNotAdaptable(final IPackageFragment fragment) {
     if(isAdaptable(fragment)) {
       internalEnsureNotAdaptable(fragment);
       
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateInstrumentedClassesPanel();
       }
       else {
@@ -507,7 +591,7 @@ public class ConfigurationHelper {
       }
       
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateInstrumentedClassesPanel();
       }
       else {
@@ -521,7 +605,7 @@ public class ConfigurationHelper {
       internalEnsureNotAdaptable(classExpr);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateInstrumentedClassesPanel();
       }
       else {
@@ -553,6 +637,9 @@ public class ConfigurationHelper {
     }
     else if(element instanceof IType) {
       return isExcluded((IType)element);
+    }
+    else if(element instanceof IPackageDeclaration) {
+      return isExcluded(element.getElementName());
     }
     else if(element instanceof IPackageFragment) {
       return isExcluded((IPackageFragment)element);
@@ -673,6 +760,9 @@ public class ConfigurationHelper {
     else if(element instanceof IType) {
       ensureExcluded((IType)element);
     }
+    else if(element instanceof IPackageDeclaration) {
+      ensureExcluded(element.getElementName());
+    }
     else if(element instanceof IPackageFragment) {
       ensureExcluded((IPackageFragment)element);
     }
@@ -686,7 +776,7 @@ public class ConfigurationHelper {
       internalEnsureExcluded(module);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateInstrumentedClassesPanel();
       }
       else {
@@ -704,7 +794,7 @@ public class ConfigurationHelper {
       internalEnsureExcluded(type);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateInstrumentedClassesPanel();
       }
       else {
@@ -722,7 +812,7 @@ public class ConfigurationHelper {
       internalEnsureExcluded(fragment);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateInstrumentedClassesPanel();
       }
       else {
@@ -752,7 +842,7 @@ public class ConfigurationHelper {
       internalEnsureExcluded(className);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateInstrumentedClassesPanel();
       }
       else {
@@ -785,7 +875,7 @@ public class ConfigurationHelper {
       internalEnsureNotExcluded(module);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateInstrumentedClassesPanel();
       }
       else {
@@ -803,7 +893,7 @@ public class ConfigurationHelper {
       baseEnsureNotExcluded(PatternHelper.getFullyQualifiedName(type));
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateInstrumentedClassesPanel();
       }
       else {
@@ -839,7 +929,7 @@ public class ConfigurationHelper {
       }
       
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateInstrumentedClassesPanel();
       }
       else {
@@ -853,7 +943,7 @@ public class ConfigurationHelper {
       baseEnsureNotExcluded(classExpr);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateInstrumentedClassesPanel();
       }
       else {
@@ -950,7 +1040,7 @@ public class ConfigurationHelper {
       internalEnsureRoot(getFullName(field));
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         if(updateInstrumented) {
           editor.updateInstrumentedClassesPanel();
         }
@@ -1030,7 +1120,7 @@ public class ConfigurationHelper {
       internalEnsureRoot(fieldName);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         if(updateInstrumented) {
           editor.updateInstrumentedClassesPanel();
         }
@@ -1054,7 +1144,7 @@ public class ConfigurationHelper {
       baseEnsureNotRoot(field);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateRootsPanel();
       }
       else {
@@ -1076,7 +1166,7 @@ public class ConfigurationHelper {
       baseEnsureNotRoot(fieldName);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateRootsPanel();
       }
       else {
@@ -1110,7 +1200,7 @@ public class ConfigurationHelper {
       internalRenameRoot(fieldName, newFieldName);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateRootsPanel();
       }
       else {
@@ -1173,7 +1263,7 @@ public class ConfigurationHelper {
         internalEnsureNotRoot(field);
 
         ConfigurationEditor editor = getConfigurationEditor();
-        if(editor != null) {
+        if(false && editor != null) {
           editor.updateRootsPanel();
         }
       }
@@ -1182,7 +1272,7 @@ public class ConfigurationHelper {
       if(!isAdaptable(declaringType)) {
         internalEnsureAdaptable(declaringType);
         ConfigurationEditor editor = getConfigurationEditor();
-        if(editor != null) {
+        if(false && editor != null) {
           editor.updateInstrumentedClassesPanel();
         }
       }
@@ -1213,7 +1303,7 @@ public class ConfigurationHelper {
       internalEnsureTransient(fieldName);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         if(updateInstrumented) {
           editor.updateInstrumentedClassesPanel();
         }
@@ -1243,7 +1333,7 @@ public class ConfigurationHelper {
       internalEnsureNotTransient(fieldName);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateTransientsPanel();
       }
       else {
@@ -1350,7 +1440,7 @@ public class ConfigurationHelper {
       internalEnsureDistributedMethod(method);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateDistributedMethodsPanel();
       }
       else {
@@ -1383,7 +1473,7 @@ public class ConfigurationHelper {
       internalEnsureLocalMethod(method);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateDistributedMethodsPanel();
       }
       else {
@@ -1437,6 +1527,9 @@ public class ConfigurationHelper {
     }
     else if(element instanceof IType) {
       return isAutolocked((IType)element);
+    }
+    else if(element instanceof IPackageDeclaration) {
+      return isAutolocked((IPackageDeclaration)element);
     }
     else if(element instanceof IPackageFragment) {
       return isAutolocked((IPackageFragment)element);
@@ -1528,6 +1621,34 @@ public class ConfigurationHelper {
     return false;
   }
 
+  public boolean isAutolocked(final IPackageDeclaration packageDecl) {
+    TcConfig config = getConfig();
+    
+    if(config != null) {
+      Locks locks = getLocks();
+      
+      if(locks != null) {
+        int      size = locks.sizeOfAutolockArray();
+        Autolock autolock;
+        String   expr;
+        String   fragExpr;
+        
+        fragExpr = PatternHelper.getExecutionPattern(packageDecl);
+        
+        for(int i = 0; i < size; i++) {
+          autolock = locks.getAutolockArray(i);
+          expr     = autolock.getMethodExpression();
+          
+          if(fragExpr.equals(expr)) {
+            return true;
+          }
+        }
+      }
+    }
+    
+    return false;
+  }
+  
   public boolean isAutolocked(final IPackageFragment fragment) {
     TcConfig config = getConfig();
     
@@ -1583,6 +1704,9 @@ public class ConfigurationHelper {
     }
     else if(element instanceof IType) {
       return isNameLocked((IType)element);
+    }
+    else if(element instanceof IPackageDeclaration) {
+      return isNameLocked((IPackageDeclaration)element);
     }
     else if(element instanceof IPackageFragment) {
       return isNameLocked((IPackageFragment)element);
@@ -1674,6 +1798,34 @@ public class ConfigurationHelper {
     return false;
   }
 
+  public boolean isNameLocked(final IPackageDeclaration packageDecl) {
+    TcConfig config = getConfig();
+    
+    if(config != null) {
+      Locks locks = getLocks();
+      
+      if(locks != null) {
+        int       size = locks.sizeOfNamedLockArray();
+        NamedLock namedLock;
+        String    expr;
+        String    fragExpr;
+        
+        fragExpr = PatternHelper.getExecutionPattern(packageDecl);
+        
+        for(int i = 0; i < size; i++) {
+          namedLock = locks.getNamedLockArray(i);
+          expr      = namedLock.getMethodExpression();
+          
+          if(fragExpr.equals(expr)) {
+            return true;
+          }
+        }
+      }
+    }
+    
+    return false;
+  }
+  
   public boolean isNameLocked(final IPackageFragment fragment) {
     TcConfig config = getConfig();
     
@@ -1735,6 +1887,9 @@ public class ConfigurationHelper {
     else if(element instanceof IType) {
       ensureNameLocked((IType)element, name, level);
     }
+    else if(element instanceof IPackageDeclaration) {
+      ensureNameLocked((IPackageDeclaration)element, name, level);
+    }
     else if(element instanceof IPackageFragment) {
       ensureNameLocked((IPackageFragment)element, name, level);
     }
@@ -1752,7 +1907,7 @@ public class ConfigurationHelper {
       internalEnsureNameLocked(method, name, level);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -1795,7 +1950,7 @@ public class ConfigurationHelper {
       internalEnsureNameLocked(type, name, level);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -1823,6 +1978,42 @@ public class ConfigurationHelper {
   }
 
   public void ensureNameLocked(
+     final IPackageDeclaration packageDecl,
+     final String              name,
+     final LockLevel.Enum      level)
+  {
+    if(!isNameLocked(packageDecl)) {
+      internalEnsureNameLocked(packageDecl, name, level);
+
+      ConfigurationEditor editor = getConfigurationEditor();
+      if(false && editor != null) {
+        editor.updateLocksPanel();
+      }
+      else {
+        persistConfiguration();
+      }
+    }
+  }
+
+   private void internalEnsureNameLocked(
+     final IPackageDeclaration packageDecl,
+     final String              name,
+     final LockLevel.Enum      level)
+   {
+     if(!isAdaptable(packageDecl)) {
+       internalEnsureAdaptable(packageDecl);
+     }
+
+     Locks     locks = ensureLocks();
+     NamedLock lock  = locks.addNewNamedLock();
+     String    expr  = PatternHelper.getExecutionPattern(packageDecl);
+       
+     lock.setMethodExpression(expr);
+     lock.setLockName(name);
+     lock.setLockLevel(level);
+   }
+
+  public void ensureNameLocked(
     final IPackageFragment fragment,
     final String           name,
     final LockLevel.Enum   level)
@@ -1831,7 +2022,7 @@ public class ConfigurationHelper {
       internalEnsureNameLocked(fragment, name, level);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -1867,7 +2058,7 @@ public class ConfigurationHelper {
       internalEnsureNameLocked(javaProject, name, level);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -1897,6 +2088,9 @@ public class ConfigurationHelper {
     else if(element instanceof IType) {
       ensureAutolocked((IType)element);
     }
+    else if(element instanceof IPackageDeclaration) {
+      ensureAutolocked((IPackageDeclaration)element);
+    }
     else if(element instanceof IPackageFragment) {
       ensureAutolocked((IPackageFragment)element);
     }
@@ -1910,7 +2104,7 @@ public class ConfigurationHelper {
       internalEnsureAutolocked(method);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -1944,7 +2138,7 @@ public class ConfigurationHelper {
       internalEnsureAutolocked(type);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -1966,12 +2160,39 @@ public class ConfigurationHelper {
     lock.setLockLevel(LockLevel.WRITE);
   }
 
+  public void ensureAutolocked(final IPackageDeclaration packageDecl) {
+    if(!isAutolocked(packageDecl)) {
+      internalEnsureAutolocked(packageDecl);
+
+      ConfigurationEditor editor = getConfigurationEditor();
+      if(false && editor != null) {
+        editor.updateLocksPanel();
+      }
+      else {
+        persistConfiguration();
+      }
+    }
+  }
+
+  private void internalEnsureAutolocked(final IPackageDeclaration packageDecl) {
+    if(!isAdaptable(packageDecl)) {
+      internalEnsureAdaptable(packageDecl);
+    }
+
+    Locks    locks = ensureLocks();
+    Autolock lock  = locks.addNewAutolock();
+    String   expr  = PatternHelper.getExecutionPattern(packageDecl);
+    
+    lock.setMethodExpression(expr);
+    lock.setLockLevel(LockLevel.WRITE);
+  }
+  
   public void ensureAutolocked(final IPackageFragment fragment) {
     if(!isAutolocked(fragment)) {
       internalEnsureAutolocked(fragment);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -1998,7 +2219,7 @@ public class ConfigurationHelper {
       internalEnsureAutolocked(javaProject);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -2047,7 +2268,7 @@ public class ConfigurationHelper {
       internalEnsureNotNameLocked(methodInfo);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -2080,7 +2301,7 @@ public class ConfigurationHelper {
       internalEnsureNotNameLocked(type);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -2111,12 +2332,48 @@ public class ConfigurationHelper {
     }
   }
 
+  public void ensureNotNameLocked(final IPackageDeclaration packageDecl) {
+    if(isNameLocked(packageDecl)) {
+      internalEnsureNotNameLocked(packageDecl);
+
+      ConfigurationEditor editor = getConfigurationEditor();
+      if(false && editor != null) {
+        editor.updateLocksPanel();
+      }
+      else {
+        persistConfiguration();
+      }
+    }
+  }
+
+  private void internalEnsureNotNameLocked(final IPackageDeclaration packageDecl) {
+    Locks locks = getLocks();
+    
+    if(locks != null) {
+      int    size = locks.sizeOfNamedLockArray();
+      String expr;
+      String fragExpr;
+      
+      fragExpr = PatternHelper.getExecutionPattern(packageDecl);
+      
+      for(int i = size-1; i >= 0; i--) {
+        expr = locks.getNamedLockArray(i).getMethodExpression();
+        
+        if(fragExpr.equals(expr)) {
+          locks.removeNamedLock(i);
+        }
+      }
+      
+      testRemoveLocks();
+    }
+  }
+  
   public void ensureNotNameLocked(final IPackageFragment fragment) {
     if(isNameLocked(fragment)) {
       internalEnsureNotNameLocked(fragment);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -2152,7 +2409,7 @@ public class ConfigurationHelper {
       internalEnsureNotNameLocked(javaProject);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -2199,7 +2456,7 @@ public class ConfigurationHelper {
       internalEnsureNotAutolocked(methodInfo);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -2232,7 +2489,7 @@ public class ConfigurationHelper {
       internalEnsureNotAutolocked(type);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -2263,12 +2520,48 @@ public class ConfigurationHelper {
     }
   }
 
+  public void ensureNotAutolocked(final IPackageDeclaration packageDecl) {
+    if(isAutolocked(packageDecl)) {
+      internalEnsureNotAutolocked(packageDecl);
+
+      ConfigurationEditor editor = getConfigurationEditor();
+      if(false && editor != null) {
+        editor.updateLocksPanel();
+      }
+      else {
+        persistConfiguration();
+      }
+    }
+  }
+  
+  private void internalEnsureNotAutolocked(final IPackageDeclaration packageDecl) {
+    Locks locks = getLocks();
+      
+    if(locks != null) {
+      int    size = locks.sizeOfAutolockArray();
+      String expr;
+      String fragExpr;
+      
+      fragExpr = PatternHelper.getExecutionPattern(packageDecl);
+      
+      for(int i = size-1; i >= 0; i--) {
+        expr = locks.getAutolockArray(i).getMethodExpression();
+        
+        if(fragExpr.equals(expr)) {
+          locks.removeAutolock(i);
+        }
+      }
+      
+      testRemoveLocks();
+    }
+  }
+  
   public void ensureNotAutolocked(final IPackageFragment fragment) {
     if(isAutolocked(fragment)) {
       internalEnsureNotAutolocked(fragment);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -2304,7 +2597,7 @@ public class ConfigurationHelper {
       internalEnsureNotAutolocked(javaProject);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -2347,7 +2640,7 @@ public class ConfigurationHelper {
       
       if(persist) {
         ConfigurationEditor editor = getConfigurationEditor();
-        if(editor != null) {
+        if(false && editor != null) {
           editor.updateLocksPanel();
         }
         else {
@@ -2389,7 +2682,7 @@ public class ConfigurationHelper {
     
     if(persist) {
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -2423,12 +2716,22 @@ public class ConfigurationHelper {
     
     if(persist) {
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
         persistConfiguration();
       }
+    }
+  }
+
+  private void internalEnsureNotLocked(final IPackageDeclaration packageDecl) {
+    if(isAutolocked(packageDecl)) {
+      internalEnsureNotAutolocked(packageDecl);
+    }
+    
+    if(isNameLocked(packageDecl)) {
+      internalEnsureNotNameLocked(packageDecl);
     }
   }
 
@@ -2451,7 +2754,7 @@ public class ConfigurationHelper {
       }
       
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateLocksPanel();
       }
       else {
@@ -2501,7 +2804,7 @@ public class ConfigurationHelper {
       internalEnsureBootJarClass(className);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateBootClassesPanel();
       }
       else {
@@ -2522,7 +2825,7 @@ public class ConfigurationHelper {
       internalEnsureNotBootJarClass(module);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateBootClassesPanel();
       }
       else {
@@ -2540,7 +2843,7 @@ public class ConfigurationHelper {
       internalEnsureNotBootJarClass(type);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateBootClassesPanel();
       }
       else {
@@ -2558,7 +2861,7 @@ public class ConfigurationHelper {
       internalEnsureNotBootJarClass(className);
 
       ConfigurationEditor editor = getConfigurationEditor();
-      if(editor != null) {
+      if(false && editor != null) {
         editor.updateBootClassesPanel();
       }
       else {
@@ -2594,11 +2897,13 @@ public class ConfigurationHelper {
   // Validation support
   
   public void validateAll() {
-    validateLocks();
-    validateRoots();
-    validateTransientFields();
-    validateInstrumentedClasses();
-    validateBootJarClasses();
+    if(getConfig() != null) {
+      validateLocks();
+      validateRoots();
+      validateTransientFields();
+      validateInstrumentedClasses();
+      validateBootJarClasses();
+    }
   }
   
   private static String LOCK_PROBLEM_MARKER = "org.terracotta.dso.LockMethodProblemMarker";
@@ -3339,7 +3644,8 @@ public class ConfigurationHelper {
   }
   
   private Roots getRoots() {
-    return ensureDsoApplication().getRoots();
+    DsoApplication dsoApp = getDsoApplication();
+    return dsoApp != null ? dsoApp.getRoots() : null;
   }
   
   private Roots ensureRoots() {
@@ -3545,7 +3851,7 @@ public class ConfigurationHelper {
   public void persistConfiguration() {
     ConfigurationEditor editor = getConfigurationEditor();
     
-    if(editor != null) {
+    if(false && editor != null) {
       editor._setDirty();
     }
     else {

@@ -3,7 +3,12 @@
  */
 package org.terracotta.dso.dialogs;
 
-import org.eclipse.jdt.core.IMethod;
+import org.dijon.ButtonGroup;
+import org.dijon.Container;
+import org.dijon.ContainerResource;
+import org.dijon.DictionaryResource;
+import org.dijon.TextField;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
@@ -12,15 +17,9 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
-
-import org.dijon.ButtonGroup;
-import org.dijon.Container;
-import org.dijon.ContainerResource;
-import org.dijon.DictionaryResource;
-import org.dijon.TextField;
-
 import org.terracotta.dso.PatternHelper;
 import org.terracotta.dso.TcPlugin;
+
 import com.tc.admin.common.XAbstractAction;
 import com.terracottatech.config.LockLevel;
 
@@ -42,9 +41,9 @@ import javax.swing.KeyStroke;
 public class LockAttributesDialog extends MessageDialog {
   private static ContainerResource m_panelRes;
   
-  private TextField   m_nameField;
-  private ButtonGroup m_typeGroup;
-  private IMethod     m_method;
+  private TextField    m_nameField;
+  private ButtonGroup  m_typeGroup;
+  private IJavaElement m_element;
   
   private static final String ENTER_CMD = "ENTER";
   
@@ -53,13 +52,13 @@ public class LockAttributesDialog extends MessageDialog {
     m_panelRes = (ContainerResource)topRes.findComponent("LockAttributesPanel"); 
   }
   
-  public LockAttributesDialog(Shell parentShell, IMethod method) {
+  public LockAttributesDialog(Shell parentShell, IJavaElement element) {
     super(parentShell, "Specify Named-Lock Attributes", null,
-          PatternHelper.getExecutionPattern(method),
+          PatternHelper.getExecutionPattern(element),
           MessageDialog.NONE,
           new String[] {IDialogConstants.OK_LABEL,
                         IDialogConstants.CANCEL_LABEL}, 0);
-    m_method = method;
+    m_element = element;
   }
   
   protected Control createCustomArea(Composite parent) {
@@ -78,7 +77,7 @@ public class LockAttributesDialog extends MessageDialog {
     rootPane.getContentPane().add(panel);
 
     m_nameField = (TextField)panel.findComponent("NameField");
-    m_nameField.setText(m_method.getElementName());
+    m_nameField.setText(m_element.getElementName());
     
     m_typeGroup = (ButtonGroup)panel.findComponent("TypeGroup");
     m_typeGroup.setSelectedIndex(1);

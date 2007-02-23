@@ -52,6 +52,7 @@ import org.terracotta.dso.JavaSetupParticipant;
 import org.terracotta.dso.Messages;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.decorator.AdaptedModuleDecorator;
+import org.terracotta.dso.decorator.AdaptedPackageFragmentDecorator;
 import org.terracotta.dso.decorator.AdaptedTypeDecorator;
 import org.terracotta.dso.decorator.AutolockedDecorator;
 import org.terracotta.dso.decorator.DistributedMethodDecorator;
@@ -241,10 +242,6 @@ public class ConfigurationEditor extends MultiPageEditorPart
         }
       });
     } catch(Exception e) {/**/}
-    
-    if(isDirty()) {
-      TcPlugin.getDefault().reloadConfiguration(m_project);
-    }
     
     super.dispose();
   }
@@ -532,6 +529,7 @@ public class ConfigurationEditor extends MultiPageEditorPart
       new String[] {
         AdaptedModuleDecorator.DECORATOR_ID,
         AdaptedTypeDecorator.DECORATOR_ID,
+        AdaptedPackageFragmentDecorator.DECORATOR_ID,
         ExcludedTypeDecorator.DECORATOR_ID,
         ExcludedModuleDecorator.DECORATOR_ID});
   }
@@ -664,6 +662,7 @@ public class ConfigurationEditor extends MultiPageEditorPart
       doc.set(configDoc.xmlText(opts));
       doc.addDocumentListener(m_docListener);
     }
+    plugin.fireConfigurationChange(m_project);
   }
 
   public synchronized void syncXmlModel() {
@@ -692,6 +691,7 @@ public class ConfigurationEditor extends MultiPageEditorPart
     internalSetDirty(Boolean.TRUE);
     JavaSetupParticipant.inspectAll();
     TcPlugin.getDefault().updateDecorators();
+    TcPlugin.getDefault().fireConfigurationChange(m_project);
 
     //TcPlugin.getDefault().saveConfigurationQuietly(m_project);
   }

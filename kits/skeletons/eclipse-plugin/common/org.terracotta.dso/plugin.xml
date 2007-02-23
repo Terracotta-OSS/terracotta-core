@@ -17,7 +17,7 @@
           id="org.terracotta.dso.newProjectWizard" 
           name="Terracotta DSO Project" 
           category="org.eclipse.jdt.ui.java/org.terracotta.dso.ui.project"
-          finalPerspective="org.eclipse.jdt.ui.JavaPerspective"
+          finalPerspective="org.terracotta.dso.terracottaPerspective"
           project="true"
           icon="images/eclipse/logo16.gif" 
           class="org.terracotta.dso.wizards.NewProjectWizard"
@@ -37,6 +37,20 @@
              name="Terracotta DSO Application"
              public="true">
       </launchConfigurationType>
+      <launchConfigurationType
+             delegate="org.terracotta.dso.launch.DSOEclipseApplicationLaunchConfiguration"
+             id="launch.eclipseAppConfigurationDelegate"
+             modes="run,debug"
+             name="Terracotta DSO Eclipse Application"
+             public="true">
+      </launchConfigurationType>
+      <launchConfigurationType
+             delegate="org.terracotta.dso.launch.DSOJUnitLaunchConfiguration"
+             id="launch.junitTestConfigurationDelegate"
+             modes="run,debug"
+             name="Terracotta DSO JUnit Test"
+             public="true">
+      </launchConfigurationType>
    </extension>
 
    <extension point="org.eclipse.debug.ui.launchConfigurationTypeImages">
@@ -45,6 +59,16 @@
           configTypeID="launch.configurationDelegate"
           id="launch.configurationTypeImage">
     </launchConfigurationTypeImage>
+     <launchConfigurationTypeImage
+          icon="images/eclipse/logo16.gif"
+          configTypeID="launch.eclipseAppConfigurationDelegate"
+          id="launch.pluginConfigurationTypeImage">
+    </launchConfigurationTypeImage>
+     <launchConfigurationTypeImage
+          icon="images/eclipse/logo16.gif"
+          configTypeID="launch.junitTestConfigurationDelegate"
+          id="launch.pluginConfigurationTypeImage">
+    </launchConfigurationTypeImage>
    </extension>
 
    <extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
@@ -52,6 +76,16 @@
          id="launch.configurationTabGroup"
          type="launch.configurationDelegate"
          class="org.terracotta.dso.launch.ConfigurationTabGroup">
+     </launchConfigurationTabGroup>
+     <launchConfigurationTabGroup
+         id="launch.pluginConfigurationTabGroup"
+         type="launch.eclipseAppConfigurationDelegate"
+         class="org.terracotta.dso.launch.DSOEclipseApplicationLaunchConfigurationTabGroup">
+     </launchConfigurationTabGroup>
+     <launchConfigurationTabGroup
+         id="launch.junitTestConfigurationTabGroup"
+         type="launch.junitTestConfigurationDelegate"
+         class="org.terracotta.dso.launch.DSOJUnitTabGroup">
      </launchConfigurationTabGroup>
    </extension>
 
@@ -79,6 +113,28 @@
            </enablement>
         </contextualLaunch>
       </shortcut>
+      <shortcut
+            label="Terracotta DSO JUnit Test"
+            icon="images/eclipse/logo16.gif"	
+            helpContextId="org.terracotta.dso.debug.ui.shortcut_dso_junit_test"
+            modes="run,debug"
+            class="org.terracotta.dso.launch.DSOJUnitLaunchShortcut"
+            id="org.terracotta.dso.debug.ui.dsoJUnitTestLaunchShortcut">
+         <contextualLaunch>
+           <enablement>
+             <with variable="selection">
+               <count value="1"/>
+               <iterate>
+                 <or>
+                   <test property="org.eclipse.debug.ui.matchesPattern" value="*.java"/>
+                   <test property="org.eclipse.debug.ui.matchesPattern" value="*.class"/>
+                   <instanceof value="org.eclipse.jdt.core.IJavaElement"/>
+                 </or>
+               </iterate>
+             </with>
+           </enablement>
+        </contextualLaunch>
+      </shortcut>
    </extension>
 
    <extension point="org.eclipse.ui.commands">
@@ -94,20 +150,32 @@
             categoryId="org.eclipse.debug.ui.category.run"
             id="org.terracotta.dso.debug.ui.dsoApplicationShortcut.run">
       </command>
+      <command
+            name="Debug Terracotta DSO JUnit Test"
+            description="Debug Terracotta DSO JUnit Test"
+            categoryId="org.eclipse.debug.ui.category.run"
+            id="org.terracotta.dso.debug.ui.dsoJUnitTestLaunchShortcut.debug">
+      </command>
+      <command
+            name="Run Terracotta DSO JUnit Test"
+            description="Run Terracotta DSO JUnit Test"
+            categoryId="org.eclipse.debug.ui.category.run"
+            id="org.terracotta.dso.debug.ui.dsoJUnitTestLaunchShortcut.run">
+      </command>
    </extension>      
 
    <extension point="org.eclipse.ui.bindings">
       <key
-  		sequence="M3+M2+D D"
-  		commandId="org.terracotta.dso.debug.ui.dsoApplicationShortcut.debug"
-  		schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-  		contextId="org.eclipse.ui.globalScope"/>
+	sequence="M3+M2+D D"
+	commandId="org.terracotta.dso.debug.ui.dsoApplicationShortcut.debug"
+	schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+	contextId="org.eclipse.ui.globalScope"/>
       <key
-  		sequence="M3+M2+X D"
-  		commandId="org.terracotta.dso.debug.ui.dsoApplicationShortcut.run"
-  		schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-  		contextId="org.eclipse.ui.globalScope"/>
-	</extension>
+	sequence="M3+M2+X D"
+	commandId="org.terracotta.dso.debug.ui.dsoApplicationShortcut.run"
+	schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+	contextId="org.eclipse.ui.globalScope"/>
+   </extension>
 
    <extension point="org.eclipse.ui.editors">
       <editor
@@ -131,10 +199,10 @@
          class="org.terracotta.dso.views.BootJarView" 
          icon="images/eclipse/logo16.gif"/>
       <view 
-         id="org.terracotta.dso.ui.views.appOverview" 
-         name="DSO Application Overview" 
+         id="org.terracotta.dso.ui.views.configView" 
+         name="DSO Config" 
          category="org.terracotta.dso.views"
-         class="org.terracotta.dso.views.ApplicationOverview" 
+         class="org.terracotta.dso.views.ConfigViewPart" 
          icon="images/eclipse/logo16.gif"/>
    </extension> 
 
@@ -1296,4 +1364,25 @@
     	</enablement>
 	  </deleteParticipant>
    </extension> 
+
+  <extension point="org.eclipse.ui.perspectives">
+      <perspective name="Terracotta"
+            icon="images/eclipse/logo16.gif" 
+            class="org.terracotta.dso.TerracottaPerspective"
+            id="org.terracotta.dso.terracottaPerspective">
+      </perspective>
+  </extension>
+
+  <extension point="org.eclipse.ui.perspectiveExtensions">
+    <perspectiveExtension targetID="org.eclipse.jdt.ui.JavaPerspective">
+	  <actionSet id="org.eclipse.jdt.debug.ui.JDTDebugActionSet"/>
+      <view id="org.terracotta.dso.ui.views.configView" 
+            relative="org.eclipse.jdt.ui.PackageExplorer" 
+            relationship="below"
+			ratio="0.50"
+            visible="true"/>
+      <viewShortcut id="org.terracotta.dso.ui.views.configView"/>
+      <perspectiveShortcut id="org.terracotta.dso.terracottaPerspective"/>
+    </perspectiveExtension> 
+  </extension>
 </plugin>

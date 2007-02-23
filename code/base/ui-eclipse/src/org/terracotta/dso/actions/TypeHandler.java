@@ -22,7 +22,6 @@ import org.eclipse.swt.widgets.Menu;
 public class TypeHandler extends BaseMenuCreator {
   private AdaptableAction    m_adaptableAction;
   private ExcludedTypeAction m_excludedAction;
-  private LockHandler        m_lockHandler;
   private BootJarTypeAction  m_bootJarAction;
   
   public TypeHandler() {
@@ -30,7 +29,6 @@ public class TypeHandler extends BaseMenuCreator {
     
     m_adaptableAction = new AdaptableAction();
     m_excludedAction  = new ExcludedTypeAction();
-    m_lockHandler     = new LockHandler();
     m_bootJarAction   = new BootJarTypeAction();
   }
   
@@ -70,8 +68,6 @@ public class TypeHandler extends BaseMenuCreator {
       m_excludedAction.setJavaElement(m_element);
       addMenuAction(menu, m_excludedAction);
 
-      m_lockHandler.fillMenu(menu);
-      
       if(m_element instanceof IType) {
         m_bootJarAction.setType((IType)m_element);
         addMenuAction(menu, m_bootJarAction);

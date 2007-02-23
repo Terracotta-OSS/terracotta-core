@@ -33,7 +33,6 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
-
 import org.terracotta.dso.JdtUtils;
 import org.terracotta.dso.TcPlugin;
 
@@ -89,9 +88,13 @@ public class ActionUtil {
       
       if(input instanceof IFileEditorInput) {
         IProject project = ((IFileEditorInput)input).getFile().getProject();
-        
         if(project != null) {
           return findJavaProject(project);
+        }
+      } else {
+        IClassFile classFile = (IClassFile)input.getAdapter(IClassFile.class);
+        if(classFile != null) {
+          return classFile.getJavaProject();
         }
       }
     }

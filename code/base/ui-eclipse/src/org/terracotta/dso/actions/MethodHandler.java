@@ -34,8 +34,10 @@ public class MethodHandler extends BaseMenuCreator {
     IJavaElement elem  = null;
     String       label = "Methods";
     
-    if((elem = ActionUtil.findSelectedMethod(selection)) != null) {
-      label = "Method " + elem.getElementName();
+    if((elem = ActionUtil.findSelectedJavaElement(selection)) != null) {
+      if(elem.getElementType() == IJavaElement.METHOD) {
+        label = "Method " + elem.getElementName();
+      }
     }
 
     m_delegateAction.setText(label);
@@ -44,13 +46,25 @@ public class MethodHandler extends BaseMenuCreator {
   }
   
   protected void fillMenu(Menu menu) {
-    if(m_element != null) {
-      m_autolockAction.setJavaElement(m_element);
-      addMenuAction(menu, m_autolockAction);
+    if(m_element == null) {
+      return;
+    }
+    
+    int elementType = m_element.getElementType();
+    if(elementType != IJavaElement.METHOD &&
+       elementType != IJavaElement.TYPE &&
+       elementType != IJavaElement.PACKAGE_FRAGMENT &&
+       elementType != IJavaElement.COMPILATION_UNIT) {
+      return;
+    }
 
-      m_namedLockAction.setJavaElement(m_element);
-      addMenuAction(menu, m_namedLockAction);
+    m_autolockAction.setJavaElement(m_element);
+    addMenuAction(menu, m_autolockAction);
 
+    m_namedLockAction.setJavaElement(m_element);
+    addMenuAction(menu, m_namedLockAction);
+
+    if(m_element.getElementType() == IJavaElement.METHOD) {
       m_distributedAction.setMethod((IMethod)m_element);
       addMenuAction(menu, m_distributedAction);
     }

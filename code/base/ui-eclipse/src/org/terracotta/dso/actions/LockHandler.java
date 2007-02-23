@@ -4,12 +4,9 @@
 package org.terracotta.dso.actions;
 
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.widgets.Menu;
-
 import org.terracotta.dso.ConfigurationHelper;
-import org.terracotta.dso.actions.ActionUtil;
 
 /**
  * Popup action submenu that contains lock-related actions.
@@ -20,7 +17,6 @@ import org.terracotta.dso.actions.ActionUtil;
  */
 
 public class LockHandler extends BaseMenuCreator {
-  private IMethod          m_method;
   private NameLockedAction m_namedLockAction;
   private AutolockAction   m_autolockAction;
 
@@ -32,22 +28,30 @@ public class LockHandler extends BaseMenuCreator {
   }
   
   protected IJavaElement getJavaElement(ISelection selection) {
-    return m_method = ActionUtil.findSelectedMethod(selection);
+    return m_element = ActionUtil.findSelectedJavaElement(selection);
   }
   
   protected void fillMenu(Menu menu) {
-    if(m_method == null) {
+    if(m_element == null) {
       return;
     }
 
+    int elementType = m_element.getElementType();
+    if(elementType != IJavaElement.METHOD &&
+       elementType != IJavaElement.TYPE &&
+       elementType != IJavaElement.PACKAGE_FRAGMENT &&
+       elementType != IJavaElement.COMPILATION_UNIT) {
+      return;
+    }
+    
     try {
       ConfigurationHelper config = getConfigHelper();
 
       if(config != null) {
-        m_namedLockAction.setJavaElement(m_method);
+        m_namedLockAction.setJavaElement(m_element);
         addMenuAction(menu, m_namedLockAction);
           
-        m_autolockAction.setJavaElement(m_method);
+        m_autolockAction.setJavaElement(m_element);
         addMenuAction(menu, m_autolockAction);
       }
     } catch(Exception e) {

@@ -9,6 +9,7 @@ import org.apache.xmlbeans.XmlError;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
 import org.dijon.DictionaryResource;
+import org.eclipse.core.commands.common.EventManager;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
@@ -20,6 +21,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.core.runtime.IAdapterManager;
+import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -46,9 +48,8 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.BinaryMember;
 import org.eclipse.jdt.internal.core.SourceMethod;
-import org.eclipse.jdt.internal.ui.IJavaStatusConstants;
-import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
+import org.eclipse.jdt.ui.JavaElementImageDescriptor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -58,6 +59,8 @@ import org.eclipse.jface.text.FindReplaceDocumentAdapter;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.wizard.WizardDialog;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IDecoratorManager;
@@ -75,6 +78,7 @@ import org.osgi.framework.BundleContext;
 import org.terracotta.dso.actions.ActionUtil;
 import org.terracotta.dso.actions.IProjectAction;
 import org.terracotta.dso.decorator.AdaptedModuleDecorator;
+import org.terracotta.dso.decorator.AdaptedPackageFragmentDecorator;
 import org.terracotta.dso.decorator.AdaptedTypeDecorator;
 import org.terracotta.dso.decorator.AutolockedDecorator;
 import org.terracotta.dso.decorator.DistributedMethodDecorator;
@@ -160,7 +164,8 @@ import javax.swing.UIManager;
 
 public class TcPlugin extends AbstractUIPlugin
   implements QualifiedNames,
-             IJavaLaunchConfigurationConstants
+             IJavaLaunchConfigurationConstants,
+             TcPluginStatusConstants
 {
   private static TcPlugin        m_plugin;
   private DictionaryResource     m_topRes;
@@ -299,7 +304,7 @@ public class TcPlugin extends AbstractUIPlugin
     manager.registerAdapters(factory, IMethod.class);
     manager.registerAdapters(factory, IClassFile.class);
 
-    // REMOVE the following when 3.1 is no longer supported
+    // TODO: REMOVE the following when 3.1 is no longer supported
     // SourceMethod and BinaryMember are internal types
     manager.registerAdapters(factory, SourceMethod.class);
     manager.registerAdapters(factory, BinaryMember.class);
@@ -480,6 +485,7 @@ public class TcPlugin extends AbstractUIPlugin
         clearConfigurationSessionProperties(project);
         notifyProjectActions(project);
         updateDecorators();
+        fireConfigurationChange(project);
         
         monitor.worked(4);
       } catch(CoreException e) {
@@ -746,6 +752,7 @@ public class TcPlugin extends AbstractUIPlugin
       getConfigurationHelper(project).validateAll();
       JavaSetupParticipant.inspectAll();
       updateDecorators();
+      fireConfigurationChange(project);
       
       writeSerializedConfigFile(project, lineLengths, config);
     }
@@ -791,7 +798,8 @@ public class TcPlugin extends AbstractUIPlugin
       getConfigurationHelper(project).validateAll();
       JavaSetupParticipant.inspectAll();
       updateDecorators();
-  
+      fireConfigurationChange(project);
+      
       writeSerializedConfigFile(project, lineLengths, config);
     }
   }
@@ -945,6 +953,9 @@ public class TcPlugin extends AbstractUIPlugin
         LineLengths lineLengths = getConfigurationLineLengths(project);
         handleXmlException(getConfigurationFile(project), lineLengths, e);
       } catch(Exception e) {/**/}
+        catch(NoClassDefFoundError noClassDef) {
+          noClassDef.printStackTrace();
+        }
     }
     
     return config;
@@ -1063,6 +1074,7 @@ public class TcPlugin extends AbstractUIPlugin
         getConfigurationHelper(project).validateAll();
         JavaSetupParticipant.inspectAll();
         updateDecorators();
+        fireConfigurationChange(project);
       }
     } catch(Exception e) {
       openError("Error saving '" + configFile.getName() + "'", e);
@@ -1100,6 +1112,7 @@ public class TcPlugin extends AbstractUIPlugin
         getConfigurationHelper(project).validateAll();
         JavaSetupParticipant.inspectAll();
         updateDecorators();
+        fireConfigurationChange(project);
       }
     } catch(Exception e) {
       openError("Error saving '" + configFile.getName() + "'", e);
@@ -1325,6 +1338,7 @@ public class TcPlugin extends AbstractUIPlugin
     ServerRunningDecorator.DECORATOR_ID,
     AdaptedModuleDecorator.DECORATOR_ID,
     AdaptedTypeDecorator.DECORATOR_ID,
+    AdaptedPackageFragmentDecorator.DECORATOR_ID,
     ExcludedTypeDecorator.DECORATOR_ID,
     ExcludedModuleDecorator.DECORATOR_ID,
     DistributedMethodDecorator.DECORATOR_ID,
@@ -1390,7 +1404,7 @@ public class TcPlugin extends AbstractUIPlugin
   }
   
   public static ImageDescriptor getImageDescriptor(String path) {
-    return AbstractUIPlugin.imageDescriptorFromPlugin("org.terracotta.dso", path);
+    return AbstractUIPlugin.imageDescriptorFromPlugin(getPluginId(), path);
   }
 
   public ConfigurationEditor openConfigurationEditor(IProject project)
@@ -1455,11 +1469,8 @@ public class TcPlugin extends AbstractUIPlugin
   }
 
   public void openError(final String msg, final Throwable t) {
-    getDefault().getLog().log(new Status(IStatus.ERROR,
-                                         JavaPlugin.getPluginId(), 
-                                         IJavaStatusConstants.INTERNAL_ERROR,
-                                         msg,
-                                         t));
+    ILog log = getLog();
+    log.log(new Status(IStatus.ERROR, getPluginId(), INTERNAL_ERROR, msg, t));
   }
   
   public void openError(final String msg) {
@@ -1500,10 +1511,48 @@ public class TcPlugin extends AbstractUIPlugin
   }
 
   public static Display getStandardDisplay() {
-    Display display= Display.getCurrent();
+    Display display = Display.getCurrent();
     if (display == null) {
       display= Display.getDefault();
     }
     return display;   
   } 
+  
+  public void fireConfigurationChange(IProject project) {
+    m_configurationListeners.fireConfigurationChange(project);
+  }
+  
+  class ConfigurationManager extends EventManager {
+    void addConfigurationListener(IConfigurationListener listener) {
+      addListenerObject(listener);
+    }
+    
+    void removeConfigurationListener(IConfigurationListener listener) {
+      removeListenerObject(listener);
+    }
+    
+    void fireConfigurationChange(IProject project) {
+      Object[] listeners = getListeners();
+      
+      if(listeners != null) {
+        for(int i = 0; i < listeners.length; i++) {
+          ((IConfigurationListener)listeners[i]).configurationChanged(project);
+        }
+      }
+    }
+  }
+  
+  private ConfigurationManager m_configurationListeners = new ConfigurationManager();
+  
+  public void addConfigurationListener(IConfigurationListener listener) {
+    m_configurationListeners.addConfigurationListener(listener);
+  }
+
+  public void removeConfigurationListener(IConfigurationListener listener) {
+    m_configurationListeners.removeConfigurationListener(listener);
+  }
+  
+  public static Image createImage(String path) {
+    return new JavaElementImageDescriptor(getImageDescriptor(path), 0, new Point(16, 16)).createImage(false);
+  }
 }

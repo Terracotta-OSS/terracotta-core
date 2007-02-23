@@ -5,8 +5,10 @@ package org.terracotta.dso;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.core.Flags;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
@@ -105,6 +107,10 @@ public class PatternHelper {
     return createWithinExpressionContext(getFullyQualifiedName(type));
   }
 
+  public ExpressionContext createWithinExpressionContext(final IPackageDeclaration packageDecl) {
+    return createWithinExpressionContext(packageDecl.getElementName());
+  }
+  
   public ExpressionContext createWithinExpressionContext(final IPackageFragment fragment) {
     return createWithinExpressionContext(fragment.getElementName());
   }
@@ -144,6 +150,10 @@ public class PatternHelper {
     return matchesClass(expr, createWithinExpressionContext(fragment));
   }
 
+  public boolean matchesPackageDeclaration(final String expr, final IPackageDeclaration packageDecl) {
+    return matchesClass(expr, createWithinExpressionContext(packageDecl));
+  }
+
   public static String getSignature(IMethod method)
     throws JavaModelException
   {
@@ -156,9 +166,19 @@ public class PatternHelper {
     
     for(int i = 0; i < pTypes.length; i++) {
       pTypes[i] = Signature.getTypeErasure(pTypes[i]);
+      if(pTypes[i].charAt(0) == 'T') {
+        pTypes[i] = "Ljava.lang.Object;";
+      } else if(pTypes[i].charAt(0) == '[' && pTypes[i].charAt(1) == 'T') {
+        pTypes[i] = "[Ljava.lang.Object;";
+      }
       JdtUtils.resolveTypeName(pTypes[i], dType, sb);
     }
     sb.append(')');
+    if(rType.charAt(0) == 'T') {
+      rType = "Ljava.lang.Object;";
+    } else if(rType.charAt(0) == '[' && rType.charAt(1) == 'T') {
+      rType = "[Ljava.lang.Object;";
+    }
     JdtUtils.resolveTypeName(rType, dType, sb);
 
     String result = sb.toString().replace('.', '/');
@@ -288,6 +308,21 @@ public class PatternHelper {
                              exceptions);
   }
   
+  public static String getExecutionPattern(IJavaElement element) {
+    if(element instanceof IMethod) {
+      return getExecutionPattern((IMethod)element);
+    } else if(element instanceof IType) {
+      return getExecutionPattern((IType)element);
+    } else if(element instanceof IPackageFragment) {
+      return getExecutionPattern((IPackageFragment)element);
+    } else if(element instanceof ICompilationUnit) {
+      return getExecutionPattern(((ICompilationUnit)element).findPrimaryType());
+    } else if(element instanceof IPackageDeclaration) {
+      return getExecutionPattern((IPackageDeclaration)element);
+    }
+    return null;
+  }
+
   public static String getExecutionPattern(IMethod method) {
     try {
       if(!method.getOpenable().isOpen()) {
@@ -314,8 +349,16 @@ public class PatternHelper {
     return "* "+getWithinPattern(fragment)+"(..)";
   }
   
+  public static String getExecutionPattern(IPackageDeclaration packageDecl) {
+    return "* "+getWithinPattern(packageDecl)+"(..)";
+  }
+
   public static String getWithinPattern(IPackageFragment fragment) {
     return fragment.getElementName()+"..*";
+  }
+
+  public static String getWithinPattern(IPackageDeclaration packageDecl) {
+    return packageDecl.getElementName()+"..*";
   }
 }
 

@@ -4,11 +4,9 @@
 package org.terracotta.dso.actions;
 
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Shell;
-
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.dialogs.LockAttributesDialog;
 import org.terracotta.dso.editors.ConfigurationEditor;
@@ -39,7 +37,7 @@ public class NameLockedAction extends BaseAction {
   public void performAction(Event event) {
     if(isChecked()) {
       Shell                shell  = ActionUtil.findSelectedEditorPart().getSite().getShell();
-      LockAttributesDialog dialog = new LockAttributesDialog(shell, (IMethod)m_element);
+      LockAttributesDialog dialog = new LockAttributesDialog(shell, m_element);
             
       if(dialog.open() != IDialogConstants.OK_ID) {
         return;

@@ -22,10 +22,18 @@
 	<dependency name="org.eclipse.jface.text" rev="3.2.0.v20060605-1400" org="tc-eclipse"/>
 	<dependency name="org.eclipse.ltk.core.refactoring" rev="3.2.0.v20060605-1400" org="tc-eclipse"/>
 	<dependency name="org.eclipse.osgi" rev="3.2.0.v20060601" org="tc-eclipse"/>
+
+	<dependency name="org.eclipse.pde.core" rev="3.2.0.v20060605" org="tc-eclipse"/>
+	<dependency name="org.eclipse.pde.ui" rev="3.2.0.v20060605" org="tc-eclipse"/>
+	<dependency name="junit" rev="3.8.1" org="tc-eclipse"/>
+	<dependency name="junitsupport" rev="3.2.0.v20060605-1400" org="tc-eclipse"/>
+
+	<dependency name="org.eclipse.search" rev="3.2.0.v20060605-1400" org="tc-eclipse"/>
 	<dependency name="org.eclipse.swt" rev="3.2.0.v3232o" org="tc-eclipse"/>
 	<dependency name="org.eclipse.swt.gtk.linux.x86" rev="3.2.0.v3232m" org="tc-eclipse"/>
 	<dependency name="org.eclipse.text" rev="3.2.0.v20060605-1400" org="tc-eclipse"/>
 	<dependency name="org.eclipse.ui" rev="3.2.0.I20060605-1400" org="tc-eclipse"/>
+	<dependency name="org.eclipse.ui.console" rev="3.1.100.v20060605" org="tc-eclipse"/>
 	<dependency name="org.eclipse.ui.editors" rev="3.2.0.v20060605-1400" org="tc-eclipse"/>
 	<dependency name="org.eclipse.ui.ide" rev="3.2.0.I20060605-1400" org="tc-eclipse"/>
 	<dependency name="org.eclipse.ui.workbench" rev="3.2.0.I20060605-1400" org="tc-eclipse"/>

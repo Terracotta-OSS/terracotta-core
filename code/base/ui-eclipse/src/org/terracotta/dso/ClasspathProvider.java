@@ -95,13 +95,18 @@ public class ClasspathProvider extends StandardClasspathProvider {
         fileList.addAll(FileUtils.listFiles(libDir, extensions, false));
       }
     }
+
+    libDir = location.append("..").append("dependencies").append("lib").toFile();
+    fileList.addAll(FileUtils.listFiles(libDir, extensions, false));
     
     Iterator fileIter = fileList.iterator();
     File     file;
     
     while(fileIter.hasNext()) {
       file = (File)fileIter.next();
-      list.add(new Path(file.getAbsolutePath()));
+      if(!file.getName().startsWith("org.eclipse")) {
+        list.add(new Path(file.getAbsolutePath()));
+      }
     }
     
     return (IPath[])list.toArray(new IPath[list.size()]);

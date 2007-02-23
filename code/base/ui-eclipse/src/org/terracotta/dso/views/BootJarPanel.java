@@ -36,13 +36,14 @@ public class BootJarPanel extends XContainer
     super();
     setLayout(new BorderLayout());
     
-    XRootNode               root  = new XRootNode();
-    XTreeModel              model = new XTreeModel(root);
-    XTree                   tree  = new XTree();
-    IPackageFragmentRoot    pfr   = (IPackageFragmentRoot)JavaCore.create(bootJarFile); 
-    PackageFragmentRootNode pfrn  = new PackageFragmentRootNode(pfr);
-
-    root.add(pfrn);
+    XRootNode            root  = new XRootNode();
+    XTreeModel           model = new XTreeModel(root);
+    XTree                tree  = new XTree();
+    IPackageFragmentRoot pfr   = (IPackageFragmentRoot)JavaCore.create(bootJarFile); 
+    
+    if(pfr != null) {
+      root.add(new PackageFragmentRootNode(pfr));
+    }
     tree.setModel(model);
 
     add(new JScrollPane(tree));

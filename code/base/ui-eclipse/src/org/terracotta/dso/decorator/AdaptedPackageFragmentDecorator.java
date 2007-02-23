@@ -4,12 +4,11 @@
 package org.terracotta.dso.decorator;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 import org.eclipse.jface.viewers.LabelProvider;
-
 import org.terracotta.dso.ConfigurationHelper;
 import org.terracotta.dso.TcPlugin;
 
@@ -34,14 +33,14 @@ public class AdaptedPackageFragmentDecorator extends LabelProvider
     DECORATOR_ID = "org.terracotta.dso.adaptedPackageFragmentDecorator";
 
   public void decorate(Object element, IDecoration decoration) {
-    TcPlugin         plugin   = TcPlugin.getDefault();
-    IPackageFragment fragment = (IPackageFragment)element;
-    IProject         project  = fragment.getJavaProject().getProject();
+    TcPlugin     plugin  = TcPlugin.getDefault();
+    IJavaElement pack    = (IJavaElement)element;
+    IProject     project = pack.getJavaProject().getProject();
   
     if(plugin.hasTerracottaNature(project)) {
       ConfigurationHelper config = plugin.getConfigurationHelper(project);
 
-      if(config != null && config.isAdaptable(fragment)) {
+      if(config != null && config.isAdaptable(pack)) {
         decoration.addOverlay(m_imageDesc);
       }
     }
