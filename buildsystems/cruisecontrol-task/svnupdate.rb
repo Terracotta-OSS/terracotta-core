@@ -37,9 +37,9 @@ currently_good_rev = 0
 unless ARGV[0] == 'general-monkey'
   begin
     good_rev_file = File.join(build_archive_dir, "currently_good_rev.txt")
-    File.open(good_rev_file) do | f |
+    File.open(good_rev_file, "r") do | f |
       currently_good_rev = f.gets.to_i
-      STDERR.puts "Currently good revision: #{currently_good_revision}"
+      puts "Currently good revision: #{currently_good_rev}"
     end
   rescue
     currently_good_rev = 0
