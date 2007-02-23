@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config.schema;
 
@@ -16,7 +17,6 @@ public class StandardDSORuntimeOutputOptions extends BaseNewConfigObject impleme
   private final BooleanConfigItem doAutoLockDetails;
   private final BooleanConfigItem doCaller;
   private final BooleanConfigItem doFullStack;
-  private final BooleanConfigItem doFindNeededIncludes;
 
   public StandardDSORuntimeOutputOptions(ConfigContext context) {
     super(context);
@@ -26,7 +26,6 @@ public class StandardDSORuntimeOutputOptions extends BaseNewConfigObject impleme
     this.doAutoLockDetails = this.context.booleanItem("debugging/runtime-output-options/auto-lock-details");
     this.doCaller = this.context.booleanItem("debugging/runtime-output-options/caller");
     this.doFullStack = this.context.booleanItem("debugging/runtime-output-options/full-stack");
-    this.doFindNeededIncludes = this.context.booleanItem("debugging/runtime-output-options/find-needed-includes");
   }
 
   public BooleanConfigItem doAutoLockDetails() {
@@ -39,10 +38,6 @@ public class StandardDSORuntimeOutputOptions extends BaseNewConfigObject impleme
 
   public BooleanConfigItem doFullStack() {
     return this.doFullStack;
-  }
-
-  public BooleanConfigItem doFindNeededIncludes() {
-    return this.doFindNeededIncludes;
   }
 
 }

@@ -12,11 +12,9 @@ import com.tc.config.schema.dynamic.BooleanConfigItem;
 public interface DSORuntimeOutputOptions extends NewConfig {
 
   BooleanConfigItem doAutoLockDetails();
-  
+
   BooleanConfigItem doCaller();
-  
+
   BooleanConfigItem doFullStack();
-  
-  BooleanConfigItem doFindNeededIncludes();
-  
+
 }
