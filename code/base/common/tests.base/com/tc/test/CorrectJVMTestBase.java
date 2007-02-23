@@ -15,7 +15,7 @@ public class CorrectJVMTestBase extends TCTestCase {
   private static final Pattern VERSION_PATTERN = Pattern.compile("(\\d+\\.\\d+\\.\\d+(_\\d+)?)(-\\S+)?");
 
   public void testVersion() throws Exception {
-    tring actualVersion = System.getProperty("java.runtime.version");
+    String actualVersion = System.getProperty("java.runtime.version");
     String expectedVersion = TestConfigObject.getInstance().jvmVersion();
 
     Matcher matcher = VERSION_PATTERN.matcher(actualVersion);
