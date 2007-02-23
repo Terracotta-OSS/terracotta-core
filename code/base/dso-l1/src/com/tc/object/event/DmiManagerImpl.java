@@ -24,7 +24,7 @@ import java.util.Set;
 
 public class DmiManagerImpl implements DmiManager {
   private static final TCLogger     logger   = TCLogging.getLogger(DmiManager.class);
-  private static final String       lockName = "xxxyyyzzz";
+  private static final String       lockName = "@DistributedMethodCall";
   private static final Object       TRUE     = new Object();
 
   private final ClassProvider       classProvider;
@@ -52,13 +52,12 @@ public class DmiManagerImpl implements DmiManager {
     Assert.pre(receiver != null);
     Assert.pre(method != null);
     Assert.pre(params != null);
-    
+
     final String methodName = method.substring(0, method.indexOf('('));
     final String paramDesc = method.substring(method.indexOf('('));
     final DistributedMethodCall dmc = new DistributedMethodCall(receiver, params, methodName, paramDesc);
-    if (runtimeLogger.distributedMethodDebug()) runtimeLogger.distributedMethodCall(receiver.getClass().getName(),
-                                                                                    dmc.getMethodName(), dmc
-                                                                                        .getParameterDesc());
+    if (runtimeLogger.distributedMethodDebug()) runtimeLogger.distributedMethodCall(receiver.getClass().getName(), dmc
+        .getMethodName(), dmc.getParameterDesc());
     objMgr.getTransactionManager().begin(lockName, LockLevel.CONCURRENT);
     try {
       final ObjectID receiverId = objMgr.lookupOrCreate(receiver).getObjectID();
