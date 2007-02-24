@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="tests.base"/>
+	<classpathentry kind="src" path="tests.system"/>
+	<classpathentry kind="src" path="tests.base.resources"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/dependencies/lib/lucene-core-2.0.0.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/lucene-demos-2.0.0.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/legacy-test-tree"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/simulator"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1"/>
+	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
+</classpath>

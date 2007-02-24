@@ -28,14 +28,14 @@ class BuildSubtree
 
             jdk = compile_jdk
 
-            if build_module.aspectj
+            if build_module.aspectj?
                 puts "AspectJ #{build_module.name}/#{name}..."
 
                 # Include the java.lang.System class to get access to Java
                 # system properties
                 include_class('java.lang.System')
-                javac_classpath = System.getProperty('java.class.path')                
-                
+                javac_classpath = System.getProperty('java.class.path')
+
                 ant.java(
                   :jvm => jdk.java.to_s,
                   :fork => true,
@@ -78,15 +78,14 @@ class BuildSubtree
                 }
             end
 
-            if @resources_exists
-                ant.copy(:todir => build_results.classes_directory(self).to_s) {
-                    ant.fileset(:dir => resource_root.to_s, :includes => '**/*')
-                }
-            end
-
             create_build_data(config_source, build_results, build_environment)
-        else
-            # puts "(no #{source_root})"
+        end
+
+        if @resources_exists
+            resources_dir = build_results.classes_directory(self).to_s
+            ant.copy(:todir => resources_dir) {
+                ant.fileset(:dir => resource_root.to_s, :includes => '**/*')
+            }
         end
     end
 
@@ -127,7 +126,19 @@ end
 class BuildModule
     # Compiles the module. All this does is call BuildSubtree#compile on each of the module's
     # subtrees.
-    def compile(*args)
-        @subtrees.each { |subtree| subtree.compile(*args) }
+    def compile(jvm_set, build_results, ant, config_source, build_environment)
+        @subtrees.each { |subtree| subtree.compile(jvm_set, build_results, ant, config_source, build_environment) }
+        if self.plugin?
+           create_plugin_jar(ant, build_results)
+        end
+    end
+
+    # Creates a JAR file for a plugin module and stores it in build/plugins.
+    def create_plugin_jar(ant, build_results)
+      plugins_metainf_dir = FilePath.new(self.root, "META-INF").to_s
+      jarfile  = FilePath.new(build_results.plugins_home, self.name + ".jar")
+      basedir  = build_results.classes_directory(subtree('src')).ensure_directory
+      manifest = FilePath.new(plugins_metainf_dir, "MANIFEST.MF")
+      ant.jar(:destfile => jarfile.to_s, :basedir => basedir.to_s, :manifest => manifest.to_s)
     end
 end

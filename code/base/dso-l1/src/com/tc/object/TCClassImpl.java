@@ -97,6 +97,7 @@ public class TCClassImpl implements TCClass {
     this.superclazz = findSuperClass(peer);
     this.isEnum = ClassUtils.isEnum(peer);
     this.logicalExtendingClassName = logicalExtendingClassName;
+    
     this.applicator = createApplicator();
 
     introspectFields(peer, factory);
@@ -104,7 +105,7 @@ public class TCClassImpl implements TCClass {
     this.useNonDefaultConstructor = isProxyClass || useNonDefaultConstructor;
     this.logicalSuperClass = logicalSuperClass;
   }
-
+  
   public Field getParentField() {
     return parentField;
   }

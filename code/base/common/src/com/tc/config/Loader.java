@@ -22,7 +22,6 @@ import java.net.URL;
 /**
  * Responsible for creating a TcConfigDocument of the current version from any published configuration schema version.
  */
-
 public final class Loader {
 
   private final ConfigUpdate[] converters;

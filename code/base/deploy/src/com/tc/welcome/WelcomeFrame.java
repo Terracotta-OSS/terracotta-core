@@ -10,7 +10,7 @@ import org.dijon.TextPane;
 
 import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.InputStreamDrainer;
-import com.tc.util.BundleHelper;
+import com.tc.util.ResourceBundleHelper;
 import com.tc.util.runtime.Os;
 
 import java.awt.BorderLayout;
@@ -39,7 +39,7 @@ import javax.swing.text.html.HTMLEditorKit;
 
 public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, PropertyChangeListener {
   private static String[]     PRODUCTS       = { "Pojos", "Spring", "Sessions" };
-  private static BundleHelper m_bundleHelper = new BundleHelper(WelcomeFrame.class);
+  private static ResourceBundleHelper m_bundleHelper = new ResourceBundleHelper(WelcomeFrame.class);
   private TabbedPane          m_tabbedPane;
   private SimpleAttributeSet  m_underlineAttrSet;
   private ArrayList           m_startupList;

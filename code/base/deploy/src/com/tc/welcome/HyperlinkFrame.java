@@ -16,7 +16,7 @@ import com.tc.admin.common.ContactTerracottaAction;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.object.tools.BootJarSignature;
 import com.tc.object.tools.UnsupportedVMException;
-import com.tc.util.BundleHelper;
+import com.tc.util.ResourceBundleHelper;
 import com.tc.util.ProductInfo;
 import com.tc.util.runtime.Os;
 
@@ -34,7 +34,7 @@ import javax.swing.WindowConstants;
 import javax.swing.event.HyperlinkListener;
 
 public abstract class HyperlinkFrame extends Frame implements HyperlinkListener {
-  private static BundleHelper m_bundleHelper = new BundleHelper(HyperlinkFrame.class);
+  private static ResourceBundleHelper m_bundleHelper = new ResourceBundleHelper(HyperlinkFrame.class);
   private File                m_installRoot;
   private File                m_bootPath;
   private File                m_javaCmd;

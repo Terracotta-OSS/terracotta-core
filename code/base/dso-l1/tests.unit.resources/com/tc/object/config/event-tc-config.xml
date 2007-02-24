@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2003-2006 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved
+
+-->
+<tc:tc-config 
+    xmlns:tc="http://www.terracotta.org/config"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://www.terracotta.org/config ..\..\..\common\src.resources\com\tc\config\schema\terracotta-2.2.xsd">
+
+	<system>
+    	<configuration-model>development</configuration-model>
+	</system>
+
+	<clients>
+    <logs>logs-%i</logs>
+    
+    <dso>
+      <debugging>
+        <runtime-logging>
+          <lock-debug>false</lock-debug>
+          <partial-instrumentation>true</partial-instrumentation>
+          <non-portable-warning>true</non-portable-warning>
+          <wait-notify-debug>false</wait-notify-debug>
+          <distributed-method-debug>true</distributed-method-debug>
+          <new-object-debug>false</new-object-debug>
+        </runtime-logging>
+      </debugging>
+    </dso>
+  </clients>
+
+	<servers>
+		<server name="localhost" />
+	</servers>
+
+	<application>
+		<spring>
+			<jee-application name="distributed-events">
+				<session-support>false</session-support>
+				<application-contexts>
+					<application-context>
+						<paths>
+							<path>*.xml</path>
+						</paths>
+						<distributed-events>
+							<distributed-event>com.tctest.spring.bean.DistributedSingletonEvent</distributed-event>
+							<distributed-event>com.tctest.spring.bean.AnotherEventExpectedToBeDistributed</distributed-event>
+							<distributed-event>com.tctest.spring.bean.WildcardAtEnd*</distributed-event>
+							<distributed-event>*WildcardAtStartEvent</distributed-event>
+							<distributed-event>*WildcardAtBothEnds*</distributed-event>
+						</distributed-events>
+					</application-context>
+				</application-contexts>
+				<instrumented-classes>
+					<include>
+						<class-expression>com.tctest.spring.bean.SingletonEvent</class-expression>
+					</include>
+					<include>
+						<class-expression>com.tctest.spring.bean.WildcardAtEndEvent</class-expression>
+					</include>
+					<include>
+						<class-expression>com.tctest.spring.bean.WildcardAtStartEvent</class-expression>
+					</include>
+					<include>
+						<class-expression>com.tctest.spring.bean.WildcardAtBothEndsEvent</class-expression>
+					</include>
+				</instrumented-classes>
+			</jee-application>
+		</spring>
+	</application>
+
+</tc:tc-config>

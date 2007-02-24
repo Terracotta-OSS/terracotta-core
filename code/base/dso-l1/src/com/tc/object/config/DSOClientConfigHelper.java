@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config;
 
@@ -7,12 +8,16 @@ import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
 import com.tc.aspectwerkz.reflect.MemberInfo;
+import com.tc.config.schema.NewCommonL1Config;
 import com.tc.object.Portability;
+import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.TransparencyClassAdapter;
 import com.tc.object.config.schema.DSOInstrumentationLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeOutputOptions;
+import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.logging.InstrumentationLogger;
+import com.terracottatech.config.Plugins;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -33,6 +38,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   DSOInstrumentationLoggingOptions getInstrumentationLoggingOptions();
 
+  void verifyBootJarContents() throws IncompleteBootJarException, UnverifiedBootJarException;
+
   Iterator getAllSpecs();
 
   Iterator getAllUserDefinedBootSpecs();
@@ -47,7 +54,12 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   boolean isCallConstructorOnLoad(String className);
 
-  String getChangeApplicatorClassNameFor(String className);
+  //String getChangeApplicatorClassNameFor(String className);
+  Class getChangeApplicator(Class clazz);
+  
+  boolean isPortablePluginClass(Class clazz);
+  
+  void setPluginSpecs(PluginSpec[] pluginSpecs);
 
   TransparencyClassSpec getOrCreateSpec(String className);
 
@@ -103,33 +115,37 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   void addTransient(String className, String fieldName);
 
-  public String getOnLoadScriptIfDefined(String className);
+  void addTransientType(String className, String fieldName);
 
-  public String getPostCreateMethodIfDefined(String className);
+  String getOnLoadScriptIfDefined(String className);
 
-  public String getOnLoadMethodIfDefined(String className);
+  String getPostCreateMethodIfDefined(String className);
 
-  public boolean isUseNonDefaultConstructor(String className);
+  String getOnLoadMethodIfDefined(String className);
 
-  public void addIncludePattern(String expression);
+  boolean isUseNonDefaultConstructor(Class clazz);
+
+  void addIncludePattern(String expression);
+
+  NewCommonL1Config getNewCommonL1Config();
 
   // Used for testing
-  public void addIncludePattern(String expression, boolean honorTransient);
+  void addIncludePattern(String expression, boolean honorTransient);
 
-  public void addIncludePattern(String expression, boolean honorTransient, boolean oldStyleCallConstructorOnLoad,
+  void addIncludePattern(String expression, boolean honorTransient, boolean oldStyleCallConstructorOnLoad,
                                 boolean honorVolatile);
 
   // Used for testing and Spring
-  public void addIncludeAndLockIfRequired(String expression, boolean honorTransient,
+  void addIncludeAndLockIfRequired(String expression, boolean honorTransient,
                                           boolean oldStyleCallConstructorOnLoad, boolean honorVolatile,
                                           String lockExpression);
 
   // Used for testing
-  public void addExcludePattern(String expression);
+  void addExcludePattern(String expression);
 
-  public boolean hasIncludeExcludePatterns();
+  boolean hasIncludeExcludePatterns();
 
-  public boolean hasIncludeExcludePattern(String className);
+  boolean hasIncludeExcludePattern(String className);
 
   void addAspectModule(String pattern, String moduleName);
 
@@ -146,4 +162,19 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   void removeSpec(String className);
 
   String getLogicalExtendingClassName(String className);
+
+  void addUserDefinedBootSpec(String className, TransparencyClassSpec spec);
+
+  void addApplicationName(String name);
+
+  void addInstrumentationDescriptor(InstrumentedClass classDesc);
+
+  Plugins getPluginsForInitialization();
+  
+  void addNewPlugin(String name, String version);
+
+  boolean hasCustomAdapter(String fullName);
+  
+  void addCustomAdapter(String name, ClassAdapterFactory adapterFactory);
+
 }

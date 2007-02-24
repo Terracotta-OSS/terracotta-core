@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ivy-module version="1.0">
+  <info organisation="ibiblio" module="clustered-lucene-2.0"/>
+  <dependencies>
+    <dependency name="lucene-core" rev="2.0.0" org="terracotta"/>
+    <dependency name="lucene-demos" rev="2.0.0" org="terracotta"/>
+  </dependencies>
+</ivy-module>

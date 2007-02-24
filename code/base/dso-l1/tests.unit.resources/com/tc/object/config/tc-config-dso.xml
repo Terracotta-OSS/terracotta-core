@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2003-2006 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->
+<!--
+ This is a Terracotta configuration file that has been pre-configured
+ for use with DSO.  All classes are included for instrumentation,
+ and all instrumented methods are write locked.
+     
+ For more information, please see the product documentation.
+-->
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config">
+  <servers>
+    <server name="localhost">
+      <data>%(user.home)/terracotta/server-data</data>
+      <logs>%(user.home)/terracotta/server-logs</logs>
+    </server>
+  </servers>
+  
+  <clients>
+    <logs>%(user.home)/terracotta/client-logs</logs>
+  </clients>
+  
+  <application>
+    <dso>
+
+      <!-- Start by including all classes for instrumentation.
+           It's more efficient to instrument only those classes that
+           hold shared roots or are part of a shared root graph.
+        -->
+      <instrumented-classes>
+        <include>
+          <class-expression>*..*</class-expression>
+        </include>
+      </instrumented-classes>
+
+      <!-- Create a single write autolock for all instrumented methods.
+           It's more efficient to create finer-grain locks as dictated
+           by your application needs.
+        -->
+      <locks>
+        <autolock>
+          <lock-level>write</lock-level>
+          <method-expression>* *..*.*(..)</method-expression>
+        </autolock>
+      </locks>
+    </dso>
+  </application>
+  
+</tc:tc-config>

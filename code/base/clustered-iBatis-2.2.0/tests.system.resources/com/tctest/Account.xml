@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE sqlMap      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="Account">
+
+  <!-- Use type aliases to avoid typing the full classname every time. -->
+  <typeAlias alias="Account" type="com.tctest.domain.Account"/>
+
+  <!-- Result maps describe the mapping between the columns returned
+       from a query, and the class properties.  A result map isn't
+       necessary if the columns (or aliases) match to the properties 
+       exactly. -->
+  <resultMap id="AccountResult" class="Account">
+    <result property="id" column="ACC_ID"/>
+    <result property="number" column="ACC_NUMBER"/>
+  </resultMap>
+
+  <!-- Select with no parameters using the result map for Account class. -->
+  <select id="selectAllAccounts" resultMap="AccountResult">
+    select * from ACCOUNT
+  </select>
+
+  <!-- A simpler select example without the result map.  Note the 
+       aliases to match the properties of the target result class. -->
+  <select id="selectAccountById" parameterClass="int" resultMap="AccountResult">
+    select *
+    from ACCOUNT
+    where ACC_ID = #id#
+  </select>
+   
+  <!-- Insert example, using the Account parameter class -->
+  <insert id="insertAccount" parameterClass="Account">
+    insert into ACCOUNT (
+      ACC_ID,
+      ACC_NUMBER
+    )
+    values (
+      #id#, #number#
+    )
+  </insert>
+
+  <!-- Update example, using the Account parameter class -->
+  <update id="updateAccount" parameterClass="Account">
+    update ACCOUNT set
+      ACC_NUMBER = #number#
+    where
+      ACC_ID = #id#
+  </update>
+
+  <!-- Delete example, using an integer as the parameter class -->
+  <delete id="deleteAccountById" parameterClass="int">
+    delete from ACCOUNT where ACC_ID = #id#
+  </delete>
+
+</sqlMap>

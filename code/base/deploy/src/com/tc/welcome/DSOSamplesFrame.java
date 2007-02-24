@@ -14,7 +14,7 @@ import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.StreamReader;
 import com.tc.admin.common.TextPaneUpdater;
 import com.tc.admin.common.XTextPane;
-import com.tc.util.BundleHelper;
+import com.tc.util.ResourceBundleHelper;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -47,11 +47,11 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 
 public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener, PropertyChangeListener {
-  private BundleHelper       m_bundleHelper = new BundleHelper(DSOSamplesFrame.class);
-  private TextPane           m_textPane;
-  private TextPane           m_outputPane;
-  private ArrayList          m_processList;
-  private SimpleAttributeSet m_underlineAttrSet;
+  private ResourceBundleHelper m_bundleHelper = new ResourceBundleHelper(DSOSamplesFrame.class);
+  private TextPane             m_textPane;
+  private TextPane             m_outputPane;
+  private ArrayList            m_processList;
+  private SimpleAttributeSet   m_underlineAttrSet;
 
   public DSOSamplesFrame() {
     super();

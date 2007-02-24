@@ -8,7 +8,7 @@ import org.dijon.ApplicationManager;
 import org.dijon.DictionaryResource;
 import org.dijon.Image;
 
-import com.tc.util.BundleHelper;
+import com.tc.util.ResourceBundleHelper;
 import com.tc.util.runtime.Os;
 
 import java.io.File;
@@ -49,7 +49,7 @@ public class AdminClient extends ApplicationManager {
     m_cntx.client = m_client = this;
     m_cntx.prefs = loadPrefs();
     m_cntx.topRes = loadTopRes();
-    m_cntx.bundleHelper = new BundleHelper(getClass());
+    m_cntx.bundleHelper = new ResourceBundleHelper(getClass());
 
     if(!Boolean.getBoolean("com.tc.ui.java-icon")) {
       setIconImage(new Image(getBytes("/com/tc/admin/icons/logo_small.gif")));

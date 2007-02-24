@@ -5,6 +5,7 @@ package com.tc.object.tools;
 
 import com.tc.object.NotInBootJar;
 import com.tc.util.Assert;
+import com.tc.util.ProductInfo;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -243,6 +244,8 @@ public class BootJar {
 
   static class BootJarMetaData {
     private static final String META_DATA_ATTRIBUTE_NAME = "DSO_BOOTJAR_METADATA";
+    private static final String TC_MONIKER               = "TC_MONIKER";
+    private static final String TC_VERSION               = "TC_VERSION";
     private static final String VERSION                  = "VERSION";
     private static final String VM_SIGNATURE             = "VM_SIGNATURE";
 
@@ -280,7 +283,10 @@ public class BootJar {
 
     public void write(Manifest manifest) {
       if (VERSION_1_1.equals(version)) {
+        ProductInfo productInfo = ProductInfo.getThisProductInfo();
         Attributes attributes = new Attributes();
+        attributes.put(new Attributes.Name(TC_MONIKER), productInfo.moniker());
+        attributes.put(new Attributes.Name(TC_VERSION), productInfo.rawVersion());
         attributes.put(new Attributes.Name(VERSION), getVersion());
         attributes.put(new Attributes.Name(VM_SIGNATURE), getVMSignature());
         Object prev = manifest.getEntries().put(META_DATA_ATTRIBUTE_NAME, attributes);

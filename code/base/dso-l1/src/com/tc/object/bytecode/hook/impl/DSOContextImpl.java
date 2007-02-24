@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode.hook.impl;
 
@@ -20,10 +21,12 @@ import com.tc.object.bytecode.ManagerImpl;
 import com.tc.object.bytecode.hook.ClassLoaderPreProcessorImpl;
 import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.IncompleteBootJarException;
 import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.config.UnverifiedBootJarException;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.InstrumentationLoggerImpl;
+import com.tc.plugins.PluginsLoader;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.terracottatech.config.ConfigurationModel;
@@ -72,16 +75,39 @@ public class DSOContextImpl implements DSOContext {
 
   private DSOContextImpl(DSOClientConfigHelper configHelper, Manager manager) {
     checkForProperlyInstrumentedBaseClasses();
-
     if (configHelper == null) { throw new NullPointerException(); }
 
     this.configHelper = configHelper;
     this.manager = manager;
-    InstrumentationLogger instrumentationLogger = new InstrumentationLoggerImpl(configHelper
-        .instrumentationLoggingOptions());
-    this.weavingStrategy = new DefaultWeavingStrategy(configHelper, instrumentationLogger);
-  }
+    weavingStrategy = new DefaultWeavingStrategy(configHelper, new InstrumentationLoggerImpl(configHelper
+        .instrumentationLoggingOptions()));
 
+    PluginsLoader.initPlugins(configHelper, false);
+    validateBootJar();
+  }
+  
+  private void validateBootJar() {
+    try {
+      configHelper.verifyBootJarContents();   
+    } catch(UnverifiedBootJarException ubjex) {
+      StringBuffer msg = new StringBuffer(ubjex.getMessage() + " ");
+      msg.append("Unable to verify the contents of the boot jar; ");
+      msg.append("Please check the client logs for more information.");
+      logger.error(ubjex);
+      throw new RuntimeException(msg.toString());
+    } catch(IncompleteBootJarException ibjex) {
+      StringBuffer msg = new StringBuffer(ibjex.getMessage() + " ");
+      msg.append("The DSO boot jar appears to be incomplete --- some pre-instrumented classes ");
+      msg.append("listed in your tc-config is not included in the boot jar file. This could ");
+      msg.append("happen if you've modified your DSO clients' tc-config file to specify additional ");
+      msg.append("classes for inclusion in the boot jar, but forgot to rebuild the boot jar. Or, you ");
+      msg.append("could be a using an older boot jar against a newer Terracotta client installation. ");
+      msg.append("Please check the client logs for the list of classes that were not found in your boot jar.");
+      logger.error(ibjex);
+      throw new RuntimeException(msg.toString());
+    }
+  }
+  
   private void checkForProperlyInstrumentedBaseClasses() {
     if (!Manageable.class.isAssignableFrom(HashMap.class)) {
       StringBuffer msg = new StringBuffer();
@@ -100,7 +126,7 @@ public class DSOContextImpl implements DSOContext {
   /**
    * XXX::NOTE:: ClassLoader checks the returned byte array to see if the class is instrumented or not to maintain the
    * offset.
-   *
+   * 
    * @return new byte array if the class is instrumented and same input byte array if not.
    * @see ClassLoaderPreProcessorImpl
    */
@@ -145,20 +171,14 @@ public class DSOContextImpl implements DSOContext {
       } catch (Exception e) {
         throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
       }
-
-      StandardDSOClientConfigHelper helper = new StandardDSOClientConfigHelper(config);
-
-      staticConfigHelper = helper;
+      staticConfigHelper = new StandardDSOClientConfigHelper(config);
     }
 
     return staticConfigHelper;
   }
 
   private static PreparedComponentsFromL2Connection validateMakeL2Connection(L1TVSConfigurationSetupManager config)
-    throws UnknownHostException,
-           IOException,
-           TCTimeoutException
-  {
+      throws UnknownHostException, IOException, TCTimeoutException {
     L2Data[] l2Data = (L2Data[]) config.l2Config().l2Data().getObjects();
     Assert.assertNotNull(l2Data);
 
@@ -167,9 +187,9 @@ public class DSOContextImpl implements DSOContext {
     if (false && !config.loadedFromTrustedSource()) {
       String serverConfigMode = getServerConfigMode(serverHost, l2Data[0].dsoPort());
 
-      if(serverConfigMode != null && serverConfigMode.equals(ConfigurationModel.PRODUCTION)) {
-        String text = "Configuration constraint violation: " +
-                      "untrusted client configuration not allowed against production server";
+      if (serverConfigMode != null && serverConfigMode.equals(ConfigurationModel.PRODUCTION)) {
+        String text = "Configuration constraint violation: "
+                      + "untrusted client configuration not allowed against production server";
         throw new AssertionError(text);
       }
     }
@@ -180,12 +200,9 @@ public class DSOContextImpl implements DSOContext {
   private static final long MAX_HTTP_FETCH_TIME       = 30 * 1000; // 30 seconds
   private static final long HTTP_FETCH_RETRY_INTERVAL = 1 * 1000; // 1 second
 
-  private static String getServerConfigMode(String serverHost, int httpPort)
-    throws MalformedURLException,
-           TCTimeoutException,
-           IOException
-  {
-    URL  theURL    = new URL("http", serverHost, httpPort, "/config?query=mode");
+  private static String getServerConfigMode(String serverHost, int httpPort) throws MalformedURLException,
+      TCTimeoutException, IOException {
+    URL theURL = new URL("http", serverHost, httpPort, "/config?query=mode");
     long startTime = System.currentTimeMillis();
     long lastTrial = 0;
 
@@ -219,7 +236,7 @@ public class DSOContextImpl implements DSOContext {
     }
 
     throw new TCTimeoutException("We tried for " + (int) ((System.currentTimeMillis() - startTime) / 1000)
-                                 + " seconds, but couldn't fetch system configuration mode from the L2 " + "at '" + theURL
-                                 + "'. Is the L2 running?");
+                                 + " seconds, but couldn't fetch system configuration mode from the L2 " + "at '"
+                                 + theURL + "'. Is the L2 running?");
   }
 }

@@ -4,6 +4,8 @@
  */
 package com.tctest;
 
+import org.apache.xmlbeans.XmlObject;
+
 import com.tc.cluster.Cluster;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.NewSystemConfig;
@@ -427,6 +429,10 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
       public ConfigItem persistenceMode() {
         return config.persistenceMode();
+      }
+
+      public XmlObject getBean() {
+        return config.getBean();
       }
 
     }

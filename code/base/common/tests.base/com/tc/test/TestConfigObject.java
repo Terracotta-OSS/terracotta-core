@@ -92,6 +92,8 @@ public class TestConfigObject {
 
   private static final String     SYSTEM_PROPERTIES_RESOURCE_NAME  = "/test-system-properties.properties";
 
+
+
   private static TestConfigObject INSTANCE;
 
   private final Properties        properties;
@@ -269,7 +271,7 @@ public class TestConfigObject {
     }
     else return osname;
   }
-  
+
   public String dataDirectoryRoot() {
     String out = this.properties.getProperty(DATA_DIRECTORY_ROOT);
     Assert.assertNotBlank(out);

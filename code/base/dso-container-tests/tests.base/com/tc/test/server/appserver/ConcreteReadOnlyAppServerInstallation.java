@@ -3,11 +3,10 @@
  */
 package com.tc.test.server.appserver;
 
-import org.apache.commons.io.CopyUtils;
+import com.tc.util.ZipBuilder;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -17,8 +16,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.text.DateFormat;
 import java.util.Date;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 /**
  * This class manages the installation of the read-only portion of a running appserver. A timestamp is used to cache the
@@ -39,7 +36,7 @@ final class ConcreteReadOnlyAppServerInstallation {
       deleteServer.delete();
     }
     BufferedInputStream in = new BufferedInputStream(appendPath(host, serverType, majorVersion, minorVersion).openStream());
-    unzip(in, serverInstallDir);
+    ZipBuilder.unzip(in, serverInstallDir);
     in.close();
     return serverInstallDir;
   }
@@ -79,19 +76,5 @@ final class ConcreteReadOnlyAppServerInstallation {
         majorVersion + "/" + majorVersion + "." + minorVersion + "/" +
         serverType + "-" + majorVersion + "." + minorVersion + ".zip";
     return new URL(baseUrl + "/" + appendedPath);
-  }
-
-  private static void unzip(BufferedInputStream archive, File destDir) throws IOException {
-    ZipInputStream zis = new ZipInputStream(archive);
-    ZipEntry entry;
-    while ((entry = zis.getNextEntry()) != null) {
-      File file = new File(destDir, entry.getName());
-      if (!entry.getName().endsWith("/")) {
-        CopyUtils.copy(zis, new FileOutputStream(file));
-      } else {
-        file.mkdirs();
-      }
-      zis.closeEntry();
-    }
   }
 }

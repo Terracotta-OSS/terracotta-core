@@ -207,6 +207,14 @@ class FilePath
         def canonicalize
             FilePath.new(JavaFile.new(to_s).getCanonicalPath)
         end
+
+        # Use a java.io.File object to convert the path into a URL
+        include_class('java.io.File') { 'JavaFile' }
+
+        # Returns a String that is the URL form of this FilePath.
+        def to_url
+          JavaFile.new(self.canonicalize.to_s).toURL().to_s
+        end
     else
         # (Ruby version): Returns a FilePath that is a canonicalized version of this pathname:
         # the result will always be absolute, have directory components like '.' or '..' removed,

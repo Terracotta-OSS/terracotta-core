@@ -4,6 +4,7 @@
 package com.tc.config.schema;
 
 import org.apache.commons.lang.ClassUtils;
+import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.ConfigItem;
@@ -87,4 +88,8 @@ public class BaseNewConfigObject implements NewConfig {
     return ClassUtils.getShortClassName(getClass()) + " around bean:\n" + context.bean();
   }
 
+  public XmlObject getBean() {
+    return this.context.bean();
+  }
+  
 }

@@ -48,6 +48,7 @@ public class TransparencyClassSpec {
   private final Map                   codeSpecs                  = new HashMap();
   private final Set                   nonInstrumentedMethods     = Collections.synchronizedSet(new HashSet());
   private String                      changeApplicatorClassName;
+  private ChangeApplicatorSpec        changeApplicatorSpec;
   private boolean                     isLogical;
   private final IncludeOnLoad         onLoad                     = new IncludeOnLoad();
   private boolean                     preInstrumented;
@@ -66,14 +67,17 @@ public class TransparencyClassSpec {
     this.configuration = configuration;
     this.className = className;
     this.changeApplicatorClassName = changeApplicatorClassName;
+    this.changeApplicatorSpec = new DSOChangeApplicatorSpec(changeApplicatorClassName);
     this.isLogical = true;
   }
-
+  
   public TransparencyClassSpec(String className, DSOClientConfigHelper configuration) {
     this.className = className;
     this.configuration = configuration;
     this.isLogical = false;
     this.changeApplicatorClassName = null;
+    this.changeApplicatorSpec = null;
+    this.changeApplicatorSpec = null;
   }
 
   public TransparencyClassSpec getClassSpec(String clazzName) {
@@ -267,9 +271,9 @@ public class TransparencyClassSpec {
   private boolean isDistributedMethodCall(int access, String methodName, String description, String[] exceptions) {
     return configuration.isDistributedMethodCall(access, className, methodName, description, exceptions);
   }
-
-  public String getChangeApplicatorClassName() {
-    return changeApplicatorClassName;
+  
+  public ChangeApplicatorSpec getChangeApplicatorSpec() {
+    return changeApplicatorSpec;
   }
 
   public String getLogicalExtendingClassName() {
@@ -284,7 +288,8 @@ public class TransparencyClassSpec {
     if (superClassLogicalExtendingClassName == null) {
       superClassLogicalExtendingClassName = superClassSpec.getClassName();
     }
-    this.changeApplicatorClassName = superClassSpec.getChangeApplicatorClassName();
+    this.changeApplicatorClassName = superClassSpec.changeApplicatorClassName;
+    this.changeApplicatorSpec = new DSOChangeApplicatorSpec(superClassSpec.changeApplicatorClassName);
     this.logicalExtendingClassName = superClassLogicalExtendingClassName;
   }
 

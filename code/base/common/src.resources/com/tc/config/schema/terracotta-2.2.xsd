@@ -9,7 +9,7 @@
       <xs:all>
         <xs:element name="system" type="system" minOccurs="0">
           <xs:annotation>
-            <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+            <xs:documentation>
               The 'system' section contains configuration
               data that affects the entire Terracotta
               system as a whole; things like the configuration
@@ -20,49 +20,42 @@
 
         <xs:element name="servers" type="servers" minOccurs="0">
           <xs:annotation>
-            <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
-              <p>
-                This section defines the servers present
-                in your Terracotta system. You can omit
-                this section entirely, in which case it
-                behaves as if there's a single server
-                with all values set at their default.
-                You can include exactly one server entry
-                here (the common case), or, if you're
-                going to run multiple servers for
-                failover, you can include multiple
-                servers here.
-              </p>
+            <xs:documentation>
+              This section defines the servers present
+              in your Terracotta system. You can omit
+              this section entirely, in which case it
+              behaves as if there's a single server
+              with all values set at their default.
+              You can include exactly one server entry
+              here (the common case), or, if you're
+              going to run multiple servers for
+              failover, you can include multiple
+              servers here.
 
-              <p>
-                If you include more than one server
-                here, note that each server will need to
-                know which configuration it should use
-                as it starts up. If you name your
-                servers according to the host that they
-                run on (and no host contains more than
-                one server), then they will find the
-                hostname themselves and work
-                automatically.
-              </p>
+              If you include more than one server
+              here, note that each server will need to
+              know which configuration it should use
+              as it starts up. If you name your
+              servers according to the host that they
+              run on (and no host contains more than
+              one server), then they will find the
+              hostname themselves and work
+              automatically.
 
-              <p>
-                If you name your servers in any other
-                fashion (and, again, only if there is
-                more than one 'server' element present
-                here), then you will need to pass the
-                command-line option "-n
-                <![CDATA[ <name>]]>
-                " to the start-tc-server script, passing
-                it the name of a server configuration
-                from this file.
-              </p>
+              If you name your servers in any other
+              fashion (and, again, only if there is
+              more than one 'server' element present
+              here), then you will need to pass the
+              command-line option "-n <![CDATA[ <name>]]>"
+              to the start-tc-server script, passing
+              it the name of a server configuration
+              from this file.
             </xs:documentation>
           </xs:annotation>
         </xs:element>
         <xs:element name="clients" type="client" minOccurs="0">
           <xs:annotation>
-            <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+            <xs:documentation>
               This section contains settings that affect
               all clients that connect to the system.
 
@@ -72,7 +65,7 @@
               to various clients. There are two ways of
               doing this:
 
-              - Certain parameters ('logs', below) undergo
+              Certain parameters ('logs', below) undergo
               parameter expansion before being used by the
               client. This allows you to use various
               predefined substitutions (like '%h' for
@@ -81,7 +74,7 @@
               for these values; expansions are carried out
               in each client's JVM independently.
 
-              - For each client to have its own
+              For each client to have its own
               configuration you can set 'tc.config' to the
               configuration file. If the configuration
               model is production then the 'application'
@@ -94,7 +87,7 @@
 
         <xs:element name="application" type="application" minOccurs="0">
           <xs:annotation>
-            <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+            <xs:documentation>
               This section contains items that affect the
               core behavior of Terracotta as it relates to
               your application. This data must be kept
@@ -308,6 +301,26 @@
     </xs:all>
   </xs:complexType>
 
+  <xs:complexType name="plugin">
+    <xs:annotation>
+      <xs:documentation>
+        Identifies a plugin/version to use, this plugin must be located
+        in either a) the default repository shipped with Terracotta or
+        b) one of the repositories listed in the <![CDATA[<plugins>]]>
+        section.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="name" type="xs:string" />
+    <xs:attribute name="version" type="xs:string" />
+  </xs:complexType>
+
+  <xs:complexType name="plugins">
+    <xs:sequence maxOccurs="unbounded">
+      <xs:element name="repository" type="xs:anyURI" minOccurs="0" />
+      <xs:element name="plugin" type="plugin" minOccurs="0" />
+    </xs:sequence>
+  </xs:complexType>
+
   <xs:complexType name="dso-application">
     <xs:all>
       <xs:element name="instrumented-classes" type="instrumented-classes" />
@@ -427,7 +440,7 @@
       <xs:element name="data" type="path" minOccurs="0"
         default="data">
         <xs:annotation>
-          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+          <xs:documentation>
             Where should the server store its persistent
             data? (This includes stored object data for
             DSO.) This value undergoes parameter
@@ -447,7 +460,8 @@
             thus recommended that you specify an absolute
             path here.
 
-            <p>Default: 'data'</p>
+            Default: 'data'
+
             This places the 'data' directory in the
             directory you were in when you invoked
             'start-tc-server'.
@@ -457,7 +471,7 @@
       <xs:element name="logs" type="path" minOccurs="0"
         default="logs">
         <xs:annotation>
-          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+          <xs:documentation>
             In which directory should the server store its
             log files? Again, this value undergoes parameter
             substitution before being used; thus, a value
@@ -472,7 +486,8 @@
             recommended that you specify an absolute path
             here.
 
-            <p>Default: 'logs'</p>
+            Default: 'logs'
+
             This places the 'logs' directory in the
             directory you were in when you invoked
             'start-tc-server'.
@@ -482,27 +497,29 @@
       <xs:element name="dso-port" type="port" minOccurs="0"
         default="9510">
         <xs:annotation>
-          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+          <xs:documentation>
             On what port should the DSO server listen for
             connections from DSO clients? This can be any
             port you like, but note that ports below 1024
             typically require 'root' privileges to use on
             Unix-style systems (Linux, Solaris).
-            <p>Default:9510</p>
+
+            Default:9510
           </xs:documentation>
         </xs:annotation>
       </xs:element>
       <xs:element name="jmx-port" type="port" minOccurs="0"
         default="9520">
         <xs:annotation>
-          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+          <xs:documentation>
             On what port should the server listen for
             connections from the Terracotta administration
             console? This can be any port you like, but note
             that ports below 1024 typically require 'root'
             privileges to use on Unix-style systems (Linux,
             Solaris).
-            <p>Default: 9520</p>
+
+            Default: 9520
           </xs:documentation>
         </xs:annotation>
       </xs:element>
@@ -510,7 +527,7 @@
       <xs:element name="dso" type="dso-server-data"
         minOccurs="0">
         <xs:annotation>
-          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+          <xs:documentation>
             Configuration data for DSO that's specific to
             the DSO server.
           </xs:documentation>
@@ -520,14 +537,14 @@
     <xs:attribute name="name" type="non-blank-token"
       use="required">
       <xs:annotation>
-        <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+        <xs:documentation>
           The name of the server. The name is required.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="host" type="host" use="optional">
       <xs:annotation>
-        <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+        <xs:documentation>
           The host that the server runs on. If the host is the
           same as the name of the server, then you can omit
           it; otherwise, you must include it.
@@ -538,7 +555,7 @@
 
   <xs:complexType name="client">
     <xs:annotation>
-      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+      <xs:documentation>
         This section contains settings that affect all clients
         that connect to the system.
 
@@ -563,10 +580,19 @@
       </xs:documentation>
     </xs:annotation>
     <xs:all>
+      <xs:element name="plugins" type="plugins"
+        minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            This section contains the list of plugins to use in
+            the client.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
       <xs:element name="logs" type="path" minOccurs="0"
         default="logs-%i">
         <xs:annotation>
-          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+          <xs:documentation>
             Where should the client write its log files?
 
             This value undergoes parameter substitution
@@ -583,7 +609,8 @@
             recommended that you specify an absolute path
             here.
 
-            <p>Default: 'logs-%i';</p>
+            Default: 'logs-%i';
+
             this places the logs in a directory relative to
             the directory you were in when you invoked the
             program that uses Terracotta services (your
@@ -596,7 +623,7 @@
       <xs:element name="dso" type="dso-client-data"
         minOccurs="0">
         <xs:annotation>
-          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+          <xs:documentation>
             This section contains data for Terracotta DSO
             that's specific to the DSO client only.
           </xs:documentation>
@@ -607,7 +634,7 @@
 
   <xs:complexType name="application">
     <xs:annotation>
-      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+      <xs:documentation>
         This section contains items that affect the core
         behavior of Terracotta as it relates to your
         application. This data must be kept consistent across
@@ -621,7 +648,7 @@
       <xs:element name="dso" type="dso-application"
         minOccurs="0">
         <xs:annotation>
-          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+          <xs:documentation>
             This section controls how Terracotta DSO behaves
             in your application.
           </xs:documentation>
@@ -631,9 +658,9 @@
       <xs:element name="spring" type="spring-application"
         minOccurs="0">
         <xs:annotation>
-          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+          <xs:documentation>
             This section is a self-contained configuration
-            that controls how Terracotta Spring behaves in
+            that controls how Terracotta for Spring behaves in
             your application.
           </xs:documentation>
         </xs:annotation>
@@ -643,38 +670,29 @@
 
   <xs:complexType name="servers">
     <xs:annotation>
-      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
-        <p>
-          This section defines the servers present in your
-          Terracotta system. You can omit this section
-          entirely, in which case it behaves as if there's a
-          single server with all values set at their default.
-          You can include exactly one server entry here (the
-          common case), or, if you're going to run multiple
-          servers for failover, you can include multiple
-          servers here.
-        </p>
+      <xs:documentation>
+        This section defines the servers present in your
+        Terracotta system. You can omit this section
+        entirely, in which case it behaves as if there's a
+        single server with all values set at their default.
+        You can include exactly one server entry here (the
+        common case), or, if you're going to run multiple
+        servers for failover, you can include multiple
+        servers here.
 
-        <p>
-          If you include more than one server here, note that
-          each server will need to know which configuration it
-          should use as it starts up. If you name your servers
-          according to the host that they run on (and no host
-          contains more than one server), then they will find
-          the hostname themselves and work automatically.
-        </p>
+        If you include more than one server here, note that
+        each server will need to know which configuration it
+        should use as it starts up. If you name your servers
+        according to the host that they run on (and no host
+        contains more than one server), then they will find
+        the hostname themselves and work automatically.
 
-        <p>
-          If you name your servers in any other fashion (and,
-          again, only if there is more than one 'server'
-          element present here), then you will need to pass
-          the command-line option "-n
-          <![CDATA[
-        <name>        
-        ]]>
-          " to the start-tc-server script, passing it the name
-          of a server configuration from this file.
-        </p>
+        If you name your servers in any other fashion (and,
+        again, only if there is more than one 'server'
+        element present here), then you will need to pass
+        the command-line option "-n <![CDATA[ <name>]]>"
+        to the start-tc-server script, passing it the name
+        of a server configuration from this file.
       </xs:documentation>
     </xs:annotation>
     <xs:sequence>
@@ -685,34 +703,23 @@
 
   <xs:simpleType name="configuration-model">
     <xs:annotation>
-      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
-        <p>
-          The configuration model: 'development' or
-          'production'.
-        </p>
+      <xs:documentation>
+        The configuration model: 'development' or 'production'.
 
-        <p>
-          The clients can each have their own configuration
-          file or all use the server's configuration file.
-        </p>
+        The clients can each have their own configuration
+        file or all use the server's configuration file.
 
-        <p>
-          The server's configuration file is located at
-          http://localhost:9515/config
-        </p>
+        The server's configuration file is located at
+        http://localhost:9515/config
 
-        <p>
-          If the configuration model is production then the
-          'application' section for all of the clients comes
-          from the application section of the server's config
-          file.
-        </p>
+        If the configuration model is production then the
+        'application' section for all of the clients comes
+        from the application section of the server's config
+        file.
 
-        <p>
-          If the configuration model is development then each
-          of the clients's 'application' section is determined
-          by their own configuration file.
-        </p>
+        If the configuration model is development then each
+        of the clients's 'application' section is determined
+        by their own configuration file.
       </xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:token">
@@ -723,7 +730,7 @@
 
   <xs:simpleType name="license-type">
     <xs:annotation>
-      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+      <xs:documentation>
         What type of license is in use? This can be 'trial' or
         'production', and does not affect the behavior of the
         system other than ensuring that the license in use
@@ -744,7 +751,7 @@
     <xs:all>
       <xs:element name="location" type="path">
         <xs:annotation>
-          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+          <xs:documentation>
             Where is the license file? Each server must have
             access to this file (which may be a relative or
             absolute path). This item can use parameter
@@ -759,7 +766,7 @@
       <xs:element name="type" type="license-type"
         default="none">
         <xs:annotation>
-          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+          <xs:documentation>
             What type of license is in use? This can be
             'trial' or 'production', and does not affect the
             behavior of the system other than ensuring that
@@ -776,7 +783,7 @@
 
   <xs:complexType name="system">
     <xs:annotation>
-      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+      <xs:documentation>
         The 'system' section contains configuration data that
         affects the entire Terracotta system as a whole; things
         like whether to activate DSO services go here.
@@ -785,7 +792,7 @@
     <xs:all>
       <xs:element name="license" type="license" minOccurs="0">
         <xs:annotation>
-          <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+          <xs:documentation>
             The 'license' element requires a 'location' and
             'type' to be specified. If you omit the
             'license' element, Terracotta will run in a
@@ -808,45 +815,36 @@
 
   <xs:simpleType name="path">
     <xs:annotation>
-      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
+      <xs:documentation>
         Several different predefined substitutions are available
         for your use:
-        <p>
-          %h expands to the fully-qualified host name of the
-          machine running your application
-        </p>
-        <p>
-          %i expands to the IP adress of the machine running
-          your application
-        </p>
-        <p>
-          %H refers to the home directory of the user running
-          running your application
-        </p>
-        <p>
-          %n refers to the username of the user running
-          running your application
-        </p>
-        <p>
-          %o refers to the name of the operating system
-          running running your application
-        </p>
-        <p>
-          %a refers to the processor architecture of the
-          machine running running your application %v refers
-          to the version of the operating system running
-          running your application
-        </p>
-        <p>
-          %t refers to the temporary directory of the machine
-          running your application(on Linux or Solaris, e.g.,
-          /tmp)
-        </p>
-        <p>
-          %(property) refers to the java system property of
-          the JVM running on the machine(e.g. %(java.home) )
-        </p>
 
+        %h expands to the fully-qualified host name of the
+        machine running your application
+
+        %i expands to the IP adress of the machine running
+        your application
+
+        %H refers to the home directory of the user running
+        running your application
+
+        %n refers to the username of the user running
+        running your application
+
+        %o refers to the name of the operating system
+        running running your application
+
+        %a refers to the processor architecture of the
+        machine running running your application %v refers
+        to the version of the operating system running
+        running your application
+
+        %t refers to the temporary directory of the machine
+        running your application(on Linux or Solaris, e.g.,
+        /tmp)
+
+        %(property) refers to the java system property of
+        the JVM running on the machine(e.g. %(java.home) )
       </xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:token">
@@ -884,18 +882,12 @@
 
   <xs:simpleType name="port">
     <xs:restriction base="xs:nonNegativeInteger">
-      <!-- We allow dynamic ports, for tests if nothing else -->
       <xs:minInclusive value="0" />
       <xs:maxInclusive value="65535" />
     </xs:restriction>
   </xs:simpleType>
 
   <xs:simpleType name="host">
-    <xs:annotation>
-      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
-        <p>Valid values are from 1 to 255</p>
-      </xs:documentation>
-    </xs:annotation>
     <xs:restriction base="xs:string">
       <xs:whiteSpace value="collapse" />
       <xs:minLength value="1" />
@@ -954,4 +946,13 @@
       <xs:pattern value="[A-Za-z_][A-Za-z_0-9$]*" />
     </xs:restriction>
   </xs:simpleType>
+  
+  <xs:element name="dso" type="dso-application">
+    <xs:annotation>
+      <xs:documentation>
+        Terracotta Plug-in configuration element
+      </xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  
 </xs:schema>

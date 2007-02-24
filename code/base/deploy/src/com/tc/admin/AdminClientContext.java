@@ -5,7 +5,7 @@ package com.tc.admin;
 
 import org.dijon.DictionaryResource;
 
-import com.tc.util.BundleHelper;
+import com.tc.util.ResourceBundleHelper;
 
 import java.util.prefs.Preferences;
 
@@ -15,7 +15,7 @@ public class AdminClientContext {
   public AdminClient           client;
   public AdminClientController controller;
   public UIDefaults            uiDefaults;
-  public BundleHelper          bundleHelper;
+  public ResourceBundleHelper          bundleHelper;
   public DictionaryResource    topRes;
   public Preferences           prefs;
 

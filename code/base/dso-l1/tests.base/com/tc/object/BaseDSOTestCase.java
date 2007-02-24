@@ -111,7 +111,7 @@ public class BaseDSOTestCase extends TCTestCase {
   }
 
   protected final DSOClientConfigHelper createClientConfigHelper() throws ConfigurationSetupException {
-    return new StandardDSOClientConfigHelper(createL1ConfigManager());
+    return new StandardDSOClientConfigHelper(true, createL1ConfigManager());
   }
 
   protected final void makeClientUsePort(int whichPort) throws ConfigurationSetupException {

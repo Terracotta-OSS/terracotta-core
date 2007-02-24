@@ -1,0 +1,11 @@
+<project name="clustered-lucene-2.0" xmlns:ivy="antlib:fr.jayasoft.ivy.ant">
+  
+  <!-- ================================= 
+  target: resolve              
+  ================================= -->
+  <target name="resolve" description="--> retreive dependencies with ivy">
+  	<ivy:resolve file="${basedir}/ivy.xml"/>
+    <ivy:retrieve pattern="${ivy.dependencies.dir}/[artifact]-[revision].[ext]"/>
+  </target>
+  
+</project>

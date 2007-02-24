@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.bootjar.java.util;
 
@@ -7,6 +8,7 @@ import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
 import com.tc.aspectwerkz.reflect.MemberInfo;
+import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.exception.ImplementMe;
 import com.tc.object.MockTCObject;
@@ -16,6 +18,7 @@ import com.tc.object.PortabilityImpl;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TestClientObjectManager;
 import com.tc.object.MockTCObject.MethodCall;
+import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TransparencyClassAdapter;
 import com.tc.object.config.ConfigLockLevel;
@@ -23,15 +26,18 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOSpringConfigHelper;
 import com.tc.object.config.Lock;
 import com.tc.object.config.LockDefinition;
+import com.tc.object.config.PluginSpec;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.schema.DSOInstrumentationLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeOutputOptions;
+import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.loaders.IsolationClassLoader;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.tx.MockTransactionManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
+import com.terracottatech.config.Plugins;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -264,7 +270,7 @@ public class HashMapTCTest extends TCTestCase {
     validateValuesIteratorRemove(jmap, tcmap);
   }
 
-  /*********************************************************************************/
+  /** ****************************************************************************** */
 
   public void validateLogicalInvoke(Map tcmap) throws Exception {
 
@@ -476,7 +482,6 @@ public class HashMapTCTest extends TCTestCase {
     assertEquals(tcmap, jmap);
   }
 
-
   void assertSingleMapping(Map map, final Object key, final Object value) {
     Assert.assertFalse(map.isEmpty());
     Assert.assertEquals(1, map.size());
@@ -540,7 +545,7 @@ public class HashMapTCTest extends TCTestCase {
   }
 
   private void populateMapWithHashKey(Map map, int numOfItems) {
-    for (int i=0; i<numOfItems; i++) {
+    for (int i = 0; i < numOfItems; i++) {
       map.put(new HashKey(i), new HashValue(i));
     }
   }
@@ -575,6 +580,10 @@ public class HashMapTCTest extends TCTestCase {
 
     final Set isNeverAdaptable = new HashSet();
 
+    public NewCommonL1Config getNewCommonL1Config() {
+      return null;
+    }
+
     public boolean shouldBeAdapted(String fullName) {
       return false;
     }
@@ -596,6 +605,10 @@ public class HashMapTCTest extends TCTestCase {
     }
 
     public Iterator getAllSpecs() {
+      throw new ImplementMe();
+    }
+
+    public void verifyBootJarContents() {
       throw new ImplementMe();
     }
 
@@ -727,7 +740,7 @@ public class HashMapTCTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public boolean isUseNonDefaultConstructor(String className) {
+    public boolean isUseNonDefaultConstructor(Class clazz) {
       throw new ImplementMe();
     }
 
@@ -825,9 +838,60 @@ public class HashMapTCTest extends TCTestCase {
       return null;
     }
 
-    public TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, String className, InstrumentationLogger lgr, ClassLoader caller, boolean forcePortable) {
+    public TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, String className,
+                                                             InstrumentationLogger lgr, ClassLoader caller,
+                                                             boolean forcePortable) {
       return null;
     }
+
+    public void addApplicationName(String name) {
+      throw new ImplementMe();
+    }
+
+    public void addInstrumentationDescriptor(InstrumentedClass classDesc) {
+      throw new ImplementMe();
+    }
+
+    public void addUserDefinedBootSpec(String className, TransparencyClassSpec spec) {
+      throw new ImplementMe();
+    }
+
+    public void addTransientType(String className, String fieldName) {
+      throw new ImplementMe();
+    }
+
+    public Plugins getPlugins() {
+      throw new ImplementMe();
+    }
+
+    public boolean hasCustomAdapter(String fullName) {
+      throw new ImplementMe();
+    }
+
+    public Class getChangeApplicator(Class clazz) {
+      throw new ImplementMe();
+    }
+
+    public void setPluginSpecs(PluginSpec[] pluginSpecs) {
+      throw new ImplementMe();
+    }
+
+    public void addNewPlugin(String name, String version) {
+      throw new ImplementMe();
+    }
+
+    public Plugins getPluginsForInitialization() {
+      throw new ImplementMe();
+    }
+
+    public boolean isPortablePluginClass(Class clazz) {
+      throw new ImplementMe();
+    }
+
+    public void addCustomAdapter(String name, ClassAdapterFactory factory) {
+      throw new ImplementMe();
+    }
+
   }
 
   private static class SimpleEntry implements Map.Entry {
@@ -927,6 +991,5 @@ public class HashMapTCTest extends TCTestCase {
       return super.toString() + ", i: " + i;
     }
   }
-
 
 }

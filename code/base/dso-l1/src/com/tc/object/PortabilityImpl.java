@@ -31,6 +31,9 @@ public class PortabilityImpl implements Portability {
     nonInstrumentedClass.add("java.lang.reflect.AccessibleObject");
     nonInstrumentedClass.add("java.util.concurrent.locks.AbstractQueuedSynchronizer");
     nonInstrumentedClass.add("java.util.concurrent.locks.AbstractQueuedSynchronizer$Node");
+    nonInstrumentedClass.add("com.ibatis.sqlmap.engine.accessplan.BaseAccessPlan");
+    // nonInstrumentedClass.add("java.util.concurrent.ConcurrentHashMap$SimpleEntry");
+    // nonInstrumentedClass.add("java.util.concurrent.ConcurrentHashMap$EntryIterator");
   }
 
   private final LiteralValues         literalValues        = new LiteralValues();
@@ -126,7 +129,7 @@ public class PortabilityImpl implements Portability {
 
     boolean bool = literalValues.isLiteral(clazzName) || config.isLogical(clazzName) || clazz.isArray()
                    || Proxy.isProxyClass(clazz) || ClassUtils.isEnum(clazz) || isClassPhysicallyInstrumented(clazz)
-                   || isInstrumentationNotNeeded(clazzName);
+                   || isInstrumentationNotNeeded(clazzName) || config.isPortablePluginClass(clazz);
     portableCache.put(clazzName, Boolean.valueOf(bool));
     return bool;
   }

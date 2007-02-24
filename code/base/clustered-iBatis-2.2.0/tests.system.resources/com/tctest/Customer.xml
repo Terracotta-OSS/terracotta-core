@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE sqlMap      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="Customer">
+
+  <!-- Use type aliases to avoid typing the full classname every time. -->
+  <typeAlias alias="Customer" type="com.tctest.domain.Customer"/>
+
+  <!-- Result maps describe the mapping between the columns returned
+       from a query, and the class properties.  A result map isn't
+       necessary if the columns (or aliases) match to the properties 
+       exactly. -->
+  <resultMap id="CustomerResult" class="Customer">
+    <result property="id" column="CUS_ID"/>
+    <result property="firstName" column="CUS_FIRST_NAME"/>
+    <result property="lastName" column="CUS_LAST_NAME"/>
+    <result property="emailAddress" column="CUS_EMAIL"/>
+    <result property="account" column="CUS_ACCOUNT_ID" select="selectAccountById"/>
+  </resultMap>
+  
+  <cacheModel id="customer-cache" type="LRU">
+    <flushInterval hours="24"/>
+    <flushOnExecute statement="insertCustomer"/>
+    <flushOnExecute statement="updateCustomer"/>
+    <property name="size" value="1000"/>
+  </cacheModel>
+  
+  <!-- Select with no parameters using the result map for Customer class. -->
+  <select id="selectAllCustomers" resultMap="CustomerResult">
+    select * from Customer
+  </select>
+
+  <!-- A simpler select example without the result map.  Note the 
+       aliases to match the properties of the target result class. 
+  <select id="selectCustomerById" parameterClass="int" resultMap="CustomerResult" cacheModel="customer-cache"> -->
+  <select id="selectCustomerById" parameterClass="int" resultMap="CustomerResult">
+    select *
+    from Customer
+    where CUS_ID = #id#
+  </select>
+   
+  <!-- Insert example, using the Customer parameter class -->
+  <insert id="insertCustomer" parameterClass="Customer">
+    insert into Customer (
+      CUS_ID,
+      CUS_FIRST_NAME,
+      CUS_LAST_NAME,
+      CUS_EMAIL,
+      CUS_ACCOUNT_ID
+    )
+    values (
+      #id#, #firstName#, #lastName#, #emailAddress#, #account.id#
+    )
+  </insert>
+
+  <!-- Update example, using the Customer parameter class -->
+  <update id="updateCustomer" parameterClass="Customer">
+    update Customer set
+      CUS_FIRST_NAME = #firstName#,
+      CUS_LAST_NAME = #lastName#,
+      CUS_EMAIL = #emailAddress#
+    where
+      CUS_ID = #id#
+  </update>
+
+  <!-- Delete example, using an integer as the parameter class -->
+  <delete id="deleteCustomerById" parameterClass="int">
+    delete from Customer where CUS_ID = #id#
+  </delete>
+
+</sqlMap>

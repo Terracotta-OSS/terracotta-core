@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -46,16 +47,17 @@ public class TCClassFactoryImpl implements TCClassFactory {
       if (rv == null) {
         String loaderDesc = classProvider.getLoaderDescriptionFor(clazz);
         String className = clazz.getName();
-        rv = new TCClassImpl(fieldFactory, this, objectManager, clazz, getLogicalSuperClassWithDefaultConstructor(clazz), loaderDesc, config
-                             .getLogicalExtendingClassName(className), config.isLogical(className), config
-                             .isCallConstructorOnLoad(className), config.getOnLoadScriptIfDefined(className), config
-                             .getOnLoadMethodIfDefined(className), config.isUseNonDefaultConstructor(className));
+        rv = new TCClassImpl(fieldFactory, this, objectManager, clazz,
+                             getLogicalSuperClassWithDefaultConstructor(clazz), loaderDesc, config
+                                 .getLogicalExtendingClassName(className), config.isLogical(className), config
+                                 .isCallConstructorOnLoad(className), config.getOnLoadScriptIfDefined(className),
+                             config.getOnLoadMethodIfDefined(className), config.isUseNonDefaultConstructor(clazz));
         classes.put(clazz, rv);
       }
       return rv;
     }
   }
-  
+
   public Class getLogicalSuperClassWithDefaultConstructor(Class clazz) {
     TransparencyClassSpec spec = config.getSpec(clazz.getName());
     if (spec == null) { return null; }
@@ -83,12 +85,12 @@ public class TCClassFactoryImpl implements TCClassFactory {
     return null;
   }
 
-  
   public ChangeApplicator createApplicatorFor(TCClass clazz, boolean indexed) {
     if (indexed) { return new ArrayApplicator(encoding); }
     String name = clazz.getName();
-    String applicatorName = config.getChangeApplicatorClassNameFor(name);
-    if (applicatorName == null) {
+    Class applicatorClazz = config.getChangeApplicator(clazz.getPeerClass());
+
+    if (applicatorClazz == null) {
       if (literalValues.isLiteral(name)) {
         return new LiteralTypesApplicator(clazz, encoding);
       } else if (clazz.isProxyClass()) {
@@ -101,7 +103,6 @@ public class TCClassFactoryImpl implements TCClassFactory {
     }
 
     try {
-      Class applicatorClazz = Class.forName(applicatorName);
       Constructor cstr = applicatorClazz.getConstructor(APPLICATOR_CSTR_SIGNATURE);
       Object[] params = new Object[] { encoding };
       return (ChangeApplicator) cstr.newInstance(params);
@@ -109,4 +110,18 @@ public class TCClassFactoryImpl implements TCClassFactory {
       throw new AssertionError(e);
     }
   }
+
+  /*
+   * public ChangeApplicator createApplicatorFor(TCClass clazz, boolean indexed) { if (indexed) { return new
+   * ArrayApplicator(encoding); } String name = clazz.getName(); String applicatorName =
+   * config.getChangeApplicatorClassNameFor(name); if (applicatorName == null) { if (literalValues.isLiteral(name)) {
+   * return new LiteralTypesApplicator(clazz, encoding); } else if (clazz.isProxyClass()) { return new
+   * ProxyApplicator(encoding); } else if (clazz.isCglibProxyClass()) { return new CglibProxyApplicator(encoding); }
+   * else if (clazz.isCglibBulkBean()) { return new CglibBulkBeanApplicator(encoding); } else if
+   * (clazz.isIBatisAccessPlan()) { return new IBatisAccessPlanApplicator(encoding); } else if
+   * ("java.io.File".equals(name)) { return new FileApplicator(clazz, encoding); } else { return new
+   * PhysicalApplicator(clazz, encoding); } } try { Class applicatorClazz = Class.forName(applicatorName); Constructor
+   * cstr = applicatorClazz.getConstructor(APPLICATOR_CSTR_SIGNATURE); Object[] params = new Object[] { encoding };
+   * return (ChangeApplicator) cstr.newInstance(params); } catch (Exception e) { throw new AssertionError(e); } }
+   */
 }

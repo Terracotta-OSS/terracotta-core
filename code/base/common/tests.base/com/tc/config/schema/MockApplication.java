@@ -19,6 +19,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.test.UniqueSequenceGenerator;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.DsoApplication;
+import com.terracottatech.config.Plugins;
 import com.terracottatech.config.SpringApplication;
 
 import java.io.File;
@@ -293,6 +294,27 @@ public class MockApplication implements Application {
   public void unsetSpring() {
     throw new ImplementMe();
 
+  }
+
+  public Plugins addNewPlugins() {
+    throw new ImplementMe();
+  }
+
+  public Plugins getPlugins() {
+    throw new ImplementMe();
+  }
+
+  public boolean isSetPlugins() {
+    throw new ImplementMe();
+  }
+
+  public void setPlugins(Plugins arg0) {
+    throw new ImplementMe();
+    
+  }
+
+  public void unsetPlugins() {
+    throw new ImplementMe();
   }
 
 }

@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-Activator: org.terracotta.plugins.iBatis_2_2_0.IBatisTerracottaConfigurator
+Bundle-Category: terracotta
+Bundle-Copyright: Terracotta, Inc. (c) 2003-2007
+Bundle-Description: Terracotta configuration for clustering iBatis 2.2.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Terracotta Configuration for iBatis 2.2.0
+Bundle-RequiredExecutionEnvironment: J2SE-1.4
+Bundle-SymbolicName: org.terracotta.plugins.clustered-iBatis-2.2.0
+Bundle-Vendor: Terracotta, Inc.
+Bundle-Version: 1.0.0
+Require-Bundle: org.terracotta.plugins.clustered-cglib-2.1.3
+Import-Package: org.terracotta.plugins.configuration

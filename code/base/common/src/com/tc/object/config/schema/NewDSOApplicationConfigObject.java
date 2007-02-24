@@ -102,7 +102,6 @@ public class NewDSOApplicationConfigObject extends BaseNewConfigObject implement
       com.tc.object.config.schema.Root[] out;
       Root[] theRoots = ((Roots) xmlObject).getRootArray();
       out = new com.tc.object.config.schema.Root[theRoots == null ? 0 : theRoots.length];
-  
       for (int i = 0; i < out.length; ++i) {
         out[i] = new com.tc.object.config.schema.Root(theRoots[i].getRootName(), theRoots[i].getFieldName());
       }

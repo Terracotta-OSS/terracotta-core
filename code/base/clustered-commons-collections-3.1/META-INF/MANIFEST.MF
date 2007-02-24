@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-Category: terracotta
+Bundle-Copyright: Terracotta, Inc. (c) 2003-2007
+Bundle-Description: Terracotta configuration for clustering Apache Commons Collections 3.1
+Bundle-ManifestVersion: 2
+Bundle-Name: Terracotta Configuration for Apache Commons Collections 3.1
+Bundle-RequiredExecutionEnvironment: J2SE-1.4
+Bundle-SymbolicName: org.terracotta.plugins.clustered_commons_collections_3.1
+Bundle-Vendor: Terracotta, Inc.
+Bundle-Version: 1.0.0

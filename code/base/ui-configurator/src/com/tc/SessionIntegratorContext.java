@@ -5,14 +5,14 @@ package com.tc;
 
 import org.dijon.DictionaryResource;
 
-import com.tc.util.BundleHelper;
+import com.tc.util.ResourceBundleHelper;
 
 import java.util.prefs.Preferences;
 
 public class SessionIntegratorContext {
   public SessionIntegrator      client;
   public SessionIntegratorFrame frame;
-  public BundleHelper           bundleHelper;
+  public ResourceBundleHelper           bundleHelper;
   public DictionaryResource     topRes;
   public Preferences            prefs;
 

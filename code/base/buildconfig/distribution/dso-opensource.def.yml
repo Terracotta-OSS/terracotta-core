@@ -89,6 +89,12 @@ bundled_components:
         - management
         - thirdparty
         - ui-configurator
+bundled_plugins:
+  - core:
+      install_directory: modules
+      manifest:
+        - clustered-apache-struts-1.1
+        - clustered-commons-collections-3.1
 packaging:
   - tar:
       assert: '@build_environment.os_type !~ /^\s*windows\s*$/i'

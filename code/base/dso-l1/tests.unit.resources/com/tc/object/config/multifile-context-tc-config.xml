@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2003-2006 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved
+
+-->
+<tc:tc-config 
+    xmlns:tc="http://www.terracotta.org/config"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://www.terracotta.org/config ..\..\..\common\src.resources\com\tc\config\schema\terracotta-2.2.xsd">
+
+	<system>
+	    <configuration-model>development</configuration-model>
+	</system>
+
+	<clients>
+		<logs>%d/client-logs-%h</logs>
+	</clients>
+
+	<servers>
+		<server name="localhost" />
+	</servers>
+
+	<application>
+		<spring>
+			<jee-application name="test-multifile-context">
+				<application-contexts>
+					<application-context>
+						<paths>
+							<path>/WEB-INF/multifile-context-factory1.xml</path>
+							<path>/WEB-INF/multifile-context-factory2.xml</path>
+						</paths>
+						<beans>
+							<bean name="distributedMasterBean">
+                <non-distributed-field>singleton</non-distributed-field>
+                <non-distributed-field>sharedSingletons</non-distributed-field>
+              </bean>
+						</beans>
+					</application-context>
+				</application-contexts>
+			</jee-application>
+		</spring>
+	</application>
+
+</tc:tc-config>
+

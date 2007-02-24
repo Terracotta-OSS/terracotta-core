@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema;
 
@@ -18,6 +19,7 @@ import com.tc.exception.ImplementMe;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.DsoClientData;
 import com.terracottatech.config.Path;
+import com.terracottatech.config.Plugins;
 
 import java.io.File;
 import java.io.InputStream;
@@ -279,4 +281,26 @@ public class MockClient implements Client {
   public void dump() {
     throw new ImplementMe();
   }
+
+  public Plugins addNewPlugins() {
+    throw new ImplementMe();
+  }
+
+  public Plugins getPlugins() {
+    throw new ImplementMe();
+  }
+
+  public boolean isSetPlugins() {
+    throw new ImplementMe();
+  }
+
+  public void setPlugins(Plugins plugins) {
+    throw new ImplementMe();
+
+  }
+
+  public void unsetPlugins() {
+    throw new ImplementMe();
+  }
+
 }

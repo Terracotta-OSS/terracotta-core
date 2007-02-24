@@ -4,15 +4,19 @@
  */
 package com.tc.util;
 
+import org.apache.commons.io.CopyUtils;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -20,10 +24,10 @@ import java.util.zip.ZipOutputStream;
  */
 public class ZipBuilder implements ArchiveBuilder {
 
-  private final CRC32           crc32 = new CRC32();
+  private final CRC32           crc32    = new CRC32();
   private final ZipOutputStream zout;
-  private final HashSet       dirSet   = new HashSet();
-  private final HashSet       entrySet = new HashSet();
+  private final HashSet         dirSet   = new HashSet();
+  private final HashSet         entrySet = new HashSet();
 
   public ZipBuilder(File archiveFile, boolean useCompression) throws IOException {
     zout = getArchiveOutputStream(archiveFile);
@@ -49,7 +53,7 @@ public class ZipBuilder implements ArchiveBuilder {
       putEntry(dirName + File.separator + files[i], readFile(file));
     }
   }
-  
+
   public final void putDirEntry(String file) throws IOException {
     if (dirSet.contains(file)) return;
     dirSet.add(file);
@@ -88,7 +92,7 @@ public class ZipBuilder implements ArchiveBuilder {
   protected ZipEntry createEntry(String name) {
     return new ZipEntry(name);
   }
-  
+
   protected ZipOutputStream getArchiveOutputStream(File archiveFile) throws IOException {
     if (zout != null) throw new IllegalStateException("ArchiveOutputStream has already been instantiated.");
     return new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(archiveFile)));
@@ -104,5 +108,19 @@ public class ZipBuilder implements ArchiveBuilder {
   private String archivePath(String file) {
     if (File.separator.equals("/")) return file;
     return file.replaceAll("\\\\", "/");
+  }
+
+  public static void unzip(InputStream archive, File destDir) throws IOException {
+    ZipInputStream zis = new ZipInputStream(archive);
+    ZipEntry entry;
+    while ((entry = zis.getNextEntry()) != null) {
+      File file = new File(destDir, entry.getName());
+      if (!entry.getName().endsWith("/")) {
+        CopyUtils.copy(zis, new FileOutputStream(file));
+      } else {
+        file.mkdirs();
+      }
+      zis.closeEntry();
+    }
   }
 }

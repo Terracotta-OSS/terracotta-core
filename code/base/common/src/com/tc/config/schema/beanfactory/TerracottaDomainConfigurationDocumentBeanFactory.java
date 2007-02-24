@@ -35,7 +35,7 @@ public class TerracottaDomainConfigurationDocumentBeanFactory implements ConfigB
     List errors = new ArrayList();
     XmlOptions options = createXmlOptions(errors, sourceDescription);
     Loader configLoader = new Loader();
-    
+
     TcConfigDocument document = configLoader.parse(in, options);
     document.validate(options);
     return new BeanWithErrors(document, (XmlError[]) errors.toArray(new XmlError[errors.size()]));

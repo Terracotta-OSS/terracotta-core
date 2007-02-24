@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE sqlMapConfig      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map Config 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-config-2.dtd">
+
+<sqlMapConfig>
+<!--
+  <settings
+        lazyLoadingEnabled="true" />
+-->
+  <!-- Configure a built-in transaction manager.  If you're using an 
+       app server, you probably want to use its transaction manager 
+       and a managed datasource -->
+  <transactionManager type="JDBC" commitRequired="false">
+    <dataSource type="SIMPLE">
+      <property name="JDBC.Driver" value="org.hsqldb.jdbcDriver"/>
+      <property name="JDBC.ConnectionURL" value="jdbc:hsqldb:file:testdb"/>
+      <property name="JDBC.Username" value="sa"/>
+      <property name="JDBC.Password" value=""/>
+    </dataSource>
+  </transactionManager>
+  
+  <!-- List the SQL Map XML files. They can be loaded from the 
+       classpath, as they are here (com.domain.data...) -->
+  <sqlMap resource="com/tctest/Account.xml"/>
+  <sqlMap resource="com/tctest/Customer.xml"/>
+
+</sqlMapConfig>

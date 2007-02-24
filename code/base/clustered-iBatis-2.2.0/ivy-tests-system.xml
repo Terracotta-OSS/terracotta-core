@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ivy-module version="1.0">
+  <info organisation="ibiblio" module="clustered-iBatis-2.2.0"/>
+  <dependencies>
+  	<dependency name="ibatis-common" rev="2"/>
+  	<dependency name="hsqldb" rev="1.7.2.2"/>
+  	<dependency name="ibatis-dao" rev="2"/>
+  	<dependency name="ibatis-sqlmap" rev="2"/>
+  </dependencies>
+</ivy-module>

@@ -25,7 +25,7 @@ import java.util.Properties;
  * Utility class to retrieve the build information for the product.
  */
 public final class ProductInfo {
-  private static final BundleHelper bundleHelper              = new BundleHelper(ProductInfo.class);
+  private static final ResourceBundleHelper bundleHelper              = new ResourceBundleHelper(ProductInfo.class);
 
   private static final DateFormat   DATE_FORMAT               = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
