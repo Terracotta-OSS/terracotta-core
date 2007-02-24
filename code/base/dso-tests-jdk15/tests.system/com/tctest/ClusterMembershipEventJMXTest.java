@@ -29,6 +29,10 @@ public class ClusterMembershipEventJMXTest extends TransparentTestBase {
   private File             configFile;
   private int              adminPort;
 
+  public ClusterMembershipEventJMXTest() {
+    this.disableAllUntil("2007-02-27");
+  }
+
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
