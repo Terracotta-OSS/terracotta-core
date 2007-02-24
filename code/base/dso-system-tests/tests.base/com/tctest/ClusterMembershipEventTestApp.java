@@ -68,6 +68,7 @@ public class ClusterMembershipEventTestApp extends AbstractTransparentApp implem
   // not shared..
   private final SynchronizedInt localNodeCount            = new SynchronizedInt(0);
   private final SynchronizedInt localThisNodeConCallCount = new SynchronizedInt(0);
+  private final SynchronizedInt localThisNodeDisconCount  = new SynchronizedInt(0);
 
   private final CyclicBarrier   callbackBarrier           = new CyclicBarrier(2);
   private CyclicBarrier         localThisNodeConBarrier   = null;
@@ -114,7 +115,6 @@ public class ClusterMembershipEventTestApp extends AbstractTransparentApp implem
     stage4.barrier();
     System.err.println("### thisNode=" + thisNode + " -> stage # 4");
 
-
     // stage - all nodes got nodeConnected callback. prepare to test nodeDisconnected event
     localNodeConBarrier = null;
     localNodeDisBarrier = callbackBarrier;
@@ -128,6 +128,18 @@ public class ClusterMembershipEventTestApp extends AbstractTransparentApp implem
     stage6.barrier();
     System.err.println("### thisNode=" + thisNode + " -> stage # 6");
 
+    // now let's try to kill the server and see if all nodes get thisNodeDisconnected event
+    localNodeDisBarrier = null;
+    localNodeConBarrier = null;
+    localThisNodeConBarrier = null;
+    
+    if (isMasterNode) {
+      config.getServerControl().crash();
+      checkCountTimed(localThisNodeDisconCount, 1, 10, 5 * 1000, "localThisNodeDisconnectedCount");
+      config.getServerControl().start(30 * 1000);
+    }
+    stage6.barrier();
+    checkCountTimed(localThisNodeDisconCount, 1, 10, 5 * 1000, "localThisNodeDisconnectedCount");
   }
 
   private void checkCountTimed(SynchronizedInt actualSI, final int expected, final int slices, final long sliceMillis,
@@ -188,7 +200,8 @@ public class ClusterMembershipEventTestApp extends AbstractTransparentApp implem
   }
 
   public void thisNodeDisconnected(String thisNodeId) {
-    //
+    System.err.println("\n### thisNodeDisconnected->thisNodeId=" + thisNodeId);
+    localThisNodeDisconCount.increment();
   }
 
   public static class L1Client {
