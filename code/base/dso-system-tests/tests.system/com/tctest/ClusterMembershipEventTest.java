@@ -26,6 +26,10 @@ public class ClusterMembershipEventTest extends TransparentTestBase {
   private int              port;
   private int              adminPort;
   private File             configFile;
+    
+  public ClusterMembershipEventTest() {
+    this.disableAllUntil("2007-02-27")
+  }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
