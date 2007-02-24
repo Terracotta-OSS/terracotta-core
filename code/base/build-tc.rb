@@ -83,7 +83,6 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   # Prints a help message.
   def help
     puts(Resources::HELP_MESSAGE)
-    check_    
   end
   
   # Shows a list of all available variants for each subtree. Useful for debugging the buildsystem.
