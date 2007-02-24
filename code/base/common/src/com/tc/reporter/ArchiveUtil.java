@@ -153,7 +153,7 @@ public final class ArchiveUtil {
 
   private File getClientLogsLocation(TcConfig configBeans) throws IOException, XmlException {
     Client clients = configBeans.getClients();
-    if (clients == null) quit("The Terracotta config specified doesn't contain the <clients> element");
+    if (clients == null) quit("The Terracotta config specified doesn't contain the <clients> element.\nYou may have provided a server config by mistake.");
     String logs = clients.getLogs();
     if (isStdX(logs)) return null;
     if (logs == null) logs = Client.type.getElementProperty(QName.valueOf("logs")).getDefaultText();
@@ -186,7 +186,7 @@ public final class ArchiveUtil {
       logs[i] = ParameterSubstituter.substitute(logs[i]);
       File serverLogsDir = makeAbsolute(new File(logs[i]));
       if (!serverLogsDir.exists()) quit("\nError occured while parsing: " + tcConfig
-          + "\n\tUnable to locate server log files at: " + logs[i]);
+          + "\n\tUnable to resolve the server log location element to an actual file: " + logs[i]);
       logFiles[i] = serverLogsDir;
     }
     return logFiles;
@@ -203,7 +203,7 @@ public final class ArchiveUtil {
       serverData[i] = ParameterSubstituter.substitute(serverData[i]);
       File serverDataDir = makeAbsolute(new File(serverData[i]));
       if (!serverDataDir.exists()) quit("\nError occured while parsing: " + tcConfig
-          + "\n\tUnable to locate server data files at: " + serverData[i]);
+          + "\n\tUnable to resolve the server data location element to an actual file: " + serverData[i]);
       dataFiles[i] = serverDataDir;
     }
     return dataFiles;
