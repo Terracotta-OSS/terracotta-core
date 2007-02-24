@@ -157,7 +157,7 @@ public class LinkedJavaProcessTest extends TCTestCase {
     assertTrue(child2NewSize > child2OrigSize);
 
     process.destroy();
-    Thread.sleep(15000);
+    Thread.sleep(25000);
 
     origSize = destFile.length();
     Thread.sleep(5000);
