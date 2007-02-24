@@ -1,7 +1,9 @@
 package com.tc.admin;
 
+import com.tc.util.event.EventMulticaster;
+import com.tc.util.event.UpdateEventListener;
+
 import java.io.IOException;
-import java.util.EventListener;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,15 +23,15 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
 
   private final Map              m_env;
   private final Map              m_authEnv;
-  private final JMXServiceURL    m_url;                      // @NOTThreadSafe
+  private final JMXServiceURL    m_url;              // @NOTThreadSafe
   private Map                    m_conEnv;
   private JMXConnector           m_connector;
-  private AuthenticationListener m_authListener;
-  private AuthenticationListener m_collapseListener;
-  private AuthenticationListener m_exceptionListener;
+  private final EventMulticaster m_authObserver;
+  private final EventMulticaster m_collapseObserver;
+  private final EventMulticaster m_exceptionObserver;
   private boolean                m_authenticating;
   private boolean                m_securityEnabled;
-  private final Object           m_error_lock = new Object();
+  private final Object           m_error_lock;
   private Exception              m_error;
 
   public AuthenticatingJMXConnector(JMXServiceURL url, Map env) throws IOException {
@@ -37,6 +39,10 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
     (this.m_env = new HashMap()).putAll(env);
     (this.m_authEnv = new HashMap()).putAll(env);
     this.m_url = url;
+    this.m_error_lock = new Object();
+    this.m_authObserver = new EventMulticaster();
+    this.m_collapseObserver = new EventMulticaster();
+    this.m_exceptionObserver = new EventMulticaster();
   }
 
   private synchronized JMXConnector getConnector() {
@@ -47,31 +53,16 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
     this.m_connector = connector;
   }
 
-  private void fireAuthenticationEvent() {
-    if (m_authListener != null) m_authListener.handleEvent();
+  public void addAuthenticationListener(UpdateEventListener listener) {
+    m_authObserver.addListener(listener);
   }
 
-  // does not support multicast
-  public void addAuthenticationListener(AuthenticationListener listener) {
-    this.m_authListener = listener;
+  public void addCollapseListener(UpdateEventListener listener) {
+    this.m_collapseObserver.addListener(listener);
   }
 
-  private void fireCollapseEvent() {
-    if (m_collapseListener != null) m_collapseListener.handleEvent();
-  }
-
-  // does not support multicast
-  public void addCollapseListener(AuthenticationListener listener) {
-    this.m_collapseListener = listener;
-  }
-
-  private void fireExceptionEvent() {
-    if (m_exceptionListener != null) m_exceptionListener.handleEvent();
-  }
-
-  // does not support multicast
-  public void addExceptionListener(AuthenticationListener listener) {
-    this.m_exceptionListener = listener;
+  public void addExceptionListener(UpdateEventListener listener) {
+    this.m_exceptionObserver.addListener(listener);
   }
 
   public void addConnectionNotificationListener(NotificationListener arg0, NotificationFilter arg1, Object arg2) {
@@ -97,23 +88,23 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
         try {
           Thread.sleep(500);
         } catch (InterruptedException ie) {
-          fireCollapseEvent();
+          m_collapseObserver.fireUpdateEvent();
           return;
         }
         m_authenticating = true;
-        fireAuthenticationEvent();
+        m_authObserver.fireUpdateEvent();
         try {
           while (m_authenticating)
             wait();
         } catch (InterruptedException ie) {
-          fireExceptionEvent();
+          m_exceptionObserver.fireUpdateEvent();
           return;
         }
       } else {
         throw e;
       }
     } catch (IOException e) {
-      fireExceptionEvent();
+      m_exceptionObserver.fireUpdateEvent();
       throw e;
     }
     throwExceptions();
@@ -122,7 +113,7 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
   private void throwExceptions() throws IOException {
     synchronized (m_error_lock) {
       if (m_error != null) {
-        fireExceptionEvent();
+        m_exceptionObserver.fireUpdateEvent();
         if (m_error instanceof IOException) throw (IOException) m_error;
         else if (m_error instanceof RuntimeException) throw (RuntimeException) m_error;
       }
@@ -133,7 +124,7 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
   public synchronized void handleOkClick(String username, String password) {
     m_authEnv.put("jmx.remote.credentials", new String[] { username, password });
     try {
-      fireCollapseEvent();
+      m_collapseObserver.fireUpdateEvent();
       setConnector(JMXConnectorFactory.newJMXConnector(m_url, m_authEnv));
       getConnector().connect(m_conEnv);
     } catch (Exception e) {
@@ -164,12 +155,6 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
 
   public void removeConnectionNotificationListener(NotificationListener arg0) throws ListenerNotFoundException {
     getConnector().removeConnectionNotificationListener(arg0);
-  }
-
-  // --------------------------------------------------------------------------------
-
-  public static interface AuthenticationListener extends EventListener {
-    void handleEvent();
   }
 
   // --------------------------------------------------------------------------------

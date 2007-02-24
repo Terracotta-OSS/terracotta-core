@@ -10,6 +10,8 @@ import org.dijon.Dialog;
 import org.dijon.DialogResource;
 import org.dijon.TextField;
 
+import com.tc.util.event.UpdateEventListener;
+
 import java.awt.BorderLayout;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -223,23 +225,23 @@ public final class ConnectDialog extends Dialog {
         m_error = null;
         m_jmxc = new AuthenticatingJMXConnector(m_url, m_env);
         ((AuthenticatingJMXConnector) m_jmxc)
-            .addAuthenticationListener(new AuthenticatingJMXConnector.AuthenticationListener() {
-              public void handleEvent() {
+            .addAuthenticationListener(new UpdateEventListener() {
+              public void handleUpdate() {
                 m_connectionTimer.stopTimer();
                 m_connectionTimer.interrupt();
                 enableAuthenticationDialog();
               }
             });
         ((AuthenticatingJMXConnector) m_jmxc)
-            .addCollapseListener(new AuthenticatingJMXConnector.AuthenticationListener() {
-              public void handleEvent() {
+            .addCollapseListener(new UpdateEventListener() {
+              public void handleUpdate() {
                 m_connectionTimer.setTimer();
                 disableAuthenticationDialog();
               }
             });
         ((AuthenticatingJMXConnector) m_jmxc)
-            .addExceptionListener(new AuthenticatingJMXConnector.AuthenticationListener() {
-              public void handleEvent() {
+            .addExceptionListener(new UpdateEventListener() {
+              public void handleUpdate() {
                 m_connectionTimer.setTimer();
                 m_connectionTimer.interrupt();
                 disableAuthenticationDialog();
