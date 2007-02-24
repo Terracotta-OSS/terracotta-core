@@ -255,19 +255,23 @@ public final class ArchiveUtilTest extends TCTestCase {
     assertFalse(contents.contains(MK_SERVER_DATA_DIR + "/" + MK_SERVER_DATA1));
   }
 
-  public void testIgnoresFOptionForClient() throws Exception {
+  public void testIgnoresNOptionForClient() throws Exception {
     clear();
     log("<client> ignores -n option");
-    String config = createConfig(NONE, new String[] { NONE }, new String[] { NONE });
+    String[] slogs = new String[] { MK_SERVER_LOG_DIR };
+    String[] sdata = new String[] { MK_SERVER_DATA_DIR };
+    String config = createConfig(MK_CLIENT_DIR, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
     executeArchiveUtil(new String[] { "-c", "-n", configFile.toString(), archiveFile.toString() });
-    assertFalse(archiveFile.exists());
+    assertTrue(archiveFile.exists());
   }
 
   public void testInvalidArgsOrder1() throws Exception {
     clear();
     log("<server> invalid args: <output file> <config>");
-    String config = createConfig(NONE, new String[] { NONE }, new String[] { NONE });
+    String[] slogs = new String[] { MK_SERVER_LOG_DIR };
+    String[] sdata = new String[] { MK_SERVER_DATA_DIR };
+    String config = createConfig(MK_CLIENT_DIR, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
     executeArchiveUtil(new String[] { archiveFile.toString(), configFile.toString() });
     assertFalse(archiveFile.exists());
@@ -276,7 +280,9 @@ public final class ArchiveUtilTest extends TCTestCase {
   public void testInvalidArgsOrder2() throws Exception {
     clear();
     log("<server> invalid args: <config> <output file> -c");
-    String config = createConfig(NONE, new String[] { NONE }, new String[] { NONE });
+    String[] slogs = new String[] { MK_SERVER_LOG_DIR };
+    String[] sdata = new String[] { MK_SERVER_DATA_DIR };
+    String config = createConfig(MK_CLIENT_DIR, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
     executeArchiveUtil(new String[] { configFile.toString(), archiveFile.toString(), "-c" });
     assertFalse(archiveFile.exists());
@@ -285,7 +291,9 @@ public final class ArchiveUtilTest extends TCTestCase {
   public void testInvalidArgsOrder3() throws Exception {
     clear();
     log("<server> invalid args: <config> -c <output file>");
-    String config = createConfig(NONE, new String[] { NONE }, new String[] { NONE });
+    String[] slogs = new String[] { MK_SERVER_LOG_DIR };
+    String[] sdata = new String[] { MK_SERVER_DATA_DIR };
+    String config = createConfig(MK_CLIENT_DIR, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
     executeArchiveUtil(new String[] { configFile.toString(), "-c", archiveFile.toString() });
     assertFalse(archiveFile.exists());
@@ -301,7 +309,9 @@ public final class ArchiveUtilTest extends TCTestCase {
   public void testInvalidArgs2() throws Exception {
     clear();
     log("<server> invalid args: -x");
-    String config = createConfig(NONE, new String[] { NONE }, new String[] { NONE });
+    String[] slogs = new String[] { MK_SERVER_LOG_DIR };
+    String[] sdata = new String[] { MK_SERVER_DATA_DIR };
+    String config = createConfig(MK_CLIENT_DIR, slogs, sdata);
     File configFile = writeConfig(config.getBytes());
     executeArchiveUtil(new String[] { "-x", configFile.toString(), archiveFile.toString() });
     assertFalse(archiveFile.exists());
