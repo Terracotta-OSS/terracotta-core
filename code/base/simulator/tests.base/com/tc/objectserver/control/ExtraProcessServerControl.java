@@ -104,10 +104,10 @@ public class ExtraProcessServerControl extends ServerControlBase {
   }
 
   public void start(long timeout) throws Exception {
-    process = createLinkedJavaProcess();
-    process.setJavaArguments((String[]) jvmArgs.toArray(new String[jvmArgs.size()]));
     System.err.println("Starting " + this.name + ": jvmArgs=" + jvmArgs + ", main=" + getMainClassName()
                        + ", main args=" + ArrayUtils.toString(getMainClassArguments()));
+    process = createLinkedJavaProcess();
+    process.setJavaArguments((String[]) jvmArgs.toArray(new String[jvmArgs.size()]));
     process.start();
     if (mergeOutput) {
       mergeSTDOUT();

@@ -10,8 +10,8 @@ import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
+import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.util.Assert;
@@ -27,12 +27,13 @@ public class ClusterMembershipEventJMXTest extends TransparentTestBase {
   private static final int NODE_COUNT = 1;
   private int              port;
   private File             configFile;
+  private int              adminPort;
 
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
     TransparentAppConfig cfg = t.getTransparentAppConfig();
-    cfg.setAttribute(ClusterMembershipEventJMXTestApp.CONFIG_FILE, getConfigFile().getAbsolutePath());
+    cfg.setAttribute(ClusterMembershipEventJMXTestApp.CONFIG_FILE, configFile.getAbsolutePath());
     cfg.setAttribute(ClusterMembershipEventJMXTestApp.PORT_NUMBER, String.valueOf(port));
     cfg.setAttribute(ClusterMembershipEventJMXTestApp.HOST_NAME, "localhost");
   }
@@ -42,43 +43,44 @@ public class ClusterMembershipEventJMXTest extends TransparentTestBase {
   }
 
   public void setUp() throws Exception {
-    TVSConfigurationSetupManagerFactory factory;
-    factory = new StandardTVSConfigurationSetupManagerFactory(new String[] {
-        StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, getConfigFile().getAbsolutePath() },
-                                                              true, new FatalIllegalConfigurationChangeHandler());
+    PortChooser pc = new PortChooser();
+    port = pc.chooseRandomPort();
+    adminPort = pc.chooseRandomPort();
+    configFile = getTempFile("config-file.xml");
+    writeConfigFile();
+    StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
+                                                                                                          new String[] {
+                                                                                                              StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD,
+                                                                                                              configFile
+                                                                                                                  .getAbsolutePath() },
+                                                                                                          true,
+                                                                                                          new FatalIllegalConfigurationChangeHandler());
 
     L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
-    super.setUp(factory, new StandardDSOClientConfigHelper(manager));
+    setUpControlledServer(factory, new StandardDSOClientConfigHelper(manager), port, adminPort, configFile.getAbsolutePath());
     doSetUp(this);
   }
 
-  private synchronized File getConfigFile() {
-    if (configFile == null) {
-      try {
-        // XXX: ERR! HACK! Will collide eventually
-        port = new PortChooser().chooseRandomPort();
-
-        configFile = getTempFile("config-file.xml");
-        TerracottaConfigBuilder builder = createConfig(port);
-        FileOutputStream out = new FileOutputStream(configFile);
-        CopyUtils.copy(builder.toString(), out);
-        out.close();
-      } catch (Exception e) {
-        throw Assert.failure("Can't create config file", e);
-      }
+  private synchronized void writeConfigFile() {
+    try {
+      TerracottaConfigBuilder builder = createConfig(port, adminPort);
+      FileOutputStream out = new FileOutputStream(configFile);
+      CopyUtils.copy(builder.toString(), out);
+      out.close();
+    } catch (Exception e) {
+      throw Assert.failure("Can't create config file", e);
     }
-    return configFile;
   }
 
-  public static TerracottaConfigBuilder createConfig(int port) {
+  public static TerracottaConfigBuilder createConfig(int port, int adminPort) {
     String testClassName = ClusterMembershipEventJMXTestApp.class.getName();
     String testClassSuperName = AbstractTransparentApp.class.getName();
-    String clientClassName = ClusterMembershipEventJMXTestApp.L1Client.class.getName();
 
     TerracottaConfigBuilder out = new TerracottaConfigBuilder();
 
     out.getServers().getL2s()[0].setDSOPort(port);
-
+    out.getServers().getL2s()[0].setJMXPort(adminPort);
+    out.getServers().getL2s()[0].setPersistenceMode(L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE);
 
     InstrumentedClassConfigBuilder instrumented1 = new InstrumentedClassConfigBuilderImpl();
     instrumented1.setClassExpression(testClassName + "*");

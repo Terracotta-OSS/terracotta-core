@@ -23,14 +23,15 @@ import java.io.FileOutputStream;
 public class ClusterMembershipEventTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 5;
-  private int port;
-  private File configFile;
+  private int              port;
+  private int              adminPort;
+  private File             configFile;
 
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
     TransparentAppConfig cfg = t.getTransparentAppConfig();
-    cfg.setAttribute(ClusterMembershipEventTestApp.CONFIG_FILE, getConfigFile().getAbsolutePath());
+    cfg.setAttribute(ClusterMembershipEventTestApp.CONFIG_FILE, configFile.getAbsolutePath());
     cfg.setAttribute(ClusterMembershipEventTestApp.PORT_NUMBER, String.valueOf(port));
     cfg.setAttribute(ClusterMembershipEventTestApp.HOST_NAME, "localhost");
   }
@@ -40,32 +41,34 @@ public class ClusterMembershipEventTest extends TransparentTestBase {
   }
 
   public void setUp() throws Exception {
+    // XXX: ERR! HACK! Will collide eventually
+    PortChooser pc = new PortChooser();
+    port = pc.chooseRandomPort();
+    adminPort = pc.chooseRandomPort();
+    configFile = getTempFile("config-file.xml");
+    writeConfigFile();
+
     TVSConfigurationSetupManagerFactory factory;
     factory = new StandardTVSConfigurationSetupManagerFactory(new String[] {
-        StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, getConfigFile().getAbsolutePath() },
-                                                              true, new FatalIllegalConfigurationChangeHandler());
+        StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, configFile.getAbsolutePath() }, true,
+                                                              new FatalIllegalConfigurationChangeHandler());
 
     L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
-    super.setUp(factory, new StandardDSOClientConfigHelper(manager));
+    // super.setUp(factory, new StandardDSOClientConfigHelper(manager));
+    setUpControlledServer(factory, new StandardDSOClientConfigHelper(manager), port, adminPort, configFile
+        .getAbsolutePath());
     doSetUp(this);
   }
 
-  private synchronized File getConfigFile() {
-    if (configFile == null) {
-      try {
-        // XXX: ERR! HACK! Will collide eventually
-        port = new PortChooser().chooseRandomPort();
-
-        configFile = getTempFile("config-file.xml");
-        TerracottaConfigBuilder builder = ClientTerminatingTestApp.createConfig(port);
-        FileOutputStream out = new FileOutputStream(configFile);
-        CopyUtils.copy(builder.toString(), out);
-        out.close();
-      } catch (Exception e) {
-        throw Assert.failure("Can't create config file", e);
-      }
+  private synchronized void writeConfigFile() {
+    try {
+      TerracottaConfigBuilder builder = ClientTerminatingTestApp.createConfig(port, adminPort);
+      FileOutputStream out = new FileOutputStream(configFile);
+      CopyUtils.copy(builder.toString(), out);
+      out.close();
+    } catch (Exception e) {
+      throw Assert.failure("Can't create config file", e);
     }
-    return configFile;
   }
 
 }

@@ -9,6 +9,7 @@ import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.builder.LockConfigBuilder;
 import com.tc.config.schema.builder.RootConfigBuilder;
 import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
+import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.LockConfigBuilderImpl;
 import com.tc.config.schema.test.RootConfigBuilderImpl;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
@@ -105,7 +106,7 @@ public class ClientTerminatingTestApp extends AbstractTransparentApp {
     return "Controller(" + id + ") :";
   }
 
-  public static TerracottaConfigBuilder createConfig(int port) {
+  public static TerracottaConfigBuilder createConfig(int port, int adminPort) {
     String testClassName = ClientTerminatingTestApp.class.getName();
     String testClassSuperName = AbstractTransparentApp.class.getName();
     String clientClassName = Client.class.getName();
@@ -113,6 +114,8 @@ public class ClientTerminatingTestApp extends AbstractTransparentApp {
     TerracottaConfigBuilder out = new TerracottaConfigBuilder();
 
     out.getServers().getL2s()[0].setDSOPort(port);
+    out.getServers().getL2s()[0].setJMXPort(adminPort);
+    out.getServers().getL2s()[0].setPersistenceMode(L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE);
 
     LockConfigBuilder lock1 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
     lock1.setMethodExpression("* " + testClassName + ".run(..)");

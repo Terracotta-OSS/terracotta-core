@@ -19,7 +19,7 @@ public class ConcurrentLockSystemTestAppTest extends TestCase {
   private TransparentAppConfig cfg;
 
   public void setUp() throws Exception {
-    cfg = new TransparentAppConfig(ConcurrentLockSystemTestApp.class.getName(), null, 1, 1);
+    cfg = new TransparentAppConfig(ConcurrentLockSystemTestApp.class.getName(), null, 1, 1, null);
   }
 
   public void testBasics() {

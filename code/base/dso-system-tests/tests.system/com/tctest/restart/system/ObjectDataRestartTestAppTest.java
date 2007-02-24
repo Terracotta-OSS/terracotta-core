@@ -22,7 +22,7 @@ public class ObjectDataRestartTestAppTest extends TestCase {
   private TransparentAppConfig cfg;
 
   public void setUp() throws Exception {
-    cfg = new TransparentAppConfig(ObjectDataRestartTestApp.class.getName(), null, 1, 1);
+    cfg = new TransparentAppConfig(ObjectDataRestartTestApp.class.getName(), null, 1, 1, null);
   }
 
   public void testBasics() {

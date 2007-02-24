@@ -16,10 +16,11 @@ public class ServerCrasher implements Runnable {
   private final boolean             crash;
   private final SynchronizedBoolean isRunning = new SynchronizedBoolean(false);
 
-  public ServerCrasher(ServerCrasherConfig cfg) {
-    this.server = cfg.getServerControl();
-    this.crash = cfg.isCrashy();
-    this.crashInterval = cfg.getRestartInterval();
+  public ServerCrasher(final ServerControl server, final long crashInterval, final boolean crash) {
+    super();
+    this.server = server;
+    this.crashInterval = crashInterval;
+    this.crash = crash;
   }
 
   public void startAutocrash() throws Exception {

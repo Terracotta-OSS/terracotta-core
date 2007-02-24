@@ -3,6 +3,7 @@
  */
 package com.tcsimulator;
 
+import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.ApplicationConfig;
 
 import java.util.HashMap;
@@ -39,6 +40,10 @@ public class SimpleApplicationConfig implements ApplicationConfig {
   }
 
   public ApplicationConfig copy() {
+    throw new AssertionError();
+  }
+
+  public ServerControl getServerControl() {
     throw new AssertionError();
   }
 }

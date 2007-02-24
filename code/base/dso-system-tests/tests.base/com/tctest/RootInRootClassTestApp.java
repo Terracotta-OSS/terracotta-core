@@ -22,7 +22,7 @@ public class RootInRootClassTestApp extends AbstractTransparentApp {
   private Map myInnerInMap;
 
   public RootInRootClassTestApp() {
-    super("", new TransparentAppConfig(null, null, 0, 0), null);
+    super("", new TransparentAppConfig(null, null, 0, 0, null), null);
     Map m = new HashMap();
     m.put(new Long(System.currentTimeMillis()), new TestObject());
     myInnerInMap = m;

@@ -7,6 +7,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
+import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.Application;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.app.ApplicationConfigBuilder;
@@ -461,6 +462,10 @@ public class LargeGraphTestApp implements Application, ApplicationConfigBuilder 
       }
 
       public ApplicationConfig copy() {
+        throw new AssertionError();
+      }
+
+      public ServerControl getServerControl() {
         throw new AssertionError();
       }
 

@@ -3,6 +3,7 @@
  */
 package com.tctest.longrunning;
 
+import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.ApplicationConfig;
 
 public class LongrunningGCTestAppConfigObject implements LongrunningGCTestAppConfig {
@@ -49,5 +50,9 @@ public class LongrunningGCTestAppConfigObject implements LongrunningGCTestAppCon
 
   public ApplicationConfig copy() {
     throw new AssertionError();
+  }
+
+  public ServerControl getServerControl() {
+    throw new UnsupportedOperationException("not implemented, should not be used");
   }
 }

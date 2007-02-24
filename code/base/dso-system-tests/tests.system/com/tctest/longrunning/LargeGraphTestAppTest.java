@@ -5,6 +5,7 @@ package com.tctest.longrunning;
 
 import EDU.oswego.cs.dl.util.concurrent.CountDown;
 
+import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.MockListenerProvider;
 import com.tc.simulator.listener.MockOutputListener;
@@ -48,6 +49,10 @@ public class LargeGraphTestAppTest extends TestCase {
       }
 
       public ApplicationConfig copy() {
+        throw new AssertionError();
+      }
+
+      public ServerControl getServerControl() {
         throw new AssertionError();
       }
 

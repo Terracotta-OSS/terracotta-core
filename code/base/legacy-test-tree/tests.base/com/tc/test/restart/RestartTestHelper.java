@@ -15,7 +15,6 @@ public class RestartTestHelper {
   
   public RestartTestHelper(boolean isCrashy, RestartTestEnvironment env) throws Exception {
     this.isCrashy = isCrashy;
-    //env = new RestartTestEnvironment(tempDirectory, portChooser);
     this.env = env;
     serverCrasherConfig = new ServerCrasherConfigImpl();
 

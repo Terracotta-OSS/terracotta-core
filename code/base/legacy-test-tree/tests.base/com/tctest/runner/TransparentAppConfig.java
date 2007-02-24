@@ -1,9 +1,11 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.runner;
 
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.app.ApplicationConfigBuilder;
 import com.tc.simulator.app.GlobalIdGenerator;
@@ -15,18 +17,20 @@ public class TransparentAppConfig implements ApplicationConfig, ApplicationConfi
 
   private final String            applicationClassname;
   private final GlobalIdGenerator idGenerator;
-  private final Map               extraConfigAttributes = new HashMap();
+  private final Map               extraConfigAttributes             = new HashMap();
+  private final ServerControl     serverControl;
   // private int globalParticipantCount;
   private int                     intensity;
   private int                     clientCount;
   private int                     applicationInstancePerClientCount = 1;
 
-  public TransparentAppConfig(String applicationClassname, GlobalIdGenerator idGenerator, int clientCount, int intensity) {
+  public TransparentAppConfig(String applicationClassname, GlobalIdGenerator idGenerator, int clientCount, int intensity, ServerControl serverControl) {
     this.applicationClassname = applicationClassname;
     this.idGenerator = idGenerator;
     if (clientCount < 1) throw new AssertionError("Client count must be greater than 0");
     this.clientCount = clientCount;
     this.intensity = intensity;
+    this.serverControl = serverControl;
   }
 
   public void setAttribute(String key, String value) {
@@ -49,15 +53,15 @@ public class TransparentAppConfig implements ApplicationConfig, ApplicationConfi
     this.applicationInstancePerClientCount = applicationInstanceCount;
     return this;
   }
-  
+
   public int getApplicationInstancePerClientCount() {
     return this.applicationInstancePerClientCount;
   }
-  
+
   public int getClientCount() {
     return this.clientCount;
   }
-  
+
   public TransparentAppConfig setClientCount(int i) {
     this.clientCount = i;
     return this;
@@ -88,6 +92,10 @@ public class TransparentAppConfig implements ApplicationConfig, ApplicationConfi
 
   public ApplicationConfig copy() {
     throw new AssertionError();
+  }
+
+  public ServerControl getServerControl() {
+    return serverControl;
   }
 
 }

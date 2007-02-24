@@ -3,6 +3,9 @@
  */
 package com.tc.simulator.app;
 
+import com.tc.objectserver.control.ServerControl;
+
+
 public interface ApplicationConfig {
   
   public String getApplicationClassname();
@@ -14,6 +17,8 @@ public interface ApplicationConfig {
   public int getGlobalParticipantCount();
   
   public int getIntensity();
-
+  
+  public ServerControl getServerControl();
+  
   public ApplicationConfig copy();
 }

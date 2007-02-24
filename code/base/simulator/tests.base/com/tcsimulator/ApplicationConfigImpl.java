@@ -7,6 +7,7 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOApplicationConfig;
+import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.ApplicationConfig;
 
 import java.util.HashMap;
@@ -66,5 +67,9 @@ public class ApplicationConfigImpl implements ApplicationConfig {
   
   public ApplicationConfig copy() {
     return new ApplicationConfigImpl(applicatonClassname, intensity, globalParticipantCount);
+  }
+
+  public ServerControl getServerControl() {
+    throw new UnsupportedOperationException("not implemented, should not be used");
   }
 }
