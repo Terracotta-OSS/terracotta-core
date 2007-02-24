@@ -646,12 +646,7 @@ END
   
   def mark_this_revision_as_bad(revision)
     STDERR.puts("Revision #{revision} is bad, mm'kay! It doesn't compile.")
-    FileUtils.mkdir_p ".tc-build-cache" unless File.exist?(".tc-build-cache")
-    bad_rev_file = ".tc-build-cache/bad_#{revision}"
-    unless File.exist?(bad_rev_file)
-      FileUtils.touch(bad_rev_file)
-      STDERR.puts("Please let #{@build_environment.last_changed_author} know.")
-    end
+    STDERR.puts("Please let #{@build_environment.last_changed_author} know.")
   end
   
   # The full path to the build archive, including directory.
