@@ -324,7 +324,7 @@ class PathSet
 
     # Runs a block on each path in the PathSet, in order.
     def each(&proc)
-        @parts.each &proc
+        @parts.each(&proc)
     end
 
     # Are there no actual paths in this PathSet?

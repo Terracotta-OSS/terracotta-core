@@ -78,11 +78,12 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   
   def monkey?
     config_source['monkey-name']
-  end
+  end  
   
   # Prints a help message.
   def help
     puts(Resources::HELP_MESSAGE)
+    check_    
   end
   
   # Shows a list of all available variants for each subtree. Useful for debugging the buildsystem.
@@ -171,9 +172,35 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     if @no_compile
       loud_message("--no-compile option found.  Skipping compilation.")
     else
-      @module_set.each do |build_module|
-        build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
+      compile_only = config_source['compile_only']
+      unless compile_only.nil?
+        loud_message("compile_only option found. Only specified modules will be compiled.")
+        module_names = compile_only.split(/,/)
+        module_names.each do |name|
+          build_module = @module_set[name]
+          build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
+        end
+      else      
+        @module_set.each do |build_module|
+          build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
+        end
       end
+    end
+  end
+  
+  # only compile the specified module
+  # and its dependencies
+  def smart_compile(build_module_name)
+    depends :init, :resolve_dependencies
+    
+    build_module = @module_set[build_module_name]
+    if @no_compile
+      loud_message("--no-compile option found.  Skipping compilation.")
+    else
+      build_module.dependent_modules.each do |dependent_module|
+        dependent_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
+      end
+      build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
     end
   end
   
