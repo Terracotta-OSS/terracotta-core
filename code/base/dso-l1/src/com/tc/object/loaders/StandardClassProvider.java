@@ -3,6 +3,8 @@
  */
 package com.tc.object.loaders;
 
+import com.tc.aspectwerkz.transform.inlining.AsmHelper;
+
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +17,7 @@ public class StandardClassProvider implements ClassProvider {
 
   private final ClassLoader   systemLoader = ClassLoader.getSystemClassLoader();
   private final Map           loaders      = new HashMap();
-
+  
   public StandardClassProvider() {
     //
   }
@@ -28,7 +30,7 @@ public class StandardClassProvider implements ClassProvider {
     return rv;
   }
 
-  public Class getClassFor(String className, String desc) throws ClassNotFoundException {
+  public Class getClassFor(final String className, String desc) throws ClassNotFoundException {
     final ClassLoader loader;
 
     if (isStandardLoader(desc)) {
@@ -38,10 +40,21 @@ public class StandardClassProvider implements ClassProvider {
       if (loader == null) { throw new ClassNotFoundException("No registered loader for description: " + desc
                                                              + ", trying to load " + className); }
     }
-
-    return Class.forName(className, false, loader);
+    
+    try {
+      return Class.forName(className, false, loader);      
+    } catch (ClassNotFoundException e) {
+      if (loader instanceof BytecodeProvider) {
+        BytecodeProvider provider = (BytecodeProvider) loader;
+        byte[] bytes = provider.__tc_getBytecodeForClass(className);
+        if (bytes != null && bytes.length != 0) {
+          return AsmHelper.defineClass(loader, bytes, className);             
+        }
+      }
+      throw e;
+    }    
   }
-
+           
   public void registerNamedLoader(NamedClassLoader loader) {
     final String name = getName(loader);
     synchronized (loaders) {
