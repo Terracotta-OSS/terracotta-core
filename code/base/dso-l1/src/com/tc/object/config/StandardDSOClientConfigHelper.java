@@ -87,7 +87,6 @@ import com.terracottatech.config.Plugins;
 import com.terracottatech.config.SpringApplication;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -1457,12 +1456,12 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
   public ClassAdapter createClassAdapterFor(ClassWriter writer, String className, InstrumentationLogger lgr,
                                             ClassLoader caller, final boolean forcePortable) {
-    Constructor customCstr = (Constructor) this.customAdapters.get(className);
-    if (customCstr != null) {
-      return createCustomAdapter(customCstr, writer, caller);
+    ClassAdapterFactory adapter = (ClassAdapterFactory) this.customAdapters.get(className);
+    if (adapter != null) {
+      return adapter.create(writer, caller);
     } else {
       ManagerHelper mgrHelper = mgrHelperFactory.createHelper();
-      TransparencyClassSpec spec = getOrCreateSpec(className);
+      TransparencyClassSpec spec = basicGetOrCreateSpec(className, null, false);
 
       if (forcePortable) {
         if (spec.getInstrumentationAction() == TransparencyClassSpec.NOT_SET) {
@@ -1472,7 +1471,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
         }
       }
 
-      ClassAdapter dsoAdapter = new TransparencyClassAdapter(basicGetOrCreateSpec(className, null, false), writer, mgrHelper, lgr,
+      ClassAdapter dsoAdapter = new TransparencyClassAdapter(spec, writer, mgrHelper, lgr,
                                                              caller, portability);
       ClassAdapterFactory factory = spec.getCustomClassAdapter();
       ClassVisitor cv;
@@ -1483,14 +1482,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
       }
       
       return new SerialVersionUIDAdder(cv);
-    }
-  }
-
-  private ClassAdapter createCustomAdapter(Constructor cstr, ClassWriter writer, ClassLoader caller) {
-    try {
-      return (ClassAdapter) cstr.newInstance(new Object[] { writer, caller });
-    } catch (Exception e) {
-      throw new RuntimeException(e);
     }
   }
 
