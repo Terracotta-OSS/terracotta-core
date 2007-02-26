@@ -1461,7 +1461,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
       return adapter.create(writer, caller);
     } else {
       ManagerHelper mgrHelper = mgrHelperFactory.createHelper();
-      TransparencyClassSpec spec = basicGetOrCreateSpec(className, null, false);
+      TransparencyClassSpec spec = getOrCreateSpec(className);
 
       if (forcePortable) {
         if (spec.getInstrumentationAction() == TransparencyClassSpec.NOT_SET) {
