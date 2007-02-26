@@ -73,7 +73,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
     if (! (map instanceof Hashtable) || (map instanceof HashMap)) {
       return;
     }
-    
+
     if (validate) {
       return;
     }
@@ -90,7 +90,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
 
   void testPut(Map map, boolean validate) throws Exception {
     if (map instanceof HashMap) { return; }
-    
+
     if (validate) {
       assertMappings(getInitialData(), map);
     } else {
@@ -100,7 +100,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
 
   void testEntrySetRemove(Map map, boolean validate) throws Exception {
     if (map instanceof HashMap) { return; }
-    
+
     if (validate) {
       Hashtable expect = getInitialData();
       expect.remove("February");
@@ -115,7 +115,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
 
   void testEntrySetClear(Map map, boolean validate) throws Exception {
     if (map instanceof HashMap) { return; }
-    
+
     if (validate) {
       Assert.assertEquals(0, map.size());
     } else {
@@ -127,7 +127,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
 
   void testEntrySetRetainAll(Map map, boolean validate) throws Exception {
     if (map instanceof HashMap) { return; }
-    
+
     if (validate) {
       Hashtable expect = getInitialData();
       expect.remove("January");
@@ -147,7 +147,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
 
   void testEntrySetRemoveAll(Map map, boolean validate) throws Exception {
     if (map instanceof HashMap) { return; }
-    
+
     if (validate) {
       Hashtable expect = getInitialData();
       expect.remove("February");
@@ -209,7 +209,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
 
   void testKeySetRemove(Map map, boolean validate) throws Exception {
     if (map instanceof HashMap) { return; }
-    
+
     if (validate) {
       Hashtable expect = getInitialData();
       expect.remove("February");
@@ -223,7 +223,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
 
   void testKeySetClear(Map map, boolean validate) throws Exception {
     if (map instanceof HashMap) { return; }
-    
+
     if (validate) {
       Assert.assertEquals(0, map.size());
     } else {
@@ -253,10 +253,10 @@ public class AutoLockMapTestApp extends GenericTestApp {
       }
     }
   }
-  
+
   void testKeySetRetainAll(Map map, boolean validate) throws Exception {
     if (map instanceof HashMap) { return; }
-    
+
     if (validate) {
       Hashtable expect = getInitialData();
       expect.remove("January");
@@ -276,7 +276,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
 
   void testKeySetRemoveAll(Map map, boolean validate) throws Exception {
     if (map instanceof HashMap) { return; }
-    
+
     if (validate) {
       Hashtable expect = getInitialData();
       expect.remove("February");
@@ -296,7 +296,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
 
   void testKeySetToArray(Map map, boolean validate) {
     if (map instanceof HashMap) { return; }
-    
+
     Object[] array = getArray(map);
 
     if (validate) {
@@ -313,7 +313,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
 
   void testValuesRemove(Map map, boolean validate) throws Exception {
     if (map instanceof HashMap) { return; }
-    
+
     if (validate) {
       Hashtable expect = getInitialData();
       expect.remove("February");
@@ -327,7 +327,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
 
   void testValuesClear(Map map, boolean validate) throws Exception {
     if (map instanceof HashMap) { return; }
-    
+
     if (validate) {
       Assert.assertEquals(0, map.size());
     } else {
@@ -361,7 +361,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
 
   void testValuesRetainAll(Map map, boolean validate) throws Exception {
     if (map instanceof HashMap) { return; }
-    
+
     if (validate) {
       Hashtable expect = getInitialData();
       expect.remove("January");
@@ -381,7 +381,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
 
   void testValuesRemoveAll(Map map, boolean validate) throws Exception {
     if (map instanceof HashMap) { return; }
-    
+
     if (validate) {
       Hashtable expect = getInitialData();
       expect.remove("February");
@@ -401,7 +401,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
 
   void testValuesToArray(Map map, boolean validate) {
     if (map instanceof HashMap) { return; }
-    
+
     Object[] array = getArray(map);
 
     if (validate) {
@@ -415,13 +415,13 @@ public class AutoLockMapTestApp extends GenericTestApp {
       }
     }
   }
-  
+
   void testBasicSetProperty(Map map, boolean validate) {
     if (map instanceof HashMap) { return; }
     if (!(map instanceof Properties)) {
       return;
     }
-    
+
     if(validate) {
       assertMappings(getInitialData(), map);
     } else {
@@ -431,13 +431,13 @@ public class AutoLockMapTestApp extends GenericTestApp {
       ((Properties)map).setProperty("April", "Apr");
     }
   }
-  
+
   void testBasicGetProperty(Map map, boolean validate) {
     if (map instanceof HashMap) { return; }
     if (!(map instanceof Properties)) {
       return;
     }
-    
+
     if(validate) {
       Assert.assertEquals("value", ((Properties)map).getProperty("key"));
       Assert.assertEquals("defaultValue", ((Properties)map).getProperty("nonsense", "defaultValue"));
@@ -446,13 +446,13 @@ public class AutoLockMapTestApp extends GenericTestApp {
       ((Properties)map).setProperty("key", "value");
     }
   }
-  
+
   void testBasicLoad(Map map, boolean validate) {
     if (map instanceof HashMap) { return; }
     if (!(map instanceof Properties)) {
       return;
     }
-    
+
     if(validate) {
       Map expectedMap = new Properties();
       expectedMap.put("key1", "val1");
@@ -478,10 +478,10 @@ public class AutoLockMapTestApp extends GenericTestApp {
       }
     }
   }
-  
+
   void testHashMapPut(Map map, boolean validate) {
     if (!(map instanceof HashMap) || (map instanceof FastHashMap)) { return; }
-    
+
     if (validate) {
       Assert.assertEquals(0, map.size());
     } else {
@@ -493,7 +493,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
       }
     }
   }
-  
+
   void assertArray(Object[] expect, Collection collection) {
     Assert.assertEquals(expect.length, collection.size());
     for (int i = 0; i < expect.length; i++) {
@@ -542,6 +542,8 @@ public class AutoLockMapTestApp extends GenericTestApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
+	config.addNewPlugin("clustered-commons-collections", "3.1");
+
     String testClass = AutoLockMapTestApp.class.getName();
     config.getOrCreateSpec(testClass);
     String readOnlyMethodExpression = "* " + testClass + "*.*ReadOnly*(..)";
