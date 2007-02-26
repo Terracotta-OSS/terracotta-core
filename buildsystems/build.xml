@@ -1,12 +1,12 @@
 <project name="buildsystems" xmlns:ivy="antlib:fr.jayasoft.ivy.ant">
-  
+  <property name="jruby.jar" value="jruby-0.9.2.jar"/>
   <!-- ================================= 
   target: resolve              
   ================================= -->
   <target name="resolve" description="--> retreive dependencies with ivy">
     <ivy:retrieve pattern="${basedir}/[artifact]-[revision].[ext]"/>
-    <unzip src="jruby-1.8.jar" dest="."/>
-    <delete file="jruby-1.8.jar"/>
+    <unzip src="${jruby.jar}" dest="."/>
+    <delete file="${jruby.jar}"/>
   </target>
   
 </project>

@@ -36,13 +36,13 @@ module CrossPlatform
 
         $is_jruby
     end
-    
+
     # Sets the class that we should instantiate to get a valid Platform object
     # for our platform.
     def self.set_implementation_class(the_class)
         $platform_implementation_class = the_class
     end
-    
+
     # Creates an instance of the right Platform class for our platform.
     def self.create_implementation(data)
         $platform_implementation_class.new(data)
@@ -55,7 +55,13 @@ end
 # big pain in the ass, like if you need some classes compiled with 1.4 and some
 # with 1.5 -- you have to run the compiler twice, use reflection, etc., etc., etc.)
 if CrossPlatform.is_jruby?
-    # The JRuby implementation of Platform. 
+    def redefine_env(ant_env_proc)
+        def ENV.[](key)
+          ant_env_proc.call(key)
+        end
+    end
+
+    # The JRuby implementation of Platform.
     class JRubyPlatform
         attr_reader :ant
 
@@ -66,8 +72,16 @@ if CrossPlatform.is_jruby?
         # should use CrossPlatform.create_implementation anyway, not create one of
         # these directly.)
         def initialize(data)
-            raise RuntimeError, "You must set 'ant' to a valid Ant instance" if data[:ant].nil?
+            raise "You must set 'ant' to a valid Ant instance" unless data[:ant]
             @ant = data[:ant]
+
+            # Make ENV use Ant to get environment variables.
+            unless $ant
+              $ant = @ant
+              def ENV.[](key)
+                $ant.instance_eval("@env_#{key}")
+              end
+            end
         end
 
         $ant_execute_count = 0
@@ -110,7 +124,7 @@ if CrossPlatform.is_jruby?
             line = actual_arguments.join(" ")
 
             # Use Ant to execute this.
-            ant.exec(:executable => executable_path.to_s, :dir => exec_dir, :errorproperty => errorproperty, 
+            ant.exec(:executable => executable_path.to_s, :dir => exec_dir, :errorproperty => errorproperty,
                 :outputproperty => outputproperty, :failonerror => true, :resultproperty => resultproperty) {
                 ant.arg(:line => line) unless line.blank?
             }
@@ -158,7 +172,7 @@ if CrossPlatform.is_jruby?
             actual_arguments
         end
     end
-    
+
     CrossPlatform.set_implementation_class(JRubyPlatform)
 else
     # The Platform implementation for standard Ruby (i.e., not JRuby).
