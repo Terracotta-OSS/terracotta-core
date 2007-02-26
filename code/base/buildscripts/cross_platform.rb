@@ -55,11 +55,6 @@ end
 # big pain in the ass, like if you need some classes compiled with 1.4 and some
 # with 1.5 -- you have to run the compiler twice, use reflection, etc., etc., etc.)
 if CrossPlatform.is_jruby?
-    def redefine_env(ant_env_proc)
-        def ENV.[](key)
-          ant_env_proc.call(key)
-        end
-    end
 
     # The JRuby implementation of Platform.
     class JRubyPlatform
