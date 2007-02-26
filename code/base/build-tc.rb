@@ -647,7 +647,11 @@ END
   end
 
   def mark_this_revision_as_bad(revision)
-    STDERR.puts("Revision #{revision} is bad, mm'kay! It doesn't compile.")
+    if @script_results.failed?
+      STDERR.puts("Revision #{revision} is bad, mm'kay! check_short fails.")
+    else
+      STDERR.puts("Revision #{revision} is bad, mm'kay! It doesn't compile.")
+    end
     STDERR.puts("Please let #{@build_environment.last_changed_author} know.")
   end
 
