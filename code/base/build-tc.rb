@@ -264,10 +264,11 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     begin
       @no_compile = false # override this if it's turned on
       check_short
+      raise "There's failure in tests." if @script_results.failed?
       mark_this_revision_as_good(@build_environment.current_revision)
-    rescue StandardError => e
+    rescue
       mark_this_revision_as_bad(@build_environment.current_revision)
-      raise e
+      raise
     end
   end
 
