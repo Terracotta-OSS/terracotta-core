@@ -434,7 +434,7 @@ public class ClassUtilsTest extends TestCase {
     public Iterator getAllSpecs() {
       throw new ImplementMe();
     }
-    
+
     public void verifyBootJarContents() {
       throw new ImplementMe();
     }

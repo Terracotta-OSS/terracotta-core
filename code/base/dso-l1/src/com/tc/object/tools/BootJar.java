@@ -241,52 +241,79 @@ public class BootJar {
 
     state = STATE_CLOSED;
   }
+  
+  /**
+   * Check the embedded TC_VERSION information against current product version.
+   * @return <code>true</code> TC_VERSION matches current product version.
+   */
+  public boolean checkSourceVersion() {
+    return false;
+  }
 
   static class BootJarMetaData {
     private static final String META_DATA_ATTRIBUTE_NAME = "DSO_BOOTJAR_METADATA";
-    private static final String TC_MONIKER               = "TC_MONIKER";
     private static final String TC_VERSION               = "TC_VERSION";
+    private static final String TC_MONIKER               = "TC_MONIKER";
     private static final String VERSION                  = "VERSION";
     private static final String VM_SIGNATURE             = "VM_SIGNATURE";
 
-    private final String        vmSignature;
-    private final String        version;
-
+    private final String vmSignature;
+    private final String version;
+    private final String tcversion;
+    private final String tcmoniker;
+    
     BootJarMetaData(String vmSignature, String version) {
       Assert.assertNotNull(vmSignature);
       Assert.assertNotNull(version);
       this.vmSignature = vmSignature;
       this.version = version;
+      this.tcversion = null; 
+      this.tcmoniker = null;
     }
 
     BootJarMetaData(Manifest manifest) throws BootJarException {
       Assert.assertNotNull(manifest);
       Attributes attributes = (Attributes) manifest.getEntries().get(META_DATA_ATTRIBUTE_NAME);
-      if (attributes == null) {
-        // make formatter sane
+      if (attributes == null) 
         throw new InvalidBootJarMetaDataException("Missing attributes in jar manifest.  Please regenerate boot jar");
-      }
-
+ 
       version = attributes.getValue(VERSION);
-      if (version == null) throw new InvalidBootJarMetaDataException("Missing metadata version");
+      if (version == null) 
+        throw new InvalidBootJarMetaDataException("Missing metadata version");
 
-      String expect = VERSION_1_1;
-      if (expect.equals(version)) {
+      String expect_version = VERSION_1_1;
+      if (expect_version.equals(version)) {
         vmSignature = attributes.getValue(VM_SIGNATURE);
-        if (vmSignature == null) throw new InvalidJVMVersionException("Missing vm signature");
+        if (vmSignature == null) 
+          throw new InvalidJVMVersionException("Missing vm signature");
       } else {
-        throw new InvalidBootJarMetaDataException("Incompatible DSO meta data version; expected " + expect
+        throw new InvalidBootJarMetaDataException("Incompatible DSO meta data version; expected " + expect_version
                                                   + " but was (in boot jar): " + version
                                                   + ". Please regenerate the DSO boot jar");
       }
+
+      tcversion = attributes.getValue(TC_VERSION);
+      if (tcversion == null) 
+        throw new InvalidBootJarMetaDataException("Missing metadata tcversion");
+      
+      tcmoniker = attributes.getValue(TC_MONIKER);
+      if (tcmoniker == null)
+        throw new InvalidBootJarMetaDataException("Missing metadata tcmoniker");
+
+      ProductInfo productInfo = ProductInfo.getThisProductInfo();
+      String expect_tcversion = productInfo.rawVersion();
+      if (!expect_tcversion.equals(tcversion)) 
+        throw new InvalidBootJarMetaDataException("Incompatible DSO meta data tcversion; expected " + expect_tcversion
+                                                  + " but was (in boot jar): " + tcversion
+                                                  + ". Please regenerate the DSO boot jar");
     }
 
     public void write(Manifest manifest) {
       if (VERSION_1_1.equals(version)) {
         ProductInfo productInfo = ProductInfo.getThisProductInfo();
         Attributes attributes = new Attributes();
-        attributes.put(new Attributes.Name(TC_MONIKER), productInfo.moniker());
         attributes.put(new Attributes.Name(TC_VERSION), productInfo.rawVersion());
+        attributes.put(new Attributes.Name(TC_MONIKER), productInfo.moniker());
         attributes.put(new Attributes.Name(VERSION), getVersion());
         attributes.put(new Attributes.Name(VM_SIGNATURE), getVMSignature());
         Object prev = manifest.getEntries().put(META_DATA_ATTRIBUTE_NAME, attributes);
@@ -296,6 +323,10 @@ public class BootJar {
       }
     }
 
+    public String getTCVersion() {
+      return this.tcversion;
+    }
+    
     public String getVMSignature() {
       return this.vmSignature;
     }

@@ -353,7 +353,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     // Table model stuff
     addIncludePattern("javax.swing.event.TableModelEvent", true);
     TransparencyClassSpec spec = getOrCreateSpec("javax.swing.event.TableModelEvent");
-    
+
     addIncludePattern("javax.swing.table.AbstractTableModel", true);
     spec = getOrCreateSpec("javax.swing.table.AbstractTableModel");
     spec.addDistributedMethodCall("fireTableChanged", "(Ljavax/swing/event/TableModelEvent;)V");
@@ -442,7 +442,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
     addIncludePattern("javax.swing.tree.DefaultMutableTreeNode", false);
     spec = getOrCreateSpec("javax.swing.tree.DefaultMutableTreeNode");
-    
+
     spec = getOrCreateSpec("javax.swing.tree.DefaultTreeModel");
     ld = new LockDefinition("tctreeLock", ConfigLockLevel.WRITE);
     ld.commit();
@@ -601,7 +601,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     // AbstractMap is special because it actually has some fields so it needs to be instrumented and not just ADAPTABLE
     spec = getOrCreateSpec("java.util.AbstractMap");
     spec.setHonorTransient(true);
-    
+
     // spec = getOrCreateSpec("java.lang.Number");
     // This hack is needed to make Number work in all platforms. Without this hack, if you add Number in bootjar, the
     // JVM crashes.
@@ -1603,15 +1603,15 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
     return rv;
   }
-  
+
   public void verifyBootJarContents() throws IncompleteBootJarException, UnverifiedBootJarException {
-    logger.info("Verifying boot jar contents");
-    int missingCount         = 0;
+    logger.info("Verifying boot jar contents...");
+    int missingCount = 0;
     int preInstrumentedCount = 0;
-    int bootJarPopulation    = 0;
+    int bootJarPopulation = 0;
     try {
-      BootJar bootJar   = BootJar.getDefaultBootJarForReading();
-      Set bjClasses     = bootJar.getAllPreInstrumentedClasses();
+      BootJar bootJar = BootJar.getDefaultBootJarForReading();
+      Set bjClasses = bootJar.getAllPreInstrumentedClasses();
       bootJarPopulation = bjClasses.size();
       for (Iterator i = getAllSpecs(); i.hasNext();) {
         TransparencyClassSpec classSpec = (TransparencyClassSpec) i.next();
@@ -1629,15 +1629,19 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
         }
       }
     } catch (BootJarException bjex) {
-      throw new UnverifiedBootJarException("BootJarException occurred while attempting to verify the contents of the boot jar.", bjex);
+      throw new UnverifiedBootJarException(
+                                           "BootJarException occurred while attempting to verify the contents of the boot jar.",
+                                           bjex);
     } catch (IOException ioex) {
-      throw new UnverifiedBootJarException("IOException occurred while attempting to verify the contents of the boot jar.", ioex);
+      throw new UnverifiedBootJarException(
+                                           "IOException occurred while attempting to verify the contents of the boot jar.",
+                                           ioex);
     }
     logger.info("Number of classes in the DSO boot jar:" + bootJarPopulation);
     logger.info("Number of classes expected to be in the DSO boot jar:" + preInstrumentedCount);
     logger.info("Number of classes found missing from the DSO boot jar:" + missingCount);
-    if (missingCount > 0) {
-      throw new IncompleteBootJarException("Incomplete DSO boot jar; " + missingCount + " pre-instrumented class(es) found missing.");
+    if (missingCount > 0) { 
+      throw new IncompleteBootJarException("Incomplete DSO boot jar; " + missingCount + " pre-instrumented class(es) found missing."); 
     }
   }
 

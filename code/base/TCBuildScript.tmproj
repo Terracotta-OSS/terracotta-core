@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>currentDocument</key>
+	<string>modules.def.yml</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -13,12 +15,8 @@
 			<string>build-tc.rb</string>
 			<key>lastUsed</key>
 			<date>2007-02-21T21:16:07Z</date>
-			<key>selected</key>
-			<true/>
 		</dict>
 		<dict>
-			<key>expanded</key>
-			<true/>
 			<key>name</key>
 			<string>buildscripts</string>
 			<key>regexFolderFilter</key>
@@ -41,10 +39,16 @@
 		<dict>
 			<key>filename</key>
 			<string>modules.def.yml</string>
+			<key>lastUsed</key>
+			<date>2007-02-22T22:06:17Z</date>
+			<key>selected</key>
+			<true/>
 		</dict>
 		<dict>
 			<key>filename</key>
 			<string>services.modules.yml</string>
+			<key>lastUsed</key>
+			<date>2007-02-22T21:58:53Z</date>
 		</dict>
 		<dict>
 			<key>filename</key>
@@ -58,7 +62,26 @@
 	<key>fileHierarchyDrawerWidth</key>
 	<integer>200</integer>
 	<key>metaData</key>
-	<dict/>
+	<dict>
+		<key>modules.def.yml</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>10</integer>
+				<key>line</key>
+				<integer>73</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>16</integer>
+		</dict>
+	</dict>
+	<key>openDocuments</key>
+	<array>
+		<string>modules.def.yml</string>
+	</array>
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>

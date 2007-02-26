@@ -105,7 +105,7 @@ public class DSOContextImpl implements DSOContext {
       msg.append("Please check the client logs for the list of classes that were not found in your boot jar.");
       logger.error(ibjex);
       throw new RuntimeException(msg.toString());
-    }
+    }  
   }
   
   private void checkForProperlyInstrumentedBaseClasses() {

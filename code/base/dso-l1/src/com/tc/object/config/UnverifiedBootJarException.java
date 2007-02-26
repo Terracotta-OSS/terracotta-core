@@ -9,6 +9,7 @@ import com.tc.object.tools.BootJarException;
  * 
  */
 public class UnverifiedBootJarException extends BootJarException {
+
   protected UnverifiedBootJarException(String message) {
     super(message);
   }
