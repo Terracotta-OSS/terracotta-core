@@ -4,11 +4,15 @@
  */
 package com.tc.management;
 
+import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
+
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesImpl;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -18,7 +22,6 @@ import javax.management.MBeanFeatureInfo;
 import javax.management.MBeanNotificationInfo;
 import javax.management.NotCompliantMBeanException;
 import javax.management.Notification;
-import javax.management.NotificationBroadcasterSupport;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
@@ -26,17 +29,20 @@ import javax.management.StandardMBean;
 
 public abstract class AbstractTerracottaMBean extends StandardMBean implements NotificationEmitter, TerracottaMBean {
 
-  private static final ResourceBundle          DEFAULT_BUNDLE = getBundleForMBean(TerracottaMBean.class, TCLogging
-                                                                  .getLogger(TerracottaMBean.class));
+  private static final ResourceBundle DEFAULT_BUNDLE        = getBundleForMBean(TerracottaMBean.class, TCLogging
+                                                                .getLogger(TerracottaMBean.class));
 
-  private static final boolean                 ENABLED        = TCPropertiesImpl.getProperties()
-                                                                  .getBoolean("tc.management.mbeans.enabled");
+  private static final boolean        ENABLED               = TCPropertiesImpl.getProperties().getBoolean(
+                                                                "tc.management.mbeans.enabled");
 
-  private final TCLogger                       logger;
-  private final ResourceBundle                 beanBundle;
-  private final boolean                        isNotificationBroadcaster;
-  private final NotificationBroadcasterSupport broadcaster;
-  private boolean                              isActive;
+  private final TCLogger              logger;
+  private final ResourceBundle        beanBundle;
+  private final boolean               isNotificationBroadcaster;
+
+  // NOTE: The use of NotificationBroadcasterSupport has been removed and re-implemented internally
+  // to avoid issues with JDK logging (DEV-421)
+  private final List                  notificationListeners = new CopyOnWriteArrayList();
+  private boolean                     isActive;
 
   protected AbstractTerracottaMBean(final Class mBeanInterface, final boolean isNotificationBroadcaster)
       throws NotCompliantMBeanException {
@@ -46,10 +52,9 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
   protected AbstractTerracottaMBean(final Class mBeanInterface, final boolean isNotificationBroadcaster,
                                     final boolean isActive) throws NotCompliantMBeanException {
     super(mBeanInterface);
-    logger = TCLogging.getLogger(mBeanInterface);
-    beanBundle = getBundleForMBean(mBeanInterface, logger);
+    this.logger = TCLogging.getLogger(mBeanInterface);
+    this.beanBundle = getBundleForMBean(mBeanInterface, logger);
     this.isNotificationBroadcaster = isNotificationBroadcaster;
-    broadcaster = new NotificationBroadcasterSupport();
     this.isActive = isActive;
   }
 
@@ -57,34 +62,59 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
     return getMBeanInterface().getName();
   }
 
-  public final void addNotificationListener(final NotificationListener notificationlistener,
-                                            final NotificationFilter notificationfilter, final Object obj) {
-    broadcaster.addNotificationListener(notificationlistener, notificationfilter, obj);
+  public final void addNotificationListener(final NotificationListener listener, final NotificationFilter filter,
+                                            final Object obj) {
+    notificationListeners.add(new Listener(listener, filter, obj));
   }
 
   public MBeanNotificationInfo[] getNotificationInfo() {
     if (isNotificationBroadcaster()) {
       final RuntimeException re = new TCRuntimeException("MBean error: this MBean[" + getClass().getName()
-                                                         + "] must override getNotificationInfo() since"
-                                                         + " it broadcasts notifications");
+          + "] must override getNotificationInfo() since" + " it broadcasts notifications");
       throw re;
     }
     return new MBeanNotificationInfo[0];
   }
 
-  public final void removeNotificationListener(final NotificationListener notificationlistener,
-                                               final NotificationFilter notificationfilter, final Object obj)
-      throws ListenerNotFoundException {
-    broadcaster.removeNotificationListener(notificationlistener, notificationfilter, obj);
+  public final void removeNotificationListener(final NotificationListener listener, final NotificationFilter filter,
+                                               final Object obj) throws ListenerNotFoundException {
+    boolean removed = false;
+
+    for (Iterator i = notificationListeners.iterator(); i.hasNext();) {
+      Listener lsnr = (Listener) i.next();
+      if (lsnr.listener == listener && lsnr.filter == filter && lsnr.handback == obj) {
+        removed = true;
+        i.remove();
+      }
+    }
+
+    if (!removed) { throw new ListenerNotFoundException(); }
   }
 
-  public final void removeNotificationListener(final NotificationListener notificationlistener)
-      throws ListenerNotFoundException {
-    broadcaster.removeNotificationListener(notificationlistener);
+  public final void removeNotificationListener(final NotificationListener listener) throws ListenerNotFoundException {
+    boolean removed = false;
+
+    for (Iterator i = notificationListeners.iterator(); i.hasNext();) {
+      Listener lsnr = (Listener) i.next();
+      if (lsnr.listener == listener) {
+        removed = true;
+        i.remove();
+      }
+    }
+
+    if (!removed) { throw new ListenerNotFoundException(); }
   }
 
   public final void sendNotification(final Notification notification) {
-    if (isEnabled()) broadcaster.sendNotification(notification);
+    if (isEnabled()) {
+      for (Iterator i = notificationListeners.iterator(); i.hasNext();) {
+        Listener lsnr = (Listener) i.next();
+
+        if (lsnr.filter == null || lsnr.filter.isNotificationEnabled(notification)) {
+          lsnr.listener.handleNotification(notification, lsnr.handback);
+        }
+      }
+    }
   }
 
   public final boolean isNotificationBroadcaster() {
@@ -153,6 +183,19 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
       logger.warn("Unexpected error loading resource bundle for MBean " + mBeanInterface.getName(), t);
     }
     return bundle;
+  }
+
+  private static class Listener {
+    private final NotificationListener listener;
+    private final NotificationFilter   filter;
+    private final Object               handback;
+
+    Listener(NotificationListener listener, NotificationFilter filter, Object obj) {
+      this.listener = listener;
+      this.filter = filter;
+      this.handback = obj;
+    }
+
   }
 
 }
