@@ -66,7 +66,12 @@ public class ConcurrentHashMapSwapingTestApp extends AbstractTransparentApp {
     for (int i = 0; i < MAX_KEY_VALUE; i++) {
       int useVal = i % MAX_KEY_VALUE;
       if(i % 100 == 0 ) System.err.println("Getting key: " + useVal);
-      Assert.assertEquals(new HashValue(useVal), mapRoot.get(new HashKey(useVal)));
+      Object key = new HashKey(useVal);
+      if (key.hashCode() == System.identityHashCode(key)) {
+        String assertionMsg = "Getting key: " + useVal + ", hashCode: " + key.hashCode() + ", identityHashCode: " + System.identityHashCode(key);
+        throw new AssertionError(assertionMsg);
+      }
+      Assert.assertEquals(new HashValue(useVal), mapRoot.get(key));
     }
 
     barrier.await();
