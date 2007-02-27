@@ -74,7 +74,7 @@ public class TCStop {
       System.exit(1);
     }
     
-    String  defaultName       = StandardTVSConfigurationSetupManagerFactory.DEFAULT_CONFIG_SPEC_FOR_L2;
+    String  defaultName       = StandardTVSConfigurationSetupManagerFactory.DEFAULT_CONFIG_SPEC;
     File    configFile        = new File(System.getProperty("user.dir"), defaultName);
     boolean configSpecified   = commandLine.hasOption('f');
     boolean nameSpecified     = commandLine.hasOption('n');

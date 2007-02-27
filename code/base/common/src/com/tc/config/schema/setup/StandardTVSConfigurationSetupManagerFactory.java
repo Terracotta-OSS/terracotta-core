@@ -30,7 +30,7 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
   public static final String    CONFIG_SPEC_ARGUMENT_WORD        = "--" + CONFIG_SPEC_ARGUMENT_NAME;
 
   private static final String   L2_NAME_PROPERTY_NAME            = "tc.server.name";
-  public static final String    DEFAULT_CONFIG_SPEC_FOR_L2       = "tc-config.xml";
+  public static final String    DEFAULT_CONFIG_SPEC              = "tc-config.xml";
   public static final String    DEFAULT_CONFIG_PATH              = "default-config.xml";
 
   private final String          defaultL2Identifier;
@@ -74,12 +74,25 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     configFileOnCommandLine = StringUtils.trimToNull(commandLine.getOptionValue('f'));
     l2NameOnCommandLine = StringUtils.trimToNull(commandLine.getOptionValue('n'));
 
-    this.configSpec = StringUtils.trimToNull(configFileOnCommandLine != null ? configFileOnCommandLine : System
+    String effectiveConfigSpec;
+    effectiveConfigSpec = StringUtils.trimToNull(configFileOnCommandLine != null ? configFileOnCommandLine : System
         .getProperty(TVSConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME));
     String specifiedL2Identifier = StringUtils.trimToNull(l2NameOnCommandLine != null ? l2NameOnCommandLine : System
         .getProperty(L2_NAME_PROPERTY_NAME));
 
-    if ((!isForL2) && StringUtils.isBlank(this.configSpec)) {
+    if (StringUtils.isBlank(this.configSpec)) {
+      File localConfig = new File(System.getProperty("user.dir"), DEFAULT_CONFIG_SPEC);
+      
+      if(localConfig.exists()) {
+        effectiveConfigSpec = localConfig.getAbsolutePath();
+      } else if(isForL2) {
+        String packageName = getClass().getPackage().getName();
+        effectiveConfigSpec = "resource:///" + packageName.replace('.', '/') + "/" + DEFAULT_CONFIG_PATH;
+      }
+    }
+    this.configSpec = effectiveConfigSpec;
+    
+    if (StringUtils.isBlank(this.configSpec)) {
       // formatting
       throw new ConfigurationSetupException("You must specify the location of the Terracotta "
                                             + "configuration file for this process, using the " + "'"
@@ -183,26 +196,8 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
   {
     if (l2Name == null) l2Name = this.defaultL2Identifier;
 
-    String effectiveConfigSpec;
-
-    if (this.configSpec == null) {
-      File localConfig = new File(System.getProperty("user.dir"),
-                                  DEFAULT_CONFIG_SPEC_FOR_L2);
-      
-      if(localConfig.exists()) {
-        effectiveConfigSpec = localConfig.getAbsolutePath();
-      }
-      else {
-        String packageName = getClass().getPackage().getName();
-        effectiveConfigSpec = "resource:///" + packageName.replace('.', '/') + "/" + DEFAULT_CONFIG_PATH;
-      }
-    } else {
-      effectiveConfigSpec = this.configSpec;
-    }
-    
     ConfigurationCreator configurationCreator;
-    
-    configurationCreator = new StandardXMLFileConfigurationCreator(effectiveConfigSpec,
+    configurationCreator = new StandardXMLFileConfigurationCreator(this.configSpec,
                                                                    this.cwd,
                                                                    this.beanFactory);
 
