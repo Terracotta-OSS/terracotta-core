@@ -13,38 +13,17 @@ Getting Started
 Consult the appropriate Terracotta product guide for detailed installation
 instructions.  Below are abbreviated install steps for each product.
 
-Terracotta Sessions
-   Unix/Linux:
-      - Unzip/untar the Terracotta software.
-      - cd into the "sessions/bin" directory.
-      - Launch the Welcome tool by entering the command:
-           ./tc-welcome.sh
-   Windows:
-      - Run the Terracotta installer.
-      - Launch the Welcome tool from the start menu:
-           Programs --> Terracotta --> Sessions --> Terracotta Sessions Welcome
-
-Terracotta for Spring
-   Unix/Linux:
-      - Unzip/untar the Terracotta software.
-      - cd into the "spring/bin" directory.
-      - Launch the Welcome tool by entering the command:
-           ./tc-welcome.sh
-   Windows:
-      - Run the Terracotta installer.
-      - Launch the Welcome tool from the start menu:
-           Programs --> Terracotta --> Spring --> Terracotta for Spring Welcome
-
 Terracotta DSO
    Unix/Linux:
       - Unzip/untar the Terracotta software.
-      - cd into the "dso/bin" directory.
+      - cd into the the top-level directory.
       - Launch the Welcome tool by entering the command:
-           ./tc-welcome.sh
+           ./bin/welcome.sh
    Windows:
       - Run the Terracotta installer.
-      - Launch the Welcome tool from the start menu:
-           Programs --> Terracotta --> DSO --> Terracotta DSO Welcome
+      - After a successful installation, the Welcome tool is launched.
+      - Alternatively, you can launch the Welcome tool from the start menu:
+           Programs --> Terracotta --> Terracotta DSO Welcome
 
 Terracotta DSO Eclipse Plug-in
    Follow the installation directions at:
@@ -54,7 +33,7 @@ Terracotta DSO Eclipse Plug-in
 Configuration File Samples
 --------------------------
 
-The "config-sample" directory for each product contains a sample Terracotta
+The "config-examples" directory for each product contains a sample Terracotta
 configuration file with example settings appropriate for a typical deployment.
 The directory also contains a reference configuration file for a complete
 explanation of the options available.
@@ -72,14 +51,14 @@ and Terracotta DSO, the sample applications are in the "samples" directory.
 Administration Tools
 --------------------
 
-The "bin" directory for each product contains a script to start the Terracotta
-Administration Console.  Launch the Console tool with the following command.
+The "bin" directory contains a script to start the Terracotta Administration 
+Console.  Launch the Console tool with the following command.
 
 Unix/Linx:
-   ./tc-admin.sh
+   ./admin.sh
 
 Windows:
-   tc-admin.bat
+   admin.bat
 
 The Console tool provides a view inside the Terracotta Server, letting you see
 activity inside Terracotta at run-time.
@@ -102,5 +81,5 @@ JVM.
 
 
 ----
-Copyright (c) 2006, Terracotta, Inc.
+Copyright (c) 2007, Terracotta, Inc.
 http://www.terracotta.org
