@@ -10,6 +10,6 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/servlet-api-2.4.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/tomcat-util-x.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/catalina-x.jar"/>
-	<classpathentry kind="lib" path="/dependencies/lib/catalina-cluster-5.5.20.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/catalina-cluster-5.5.20.jar"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>
