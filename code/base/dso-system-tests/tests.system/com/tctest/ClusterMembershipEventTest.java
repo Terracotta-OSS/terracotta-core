@@ -28,7 +28,7 @@ public class ClusterMembershipEventTest extends TransparentTestBase {
   private File             configFile;
     
   public ClusterMembershipEventTest() {
-    this.disableAllUntil("2007-02-27");
+//    this.disableAllUntil("2007-02-27");
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
