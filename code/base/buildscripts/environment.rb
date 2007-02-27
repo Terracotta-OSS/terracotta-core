@@ -81,7 +81,7 @@ class Environment
     # What operating-system family are we on -- Unix, Windows, or other? (OS X counts as Unix here.)
     def os_family
         case os_type(:nice)
-        when /Linux|Solaris|OSX/i then 'Unix'
+        when /Linux|Solaris|OSX/i then 'Generic'
         when /Windows/i           then 'Windows'
         else                           'Unknown'
         end
