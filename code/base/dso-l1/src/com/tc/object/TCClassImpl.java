@@ -36,7 +36,7 @@ import java.util.Map;
  * Peer of a Class under management.
  * <p>
  * This is used to cache the fields of each class by type.
- * 
+ *
  * @author orion
  */
 public class TCClassImpl implements TCClass {
@@ -97,7 +97,7 @@ public class TCClassImpl implements TCClass {
     this.superclazz = findSuperClass(peer);
     this.isEnum = ClassUtils.isEnum(peer);
     this.logicalExtendingClassName = logicalExtendingClassName;
-    
+
     this.applicator = createApplicator();
 
     introspectFields(peer, factory);
@@ -105,7 +105,7 @@ public class TCClassImpl implements TCClass {
     this.useNonDefaultConstructor = isProxyClass || useNonDefaultConstructor;
     this.logicalSuperClass = logicalSuperClass;
   }
-  
+
   public Field getParentField() {
     return parentField;
   }
@@ -177,6 +177,10 @@ public class TCClassImpl implements TCClass {
 
   public Class getComponentType() {
     return peer.getComponentType();
+  }
+
+  public boolean isEnum() {
+    return isEnum;
   }
 
   public String getName() {

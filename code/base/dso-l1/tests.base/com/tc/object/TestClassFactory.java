@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -15,7 +16,6 @@ import java.lang.reflect.Field;
 import java.util.Map;
 
 public class TestClassFactory implements TCClassFactory {
-
 
   public TCClass getOrCreate(Class clazz, ClientObjectManager objectManager) {
     return new MockTCClass();
@@ -42,7 +42,7 @@ public class TestClassFactory implements TCClassFactory {
     public String getOnLoadExecuteScript() {
       return null;
     }
-    
+
     public Field getParentField() {
       return null;
     }
@@ -123,7 +123,7 @@ public class TestClassFactory implements TCClassFactory {
       throw new ImplementMe();
     }
 
-    public Map connectedCopy(Object source, Object dest, Map visited,  OptimisticTransactionManager txManager) {
+    public Map connectedCopy(Object source, Object dest, Map visited, OptimisticTransactionManager txManager) {
       throw new ImplementMe();
     }
 
@@ -141,6 +141,10 @@ public class TestClassFactory implements TCClassFactory {
 
     public String getExtendingClassName() {
       return getName();
+    }
+
+    public boolean isEnum() {
+      return false;
     }
 
   }

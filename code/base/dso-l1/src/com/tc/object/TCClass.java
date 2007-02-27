@@ -23,7 +23,7 @@ import java.util.Map;
  * <p>
  * TODO: Add support for using a serialized instance of classes with no nullary constructor to rehydrate into. <br>
  * TODO:
- * 
+ *
  * @author Orion Letizi
  */
 public interface TCClass {
@@ -62,10 +62,12 @@ public interface TCClass {
   public boolean isLogical();
 
   public ClientObjectManager getObjectManager();
-    
+
   public TCClass getSuperclass();
 
   public boolean isNonStaticInner();
+
+  public boolean isEnum();
 
   public boolean isUseNonDefaultConstructor();
 
@@ -87,6 +89,6 @@ public interface TCClass {
   public String getFieldNameByOffset(long fieldOffset);
 
   public boolean isProxyClass();
-  
+
   public String getExtendingClassName();
 }

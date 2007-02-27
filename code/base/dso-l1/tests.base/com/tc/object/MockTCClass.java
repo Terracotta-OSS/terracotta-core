@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -66,7 +67,7 @@ public class MockTCClass implements TCClass {
   public void dehydrate(TCObject tcObject, DNAWriter writer, Object pojo) {
     throw new ImplementMe();
   }
-  
+
   public Field getParentField() {
     throw new ImplementMe();
   }
@@ -116,7 +117,7 @@ public class MockTCClass implements TCClass {
     return getClass();
   }
 
-  public Map connectedCopy(Object source, Object dest, Map visited,  OptimisticTransactionManager txManager) {
+  public Map connectedCopy(Object source, Object dest, Map visited, OptimisticTransactionManager txManager) {
     throw new ImplementMe();
   }
 
@@ -134,6 +135,10 @@ public class MockTCClass implements TCClass {
 
   public String getExtendingClassName() {
     return getName();
+  }
+
+  public boolean isEnum() {
+    return false;
   }
 
 }

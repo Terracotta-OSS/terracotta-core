@@ -250,5 +250,9 @@ public class TCObjectImplTest extends BaseDSOTestCase {
     public String getExtendingClassName() {
       return getName();
     }
+
+    public boolean isEnum() {
+      return false;
+    }
   }
 }

@@ -77,6 +77,10 @@ abstract class AbstractClientTransaction implements ClientTransaction {
     if (transactionContext.getType() == TxnType.READ_ONLY) {
       throwReadOnlyException("Failed To Modify Field:  " + fieldname + " in " + classname);
     }
+
+    if (source.getTCClass().isEnum()) { throw new AssertionError("fieldChanged() on an enum type "
+                                                                 + source.getTCClass().getPeerClass().getName()); }
+
     alreadyCommittedCheck();
     basicFieldChanged(source, classname, fieldname, newValue, index);
   }
