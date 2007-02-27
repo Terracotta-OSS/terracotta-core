@@ -13,7 +13,6 @@ import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.File;
