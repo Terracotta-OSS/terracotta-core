@@ -80,7 +80,7 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     String specifiedL2Identifier = StringUtils.trimToNull(l2NameOnCommandLine != null ? l2NameOnCommandLine : System
         .getProperty(L2_NAME_PROPERTY_NAME));
 
-    if (StringUtils.isBlank(this.configSpec)) {
+    if (StringUtils.isBlank(effectiveConfigSpec)) {
       File localConfig = new File(System.getProperty("user.dir"), DEFAULT_CONFIG_SPEC);
       
       if(localConfig.exists()) {
