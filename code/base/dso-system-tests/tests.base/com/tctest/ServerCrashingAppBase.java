@@ -24,4 +24,16 @@ public abstract class ServerCrashingAppBase extends AbstractTransparentApp {
   public ApplicationConfig getConfig() {
     return config;
   }
+
+  public String getHostName() {
+    return config.getAttribute(HOST_NAME);
+  }
+  
+  public int getPort() {
+    return Integer.parseInt(config.getAttribute(PORT_NUMBER));
+  }
+  
+  public String getConfigFilePath() {
+    return config.getAttribute(CONFIG_FILE);
+  }
 }
