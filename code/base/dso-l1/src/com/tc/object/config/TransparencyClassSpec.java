@@ -70,7 +70,7 @@ public class TransparencyClassSpec {
     this.changeApplicatorSpec = new DSOChangeApplicatorSpec(changeApplicatorClassName);
     this.isLogical = true;
   }
-  
+
   public TransparencyClassSpec(String className, DSOClientConfigHelper configuration) {
     this.className = className;
     this.configuration = configuration;
@@ -271,7 +271,7 @@ public class TransparencyClassSpec {
   private boolean isDistributedMethodCall(int access, String methodName, String description, String[] exceptions) {
     return configuration.isDistributedMethodCall(access, className, methodName, description, exceptions);
   }
-  
+
   public ChangeApplicatorSpec getChangeApplicatorSpec() {
     return changeApplicatorSpec;
   }
@@ -281,8 +281,8 @@ public class TransparencyClassSpec {
   }
 
   public void moveToLogical(TransparencyClassSpec superClassSpec) {
-    System.err.println("### Moving to logical this:" + getClassName() + "; super:" + superClassSpec.getClassName());
-    
+    // System.err.println("### Moving to logical this:" + getClassName() + "; super:" + superClassSpec.getClassName());
+
     this.isLogical = true;
     String superClassLogicalExtendingClassName = superClassSpec.getLogicalExtendingClassName();
     if (superClassLogicalExtendingClassName == null) {
@@ -506,11 +506,11 @@ public class TransparencyClassSpec {
   public void setPostCreateMethod(String postCreateMethod) {
     this.postCreateMethod = postCreateMethod;
   }
-  
+
   public void setCustomClassAdapter(ClassAdapterFactory customClassAdapter) {
     this.customClassAdapter = customClassAdapter;
   }
-  
+
   public ClassAdapterFactory getCustomClassAdapter() {
     return customClassAdapter;
   }
