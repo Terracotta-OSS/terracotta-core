@@ -95,6 +95,7 @@ import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.dna.impl.ProxyInstance;
 import com.tc.object.field.TCField;
+import com.tc.object.loaders.BytecodeProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.Namespace;
@@ -251,6 +252,8 @@ public class BootJarTool {
       loadTerracottaClass(EnumerationWrapper.class.getName());
       loadTerracottaClass(NamedClassLoader.class.getName());
       loadTerracottaClass(TransparentAccess.class.getName());
+      loadTerracottaClass(BytecodeProvider.class.getName());
+      
       loadTerracottaClass(Manageable.class.getName());
       loadTerracottaClass(Clearable.class.getName());
       loadTerracottaClass(Manager.class.getName());
@@ -291,6 +294,7 @@ public class BootJarTool {
       loadTerracottaClass(ExceptionWrapperImpl.class.getName());
       loadTerracottaClass(TraverseTest.class.getName());
       loadTerracottaClass(Os.class.getName());
+      loadTerracottaClass(com.tc.util.Util.class.getName());
       loadTerracottaClass(NIOWorkarounds.class.getName());
       loadTerracottaClass(TCProperties.class.getName());
       loadTerracottaClass(ClusterEventListener.class.getName());
