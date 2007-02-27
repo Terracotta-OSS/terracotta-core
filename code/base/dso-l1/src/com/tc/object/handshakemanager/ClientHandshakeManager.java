@@ -28,6 +28,7 @@ import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.util.State;
+import com.tc.util.Util;
 import com.tc.util.sequence.BatchSequenceReceiver;
 
 import java.util.Collection;
@@ -238,13 +239,16 @@ public class ClientHandshakeManager implements ChannelEventListener {
   }
 
   public synchronized void waitForHandshake() {
+    boolean isInterrupted = false;
     while (state != RUNNING) {
       try {
         wait();
       } catch (InterruptedException e) {
         logger.error("Interrupted while waiting for handshake");
+        isInterrupted = true;
       }
     }
+    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   private synchronized void changeState(State newState) {

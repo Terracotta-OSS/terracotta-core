@@ -4,7 +4,6 @@
  */
 package com.tc.object.tx;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.object.lockmanager.api.LockFlushCallback;
 import com.tc.object.lockmanager.api.LockID;
@@ -16,6 +15,7 @@ import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 import com.tc.util.State;
 import com.tc.util.TCAssertionError;
+import com.tc.util.Util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -154,6 +154,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   public void flush(LockID lockID) {
+    boolean isInterrupted = false;
     Collection c;
     synchronized (lock) {
       while ((!(c = lockAccounting.getTransactionsFor(lockID)).isEmpty())) {
@@ -166,10 +167,11 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
                         + "ms. # Transactions not yet Acked = " + c.size() + "\n");
           }
         } catch (InterruptedException e) {
-          throw new TCRuntimeException(e);
+          isInterrupted = true;
         }
       }
     }
+    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   /* This does not block unlike flush() */
@@ -387,12 +389,15 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   private void waitUntilRunning() {
-    while (status != RUNNING)
+    boolean isInterrupted = false;
+    while (status != RUNNING) {
       try {
         lock.wait();
       } catch (InterruptedException e) {
-        throw new TCRuntimeException(e);
+        isInterrupted = true;
       }
+    }
+    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   // This method exists so that both these (resending and unpausing) should happen in

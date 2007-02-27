@@ -38,6 +38,7 @@ import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
 import com.tc.util.NonPortableReason;
 import com.tc.util.State;
+import com.tc.util.Util;
 import com.tc.util.concurrent.StoppableThread;
 
 import java.io.ByteArrayOutputStream;
@@ -171,13 +172,16 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   }
 
   private void waitUntilRunning() {
+    boolean isInterrupted = false;
+    
     while (state != RUNNING) {
       try {
         wait();
       } catch (InterruptedException e) {
-        throw new TCRuntimeException(e);
+        isInterrupted = true;
       }
     }
+    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   private void assertPaused(Object message) {
@@ -451,6 +455,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   private TCObject lookup(ObjectID id, boolean noDepth) {
     TCObject obj = null;
     boolean retrieveNeeded = false;
+    boolean isInterrupted = false;
+    
     synchronized (this) {
       while (obj == null) {
         obj = basicLookupByID(id);
@@ -465,11 +471,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
           try {
             wait();
           } catch (InterruptedException ie) {
-            ie.printStackTrace();
+            isInterrupted = true;
           }
         }
       }
     }
+    Util.selfInterruptIfNeeded(isInterrupted);
 
     if (retrieveNeeded) {
       try {
@@ -664,7 +671,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     boolean retrieveNeeded = false;
     boolean isNew = false;
     boolean lookupInProgress = false;
-
+    boolean isInterrupted = false;
+    
     synchronized (this) {
       while (true) {
         if (!replaceRootIfExistWhenCreate) {
@@ -684,10 +692,12 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
             wait();
           } catch (InterruptedException e) {
             e.printStackTrace();
+            isInterrupted = true;
           }
         }
       }
     }
+    Util.selfInterruptIfNeeded(isInterrupted);
 
     retrieveNeeded = lookupInProgress && !replaceRootIfExistWhenCreate;
 

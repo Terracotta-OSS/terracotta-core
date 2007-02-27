@@ -132,5 +132,11 @@ public class Util {
       }
     }
   }
+  
+  public static void selfInterruptIfNeeded(boolean interruptFlag) {
+    if (interruptFlag) {
+      Thread.currentThread().interrupt();
+    }
+  }
 
 }

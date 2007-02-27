@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.core;
 
@@ -9,6 +10,7 @@ import com.tc.exception.TCInternalError;
 import com.tc.net.NIOWorkarounds;
 import com.tc.net.core.event.TCListenerEvent;
 import com.tc.util.Assert;
+import com.tc.util.Util;
 import com.tc.util.runtime.Os;
 
 import java.io.IOException;
@@ -31,7 +33,7 @@ import java.util.Set;
 /**
  * JDK 1.4 (NIO) version of TCComm. Uses a single internal thread and a selector to manage channels associated with
  * <code>TCConnection</code>'s
- *
+ * 
  * @author teck
  */
 class TCCommJDK14 extends AbstractTCComm {
@@ -83,14 +85,22 @@ class TCCommJDK14 extends AbstractTCComm {
 
   void addSelectorTask(final Runnable task) {
     Assert.eval(!isCommThread());
+    boolean isInterrupted = false;
 
     try {
-      selectorTasks.put(task);
-    } catch (InterruptedException e) {
-      logger.warn(e);
+      while (true) {
+        try {
+          selectorTasks.put(task);
+          break;
+        } catch (InterruptedException e) {
+          logger.warn(e);
+          isInterrupted = true;
+        }
+      }
     } finally {
       selector.wakeup();
     }
+    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   void stopListener(final ServerSocketChannel ssc, final Runnable callback) {
@@ -289,13 +299,18 @@ class TCCommJDK14 extends AbstractTCComm {
         return;
       }
 
+      boolean isInterrupted = false;
       // run any pending selector tasks
       while (true) {
         Runnable task = null;
-        try {
-          task = (Runnable) selectorTasks.poll(0);
-        } catch (InterruptedException ie) {
-          logger.error("Error getting task from task queue", ie);
+        while (true) {
+          try {
+            task = (Runnable) selectorTasks.poll(0);
+            break;
+          } catch (InterruptedException ie) {
+            logger.error("Error getting task from task queue", ie);
+            isInterrupted = true;
+          }
         }
 
         if (null == task) {
@@ -308,6 +323,7 @@ class TCCommJDK14 extends AbstractTCComm {
           logger.error("error running selector task", e);
         }
       }
+      Util.selfInterruptIfNeeded(isInterrupted);
 
       final Set selectedKeys = selector.selectedKeys();
       if ((0 == numKeys) && (0 == selectedKeys.size())) {

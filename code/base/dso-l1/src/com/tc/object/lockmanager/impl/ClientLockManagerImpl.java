@@ -4,7 +4,6 @@
  */
 package com.tc.object.lockmanager.impl;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.lockmanager.api.LockFlushCallback;
@@ -23,6 +22,7 @@ import com.tc.text.ParagraphFormatter;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
 import com.tc.util.State;
+import com.tc.util.Util;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -192,15 +192,18 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   }
 
   private void waitForQueryReply(ThreadID threadID, Object waitLock) {
+    boolean isInterrupted = false;
+
     synchronized (waitLock) {
       while (!hasLockInfo(threadID)) {
         try {
           waitLock.wait();
         } catch (InterruptedException ioe) {
-          throw new TCRuntimeException(ioe);
+          isInterrupted = true;
         }
       }
     }
+    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   private synchronized boolean hasLockInfo(ThreadID threadID) {
@@ -256,7 +259,8 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     return new AssertionError(MISSING_LOCK_TEXT + " Missing lock ID is " + lockID);
   }
 
-  public void wait(LockID lockID, ThreadID threadID, WaitInvocation call, Object waitLock, WaitListener listener) throws InterruptedException {
+  public void wait(LockID lockID, ThreadID threadID, WaitInvocation call, Object waitLock, WaitListener listener)
+      throws InterruptedException {
     final ClientLock myLock;
     synchronized (this) {
       waitUntilRunning();
@@ -428,12 +432,15 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   }
 
   private void waitUntilRunning() {
-    try {
-      while (!isRunning())
+    boolean isInterrupted = false;
+    while (!isRunning()) {
+      try {
         wait();
-    } catch (InterruptedException e) {
-      throw new AssertionError(e);
+      } catch (InterruptedException e) {
+        isInterrupted = true;
+      }
     }
+    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   public synchronized boolean isRunning() {

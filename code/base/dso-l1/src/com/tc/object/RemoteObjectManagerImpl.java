@@ -1,9 +1,9 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ChannelIDProvider;
@@ -15,6 +15,7 @@ import com.tc.object.msg.RequestRootMessageFactory;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.util.State;
+import com.tc.util.Util;
 
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -32,7 +33,7 @@ import java.util.Map.Entry;
 /**
  * This class is a kludge but I think it will do the trick for now. It is responsible for any communications to the
  * server for object retrieval and removal
- *
+ * 
  * @author steve
  */
 public class RemoteObjectManagerImpl implements RemoteObjectManager {
@@ -102,13 +103,15 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   }
 
   private void waitUntilRunning() {
+    boolean isInterrupted = false;
     while (state != RUNNING) {
       try {
         wait();
       } catch (InterruptedException e) {
-        throw new TCRuntimeException(e);
+        isInterrupted = true;
       }
     }
+    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   private void assertPaused(Object message) {
@@ -141,6 +144,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   }
 
   public synchronized DNA retrieve(ObjectID id, int depth) {
+    boolean isInterrupted = false;
+    
     ObjectRequestContext ctxt = new ObjectRequestContextImpl(this.cip.getChannelID(),
                                                              new ObjectRequestID(objectRequestIDCounter++), id, depth);
     while (!dnaRequests.containsKey(id) || dnaRequests.get(id) == null) {
@@ -151,12 +156,15 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
         outstandingObjectRequests.put(id, ctxt);
       }
 
-      if (dnaRequests.get(id) == null) try {
-        wait();
-      } catch (InterruptedException e) {
-        throw new TCRuntimeException(e);
+      if (dnaRequests.get(id) == null) {
+        try {
+          wait();
+        } catch (InterruptedException e) {
+          isInterrupted = true;
+        }
       }
     }
+    Util.selfInterruptIfNeeded(isInterrupted);
     lruDNA.remove(id);
     return (DNA) dnaRequests.remove(id);
   }
@@ -195,6 +203,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
       rrm.send();
     }
 
+    boolean isInterrupted = false;
     while (ObjectID.NULL_ID.equals(rootRequests.get(name))) {
       waitUntilRunning();
       try {
@@ -202,9 +211,10 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
           wait();
         }
       } catch (InterruptedException e) {
-        throw new TCRuntimeException(e);
+        isInterrupted = true;
       }
     }
+    Util.selfInterruptIfNeeded(isInterrupted);
 
     return (ObjectID) (rootRequests.containsKey(name) ? rootRequests.get(name) : ObjectID.NULL_ID);
   }

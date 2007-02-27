@@ -22,6 +22,7 @@ import com.tc.object.tx.WaitInvocation;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.TCAssertionError;
+import com.tc.util.Util;
 
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntStack;
@@ -151,14 +152,8 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     } else {
       isInterrupted = waitForLock(requesterID, type, waitLock);
     }
-    if (isInterrupted) {
-      selfInterrupt();
-    }
+    Util.selfInterruptIfNeeded(isInterrupted);
     // debug("lock - GOT IT - ", requesterID, LockLevel.toString(type));
-  }
-
-  private void selfInterrupt() {
-    Thread.currentThread().interrupt();
   }
 
   void unlock(ThreadID threadID) {
@@ -962,13 +957,15 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
   }
 
   private synchronized void waitUntillRunning() {
-    try {
-      while (state != RUNNING) {
+    boolean isInterrupted = false;
+    while (state != RUNNING) {
+      try {
         wait();
+      } catch (InterruptedException e) {
+        isInterrupted = true;
       }
-    } catch (InterruptedException e) {
-      throw new AssertionError(e);
     }
+    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   // I wish we were using 1.5 !!!
