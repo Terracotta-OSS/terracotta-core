@@ -1,10 +1,10 @@
 <project name="dso-l1-tomcat" xmlns:ivy="antlib:fr.jayasoft.ivy.ant">
   
-  <!-- ================================= 
-  target: resolve              
-  ================================= -->
+  <!-- =================================
+       target: resolve
+       ================================= -->
   <target name="resolve" description="--> retreive dependencies with ivy">
-  	<ivy:resolve file="${basedir}/ivy-tests-base.xml"/>
+    <ivy:resolve file="${basedir}/ivy.xml"/>
     <ivy:retrieve pattern="${ivy.dependencies.dir}/[artifact]-[revision].[ext]"/>
   </target>
   
