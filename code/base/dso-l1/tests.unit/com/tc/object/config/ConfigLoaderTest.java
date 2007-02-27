@@ -5,6 +5,7 @@ package com.tc.object.config;
 
 import org.apache.xmlbeans.XmlException;
 
+import com.tc.config.Loader;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
@@ -67,10 +68,7 @@ public class ConfigLoaderTest extends TestCase {
 
 
   private void test(String name) throws XmlException, IOException, ConfigurationSetupException {
-    InputStream is = getClass().getResourceAsStream(name);
-    
-    // Application app = Application.Factory.parse(is);
-    TcConfigDocument tcConfigDocument = TcConfigDocument.Factory.parse(is);
+    TcConfigDocument tcConfigDocument = new Loader().parse(getClass().getResourceAsStream(name));
     TcConfig tcConfig = tcConfigDocument.getTcConfig();
     Application application = tcConfig.getApplication();
     
