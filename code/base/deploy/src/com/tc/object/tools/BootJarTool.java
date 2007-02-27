@@ -87,6 +87,7 @@ import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelperJDK15;
 import com.tc.object.bytecode.hook.impl.JavaLangArrayHelpers;
 import com.tc.object.bytecode.hook.impl.SessionsHelper;
+import com.tc.object.bytecode.hook.impl.Util;
 import com.tc.object.cache.Cacheable;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOSpringConfigHelper;
@@ -252,7 +253,7 @@ public class BootJarTool {
       loadTerracottaClass(NamedClassLoader.class.getName());
       loadTerracottaClass(TransparentAccess.class.getName());
       loadTerracottaClass(BytecodeProvider.class.getName());
-      
+
       loadTerracottaClass(Manageable.class.getName());
       loadTerracottaClass(Clearable.class.getName());
       loadTerracottaClass(Manager.class.getName());
@@ -292,7 +293,7 @@ public class BootJarTool {
       loadTerracottaClass(ExceptionWrapperImpl.class.getName());
       loadTerracottaClass(TraverseTest.class.getName());
       loadTerracottaClass(Os.class.getName());
-      loadTerracottaClass(com.tc.util.Util.class.getName());
+      loadTerracottaClass(Util.class.getName());
       loadTerracottaClass(NIOWorkarounds.class.getName());
       loadTerracottaClass(TCProperties.class.getName());
       loadTerracottaClass(ClusterEventListener.class.getName());
@@ -1441,12 +1442,12 @@ public class BootJarTool {
     bytes = doDSOTransform(spec.getClassName(), bytes);
     bootJar.loadClassIntoJar("java.util.concurrent.LinkedBlockingQueue", bytes, spec.isPreInstrumented());
   }
-  
+
   private void addInstrumentedJavaUtilConcurrentFutureTask() {
 
     if (!isAtLeastJDK15()) { return; }
     Map instrumentedContext = new HashMap();
-    
+
     TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.FutureTask");
     spec.setHonorTransient(true);
     spec.setCallConstructorOnLoad(true);
@@ -1835,7 +1836,7 @@ public class BootJarTool {
     if (outputFile.isDirectory()) {
       outputFile = new File(outputFile, BootJarSignature.getBootJarNameForThisVM());
     }
-    
+
     // This used to be a provider that read from a specified rt.jar (to let us create boot jars for other platforms).
     // That requirement is no more, but might come back, so I'm leaving at least this much scaffolding in place
     // WAS: systemProvider = new RuntimeJarBytesProvider(...)
