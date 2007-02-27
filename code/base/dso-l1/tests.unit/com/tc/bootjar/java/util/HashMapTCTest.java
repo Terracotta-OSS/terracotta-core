@@ -881,7 +881,7 @@ public class HashMapTCTest extends TCTestCase {
     }
 
     public Plugins getPluginsForInitialization() {
-      throw new ImplementMe();
+      return null;
     }
 
     public boolean isPortablePluginClass(Class clazz) {

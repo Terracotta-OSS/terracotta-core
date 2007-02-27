@@ -704,11 +704,11 @@ public class ClassUtilsTest extends TestCase {
     }
 
     public Plugins getPluginsForInitialization() {
-      throw new ImplementMe();
+      return null;
     }
 
     public boolean isPortablePluginClass(Class clazz) {
-      throw new ImplementMe();
+      return false;
     }
 
     public void addCustomAdapter(String name, ClassAdapterFactory factory) {
