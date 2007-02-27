@@ -16,6 +16,7 @@ import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
+import com.tc.capabilities.AbstractCapabilitiesFactory;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.NewSystemConfig;
@@ -102,6 +103,10 @@ public class TCServerImpl extends SEDA implements TCServer {
     return out;
   }
 
+  public String getDescriptionOfCapabilities() {
+    return AbstractCapabilitiesFactory.getCapabilitiesManager().describe();
+  }
+  
   /**
    * I realize this is wrong, since the server can still be starting but we'll have to deal with the whole stopping
    * issue later, and there's the TCStop feature which should be removed.

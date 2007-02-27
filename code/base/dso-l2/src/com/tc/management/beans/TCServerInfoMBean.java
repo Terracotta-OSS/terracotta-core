@@ -28,6 +28,8 @@ public interface TCServerInfoMBean extends TerracottaMBean {
   
   String getHealthStatus();
 
+  String getDescriptionOfCapabilities();
+  
   L2Info[] getL2Info();
 
 }

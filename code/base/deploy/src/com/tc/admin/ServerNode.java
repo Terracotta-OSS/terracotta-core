@@ -560,7 +560,7 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
 
     String version = cntx.getStringAttribute(serverInfo, "Version");
     String buildID = cntx.getStringAttribute(serverInfo, "BuildID");
-    String license = cntx.getStringAttribute(serverInfo, "DescriptionOfLicense");
+    String license = cntx.getStringAttribute(serverInfo, "DescriptionOfCapabilities");
     String copyright = cntx.getStringAttribute(serverInfo, "Copyright");
 
     return new ProductInfo(version, buildID, license, copyright);

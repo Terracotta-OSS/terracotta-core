@@ -31,6 +31,10 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
     return "";
   }
 
+  public String getDescriptionOfCapabilities() {
+    return "";
+  }
+  
   public L2Info[] getL2Info() {
     return null;
   }

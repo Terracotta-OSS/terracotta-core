@@ -114,6 +114,10 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return productInfo.copyright();
   }
 
+  public String getDescriptionOfCapabilities() {
+    return server.getDescriptionOfCapabilities();
+  }
+  
   public L2Info[] getL2Info() {
     return server.infoForAllL2s();
   }
