@@ -9,7 +9,7 @@ License Key: sales@terracottatech.com or +1 415-738-4000
 Installation
 ------------
 
-From the "eclipse" directory, copy the "com.terracotta.dso_2.1"
+From the "eclipse" directory, copy the "com.terracotta.dso_2.3"
 directory and its contents into the Eclipse "plugins" directory.
 Restart Eclipse.
 
