@@ -1,16 +1,19 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.apache.catalina.connector;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.Host;
+import org.apache.catalina.Realm;
 import org.apache.catalina.Session;
 import org.apache.catalina.Wrapper;
 import org.apache.tomcat.util.buf.B2CConverter;
 import org.apache.tomcat.util.buf.MessageBytes;
 import org.apache.tomcat.util.http.mapper.MappingData;
 
+import com.tc.tomcat.session.SessionInternal;
 import com.terracotta.session.TerracottaRequest;
 
 import java.io.BufferedReader;
@@ -30,17 +33,20 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 public class SessionRequest55 extends Request {
-  private final Request        valveReq;
+  private final Request           valveReq;
   private final TerracottaRequest sessionReq;
-  private SessionResponse55    sessionRes;
+  private final Realm             realm;
+  private SessionResponse55       sessionRes;
+  private Session                 sessionInternal = null;
 
   /**
    * @param sessionReq SessionRequest must be a HttpServletRequest slice of Request
    * @param valveReq
    */
-  public SessionRequest55(TerracottaRequest sessionReq, Request valveReq) {
+  public SessionRequest55(TerracottaRequest sessionReq, Request valveReq, Realm realm) {
     this.valveReq = valveReq;
     this.sessionReq = sessionReq;
+    this.realm = realm;
   }
 
   public void setSessionResponse(SessionResponse55 sessionRes) {
@@ -91,7 +97,16 @@ public class SessionRequest55 extends Request {
   }
 
   public Session getSessionInternal(boolean create) {
-    throw new UnsupportedOperationException();
+    synchronized (this) {
+      if (sessionInternal != null) { return sessionInternal; }
+
+      com.terracotta.session.Session tcSession = (com.terracotta.session.Session) getSession(create);
+      if (tcSession == null) { return null; }
+
+      return sessionInternal = new SessionInternal(tcSession, realm);
+    }
+
+    // unreachable
   }
 
   // ////////////////////////////////////////////////////////

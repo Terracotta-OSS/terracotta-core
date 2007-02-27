@@ -1,18 +1,23 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session;
 
 import com.terracotta.session.util.Assert;
 import com.terracotta.session.util.Timestamp;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 public class SessionData {
   private final String    id;
-  private final Map       attributes = new HashMap();
+  private final Map       attributes         = new HashMap();
+  private final Map       internalAttributes = new HashMap();
+  private transient Map   transientAttributes;
   private final long      createTime;
   private final Timestamp timestamp;
 
@@ -87,6 +92,41 @@ public class SessionData {
     maxIdleMillis = v;
   }
 
+  public synchronized Object getInternalAttribute(String name) {
+    return internalAttributes.get(name);
+  }
+
+  public synchronized Object setInternalAttribute(String name, Object value) {
+    return internalAttributes.put(name, value);
+  }
+
+  public synchronized Object removeInternalAttribute(String name) {
+    return internalAttributes.remove(name);
+  }
+
+  public synchronized Object getTransientAttribute(String name) {
+    return getTransientAttributes().get(name);
+  }
+
+  public synchronized Object setTransientAttribute(String name, Object value) {
+    return getTransientAttributes().put(name, value);
+  }
+
+  public synchronized Object removeTransientAttribute(String name) {
+    return getTransientAttributes().remove(name);
+  }
+
+  public synchronized Collection getTransientAttributeKeys() {
+    return new ArrayList(getTransientAttributes().keySet());
+  }
+
+  private Map getTransientAttributes() {
+    if (transientAttributes == null) {
+      transientAttributes = new HashMap();
+    }
+    return transientAttributes;
+  }
+
   String getId() {
     return id;
   }
@@ -94,4 +134,5 @@ public class SessionData {
   Timestamp getTimestamp() {
     return timestamp;
   }
+
 }

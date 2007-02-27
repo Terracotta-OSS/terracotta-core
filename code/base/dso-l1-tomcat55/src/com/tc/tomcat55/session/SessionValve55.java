@@ -52,7 +52,7 @@ public class SessionValve55 extends ValveBase {
   private void tcInvoke(Request valveReq, Response valveRes) throws IOException, ServletException {
     TerracottaSessionManager mgr = findOrCreateManager(valveReq, valveReq.getContextPath());
     TerracottaRequest sReq = mgr.preprocess(valveReq, valveRes);
-    SessionRequest55 sReq55 = new SessionRequest55(sReq, valveReq);
+    SessionRequest55 sReq55 = new SessionRequest55(sReq, valveReq, valveReq.getContext().getRealm());
     SessionResponse sRes = new SessionResponse(sReq, valveRes);
     SessionResponse55 sRes55 = new SessionResponse55(valveRes, sReq55, sRes);
     try {
