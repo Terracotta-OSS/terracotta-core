@@ -13,6 +13,7 @@ import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.File;
@@ -80,21 +81,24 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
 
   private void runTest() throws Throwable {
     spawnNewClient();
-    stage1.await();
+
     config.getServerControl().crash();
     while (config.getServerControl().isRunning()) {
       Thread.sleep(5000);
     }
-    config.getServerControl().start(30*1000);
+    config.getServerControl().start(30 * 1000);
     while (!config.getServerControl().isRunning()) {
       Thread.sleep(5000);
     }
-    Thread.currentThread().sleep(5000);
-    Assert.assertEquals(4, eventsCount.size());
-    Assert.assertTrue(eventsCount.containsKey("com.tc.cluster.event.nodeDisconnected"));
-    Assert.assertTrue(eventsCount.containsKey("com.tc.cluster.event.nodeConnected"));
-    Assert.assertTrue(eventsCount.containsKey("com.tc.cluster.event.thisNodeDisconnected"));
-    Assert.assertTrue(eventsCount.containsKey("com.tc.cluster.event.thisNodeConnected"));
+    echo("Server restarted successfully.");
+    stage1.await();
+    synchronized (eventsCount) {
+      Assert.assertEquals(4, eventsCount.size());
+      Assert.assertTrue(eventsCount.containsKey("com.tc.cluster.event.nodeDisconnected"));
+      Assert.assertTrue(eventsCount.containsKey("com.tc.cluster.event.nodeConnected"));
+      Assert.assertTrue(eventsCount.containsKey("com.tc.cluster.event.thisNodeDisconnected"));
+      Assert.assertTrue(eventsCount.containsKey("com.tc.cluster.event.thisNodeConnected"));
+    }
   }
 
   private void registerMBeanListener() throws Exception {
