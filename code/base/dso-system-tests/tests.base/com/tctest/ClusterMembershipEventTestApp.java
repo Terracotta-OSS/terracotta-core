@@ -11,46 +11,17 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.cluster.ClusterEventListener;
 import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.config.ConfigVisitor;
-import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.config.spec.CyclicBarrierSpec;
-import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.File;
 import java.util.HashSet;
 
-public class ClusterMembershipEventTestApp extends AbstractTransparentApp implements ClusterEventListener {
-
-  public static final String      CONFIG_FILE = "config-file";
-  public static final String      PORT_NUMBER = "port-number";
-  public static final String      HOST_NAME   = "host-name";
-
-  private final ApplicationConfig config;
+public class ClusterMembershipEventTestApp extends ServerCrashingAppBase implements ClusterEventListener {
 
   public ClusterMembershipEventTestApp(String appId, ApplicationConfig config, ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
-    this.config = config;
-  }
-
-  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    new CyclicBarrierSpec().visit(visitor, config);
-    new SynchronizedIntSpec().visit(visitor, config);
-
-    String testClass = ClusterMembershipEventTestApp.class.getName();
-    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
-
-    config.addIncludePattern(testClass + "$*");
-
-    String methodExpression = "* " + testClass + "*.*(..)";
-    config.addWriteAutolock(methodExpression);
-
-    spec.addRoot("barrier", "barrier");
-
   }
 
   private final int             initialNodeCount = getParticipantCount();
@@ -104,7 +75,7 @@ public class ClusterMembershipEventTestApp extends AbstractTransparentApp implem
     if (true) return;
     if (isMasterNode) {
       System.err.println("### masterNode=" + thisNode + " -> crashing server...");
-      config.getServerControl().crash();
+      getConfig().getServerControl().crash();
       System.err.println("### masterNode=" + thisNode + " -> crashed server");
     }
 
@@ -114,7 +85,7 @@ public class ClusterMembershipEventTestApp extends AbstractTransparentApp implem
 
     if (isMasterNode) {
       System.err.println("### masterNode=" + thisNode + " -> restarting server...");
-      config.getServerControl().start(30 * 1000);
+      getConfig().getServerControl().start(30 * 1000);
       System.err.println("### masterNode=" + thisNode + " -> restarted server");
     }
     System.err.println("### stage 4 [reconnecting]: thisNode=" + thisNode + ", threadId="
@@ -214,9 +185,9 @@ public class ClusterMembershipEventTestApp extends AbstractTransparentApp implem
   }
 
   private ExtraL1ProcessControl spawnNewClient() throws Exception {
-    final String hostName = config.getAttribute(HOST_NAME);
-    final int port = Integer.parseInt(config.getAttribute(PORT_NUMBER));
-    final File configFile = new File(config.getAttribute(CONFIG_FILE));
+    final String hostName = getHostName();
+    final int port = getPort();
+    final File configFile = new File(getConfigFilePath());
     File workingDir = new File(configFile.getParentFile(), "client-0");
     FileUtils.forceMkdir(workingDir);
 
