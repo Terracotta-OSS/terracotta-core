@@ -13,6 +13,11 @@ public class InstrumentedClassConfigBuilderImpl extends BaseConfigBuilder implem
 
   private boolean isInclude;
 
+  public InstrumentedClassConfigBuilderImpl(Class clazz) {
+    this();
+    setClassExpression(clazz.getName());
+  }
+
   public InstrumentedClassConfigBuilderImpl() {
     super(4, ALL_PROPERTIES);
     this.isInclude = true;

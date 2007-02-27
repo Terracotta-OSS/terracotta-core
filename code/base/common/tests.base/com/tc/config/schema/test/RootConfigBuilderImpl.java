@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.test;
 
@@ -11,10 +12,15 @@ import com.tc.config.schema.builder.RootConfigBuilder;
  */
 public class RootConfigBuilderImpl extends BaseConfigBuilder implements RootConfigBuilder {
 
+  public RootConfigBuilderImpl(Class clazz, String field) {
+    this();
+    setFieldName(clazz.getName() + "." + field);
+  }
+
   public RootConfigBuilderImpl() {
     super(4, ALL_PROPERTIES);
   }
-  
+
   public void setFieldName(String name) {
     setProperty("field-name", name);
   }
@@ -22,9 +28,9 @@ public class RootConfigBuilderImpl extends BaseConfigBuilder implements RootConf
   public void setRootName(String name) {
     setProperty("root-name", name);
   }
-  
+
   private static final String[] ALL_PROPERTIES = new String[] { "field-name", "root-name" };
-  
+
   public String toString() {
     return elements(ALL_PROPERTIES);
   }

@@ -14,6 +14,12 @@ public class LockConfigBuilderImpl extends BaseConfigBuilder implements LockConf
 
   private final String       tag;
 
+  public LockConfigBuilderImpl(String tag, Class clazz, String lockLevel) {
+    this(tag);
+    setMethodExpression("* " + clazz.getName() + ".*(..)");
+    setLockLevel(lockLevel);
+  }
+  
   public LockConfigBuilderImpl(String tag) {
     super(4, ALL_PROPERTIES);
 
