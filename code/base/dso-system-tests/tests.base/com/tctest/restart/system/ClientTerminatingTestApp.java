@@ -5,29 +5,17 @@ package com.tctest.restart.system;
 
 import org.apache.commons.io.FileUtils;
 
-import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
-import com.tc.config.schema.builder.LockConfigBuilder;
-import com.tc.config.schema.builder.RootConfigBuilder;
-import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
-import com.tc.config.schema.test.L2ConfigBuilder;
-import com.tc.config.schema.test.LockConfigBuilderImpl;
-import com.tc.config.schema.test.RootConfigBuilderImpl;
-import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tctest.runner.AbstractTransparentApp;
+import com.tctest.ServerCrashingAppBase;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class ClientTerminatingTestApp extends AbstractTransparentApp {
-
-  public static final String CONFIG_FILE = "config-file";
-  public static final String PORT_NUMBER = "port-number";
-  public static final String HOST_NAME   = "host-name";
+public class ClientTerminatingTestApp extends ServerCrashingAppBase {
 
   private static final int      LOOP_COUNT = 2;
   private static final List     queue      = new ArrayList();
@@ -35,16 +23,9 @@ public class ClientTerminatingTestApp extends AbstractTransparentApp {
   private int                   id         = -1;
   private long                  count      = 0;
   private ExtraL1ProcessControl client;
-  private final String          hostName;
-  private final int             port;
-  private final File            config;
 
   public ClientTerminatingTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
-
-    config = new File(cfg.getAttribute(CONFIG_FILE));
-    hostName = cfg.getAttribute(HOST_NAME);
-    port = Integer.parseInt(cfg.getAttribute(PORT_NUMBER));
   }
 
   public void run() {
@@ -60,10 +41,10 @@ public class ClientTerminatingTestApp extends AbstractTransparentApp {
     try {
       while (times-- >= 0) {
         long toAdd = random.nextInt(10) * 10L + 1;
-        File workingDir = new File(config.getParentFile(), "client-" + id + "-" + times);
+        File workingDir = new File(getConfigFileDirectoryPath(), "client-" + id + "-" + times);
         FileUtils.forceMkdir(workingDir);
         System.err.println(this + "Creating Client with args " + id + " , " + toAdd);
-        client = new ExtraL1ProcessControl(hostName, port, Client.class, config.getAbsolutePath(), new String[] {
+        client = new ExtraL1ProcessControl(getHostName(), getPort(), Client.class, getConfigFilePath(), new String[] {
             "" + id, "" + toAdd }, workingDir);
         client.start(20000);
         int exitCode = client.waitFor();
@@ -104,45 +85,6 @@ public class ClientTerminatingTestApp extends AbstractTransparentApp {
 
   public String toString() {
     return "Controller(" + id + ") :";
-  }
-
-  public static TerracottaConfigBuilder createConfig(int port, int adminPort) {
-    String testClassName = ClientTerminatingTestApp.class.getName();
-    String testClassSuperName = AbstractTransparentApp.class.getName();
-    String clientClassName = Client.class.getName();
-
-    TerracottaConfigBuilder out = new TerracottaConfigBuilder();
-
-    out.getServers().getL2s()[0].setDSOPort(port);
-    out.getServers().getL2s()[0].setJMXPort(adminPort);
-    out.getServers().getL2s()[0].setPersistenceMode(L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE);
-
-    LockConfigBuilder lock1 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
-    lock1.setMethodExpression("* " + testClassName + ".run(..)");
-    lock1.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
-
-    LockConfigBuilder lock2 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
-    lock2.setMethodExpression("* " + clientClassName + ".execute(..)");
-    lock2.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
-
-    out.getApplication().getDSO().setLocks(new LockConfigBuilder[] { lock1, lock2 });
-
-    RootConfigBuilder root = new RootConfigBuilderImpl();
-    root.setFieldName(testClassName + ".queue");
-    // root.setRootName("queue");
-    out.getApplication().getDSO().setRoots(new RootConfigBuilder[] { root });
-
-    InstrumentedClassConfigBuilder instrumented1 = new InstrumentedClassConfigBuilderImpl();
-    instrumented1.setClassExpression(testClassName + "*");
-
-    InstrumentedClassConfigBuilder instrumented2 = new InstrumentedClassConfigBuilderImpl();
-    instrumented2.setClassExpression(testClassSuperName + "*");
-
-    out.getApplication().getDSO().setInstrumentedClasses(
-                                                         new InstrumentedClassConfigBuilder[] { instrumented1,
-                                                             instrumented2 });
-
-    return out;
   }
 
   public static class Client {

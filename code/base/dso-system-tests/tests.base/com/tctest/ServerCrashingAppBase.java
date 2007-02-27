@@ -8,6 +8,8 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
 
+import java.io.File;
+
 public abstract class ServerCrashingAppBase extends AbstractTransparentApp {
 
   public static final String CONFIG_FILE = "config-file";
@@ -35,5 +37,11 @@ public abstract class ServerCrashingAppBase extends AbstractTransparentApp {
   
   public String getConfigFilePath() {
     return config.getAttribute(CONFIG_FILE);
+  }
+  
+  public String getConfigFileDirectoryPath() {
+    String configFile = getConfigFilePath();
+    int i = configFile.lastIndexOf(File.separatorChar);
+    return configFile.substring(0, i);
   }
 }
