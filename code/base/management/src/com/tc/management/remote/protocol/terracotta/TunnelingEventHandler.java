@@ -22,126 +22,155 @@ import java.io.IOException;
 import javax.management.remote.generic.MessageConnection;
 import javax.management.remote.message.Message;
 
-public final class TunnelingEventHandler extends AbstractEventHandler implements ChannelEventListener {
+public final class TunnelingEventHandler extends AbstractEventHandler implements
+        ChannelEventListener {
 
-  private static final TCLogger      logger = TCLogging.getLogger(TunnelingEventHandler.class);
+    private static final TCLogger logger = TCLogging
+            .getLogger(TunnelingEventHandler.class);
 
-  private final MessageChannel       channel;
-  private TunnelingMessageConnection messageConnection;
-  private boolean                    acceptOk;
+    private final MessageChannel channel;
 
-  private Object                     jmxReadyLock;
-  private SetOnceFlag                localJmxServerReady;
-  private boolean                    transportConnected;
-  private boolean                    sentReadyMessage;
+    private TunnelingMessageConnection messageConnection;
 
-  public TunnelingEventHandler(final MessageChannel channel) {
-    this.channel = channel;
-    this.channel.addListener(this);
-    acceptOk = false;
-    jmxReadyLock = new Object();
-    localJmxServerReady = new SetOnceFlag();
-    transportConnected = false;
-    sentReadyMessage = false;
-  }
+    private boolean acceptOk;
 
-  public void handleEvent(final EventContext context) throws EventHandlerException {
-    final JmxRemoteTunnelMessage messageEnvelope = (JmxRemoteTunnelMessage) context;
-    if (messageEnvelope.getCloseConnection()) {
-      reset();
-    } else {
-      final Message message = messageEnvelope.getTunneledMessage();
-      synchronized (this) {
-        if (messageEnvelope.getInitConnection()) {
-          if (messageConnection != null) {
-            logger.warn("Received a client connection initialization, resetting existing connection");
+    private Object jmxReadyLock;
+
+    private SetOnceFlag localJmxServerReady;
+
+    private boolean transportConnected;
+
+    private boolean sentReadyMessage;
+
+    public TunnelingEventHandler(final MessageChannel channel) {
+        this.channel = channel;
+        this.channel.addListener(this);
+        acceptOk = false;
+        jmxReadyLock = new Object();
+        localJmxServerReady = new SetOnceFlag();
+        transportConnected = false;
+        sentReadyMessage = false;
+    }
+
+    public void handleEvent(final EventContext context)
+            throws EventHandlerException {
+        final JmxRemoteTunnelMessage messageEnvelope = (JmxRemoteTunnelMessage) context;
+        if (messageEnvelope.getCloseConnection()) {
             reset();
-          }
-          messageConnection = new TunnelingMessageConnection(channel, true);
-          acceptOk = true;
-          notifyAll();
-        } else if (messageConnection == null) {
-          logger.warn("Received unexpected data message, connection is not yet established");
         } else {
-          if (message != null) {
-            messageConnection.incomingNetworkMessage(message);
-          } else {
-            logger.warn("Received tunneled message with no data, resetting connection");
-            reset();
-          }
+            final Message message = messageEnvelope.getTunneledMessage();
+            synchronized (this) {
+                if (messageEnvelope.getInitConnection()) {
+                    if (messageConnection != null) {
+                        logger
+                                .warn("Received a client connection initialization, resetting existing connection");
+                        reset();
+                    }
+                    messageConnection = new TunnelingMessageConnection(channel,
+                            true);
+                    acceptOk = true;
+                    notifyAll();
+                } else if (messageConnection == null) {
+                    logger
+                            .warn("Received unexpected data message, connection is not yet established");
+                } else {
+                    if (message != null) {
+                        messageConnection.incomingNetworkMessage(message);
+                    } else {
+                        logger
+                                .warn("Received tunneled message with no data, resetting connection");
+                        reset();
+                    }
+                }
+            }
         }
-      }
     }
-  }
 
-  synchronized MessageConnection accept() throws IOException {
-    while (!acceptOk) {
-      try {
-        wait();
-      } catch (InterruptedException ie) {
-        logger.warn("Interrupted while waiting for a new connection", ie);
-        throw new IOException("Interrupted while waiting for new connection: " + ie.getMessage());
-      }
+    synchronized MessageConnection accept() throws IOException {
+        while (!acceptOk) {
+            try {
+                wait();
+            } catch (InterruptedException ie) {
+                logger.warn("Interrupted while waiting for a new connection",
+                        ie);
+                throw new IOException(
+                        "Interrupted while waiting for new connection: "
+                                + ie.getMessage());
+            }
+        }
+        acceptOk = false;
+        return messageConnection;
     }
-    acceptOk = false;
-    return messageConnection;
-  }
 
-  private synchronized void reset() {
-    if (messageConnection != null) {
-      try {
-        messageConnection.close();
-      } catch (IOException ioe) {
-        logger.warn("Caught I/O exception while closing tunneled JMX connection");
-      }
-    }
-    messageConnection = null;
-    acceptOk = false;
-    synchronized (jmxReadyLock) {
-      sentReadyMessage = false;
-    }
-    notifyAll();
-  }
-
-  public void notifyChannelEvent(final ChannelEvent event) {
-    if (event.getChannel() == channel) {
-      if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
+    private synchronized void reset() {
+        if (messageConnection != null) {
+            try {
+                messageConnection.close();
+            } catch (IOException ioe) {
+                logger
+                        .warn("Caught I/O exception while closing tunneled JMX connection");
+            }
+        }
+        messageConnection = null;
+        acceptOk = false;
         synchronized (jmxReadyLock) {
-          transportConnected = true;
+            sentReadyMessage = false;
         }
+        notifyAll();
+    }
+
+    public void notifyChannelEvent(final ChannelEvent event) {
+        if (event.getChannel() == channel) {
+            if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
+                synchronized (jmxReadyLock) {
+                    transportConnected = true;
+                }
+                sendJmxReadyMessageIfNecessary();
+            } else if (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT
+                    || event.getType() == ChannelEventType.TRANSPORT_DISCONNECTED_EVENT) {
+                reset();
+                synchronized (jmxReadyLock) {
+                    transportConnected = false;
+                }
+            }
+        }
+    }
+
+    public void jmxIsReady() {
+        synchronized (jmxReadyLock) {
+            localJmxServerReady.set();
+        }
+
         sendJmxReadyMessageIfNecessary();
-      } else if (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT
-          || event.getType() == ChannelEventType.TRANSPORT_DISCONNECTED_EVENT) {
-        reset();
+    }
+
+    /**
+     * Once the local JMX server has successfully started (this happens in a
+     * background thread as DSO is so early in the startup process that the
+     * system JMX server in 1.5+ can't be created inline with other
+     * initialization) we send a 'ready' message to the L2 each time we connect
+     * to it. This tells the L2 that they can connect to our local JMX server
+     * and see the beans we have in the DSO client.
+     */
+    private void sendJmxReadyMessageIfNecessary() {
+        final boolean send;
         synchronized (jmxReadyLock) {
-          transportConnected = false;
+            send = localJmxServerReady.isSet() && transportConnected
+                    && !sentReadyMessage;
+            if (send) {
+                sentReadyMessage = true;
+            }
         }
-      }
-    }
-  }
 
-  public void jmxIsReady() {
-    synchronized (jmxReadyLock) {
-      localJmxServerReady.set();
-      sendJmxReadyMessageIfNecessary();
-    }
-  }
+        // Doing this message send outside of the jmxReadyLock to avoid a
+        // deadlock (CDV-132)
+        if (send) {
+            logger
+                    .info("Client JMX server ready; sending notification to L2 server");
+            TCMessage readyMessage = channel
+                    .createMessage(TCMessageType.CLIENT_JMX_READY_MESSAGE);
+            readyMessage.send();
+        }
 
-  /**
-   * Once the local JMX server has successfully started (this happens in a background thread as DSO is so early in the
-   * startup process that the system JMX server in 1.5+ can't be created inline with other initialization) we send a
-   * 'ready' message to the L2 each time we connect to it. This tells the L2 that they can connect to our local JMX
-   * server and see the beans we have in the DSO client.
-   */
-  private void sendJmxReadyMessageIfNecessary() {
-    synchronized (jmxReadyLock) {
-      if (localJmxServerReady.isSet() && transportConnected && !sentReadyMessage) {
-        logger.info("Client JMX server ready; sending notification to L2 server");
-        TCMessage readyMessage = channel.createMessage(TCMessageType.CLIENT_JMX_READY_MESSAGE);
-        readyMessage.send();
-        sentReadyMessage = true;
-      }
     }
-  }
-
 }
