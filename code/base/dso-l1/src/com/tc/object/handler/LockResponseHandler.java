@@ -11,6 +11,8 @@ import com.tc.logging.TCLogging;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.msg.LockResponseMessage;
+import com.tc.object.session.SessionID;
+import com.tc.object.session.SessionManager;
 
 /**
  * @author steve
@@ -18,10 +20,19 @@ import com.tc.object.msg.LockResponseMessage;
 public class LockResponseHandler extends AbstractEventHandler {
   private static final TCLogger logger = TCLogging.getLogger(LockResponseHandler.class);
   private ClientLockManager     lockManager;
+  private final SessionManager sessionManager;
+
+  public LockResponseHandler(SessionManager sessionManager) {
+    this.sessionManager = sessionManager;
+  }
 
   public void handleEvent(EventContext context) {
-    LockResponseMessage msg = (LockResponseMessage) context;
-
+    final LockResponseMessage msg = (LockResponseMessage) context;
+    final SessionID sessionID = msg.getLocalSessionID();
+    if(!sessionManager.isCurrentSession(sessionID)) {
+      logger.warn("Ignoring " + msg + " from a previous session:" + sessionID + ", " + sessionManager);
+      return;
+    }
     if (msg.isLockAward()) {
       lockManager.awardLock(msg.getLocalSessionID(), msg.getLockID(), msg.getThreadID(), msg.getLockLevel());
     } else if (msg.isLockRecall()) {

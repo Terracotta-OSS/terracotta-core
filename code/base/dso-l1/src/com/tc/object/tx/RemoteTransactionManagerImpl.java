@@ -20,6 +20,7 @@ import com.tc.util.Util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,10 +28,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * Sends off committed transactions
- *
+ * 
  * @author steve
  */
 public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
@@ -59,8 +61,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   private State                            status;
   private final SessionManager             sessionManager;
-  private final TransactionSequencer               sequencer;
-  private final DSOClientMessageChannel            channel;
+  private final TransactionSequencer       sequencer;
+  private final DSOClientMessageChannel    channel;
 
   public RemoteTransactionManagerImpl(TCLogger logger, final TransactionBatchFactory batchFactory,
                                       TransactionBatchAccounting batchAccounting, LockAccounting lockAccounting,
@@ -340,8 +342,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
   }
 
   public void receivedAcknowledgement(SessionID sessionID, TransactionID txID) {
-    Set completedLocks;
-
+    Map callbacks;
     synchronized (lock) {
       // waitUntilRunning();
       if (!sessionManager.isCurrentSession(sessionID)) {
@@ -349,7 +350,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
         return;
       }
 
-      completedLocks = lockAccounting.acknowledge(txID);
+      Set completedLocks = lockAccounting.acknowledge(txID);
 
       TxnBatchID container = batchAccounting.getBatchByTransactionID(txID);
       if (!container.isNull()) {
@@ -368,24 +369,39 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
         throw new AssertionError("No batch found for acknowledgement: " + txID);
       }
       lock.notifyAll();
+      callbacks = getLockFlushCallbacks(completedLocks);
+    }
+    fireLockFlushCallbacks(callbacks);
+  }
 
-      // doLockFlushCallbacks() is moved inside the synchronized() block due to a race condition
-      // between flush and recallCommit.
-      doLockFlushCallbacks(completedLocks);
+  /*
+   * Never fire callbacks while holding lock
+   */
+  private void fireLockFlushCallbacks(Map callbacks) {
+    if (callbacks.isEmpty()) return;
+    for (Iterator i = callbacks.entrySet().iterator(); i.hasNext();) {
+      Entry e = (Entry) i.next();
+      LockID lid = (LockID) e.getKey();
+      LockFlushCallback callback = (LockFlushCallback) e.getValue();
+      callback.transactionsForLockFlushed(lid);
     }
   }
 
-  private void doLockFlushCallbacks(Set completedLocks) {
-    // Do callback
+  private Map getLockFlushCallbacks(Set completedLocks) {
+    Map callbacks = Collections.EMPTY_MAP;
     if (!completedLocks.isEmpty() && !lockFlushCallbacks.isEmpty()) {
       for (Iterator i = completedLocks.iterator(); i.hasNext();) {
-        LockID lid = (LockID) i.next();
-        LockFlushCallback callback = (LockFlushCallback) lockFlushCallbacks.remove(lid);
+        Object lid = i.next();
+        Object callback = lockFlushCallbacks.remove(lid);
         if (callback != null) {
-          callback.transactionsForLockFlushed(lid);
+          if (callbacks == Collections.EMPTY_MAP) {
+            callbacks = new HashMap();
+          }
+          callbacks.put(lid, callback);
         }
       }
     }
+    return callbacks;
   }
 
   private void waitUntilRunning() {

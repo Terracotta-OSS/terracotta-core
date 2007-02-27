@@ -24,12 +24,10 @@ import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.Util;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.TimerTask;
 
@@ -68,8 +66,6 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     for (Iterator iter = new HashSet(locksByID.values()).iterator(); iter.hasNext();) {
       ClientLock lock = (ClientLock) iter.next();
       lock.pause();
-      // lock.loseGreediness();
-      // cleanUp(lock);
     }
   }
 
@@ -92,27 +88,16 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     return state == STARTING;
   }
 
-  public void runGC() {
-
-    List toGC = new ArrayList();
-
-    synchronized (this) {
-      waitUntilRunning();
-      for (Iterator iter = locksByID.values().iterator(); iter.hasNext();) {
-        ClientLock lock = (ClientLock) iter.next();
-        if (lock.timedout()) {
-          toGC.add(lock.getLockID());
-        }
+  public synchronized void runGC() {
+    waitUntilRunning();
+    for (Iterator iter = locksByID.values().iterator(); iter.hasNext();) {
+      ClientLock lock = (ClientLock) iter.next();
+      if (lock.timedout()) {
+        logger.debug("GCing Lock " + lock);
+        recall(lock.getLockID(), ThreadID.VM_ID, LockLevel.WRITE);
       }
     }
 
-    if (toGC.size() > 0) {
-      logger.debug("GCing " + (toGC.size() < 11 ? toGC.toString() : toGC.size() + " Locks ..."));
-      for (Iterator iter = toGC.iterator(); iter.hasNext();) {
-        LockID lockID = (LockID) iter.next();
-        recall(lockID, ThreadID.VM_ID, LockLevel.WRITE);
-      }
-    }
   }
 
   private GlobalLockInfo getLockInfo(LockID lockID, ThreadID threadID) {
@@ -283,13 +268,14 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   /*
    * The level represents the reason why server wanted a recall and will determite when a recall commit will happen.
    */
-  public void recall(LockID lockID, ThreadID threadID, int interestedLevel) {
-    final ClientLock myLock;
+  public synchronized void recall(LockID lockID, ThreadID threadID, int interestedLevel) {
     Assert.assertEquals(ThreadID.VM_ID, threadID);
-    synchronized (this) {
-      waitUntilRunning();
-      myLock = (ClientLock) locksByID.get(lockID);
+    if (isPaused()) {
+      logger.warn("Ignoring recall request from dead server : " + lockID + ", " + threadID + " interestedLevel : "
+                  + LockLevel.toString(interestedLevel));
+      return;
     }
+    final ClientLock myLock = (ClientLock) locksByID.get(lockID);
     if (myLock != null) {
       myLock.recall(interestedLevel, this);
       cleanUp(myLock);
@@ -308,13 +294,14 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     }
   }
 
-  public void queryLockCommit(ThreadID threadID, GlobalLockInfo globalLockInfo) {
-    Object waitLock;
-    synchronized (this) {
-      waitUntilRunning();
-      lockInfoByID.put(threadID, globalLockInfo);
-      waitLock = pendingQueryLockRequestsByID.remove(threadID);
-    }
+  /*
+   * Called from a stage thread and should never be blocked XXX:: I am currently not ignoring reponses from dead server
+   * because of a bug during server restart case. check out https://jira.terracotta.org/jira/browse/DEV-448 . After
+   * fixing that, one can ignore responses while in paused state.
+   */
+  public synchronized void queryLockCommit(ThreadID threadID, GlobalLockInfo globalLockInfo) {
+    lockInfoByID.put(threadID, globalLockInfo);
+    Object waitLock = pendingQueryLockRequestsByID.remove(threadID);
     if (waitLock == null) { throw new AssertionError("Query Lock request does not exist."); }
     synchronized (waitLock) {
       waitLock.notifyAll();
@@ -322,7 +309,6 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   }
 
   public synchronized void waitTimedOut(LockID lockID, ThreadID threadID) {
-    waitUntilRunning();
     notified(lockID, threadID);
   }
 
@@ -338,42 +324,45 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     }
   }
 
-  public void notified(LockID lockID, ThreadID threadID) {
-    final ClientLock myLock;
-    synchronized (this) {
-      waitUntilRunning();
-      myLock = (ClientLock) locksByID.get(lockID);
+  /*
+   * Called from a stage thread and should never be blocked
+   */
+  public synchronized void notified(LockID lockID, ThreadID threadID) {
+    if (isPaused()) {
+      logger.warn("Ignoring notified call from dead server : " + lockID + ", " + threadID);
+      return;
     }
+    final ClientLock myLock = (ClientLock) locksByID.get(lockID);
     if (myLock == null) { throw new AssertionError(lockID.toString()); }
     myLock.notified(threadID);
-
   }
 
-  public void awardLock(SessionID sessionID, LockID lockID, ThreadID threadID, int level) {
-    final ClientLock lock;
-    synchronized (this) {
-      waitUntilRunning();
-      if (!sessionManager.isCurrentSession(sessionID)) {
-        logger.warn("Ignoring lock award from a previous session:" + sessionID + ", " + sessionManager);
-        return;
-      }
-      lock = (ClientLock) locksByID.get(lockID);
+  /*
+   * XXX::This method is called from a stage thread. It operate on the lock inside the scope of the synchronization
+   * unlike other methods because, we want to decide whether to process this award or not and go with it atomically
+   */
+  public synchronized void awardLock(SessionID sessionID, LockID lockID, ThreadID threadID, int level) {
+    if (isPaused() || !sessionManager.isCurrentSession(sessionID)) {
+      logger.warn("Ignoring lock award from a dead server :" + sessionID + ", " + sessionManager + " : " + lockID + " "
+                  + threadID + " " + LockLevel.toString(level) + " state = " + state);
+      return;
     }
+    final ClientLock lock = (ClientLock) locksByID.get(lockID);
     if (lock == null) { throw new AssertionError("awardLock(): Lock not found" + lockID.toString() + " :: " + threadID
                                                  + " :: " + LockLevel.toString(level)); }
     lock.awardLock(threadID, level);
   }
 
-  public void cannotAwardLock(SessionID sessionID, LockID lockID, ThreadID threadID, int level) {
-    final ClientLock lock;
-    synchronized (this) {
-      waitUntilRunning();
-      if (!sessionManager.isCurrentSession(sessionID)) {
-        logger.warn("Ignoring lock award from a previous session:" + sessionID + ", " + sessionManager);
-        return;
-      }
-      lock = (ClientLock) locksByID.get(lockID);
+  /*
+   * XXX:: @read comment for awardLock();
+   */
+  public synchronized void cannotAwardLock(SessionID sessionID, LockID lockID, ThreadID threadID, int level) {
+    if (isPaused() || !sessionManager.isCurrentSession(sessionID)) {
+      logger.warn("Ignoring lock award from a dead server :" + sessionID + ", " + sessionManager + " : " + lockID + " "
+                  + threadID + " level = " + level + " state = " + state);
+      return;
     }
+    final ClientLock lock = (ClientLock) locksByID.get(lockID);
     if (lock == null) { throw new AssertionError("awardLock(): Lock not found" + lockID.toString() + " :: " + threadID
                                                  + " :: " + LockLevel.toString(level)); }
     lock.cannotAwardLock(threadID, level);
@@ -445,6 +434,10 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
 
   public synchronized boolean isRunning() {
     return (state == RUNNING);
+  }
+
+  public synchronized boolean isPaused() {
+    return (state == PAUSED);
   }
 
   private void assertStarting() {

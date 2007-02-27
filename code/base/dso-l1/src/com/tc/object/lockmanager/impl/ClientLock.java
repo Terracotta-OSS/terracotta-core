@@ -39,7 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimerTask;
 
-public class ClientLock implements WaitTimerCallback, LockFlushCallback {
+class ClientLock implements WaitTimerCallback, LockFlushCallback {
 
   private static final State      RUNNING                  = new State("RUNNING");
   private static final State      PAUSED                   = new State("PAUSED");
@@ -56,10 +56,10 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
   private final TCLogger          logger;
   private final Greediness        greediness               = new Greediness();
   private int                     useCount                 = 0;
-  private State                   state                    = RUNNING;
+  private volatile State          state                    = RUNNING;
   private long                    timeUsed                 = System.currentTimeMillis();
 
-  public ClientLock(TCLogger logger, LockID lockID, RemoteLockManager remoteLockManager, WaitTimer waitTimer) {
+  ClientLock(TCLogger logger, LockID lockID, RemoteLockManager remoteLockManager, WaitTimer waitTimer) {
     Assert.assertNotNull(lockID);
     this.logger = logger;
     this.lockID = lockID;
@@ -67,12 +67,12 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     this.waitTimer = waitTimer;
   }
 
-  boolean tryLock(ThreadID threadID, int type) {
+  public boolean tryLock(ThreadID threadID, int type) {
     lock(threadID, type, true);
     return isHeldBy(threadID, type);
   }
 
-  void lock(ThreadID threadID, int type) {
+  public void lock(ThreadID threadID, int type) {
     lock(threadID, type, false);
   }
 
@@ -156,7 +156,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     // debug("lock - GOT IT - ", requesterID, LockLevel.toString(type));
   }
 
-  void unlock(ThreadID threadID) {
+  public void unlock(ThreadID threadID) {
     Action action;
     boolean changed;
 
@@ -215,7 +215,8 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     return action;
   }
 
-  void wait(ThreadID threadID, WaitInvocation call, Object waitLock, WaitListener listener) throws InterruptedException {
+  public void wait(ThreadID threadID, WaitInvocation call, Object waitLock, WaitListener listener)
+      throws InterruptedException {
     Action action;
     boolean changed;
     int server_level = LockLevel.NIL_LOCK_LEVEL;
@@ -289,7 +290,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     return action;
   }
 
-  synchronized Notify notify(ThreadID threadID, boolean all) {
+  public synchronized Notify notify(ThreadID threadID, boolean all) {
     boolean isRemote;
     waitUntillRunning();
     checkValidWaitNotifyState(threadID);
@@ -336,39 +337,37 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     this.pendingLockRequests.put(threadID, pending);
   }
 
-  synchronized void notified(ThreadID threadID) {
-    waitUntillRunning();
+  /**
+   * This method is called from a stage-thread and should never block
+   */
+  public synchronized void notified(ThreadID threadID) {
     movedToPending(threadID);
   }
 
-  /*
-   * Server recalls READ or WRITE depending on what triggered the recall.
+  /**
+   * XXX:: This method is called from a stage-thread and should never block. Server recalls READ or WRITE depending on
+   * what triggered the recall.
    */
-  void recall(int interestedLevel, LockFlushCallback callback) {
-    final Action action = new Action();
-    synchronized (this) {
-      waitUntillRunning();
-      // debug("recall() - BEGIN - ", LockLevel.toString(interestedLevel));
-      if (greediness.isGreedy()) {
-        greediness.recall(interestedLevel);
-        if (canProceedWithRecall()) {
-          greediness.startRecallCommit();
-          action.addAction(Action.RECALL_COMMIT);
+  public synchronized void recall(int interestedLevel, LockFlushCallback callback) {
+    // debug("recall() - BEGIN - ", LockLevel.toString(interestedLevel));
+    if (greediness.isGreedy()) {
+      greediness.recall(interestedLevel);
+      if (canProceedWithRecall()) {
+        greediness.startRecallCommit();
+        if (isTransactionsForLockFlushed(callback)) {
+          // debug("recall() - recall commit - ", LockLevel.toString(interestedLevel));
+          recallCommit();
         }
-      }
-    }
-    if (action.doRecallCommit()) {
-      if (isTransactionsForLockFlushed(callback)) {
-        // debug("recall() - recall commit - ", LockLevel.toString(interestedLevel));
-        recallCommit();
       }
     }
   }
 
-  void cannotAwardLock(ThreadID threadID, int level) {
+  /**
+   * XXX:: This method is called from a stage-thread and should never block.
+   */
+  public void cannotAwardLock(ThreadID threadID, int level) {
     final Object waitLock;
     synchronized (this) {
-      waitUntillRunning();
       waitLock = waitLocksByRequesterID.remove(threadID);
       if (waitLock == null && !threadID.equals(ThreadID.VM_ID)) {
         // Not waiting for this lock
@@ -394,10 +393,12 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     }
   }
 
-  void awardLock(ThreadID threadID, int level) {
+  /**
+   * XXX:: This method is called from a stage-thread and should never block.
+   */
+  public void awardLock(ThreadID threadID, int level) {
     final Object waitLock;
     synchronized (this) {
-      waitUntillRunning();
       // debug("awardLock() - BEGIN - ", requesterID, LockLevel.toString(level));
       waitLock = waitLocksByRequesterID.remove(threadID);
       if (waitLock == null && !threadID.equals(ThreadID.VM_ID)) {
@@ -411,8 +412,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
         // 1) a recall is issued
         // 2) an lock upgrade is needed.
         final int nlevel = LockLevel.makeNotGreedy(level);
-        // TODO:: comeback on the method names ...
-        awardGreedy(nlevel);
+        greediness.add(nlevel);
         awardLocksGreedily();
         return;
       }
@@ -592,17 +592,15 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     recallCommit();
   }
 
-  private void recallCommit() {
-    synchronized (this) {
-      // debug("recallCommit() - BEGIN - ", "");
-      if (greediness.isRecallInProgress()) {
-        greediness.recallComplete();
-        cancelTimers();
-        remoteLockManager.recallCommit(lockID, addHoldersToAsLockRequests(new ArrayList()),
-                                       addAllWaitersTo(new ArrayList()), addAllPendingLockRequestsTo(new ArrayList()));
-      } else {
-        logger.debug(lockID + " : recallCommit() : skipping as the state is not RECALL_IN_PROGRESS !");
-      }
+  private synchronized void recallCommit() {
+    // debug("recallCommit() - BEGIN - ", "");
+    if (greediness.isRecallInProgress()) {
+      greediness.recallComplete();
+      cancelTimers();
+      remoteLockManager.recallCommit(lockID, addHoldersToAsLockRequests(new ArrayList()),
+                                     addAllWaitersTo(new ArrayList()), addAllPendingLockRequestsTo(new ArrayList()));
+    } else {
+      logger.debug(lockID + " : recallCommit() : skipping as the state is not RECALL_IN_PROGRESS !");
     }
   }
 
@@ -610,7 +608,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     remoteLockManager.flush(lockID);
   }
 
-  synchronized Collection addAllWaitersTo(Collection c) {
+  public synchronized Collection addAllWaitersTo(Collection c) {
     for (Iterator i = pendingLockRequests.values().iterator(); i.hasNext();) {
       Object o = i.next();
       if (o instanceof WaitLockRequest) {
@@ -620,7 +618,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     return c;
   }
 
-  synchronized Collection addHoldersToAsLockRequests(Collection c) {
+  public synchronized Collection addHoldersToAsLockRequests(Collection c) {
     if (greediness.isNotGreedy()) {
       for (Iterator i = holders.keySet().iterator(); i.hasNext();) {
         ThreadID threadID = (ThreadID) i.next();
@@ -636,7 +634,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     return c;
   }
 
-  synchronized Collection addAllPendingLockRequestsTo(Collection c) {
+  public synchronized Collection addAllPendingLockRequestsTo(Collection c) {
     for (Iterator i = pendingLockRequests.values().iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
       if (request instanceof WaitLockRequest) continue;
@@ -645,19 +643,19 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     return c;
   }
 
-  synchronized void incUseCount() {
+  public synchronized void incUseCount() {
     if (useCount == Integer.MAX_VALUE) { throw new AssertionError("Lock use count cannot exceed integer max value"); }
     useCount++;
     timeUsed = System.currentTimeMillis();
   }
 
-  synchronized void decUseCount() {
+  public synchronized void decUseCount() {
     if (useCount == 0) { throw new AssertionError("Lock use count is zero"); }
     useCount--;
     timeUsed = System.currentTimeMillis();
   }
 
-  synchronized int getUseCount() {
+  public synchronized int getUseCount() {
     return useCount;
   }
 
@@ -703,16 +701,6 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
       return (map.size() == 0);
     }
     return false;
-  }
-
-  /* server awarded greedy lock */
-  private synchronized void awardGreedy(int level) {
-    // debug("awardGreedy() - BEGIN - ", LockLevel.toString(level));
-    if (greediness.isReadOnly() && LockLevel.isWrite(level)) {
-      // An Updrage is awarded
-      // setGreedyUpgradeInProgress(false);
-    }
-    greediness.add(level);
   }
 
   private synchronized void award(ThreadID threadID, int level) {
@@ -817,13 +805,13 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     logger.warn("Ignoring wait timeout for : " + callbackObject);
   }
 
-  synchronized boolean isClear() {
+  public synchronized boolean isClear() {
     return (holders.isEmpty() && greediness.isNotGreedy() && (pendingLockRequests.size() == 0) && (useCount == 0));
   }
 
   // This method is synchronized such that we can quickly inspect for potential timeouts and only on possible
   // timeouts we grab the lock.
-  boolean timedout() {
+  public boolean timedout() {
     if (useCount != 0) { return false; }
     synchronized (this) {
       return (holders.isEmpty() && greediness.isGreedy() && (pendingLockRequests.size() == 0) && (useCount == 0) && ((System
@@ -831,7 +819,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     }
   }
 
-  boolean isHeldBy(ThreadID threadID) {
+  private boolean isHeldBy(ThreadID threadID) {
     synchronized (holders) {
       LockHold holder = (LockHold) holders.get(threadID);
       if (holder != null) { return holder.isHolding(); }
@@ -839,7 +827,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     }
   }
 
-  boolean isHeldBy(ThreadID threadID, int level) {
+  public boolean isHeldBy(ThreadID threadID, int level) {
     synchronized (holders) {
       LockHold holder = (LockHold) holders.get(threadID);
       if (holder != null) { return ((holder.isHolding()) && ((holder.getLevel() & level) == level)); }
@@ -847,7 +835,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     }
   }
 
-  boolean isHeld() {
+  public boolean isHeld() {
     synchronized (holders) {
       for (Iterator it = holders.values().iterator(); it.hasNext();) {
         LockHold holder = (LockHold) it.next();
@@ -857,7 +845,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     }
   }
 
-  boolean isWaiting(ThreadID threadID) {
+  private boolean isWaiting(ThreadID threadID) {
     synchronized (holders) {
       LockHold holder = (LockHold) holders.get(threadID);
       if (holder != null) { return holder.isWaiting(); }
@@ -865,7 +853,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     }
   }
 
-  int heldCount() {
+  private int heldCount() {
     int count = 0;
     synchronized (holders) {
       for (Iterator it = holders.values().iterator(); it.hasNext();) {
@@ -878,16 +866,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     return count;
   }
 
-  public int heldCount(ThreadID id) {
-    LockHold holder;
-    synchronized (holders) {
-      holder = (LockHold) holders.get(id);
-    }
-    if (holder == null) return 0;
-    else return holder.heldCount();
-  }
-
-  int heldCount(ThreadID threadID, int lockLevel) {
+  public int heldCount(ThreadID threadID, int lockLevel) {
     LockHold holder;
     synchronized (holders) {
       holder = (LockHold) holders.get(threadID);
@@ -896,7 +875,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     else return holder.heldCount(lockLevel);
   }
 
-  synchronized int queueLength() {
+  public synchronized int queueLength() {
     int count = 0;
     for (Iterator i = pendingLockRequests.values().iterator(); i.hasNext();) {
       Object o = i.next();
@@ -905,7 +884,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     return count;
   }
 
-  synchronized int waitLength() {
+  public synchronized int waitLength() {
     int count = 0;
     for (Iterator i = pendingLockRequests.values().iterator(); i.hasNext();) {
       Object o = i.next();
@@ -914,7 +893,7 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     return count;
   }
 
-  LockID getLockID() {
+  public LockID getLockID() {
     return lockID;
   }
 
@@ -936,22 +915,17 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
            + " : " + greediness;
   }
 
-  synchronized boolean isConcurrentWriteLock(ThreadID threadID) {
+  private boolean isConcurrentWriteLock(ThreadID threadID) {
     LockHold holder = (LockHold) holders.get(threadID);
     if (holder != null) { return LockLevel.isConcurrent(holder.getLevel()); }
     return false;
   }
 
-  synchronized void loseGreediness() {
-    waitUntillRunning();
-    greediness.lose();
-  }
-
-  void pause() {
+  public void pause() {
     state = PAUSED;
   }
 
-  synchronized void unpause() {
+  public synchronized void unpause() {
     state = RUNNING;
     notifyAll();
   }
@@ -1156,12 +1130,6 @@ public class ClientLock implements WaitTimerCallback, LockFlushCallback {
     void add(int l) {
       this.level |= l;
       state = GREEDY;
-    }
-
-    void lose() {
-      level = LockLevel.NIL_LOCK_LEVEL;
-      recallLevel = LockLevel.NIL_LOCK_LEVEL;
-      state = NOT_GREEDY;
     }
 
     int getLevel() {

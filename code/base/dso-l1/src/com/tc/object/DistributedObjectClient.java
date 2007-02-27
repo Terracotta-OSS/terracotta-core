@@ -246,7 +246,7 @@ public class DistributedObjectClient extends SEDA {
     stageManager.setLoggerProvider(cidLoggerProvider);
 
     Stage lockResponse = stageManager.createStage(ClientConfigurationContext.LOCK_RESPONSE_STAGE,
-                                                  new LockResponseHandler(), 1, maxSize);
+                                                  new LockResponseHandler(sessionManager), 1, maxSize);
     Stage receiveRootID = stageManager.createStage(ClientConfigurationContext.RECEIVE_ROOT_ID_STAGE,
                                                    new ReceiveRootIDHandler(), 1, maxSize);
     Stage receiveObject = stageManager.createStage(ClientConfigurationContext.RECEIVE_OBJECT_STAGE,
