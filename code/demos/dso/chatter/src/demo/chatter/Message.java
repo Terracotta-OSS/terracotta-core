@@ -1,22 +1,22 @@
 /*
-@COPYRIGHT@
-*/
+ @COPYRIGHT@
+ */
 package demo.chatter;
 
 class Message {
-   private String message;
-   private String sender;
+	private String	message;
+	private User	user;
 
-   public Message(String sender, String message) {
-      this.sender = sender;
-      this.message = message;
-   }
+	public Message(User user, String message) {
+		this.user = user;
+		this.message = message;
+	}
 
-   public String getMessage() {
-      return message;
-   }
+	public String getMessage() {
+		return message;
+	}
 
-   public String getSender() {
-      return sender;
-   }
+	public User getUser() {
+		return user;
+	}
 }
