@@ -24,6 +24,7 @@ import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.Util;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -90,14 +91,21 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
 
   public synchronized void runGC() {
     waitUntilRunning();
+    logger.info("Running Lock GC...");
+    ArrayList toGC = new ArrayList(locksByID.size());
     for (Iterator iter = locksByID.values().iterator(); iter.hasNext();) {
       ClientLock lock = (ClientLock) iter.next();
       if (lock.timedout()) {
-        logger.debug("GCing Lock " + lock);
-        recall(lock.getLockID(), ThreadID.VM_ID, LockLevel.WRITE);
+        toGC.add(lock.getLockID());
       }
     }
-
+    if (toGC.size() > 0) {
+      logger.debug("GCing " + (toGC.size() < 11 ? toGC.toString() : toGC.size() + " Locks ..."));
+      for (Iterator iter = toGC.iterator(); iter.hasNext();) {
+        LockID lockID = (LockID) iter.next();
+        recall(lockID, ThreadID.VM_ID, LockLevel.WRITE);
+      }
+    }
   }
 
   private GlobalLockInfo getLockInfo(LockID lockID, ThreadID threadID) {
