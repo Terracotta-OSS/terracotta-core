@@ -20,52 +20,61 @@ import java.lang.reflect.Array;
  */
 public class Util {
   private static final Error FATAL_ERROR = new Error(
-                                                     "Fatal error -- Please refer to console output and Terracotta log files for more information");
+  "Fatal error -- Please refer to console output and Terracotta log files for more information");
 
   public static boolean copyFile(File src, File dest) {
-      File destpath = dest;
-      if (dest.isDirectory()) {
-         destpath = new File(dest, src.getName());
+    File destpath = dest;
+    if (dest.isDirectory()) {
+      destpath = new File(dest, src.getName());
+    }
+
+    File tmpdest     = new File(destpath.getAbsolutePath() + ".tmp");
+    InputStream in   = null;  
+    OutputStream out = null;
+    FileLock lock    = null;
+    try {
+      in  = new FileInputStream(src);
+      out = new FileOutputStream(tmpdest);
+      FileChannel channel = ((FileOutputStream)out).getChannel();
+      lock = channel.lock();
+
+      byte[] buffer = new byte[4096];
+      int bytesRead;
+
+      while ((bytesRead = in.read(buffer)) >= 0) {
+        out.write(buffer, 0, bytesRead);
       }
-   
-		InputStream in   = null;  
-		OutputStream out = null;
-		FileLock lock    = null;
-		try {
-   		in  = new FileInputStream(src);
-   		out = new FileOutputStream(destpath);
-   		FileChannel channel = ((FileOutputStream)out).getChannel();
-   		lock = channel.lock();
-		
-   		byte[] buffer = new byte[4096];
-   		int bytesRead;
-		
-   		while ((bytesRead = in.read(buffer)) >= 0) {
-   			out.write(buffer, 0, bytesRead);
-   		}
-   		return true;
-	   }
-	   catch (FileNotFoundException fnfex) {
-	      System.err.println(fnfex.getMessage());
-	      return false;
-	   }
-	   catch (IOException ioex) {
-	      System.err.println(ioex.getMessage());
-	      return false;
-	   }
-	   finally {
-	      try {
-	         if (lock != null) lock.release();
-   		   if (out  != null) out.close();
-   		   if (in   != null) in.close();
-	      } catch (IOException ioex) {
-   	      System.err.println(ioex.getMessage());
-   	      ioex.printStackTrace();
-         }
-	   }
+
+      lock.release();
+      lock = null;
+
+      out.close(); 
+      out = null;
+
+      in.close();
+      in = null;
+
+      tmpdest.renameTo(dest);
+      return true;
+    } catch (FileNotFoundException fnfex) {
+      System.err.println(fnfex.getMessage());
+      return false;
+    } catch (IOException ioex) {
+      System.err.println(ioex.getMessage());
+      return false;
+    } finally {
+      try {
+        if (lock != null) lock.release();
+        if (out  != null) out.close();
+        if (in   != null) in.close();
+      } catch (IOException ioex) {
+        System.err.println(ioex.getMessage());
+        ioex.printStackTrace();
+      }
+    }
   }
-  
-  
+
+
   /**
    * Enumerates the argument, provided that it is an array, in a nice, human-readable format.
    * 
@@ -132,11 +141,10 @@ public class Util {
       }
     }
   }
-  
+
   public static void selfInterruptIfNeeded(boolean interruptFlag) {
     if (interruptFlag) {
       Thread.currentThread().interrupt();
     }
   }
-
 }
