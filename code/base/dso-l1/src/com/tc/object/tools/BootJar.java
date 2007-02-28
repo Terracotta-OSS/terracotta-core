@@ -87,6 +87,8 @@ public class BootJar {
       throw new FileNotFoundException("Cannot access file: " + bootJar.getAbsolutePath());
     }
 
+    wait(bootJar);
+    
     JarFile jarFile = new JarFile(bootJar, false);
     Manifest manifest = jarFile.getManifest();
     BootJarMetaData metaData = new BootJarMetaData(manifest);
@@ -129,6 +131,18 @@ public class BootJar {
 
   private static boolean existingFileIsAccessible(File file) {
     return file.exists() || file.isFile() || file.canRead();
+  }
+  
+  private static void wait(final File file) {
+    final File semaphore = new File(file.getAbsolutePath() + ".sem");
+    while (semaphore.exists()) {
+      try {
+        Thread.sleep(100);
+      } catch (final InterruptedException e) {
+        logger.error(e);
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   public static String classNameToFileName(String className) {

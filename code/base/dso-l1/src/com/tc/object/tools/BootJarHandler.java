@@ -7,8 +7,13 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
@@ -117,9 +122,8 @@ public class BootJarHandler {
       jarOut.close();
       jarIn.close();
       
-      if (!com.tc.util.Util.copyFile(tempFile, outputFile)) {
+      if (!copyFile(tempFile, outputFile)) 
          throw new Exception("Unable to copy boot jar file to final output location: " + outputFile.getAbsolutePath());
-      }
       
     } catch (Exception e) {
       throw new BootJarHandlerException("ERROR creating boot jar", e);
@@ -141,4 +145,61 @@ public class BootJarHandler {
     System.out.println(msg);
   }
   
+  private boolean copyFile(File src, File dest) {
+    File destpath = dest;
+    
+    if (dest.isDirectory()) {
+      destpath = new File(dest, src.getName());
+    }
+
+    File tmpdest     = new File(destpath.getAbsolutePath() + ".tmp");
+    File semaphore   = new File(destpath.getAbsolutePath() + ".sem");
+    semaphore.deleteOnExit();
+    
+    InputStream in   = null;  
+    OutputStream out = null;
+    FileLock lock    = null;
+    try {
+      out = new FileOutputStream(tmpdest);
+      FileChannel channel = ((FileOutputStream)out).getChannel();
+      lock = channel.lock();
+      in  = new FileInputStream(src);
+      semaphore.createNewFile();
+       
+      byte[] buffer = new byte[4096];
+      int bytesRead;
+
+      while ((bytesRead = in.read(buffer)) >= 0) {
+        out.write(buffer, 0, bytesRead);
+      }
+
+      in.close(); 
+      in = null;
+
+      lock.release();
+      lock = null;
+      
+      out.close(); 
+      out = null;
+
+      tmpdest.renameTo(dest);
+      return true;
+    } catch (FileNotFoundException fnfex) {
+      System.err.println(fnfex.getMessage());
+      return false;
+    } catch (IOException ioex) {
+      System.err.println(ioex.getMessage());
+      return false;
+    } finally {
+      try {
+        if (in   != null) in.close();
+        if (lock != null) lock.release();
+        if (out  != null) out.close();
+        semaphore.delete();
+      } catch (IOException ioex) {
+        System.err.println(ioex.getMessage());
+        ioex.printStackTrace();
+      }
+    }
+  }
 }
