@@ -1,2 +1,2 @@
 CATALINA_HOME=${CATALINA_HOME},/tomcat5.0
-TC_JAVA_HOME=${TC_JAVA_HOME},${JAVA_HOME},${tc.install-root}/jre
+JAVA_HOME=${JAVA_HOME},${java.home}

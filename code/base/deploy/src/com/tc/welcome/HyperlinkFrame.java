@@ -122,24 +122,10 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
 
   protected File getJavaCmd() {
     if(m_javaCmd == null) {
-      String tcJavaHome = getenv("TC_JAVA_HOME");
-      File   file;
-      
-      if(tcJavaHome != null) {
-        file = new File(tcJavaHome, "bin");
-      } else {
-        file = new File(System.getProperty("tc.install-root"), "jre");
-        file = new File(file, "bin");
-      }
-      
-      if(Os.isWindows()) {
-        file = new File(file, "java.exe");
-      } else {
-        file = new File(file, "java");
-      }
-
-      m_javaCmd = file;
+      File javaBin = new File(System.getProperty("java.home"), "bin");
+      m_javaCmd = new File(javaBin, "java" + (Os.isWindows() ? ".exe" : ""));
     }
+
     return m_javaCmd;
   }
 

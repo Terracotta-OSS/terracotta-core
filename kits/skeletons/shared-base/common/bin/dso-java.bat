@@ -6,12 +6,10 @@ rem  except as may otherwise be noted in a separate copyright notice.
 rem  All rights reserved.
 rem
 
-SETLOCAL
-SET TOPDIR=%~d0%~p0..
-IF "x%TC_INSTALL_DIR%"=="x" SET TC_INSTALL_DIR=%TOPDIR%
-CALL "%TOPDIR%\bin\tc-functions.bat" tc_install_dir "%TC_INSTALL_DIR%" TRUE
-CALL "%TOPDIR%\bin\tc-functions.bat" tc_classpath "" FALSE
-CALL "%TOPDIR%\bin\tc-functions.bat" tc_java_opts
-CALL "%TOPDIR%\bin\tc-functions.bat" tc_set_dso_boot_jar
-CALL "%TOPDIR%\bin\tc-functions.bat" tc_java "-Xbootclasspath/p:%DSO_BOOT_JAR%" "-Dtc.install-root=%TC_INSTALL_DIR%" %TC_ALL_JAVA_OPTS% %*
-ENDLOCAL
+setlocal
+set TC_INSTALL_DIR=%~d0%~p0..
+if not exist "%JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
+call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q
+set JAVA_OPTS=%TC_JAVA_OPTS% %JAVA_OPTS%
+"%JAVA_HOME%\bin\java" %JAVA_OPTS% %*
+endlocal

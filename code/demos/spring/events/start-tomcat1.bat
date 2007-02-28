@@ -6,18 +6,28 @@ rem  except as may otherwise be noted in a separate copyright notice.
 rem  All rights reserved.
 rem
 
+rem
+rem samples\spring\events
+rem
+rem Environment variables required by dso-env helper script:
+rem  JAVA_HOME: root of Java Development Kit installation
+rem  TC_INSTALL_DIR: root of Terracotta installation
+rem
+rem Arguments to dso-env helper script:
+rem  -q: do not print value of TC_JAVA_OPTS
+rem  tc-config.xml: path to DSO config file
+rem
+rem Environment variable set by dso-env helper script:
+rem  TC_JAVA_OPTS: Java options needed to activate DSO
+rem
+
 setlocal
-set topdir=%~d0%~p0..\..\..
-set catalina_home=%topdir%\vendors\tomcat5.5
-call "%topdir%\bin\dso-env.bat" -q tc-config.xml
-set java_opts=%tc_java_opts% -Dcom.sun.management.jmxremote
-set jpda_transport=dt_socket
-set jpda_address=localhost:8001
-
-set catalina_base=tomcat1
-set java_home=%tc_java_home%
- 
-start "terracotta for spring: event sample: 8081" "%catalina_home%\bin\catalina.bat" jpda run
-
-:end
+cd %~d0%~p0
+set TC_INSTALL_DIR=..\..\..
+set CATALINA_HOME=%TC_INSTALL_DIR%\vendors\tomcat5.5
+if not exist "%JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
+call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q tc-config.xml
+set JAVA_OPTS=%TC_JAVA_OPTS% %JAVA_OPTS% -Dcom.sun.management.jmxremote
+set CATALINA_BASE=tomcat1
+start "terracotta for spring: event sample: 8081" "%CATALINA_HOME%\bin\catalina.bat" run
 endlocal

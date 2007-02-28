@@ -6,16 +6,25 @@ rem  except as may otherwise be noted in a separate copyright notice.
 rem  All rights reserved.
 rem
 
+rem
+rem samples\spring\webflow
+rem
+rem Environment variables required by dso-env helper script:
+rem  JAVA_HOME: root of Java Development Kit installation
+rem  TC_INSTALL_DIR: root of Terracotta installation
+rem
+rem Arguments to dso-env helper script:
+rem  -q: do not print value of TC_JAVA_OPTS
+rem  tc-config.xml: path to DSO config file
+rem
+rem Environment variable set by dso-env helper script:
+rem  TC_JAVA_OPTS: Java options needed to activate DSO
+rem
+
 setlocal
-set local_dir=%~d0%~p0
-set topdir=%local_dir%..\..\..
-if "x%tc_install_dir%"=="x" set tc_install_dir=%topdir%
-
-call "%topdir%\bin\tc-functions.bat" tc_install_dir "%tc_install_dir%" true
-if "%exitflag%"=="true" goto end
-
-set java_home=%tc_java_home%
-start "terracotta for spring: webflow sample: load balancer" call "%topdir%\bin\tc-functions.bat" tc_java -classpath "%tc_install_dir%\lib\tc.jar" -Ddaemon=true com.tc.net.proxy.TCPProxy 8080 localhost:8081,localhost:8082,localhost:8083
-
-:end
+set TC_INSTALL_DIR=%~d0%~p0..\..\..
+if not exist "%JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
+set CLASSPATH=%TC_INSTALL_DIR%\lib\tc.jar
+set JAVA_OPTS=%JAVA_OPTS% -Dtc.install-root="%TC_INSTALL_DIR%" -Ddaemon=true
+start "loadbalancer" "%JAVA_HOME%\bin\java" %JAVA_OPTS% -cp "%CLASSPATH%" com.tc.net.proxy.TCPProxy 8080 localhost:8081,localhost:8082,localhost:8083
 endlocal

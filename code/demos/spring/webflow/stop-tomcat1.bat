@@ -7,19 +7,11 @@ rem  All rights reserved.
 rem
 
 setlocal
-set topdir=%~d0%~p0..\..\..
-
-if "x%tc_install_dir%"=="x" set tc_install_dir=%topdir%
-set catalina_home=%tc_install_dir%\vendors\tomcat5.5
-
-call "%topdir%\bin\tc-functions.bat" tc_install_dir "%tc_install_dir%" true
-if "%exitflag%"=="true" goto end
-
-set catalina_base=tomcat1
-set java_home=%tc_java_home%
-
+cd %~d0%~p0
+set TC_INSTALL_DIR=..\..\..
+set CATALINA_HOME=%TC_INSTALL_DIR%\vendors\tomcat5.5
+if not exist "%JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
+set CATALINA_BASE=tomcat1
 echo "stopping terracotta for spring: webflow sample: 8081" 
-"%catalina_home%\bin\catalina.bat" stop
-
-:end
+"%CATALINA_HOME%\bin\catalina.bat" stop
 endlocal
