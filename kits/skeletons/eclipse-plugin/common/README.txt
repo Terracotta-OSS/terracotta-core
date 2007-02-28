@@ -9,9 +9,11 @@ License Key: sales@terracottatech.com or +1 415-738-4000
 Installation
 ------------
 
-From the "eclipse" directory, copy the "com.terracotta.dso_2.3"
-directory and its contents into the Eclipse "plugins" directory.
-Restart Eclipse.
+From the "eclipse/update/plugins" directory, copy the 
+"org.terracotta.dso_2.3.0.jar" file into the Eclipse "plugins" 
+directory.
+
+You'll have to restart Eclipse.
 
 Terracotta DSO Eclipse Plug-in requires Ecplise 3.2 on Java 5.
 
