@@ -59,7 +59,9 @@ public class DistributedEventsLoadTest extends AbstractDeploymentTest {
         server.addWarDeployment(deployment, CONTEXT);
         server.start();
         servers.add(server);
-        eventManagers.add(server.getProxy(EventManager.class, REMOTE_SERVICE_NAME));
+        EventManager em = (EventManager) server.getProxy(EventManager.class, REMOTE_SERVICE_NAME);
+        em.size();
+        eventManagers.add(em);
       }
   
       debugPrintln("publishDistributedEvents():  num_iteration per node = " + NUM_ITERATION);
