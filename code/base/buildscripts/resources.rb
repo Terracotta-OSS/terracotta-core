@@ -45,7 +45,23 @@ check
     Runs all tests
 
 check_prep <module> <type>
-    Prepare to run tests from an external tool (eg: Eclipse)
+    Prepare to run tests from an external tool (e.g. Eclipse).
+    <module> may be the name of a module as specified in modules.def.yml, or
+    it may be the keyword 'all'.
+    <type> may be either 'unit', 'system', or 'all'.
+    Both <module> and <type> default to 'all', so simply running check_prep
+    with no arguments will prepare all test subtrees in all modules.
+
+    Examples:
+
+      Prepare all subtress in all modules:
+          tcbuild check_prep
+
+      Prepare unit and system tests in common module:
+          tcbuild check_prep common
+
+      Prepare unit tests for all modules, but not system tests:
+          tcbuild check_prep all unit
 
 check_file <file>
     Runs set of tests specified in <file>.  Each line of the <file>
@@ -74,10 +90,10 @@ PACKAGING & DISTRIBUTION
 
 dist <product_code> <distribution_type>
     Assembles the kit. It takes 2 arguments: <product_code> <distribution_type> It
-    uses these values to locate the appropriate kit definition file used to build the 
-    kit. By default, <product_code> is DSO and <distribution_type> is OPENSOURCE - 
-    so it looks for the kit definition file named 'dso-opensource.def.yml' in 
-    the code/base/buildconfig/distribution - if you want to know what values are 
+    uses these values to locate the appropriate kit definition file used to build the
+    kit. By default, <product_code> is DSO and <distribution_type> is OPENSOURCE -
+    so it looks for the kit definition file named 'dso-opensource.def.yml' in
+    the code/base/buildconfig/distribution - if you want to know what values are
     appropriate for these arguments, list the contents of this directory.
 
 create_package <product_code> <distribution_type>
@@ -85,7 +101,7 @@ create_package <product_code> <distribution_type>
 
 create_all_packages
     Assembles, packages, and publishes all possible kits, based on the
-    configuration files found under the code/base/buildconfig/distribution 
+    configuration files found under the code/base/buildconfig/distribution
     directory.
 
 dist_jars <product_code> <distribution_type>

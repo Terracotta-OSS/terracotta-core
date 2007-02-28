@@ -309,13 +309,31 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   end
 
   # Prepares to run tests in an external tool (i.e., Eclipse).
-  def check_prep(module_name, test_type)
+  def check_prep(module_name = 'all', test_type = 'all')
     depends :init, :compile
-    test_set = FixedModuleTypeTestSet.new([ module_name ], [ test_type ])
-    if test_set.validate(@module_set, @script_results)
-      results_dir = FilePath.new(@build_results.build_dir, "externally-run-tests").delete.ensure_directory
-      prepare_and_run_block_on_tests(test_set,
-                                     TestRunResults.new(results_dir), Proc.new { |testrun| testrun.prepare_for_external_run })
+    if module_name.downcase == 'all'
+      @module_set.each do |mod|
+        check_prep(mod.name, test_type)
+      end
+    else
+      if test_type.downcase == 'all'
+        %w(unit system).each do |type|
+          check_prep(module_name, type)
+        end
+      else
+        mod = @module_set[module_name]
+        if mod.has_subtree?("tests.#{test_type}")
+          test_set = FixedModuleTypeTestSet.new([module_name], [test_type])
+          if test_set.validate(@module_set, @script_results)
+            results_dir = FilePath.new(@build_results.build_dir,
+                                      "externally-run-tests")
+            results_dir = results_dir.delete.ensure_directory
+            test_proc = Proc.new { |testrun| testrun.prepare_for_external_run }
+            prepare_and_run_block_on_tests(test_set,
+                TestRunResults.new(results_dir), test_proc)
+          end
+        end
+      end
     end
   end
 

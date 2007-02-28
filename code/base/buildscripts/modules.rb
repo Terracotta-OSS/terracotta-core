@@ -206,6 +206,11 @@ class BuildModule
         raise "Unknown subtree '#{name}'" if out.nil?
         out
     end
+
+    # Returns true if this module has a subtree with the specified name.
+    def has_subtree?(name)
+      File.directory?(FilePath.new(@root, name).to_s)
+    end
 end
 
 # Maintains a set of BuildModule objects. This is little more than an array, but lets
