@@ -44,15 +44,19 @@ class Environment
         key = [ nice, extended ]
         
         if @os_types[key].nil?
-            if @platform.get_env("OS") =~ /windows/i
-                os_type = "Windows"
-            else
-                os_type = @platform.exec("uname", "-s").strip if @os_type.nil?
-                os_type = "Windows" if (nice == :nice) && (/CYGWIN/ =~ os_type)
-                os_type = "OSX"     if (nice == :nice) && (/Darwin/ =~ os_type)
-                os_type = "Solaris" if (nice == :nice) && (/SunOS/  =~ os_type)
+            begin            
+              if @platform.get_env("OS") =~ /windows/i                
+                  os_type = "Windows"                
+              else
+                  os_type = @platform.exec("uname", "-s").strip if @os_type.nil?
+                  os_type = "Windows" if (nice == :nice) && (/CYGWIN/ =~ os_type)
+                  os_type = "OSX"     if (nice == :nice) && (/Darwin/ =~ os_type)
+                  os_type = "Solaris" if (nice == :nice) && (/SunOS/  =~ os_type)
+              end
+            rescue
+              os_type = "Windows"
             end
-
+            
             os_type.chomp!
 
             if os_type =~ /linux/i && extended == :extended
