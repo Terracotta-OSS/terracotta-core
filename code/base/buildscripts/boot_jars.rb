@@ -77,15 +77,16 @@ class BootJar
   # a given instance of this object, so you don't have to worry about repeating work.
   def ensure_created
     unless @created
-      puts("Creating boot JAR with #{@jvm}")
+      classpath = @module_set['dso-tests-jdk15'].subtree('src').classpath(@build_results, :full, :runtime)
+      puts("Creating boot JAR with: #{@jvm}; using classpath: #{classpath}")
+      
       File.delete(path.to_s) if FileTest.exist?(path.to_s)
-
       sysproperties = {
         PropertyNames::TC_BASE_DIR => @static_resources.root_dir.to_s,
         PropertyNames::PLUGINS_URL => @build_results.plugins_home.to_url
       }
       @ant.java(:classname   => 'com.tc.object.tools.BootJarTool',
-                :classpath   => @module_set['dso-tests-jdk15'].subtree('src').classpath(@build_results, :full, :runtime).to_s,
+                :classpath   => classpath.to_s,
                 :jvm         => @jvm.java,
                 :fork        => true,
                 :failonerror => true,
