@@ -396,9 +396,11 @@ class SubtreeTestRun
         end
 
         # Grep for current java processes for debugging
-        path = File.join(@cwd.to_s, "javaprocesses.txt")
-        File.open(path, "w") do |file|
+        if @config_source['monkey-name']
+          path = File.join(@cwd.to_s, "javaprocesses.txt")
+          File.open(path, "w") do |file|
             file << ps_grep_java
+          end
         end
 
         puts "Done."
