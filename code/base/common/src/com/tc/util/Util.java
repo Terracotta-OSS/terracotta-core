@@ -24,6 +24,7 @@ public class Util {
 
   public static boolean copyFile(File src, File dest) {
     File destpath = dest;
+    
     if (dest.isDirectory()) {
       destpath = new File(dest, src.getName());
     }
@@ -47,14 +48,15 @@ public class Util {
 
       lock.release();
       lock = null;
-
+      
       out.close(); 
       out = null;
 
-      in.close();
+      in.close(); 
       in = null;
-
+      
       tmpdest.renameTo(dest);
+
       return true;
     } catch (FileNotFoundException fnfex) {
       System.err.println(fnfex.getMessage());

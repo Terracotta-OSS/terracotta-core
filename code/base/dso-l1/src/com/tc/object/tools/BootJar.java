@@ -3,6 +3,8 @@
  */
 package com.tc.object.tools;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.NotInBootJar;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
@@ -25,6 +27,8 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 public class BootJar {
+  private static final TCLogger logger = TCLogging.getLogger(BootJar.class);
+  
   private static final String   DSO_BOOT_JAR_PATTERN = ".+dso-boot.*\\.jar$";
   static final String           JAR_NAME_PREFIX      = "dso-boot-";
 
@@ -279,7 +283,7 @@ public class BootJar {
  
       version = attributes.getValue(VERSION);
       if (version == null) 
-        throw new InvalidBootJarMetaDataException("Missing metadata version");
+        throw new InvalidBootJarMetaDataException("Missing metadata: version");
 
       String expect_version = VERSION_1_1;
       if (expect_version.equals(version)) {
@@ -287,25 +291,30 @@ public class BootJar {
         if (vmSignature == null) 
           throw new InvalidJVMVersionException("Missing vm signature");
       } else {
-        throw new InvalidBootJarMetaDataException("Incompatible DSO meta data version; expected " + expect_version
-                                                  + " but was (in boot jar): " + version
-                                                  + ". Please regenerate the DSO boot jar");
+        throw new InvalidBootJarMetaDataException("Incompatible DSO meta data: version; expected '" + expect_version
+                                                  + "' but was (in boot jar): '" + version
+                                                  + "'; please regenerate the DSO boot jar");
       }
 
       tcversion = attributes.getValue(TC_VERSION);
       if (tcversion == null) 
-        throw new InvalidBootJarMetaDataException("Missing metadata tcversion");
+        throw new InvalidBootJarMetaDataException("Missing metadata: tcversion");
       
       tcmoniker = attributes.getValue(TC_MONIKER);
       if (tcmoniker == null)
-        throw new InvalidBootJarMetaDataException("Missing metadata tcmoniker");
+        throw new InvalidBootJarMetaDataException("Missing metadata: tcmoniker");
 
       ProductInfo productInfo = ProductInfo.getThisProductInfo();
       String expect_tcversion = productInfo.rawVersion();
-      if (!expect_tcversion.equals(tcversion) && !expect_tcversion.equals("[unknown]")) 
-        throw new InvalidBootJarMetaDataException("Incompatible DSO meta data tcversion; expected " + expect_tcversion
-                                                  + " but was (in boot jar): " + tcversion
-                                                  + ". Please regenerate the DSO boot jar");
+      
+      if (ProductInfo.isUnknown(expect_tcversion))
+        logger.warn("The value for the DSO meta data, tcversion is: '" + expect_tcversion + 
+                    "'; this might not be correct, this value is used only when tests are being run.");
+      
+      if (!ProductInfo.isUnknown(expect_tcversion) && !expect_tcversion.equals(tcversion)) 
+        throw new InvalidBootJarMetaDataException("Incompatible DSO meta data: tcversion; expected '" + expect_tcversion
+                                                  + "' but was (in boot jar): '" + tcversion
+                                                  + "'; please regenerate the DSO boot jar");
     }
 
     public void write(Manifest manifest) {

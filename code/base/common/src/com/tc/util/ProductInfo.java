@@ -116,6 +116,10 @@ public final class ProductInfo {
 
     return thisProductInfo;
   }
+  
+  public static boolean isUnknown(String value) {
+    return value.equals(UNKNOWN_VALUE);
+  }
 
   public String moniker() {
     return this.moniker;
@@ -133,7 +137,7 @@ public final class ProductInfo {
     if (this.timestamp == null) return UNKNOWN_VALUE;
     else return DATE_FORMAT.format(this.timestamp);
   }
-
+  
   public String buildHost() {
     return this.host;
   }
