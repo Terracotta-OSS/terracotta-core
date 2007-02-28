@@ -22,7 +22,7 @@ class Environment
             @hostname = @platform.exec("hostname") if @hostname.blank?
             @hostname = @hostname.gsub(/\.terracotta\.lan/, '').strip
         end
-        
+
         @hostname
     end
 
@@ -42,11 +42,11 @@ class Environment
         # often enough in some cases that this actually becomes a very significant bottleneck
         # if we don't cache it.
         key = [ nice, extended ]
-        
+
         if @os_types[key].nil?
-            begin            
-              if @platform.get_env("OS") =~ /windows/i                
-                  os_type = "Windows"                
+            begin
+              if @platform.get_env("OS") =~ /windows/i
+                  os_type = "Windows"
               else
                   os_type = @platform.exec("uname", "-s").strip if @os_type.nil?
                   os_type = "Windows" if (nice == :nice) && (/CYGWIN/ =~ os_type)
@@ -56,13 +56,13 @@ class Environment
             rescue
               os_type = "Windows"
             end
-            
+
             os_type.chomp!
 
             if os_type =~ /linux/i && extended == :extended
                 os_type = linux_type
             end
-            
+
             @os_types[key] = os_type
         end
 
@@ -103,7 +103,7 @@ class Environment
         when /Linux/i then linux_type
         else type
         end
-        
+
         # Grab the Solaris version; turns '5.9' into '9', for example. (Solaris has a really
         # bizarre numbering scheme.)
         #
@@ -113,10 +113,10 @@ class Environment
                 @solaris_version = @platform.exec("uname", "-r").strip
                 @solaris_version = $2 if @solaris_version =~ /^\s*(\d+)\s*\.\s*(\d+)\s*$/i
             end
-            
+
             type += @solaris_version
         end
-        
+
         # Grab the OS X version by looking at the Darwin kernel version.
         #
         # FIXME: This should include minor version, too (e.g., 10.4.7).
@@ -130,10 +130,10 @@ class Environment
                     @osx_version = '-unknown-%s' % @osx_version
                 end
             end
-            
+
             type += @osx_version
         end
-        
+
         # Grab the Windows version by looking at the Cygwin version.
         #
         # FIXME: This should include service pack, too (e.g., win2k3-sp2).
@@ -142,8 +142,14 @@ class Environment
                 begin
                     #@windows_version = @platform.exec("uname", "-s").strip
                     @windows_version = `uname -s`.strip
+                    unless $? == 0
+                      raise("This exception will be caught directly below")
+                    end
                 rescue
                     @windows_version = `ver`.strip
+                    unless $? == 0
+                      raise("Couldn't get Windows version information")
+                    end
                 end
                 if @windows_version =~ /CYGWIN_NT-(\d+)\.(\d+)/i
                    @windows_version = case $2.to_i
@@ -157,7 +163,7 @@ class Environment
                    @windows_version = 'windows-unknown-%s' % @windows_version
                 end
             end
-            
+
             type = @windows_version
         end
 
@@ -174,7 +180,7 @@ class Environment
                 @processor_type = @platform.exec("uname", (os_type(:nice) =~ /Windows/ ? '-m' : '-p')).strip
             end
         end
-        
+
         @processor_type
     end
 
@@ -204,7 +210,7 @@ class Environment
                     out += "-update-%s" % $1 if text =~ /update\s+(\d+)/i
                 end
             end
-            
+
             @redhat_linux_type = out
         end
 
@@ -224,7 +230,7 @@ class Environment
                     out += "%s" % $1 if text =~ /^[^\d]+(\d+)/i
                 end
             end
-            
+
             @suse_linux_type = out
         end
 
@@ -238,7 +244,7 @@ class Environment
             version = "unknown" if version.blank?
             @unknown_linux_type = "unknown-linux-%s" % version
         end
-        
+
         @unknown_linux_type
     end
 end
