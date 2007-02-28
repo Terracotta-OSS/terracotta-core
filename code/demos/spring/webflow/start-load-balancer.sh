@@ -6,8 +6,9 @@
 #  All rights reserved.
 #
 
-TOPDIR=`dirname "$0"`/../../..
-. "${TOPDIR}"/bin/tc-functions.sh
+TC_INSTALL_DIR=`dirname "$0"`/../../..
 
-tc_install_dir "${TOPDIR}" true
-tc_java -classpath "${TC_INSTALL_DIR}/lib/tc.jar" -Ddaemon=true com.tc.net.proxy.TCPProxy 8080 localhost:8081,localhost:8082,localhost:8083
+exec "${JAVA_HOME}/bin/java" ${JAVA_OPTS} \
+  -Dtc.install-root="${TC_INSTALL_DIR}" -Ddaemon=true \
+  -cp "${TC_INSTALL_DIR}/lib/tc.jar" \
+   com.tc.net.proxy.TCPProxy 8080 localhost:8081,localhost:8082,localhost:8083

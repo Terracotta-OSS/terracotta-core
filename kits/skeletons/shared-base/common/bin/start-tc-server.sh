@@ -6,12 +6,15 @@
 #  All rights reserved.
 #
 
-TOPDIR=`dirname "$0"`/..
-. "${TOPDIR}"/bin/tc-functions.sh
+if test \! -d "${JAVA_HOME}"; then
+  echo "$0: the JAVA_HOME environment variable is not defined correctly"
+  exit 2
+fi
 
-tc_install_dir "${TOPDIR}"
-tc_classpath "" true
-tc_java_opts "-server -Xms256m -Xmx256m -Dcom.sun.management.jmxremote"
+TC_INSTALL_DIR=`dirname "$0"`/..
 
-tc_java -classpath "${TC_CLASSPATH}" -Dtc.install-root="${TC_INSTALL_DIR}" ${TC_ALL_JAVA_OPTS} com.tc.server.TCServerMain "$@"
-~
+exec "${JAVA_HOME}/bin/java" ${JAVA_OPTS} \
+  -server -Xms256m -Xmx256m -Dcom.sun.management.jmxremote \
+  -Dtc.install-root="${TC_INSTALL_DIR}" \
+  -cp "${TC_INSTALL_DIR}/lib/tc.jar" \
+  com.tc.server.TCServerMain "$@"

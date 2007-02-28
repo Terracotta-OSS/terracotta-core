@@ -6,10 +6,27 @@
 #  All rights reserved.
 #
 
-TOPDIR=`dirname "$0"`/../../..
-. "${TOPDIR}"/bin/tc-functions.sh
+#
+# samples/pojos/sharedqueue
+#
+# Environment variables required by dso-env script:
+#  TC_INSTALL_DIR: root of Terracotta installation
+#  TC_CONFIG_PATH: location of DSO config file
+#
+# Environment variable set by dso-env script:
+#  TC_JAVA_OPTS: Java options needed to activate DSO
+#
 
-TC_CONFIG_PATH="tc-config.xml"
-. "${TOPDIR}"/bin/dso-env.sh
+CWD=`dirname "$0"`
+TC_INSTALL_DIR=${CWD}/../../..
 
-tc_java ${TC_JAVA_OPTS} -Dcom.sun.management.jmxremote -cp "classes:lib/org.mortbay.jetty-4.2.20.jar:lib/javax.servlet.jar" demo.sharedqueue.Main "$@"
+TC_CONFIG_PATH="${CWD}/tc-config.xml"
+. "${TC_INSTALL_DIR}/bin/dso-env.sh" -q
+
+CLASSPATH="${CWD}/classes"
+CLASSPATH="${CLASSPATH}:${CWD}/lib/org.mortbay.jetty-4.2.20.jar"
+CLASSPATH="${CLASSPATH}:${CWD}/lib/javax.servlet.jar"
+
+exec "${JAVA_HOME}/bin/java" ${JAVA_OPTS} ${JAVA_OPTS} \
+  -Dcom.sun.management.jmxremote \
+  -cp "${CLASSPATH}" demo.sharedqueue.Main "$@"

@@ -12,10 +12,14 @@
 
 	<target name="init">
 		<mkdir dir="${build.dir}"/>
+                <mkdir dir="${build.dir}/images"/>
 	</target>
 
 	<target name="build" depends="init" description="build the source ">
 		<javac target="1.4" source="1.4" srcdir="${src}" destdir="${build.dir}"/>
+                <copy todir="${build.dir}/images">
+                  <fileset dir="images"/>
+                </copy>
 	</target>
 
 	<target name="clean" description="clean up">

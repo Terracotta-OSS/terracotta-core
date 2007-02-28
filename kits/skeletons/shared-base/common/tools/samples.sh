@@ -6,11 +6,15 @@
 #  All rights reserved.
 #
 
-TOPDIR=`dirname $0`/..
-. ${TOPDIR}/bin/tc-functions.sh
+if test \! -d "${JAVA_HOME}"; then
+  echo "$0: the JAVA_HOME environment variable is not defined correctly"
+  exit 2
+fi
 
-tc_install_dir ${TOPDIR}
-tc_classpath "" true
-tc_java_opts "-Dtc.install-root=${TC_INSTALL_DIR} -Djava.awt.Window.locationByPlatform=true"
+TC_INSTALL_DIR=`dirname "$0"`/..
 
-tc_java -classpath "${TC_CLASSPATH}" ${TC_ALL_JAVA_OPTS} com.tc.welcome.DSOSamplesFrame "$@"
+exec "${JAVA_HOME}/bin/java" ${JAVA_OPTS} \
+  -Dtc.install-root=${TC_INSTALL_DIR}" \
+  -Djava.awt.Window.locationByPlatform=true \
+  -cp ${TC_INSTALL_DIR}/lib/tc.jar \
+   com.tc.welcome.DSOSamplesFrame "$@"

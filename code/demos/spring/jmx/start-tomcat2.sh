@@ -6,11 +6,11 @@
 #  All rights reserved.
 #
 
-TOPDIR=`dirname "$0"`/../../..
-. "${TOPDIR}"/bin/tc-functions.sh
+CWD=`dirname "$0"`
+TC_INSTALL_DIR=${CWD}/../../..
 
-TC_CONFIG_PATH="tc-config.xml"
-. "${TOPDIR}"/bin/dso-env.sh
+TC_CONFIG_PATH="${CWD}/tc-config.xml"
+. "${TC_INSTALL_DIR}/bin/dso-env.sh" -q
 
 JAVA_OPTS="${TC_JAVA_OPTS} -Dcom.sun.management.jmxremote"
 JAVA_OPTS="${JAVA_OPTS} -Dcom.sun.management.jmxremote.port=8092"
@@ -18,10 +18,9 @@ JAVA_OPTS="${JAVA_OPTS} -Dcom.sun.management.jmxremote.authenticate=false"
 JAVA_OPTS="${JAVA_OPTS} -Dcom.sun.management.jmxremote.ssl=false"
 export JAVA_OPTS
 
-JAVA_HOME="${TC_JAVA_HOME:-${TOPDIR}/jre}"
-CATALINA_HOME="${TOPDIR}/vendors/tomcat5.5"
+CATALINA_HOME="${TC_INSTALL_DIR}/vendors/tomcat5.5"
 CATALINA_BASE="tomcat2"
-export JAVA_HOME CATALINA_HOME CATALINA_BASE
+export CATALINA_HOME CATALINA_BASE
 
 mkdir -p "${CATALINA_BASE}/logs" "${CATALINA_BASE}/temp"
 exec "${CATALINA_HOME}/bin/catalina.sh" run

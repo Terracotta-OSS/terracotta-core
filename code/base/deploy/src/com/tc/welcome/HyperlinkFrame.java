@@ -142,7 +142,7 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
     }
     return m_javaCmd;
   }
-  
+
   protected File getTCLib() {
     if(m_tcLib == null) {
       File file = new File(System.getProperty("tc.install-root"));

@@ -13,6 +13,7 @@ import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.awt.Rectangle;
 import java.lang.reflect.Method;
+import java.net.URL;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
@@ -44,56 +45,56 @@ public final class Dashboard
 
 		ButtonGroup bg   = new ButtonGroup();
 		JToggleButton b1 = new JToggleButton(new SetDrawToolAction("Selector"));
-		b1.setIcon(new ImageIcon("images/selector.gif"));
+		b1.setIcon(new ImageIcon(getResource("/images/selector.gif")));
 		b1.setToolTipText("Select shapes");
 		bg.add(b1);
 		add(b1);
 
 		JButton b0 = new JButton();
 		b0.setEnabled(false);
-		b0.setIcon(new ImageIcon("images/placeholder.gif"));
+		b0.setIcon(new ImageIcon(getResource("/images/placeholder.gif")));
 		setWithSolidColorIcon(b0, Color.LIGHT_GRAY);
 
 		b1 = new JToggleButton(new SetDrawToolAction("Line"));
-		b1.setIcon(new ImageIcon("images/line.gif"));
+		b1.setIcon(new ImageIcon(getResource("/images/line.gif")));
 		b1.setToolTipText("Draw lines");
 		bg.add(b1);
 		add(b1);
 
 		b1 = new JToggleButton(new SetDrawToolAction("Square", IFillStyleConsts.FILLSTYLE_TRANSPARENT));
-		b1.setIcon(new ImageIcon("images/square.gif"));
+		b1.setIcon(new ImageIcon(getResource("/images/square.gif")));
 		b1.setToolTipText("Draw transparent squares and rectangular shapes");
 		bg.add(b1);
 		add(b1);
 
 		b1 = new JToggleButton(new SetDrawToolAction("Square", IFillStyleConsts.FILLSTYLE_SOLID));
-		b1.setIcon(new ImageIcon("images/filledsquare.gif"));
+		b1.setIcon(new ImageIcon(getResource("/images/filledsquare.gif")));
 		b1.setToolTipText("Draw solid squares and rectangular shapes");
 		bg.add(b1);
 		add(b1);
 
 		b1 = new JToggleButton(new SetDrawToolAction("Circle", IFillStyleConsts.FILLSTYLE_TRANSPARENT));
-		b1.setIcon(new ImageIcon("images/circle.gif"));
+		b1.setIcon(new ImageIcon(getResource("/images/circle.gif")));
 		b1.setToolTipText("Draw transparent circles and oval shapes");
 		bg.add(b1);
 		add(b1);
 
 		b1 = new JToggleButton(new SetDrawToolAction("Circle", IFillStyleConsts.FILLSTYLE_SOLID));
-		b1.setIcon(new ImageIcon("images/filledcircle.gif"));
+		b1.setIcon(new ImageIcon(getResource("/images/filledcircle.gif")));
 		b1.setToolTipText("Draw solid circles and oval shapes");
 		bg.add(b1);
 		add(b1);
 
 		b1 = new JToggleButton(new SetDrawToolAction("Text"));
-		b1.setIcon(new ImageIcon("images/text.gif"));
+		b1.setIcon(new ImageIcon(getResource("/images/text.gif")));
 		b1.setToolTipText("Render text as images");
 		add(b1);
 		bg.add(b1);
 
 		b1 = new JToggleButton(new SetDrawToolAction("Image", IFillStyleConsts.FILLSTYLE_TEXTURED));
 		textureToolButton = b1;
-		b1.setIcon(new ImageIcon("images/placeholder.gif"));
-		setWithImageIcon(b1, "images/warrior.jpg");
+		b1.setIcon(new ImageIcon(getResource("/images/placeholder.gif")));
+		setWithImageIcon(b1, new ImageIcon(getResource("/images/warrior.jpg")));
 		b1.setToolTipText("Paint with images");
 		add(b1);
 		bg.add(b1);
@@ -102,21 +103,21 @@ public final class Dashboard
 		add(new JToolBar.Separator());
 
 		JButton b2 = new JButton(new SetColorAction("Foreground", Color.DARK_GRAY));
-		b2.setIcon(new ImageIcon("images/placeholder.gif"));
+		b2.setIcon(new ImageIcon(getResource("/images/placeholder.gif")));
 		b2.setToolTipText("Select line color");
 		setWithSolidColorIcon(b2, Color.DARK_GRAY);
 		add(b2);
 
 		b2 = new JButton(new SetColorAction("Background", Color.LIGHT_GRAY));
-		b2.setIcon(new ImageIcon("images/placeholder.gif"));
+		b2.setIcon(new ImageIcon(getResource("/images/placeholder.gif")));
 		b2.setToolTipText("Select fill color");
 		setWithSolidColorIcon(b2, Color.LIGHT_GRAY);
 		add(b2);
 
 		b2 = new JButton(new SetTextureAction());
 		this.textureSelectButton = b2;
-		b2.setIcon(new ImageIcon("images/placeholder.gif"));
-		setWithImageIcon(b2, "images/warrior.jpg");
+		b2.setIcon(new ImageIcon(getResource("/images/placeholder.gif")));
+		setWithImageIcon(b2, new ImageIcon(getResource("/images/warrior.jpg")));
 		b2.setToolTipText("Select the image to use when painting with images");
 		b2.setEnabled(false);
 		add(b2);
@@ -127,7 +128,7 @@ public final class Dashboard
 		dispatcher.setFillStyle(IFillStyleConsts.FILLSTYLE_SOLID);
 		dispatcher.setForeground(Color.DARK_GRAY);
 		dispatcher.setBackground(Color.LIGHT_GRAY);
-		dispatcher.setTexture(new ImageIcon("images/warrior.jpg").getImage());
+		dispatcher.setTexture(new ImageIcon(getResource("/images/warrior.jpg")).getImage());
 		dispatcher.setFontName("Courier New");
 		dispatcher.setFontSize(24);
 		dispatcher.setDrawTool("Line");
@@ -150,9 +151,12 @@ public final class Dashboard
 		b.setIcon(new ImageIcon(icon));
 	}
 
-	private void setWithImageIcon(AbstractButton b, String iconfilename)
+        private URL getResource(String path) {
+          return getClass().getResource(path);
+        }
+
+	private void setWithImageIcon(AbstractButton b, ImageIcon icon)
 	{
-		ImageIcon icon = new ImageIcon(iconfilename);
 		dispatcher.setTexture(icon.getImage());
 		int w = b.getIcon().getIconWidth();
 		int h = b.getIcon().getIconHeight();
@@ -246,8 +250,8 @@ public final class Dashboard
 			if (JFileChooser.APPROVE_OPTION == jc.showOpenDialog(Dashboard.this))
 			{
 			   String imagefile = jc.getSelectedFile().getAbsolutePath();
-				Dashboard.this.setWithImageIcon((AbstractButton) e.getSource(), imagefile);
-				Dashboard.this.setWithImageIcon((AbstractButton) textureToolButton, imagefile);
+				Dashboard.this.setWithImageIcon((AbstractButton) e.getSource(), new ImageIcon(imagefile));
+				Dashboard.this.setWithImageIcon((AbstractButton) textureToolButton, new ImageIcon(imagefile));
 			}
 		}
 		

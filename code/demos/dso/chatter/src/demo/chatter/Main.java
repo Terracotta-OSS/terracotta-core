@@ -63,8 +63,9 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 		input.addActionListener(this);
 		JScrollPane scroll = new JScrollPane(display);
 		Random r = new Random();
-		JLabel buddy = new JLabel(user.getName(), new ImageIcon("images/buddy"
-				+ r.nextInt(10) + ".gif"), JLabel.LEFT);
+		JLabel buddy = new JLabel(user.getName(),
+					  new ImageIcon(getClass().getResource("/images/buddy" + r.nextInt(10) + ".gif")),
+					  JLabel.LEFT);
 		buddy.setFont(new Font("Lucida Sans Typewriter", Font.PLAIN, 16));
 		buddy.setVerticalTextPosition(JLabel.CENTER);
 		JPanel buddypanel = new JPanel();

@@ -63,7 +63,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     cp.setLayout(new BorderLayout());
 
     m_textPane = new TextPane();
-    cp.add(m_textPane);
+    cp.add(new ScrollPane(m_textPane));
     m_textPane.setEditable(false);
     m_textPane.addHyperlinkListener(this);
     m_textPane.addPropertyChangeListener("page", this);
@@ -157,7 +157,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
   }
 
   private void createBootJar() {
-    String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.install-root=" + System.getProperty("tc.install-root"),
+    String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
         "-cp", getTCLib().getAbsolutePath(), "com.tc.object.tools.BootJarTool" };
 
     final Process p = exec(cmdarray, null, getSamplesDir());
@@ -183,7 +183,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
 
   private void internalRunServer() {
     String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.config=tc-config.xml",
-        "-Dtc.install-root=" + System.getProperty("tc.install-root"), "-cp", getTCLib().getAbsolutePath(),
+        "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(), "-cp", getTCLib().getAbsolutePath(),
         "com.tc.server.TCServerMain" };
 
     Process p = exec(cmdarray, null, getSamplesDir());
@@ -199,7 +199,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     try {
       String bootPath = getBootPath();
       String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.config=tc-config.xml",
-          "-Djava.awt.Window.locationByPlatform=true", "-Dtc.install-root=" + System.getProperty("tc.install-root"),
+          "-Djava.awt.Window.locationByPlatform=true", "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
           "-Xbootclasspath/p:" + bootPath, "-cp", "classes", className };
 
       Process p = exec(cmdarray, null, new File(getProductDirectory(), dirName));
@@ -225,7 +225,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
       File oswego = new File(lib, "concurrent-1.3.4.jar");
       String classpath = "classes" + System.getProperty("path.separator") + oswego.getAbsolutePath();
       String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.config=tc-config.xml",
-          "-Djava.awt.Window.locationByPlatform=true", "-Dtc.install-root=" + System.getProperty("tc.install-root"),
+          "-Djava.awt.Window.locationByPlatform=true", "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
           "-Xbootclasspath/p:" + bootPath, "-cp", classpath, "demo.coordination.Main" };
 
       final Process p = exec(cmdarray, null, dir);
@@ -268,7 +268,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
       String pathSep = System.getProperty("path.separator");
       String classpath = "classes" + pathSep + servlet.getAbsolutePath() + pathSep + jetty;
       String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.config=tc-config.xml",
-          "-Djava.awt.Window.locationByPlatform=true", "-Dtc.install-root=" + System.getProperty("tc.install-root"),
+          "-Djava.awt.Window.locationByPlatform=true", "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
           "-Xbootclasspath/p:" + bootPath, "-cp", classpath, "demo.sharedqueue.Main" };
 
       final Process p = exec(cmdarray, null, dir);

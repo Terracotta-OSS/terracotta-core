@@ -14,9 +14,7 @@ cd "`dirname $0`/.."
 SANDBOX="`pwd`"
 TC_INSTALL_DIR="${SANDBOX}/../../.."
 
-JAVA_HOME="${TC_JAVA_HOME:-${TC_INSTALL_DIR}/jre}"
 WL_HOME="${BEA_HOME}/weblogic81"
-
 PRODUCTION_MODE=
 JAVA_VENDOR="Sun"
 export PRODUCTION_MODE JAVA_VENDOR

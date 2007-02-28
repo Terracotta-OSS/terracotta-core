@@ -140,7 +140,8 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
 
     try {
       String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.config=tc-config.xml",
-          "-Dtc.install-root=" + System.getProperty("tc.install-root"), "-cp", getTCLib().getAbsolutePath(),
+          "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
+          "-cp", getTCLib().getAbsolutePath(),
           "com.tc.welcome.DSOSamplesFrame" };
 
       Process p = exec(cmdarray, null, getProductDirectory());

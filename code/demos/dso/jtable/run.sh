@@ -6,10 +6,23 @@
 #  All rights reserved.
 #
 
-TOPDIR=`dirname "$0"`/../../..
-. "${TOPDIR}"/bin/tc-functions.sh
+#
+# samples/pojos/jtable
+#
+# Environment variables required by dso-env script:
+#  TC_INSTALL_DIR: root of Terracotta installation
+#  TC_CONFIG_PATH: location of DSO config file
+#
+# Environment variable set by dso-env script:
+#  TC_JAVA_OPTS: Java options needed to activate DSO
+#
 
-TC_CONFIG_PATH="tc-config.xml"
-. "${TOPDIR}"/bin/dso-env.sh
+CWD=`dirname "$0"`
+TC_INSTALL_DIR=${CWD}/../../..
 
-tc_java ${TC_JAVA_OPTS} -cp "classes" "-Djava.awt.Window.locationByPlatform=true" demo.jtable.Main "$@"
+TC_CONFIG_PATH="${CWD}/tc-config.xml"
+. "${TC_INSTALL_DIR}/bin/dso-env.sh" -q
+
+exec "${JAVA_HOME}/bin/java" ${TC_JAVA_OPTS} ${JAVA_OPTS} \
+  -Djava.awt.Window.locationByPlatform=true \
+  -cp "${CWD}/classes" demo.jtable.Main "$@"
