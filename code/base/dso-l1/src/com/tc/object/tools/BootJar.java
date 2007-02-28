@@ -83,13 +83,12 @@ public class BootJar {
 
   static BootJar getBootJarForReading(File bootJar, BootJarSignature expectedSignature) throws IOException,
       BootJarException {
-    if (!existingFileIsAccessible(bootJar)) {
-      // comment here to make formatter sane
+    
+    waitUntilAvailable(bootJar);
+
+    if (!existingFileIsAccessible(bootJar))
       throw new FileNotFoundException("Cannot access file: " + bootJar.getAbsolutePath());
-    }
-
-    wait(bootJar);
-
+    
     JarFile jarFile = new JarFile(bootJar, false);
     Manifest manifest = jarFile.getManifest();
     BootJarMetaData metaData = new BootJarMetaData(manifest);
@@ -134,7 +133,7 @@ public class BootJar {
     return file.exists() || file.isFile() || file.canRead();
   }
 
-  private static void wait(final File file) {
+  private static void waitUntilAvailable(final File file) {
     final File semaphore = new File(file.getAbsolutePath() + ".sem");
     while (semaphore.exists()) {
       try {

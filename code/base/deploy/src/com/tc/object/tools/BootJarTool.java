@@ -210,8 +210,6 @@ public class BootJarTool {
 
   public void generateJar() {
     instrumentationLogger = new InstrumentationLoggerImpl(config.getInstrumentationLoggingOptions());
-
-    //bootJarHandler.setOverwriteMode(commandLine.hasOption("x"));
     try {
       bootJarHandler.validateDirectoryExists();
     } catch (BootJarHandlerException e) {

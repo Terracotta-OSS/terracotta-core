@@ -122,9 +122,7 @@ public class BootJarHandler {
       jarOut.close();
       jarIn.close();
       
-      if (!copyFile(tempFile, outputFile)) 
-         throw new Exception("Unable to copy boot jar file to final output location: " + outputFile.getAbsolutePath());
-      
+      copyFile(tempFile, outputFile);
     } catch (Exception e) {
       throw new BootJarHandlerException("ERROR creating boot jar", e);
     }
@@ -145,7 +143,7 @@ public class BootJarHandler {
     System.out.println(msg);
   }
   
-  private boolean copyFile(File src, File dest) {
+  private void copyFile(File src, File dest) throws IOException {
     File destpath = dest;
     
     if (dest.isDirectory()) {
@@ -183,23 +181,11 @@ public class BootJarHandler {
       out = null;
 
       tmpdest.renameTo(dest);
-      return true;
-    } catch (FileNotFoundException fnfex) {
-      System.err.println(fnfex.getMessage());
-      return false;
-    } catch (IOException ioex) {
-      System.err.println(ioex.getMessage());
-      return false;
     } finally {
-      try {
-        if (in   != null) in.close();
-        if (lock != null) lock.release();
-        if (out  != null) out.close();
-        semaphore.delete();
-      } catch (IOException ioex) {
-        System.err.println(ioex.getMessage());
-        ioex.printStackTrace();
-      }
+      if (in   != null) in.close();
+      if (lock != null) lock.release();
+      if (out  != null) out.close();
+      semaphore.delete();
     }
   }
 }
