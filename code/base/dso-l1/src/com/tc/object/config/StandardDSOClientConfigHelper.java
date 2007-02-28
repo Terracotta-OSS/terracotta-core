@@ -221,6 +221,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     addPermanentExcludePattern("java.nio.channels.SocketChannel");
     addPermanentExcludePattern("java.util.logging.FileHandler");
     addPermanentExcludePattern("java.util.logging.SocketHandler");
+    addUnsupportedJavaUtilConcurrentTypes();
 
     addAutoLockExcludePattern("* java.lang.Throwable.*(..)");
 
@@ -250,6 +251,43 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     logger.debug("distributed-methods: " + ArrayUtils.toString(this.distributedMethods));
 
     rewriteHashtableAutLockSpecIfNecessary();
+  }
+
+  private void addUnsupportedJavaUtilConcurrentTypes() {
+    addPermanentExcludePattern("java.util.concurrent.AbstractExecutorService");
+    addPermanentExcludePattern("java.util.concurrent.ArrayBlockingQueue*");
+    addPermanentExcludePattern("java.util.concurrent.ConcurrentLinkedQueue*");
+    addPermanentExcludePattern("java.util.concurrent.ConcurrentSkipListMap*");
+    addPermanentExcludePattern("java.util.concurrent.ConcurrentSkipListSet*");
+    addPermanentExcludePattern("java.util.concurrent.CopyOnWriteArrayList*");
+    addPermanentExcludePattern("java.util.concurrent.CopyOnWriteArraySet*");
+    addPermanentExcludePattern("java.util.concurrent.CountDownLatch*");
+    addPermanentExcludePattern("java.util.concurrent.DelayQueue*");
+    addPermanentExcludePattern("java.util.concurrent.Exchanger*");
+    addPermanentExcludePattern("java.util.concurrent.ExecutorCompletionService*");
+    addPermanentExcludePattern("java.util.concurrent.LinkedBlockingDeque*");
+    addPermanentExcludePattern("java.util.concurrent.PriorityBlockingQueue*");
+    addPermanentExcludePattern("java.util.concurrent.ScheduledThreadPoolExecutor*");
+    addPermanentExcludePattern("java.util.concurrent.Semaphore*");
+    addPermanentExcludePattern("java.util.concurrent.SynchronousQueue*");
+    addPermanentExcludePattern("java.util.concurrent.ThreadPoolExecutor*");
+
+    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicBoolean*");
+    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicIntegerArray*");
+    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicIntegerFieldUpdater*");
+    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicLongArray*");
+    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicLongFieldUpdater*");
+    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicMarkableReference*");
+    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicReference*");
+    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicReferenceArray*");
+    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicReferenceFieldUpdater*");
+    addPermanentExcludePattern("java.util.concurrent.atomic.AtomicStampedReference*");
+
+    addPermanentExcludePattern("java.util.concurrent.locks.AbstractOwnableSynchronizer*");
+    addPermanentExcludePattern("java.util.concurrent.locks.AbstractQueuedLongSynchronizer*");
+    addPermanentExcludePattern("java.util.concurrent.locks.AbstractQueuedSynchronizer*");
+    addPermanentExcludePattern("java.util.concurrent.locks.LockSupport*");
+    addPermanentExcludePattern("java.util.concurrent.locks.ReentrantReadWriteLock*");
   }
 
   public Portability getPortability() {
@@ -1444,8 +1482,8 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
       }
     }
 
-    TransparencyClassAdapter dsoAdapter = new TransparencyClassAdapter(basicGetOrCreateSpec(className, null, false), writer, mgrHelper,
-                                                                       lgr, caller, portability);
+    TransparencyClassAdapter dsoAdapter = new TransparencyClassAdapter(basicGetOrCreateSpec(className, null, false),
+                                                                       writer, mgrHelper, lgr, caller, portability);
     return dsoAdapter;
   }
 
@@ -1471,16 +1509,15 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
         }
       }
 
-      ClassAdapter dsoAdapter = new TransparencyClassAdapter(spec, writer, mgrHelper, lgr,
-                                                             caller, portability);
+      ClassAdapter dsoAdapter = new TransparencyClassAdapter(spec, writer, mgrHelper, lgr, caller, portability);
       ClassAdapterFactory factory = spec.getCustomClassAdapter();
       ClassVisitor cv;
-      if(factory==null) {
+      if (factory == null) {
         cv = dsoAdapter;
       } else {
         cv = factory.create(dsoAdapter, caller);
       }
-      
+
       return new SerialVersionUIDAdder(cv);
     }
   }
@@ -1640,9 +1677,8 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     logger.info("Number of classes in the DSO boot jar:" + bootJarPopulation);
     logger.info("Number of classes expected to be in the DSO boot jar:" + preInstrumentedCount);
     logger.info("Number of classes found missing from the DSO boot jar:" + missingCount);
-    if (missingCount > 0) { 
-      throw new IncompleteBootJarException("Incomplete DSO boot jar; " + missingCount + " pre-instrumented class(es) found missing."); 
-    }
+    if (missingCount > 0) { throw new IncompleteBootJarException("Incomplete DSO boot jar; " + missingCount
+                                                                 + " pre-instrumented class(es) found missing."); }
   }
 
   public Iterator getAllSpecs() {
