@@ -29,13 +29,13 @@ GOTO end
 :located_java_home
 
 echo --------------------------------------------------------------------------------
-echo RUNNING TCBUILD"
+echo RUNNING TCBUILD -- tcbuild.bat
 
 GOTO run_jruby
 
 :run_jruby
 
-%JRUBY_HOME%\bin\jruby.bat -Ibuildscripts build-tc.rb %*
+call %JRUBY_HOME%\bin\jruby.bat -Ibuildscripts build-tc.rb %*
 set TCBUILD_ERR=%ERRORLEVEL%
 GOTO end
 
