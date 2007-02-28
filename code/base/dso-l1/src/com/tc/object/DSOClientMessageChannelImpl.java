@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -15,6 +16,7 @@ import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.msg.CommitTransactionMessageFactory;
+import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.ObjectIDBatchRequestMessage;
@@ -111,6 +113,10 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return (ObjectIDBatchRequestMessage) channel.createMessage(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE);
   }
 
+  public JMXMessage getJMXMessage() {
+    return (JMXMessage) channel.createMessage(TCMessageType.JMX_MESSAGE);
+  }
+
   public ObjectIDBatchRequestMessageFactory getObjectIDBatchRequestMessageFactory() {
     return this;
   }
@@ -126,4 +132,5 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   public boolean isConnected() {
     return channel.isConnected();
   }
+
 }

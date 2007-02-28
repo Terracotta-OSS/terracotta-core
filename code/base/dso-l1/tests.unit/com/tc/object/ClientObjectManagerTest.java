@@ -57,7 +57,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
 
     mgr = new ClientObjectManagerImpl(remoteObjectManager, clientConfiguration, idProvider, cache, runtimeLogger,
                                       new TestChannelIDProvider(), classProvider, classFactory, objectFactory,
-                                      new PortabilityImpl(clientConfiguration));
+                                      new PortabilityImpl(clientConfiguration), null);
     mgr.setTransactionManager(new MockTransactionManager());
   }
 

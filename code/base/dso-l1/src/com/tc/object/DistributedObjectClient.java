@@ -218,7 +218,7 @@ public class DistributedObjectClient extends SEDA {
 
     objectManager = new ClientObjectManagerImpl(remoteObjectManager, config, idProvider, new ClockEvictionPolicy(-1),
                                                 runtimeLogger, channel.getChannelIDProvider(), classProvider,
-                                                classFactory, objectFactory, config.getPortability());
+                                                classFactory, objectFactory, config.getPortability(), channel);
 
     l1Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l1");
     TCProperties cacheManagerProperties = l1Properties.getPropertiesFor("cachemanager");

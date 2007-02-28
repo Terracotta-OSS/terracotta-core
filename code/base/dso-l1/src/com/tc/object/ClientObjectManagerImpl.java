@@ -13,6 +13,7 @@ import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.appevent.NonPortableEventContext;
 import com.tc.object.appevent.NonPortableEventContextFactory;
 import com.tc.object.appevent.NonPortableFieldSetContext;
+import com.tc.object.appevent.NonPortableObjectEvent;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.TransparentAccess;
@@ -25,6 +26,8 @@ import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.Namespace;
 import com.tc.object.logging.RuntimeLogger;
+import com.tc.object.msg.JMXMessage;
+import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.TCObjectClone;
@@ -106,17 +109,19 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   private final ThreadLocal                    localCreationInProgress = new ThreadLocal();
   private final Set                            pendingCreateTCObjects  = new HashSet();
   private final Portability                    portability;
+  private final DSOClientMessageChannel        channel;
 
   public ClientObjectManagerImpl(RemoteObjectManager remoteObjectManager, DSOClientConfigHelper clientConfiguration,
                                  ObjectIDProvider idProvider, EvictionPolicy cache, RuntimeLogger runtimeLogger,
                                  ChannelIDProvider provider, ClassProvider classProvider, TCClassFactory classFactory,
-                                 TCObjectFactory objectFactory, Portability portability) {
+                                 TCObjectFactory objectFactory, Portability portability, DSOClientMessageChannel channel) {
     this.remoteObjectManager = remoteObjectManager;
     this.cache = cache;
     this.clientConfiguration = clientConfiguration;
     this.idProvider = idProvider;
     this.runtimeLogger = runtimeLogger;
     this.portability = portability;
+    this.channel = channel;
     this.logger = new ChannelIDLogger(provider, TCLogging.getLogger(ClientObjectManager.class));
     this.classProvider = classProvider;
     this.traverseTest = new NewObjectTraverseTest();
@@ -173,7 +178,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
 
   private void waitUntilRunning() {
     boolean isInterrupted = false;
-    
+
     while (state != RUNNING) {
       try {
         wait();
@@ -456,7 +461,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     TCObject obj = null;
     boolean retrieveNeeded = false;
     boolean isInterrupted = false;
-    
+
     synchronized (this) {
       while (obj == null) {
         obj = basicLookupByID(id);
@@ -617,6 +622,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     reason.setMessage(message);
     context.addDetailsTo(reason);
 
+    // Send this event to L2
+    JMXMessage jmxMsg = channel.getJMXMessage();
+    jmxMsg.setJMXObject(new NonPortableObjectEvent(context, reason));
+    jmxMsg.send();
+
     StringWriter formattedReason = new StringWriter();
     PrintWriter out = new PrintWriter(formattedReason);
     StringFormatter sf = new StringFormatter();
@@ -672,7 +682,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     boolean isNew = false;
     boolean lookupInProgress = false;
     boolean isInterrupted = false;
-    
+
     synchronized (this) {
       while (true) {
         if (!replaceRootIfExistWhenCreate) {

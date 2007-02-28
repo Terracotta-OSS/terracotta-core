@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -34,13 +35,13 @@ import com.tc.util.sequence.SimpleSequence;
  * Test to see if an adapted class has all of the adaptations we expect.
  */
 public class DsoFinalMethodTest extends BaseDSOTestCase {
-  private String rootName;
-  private Object rootObject;
+  private String                      rootName;
+  private Object                      rootObject;
   private MockClientObjectManagerImpl objectManager;
 
   protected void setUp() throws Exception {
     super.setUp();
-    
+
     rootName = "testSyncRoot";
     rootObject = new Object();
     ObjectID objectID = new ObjectID(1);
@@ -48,9 +49,11 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
     TestObjectFactory objectFactory = new TestObjectFactory();
     objectFactory.peerObject = rootObject;
     objectFactory.tcObject = tcObject;
-    objectManager = new MockClientObjectManagerImpl(new MockRemoteObjectManagerImpl(), configHelper(), new ObjectIDProviderImpl(new SimpleSequence()), new NullCache(), new NullRuntimeLogger(),
-                                                    new TestChannelIDProvider(), new MockClassProvider(), new TestClassFactory(), objectFactory);
-    
+    objectManager = new MockClientObjectManagerImpl(new MockRemoteObjectManagerImpl(), configHelper(),
+                                                    new ObjectIDProviderImpl(new SimpleSequence()), new NullCache(),
+                                                    new NullRuntimeLogger(), new TestChannelIDProvider(),
+                                                    new MockClassProvider(), new TestClassFactory(), objectFactory);
+
     objectManager.setTransactionManager(new MockTransactionManagerImpl());
   }
 
@@ -70,7 +73,7 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
     // AssertionError.
     objectManager.lookupOrCreateRoot(rootName, rootObject, false);
   }
-  
+
   public void testRootCreateOrReplaceWithDsoFinal() throws Exception {
     try {
       objectManager.lookupOrCreateRoot(rootName, rootObject, true);
@@ -87,8 +90,8 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
                                        ClassProvider classProvider, TCClassFactory classFactory,
                                        TCObjectFactory objectFactory) {
       super(remoteObjectManager, clientConfiguration, idProvider, cache, runtimeLogger, provider, classProvider,
-            classFactory, objectFactory, new TestPortability());
-    }
+            classFactory, objectFactory, new TestPortability(), null);
+      }
 
     public boolean isPortable(Object obj) {
       return true;
@@ -110,7 +113,7 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
     public void createRoot(String name, ObjectID id) {
       return;
     }
-    
+
     public void createObject(TCObject source) {
       return;
     }

@@ -26,6 +26,7 @@ import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.CommitTransactionMessageFactory;
+import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
@@ -621,7 +622,10 @@ public class RemoteTransactionManagerTest extends TestCase {
     public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink) {
       throw new ImplementMe();
     }
-    //
+
+    public JMXMessage getJMXMessage() {
+      throw new ImplementMe();
+    }
   }
 
 }
