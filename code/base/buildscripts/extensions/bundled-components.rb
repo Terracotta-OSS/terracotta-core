@@ -54,11 +54,11 @@ module BundledComponents
     runtime_classes_dir.delete
   end
 
-  def add_dso_bootjar(component, destdir=libpath(component))
+  def add_dso_bootjar(component, destdir=libpath(component), build_anyway=false)
     bootjar_spec = component[:bootjar]
     unless bootjar_spec.nil?
       bootjar_dir = FilePath.new(File.dirname(destdir.to_s), *bootjar_spec['install_directory'].split('/')).ensure_directory
-      if bootjar_spec['assert'].nil? || eval(bootjar_spec['assert'])
+      if bootjar_spec['assert'].nil? || eval(bootjar_spec['assert']) || build_anyway
         bootjar_spec['compiler_versions'].each do |version|
           jvm = Registry[:jvm_set][version.to_s]
           if jvm
