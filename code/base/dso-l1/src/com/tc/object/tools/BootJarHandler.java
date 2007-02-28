@@ -90,7 +90,6 @@ public class BootJarHandler {
   }
 
   private void createFinalBootJar() throws BootJarHandlerException {
-    System.err.println(">>>>" + tempOutputFile.getAbsolutePath());
     announce("Creating boot JAR at '" + outputFileAbsPath + "...");
     try {
       JarInputStream jarIn = new JarInputStream(new FileInputStream(tempOutputFile.getAbsolutePath()));
@@ -99,7 +98,7 @@ public class BootJarHandler {
         manifest = new Manifest();
       }
 
-      File tempFile = File.createTempFile("terracotta", "bootjar.tmp");
+      File tempFile = File.createTempFile("tc-bootjar", null, getTempDir());
       tempFile.deleteOnExit();
 
       JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(tempFile.getAbsolutePath()), manifest);
