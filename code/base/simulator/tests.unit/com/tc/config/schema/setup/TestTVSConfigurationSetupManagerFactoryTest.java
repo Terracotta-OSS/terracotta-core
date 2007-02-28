@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
@@ -78,6 +79,7 @@ public class TestTVSConfigurationSetupManagerFactoryTest extends TCTestCase {
     if (in.equals(LockLevel.CONCURRENT)) return com.terracottatech.config.LockLevel.CONCURRENT;
     if (in.equals(LockLevel.READ)) return com.terracottatech.config.LockLevel.READ;
     if (in.equals(LockLevel.WRITE)) return com.terracottatech.config.LockLevel.WRITE;
+    if (in.equals(LockLevel.SYNCHRONOUS_WRITE)) return com.terracottatech.config.LockLevel.SYNCHRONOUS_WRITE;
     throw Assert.failure("Unknown lock level " + in);
   }
 

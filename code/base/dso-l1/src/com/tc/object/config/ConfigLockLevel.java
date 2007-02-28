@@ -13,10 +13,13 @@ public class ConfigLockLevel {
   static final String                 WRITE_NAME      = "write";
   static final String                 READ_NAME       = "read";
   static final String                 CONCURRENT_NAME = "concurrent";
+  static final String                 SYNCHRONOUS_WRITE_NAME = "synchronous-write";
 
   public static final ConfigLockLevel WRITE           = new ConfigLockLevel(WRITE_NAME, LockLevel.WRITE);
   public static final ConfigLockLevel READ            = new ConfigLockLevel(READ_NAME, LockLevel.READ);
   public static final ConfigLockLevel CONCURRENT      = new ConfigLockLevel(CONCURRENT_NAME, LockLevel.CONCURRENT);
+  public static final ConfigLockLevel SYNCHRONOUS_WRITE      = new ConfigLockLevel(SYNCHRONOUS_WRITE_NAME,
+                                                                                   LockLevel.SYNCHRONOUS_WRITE);
 
   private static final Map            locksByLevel;
 
@@ -26,6 +29,7 @@ public class ConfigLockLevel {
     tmp.put(WRITE_NAME, WRITE);
     tmp.put(READ_NAME, READ);
     tmp.put(CONCURRENT_NAME, CONCURRENT);
+    tmp.put(SYNCHRONOUS_WRITE_NAME, SYNCHRONOUS_WRITE);
 
     locksByLevel = Collections.unmodifiableMap(tmp);
   }

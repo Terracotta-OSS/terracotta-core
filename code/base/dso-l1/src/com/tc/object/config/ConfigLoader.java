@@ -184,7 +184,11 @@ public class ConfigLoader {
       return ConfigLockLevel.WRITE;
     } else if (LockLevel.CONCURRENT.equals(lockLevel)) {
       return ConfigLockLevel.CONCURRENT;
-    } else if (LockLevel.READ.equals(lockLevel)) { return ConfigLockLevel.READ; }
+    } else if (LockLevel.READ.equals(lockLevel)) { 
+      return ConfigLockLevel.READ; 
+      } else if (LockLevel.SYNCHRONOUS_WRITE.equals(lockLevel)) {
+        return ConfigLockLevel.SYNCHRONOUS_WRITE;
+      }
     throw Assert.failure("Unknown lock level " + lockLevel);
   }
 

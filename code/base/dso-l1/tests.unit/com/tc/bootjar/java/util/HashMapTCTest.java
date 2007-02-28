@@ -844,6 +844,10 @@ public class HashMapTCTest extends TCTestCase {
       return null;
     }
 
+    public void addSynchronousWriteAutolock(String methodPattern) {
+      throw new ImplementMe();
+    }
+
     public void addApplicationName(String name) {
       throw new ImplementMe();
     }

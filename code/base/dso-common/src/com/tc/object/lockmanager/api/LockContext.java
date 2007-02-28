@@ -1,12 +1,16 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.lockmanager.api;
+
+import org.apache.commons.lang.builder.HashCodeBuilder;
 
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.util.Assert;
 
 import java.io.IOException;
 
@@ -21,6 +25,7 @@ public class LockContext implements TCSerializable {
   private int       lockLevel;
   private ChannelID channelID;
   private ThreadID  threadID;
+  private int       hashCode;
 
   public LockContext() {
     return;
@@ -30,7 +35,10 @@ public class LockContext implements TCSerializable {
     this.lockID = lockID;
     this.channelID = channelID;
     this.threadID = threadID;
+    Assert.assertFalse(LockLevel.isSynchronous(lockLevel));
     this.lockLevel = lockLevel;
+    this.hashCode = new HashCodeBuilder(5503, 6737).append(lockID).append(channelID).append(threadID).append(lockLevel)
+        .toHashCode();
   }
 
   public ChannelID getChannelID() {
@@ -47,6 +55,18 @@ public class LockContext implements TCSerializable {
 
   public ThreadID getThreadID() {
     return threadID;
+  }
+
+  public boolean equals(Object o) {
+    if (o == this) return true;
+    if (!(o instanceof LockContext)) return false;
+    LockContext cmp = (LockContext) o;
+    return lockID.equals(cmp.lockID) && threadID.equals(cmp.threadID) && lockLevel == cmp.lockLevel
+           && channelID.equals(cmp.channelID);
+  }
+
+  public int hashCode() {
+    return hashCode;
   }
 
   public void serializeTo(TCByteBufferOutput output) {

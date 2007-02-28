@@ -384,7 +384,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   private synchronized ClientLock getOrCreateLock(LockID id) {
     ClientLock lock = (ClientLock) locksByID.get(id);
     if (lock == null) {
-      lock = new ClientLock(logger, id, remoteLockManager, waitTimer);
+      lock = new ClientLock(id, remoteLockManager, waitTimer);
       locksByID.put(id, lock);
     }
     return lock;

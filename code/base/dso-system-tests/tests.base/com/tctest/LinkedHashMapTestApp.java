@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -12,6 +13,8 @@ import com.tc.object.tx.ReadOnlyException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.DebugUtil;
+import com.tctest.restart.system.ObjectDataRestartTestApp;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.HashMap;
@@ -21,8 +24,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class LinkedHashMapTestApp extends AbstractTransparentApp {
+  public static final String  SYNCHRONOUS_WRITE = "synch-write";
 
-  private final MapRoot       root = new MapRoot();
+  private final MapRoot       root              = new MapRoot();
 
   private final CyclicBarrier barrier;
 
@@ -92,10 +96,10 @@ public class LinkedHashMapTestApp extends AbstractTransparentApp {
 
     barrier.barrier();
   }
-  
+
   /**
-   * The goal of this test is that it will not throw a ReadOnlyException during the get()
-   * operation since the LinkedHashMap is unshared.
+   * The goal of this test is that it will not throw a ReadOnlyException during the get() operation since the
+   * LinkedHashMap is unshared.
    */
   private void unsharedGetTesting() throws Exception {
     LinkedHashMap map = new LinkedHashMap(10, 0.75f, true);
@@ -105,7 +109,7 @@ public class LinkedHashMapTestApp extends AbstractTransparentApp {
 
     barrier.barrier();
   }
-  
+
   private void getROTesting() throws Exception {
     clear();
     initialize();
@@ -121,7 +125,7 @@ public class LinkedHashMapTestApp extends AbstractTransparentApp {
     }
     barrier.barrier();
   }
-  
+
   private void tryReadOnlyGetTesting() {
     LinkedHashMap map = root.getMap();
     synchronized (map) {
@@ -132,18 +136,18 @@ public class LinkedHashMapTestApp extends AbstractTransparentApp {
       }
     }
   }
-  
+
   private void putTesting() throws Exception {
     clear();
     initialize();
-    
+
     LinkedHashMap expect = new LinkedHashMap(10, 0.75f, true);
     expect.putAll(getInitialMapData());
-    
+
     assertMappings(expect, root.getMap());
 
     barrier.barrier();
-    
+
   }
 
   void assertMappings(Map expect, Map actual) {
@@ -157,21 +161,50 @@ public class LinkedHashMapTestApp extends AbstractTransparentApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
+    visitL1DSOConfig(visitor, config, new HashMap());
+  }
+
+  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config, Map optionalAttributes) {
+    DebugUtil.DEBUG = true;
+
+    boolean isSynchronousWrite = false;
+    if (optionalAttributes.size() > 0) {
+      isSynchronousWrite = Boolean.valueOf((String) optionalAttributes.get(ObjectDataRestartTestApp.SYNCHRONOUS_WRITE))
+          .booleanValue();
+    }
+
     TransparencyClassSpec spec = config.getOrCreateSpec(CyclicBarrier.class.getName());
-    config.addWriteAutolock("* " + CyclicBarrier.class.getName() + "*.*(..)");
+    addWriteAutolock(config, isSynchronousWrite, "* " + CyclicBarrier.class.getName() + "*.*(..)");
 
     String testClass = LinkedHashMapTestApp.class.getName();
     spec = config.getOrCreateSpec(testClass);
-    
+
     config.addIncludePattern(MapRoot.class.getName());
 
     String writeAllowdMethodExpression = "* " + testClass + "*.*(..)";
-    config.addWriteAutolock(writeAllowdMethodExpression);
+    addWriteAutolock(config, isSynchronousWrite, writeAllowdMethodExpression);
     String readOnlyMethodExpression = "* " + testClass + "*.*ReadOnly*(..)";
     config.addReadAutolock(readOnlyMethodExpression);
 
     spec.addRoot("root", "root");
     spec.addRoot("barrier", "barrier");
+
+    DebugUtil.DEBUG = false;
+  }
+
+  private static void addWriteAutolock(DSOClientConfigHelper config, boolean isSynchronousWrite, String methodPattern) {
+    if (isSynchronousWrite) {
+      config.addSynchronousWriteAutolock(methodPattern);
+      debugPrintln("***** doing a synchronous write");
+    } else {
+      config.addWriteAutolock(methodPattern);
+    }
+  }
+
+  private static void debugPrintln(String s) {
+    if (DebugUtil.DEBUG) {
+      System.err.println(s);
+    }
   }
 
   private static class MapRoot {

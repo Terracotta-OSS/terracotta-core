@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config;
 
@@ -25,7 +26,8 @@ public class ConfigVisitor {
   public static final String  VISIT_INSTANCE_METHOD_NAME                     = "instanceVisitL1DSOConfig";
   public static final Class[] VISIT_METHOD_PARAMETERS                        = new Class[] { ConfigVisitor.class,
       DSOClientConfigHelper.class                                           };
-
+  public static final Class[] VISIT_METHOD_PARAMETERS_WITH_ATTRIBUTES        = new Class[] { ConfigVisitor.class,
+      DSOClientConfigHelper.class, Map.class                                };
   public static final String  VISIT_DSO_APPLICATION_CONFIG_METHOD_NAME       = "visitDSOApplicationConfig";
   public static final Class[] VISIT_DSO_APPLICATION_CONFIG_METHOD_PARAMETERS = new Class[] { ConfigVisitor.class,
       DSOApplicationConfig.class                                            };
@@ -44,12 +46,29 @@ public class ConfigVisitor {
   public void visit(DSOClientConfigHelper config, Class clazz) {
     if (checkAndSetVisited(config, clazz)) { return; }
     Object[] args = new Object[] { this, config };
-    //use instance visiting if available, otherwise do class visiting
-    if(!doInstanceVisit(clazz, VISIT_INSTANCE_METHOD_NAME, VISIT_METHOD_PARAMETERS, args ))
-      doVisit(clazz, VISIT_METHOD_NAME, VISIT_METHOD_PARAMETERS, new Object[] { this, config });
+    // use instance visiting if available, otherwise do class visiting
+    if (!doInstanceVisit(clazz, VISIT_INSTANCE_METHOD_NAME, VISIT_METHOD_PARAMETERS, args)) doVisit(
+                                                                                                    clazz,
+                                                                                                    VISIT_METHOD_NAME,
+                                                                                                    VISIT_METHOD_PARAMETERS,
+                                                                                                    new Object[] {
+                                                                                                        this, config });
   }
 
-  //instance visiting only works if clazz defines a niladic constructor
+  public void visit(DSOClientConfigHelper config, Class clazz, Map optionalAttributes) {
+    if (checkAndSetVisited(config, clazz)) { return; }
+    Object[] args = new Object[] { this, config };
+    // use instance visiting if available, otherwise do class visiting
+    if (!doInstanceVisit(clazz, VISIT_INSTANCE_METHOD_NAME, VISIT_METHOD_PARAMETERS, args)) doVisit(
+                                                                                                    clazz,
+                                                                                                    VISIT_METHOD_NAME,
+                                                                                                    VISIT_METHOD_PARAMETERS_WITH_ATTRIBUTES,
+                                                                                                    new Object[] {
+                                                                                                        this, config,
+                                                                                                        optionalAttributes });
+  }
+
+  // instance visiting only works if clazz defines a niladic constructor
   private boolean doInstanceVisit(Class clazz, String methodName, Class[] parameters, Object[] arguments) {
     boolean result = false;
     try {
@@ -60,20 +79,18 @@ public class ConfigVisitor {
       visitMethod.setAccessible(true);
       visitMethod.invoke(instance, arguments);
       result = true;
-    }
-    catch (NoSuchMethodException e) {
-      //nothing to do
-    }
-    catch (Exception e) {
+    } catch (NoSuchMethodException e) {
+      // nothing to do
+    } catch (Exception e) {
       throw new RuntimeException(e);
-    } 
+    }
     return result;
   }
-        
+
   private void doVisit(Class clazz, String methodName, Class[] parameters, Object[] arguments) {
     while (clazz != null) {
       try {
-        //look for instance method first
+        // look for instance method first
         Method visitMethod = clazz.getMethod(methodName, parameters);
         if (Modifier.isStatic(visitMethod.getModifiers())) {
           visitMethod.setAccessible(true);

@@ -15,19 +15,18 @@ import com.tctest.ServerCrashingTestBase;
 import com.tctest.restart.system.ClientTerminatingTestApp.Client;
 import com.tctest.runner.AbstractTransparentApp;
 
-import java.io.File;
-
 public class ClientTerminatingTest extends ServerCrashingTestBase {
 
-  private static final int NODE_COUNT = 2;
+  private static final int NODE_COUNT         = 2;
 
-  private File             configFile;
-  private int              port;
-
-  private int              adminPort;
+  private boolean          isSynchronousWrite = false;
 
   public ClientTerminatingTest() {
     super(NODE_COUNT);
+  }
+
+  protected void setSynchronousWrite() {
+    isSynchronousWrite = true;
   }
 
   protected Class getApplicationClass() {
@@ -41,11 +40,11 @@ public class ClientTerminatingTest extends ServerCrashingTestBase {
 
     LockConfigBuilder lock1 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
     lock1.setMethodExpression("* " + testClassName + ".run(..)");
-    lock1.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
+    setLockLevel(lock1);
 
     LockConfigBuilder lock2 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
     lock2.setMethodExpression("* " + clientClassName + ".execute(..)");
-    lock2.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
+    setLockLevel(lock2);
 
     cb.getApplication().getDSO().setLocks(new LockConfigBuilder[] { lock1, lock2 });
 
@@ -63,7 +62,14 @@ public class ClientTerminatingTest extends ServerCrashingTestBase {
     cb.getApplication().getDSO().setInstrumentedClasses(
                                                         new InstrumentedClassConfigBuilder[] { instrumented1,
                                                             instrumented2 });
+  }
 
+  private void setLockLevel(LockConfigBuilder lock) {
+    if (isSynchronousWrite) {
+      lock.setLockLevel(LockConfigBuilder.LEVEL_SYNCHRONOUS_WRITE);
+    } else {
+      lock.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
+    }
   }
 
 }

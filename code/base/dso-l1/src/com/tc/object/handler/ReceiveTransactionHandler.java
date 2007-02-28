@@ -14,7 +14,7 @@ import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.lockmanager.api.ClientLockManager;
-import com.tc.object.lockmanager.api.LockRequest;
+import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.msg.AcknowledgeTransactionMessage;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.BroadcastTransactionMessageImpl;
@@ -75,8 +75,8 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
 
     Collection notifies = btm.addNotifiesTo(new LinkedList());
     for (Iterator i = notifies.iterator(); i.hasNext();) {
-      LockRequest lr = (LockRequest) i.next();
-      lockManager.notified(lr.lockID(), lr.threadID());
+      LockContext lc = (LockContext) i.next();
+      lockManager.notified(lc.getLockID(), lc.getThreadID());
     }
 
     List dmis = btm.getDmiDescriptors();
@@ -84,7 +84,7 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
       DmiDescriptor dd = (DmiDescriptor) i.next();
       dmiSink.add(dd);
     }
-    
+
     // XXX:: This is a potential race condition here 'coz after we decide to send an ACK
     // and before we actually send it, the server may go down and come back up !
     if (sessionManager.isCurrentSession(btm.getLocalSessionID())) {

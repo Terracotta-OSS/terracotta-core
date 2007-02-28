@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.restart.system;
 
@@ -17,15 +18,25 @@ import java.util.Random;
 
 public class ClientTerminatingTestApp extends ServerCrashingAppBase {
 
+  public static final String    FORCE_KILL = "force-kill";
+
   private static final int      LOOP_COUNT = 2;
   private static final List     queue      = new ArrayList();
 
   private int                   id         = -1;
   private long                  count      = 0;
   private ExtraL1ProcessControl client;
+  private final boolean         forceKill;
 
   public ClientTerminatingTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
+
+    String forceKillVal = cfg.getAttribute(FORCE_KILL);
+    if (forceKillVal != null && !forceKillVal.equals("")) {
+      forceKill = true;
+    } else {
+      forceKill = false;
+    }
   }
 
   public void run() {
@@ -39,13 +50,13 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
     Random random = new Random();
     int times = LOOP_COUNT;
     try {
-      while (times-- >= 0) {
-        long toAdd = random.nextInt(10) * 10L + 1;
+      while (times-- > 0) {
+        long toAdd = random.nextInt(10) * 50L + 1;
         File workingDir = new File(getConfigFileDirectoryPath(), "client-" + id + "-" + times);
         FileUtils.forceMkdir(workingDir);
         System.err.println(this + "Creating Client with args " + id + " , " + toAdd);
         client = new ExtraL1ProcessControl(getHostName(), getPort(), Client.class, getConfigFilePath(), new String[] {
-            "" + id, "" + toAdd }, workingDir);
+            "" + id, "" + toAdd, "" + forceKill }, workingDir);
         client.start(20000);
         int exitCode = client.waitFor();
         if (exitCode == 0) {
@@ -88,22 +99,32 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
   }
 
   public static class Client {
-    private int  id;
-    private long addCount;
+    private int     id;
+    private long    addCount;
+    private boolean shouldForceKill;
 
-    public Client(int i, long addCount) {
+    public Client(int i, long addCount, boolean shouldForceKill) {
       this.id = i;
       this.addCount = addCount;
+      this.shouldForceKill = shouldForceKill;
     }
 
     public static void main(String args[]) {
-      if (args.length != 2) { throw new AssertionError("Usage : Client <id> <num of increments>"); }
+      if (args.length < 2 || args.length > 3) { throw new AssertionError(
+                                                                         "Usage : Client <id> <num of increments> [shouldForceKill]"); }
 
-      Client client = new Client(Integer.parseInt(args[0]), Long.parseLong(args[1]));
+      boolean shouldForceKill;
+      if (args.length == 3 && args[2] != null && !args[2].equals("")) {
+        shouldForceKill = Boolean.valueOf(args[2]).booleanValue();
+      } else {
+        shouldForceKill = false;
+      }
+
+      Client client = new Client(Integer.parseInt(args[0]), Long.parseLong(args[1]), shouldForceKill);
       client.execute();
     }
 
-    // Writen so that many transactions are created ...
+    // Written so that many transactions are created ...
     public void execute() {
       List myList = null;
       long count = 0;
@@ -122,13 +143,20 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
           myList.add(new Long(++count));
         }
       }
-      System.err.println(this + " put till :" + count);
-      System.exit(0);
+
+      if (shouldForceKill) {
+        System.err.println(this + " killed forceably :" + count);
+        Runtime.getRuntime().halt(0);
+      } else {
+        System.err.println(this + " put till :" + count);
+        System.exit(0);
+      }
     }
 
     public String toString() {
       return "Client(" + id + ") :";
     }
+
   }
 
 }

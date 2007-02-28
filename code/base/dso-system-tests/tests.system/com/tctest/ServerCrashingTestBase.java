@@ -31,15 +31,6 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
     this.nodeCount = nodeCount;
   }
 
-  public void doSetUp(TransparentTestIface t) throws Exception {
-    t.getTransparentAppConfig().setClientCount(nodeCount);
-    t.initializeTestRunner();
-    TransparentAppConfig cfg = t.getTransparentAppConfig();
-    cfg.setAttribute(ServerCrashingAppBase.CONFIG_FILE, configFile.getAbsolutePath());
-    cfg.setAttribute(ServerCrashingAppBase.PORT_NUMBER, String.valueOf(port));
-    cfg.setAttribute(ServerCrashingAppBase.HOST_NAME, "localhost");
-  }
-
   public void setUp() throws Exception {
     // XXX: ERR! HACK! Will collide eventually
     PortChooser pc = new PortChooser();
@@ -56,6 +47,14 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
     L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
     setUpControlledServer(factory, new StandardDSOClientConfigHelper(manager), port, adminPort, configFile
         .getAbsolutePath());
+
+    getTransparentAppConfig().setClientCount(nodeCount);
+    initializeTestRunner();
+    TransparentAppConfig cfg = getTransparentAppConfig();
+    cfg.setAttribute(ServerCrashingAppBase.CONFIG_FILE, configFile.getAbsolutePath());
+    cfg.setAttribute(ServerCrashingAppBase.PORT_NUMBER, String.valueOf(port));
+    cfg.setAttribute(ServerCrashingAppBase.HOST_NAME, "localhost");
+
     doSetUp(this);
   }
 
@@ -68,7 +67,7 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
       cb.getServers().getL2s()[0].setPersistenceMode(L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE);
 
       createConfig(cb);
-      
+
       FileOutputStream out = new FileOutputStream(configFile);
       CopyUtils.copy(cb.toString(), out);
       out.close();
@@ -76,7 +75,7 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
       throw Assert.failure("Can't create config file", e);
     }
   }
-  
+
   protected abstract void createConfig(TerracottaConfigBuilder cb);
 
   public int getPort() {

@@ -675,6 +675,10 @@ public class ClassUtilsTest extends TestCase {
       return null;
     }
 
+    public void addSynchronousWriteAutolock(String methodPattern) {
+      throw new ImplementMe();
+    }
+
     public void addApplicationName(String name) {
       throw new ImplementMe();
     }

@@ -1,11 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.lockmanager.api;
 
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.lockmanager.api.LockRequest;
 import com.tc.object.lockmanager.api.ThreadID;
 
 import java.util.HashSet;
@@ -29,17 +30,17 @@ public class NotifiedWaitersTest extends TestCase {
 
     NotifiedWaiters ns = new NotifiedWaiters();
 
-    LockRequest lr1 = new LockRequest(lockID, txID1, 0);
+    LockContext lr1 = new LockContext(lockID, channel1, txID1, 0);
     forChannel1.add(lr1);
-    ns.put(channel1, lr1);
+    ns.addNotification(lr1);
 
-    LockRequest lr2 = new LockRequest(lockID, txID2, 0);
+    LockContext lr2 = new LockContext(lockID, channel1, txID2, 0);
     forChannel1.add(lr2);
-    ns.put(channel1, lr2);
+    ns.addNotification(lr2);
 
-    LockRequest lr3 = new LockRequest(lockID, txID3, 0);
+    LockContext lr3 = new LockContext(lockID, channel2, txID3, 0);
     forChannel2.add(lr3);
-    ns.put(channel2, lr3);
+    ns.addNotification(lr3);
 
     assertEquals(forChannel1, ns.getNotifiedFor(channel1));
     assertEquals(forChannel2, ns.getNotifiedFor(channel2));

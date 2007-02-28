@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.restart.system;
 
@@ -17,6 +18,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.simulator.listener.OutputListener;
 import com.tc.util.Assert;
+import com.tc.util.DebugUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.ArrayList;
@@ -29,17 +31,18 @@ import java.util.List;
 import java.util.Map;
 
 public class ObjectDataRestartTestApp extends AbstractTransparentApp {
+  public static final String SYNCHRONOUS_WRITE = "synch-write";
 
-  private int             threadCount     = 10;
-  private int             workSize        = 1 * 100;
-  private int             testObjectDepth = 1 * 50;
+  private int                threadCount       = 10;
+  private int                workSize          = 1 * 100;
+  private int                testObjectDepth   = 1 * 50;
   // I had to dial this down considerably because this takes a long time to run.
-  private int             iterationCount  = 1 * 2;
-  private List            workQueue       = new ArrayList();
-  private Collection      resultSet       = new HashSet();
-  private SynchronizedInt complete        = new SynchronizedInt(0);
-  private OutputListener  out;
-  private SynchronizedInt nodes           = new SynchronizedInt(0);
+  private int                iterationCount    = 1 * 2;
+  private List               workQueue         = new ArrayList();
+  private Collection         resultSet         = new HashSet();
+  private SynchronizedInt    complete          = new SynchronizedInt(0);
+  private OutputListener     out;
+  private SynchronizedInt    nodes             = new SynchronizedInt(0);
 
   public ObjectDataRestartTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -117,6 +120,18 @@ public class ObjectDataRestartTestApp extends AbstractTransparentApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
+    visitL1DSOConfig(visitor, config, new HashMap());
+  }
+
+  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config, Map optionalAttributes) {
+    DebugUtil.DEBUG = true;
+
+    boolean isSynchronousWrite = false;
+    if (optionalAttributes.size() > 0) {
+      isSynchronousWrite = Boolean.valueOf((String) optionalAttributes.get(ObjectDataRestartTestApp.SYNCHRONOUS_WRITE))
+          .booleanValue();
+    }
+
     visitor.visit(config, Barriers.class);
 
     String testClassName = ObjectDataRestartTestApp.class.getName();
@@ -156,43 +171,60 @@ public class ObjectDataRestartTestApp extends AbstractTransparentApp {
 
     // Create locks
     String verifyExpression = "* " + testClassName + ".verify(..)";
-    config.addWriteAutolock(verifyExpression);
+    addWriteAutolock(config, isSynchronousWrite, verifyExpression);
 
     String runExpression = "* " + testClassName + ".run(..)";
-    config.addWriteAutolock(runExpression);
+    addWriteAutolock(config, isSynchronousWrite, runExpression);
 
     String populateWorkQueueExpression = "* " + testClassName + ".populateWorkQueue(..)";
-    config.addWriteAutolock(populateWorkQueueExpression);
+    addWriteAutolock(config, isSynchronousWrite, populateWorkQueueExpression);
 
     String putExpression = "* " + testClassName + ".put(..)";
-    config.addWriteAutolock(putExpression);
+    addWriteAutolock(config, isSynchronousWrite, putExpression);
 
     String takeExpression = "* " + testClassName + ".take(..)";
-    config.addWriteAutolock(takeExpression);
+    addWriteAutolock(config, isSynchronousWrite, takeExpression);
 
     // TestObject config
     String incrementExpression = "* " + testObjectClassname + ".increment(..)";
-    config.addWriteAutolock(incrementExpression);
+    addWriteAutolock(config, isSynchronousWrite, incrementExpression);
 
     String populateExpression = "* " + testObjectClassname + ".populate(..)";
-    config.addWriteAutolock(populateExpression);
+    addWriteAutolock(config, isSynchronousWrite, populateExpression);
 
     String validateExpression = "* " + testObjectClassname + ".validate(..)";
     config.addReadAutolock(validateExpression);
 
     // Worker factory config
     String workerFactoryExpression = "* " + workerFactoryClassname + ".*(..)";
-    config.addWriteAutolock(workerFactoryExpression);
+    addWriteAutolock(config, isSynchronousWrite, workerFactoryExpression);
 
     // Worker config
     String workerRunExpression = "* " + workerClassname + ".run(..)";
-    config.addWriteAutolock(workerRunExpression);
+    addWriteAutolock(config, isSynchronousWrite, workerRunExpression);
 
     new SynchronizedIntSpec().visit(visitor, config);
 
     // IDProvider config
     String nextIDExpression = "* " + idProviderClassname + ".nextID(..)";
-    config.addWriteAutolock(nextIDExpression);
+    addWriteAutolock(config, isSynchronousWrite, nextIDExpression);
+
+    DebugUtil.DEBUG = false;
+  }
+
+  private static void addWriteAutolock(DSOClientConfigHelper config, boolean isSynchronousWrite, String methodPattern) {
+    if (isSynchronousWrite) {
+      config.addSynchronousWriteAutolock(methodPattern);
+      debugPrintln("***** doing a synchronous write");
+    } else {
+      config.addWriteAutolock(methodPattern);
+    }
+  }
+
+  private static void debugPrintln(String s) {
+    if (DebugUtil.DEBUG) {
+      System.err.println(s);
+    }
   }
 
   public static final class WorkerFactory {
@@ -227,7 +259,7 @@ public class ObjectDataRestartTestApp extends AbstractTransparentApp {
     }
   }
 
-  private static final class Worker implements Runnable {
+  protected static final class Worker implements Runnable {
 
     private final String          name;
     private final List            workQueue;
@@ -322,7 +354,7 @@ public class ObjectDataRestartTestApp extends AbstractTransparentApp {
 
   }
 
-  private static final class TestObject {
+  protected static final class TestObject {
     private TestObject child;
     private int        counter;
     private List       activity = new ArrayList();
@@ -356,7 +388,7 @@ public class ObjectDataRestartTestApp extends AbstractTransparentApp {
         synchronized (to) {
           // XXX: This synchronization is here to provide transaction boundaries, not because other threads will be
           // fussing with this object.
-          if(currentValue == Integer.MIN_VALUE) {
+          if (currentValue == Integer.MIN_VALUE) {
             currentValue = to.counter;
           }
           if (currentValue != to.counter) { throw new RuntimeException("Expected current value=" + currentValue
@@ -392,11 +424,11 @@ public class ObjectDataRestartTestApp extends AbstractTransparentApp {
     }
 
     public String toString() {
-      return "TestObject@" + System.identityHashCode(this) + "(" + id + ")={ counter = " + counter +" }";
+      return "TestObject@" + System.identityHashCode(this) + "(" + id + ")={ counter = " + counter + " }";
     }
   }
 
-  private static final class IDProvider {
+  protected static final class IDProvider {
     private int current;
 
     public synchronized Integer nextID() {

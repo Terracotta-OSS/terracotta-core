@@ -7,6 +7,7 @@ import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockFlushCallback;
 import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.LockRequest;
 import com.tc.object.lockmanager.api.RemoteLockManager;
 import com.tc.object.lockmanager.api.ThreadID;
@@ -15,6 +16,7 @@ import com.tc.object.lockmanager.api.WaitLockRequest;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.tx.WaitInvocation;
+import com.tc.util.Assert;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -35,12 +37,14 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   public void requestLock(LockID lockID, ThreadID threadID, int lockType) {
+    Assert.assertTrue(LockLevel.isDiscrete(lockType));
     LockRequestMessage req = createRequest();
     req.initializeObtainLock(lockID, threadID, lockType);
     req.send();
   }
   
   public void tryRequestLock(LockID lockID, ThreadID threadID, int lockType) {
+    Assert.assertTrue(LockLevel.isDiscrete(lockType));
     LockRequestMessage req = createRequest();
     req.initializeTryObtainLock(lockID, threadID, lockType);
     req.send();

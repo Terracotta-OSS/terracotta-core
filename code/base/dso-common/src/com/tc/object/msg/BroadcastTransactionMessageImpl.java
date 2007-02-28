@@ -20,8 +20,8 @@ import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.VersionizedDNAWrapper;
 import com.tc.object.gtx.GlobalTransactionID;
+import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.lockmanager.api.LockRequest;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnType;
@@ -90,7 +90,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     }
 
     for (Iterator i = notifies.iterator(); i.hasNext();) {
-      LockRequest notified = (LockRequest) i.next();
+      LockContext notified = (LockContext) i.next();
       putNVPair(NOTIFIED, notified);
     }
 
@@ -136,7 +136,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
         this.lockIDs.add(new LockID(getStringValue()));
         return true;
       case NOTIFIED:
-        this.notifies.add(this.getObject(new LockRequest()));
+        this.notifies.add(this.getObject(new LockContext()));
         return true;
       case CHANGE_ID:
         this.changeID = getLongValue();

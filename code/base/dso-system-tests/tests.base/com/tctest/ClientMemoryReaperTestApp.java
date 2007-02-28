@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -9,6 +10,8 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.DebugUtil;
+import com.tctest.restart.system.ObjectDataRestartTestApp;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.security.SecureRandom;
@@ -25,34 +28,64 @@ import java.util.Vector;
  * reason then it forces an OOME This test needs some tuning
  */
 public class ClientMemoryReaperTestApp extends AbstractErrorCatchingTransparentApp {
+  public static final String SYNCHRONOUS_WRITE         = "synch-write";
 
-  private static final long OBJECT_COUNT              = 2000;
-  private static final long MINIMUM_MEM_NEEDED        = 60 * 1024 * 1024;
-  private static final int  MEMORY_BLOCKS             = 1024 * 1024;
+  private static final long  OBJECT_COUNT              = 2000;
+  private static final long  MINIMUM_MEM_NEEDED        = 60 * 1024 * 1024;
+  private static final int   MEMORY_BLOCKS             = 1024 * 1024;
 
-  final Map                 root                      = new HashMap();
-  final Vector              unusedBytes               = new Vector();
-  static long               maxDepth                  = 1;
-  static int                transient_mem_blocks_size = 0;
+  final Map                  root                      = new HashMap();
+  final Vector               unusedBytes               = new Vector();
+  static long                maxDepth                  = 1;
+  static int                 transient_mem_blocks_size = 0;
 
   public ClientMemoryReaperTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
+    visitL1DSOConfig(visitor, config, new HashMap());
+  }
+
+  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config, Map optionalAttributes) {
+    DebugUtil.DEBUG = true;
+
+    boolean isSynchronousWrite = false;
+    if (optionalAttributes.size() > 0) {
+      isSynchronousWrite = Boolean.valueOf((String) optionalAttributes.get(ObjectDataRestartTestApp.SYNCHRONOUS_WRITE))
+          .booleanValue();
+    }
+
     String testClass = ClientMemoryReaperTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     spec.addRoot("root", "root");
     String methodExpression = "* " + testClass + ".getNode(..)";
     config.addReadAutolock(methodExpression);
     methodExpression = "* " + testClass + ".putNode(..)";
-    config.addWriteAutolock(methodExpression);
+    addWriteAutolock(config, isSynchronousWrite, methodExpression);
     methodExpression = "* " + testClass + ".addNode(..)";
-    config.addWriteAutolock(methodExpression);
+    addWriteAutolock(config, isSynchronousWrite, methodExpression);
 
     testClass = ClientMemoryReaperTestApp.Node.class.getName();
     spec = config.getOrCreateSpec(testClass);
     config.addTransient(testClass, "transientBytes");
+
+    DebugUtil.DEBUG = false;
+  }
+
+  private static void addWriteAutolock(DSOClientConfigHelper config, boolean isSynchronousWrite, String methodPattern) {
+    if (isSynchronousWrite) {
+      config.addSynchronousWriteAutolock(methodPattern);
+      debugPrintln("***** doing a synchronous write");
+    } else {
+      config.addWriteAutolock(methodPattern);
+    }
+  }
+
+  private static void debugPrintln(String s) {
+    if (DebugUtil.DEBUG) {
+      System.err.println(s);
+    }
   }
 
   public void runTest() {
@@ -87,19 +120,19 @@ public class ClientMemoryReaperTestApp extends AbstractErrorCatchingTransparentA
   }
 
   private static synchronized void initTransientMemBlockSize() {
-    if(transient_mem_blocks_size > 0 ) {
+    if (transient_mem_blocks_size > 0) {
       log("Transient memory block size is already initialized to " + transient_mem_blocks_size);
       return;
     }
     Runtime runtime = Runtime.getRuntime();
     long max_memory = runtime.maxMemory();
-    if (max_memory == Long.MAX_VALUE ) {
+    if (max_memory == Long.MAX_VALUE) {
       // With no upperbound it is possible that this test wont fail even when client memory reaper is broken.
       throw new AssertionError("This test is memory sensitive. Please specify the max memory using -Xmx option. "
                                + "Currently Max Memory is " + max_memory);
     }
     log("Max memory is " + max_memory);
-    transient_mem_blocks_size = (int) ((max_memory * 50 ) / (512 * 1024 )) ;   // 50KB for 512MB, so for max_memory ?
+    transient_mem_blocks_size = (int) ((max_memory * 50) / (512 * 1024)); // 50KB for 512MB, so for max_memory ?
     log("Transient memory block size is " + transient_mem_blocks_size);
   }
 
@@ -163,7 +196,8 @@ public class ClientMemoryReaperTestApp extends AbstractErrorCatchingTransparentA
   }
 
   private static final class Node {
-    final long id;                                             // Not necessarily unique as each node might create with
+    final long id;                                                  // Not necessarily unique as each node might create
+    // with
     // the same id.
     long       lastAccess;
     long       level;

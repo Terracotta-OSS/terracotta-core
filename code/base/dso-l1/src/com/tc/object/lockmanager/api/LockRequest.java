@@ -5,22 +5,12 @@ package com.tc.object.lockmanager.api;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
-import com.tc.io.TCByteBufferInputStream;
-import com.tc.io.TCByteBufferOutput;
-import com.tc.io.TCSerializable;
-
-import java.io.IOException;
-
-public class LockRequest implements TCSerializable {
+public class LockRequest {
   private LockID   lockID;
   private ThreadID threadID;
   private int      lockLevel;
   private int      hashCode;
   private boolean  initialized;
-
-  public LockRequest() {
-    return;
-  }
 
   public LockRequest(LockID lockID, ThreadID threadID, int lockLevel) {
     initialize(lockID, threadID, lockLevel);
@@ -63,14 +53,4 @@ public class LockRequest implements TCSerializable {
     return getClass().getName() + "[" + lockID + ", " + threadID + ", lockLevel=" + lockLevel + "]";
   }
 
-  public void serializeTo(TCByteBufferOutput out) {
-    out.writeString(lockID.asString());
-    out.writeLong(threadID.toLong());
-    out.writeInt(lockLevel);
-  }
-
-  public Object deserializeFrom(TCByteBufferInputStream in) throws IOException {
-    initialize(new LockID(in.readString()), new ThreadID(in.readLong()), in.readInt());
-    return this;
-  }
 }

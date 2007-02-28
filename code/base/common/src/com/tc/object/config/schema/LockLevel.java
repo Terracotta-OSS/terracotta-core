@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config.schema;
 
@@ -18,9 +19,10 @@ public class LockLevel {
     this.level = level;
   }
 
-  public static final LockLevel WRITE      = new LockLevel("write");
-  public static final LockLevel READ       = new LockLevel("read");
-  public static final LockLevel CONCURRENT = new LockLevel("concurrent");
+  public static final LockLevel WRITE             = new LockLevel("write");
+  public static final LockLevel READ              = new LockLevel("read");
+  public static final LockLevel CONCURRENT        = new LockLevel("concurrent");
+  public static final LockLevel SYNCHRONOUS_WRITE = new LockLevel("synchronous-write");
 
   public boolean equals(Object that) {
     if (!(that instanceof LockLevel)) return false;
@@ -30,7 +32,7 @@ public class LockLevel {
   public int hashCode() {
     return this.level.hashCode();
   }
-  
+
   public String toString() {
     return level;
   }

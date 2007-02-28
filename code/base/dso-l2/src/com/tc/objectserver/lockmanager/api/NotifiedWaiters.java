@@ -4,7 +4,7 @@
 package com.tc.objectserver.lockmanager.api;
 
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.object.lockmanager.api.LockRequest;
+import com.tc.object.lockmanager.api.LockContext;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,16 +26,16 @@ public class NotifiedWaiters {
     return notifiedSets.isEmpty();
   }
 
-  public void put(ChannelID channelID, LockRequest wc) {
+  public void addNotification(LockContext context) {
     synchronized (notifiedSets) {
-      getOrCreateSetFor(channelID).add(wc);
+      getOrCreateSetFor(context.getChannelID()).add(context);
     }
   }
 
   public Set getNotifiedFor(ChannelID channelID) {
     synchronized (notifiedSets) {
       Set rv = getSetFor(channelID);
-      return (rv == null) ? Collections.EMPTY_SET : new HashSet(rv);
+      return (rv == null) ? Collections.EMPTY_SET : rv;
     }
   }
 
@@ -51,5 +51,6 @@ public class NotifiedWaiters {
     }
     return rv;
   }
+
 
 }

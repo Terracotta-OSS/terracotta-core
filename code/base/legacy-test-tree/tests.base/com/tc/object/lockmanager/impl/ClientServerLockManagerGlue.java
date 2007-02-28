@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.lockmanager.impl;
 
@@ -156,8 +157,8 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
     serverLockManager.notify(lockID1, channelID, tx2, all, waiters);
     Set s = waiters.getNotifiedFor(channelID);
     for (Iterator i = s.iterator(); i.hasNext();) {
-      LockRequest lr = (LockRequest) i.next();
-      clientLockManager.notified(lr.lockID(), lr.threadID());
+      LockContext lc = (LockContext) i.next();
+      clientLockManager.notified(lc.getLockID(), lc.getThreadID());
     }
   }
 
@@ -176,6 +177,6 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
 
   public void interrruptWait(LockID lockID, ThreadID threadID) {
     serverLockManager.interrupt(lockID, channelID, threadID);
-    
+
   }
 }

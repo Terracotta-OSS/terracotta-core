@@ -97,6 +97,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   void addWriteAutolock(String methodPattern);
 
+  void addSynchronousWriteAutolock(String methodPattern);
+
   void addLock(String methodPattern, LockDefinition lockDefinition);
 
   void addReadAutolock(String methodPattern);

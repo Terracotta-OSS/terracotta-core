@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.runner;
 
@@ -36,6 +37,7 @@ import com.tcsimulator.listener.QueuePrinter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Takes an application configuration and some parameters and runs a single-vm, multi-node (multi-classloader) test.
@@ -67,6 +69,8 @@ public class DistributedTestRunner implements ResultsListener {
   private final LinkedQueue                         statsOutputQueue;
   private final QueuePrinter                        statsOutputPrinter;
 
+  private final Map                                 optionalAttributes;
+
   /**
    * @param applicationClass Class of the application to be executed. It should implement the static method required by
    *        ClassLoaderConfigVisitor.
@@ -76,9 +80,10 @@ public class DistributedTestRunner implements ResultsListener {
    *        threads per classloader.
    */
   public DistributedTestRunner(DistributedTestRunnerConfig config, TVSConfigurationSetupManagerFactory configFactory,
-                               DSOClientConfigHelper configHelper, Class applicationClass,
+                               DSOClientConfigHelper configHelper, Class applicationClass, Map optionalAttributes,
                                ApplicationConfig applicationConfig, int clientCount, int applicationInstanceCount,
                                boolean startServer) throws Exception {
+    this.optionalAttributes = optionalAttributes;
     this.clientCount = clientCount;
     this.applicationInstanceCount = applicationInstanceCount;
     this.startServer = startServer;
@@ -104,7 +109,8 @@ public class DistributedTestRunner implements ResultsListener {
     L2TVSConfigurationSetupManager manager = configFactory.createL2TVSConfigurationSetupManager(null);
 
     this.server = new DistributedObjectServer(manager, new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(DistributedObjectServer.class))), new ConnectionPolicyImpl(Integer.MAX_VALUE), new NullTCServerInfo());
+        .getLogger(DistributedObjectServer.class))), new ConnectionPolicyImpl(Integer.MAX_VALUE),
+                                              new NullTCServerInfo());
   }
 
   public void run() {
@@ -188,7 +194,11 @@ public class DistributedTestRunner implements ResultsListener {
   }
 
   private void visitApplicationClassLoaderConfig() {
-    this.configVisitor.visit(this.configHelper, this.applicationClass);
+    if (optionalAttributes.size() > 0) {
+      this.configVisitor.visit(this.configHelper, this.applicationClass, this.optionalAttributes);
+    } else {
+      this.configVisitor.visit(this.configHelper, this.applicationClass);
+    }
   }
 
   private ContainerConfig newContainerConfig() {

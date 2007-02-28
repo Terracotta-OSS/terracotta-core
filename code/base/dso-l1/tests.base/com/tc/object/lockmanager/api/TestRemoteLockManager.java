@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.lockmanager.api;
 
@@ -30,6 +31,8 @@ public class TestRemoteLockManager implements RemoteLockManager {
   private Map                         locks                   = new HashMap();
   private int                         lockRequests            = 0;
   private int                         unlockRequests          = 0;
+  private int                         flushCount              = 0;
+  private boolean                     isGreedy                = false;
   public LockResponder                lockResponder           = LOOPBACK_LOCK_RESPONDER;
 
   public final NoExceptionLinkedQueue lockRequestCalls        = new NoExceptionLinkedQueue();
@@ -60,7 +63,14 @@ public class TestRemoteLockManager implements RemoteLockManager {
   public synchronized void requestLock(LockID lockID, ThreadID threadID, int lockType) {
     lockRequests++;
     lockRequestCalls.put(new Object[] { lockID, threadID, new Integer(lockType) });
-    LockRequest request = new LockRequest(lockID, threadID, lockType);
+
+    LockRequest request;
+    if (isGreedy) {
+      request = new LockRequest(lockID, ThreadID.VM_ID, LockLevel.makeGreedy(lockType));
+    } else {
+      request = new LockRequest(lockID, threadID, lockType);
+    }
+
     if (!locks.containsKey(lockID)) {
       locks.put(lockID, new LinkedList(Arrays.asList(new Object[] { new Lock(threadID, lockType) })));
       lockResponder.respondToLockRequest(request);
@@ -79,6 +89,14 @@ public class TestRemoteLockManager implements RemoteLockManager {
     }
 
     myLocks.addLast(new Lock(request.threadID(), request.lockLevel()));
+  }
+
+  public synchronized void makeLocksGreedy() {
+    isGreedy = true;
+  }
+
+  public synchronized void makeLocksNotGreedy() {
+    isGreedy = false;
   }
 
   public synchronized void releaseLock(LockID lockID, ThreadID threadID) {
@@ -113,8 +131,16 @@ public class TestRemoteLockManager implements RemoteLockManager {
     return;
   }
 
-  public void flush(LockID lockID) {
-    return;
+  public synchronized void flush(LockID lockID) {
+    flushCount++;
+  }
+
+  public synchronized void resetFlushCount() {
+    flushCount = 0;
+  }
+
+  public synchronized int getFlushCount() {
+    return flushCount;
   }
 
   public boolean isTransactionsForLockFlushed(LockID lockID, LockFlushCallback callback) {

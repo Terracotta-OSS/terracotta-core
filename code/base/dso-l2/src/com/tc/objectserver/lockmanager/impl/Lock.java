@@ -11,9 +11,9 @@ import com.tc.exception.TCInternalError;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
-import com.tc.object.lockmanager.api.LockRequest;
 import com.tc.object.lockmanager.api.ServerThreadID;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.lockmanager.api.WaitTimer;
@@ -365,7 +365,7 @@ public class Lock {
         LockWaitContext wait = (LockWaitContext) waiters.remove(0);
         removeAndCancelWaitTimer(wait);
         createPendingFromWaiter(wait);
-        addNotifiedWaitersTo.put(wait.getChannelID(), new LockRequest(lockID, wait.getThreadID(), wait.lockLevel()));
+        addNotifiedWaitersTo.addNotification(new LockContext(lockID, wait.getChannelID(), wait.getThreadID(), wait.lockLevel()));
       }
     }
   }

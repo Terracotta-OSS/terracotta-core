@@ -130,6 +130,7 @@
       <xs:enumeration value="write" />
       <xs:enumeration value="read" />
       <xs:enumeration value="concurrent" />
+      <xs:enumeration value="synchronous-write" />
     </xs:restriction>
   </xs:simpleType>
 

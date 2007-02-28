@@ -177,6 +177,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
         return TxnType.CONCURRENT;
       case LockLevel.WRITE:
         return TxnType.NORMAL;
+      case LockLevel.SYNCHRONOUS_WRITE:
+        return TxnType.NORMAL;
       default:
         throw Assert.failure("don't know how to translate lock level " + lockLevel);
     }

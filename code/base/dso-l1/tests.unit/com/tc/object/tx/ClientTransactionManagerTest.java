@@ -64,6 +64,10 @@ public class ClientTransactionManagerTest extends TestCase {
     clientTxnMgr.begin("lock", LockLevel.WRITE);
     clientTxnMgr.checkWriteAccess(new Object());
     clientTxnMgr.commit("lock");
+    
+    clientTxnMgr.begin("lock", LockLevel.SYNCHRONOUS_WRITE);
+    clientTxnMgr.checkWriteAccess(new Object());
+    clientTxnMgr.commit("lock");
 
     clientTxnMgr.begin("lock", LockLevel.CONCURRENT);
     clientTxnMgr.checkWriteAccess(new Object());
