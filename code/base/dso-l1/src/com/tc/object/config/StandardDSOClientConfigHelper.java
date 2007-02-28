@@ -283,7 +283,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     addPermanentExcludePattern("java.util.concurrent.atomic.AtomicReferenceFieldUpdater*");
     addPermanentExcludePattern("java.util.concurrent.atomic.AtomicStampedReference*");
 
-    addPermanentExcludePattern("java.util.concurrent.locks.AbstractOwnableSynchronizer*");
     addPermanentExcludePattern("java.util.concurrent.locks.AbstractQueuedLongSynchronizer*");
     addPermanentExcludePattern("java.util.concurrent.locks.AbstractQueuedSynchronizer*");
     addPermanentExcludePattern("java.util.concurrent.locks.LockSupport*");
