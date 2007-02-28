@@ -44,5 +44,5 @@ GOTO end
 	GOTO end
 
 :end
-echo tcbuild.bat: exit code is %TCBULD_ERR%
+echo tcbuild.bat: exit code is %TCBUILD_ERR%
 exit /b %TCBUILD_ERR%
