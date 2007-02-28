@@ -302,7 +302,7 @@ public class BootJar {
 
       ProductInfo productInfo = ProductInfo.getThisProductInfo();
       String expect_tcversion = productInfo.rawVersion();
-      if (!expect_tcversion.equals(tcversion)) 
+      if (!expect_tcversion.equals(tcversion) && !expect_tcversion.equals("[unknown]")) 
         throw new InvalidBootJarMetaDataException("Incompatible DSO meta data tcversion; expected " + expect_tcversion
                                                   + " but was (in boot jar): " + tcversion
                                                   + ". Please regenerate the DSO boot jar");
