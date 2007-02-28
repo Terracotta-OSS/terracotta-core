@@ -1,7 +1,7 @@
 @ECHO OFF
 IF NOT EXIST build-tc.rb GOTO no_build_tc
 
-set JRUBY_HOME=%~d0%~p0..\..\buildsystems\jruby
+set JRUBY_HOME=%~dp0..\..\buildsystems\jruby
 
 if NOT EXIST "%JRUBY_HOME%" GOTO install_jruby
 GOTO has_jruby_home
