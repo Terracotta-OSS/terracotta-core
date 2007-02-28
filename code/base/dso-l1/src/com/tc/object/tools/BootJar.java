@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.tools;
 
@@ -27,8 +28,8 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 public class BootJar {
-  private static final TCLogger logger = TCLogging.getLogger(BootJar.class);
-  
+  private static final TCLogger logger               = TCLogging.getLogger(BootJar.class);
+
   private static final String   DSO_BOOT_JAR_PATTERN = ".+dso-boot.*\\.jar$";
   static final String           JAR_NAME_PREFIX      = "dso-boot-";
 
@@ -47,7 +48,7 @@ public class BootJar {
   private final JarFile         jarFileInput;
   private final Set             classes              = new HashSet();
   private State                 state;
-  private boolean creationErrorOccurred;
+  private boolean               creationErrorOccurred;
 
   private BootJar(File file, boolean openForWrite, BootJarMetaData metaData, JarFile jarFile) {
     Assert.assertNotNull(file);
@@ -88,7 +89,7 @@ public class BootJar {
     }
 
     wait(bootJar);
-    
+
     JarFile jarFile = new JarFile(bootJar, false);
     Manifest manifest = jarFile.getManifest();
     BootJarMetaData metaData = new BootJarMetaData(manifest);
@@ -132,7 +133,7 @@ public class BootJar {
   private static boolean existingFileIsAccessible(File file) {
     return file.exists() || file.isFile() || file.canRead();
   }
-  
+
   private static void wait(final File file) {
     final File semaphore = new File(file.getAbsolutePath() + ".sem");
     while (semaphore.exists()) {
@@ -259,9 +260,10 @@ public class BootJar {
 
     state = STATE_CLOSED;
   }
-  
+
   /**
    * Check the embedded TC_VERSION information against current product version.
+   * 
    * @return <code>true</code> TC_VERSION matches current product version.
    */
   public boolean checkSourceVersion() {
@@ -275,35 +277,33 @@ public class BootJar {
     private static final String VERSION                  = "VERSION";
     private static final String VM_SIGNATURE             = "VM_SIGNATURE";
 
-    private final String vmSignature;
-    private final String version;
-    private final String tcversion;
-    private final String tcmoniker;
-    
+    private final String        vmSignature;
+    private final String        version;
+    private final String        tcversion;
+    private final String        tcmoniker;
+
     BootJarMetaData(String vmSignature, String version) {
       Assert.assertNotNull(vmSignature);
       Assert.assertNotNull(version);
       this.vmSignature = vmSignature;
       this.version = version;
-      this.tcversion = null; 
+      this.tcversion = null;
       this.tcmoniker = null;
     }
 
     BootJarMetaData(Manifest manifest) throws BootJarException {
       Assert.assertNotNull(manifest);
       Attributes attributes = (Attributes) manifest.getEntries().get(META_DATA_ATTRIBUTE_NAME);
-      if (attributes == null) 
-        throw new InvalidBootJarMetaDataException("Missing attributes in jar manifest.  Please regenerate boot jar");
- 
+      if (attributes == null) throw new InvalidBootJarMetaDataException(
+                                                                        "Missing attributes in jar manifest.  Please regenerate boot jar");
+
       version = attributes.getValue(VERSION);
-      if (version == null) 
-        throw new InvalidBootJarMetaDataException("Missing metadata: version");
+      if (version == null) throw new InvalidBootJarMetaDataException("Missing metadata: version");
 
       String expect_version = VERSION_1_1;
       if (expect_version.equals(version)) {
         vmSignature = attributes.getValue(VM_SIGNATURE);
-        if (vmSignature == null) 
-          throw new InvalidJVMVersionException("Missing vm signature");
+        if (vmSignature == null) throw new InvalidJVMVersionException("Missing vm signature");
       } else {
         throw new InvalidBootJarMetaDataException("Incompatible DSO meta data: version; expected '" + expect_version
                                                   + "' but was (in boot jar): '" + version
@@ -311,24 +311,24 @@ public class BootJar {
       }
 
       tcversion = attributes.getValue(TC_VERSION);
-      if (tcversion == null) 
-        throw new InvalidBootJarMetaDataException("Missing metadata: tcversion");
-      
+      if (tcversion == null) throw new InvalidBootJarMetaDataException("Missing metadata: tcversion");
+
       tcmoniker = attributes.getValue(TC_MONIKER);
-      if (tcmoniker == null)
-        throw new InvalidBootJarMetaDataException("Missing metadata: tcmoniker");
+      if (tcmoniker == null) throw new InvalidBootJarMetaDataException("Missing metadata: tcmoniker");
 
       ProductInfo productInfo = ProductInfo.getThisProductInfo();
       String expect_tcversion = productInfo.rawVersion();
-      
-      if (ProductInfo.isUnknown(expect_tcversion))
-        logger.warn("The value for the DSO meta data, tcversion is: '" + expect_tcversion + 
-                    "'; this might not be correct, this value is used only when tests are being run.");
-      
-      if (!ProductInfo.isUnknown(expect_tcversion) && !expect_tcversion.equals(tcversion)) 
-        throw new InvalidBootJarMetaDataException("Incompatible DSO meta data: tcversion; expected '" + expect_tcversion
-                                                  + "' but was (in boot jar): '" + tcversion
-                                                  + "'; please regenerate the DSO boot jar");
+
+      if (ProductInfo.isUnknown(expect_tcversion)) logger
+          .warn("The value for the DSO meta data, tcversion is: '" + expect_tcversion
+                + "'; this might not be correct, this value is used only when tests are being run.");
+
+      if (!ProductInfo.isUnknown(expect_tcversion) && !expect_tcversion.equals(tcversion)) throw new InvalidBootJarMetaDataException(
+                                                                                                                                     "Incompatible DSO meta data: tcversion; expected '"
+                                                                                                                                         + expect_tcversion
+                                                                                                                                         + "' but was (in boot jar): '"
+                                                                                                                                         + tcversion
+                                                                                                                                         + "'; please regenerate the DSO boot jar");
     }
 
     public void write(Manifest manifest) {
@@ -349,7 +349,7 @@ public class BootJar {
     public String getTCVersion() {
       return this.tcversion;
     }
-    
+
     public String getVMSignature() {
       return this.vmSignature;
     }
