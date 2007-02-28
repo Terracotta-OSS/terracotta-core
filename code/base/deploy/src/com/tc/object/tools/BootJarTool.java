@@ -915,7 +915,7 @@ public class BootJarTool {
                 "Attempt to add non-adaptable classes: ");
     issueErrors(logicalSubclasses,
                 "are subclasses of logically managed types and have not been included in the boot jar", "remove",
-                "Attemp to add subclasses of logically manages classes: ");
+                "Attempt to add subclasses of logically manages classes: ");
     issueWarnings(autoIncludedBootstrapClasses,
                   "were automatically included in the boot jar since they are required super classes", "add");
   }
@@ -1450,7 +1450,8 @@ public class BootJarTool {
     spec.setHonorTransient(true);
     spec.setCallConstructorOnLoad(true);
     spec.markPreInstrumented();
-    changeClassName("java.util.concurrent.FutureTaskTC", "java.util.concurrent.FutureTaskTC", "java.util.concurrent.FutureTask", instrumentedContext);
+    changeClassName("java.util.concurrent.FutureTaskTC", "java.util.concurrent.FutureTaskTC",
+                    "java.util.concurrent.FutureTask", instrumentedContext);
 
     config.addWriteAutolock("* java.util.concurrent.FutureTask$Sync.*(..)");
 
@@ -1458,7 +1459,8 @@ public class BootJarTool {
     spec.setHonorTransient(true);
     spec.markPreInstrumented();
     spec.addDistributedMethodCall("managedInnerCancel", "()V");
-    changeClassName("java.util.concurrent.FutureTaskTC$Sync", "java.util.concurrent.FutureTaskTC", "java.util.concurrent.FutureTask", instrumentedContext);
+    changeClassName("java.util.concurrent.FutureTaskTC$Sync", "java.util.concurrent.FutureTaskTC",
+                    "java.util.concurrent.FutureTask", instrumentedContext);
   }
 
   private void addInstrumentedJavaUtilCollection() {
@@ -1630,7 +1632,8 @@ public class BootJarTool {
     ClassReader cr = new ClassReader(data);
     ClassWriter cw = new ClassWriter(true);
 
-    String replacedClassNameDots = ChangeClassNameRootAdapter.replaceClassName(fullClassNameDots, classNameDotsToBeChanged,
+    String replacedClassNameDots = ChangeClassNameRootAdapter.replaceClassName(fullClassNameDots,
+                                                                               classNameDotsToBeChanged,
                                                                                classNameDotsReplaced);
     TransparencyClassAdapter dsoAdapter = config.createDsoClassAdapterFor(cw, replacedClassNameDots,
                                                                           instrumentationLogger, getClass()
@@ -1824,7 +1827,7 @@ public class BootJarTool {
     if (!commandLine.hasOption(OUTPUT_FILE_OPTION)) {
       File libDir = new File(installDir, "lib");
       outputFile = new File(libDir, "dso-boot");
-      if(!outputFile.exists()) {
+      if (!outputFile.exists()) {
         outputFile.mkdirs();
       }
     } else {
@@ -1840,7 +1843,8 @@ public class BootJarTool {
     // WAS: systemProvider = new RuntimeJarBytesProvider(...)
 
     ClassBytesProvider systemProvider = new ClassLoaderBytesProvider(ClassLoader.getSystemClassLoader());
-    new BootJarTool(new StandardDSOClientConfigHelper(config, false), outputFile, systemProvider, !verbose).generateJar();
+    new BootJarTool(new StandardDSOClientConfigHelper(config, false), outputFile, systemProvider, !verbose)
+        .generateJar();
   }
 
   public static class RuntimeJarBytesProvider implements ClassBytesProvider {

@@ -88,18 +88,18 @@ public class DSOContextImpl implements DSOContext {
     // while another thread is still in the process of validating the boot jar.
     // validateBootJar();
   }
-  
+
   private void validateBootJar() {
     try {
-      configHelper.verifyBootJarContents();   
-    } catch(UnverifiedBootJarException ubjex) {
-      StringBuffer msg = new StringBuffer(ubjex.getMessage() + " ");
+      configHelper.verifyBootJarContents();
+    } catch (final UnverifiedBootJarException ubjex) {
+      final StringBuffer msg = new StringBuffer(ubjex.getMessage() + " ");
       msg.append("Unable to verify the contents of the boot jar; ");
       msg.append("Please check the client logs for more information.");
       logger.error(ubjex);
       throw new RuntimeException(msg.toString());
-    } catch(IncompleteBootJarException ibjex) {
-      StringBuffer msg = new StringBuffer(ibjex.getMessage() + " ");
+    } catch (final IncompleteBootJarException ibjex) {
+      final StringBuffer msg = new StringBuffer(ibjex.getMessage() + " ");
       msg.append("The DSO boot jar appears to be incomplete --- some pre-instrumented classes ");
       msg.append("listed in your tc-config is not included in the boot jar file. This could ");
       msg.append("happen if you've modified your DSO clients' tc-config file to specify additional ");
@@ -108,9 +108,9 @@ public class DSOContextImpl implements DSOContext {
       msg.append("Please check the client logs for the list of classes that were not found in your boot jar.");
       logger.error(ibjex);
       throw new RuntimeException(msg.toString());
-    }  
+    }
   }
-  
+
   private void checkForProperlyInstrumentedBaseClasses() {
     if (!Manageable.class.isAssignableFrom(HashMap.class)) {
       StringBuffer msg = new StringBuffer();

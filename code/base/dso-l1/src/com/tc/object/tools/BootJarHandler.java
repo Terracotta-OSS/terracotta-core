@@ -7,7 +7,6 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,49 +19,51 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 public class BootJarHandler {
-  private final static String TEMP_OUTPUT_FILE_PREFIX = "temp-";
-  private final boolean       write_out_temp_file;
-  private final File          outputFile;
-  private final File          tempOutputFile;
-  private final String        tempDir;
-  private final String        tempOutputFileAbsPath;
-  private final String        outputFileAbsPath;
+  private final boolean write_out_temp_file;
+  private final File    outputFile;
+  private final File    tempOutputFile;
+  private final String  tempOutputFileAbsPath;
+  private final String  outputFileAbsPath;
 
   public BootJarHandler(boolean write_out_temp_file, File outputFile) {
     this.write_out_temp_file = write_out_temp_file;
     this.outputFile = outputFile;
     outputFileAbsPath = this.outputFile.getAbsolutePath();
     if (this.write_out_temp_file) {
-        tempDir = getTempDir();
-        tempOutputFile = new File(tempDir, TEMP_OUTPUT_FILE_PREFIX + this.outputFile.getName());
+      try {
+        tempOutputFile = File.createTempFile("tc-bootjar", null, getTempDir());
         tempOutputFileAbsPath = tempOutputFile.getAbsolutePath();
-      } else {
-        tempDir = "";
-        tempOutputFile = null;
-        tempOutputFileAbsPath = "";
+        tempOutputFile.deleteOnExit();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
       }
+    } else {
+      tempOutputFile = null;
+      tempOutputFileAbsPath = "";
+    }
   }
-  
+
   public void validateDirectoryExists() throws BootJarHandlerException {
     try {
       FileUtils.forceMkdir(outputFile.getAbsoluteFile().getParentFile());
     } catch (IOException ioe) {
       throw new BootJarHandlerException("Failed to create path:" + outputFile.getParentFile().getAbsolutePath(), ioe);
     }
-    
+
     if (write_out_temp_file) {
       try {
         FileUtils.forceMkdir(tempOutputFile.getAbsoluteFile().getParentFile());
       } catch (IOException ioe) {
-        throw new BootJarHandlerException("Failed to create path:" + tempOutputFile.getParentFile().getAbsolutePath(), ioe);
-      }      
+        throw new BootJarHandlerException("Failed to create path:" + tempOutputFile.getParentFile().getAbsolutePath(),
+                                          ioe);
+      }
     }
   }
-  
+
   public void announceCreationStart() {
     announce("Creating boot JAR at '" + outputFileAbsPath + "...");
   }
- 
+
   public BootJar getBootJar() throws UnsupportedVMException {
     if (write_out_temp_file) {
       return BootJar.getBootJarForWriting(this.tempOutputFile);
@@ -70,29 +71,26 @@ public class BootJarHandler {
       return BootJar.getBootJarForWriting(this.outputFile);
     }
   }
-  
+
   public String getCreationErrorMessage() {
-    if (write_out_temp_file) {
-      return "ERROR creating temp boot jar";
-    }
+    if (write_out_temp_file) { return "ERROR creating temp boot jar"; }
     return "ERROR creating boot jar";
   }
-  
+
   public String getCloseErrorMessage() {
-    if (write_out_temp_file) {
-      return "Failed to create temp jar file:" + tempOutputFileAbsPath;
-    }
+    if (write_out_temp_file) { return "Failed to create temp jar file:" + tempOutputFileAbsPath; }
     return "Failed to create jar file:" + outputFileAbsPath;
   }
-  
+
   public void announceCreationEnd() throws BootJarHandlerException {
     if (write_out_temp_file) {
       createFinalBootJar();
-    } 
+    }
     announce("Successfully created boot JAR file at '" + outputFileAbsPath + "'.");
   }
-  
+
   private void createFinalBootJar() throws BootJarHandlerException {
+    System.err.println(">>>>" + tempOutputFile.getAbsolutePath());
     announce("Creating boot JAR at '" + outputFileAbsPath + "...");
     try {
       JarInputStream jarIn = new JarInputStream(new FileInputStream(tempOutputFile.getAbsolutePath()));
@@ -100,10 +98,10 @@ public class BootJarHandler {
       if (manifest == null) {
         manifest = new Manifest();
       }
-      
+
       File tempFile = File.createTempFile("terracotta", "bootjar.tmp");
       tempFile.deleteOnExit();
-      
+
       JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(tempFile.getAbsolutePath()), manifest);
       byte[] buffer = new byte[4096];
       JarEntry entry;
@@ -121,49 +119,42 @@ public class BootJarHandler {
       jarOut.flush();
       jarOut.close();
       jarIn.close();
-      
+
       copyFile(tempFile, outputFile);
     } catch (Exception e) {
       throw new BootJarHandlerException("ERROR creating boot jar", e);
     }
     if (!tempOutputFile.delete()) {
       announce("Warning: Unsuccessful deletion of temp boot JAR file at '" + tempOutputFileAbsPath + "'.");
-    }  
+    }
   }
-  
-  private String getTempDir() {
+
+  private File getTempDir() {
     String tmpDir = System.getProperty("java.io.tmpDir");
     if (tmpDir == null) {
       tmpDir = outputFile.getParent();
     }
-    return tmpDir;
+    return new File(tmpDir);
   }
-  
+
   private void announce(String msg) {
     System.out.println(msg);
   }
-  
+
   private void copyFile(File src, File dest) throws IOException {
     File destpath = dest;
-    
-    if (dest.isDirectory()) {
-      destpath = new File(dest, src.getName());
-    }
+    if (dest.isDirectory()) destpath = new File(dest, src.getName());
 
-    File tmpdest     = new File(destpath.getAbsolutePath() + ".tmp");
-    File semaphore   = new File(destpath.getAbsolutePath() + ".sem");
-    semaphore.deleteOnExit();
-    
-    InputStream in   = null;  
+    InputStream in = null;
     OutputStream out = null;
-    FileLock lock    = null;
+    FileLock lock = null;
     try {
+      File tmpdest = new File(destpath.getAbsolutePath() + ".tmp");
       out = new FileOutputStream(tmpdest);
-      FileChannel channel = ((FileOutputStream)out).getChannel();
+      FileChannel channel = ((FileOutputStream) out).getChannel();
       lock = channel.lock();
-      in  = new FileInputStream(src);
-      semaphore.createNewFile();
-       
+      in = new FileInputStream(src);
+
       byte[] buffer = new byte[4096];
       int bytesRead;
 
@@ -171,21 +162,20 @@ public class BootJarHandler {
         out.write(buffer, 0, bytesRead);
       }
 
-      in.close(); 
+      in.close();
       in = null;
 
       lock.release();
       lock = null;
-      
-      out.close(); 
+
+      out.close();
       out = null;
 
       tmpdest.renameTo(dest);
     } finally {
-      if (in   != null) in.close();
+      if (in != null) in.close();
       if (lock != null) lock.release();
-      if (out  != null) out.close();
-      semaphore.delete();
+      if (out != null) out.close();
     }
   }
 }
