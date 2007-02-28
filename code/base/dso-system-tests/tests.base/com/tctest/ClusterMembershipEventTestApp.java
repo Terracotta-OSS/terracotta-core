@@ -44,7 +44,6 @@ public class ClusterMembershipEventTestApp extends ServerCrashingAppBase impleme
   }
 
   private void runTest() throws Throwable {
-
     ManagerUtil.addClusterEventListener(this);
     check(1, thisNodeConCnt.get(), "thisNodeConnected");
     waitForNodes(initialNodeCount);
@@ -54,49 +53,41 @@ public class ClusterMembershipEventTestApp extends ServerCrashingAppBase impleme
 
     clearCounters();
     final boolean isMasterNode = barrier.barrier() == 0;
+    if (isMasterNode) {
+      System.err.println("### masterNode=" + thisNode + " -> crashing server...");
+      getConfig().getServerControl().crash();
+      System.err.println("### masterNode=" + thisNode + " -> crashed server");
+
+      System.err.println("### masterNode=" + thisNode + " -> restarting server...");
+      getConfig().getServerControl().start(30 * 1000);
+      System.err.println("### masterNode=" + thisNode + " -> restarted server");
+    }
+    System.err.println("### stage 2 [reconnecting]: thisNode=" + thisNode + ", threadId="
+                       + Thread.currentThread().getName());
+    barrier.barrier();
+    waitForNodes(initialNodeCount);
+    check(1, thisNodeDisCnt.get(), "thisNodeDisconnected");
+    check(1, thisNodeConCnt.get(), "thisNodeConnected");
+
+    clearCounters();
+    barrier.barrier();
+    System.err.println("### stage 3 [reconnected]: thisNode=" + thisNode + ", threadId="
+                       + Thread.currentThread().getName());
 
     if (isMasterNode) {
       // master node blocks until new client exists...
       spawnNewClient();
     }
     barrier.barrier();
+    System.err.println("### stage 4 [new client disconnected]: thisNode=" + thisNode + ", threadId="
+                       + Thread.currentThread().getName());
 
     waitForNodes(initialNodeCount);
     check(1, nodeConCnt.get(), "nodeConnected");
     check(1, nodeDisCnt.get(), "nodeDisconnected");
     clearCounters();
-    System.err.println("### stage 2 [new client connected & disconnected]: thisNode=" + thisNode + ", threadId="
-                       + Thread.currentThread().getName());
-
-    clearCounters();
     barrier.barrier();
-
-    // FIXME: removing server crash/restart for now. it's broken. WE'll have to fix it later
-    if (true) return;
-    if (isMasterNode) {
-      System.err.println("### masterNode=" + thisNode + " -> crashing server...");
-      getConfig().getServerControl().crash();
-      System.err.println("### masterNode=" + thisNode + " -> crashed server");
-    }
-
-    waitForCount(thisNodeDisCnt, 1);
-    System.err.println("### stage 3 [killed server]: thisNode=" + thisNode + ", threadId="
-                       + Thread.currentThread().getName());
-
-    if (isMasterNode) {
-      System.err.println("### masterNode=" + thisNode + " -> restarting server...");
-      getConfig().getServerControl().start(30 * 1000);
-      System.err.println("### masterNode=" + thisNode + " -> restarted server");
-    }
-    System.err.println("### stage 4 [reconnecting]: thisNode=" + thisNode + ", threadId="
-                       + Thread.currentThread().getName());
-    waitForCount(thisNodeConCnt, 1);
-    barrier.barrier();
-    System.err.println("### stage 5 [reconnected]: thisNode=" + thisNode + ", threadId="
-                       + Thread.currentThread().getName());
-    check(1, thisNodeConCnt.get(), "thisNodeConnected");
-    check(initialNodeCount, nodes.size(), "nodesInCluster");
-    System.err.println("### stage 6 [all nodes reconnected]: thisNode=" + thisNode + ", threadId="
+    System.err.println("### stage 5 [all done]: thisNode=" + thisNode + ", threadId="
                        + Thread.currentThread().getName());
   }
 
@@ -105,19 +96,6 @@ public class ClusterMembershipEventTestApp extends ServerCrashingAppBase impleme
     this.nodeDisCnt.set(0);
     this.thisNodeConCnt.set(0);
     this.thisNodeDisCnt.set(0);
-  }
-
-  private void waitForCount(SynchronizedInt cnt, int expectedSize) {
-    while (true) {
-      synchronized (cnt) {
-        if (cnt.get() == expectedSize) break;
-        try {
-          cnt.wait();
-        } catch (InterruptedException e) {
-          notifyError(e);
-        }
-      }
-    }
   }
 
   private void waitForNodes(int expectedSize) {
