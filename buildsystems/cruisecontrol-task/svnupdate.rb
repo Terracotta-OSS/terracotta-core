@@ -20,13 +20,13 @@ def svn_update_with_error_tolerant(topdir, revision)
 end
 
 def get_current_good_rev(file)
-  currently_good_rev = 'HEAD'
+  currently_good_rev = 0
   begin
     File.open(file, "r") do | f |
       currently_good_rev = f.gets.to_i    
     end
   rescue
-    currently_good_rev = 'HEAD'
+    currently_good_rev = 0
   end
   currently_good_rev
 end
