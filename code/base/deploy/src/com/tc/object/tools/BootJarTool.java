@@ -300,6 +300,7 @@ public class BootJarTool {
       // the static block of IdentityWeakHashMap from executing during generating
       // the boot jar.
       loadTerracottaClass("com.tc.object.util.IdentityWeakHashMap");
+      loadTerracottaClass("com.tc.object.util.IdentityWeakHashMap$TestKey");
       loadTerracottaClass("com.tc.object.util.IdentityWeakHashSet");
       loadTerracottaClass("com.tc.object.bytecode.hook.impl.ArrayManager");
 
