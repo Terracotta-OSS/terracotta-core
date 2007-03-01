@@ -51,6 +51,7 @@ public class ThreadDump {
     } catch (Throwable t) {
       System.err.println("Got Exception trying to get the process ID. Sending Kill signal to entire process group. "
                          + t.getMessage());
+      System.err.flush();
       pid = 0;
     }
 
@@ -84,7 +85,9 @@ public class ThreadDump {
       out.join();
 
       System.err.print(err.toString());
+      System.err.flush();
       System.out.print(out.toString());
+      System.out.flush();
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -121,6 +124,7 @@ public class ThreadDump {
       if (rv != null) {
         if (rv.exists() && rv.isFile()) { return rv; }
         System.err.println("Cannot find signal program: " + rv.getAbsolutePath());
+        System.err.flush();
       }
 
       throw new RuntimeException("Cannot find signal program");
