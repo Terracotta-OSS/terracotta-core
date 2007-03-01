@@ -93,6 +93,7 @@ public class TCTestCase extends TestCase {
   private void timeoutCallback() {
     String bar = "***************************************";
     System.err.println("\n" + bar + "\n+ TCTestCase timeout alarm going off at " + new Date() + "\n" + bar + "\n");
+    System.err.flush();
 
     doDumpServerDetails();
     if (dumpThreadsOnTimeout) {
@@ -124,6 +125,7 @@ public class TCTestCase extends TestCase {
     if (isAllDisabled()) {
       System.out.println("NOTE: ALL tests in " + this.getClass().getName() + " are disabled until "
           + this.allDisabledUntil);
+      System.out.flush();
       return;
     }
 
@@ -131,6 +133,7 @@ public class TCTestCase extends TestCase {
     if (isTestDisabled(testMethod)) {
       System.out.println("NOTE: Test method " + testMethod + "() is disabled until "
           + this.disabledUntil.get(testMethod));
+      System.out.flush();
       return;
     }
 
@@ -178,6 +181,7 @@ public class TCTestCase extends TestCase {
     if ((junitTimeout - timeoutThreshold) < MIN_THRESH) {
       System.err.println("ERROR: Cannot apply timeout threshold of " + timeoutThreshold + ", using " + MIN_THRESH
           + " instead");
+      System.err.flush();
       timeoutThreshold = MIN_THRESH;
     }
 
@@ -207,15 +211,15 @@ public class TCTestCase extends TestCase {
   }
 
   protected final synchronized TempDirectoryHelper getTempDirectoryHelper() {
-    if (this.tempDirectoryHelper == null) {
+    if (tempDirectoryHelper == null) {
       try {
-        this.tempDirectoryHelper = new TempDirectoryHelper(getClass(), cleanTempDir());
+        tempDirectoryHelper = new TempDirectoryHelper(getClass(), cleanTempDir());
       } catch (IOException ioe) {
         throw new TCRuntimeException("Can't get configuration for temp directory", ioe);
       }
     }
 
-    return this.tempDirectoryHelper;
+    return tempDirectoryHelper;
   }
 
   protected boolean cleanTempDir() {
@@ -223,19 +227,15 @@ public class TCTestCase extends TestCase {
   }
 
   protected final synchronized DataDirectoryHelper getDataDirectoryHelper() {
-    if (this.dataDirectoryHelper == null) {
+    if (dataDirectoryHelper == null) {
       try {
-        this.dataDirectoryHelper = new DataDirectoryHelper(getClass());
+        dataDirectoryHelper = new DataDirectoryHelper(getClass());
       } catch (IOException ioe) {
         throw new TCRuntimeException(ioe.getLocalizedMessage(), ioe);
       }
     }
 
-    return this.dataDirectoryHelper;
-  }
-
-  protected final void cleanTempDirectory() throws IOException {
-    getTempDirectoryHelper().cleanTempDirectory();
+    return dataDirectoryHelper;
   }
 
   protected final File getDataDirectory() throws IOException {
