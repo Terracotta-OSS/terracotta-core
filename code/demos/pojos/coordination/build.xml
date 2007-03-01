@@ -1,24 +1,24 @@
 <!--
 
-  All content copyright (c) 2003-2006 Terracotta, Inc.,
+  All content copyright (c) 2003-2007 Terracotta, Inc.,
   except as may otherwise be noted in a separate copyright notice.
   All rights reserved.
 
 -->
 
-<project name="CyclicBarrier" default="build" basedir=".">
-	<property name="src" location="src"/>
-	<property name="build.dir" location="classes"/>
+<project name="coordination" default="build" basedir=".">
+	<property name="src.dir" location="src" />
+	<property name="build.dir" location="classes" />
 
 	<target name="init">
-		<mkdir dir="${build.dir}"/>
+		<mkdir dir="${build.dir}" />
 	</target>
 
 	<target name="build" depends="init" description="build the source ">
-		<javac target="1.4" source="1.4" srcdir="${src}" classpath="lib/concurrent-1.3.4.jar" destdir="${build.dir}"/>
+		<javac target="1.4" source="1.4" srcdir="${src.dir}" classpath="lib/concurrent-1.3.4.jar" destdir="${build.dir}" />
 	</target>
 
 	<target name="clean" description="clean up">
-		<delete dir="${build.dir}"/>
+		<delete dir="${build.dir}" />
 	</target>
 </project>
