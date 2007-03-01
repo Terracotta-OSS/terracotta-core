@@ -33,24 +33,23 @@ import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 
 public class Main extends JFrame implements ActionListener, ChatterDisplay {
-	/** roots * */
-	private ChatManager			chatManager	= new ChatManager();
+	private final ChatManager chatManager = new ChatManager();
+	private final JTextPane display = new JTextPane();
+	private User user;
 
-	private JTextPane			display		= new JTextPane();
-	private User				user;
-	private DefaultListModel	listModel	= new DefaultListModel();
+	private final DefaultListModel listModel = new DefaultListModel();
 
 	public Main() {
 		try {
-			String nodeId = registerForNotifications();
+			final String nodeId = registerForNotifications();
 			user = new User(nodeId, this);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 
 		setDefaultLookAndFeelDecorated(true);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		Container content = getContentPane();
+		final Container content = getContentPane();
 
 		display.setFont(new Font("Lucida Sans Typewriter", Font.PLAIN, 9));
 		display.setEditable(false);
@@ -59,20 +58,20 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 		final JTextField input = new JTextField();
 		input.setFont(new Font("Lucida Sans Typewriter", Font.PLAIN, 9));
 		input.addActionListener(this);
-		JScrollPane scroll = new JScrollPane(display);
-		Random r = new Random();
-		JLabel buddy = new JLabel(user.getName(),
-					  new ImageIcon(getClass().getResource("/images/buddy" + r.nextInt(10) + ".gif")),
-					  JLabel.LEFT);
+		final JScrollPane scroll = new JScrollPane(display);
+		final Random r = new Random();
+		final JLabel buddy = new JLabel(user.getName(),
+				new ImageIcon(getClass().getResource(
+						"/images/buddy" + r.nextInt(10) + ".gif")), JLabel.LEFT);
 		buddy.setFont(new Font("Lucida Sans Typewriter", Font.PLAIN, 16));
 		buddy.setVerticalTextPosition(JLabel.CENTER);
-		JPanel buddypanel = new JPanel();
+		final JPanel buddypanel = new JPanel();
 		buddypanel.setBackground(Color.WHITE);
 		buddypanel.setLayout(new BorderLayout());
 		buddypanel.add(buddy, BorderLayout.CENTER);
 
-		JPanel buddyListPanel = new JPanel();
-		JList buddyList = new JList(listModel);
+		final JPanel buddyListPanel = new JPanel();
+		final JList buddyList = new JList(listModel);
 		buddyListPanel.add(buddyList);
 
 		content.setLayout(new BorderLayout());
@@ -93,17 +92,18 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 	}
 
 	private void populateCurrentUsers() {
-		Object[] currentUsers = chatManager.getCurrentUsers();
+		final Object[] currentUsers = chatManager.getCurrentUsers();
 		for (int i = 0; i < currentUsers.length; i++) {
-			listModel.addElement(new String(((User)currentUsers[i]).getName()));
+			listModel
+					.addElement(new String(((User) currentUsers[i]).getName()));
 		}
 	}
 
-	public void actionPerformed(ActionEvent e) {
-		JTextField input = (JTextField) e.getSource();
+	public void actionPerformed(final ActionEvent e) {
+		final JTextField input = (JTextField) e.getSource();
 		final String message = input.getText();
 		input.setText("");
-		Thread sender = new Thread(new Runnable() {
+		final Thread sender = new Thread(new Runnable() {
 			public void run() {
 				chatManager.send(user, message);
 			}
@@ -112,7 +112,7 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 	}
 
 	void login() {
-		Message[] messages = chatManager.getMessages();
+		final Message[] messages = chatManager.getMessages();
 		for (int i = 0; i < messages.length; i++) {
 			user.newMessage(messages[i]);
 		}
@@ -124,11 +124,11 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 
 	}
 
-	public static void echo(String msg) {
+	public static void echo(final String msg) {
 		System.err.println(msg);
 	}
 
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
@@ -139,20 +139,20 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 
 	/**
 	 * Registers this client for JMX notifications.
-	 *
+	 * 
 	 * @returns This clients Node ID
 	 */
 	private String registerForNotifications() throws Exception {
-		java.util.List servers = MBeanServerFactory.findMBeanServer(null);
-		MBeanServer server = (MBeanServer) servers.get(0);
+		final java.util.List servers = MBeanServerFactory.findMBeanServer(null);
+		final MBeanServer server = (MBeanServer) servers.get(0);
 		final ObjectName clusterBean = new ObjectName(
 				"com.terracottatech:type=Terracotta Cluster,name=Terracotta Cluster Bean");
-		ObjectName delegateName = ObjectName
+		final ObjectName delegateName = ObjectName
 				.getInstance("JMImplementation:type=MBeanServerDelegate");
 		final java.util.List clusterBeanBag = new java.util.ArrayList();
 
 		// listener for newly registered MBeans
-		NotificationListener listener0 = new NotificationListener() {
+		final NotificationListener listener0 = new NotificationListener() {
 			public void handleNotification(Notification notification,
 					Object handback) {
 				synchronized (clusterBeanBag) {
@@ -163,7 +163,7 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 		};
 
 		// filter to let only clusterBean passed through
-		NotificationFilter filter0 = new NotificationFilter() {
+		final NotificationFilter filter0 = new NotificationFilter() {
 			public boolean isNotificationEnabled(Notification notification) {
 				if (notification.getType().equals("JMX.mbean.registered")
 						&& ((MBeanServerNotification) notification)
@@ -179,7 +179,7 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 
 		// because of race condition, clusterBean might already have registered
 		// before we registered the listener
-		java.util.Set allObjectNames = server.queryNames(null, null);
+		final java.util.Set allObjectNames = server.queryNames(null, null);
 
 		if (!allObjectNames.contains(clusterBean)) {
 			synchronized (clusterBeanBag) {
@@ -193,7 +193,7 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 		server.removeNotificationListener(delegateName, listener0);
 
 		// listener for clustered bean events
-		NotificationListener listener1 = new NotificationListener() {
+		final NotificationListener listener1 = new NotificationListener() {
 			public void handleNotification(Notification notification,
 					Object handback) {
 				String nodeId = notification.getMessage();
@@ -210,12 +210,12 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 		return (server.getAttribute(clusterBean, "NodeId")).toString();
 	}
 
-	public void handleDisconnectedUser(String nodeId) {
-		String username = chatManager.removeUser(nodeId);
+	public void handleDisconnectedUser(final String nodeId) {
+		final String username = chatManager.removeUser(nodeId);
 		listModel.removeElement(username);
 	}
 
-	public void handleNewUser(String username) {
+	public void handleNewUser(final String username) {
 		echo("Adding user: " + username);
 		listModel.addElement(username);
 	}
@@ -224,8 +224,8 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					Document doc = display.getDocument();
-					Style style = display.addStyle("Style", null);
+					final Document doc = display.getDocument();
+					final Style style = display.addStyle("Style", null);
 
 					if (user.getName().equals(username)) {
 						StyleConstants.setItalic(style, true);
@@ -246,12 +246,11 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 					doc.insertString(doc.getLength(), "\n", style);
 
 					display.setCaretPosition(doc.getLength());
-				} catch (javax.swing.text.BadLocationException ble) {
+				} catch (final javax.swing.text.BadLocationException ble) {
 					System.err.println(ble.getMessage());
 				}
 			}
 		});
 
 	}
-
 }

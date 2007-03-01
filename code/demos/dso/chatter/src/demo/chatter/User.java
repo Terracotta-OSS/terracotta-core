@@ -16,6 +16,7 @@ public class User implements ChatListener {
 	public String getName() {
 		return name;
 	}
+
 	public String getNodeId() {
 		return nodeId;
 	}
@@ -35,7 +36,9 @@ public class User implements ChatListener {
 	}
 
 	public void newMessage(Message message) {
-		display.updateMessage(message.getUser().getName(), message.getMessage());
+		display
+				.updateMessage(message.getUser().getName(), message
+						.getMessage());
 	}
 
 	public void newUser(String username) {

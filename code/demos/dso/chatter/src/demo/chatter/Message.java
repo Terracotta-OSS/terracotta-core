@@ -4,8 +4,8 @@
 package demo.chatter;
 
 class Message {
-	private String	message;
-	private User	user;
+	private String message;
+	private User user;
 
 	public Message(User user, String message) {
 		this.user = user;

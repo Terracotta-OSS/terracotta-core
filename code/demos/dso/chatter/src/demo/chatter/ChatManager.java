@@ -3,20 +3,20 @@
  */
 package demo.chatter;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
-
 import javax.swing.DefaultListModel;
 
 class ChatManager {
-	private transient ChatListener	listener;
-	private List					messages;
-	private DefaultListModel		listModel;
-	private Map						map;
+	private transient ChatListener listener;
+
+	private List messages;
+
+	private DefaultListModel listModel;
+
+	private Map map;
 
 	public ChatManager() {
 		listModel = new DefaultListModel();
@@ -48,7 +48,7 @@ class ChatManager {
 	public String removeUser(String nodeId) {
 		synchronized (listModel) {
 			if (map.containsKey(nodeId)) {
-				User removedUser = (User)map.get(nodeId);
+				User removedUser = (User) map.get(nodeId);
 				listModel.removeElement(removedUser);
 				return removedUser.getName();
 			} else {
