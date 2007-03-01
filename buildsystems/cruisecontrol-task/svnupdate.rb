@@ -55,9 +55,18 @@ end
 good_rev_file = File.join(build_archive_dir, "currently_good_rev.txt")
 monkey_name = ARGV[0]
 
-current_rev = get_current_rev(topdir)
-current_good_rev = (monkey_name == "general-monkey") ? 'HEAD' : get_current_good_rev(good_rev_file)
+while true
+  current_rev = get_current_rev(topdir)
+  current_good_rev = get_current_good_rev(good_rev_file)
 
-if current_good_rev == 'HEAD' || current_rev <= current_good_rev 
-  svn_update_with_error_tolerant(topdir, current_good_rev)
+  if monkey_name == "general-monkey" || monkey_name == "test-monkey"
+    svn_update_with_error_tolerant(topdir, "HEAD")
+    exit(0)
+  elsif current_rev <= current_good_rev
+    svn_update_with_error_tolerant(topdir, current_good_rev)
+    exit(0)
+  else # I have a revision that is greater than a good known reivision, so I sleep and wait
+    sleep(5*60)
+  end
 end
+
