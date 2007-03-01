@@ -415,7 +415,10 @@ class SubtreeTestRun
     # being able to be set by TestConfigObject calling System.setProperty() from its static
     # initializer block. These are system properties that the JVM itself reads, or that DSO
     # (which loads from the bootclasspath, long, long before TestConfigObject loads) uses.
-    NON_CLASSPATH_LOADABLE_SYSTEM_PROPERTIES = [ 'java.library.path', 'tc.config', 'tc.dso.globalmode' ]
+    #
+    # It's also just a bad idea in the case of running tests in Eclipse, the use of this variable
+    # is commented out below; there is a comment there.
+    NON_CLASSPATH_LOADABLE_SYSTEM_PROPERTIES = [ 'java.library.path', 'tc.config', 'tc.dso.globalmode', "#{STATIC_PROPERTIES_PREFIX}plugins.url" ]
 
     # Prepares to have tests in this tree run externally (i.e., but Eclipse). This mostly just
     # sets up a properties file that contains a list of system properties for TestConfigObject
@@ -452,8 +455,12 @@ class SubtreeTestRun
             end
         end
 
-        # Compute which system properties need to be set manually.
-        required_system_properties = @sysproperties.keys & NON_CLASSPATH_LOADABLE_SYSTEM_PROPERTIES
+        # Compute which system properties need to be set manually.  This, as it turns out, is a bad idea: the
+        # Eclipse plugin for TC development (actually JUnit which it extends) creates an Eclipse launch
+        # configuration and it needs ALL the properties since this configuration is reused.  Commented out in
+        # case someone really wants to look at this, instead of just removing it.
+        #required_system_properties = @sysproperties.keys & NON_CLASSPATH_LOADABLE_SYSTEM_PROPERTIES
+        required_system_properties = @sysproperties.keys
 
         # Write out a file 'stamping' the module and subtree we've prepared this for, plus containing
         # extra information that the Eclipse tool we wrote that runs Terracotta tests needs in order
