@@ -15,8 +15,6 @@
 # is where the XML result files should go, not any of the other stuff this class
 # knows.
 
-require 'shell'
-
 class TestRunResults
     # Creates a TestRunResults object for the next free testrun directory in the
     # build-results directory (usually 'build').
