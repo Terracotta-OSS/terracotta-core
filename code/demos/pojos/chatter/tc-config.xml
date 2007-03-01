@@ -5,7 +5,7 @@
     <server name="localhost">
       <dso>
         <persistence>
-          <mode>permanent-store</mode>
+          <mode>temporary-swap-only</mode>
         </persistence>
       </dso>
     </server>
@@ -50,8 +50,9 @@
           <class-expression>demo.chatter.ChatManager</class-expression>
           <honor-transient>true</honor-transient>
         </include>
-        <!--Here, we say, treat the class 'demo.chatter.Message' as shareable; we use this
-             object to ferry around the messages sent from the chatter clients.-->
+        <!--Here, we're essentially saying, treat the following classes: 'demo.chatter.Message', 
+            'demo.chatter.User' as shareable; we use these objects to ferry around the messages 
+            (and information about the message) sent from chatter clients.-->
         <include>
           <class-expression>demo.chatter.Message</class-expression>
         </include>
@@ -59,6 +60,8 @@
           <class-expression>demo.chatter.User</class-expression>
           <honor-transient>true</honor-transient>
         </include>
+        <!--We instrument 'demo.chatter.Main' because it has a field (demo.chatter.Main.chatManager)
+	        that we later declare as root.-->
         <include>
           <class-expression>demo.chatter.Main</class-expression>
         </include>
@@ -69,10 +72,6 @@
         <method-expression>void demo.chatter.ChatManager.sendNewMessageEvent(..)</method-expression>
         <method-expression>void demo.chatter.ChatManager.sendNewUserEvent(..)</method-expression>
       </distributed-methods>
-      <!--These methods (originating from local objects) operates on objects declared as shared. This
-           section tells DSO to assume a lock on those objects for the duration of the call; essentially this
-           section declares that all methods found for all classes found for all packages should assume the
-           behavior described-->
       <!--We declare the field 'demo.chatter.Main.message' a root, making it
            available for all instances of our app that runs via DSO-->
       <roots>
@@ -80,6 +79,10 @@
           <field-name>demo.chatter.Main.chatManager</field-name>
         </root>
       </roots>
+      <!--These methods (originating from local objects) operates on objects declared as shared. This
+           section tells DSO to assume a lock on those objects for the duration of the call; essentially this
+           section declares that all methods found for all classes found for all packages should assume the
+           behavior described-->
       <locks>
         <autolock>
           <method-expression>void demo.chatter.ChatManager.send(demo.chatter.User, java.lang.String)</method-expression>
@@ -90,7 +93,7 @@
           <lock-level>write</lock-level>
         </autolock>
         <autolock>
-          <method-expression>void demo.chatter.ChatManager.removeUser(java.lang.String)</method-expression>
+          <method-expression>String demo.chatter.ChatManager.removeUser(java.lang.String)</method-expression>
           <lock-level>write</lock-level>
         </autolock>
       </locks>

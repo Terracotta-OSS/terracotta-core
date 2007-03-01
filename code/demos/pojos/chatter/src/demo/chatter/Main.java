@@ -51,27 +51,30 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		final Container content = getContentPane();
 
-		display.setFont(new Font("Lucida Sans Typewriter", Font.PLAIN, 9));
+		display.setFont(new Font("Andale Mono", Font.PLAIN, 9));
 		display.setEditable(false);
 		display.setRequestFocusEnabled(false);
 
 		final JTextField input = new JTextField();
-		input.setFont(new Font("Lucida Sans Typewriter", Font.PLAIN, 9));
+		input.setFont(new Font("Andale Mono", Font.PLAIN, 9));
 		input.addActionListener(this);
 		final JScrollPane scroll = new JScrollPane(display);
 		final Random r = new Random();
-		final JLabel buddy = new JLabel(user.getName(),
+		final JLabel avatar = new JLabel(user.getName() + " (node id: " + user.getNodeId() + ")",
 				new ImageIcon(getClass().getResource(
 						"/images/buddy" + r.nextInt(10) + ".gif")), JLabel.LEFT);
-		buddy.setFont(new Font("Lucida Sans Typewriter", Font.PLAIN, 16));
-		buddy.setVerticalTextPosition(JLabel.CENTER);
+		avatar.setForeground(Color.WHITE);
+		avatar.setFont(new Font("Georgia", Font.PLAIN, 16));
+		avatar.setVerticalTextPosition(JLabel.CENTER);
 		final JPanel buddypanel = new JPanel();
-		buddypanel.setBackground(Color.WHITE);
+		buddypanel.setBackground(Color.DARK_GRAY);
 		buddypanel.setLayout(new BorderLayout());
-		buddypanel.add(buddy, BorderLayout.CENTER);
+		buddypanel.add(avatar, BorderLayout.CENTER);
 
 		final JPanel buddyListPanel = new JPanel();
+		buddyListPanel.setBackground(Color.WHITE);
 		final JList buddyList = new JList(listModel);
+		buddyList.setFont(new Font("Andale Mono", Font.BOLD, 9));
 		buddyListPanel.add(buddyList);
 
 		content.setLayout(new BorderLayout());
@@ -82,7 +85,7 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 		pack();
 
 		setTitle("Chatter: " + user.getName());
-		setSize(new Dimension(300, 400));
+		setSize(new Dimension(600, 400));
 		setVisible(true);
 
 		input.requestFocus();
@@ -118,21 +121,44 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 		}
 
 		synchronized (chatManager) {
-			echo("registering: " + user + ", nodeId: " + user.getNodeId());
 			chatManager.registerUser(user);
 		}
-
 	}
 
-	public static void echo(final String msg) {
-		System.err.println(msg);
+	public void handleDisconnectedUser(final String nodeId) {
+		final String username = chatManager.removeUser(nodeId);
+		listModel.removeElement(username);
 	}
 
-	public static void main(final String[] args) {
+	public void handleNewUser(final String username) {
+		listModel.addElement(username);
+	}
 
+	public void updateMessage(final String username, final String message) {
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				new Main();
+				try {
+					final Document doc = display.getDocument();
+					final Style style = display.addStyle("Style", null);
+
+					if (user.getName().equals(username)) {
+						StyleConstants.setItalic(style, true);
+						StyleConstants.setForeground(style, Color.LIGHT_GRAY);
+						StyleConstants.setFontSize(style, 9);
+					}
+					
+					StyleConstants.setBold(style, true);
+					doc.insertString(doc.getLength(), username + ": ",
+							style);
+
+					StyleConstants.setBold(style, false);
+					doc.insertString(doc.getLength(), message, style);
+					doc.insertString(doc.getLength(), "\n", style);
+
+					display.setCaretPosition(doc.getLength());
+				} catch (final javax.swing.text.BadLocationException ble) {
+					System.err.println(ble.getMessage());
+				}
 			}
 		});
 	}
@@ -197,7 +223,6 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 			public void handleNotification(Notification notification,
 					Object handback) {
 				String nodeId = notification.getMessage();
-				echo("received msg: " + notification);
 				if (notification.getType().endsWith("nodeDisconnected")) {
 					handleDisconnectedUser(nodeId);
 				}
@@ -210,47 +235,11 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 		return (server.getAttribute(clusterBean, "NodeId")).toString();
 	}
 
-	public void handleDisconnectedUser(final String nodeId) {
-		final String username = chatManager.removeUser(nodeId);
-		listModel.removeElement(username);
-	}
-
-	public void handleNewUser(final String username) {
-		echo("Adding user: " + username);
-		listModel.addElement(username);
-	}
-
-	public void updateMessage(final String username, final String message) {
+	public static void main(final String[] args) {
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				try {
-					final Document doc = display.getDocument();
-					final Style style = display.addStyle("Style", null);
-
-					if (user.getName().equals(username)) {
-						StyleConstants.setItalic(style, true);
-						StyleConstants.setForeground(style, Color.LIGHT_GRAY);
-						StyleConstants.setFontSize(style, 9);
-					} else {
-						if (user.equals(username)) {
-							StyleConstants.setItalic(style, true);
-							StyleConstants.setForeground(style, Color.GRAY);
-						}
-						StyleConstants.setBold(style, true);
-						doc.insertString(doc.getLength(), username + ": ",
-								style);
-					}
-
-					StyleConstants.setBold(style, false);
-					doc.insertString(doc.getLength(), message, style);
-					doc.insertString(doc.getLength(), "\n", style);
-
-					display.setCaretPosition(doc.getLength());
-				} catch (final javax.swing.text.BadLocationException ble) {
-					System.err.println(ble.getMessage());
-				}
+				new Main();
 			}
 		});
-
 	}
 }
