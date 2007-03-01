@@ -829,8 +829,17 @@ public class AdminClientPanel extends XContainer
     }
     
     long nextCheckTime() {
-      long twoWeeks = System.currentTimeMillis()+(14*24*60*60*1000);
-      return twoWeeks;
+      long currentTime = System.currentTimeMillis();
+      Long minutes = Long.getLong("terracotta.update-checker.next-check-minutes");
+      long nextCheckTime;
+      
+      if(minutes != null) {
+        nextCheckTime = currentTime+(minutes.longValue()*60*1000);
+      } else {
+        nextCheckTime = currentTime+(14*24*60*60*1000);
+      }
+
+      return nextCheckTime;
     }
   }
   
