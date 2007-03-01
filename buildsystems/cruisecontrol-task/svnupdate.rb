@@ -14,6 +14,7 @@ def svn_update_with_error_tolerant(topdir, revision)
     error_msg=`svn update #{topdir} -r #{revision} -q --non-interactive 2>&1`
     return get_current_rev(topdir) if $? == 0
     sleep(5*60)
+    `svn cleanup #{topdir}`
   end  
   fail(error_msg)
 end
