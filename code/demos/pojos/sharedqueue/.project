@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>web-demo</name>
+	<name>sharedqueue</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -14,5 +14,6 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 		<nature>com.tc.ProjectNature</nature>
+		<nature>org.terracotta.dso.ProjectNature</nature>
 	</natures>
 </projectDescription>
