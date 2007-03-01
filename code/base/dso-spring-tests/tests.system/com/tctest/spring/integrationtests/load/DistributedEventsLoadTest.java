@@ -70,18 +70,18 @@ public class DistributedEventsLoadTest extends AbstractDeploymentTest {
   
       debugPrintln("publishDistributedEvents():  startTime = " + startTime);
   
-      for (int i = 0; i < NUM_ITERATION * nodeCount; i++) {
-        debugPrintln("publishDistributedEvents():  i % nodeCount = " + (i % nodeCount));
-  
-        ((EventManager) eventManagers.get(i % nodeCount))
-            .publishEvent("foo" + i, "bar" + i);
+      for (int i = 0; i < NUM_ITERATION; i++) {
+        for (int node = 0; node < nodeCount; node++) {
+          debugPrintln("publishDistributedEvents():  node:" + node + " iteration:" + i);
+          ((EventManager) eventManagers.get(node)).publishEvents("foo" + node, "bar" + i, 2);
+        }
       }
   
       waitForSuccess(8 * 60, new TestCallback() {
         public void check() {
           for (Iterator iter = eventManagers.iterator(); iter.hasNext();) {
             EventManager em = (EventManager) iter.next();
-            assertEquals(NUM_ITERATION * nodeCount, em.size());
+            assertEquals(NUM_ITERATION * nodeCount * 2, em.size());
           }
         }
       });
