@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>modules.def.yml</string>
+	<string>buildscripts/boot_jars.rb</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -25,6 +25,8 @@
 			<string>buildscripts</string>
 		</dict>
 		<dict>
+			<key>expanded</key>
+			<true/>
 			<key>name</key>
 			<string>buildconfig</string>
 			<key>regexFolderFilter</key>
@@ -40,9 +42,7 @@
 			<key>filename</key>
 			<string>modules.def.yml</string>
 			<key>lastUsed</key>
-			<date>2007-02-22T22:06:17Z</date>
-			<key>selected</key>
-			<true/>
+			<date>2007-02-28T21:51:36Z</date>
 		</dict>
 		<dict>
 			<key>filename</key>
@@ -63,24 +63,40 @@
 	<integer>200</integer>
 	<key>metaData</key>
 	<dict>
-		<key>modules.def.yml</key>
+		<key>buildscripts/boot_jars.rb</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>10</integer>
+				<integer>106</integer>
 				<key>line</key>
-				<integer>73</integer>
+				<integer>79</integer>
 			</dict>
+			<key>columnSelection</key>
+			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>16</integer>
+			<integer>57</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>18</integer>
+				<key>line</key>
+				<integer>79</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>106</integer>
+				<key>line</key>
+				<integer>79</integer>
+			</dict>
 		</dict>
 	</dict>
 	<key>openDocuments</key>
 	<array>
-		<string>modules.def.yml</string>
+		<string>buildscripts/boot_jars.rb</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
 	<true/>
