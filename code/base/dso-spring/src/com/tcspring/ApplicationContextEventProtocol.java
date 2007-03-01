@@ -132,8 +132,9 @@ public class ApplicationContextEventProtocol {
       if (distributableBeanFactory.isDistributedEvent(event.getClass().getName())) {
         String ctxId = distributableBeanFactory.getId();
         // logger.info("Publishing distributed  " + event);
+        boolean requireCommit = false;
         try {
-          ManagerUtil.distributedMethodCall(
+          requireCommit = ManagerUtil.distributedMethodCall(
                                      this,
                                      "multicastEvent(Ljava/lang/String;Lorg/springframework/context/ApplicationEvent;)V",
                                      new Object[] { ctxId, event });
@@ -141,6 +142,10 @@ public class ApplicationContextEventProtocol {
 
         } catch (Throwable e) {
           logger.error("Unable to send event " + event + "; " + e.getMessage(), e);
+        } finally {
+          if(requireCommit) {
+            ManagerUtil.distributedMethodCallCommit();
+          }
         }
         return true;
 //      } else {

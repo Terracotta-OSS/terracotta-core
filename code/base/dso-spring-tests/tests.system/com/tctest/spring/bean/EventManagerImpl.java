@@ -26,8 +26,10 @@ public class EventManagerImpl implements EventManager, ApplicationContextAware {
     return listener.getEvents().size();
   }
 
-  public void publishEvent(Object source, String message) {
-    ctx.publishEvent(new DistributedSingletonEvent(source, message));
+  public void publishEvents(Object source, String message, int count) {
+    for (int i = 0; i < count; i++) {
+      ctx.publishEvent(new DistributedSingletonEvent(source, message + "[" + i + "]"));
+    }
   }
 
   public void publishLocalEvent(Object source, String message) {

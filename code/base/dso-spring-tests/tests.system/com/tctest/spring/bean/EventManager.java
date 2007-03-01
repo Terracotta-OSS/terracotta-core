@@ -9,7 +9,7 @@ public interface EventManager {
 
   int size();
 
-  void publishEvent(Object source, String message);
+  void publishEvents(Object source, String message, int count);
 
   void publishLocalEvent(Object source, String message);
 
