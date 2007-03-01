@@ -421,8 +421,21 @@ modules:
         - legacy-test-tree
   - clustered-commons-collections-3.1:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
         plugin: true
+      dependencies:
+        - aspectwerkz
+        - common
+        - deploy
+        - dso-common
+        - dso-common-jdk15
+        - dso-l1
+        - dso-l2
+        - legacy-test-tree
+        - linked-child-process
+        - management
+        - simulator
+        - thirdparty
   - clustered-cglib-2.1.3:
       options:
         jdk: J2SE-1.4

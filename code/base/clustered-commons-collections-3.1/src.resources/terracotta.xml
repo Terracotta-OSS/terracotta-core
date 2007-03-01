@@ -48,6 +48,16 @@
                 <method-expression>* org.apache.commons.collections.FastHashMap*.size(..)</method-expression>
                 <lock-level>read</lock-level>
             </autolock>
+            <named-lock>
+                <lock-name>org.apache.commons.collections.FastHashMap.fast</lock-name>
+                <method-expression>* org.apache.commons.collections.FastHashMap*.getFast(..)</method-expression>
+                <lock-level>write</lock-level>
+            </named-lock>
+            <named-lock>
+                <lock-name>org.apache.commons.collections.FastHashMap.fast</lock-name>
+                <method-expression>* org.apache.commons.collections.FastHashMap*.setFast(..)</method-expression>
+                <lock-level>write</lock-level>
+            </named-lock>
         </locks>
 
 </xml-fragment>
