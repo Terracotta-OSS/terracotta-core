@@ -14,6 +14,9 @@
 # already been put on disk (i.e., by running the tests); the only thing it knows
 # is where the XML result files should go, not any of the other stuff this class
 # knows.
+
+require 'shell'
+
 class TestRunResults
     # Creates a TestRunResults object for the next free testrun directory in the
     # build-results directory (usually 'build').
@@ -32,8 +35,15 @@ class TestRunResults
         
         # create symlink to latest testrun, must have Cygwin on Windows for this to work
         # detect if we're in unix or cygwin env
-        uname = `uname 2>&1`
-        unless $? != 0      
+        is_unix = true
+        begin
+          Registry[:platform].exec("ls")
+        rescue
+          is_unix = false
+        end
+        
+        
+        if is_unix          
           unixpath = root_dir.to_s.gsub(/\\/, "/")
           if ENV['OS'] =~ /(Windows)|(CYGWIN)/i 
               unixpath = `cygpath -l -w #{unixpath}`.gsub(/\\/, "/")
