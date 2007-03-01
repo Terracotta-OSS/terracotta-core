@@ -86,18 +86,4 @@ public class TempDirectoryHelperTest extends TestCase {
     assertEquals(theDir.getAbsolutePath(), theFile.getParentFile().getAbsolutePath());
   }
 
-  public void testCleanTempDirectory() throws Exception {
-    this.helper.getDirectory();
-
-    File theFile = new File(this.expectedDir, "foo.txt");
-    assertTrue(theFile.createNewFile());
-    assertTrue(theFile.exists());
-
-    this.helper.getDirectory();
-    assertTrue(theFile.exists());
-
-    this.helper.cleanTempDirectory();
-    assertFalse(theFile.exists());
-  }
-
 }

@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test;
 
@@ -38,17 +39,16 @@ public class TempDirectoryHelper extends BaseDirectoryHelper {
     }
     ClassBasedDirectoryTree tree = new ClassBasedDirectoryTree(getRoot());
     File out = tree.getOrMakeDirectory(getTargetClass());
-    if ((!out.exists()) && (!out.mkdirs())) throw new FileNotFoundException("Directory '" + out.getAbsolutePath()
-                                                                            + "' can't be created.");
+    if ((!out.exists()) && (!out.mkdirs())) {
+      FileNotFoundException fnfe = new FileNotFoundException("Directory '" + out.getAbsolutePath()
+          + "' can't be created.");
+      throw fnfe;
+    }
 
     if (cleanDir) {
       FileUtils.cleanDirectory(out);
     }
     return out;
-  }
-
-  public void cleanTempDirectory() throws IOException {
-    FileUtils.cleanDirectory(getDirectory());
   }
 
 }
