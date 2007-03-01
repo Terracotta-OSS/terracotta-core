@@ -389,10 +389,13 @@ class SubtreeTestRun
         # overwrite them as they go; this way, it's positive, instead of negative, feedback -- we only
         # count the test as having passed if we *know* it passed, rather than only counting it as
         # having failed if we *know* it failed. Much better.
-        puts "Writing out 'did-not-run' XML files for the %d test(s) in %s/%s..." % [ @found_tests.size, @subtree.build_module.name, @subtree.name ]
+        puts "Writing out 'did-not-run' XML files for the #{@found_tests.size} " +
+             "test(s) in #{@subtree.build_module.name}/#{@subtree.name}..."
         @found_tests.each do |found_test|
             class_name = @build_results.class_name_for_class_file(@subtree, found_test)
-            create_did_not_run_file(class_name, @testrun_results.results_file(@subtree, class_name)) unless FilePath.new(found_test).filename =~ /\$/
+            unless FilePath.new(found_test).filename =~ /\$/
+              create_did_not_run_file(class_name, @testrun_results.results_file(@subtree, class_name))
+            end
         end
 
         # Grep for current java processes for debugging

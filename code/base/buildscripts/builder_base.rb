@@ -56,30 +56,9 @@ class TerracottaAnt < Builder::AntBuilder
         out
     end
 
-    # Returns a hash of the current values of all Ant properties. This will always return the correct
-    # values of properties, but will not pick up new properties that have been set for the first time
-    # since the last time you called it, unless you set force_update to true.
-    def all_ant_properties(force_update = false)
-        out = { }
-
-        # If we don't have a cache, or are forcing an update, use the Ant 'propertyselector' task to
-        # gin up a list of all property names.
-        if force_update || $antCachedPropertyNames.nil?
-            property_name = ANT_PROPERTY_LIST_PROPERTY_NAME_BASE + $antPropertyListPropertyNextIndex.to_s
-            $antPropertyListPropertyNextIndex += 1
-
-            propertyselector(:property => property_name, :override => true, :match => '.*',
-                :casesensitive => false, :distinct => true)
-
-            property_list = get_ant_property(property_name)
-            $antCachedPropertyNames = property_list.split(/\s*,\s*/)
-        end
-
-        $antCachedPropertyNames.each do |name|
-            out[name] = get_ant_property(name, "(unknown -- cannot fetch from Ant; this is not a valid Ruby identifier)")
-        end
-
-        out
+    # Returns a hash of the current values of all Ant properties.
+    def all_ant_properties
+      _get_ant_properties_as_hash
     end
 
     # Sets an Ant property to a particular value. If you pass in a key that's not a valid Ruby
