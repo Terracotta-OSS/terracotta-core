@@ -47,8 +47,8 @@ class TestRunResults
               unixpath = `cygpath -l -w #{unixpath}`.gsub(/\\/, "/")
               unixpath = `cygpath -u #{unixpath}`.strip
           end
-                    
-          link=`rm testrun-latest; ln -s #{unixpath} testrun-latest`        
+          `rm testrun-latest` if File.exist?("testrun-latest")
+          link=`ln -s #{unixpath} testrun-latest`        
         end
         
         TestRunResults.new(root_dir)
