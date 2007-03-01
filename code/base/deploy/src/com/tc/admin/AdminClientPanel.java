@@ -3,15 +3,21 @@
  */
 package com.tc.admin;
 
+import org.apache.commons.io.IOUtils;
 import org.dijon.Button;
+import org.dijon.CheckBox;
 import org.dijon.Dialog;
 import org.dijon.DialogResource;
 import org.dijon.FrameResource;
 import org.dijon.HelpManager;
 import org.dijon.Label;
+import org.dijon.ScrollPane;
 import org.dijon.Separator;
+import org.dijon.TextArea;
+import org.dijon.TextPane;
 import org.dijon.UndoMonger;
 
+import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.ContactTerracottaAction;
 import com.tc.admin.common.PrefsHelper;
@@ -36,26 +42,40 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Properties;
+import java.util.StringTokenizer;
 import java.util.prefs.Preferences;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
+import javax.swing.text.html.HTML;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.undo.UndoManager;
@@ -239,6 +259,14 @@ public class AdminClientPanel extends XContainer
     return AdminClient.getContext().getMessage(key);
   }
   
+  private String formatBundleString(String key, Object[] args) {
+    return AdminClient.getContext().format(key, args);
+  }
+
+  private String formatBundleString(String key, Object arg) {
+    return formatBundleString(key, new Object[]{arg});
+  }
+
   public void initMenubar(XMenuBar menuBar) {
     XMenu menu = new XMenu(getBundleString("file.menu.label"));
 
@@ -258,13 +286,8 @@ public class AdminClientPanel extends XContainer
                                          "http://www.terracottatech.com/forums/"));
     menu.add(new ContactTerracottaAction("Contact Terracotta Technical Support",
                                          "http://www.terracottatech.com/support_services.shtml"));
-    /*
-    menu.add(new ContactTerracottaAction("Contact Terracotta Field Engineering",
-                                         "http://www.terracottatech.com/contact/field/"));
-    menu.add(new ContactTerracottaAction("Contact Terracotta Sales",
-                                         "http://www.terracottatech.com/contact/"));
-    */
     menu.addSeparator();
+    menu.add(new UpdateCheckerAction());
     menu.add(m_aboutAction = new AboutAction());
     
     menuBar.add(menu);
@@ -553,20 +576,7 @@ public class AdminClientPanel extends XContainer
     }
 
     public void actionPerformed(ActionEvent ae) {
-      disconnectAll();
-
-      // We do this because the ServerConnectionManager messages its listener
-      // in a background thread, so the listener needs to invokerLater itself.
-      // This ensures that work gets done, including resetting any ConnectionContexts
-      // such as the ones used by the ClusterMemberList in ServerPanel.  If we don't
-      // handle it this way, the process will exit resulting in messy JMX errors
-      // in the log.
-      
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          System.exit(0);
-        }
-      });
+      System.exit(0);
     }
   }
 
@@ -577,6 +587,251 @@ public class AdminClientPanel extends XContainer
   
   protected boolean shouldAddAboutItem() {
     return true;
+  }
+ 
+  class UpdateCheckerAction extends XAbstractAction {
+    Dialog m_updateCheckerDialog;
+    ProductInfo m_productInfo;
+
+    UpdateCheckerAction() {
+      super(getBundleString("update-checker.action.label"));
+      Preferences updateCheckerPrefs = getUpdateCheckerPrefs();
+      boolean shouldCheck = updateCheckerPrefs.getBoolean("checking-enabled", true);
+      
+      if(shouldCheck) {
+        long nextCheckTime = updateCheckerPrefs.getLong("next-check-time", 0L);
+        
+        if(nextCheckTime == 0L) {
+          updateCheckerPrefs.putLong("next-check-time", nextCheckTime());
+          storePreferences();
+        } else if(nextCheckTime < System.currentTimeMillis()) {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              Timer t = new Timer(1, UpdateCheckerAction.this);
+              t.setRepeats(false);
+              t.start();
+            }
+          });
+        }
+      }
+    }
+    
+    Preferences getUpdateCheckerPrefs() {
+      return getPreferences().node("update-checker");
+    }
+    
+    public void actionPerformed(ActionEvent e) {
+      final Preferences updateCheckerPrefs = getUpdateCheckerPrefs();
+      final boolean promptForCheck = updateCheckerPrefs.getBoolean("prompt-for-check-enabled", true);
+      final Object src = e.getSource();
+      
+      if(promptForCheck || !(src instanceof Timer)) {
+        if(m_updateCheckerDialog == null) {
+          AdminClientContext acc = AdminClient.getContext();
+          java.awt.Frame frame = getFrame();
+  
+          m_updateCheckerDialog = frame != null ? new Dialog(frame) : new Dialog();
+          m_updateCheckerDialog.load((DialogResource)acc.topRes.child("UpdateCheckerDialog"));
+          
+          Button button = (Button)m_updateCheckerDialog.findComponent("EnableCheckingButton");
+          button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+              updateCheckerPrefs.putBoolean("checking-enabled", true);
+              storePreferences();
+              UpdateCheckerAction.this.startUpdateCheck(true);
+              m_updateCheckerDialog.setVisible(false);
+            }
+          });
+          m_updateCheckerDialog.getRootPane().setDefaultButton(button);
+  
+          CheckBox promptForCheckToggle = (CheckBox)m_updateCheckerDialog.findComponent("PromptForCheckToggle");
+          promptForCheckToggle.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+              CheckBox cb = (CheckBox)ae.getSource();
+              updateCheckerPrefs.putBoolean("prompt-for-check-enabled", cb.isSelected());
+              storePreferences();
+            }
+          });
+          promptForCheckToggle.setSelected(updateCheckerPrefs.getBoolean("prompt-for-check-enabled", true));
+  
+          button = (Button)m_updateCheckerDialog.findComponent("DisableCheckingButton");
+          button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+              updateCheckerPrefs.putBoolean("checking-enabled", false);
+              storePreferences();
+              m_updateCheckerDialog.setVisible(false);
+            }
+          });
+  
+          button = (Button)m_updateCheckerDialog.findComponent("CloseButton");
+          button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+              m_updateCheckerDialog.setVisible(false);
+            }
+          });
+          Label lastCheckLabel = (Label)m_updateCheckerDialog.findComponent("LastCheckTimeLabel");
+          long lastCheckTime = updateCheckerPrefs.getLong("last-check-time", 0L);
+          if(lastCheckTime != 0L) {
+            lastCheckLabel.setText(formatBundleString("update-checker.last.checked.msg",
+                                                      new Date(lastCheckTime)));
+          }
+        }
+        
+        m_updateCheckerDialog.pack();
+        m_updateCheckerDialog.center(AdminClientPanel.this);
+        m_updateCheckerDialog.setVisible(true);
+      } else {
+        UpdateCheckerAction.this.startUpdateCheck(false);
+      }
+    }
+    
+    ProductInfo getProductInfo() {
+      if(m_productInfo == null) {
+        m_productInfo = new ProductInfo();
+      }
+      return m_productInfo;
+    }
+    
+    URL constructCheckURL() throws MalformedURLException {
+      String defaultPropsUrl = "http://www.terracottatech.com/updateCheck/1.0/update-list.properties";
+      String propsUrl = System.getProperty("terracotta.update-checker.url", defaultPropsUrl);
+      StringBuffer sb = new StringBuffer(propsUrl);
+      ProductInfo productInfo = getProductInfo();
+      
+      sb.append("?os-name=");
+      sb.append(URLEncoder.encode(System.getProperty("os.name")));
+      sb.append("&jvm-name=");
+      sb.append(URLEncoder.encode(System.getProperty("java.vm.name")));
+      sb.append("&jvm-version=");
+      sb.append(URLEncoder.encode(System.getProperty("java.vm.version")));
+      sb.append("&platform=");
+      sb.append(URLEncoder.encode(System.getProperty("os.arch")));
+      sb.append("&tc-version=");
+      sb.append(URLEncoder.encode(productInfo.getVersion()));
+      sb.append("&tc-product=");
+      sb.append(productInfo.getLicense().equals(ProductInfo.DEFAULT_LICENSE) ? "oss" : "ee");
+      
+      return new URL(sb.toString());
+    }
+    
+    void showMessage(String msg) {
+      TextArea textArea = new TextArea();
+      textArea.setText(msg);
+      textArea.setRows(8);
+      textArea.setColumns(80);
+      textArea.setEditable(false);
+      ScrollPane scrollPane = new ScrollPane(textArea);
+      JOptionPane.showMessageDialog(AdminClientPanel.this, scrollPane,
+                                    getBundleString("update-checker.action.title"),
+                                    JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    void startUpdateCheck(final boolean wasPrompted) {
+      Thread t = new Thread() {
+        public void run() {
+          InputStream is = null;
+          Object result = null;
+          String versionNotice = null;
+          
+          try {
+            StringBuffer sb = new StringBuffer();
+            String version = getProductInfo().getVersion();
+            if(version.indexOf('.') != -1) {
+              URL url = constructCheckURL();
+              is = url.openStream();
+              Properties props = new Properties();
+              props.load(is);
+              
+              String propVal = props.getProperty("general.notice");
+              if(propVal != null && (propVal = propVal.trim()) != null && propVal.length() > 0) {
+                showMessage(propVal);
+              }
+
+              propVal = props.getProperty(version+".notice");
+              if(propVal != null && (propVal = propVal.trim()) != null && propVal.length() > 0) {
+                showMessage(propVal);
+              }
+              versionNotice = propVal;
+              
+              propVal = props.getProperty(version+".updates");
+              if(propVal != null && (propVal = propVal.trim()) != null && propVal.length() > 0) {
+                sb.append("<ul>");
+                StringTokenizer st = new StringTokenizer(propVal, ",");
+                while(st.hasMoreElements()) {
+                  sb.append("<li>");
+                  String newVersion = st.nextToken();
+                  sb.append(newVersion);
+  
+                  propVal = props.getProperty(newVersion+".release-notes");
+                  if(propVal != null && (propVal = propVal.trim()) != null && propVal.length() > 0) {
+                    sb.append(" -- <a href=\"");
+                    sb.append(propVal);
+                    sb.append("\">");
+                    sb.append(getBundleString("update-checker.release-notes.label"));
+                    sb.append("</a>");
+                  }
+                  sb.append("</li>\n");
+                }
+                sb.append("</ol>");
+              }
+            }
+            if(sb.length() > 0) {
+              sb.insert(0, "<html><body><p>"+getBundleString("update-checker.updates.available.msg")+"</p>");
+              sb.append("</body></html>");
+              TextPane textPane = new TextPane();
+              textPane.setEditable(false);
+              textPane.setContentType("text/html");
+              textPane.setBackground(null);
+              textPane.setText(sb.toString());
+              textPane.addHyperlinkListener(new HyperlinkListener() {
+                public void hyperlinkUpdate(HyperlinkEvent e) {
+                  if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                    Element elem = e.getSourceElement();
+                    AttributeSet a = elem.getAttributes();
+                    AttributeSet anchor = (AttributeSet) a.getAttribute(HTML.Tag.A);
+                    String action = (String) anchor.getAttribute(HTML.Attribute.HREF);
+                    BrowserLauncher.openURL(action);
+                  }
+                }
+              });
+              result = textPane;
+            } else if(wasPrompted && versionNotice == null) {
+              result = getBundleString("update-checker.current.msg");
+            }
+          } catch(Exception e) {
+            if(wasPrompted) {
+              result = getBundleString("update-checker.connect.failed.msg");
+            }
+          } finally {
+            IOUtils.closeQuietly(is);
+          }
+          UpdateCheckerAction.this.finishUpdateCheck(wasPrompted, result);
+        }
+      };
+      t.start();
+    }
+
+    void finishUpdateCheck(final boolean wasPrompted, final Object msg) {
+      if(msg != null) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            JOptionPane.showMessageDialog(AdminClientPanel.this, msg,
+                                          getBundleString("update-checker.action.title"),
+                                          JOptionPane.INFORMATION_MESSAGE);
+          }
+        });
+      }
+
+      final Preferences updateCheckerPrefs = getUpdateCheckerPrefs();
+      updateCheckerPrefs.putLong("next-check-time", nextCheckTime());
+      updateCheckerPrefs.putLong("last-check-time", System.currentTimeMillis());
+      storePreferences();
+    }
+    
+    long nextCheckTime() {
+      long twoWeeks = System.currentTimeMillis()+(14*24*60*60*1000);
+      return twoWeeks;
+    }
   }
   
   class AboutAction extends XAbstractAction {

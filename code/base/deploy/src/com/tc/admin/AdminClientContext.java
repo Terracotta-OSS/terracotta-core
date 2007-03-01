@@ -33,6 +33,10 @@ public class AdminClientContext {
     return bundleHelper.getString(id);
   }
   
+  public String format(final String key, Object[] args) {
+    return bundleHelper.format(key, args);
+  }
+
   /**
    * Load an array of messages from Resources.java.
    */

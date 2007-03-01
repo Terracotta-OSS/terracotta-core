@@ -18,8 +18,6 @@ import java.awt.Toolkit;
 import java.awt.event.WindowEvent;
 import java.util.prefs.Preferences;
 
-import javax.swing.SwingUtilities;
-
 public class AdminClientFrame extends XFrame
   implements AdminClientController
 {
@@ -83,18 +81,9 @@ public class AdminClientFrame extends XFrame
 
   protected void processWindowEvent(final WindowEvent e) {
     if(e.getID() == WindowEvent.WINDOW_CLOSING) {
-      m_mainPanel.disconnectAll();
+      System.exit(0);
     }
-
-    // We need to give the ServerNodes a chance to hear disconnect messages
-    // from the ServerConnectionManager, which happen in an application thread,
-    // not the EventDispatchThread.
-    
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        AdminClientFrame.super.processWindowEvent(e);
-      }
-    });
+    super.processWindowEvent(e);
   }
 
   public void log(String s) {

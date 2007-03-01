@@ -199,5 +199,26 @@ public class AdminClientBundle extends ListResourceBundle {
      
     {"about.action.label",
      "About Terracotta Console"},
+
+    {"update-checker.action.label",
+     "Update checker..."},
+     
+    {"update-checker.connect.failed.msg",
+     "Unable to connect to update site."},
+
+    {"update-checker.current.msg",
+     "Your software is up-to-date."},
+      
+    {"update-checker.updates.available.msg",
+     "New Terracotta versions are now available."},
+       
+    {"update-checker.release-notes.label",
+     "Release notes"},
+        
+    {"update-checker.action.title",
+     "Terracotta Update Checker"},
+     
+     {"update-checker.last.checked.msg",
+      "Last checked: {0}"},
   };
 }

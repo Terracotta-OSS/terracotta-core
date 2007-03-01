@@ -12,7 +12,7 @@ public class ProductInfo {
   private String              m_license;
   private String              m_copyright;
 
-  private static final String DEFAULT_LICENSE = "Unlimited development";
+  public static final String DEFAULT_LICENSE = "Unlimited development";
 
   public ProductInfo() {
     TCLogging.class.toString();
