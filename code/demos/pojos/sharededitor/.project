@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>SharedEditor</name>
+	<name>sharededitor</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -13,5 +13,6 @@
 	</buildSpec>
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>org.terracotta.dso.ProjectNature</nature>
 	</natures>
 </projectDescription>
