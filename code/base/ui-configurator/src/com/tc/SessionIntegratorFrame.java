@@ -656,9 +656,11 @@ public class SessionIntegratorFrame extends Frame {
             m_webServer1Label.setText(getWebServer1Label());            
             m_webServer2Label.setText(getWebServer2Label());
 
-            m_webAppTreeModel = new WebAppTreeModel(SessionIntegratorFrame.this, getWebApps());    
-            m_webAppTree.setModel(m_webAppTreeModel);
-            
+            WebApp[] webApps = getWebApps();
+            for(int i = 0; i < webApps.length; i++) {
+              touch(webApps[i]);
+            }
+
             m_configHelper = new ConfigHelper(m_serverSelection);
             m_l2ConnectManager.setJMXPortNumber(m_configHelper.getJmxPort());
             initXmlPane();
@@ -1032,6 +1034,33 @@ public class SessionIntegratorFrame extends Frame {
       } catch(Exception e) {
         String msg = formatBundleString("refresh.failure.msg", new Object[] {webApp});
         m_configHelper.openError(msg, e);
+      }
+    }
+  }
+ 
+  /**
+   * Update the timestamp on archived webapps or JSP's from exploded WAR's so
+   * they get recompiled. We do this after the user has used the 'Servers' dialog
+   * because they may have changed the Java runtime from 1.5+ down to 1.4.
+   * If we don't force the JSP's to be recompiled, they'll get a ClassFormatVersion
+   * exception when they hit the page.
+   */
+  void touch(WebApp webApp) {
+    long time = System.currentTimeMillis();
+    String[] serverAreas = new String[] {getWebServer1Area(), getWebServer2Area()};
+    
+    for(int j = 0; j < serverAreas.length; j++) {
+      File destFile = new File(serverAreas[j], webApp.getName());
+      
+      if(!destFile.isDirectory()) {
+        destFile.setLastModified(time);
+      } else {
+        Collection fileSet = FileUtils.listFiles(destFile, new String[]{"jsp"}, true);
+        File[]     files   = FileUtils.convertFileCollectionToFileArray(fileSet);
+
+        for(int i = 0 ; i < files.length; i++) {
+          files[i].setLastModified(time);
+        }
       }
     }
   }
