@@ -54,7 +54,7 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 			populateCurrentUsers();
 			login();
 		} catch (final Exception e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 
 		setDefaultLookAndFeelDecorated(true);
