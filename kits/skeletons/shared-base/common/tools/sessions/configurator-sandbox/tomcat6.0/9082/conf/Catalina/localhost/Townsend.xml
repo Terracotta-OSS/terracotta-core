@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2003-2006 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->
+<Context path="/Townsend">
+  <!-- specify empty pathname to disable session serialization -->
+  <Manager pathname=""/>
+</Context>

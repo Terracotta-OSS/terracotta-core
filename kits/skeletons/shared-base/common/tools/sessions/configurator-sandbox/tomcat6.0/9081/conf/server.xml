@@ -1,0 +1,19 @@
+<!--
+
+  All content copyright (c) 2003-2006 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->
+
+<Server port="9051" shutdown="SHUTDOWN">
+  <Service name="Catalina">
+    <Connector port="9081" />
+
+    <Engine name="Catalina" defaultHost="localhost">
+      <Host name="localhost" appBase="webapps"
+            unpackWARs="true" autoDeploy="true"
+            xmlValidation="false" xmlNamespaceAware="false"/>
+    </Engine>
+  </Service>
+</Server>

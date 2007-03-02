@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2003-2006 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->
+
+<!-- This is a Terracotta configuration file that has been pre-configured
+     for use with Tomcat Sessions.
+     For more information, please see the product documentation -->
+
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config">
+
+  <!-- Tell DSO where the Terracotta server can be found; 
+       See the Terracotta DSO Guide for additional information. -->
+  <servers>
+    <server name="localhost">
+      <data>data/server-data</data>
+      <logs>logs/server-logs</logs>
+    </server>
+  </servers>
+
+  <!-- Tell DSO where to put the generated client logs
+       See the Terracotta DSO Guide for additional information. -->
+  <clients>
+    <logs>logs/client-logs/%(webserver.log.name)</logs>
+    <plugins>
+      <plugin name="clustered-apache-struts" version="1.1"/>
+    </plugins>
+  </clients>
+
+  <application>
+    <dso>
+      <!-- Our app requires these custom objects/classes to be shared - the following declarations
+           tells DSO which ones they are. When the app runs under DSO, instances of these classes
+           will broadcast changes in their state.
+
+           A good idiom when writing an app that you intend to cluster via TC DSO, is to group the 
+           classes you wish to share under a single package (although if you follow the MVC pattern
+           this tends to happen naturally) - this way the list of classes you wish to instrument
+           can be concise -->
+      <instrumented-classes>
+        <!-- Include all classes for DSO instrumentation -->
+        <include>
+          <class-expression>*..*</class-expression>
+        </include>
+        <!-- But exclude Tomcat internals to improve performance of webapp load -->
+        <exclude>org.apache.coyote..*</exclude>
+        <exclude>org.apache.catalina..*</exclude>
+        <exclude>org.apache.jasper..*</exclude>
+        <exclude>org.apache.tomcat..*</exclude>
+      </instrumented-classes>
+
+      <!-- Tell DSO which applications in your web container is using DSO -->
+      <web-applications>
+        <web-application>Cart</web-application>
+        <web-application>DepartmentTaskList</web-application>
+        <web-application>Townsend</web-application>
+      </web-applications>
+
+      <!-- We declare the field 'service.ProductCatalog.catalog' a root, making it 
+           available for all instances of our app that runs via DSO -->
+      <roots>
+        <root>
+          <field-name>demo.townsend.service.ProductCatalog.catalog</field-name>
+          <root-name>ProductCatalog</root-name>
+        </root>
+      </roots>
+    </dso>
+  </application>
+
+</tc:tc-config>

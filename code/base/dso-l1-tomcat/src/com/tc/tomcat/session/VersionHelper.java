@@ -37,6 +37,8 @@ public class VersionHelper {
       CURRENT = TOMCAT_50;
     } else if (ver.startsWith("5.5")) {
       CURRENT = TOMCAT_55;
+    } else if (ver.startsWith("6.0")) {
+      CURRENT = TOMCAT_55;      
     } else {
       throw new AssertionError("Cannot determine tomcat version from " + serverInfo);
     }
