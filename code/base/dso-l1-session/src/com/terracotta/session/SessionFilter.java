@@ -4,6 +4,7 @@
  */
 package com.terracotta.session;
 
+import com.tc.object.bytecode.ManagerUtil;
 import com.terracotta.session.util.Assert;
 import com.terracotta.session.util.ConfigProperties;
 import com.terracotta.session.util.ContextMgr;
@@ -98,7 +99,11 @@ public class SessionFilter implements Filter {
                                                           final RequestResponseFactory factory,
                                                           final ServletContext servletContext) {
     final ConfigProperties cp = new ConfigProperties(wac);
-    final SessionIdGenerator sig = DefaultIdGenerator.makeInstance(cp);
+
+    String appName = DefaultContextMgr.computeAppName(req);
+    int lockType = ManagerUtil.getSessionLockType(appName);
+    final SessionIdGenerator sig = DefaultIdGenerator.makeInstance(cp, lockType);
+
     final SessionCookieWriter scw = DefaultCookieWriter.makeInstance(cp);
     final LifecycleEventMgr eventMgr = DefaultLifecycleEventMgr.makeInstance(cp);
     final ContextMgr contextMgr = DefaultContextMgr.makeInstance(req, servletContext);

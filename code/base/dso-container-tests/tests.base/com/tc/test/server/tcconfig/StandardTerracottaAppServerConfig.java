@@ -23,7 +23,9 @@ import com.tc.util.PortChooser;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This class delegates to {@link TerracottaConfigBuilder} laying out the elements for a minimal config used to run
@@ -100,6 +102,15 @@ public class StandardTerracottaAppServerConfig {
     WebApplicationConfigBuilder wacbImpl = new WebApplicationConfigBuilderImpl();
     wacbImpl.setWebApplicationName(appName);
     webapps.add(wacbImpl);
+  }
+  
+  public void addWebApplication(String appName, boolean isSynchronousWrite) {
+    WebApplicationConfigBuilder builder = new WebApplicationConfigBuilderImpl();
+    builder.setWebApplicationName(appName);
+    Map attributes = new HashMap();
+    attributes.put(WebApplicationConfigBuilder.ATTRIBUTE_NAME, "" + isSynchronousWrite);
+    builder.setWebApplicationAttributes(attributes);
+    webapps.add(builder);
   }
 
   public final void addExclude(String exclude) {

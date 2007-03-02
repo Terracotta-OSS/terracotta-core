@@ -63,6 +63,7 @@ import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.config.schema.NewDSOApplicationConfig;
 import com.tc.object.config.schema.NewSpringApplicationConfig;
 import com.tc.object.loaders.NamedLoaderAdapter;
+import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.tools.BootJar;
 import com.tc.object.tools.BootJarException;
@@ -120,6 +121,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
   private final Set                              applicationNames                   = Collections
                                                                                         .synchronizedSet(new HashSet());
+  private final List                             synchronousWriteApplications       = new ArrayList();
   private final CompoundExpressionMatcher        permanentExcludesMatcher;
   private final CompoundExpressionMatcher        nonportablesMatcher;
   private final List                             autoLockExcludes                   = new ArrayList();
@@ -246,6 +248,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     loader.loadSpringConfig((SpringApplication) springConfig.getBean());
 
     logger.debug("web-applications: " + this.applicationNames);
+    logger.debug("synchronous-write web-applications: " + this.synchronousWriteApplications);
     logger.debug("roots: " + this.roots);
     logger.debug("transients: " + this.types);
     logger.debug("locks: " + this.locks);
@@ -1762,6 +1765,10 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     applicationNames.add(name);
   }
 
+  public void addSynchronousWriteApplication(String name) {
+    this.synchronousWriteApplications.add(name);
+  }
+
   public void addUserDefinedBootSpec(String className, TransparencyClassSpec spec) {
     userDefinedBootSpecs.put(className, spec);
   }
@@ -1806,6 +1813,14 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
         }
       }
     }
+  }
+
+  public int getSessionLockType(String appName) {
+    for (Iterator iter = synchronousWriteApplications.iterator(); iter.hasNext();) {
+      String webApp = (String) iter.next();
+      if (webApp.equals(appName)) { return LockLevel.SYNCHRONOUS_WRITE; }
+    }
+    return LockLevel.WRITE;
   }
 
 }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.server.appserver.unit;
 
@@ -27,6 +28,23 @@ public class SimpleDsoSessionsTest extends AbstractAppServerTestCase {
 
   public final void testSessions() throws Exception {
 
+    startDsoServer();
+
+    HttpClient client = HttpUtil.createHttpClient();
+
+    int port0 = startAppServer(true).serverPort();
+    int port1 = startAppServer(true).serverPort();
+
+    URL url0 = new URL(createUrl(port0, SimpleDsoSessionsTest.DsoPingPongServlet.class) + "?server=0");
+    URL url1 = new URL(createUrl(port1, SimpleDsoSessionsTest.DsoPingPongServlet.class) + "?server=1");
+
+    assertEquals("OK", HttpUtil.getResponseBody(url0, client));
+    assertEquals("OK", HttpUtil.getResponseBody(url1, client));
+  }
+
+  public final void testSynchronousWriteSessions() throws Exception {
+
+    setSynchronousWrite(true);
     startDsoServer();
 
     HttpClient client = HttpUtil.createHttpClient();

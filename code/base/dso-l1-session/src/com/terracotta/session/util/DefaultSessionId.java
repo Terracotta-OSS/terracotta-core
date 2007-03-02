@@ -1,8 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session.util;
 
+import com.tc.object.bytecode.Manager;
 import com.terracotta.session.SessionId;
 
 public class DefaultSessionId implements SessionId {
@@ -10,14 +12,21 @@ public class DefaultSessionId implements SessionId {
   private final String key;
   private final String requestedId;
   private final String externalId;
-  private final Lock lock;
+  private final Lock   lock;
+
+  // for non-synchronous-write tests
   protected DefaultSessionId(final String internalKey, final String requestedId, final String externalId) {
+    this(internalKey, requestedId, externalId, Manager.LOCK_TYPE_WRITE);
+  }
+
+  protected DefaultSessionId(final String internalKey, final String requestedId, final String externalId,
+                             final int lockType) {
     Assert.pre(internalKey != null);
     Assert.pre(externalId != null);
     this.key = internalKey;
     this.requestedId = requestedId;
     this.externalId = externalId;
-    this.lock = new Lock(this.key);
+    this.lock = new Lock(this.key, lockType);
   }
 
   public String getRequestedId() {

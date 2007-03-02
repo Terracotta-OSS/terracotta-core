@@ -44,8 +44,10 @@ import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.http.HttpServlet;
@@ -90,26 +92,26 @@ import javax.servlet.http.HttpSessionListener;
  * the appserver)
  * </ul>
  * <p>
- *
+ * 
  * <pre>
- *                           outer class:
- *                           ...
- *                           int port0 = startAppServer(false).serverPort();
- *                           boolean[] values = HttpUtil.getBooleanValues(createUrl(port0, SimpleDsoSessionsTest.DsoPingPongServlet.class));
- *                           assertTrue(values[0]);
- *                           assertFalse(values[1]);
- *                           ...
- *
- *                           inner class servlet:
- *                           ...
- *                           response.setContentType(&quot;text/html&quot;);
- *                           PrintWriter out = response.getWriter();
- *
- *                           out.println(&quot;true&quot;);
- *                           out.println(&quot;false&quot;);
- *                           ...
+ *                            outer class:
+ *                            ...
+ *                            int port0 = startAppServer(false).serverPort();
+ *                            boolean[] values = HttpUtil.getBooleanValues(createUrl(port0, SimpleDsoSessionsTest.DsoPingPongServlet.class));
+ *                            assertTrue(values[0]);
+ *                            assertFalse(values[1]);
+ *                            ...
+ * 
+ *                            inner class servlet:
+ *                            ...
+ *                            response.setContentType(&quot;text/html&quot;);
+ *                            PrintWriter out = response.getWriter();
+ * 
+ *                            out.println(&quot;true&quot;);
+ *                            out.println(&quot;false&quot;);
+ *                            ...
  * </pre>
- *
+ * 
  * <p>
  * <h3>Debugging Information:</h3>
  * There are a number of locations and files to consider when debugging appserver unit tests. Below is a list followed
@@ -144,7 +146,7 @@ import javax.servlet.http.HttpSessionListener;
  * <p>
  * As a final note: the <tt>UttpUtil</tt> class should be used (and added to as needed) to page servlets and validate
  * assertions.
- *
+ * 
  * @author eellis
  */
 public abstract class AbstractAppServerTestCase extends TCTestCase {
@@ -168,6 +170,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   private List                            dsoServerJvmArgs;
   private List                            roots;
   private List                            locks;
+  private boolean                         isSynchronousWrite;
 
   public AbstractAppServerTestCase() {
     // keep the regular thread dump behavior for windows and macs
@@ -181,6 +184,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   }
 
   protected void setUp() throws Exception {
+    isSynchronousWrite = false;
     config = TestConfigObject.getInstance();
     tempDir = getTempDirectory();
     serverInstallDir = makeDir(config.appserverServerInstallDir());
@@ -245,6 +249,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     }
   }
 
+
   /**
    * Starts a DSO server using a generated tc-config.xml
    */
@@ -279,6 +284,13 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   /*
    * This method should be called before DSO server is started.
    */
+  protected final void setSynchronousWrite(boolean value) {
+    isSynchronousWrite = value;
+  }
+
+  /*
+   * This method should be called before DSO server is started.
+   */
   protected final void addRoots(List rootsToAdd) {
     roots = new ArrayList();
     roots.addAll(rootsToAdd);
@@ -295,7 +307,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   /**
    * Starts an instance of the assigned default application server listed in testconfig.properties. Servlets and the WAR
    * are dynamically generated using the convention listed in the header of this document.
-   *
+   * 
    * @param dsoEnabled - enable or disable dso for this instance
    * @return AppServerResult - series of return values including the server port assigned to this instance
    */
@@ -384,7 +396,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
   /**
    * If overridden <tt>super.tearDown()</tt> must be called to ensure that servers are all shutdown properly
-   *
+   * 
    * @throws Exception
    */
   protected void tearDown() throws Exception {
@@ -492,7 +504,14 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   private synchronized TerracottaServerConfigGenerator configGen() throws Exception {
     if (configGen != null) { return configGen; }
     StandardTerracottaAppServerConfig configBuilder = appServerFactory.createTcConfig(installation.getDataDirectory());
-    configBuilder.addWebApplication(testName());
+
+    if (isSynchronousWrite) {
+      Map attributes = new HashMap();
+      attributes.put("synchronous-write", "true");
+      configBuilder.addWebApplication(testName(), isSynchronousWrite);
+    } else {
+      configBuilder.addWebApplication(testName());
+    }
 
     configBuilder.addInclude("com.tctest..*");
 

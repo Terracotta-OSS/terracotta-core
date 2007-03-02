@@ -242,4 +242,8 @@ public class DSOContextImpl implements DSOContext {
                                  + " seconds, but couldn't fetch system configuration mode from the L2 " + "at '"
                                  + theURL + "'. Is the L2 running?");
   }
+
+  public int getSessionLockType(String appName) {
+    return configHelper.getSessionLockType(appName);
+  }
 }

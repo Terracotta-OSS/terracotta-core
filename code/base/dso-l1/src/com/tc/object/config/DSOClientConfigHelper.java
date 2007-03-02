@@ -55,11 +55,11 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   boolean isCallConstructorOnLoad(String className);
 
-  //String getChangeApplicatorClassNameFor(String className);
+  // String getChangeApplicatorClassNameFor(String className);
   Class getChangeApplicator(Class clazz);
-  
+
   boolean isPortablePluginClass(Class clazz);
-  
+
   void setPluginSpecs(PluginSpec[] pluginSpecs);
 
   TransparencyClassSpec getOrCreateSpec(String className);
@@ -136,12 +136,11 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   void addIncludePattern(String expression, boolean honorTransient);
 
   void addIncludePattern(String expression, boolean honorTransient, boolean oldStyleCallConstructorOnLoad,
-                                boolean honorVolatile);
+                         boolean honorVolatile);
 
   // Used for testing and Spring
-  void addIncludeAndLockIfRequired(String expression, boolean honorTransient,
-                                          boolean oldStyleCallConstructorOnLoad, boolean honorVolatile,
-                                          String lockExpression);
+  void addIncludeAndLockIfRequired(String expression, boolean honorTransient, boolean oldStyleCallConstructorOnLoad,
+                                   boolean honorVolatile, String lockExpression);
 
   // Used for testing
   void addExcludePattern(String expression);
@@ -170,14 +169,18 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   void addApplicationName(String name);
 
+  void addSynchronousWriteApplication(String name);
+
   void addInstrumentationDescriptor(InstrumentedClass classDesc);
 
   Plugins getPluginsForInitialization();
-  
+
   void addNewPlugin(String name, String version);
 
   boolean hasCustomAdapter(String fullName);
-  
+
   void addCustomAdapter(String name, ClassAdapterFactory adapterFactory);
+
+  int getSessionLockType(String appName);
 
 }

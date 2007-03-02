@@ -719,6 +719,14 @@ public class ClassUtilsTest extends TestCase {
     public void addCustomAdapter(String name, ClassAdapterFactory factory) {
       throw new ImplementMe();
     }
+
+    public int getSessionLockType(String appName) {
+      throw new ImplementMe();
+    }
+
+    public void addSynchronousWriteApplication(String name) {
+      throw new ImplementMe();
+    }
   }
 
 }

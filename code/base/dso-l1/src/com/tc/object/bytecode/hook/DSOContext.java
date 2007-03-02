@@ -20,4 +20,6 @@ public interface DSOContext extends ClassProcessor {
 
   public void addTransient(String beanClassName, String fieldName);
 
+  public int getSessionLockType(String appName);
+
 }

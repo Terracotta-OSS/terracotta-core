@@ -205,10 +205,18 @@
 
   <xs:complexType name="web-applications">
     <xs:sequence>
-      <xs:element name="web-application" type="web-application-name-expression" maxOccurs="unbounded" />
+      <xs:element name="web-application" type="web-application" maxOccurs="unbounded" />
     </xs:sequence>
   </xs:complexType>
-
+  
+  <xs:complexType name="web-application">
+    <xs:simpleContent>
+      <xs:extension base="web-application-name-expression">
+        <xs:attribute name="synchronous-write" type="xs:boolean" use="optional" default="false" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  
   <xs:complexType name="instrumentation-logging">
     <xs:all>
       <xs:element name="class" type="xs:boolean" minOccurs="0" default="false" />

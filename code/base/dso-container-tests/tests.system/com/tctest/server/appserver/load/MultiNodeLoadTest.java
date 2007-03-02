@@ -20,6 +20,8 @@ public class MultiNodeLoadTest extends AbstractAppServerTestCase {
   private static final int  SESSIONS_PER_NODE = 10;
 
   private static final long TEST_DURATION     = 4 * 60 * 1000;
+  
+//  private static final long TEST_DURATION     = 10 * 1000;
 
   public MultiNodeLoadTest() {
     // this.disableAllUntil("2006-10-24");

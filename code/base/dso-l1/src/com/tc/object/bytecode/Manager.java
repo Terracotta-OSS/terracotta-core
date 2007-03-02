@@ -18,12 +18,13 @@ import com.tc.properties.TCProperties;
  */
 public interface Manager {
 
-  public static final String CLASS                = "com/tc/object/bytecode/Manager";
-  public static final String TYPE                 = "L" + CLASS + ";";
+  public static final String CLASS                       = "com/tc/object/bytecode/Manager";
+  public static final String TYPE                        = "L" + CLASS + ";";
 
-  public final static int    LOCK_TYPE_READ       = LockLevel.READ;
-  public final static int    LOCK_TYPE_WRITE      = LockLevel.WRITE;
-  public final static int    LOCK_TYPE_CONCURRENT = LockLevel.CONCURRENT;
+  public final static int    LOCK_TYPE_READ              = LockLevel.READ;
+  public final static int    LOCK_TYPE_WRITE             = LockLevel.WRITE;
+  public final static int    LOCK_TYPE_CONCURRENT        = LockLevel.CONCURRENT;
+  public final static int    LOCK_TYPE_SYNCHRONOUS_WRITE = LockLevel.SYNCHRONOUS_WRITE;
 
   public boolean isPhysicallyInstrumented(Class clazz);
 

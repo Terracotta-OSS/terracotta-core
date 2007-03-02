@@ -387,4 +387,8 @@ public class ManagerUtil {
     getManager().addClusterEventListener(cel);
   }
 
+  public static int getSessionLockType(String appName) {
+    return ClassProcessorHelper.getSessionLockType(appName);
+  }
+
 }

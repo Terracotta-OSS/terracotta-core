@@ -11,6 +11,7 @@ import org.apache.catalina.connector.SessionRequest55;
 import org.apache.catalina.connector.SessionResponse55;
 import org.apache.catalina.valves.ValveBase;
 
+import com.tc.object.bytecode.ManagerUtil;
 import com.terracotta.session.BaseRequestResponseFactory;
 import com.terracotta.session.SessionResponse;
 import com.terracotta.session.TerracottaRequest;
@@ -76,7 +77,11 @@ public class SessionValve55 extends ValveBase {
 
   private static TerracottaSessionManager createManager(Request valveReq, String contextPath) {
     final ConfigProperties cp = new ConfigProperties(makeWebAppConfig(valveReq.getContext()));
-    final SessionIdGenerator sig = DefaultIdGenerator.makeInstance(cp);
+
+    String appName = DefaultContextMgr.computeAppName(valveReq);
+    int lockType = ManagerUtil.getSessionLockType(appName);
+    final SessionIdGenerator sig = DefaultIdGenerator.makeInstance(cp, lockType);
+
     final SessionCookieWriter scw = DefaultCookieWriter.makeInstance(cp);
     final LifecycleEventMgr eventMgr = DefaultLifecycleEventMgr.makeInstance(cp);
     final ContextMgr contextMgr = DefaultContextMgr

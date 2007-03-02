@@ -1,8 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session.util;
 
+import com.tc.object.bytecode.Manager;
 import com.terracotta.session.SessionId;
 
 import java.security.SecureRandom;
@@ -19,19 +21,26 @@ public class DefaultIdGenerator implements SessionIdGenerator {
   private final int          idLength;
   private final String       serverId;
   private short              nextId     = Short.MIN_VALUE;
+  private final int          lockType;
 
-  public static SessionIdGenerator makeInstance(ConfigProperties cp) {
+  public static SessionIdGenerator makeInstance(ConfigProperties cp, int lockType) {
     Assert.pre(cp != null);
     final int idLength = cp.getSessionIdLength();
     final String servetId = cp.getServerId();
-    return new DefaultIdGenerator(idLength, servetId);
+    return new DefaultIdGenerator(idLength, servetId, lockType);
   }
 
+  // for non-synchronous-write tests
   public DefaultIdGenerator(final int idLength, final String serverId) {
+    this(idLength, serverId, Manager.LOCK_TYPE_WRITE);
+  }
+
+  public DefaultIdGenerator(final int idLength, final String serverId, int lockType) {
     random = new SecureRandom();
     // init
     random.nextInt();
 
+    this.lockType = lockType;
     this.idLength = Math.max(idLength, MIN_LENGTH);
     this.serverId = serverId;
   }
@@ -39,7 +48,7 @@ public class DefaultIdGenerator implements SessionIdGenerator {
   public SessionId generateNewId() {
     final String key = generateKey();
     final String externalId = key + DLM + serverId;
-    return new DefaultSessionId(key, null, externalId);
+    return new DefaultSessionId(key, null, externalId, lockType);
   }
 
   public SessionId makeInstanceFromBrowserId(String requestedSessionId) {
@@ -49,7 +58,7 @@ public class DefaultIdGenerator implements SessionIdGenerator {
     if (dlmIndex > 0) {
       final String key = requestedSessionId.substring(0, dlmIndex);
       final String externalId = key + DLM + serverId;
-      return new DefaultSessionId(key, requestedSessionId, externalId);
+      return new DefaultSessionId(key, requestedSessionId, externalId, lockType);
     } else {
       // DLM is missing. someone is messing with our session ids!
       return null;
@@ -58,7 +67,7 @@ public class DefaultIdGenerator implements SessionIdGenerator {
 
   public SessionId makeInstanceFromInternalKey(String key) {
     final String externalId = key + DLM + serverId;
-    return new DefaultSessionId(key, externalId, externalId);
+    return new DefaultSessionId(key, externalId, externalId, lockType);
   }
 
   /**

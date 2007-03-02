@@ -34,6 +34,7 @@ import com.terracottatech.config.SpringBean;
 import com.terracottatech.config.SpringDistributedEvent;
 import com.terracottatech.config.SpringPath;
 import com.terracottatech.config.TransientFields;
+import com.terracottatech.config.WebApplication;
 import com.terracottatech.config.WebApplications;
 
 import java.text.ParseException;
@@ -72,9 +73,12 @@ public class ConfigLoader {
 
       WebApplications webApplicationsList = dsoApplication.getWebApplications();
       if (webApplicationsList != null && webApplicationsList.getWebApplicationArray() != null) {
-        String[] webApplications = webApplicationsList.getWebApplicationArray();
+        WebApplication[] webApplications = webApplicationsList.getWebApplicationArray();
         for (int i = 0; i < webApplications.length; i++) {
-          config.addApplicationName(webApplications[i]);
+          config.addApplicationName(webApplications[i].getStringValue());
+          if (webApplications[i].getSynchronousWrite()) {
+            config.addSynchronousWriteApplication(webApplications[i].getStringValue());
+          }
         }
       }
 
@@ -184,11 +188,9 @@ public class ConfigLoader {
       return ConfigLockLevel.WRITE;
     } else if (LockLevel.CONCURRENT.equals(lockLevel)) {
       return ConfigLockLevel.CONCURRENT;
-    } else if (LockLevel.READ.equals(lockLevel)) { 
-      return ConfigLockLevel.READ; 
-      } else if (LockLevel.SYNCHRONOUS_WRITE.equals(lockLevel)) {
-        return ConfigLockLevel.SYNCHRONOUS_WRITE;
-      }
+    } else if (LockLevel.READ.equals(lockLevel)) {
+      return ConfigLockLevel.READ;
+    } else if (LockLevel.SYNCHRONOUS_WRITE.equals(lockLevel)) { return ConfigLockLevel.SYNCHRONOUS_WRITE; }
     throw Assert.failure("Unknown lock level " + lockLevel);
   }
 

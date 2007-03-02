@@ -1,27 +1,39 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.test;
 
 import com.tc.config.schema.builder.WebApplicationConfigBuilder;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Used to create a web-application config element.
  */
 public class WebApplicationConfigBuilderImpl extends BaseConfigBuilder implements WebApplicationConfigBuilder {
 
-  public void setWebApplicationName(String name) {
-    setProperty("web-application", name);
-  }
+  private static final String TAG_NAME       = "web-application";
+  private static final String ATTRIBUTE_NAME = "synchronous-write";
+
+  private Map                 attributes;
 
   public WebApplicationConfigBuilderImpl() {
-    super(5, ALL_PROPERTIES);
+    super(5, new String[] { TAG_NAME });
+    attributes = new HashMap();
   }
-  
-  private static final String[] ALL_PROPERTIES = new String[] { "web-application" };
-  
+
+  public void setWebApplicationName(String name) {
+    setProperty(TAG_NAME, name);
+  }
+
+  public void setWebApplicationAttributes(Map attributes) {
+    this.attributes.putAll(attributes);
+  }
+
   public String toString() {
-    return elements(ALL_PROPERTIES);
+    return openElement(TAG_NAME, attributes) + propertyAsString(TAG_NAME) + closeElement(TAG_NAME);
   }
 
 }

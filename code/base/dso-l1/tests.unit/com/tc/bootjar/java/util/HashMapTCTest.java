@@ -897,6 +897,14 @@ public class HashMapTCTest extends TCTestCase {
       throw new ImplementMe();
     }
 
+    public int getSessionLockType(String appName) {
+      throw new ImplementMe();
+    }
+
+    public void addSynchronousWriteApplication(String name) {
+      throw new ImplementMe();
+    }
+
   }
 
   private static class SimpleEntry implements Map.Entry {

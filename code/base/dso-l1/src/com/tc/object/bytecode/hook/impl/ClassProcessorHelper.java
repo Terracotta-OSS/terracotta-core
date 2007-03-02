@@ -474,6 +474,10 @@ public class ClassProcessorHelper {
     // || className.startsWith("org.apache.commons.logging.") || className.startsWith("javax.xml.")
     // || className.startsWith("org.apache.xmlbeans.") || className.startsWith("org.apache.xerces.");
   }
+  
+  public static int getSessionLockType(String appName) {
+    return gloalContext.getSessionLockType(appName);
+  }
 
   public static class JarFilter implements FileFilter {
     public boolean accept(File pathname) {
