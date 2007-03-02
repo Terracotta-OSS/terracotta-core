@@ -46,11 +46,13 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 	private final JList buddyList = new JList(listModel);
 
 	private boolean isServerDown = false;
-	
+
 	public Main() {
 		try {
 			final String nodeId = registerForNotifications();
 			user = new User(nodeId, this);
+			populateCurrentUsers();
+			login();
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
@@ -95,9 +97,6 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 		setSize(new Dimension(600, 400));
 		setVisible(true);
 		input.requestFocus();
-
-		populateCurrentUsers();
-		login();
 	}
 
 	private void populateCurrentUsers() {
@@ -106,23 +105,24 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 			listModel
 					.addElement(new String(((User) currentUsers[i]).getName()));
 		}
+		//this.repaint();
 	}
 
 	public void actionPerformed(final ActionEvent e) {
 		final JTextField input = (JTextField) e.getSource();
 		final String message = input.getText();
 		input.setText("");
-		(new Thread() { 
+		(new Thread() {
 			public void run() {
 				chatManager.send(user, message);
 			}
 		}).start();
-		
+
 		if (isServerDown) {
 			updateMessage(user.getName(), message, true);
 		}
 	}
-	
+
 	void login() {
 		// Uncomment this section if you want incoming clients
 		// to see the history of messages.
@@ -207,7 +207,7 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 
 	/**
 	 * Registers this client for JMX notifications.
-	 * 
+	 *
 	 * @returns This clients Node ID
 	 */
 	private String registerForNotifications() throws Exception {
