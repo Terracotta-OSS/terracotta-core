@@ -35,7 +35,7 @@ class ChatManager {
 		}
 		sendNewMessageEvent(msg);
 	}
-
+	
 	public void registerUser(User user) {
 		this.listener = user;
 		synchronized (listModel) {
