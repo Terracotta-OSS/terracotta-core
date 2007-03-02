@@ -26,8 +26,8 @@ IF NOT EXIST "%JAVA_HOME%" (
   endlocal  
 )
 
-"%JAVA_HOME%\bin\java" -classpath "%TC_INSTALL_DIR%\common\lib\tc.jar" com.tc.CheckForJava14
-if not ERRORLEVEL==0 (
+"%JAVA_HOME%\bin\java" -classpath "%TC_INSTALL_DIR%lib\tc.jar" com.tc.CheckForJava14
+if not %ERRORLEVEL%==0 (
   echo Weblogic Server 8.1 requires Java 1.4. Exiting.
   goto end
 )
