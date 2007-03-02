@@ -24,4 +24,4 @@ fi
 	echo "--------------------------------------------------------------------------------"
 	echo "RUNNING TCBUILD"
 	echo ""
-	exec /bin/sh $JRUBY_HOME/bin/jruby -O -Ibuildscripts build-tc.rb "$@"
+	exec /bin/sh $JRUBY_HOME/bin/jruby -Ibuildscripts build-tc.rb "$@"
