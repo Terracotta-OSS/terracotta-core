@@ -482,6 +482,12 @@
            denoting which method(s) to distribute. -->
         <method-expression>void com.mycompany.pkga.MyClass.somethingHappened(String, int)</method-expression>
         <method-expression>String[] com.mycompany.pkgc.AnotherClass.eventOccurred(Boolean, Double)</method-expression>
+        <!-- An optional attribute run-on-all-nodes (default value "true") 
+           can be set to false to execute distributed only on those nodes
+           that already have a reference to the object on which the method
+           is called -->
+        <method-expression run-on-all-nodes="false">String[] com.mycompany.pkgc.AnotherClass.eventOccurred(Boolean, Double)</method-expression>
+
       </distributed-methods>
       
       <!-- Classes that are part of the 'java.' hierarchy (in other words,
