@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config.schema;
 
@@ -21,13 +22,12 @@ import com.terracottatech.config.Root;
 import com.terracottatech.config.Roots;
 
 public class NewDSOApplicationConfigObject extends BaseNewConfigObject implements NewDSOApplicationConfig {
-  private static final TCLogger logger = TCLogging.getLogger(NewDSOApplicationConfigObject.class);
+  private static final TCLogger       logger = TCLogging.getLogger(NewDSOApplicationConfigObject.class);
 
   private final ConfigItem            instrumentedClasses;
   private final StringArrayConfigItem transientFields;
   private final ConfigItem            locks;
   private final ConfigItem            roots;
-  private final StringArrayConfigItem distributedMethods;
   private final StringArrayConfigItem additionalBootJarClasses;
   private final BooleanConfigItem     supportSharingThroughReflection;
   private final StringArrayConfigItem webApplications;
@@ -56,7 +56,6 @@ public class NewDSOApplicationConfigObject extends BaseNewConfigObject implement
     };
 
     this.transientFields = this.context.stringArrayItem("transient-fields");
-    this.distributedMethods = this.context.stringArrayItem("distributed-methods");
     this.additionalBootJarClasses = this.context.stringArrayItem("additional-boot-jar-classes");
     this.webApplications = this.context.stringArrayItem("web-applications");
     this.supportSharingThroughReflection = this.context.booleanItem("dso-reflection-enabled");
@@ -82,10 +81,6 @@ public class NewDSOApplicationConfigObject extends BaseNewConfigObject implement
     return this.roots;
   }
 
-  public StringArrayConfigItem distributedMethods() {
-    return this.distributedMethods;
-  }
-
   public StringArrayConfigItem additionalBootJarClasses() {
     return this.additionalBootJarClasses;
   }
@@ -98,7 +93,7 @@ public class NewDSOApplicationConfigObject extends BaseNewConfigObject implement
     if (xmlObject == null) return null;
 
     Capabilities capabilitiesManager = AbstractCapabilitiesFactory.getCapabilitiesManager();
-    if(capabilitiesManager.canClusterPOJOs()) {
+    if (capabilitiesManager.canClusterPOJOs()) {
       com.tc.object.config.schema.Root[] out;
       Root[] theRoots = ((Roots) xmlObject).getRootArray();
       out = new com.tc.object.config.schema.Root[theRoots == null ? 0 : theRoots.length];
@@ -107,7 +102,7 @@ public class NewDSOApplicationConfigObject extends BaseNewConfigObject implement
       }
       return out;
     } else {
-      String msg = "Declared roots not a supported capability: "+capabilitiesManager.describe();
+      String msg = "Declared roots not a supported capability: " + capabilitiesManager.describe();
       logger.error(msg);
       CustomerLogging.getConsoleLogger().error(msg);
       throw new RuntimeException("msg");

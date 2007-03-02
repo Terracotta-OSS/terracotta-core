@@ -21,8 +21,6 @@ public interface NewDSOApplicationConfig extends NewConfig {
 
   ConfigItem roots();
 
-  StringArrayConfigItem distributedMethods();
-
   StringArrayConfigItem additionalBootJarClasses();
 
   BooleanConfigItem supportSharingThroughReflection();
