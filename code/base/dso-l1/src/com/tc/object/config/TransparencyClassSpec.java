@@ -159,10 +159,6 @@ public class TransparencyClassSpec {
     return this;
   }
 
-  public TransparencyClassSpec addDistributedMethodCall(String methodName, String description) {
-    return addDistributedMethodCall(methodName, description, true);
-  }
-
   public TransparencyClassSpec addDistributedMethodCall(String methodName, String description, boolean runOnAllNodes) {
     if ("<init>".equals(methodName) || "<clinit>".equals(methodName)) { throw new AssertionError(
                                                                                                  "Initializers of class "

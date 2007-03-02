@@ -9,6 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.DistributedMethodSpec;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.object.config.spec.SynchronizedIntSpec;
@@ -122,15 +123,16 @@ public class DistributedMethodCallExpressionTestApp extends AbstractTransparentA
       config.addWriteAutolock(methodExpression);
 
       spec = config.getOrCreateSpec(SharedModel.class.getName());
-      spec.addDistributedMethodCall("staticMethod", "()V");
+      spec.addDistributedMethodCall("staticMethod", "()V", true);
       try {
-        spec.addDistributedMethodCall("<init>", "()V");
+        spec.addDistributedMethodCall("<init>", "()V", true);
         throw new AssertionError("Should have thrown an AssertionError.");
       } catch (AssertionError e) {
         // Expected.
       }
+      
       config
-          .addDistributedMethodCall("* com.tctest.DistributedMethodCallExpressionTestApp$SharedModel.nonStaticMethod(..)");
+          .addDistributedMethodCall(new DistributedMethodSpec("* com.tctest.DistributedMethodCallExpressionTestApp$SharedModel.nonStaticMethod(..)", true));
     } catch (Exception e) {
       throw new AssertionError(e);
     }

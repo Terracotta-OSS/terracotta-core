@@ -1491,7 +1491,7 @@ public class BootJarTool {
     spec = config.getOrCreateSpec("java.util.concurrent.FutureTask$Sync");
     spec.setHonorTransient(true);
     spec.markPreInstrumented();
-    spec.addDistributedMethodCall("managedInnerCancel", "()V");
+    spec.addDistributedMethodCall("managedInnerCancel", "()V", true);
     changeClassName("java.util.concurrent.FutureTaskTC$Sync", "java.util.concurrent.FutureTaskTC",
                     "java.util.concurrent.FutureTask", instrumentedContext);
   }

@@ -21,4 +21,8 @@ public class DistributedMethodSpec {
   public boolean runOnAllNodes() {
     return runOnAllNodes;
   }
+
+  public String toString() {
+    return "DistributedMethodSpec{methodExpression=" + methodExpression + ", runOnAllNodes=" + runOnAllNodes + "}";
+  }
 }

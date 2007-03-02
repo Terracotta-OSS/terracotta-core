@@ -397,7 +397,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
     addIncludePattern("javax.swing.table.AbstractTableModel", true);
     spec = getOrCreateSpec("javax.swing.table.AbstractTableModel");
-    spec.addDistributedMethodCall("fireTableChanged", "(Ljavax/swing/event/TableModelEvent;)V");
+    spec.addDistributedMethodCall("fireTableChanged", "(Ljavax/swing/event/TableModelEvent;)V", false);
     spec.addTransient("listenerList");
 
     spec = getOrCreateSpec("javax.swing.table.DefaultTableModel");
@@ -493,20 +493,20 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
     spec.addTransient("listenerList");
     spec.addDistributedMethodCall("fireTreeNodesChanged",
-                                  "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V");
+                                  "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
     spec.addDistributedMethodCall("fireTreeNodesInserted",
-                                  "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V");
+                                  "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
     spec.addDistributedMethodCall("fireTreeNodesRemoved",
-                                  "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V");
+                                  "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
     spec.addDistributedMethodCall("fireTreeStructureChanged",
-                                  "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V");
-    spec.addDistributedMethodCall("fireTreeStructureChanged", "(Ljava/lang/Object;Ljavax/swing/tree/TreePath;)V");
+                                  "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
+    spec.addDistributedMethodCall("fireTreeStructureChanged", "(Ljava/lang/Object;Ljavax/swing/tree/TreePath;)V", false);
 
     spec = getOrCreateSpec("javax.swing.AbstractListModel");
     spec.addTransient("listenerList");
-    spec.addDistributedMethodCall("fireContentsChanged", "(Ljava/lang/Object;II)V");
-    spec.addDistributedMethodCall("fireIntervalAdded", "(Ljava/lang/Object;II)V");
-    spec.addDistributedMethodCall("fireIntervalRemoved", "(Ljava/lang/Object;II)V");
+    spec.addDistributedMethodCall("fireContentsChanged", "(Ljava/lang/Object;II)V", false);
+    spec.addDistributedMethodCall("fireIntervalAdded", "(Ljava/lang/Object;II)V", false);
+    spec.addDistributedMethodCall("fireIntervalRemoved", "(Ljava/lang/Object;II)V", false);
 
     spec = getOrCreateSpec("java.util.Arrays");
     spec.addDoNotInstrument("copyOfRange");
@@ -933,7 +933,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.FutureTask$Sync");
     addWriteAutolock("* java.util.concurrent.FutureTask$Sync.*(..)");
     spec.setHonorTransient(true);
-    spec.addDistributedMethodCall("managedInnerCancel", "()V");
+    spec.addDistributedMethodCall("managedInnerCancel", "()V", false);
 
     getOrCreateSpec("java.util.concurrent.FutureTask");
 
@@ -1692,11 +1692,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
   public Iterator getAllSpecs() {
     return classSpecs.values().iterator();
-  }
-
-  public void addDistributedMethodCall(String methodExpression) {
-    final DistributedMethodSpec dms = new DistributedMethodSpec(methodExpression, true);
-    addDistributedMethodCall(dms);
   }
 
   public void addDistributedMethodCall(DistributedMethodSpec dms) {

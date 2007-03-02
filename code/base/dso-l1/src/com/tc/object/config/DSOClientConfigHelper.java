@@ -159,8 +159,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   Collection getDSOSpringConfigs();
 
-  void addDistributedMethodCall(String string);
-
   void addDistributedMethodCall(DistributedMethodSpec dms);
 
   Portability getPortability();

@@ -281,13 +281,13 @@ public class DistributedMethodCallTestApp extends AbstractTransparentApp {
 
       spec = config.getOrCreateSpec(SharedModel.class.getName());
       spec.addDistributedMethodCall("addObjectNonVoid",
-                                    "(Ljava/lang/Object;ID[[Lcom/tctest/FooObject;[[[IZ)java/lang/String;");
-      spec.addDistributedMethodCall("addObjectWithNulls", "(Ljava/lang/Object;ID[[Lcom/tctest/FooObject;[[[IZ)V");
+                                    "(Ljava/lang/Object;ID[[Lcom/tctest/FooObject;[[[IZ)java/lang/String;", true);
+      spec.addDistributedMethodCall("addObjectWithNulls", "(Ljava/lang/Object;ID[[Lcom/tctest/FooObject;[[[IZ)V", true);
       spec
-          .addDistributedMethodCall("addObjectWithParamChange", "(Ljava/lang/Object;ID[[Lcom/tctest/FooObject;[[[IZ)V");
-      spec.addDistributedMethodCall("addObjectSynched", "(Ljava/lang/Object;ID[[Lcom/tctest/FooObject;[[[IZ)V");
-      spec.addDistributedMethodCall("addObjectNested", "(Ljava/lang/Object;ID[[Lcom/tctest/FooObject;[[[IZ)V");
-      spec.addDistributedMethodCall("addObject", "(Ljava/lang/Object;ID[[Lcom/tctest/FooObject;[[[IZ)V");
+          .addDistributedMethodCall("addObjectWithParamChange", "(Ljava/lang/Object;ID[[Lcom/tctest/FooObject;[[[IZ)V", true);
+      spec.addDistributedMethodCall("addObjectSynched", "(Ljava/lang/Object;ID[[Lcom/tctest/FooObject;[[[IZ)V", true);
+      spec.addDistributedMethodCall("addObjectNested", "(Ljava/lang/Object;ID[[Lcom/tctest/FooObject;[[[IZ)V", true);
+      spec.addDistributedMethodCall("addObject", "(Ljava/lang/Object;ID[[Lcom/tctest/FooObject;[[[IZ)V", true);
     } catch (Exception e) {
       throw new AssertionError(e);
     }

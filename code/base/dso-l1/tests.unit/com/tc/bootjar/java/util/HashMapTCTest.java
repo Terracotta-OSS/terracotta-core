@@ -902,10 +902,6 @@ public class HashMapTCTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void addDistributedMethodCall(String methodExpression) {
-      throw new ImplementMe();
-    }
-
     public void addDistributedMethodCall(DistributedMethodSpec dms) {
       throw new ImplementMe();
     }
