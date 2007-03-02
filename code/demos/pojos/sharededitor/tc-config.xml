@@ -92,9 +92,6 @@
           <field-name>demo.sharededitor.controls.Dispatcher.objmgr</field-name>
         </root>
       </roots>
-      <additional-boot-jar-classes>
-        <include>javax.swing.event.MouseInputAdapter</include>
-      </additional-boot-jar-classes>
     </dso>
   </application>
 </tc:tc-config>
