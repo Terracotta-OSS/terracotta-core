@@ -97,6 +97,7 @@ class TerracottaBuilder
         option_parser.on('--no-compile') do @no_compile = true end
         @start_time = Time.now
         @basedir = FilePath.new("").canonicalize
+        Registry[:basedir] = @basedir
         puts("Building with base directory: '#@basedir'.")
         puts
         @default_target = default_target

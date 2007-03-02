@@ -820,16 +820,10 @@ END
     # do a "ps auxwwww | grep java"
     # to be used in monkey environment ONLY
     def ps_grep_java
-        ps_cmd = case @build_environment.os_type(:nice)
-            when /windows/i: 'pv.exe -l | grep java | grep -v grep'
-            when /solaris/i: '/usr/ucb/ps auxwwww | grep java | grep -v grep'
-            else 'ps auxwwww | grep java | grep -v grep'
-        end
-
-        begin
-            java_processes = `#{ps_cmd}`
-        rescue
-            java_processes = ''
+        java_processes = case @build_environment.os_type(:nice)
+            when /windows/i: Registry[:platform].exec("#{Registry[:basedir]}/common/lib.tests.base.native/Windows/pv.exe", "-l").grep(/java/).to_s
+            when /solaris/i: `/usr/ucb/ps auxwwww | grep java | grep -v grep`
+            else `ps auxwwww | grep java | grep -v grep`
         end
         java_processes
     end
