@@ -18,8 +18,8 @@ import org.xml.sax.ext.LexicalHandler;
 import com.tc.exception.ImplementMe;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.DsoClientData;
+import com.terracottatech.config.Modules;
 import com.terracottatech.config.Path;
-import com.terracottatech.config.Plugins;
 
 import java.io.File;
 import java.io.InputStream;
@@ -282,24 +282,24 @@ public class MockClient implements Client {
     throw new ImplementMe();
   }
 
-  public Plugins addNewPlugins() {
+  public Modules addNewModules() {
     throw new ImplementMe();
   }
 
-  public Plugins getPlugins() {
+  public Modules getModules() {
     throw new ImplementMe();
   }
 
-  public boolean isSetPlugins() {
+  public boolean isSetModules() {
     throw new ImplementMe();
   }
 
-  public void setPlugins(Plugins plugins) {
+  public void setModules(Modules modules) {
     throw new ImplementMe();
 
   }
 
-  public void unsetPlugins() {
+  public void unsetModules() {
     throw new ImplementMe();
   }
 

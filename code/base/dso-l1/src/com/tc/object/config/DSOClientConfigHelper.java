@@ -18,7 +18,7 @@ import com.tc.object.config.schema.DSORuntimeLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeOutputOptions;
 import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.logging.InstrumentationLogger;
-import com.terracottatech.config.Plugins;
+import com.terracottatech.config.Modules;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -45,10 +45,12 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   Iterator getAllUserDefinedBootSpecs();
 
-  TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, ClassInfo classInfo, InstrumentationLogger lgr,
-                                                    ClassLoader caller, final boolean forcePortable);
+  TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, ClassInfo classInfo,
+                                                    InstrumentationLogger lgr, ClassLoader caller,
+                                                    final boolean forcePortable);
 
-  ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr, ClassLoader caller);
+  ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
+                                     ClassLoader caller);
 
   ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
                                      ClassLoader caller, boolean disableSuperClassTypeChecking);
@@ -58,9 +60,9 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   // String getChangeApplicatorClassNameFor(String className);
   Class getChangeApplicator(Class clazz);
 
-  boolean isPortablePluginClass(Class clazz);
+  boolean isPortableModuleClass(Class clazz);
 
-  void setPluginSpecs(PluginSpec[] pluginSpecs);
+  void setModuleSpecs(ModuleSpec[] pluginSpecs);
 
   TransparencyClassSpec getOrCreateSpec(String className);
 
@@ -173,9 +175,9 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   void addInstrumentationDescriptor(InstrumentedClass classDesc);
 
-  Plugins getPluginsForInitialization();
+  Modules getModulesForInitialization();
 
-  void addNewPlugin(String name, String version);
+  void addNewModule(String name, String version);
 
   boolean hasCustomAdapter(String fullName);
 

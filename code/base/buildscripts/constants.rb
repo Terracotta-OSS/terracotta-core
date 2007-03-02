@@ -10,8 +10,8 @@ module PropertyNames
   # ferried across to the tests.
   STATIC_PROPERTIES_PREFIX = 'tc.tests.configuration.'
 
-  # The name of the system property that contains the URL for plugins.
-  PLUGINS_URL = STATIC_PROPERTIES_PREFIX + 'plugins.url'
+  # The name of the system property that contains the URL for modules.
+  MODULES_URL = STATIC_PROPERTIES_PREFIX + 'modules.url'
 
   TC_BASE_DIR = 'tc.base-dir'
 end

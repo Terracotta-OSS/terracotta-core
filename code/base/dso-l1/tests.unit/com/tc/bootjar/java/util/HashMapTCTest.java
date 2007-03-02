@@ -27,7 +27,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOSpringConfigHelper;
 import com.tc.object.config.Lock;
 import com.tc.object.config.LockDefinition;
-import com.tc.object.config.PluginSpec;
+import com.tc.object.config.ModuleSpec;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.schema.DSOInstrumentationLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeLoggingOptions;
@@ -38,7 +38,7 @@ import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.tx.MockTransactionManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
-import com.terracottatech.config.Plugins;
+import com.terracottatech.config.Modules;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -865,7 +865,7 @@ public class HashMapTCTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public Plugins getPlugins() {
+    public Modules getModules() {
       throw new ImplementMe();
     }
 
@@ -877,19 +877,19 @@ public class HashMapTCTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void setPluginSpecs(PluginSpec[] pluginSpecs) {
+    public void setModuleSpecs(ModuleSpec[] pluginSpecs) {
       throw new ImplementMe();
     }
 
-    public void addNewPlugin(String name, String version) {
+    public void addNewModule(String name, String version) {
       throw new ImplementMe();
     }
 
-    public Plugins getPluginsForInitialization() {
+    public Modules getModulesForInitialization() {
       return null;
     }
 
-    public boolean isPortablePluginClass(Class clazz) {
+    public boolean isPortableModuleClass(Class clazz) {
       throw new ImplementMe();
     }
 

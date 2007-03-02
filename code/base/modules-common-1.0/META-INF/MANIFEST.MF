@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-Category: terracotta
+Bundle-Copyright: Terracotta, Inc. (c) 2003-2007
+Bundle-Description: Common code for Terracotta configuration modules
+Bundle-ManifestVersion: 2
+Bundle-Name: Modules-Common
+Bundle-RequiredExecutionEnvironment: J2SE-1.4
+Bundle-SymbolicName: org.terracotta.modules.modules_common
+Bundle-Vendor: Terracotta, Inc.
+Bundle-Version: 1.0.0
+Export-Package: org.terracotta.modules.configuration

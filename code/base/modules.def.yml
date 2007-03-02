@@ -376,10 +376,10 @@ modules:
         - deploy
         - thirdparty
         - legacy-test-tree
-  - plugins-common-1.0:
+  - modules-common-1.0:
       options:
         jdk: J2SE-1.4
-        plugin: true
+        module: true
       dependencies:
         - common
         - dso-l1
@@ -387,9 +387,9 @@ modules:
   - clustered-apache-struts-1.1:
       options:
         jdk: J2SE-1.4
-        plugin: true
+        module: true
       dependencies:
-        - plugins-common-1.0
+        - modules-common-1.0
         - aspectwerkz
         - linked-child-process
         - common
@@ -422,7 +422,7 @@ modules:
   - clustered-commons-collections-3.1:
       options:
         jdk: J2SE-1.5
-        plugin: true
+        module: true
       dependencies:
         - aspectwerkz
         - common
@@ -439,9 +439,9 @@ modules:
   - clustered-cglib-2.1.3:
       options:
         jdk: J2SE-1.4
-        plugin: true
+        module: true
       dependencies:
-        - plugins-common-1.0
+        - modules-common-1.0
         - clustered-cglib-2.1.3
         - aspectwerkz
         - linked-child-process
@@ -459,9 +459,9 @@ modules:
   - clustered-iBatis-2.2.0:
       options:
         jdk: J2SE-1.4
-        plugin: true
+        module: true
       dependencies:
-        - plugins-common-1.0
+        - modules-common-1.0
         - clustered-cglib-2.1.3
         - aspectwerkz
         - linked-child-process

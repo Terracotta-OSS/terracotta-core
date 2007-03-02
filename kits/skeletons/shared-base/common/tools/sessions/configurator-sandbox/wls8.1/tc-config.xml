@@ -26,9 +26,9 @@
        See the Terracotta DSO Guide for additional information. -->
   <clients>
     <logs>logs/client-logs/%(webserver.log.name)</logs>
-    <plugins>
-      <plugin name="clustered-apache-struts" version="1.1"/>
-    </plugins>
+    <modules>
+      <module name="clustered-apache-struts" version="1.1"/>
+    </modules>
   </clients>
 
   <application>

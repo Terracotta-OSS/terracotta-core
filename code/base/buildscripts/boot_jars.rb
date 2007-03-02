@@ -83,7 +83,7 @@ class BootJar
       File.delete(path.to_s) if FileTest.exist?(path.to_s)
       sysproperties = {
         PropertyNames::TC_BASE_DIR => @static_resources.root_dir.to_s,
-        PropertyNames::PLUGINS_URL => @build_results.plugins_home.to_url
+        PropertyNames::MODULES_URL => @build_results.modules_home.to_url
       }
       @ant.java(:classname   => 'com.tc.object.tools.BootJarTool',
                 :classpath   => classpath.to_s,

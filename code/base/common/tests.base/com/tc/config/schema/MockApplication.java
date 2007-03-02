@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema;
 
@@ -19,7 +20,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.test.UniqueSequenceGenerator;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.DsoApplication;
-import com.terracottatech.config.Plugins;
+import com.terracottatech.config.Modules;
 import com.terracottatech.config.SpringApplication;
 
 import java.io.File;
@@ -63,7 +64,7 @@ public class MockApplication implements Application {
   }
 
   public void setDso(DsoApplication arg0) {
-    // nothing here
+  // nothing here
   }
 
   public DsoApplication addNewDso() {
@@ -71,7 +72,7 @@ public class MockApplication implements Application {
   }
 
   public void unsetDso() {
-    // nothing here
+  // nothing here
   }
 
   public SchemaType schemaType() {
@@ -115,7 +116,7 @@ public class MockApplication implements Application {
   }
 
   public void setNil() {
-    // nothing here
+  // nothing here
   }
 
   public boolean isImmutable() {
@@ -211,19 +212,19 @@ public class MockApplication implements Application {
   }
 
   public void save(ContentHandler arg0, LexicalHandler arg1) {
-    // nothing here
+  // nothing here
   }
 
   public void save(File arg0) {
-    // nothing here
+  // nothing here
   }
 
   public void save(OutputStream arg0) {
-    // nothing here
+  // nothing here
   }
 
   public void save(Writer arg0) {
-    // nothing here
+  // nothing here
   }
 
   public XMLInputStream newXMLInputStream(XmlOptions arg0) {
@@ -251,23 +252,23 @@ public class MockApplication implements Application {
   }
 
   public void save(ContentHandler arg0, LexicalHandler arg1, XmlOptions arg2) {
-    // nothing here
+  // nothing here
   }
 
   public void save(File arg0, XmlOptions arg1) {
-    // nothing here
+  // nothing here
   }
 
   public void save(OutputStream arg0, XmlOptions arg1) {
-    // nothing here
+  // nothing here
   }
 
   public void save(Writer arg0, XmlOptions arg1) {
-    // nothing here
+  // nothing here
   }
 
   public void dump() {
-    // nothing here
+  // nothing here
   }
 
   public String toString() {
@@ -288,32 +289,29 @@ public class MockApplication implements Application {
 
   public void setSpring(SpringApplication arg0) {
     throw new ImplementMe();
-
   }
 
   public void unsetSpring() {
     throw new ImplementMe();
-
   }
 
-  public Plugins addNewPlugins() {
+  public Modules addNewModules() {
     throw new ImplementMe();
   }
 
-  public Plugins getPlugins() {
+  public Modules getModules() {
     throw new ImplementMe();
   }
 
-  public boolean isSetPlugins() {
+  public boolean isSetModules() {
     throw new ImplementMe();
   }
 
-  public void setPlugins(Plugins arg0) {
+  public void setModules(Modules arg0) {
     throw new ImplementMe();
-    
   }
 
-  public void unsetPlugins() {
+  public void unsetModules() {
     throw new ImplementMe();
   }
 

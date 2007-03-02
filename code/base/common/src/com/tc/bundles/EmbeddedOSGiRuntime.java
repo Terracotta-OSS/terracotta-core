@@ -12,7 +12,7 @@ import org.osgi.framework.ServiceReference;
 import com.tc.config.Directories;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.terracottatech.config.Plugins;
+import com.terracottatech.config.Modules;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -22,12 +22,11 @@ import java.util.Dictionary;
 import java.util.List;
 
 /**
- * The methods named here are pretty standard; if you don't know what they mean please refer to the documentation at the
- * <a href="http://www.osgi.org/">OSGi web page</a>
+ * For OSGi information please refer to the documentation at the <a href="http://www.osgi.org/">OSGi web page</a>
  */
 public interface EmbeddedOSGiRuntime {
 
-  public static final String PLUGINS_URL_PROPERTY_NAME = "tc.tests.configuration.plugins.url";
+  public static final String MODULES_URL_PROPERTY_NAME = "tc.tests.configuration.modules.url";
 
   void installBundle(final String bundleName, final String bundleVersion) throws BundleException;
 
@@ -56,29 +55,29 @@ public interface EmbeddedOSGiRuntime {
 
     private static final TCLogger logger = TCLogging.getLogger(EmbeddedOSGiRuntime.Factory.class);
 
-    public static EmbeddedOSGiRuntime createOSGiRuntime(final Plugins plugins) throws Exception {
+    public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules) throws Exception {
       final List prependLocations = new ArrayList();
       // There are two repositories that we [optionally] prepend: a system property (used by tests) and the installation
       // root (which is not set when running tests)
       try {
         if (Directories.getInstallationRoot() != null) {
-          prependLocations.add(new File(Directories.getInstallationRoot(), "plugins").toURL());
+          prependLocations.add(new File(Directories.getInstallationRoot(), "modules").toURL());
         }
       } catch (FileNotFoundException fnfe) {
         // Ignore, tc.install-dir is not set so we must be in a test environment
       }
-      if (System.getProperty(PLUGINS_URL_PROPERTY_NAME) != null) {
-        prependLocations.add(new URL(System.getProperty(PLUGINS_URL_PROPERTY_NAME)));
+      if (System.getProperty(MODULES_URL_PROPERTY_NAME) != null) {
+        prependLocations.add(new URL(System.getProperty(MODULES_URL_PROPERTY_NAME)));
       }
       final URL[] prependURLs = new URL[prependLocations.size()];
       prependLocations.toArray(prependURLs);
 
-      final URL[] bundleRepositories = new URL[plugins.sizeOfRepositoryArray() + prependURLs.length];
+      final URL[] bundleRepositories = new URL[modules.sizeOfRepositoryArray() + prependURLs.length];
       for (int pos = 0; pos < prependURLs.length; pos++) {
         bundleRepositories[pos] = prependURLs[pos];
       }
       for (int pos = prependURLs.length; pos < bundleRepositories.length; pos++) {
-        bundleRepositories[pos] = new URL(plugins.getRepositoryArray(pos - prependURLs.length));
+        bundleRepositories[pos] = new URL(modules.getRepositoryArray(pos - prependURLs.length));
       }
 
       logger.info("OSGi Bundle Repositories:");
@@ -86,8 +85,8 @@ public interface EmbeddedOSGiRuntime {
         logger.info(bundleRepositories[i]);
       }
       EmbeddedOSGiRuntime osgiRuntime = new KnopflerfishOSGi(bundleRepositories);
-      // The "plugins-common" bundle contains a convenience superclass that some bundles extend
-      osgiRuntime.installBundle("plugins-common", "1.0");
+      // The "modules-common" bundle contains a convenience superclass that some bundles extend
+      osgiRuntime.installBundle("modules-common", "1.0");
       return osgiRuntime;
     }
   }

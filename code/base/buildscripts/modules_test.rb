@@ -356,14 +356,14 @@ class SubtreeTestRun
 
         @jvmargs = [ ]
 
-        plugins_url = @build_results.plugins_home.to_url
+        modules_url = @build_results.modules_home.to_url
 
         # 'tc.tests.info.property-files' is set so that TestConfigObject knows which file to go read.
         @sysproperties = {
             "tc.base-dir" => @static_resources.root_dir.to_s,
             'java.awt.headless' => true,
             'tc.tests.info.property-files' => @testrun_results.build_configuration_file(@subtree).to_s,
-            "#{STATIC_PROPERTIES_PREFIX}plugins.url" => plugins_url
+            "#{STATIC_PROPERTIES_PREFIX}modules.url" => modules_url
         }
 
         @sysproperties['java.library.path'] = native_library_path.to_s unless native_library_path.to_s.blank?
@@ -418,7 +418,7 @@ class SubtreeTestRun
     #
     # It's also just a bad idea in the case of running tests in Eclipse, the use of this variable
     # is commented out below; there is a comment there.
-    NON_CLASSPATH_LOADABLE_SYSTEM_PROPERTIES = [ 'java.library.path', 'tc.config', 'tc.dso.globalmode', "#{STATIC_PROPERTIES_PREFIX}plugins.url" ]
+    NON_CLASSPATH_LOADABLE_SYSTEM_PROPERTIES = [ 'java.library.path', 'tc.config', 'tc.dso.globalmode', "#{STATIC_PROPERTIES_PREFIX}modules.url" ]
 
     # Prepares to have tests in this tree run externally (i.e., but Eclipse). This mostly just
     # sets up a properties file that contains a list of system properties for TestConfigObject

@@ -8,7 +8,7 @@ import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.FileConfigItem;
 import com.tc.util.Assert;
 import com.terracottatech.config.Client;
-import com.terracottatech.config.Plugins;
+import com.terracottatech.config.Modules;
 
 /**
  * The standard implementation of {@link NewCommonL1Config}.
@@ -16,7 +16,7 @@ import com.terracottatech.config.Plugins;
 public class NewCommonL1ConfigObject extends BaseNewConfigObject implements NewCommonL1Config {
 
   private final FileConfigItem logsPath;
-  private final Plugins        plugins;
+  private final Modules        modules;
 
   public NewCommonL1ConfigObject(ConfigContext context) {
     super(context);
@@ -26,15 +26,15 @@ public class NewCommonL1ConfigObject extends BaseNewConfigObject implements NewC
 
     logsPath = this.context.substitutedFileItem("logs");
     final Client client = (Client) this.context.bean();
-    plugins = client != null && client.isSetPlugins() ? client.getPlugins() : null;
+    modules = client != null && client.isSetModules() ? client.getModules() : null;
   }
 
   public FileConfigItem logsPath() {
     return this.logsPath;
   }
 
-  public Plugins plugins() {
-    return plugins;
+  public Modules modules() {
+    return modules;
   }
 
 }

@@ -128,17 +128,17 @@ class BuildModule
     # subtrees.
     def compile(jvm_set, build_results, ant, config_source, build_environment)
         @subtrees.each { |subtree| subtree.compile(jvm_set, build_results, ant, config_source, build_environment) }
-        if self.plugin?
-           create_plugin_jar(ant, build_results)
+        if self.module?
+           create_module_jar(ant, build_results)
         end
     end
 
-    # Creates a JAR file for a plugin module and stores it in build/plugins.
-    def create_plugin_jar(ant, build_results)
-      plugins_metainf_dir = FilePath.new(self.root, "META-INF").to_s
-      jarfile  = FilePath.new(build_results.plugins_home, self.name + ".jar")
+    # Creates a JAR file for a pluggable module and stores it in build/modules.
+    def create_module_jar(ant, build_results)
+      module_metainf_dir = FilePath.new(self.root, "META-INF").to_s
+      jarfile  = FilePath.new(build_results.modules_home, self.name + ".jar")
       basedir  = build_results.classes_directory(subtree('src')).ensure_directory
-      manifest = FilePath.new(plugins_metainf_dir, "MANIFEST.MF")
+      manifest = FilePath.new(module_metainf_dir, "MANIFEST.MF")
       ant.jar(:destfile => jarfile.to_s, :basedir => basedir.to_s, :manifest => manifest.to_s)
     end
 end

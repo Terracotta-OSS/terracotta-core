@@ -148,8 +148,8 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
     config.addIncludePattern("com.tctest.domain.*");
     new CyclicBarrierSpec().visit(visitor, config);
 
-    config.addNewPlugin("clustered-cglib", "2.1.3");
-    config.addNewPlugin("clustered-iBatis", "2.2.0");
+    config.addNewModule("clustered-cglib", "2.1.3");
+    config.addNewModule("clustered-iBatis", "2.2.0");
     pluginsLoaded = true;
   }
 

@@ -84,8 +84,8 @@ import com.tc.weblogic.transform.TerracottaServletResponseImplAdapter;
 import com.tc.weblogic.transform.WebAppServletContextAdapter;
 import com.tcclient.util.DSOUnsafe;
 import com.terracottatech.config.DsoApplication;
-import com.terracottatech.config.Plugin;
-import com.terracottatech.config.Plugins;
+import com.terracottatech.config.Module;
+import com.terracottatech.config.Modules;
 import com.terracottatech.config.SpringApplication;
 
 import java.io.IOException;
@@ -158,21 +158,21 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
   private int                                    faultCount                         = -1;
 
-  private PluginSpec[]                           pluginSpecs                        = null;
+  private ModuleSpec[]                           moduleSpecs                        = null;
 
-  private final PluginsContext                   pluginsContext                     = new PluginsContext();
+  private final ModulesContext                   modulesContext                     = new ModulesContext();
 
   public StandardDSOClientConfigHelper(L1TVSConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
     this(configSetupManager, true);
   }
 
-  public StandardDSOClientConfigHelper(boolean initializedPluginsOnlyOnce,
+  public StandardDSOClientConfigHelper(boolean initializedModulesOnlyOnce,
                                        L1TVSConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
     this(configSetupManager, true);
-    if (initializedPluginsOnlyOnce) {
-      pluginsContext.initializedPluginsOnlyOnce();
+    if (initializedModulesOnlyOnce) {
+      modulesContext.initializedModulesOnlyOnce();
     }
   }
 
@@ -189,8 +189,8 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     helperLogger = new DSOClientConfigHelperLogger(logger);
     this.classInfoFactory = classInfoFactory;
     this.expressionHelper = eh;
-    pluginsContext.setPlugins(configSetupManager.commonL1Config().plugins() != null ? configSetupManager
-        .commonL1Config().plugins() : Plugins.Factory.newInstance());
+    modulesContext.setModules(configSetupManager.commonL1Config().modules() != null ? configSetupManager
+        .commonL1Config().modules() : Modules.Factory.newInstance());
 
     permanentExcludesMatcher = new CompoundExpressionMatcher();
     // TODO:: come back and add all possible non-portable/non-adaptable classes here. This is by no means exhaustive !
@@ -394,7 +394,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     // Table model stuff
     addIncludePattern("javax.swing.event.TableModelEvent", true);
     TransparencyClassSpec spec = getOrCreateSpec("javax.swing.event.TableModelEvent");
-    
+
     addIncludePattern("javax.swing.table.AbstractTableModel", true);
     spec = getOrCreateSpec("javax.swing.table.AbstractTableModel");
     spec.addDistributedMethodCall("fireTableChanged", "(Ljavax/swing/event/TableModelEvent;)V");
@@ -483,7 +483,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
     addIncludePattern("javax.swing.tree.DefaultMutableTreeNode", false);
     spec = getOrCreateSpec("javax.swing.tree.DefaultMutableTreeNode");
-    
+
     spec = getOrCreateSpec("javax.swing.tree.DefaultTreeModel");
     ld = new LockDefinition("tctreeLock", ConfigLockLevel.WRITE);
     ld.commit();
@@ -642,7 +642,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     // AbstractMap is special because it actually has some fields so it needs to be instrumented and not just ADAPTABLE
     spec = getOrCreateSpec("java.util.AbstractMap");
     spec.setHonorTransient(true);
-    
+
     // spec = getOrCreateSpec("java.lang.Number");
     // This hack is needed to make Number work in all platforms. Without this hack, if you add Number in bootjar, the
     // JVM crashes.
@@ -1460,9 +1460,9 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   }
 
   public Class getTCPeerClass(Class clazz) {
-    if (pluginSpecs != null) {
-      for (int i = 0; i < pluginSpecs.length; i++) {
-        clazz = pluginSpecs[i].getPeerClass(clazz);
+    if (moduleSpecs != null) {
+      for (int i = 0; i < moduleSpecs.length; i++) {
+        clazz = moduleSpecs[i].getPeerClass(clazz);
       }
     }
     return clazz;
@@ -1521,12 +1521,12 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
                                                              portability);
       ClassAdapterFactory factory = spec.getCustomClassAdapter();
       ClassVisitor cv;
-      if(factory==null) {
+      if (factory == null) {
         cv = dsoAdapter;
       } else {
         cv = factory.create(dsoAdapter, caller);
       }
-      
+
       return new SerialVersionUIDAdder(cv);
     }
   }
@@ -1569,11 +1569,11 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     return spec != null && spec.isLogical();
   }
 
-  // TODO: Need to optimize this by identifying the plugin to query instead of querying all the plugins.
-  public boolean isPortablePluginClass(Class clazz) {
-    if (pluginSpecs != null) {
-      for (int i = 0; i < pluginSpecs.length; i++) {
-        if (pluginSpecs[i].isPortableClass(clazz)) { return true; }
+  // TODO: Need to optimize this by identifying the module to query instead of querying all the modules.
+  public boolean isPortableModuleClass(Class clazz) {
+    if (moduleSpecs != null) {
+      for (int i = 0; i < moduleSpecs.length; i++) {
+        if (moduleSpecs[i].isPortableClass(clazz)) { return true; }
       }
     }
     return false;
@@ -1587,9 +1587,9 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     }
 
     if (applicatorSpec == null) {
-      if (pluginSpecs != null) {
-        for (int i = 0; i < pluginSpecs.length; i++) {
-          Class applicatorClass = pluginSpecs[i].getChangeApplicatorSpec().getChangeApplicator(clazz);
+      if (moduleSpecs != null) {
+        for (int i = 0; i < moduleSpecs.length; i++) {
+          Class applicatorClass = moduleSpecs[i].getChangeApplicatorSpec().getChangeApplicator(clazz);
           if (applicatorClass != null) { return applicatorClass; }
         }
       }
@@ -1598,22 +1598,22 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     return applicatorSpec.getChangeApplicator(clazz);
   }
 
-  // TODO: Need to optimize this by identifying the plugin to query instead of querying all the plugins.
+  // TODO: Need to optimize this by identifying the module to query instead of querying all the modules.
   public boolean isUseNonDefaultConstructor(Class clazz) {
     String className = clazz.getName();
     if (literalValues.isLiteral(className)) { return true; }
     TransparencyClassSpec spec = getSpec(className);
     if (spec != null) { return spec.isUseNonDefaultConstructor(); }
-    if (pluginSpecs != null) {
-      for (int i = 0; i < pluginSpecs.length; i++) {
-        if (pluginSpecs[i].isUseNonDefaultConstructor(clazz)) { return true; }
+    if (moduleSpecs != null) {
+      for (int i = 0; i < moduleSpecs.length; i++) {
+        if (moduleSpecs[i].isUseNonDefaultConstructor(clazz)) { return true; }
       }
     }
     return false;
   }
 
-  public void setPluginSpecs(PluginSpec[] pluginSpecs) {
-    this.pluginSpecs = pluginSpecs;
+  public void setModuleSpecs(ModuleSpec[] moduleSpecs) {
+    this.moduleSpecs = moduleSpecs;
   }
 
   /*
@@ -1649,15 +1649,15 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
     return rv;
   }
-  
+
   public void verifyBootJarContents() throws IncompleteBootJarException, UnverifiedBootJarException {
     logger.info("Verifying boot jar contents...");
-    int missingCount         = 0;
+    int missingCount = 0;
     int preInstrumentedCount = 0;
-    int bootJarPopulation    = 0;
+    int bootJarPopulation = 0;
     try {
-      BootJar bootJar   = BootJar.getDefaultBootJarForReading();
-      Set bjClasses     = bootJar.getAllPreInstrumentedClasses();
+      BootJar bootJar = BootJar.getDefaultBootJarForReading();
+      Set bjClasses = bootJar.getAllPreInstrumentedClasses();
       bootJarPopulation = bjClasses.size();
       for (Iterator i = getAllSpecs(); i.hasNext();) {
         TransparencyClassSpec classSpec = (TransparencyClassSpec) i.next();
@@ -1679,14 +1679,15 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
                                            "BootJarException occurred while attempting to verify the contents of the boot jar.",
                                            bjex);
     } catch (IOException ioex) {
-      throw new UnverifiedBootJarException("IOException occurred while attempting to verify the contents of the boot jar.", ioex);
+      throw new UnverifiedBootJarException(
+                                           "IOException occurred while attempting to verify the contents of the boot jar.",
+                                           ioex);
     }
     logger.info("Number of classes in the DSO boot jar:" + bootJarPopulation);
     logger.info("Number of classes expected to be in the DSO boot jar:" + preInstrumentedCount);
     logger.info("Number of classes found missing from the DSO boot jar:" + missingCount);
-    if (missingCount > 0) {
-      throw new IncompleteBootJarException("Incomplete DSO boot jar; " + missingCount + " pre-instrumented class(es) found missing.");
-    }
+    if (missingCount > 0) { throw new IncompleteBootJarException("Incomplete DSO boot jar; " + missingCount
+                                                                 + " pre-instrumented class(es) found missing."); }
   }
 
   public Iterator getAllSpecs() {
@@ -1773,42 +1774,43 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     userDefinedBootSpecs.put(className, spec);
   }
 
-  public void addNewPlugin(String name, String version) {
-    Plugin newPlugin = pluginsContext.plugins.addNewPlugin();
-    newPlugin.setName(name);
-    newPlugin.setVersion(version);
+  public void addNewModule(String name, String version) {
+    Module newModule = modulesContext.modules.addNewModule();
+    newModule.setName(name);
+    newModule.setVersion(version);
   }
 
-  public Plugins getPluginsForInitialization() {
-    return pluginsContext.getPluginsForInitialization();
+  public Modules getModulesForInitialization() {
+    return modulesContext.getModulesForInitialization();
   }
 
-  private static class PluginsContext {
-    private boolean alwaysInitializedPlugins = true; // set to false only when in test
-    private boolean pluginsInitialized       = false; // set to true only when in test
+  private static class ModulesContext {
 
-    private Plugins plugins;
+    private boolean alwaysInitializedModules = true; // set to false only when in test
+    private boolean modulesInitialized       = false; // set to true only when in test
+
+    private Modules modules;
 
     // This is used only in test
-    void initializedPluginsOnlyOnce() {
-      this.alwaysInitializedPlugins = false;
+    void initializedModulesOnlyOnce() {
+      this.alwaysInitializedModules = false;
     }
 
-    void setPlugins(Plugins plugins) {
-      this.plugins = plugins;
+    void setModules(Modules modules) {
+      this.modules = modules;
     }
 
-    Plugins getPluginsForInitialization() {
-      if (alwaysInitializedPlugins) {
-        return this.plugins;
+    Modules getModulesForInitialization() {
+      if (alwaysInitializedModules) {
+        return this.modules;
       } else {
         // this could happen only in test
         synchronized (this) {
-          if (pluginsInitialized) {
-            return Plugins.Factory.newInstance();
+          if (modulesInitialized) {
+            return Modules.Factory.newInstance();
           } else {
-            pluginsInitialized = true;
-            return this.plugins;
+            modulesInitialized = true;
+            return this.modules;
           }
         }
       }

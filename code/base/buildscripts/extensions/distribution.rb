@@ -130,8 +130,8 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   require 'extensions/bundled-demos'
   include BundledDemos
 
-  require 'extensions/bundled-plugins'
-  include BundledPlugins
+  require 'extensions/bundled-modules'
+  include BundledModules
 
   require 'extensions/bundled-jres'
   include BundledJREs
@@ -165,7 +165,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     exec_section :bundled_vendors
     exec_section :bundled_demos
     exec_section :bundled_jres
-    exec_section :bundled_plugins
+    exec_section :bundled_modules
     exec_section :postscripts
   end
 

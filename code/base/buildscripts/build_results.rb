@@ -107,9 +107,9 @@ class BuildResults
         end
     end
 
-    # The directory to store plugin JAR files.
-    def plugins_home
-      FilePath.new(@build_dir, "plugins").ensure_directory
+    # The directory to store module JAR files.
+    def modules_home
+      FilePath.new(@build_dir, "modules").ensure_directory
     end
 
     # The "server home", which is the working directory we set (and into which we copy certain files required

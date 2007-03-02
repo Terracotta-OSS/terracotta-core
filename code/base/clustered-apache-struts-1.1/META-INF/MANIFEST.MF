@@ -1,11 +1,11 @@
 Manifest-Version: 1.0
-Bundle-Activator: org.terracotta.plugins.struts_1_1.StrutsTerracottaConfigurator
+Bundle-Activator: org.terracotta.modules.struts_1_1.StrutsTerracottaConfigurator
 Bundle-Category: terracotta
 Bundle-Copyright: Terracotta, Inc. (c) 2003-2007
 Bundle-Description: Terracotta configuration for clustering Apache Struts 1.1
 Bundle-ManifestVersion: 2
 Bundle-Name: Terracotta Configuration for Apache Struts 1.1
 Bundle-RequiredExecutionEnvironment: J2SE-1.4
-Bundle-SymbolicName: org.terracotta.plugins.clustered_apache_struts_1.1
+Bundle-SymbolicName: org.terracotta.modules.clustered_apache_struts_1.1
 Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: 1.0.0

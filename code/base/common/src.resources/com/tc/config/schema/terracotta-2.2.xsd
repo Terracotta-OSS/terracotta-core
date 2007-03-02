@@ -310,12 +310,12 @@
     </xs:all>
   </xs:complexType>
 
-  <xs:complexType name="plugin">
+  <xs:complexType name="module">
     <xs:annotation>
       <xs:documentation>
-        Identifies a plugin/version to use, this plugin must be located
+        Identifies a module/version to use, this module must be located
         in either a) the default repository shipped with Terracotta or
-        b) one of the repositories listed in the <![CDATA[<plugins>]]>
+        b) one of the repositories listed in the <![CDATA[<module>]]>
         section.
       </xs:documentation>
     </xs:annotation>
@@ -323,10 +323,10 @@
     <xs:attribute name="version" type="xs:string" />
   </xs:complexType>
 
-  <xs:complexType name="plugins">
+  <xs:complexType name="modules">
     <xs:sequence maxOccurs="unbounded">
       <xs:element name="repository" type="xs:anyURI" minOccurs="0" />
-      <xs:element name="plugin" type="plugin" minOccurs="0" />
+      <xs:element name="module" type="module" minOccurs="0" />
     </xs:sequence>
   </xs:complexType>
 
@@ -589,11 +589,11 @@
       </xs:documentation>
     </xs:annotation>
     <xs:all>
-      <xs:element name="plugins" type="plugins"
+      <xs:element name="modules" type="modules"
         minOccurs="0">
         <xs:annotation>
           <xs:documentation>
-            This section contains the list of plugins to use in
+            This section contains the list of modules to use in
             the client.
           </xs:documentation>
         </xs:annotation>

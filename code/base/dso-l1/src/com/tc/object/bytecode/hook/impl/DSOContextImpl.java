@@ -26,7 +26,7 @@ import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.config.UnverifiedBootJarException;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.logging.InstrumentationLoggerImpl;
-import com.tc.plugins.PluginsLoader;
+import com.tc.plugins.ModulesLoader;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.terracottatech.config.ConfigurationModel;
@@ -82,7 +82,7 @@ public class DSOContextImpl implements DSOContext {
     weavingStrategy = new DefaultWeavingStrategy(configHelper, new InstrumentationLoggerImpl(configHelper
         .instrumentationLoggingOptions()));
 
-    PluginsLoader.initPlugins(configHelper, false);
+    ModulesLoader.initPlugins(configHelper, false);
     // TODO: This could result in a ConcurrentModificationException in the test framework when one thread
     // finish the validation and continues to instrument user classes which may create new TransparencyClassSpec
     // while another thread is still in the process of validating the boot jar.

@@ -89,7 +89,7 @@ bundled_components:
         - management
         - thirdparty
         - ui-configurator
-bundled_plugins:
+bundled_modules:
   - core:
       install_directory: modules
       manifest:

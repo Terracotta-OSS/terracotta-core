@@ -149,8 +149,8 @@ end
 # A build module. This represents the largest-scale division of our codebase, like 'common',
 # 'dso-spring', or 'dso-l2'.
 class BuildModule
-    attr_reader :root, :name, :jdk, :aspectj, :plugin, :module_set, :dependencies
-    alias plugin? plugin
+    attr_reader :root, :name, :jdk, :aspectj, :module, :module_set, :dependencies
+    alias module? module
     alias aspectj? aspectj
 
     # Creates a new instance. root_dir is the root directory of the module; module_set is
@@ -171,7 +171,7 @@ class BuildModule
         assert("modules.def.yml: module #{@name} does not have required jdk: attribute") { ! jdk.nil? }
         @jdk = Registry[:jvm_set][jdk]
         @aspectj = data[:aspectj] || false
-        @plugin = data[:plugin] || false
+        @module = data[:module] || false
         @dependencies = data[:dependencies] || [ ]
 
         assert("Root ('#{@root.to_s}') must be an absolute path") { @root.absolute? }

@@ -132,7 +132,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = GenericMapTestApp.class.getName();
-    config.addNewPlugin("clustered-commons-collections", "3.1");
+    config.addNewModule("clustered-commons-collections", "3.1");
     config.getOrCreateSpec(testClass);
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);

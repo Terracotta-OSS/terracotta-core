@@ -22,7 +22,7 @@ public final class FastHashMapTestApp extends AbstractErrorCatchingTransparentAp
   private final FastHashMap   clusteredFastHashMap;
 
   public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config) {
-    config.addNewPlugin("clustered-commons-collections", "3.1");
+    config.addNewModule("clustered-commons-collections", "3.1");
 
     final String testClass = FastHashMapTestApp.class.getName();
     config.addIncludePattern(testClass + "$*");
