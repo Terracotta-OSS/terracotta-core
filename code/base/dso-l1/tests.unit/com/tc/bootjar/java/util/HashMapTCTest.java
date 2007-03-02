@@ -25,6 +25,7 @@ import com.tc.object.bytecode.TransparencyClassAdapter;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOSpringConfigHelper;
+import com.tc.object.config.DistributedMethodSpec;
 import com.tc.object.config.Lock;
 import com.tc.object.config.LockDefinition;
 import com.tc.object.config.ModuleSpec;
@@ -818,10 +819,6 @@ public class HashMapTCTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void addDistributedMethodCall(String methodExpression) {
-      throw new ImplementMe();
-    }
-
     public String getPostCreateMethodIfDefined(String className) {
       throw new ImplementMe();
     }
@@ -902,6 +899,14 @@ public class HashMapTCTest extends TCTestCase {
     }
 
     public void addSynchronousWriteApplication(String name) {
+      throw new ImplementMe();
+    }
+
+    public void addDistributedMethodCall(String methodExpression) {
+      throw new ImplementMe();
+    }
+
+    public void addDistributedMethodCall(DistributedMethodSpec dms) {
       throw new ImplementMe();
     }
 

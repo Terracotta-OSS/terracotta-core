@@ -159,7 +159,9 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   Collection getDSOSpringConfigs();
 
-  void addDistributedMethodCall(String methodExpression);
+  void addDistributedMethodCall(String string);
+
+  void addDistributedMethodCall(DistributedMethodSpec dms);
 
   Portability getPortability();
 
@@ -184,5 +186,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   void addCustomAdapter(String name, ClassAdapterFactory adapterFactory);
 
   int getSessionLockType(String appName);
+
 
 }

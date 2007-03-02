@@ -256,7 +256,9 @@ public class ConfigLoader {
     if (distributedMethods != null) {
       MethodExpression[] methodExpressions = distributedMethods.getMethodExpressionArray();
       for (int i = 0; methodExpressions != null && i < methodExpressions.length; i++) {
-        config.addDistributedMethodCall(methodExpressions[i].getStringValue());
+        final MethodExpression me = methodExpressions[i];
+        final DistributedMethodSpec dms = new DistributedMethodSpec(me.getStringValue(), me.getRunOnAllNodes());
+        config.addDistributedMethodCall(dms);
       }
     }
   }

@@ -71,7 +71,7 @@ public class TransparencyClassSpec {
     this.changeApplicatorSpec = new DSOChangeApplicatorSpec(changeApplicatorClassName);
     this.isLogical = true;
   }
-  
+
   public TransparencyClassSpec(String className, DSOClientConfigHelper configuration) {
     this.className = className;
     this.configuration = configuration;
@@ -160,19 +160,22 @@ public class TransparencyClassSpec {
   }
 
   public TransparencyClassSpec addDistributedMethodCall(String methodName, String description) {
+    return addDistributedMethodCall(methodName, description, true);
+  }
+
+  public TransparencyClassSpec addDistributedMethodCall(String methodName, String description, boolean runOnAllNodes) {
     if ("<init>".equals(methodName) || "<clinit>".equals(methodName)) { throw new AssertionError(
                                                                                                  "Initializers of class "
                                                                                                      + className
                                                                                                      + " cannot be participated in distrbuted method call and are ignored."); }
-
     StringBuffer sb = new StringBuffer("* ");
     sb.append(className);
     sb.append(".");
     sb.append(methodName);
     String arguments = ByteCodeUtil.methodDescriptionToMethodArgument(description);
     sb.append(arguments);
-    configuration.addDistributedMethodCall(sb.toString());
-
+    final DistributedMethodSpec dms = new DistributedMethodSpec(sb.toString(), runOnAllNodes);
+    configuration.addDistributedMethodCall(dms);
     return this;
   }
 
@@ -272,7 +275,7 @@ public class TransparencyClassSpec {
   private boolean isDistributedMethodCall(int access, String methodName, String description, String[] exceptions) {
     return configuration.isDistributedMethodCall(access, className, methodName, description, exceptions);
   }
-  
+
   public ChangeApplicatorSpec getChangeApplicatorSpec() {
     return changeApplicatorSpec;
   }
@@ -505,11 +508,11 @@ public class TransparencyClassSpec {
   public void setPostCreateMethod(String postCreateMethod) {
     this.postCreateMethod = postCreateMethod;
   }
-  
+
   public void setCustomClassAdapter(ClassAdapterFactory customClassAdapter) {
     this.customClassAdapter = customClassAdapter;
   }
-  
+
   public ClassAdapterFactory getCustomClassAdapter() {
     return customClassAdapter;
   }

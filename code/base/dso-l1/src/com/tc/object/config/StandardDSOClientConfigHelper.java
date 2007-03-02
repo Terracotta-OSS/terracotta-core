@@ -125,7 +125,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   private final CompoundExpressionMatcher        permanentExcludesMatcher;
   private final CompoundExpressionMatcher        nonportablesMatcher;
   private final List                             autoLockExcludes                   = new ArrayList();
-  private final List                             distributedMethods                 = new LinkedList();
+  private final List                             distributedMethods                 = new LinkedList();                    // <DistributedMethodSpec>
   private final Map                              userDefinedBootSpecs               = new HashMap();
 
   private final ClassInfoFactory                 classInfoFactory;
@@ -1695,7 +1695,12 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   }
 
   public void addDistributedMethodCall(String methodExpression) {
-    distributedMethods.add(methodExpression);
+    final DistributedMethodSpec dms = new DistributedMethodSpec(methodExpression, true);
+    addDistributedMethodCall(dms);
+  }
+
+  public void addDistributedMethodCall(DistributedMethodSpec dms) {
+    this.distributedMethods.add(dms);
   }
 
   public boolean isDistributedMethodCall(int modifiers, String className, String methodName, String description,
@@ -1703,7 +1708,8 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     if (Modifier.isStatic(modifiers) || "<init>".equals(methodName) || "<clinit>".equals(methodName)) { return false; }
     MemberInfo methodInfo = getMemberInfo(modifiers, className, methodName, description, exceptions);
     for (Iterator i = distributedMethods.iterator(); i.hasNext();) {
-      if (matches((String) i.next(), methodInfo)) { return true; }
+      DistributedMethodSpec dms = (DistributedMethodSpec) i.next();
+      if (matches(dms.getMethodExpression(), methodInfo)) { return true; }
     }
     return false;
   }
