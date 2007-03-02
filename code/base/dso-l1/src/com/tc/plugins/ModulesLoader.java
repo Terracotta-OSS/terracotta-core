@@ -33,6 +33,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
 public class ModulesLoader {
+
   private static final TCLogger logger = TCLogging.getLogger(ModulesLoader.class);
 
   private ModulesLoader() {
@@ -84,6 +85,8 @@ public class ModulesLoader {
 
   private static void initPlugins(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
                                   final Module[] modules) throws BundleException {
+    // The "modules-common" bundle contains a convenience superclass that some bundles extend
+    osgiRuntime.installBundle("modules-common", "1.0");
     for (int pos = 0; pos < modules.length; ++pos) {
       String bundle = modules[pos].getName() + "-" + modules[pos].getVersion();
       logger.info("Installing OSGI bundle " + bundle);

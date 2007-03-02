@@ -82,12 +82,9 @@ public interface EmbeddedOSGiRuntime {
 
       logger.info("OSGi Bundle Repositories:");
       for (int i = 0; i < bundleRepositories.length; i++) {
-        logger.info(bundleRepositories[i]);
+        logger.info("\t" + bundleRepositories[i]);
       }
-      EmbeddedOSGiRuntime osgiRuntime = new KnopflerfishOSGi(bundleRepositories);
-      // The "modules-common" bundle contains a convenience superclass that some bundles extend
-      osgiRuntime.installBundle("modules-common", "1.0");
-      return osgiRuntime;
+      return new KnopflerfishOSGi(bundleRepositories);
     }
   }
 
