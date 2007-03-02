@@ -15,7 +15,6 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
