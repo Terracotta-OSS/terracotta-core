@@ -5,6 +5,7 @@ package com.tc.object.bytecode;
 
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodVisitor;
+import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.object.Portability;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.logging.InstrumentationLogger;
@@ -12,10 +13,10 @@ import com.tc.util.Assert;
 
 public class JavaLangThrowableAdapter extends TransparencyClassAdapter {
 
-  public JavaLangThrowableAdapter(TransparencyClassSpec spec, ClassVisitor cv, ManagerHelper mgrHelper,
-                                  InstrumentationLogger instrumentationLogger, ClassLoader caller,
-                                  Portability portability) {
-    super(spec, cv, mgrHelper, instrumentationLogger, caller, portability);
+  public JavaLangThrowableAdapter(ClassInfo classInfo, TransparencyClassSpec spec, ClassVisitor cv,
+                                  ManagerHelper mgrHelper, InstrumentationLogger instrumentationLogger,
+                                  ClassLoader caller, Portability portability) {
+    super(classInfo, spec, cv, mgrHelper, instrumentationLogger, caller, portability);
   }
 
   protected void basicVisit(final int version, final int access, final String name, String signature,

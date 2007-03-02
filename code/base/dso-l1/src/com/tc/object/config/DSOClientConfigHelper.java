@@ -7,6 +7,7 @@ package com.tc.object.config;
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
+import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.object.Portability;
@@ -30,7 +31,7 @@ import java.util.Map;
  */
 public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
-  boolean shouldBeAdapted(String fullName);
+  boolean shouldBeAdapted(ClassInfo classInfo);
 
   boolean isNeverAdaptable(String fullName);
 
@@ -44,12 +45,12 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   Iterator getAllUserDefinedBootSpecs();
 
-  TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, String className, InstrumentationLogger lgr,
+  TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, ClassInfo classInfo, InstrumentationLogger lgr,
                                                     ClassLoader caller, final boolean forcePortable);
 
-  ClassAdapter createClassAdapterFor(ClassWriter writer, String className, InstrumentationLogger lgr, ClassLoader caller);
+  ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr, ClassLoader caller);
 
-  ClassAdapter createClassAdapterFor(ClassWriter writer, String className, InstrumentationLogger lgr,
+  ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
                                      ClassLoader caller, boolean disableSuperClassTypeChecking);
 
   boolean isCallConstructorOnLoad(String className);

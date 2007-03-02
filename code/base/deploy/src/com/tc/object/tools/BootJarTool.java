@@ -10,7 +10,6 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.apache.commons.io.IOUtils;
 
 import com.tc.asm.ClassReader;
 import com.tc.asm.ClassVisitor;
@@ -19,6 +18,8 @@ import com.tc.asm.commons.SerialVersionUIDAdder;
 import com.tc.asm.tree.ClassNode;
 import com.tc.asm.tree.InnerClassNode;
 import com.tc.asm.tree.MethodNode;
+import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.cluster.ClusterEventListener;
 import com.tc.config.Directories;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
@@ -126,10 +127,12 @@ import com.tcclient.util.MapEntrySetWrapper;
 import gnu.trove.TLinkable;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collections;
@@ -139,8 +142,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.jar.JarFile;
-import java.util.zip.ZipEntry;
 
 /**
  * Tool for creating the DSO boot jar
@@ -152,8 +153,8 @@ public class BootJarTool {
   private static final String         DEFAULT_CONFIG_PATH          = "default-config.xml";
   private static final String         DEFAULT_CONFIG_SPEC          = "tc-config.xml";
 
-  private final ClassBytesProvider    tcBytesProvider;
-  private final ClassBytesProvider    systemBytesProvider;
+  private final ClassLoader           tcLoader;
+  private final ClassLoader           systemLoader;
   private final DSOClientConfigHelper config;
   private final File                  outputFile;
   private final Portability           portability;
@@ -170,25 +171,25 @@ public class BootJarTool {
   private BootJarHandler              bootJarHandler;
   private boolean                     quiet;
 
-  public BootJarTool(DSOClientConfigHelper configuration, File outputFile, ClassBytesProvider systemProvider,
+  public BootJarTool(DSOClientConfigHelper configuration, File outputFile, ClassLoader systemProvider,
                      boolean quiet) {
     this.config = configuration;
     this.outputFile = outputFile;
-    this.systemBytesProvider = systemProvider;
-    this.tcBytesProvider = new ClassLoaderBytesProvider(getClass().getClassLoader());
+    this.systemLoader = systemProvider;
+    this.tcLoader = getClass().getClassLoader();
     this.bootJarHandler = new BootJarHandler(WRITE_OUT_TEMP_FILE, this.outputFile);
     this.quiet = quiet;
     this.portability = new PortabilityImpl(this.config);
     PluginsLoader.initPlugins(this.config, true);
   }
 
-  public BootJarTool(DSOClientConfigHelper configuration, File outputFile, ClassBytesProvider systemProvider) {
+  public BootJarTool(DSOClientConfigHelper configuration, File outputFile, ClassLoader systemProvider) {
     this(configuration, outputFile, systemProvider, false);
   }
 
   private boolean isAtLeastJDK15() {
     try {
-      systemBytesProvider.getBytesForClass("java.lang.StringBuilder");
+      getBytesForClass("java.lang.StringBuilder", systemLoader);
       return true;
     } catch (ClassNotFoundException e) {
       return false;
@@ -1074,20 +1075,50 @@ public class BootJarTool {
   }
 
   private byte[] getTerracottaBytes(String className) {
-    return getBytes(className, tcBytesProvider);
+    return getBytes(className, tcLoader);
   }
 
   private byte[] getSystemBytes(String className) {
-    return getBytes(className, systemBytesProvider);
+    return getBytes(className, systemLoader);
   }
 
-  private byte[] getBytes(String className, ClassBytesProvider provider) {
+  private byte[] getBytes(String className, ClassLoader provider) {
     try {
-      return provider.getBytesForClass(className);
+      return getBytesForClass(className, provider);
     } catch (ClassNotFoundException e) {
       throw exit("Error sourcing bytes for class " + className, e);
     }
   }
+  
+  public byte[] getBytesForClass(String className, ClassLoader loader) throws ClassNotFoundException {
+    String resource = BootJar.classNameToFileName(className);
+
+    InputStream is = loader.getResourceAsStream(resource);
+    if (is == null) { throw new ClassNotFoundException("No resource found for class: " + className); }
+    final int size = 4096;
+    byte[] buffer = new byte[size];
+    ByteArrayOutputStream baos = new ByteArrayOutputStream(size);
+
+    int read;
+    try {
+      while ((read = is.read(buffer, 0, size)) > 0) {
+        baos.write(buffer, 0, read);
+      }
+    } catch (IOException ioe) {
+      throw new ClassNotFoundException("Error reading bytes for " + resource, ioe);
+    } finally {
+      if (is != null) {
+        try {
+          is.close();
+        } catch (IOException ioe) {
+          // ignore
+        }
+      }
+    }
+
+    return baos.toByteArray();
+  }
+  
 
   private RuntimeException exit(String msg, Throwable t) {
     if (!WRITE_OUT_TEMP_FILE) {
@@ -1288,7 +1319,8 @@ public class BootJarTool {
     ClassWriter cw = new ClassWriter(true);
     ManagerHelperFactory mgrFactory = new ManagerHelperFactory();
 
-    ClassVisitor cv = new JavaLangThrowableAdapter(spec, cw, mgrFactory.createHelper(), instrumentationLogger,
+    ClassInfo classInfo = AsmClassInfo.getClassInfo(className, systemLoader);
+    ClassVisitor cv = new JavaLangThrowableAdapter(classInfo, spec, cw, mgrFactory.createHelper(), instrumentationLogger,
                                                    getClass().getClassLoader(), portability);
     cr.accept(cv, false);
 
@@ -1605,8 +1637,11 @@ public class BootJarTool {
     ClassReader jCR = new ClassReader(jData);
     ClassWriter cw = new ClassWriter(true);
 
-    TransparencyClassAdapter dsoAdapter = config.createDsoClassAdapterFor(cw, jClassNameDots, instrumentationLogger,
+    ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, systemLoader);
+    
+    TransparencyClassAdapter dsoAdapter = config.createDsoClassAdapterFor(cw, jClassInfo, instrumentationLogger,
                                                                           getClass().getClassLoader(), true);
+
     ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
                                                                               tcClassNameDots, tcCN,
                                                                               instrumentedContext));
@@ -1636,7 +1671,9 @@ public class BootJarTool {
     String replacedClassNameDots = ChangeClassNameRootAdapter.replaceClassName(fullClassNameDots,
                                                                                classNameDotsToBeChanged,
                                                                                classNameDotsReplaced);
-    TransparencyClassAdapter dsoAdapter = config.createDsoClassAdapterFor(cw, replacedClassNameDots,
+    ClassInfo replacedClassInfo = AsmClassInfo.getClassInfo(fullClassNameDots, systemLoader);
+    
+    TransparencyClassAdapter dsoAdapter = config.createDsoClassAdapterFor(cw, replacedClassInfo,
                                                                           instrumentationLogger, getClass()
                                                                               .getClassLoader(), true);
     ClassVisitor cv = new ChangeClassNameRootAdapter(dsoAdapter, fullClassNameDots, classNameDotsToBeChanged,
@@ -1653,7 +1690,9 @@ public class BootJarTool {
     ClassReader cr = new ClassReader(data);
     ClassWriter cw = new ClassWriter(true);
 
-    ClassVisitor cv = config.createClassAdapterFor(cw, className, instrumentationLogger, getClass().getClassLoader(),
+    ClassInfo classInfo = AsmClassInfo.getClassInfo(className, systemLoader);
+    
+    ClassVisitor cv = config.createClassAdapterFor(cw, classInfo, instrumentationLogger, getClass().getClassLoader(),
                                                    true);
     cv = new ChangePackageClassAdapter(cv, targetClassName, targetPackageName, newPackageName, null);
     cr.accept(cv, false);
@@ -1715,7 +1754,8 @@ public class BootJarTool {
     ClassReader cr = new ClassReader(data);
     ClassWriter cw = new ClassWriter(true);
 
-    ClassVisitor cv = config.createClassAdapterFor(cw, name, instrumentationLogger, getClass().getClassLoader(), true);
+    ClassInfo classInfo = AsmClassInfo.getClassInfo(data, tcLoader);
+    ClassVisitor cv = config.createClassAdapterFor(cw, classInfo, instrumentationLogger, getClass().getClassLoader(), true);
     cr.accept(cv, false);
 
     return cw.toByteArray();
@@ -1843,28 +1883,8 @@ public class BootJarTool {
     // That requirement is no more, but might come back, so I'm leaving at least this much scaffolding in place
     // WAS: systemProvider = new RuntimeJarBytesProvider(...)
 
-    ClassBytesProvider systemProvider = new ClassLoaderBytesProvider(ClassLoader.getSystemClassLoader());
-    new BootJarTool(new StandardDSOClientConfigHelper(config, false), outputFile, systemProvider, !verbose)
-        .generateJar();
-  }
-
-  public static class RuntimeJarBytesProvider implements ClassBytesProvider {
-    private final JarFile jar;
-
-    public RuntimeJarBytesProvider(File runtimeJar) throws IOException {
-      this.jar = new JarFile(runtimeJar);
-    }
-
-    public byte[] getBytesForClass(String className) throws ClassNotFoundException {
-      ZipEntry entry = jar.getEntry(BootJar.classNameToFileName(className));
-      if (entry == null) { throw new ClassNotFoundException(className); }
-
-      try {
-        return IOUtils.toByteArray(jar.getInputStream(entry));
-      } catch (IOException e) {
-        throw new ClassNotFoundException(className, e);
-      }
-    }
+    ClassLoader systemLoader = ClassLoader.getSystemClassLoader();
+    new BootJarTool(new StandardDSOClientConfigHelper(config, false), outputFile, systemLoader, !verbose).generateJar();
   }
 
 }

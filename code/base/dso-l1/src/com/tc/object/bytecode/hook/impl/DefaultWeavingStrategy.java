@@ -115,7 +115,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       // } else {
       // isDsoAdaptable = m_configHelper.isAdaptable(className);
       // }
-      final boolean isDsoAdaptable = m_configHelper.shouldBeAdapted(className);
+      final boolean isDsoAdaptable = m_configHelper.shouldBeAdapted(classInfo);
 
       // TODO match on (within, null, classInfo) should be equivalent to those ones.
       final Set definitions = context.getDefinitions();
@@ -252,7 +252,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       // -- Phase DSO -- DSO clustering
       if (isDsoAdaptable) {
         final ClassWriter dsoWriter = AsmHelper.newClassWriter(true);
-        ClassVisitor dsoVisitor = m_configHelper.createClassAdapterFor(dsoWriter, className, m_logger, loader);
+        ClassVisitor dsoVisitor = m_configHelper.createClassAdapterFor(dsoWriter, classInfo, m_logger, loader);
 
         final ClassReader dsoReader = new ClassReader(context.getCurrentBytecode());
         try {

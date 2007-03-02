@@ -726,8 +726,7 @@ public class AsmClassInfo implements ClassInfo {
       } else {
         // boot class loader, fall back to system classloader that will see it anyway
         componentClassAsStream = ClassLoader.getSystemClassLoader().getResourceAsStream(
-                componentName + ".class"
-        );
+                componentName + ".class");
       }
       if (componentClassAsStream == null) {
         // might be more than one dimension
@@ -749,7 +748,7 @@ public class AsmClassInfo implements ClassInfo {
         try {
           componentClassAsStream.close();
         } catch (Exception e) {
-          ;
+          // ignore
         }
       }
     }
@@ -964,7 +963,7 @@ public class AsmClassInfo implements ClassInfo {
         // this is not a local variable
         if (index == 0) {
           if (!m_isStatic) {
-            ;//skip this
+            //skip this
           } else {
             m_methodInfo.pushParameterNameFromRegister(index, name);
           }
@@ -972,7 +971,7 @@ public class AsmClassInfo implements ClassInfo {
           m_methodInfo.pushParameterNameFromRegister(index, name);
         }
       } else {
-        ;// skip code block locals
+        // skip code block locals
       }
     }
   }

@@ -7,6 +7,7 @@ package com.tc.bootjar.java.util;
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
+import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
@@ -584,7 +585,7 @@ public class HashMapTCTest extends TCTestCase {
       return null;
     }
 
-    public boolean shouldBeAdapted(String fullName) {
+    public boolean shouldBeAdapted(ClassInfo classInfo) {
       return false;
     }
 
@@ -616,12 +617,12 @@ public class HashMapTCTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public ClassAdapter createClassAdapterFor(ClassWriter writer, String className, InstrumentationLogger lgr,
+    public ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
                                               ClassLoader caller) {
       throw new ImplementMe();
     }
 
-    public ClassAdapter createClassAdapterFor(ClassWriter writer, String className, InstrumentationLogger lgr,
+    public ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
                                               ClassLoader caller, boolean disableSuperClassTypeChecking) {
       throw new ImplementMe();
     }
@@ -838,7 +839,7 @@ public class HashMapTCTest extends TCTestCase {
       return null;
     }
 
-    public TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, String className,
+    public TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, ClassInfo classInfo,
                                                              InstrumentationLogger lgr, ClassLoader caller,
                                                              boolean forcePortable) {
       return null;

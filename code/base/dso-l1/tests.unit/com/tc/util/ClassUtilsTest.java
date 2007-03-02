@@ -7,6 +7,7 @@ package com.tc.util;
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
+import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
@@ -411,7 +412,7 @@ public class ClassUtilsTest extends TestCase {
       return null;
     }
 
-    public boolean shouldBeAdapted(String fullName) {
+    public boolean shouldBeAdapted(ClassInfo classInfo) {
       return true;
     }
 
@@ -443,12 +444,12 @@ public class ClassUtilsTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public ClassAdapter createClassAdapterFor(ClassWriter writer, String className, InstrumentationLogger lgr,
+    public ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
                                               ClassLoader caller) {
       throw new ImplementMe();
     }
 
-    public ClassAdapter createClassAdapterFor(ClassWriter writer, String className, InstrumentationLogger lgr,
+    public ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
                                               ClassLoader caller, boolean disableSuperClassTypeChecking) {
       throw new ImplementMe();
     }
@@ -669,7 +670,7 @@ public class ClassUtilsTest extends TestCase {
       return null;
     }
 
-    public TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, String className,
+    public TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, ClassInfo classInfo,
                                                              InstrumentationLogger lgr, ClassLoader caller,
                                                              boolean forcePortable) {
       return null;

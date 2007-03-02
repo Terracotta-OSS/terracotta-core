@@ -4,6 +4,7 @@
 package com.tc.object.bytecode;
 
 import com.tc.asm.Type;
+import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.exception.TCLogicalSubclassNotPortableException;
 import com.tc.object.LiteralValues;
 import com.tc.object.Portability;
@@ -54,15 +55,18 @@ class InstrumentationSpec {
   private boolean                     isSubclassOfLogicalClass;
   private TransparencyClassSpec       superClassSpec;
 
-  private final ClassLoader           caller;
+  private final ClassInfo             classInfo;
   private final TransparencyClassSpec spec;
   private final ManagerHelper         mgrHelper;
+  private final ClassLoader           caller;
+
   private final Set                   classHierarchy;
   private final Map                   shouldOverrideMethods;
   private final Set                   logicalExtendingMethodSpec;
   private final Set                   logicalExtendingFieldSpec;
 
-  InstrumentationSpec(TransparencyClassSpec spec, ManagerHelper mgrHelper, ClassLoader caller) {
+  InstrumentationSpec(ClassInfo classInfo, TransparencyClassSpec spec, ManagerHelper mgrHelper, ClassLoader caller) {
+    this.classInfo = classInfo;
     this.spec = spec;
     this.mgrHelper = mgrHelper;
     this.caller = caller;
@@ -72,6 +76,12 @@ class InstrumentationSpec {
     this.logicalExtendingFieldSpec = new HashSet();
   }
 
+  public ClassInfo getClassInfo() {
+    return classInfo;
+  }
+  
+  
+  // XXX no need to initialize because these values are in the classInfo
   void initialize(int version, int access, String name, String signature, String superName, String[] interfaces,
                   Portability portability) {
     this.classNameSlashes = name;
@@ -116,7 +126,8 @@ class InstrumentationSpec {
     String superClassName = superNameSlashes.replace('/', '.');
     try {
       // As long as we are instrumenting anything other than Object, we are fine.
-      Class superClazz = Class.forName(superClassName, false, this.caller).getSuperclass();
+      // Class superClazz = Class.forName(superClassName, false, this.caller).getSuperclass();
+      Class superClazz = Class.forName(superClassName, false, this.classInfo.getClassLoader()).getSuperclass();
       while (superClazz != null) {
         String superName = superClazz.getName();
         classHierarchy.add(superName.replace('.', '/'));
@@ -198,9 +209,10 @@ class InstrumentationSpec {
    */
   private byte isNeedManagedField(Portability portability) {
     if (isSubclassOfLogicalClass) { return IS_NOT_NEEDED; }
-    String superClassName = superNameSlashes.replace('/', '.');
-    if (portability.isInstrumentationNotNeeded(superClassName)) { return IS_NEEDED; }
-    if (!spec.hasPhysicallyPortableSpecs(superClassName)) { return IS_NEEDED; }
+    // String superClassName = superNameSlashes.replace('/', '.');
+    ClassInfo superClassInfo = classInfo.getSuperclass();
+    if (portability.isInstrumentationNotNeeded(superClassInfo.getName())) { return IS_NEEDED; }
+    if (!spec.hasPhysicallyPortableSpecs(superClassInfo)) { return IS_NEEDED; }
     if (spec.isLogical()) { return IS_NEEDED; }
     return IS_NOT_NEEDED;
   }
@@ -211,7 +223,8 @@ class InstrumentationSpec {
 
     final Class superClazz;
     try {
-      superClazz = Class.forName(superClassName, false, this.caller);
+      // superClazz = Class.forName(superClassName, false, this.caller);
+      superClazz = Class.forName(superClassName, false, this.classInfo.getClassLoader());
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     }
@@ -273,7 +286,8 @@ class InstrumentationSpec {
     } else if (isSubclassOfLogicalClass && !hasVisitedField) {
       hasVisitedField = true;
       try {
-        Class superClazz = Class.forName(superNameDots, false, caller);
+        // Class superClazz = Class.forName(superNameDots, false, caller);
+        Class superClazz = Class.forName(superNameDots, false, this.classInfo.getClassLoader());
 
         Method[] methods = superClazz.getMethods();
         for (int i = 0; i < methods.length; i++) {
