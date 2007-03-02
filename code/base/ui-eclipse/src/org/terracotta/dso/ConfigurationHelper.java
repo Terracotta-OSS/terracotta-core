@@ -1423,7 +1423,7 @@ public class ConfigurationHelper {
         String expr;
         
         for(int i = 0; i < size; i++) {
-          expr = methods.getMethodExpressionArray(i);
+          expr = methods.getMethodExpressionArray(i).getStringValue();
           
           if(m_patternHelper.matchesMember(expr, methodInfo)) {
             return true;
@@ -1490,7 +1490,7 @@ public class ConfigurationHelper {
       String expr;
       
       for(int i = size-1; i >= 0; i--) {
-        expr = methods.getMethodExpressionArray(i);
+        expr = methods.getMethodExpressionArray(i).getStringValue();
         
         if(m_patternHelper.matchesMethod(expr, method)) {
           methods.removeMethodExpression(i);
@@ -3255,7 +3255,7 @@ public class ConfigurationHelper {
       String methodExpr;
     
       for(int i = 0; i < size; i++) {
-        methodExpr = getRawString(distributedMethods.xgetMethodExpressionArray(i));
+        methodExpr = distributedMethods.getMethodExpressionArray(i).getStringValue();
         validateDistributedMethodExpression(methodExpr);
       }
     }

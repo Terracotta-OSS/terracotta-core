@@ -36,6 +36,7 @@ import com.terracottatech.config.SpringPath;
 import com.terracottatech.config.TransientFields;
 import com.terracottatech.config.WebApplication;
 import com.terracottatech.config.WebApplications;
+import com.terracottatech.config.DistributedMethods.MethodExpression;
 
 import java.text.ParseException;
 import java.util.Arrays;
@@ -253,9 +254,9 @@ public class ConfigLoader {
 
   private void loadDistributedMethods(DistributedMethods distributedMethods) {
     if (distributedMethods != null) {
-      String[] methodExpressions = distributedMethods.getMethodExpressionArray();
+      MethodExpression[] methodExpressions = distributedMethods.getMethodExpressionArray();
       for (int i = 0; methodExpressions != null && i < methodExpressions.length; i++) {
-        config.addDistributedMethodCall(methodExpressions[i]);
+        config.addDistributedMethodCall(methodExpressions[i].getStringValue());
       }
     }
   }

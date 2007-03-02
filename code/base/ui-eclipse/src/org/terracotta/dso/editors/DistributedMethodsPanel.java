@@ -3,17 +3,17 @@
  */
 package org.terracotta.dso.editors;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.jdt.core.IMethod;
-
 import org.dijon.Button;
 import org.dijon.ContainerResource;
-
+import org.eclipse.core.resources.IProject;
+import org.eclipse.jdt.core.IMethod;
 import org.terracotta.dso.TcPlugin;
-import com.tc.admin.common.XTable;
 import org.terracotta.dso.editors.chooser.MethodChooser;
+
+import com.tc.admin.common.XTable;
 import com.terracottatech.config.DistributedMethods;
 import com.terracottatech.config.DsoApplication;
+import com.terracottatech.config.DistributedMethods.MethodExpression;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -159,7 +159,12 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel
     m_methodModel.clear();
 
     if(m_distributedMethods != null) {
-      m_methodModel.setMethods(m_distributedMethods.getMethodExpressionArray());
+      MethodExpression[] mes = m_distributedMethods.getMethodExpressionArray();
+      String [] vals = new String[mes.length];
+      for (int i = 0; i < mes.length; i++) {
+        vals[i] = mes[i].getStringValue();
+      }
+      m_methodModel.setMethods(vals);
     }
   }
 
@@ -227,7 +232,9 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel
     }
     
     public void setValueAt(Object value, int row, int col) {
-      ensureDistributedMethods().setMethodExpressionArray(row, (String)value);
+      DistributedMethods dms = ensureDistributedMethods();
+      MethodExpression me = dms.getMethodExpressionArray(row);
+      me.setStringValue((String)value);
       super.setValueAt(value, row, col);
     }
   }
@@ -242,7 +249,9 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel
   
   private void internalAddDistributed(String expr) {
     if(expr != null && expr.length() > 0) {
-      ensureDistributedMethods().addMethodExpression(expr);
+      DistributedMethods dms = ensureDistributedMethods();
+      MethodExpression me = dms.addNewMethodExpression();
+      me.setStringValue(expr);
       m_methodModel.addMethod(expr);
     }
   }

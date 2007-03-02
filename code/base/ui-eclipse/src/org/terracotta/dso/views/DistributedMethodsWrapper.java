@@ -20,7 +20,7 @@ public class DistributedMethodsWrapper {
   
   String getMethodExpressionArray(int i) {
     DistributedMethods distributedMethods = fApp.getDistributedMethods();
-    return distributedMethods != null ? distributedMethods.getMethodExpressionArray(i) : null;
+    return distributedMethods != null ? distributedMethods.getMethodExpressionArray(i).getStringValue() : null;
   }
   
   void removeMethodExpression(int i) {

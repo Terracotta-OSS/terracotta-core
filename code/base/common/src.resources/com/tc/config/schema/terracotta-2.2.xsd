@@ -199,7 +199,15 @@
 
   <xs:complexType name="distributed-methods">
     <xs:sequence>
-      <xs:element name="method-expression" type="method-name-expression" maxOccurs="unbounded" />
+      <xs:element name="method-expression" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:simpleContent>
+            <xs:extension base="method-name-expression">
+              <xs:attribute name="run-on-all-nodes" type="xs:boolean" use="optional" default="true"/>
+            </xs:extension>
+          </xs:simpleContent>
+        </xs:complexType>
+      </xs:element>
     </xs:sequence>
   </xs:complexType>
 
