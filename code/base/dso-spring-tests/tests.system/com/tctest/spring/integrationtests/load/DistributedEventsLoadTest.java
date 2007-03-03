@@ -26,9 +26,9 @@ public class DistributedEventsLoadTest extends AbstractDeploymentTest {
   
   private Deployment           deployment;
 
-//  public DistributedEventsLoadTest() {
-//    disableAllUntil("2007-03-20");  // XXX timebombed
-//  }
+  public DistributedEventsLoadTest() {
+    disableAllUntil("2007-03-06");  // XXX timebombed
+  }
   
   protected void setUp() throws Exception {
     super.setUp();
