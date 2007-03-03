@@ -32,7 +32,7 @@ goto tc_set_dso_boot_jar__1_2
 
  :tc_set_dso_boot_jar__1_1
    if not exist "%DSO_BOOT_JAR%" goto tc_set_dso_boot_jar__1_3
-   goto end
+   goto return
 
  :tc_set_dso_boot_jar__1_2
    if not defined TMPFILE set TMPFILE=%TEMP%\var~
@@ -40,7 +40,7 @@ goto tc_set_dso_boot_jar__1_2
    for /F %%i in (%TMPFILE%) do @set DSO_BOOT_JAR_NAME=%%i
    del %TMPFILE%
    set __BOOT_JAR_SIG_EXIT_CODE=%errorlevel%
-   if not ERRORLEVEL==0 goto tc_set_dso_boot_jar__1_2_1
+   if %ERRORLEVEL% NEQ 0 goto tc_set_dso_boot_jar__1_2_1
    goto tc_set_dso_boot_jar__1_2_2
 
    :tc_set_dso_boot_jar__1_2_1
@@ -48,25 +48,25 @@ goto tc_set_dso_boot_jar__1_2
      echo name of the DSO boot JAR using the following command:
      echo %JAVACMD% -cp "%TC_JAR%" com.tc.object.tools.BootJarSignature
      echo ...but we got exit code %__BOOT_JAR_SIG_EXIT_CODE%. Stop.
-     set EXITFLAG=TRUE
-     goto end
+     goto error
 
    :tc_set_dso_boot_jar__1_2_2
      set DSO_BOOT_JAR=%TC_INSTALL_DIR%\lib\dso-boot\%DSO_BOOT_JAR_NAME%
      if not exist "%DSO_BOOT_JAR%" goto tc_set_dso_boot_jar__1_3
-     goto end
+     goto return
 
  :tc_set_dso_boot_jar__1_3
    if not defined TC_CONFIG_PATH goto tc_set_dso_boot_jar__1_3_1
    "%JAVACMD%" -cp "%TC_JAR%" com.tc.object.tools.BootJarTool -o "%DSO_BOOT_JAR%" -f "%TC_CONFIG_PATH%"
-   goto end
+    if %ERRORLEVEL% NEQ 0 goto error
+    goto return
 
    :tc_set_dso_boot_jar__1_3_1
     "%JAVACMD%" -cp "%TC_JAR%" com.tc.object.tools.BootJarTool -o "%DSO_BOOT_JAR%"
+    if %ERRORLEVEL% NEQ 0 goto error
+    goto return
 
-:end
-if not "%EXITFLAG%"=="TRUE" goto return
-if not "%EXIT_ON_ERROR%"=="TRUE" goto return
-exit 1
+:error
+exit %ERRORLEVEL%
 
 :return

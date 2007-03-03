@@ -8,9 +8,11 @@ rem
 
 setlocal
 cd %~d0%~p0..\..\..
-set EXIT_ON_ERROR=TRUE
 set SANDBOX=%CD%\sessions\configurator-sandbox\%1
 call "..\bin\make-boot-jar.bat" -o ..\lib\dso-boot -f "%SANDBOX%\tc-config.xml"
+if %ERRORLEVEL% neq 0 goto end
 call "..\bin\start-tc-server.bat" -f "%SANDBOX%\tc-config.xml"
+
+:end
 exit %ERRORLEVEL%
 endlocal

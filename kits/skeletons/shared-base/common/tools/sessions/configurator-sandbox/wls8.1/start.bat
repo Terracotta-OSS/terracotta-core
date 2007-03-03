@@ -26,8 +26,8 @@ IF NOT EXIST "%JAVA_HOME%" (
   endlocal  
 )
 
-"%JAVA_HOME%\bin\java" -classpath "%TC_INSTALL_DIR%lib\tc.jar" com.tc.CheckForJava14
-if not %ERRORLEVEL%==0 (
+"%JAVA_HOME%\bin\java" -classpath "%TC_INSTALL_DIR%\lib\tc.jar" com.tc.CheckForJava14
+if %ERRORLEVEL% NEQ 0 (
   echo Weblogic Server 8.1 requires Java 1.4. Exiting.
   goto end
 )
@@ -37,7 +37,7 @@ if ""%2"" == ""nodso"" goto doRunWLS
 set TC_CONFIG_PATH=%SANDBOX%\tomcat5.5\tc-config.xml
 call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q
 
-if "%EXITFLAG%"=="TRUE" goto end
+if %ERRORLEVEL% neq 0 goto end
 
 set JAVA_OPTIONS=%JAVA_OPTS% %TC_JAVA_OPTS%
 set JAVA_OPTIONS=%JAVA_OPTIONS% -Dwebserver.log.name=%1
