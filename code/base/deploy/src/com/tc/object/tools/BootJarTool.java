@@ -14,6 +14,7 @@ import org.apache.commons.cli.PosixParser;
 import com.tc.asm.ClassReader;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
+import com.tc.asm.MethodVisitor;
 import com.tc.asm.commons.SerialVersionUIDAdder;
 import com.tc.asm.tree.ClassNode;
 import com.tc.asm.tree.InnerClassNode;
@@ -1611,27 +1612,21 @@ public class BootJarTool {
     addInstrumentedLinkedHashMap(instrumentedContext);
   }
 
-  private void replaceMethod(List methods, MethodNode replacedMethod) {
-    for (Iterator i = methods.iterator(); i.hasNext();) {
-      MethodNode m = (MethodNode) i.next();
-      if (m.name.equals(replacedMethod.name) && m.desc.equals(replacedMethod.desc)) {
-        i.remove();
-        break;
-      }
-    }
-    methods.add(replacedMethod);
-  }
-
   private void mergeClass(String tcClassNameDots, String jClassNameDots, Map instrumentedContext,
-                          MethodNode replacedMethod) {
+                          final MethodNode replacedMethod) {
     byte[] tcData = getSystemBytes(tcClassNameDots);
 
     ClassReader tcCR = new ClassReader(tcData);
-    ClassNode tcCN = new ClassNode();
+    ClassNode tcCN = new ClassNode() {
+      public MethodVisitor visitMethod(int maccess, String mname, String mdesc, String msignature, String[] mexceptions) {
+        if (replacedMethod != null && mname.equals(replacedMethod.name) && mdesc.equals(replacedMethod.desc)) {
+          methods.add(replacedMethod);
+          return null;
+        }
+        return super.visitMethod(maccess, mname, mdesc, msignature, mexceptions);
+      }
+    };
     tcCR.accept(tcCN, true);
-    if (replacedMethod != null) {
-      replaceMethod(tcCN.methods, replacedMethod);
-    }
 
     byte[] jData = getSystemBytes(jClassNameDots);
     ClassReader jCR = new ClassReader(jData);
@@ -1652,37 +1647,55 @@ public class BootJarTool {
     bootJar.loadClassIntoJar(jClassNameDots, jData, true);
 
     List innerClasses = tcCN.innerClasses;
+    // load ClassInfo for all inner classes
     for (Iterator i = innerClasses.iterator(); i.hasNext();) {
       InnerClassNode innerClass = (InnerClassNode) i.next();
-      if (!innerClass.outerName.equals(tcClassNameDots.replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER,
+      if (innerClass.outerName.equals(tcClassNameDots.replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER,
                                                                ChangeClassNameHierarchyAdapter.SLASH_DELIMITER))) {
-        continue;
+        changeClassNameAndGetBytes(innerClass.name, tcClassNameDots, jClassNameDots, instrumentedContext);
       }
-      changeClassName(innerClass.name, tcClassNameDots, jClassNameDots, instrumentedContext);
+    }
+    // transform and add inner classes to the boot jar
+    for (Iterator i = innerClasses.iterator(); i.hasNext();) {
+      InnerClassNode innerClass = (InnerClassNode) i.next();
+      if (innerClass.outerName.equals(tcClassNameDots.replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER,
+                                                              ChangeClassNameHierarchyAdapter.SLASH_DELIMITER))) {
+        changeClassName(innerClass.name, tcClassNameDots, jClassNameDots, instrumentedContext);
+      }
     }
   }
 
   private void changeClassName(String fullClassNameDots, String classNameDotsToBeChanged, String classNameDotsReplaced,
                                Map instrumentedContext) {
-    byte[] data = getSystemBytes(fullClassNameDots);
-    ClassReader cr = new ClassReader(data);
+    byte[] data = changeClassNameAndGetBytes(fullClassNameDots, classNameDotsToBeChanged, classNameDotsReplaced,
+                                             instrumentedContext);
+
+    String replacedClassName = ChangeClassNameRootAdapter.replaceClassName(fullClassNameDots, classNameDotsToBeChanged,
+                                                                           classNameDotsReplaced);
+    ClassInfo replacedClassInfo = AsmClassInfo.getClassInfo(replacedClassName, systemLoader);
+
     ClassWriter cw = new ClassWriter(true);
+    ClassReader cr = new ClassReader(data);
+    ClassVisitor dsoAdapter = config.createDsoClassAdapterFor(cw, replacedClassInfo, instrumentationLogger, // 
+                                                              getClass().getClassLoader(), true);
+    cr.accept(dsoAdapter, false);
 
-    String replacedClassNameDots = ChangeClassNameRootAdapter.replaceClassName(fullClassNameDots,
-                                                                               classNameDotsToBeChanged,
-                                                                               classNameDotsReplaced);
-    ClassInfo replacedClassInfo = AsmClassInfo.getClassInfo(fullClassNameDots, systemLoader);
-    
-    TransparencyClassAdapter dsoAdapter = config.createDsoClassAdapterFor(cw, replacedClassInfo,
-                                                                          instrumentationLogger, getClass()
-                                                                              .getClassLoader(), true);
-    ClassVisitor cv = new ChangeClassNameRootAdapter(dsoAdapter, fullClassNameDots, classNameDotsToBeChanged,
+    bootJar.loadClassIntoJar(replacedClassName, cw.toByteArray(), true);
+  }
+  
+  private byte[] changeClassNameAndGetBytes(String fullClassNameDots, String classNameDotsToBeChanged, String classNameDotsReplaced,
+                               Map instrumentedContext) {
+    ClassReader cr = new ClassReader(getSystemBytes(fullClassNameDots));
+    ClassWriter cw = new ClassWriter(true);
+    ClassVisitor cv = new ChangeClassNameRootAdapter(cw, fullClassNameDots, classNameDotsToBeChanged,
                                                      classNameDotsReplaced, instrumentedContext, null);
-
     cr.accept(cv, false);
-    data = cw.toByteArray();
-    bootJar.loadClassIntoJar(replacedClassNameDots, data, true);
-
+    
+    byte[] data = cw.toByteArray();
+    
+    AsmClassInfo.getClassInfo(data, systemLoader);
+    
+    return data;
   }
 
   private byte[] changePackageAndGetBytes(String className, byte[] data, String targetClassName,
