@@ -47,13 +47,14 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     find_jvms
 
     # Some more objects we need.
-    root_dir = File.expand_path(File.join("..", ".."))
+    root_dir = FilePath.new(@basedir.to_s, "..", "..").canonicalize    
     @build_environment = BuildEnvironment.new(platform, config_source, root_dir)
     @static_resources = StaticResources.new(basedir)
     @archive_tag = ArchiveTag.new(@build_environment)
 
     Registry[:build_environment] = @build_environment
     Registry[:static_resources] = @static_resources
+    
 
     # Load up our modules; allow definition of new modules by setting a configuration
     # property that points to additional module files to load. I believe that right now
