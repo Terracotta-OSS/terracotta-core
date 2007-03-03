@@ -14,7 +14,7 @@
 
 	<target name="init">
 		<mkdir dir="${build.dir}" />
-		<mkdir dir="${images.dir}" />
+		<mkdir dir="${build.images.dir}" />
 	</target>
 
 	<target name="build" depends="init" description="build the source ">
