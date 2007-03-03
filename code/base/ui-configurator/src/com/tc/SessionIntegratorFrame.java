@@ -134,6 +134,8 @@ public class SessionIntegratorFrame extends Frame {
   private L2ConnectListener        m_l2ConnectListener;
   private ServerConnectionManager  m_l2ConnectManager;
   
+  private CheckBox                   m_webServer1EnabledToggle;
+  private boolean                    m_webServer1Enabled;
   private ProcessOutputView          m_webServer1OutView;
   private Label                      m_webServer1Label;
   private ProcessStatus              m_webServer1Status;
@@ -142,6 +144,8 @@ public class SessionIntegratorFrame extends Frame {
   private WebServer1ShutdownListener m_webServer1ShutdownListener;
   private WebServerShutdownMonitor   m_webServer1Monitor;
   
+  private CheckBox                   m_webServer2EnabledToggle;
+  private boolean                    m_webServer2Enabled;
   private ProcessOutputView          m_webServer2OutView;
   private Label                      m_webServer2Label;
   private ProcessStatus              m_webServer2Status;
@@ -171,9 +175,11 @@ public class SessionIntegratorFrame extends Frame {
   
   private ServerSelection m_serverSelection;
   
-  private static String SHOW_SPLASH_PREF_KEY  = "ShowSplash";
-  private static String LAST_DIR_PREF_KEY     = "LastDirectory";
-  private static String DSO_ENABLED_PREF_KEY  = "DsoEnabled";
+  private static String SHOW_SPLASH_PREF_KEY         = "ShowSplash";
+  private static String LAST_DIR_PREF_KEY            = "LastDirectory";
+  private static String DSO_ENABLED_PREF_KEY         = "DsoEnabled";
+  private static String WEBSERVER1_ENABLED_PREF_KEY  = "WebServer1Enabled";
+  private static String WEBSERVER2_ENABLED_PREF_KEY  = "WebServer2Enabled";
     
   private static final String BAT_EXTENSION             = ".bat";
   private static final String SH_EXTENSION              = ".sh";  
@@ -352,6 +358,7 @@ public class SessionIntegratorFrame extends Frame {
     m_l2StartupListener  = new L2StartupListener();
     m_l2ShutdownListener = new L2ShutdownListener();
     
+    m_webServer1EnabledToggle    = (CheckBox)findComponent("Tomcat1EnabledToggle");
     m_webServer1OutView          = (ProcessOutputView)findComponent("Tomcat1OutView");
     m_webServer1Label            = (Label)findComponent("Tomcat1Label");
     m_webServer1Status           = new ProcessStatus(getWebServer1Label());
@@ -359,6 +366,13 @@ public class SessionIntegratorFrame extends Frame {
     m_webServer1StartupListener  = new WebServer1StartupListener();
     m_webServer1ShutdownListener = new WebServer1ShutdownListener();
 
+    m_webServer1Enabled = prefs.getBoolean(WEBSERVER1_ENABLED_PREF_KEY, true);
+    m_webServer1EnabledToggle.setSelected(m_webServer1Enabled);
+    m_webServer1EnabledToggle.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        setWebServer1Enabled(m_webServer1EnabledToggle.isSelected());
+      }
+    });
     m_webServer1Label.setText(getWebServer1Label());
     m_webServer1Control.setMargin(new Insets(0,0,0,0));
     m_webServer1Control.addActionListener(new ActionListener() {
@@ -369,6 +383,7 @@ public class SessionIntegratorFrame extends Frame {
       }
     });
     
+    m_webServer2EnabledToggle    = (CheckBox)findComponent("Tomcat2EnabledToggle");
     m_webServer2OutView          = (ProcessOutputView)findComponent("Tomcat2OutView");
     m_webServer2Label            = (Label)findComponent("Tomcat2Label");
     m_webServer2Status           = new ProcessStatus(getWebServer1Label());
@@ -376,6 +391,13 @@ public class SessionIntegratorFrame extends Frame {
     m_webServer2StartupListener  = new WebServer2StartupListener();
     m_webServer2ShutdownListener = new WebServer2ShutdownListener();
     
+    m_webServer2Enabled = prefs.getBoolean(WEBSERVER2_ENABLED_PREF_KEY, true);
+    m_webServer2EnabledToggle.setSelected(m_webServer2Enabled);
+    m_webServer2EnabledToggle.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        setWebServer2Enabled(m_webServer2EnabledToggle.isSelected());
+      }
+    });
     m_webServer2Label.setText(getWebServer2Label());
     m_webServer2Control.setMargin(new Insets(0,0,0,0));
     m_webServer2Control.addActionListener(new ActionListener() {
@@ -395,6 +417,9 @@ public class SessionIntegratorFrame extends Frame {
     
     setupEditorPanels();
     
+    m_startButton.setEnabled(isWebServer1Enabled() || isWebServer2Enabled() || isDsoEnabled());
+    m_stopButton.setEnabled(isWebServer1Enabled() || isWebServer2Enabled() || isDsoEnabled());
+
     if(prefs.getBoolean(SHOW_SPLASH_PREF_KEY, true)) {
       addComponentListener(new ComponentAdapter() {
         public void componentShown(ComponentEvent e) {
@@ -1190,6 +1215,9 @@ public class SessionIntegratorFrame extends Frame {
     
     setMonitorTabEnabled(enabled);
     
+    m_startButton.setEnabled(enabled || isWebServer1Enabled() || isWebServer2Enabled());
+    m_stopButton.setEnabled(enabled || isWebServer1Enabled() || isWebServer2Enabled());
+    
     if(isL2Ready()) {
       queryRestart();
     }
@@ -1370,16 +1398,44 @@ public class SessionIntegratorFrame extends Frame {
     }
     else {
       if(isDsoEnabled()) {
-        m_webServer1Label.setIcon(m_waitingIcon);
-        m_webServer1Label.setText(getWebServer1Label()+WAITING_LABEL);
-        m_webServer2Label.setIcon(m_waitingIcon);
-        m_webServer2Label.setText(getWebServer2Label()+WAITING_LABEL);
+        if(isWebServer1Enabled()) {
+          m_webServer1Label.setIcon(m_waitingIcon);
+          m_webServer1Label.setText(getWebServer1Label()+WAITING_LABEL);
+        }
+        if(isWebServer2Enabled()) {
+          m_webServer2Label.setIcon(m_waitingIcon);
+          m_webServer2Label.setText(getWebServer2Label()+WAITING_LABEL);
+        }
         startL2();
       }
       else {
         startWebServers();
       }
     }
+  }
+
+  private boolean isWebServer1Enabled() {
+    return m_webServer1Enabled;
+  }
+
+  private void setWebServer1Enabled(boolean enabled) {
+    getPreferences().putBoolean(WEBSERVER1_ENABLED_PREF_KEY, m_webServer1Enabled = enabled);
+    storePreferences();
+ 
+    m_startButton.setEnabled(enabled || isWebServer2Enabled() || isDsoEnabled());
+    m_stopButton.setEnabled(enabled || isWebServer2Enabled() || isDsoEnabled());
+  }
+
+  private boolean isWebServer2Enabled() {
+    return m_webServer2Enabled;
+  }
+
+  private void setWebServer2Enabled(boolean enabled) {
+    getPreferences().putBoolean(WEBSERVER2_ENABLED_PREF_KEY, m_webServer2Enabled = enabled);
+    storePreferences();
+
+    m_startButton.setEnabled(enabled || isWebServer1Enabled() || isDsoEnabled());
+    m_stopButton.setEnabled(enabled || isWebServer1Enabled() || isDsoEnabled());
   }
 
   private String getWebServer1Label() {
@@ -1390,9 +1446,14 @@ public class SessionIntegratorFrame extends Frame {
     return getSelectedServerLabel()+"-"+SERVER2_PORT;
   }
 
+  
   private void startWebServers() {
-    startWebServer1();
-    startWebServer2();
+    if(isWebServer1Enabled()) {
+      startWebServer1();
+    }
+    if(isWebServer2Enabled()) {
+      startWebServer2();
+    }
   }
   
   private void stopWebServers() {
@@ -1592,9 +1653,7 @@ public class SessionIntegratorFrame extends Frame {
       m_l2Label.setText(L2_LABEL+READY_LABEL);
       m_l2Status.setReady();
 
-      startWebServer1();
-      startWebServer2();
-
+      startWebServers();
       waitForMBean();
       
       m_l2Monitor = new L2ShutdownMonitor(m_l2ShutdownListener);
@@ -2815,6 +2874,8 @@ public class SessionIntegratorFrame extends Frame {
   }
 
   private void disableControls() {
+    m_webServer1EnabledToggle.setEnabled(false);
+    m_webServer2EnabledToggle.setEnabled(false);
     m_dsoEnabledToggle.setEnabled(false);
     
     m_startButton.setEnabled(false);
@@ -2864,6 +2925,8 @@ public class SessionIntegratorFrame extends Frame {
       }
     }
 
+    m_webServer1EnabledToggle.setEnabled(!anyWaiting && !anyRestarting && !anyReady);
+    m_webServer2EnabledToggle.setEnabled(!anyWaiting && !anyRestarting && !anyReady);
     m_dsoEnabledToggle.setEnabled(!anyWaiting && !anyRestarting && !anyReady);
     m_startButton.setEnabled(!anyWaiting && !anyRestarting);
     m_stopButton.setEnabled(!anyWaiting && !anyRestarting && anyReady);

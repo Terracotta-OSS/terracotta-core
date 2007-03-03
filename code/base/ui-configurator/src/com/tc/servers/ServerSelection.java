@@ -18,7 +18,7 @@ public class ServerSelection {
   private ServerInfo[] m_serverInfos;
   private int          m_selectedServerIndex;
   
-  private static final String[] WEB_SERVERS               = {"tomcat5.5", "tomcat5.0", "wls8.1"};
+  private static final String[] WEB_SERVERS               = {"tomcat6.0", "tomcat5.5", "tomcat5.0", "wls8.1"};
   private static final String   SERVER_SELECTION_PREF_KEY = "SessionIntegrator.ServerSelection";
   private static final String   SELECTED_SERVER_PREF_KEY  = "SelectedServer";
   private static final String   SERVERS_PREF_KEY          = "Servers";

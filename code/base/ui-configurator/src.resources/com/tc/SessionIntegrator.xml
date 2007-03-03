@@ -109,30 +109,48 @@
                   <children>
                     <container>
                       <children>
-                        <label name="Tomcat1Label" font="Trebuchet MS-plain-12" text="Tomcat-9081"/>
-                        <button name="Tomcat1Control" text="" image-uri="/com/tc/admin/icons/run_exc.gif" visible="false" class="com.tc.admin.common.RolloverButton"/>
+	                    <container>
+	                      <children>
+							<checkbox name="Tomcat1EnabledToggle"/>
+	                        <label name="Tomcat1Label" font="Trebuchet MS-plain-12" text="Tomcat-9081"/>
+	                        <button name="Tomcat1Control" text="" image-uri="/com/tc/admin/icons/run_exc.gif" visible="false" class="com.tc.admin.common.RolloverButton"/>
+	                      </children>
+	                      <connections>
+	                        <item left="-1,left:n" top="-1,top:ns" right="1,left:n" bottom="-1,bottom:ns" width="n" height="n"/>
+	                        <item left="0,right:n" top="-1,top:ns" right="2,left:n" bottom="-1,bottom:ns" width="n" height="n"/>
+	                        <item left="1,right:n" top="-1,top:ns" right="-1,right:ns" bottom="-1,bottom:ns" width="n" height="n"/>
+	                      </connections>
+	                    </container>
                         <scrollpane>
                           <textpane name="Tomcat1OutView" class="com.tc.ProcessOutputView" font="monospaced-plain-11" editable="false"/>
                         </scrollpane>
                       </children>
                       <connections>
-                        <item left="-1,left:n" top="-1,top:ns" right="1,left:n" bottom="2,top:ns" width="n" height="n"/>
-                        <item left="0,right:n" top="-1,top:n" right="-1,right:ns" bottom="2,top:n" width="n" height="n"/>
-                        <item left="-1,left:n" top="1,bottom:n" right="-1,right:n" bottom="-1,bottom:n" width="s" height="s"/>
+                        <item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="1,top:0" width="ns" height="n"/>
+                        <item left="-1,left:n" top="0,bottom:0" right="-1,right:n" bottom="-1,bottom:0" width="s" height="s"/>
                       </connections>
                     </container>
                     <container>
                       <children>
-                        <label name="Tomcat2Label" font="Trebuchet MS-plain-12" text="Tomcat-9082"/>
-                        <button name="Tomcat2Control" text="" image-uri="/com/tc/admin/icons/run_exc.gif" visible="false" class="com.tc.admin.common.RolloverButton"/>
+	                    <container>
+	                      <children>
+							<checkbox name="Tomcat2EnabledToggle"/>
+	                        <label name="Tomcat2Label" font="Trebuchet MS-plain-12" text="Tomcat-9082"/>
+	                        <button name="Tomcat2Control" text="" image-uri="/com/tc/admin/icons/run_exc.gif" visible="false" class="com.tc.admin.common.RolloverButton"/>
+	                      </children>
+	                      <connections>
+	                        <item left="-1,left:n" top="-1,top:ns" right="1,left:n" bottom="-1,bottom:ns" width="n" height="n"/>
+	                        <item left="0,right:n" top="-1,top:ns" right="2,left:n" bottom="-1,bottom:ns" width="n" height="n"/>
+	                        <item left="1,right:n" top="-1,top:ns" right="-1,right:ns" bottom="-1,bottom:ns" width="n" height="n"/>
+	                      </connections>
+	                    </container>
                         <scrollpane>
                           <textpane name="Tomcat2OutView" class="com.tc.ProcessOutputView" font="monospaced-plain-11" editable="false"/>
                         </scrollpane>
                       </children>
                       <connections>
-                        <item left="-1,left:n" top="-1,top:ns" right="1,left:n" bottom="2,top:ns" width="n" height="n"/>
-                        <item left="0,right:n" top="-1,top:n" right="-1,right:ns" bottom="2,top:n" width="n" height="n"/>
-                        <item left="-1,left:n" top="1,bottom:n" right="-1,right:n" bottom="-1,bottom:n" width="s" height="s"/>
+                        <item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="1,top:0" width="ns" height="n"/>
+                        <item left="-1,left:n" top="0,bottom:0" right="-1,right:n" bottom="-1,bottom:0" width="s" height="s"/>
                       </connections>
                     </container>
                     <container>
