@@ -137,9 +137,7 @@ class Environment
       type += @osx_version
     end
     
-    # Grab the Windows version by looking at the Cygwin version.
-    #
-    # FIXME: This should include service pack, too (e.g., win2k3-sp2).
+    # Grab the Windows version by System.getProperty
     if type =~ /Windows/i
       os_name = JavaSystem.getProperty('os.name');
       sun_os_patch_level = JavaSystem.getProperty('sun.os.patch.level');
