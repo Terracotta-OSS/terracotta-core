@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.util.EventListener;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.management.AttributeChangeNotification;
 import javax.management.Notification;
@@ -40,6 +42,10 @@ public class ServerConnectionManager implements NotificationListener {
   private AutoConnectListener     m_autoConnectListener;
 
   private static final int        CONNECT_MONITOR_PERIOD = 1000;
+
+  static {
+    Logger.getLogger("javax.management.remote.rmi").setLevel(Level.OFF);
+  }
 
   public ServerConnectionManager(String host, int port, boolean autoConnect, ConnectionListener listener) {
     this(new L2Info(host, host, port), autoConnect, listener);

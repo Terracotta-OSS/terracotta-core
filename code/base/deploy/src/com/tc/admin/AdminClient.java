@@ -32,6 +32,7 @@ public class AdminClient extends ApplicationManager {
     Logger.getLogger("javax.management.remote.misc").setLevel(Level.OFF);
     Logger.getLogger("com.sun.jmx.remote.opt.util").setLevel(Level.OFF);
     Logger.getLogger("com.sun.jmx.remote.opt.util").setLevel(Level.OFF);
+    Logger.getLogger("javax.management.remote.rmi").setLevel(Level.OFF);
   }
   
   protected AdminClient() {
