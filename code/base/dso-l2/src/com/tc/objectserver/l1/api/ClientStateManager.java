@@ -36,12 +36,14 @@ public interface ClientStateManager extends PrettyPrintable {
    */
   public void removeReferences(ChannelID clientID, Set removed);
 
+  public boolean hasReference(ChannelID clientID, ObjectID objectID);
+
   /**
    * Prunes the changes list down to include only changes for objects the given client has.
    * @param objectIDs TODO
    */
   public List createPrunedChangesAndAddObjectIDTo(Collection changes, BackReferences references, ChannelID clientID, Set objectIDs);
-
+  
   public void addAllReferencedIdsTo(Set rescueIds);
 
   public Collection getAllClientIDs();

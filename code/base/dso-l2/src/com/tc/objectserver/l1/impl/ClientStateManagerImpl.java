@@ -91,6 +91,11 @@ public class ClientStateManagerImpl implements ClientStateManager {
     c.removeReferences(removed);
   }
 
+  public boolean hasReference(ChannelID clientID, ObjectID objectID) {
+    ClientStateImpl c = getOrCreateClientState(clientID);
+    return c.containsReference(objectID);
+  }
+
   public synchronized void addAllReferencedIdsTo(Set ids) {
     assertStarted();
     for (Iterator i = clientStates.values().iterator(); i.hasNext();) {
@@ -252,5 +257,6 @@ public class ClientStateManagerImpl implements ClientStateManager {
       return clientID;
     }
   }
+
 
 }

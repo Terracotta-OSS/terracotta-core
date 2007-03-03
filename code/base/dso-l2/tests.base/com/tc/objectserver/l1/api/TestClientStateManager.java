@@ -49,6 +49,12 @@ public class TestClientStateManager implements ClientStateManager {
     return Collections.EMPTY_LIST;
   }
 
+
+  public boolean hasReference(ChannelID clientID, ObjectID objectID) {
+    // to be consistent with createPrunedChangesAndAddObjectIDTo, return false
+    return false;
+  }
+
   public void addAllReferencedIdsTo(Set rescueIds) {
     throw new ImplementMe();
 
