@@ -164,7 +164,6 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay, Wind
 
 	public void handleDisconnectedUser(final String nodeId) {
 		final String username = chatManager.removeUser(nodeId);
-		System.err.println("removing: " + username);
 		listModel.removeElement(username);
 	}
 
