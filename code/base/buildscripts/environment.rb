@@ -147,7 +147,7 @@ class Environment
           @windows_version = case os_name 
                               when /Windows 2003/i: "win2k3"
                               when /Windows XP/i:   "winxp"
-                              else                  os_name.gsub(/ /, '')
+                              else                  os_name.gsub(/ /, '_')
                              end
           unless sun_os_patch_level == "unknown"
             patch = ''
