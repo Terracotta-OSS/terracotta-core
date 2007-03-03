@@ -28,6 +28,7 @@ import com.tc.objectserver.tx.NoSuchBatchException;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManager;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -72,7 +73,9 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
         prunedChanges = clientStateManager.createPrunedChangesAndAddObjectIDTo(bcc.getChanges(), bcc.getIncludeIDs(),
                                                                                clientID, lookupObjectIDs);
       }
-      final boolean includeDmi = !clientID.equals(committerID) && bcc.getDmiDescriptors().length > 0;
+
+      DmiDescriptor[] prunedDmis = pruneDmiDescriptors(bcc.getDmiDescriptors(), clientID, clientStateManager);
+      final boolean includeDmi = !clientID.equals(committerID) && prunedDmis.length > 0;
       if (!prunedChanges.isEmpty() || !lookupObjectIDs.isEmpty() || !notifiedWaiters.isEmpty() || !newRoots.isEmpty()
           || includeDmi) {
         transactionManager.addWaitingForAcknowledgement(committerID, txnID, clientID);
@@ -84,7 +87,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
                                                                             lookupObjectIDs, -1,
                                                                             this.respondObjectRequestSink));
         }
-        final DmiDescriptor[] dmi = (includeDmi) ? bcc.getDmiDescriptors() : DmiDescriptor.EMPTY_ARRAY;
+        final DmiDescriptor[] dmi = (includeDmi) ? prunedDmis : DmiDescriptor.EMPTY_ARRAY;
         BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client
             .createMessage(TCMessageType.BROADCAST_TRANSACTION_MESSAGE);
         responseMessage.initialize(prunedChanges, lookupObjectIDs, bcc.getSerializer(), bcc.getLockIDs(),
@@ -110,6 +113,18 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
     } catch (NoSuchBatchException e) {
       throw new EventHandlerException(e);
     }
+  }
+
+  private static DmiDescriptor[] pruneDmiDescriptors(DmiDescriptor[] dmiDescriptors, ChannelID clientID,
+                                                     ClientStateManager clientStateManager) {
+    List list = new ArrayList();
+    for (int i = 0; i < dmiDescriptors.length; i++) {
+      DmiDescriptor dd = dmiDescriptors[i];
+      if (clientStateManager.hasReference(clientID, dd.getReceiverId())) list.add(dd);
+    }
+    DmiDescriptor[] rv = new DmiDescriptor[list.size()];
+    list.toArray(rv);
+    return rv;
   }
 
   private synchronized long getNextChangeIDFor(ChannelID id) {
