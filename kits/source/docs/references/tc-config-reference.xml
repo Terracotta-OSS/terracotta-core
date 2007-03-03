@@ -257,7 +257,6 @@
            
         <instrumentation-logging>
           <class>false</class>
-          <hierarchy>true</hierarchy>
           <locks>false</locks>
           <transient-root>true</transient-root>
           <roots>false</roots>
@@ -270,9 +269,8 @@
            kind of output. -->
            
         <runtime-logging>
+          <non-portable-dump>true</non-portable-dump>
           <lock-debug>false</lock-debug>
-          <partial-instrumentation>true</partial-instrumentation>
-          <non-portable-warning>true</non-portable-warning>
           <wait-notify-debug>false</wait-notify-debug>
           <distributed-method-debug>false</distributed-method-debug>
           <new-object-debug>false</new-object-debug>
@@ -284,7 +282,6 @@
            controls a different kind of output. -->
 
         <runtime-output-options>
-          <find-needed-includes>true</find-needed-includes>
           <auto-lock-details>false</auto-lock-details>
           <caller>false</caller>
           <full-stack>false</full-stack>
