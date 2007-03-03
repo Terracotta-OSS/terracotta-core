@@ -63,7 +63,7 @@ public class DmiManagerImpl implements DmiManager {
       final ObjectID receiverId = objMgr.lookupOrCreate(receiver).getObjectID();
       final ObjectID dmiCallId = objMgr.lookupOrCreate(dmc).getObjectID();
       final DmiClassSpec[] classSpecs = getClassSpecs(classProvider, receiver, params);
-      final DmiDescriptor dd = new DmiDescriptor(receiverId, dmiCallId, classSpecs);
+      final DmiDescriptor dd = new DmiDescriptor(receiverId, dmiCallId, classSpecs, true);
       objMgr.getTransactionManager().addDmiDescriptor(dd);
       return true;
     } finally {

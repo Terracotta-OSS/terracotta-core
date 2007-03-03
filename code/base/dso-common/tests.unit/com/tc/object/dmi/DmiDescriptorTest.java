@@ -16,12 +16,14 @@ import junit.framework.TestCase;
 
 public class DmiDescriptorTest extends TestCase {
 
-  final ObjectID receiverId = new ObjectID(567);
-  final ObjectID dmiCallId  = new ObjectID(789);
+  final ObjectID       receiverId = new ObjectID(567);
+  final ObjectID       dmiCallId  = new ObjectID(789);
+  final boolean        faultRec   = true;
   final DmiClassSpec[] classSpecs = new DmiClassSpec[] { new DmiClassSpec("loaderDesc", "className") };
+
   public void testSerialization() throws IOException {
 
-    final DmiDescriptor dd1 = new DmiDescriptor(receiverId, dmiCallId, classSpecs);
+    final DmiDescriptor dd1 = new DmiDescriptor(receiverId, dmiCallId, classSpecs, faultRec);
     final DmiDescriptor dd2 = writeAndRead(dd1);
     check(dd1, dd2);
   }
@@ -34,6 +36,7 @@ public class DmiDescriptorTest extends TestCase {
   private void check(DmiDescriptor dd2) {
     assertEquals(receiverId, dd2.getReceiverId());
     assertEquals(dmiCallId, dd2.getDmiCallId());
+    assertEquals(faultRec, dd2.isFaultReceiver());
     assertTrue(Arrays.equals(classSpecs, dd2.getClassSpecs()));
   }
 
