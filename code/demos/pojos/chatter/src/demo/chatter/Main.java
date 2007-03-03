@@ -10,6 +10,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.Random;
 
 import javax.management.MBeanServer;
@@ -32,7 +34,7 @@ import javax.swing.text.Document;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 
-public class Main extends JFrame implements ActionListener, ChatterDisplay {
+public class Main extends JFrame implements ActionListener, ChatterDisplay, WindowListener {
 	private static final String CHATTER_SYSTEM = "SYSTEM";
 
 	private final ChatManager chatManager = new ChatManager();
@@ -57,6 +59,7 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 			throw new RuntimeException(e);
 		}
 
+		addWindowListener(this);
 		setDefaultLookAndFeelDecorated(true);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		final Container content = getContentPane();
@@ -105,7 +108,6 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 			listModel
 					.addElement(new String(((User) currentUsers[i]).getName()));
 		}
-		//this.repaint();
 	}
 
 	public void actionPerformed(final ActionEvent e) {
@@ -124,8 +126,10 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 	}
 
 	void login() {
+		// ****************************************************
 		// Uncomment this section if you want incoming clients
 		// to see the history of messages.
+		// ****************************************************
 		// --- CODE BEGINS HERE ---
 		//final Message[] messages = chatManager.getMessages();
 		//for (int i = 0; i < messages.length; i++) {
@@ -160,6 +164,7 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 
 	public void handleDisconnectedUser(final String nodeId) {
 		final String username = chatManager.removeUser(nodeId);
+		System.err.println("removing: " + username);
 		listModel.removeElement(username);
 	}
 
@@ -288,5 +293,33 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay {
 				new Main();
 			}
 		});
+	}
+
+	public void windowClosing(WindowEvent e) {
+		handleDisconnectedUser(user.getNodeId());
+	}
+
+	public void windowActivated(WindowEvent e) {
+		// TODO Auto-generated method stub
+	}
+
+	public void windowClosed(WindowEvent e) {
+		// TODO Auto-generated method stub
+	}
+
+	public void windowDeactivated(WindowEvent e) {
+		// TODO Auto-generated method stub
+	}
+
+	public void windowDeiconified(WindowEvent e) {
+		// TODO Auto-generated method stub
+	}
+
+	public void windowIconified(WindowEvent e) {
+		// TODO Auto-generated method stub
+	}
+
+	public void windowOpened(WindowEvent e) {
+		// TODO Auto-generated method stub
 	}
 }
