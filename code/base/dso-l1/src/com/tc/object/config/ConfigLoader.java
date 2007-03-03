@@ -93,14 +93,20 @@ public class ConfigLoader {
       if (additionalBootJarClassesList != null) {
         Set userDefinedBootClassNames = new HashSet();
         userDefinedBootClassNames.addAll(Arrays.asList(additionalBootJarClassesList.getIncludeArray()));
-        logger.debug("boot-jar/includes: " + ArrayUtils.toString(userDefinedBootClassNames));
+        logger.debug("Additional boot-jar classes: " + ArrayUtils.toString(userDefinedBootClassNames));
 
         for (Iterator i = userDefinedBootClassNames.iterator(); i.hasNext();) {
           String className = (String) i.next();
-          if (config.getSpec(className) == null) {
-            TransparencyClassSpec spec = new TransparencyClassSpec(className, config);
+          TransparencyClassSpec spec = config.getSpec(className);
+          if (spec == null) {
+            spec = new TransparencyClassSpec(className, config);
             spec.markPreInstrumented();
             config.addUserDefinedBootSpec(spec.getClassName(), spec);
+          } else if (!spec.isPreInstrumented()) {
+            // DEV-458: if the class being added to the boot jar defines locks/distributed methods/etc. it creates a
+            // spec but does not pre-instrument it.  This makes sure that the adapted code gets into the boot jar in
+            // this case.
+            spec.markPreInstrumented();
           }
         }
       }
