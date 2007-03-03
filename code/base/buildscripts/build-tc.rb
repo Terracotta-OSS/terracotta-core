@@ -47,7 +47,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     find_jvms
 
     # Some more objects we need.
-    root_dir = FilePath.new(@basedir.to_s, "..", "..").canonicalize    
+    root_dir = FilePath.new(@basedir.to_s, "..", "..").canonicalize.to_s
     @build_environment = BuildEnvironment.new(platform, config_source, root_dir)
     @static_resources = StaticResources.new(basedir)
     @archive_tag = ArchiveTag.new(@build_environment)
