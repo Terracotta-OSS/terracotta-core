@@ -47,7 +47,7 @@ public class TestDNAWriter implements DNAWriter {
     //
   }
 
-  public void addPhysicalAction(String fieldName, Object value, boolean canBeReferenced) {
+  public void addPhysicalAction(String fieldName, Object value, boolean canBeReference) {
     //
   }
 

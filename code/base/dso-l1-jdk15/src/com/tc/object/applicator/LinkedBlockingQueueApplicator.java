@@ -20,7 +20,6 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAEncoding;
-import com.tc.object.field.TCFieldFactory;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.TCObjectClone;
 import com.tc.util.Assert;
@@ -108,10 +107,6 @@ public class LinkedBlockingQueueApplicator extends BaseApplicator {
     if (value != null && isPortableReference(value.getClass())) {
       addTo.addAnonymousReference(value);
     }
-  }
-
-  private boolean isPortableReference(Class c) {
-    return TCFieldFactory.isReferenceClass(c);
   }
 
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,

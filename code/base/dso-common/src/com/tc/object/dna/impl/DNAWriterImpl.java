@@ -77,9 +77,9 @@ public class DNAWriterImpl implements DNAWriter {
     addPhysicalAction(fieldName, value, value instanceof ObjectID);
   }
 
-  public void addPhysicalAction(String fieldName, Object value, boolean canBeReferenced) {
+  public void addPhysicalAction(String fieldName, Object value, boolean canBeReference) {
     actionCount++;
-    if (canBeReferenced && literalValues.isLiteralInstance(value)) {
+    if (canBeReference && literalValues.isLiteralInstance(value)) {
       // an Object reference is set to a literal instance
       output.writeByte(DNAEncoding.PHYSICAL_ACTION_TYPE_REF_OBJECT);
     } else {

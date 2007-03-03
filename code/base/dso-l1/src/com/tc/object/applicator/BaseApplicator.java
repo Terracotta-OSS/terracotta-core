@@ -47,6 +47,10 @@ public abstract class BaseApplicator implements ChangeApplicator {
     return literals.isLiteralInstance(pojo);
   }
 
+  protected boolean isPortableReference(Class c) {
+    return !literals.isLiteral(c.getName());
+  }
+
   protected Object createParentIfNecessary(Map visited, ClientObjectManager objectManager, Map cloned, Object v) {
     return objectManager.createParentCopyInstanceIfNecessary(visited, cloned, v);
   }

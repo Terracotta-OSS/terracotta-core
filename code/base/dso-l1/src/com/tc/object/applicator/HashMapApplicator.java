@@ -15,7 +15,6 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.impl.DNAEncoding;
-import com.tc.object.field.TCFieldFactory;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.TCObjectClone;
 
@@ -49,10 +48,6 @@ public class HashMapApplicator extends BaseApplicator {
         addTo.addAnonymousReference(o);
       }
     }
-  }
-
-  protected boolean isPortableReference(Class c) {
-    return TCFieldFactory.isReferenceClass(c);
   }
 
   /**

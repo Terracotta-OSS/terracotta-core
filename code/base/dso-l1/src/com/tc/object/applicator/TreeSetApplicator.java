@@ -13,7 +13,6 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAEncoding;
-import com.tc.object.field.TCFieldFactory;
 import com.tc.util.Assert;
 import com.tc.util.FieldUtils;
 
@@ -117,9 +116,4 @@ public class TreeSetApplicator extends HashSetApplicator {
       addTo.addAnonymousReference(value);
     }
   }
-
-  private boolean isPortableReference(Class c) {
-    return TCFieldFactory.isReferenceClass(c);
-  }
-
 }

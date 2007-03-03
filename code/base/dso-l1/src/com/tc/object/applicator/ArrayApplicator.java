@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.applicator;
 
@@ -14,7 +15,6 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAEncoding;
-import com.tc.object.field.TCFieldFactory;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.TCObjectClone;
 import com.tc.util.Assert;
@@ -118,10 +118,6 @@ public class ArrayApplicator extends BaseApplicator {
 
       writer.addEntireArray(toEncode);
     }
-  }
-
-  private boolean isPortableReference(Class c) {
-    return TCFieldFactory.isReferenceClass(c);
   }
 
   public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {

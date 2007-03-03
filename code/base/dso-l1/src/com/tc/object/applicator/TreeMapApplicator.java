@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.applicator;
 
@@ -15,7 +16,6 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAEncoding;
-import com.tc.object.field.TCFieldFactory;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.TCObjectClone;
 import com.tc.util.Assert;
@@ -79,7 +79,7 @@ public class TreeMapApplicator extends BaseApplicator {
     // deal with comparator
     Comparator comparatorOrig = sourceMap.comparator();
     Comparator copyValue = (Comparator) createCopyIfNecessary(objectManager, visited, cloned, comparatorOrig);
-    //FIXME::TODO:: check if this is OK.
+    // FIXME::TODO:: check if this is OK.
     setComparator(destMap, copyValue);
 
     destManaged.__tc_managed(new TCObjectClone(sourceManageable.__tc_managed(), txManager));
@@ -106,10 +106,6 @@ public class TreeMapApplicator extends BaseApplicator {
     if (value != null && isPortableReference(value.getClass())) {
       addTo.addAnonymousReference(value);
     }
-  }
-
-  private boolean isPortableReference(Class c) {
-    return TCFieldFactory.isReferenceClass(c);
   }
 
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,

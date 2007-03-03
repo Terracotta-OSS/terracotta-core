@@ -154,8 +154,8 @@ public class ManagedObjectStateSerialization15Test extends TestCase {
       //
     }
 
-    public void addPhysicalAction(String fieldName, Object value, boolean canBeReferenced) {
-      physicalActions.add(new PhysicalAction(fieldName, value, canBeReferenced));
+    public void addPhysicalAction(String fieldName, Object value, boolean canBeReference) {
+      physicalActions.add(new PhysicalAction(fieldName, value, canBeReference));
     }
 
     public int getActionCount() {

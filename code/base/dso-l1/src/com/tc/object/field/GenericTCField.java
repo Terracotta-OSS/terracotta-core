@@ -1,8 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.field;
 
+import com.tc.object.LiteralValues;
 import com.tc.object.TCClass;
 import com.tc.util.Assert;
 
@@ -13,12 +15,15 @@ import java.lang.reflect.Modifier;
  * @author orion
  */
 public class GenericTCField implements TCField {
-  private final TCClass tcClass;
-  private final boolean isPortable;
-  private final String  fieldName;
-  private final boolean isFinal;
-  private final boolean isArray;
-  private final boolean canBeReference;
+
+  private static final LiteralValues literalValues = new LiteralValues();
+
+  private final TCClass              tcClass;
+  private final boolean              isPortable;
+  private final String               fieldName;
+  private final boolean              isFinal;
+  private final boolean              isArray;
+  private final boolean              canBeReference;
 
   protected GenericTCField(TCClass tcClass, Field field, boolean portable) {
     Assert.eval(tcClass != null);
@@ -32,7 +37,18 @@ public class GenericTCField implements TCField {
 
     this.isFinal = Modifier.isFinal(field.getModifiers());
     this.isArray = field.getType().isArray();
-    this.canBeReference = TCFieldFactory.isReferenceField(field);
+    this.canBeReference = isReferenceField(field);
+  }
+
+  private static boolean isReferenceField(Field field) {
+    if (Modifier.isStatic(field.getModifiers())) return false;
+    Class type = field.getType();
+
+    if (literalValues.isLiteral(type.getName())) {
+      return !type.isPrimitive();
+    }
+
+    return true;
   }
 
   public TCClass getDeclaringTCClass() {
@@ -58,7 +74,7 @@ public class GenericTCField implements TCField {
   public boolean canBeReference() {
     return this.canBeReference;
   }
-  
+
   public String toString() {
     return getClass().getName() + "(" + getName() + ")";
   }

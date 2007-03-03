@@ -15,7 +15,7 @@ public interface DNAWriter {
 
   void addPhysicalAction(String fieldName, Object value);
 
-  void addPhysicalAction(String fieldName, Object value, boolean canBeReferenced);
+  void addPhysicalAction(String fieldName, Object value, boolean canBeReference);
 
   void addArrayElementAction(int index, Object value);
 

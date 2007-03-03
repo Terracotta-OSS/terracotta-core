@@ -143,8 +143,8 @@ public class FileSharingTestApp extends AbstractTransparentApp {
       //
     }
 
-    public void addPhysicalAction(String fieldName, Object value, boolean canBeReferenced) {
-      dna.add(new PhysicalAction(fieldName, value, canBeReferenced));
+    public void addPhysicalAction(String fieldName, Object value, boolean canBeReference) {
+      dna.add(new PhysicalAction(fieldName, value, canBeReference));
     }
 
     public List getDNA() {
