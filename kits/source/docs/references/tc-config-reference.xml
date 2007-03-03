@@ -216,10 +216,49 @@
         substitutions (like '%h' for host), or a general one
         (%(myprop) to use the value of Java system property 'myprop'), for
         these values; expansions are carried out in each client's JVM
-        independently.
+        independently.  Parameter expansion is not done for values inside the
+        <modules> element.
   -->
   <clients>
-  
+
+    <!--
+        This section lists any modules (currently pre-defined configurations)
+        for products you will be using.  These do not include the products themselves
+        (you must provide that) but rather configuration information for Terracotta
+        that describes what should be clustered.  Please check the 'modules'
+        directory in the Terracotta installation directory for a list of
+        supplied modules.
+
+        The <modules> section is optional.
+    -->
+    <modules>
+
+      <!--
+        The 'modules' directory in the Terracotta installation directory is implied
+        as the first reposository, however if you have other places to look for modules
+        you can optionally specify as many of them as you wish here; they can be any
+        valid URL.  Repositories are searched in the order defined here (after the
+        implicit repository) for modules by appending
+        "/<module-name>-<module-version>.jar" to each URL.  The first match succeeds.
+
+        The <repository> element(s) is optional.
+      -->
+      <repository>file:///my/modules/directory</repository>
+      <repository>http:///my/modules/webserver</repository>
+
+      <!--
+        If you choose to use a module, define it here.  Distributed modules have the
+        file name "name-version.jar" where "name" and "version" are the <module>
+        element attributes.  You may define 0 or more modules to be used, they are
+        loaded in the order defined here.
+
+        The <module> element(s) is optional.
+      -->
+      <module name="clustered-apache-struts" version="1.1"/>
+      <module name="clustered-commons-collections" version="3.1"/>
+
+    </modules>
+
     <!-- Where should the client write its log files?
     
        This value undergoes parameter substitution before being used;
