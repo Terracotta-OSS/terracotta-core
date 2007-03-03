@@ -96,7 +96,7 @@ class TerracottaBuilder
         option_parser.on('--no-ivy') do @no_ivy = true end
         option_parser.on('--no-compile') do @no_compile = true end
         @start_time = Time.now
-        @basedir = FilePath.new("").canonicalize
+        @basedir = FilePath.new(File.dirname(File.expand_path(__FILE__)), "..").canonicalize
         Registry[:basedir] = @basedir
         puts("Building with base directory: '#@basedir'.")
         puts
