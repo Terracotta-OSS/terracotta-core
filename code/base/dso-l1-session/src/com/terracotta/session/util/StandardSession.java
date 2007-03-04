@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session.util;
 
@@ -21,7 +22,8 @@ public class StandardSession implements Session, SessionSupport {
   private final LifecycleEventMgr eventMgr;
   private final ContextMgr        contextMgr;
 
-  private boolean                 isValid = true;
+  private boolean                 isValid      = true;
+  private boolean                 invalidating = false;
 
   public StandardSession(SessionId id, SessionData data, LifecycleEventMgr mgr, ContextMgr contextMgr) {
     Assert.pre(id != null);
@@ -86,13 +88,19 @@ public class StandardSession implements Session, SessionSupport {
   public void invalidate() {
     checkIfValid();
     synchronized (data) {
-      this.setInvalid();
+      checkIfInvalidating();
+      invalidating = true;
+
       String names[] = data.getAttributeNames();
       for (int i = 0; i < names.length; i++)
         unbindAttribute(names[i]);
       eventMgr.fireSessionDestroyedEvent(this);
-
+      this.setInvalid();
     }
+  }
+
+  private void checkIfInvalidating() {
+    if (invalidating) { throw new IllegalStateException("already invalidating sesssion"); }
   }
 
   public boolean isNew() {
