@@ -21,7 +21,7 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 
 public final class IBatisTerracottaConfigurator extends TerracottaConfiguratorModule {
-  protected final void addInstrumentation(final StandardDSOClientConfigHelper configHelper) {
+  protected final void addInstrumentation(final BundleContext context, final StandardDSOClientConfigHelper configHelper) {
     configHelper.addAutolock("* java.util.Collections$SynchronizedList.*(..)", ConfigLockLevel.WRITE);
     
     TransparencyClassSpec spec = configHelper.getOrCreateSpec("com.ibatis.sqlmap.engine.mapping.result.loader.EnhancedLazyResultLoader$EnhancedLazyResultLoaderImpl");

@@ -167,7 +167,7 @@ public class ModulesLoader {
     }
   }
 
-  private static InputStream getJarResource(final URL location, final String resource) throws IOException {
+  public static InputStream getJarResource(final URL location, final String resource) throws IOException {
     final JarInputStream jis = new JarInputStream(location.openStream());
     for (JarEntry entry = jis.getNextJarEntry(); entry != null; entry = jis.getNextJarEntry()) {
       if (entry.getName().equals(resource)) { return jis; }

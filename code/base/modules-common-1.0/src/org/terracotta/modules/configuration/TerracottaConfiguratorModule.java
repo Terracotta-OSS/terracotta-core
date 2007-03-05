@@ -17,7 +17,7 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
     if (configHelperRef != null) {
       final StandardDSOClientConfigHelper configHelper = (StandardDSOClientConfigHelper) context
           .getService(configHelperRef);
-      addInstrumentation(configHelper);
+      addInstrumentation(context, configHelper);
       context.ungetService(configHelperRef);
     } else {
       throw new BundleException("Expected the " + StandardDSOClientConfigHelper.class.getName()
@@ -30,7 +30,7 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
     // Ignore this, we don't need to stop anything
   }
 
-  protected void addInstrumentation(final StandardDSOClientConfigHelper configHelper) {
+  protected void addInstrumentation(final BundleContext context, final StandardDSOClientConfigHelper configHelper) {
     // default empty body
   }
   

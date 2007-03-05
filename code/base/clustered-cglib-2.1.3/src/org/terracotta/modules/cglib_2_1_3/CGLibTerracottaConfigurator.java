@@ -17,15 +17,17 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 
 public final class CGLibTerracottaConfigurator extends TerracottaConfiguratorModule {
-  protected final void addInstrumentation(final StandardDSOClientConfigHelper configHelper) {
-    configHelper.addCustomAdapter("net.sf.cglib.proxy.Enhancer", new CGLibProxyEnhancerAdapter());
+  protected final void addInstrumentation(final BundleContext context, final StandardDSOClientConfigHelper configHelper) {
+    configHelper.addCustomAdapter("net.sf.cglib.proxy.Enhancer", new CGLibProxyEnhancerAdapter(context.getBundle()));
   }
-  
+
   protected final void registerModuleSpec(final BundleContext context) {
     final Dictionary serviceProps = new Hashtable();
     serviceProps.put(Constants.SERVICE_VENDOR, "Terracotta, Inc.");
     serviceProps.put(Constants.SERVICE_DESCRIPTION, "CGLIB Plugin Spec");
-    context.registerService(ModuleSpec.class.getName(), new CGLibPluginSpec(new CGLibChangeApplicatorSpec(getClass().getClassLoader())), serviceProps);
+    context.registerService(ModuleSpec.class.getName(), new CGLibPluginSpec(new CGLibChangeApplicatorSpec(getClass()
+        .getClassLoader())), serviceProps);
   }
+
 
 }
