@@ -27,7 +27,7 @@ class SvnUpdate
   end
 
   def log(msg)
-    File.open(File.join(Dir.tmpdir, "svnupdate.log")) do |f|
+    File.open(File.join(Dir.tmpdir, "svnupdate.log"), "w+") do |f|
       f.puts("#{Time.now}: #{msg}")
     end
   end
