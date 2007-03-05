@@ -113,7 +113,7 @@
 					</left>
 					<right>
 						<tabbedpane class="com.tc.admin.common.XTabbedPane" name="BottomPane" selected-index="0">
-							<tab bg="0xff0000" fg="0xff0000" title="Console">
+							<tab title="Console">
 								<scrollpane>
 									<textarea class="com.tc.admin.common.XTextArea" editable="false" font="helvetica-plain-12" 
 										name="LogArea"/>
