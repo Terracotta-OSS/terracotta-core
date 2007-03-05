@@ -70,6 +70,8 @@ public class ClusterMembershipEventTestApp extends ServerCrashingAppBase impleme
     check(1, thisNodeConCnt.get(), "thisNodeConnected");
 
     clearCounters();
+    check(0, nodeConCnt.get(), "nodeConnected");
+    check(0, nodeDisCnt.get(), "nodeDisconnected");
     barrier.barrier();
     System.err.println("### stage 3 [reconnected]: thisNode=" + thisNode + ", threadId="
                        + Thread.currentThread().getName());
