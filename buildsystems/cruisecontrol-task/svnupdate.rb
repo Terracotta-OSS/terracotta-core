@@ -8,6 +8,7 @@ class SvnUpdate
 
   def initialize(monkey_name)
     @monkey_name = monkey_name
+    log(monkey_name)
     # get path to top folder of the repo
     @topdir = File.join(File.expand_path(File.dirname(__FILE__)), "..", "..")
     @topdir = File.join(@topdir, "..") if @topdir =~ /community/
@@ -25,25 +26,35 @@ class SvnUpdate
     clean_up_temp_dir
   end
 
+  def log(msg)
+    File.open(File.join(Dir.tmpdir, "svnupdate.log")) do |f|
+      f.puts("#{Time.now}: #{msg}")
+    end
+  end
+
   def get_current_rev
     YAML::load(`svn info #{@topdir}`)["Last Changed Rev"].to_i
   end
 
   def svn_update_with_error_tolerant(revision)
-    error_msg=''  
+    msg=''  
     3.downto(1) do 
-      error_msg=`svn update #{@topdir} -r #{revision} -q --non-interactive 2>&1`
+      log("svn update #{@topdir} -r #{revision} --non-interactive 2>&1")
+      msg=`svn update #{@topdir} -r #{revision} --non-interactive 2>&1`
+      log(msg)
       return if $? == 0
+      log("sleep 5 min after svn error")
       sleep(5*60)
+      log("svn cleanup #{@topdir}")
       `svn cleanup #{@topdir}`
     end  
-    fail(error_msg)
+    fail(msg)
   end
 
   def get_current_good_rev(file)
     currently_good_rev = 0
     begin
-      File.open(file, "r") do | f |
+      File.open(file, "w+") do | f |
         currently_good_rev = f.gets.to_i    
       end
     rescue
@@ -66,16 +77,17 @@ class SvnUpdate
       current_rev = get_current_rev()
       current_good_rev = get_current_good_rev(@good_rev_file)
       
-      puts "curr: #{current_rev}"
-      puts "good: #{current_good_rev}"
+      log("curr: #{current_rev}")
+      log("good: #{current_good_rev}")
 
-      if @monkey_name == "general-monkey" || @monkey_name == "test-monkey"
+      if @monkey_name == "general-monkey"        
         svn_update_with_error_tolerant("HEAD")
         exit(0)
       elsif current_rev <= current_good_rev
         svn_update_with_error_tolerant(current_good_rev)
         exit(0)
       else # I have a revision that is greater than a good known reivision, so I sleep and wait
+        log("sleep 5 min waiting for good rev")
         sleep(5*60)
       end
     end
