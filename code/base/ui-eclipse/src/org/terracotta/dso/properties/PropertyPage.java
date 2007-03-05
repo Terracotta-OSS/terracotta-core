@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso.properties;
 
@@ -8,118 +9,152 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.awt.SWT_AWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-
-import org.dijon.Button;
-import org.dijon.Container;
-import org.dijon.DictionaryResource;
-import org.dijon.TextField;
-
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Text;
 import org.terracotta.dso.TcPlugin;
-import org.terracotta.dso.editors.RootPanel;
 import org.terracotta.dso.editors.chooser.ProjectFileNavigator;
 
-import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.JRootPane;
+import javax.swing.SwingUtilities;
 
-public class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
-  private Frame                m_frame;
-  private TextField            m_configPathField;
+public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
+  private final Display        m_display;
+  private Text                 m_configPathField;
   private Button               m_configFileButton;
   private ProjectFileNavigator m_fileNavigator;
-  private TextField            m_serverOptionsField;
+  private Text                 m_serverOptionsField;
   private Button               m_resetOptionsButton;
-  
-  private static final String DEFAULT_CONFIG_FILENAME = TcPlugin.DEFAULT_CONFIG_FILENAME;
-  private static final String DEFAULT_SERVER_OPTIONS  = TcPlugin.DEFAULT_SERVER_OPTIONS;
-    
+
+  private static final String  DEFAULT_CONFIG_FILENAME = TcPlugin.DEFAULT_CONFIG_FILENAME;
+  private static final String  DEFAULT_SERVER_OPTIONS  = TcPlugin.DEFAULT_SERVER_OPTIONS;
+
   public PropertyPage() {
     super();
+    m_display = Display.getCurrent();
   }
 
   private void fillControls() {
-    TcPlugin plugin  = TcPlugin.getDefault();
+    TcPlugin plugin = TcPlugin.getDefault();
     IProject project = getProject();
-    
     m_configPathField.setText(plugin.getConfigurationFilePath(project));
     m_serverOptionsField.setText(plugin.getServerOptions(project));
   }
-	
+
   protected Control createContents(Composite parent) {
-    Composite          composite = new Composite(parent, SWT.EMBEDDED);
-    Frame              frame     = SWT_AWT.new_Frame(composite);
-    DictionaryResource topRes    = TcPlugin.getDefault().getResources();
-    JRootPane          rootPane  = new JRootPane();
-    RootPanel          root      = new RootPanel();
-    Container          panel     = (Container)topRes.resolve("PropertyPanel");
+    final Composite topComp = new Composite(parent, SWT.NONE);
+    GridLayout gridLayout = new GridLayout();
+    gridLayout.numColumns = 1;
+    topComp.setLayout(gridLayout);
+    topComp.setLayoutData(new GridData(GridData.FILL_VERTICAL));
 
-    frame.add(root);
-    root.add(rootPane);
-    rootPane.getContentPane().add(panel);
+    GridData gridData = new GridData();
+    gridData.grabExcessHorizontalSpace = true;
+    gridData.horizontalAlignment = GridData.FILL;
 
-    m_configPathField = (TextField)panel.findComponent("ConfigFileField");
-    
-    m_configFileButton = (Button)panel.findComponent("ConfigFileButton");
-    m_configFileButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        if(m_fileNavigator == null) {
-          m_fileNavigator = new ProjectFileNavigator(m_frame, "xml");
+    Group domainConfig = new Group(topComp, SWT.SHADOW_ETCHED_IN);
+    domainConfig.setText("Domain Configuration");
+    gridLayout = new GridLayout();
+    gridLayout.numColumns = 2;
+    domainConfig.setLayout(gridLayout);
+    domainConfig.setLayoutData(gridData);
+
+    m_configPathField = new Text(domainConfig, SWT.SINGLE);
+    m_configPathField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+    m_configFileButton = new Button(domainConfig, SWT.PUSH);
+    m_configFileButton.setText("  Browse...  ");
+    m_configFileButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
+    m_configFileButton.addSelectionListener(new SelectionAdapter() {
+      public void widgetSelected(SelectionEvent e) {
+        if (m_fileNavigator == null) {
+          m_fileNavigator = new ProjectFileNavigator(null, "xml");
           m_fileNavigator.setActionListener(new NavigatorListener());
         }
         m_fileNavigator.init(getProject());
         m_fileNavigator.center();
-        m_fileNavigator.setVisible(true);
+        m_display.asyncExec(new Runnable() {
+          public void run() {
+            m_fileNavigator.setVisible(true);
+            m_fileNavigator.toFront();
+            m_fileNavigator.setAlwaysOnTop(true);
+          }
+        });
       }
     });
-    
-    m_serverOptionsField = (TextField)panel.findComponent("ServerOptionsField");
-    m_resetOptionsButton = (Button)panel.findComponent("ResetOptionsButton");
-    m_resetOptionsButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
+
+    Group serverOptions = new Group(topComp, SWT.SHADOW_ETCHED_IN);
+    serverOptions.setText("Server Options");
+    gridLayout = new GridLayout();
+    gridLayout.numColumns = 2;
+    serverOptions.setLayout(gridLayout);
+    serverOptions.setLayoutData(gridData);
+
+    m_serverOptionsField = new Text(serverOptions, SWT.SINGLE);
+    m_serverOptionsField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+    m_resetOptionsButton = new Button(serverOptions, SWT.PUSH);
+    m_resetOptionsButton.setText("  Reset  ");
+    m_resetOptionsButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
+    m_resetOptionsButton.addSelectionListener(new SelectionAdapter() {
+      public void widgetSelected(SelectionEvent e) {
         m_serverOptionsField.setText(DEFAULT_SERVER_OPTIONS);
       }
     });
-    
-    fillControls();
 
-    return composite;
+    Composite composite = new Composite(topComp, SWT.EMBEDDED);
+    composite.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+    fillControls();
+    return topComp;
   }
 
   class NavigatorListener implements ActionListener {
-    public void actionPerformed(ActionEvent ae) {
-      IResource member = m_fileNavigator.getSelectedMember();
-      
-      if(member != null) {
-        if(member instanceof IFolder) {
-          member = ((IFolder)member).getFile(TcPlugin.DEFAULT_CONFIG_FILENAME);
+    public void actionPerformed(ActionEvent e) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          IResource member = m_fileNavigator.getSelectedMember();
+          if (member != null) {
+            if (member instanceof IFolder) {
+              member = ((IFolder) member).getFile(TcPlugin.DEFAULT_CONFIG_FILENAME);
+            }
+            final IResource finalMember = member;
+            m_display.asyncExec(new Runnable() {
+              public void run() {
+                m_configPathField.setText(finalMember.getProjectRelativePath().toString());
+              }
+            });
+          }
         }
-        m_configPathField.setText(member.getProjectRelativePath().toString());
-      }
+      });
     }
-  }  
-  
+  }
+
   protected void performDefaults() {
     m_configPathField.setText(DEFAULT_CONFIG_FILENAME);
     m_serverOptionsField.setText(DEFAULT_SERVER_OPTIONS);
   }
-	
+
   private IProject getProject() {
-    return ((IJavaProject)getElement()).getProject();
+    return ((IJavaProject) getElement()).getProject();
   }
-  
+
   private void updateProject() {
-    TcPlugin plugin  = TcPlugin.getDefault();
+    TcPlugin plugin = TcPlugin.getDefault();
     IProject project = getProject();
-    
+
     plugin.setConfigurationFilePath(project, m_configPathField.getText());
     plugin.setServerOptions(project, m_serverOptionsField.getText());
   }
-  
+
   public boolean performOk() {
     updateProject();
     return true;
