@@ -165,7 +165,7 @@ modules:
         - deploy
   - ui-eclipse:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - common
         - dso-common
