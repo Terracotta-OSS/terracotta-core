@@ -11,6 +11,7 @@ import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.builder.LockConfigBuilder;
 import com.tc.config.schema.builder.RootConfigBuilder;
 import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
+import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.LockConfigBuilderImpl;
 import com.tc.config.schema.test.RootConfigBuilderImpl;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
@@ -29,6 +30,9 @@ public class ClusterMembershipEventTest extends ServerCrashingTestBase {
   }
 
   protected void createConfig(TerracottaConfigBuilder cb) {
+    // persistent mode
+    cb.getServers().getL2s()[0].setPersistenceMode(L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE);
+
     // locks
     LockConfigBuilder[] locks = new LockConfigBuilder[] {
         new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK, CyclicBarrier.class, LockConfigBuilder.LEVEL_WRITE),

@@ -10,7 +10,6 @@ import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
-import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.util.Assert;
@@ -64,7 +63,6 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
 
       cb.getServers().getL2s()[0].setDSOPort(port);
       cb.getServers().getL2s()[0].setJMXPort(adminPort);
-      cb.getServers().getL2s()[0].setPersistenceMode(L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE);
 
       createConfig(cb);
 
