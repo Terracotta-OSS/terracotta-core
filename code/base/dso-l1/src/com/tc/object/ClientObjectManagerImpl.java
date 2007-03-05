@@ -6,6 +6,7 @@ package com.tc.object;
 
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.exception.TCRuntimeException;
+import com.tc.io.TCByteArrayOutputStream;
 import com.tc.logging.ChannelIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -44,7 +45,6 @@ import com.tc.util.State;
 import com.tc.util.Util;
 import com.tc.util.concurrent.StoppableThread;
 
-import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -807,27 +807,35 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   }
 
   private void dumpObjectHierarchy(Object root) {
+    // the catch is not in the called method so that when/if there is an OOME, the logging might have a chance of
+    // actually working (as opposed to just throwing another OOME)
+    try {
+      dumpObjectHierarchy0(root);
+    } catch (Throwable t) {
+      logger.error("error walking non-portable object instance of type " + root.getClass().getName(), t);
+    }
+  }
+
+  private void dumpObjectHierarchy0(Object root) {
     if (runtimeLogger.nonPortableDump()) {
       // XXX: The hierarchy report is buffered in memory here so that it can logged as a single message
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      // XXX: Alternatively the dump go could be written as individual lines to the log file (which would prepend the
+      // logger formatting) and could become interleaved with outher logger output. The dump could also be written to a
+      // file, which should alleviate the memory issue, but means we need a file to write to
+      TCByteArrayOutputStream baos = new TCByteArrayOutputStream();
       PrintStream ps = new PrintStream(baos);
 
-      try {
-        ps.println("Dumping object graph of non-portable instance of type " + root.getClass().getName());
-        ps.println();
-        ps.println("  (lines that start with " + NonPortableWalkVisitor.MARKER + " are non-portable types)");
-        ps.println();
-        NonPortableWalkVisitor visitor = new NonPortableWalkVisitor(ps, this, this.clientConfiguration);
-        ObjectGraphWalker walker = new ObjectGraphWalker(root, visitor, visitor);
-        walker.walk();
-      } catch (Throwable t) {
-        logger.error("error walking non-portable object instance of type " + root.getClass().getName(), t);
-        return;
-      } finally {
-        ps.flush();
-      }
+      ps.println("Dumping object graph of non-portable instance of type " + root.getClass().getName());
+      ps.println();
+      ps.println("  (lines that start with " + NonPortableWalkVisitor.MARKER + " are non-portable types)");
+      ps.println();
+      NonPortableWalkVisitor visitor = new NonPortableWalkVisitor(ps, this, this.clientConfiguration);
+      ObjectGraphWalker walker = new ObjectGraphWalker(root, visitor, visitor);
+      walker.walk();
 
-      runtimeLogger.logNonPortableDump(new String(baos.toByteArray()));
+      ps.flush();
+
+      runtimeLogger.logNonPortableDump(new String(baos.getInternalArray(), 0, baos.size()));
     }
   }
 

@@ -17,7 +17,7 @@ public final class TCByteArrayOutputStream extends OutputStream {
 
     private byte[] buffer;
 
-    TCByteArrayOutputStream() {
+    public TCByteArrayOutputStream() {
         this(64);
     }
 
