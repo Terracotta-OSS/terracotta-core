@@ -8,7 +8,7 @@ import com.tc.object.dmi.DmiDescriptor;
 
 public interface DmiManager {
 
-  boolean distributedInvoke(Object receiver, String method, Object[] params);
+  boolean distributedInvoke(Object receiver, String method, Object[] params, boolean runOnAllNodes);
 
   void distributedInvokeCommit();
 

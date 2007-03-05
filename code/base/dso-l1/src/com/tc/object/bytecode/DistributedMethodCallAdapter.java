@@ -21,12 +21,15 @@ public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
   private String                signature;
   private InstrumentationLogger instrumentationLogger;
 
-  public DistributedMethodCallAdapter() {
+  private final boolean         runOnAllNodes;
+
+  public DistributedMethodCallAdapter(boolean runOnAllNodes) {
     super();
+    this.runOnAllNodes = runOnAllNodes;
   }
 
   public MethodVisitor adapt(ClassVisitor classVisitor) {
-    final String newMethodName = "__tc_dmi_" + methodName;
+    final String newMethodName = ByteCodeUtil.DMI_METHOD_RENAME_PREFIX + methodName;
     MethodVisitor codeVisitor = classVisitor.visitMethod(access, newMethodName, description, signature, exceptions);
     addDmiMethodWrapper(classVisitor, newMethodName);
     // addDistributedCall(codeVisitor, newMethodName, description);
@@ -91,7 +94,8 @@ public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
     ByteCodeUtil.pushThis(mv);
     mv.visitLdcInsn(name + desc);
     ByteCodeUtil.createParametersToArrayByteCode(mv, Type.getArgumentTypes(desc));
-    managerHelper.callManagerMethod("distributedMethodCall", mv);
+    final String managerMethodName = (runOnAllNodes) ? "distributedMethodCall" : "prunedDistributedMethodCall";
+    managerHelper.callManagerMethod(managerMethodName, mv);
   }
 
   public boolean doesOriginalNeedAdapting() {
@@ -112,4 +116,3 @@ public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
   }
 
 }
-

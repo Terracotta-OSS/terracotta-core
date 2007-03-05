@@ -120,7 +120,9 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
     List list = new ArrayList();
     for (int i = 0; i < dmiDescriptors.length; i++) {
       DmiDescriptor dd = dmiDescriptors[i];
-      if (clientStateManager.hasReference(clientID, dd.getReceiverId())) list.add(dd);
+      if (dd.isFaultReceiver() || clientStateManager.hasReference(clientID, dd.getReceiverId())) {
+        list.add(dd);
+      }
     }
     DmiDescriptor[] rv = new DmiDescriptor[list.size()];
     list.toArray(rv);

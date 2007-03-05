@@ -87,7 +87,7 @@ public final class NullManager implements Manager {
     //
   }
 
-  public final boolean distributedMethodCall(Object receiver, String method, Object[] params) {
+  public final boolean distributedMethodCall(Object receiver, String method, Object[] params, boolean runOnAllNodes) {
     return true;
   }
 

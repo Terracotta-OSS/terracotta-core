@@ -27,6 +27,7 @@ public class ByteCodeUtil implements Opcodes {
   public static final String         TC_FIELD_PREFIX                   = "$__tc_";
   public static final String         TC_METHOD_PREFIX                  = "__tc_";
   public static final String         METHOD_RENAME_PREFIX              = TC_METHOD_PREFIX + "wrapped_";
+  public static final String         DMI_METHOD_RENAME_PREFIX              = TC_METHOD_PREFIX + "dmi_";
 
   public static final String         VALUES_GETTER                     = TC_METHOD_PREFIX + "getallfields";
   public static final String         VALUES_GETTER_DESCRIPTION         = "(Ljava/util/Map;)V";

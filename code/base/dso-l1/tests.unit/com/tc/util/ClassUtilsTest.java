@@ -492,8 +492,8 @@ public class ClassUtilsTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public boolean isDistributedMethodCall(int modifiers, String className, String methodName, String description,
-                                           String[] exceptions) {
+    public DistributedMethodSpec getDmiSpec(int modifiers, String className, String methodName, String description,
+                                            String[] exceptions) {
       throw new ImplementMe();
     }
 

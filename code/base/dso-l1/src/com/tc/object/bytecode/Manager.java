@@ -76,7 +76,7 @@ public interface Manager {
 
   public void logicalInvokeWithTransaction(Object object, Object lockObject, String methodName, Object[] params);
 
-  public boolean distributedMethodCall(Object receiver, String method, Object[] params);
+  public boolean distributedMethodCall(Object receiver, String method, Object[] params, boolean runOnAllNodes);
 
   public void distributedMethodCallCommit();
 

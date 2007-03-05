@@ -139,8 +139,12 @@ public class ManagerUtil {
     getManager().distributedMethodCallCommit();
   }
 
+  public static boolean prunedDistributedMethodCall(Object receiver, String method, Object[] params) {
+    return getManager().distributedMethodCall(receiver, method, params, false);
+  }
+
   public static boolean distributedMethodCall(Object receiver, String method, Object[] params) {
-    return getManager().distributedMethodCall(receiver, method, params);
+    return getManager().distributedMethodCall(receiver, method, params, true);
   }
 
   public static Object lookupRoot(String name) {

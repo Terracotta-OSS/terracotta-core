@@ -1698,15 +1698,15 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     this.distributedMethods.add(dms);
   }
 
-  public boolean isDistributedMethodCall(int modifiers, String className, String methodName, String description,
+  public DistributedMethodSpec getDmiSpec(int modifiers, String className, String methodName, String description,
                                          String[] exceptions) {
-    if (Modifier.isStatic(modifiers) || "<init>".equals(methodName) || "<clinit>".equals(methodName)) { return false; }
+    if (Modifier.isStatic(modifiers) || "<init>".equals(methodName) || "<clinit>".equals(methodName)) { return null; }
     MemberInfo methodInfo = getMemberInfo(modifiers, className, methodName, description, exceptions);
     for (Iterator i = distributedMethods.iterator(); i.hasNext();) {
       DistributedMethodSpec dms = (DistributedMethodSpec) i.next();
-      if (matches(dms.getMethodExpression(), methodInfo)) { return true; }
+      if (matches(dms.getMethodExpression(), methodInfo)) { return dms; }
     }
-    return false;
+    return null;
   }
 
   public void addTransient(String className, String fieldName) {

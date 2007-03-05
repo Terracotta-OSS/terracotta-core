@@ -665,7 +665,7 @@ public class HashMapTCTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public boolean isDistributedMethodCall(int modifiers, String className, String methodName, String description,
+    public DistributedMethodSpec getDmiSpec(int modifiers, String className, String methodName, String description,
                                            String[] exceptions) {
       throw new ImplementMe();
     }

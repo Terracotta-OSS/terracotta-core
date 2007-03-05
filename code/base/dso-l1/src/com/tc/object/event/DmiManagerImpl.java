@@ -44,7 +44,7 @@ public class DmiManagerImpl implements DmiManager {
     this.nesting = new ThreadLocal();
   }
 
-  public boolean distributedInvoke(Object receiver, String method, Object[] params) {
+  public boolean distributedInvoke(Object receiver, String method, Object[] params, boolean runOnAllNodes) {
     if (feedBack.get() != null) { return false; }
     if (nesting.get() != null) { return false; }
     nesting.set(TRUE);
@@ -63,7 +63,7 @@ public class DmiManagerImpl implements DmiManager {
       final ObjectID receiverId = objMgr.lookupOrCreate(receiver).getObjectID();
       final ObjectID dmiCallId = objMgr.lookupOrCreate(dmc).getObjectID();
       final DmiClassSpec[] classSpecs = getClassSpecs(classProvider, receiver, params);
-      final DmiDescriptor dd = new DmiDescriptor(receiverId, dmiCallId, classSpecs, true);
+      final DmiDescriptor dd = new DmiDescriptor(receiverId, dmiCallId, classSpecs, runOnAllNodes);
       objMgr.getTransactionManager().addDmiDescriptor(dd);
       return true;
     } finally {

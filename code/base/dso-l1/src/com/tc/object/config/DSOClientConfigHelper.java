@@ -83,7 +83,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   boolean isLockMethod(int access, String className, String methodName, String description, String[] exceptions);
 
-  boolean isDistributedMethodCall(int modifiers, String className, String methodName, String description,
+  DistributedMethodSpec getDmiSpec(int modifiers, String className, String methodName, String description,
                                   String[] exceptions);
 
   TransparencyClassSpec getSpec(String className);

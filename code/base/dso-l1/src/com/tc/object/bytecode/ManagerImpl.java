@@ -581,12 +581,12 @@ public class ManagerImpl implements Manager {
     return this.objectManager.lookupObject(id);
   }
 
-  public boolean distributedMethodCall(Object receiver, String method, Object[] params) {
+  public boolean distributedMethodCall(Object receiver, String method, Object[] params, boolean runOnAllNodes) {
     TCObject tco = lookupExistingOrNull(receiver);
 
     try {
       if (tco != null) {
-        return methodCallManager.distributedInvoke(receiver, method, params);
+        return methodCallManager.distributedInvoke(receiver, method, params, runOnAllNodes);
       } else {
         return false;
       }
