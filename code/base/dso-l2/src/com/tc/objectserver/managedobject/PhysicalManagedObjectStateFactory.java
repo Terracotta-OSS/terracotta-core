@@ -105,7 +105,7 @@ public class PhysicalManagedObjectStateFactory {
   public PhysicalManagedObjectState create(long strIdx, ObjectID parentID, String className, String loaderDesc,
                                            DNACursor cursor) {
     ClassSpec cs = new ClassSpec(className, loaderDesc, strIdx);
-    Object classIdentifier = cs.getClassIdentifier();
+    String classIdentifier = cs.getClassIdentifier();
     String generatedClassName = (String) knownClasses.get(classIdentifier);
     if (generatedClassName == null) {
       Object lock = cs.getLock();

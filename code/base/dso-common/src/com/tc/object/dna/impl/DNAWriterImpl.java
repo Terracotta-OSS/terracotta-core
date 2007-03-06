@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.dna.impl;
 
@@ -21,11 +22,15 @@ public class DNAWriterImpl implements DNAWriter {
   private final Mark                     arrayLengthMark;
   private final ObjectStringSerializer   serializer;
   private final DNAEncoding              encoding;
+  private final String                   className;
+  private final ObjectID                 id;
   private int                            actionCount   = 0;
 
   public DNAWriterImpl(TCByteBufferOutputStream output, ObjectID id, String className,
                        ObjectStringSerializer serializer, DNAEncoding encoding, String loaderDesc, boolean isDelta) {
     this.output = output;
+    this.id = id;
+    this.className = className;
     this.encoding = encoding;
 
     this.headerMark = output.mark();
@@ -77,9 +82,14 @@ public class DNAWriterImpl implements DNAWriter {
     addPhysicalAction(fieldName, value, value instanceof ObjectID);
   }
 
-  public void addPhysicalAction(String fieldName, Object value, boolean canBeReference) {
+  public void addPhysicalAction(String fieldName, Object value, boolean canBeReferenced) {
+    if (value == null) {
+      //
+      throw new AssertionError("null value for field " + fieldName + " in type " + className + " " + id);
+    }
+
     actionCount++;
-    if (canBeReference && literalValues.isLiteralInstance(value)) {
+    if (canBeReferenced && literalValues.isLiteralInstance(value)) {
       // an Object reference is set to a literal instance
       output.writeByte(DNAEncoding.PHYSICAL_ACTION_TYPE_REF_OBJECT);
     } else {
