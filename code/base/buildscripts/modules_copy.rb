@@ -43,10 +43,9 @@ class BuildSubtree
   # Copies libraries listed as dependencies in this subtree's Ivy XML file into
   # the given destination directory.
   def copy_dependencies_libraries(destdir, ant)
-    require 'fileutils'
     libs = dependencies_libraries(:runtime).map { |lib| lib.to_s }
     libs.each do |lib|
-      FileUtils.copy(lib, destdir.to_s)
+      ant.copy(:file => lib, :todir => destdir.to_s)
     end
   end
 end
