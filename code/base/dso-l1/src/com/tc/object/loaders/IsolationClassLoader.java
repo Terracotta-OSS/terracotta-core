@@ -68,14 +68,21 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
   }
 
   public Class loadClass(String name) throws ClassNotFoundException {
-    // throw exception if one is registered
-    final ClassNotFoundException t = (ClassNotFoundException) onLoadErrors.get(name);
-    if (t != null) throw new ClassNotFoundException(t.getMessage());
+    throwIfNeeded(name);
 
     if (name.startsWith("com.tc.")) {
       return SYSTEM_LOADER.loadClass(name);
     } else {
       return super.loadClass(name);
+    }
+  }
+
+  private void throwIfNeeded(String name) throws ClassNotFoundException {
+    // throw exception if one is registered
+    final String t = (String)onLoadErrors.get(name);
+    if (t != null) {
+      ClassNotFoundException rv = new ClassNotFoundException(t);
+      throw rv;
     }
   }
 
@@ -88,9 +95,14 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
   }
 
   /**
-   * set up an instance of ClassNotFoundException t to be thrown when loadClass(className) method is called.
+   * a ClassNotFoundException or NoClassDefFoundError with errorMessage will to be thrown referencing class className
    */
-  public void throwOnLoad(String className, ClassNotFoundException t) {
-    onLoadErrors.put(className, t);
+  public void throwOnLoad(String className, String errorMessage) {
+    onLoadErrors.put(className, errorMessage);
+  }
+
+  protected Class findClass(String name) throws ClassNotFoundException {
+    throwIfNeeded(name);
+    return super.findClass(name);
   }
 }
