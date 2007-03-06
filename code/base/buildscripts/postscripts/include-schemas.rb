@@ -22,7 +22,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     docflex_lib       = FilePath.new(docflex, "lib")
     docflex_template  = FilePath.new(docflex, "templates", "XSDDocFrames.tpl")
     docflex_classpath = "#{docflex_lib.to_s}/xercesImpl.jar:#{docflex_lib.to_s}/xml-apis.jar:#{docflex_lib.to_s}/docflex-xml-kit.jar"
-    srcfiles          = FilePath.new(srcdir, "terracotta-2.2.xsd")
+    srcfiles          = FilePath.new(srcdir, "terracotta-2.3.xsd")
 
     ant.java(
       :classname   => 'com.docflex.xml.Generator',
