@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.loaders;
 
@@ -14,6 +15,7 @@ import com.tc.object.tx.ClientTransactionManager;
 
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.HashMap;
 
 /**
  * DSO Class loader for internal testing. The main purpose of this loader is to force test classes to be be defined
@@ -24,6 +26,7 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
 
   private final Manager               manager;
   private final DSOClientConfigHelper config;
+  private final HashMap               onLoadErrors;
 
   public IsolationClassLoader(DSOClientConfigHelper config, PreparedComponentsFromL2Connection connectionComponents) {
     this(config, true, null, null, connectionComponents);
@@ -40,7 +43,7 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
     super(getSystemURLS(), null);
     this.config = config;
     this.manager = createManager(startClient, objectManager, txManager, config, connectionComponents);
-
+    this.onLoadErrors = new HashMap();
   }
 
   public void init() {
@@ -65,6 +68,10 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
   }
 
   public Class loadClass(String name) throws ClassNotFoundException {
+    // throw exception if one is registered
+    final ClassNotFoundException t = (ClassNotFoundException) onLoadErrors.get(name);
+    if (t != null) throw new ClassNotFoundException(t.getMessage());
+
     if (name.startsWith("com.tc.")) {
       return SYSTEM_LOADER.loadClass(name);
     } else {
@@ -78,5 +85,12 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
 
   public void __tc_setClassLoaderName(String name) {
     throw new AssertionError();
+  }
+
+  /**
+   * set up an instance of ClassNotFoundException t to be thrown when loadClass(className) method is called.
+   */
+  public void throwOnLoad(String className, ClassNotFoundException t) {
+    onLoadErrors.put(className, t);
   }
 }
