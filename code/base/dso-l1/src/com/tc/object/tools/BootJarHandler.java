@@ -31,7 +31,7 @@ public class BootJarHandler {
     outputFileAbsPath = this.outputFile.getAbsolutePath();
     if (this.write_out_temp_file) {
       try {
-        tempOutputFile = File.createTempFile("tc-bootjar", null, getTempDir());
+        tempOutputFile = File.createTempFile("tc-bootjar", null);
         tempOutputFileAbsPath = tempOutputFile.getAbsolutePath();
         tempOutputFile.deleteOnExit();
       } catch (IOException e) {
@@ -98,7 +98,7 @@ public class BootJarHandler {
         manifest = new Manifest();
       }
 
-      File tempFile = File.createTempFile("tc-bootjar", null, getTempDir());
+      File tempFile = File.createTempFile("tc-bootjar", null);
       tempFile.deleteOnExit();
 
       JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(tempFile.getAbsolutePath()), manifest);
@@ -128,13 +128,13 @@ public class BootJarHandler {
     }
   }
 
-  private File getTempDir() {
-    String tmpDir = System.getProperty("java.io.tmpDir");
-    if (tmpDir == null) {
-      tmpDir = outputFile.getParent();
-    }
-    return new File(tmpDir);
-  }
+//  private File getTempDir() {
+//    String tmpDir = System.getProperty("java.io.tmpdir");
+//    if (tmpDir == null) {
+//      tmpDir = outputFile.getParent();
+//    }
+//    return new File(tmpDir);
+//  }
 
   private void announce(String msg) {
     System.out.println(msg);
