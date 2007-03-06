@@ -79,16 +79,21 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
   }
 
   public String valueAdornment(MemberValue value) {
-    if (isTransient(value)) {
-      //
-      return " (transient)";
-    }
+    if (isTransient(value)) { return " (transient)"; }
+
+    Object o = value.getValueObject();
+    if (o != null && config.isNeverAdaptable(o.getClass().getName())) { return " (never portable)"; }
+
     return null;
   }
 
   public boolean shouldTraverse(MemberValue val) {
     if (literals.isLiteralInstance(val.getValueObject())) { return false; }
     if (isTransient(val)) { return false; }
+
+    Object o = val.getValueObject();
+    if ((o != null) && config.isNeverAdaptable(o.getClass().getName())) { return false; }
+
     return true;
   }
 

@@ -9,3 +9,4 @@ Dumping object graph of non-portable instance of type com.tctest.NonPortableInst
          value = (com.tctest.NonPortableInstancesTest$Ref, id 2)
            Object ref = (com.tctest.NonPortableInstancesTest$Ref, id 4)
 !!           Object ref = (ref id 0)
+!!   Thread t = (java.lang.Thread) (never portable)

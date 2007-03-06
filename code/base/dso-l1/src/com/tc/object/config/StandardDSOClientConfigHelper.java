@@ -201,8 +201,9 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     // addPermanentExcludePattern("com.tc..*");
     // addPermanentExcludePattern("com.terracottatech..*");
     addPermanentExcludePattern("java.awt.Component");
-    addPermanentExcludePattern("java.lang.Object");
     addPermanentExcludePattern("java.lang.Thread");
+    addPermanentExcludePattern("java.lang.ThreadLocal");
+    addPermanentExcludePattern("java.lang.ThreadGroup");
     addPermanentExcludePattern("java.lang.Process");
     addPermanentExcludePattern("java.lang.ClassLoader");
     addPermanentExcludePattern("java.lang.Runtime");

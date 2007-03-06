@@ -31,6 +31,9 @@ public class ObjectGraphWalker {
   public void walk() {
     visitor.visitRootObject(root);
     currentDepth++;
+
+    if (!walkTest.shouldTraverse(root)) { return;  }
+
     backtrack.addFirst(makeNode(root.getValueObject()));
 
     while (backtrack.size() > 0) {

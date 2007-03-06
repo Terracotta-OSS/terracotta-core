@@ -212,7 +212,9 @@ public class NonPortableInstancesTest extends TransparentTestBase {
   }
 
   private static class NotPortable {
-    final Map m = makeGraphWithNonPortableNodes(this);
+    final Map            m            = makeGraphWithNonPortableNodes(this);
+
+    Thread               t            = Thread.currentThread();
 
     NotPortable() {
       if (this instanceof Manageable) { throw new AssertionError("this type should not be portable"); }
