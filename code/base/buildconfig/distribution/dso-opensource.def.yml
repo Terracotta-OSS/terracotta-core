@@ -110,6 +110,6 @@ postscripts:
         - schema
   - make-srcdocs:
       args:
-        - samples/pojos
+        - samples/pojo
         - samples/spring
         - samples/sessions
