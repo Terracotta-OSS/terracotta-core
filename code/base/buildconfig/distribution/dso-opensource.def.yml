@@ -8,8 +8,8 @@ bundled_jres:
       install_directory: jre
       version: 1.5.0_10
 bundled_demos:
-  - pojos:
-      install_directory: samples/pojos
+  - pojo:
+      install_directory: samples/pojo
       manifest:
         - chatter
         - coordination
