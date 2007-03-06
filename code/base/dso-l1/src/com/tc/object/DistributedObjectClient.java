@@ -154,12 +154,6 @@ public class DistributedObjectClient extends SEDA {
     int maxSize = 50000;
     int faultCount = config.getFaultCount();
 
-    String logFile = TCLogging.getLogFileLocation();
-
-    if (logFile != null) {
-      consoleLogger.info("Terracotta log file location: " + logFile);
-    }
-
     final Sequence sessionSequence = new SimpleSequence();
     final SessionManager sessionManager = new SessionManagerImpl(sessionSequence);
     final SessionProvider sessionProvider = (SessionProvider) sessionManager;

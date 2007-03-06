@@ -106,7 +106,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   public String getDescriptionOfCapabilities() {
     return AbstractCapabilitiesFactory.getCapabilitiesManager().describe();
   }
-  
+
   /**
    * I realize this is wrong, since the server can still be starting but we'll have to deal with the whole stopping
    * issue later, and there's the TCStop feature which should be removed.
@@ -257,12 +257,6 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   protected void startServer() throws Exception {
-    String logFile = TCLogging.getLogFileLocation();
-
-    if (logFile != null) {
-      consoleLogger.info("Terracotta log file location: " + logFile);
-    }
-
     if (logger.isDebugEnabled()) {
       logger.debug("Starting Terracotta server...");
     }
@@ -292,7 +286,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   protected ConnectionPolicy createConnectionPolicy() {
     return new ConnectionPolicyImpl(Integer.MAX_VALUE);
   }
-  
+
   private void startDSOServer(Sink httpSink) throws Exception {
     dsoServer = new DistributedObjectServer(configurationSetupManager, getThreadGroup(),
                                             createConnectionPolicy(), httpSink,

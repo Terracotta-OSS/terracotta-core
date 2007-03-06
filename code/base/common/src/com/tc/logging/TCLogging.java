@@ -66,7 +66,6 @@ public class TCLogging {
   private static TCLogger           console;
   private static JMXAppender         jmxAppender;
   private static Appender           consoleAppender;
-  private static String             logFile;
   private static DelegatingAppender delegateFileAppender;
   private static DelegatingAppender delegateBufferingAppender;
   private static boolean            buffering;
@@ -79,10 +78,6 @@ public class TCLogging {
 
   public static JMXAppender getJMXAppender() {
     return jmxAppender;
-  }
-
-  public static String getLogFileLocation() {
-    return logFile;
   }
 
   public static TCLogger getLogger(Class clazz) {
