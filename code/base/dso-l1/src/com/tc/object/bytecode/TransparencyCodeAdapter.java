@@ -94,6 +94,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     if (!spec.hasDelegatedToLogicalClass()) { return false; }
     String logicalExtendingClassName = spec.getSuperClassNameSlashes();
     if (INVOKESPECIAL == opcode && !spec.getClassNameSlashes().equals(classname) && !"<init>".equals(theMethodName)) {
+      spec.shouldProceedInstrumentation(modifiers, theMethodName, desc);
       storeStackValuesToLocalVariables(desc);
       super.visitMethodInsn(INVOKESPECIAL, spec.getClassNameSlashes(), ByteCodeUtil.fieldGetterMethod(ClassAdapterBase
           .getDelegateFieldName(logicalExtendingClassName)), "()L" + logicalExtendingClassName + ";");

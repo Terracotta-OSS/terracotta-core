@@ -79,8 +79,8 @@ class InstrumentationSpec {
   public ClassInfo getClassInfo() {
     return classInfo;
   }
-  
-  
+
+
   // XXX no need to initialize because these values are in the classInfo
   void initialize(int version, int access, String name, String signature, String superName, String[] interfaces,
                   Portability portability) {
@@ -410,7 +410,7 @@ class InstrumentationSpec {
   }
 
   void shouldProceedInstrumentation(int access, String name, String desc) {
-    if (isSubclassOfLogicalClass && shouldVisitMethod(access, name) && Modifier.isProtected(access)
+    if (isSubclassOfLogicalClass && shouldVisitMethod(access, name)
         && logicalExtendingMethodSpec.contains(name + desc)) {
       // Subclass of Logical class cannot override protected method. So, ignore all instrumentation.
       throw new TCLogicalSubclassNotPortableException(classNameDots, superNameDots);
