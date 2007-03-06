@@ -78,7 +78,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     runServer();
 
     try {
-      m_textPane.setPage(getClass().getResource("SamplesPojos.html"));
+      m_textPane.setPage(getClass().getResource("SamplesPojo.html"));
     } catch (IOException ioe) {
       m_textPane.setText(ioe.getMessage());
     }
@@ -396,7 +396,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
   }
 
   private File getProductDirectory() {
-    return new File(getSamplesDir(), "pojos");
+    return new File(getSamplesDir(), "pojo");
   }
 
   public void propertyChange(PropertyChangeEvent pce) {

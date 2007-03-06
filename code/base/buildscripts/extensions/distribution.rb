@@ -14,8 +14,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   end
   
   def dist_all(flavor='OPENSOURCE')
-    @flavor = flavor.downcase
-    
+    @flavor = flavor.downcase    
     depends :init, :compile
     srcdir        = @static_resources.distribution_config_directory(flavor).canonicalize.to_s
     product_codes = Dir.entries(srcdir).delete_if { |entry| (/\-(#{flavor})\.def\.yml$/i !~ entry) || (/^x\-/i =~ entry) }
@@ -25,7 +24,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       call_actions :__assemble
       srcdir  = product_directory.to_s
       destdir = FilePath.new(@distribution_results.archive_dir.ensure_directory, package_filename).to_s
-      FileUtils.mv srcdir, destdir
+      ant.move(:file => srcdir, :todir => destdir)
     end
   end
   
@@ -154,9 +153,9 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       filename            = File.basename(entry)
       incomplete_filename = destdir.to_s + "/" + filename + incomplete_tag
       dest_filename       = destdir.to_s + "/" + filename        
-      FileUtils.cp(entry, incomplete_filename)
+      ant.copy(:file => entry, :tofile => incomplete_filename)
       FileUtils.rm(dest_filename) if File.exist?(dest_filename) 
-      FileUtils.mv(incomplete_filename, dest_filename)
+      ant.move(:file => incomplete_filename, :tofile => dest_filename)
     end
   end
   

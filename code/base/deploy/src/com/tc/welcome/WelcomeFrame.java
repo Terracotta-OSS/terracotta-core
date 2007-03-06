@@ -38,7 +38,7 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 
 public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, PropertyChangeListener {
-  private static String[]     PRODUCTS       = { "Pojos", "Spring", "Sessions" };
+  private static String[]     PRODUCTS       = { "Pojo", "Spring", "Sessions" };
   private static ResourceBundleHelper m_bundleHelper = new ResourceBundleHelper(WelcomeFrame.class);
   private TabbedPane          m_tabbedPane;
   private SimpleAttributeSet  m_underlineAttrSet;
@@ -158,7 +158,7 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
 
   protected void hyperlinkActivated(AttributeSet anchor, String action) {
     if (action.equals("show_samples")) {
-      if ("Pojos".equals(getProduct())) {
+      if ("Pojo".equals(getProduct())) {
         runDSOSampleLauncher();
       } else {
         File file = new File(getProductDirectory(), "samples.html");

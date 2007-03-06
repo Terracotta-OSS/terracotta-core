@@ -371,7 +371,8 @@ class SubtreeTestRunRecord
                                 file_from_tempdir = FilePath.new(@subtree_tempdir, entry)
                                 if file_from_tempdir.exist?
                                     $stderr.puts("JVM cash dectected.")
-                                    FileUtils.mv(file_from_tempdir.to_s, filename.to_s)
+                                    #FileUtils.mv(file_from_tempdir.to_s, filename.to_s)
+                                    ant.move(:file => file_from_tempdir.to_s, :tofile => filename.to_s)
                                 end
                             end
                        
