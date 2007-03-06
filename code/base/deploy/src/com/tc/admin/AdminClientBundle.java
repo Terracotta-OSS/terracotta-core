@@ -201,7 +201,7 @@ public class AdminClientBundle extends ListResourceBundle {
      "About Terracotta Console"},
 
     {"update-checker.action.label",
-     "Update checker..."},
+     "Update Checker..."},
      
     {"update-checker.connect.failed.msg",
      "Unable to connect to update site."},
@@ -218,7 +218,7 @@ public class AdminClientBundle extends ListResourceBundle {
     {"update-checker.action.title",
      "Terracotta Update Checker"},
      
-     {"update-checker.last.checked.msg",
-      "Last checked: {0}"},
+    {"update-checker.last.checked.msg",
+     "Last checked: {0}"},
   };
 }
