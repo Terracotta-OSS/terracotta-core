@@ -54,7 +54,7 @@ class SvnUpdate
   def get_current_good_rev(file)
     currently_good_rev = 0
     begin
-      File.open(file, "w+") do | f |
+      File.open(file, "r") do | f |
         currently_good_rev = f.gets.to_i    
       end
     rescue
