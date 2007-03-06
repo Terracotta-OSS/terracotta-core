@@ -2701,7 +2701,7 @@ and any path to a file to read from that file]]></string>
 					</method>
 					<method name="put">
 						<string><![CDATA[com.zerog.ia.build.vmpack.windows.path]]></string>
-						<string><![CDATA[SunJRE150_10iWin32Custom.vm]]></string>
+						<string><![CDATA[SunJRE150_11iWin32Custom.vm]]></string>
 					</method>
 					<method name="put">
 						<string><![CDATA[com.zerog.ia.project.build.last.date]]></string>
