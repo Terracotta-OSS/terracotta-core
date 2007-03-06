@@ -81,9 +81,11 @@ class SvnUpdate
       log("good: #{current_good_rev}")
 
       if @monkey_name == "general-monkey"
+        log("general-monkey - updating to HEAD")
         svn_update_with_error_tolerant("HEAD")
         exit(0)
       elsif current_rev <= current_good_rev
+        log("not general-monkey - updating to #{current_good_rev}")
         svn_update_with_error_tolerant(current_good_rev)
         exit(0)
       else # I have a revision that is greater than a good known reivision, so I sleep and wait
