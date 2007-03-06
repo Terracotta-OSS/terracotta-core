@@ -6,7 +6,7 @@ bundled_jres:
   - jre15:
       assert: '@build_environment.os_type =~ /^\s*windows\s*$/i'
       install_directory: jre
-      version: 1.5.0_10
+      version: 1.5.0_11
 bundled_demos:
   - pojo:
       install_directory: samples/pojo
