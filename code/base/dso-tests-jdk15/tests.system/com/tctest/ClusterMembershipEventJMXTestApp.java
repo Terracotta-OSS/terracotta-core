@@ -108,7 +108,7 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     server = (MBeanServer) servers.get(0);
 
     // our *star* bean for memebership events
-    clusterBean = new ObjectName("com.terracottatech:type=Terracotta Cluster,name=Terracotta Cluster Bean");
+    clusterBean = new ObjectName("org.terracotta:type=Terracotta Cluster,name=Terracotta Cluster Bean");
 
     // The MBeanServerDelegate emits notifications about
     // registration/unregistration of MBeans
