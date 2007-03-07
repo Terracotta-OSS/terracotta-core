@@ -92,7 +92,7 @@ public interface ClientLockManager {
 
   public int waitLength(LockID lockID, ThreadID threadID);
 
-  public int heldCount(LockID lockID, int lockLevel, ThreadID threadID);
+  public int localHeldCount(LockID lockID, int lockLevel, ThreadID threadID);
 
   public boolean isLocked(LockID lockID, ThreadID threadID);
 

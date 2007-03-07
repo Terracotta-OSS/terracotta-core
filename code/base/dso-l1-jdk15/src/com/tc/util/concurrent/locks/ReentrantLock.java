@@ -118,7 +118,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
     if (!tryLock()) {
       Thread currentThread = Thread.currentThread();
 
-      long timeoutInNanos = TimeUnit.NANOSECONDS.convert(10, TimeUnit.MILLISECONDS);
+      long timeoutInNanos = TimeUnit.NANOSECONDS.convert(50, TimeUnit.MILLISECONDS);
       long totalTimeoutInNanos = unit.toNanos(timeout);
 
       if (timeoutInNanos > totalTimeoutInNanos) {
@@ -323,8 +323,6 @@ public class ReentrantLock implements Lock, java.io.Serializable {
   }
 
   private static class ConditionObject implements Condition, java.io.Serializable {
-    public static final String  CLASS_SLASH   = "com/tcclient/util/ConditionObjectWrapper";
-    public static final String  CLASS_DOTS    = "com.tcclient.util.ConditionObjectWrapper";
     private static final int    SIGNALLED     = 1;
     private static final int    NOT_SIGNALLED = 0;
 

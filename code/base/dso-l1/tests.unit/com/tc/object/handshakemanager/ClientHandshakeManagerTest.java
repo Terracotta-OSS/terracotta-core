@@ -325,7 +325,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public int heldCount(LockID lockID, int lockLevel, ThreadID threadID) {
+    public int localHeldCount(LockID lockID, int lockLevel, ThreadID threadID) {
       throw new ImplementMe();
     }
 

@@ -75,8 +75,6 @@ public interface ClientTransactionManager {
 
   public void unlock(String lockName);
 
-  public int heldCount(String lockName, int lockLevel);
-
   public boolean isHeldByCurrentThread(String lockName, int lockLevel);
 
   public int queueLength(String lockName);

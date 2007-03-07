@@ -21,7 +21,7 @@ public interface ThreadLockManager {
 
   public boolean isLocked(LockID lockID);
   
-  public int heldCount(LockID lockID, int lockLevel);
+  public int localHeldCount(LockID lockID, int lockLevel);
   
   public int queueLength(LockID lockId);
   

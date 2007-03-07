@@ -220,10 +220,6 @@ public class ManagerUtil {
     return getManager().tryMonitorEnter(obj, type);
   }
 
-  public static int heldCount(Object obj, int lockLevel) {
-    return getManager().heldCount(obj, lockLevel);
-  }
-
   public static boolean isHeldByCurrentThread(Object obj, int lockLevel) {
     return getManager().isHeldByCurrentThread(obj, lockLevel);
   }

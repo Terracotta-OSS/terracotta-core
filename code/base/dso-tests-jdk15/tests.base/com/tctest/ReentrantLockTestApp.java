@@ -27,6 +27,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ReentrantLockTestApp extends AbstractTransparentApp {
   private static final int    NUM_OF_PUTS        = 1000;
+  private static final int    NUM_OF_LOOPS       = 5;
 
   private final DataRoot      root               = new DataRoot();
   private final List          queue              = new LinkedList();
@@ -50,37 +51,40 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     numOfGetters = getParticipantCount() - numOfPutters;
   }
 
-  // TODO: We need to add a test case for a situation where an unshared ReentrantLock become
-  // shared.
   public void run() {
     try {
       barrier.await();
-
+      
       sharedUnSharedTesting();
       multipleReentrantLocksTesting();
       singleNodeTryBeginLockTesting();
       variousLockUnLockPatternTesting();
 
-      System.err.println("Testing unfair lock ...");
+      for (int i = 0; i < NUM_OF_LOOPS; i++) {
+        basicConditionVariableTesting(root.getUnfairLock(), root.getUnfairCondition());
+        basicConditionVariableWaitTesting(root.getUnfairLock(), root.getUnfairCondition());
+      }
 
-      basicConditionVariableTesting(root.getUnfairLock(), root.getUnfairCondition());
-      basicConditionVariableWaitTesting(root.getUnfairLock(), root.getUnfairCondition());
       basicUnsharedLockTesting(unsharedUnfairLock);
-      basicLockTesting(root.getUnfairLock());
+      for (int i = 0; i < NUM_OF_LOOPS; i++) {
+        basicLockTesting(root.getUnfairLock());
+        tryLockTimeoutTesting(root.getUnfairLock());
+      }
       lockSyncLockTesting(root.getUnfairLock());
-      tryLockTimeoutTesting(root.getUnfairLock());
       tryLockTesting(root.getUnfairLock());
 
       threadInterruptedLockTesting(root.getUnfairLock());
 
-      System.err.println("Testing fair lock ...");
-
-      basicConditionVariableTesting(root.getFairLock(), root.getFairCondition());
-      basicConditionVariableWaitTesting(root.getFairLock(), root.getFairCondition());
+      for (int i = 0; i < NUM_OF_LOOPS; i++) {
+        basicConditionVariableTesting(root.getFairLock(), root.getFairCondition());
+        basicConditionVariableWaitTesting(root.getFairLock(), root.getFairCondition());
+      }
       basicUnsharedLockTesting(unsharedFairLock);
-      basicLockTesting(root.getFairLock());
+      for (int i = 0; i < NUM_OF_LOOPS; i++) {
+        basicLockTesting(root.getFairLock());
+        tryLockTimeoutTesting(root.getFairLock());
+      }
       lockSyncLockTesting(root.getFairLock());
-      tryLockTimeoutTesting(root.getFairLock());
       tryLockTesting(root.getFairLock());
 
       threadInterruptedLockTesting(root.getFairLock());
@@ -400,7 +404,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     barrier.await();
 
     if (index == 0) {
-      Thread.sleep(1000); // Sleep so that the TestRunnable1 thread can pick up.
+      Thread.sleep(2000); // Sleep so that the TestRunnable1 thread can pick up.
       Assert.assertEquals(1, lock.getWaitQueueLength(condition));
     }
 
@@ -652,7 +656,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
 
     barrier.await();
   }
-  
+
   private void tryLockTesting(final ReentrantLock lock) throws Exception {
     clear();
 
@@ -667,7 +671,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     if (index == 1) {
       final CyclicBarrier localBarrier = new CyclicBarrier(3);
       final CyclicBarrier threadBarrier = new CyclicBarrier(2);
-      
+
       Thread t1 = new Thread(new Runnable() {
         public void run() {
           lock.lock();
@@ -714,7 +718,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       final CyclicBarrier localBarrier = new CyclicBarrier(3);
       final CyclicBarrier threadBarrier = new CyclicBarrier(2);
       final ReentrantLock nonSharedLock = new ReentrantLock();
-      
+
       Thread t1 = new Thread(new Runnable() {
         public void run() {
           nonSharedLock.lock();
@@ -757,11 +761,11 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
-    
+
     if (index == 0) {
       final CyclicBarrier localBarrier = new CyclicBarrier(2);
       final ReentrantLock nonSharedLock = new ReentrantLock();
-      
+
       Thread t1 = new Thread(new Runnable() {
         public void run() {
           try {
@@ -842,7 +846,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     if (index == 0) {
       final CyclicBarrier localBarrier = new CyclicBarrier(3);
       final ReentrantLock nonSharedLock = new ReentrantLock();
-      
+
       Thread t1 = new Thread(new Runnable() {
         public void run() {
           nonSharedLock.lock();
@@ -883,11 +887,11 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
-    
+
     if (index == 0) {
       final CyclicBarrier localBarrier = new CyclicBarrier(3);
       final ReentrantLock nonSharedLock = new ReentrantLock();
-      
+
       Thread t1 = new Thread(new Runnable() {
         public void run() {
           nonSharedLock.lock();
@@ -909,7 +913,8 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       Thread t2 = new Thread(new Runnable() {
         public void run() {
           try {
-            boolean isLocked = nonSharedLock.tryLock(TimeUnit.MICROSECONDS.convert(4, TimeUnit.SECONDS), TimeUnit.MICROSECONDS);
+            boolean isLocked = nonSharedLock.tryLock(TimeUnit.MICROSECONDS.convert(4, TimeUnit.SECONDS),
+                                                     TimeUnit.MICROSECONDS);
             Assert.assertTrue(isLocked);
             nonSharedLock.unlock();
           } catch (InterruptedException e) {
@@ -933,7 +938,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       final CyclicBarrier localBarrier = new CyclicBarrier(3);
       final CyclicBarrier threadBarrier = new CyclicBarrier(2);
       final ReentrantLock nonSharedLock = new ReentrantLock();
-      
+
       Thread t1 = new Thread(new Runnable() {
         public void run() {
           nonSharedLock.lock();

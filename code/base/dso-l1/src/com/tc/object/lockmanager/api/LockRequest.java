@@ -10,18 +10,24 @@ public class LockRequest {
   private ThreadID threadID;
   private int      lockLevel;
   private int      hashCode;
+  private boolean  noBlock;
   private boolean  initialized;
-
-  public LockRequest(LockID lockID, ThreadID threadID, int lockLevel) {
-    initialize(lockID, threadID, lockLevel);
+  
+  public LockRequest(LockID lockID, ThreadID threadID, int lockLevel, boolean noBlock) {
+    initialize(lockID, threadID, lockLevel, noBlock);
   }
 
-  private void initialize(LockID theLockID, ThreadID theThreadID, int theLockLevel) {
+  public LockRequest(LockID lockID, ThreadID threadID, int lockLevel) {
+    initialize(lockID, threadID, lockLevel, false);
+  }
+
+  private void initialize(LockID theLockID, ThreadID theThreadID, int theLockLevel, boolean noBlock) {
     if (initialized) throw new AssertionError("Attempt to intialize more than once.");
     this.lockID = theLockID;
     this.threadID = theThreadID;
     this.lockLevel = theLockLevel;
-    hashCode = new HashCodeBuilder(5503, 6737).append(theLockID).append(theThreadID).append(theLockLevel).toHashCode();
+    this.noBlock = noBlock;
+    hashCode = new HashCodeBuilder(5503, 6737).append(theLockID).append(theThreadID).append(theLockLevel).append(noBlock).toHashCode();
     initialized = true;
   }
 
@@ -36,12 +42,16 @@ public class LockRequest {
   public int lockLevel() {
     return lockLevel;
   }
+  
+  public boolean noBlock() {
+    return this.noBlock;
+  }
 
   public boolean equals(Object o) {
     if (o == this) return true;
     if (!(o instanceof LockRequest)) return false;
     LockRequest cmp = (LockRequest) o;
-    return lockID.equals(cmp.lockID) && threadID.equals(cmp.threadID) && lockLevel == cmp.lockLevel;
+    return lockID.equals(cmp.lockID) && threadID.equals(cmp.threadID) && lockLevel == cmp.lockLevel && noBlock == cmp.noBlock;
   }
 
   public int hashCode() {

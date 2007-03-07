@@ -100,8 +100,6 @@ public interface Manager {
 
   public boolean tryMonitorEnter(Object obj, int type);
 
-  public int heldCount(Object obj, int lockLevel);
-
   public boolean isHeldByCurrentThread(Object obj, int lockLevel);
 
   public int queueLength(Object obj);

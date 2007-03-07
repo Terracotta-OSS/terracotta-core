@@ -28,30 +28,30 @@ import java.util.TimerTask;
 
 public class ServerClientHandshakeManager {
 
-  private static final State              INIT                              = new State("INIT");
-  private static final State              STARTING                          = new State("STARTING");
-  private static final State              STARTED                           = new State("STARTED");
-  private static final int                BATCH_SEQUENCE_SIZE               = 10000;
+  private static final State             INIT                              = new State("INIT");
+  private static final State             STARTING                          = new State("STARTING");
+  private static final State             STARTED                           = new State("STARTED");
+  private static final int               BATCH_SEQUENCE_SIZE               = 10000;
 
-  public static final Sink                NULL_SINK                         = new NullSink();
+  public static final Sink               NULL_SINK                         = new NullSink();
 
-  private State                           state                             = INIT;
+  private State                          state                             = INIT;
 
-  private final TCTimer                   timer;
-  private final ReconnectTimerTask        reconnectTimerTask;
-  private final ClientStateManager        clientStateManager;
-  private final LockManager               lockManager;
-  private final Sink                      lockResponseSink;
-  private final long                      reconnectTimeout;
-  private final ObjectManager             objectManager;
-  private final Set                       existingUnconnectedClients;
-  private final DSOChannelManager         channelManager;
-  private final TCLogger                  logger;
-  private final SequenceValidator         sequenceValidator;
-  private final ServerTransactionManager  transactionManager;
-  private final ObjectIDSequence          oidSequence;
-  private final Set                       clientsRequestingObjectIDSequence = new HashSet();
-  private final boolean                   persistent;
+  private final TCTimer                  timer;
+  private final ReconnectTimerTask       reconnectTimerTask;
+  private final ClientStateManager       clientStateManager;
+  private final LockManager              lockManager;
+  private final Sink                     lockResponseSink;
+  private final long                     reconnectTimeout;
+  private final ObjectManager            objectManager;
+  private final Set                      existingUnconnectedClients;
+  private final DSOChannelManager        channelManager;
+  private final TCLogger                 logger;
+  private final SequenceValidator        sequenceValidator;
+  private final ServerTransactionManager transactionManager;
+  private final ObjectIDSequence         oidSequence;
+  private final Set                      clientsRequestingObjectIDSequence = new HashSet();
+  private final boolean                  persistent;
 
   public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager, ObjectManager objectManager,
                                       SequenceValidator sequenceValidator, ClientStateManager clientStateManager,
@@ -135,8 +135,13 @@ public class ServerClientHandshakeManager {
 
       for (Iterator i = handshake.getPendingLockContexts().iterator(); i.hasNext();) {
         LockContext ctxt = (LockContext) i.next();
-        lockManager.requestLock(ctxt.getLockID(), ctxt.getChannelID(), ctxt.getThreadID(), ctxt.getLockLevel(),
-                                lockResponseSink);
+        if (ctxt.noBlock()) {
+          lockManager.tryRequestLock(ctxt.getLockID(), ctxt.getChannelID(), ctxt.getThreadID(), ctxt.getLockLevel(),
+                                  lockResponseSink);
+        } else {
+          lockManager.requestLock(ctxt.getLockID(), ctxt.getChannelID(), ctxt.getThreadID(), ctxt.getLockLevel(),
+                                  lockResponseSink);
+        }
       }
 
       if (handshake.isObjectIDsRequested()) {

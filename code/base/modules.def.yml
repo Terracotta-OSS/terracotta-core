@@ -243,25 +243,6 @@ modules:
         - deploy
         - thirdparty
         - legacy-test-tree
-  - dso-crash-tests:
-      options:
-        jdk: J2SE-1.4
-      dependencies:
-        - aspectwerkz
-        - linked-child-process
-        - common
-        - dso-common
-        - management
-        - dso-common-jdk15
-        - dso-l1
-        - dso-l2
-        - dso-l1-weblogic
-        - simulator
-        - deploy
-        - thirdparty
-        - dso-system-tests
-        - legacy-test-tree
-        - dso-memory-datastore
   - dso-tests-jdk15:
       options:
         jdk: J2SE-1.5
@@ -280,6 +261,27 @@ modules:
         - legacy-test-tree
         - dso-l2
         - management
+  - dso-crash-tests:
+      options:
+        jdk: J2SE-1.5
+      dependencies:
+        - aspectwerkz
+        - linked-child-process
+        - common
+        - dso-common
+        - management
+        - dso-common-jdk15
+        - dso-l1
+        - dso-l2
+        - dso-l1-weblogic
+        - simulator
+        - deploy
+        - thirdparty
+        - dso-system-tests
+        - legacy-test-tree
+        - dso-memory-datastore
+        - dso-tests-jdk15
+        - dso-l1-jdk15
   - dso-container-tests:
       options:
         jdk: J2SE-1.4

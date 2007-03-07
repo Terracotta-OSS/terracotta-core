@@ -119,10 +119,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public int heldCount(String lockName, int lockLevel) {
-      throw new ImplementMe();
-    }
-
     public int queueLength(String lockName) {
       throw new ImplementMe();
     }

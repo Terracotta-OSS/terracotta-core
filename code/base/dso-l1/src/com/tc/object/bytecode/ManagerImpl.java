@@ -508,20 +508,8 @@ public class ManagerImpl implements Manager {
     return tryBegin(lockID, type, null, null);
   }
 
-  public int heldCount(Object obj, int lockLevel) {
-    if (obj == null) { throw new NullPointerException("heldCount called on a null object"); }
-
-    TCObject tco = lookupExistingOrNull(obj);
-
-    if (tco != null) {
-      return this.txManager.heldCount(generateAutolockName(tco), lockLevel);
-    } else {
-      return this.txManager.heldCount(generateLiteralLockName(obj), lockLevel);
-    }
-  }
-
   public boolean isHeldByCurrentThread(Object obj, int lockLevel) {
-    if (obj == null) { throw new NullPointerException("heldCount called on a null object"); }
+    if (obj == null) { throw new NullPointerException("isHeldByCurrentThread called on a null object"); }
 
     TCObject tco = lookupExistingOrNull(obj);
 

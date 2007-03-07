@@ -92,14 +92,14 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     return lockManager.waitLength(lockID);
   }
 
-  public int heldCount(String lockName, int lockLevel) {
+  private int localHeldCount(String lockName, int lockLevel) {
     final LockID lockID = lockManager.lockIDFor(lockName);
-    return lockManager.heldCount(lockID, lockLevel);
+    return lockManager.localHeldCount(lockID, lockLevel);
   }
 
   public boolean isHeldByCurrentThread(String lockName, int lockLevel) {
     if (isTransactionLoggingDisabled()) { return true; }
-    return heldCount(lockName, lockLevel) > 0;
+    return localHeldCount(lockName, lockLevel) > 0;
   }
 
   public boolean isLocked(String lockName) {

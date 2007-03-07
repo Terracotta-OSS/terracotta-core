@@ -136,13 +136,10 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    System.err.println("Visiting visitL1DSOConfig");
     String testClass = IBatisSimpleDaoTestApp.class.getName();
 
     config.getOrCreateSpec(testClass).addRoot("barrier", "barrier").addRoot("cus", "cus").addRoot("list", "list")
         .addRoot("customerDAO", "customerDAO").addRoot("accountDAO", "accountDAO");
-    // config.getOrCreateSpec(testClass).addRoot("barrier",
-    // "barrier").addRoot("accountDAO", "accountDAO");
 
     config.addWriteAutolock("* " + testClass + "*.*(..)");
     config.addIncludePattern("com.tctest.domain.*");

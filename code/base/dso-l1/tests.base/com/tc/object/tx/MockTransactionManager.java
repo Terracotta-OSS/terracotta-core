@@ -134,10 +134,6 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
-  public int heldCount(String lockName, int lockLevel) {
-    throw new ImplementMe();
-  }
-
   public int queueLength(String lockName) {
     throw new ImplementMe();
   }

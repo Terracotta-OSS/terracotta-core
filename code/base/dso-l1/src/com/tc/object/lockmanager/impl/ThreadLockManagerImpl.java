@@ -34,8 +34,8 @@ public class ThreadLockManagerImpl implements ThreadLockManager {
     return lockManager.waitLength(lockID, getThreadID());
   }
 
-  public int heldCount(LockID lockID, int lockLevel) {
-    return lockManager.heldCount(lockID, lockLevel, getThreadID());
+  public int localHeldCount(LockID lockID, int lockLevel) {
+    return lockManager.localHeldCount(lockID, lockLevel, getThreadID());
   }
 
   public boolean isLocked(LockID lockID) {

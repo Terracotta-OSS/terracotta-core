@@ -132,11 +132,10 @@ public class IBatisSimpleTestApp extends AbstractTransparentApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    System.err.println("Visiting visitL1DSOConfig");
     String testClass = IBatisSimpleTestApp.class.getName();
 
-    config.getOrCreateSpec(testClass) //
-        .addRoot("barrier", "barrier") //
+    config.getOrCreateSpec(testClass) 
+        .addRoot("barrier", "barrier") 
         .addRoot("cus", "cus");
 
     config.addWriteAutolock("* " + testClass + "*.*(..)");

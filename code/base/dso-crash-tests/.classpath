@@ -14,6 +14,8 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-system-tests"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/legacy-test-tree"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common-jdk15"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-jdk15"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-tests-jdk15"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
-        <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
 </classpath>

@@ -143,10 +143,6 @@ public final class NullManager implements Manager {
     return false;
   }
 
-  public final int heldCount(Object obj, int lockLevel) {
-    return 0;
-  }
-
   public final int queueLength(Object obj) {
     return 0;
   }

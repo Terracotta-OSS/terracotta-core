@@ -113,7 +113,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
     logger.debug("Getting pending lock requests...");
     for (Iterator i = lockManager.addAllPendingLockRequestsTo(new HashSet()).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
-      LockContext ctxt = new LockContext(request.lockID(), cidp.getChannelID(), request.threadID(), request.lockLevel());
+      LockContext ctxt = new LockContext(request.lockID(), cidp.getChannelID(), request.threadID(), request.lockLevel(), request.noBlock());
       handshakeMessage.addPendingLockContext(ctxt);
     }
 

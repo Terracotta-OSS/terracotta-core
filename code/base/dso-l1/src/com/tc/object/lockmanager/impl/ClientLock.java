@@ -135,7 +135,7 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
       }
 
       // All other cases have to wait for some reason or the other
-      waitLock = addToPendingLockRequest(requesterID, type);
+      waitLock = addToPendingLockRequest(requesterID, type, noBlock);
       if (greediness.isNotGreedy()) {
         // debug("lock - remote requestLock ", requesterID, LockLevel.toString(type));
         if (noBlock) {
@@ -321,7 +321,6 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
       isRemote = true;
     }
     return isRemote ? new Notify(lockID, threadID, all) : Notify.NULL;
-
   }
 
   private synchronized void handleInteruptIfWait(ThreadID threadID) {
@@ -456,9 +455,9 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
   /*
    * @returns the wait object for lock request
    */
-  private synchronized Object addToPendingLockRequest(ThreadID threadID, int lockLevel) {
+  private synchronized Object addToPendingLockRequest(ThreadID threadID, int lockLevel, boolean noBlock) {
     // Add Lock Request
-    LockRequest lockRequest = new LockRequest(lockID, threadID, lockLevel);
+    LockRequest lockRequest = new LockRequest(lockID, threadID, lockLevel, noBlock);
     Object old = pendingLockRequests.put(threadID, lockRequest);
     if (old != null) {
       // formatting
@@ -630,10 +629,12 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
   }
 
   public synchronized Collection addAllWaitersTo(Collection c) {
-    for (Iterator i = pendingLockRequests.values().iterator(); i.hasNext();) {
-      Object o = i.next();
-      if (o instanceof WaitLockRequest) {
-        c.add(o);
+    if (greediness.isNotGreedy()) {
+      for (Iterator i = pendingLockRequests.values().iterator(); i.hasNext();) {
+        Object o = i.next();
+        if (o instanceof WaitLockRequest) {
+          c.add(o);
+        }
       }
     }
     return c;
@@ -656,10 +657,12 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
   }
 
   public synchronized Collection addAllPendingLockRequestsTo(Collection c) {
-    for (Iterator i = pendingLockRequests.values().iterator(); i.hasNext();) {
-      LockRequest request = (LockRequest) i.next();
-      if (request instanceof WaitLockRequest) continue;
-      c.add(request);
+    if (greediness.isNotGreedy()) {
+      for (Iterator i = pendingLockRequests.values().iterator(); i.hasNext();) {
+        LockRequest request = (LockRequest) i.next();
+        if (request instanceof WaitLockRequest) continue;
+        c.add(request);
+      }
     }
     return c;
   }
@@ -901,7 +904,7 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
     return count;
   }
 
-  public int heldCount(ThreadID threadID, int lockLevel) {
+  public int localHeldCount(ThreadID threadID, int lockLevel) {
     LockHold holder;
     synchronized (holders) {
       holder = (LockHold) holders.get(threadID);
@@ -920,12 +923,23 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
   }
 
   public synchronized int waitLength() {
-    int count = 0;
+    int localCount = 0;
     for (Iterator i = pendingLockRequests.values().iterator(); i.hasNext();) {
       Object o = i.next();
-      if (o instanceof WaitLockRequest) count++;
+      if (o instanceof WaitLockRequest) {
+        localCount++;
+      }
     }
-    return count;
+    return localCount;
+  }
+
+  private boolean localWaiterExist(ThreadID waiterThreadID, int waiterLockLevel) {
+    Object request = pendingLockRequests.get(waiterThreadID);
+    if (request instanceof WaitLockRequest) {
+      WaitLockRequest waitLockRequest = (WaitLockRequest) request;
+      return waitLockRequest.lockID().equals(lockID) && waitLockRequest.lockLevel() == waiterLockLevel;
+    }
+    return false;
   }
 
   public LockID getLockID() {
