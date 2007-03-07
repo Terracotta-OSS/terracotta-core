@@ -71,7 +71,7 @@ public class LocksPanel extends ConfigurationEditorPanel
           m_removeAutoLockButton.setEnabled(sel != null && sel.length > 0);
         }
       }
-    };        
+    };    
     m_autoLockTable.setDefaultRenderer(StringEnumAbstractBase.class, new LockLevelRenderer());
     m_autoLockTable.setDefaultEditor(StringEnumAbstractBase.class, new LockLevelEditor());
 

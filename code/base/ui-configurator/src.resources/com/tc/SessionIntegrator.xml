@@ -1,481 +1,590 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <dict tag="Top">
-  <dialog tag="ErrorDialog" visible="false" title="An Unexpected Error Has Occurred" modal="true" bounds="50,50,364,368">
-    <content-pane>
-      <children>
-        <scrollpane>
-          <textarea name="ErrorText" class="com.tc.admin.common.XTextArea" editable="false" line-wrap="false"/>
-        </scrollpane>
-        <button name="CloseButton" class="com.tc.admin.common.XButton" text="Close"/>
-        <textfield name="MessageText" class="com.tc.admin.common.XTextField" text="MessageText" editable="false"/>
-        <label text="Stracktrace:"/>
-      </children>
-      <connections>
-        <item left="-1,left:n" top="2,bottom:sn" right="-1,right:n" bottom="1,top:n" width="s" height="s"/>
-        <item left="-1,left:s" top="0,bottom:sn" right="-1,right:s" bottom="-1,bottom:n" width="n" height="n"/>
-        <item left="-1,left:n" top="-1,top:n" right="-1,right:n" bottom="3,top:sn" width="s" height="n"/>
-        <item left="-1,left:n" top="2,bottom:n" right="-1,right:s" bottom="0,top:n" width="n" height="n"/>
-      </connections>
-    </content-pane>
-  </dialog>
-  <dialog tag="SplashDialog" visible="false" title="Terracotta Sessions Configurator" modal="true" bounds="50,50,364,368">
-    <content-pane>
-      <children>
-        <label image-uri="/com/tc/admin/icons/logo.gif"/>
-        <scrollpane>
-          <editorpane name="WelcomeText" editable="false">
-            <document uri="/com/tc/ConfiguratorIntro.html"/>
-          </editorpane>
-        </scrollpane>
-        <container>
-          <children>
-            <button name="ImportButton" class="com.tc.admin.common.XButton" text="Import..."/>
-            <button name="HelpButton" class="com.tc.admin.common.XButton" text="Help..."/>
-            <button name="SkipButton" class="com.tc.admin.common.XButton" text="Skip"/>
-          </children>
-          <connections>
-            <item left="-1,left:n" top="-1,top:ns" right="-1,right:ns" bottom="1,top:n" width="n" height="n"/>
-            <item left="-1,left:n" top="0,bottom:n" right="0,right:0" bottom="2,top:n" width="sn" height="n"/>
-            <item left="-1,left:n" top="1,bottom:n" right="0,right:0" bottom="-1,bottom:ns" width="sn" height="n"/>
-          </connections>
-        </container>
-        <checkbox name="NoShowSplash" text="Don't show again" selected="false"/>
-      </children>
-      <connections>
-        <item left="-1,left:ns" top="-1,top:n" right="-1,right:ns" bottom="1,top:n" width="n" height="n"/>
-        <item left="-1,left:n" top="0,bottom:ns" right="-1,right:n" bottom="2,top:n" width="s" height="s"/>
-        <item left="-1,left:n" top="1,bottom:n" right="3,left:n" bottom="-1,bottom:n" width="ns" height="n"/>
-        <item left="2,right:n" top="1,bottom:ns" right="-1,right:n" bottom="-1,bottom:n" width="n" height="n"/>
-      </connections>
-    </content-pane>
-  </dialog>
-  <dialog tag="ServersDialog" visible="false" title="Terracotta Sessions Configurator" modal="true" bounds="50,50,500,368">
-    <content-pane>
-      <children>
-        <label text="Current webserver"/>
-        <combo name="ServerSelector"/>
-        <scrollpane>
-          <table name="ServerEnvironment" class="com.tc.servers.ServerEnvTable"/>
-        </scrollpane>
-        <label name="ErrorLabel" text="" image-uri="/com/tc/admin/icons/error12x12.gif" horizontal-alignment="left"/>
-        <container>
-          <children>
-            <button name="OKButton" class="com.tc.admin.common.XButton" text="OK"/>
-            <button name="CancelButton" class="com.tc.admin.common.XButton" text="Cancel"/>
-            <button name="RestoreButton" class="com.tc.admin.common.XButton" text="Restore Defaults"/>
-          </children>
-          <connections>
-            <item left="-1,left:n" top="-1,top:n" right="1,left:n" bottom="-1,bottom:n" width="ns" height="n"/>
-            <item left="0,right:n" top="-1,top:n" right="2,left:n" bottom="-1,bottom:n" width="ns" height="n"/>
-            <item left="1,right:n" top="-1,top:n" right="-1,right:n" bottom="-1,bottom:n" width="ns" height="n"/>
-          </connections>
-        </container>
-      </children>
-      <connections>
-        <item left="-1,left:ns" top="1,top:s" right="1,left:n" bottom="1,bottom:s" width="n" height="n"/>
-        <item left="0,right:n" top="-1,top:n" right="-1,right:ns" bottom="2,top:n" width="n" height="n"/>
-        <item left="-1,left:n" top="1,bottom:n" right="-1,right:n" bottom="3,top:n" width="s" height="s"/>
-        <item left="-1,left:n" top="2,bottom:n" right="-1,right:n" bottom="4,top:n" width="n" height="n"/>
-        <item left="-1,left:ns" top="3,bottom:n" right="-1,right:n" bottom="-1,bottom:n" width="n" height="n"/>
-      </connections>
-    </content-pane>
-  </dialog>
-  <frame tag="MainFrame" name="Main" visible="false" title="Terracotta Sessions Configurator" bounds="50,50,675,386" help-uri="/com/tc/SessionIntegrator.html" icon-image-uri="/com/tc/admin/icons/logo_small.gif">
-    <content-pane>
-      <children>
-        <tabbedpane font="Trebuchet MS-plain-12" selected-index="0" name="MainTabbedPane">
-          <tab title="Control" icon-image-uri="/com/tc/admin/icons/thread_obj.gif">
-            <splitpane name="ControlSplitter" orientation="horizontal" focus-index="0" divider-location="-1" resize-weight="0.1">
-              <left>
-                <container>
-                  <children>
-                    <scrollpane>
-                      <tree name="WebAppTree" class="com.tc.admin.common.XTree" font="Trebuchet MS-plain-12"/>
-                    </scrollpane>
-                    <button name="StartButton" font="MS Sans Serif-plain-12" text="Start all" image-uri="/com/tc/admin/icons/run_exc.gif"/>
-                    <button name="StopButton" enabled="false" font="MS Sans Serif-plain-12" text="Stop all" image-uri="/com/tc/admin/icons/terminate_co.gif"/>
-                    <checkbox name="DSOEnabledToggle" text="Terracotta Sessions enabled" selected="false"/>
-                  </children>
-                  <connections>
-                    <item left="-1,left:0" top="1,bottom:n" right="-1,right:0" bottom="-1,bottom:0" width="sn" height="s"/>
-                    <item left="-1,left:n" top="3,bottom:n" right="2,left:n" bottom="0,top:n" width="n" height="n"/>
-                    <item left="1,right:n" top="1,top:s" right="-1,right:sn" bottom="1,bottom:s" width="n" height="n"/>
-                    <item left="-1,left:n" top="-1,top:n" right="-1,right:ns" bottom="1,top:n" width="n" height="n"/>
-                  </connections>
-                </container>
-              </left>
-              <right>
-                <container>
-                  <children>
-                    <container>
-                      <children>
-	                    <container>
-	                      <children>
-							<checkbox name="Tomcat1EnabledToggle"/>
-	                        <label name="Tomcat1Label" font="Trebuchet MS-plain-12" text="Tomcat-9081"/>
-	                        <button name="Tomcat1Control" text="" image-uri="/com/tc/admin/icons/run_exc.gif" visible="false" class="com.tc.admin.common.RolloverButton"/>
-	                      </children>
-	                      <connections>
-	                        <item left="-1,left:n" top="-1,top:ns" right="1,left:n" bottom="-1,bottom:ns" width="n" height="n"/>
-	                        <item left="0,right:n" top="-1,top:ns" right="2,left:n" bottom="-1,bottom:ns" width="n" height="n"/>
-	                        <item left="1,right:n" top="-1,top:ns" right="-1,right:ns" bottom="-1,bottom:ns" width="n" height="n"/>
-	                      </connections>
-	                    </container>
-                        <scrollpane>
-                          <textpane name="Tomcat1OutView" class="com.tc.ProcessOutputView" font="monospaced-plain-11" editable="false"/>
-                        </scrollpane>
-                      </children>
-                      <connections>
-                        <item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="1,top:0" width="ns" height="n"/>
-                        <item left="-1,left:n" top="0,bottom:0" right="-1,right:n" bottom="-1,bottom:0" width="s" height="s"/>
-                      </connections>
-                    </container>
-                    <container>
-                      <children>
-	                    <container>
-	                      <children>
-							<checkbox name="Tomcat2EnabledToggle"/>
-	                        <label name="Tomcat2Label" font="Trebuchet MS-plain-12" text="Tomcat-9082"/>
-	                        <button name="Tomcat2Control" text="" image-uri="/com/tc/admin/icons/run_exc.gif" visible="false" class="com.tc.admin.common.RolloverButton"/>
-	                      </children>
-	                      <connections>
-	                        <item left="-1,left:n" top="-1,top:ns" right="1,left:n" bottom="-1,bottom:ns" width="n" height="n"/>
-	                        <item left="0,right:n" top="-1,top:ns" right="2,left:n" bottom="-1,bottom:ns" width="n" height="n"/>
-	                        <item left="1,right:n" top="-1,top:ns" right="-1,right:ns" bottom="-1,bottom:ns" width="n" height="n"/>
-	                      </connections>
-	                    </container>
-                        <scrollpane>
-                          <textpane name="Tomcat2OutView" class="com.tc.ProcessOutputView" font="monospaced-plain-11" editable="false"/>
-                        </scrollpane>
-                      </children>
-                      <connections>
-                        <item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="1,top:0" width="ns" height="n"/>
-                        <item left="-1,left:n" top="0,bottom:0" right="-1,right:n" bottom="-1,bottom:0" width="s" height="s"/>
-                      </connections>
-                    </container>
-                    <container>
-                      <children>
-                        <label name="L2Label" font="Trebuchet MS-plain-12" text="Terracotta Server"/>
-                        <scrollpane>
-                          <textpane name="L2OutView" class="com.tc.ProcessOutputView" font="monospaced-plain-11" editable="false"/>
-                        </scrollpane>
-                      </children>
-                      <connections>
-                        <item left="-1,left:n" top="-1,top:n" right="-1,right:ns" bottom="1,top:n" width="n" height="n"/>
-                        <item left="-1,left:n" top="0,bottom:n" right="-1,right:n" bottom="-1,bottom:n" width="s" height="s"/>
-                      </connections>
-                    </container>
-                  </children>
-                  <connections>
-                    <item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="1,top:0" width="s" height="s"/>
-                    <item left="-1,left:0" top="0,bottom:0" right="-1,right:0" bottom="2,top:0" width="s" height="s"/>
-                    <item left="-1,left:0" top="1,bottom:0" right="-1,right:0" bottom="-1,bottom:0" width="s" height="s"/>
-                  </connections>
-                </container>
-              </right>
-            </splitpane>
-          </tab>
-          <tab title="Configure" icon-image-uri="/com/tc/admin/icons/text_edit.gif">
-            <container>
-              <children>
-                <tabbedpane font="Trebuchet MS-plain-12" placement="bottom" selected-index="0" name="ConfigTabbedPane">
-                  <tab title="Instrumented classes" icon-image-uri="/com/tc/admin/icons/class_obj.gif">
-                    <container name="InstrumentedClassesPanel" class="com.tc.InstrumentedClassesPanel">
-                      <border>
-                        <titled-border title="Instrumentation rules"/>
-                      </border>
-                      <children>
-                        <scrollpane>
-                          <table name="RuleTable" class="com.tc.RuleTable"/>
-                        </scrollpane>
-                        <container>
-                          <children>
-                            <button name="AddRuleButton" text="Add"/>
-                            <button name="RemoveRuleButton" enabled="false" text="Remove"/>
-                            <button name="MoveUpButton" image-uri="/com/tc/admin/icons/view_menu.gif" tip="More general"/>
-                            <button name="MoveDownButton" image-uri="/com/tc/admin/icons/hide_menu.gif" tip="More specific"/>
-                          </children>
-                          <connections>
-                            <item left="-1,left:n" top="-1,top:sn" right="-1,right:n" bottom="1,top:n" width="sn" height="n"/>
-                            <item left="-1,left:n" top="0,bottom:n" right="-1,right:n" bottom="2,top:20" width="sn" height="n"/>
-                            <item left="-1,left:n" top="1,bottom:20" right="-1,right:n" bottom="3,top:n" width="sn" height="n"/>
-                            <item left="-1,left:n" top="2,bottom:n" right="-1,right:n" bottom="-1,bottom:sn" width="sn" height="n"/>
-                          </connections>
-                        </container>
-                      </children>
-                      <connections>
-                        <item left="-1,left:n" top="-1,top:n" right="1,left:n" bottom="-1,bottom:n" width="sn" height="sn"/>
-                        <item left="0,right:sn" top="0,top:n" right="-1,right:n" bottom="0,bottom:n" width="n" height="sn"/>
-                      </connections>
-                    </container>
-                  </tab>
-                  <tab title="Transient fields" icon-image-uri="/com/tc/admin/icons/transient.gif">
-                    <container name="TransientFieldsPanel" class="com.tc.TransientFieldsPanel">
-                      <children>
-                        <scrollpane>
-                          <table name="TransientFieldTable" class="com.tc.admin.common.XTable"/>
-                        </scrollpane>
-                        <container>
-                          <children>
-                            <button name="AddTransientButton" text="Add..."/>
-                            <button name="RemoveTransientButton" enabled="false" text="Remove"/>
-                          </children>
-                          <connections>
-                            <item left="1,left:0" top="-1,top:sn" right="1,right:0" bottom="1,top:sn" width="sn" height="n"/>
-                            <item left="-1,left:sn" top="0,bottom:n" right="-1,right:sn" bottom="-1,bottom:sn" width="n" height="n"/>
-                          </connections>
-                        </container>
-                      </children>
-                      <connections>
-                        <item left="-1,left:n" top="-1,top:n" right="1,left:n" bottom="-1,bottom:n" width="sn" height="sn"/>
-                        <item left="0,right:sn" top="0,top:sn" right="-1,right:n" bottom="0,bottom:sn" width="n" height="n"/>
-                      </connections>
-                    </container>
-                  </tab>
-                  <tab title="Boot classes" icon-image-uri="/com/tc/admin/icons/jar_obj.gif">
-                    <container name="BootClassesPanel" class="com.tc.BootClassesPanel">
-                      <children>
-                        <scrollpane>
-                          <table name="BootClassesTable" class="com.tc.admin.common.XTable"/>
-                        </scrollpane>
-                        <container>
-                          <children>
-                            <button name="AddBootClassButton" text="Add..."/>
-                            <button name="RemoveBootClassButton" enabled="false" text="Remove"/>
-                          </children>
-                          <connections>
-                            <item left="1,left:0" top="-1,top:sn" right="1,right:0" bottom="1,top:sn" width="sn" height="n"/>
-                            <item left="-1,left:sn" top="0,bottom:n" right="-1,right:sn" bottom="-1,bottom:sn" width="n" height="n"/>
-                          </connections>
-                        </container>
-                      </children>
-                      <connections>
-                        <item left="-1,left:n" top="-1,top:n" right="1,left:n" bottom="-1,bottom:n" width="sn" height="sn"/>
-                        <item left="0,right:sn" top="0,top:sn" right="-1,right:n" bottom="0,bottom:sn" width="n" height="n"/>
-                      </connections>
-                    </container>
-                  </tab>
-                  <tab title="tc-config.xml">
-                    <splitpane divider-location="-1" resize-weight="0.8">
-                      <left>
-                        <scrollpane>
-                          <textpane name="XMLPane" class="com.tc.ConfigTextPane" font="monospaced-plain-12"/>
-                        </scrollpane>
-                      </left>
-                      <right>
-                        <tabbedpane>
-                          <tab title="Problems">
-                            <scrollpane>
-                              <table name="ConfigProblemTable" class="com.tc.ConfigProblemTable"/>
-                            </scrollpane>
-                          </tab>
-                        </tabbedpane>
-                      </right>
-                    </splitpane>
-                  </tab>
-                </tabbedpane>
-              </children>
-              <connections>
-                <item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="-1,bottom:0" width="s" height="s"/>
-              </connections>
-            </container>
-          </tab>
-          <tab title="Monitor" icon-image-uri="/com/tc/admin/icons/monitor_obj.gif">
-            <container>
-              <children>
-                <item child-type="com.tc.SessionIntegratorAdminPanel" child-name="AdminClientPanel"/>
-              </children>
-              <connections>
-                <item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="-1,bottom:0" width="sn" height="sn"/>
-              </connections>
-            </container>
-          </tab>
-        </tabbedpane>
-      </children>
-      <connections>
-        <item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="-1,bottom:0" width="s" height="s"/>
-      </connections>
-    </content-pane>
-  </frame>
-  <dialog tag="OnLoadDialog" visible="false" title="OnLoad" modal="true" bounds="50,50,364,368">
-    <content-pane>
-      <children>
-        <label name="ClassExpressionLabel" text=""/>
-        <buttongroup name="Selector">
-          <children>
-            <radiobutton text="Do nothing" name="NoOp"/>
-            <radiobutton text="Call a method" name="Call"/>
-            <radiobutton text="Execute some code" name="Execute"/>
-          </children>
-            <connections>
-              <item left="-1,left:ns" top="-1,top:sn" right="1,left:n" bottom="-1,bottom:sn" width="n" height="n"/>
-              <item left="0,right:n" top="-1,top:sn" right="2,left:n" bottom="-1,bottom:sn" width="n" height="n"/>
-              <item left="1,right:n" top="-1,top:sn" right="-1,right:sn" bottom="-1,bottom:sn" width="n" height="n"/>
-            </connections>
-        </buttongroup>
-        <pagedview name="Views" page="NoOp">
-          <pages>
-            <container name="NoOp"/>
-            <container name="Call">
-              <children>
-                <label text="Method name:"/>
-                <textfield name="MethodNameField" class="com.tc.admin.common.XTextField"/>
-              </children>
-              <connections>
-                <item left="-1,left:n" top="-1,top:sn" right="1,left:n" bottom="-1,bottom:sn" width="n" height="n"/>
-                <item left="0,right:n" top="-1,top:sn" right="-1,right:n" bottom="-1,bottom:sn" width="ns" height="n"/>
-              </connections>
-            </container>
-            <container name="Execute">
-              <children>
-                <label text="Code to execute:"/>
-                <scrollpane>
-                  <textpane name="CodePane" class="com.tc.admin.common.XTextPane"/>
-                </scrollpane>
-              </children>
-              <connections>
-                <item left="-1,left:n" top="-1,top:n" right="-1,right:sn" bottom="1,top:n" width="n" height="n"/>
-                <item left="-1,left:n" top="0,bottom:n" right="-1,right:n" bottom="-1,bottom:n" width="s" height="s"/>
-              </connections>
-            </container>
-          </pages>
-        </pagedview>
-        <button name="CloseButton" class="com.tc.admin.common.XButton" text="OK"/>
-        <button name="CancelButton" class="com.tc.admin.common.XButton" text="Cancel"/>
-      </children>
-      <connections>
-        <item left="-1,left:sn" top="-1,top:n" right="-1,right:sn" bottom="1,top:n" width="n" height="n"/>
-        <item left="-1,left:n" top="0,bottom:n" right="-1,right:n" bottom="2,top:n" width="ns" height="n"/>
-        <item left="-1,left:n" top="1,bottom:n" right="-1,right:n" bottom="3,top:n" width="ns" height="ns"/>
-        <item left="-1,left:sn" top="2,bottom:n" right="4,left:n" bottom="-1,bottom:n" width="n" height="n"/>
-        <item left="3,right:n" top="2,bottom:n" right="-1,right:sn" bottom="-1,bottom:n" width="n" height="n"/>
-      </connections>
-    </content-pane>
-  </dialog>
-  <container tag="InstrumentPanel">
-    <children>
-      <label name="MessageLabel"/>
-      <label text="Update configuration to instrument:"/>
-      <buttongroup name="ButtonGroup">
-        <children>
-          <radiobutton text="" name="ClassButton"/>
-          <radiobutton text="" name="PackageButton"/>
-          <radiobutton text="All types"/>
-        </children>
-        <connections>
-          <item left="-1,left:n" top="-1,top:0" right="-1,right:ns" bottom="1,top:0" width="n" height="n"/>
-          <item left="-1,left:n" top="0,bottom:0" right="-1,right:ns" bottom="2,top:0" width="n" height="n"/>
-          <item left="-1,left:n" top="1,bottom:0" right="-1,right:ns" bottom="-1,bottom:0" width="n" height="n"/>
-        </connections>
-      </buttongroup>
-      <container name="SuperTypesPanel">
-        <border>
-          <titled-border title="Update configuration to add instrumented super-types"/>
-        </border>
-        <children>
-          <scrollpane>
-            <list name="SuperTypesList"/>
-          </scrollpane>
-        </children>
-        <connections>
-          <item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="-1,bottom:0" width="ns" height="ns"/>
-        </connections>     
-      </container>
-      <container name="BootTypesPanel">
-        <border>
-          <titled-border title="Update configuration to add boot-jar types"/>
-        </border>
-        <children>
-          <scrollpane>
-            <list name="BootTypesList"/>
-          </scrollpane>
-        </children>
-        <connections>
-          <item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="-1,bottom:0" width="ns" height="ns"/>
-        </connections>     
-      </container>      
-      <checkbox text="Restart system" name="RestartToggle"/>
-    </children>
-    <connections>
-      <item left="-1,left:ns" top="-1,top:n" right="-1,right:ns" bottom="1,top:ns" width="n" height="n"/>
-      <item left="-1,left:n" top="0,bottom:n" right="-1,right:ns" bottom="2,top:n" width="n" height="n"/>
-      <item left="1,left:n" top="1,bottom:n" right="-1,right:ns" bottom="3,top:ns" width="ns" height="n"/>
-      <item left="-1,left:n" top="2,bottom:n" right="-1,right:n" bottom="4,top:n" width="ns" height="ns"/>
-      <item left="-1,left:n" top="3,bottom:n" right="-1,right:n" bottom="5,top:ns" width="ns" height="ns"/>
-      <item left="-1,left:n" top="4,bottom:ns" right="-1,right:sn" bottom="-1,bottom:n" width="n" height="n"/>
-    </connections>
-  </container>
-  <container tag="InstrumentSuperTypesPanel">
-    <children>
-      <label name="MessageArea"/>
-      <container name="SuperTypesPanel">
-        <border>
-          <titled-border title="Update configuration to add instrumented super-types"/>
-        </border>
-        <children>
-          <scrollpane>
-            <list name="SuperTypesList"/>
-          </scrollpane>
-        </children>
-        <connections>
-          <item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="-1,bottom:0" width="ns" height="ns"/>
-        </connections>     
-      </container>
-      <container name="BootTypesPanel">
-        <border>
-          <titled-border title="Update configuration to add boot-jar types"/>
-        </border>
-        <children>
-          <scrollpane>
-            <list name="BootTypesList"/>
-          </scrollpane>
-        </children>
-        <connections>
-          <item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="-1,bottom:0" width="ns" height="ns"/>
-        </connections>     
-      </container>      
-      <checkbox text="Restart system" name="RestartToggle"/>
-    </children>
-    <connections>
-      <item left="-1,left:n" top="-1,top:n" right="-1,right:n" bottom="1,top:ns" width="ns" height="n"/>
-      <item left="-1,left:n" top="0,bottom:ns" right="-1,right:n" bottom="2,top:n" width="ns" height="ns"/>
-      <item left="-1,left:n" top="1,bottom:n" right="-1,right:n" bottom="3,top:ns" width="ns" height="ns"/>
-      <item left="-1,left:n" top="2,bottom:ns" right="-1,right:sn" bottom="-1,bottom:n" width="n" height="n"/>
-    </connections>
-  </container>
-  <dialog bounds="50,50,459,279" modal="true" tag="AboutDialog" title="About Configurator" visible="false" resizable="false">
-    <content-pane>
-      <children>
-        <label font="Trebuchet MS-plain-17" text="Terrracotta Sessions Configurator" name="MonikerLabel"/>
-        <label image-uri="/com/tc/admin/icons/logo.gif"/>
-        <container class="com.tc.ConfiguratorInfoPanel" name="ConfiguratorInfoPanel">
-          <children>
-            <container>
-              <border>
-                <titled-border title="System Information"/>
-              </border>
-              <children>
-                <textarea name="SystemInformationTextArea" class="com.tc.admin.common.XTextArea" editable="false"/>
-              </children>
-              <connections>
-                <item bottom="-1,bottom:0" height="n" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="ns"/>
-              </connections>
-            </container>
-            <label name="CopyrightLabel" text="Copyright"/>
-          </children>
-          <connections>
-            <item bottom="1,top:n" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="ns"/>
-            <item bottom="-1,bottom:n" height="n" left="-1,left:s" right="-1,right:s" top="0,bottom:n" width="sn"/>
-          </connections>
-        </container>
-        <button name="OKButton" text="OK"/>
-      </children>
-      <connections>
-        <item bottom="1,top:sn" height="n" left="-1,left:s" right="-1,right:s" top="-1,top:n" width="n"/>
-        <item bottom="2,top:sn" height="sn" left="-1,left:s" right="-1,right:s" top="0,bottom:n" width="sn"/>
-        <item bottom="3,top:n" height="sn" left="-1,left:n" right="-1,right:n" top="1,bottom:n" width="sn"/>
-        <item bottom="-1,bottom:n" height="n" left="-1,left:s" right="-1,right:s" top="2,bottom:n" width="n"/>
-      </connections>
-    </content-pane>
-  </dialog>
+	<dialog tag="ErrorDialog" visible="false" title="An Unexpected Error Has Occurred" al="true" bounds="50,50,364,368">
+		<content-pane>
+			<children>
+				<scrollpane>
+					<textarea name="ErrorText" class="com.tc.admin.common.XTextArea" editable="false" line-wrap="false"/>
+				</scrollpane>
+				<button name="CloseButton" class="com.tc.admin.common.XButton" text="Close"/>
+				<textfield name="MessageText" class="com.tc.admin.common.XTextField" text="MessageText" editable="false"/>
+				<label text="Stracktrace:"/>
+			</children>
+			<connections>
+				<item left="-1,left:n" top="2,bottom:sn" right="-1,right:n" bottom="1,top:n" width="s" height="s"/>
+				<item left="-1,left:s" top="0,bottom:sn" right="-1,right:s" bottom="-1,bottom:n" width="n" height="n"/>
+				<item left="-1,left:n" top="-1,top:n" right="-1,right:n" bottom="3,top:sn" width="s" height="n"/>
+				<item left="-1,left:n" top="2,bottom:n" right="-1,right:s" bottom="0,top:n" width="n" height="n"/>
+			</connections>
+		</content-pane>
+	</dialog>
+	<dialog tag="SplashDialog" visible="false" title="Terracotta Sessions Configurator" modal="true" 
+		bounds="50,50,364,368">
+		<content-pane>
+			<children>
+				<label image-uri="/com/tc/admin/icons/logo.gif"/>
+				<scrollpane>
+					<editorpane name="WelcomeText" editable="false">
+						<document uri="/com/tc/ConfiguratorIntro.html"/>
+					</editorpane>
+				</scrollpane>
+				<container>
+					<children>
+						<button name="ImportButton" class="com.tc.admin.common.XButton" text="Import..."/>
+						<button name="HelpButton" class="com.tc.admin.common.XButton" text="Help..."/>
+						<button name="SkipButton" class="com.tc.admin.common.XButton" text="Skip"/>
+					</children>
+					<connections>
+						<item left="-1,left:n" top="-1,top:ns" right="-1,right:ns" bottom="1,top:n" width="n" height="n"/>
+						<item left="-1,left:n" top="0,bottom:n" right="0,right:0" bottom="2,top:n" width="sn" height="n"/>
+						<item left="-1,left:n" top="1,bottom:n" right="0,right:0" bottom="-1,bottom:ns" width="sn" height="n"/>
+					</connections>
+				</container>
+				<checkbox name="NoShowSplash" text="Don't show again" selected="false"/>
+			</children>
+			<connections>
+				<item left="-1,left:ns" top="-1,top:n" right="-1,right:ns" bottom="1,top:n" width="n" height="n"/>
+				<item left="-1,left:n" top="0,bottom:ns" right="-1,right:n" bottom="2,top:n" width="s" height="s"/>
+				<item left="-1,left:n" top="1,bottom:n" right="3,left:n" bottom="-1,bottom:n" width="ns" height="n"/>
+				<item left="2,right:n" top="1,bottom:ns" right="-1,right:n" bottom="-1,bottom:n" width="n" height="n"/>
+			</connections>
+		</content-pane>
+	</dialog>
+	<dialog tag="ServersDialog" visible="false" title="Terracotta Sessions Configurator" modal="true" 
+		bounds="50,50,500,368">
+		<content-pane>
+			<children>
+				<label text="Current webserver"/>
+				<combo name="ServerSelector"/>
+				<scrollpane>
+					<table name="ServerEnvironment" class="com.tc.servers.ServerEnvTable"/>
+				</scrollpane>
+				<label name="ErrorLabel" text="" image-uri="/com/tc/admin/icons/error12x12.gif" horizontal-alignment="left"/>
+				<container>
+					<children>
+						<button name="OKButton" class="com.tc.admin.common.XButton" text="OK"/>
+						<button name="CancelButton" class="com.tc.admin.common.XButton" text="Cancel"/>
+						<button name="RestoreButton" class="com.tc.admin.common.XButton" text="Restore Defaults"/>
+					</children>
+					<connections>
+						<item left="-1,left:n" top="-1,top:n" right="1,left:n" bottom="-1,bottom:n" width="ns" height="n"/>
+						<item left="0,right:n" top="-1,top:n" right="2,left:n" bottom="-1,bottom:n" width="ns" height="n"/>
+						<item left="1,right:n" top="-1,top:n" right="-1,right:n" bottom="-1,bottom:n" width="ns" height="n"/>
+					</connections>
+				</container>
+			</children>
+			<connections>
+				<item left="-1,left:ns" top="1,top:s" right="1,left:n" bottom="1,bottom:s" width="n" height="n"/>
+				<item left="0,right:n" top="-1,top:n" right="-1,right:ns" bottom="2,top:n" width="n" height="n"/>
+				<item left="-1,left:n" top="1,bottom:n" right="-1,right:n" bottom="3,top:n" width="s" height="s"/>
+				<item left="-1,left:n" top="2,bottom:n" right="-1,right:n" bottom="4,top:n" width="n" height="n"/>
+				<item left="-1,left:ns" top="3,bottom:n" right="-1,right:n" bottom="-1,bottom:n" width="n" height="n"/>
+			</connections>
+		</content-pane>
+	</dialog>
+	<frame tag="MainFrame" name="Main" visible="false" title="Terracotta Sessions Configurator" bounds="50,50,675,386" 
+		help-uri="/com/tc/SessionIntegrator.html" icon-image-uri="/com/tc/admin/icons/logo_small.gif">
+		<content-pane>
+			<children>
+				<tabbedpane font="Trebuchet MS-plain-12" selected-index="0" name="MainTabbedPane">
+					<tab title="Control" icon-image-uri="/com/tc/admin/icons/thread_obj.gif">
+						<splitpane name="ControlSplitter" orientation="horizontal" focus-index="0" divider-location="-1" 
+							resize-weight="0.1">
+							<left>
+								<container>
+									<children>
+										<scrollpane>
+											<tree name="WebAppTree" class="com.tc.admin.common.XTree" font="Trebuchet MS-plain-12"/>
+										</scrollpane>
+										<button name="StartButton" font="MS Sans Serif-plain-12" text="Start all" 
+											image-uri="/com/tc/admin/icons/run_exc.gif"/>
+										<button name="StopButton" enabled="false" font="MS Sans Serif-plain-12" text="Stop all" 
+											image-uri="/com/tc/admin/icons/terminate_co.gif"/>
+										<checkbox name="DSOEnabledToggle" text="Terracotta Sessions enabled" selected="false"/>
+									</children>
+									<connections>
+										<item left="-1,left:0" top="1,bottom:n" right="-1,right:0" bottom="-1,bottom:0" width="sn" 
+											height="s"/>
+										<item left="-1,left:n" top="3,bottom:n" right="2,left:n" bottom="0,top:n" width="n" height="n"/>
+										<item left="1,right:n" top="1,top:s" right="-1,right:sn" bottom="1,bottom:s" width="n" height="n"/>
+										<item left="-1,left:n" top="-1,top:n" right="-1,right:ns" bottom="1,top:n" width="n" height="n"/>
+									</connections>
+								</container>
+							</left>
+							<right>
+								<container>
+									<children>
+										<container>
+											<children>
+												<container>
+													<children>
+														<checkbox name="Tomcat1EnabledToggle"/>
+														<label name="Tomcat1Label" font="Trebuchet MS-plain-12" text="Tomcat-9081"/>
+														<button name="Tomcat1Control" text="" image-uri="/com/tc/admin/icons/run_exc.gif" 
+															visible="false" class="com.tc.admin.common.RolloverButton"/>
+													</children>
+													<connections>
+														<item left="-1,left:n" top="-1,top:ns" right="1,left:n" bottom="-1,bottom:ns" width="n" 
+															height="n"/>
+														<item left="0,right:n" top="-1,top:ns" right="2,left:n" bottom="-1,bottom:ns" width="n" 
+															height="n"/>
+														<item left="1,right:n" top="-1,top:ns" right="-1,right:ns" bottom="-1,bottom:ns" width="n" 
+															height="n"/>
+													</connections>
+												</container>
+												<scrollpane>
+													<textpane name="Tomcat1OutView" class="com.tc.ProcessOutputView" font="monospaced-plain-11" 
+														editable="false"/>
+												</scrollpane>
+											</children>
+											<connections>
+												<item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="1,top:0" width="ns" 
+													height="n"/>
+												<item left="-1,left:n" top="0,bottom:0" right="-1,right:n" bottom="-1,bottom:0" width="s" 
+													height="s"/>
+											</connections>
+										</container>
+										<container>
+											<children>
+												<container>
+													<children>
+														<checkbox name="Tomcat2EnabledToggle"/>
+														<label name="Tomcat2Label" font="Trebuchet MS-plain-12" text="Tomcat-9082"/>
+														<button name="Tomcat2Control" text="" image-uri="/com/tc/admin/icons/run_exc.gif" 
+															visible="false" class="com.tc.admin.common.RolloverButton"/>
+													</children>
+													<connections>
+														<item left="-1,left:n" top="-1,top:ns" right="1,left:n" bottom="-1,bottom:ns" width="n" 
+															height="n"/>
+														<item left="0,right:n" top="-1,top:ns" right="2,left:n" bottom="-1,bottom:ns" width="n" 
+															height="n"/>
+														<item left="1,right:n" top="-1,top:ns" right="-1,right:ns" bottom="-1,bottom:ns" width="n" 
+															height="n"/>
+													</connections>
+												</container>
+												<scrollpane>
+													<textpane name="Tomcat2OutView" class="com.tc.ProcessOutputView" font="monospaced-plain-11" 
+														editable="false"/>
+												</scrollpane>
+											</children>
+											<connections>
+												<item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="1,top:0" width="ns" 
+													height="n"/>
+												<item left="-1,left:n" top="0,bottom:0" right="-1,right:n" bottom="-1,bottom:0" width="s" 
+													height="s"/>
+											</connections>
+										</container>
+										<container>
+											<children>
+												<label name="L2Label" font="Trebuchet MS-plain-12" text="Terracotta Server"/>
+												<scrollpane>
+													<textpane name="L2OutView" class="com.tc.ProcessOutputView" font="monospaced-plain-11" 
+														editable="false"/>
+												</scrollpane>
+											</children>
+											<connections>
+												<item left="-1,left:n" top="-1,top:n" right="-1,right:ns" bottom="1,top:n" width="n" 
+													height="n"/>
+												<item left="-1,left:n" top="0,bottom:n" right="-1,right:n" bottom="-1,bottom:n" width="s" 
+													height="s"/>
+											</connections>
+										</container>
+									</children>
+									<connections>
+										<item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="1,top:0" width="s" height="s"/>
+										<item left="-1,left:0" top="0,bottom:0" right="-1,right:0" bottom="2,top:0" width="s" height="s"/>
+										<item left="-1,left:0" top="1,bottom:0" right="-1,right:0" bottom="-1,bottom:0" width="s" 
+											height="s"/>
+									</connections>
+								</container>
+							</right>
+						</splitpane>
+					</tab>
+					<tab title="Configure" icon-image-uri="/com/tc/admin/icons/text_edit.gif">
+						<container>
+							<children>
+								<tabbedpane font="Trebuchet MS-plain-12" placement="bottom" selected-index="0" name="ConfigTabbedPane">
+									<tab title="Instrumented classes" icon-image-uri="/com/tc/admin/icons/class_obj.gif">
+										<container name="InstrumentedClassesPanel" class="com.tc.InstrumentedClassesPanel">
+											<border>
+												<titled-border title="Instrumentation rules"/>
+											</border>
+											<children>
+												<scrollpane>
+													<table name="RuleTable" class="com.tc.RuleTable"/>
+												</scrollpane>
+												<container>
+													<children>
+														<button name="AddRuleButton" text="Add"/>
+														<button name="RemoveRuleButton" enabled="false" text="Remove"/>
+														<button name="MoveUpButton" image-uri="/com/tc/admin/icons/view_menu.gif" 
+															tip="More general"/>
+														<button name="MoveDownButton" image-uri="/com/tc/admin/icons/hide_menu.gif" 
+															tip="More specific"/>
+													</children>
+													<connections>
+														<item left="-1,left:n" top="-1,top:sn" right="-1,right:n" bottom="1,top:n" width="sn" 
+															height="n"/>
+														<item left="-1,left:n" top="0,bottom:n" right="-1,right:n" bottom="2,top:20" width="sn" 
+															height="n"/>
+														<item left="-1,left:n" top="1,bottom:20" right="-1,right:n" bottom="3,top:n" width="sn" 
+															height="n"/>
+														<item left="-1,left:n" top="2,bottom:n" right="-1,right:n" bottom="-1,bottom:sn" width="sn" 
+															height="n"/>
+													</connections>
+												</container>
+											</children>
+											<connections>
+												<item left="-1,left:n" top="-1,top:n" right="1,left:n" bottom="-1,bottom:n" width="sn" 
+													height="sn"/>
+												<item left="0,right:sn" top="0,top:n" right="-1,right:n" bottom="0,bottom:n" width="n" 
+													height="sn"/>
+											</connections>
+										</container>
+									</tab>
+									<tab title="Transient fields" icon-image-uri="/com/tc/admin/icons/transient.gif">
+										<container name="TransientFieldsPanel" class="com.tc.TransientFieldsPanel">
+											<children>
+												<scrollpane>
+													<table name="TransientFieldTable" class="com.tc.admin.common.XTable"/>
+												</scrollpane>
+												<container>
+													<children>
+														<button name="AddTransientButton" text="Add..."/>
+														<button name="RemoveTransientButton" enabled="false" text="Remove"/>
+													</children>
+													<connections>
+														<item left="1,left:0" top="-1,top:sn" right="1,right:0" bottom="1,top:sn" width="sn" 
+															height="n"/>
+														<item left="-1,left:sn" top="0,bottom:n" right="-1,right:sn" bottom="-1,bottom:sn" 
+															width="n" height="n"/>
+													</connections>
+												</container>
+											</children>
+											<connections>
+												<item left="-1,left:n" top="-1,top:n" right="1,left:n" bottom="-1,bottom:n" width="sn" 
+													height="sn"/>
+												<item left="0,right:sn" top="0,top:sn" right="-1,right:n" bottom="0,bottom:sn" width="n" 
+													height="n"/>
+											</connections>
+										</container>
+									</tab>
+									<tab title="Boot classes" icon-image-uri="/com/tc/admin/icons/jar_obj.gif">
+										<container name="BootClassesPanel" class="com.tc.BootClassesPanel">
+											<children>
+												<scrollpane>
+													<table name="BootClassesTable" class="com.tc.admin.common.XTable"/>
+												</scrollpane>
+												<container>
+													<children>
+														<button name="AddBootClassButton" text="Add..."/>
+														<button name="RemoveBootClassButton" enabled="false" text="Remove"/>
+													</children>
+													<connections>
+														<item left="1,left:0" top="-1,top:sn" right="1,right:0" bottom="1,top:sn" width="sn" 
+															height="n"/>
+														<item left="-1,left:sn" top="0,bottom:n" right="-1,right:sn" bottom="-1,bottom:sn" 
+															width="n" height="n"/>
+													</connections>
+												</container>
+											</children>
+											<connections>
+												<item left="-1,left:n" top="-1,top:n" right="1,left:n" bottom="-1,bottom:n" width="sn" 
+													height="sn"/>
+												<item left="0,right:sn" top="0,top:sn" right="-1,right:n" bottom="0,bottom:sn" width="n" 
+													height="n"/>
+											</connections>
+										</container>
+									</tab>
+									<tab title="Modules" icon-image-uri="/com/tc/admin/icons/plugin_obj.gif">
+										<container name="ModulesPanel" class="com.tc.ModulesPanel">
+											<children>
+												<scrollpane>
+													<table name="RepositoriesTable" class="com.tc.admin.common.XTable"/>
+												</scrollpane>
+												<label text="Repositories"/>
+												<container>
+													<children>
+														<button name="AddRepositoryButton" text="Add"/>
+														<button name="RemoveRepositoryButton" enabled="false" text="Remove"/>
+													</children>
+													<connections>
+														<item left="1,left:0" top="-1,top:sn" right="1,right:0" bottom="1,top:sn" width="sn" 
+															height="n"/>
+														<item left="-1,left:sn" top="0,bottom:n" right="-1,right:sn" bottom="-1,bottom:sn" 
+															width="n" height="n"/>
+													</connections>
+												</container>
+												<scrollpane>
+													<table name="ModulesTable" class="com.tc.admin.common.XTable"/>
+												</scrollpane>
+												<label text="Modules"/>
+												<container>
+													<children>
+														<button name="AddModuleButton" text="Add..."/>
+														<button name="RemoveModuleButton" enabled="false" text="Remove"/>
+													</children>
+													<connections>
+														<item left="1,left:0" top="-1,top:sn" right="1,right:0" bottom="1,top:n" width="sn" 
+															height="n"/>
+														<item left="-1,left:sn" top="0,bottom:sn" right="-1,right:sn" bottom="-1,bottom:sn" 
+															width="n" height="n"/>
+													</connections>
+												</container>
+											</children>
+											<connections>
+												<item left="-1,left:n" top="1,bottom:0" right="2,left:n" bottom="4,top:n" width="sn" 
+													height="sn"/>
+												<item left="-1,left:n" top="-1,top:n" right="-1,right:s" bottom="0,top:s" width="n" height="n"/>
+												<item left="0,right:sn" top="0,top:sn" right="-1,right:n" bottom="0,bottom:sn" width="n" 
+													height="n"/>
+												<item left="-1,left:n" top="4,bottom:s" right="5,left:n" bottom="-1,bottom:n" width="sn" 
+													height="sn"/>
+												<item left="3,left:0" top="0,bottom:sn" right="-1,right:s" bottom="3,top:0" width="n" 
+													height="n"/>
+												<item left="3,right:sn" top="3,top:s" right="-1,right:n" bottom="3,bottom:s" width="n" 
+													height="n"/>
+											</connections>
+										</container>
+									</tab>
+									<tab title="tc-config.xml">
+										<splitpane divider-location="-1" resize-weight="0.8">
+											<left>
+												<scrollpane>
+													<textpane name="XMLPane" class="com.tc.ConfigTextPane" font="monospaced-plain-12"/>
+												</scrollpane>
+											</left>
+											<right>
+												<tabbedpane>
+													<tab title="Problems">
+														<scrollpane>
+															<table name="ConfigProblemTable" class="com.tc.ConfigProblemTable"/>
+														</scrollpane>
+													</tab>
+												</tabbedpane>
+											</right>
+										</splitpane>
+									</tab>
+								</tabbedpane>
+							</children>
+							<connections>
+								<item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="-1,bottom:0" width="s" height="s"/>
+							</connections>
+						</container>
+					</tab>
+					<tab title="Monitor" icon-image-uri="/com/tc/admin/icons/monitor_obj.gif">
+						<container>
+							<children>
+								<item child-type="com.tc.SessionIntegratorAdminPanel" child-name="AdminClientPanel"/>
+							</children>
+							<connections>
+								<item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="-1,bottom:0" width="sn" height="sn"/>
+							</connections>
+						</container>
+					</tab>
+				</tabbedpane>
+			</children>
+			<connections>
+				<item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="-1,bottom:0" width="s" height="s"/>
+			</connections>
+		</content-pane>
+	</frame>
+	<dialog tag="OnLoadDialog" visible="false" title="OnLoad" modal="true" bounds="50,50,364,368">
+		<content-pane>
+			<children>
+				<label name="ClassExpressionLabel" text=""/>
+				<buttongroup name="Selector">
+					<children>
+						<radiobutton text="Do nothing" name="NoOp"/>
+						<radiobutton text="Call a method" name="Call"/>
+						<radiobutton text="Execute some code" name="Execute"/>
+					</children>
+					<connections>
+						<item left="-1,left:ns" top="-1,top:sn" right="1,left:n" bottom="-1,bottom:sn" width="n" height="n"/>
+						<item left="0,right:n" top="-1,top:sn" right="2,left:n" bottom="-1,bottom:sn" width="n" height="n"/>
+						<item left="1,right:n" top="-1,top:sn" right="-1,right:sn" bottom="-1,bottom:sn" width="n" height="n"/>
+					</connections>
+				</buttongroup>
+				<pagedview name="Views" page="NoOp">
+					<pages>
+						<container name="NoOp"/>
+						<container name="Call">
+							<children>
+								<label text="Method name:"/>
+								<textfield name="MethodNameField" class="com.tc.admin.common.XTextField"/>
+							</children>
+							<connections>
+								<item left="-1,left:n" top="-1,top:sn" right="1,left:n" bottom="-1,bottom:sn" width="n" height="n"/>
+								<item left="0,right:n" top="-1,top:sn" right="-1,right:n" bottom="-1,bottom:sn" width="ns" height="n"/>
+							</connections>
+						</container>
+						<container name="Execute">
+							<children>
+								<label text="Code to execute:"/>
+								<scrollpane>
+									<textpane name="CodePane" class="com.tc.admin.common.XTextPane"/>
+								</scrollpane>
+							</children>
+							<connections>
+								<item left="-1,left:n" top="-1,top:n" right="-1,right:sn" bottom="1,top:n" width="n" height="n"/>
+								<item left="-1,left:n" top="0,bottom:n" right="-1,right:n" bottom="-1,bottom:n" width="s" height="s"/>
+							</connections>
+						</container>
+					</pages>
+				</pagedview>
+				<button name="CloseButton" class="com.tc.admin.common.XButton" text="OK"/>
+				<button name="CancelButton" class="com.tc.admin.common.XButton" text="Cancel"/>
+			</children>
+			<connections>
+				<item left="-1,left:sn" top="-1,top:n" right="-1,right:sn" bottom="1,top:n" width="n" height="n"/>
+				<item left="-1,left:n" top="0,bottom:n" right="-1,right:n" bottom="2,top:n" width="ns" height="n"/>
+				<item left="-1,left:n" top="1,bottom:n" right="-1,right:n" bottom="3,top:n" width="ns" height="ns"/>
+				<item left="-1,left:sn" top="2,bottom:n" right="4,left:n" bottom="-1,bottom:n" width="n" height="n"/>
+				<item left="3,right:n" top="2,bottom:n" right="-1,right:sn" bottom="-1,bottom:n" width="n" height="n"/>
+			</connections>
+		</content-pane>
+	</dialog>
+	<container tag="ModulesDialog" focus-index="1">
+		<children>
+			<label name="TitleLabel" text="Module Declaration"/>
+			<label name="ModuleNameLabel" text="Name"/>
+			<textfield name="ModuleNameField"/>
+			<label name="ModuleVersionLabel" text="Version"/>
+			<textfield name="ModuleVersionField"/>
+		</children>
+		<connections>
+			<item left="-1,left:n" top="-1,top:n" right="-1,right:s" bottom="2,top:15" width="n" height="n"/>
+			<item left="-1,left:s" top="2,top:sn" right="2,left:n" bottom="2,bottom:sn" width="n" height="sn"/>
+			<item left="1,right:n" top="0,bottom:sn" right="-1,right:n" bottom="4,top:n" width="s" height="n"/>
+			<item left="-1,left:n" top="1,bottom:sn" right="4,left:n" bottom="-1,bottom:n" width="n" height="sn"/>
+			<item left="1,right:n" top="2,bottom:n" right="-1,right:n" bottom="-1,bottom:n" width="s" height="n"/>
+		</connections>
+	</container>
+	<container tag="InstrumentPanel">
+		<children>
+			<label name="MessageLabel"/>
+			<label text="Update configuration to instrument:"/>
+			<buttongroup name="ButtonGroup">
+				<children>
+					<radiobutton text="" name="ClassButton"/>
+					<radiobutton text="" name="PackageButton"/>
+					<radiobutton text="All types"/>
+				</children>
+				<connections>
+					<item left="-1,left:n" top="-1,top:0" right="-1,right:ns" bottom="1,top:0" width="n" height="n"/>
+					<item left="-1,left:n" top="0,bottom:0" right="-1,right:ns" bottom="2,top:0" width="n" height="n"/>
+					<item left="-1,left:n" top="1,bottom:0" right="-1,right:ns" bottom="-1,bottom:0" width="n" height="n"/>
+				</connections>
+			</buttongroup>
+			<container name="SuperTypesPanel">
+				<border>
+					<titled-border title="Update configuration to add instrumented super-types"/>
+				</border>
+				<children>
+					<scrollpane>
+						<list name="SuperTypesList"/>
+					</scrollpane>
+				</children>
+				<connections>
+					<item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="-1,bottom:0" width="ns" height="ns"/>
+				</connections>
+			</container>
+			<container name="BootTypesPanel">
+				<border>
+					<titled-border title="Update configuration to add boot-jar types"/>
+				</border>
+				<children>
+					<scrollpane>
+						<list name="BootTypesList"/>
+					</scrollpane>
+				</children>
+				<connections>
+					<item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="-1,bottom:0" width="ns" height="ns"/>
+				</connections>
+			</container>
+			<checkbox text="Restart system" name="RestartToggle"/>
+		</children>
+		<connections>
+			<item left="-1,left:ns" top="-1,top:n" right="-1,right:ns" bottom="1,top:ns" width="n" height="n"/>
+			<item left="-1,left:n" top="0,bottom:n" right="-1,right:ns" bottom="2,top:n" width="n" height="n"/>
+			<item left="1,left:n" top="1,bottom:n" right="-1,right:ns" bottom="3,top:ns" width="ns" height="n"/>
+			<item left="-1,left:n" top="2,bottom:n" right="-1,right:n" bottom="4,top:n" width="ns" height="ns"/>
+			<item left="-1,left:n" top="3,bottom:n" right="-1,right:n" bottom="5,top:ns" width="ns" height="ns"/>
+			<item left="-1,left:n" top="4,bottom:ns" right="-1,right:sn" bottom="-1,bottom:n" width="n" height="n"/>
+		</connections>
+	</container>
+	<container tag="InstrumentSuperTypesPanel">
+		<children>
+			<label name="MessageArea"/>
+			<container name="SuperTypesPanel">
+				<border>
+					<titled-border title="Update configuration to add instrumented super-types"/>
+				</border>
+				<children>
+					<scrollpane>
+						<list name="SuperTypesList"/>
+					</scrollpane>
+				</children>
+				<connections>
+					<item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="-1,bottom:0" width="ns" height="ns"/>
+				</connections>
+			</container>
+			<container name="BootTypesPanel">
+				<border>
+					<titled-border title="Update configuration to add boot-jar types"/>
+				</border>
+				<children>
+					<scrollpane>
+						<list name="BootTypesList"/>
+					</scrollpane>
+				</children>
+				<connections>
+					<item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="-1,bottom:0" width="ns" height="ns"/>
+				</connections>
+			</container>
+			<checkbox text="Restart system" name="RestartToggle"/>
+		</children>
+		<connections>
+			<item left="-1,left:n" top="-1,top:n" right="-1,right:n" bottom="1,top:ns" width="ns" height="n"/>
+			<item left="-1,left:n" top="0,bottom:ns" right="-1,right:n" bottom="2,top:n" width="ns" height="ns"/>
+			<item left="-1,left:n" top="1,bottom:n" right="-1,right:n" bottom="3,top:ns" width="ns" height="ns"/>
+			<item left="-1,left:n" top="2,bottom:ns" right="-1,right:sn" bottom="-1,bottom:n" width="n" height="n"/>
+		</connections>
+	</container>
+	<dialog bounds="50,50,459,279" modal="true" tag="AboutDialog" title="About Configurator" visible="false" 
+		resizable="false">
+		<content-pane>
+			<children>
+				<label font="Trebuchet MS-plain-17" text="Terrracotta Sessions Configurator" name="MonikerLabel"/>
+				<label image-uri="/com/tc/admin/icons/logo.gif"/>
+				<container class="com.tc.ConfiguratorInfoPanel" name="ConfiguratorInfoPanel">
+					<children>
+						<container>
+							<border>
+								<titled-border title="System Information"/>
+							</border>
+							<children>
+								<textarea name="SystemInformationTextArea" class="com.tc.admin.common.XTextArea" editable="false"/>
+							</children>
+							<connections>
+								<item bottom="-1,bottom:0" height="n" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="ns"/>
+							</connections>
+						</container>
+						<label name="CopyrightLabel" text="Copyright"/>
+					</children>
+					<connections>
+						<item bottom="1,top:n" height="n" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="ns"/>
+						<item bottom="-1,bottom:n" height="n" left="-1,left:s" right="-1,right:s" top="0,bottom:n" width="sn"/>
+					</connections>
+				</container>
+				<button name="OKButton" text="OK"/>
+			</children>
+			<connections>
+				<item bottom="1,top:sn" height="n" left="-1,left:s" right="-1,right:s" top="-1,top:n" width="n"/>
+				<item bottom="2,top:sn" height="sn" left="-1,left:s" right="-1,right:s" top="0,bottom:n" width="sn"/>
+				<item bottom="3,top:n" height="sn" left="-1,left:n" right="-1,right:n" top="1,bottom:n" width="sn"/>
+				<item bottom="-1,bottom:n" height="n" left="-1,left:s" right="-1,right:s" top="2,bottom:n" width="n"/>
+			</connections>
+		</content-pane>
+	</dialog>
 </dict>

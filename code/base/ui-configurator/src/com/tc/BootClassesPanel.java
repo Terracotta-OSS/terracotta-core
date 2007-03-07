@@ -93,6 +93,7 @@ public class BootClassesPanel extends XContainer
     return m_bootClasses;
   }
   
+  // make sure parent exists
   public void ensureXmlObject() {
     if(m_bootClasses == null) {
       removeListeners();
@@ -102,6 +103,7 @@ public class BootClassesPanel extends XContainer
     }
   }
   
+  // write xml and remove if not needed
   private void syncModel() {
     if(!hasAnySet() && m_dsoApp.getAdditionalBootJarClasses() != null) {
       m_dsoApp.unsetAdditionalBootJarClasses();
@@ -127,6 +129,7 @@ public class BootClassesPanel extends XContainer
     m_removeButton.removeActionListener(m_removeListener);
   }
   
+  // match table to xmlbeans
   private void updateChildren() {
     m_bootClassesTableModel.clear();
 
