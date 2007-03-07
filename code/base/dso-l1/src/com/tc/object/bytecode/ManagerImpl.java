@@ -577,7 +577,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
-  public Object lookupObject(ObjectID id) {
+  public Object lookupObject(ObjectID id) throws ClassNotFoundException {
     return this.objectManager.lookupObject(id);
   }
 
@@ -681,7 +681,7 @@ public class ManagerImpl implements Manager {
     this.optimisticTransactionManager.begin();
   }
 
-  public void optimisticCommit() {
+  public void optimisticCommit() throws ClassNotFoundException {
     this.optimisticTransactionManager.commit();
   }
 

@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.tc.exception.TCClassNotFoundException;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.field.TCField;
 import com.tc.util.Assert;
@@ -69,7 +70,12 @@ public class TCObjectPhysical extends TCObjectImpl {
     if (id.isNull()) {
       po[index] = null;
     } else {
-      Object o = getObjectManager().lookupObject(id);
+      Object o;
+      try {
+        o = getObjectManager().lookupObject(id);
+      } catch (ClassNotFoundException e) {
+        throw new TCClassNotFoundException(e);
+      }
       po[index] = o;
     }
   }
@@ -105,7 +111,11 @@ public class TCObjectPhysical extends TCObjectImpl {
 
       Object setObject = null;
       if (id != null && !id.isNull()) {
-        setObject = getObjectManager().lookupObject(id);
+        try {
+          setObject = getObjectManager().lookupObject(id);
+        } catch (ClassNotFoundException e) {
+          throw new TCClassNotFoundException(e);
+        }
       }
       removeReference(fieldName);
       ((TransparentAccess) po).__tc_setfield(field.getName(), setObject);

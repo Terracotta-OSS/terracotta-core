@@ -13,7 +13,7 @@ public interface OptimisticTransactionManager {
 
   public void logicalInvoke(TCObjectClone clone, int method, String methodName, Object[] parameters);
 
-  public void commit();
+  public void commit() throws ClassNotFoundException;
 
   public void rollback();
 

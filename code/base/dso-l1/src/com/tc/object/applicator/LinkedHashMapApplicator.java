@@ -65,7 +65,7 @@ public class LinkedHashMapApplicator extends PartialHashMapApplicator {
     }
   }
 
-  protected void apply(ClientObjectManager objectManager, Object pojo, int method, Object[] params) {
+  protected void apply(ClientObjectManager objectManager, Object pojo, int method, Object[] params) throws ClassNotFoundException {
     switch (method) {
       case SerializationUtil.GET:
         ((LinkedHashMap) pojo).get(params[0]);

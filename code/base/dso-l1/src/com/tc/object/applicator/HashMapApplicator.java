@@ -88,7 +88,7 @@ public class HashMapApplicator extends BaseApplicator {
     }
   }
 
-  protected void apply(ClientObjectManager objectManager, Object po, int method, Object[] params) {
+  protected void apply(ClientObjectManager objectManager, Object po, int method, Object[] params) throws ClassNotFoundException {
     Map m = (Map) po;
     switch (method) {
       case SerializationUtil.PUT:
@@ -123,12 +123,12 @@ public class HashMapApplicator extends BaseApplicator {
   }
 
   // This can be overridden by subclass if you want different behavior.
-  protected Object getObjectForValue(ClientObjectManager objectManager, Object v) {
+  protected Object getObjectForValue(ClientObjectManager objectManager, Object v) throws ClassNotFoundException {
     return (v instanceof ObjectID ? objectManager.lookupObject((ObjectID) v) : v);
   }
 
   // This can be overridden by subclass if you want different behavior.
-  protected Object getObjectForKey(ClientObjectManager objectManager, Object k) {
+  protected Object getObjectForKey(ClientObjectManager objectManager, Object k) throws ClassNotFoundException {
     return (k instanceof ObjectID ? objectManager.lookupObject((ObjectID) k) : k);
   }
 

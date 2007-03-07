@@ -49,7 +49,7 @@ public class HashSetApplicator extends BaseApplicator {
     }
   }
 
-  protected void apply(ClientObjectManager objectManager, Set set, int method, Object[] params) {
+  protected void apply(ClientObjectManager objectManager, Set set, int method, Object[] params) throws ClassNotFoundException {
     switch (method) {
       case SerializationUtil.ADD:
         Object v = getValue(params);
@@ -71,7 +71,7 @@ public class HashSetApplicator extends BaseApplicator {
     }
   }
 
-  private List getObjectParams(ClientObjectManager objectManager, Object[] params) {
+  private List getObjectParams(ClientObjectManager objectManager, Object[] params) throws ClassNotFoundException {
     List retParams = new ArrayList(params.length);
 
     for (int i = 0; i < params.length; i++) {

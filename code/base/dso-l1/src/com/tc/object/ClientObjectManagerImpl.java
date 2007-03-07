@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.exception.TCRuntimeException;
 import com.tc.io.TCByteArrayOutputStream;
@@ -378,15 +379,15 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     cache.markReferenced(tcobj);
   }
 
-  public Object lookupObjectNoDepth(ObjectID id) {
+  public Object lookupObjectNoDepth(ObjectID id) throws ClassNotFoundException {
     return lookupObject(id, true);
   }
 
-  public Object lookupObject(ObjectID objectID) {
+  public Object lookupObject(ObjectID objectID) throws ClassNotFoundException {
     return lookupObject(objectID, false);
   }
 
-  private Object lookupObject(ObjectID objectID, boolean noDepth) {
+  private Object lookupObject(ObjectID objectID, boolean noDepth) throws ClassNotFoundException {
     if (objectID.isNull()) return null;
     Object o = null;
     while (o == null) {
@@ -453,11 +454,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
 
   // Done
 
-  public TCObject lookup(ObjectID id) {
+  public TCObject lookup(ObjectID id) throws ClassNotFoundException {
     return lookup(id, false);
   }
 
-  private TCObject lookup(ObjectID id, boolean noDepth) {
+  private TCObject lookup(ObjectID id, boolean noDepth) throws ClassNotFoundException {
     TCObject obj = null;
     boolean retrieveNeeded = false;
     boolean isInterrupted = false;
@@ -493,10 +494,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
         setCreationInProgress(id, obj);
         Assert.assertFalse(dna.isDelta());
         obj.hydrate(dna, false);
+      } catch (ClassNotFoundException e) {
+        throw e;
+      } finally {
         removeCreationInProgress(id);
-      } catch (Exception e) {
-        e.printStackTrace();
-        throw new TCRuntimeException(e);
       }
       basicAddLocal(obj);
     }
@@ -518,14 +519,22 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   }
 
   public Object lookupRoot(String rootName) {
-    return lookupRootOptionallyCreateOrReplace(rootName, null, false, true, false);
+    try {
+      return lookupRootOptionallyCreateOrReplace(rootName, null, false, true, false);
+    } catch (ClassNotFoundException e) {
+      throw new TCClassNotFoundException(e);
+    }
   }
 
   /**
    * Check to see if the root is already in existence on the server. If it is then get it if not then create it.
    */
   public Object lookupOrCreateRoot(String rootName, Object root) {
-    return lookupOrCreateRoot(rootName, root, true, false);
+    try {
+      return lookupOrCreateRoot(rootName, root, true, false);
+    } catch (ClassNotFoundException e) {
+      throw new TCClassNotFoundException(e);
+    }
   }
 
   /**
@@ -546,18 +555,26 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   }
 
   public Object lookupOrCreateRootNoDepth(String rootName, Object root) {
-    return lookupOrCreateRoot(rootName, root, true, true);
+    try {
+      return lookupOrCreateRoot(rootName, root, true, true);
+    } catch (ClassNotFoundException e) {
+      throw new TCClassNotFoundException(e);
+    }
   }
 
   public Object lookupOrCreateRoot(String rootName, Object root, boolean dsoFinal) {
-    return lookupOrCreateRoot(rootName, root, dsoFinal, false);
+    try {
+      return lookupOrCreateRoot(rootName, root, dsoFinal, false);
+    } catch (ClassNotFoundException e) {
+      throw new TCClassNotFoundException(e);
+    }
   }
 
   private boolean isLiteralPojo(Object pojo) {
     return !(pojo instanceof Class) && literals.isLiteralInstance(pojo);
   }
 
-  private Object lookupOrCreateRoot(String rootName, Object root, boolean dsoFinal, boolean noDepth) {
+  private Object lookupOrCreateRoot(String rootName, Object root, boolean dsoFinal, boolean noDepth) throws ClassNotFoundException {
     if (root != null) {
       // this will throw an exception if root is not portable
       this.checkPortabilityOfRoot(root, rootName, root.getClass());
@@ -673,7 +690,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   }
 
   private Object lookupRootOptionallyCreateOrReplace(String rootName, Object rootPojo, boolean create,
-                                                     boolean dsoFinal, boolean noDepth) {
+                                                     boolean dsoFinal, boolean noDepth) throws ClassNotFoundException {
     boolean replaceRootIfExistWhenCreate = !dsoFinal && create;
 
     ObjectID rootID = null;

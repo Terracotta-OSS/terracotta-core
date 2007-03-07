@@ -3,6 +3,7 @@
  */
 package com.tc.object.tx.optimistic;
 
+import com.tc.exception.TCClassNotFoundException;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.LiteralValues;
 import com.tc.object.TCObject;
@@ -68,7 +69,7 @@ public class OptimisticTransactionManagerImpl implements OptimisticTransactionMa
     return nv;
   }
 
-  public void commit() {
+  public void commit() throws ClassNotFoundException {
     OptimisticTransaction ot = getTransaction();
     final ClientTransaction ctx = clientTxManager.getTransaction();
     Map buffers = ot.getChangeBuffers();
@@ -76,7 +77,11 @@ public class OptimisticTransactionManagerImpl implements OptimisticTransactionMa
       TCChangeBuffer buf = (TCChangeBuffer) i.next();
       Assert.eval(buf.getTCObject() != null);
       final TCObject tcobj = objectManager.lookup(buf.getTCObject().getObjectID());
-      tcobj.hydrate(new DNAToChangeBufferBridge(this, buf), true);
+      try {
+        tcobj.hydrate(new DNAToChangeBufferBridge(this, buf), true);
+      } catch (ClassNotFoundException e) {
+        throw new TCClassNotFoundException(e);
+      }
 
       // Add the changes to the dso transaction
       buf.accept(new TCChangeBufferEventVisitor() {

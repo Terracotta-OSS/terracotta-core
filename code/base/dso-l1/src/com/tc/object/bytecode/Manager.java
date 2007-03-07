@@ -50,7 +50,7 @@ public interface Manager {
 
   public void commitLock(String lockName);
 
-  public Object lookupObject(ObjectID id);
+  public Object lookupObject(ObjectID id) throws ClassNotFoundException;
 
   public TCObject lookupExistingOrNull(Object obj);
 
@@ -92,7 +92,7 @@ public interface Manager {
 
   public void optimisticBegin();
 
-  public void optimisticCommit();
+  public void optimisticCommit() throws ClassNotFoundException;
 
   public void optimisticRollback();
 

@@ -35,9 +35,9 @@ public interface ClientObjectManager {
 
   public void replaceRootIDIfNecessary(String rootName, ObjectID newRootID);
 
-  public Object lookupObject(ObjectID id);
+  public Object lookupObject(ObjectID id) throws ClassNotFoundException;
 
-  public Object lookupObjectNoDepth(ObjectID id);
+  public Object lookupObjectNoDepth(ObjectID id) throws ClassNotFoundException;
 
   public TCObject lookupOrCreate(Object obj);
 
@@ -55,7 +55,7 @@ public interface ClientObjectManager {
 
   public TCObject lookupIfLocal(ObjectID id);
 
-  public TCObject lookup(ObjectID id);
+  public TCObject lookup(ObjectID id) throws ClassNotFoundException;
 
   public TCObject lookupExistingOrNull(Object pojo);
 

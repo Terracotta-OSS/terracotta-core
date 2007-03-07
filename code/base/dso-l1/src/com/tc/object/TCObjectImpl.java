@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -22,6 +23,7 @@ import com.tc.util.Util;
 
 import gnu.trove.TLinkable;
 
+import java.io.IOException;
 import java.lang.ref.ReferenceQueue;
 
 /**
@@ -89,10 +91,10 @@ public abstract class TCObjectImpl implements TCObject {
    * Reconstitutes the object using the data in the DNA strand. XXX: We may need to signal (via a different signature or
    * args) that the hydration is intended to initialize the object from scratch or if it's a delta. We must avoid
    * creating a new instance of the peer object if the strand is just a delta.
-   *
+   * 
    * @throws ClassNotFoundException
    */
-  public void hydrate(DNA from, boolean force) throws DNAException {
+  public void hydrate(DNA from, boolean force) throws ClassNotFoundException {
     synchronized (getResolveLock()) {
       boolean isNewLoad = isNull();
       createPeerObjectIfNecessary(from);
@@ -102,10 +104,11 @@ public abstract class TCObjectImpl implements TCObject {
       try {
         tcClazz.hydrate(this, from, po, force);
         if (isNewLoad) performOnLoadActionIfNecessary(po);
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (ClassNotFoundException e) {
+        throw e;
+      } catch (IOException e) {
         throw new DNAException(e);
-      }
+      } 
     }
   }
 
@@ -130,16 +133,16 @@ public abstract class TCObjectImpl implements TCObject {
         // calling
         // e.getErrorText().
         consoleLogger.error("Unable to parse OnLoad script: " + pojo.getClass() + " error: " + e.getMessage()
-                           + " stack: " + e.getScriptStackTrace());
+                            + " stack: " + e.getScriptStackTrace());
         logger.error("Unable to parse OnLoad script: " + pojo.getClass() + " error: " + e.getMessage() + " line: "
-                    + " stack: " + e.getScriptStackTrace());
+                     + " stack: " + e.getScriptStackTrace());
       } catch (EvalError e) {
         // General Error evaluating script
         consoleLogger.error("OnLoad execute script failed for: " + pojo.getClass() + " error: " + e.getErrorText()
-                           + " line: " + e.getErrorLineNumber() + "; " + e.getMessage() + "; stack: "
-                           + e.getScriptStackTrace());
+                            + " line: " + e.getErrorLineNumber() + "; " + e.getMessage() + "; stack: "
+                            + e.getScriptStackTrace());
         logger.error("OnLoad execute script failed for: " + pojo.getClass() + " error: " + e.getErrorText() + " line: "
-                    + e.getErrorLineNumber() + "; " + e.getMessage() + "; stack: " + e.getScriptStackTrace());
+                     + e.getErrorLineNumber() + "; " + e.getMessage() + "; stack: " + e.getScriptStackTrace());
       } finally {
         Thread.currentThread().setContextClassLoader(prevLoader);
       }
@@ -358,10 +361,9 @@ public abstract class TCObjectImpl implements TCObject {
   }
 
   public int accessCount(int factor) {
-    //TODO:: Implement when needed
+    // TODO:: Implement when needed
     throw new UnsupportedOperationException();
   }
-
 
   public synchronized boolean getAndResetNew() {
     if (getFlag(IS_NEW_OFFSET)) {

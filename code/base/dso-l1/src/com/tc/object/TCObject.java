@@ -74,8 +74,9 @@ public interface TCObject extends Cacheable {
    * Takes a DNA strand and hydrates the object with it.
    *
    * @param force true if the DNA should be applied w/o any version checking
+   * @throws ClassNotFoundException 
    */
-  public void hydrate(DNA from, boolean force) throws DNAException;
+  public void hydrate(DNA from, boolean force) throws ClassNotFoundException;
 
   public void resolveReference(String fieldName);
 

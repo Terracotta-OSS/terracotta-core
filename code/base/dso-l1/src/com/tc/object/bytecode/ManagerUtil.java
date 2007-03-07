@@ -5,6 +5,7 @@
 package com.tc.object.bytecode;
 
 import com.tc.cluster.ClusterEventListener;
+import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.management.beans.sessions.SessionMonitorMBean;
 import com.tc.object.ObjectID;
@@ -57,7 +58,11 @@ public class ManagerUtil {
 
   public static void optimisticCommit() {
     beginLock("test", LockLevel.WRITE);
-    getManager().optimisticCommit();
+    try {
+      getManager().optimisticCommit();
+    } catch (ClassNotFoundException e) {
+      throw new TCClassNotFoundException(e);
+    }
     commitLock("test");
   }
 
@@ -152,7 +157,11 @@ public class ManagerUtil {
   }
 
   public static Object lookupObject(ObjectID id) {
-    return getManager().lookupObject(id);
+    try {
+      return getManager().lookupObject(id);
+    } catch (ClassNotFoundException e) {
+      throw new TCClassNotFoundException(e);
+    }
   }
 
   public static TCObject lookupOrCreate(Object obj) {
