@@ -7,7 +7,6 @@ package com.tc.object.bytecode;
 import com.tc.asm.Type;
 import com.tc.cluster.Cluster;
 import com.tc.cluster.ClusterEventListener;
-import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
@@ -149,35 +148,20 @@ public class ManagerImpl implements Manager {
   }
 
   private void startClient() {
-    final TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(DistributedObjectClient.class)));
+    this.dso = new DistributedObjectClient(this.config, new TCThreadGroup(new ThrowableHandler(TCLogging
+        .getLogger(DistributedObjectClient.class))), classProvider, this.connectionComponents, this, cluster);
+    this.dso.start();
+    this.objectManager = dso.getObjectManager();
+    this.txManager = dso.getTransactionManager();
+    this.runtimeLogger = dso.getRuntimeLogger();
 
-    // Do the client startup in a dedicated thread to ensure all threads we create inherit the proper thread group
-    StartupHelper.StartupAction start = new StartupHelper.StartupAction() {
-      public void execute() throws Throwable {
-        dso = new DistributedObjectClient(config, group, classProvider, connectionComponents, ManagerImpl.this, cluster);
-        dso.start();
-        objectManager = dso.getObjectManager();
-        txManager = dso.getTransactionManager();
-        runtimeLogger = dso.getRuntimeLogger();
+    this.optimisticTransactionManager = new OptimisticTransactionManagerImpl(objectManager, txManager);
 
-        optimisticTransactionManager = new OptimisticTransactionManagerImpl(objectManager, txManager);
+    this.methodCallManager = dso.getDmiManager();
 
-        methodCallManager = dso.getDmiManager();
-
-        shutdownManager = new ClientShutdownManager(objectManager, dso.getRemoteTransactionManager(), dso
-            .getStageManager(), dso.getCommunicationsManager(), dso.getChannel(), dso.getClientHandshakeManager(),
-                                                    connectionComponents);
-      }
-    };
-
-    try {
-      new StartupHelper(group, start, "DSO Client Startup").startUp();
-    } catch (Throwable t) {
-      if (t instanceof Error) { throw (Error) t; }
-      if (t instanceof RuntimeException) { throw (RuntimeException) t; }
-      throw new RuntimeException(t);
-    }
+    this.shutdownManager = new ClientShutdownManager(objectManager, dso.getRemoteTransactionManager(), dso
+        .getStageManager(), dso.getCommunicationsManager(), dso.getChannel(), dso.getClientHandshakeManager(),
+                                                     connectionComponents);
   }
 
   public void stop() {
