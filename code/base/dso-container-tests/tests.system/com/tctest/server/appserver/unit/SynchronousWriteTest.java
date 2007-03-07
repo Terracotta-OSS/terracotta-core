@@ -12,6 +12,8 @@ import com.tc.test.server.util.HttpUtil;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -47,7 +49,6 @@ public class SynchronousWriteTest extends AbstractAppServerTestCase {
     URL url1 = new URL(createUrl(port1, SynchronousWriteTest.DsoPingPongServlet.class) + "?server=1&data=ping");
     assertEquals("OK", HttpUtil.getResponseBody(url1, client));
 
-
     try {
       url0 = new URL(createUrl(port0, SynchronousWriteTest.DsoPingPongServlet.class) + "?server=0&data=" + INTENSITY);
       assertEquals("OK", HttpUtil.getResponseBody(url0, client));
@@ -56,11 +57,13 @@ public class SynchronousWriteTest extends AbstractAppServerTestCase {
       System.err.println("Caught exception from killing appserver");
     }
 
+    url1 = new URL(createUrl(port1, SynchronousWriteTest.DsoPingPongServlet.class) + "?server=1&data=ping");
+    assertEquals("OK", HttpUtil.getResponseBody(url1, client));
+
     url1 = new URL(createUrl(port1, SynchronousWriteTest.DsoPingPongServlet.class) + "?server=1&data=0");
     assertEquals("0", HttpUtil.getResponseBody(url1, client));
-
     url1 = new URL(createUrl(port1, SynchronousWriteTest.DsoPingPongServlet.class) + "?server=1&data="
-                       + (INTENSITY - 1));
+                   + (INTENSITY - 1));
     assertEquals("" + (INTENSITY - 1), HttpUtil.getResponseBody(url1, client));
   }
 
@@ -88,16 +91,25 @@ public class SynchronousWriteTest extends AbstractAppServerTestCase {
     private void handleServer0(HttpSession session, PrintWriter out, String dataParam) {
       if (dataParam.equals("ping")) {
         session.setAttribute("ping", "pong");
+        Map map = new HashMap();
+        map.put("ping", "pong");
+        session.setAttribute("dataMap", map);
         out.print("OK");
       } else {
+        Map map = (HashMap) session.getAttribute("dataMap");
         System.err.println("INTENSITY=" + dataParam);
-        int intensity = Integer.parseInt(dataParam);
-        for (int i = 0; i < intensity; i++) {
-          session.setAttribute("data" + i, "" + i);
+        int count = Integer.parseInt(dataParam);
+        for (int i = 0; i < count; i++) {
+          synchronized (map) {
+            map.put("data" + i, "" + i);
+          }
           System.err.println("data" + i + "=" + i);
         }
+
         System.err.flush();
-        if (session.getAttribute("data0") != null) { // just a sanity check
+        out.print("OK");
+        if (session.getAttribute("dataMap") != null) { // just a sanity check
+          System.err.println("dataMap size " + map.size());
           out.print("OK");
         } else {
           out.print("NOT-OK");
@@ -114,16 +126,25 @@ public class SynchronousWriteTest extends AbstractAppServerTestCase {
         if (pong == null) {
           out.println("ping is null");
         } else {
-          System.err.println("ping="+pong);
+          System.err.println("ping=" + pong);
           out.println("OK");
         }
       } else {
-        String value = (String) session.getAttribute("data"+dataParam);
-        System.err.println("data" + dataParam + "=" + value);
-        if (value == null) {
-          out.print("data" + dataParam + " is null");
+        Map map = (HashMap) session.getAttribute("dataMap");
+        if (map == null) {
+          out.print("dataMap is null");
         } else {
-          out.print(value);
+          System.err.println("dataMap size " + map.size());
+          System.err.println("looking up " + "data" + dataParam);
+          synchronized (map) {
+            String value = (String) map.get("data" + dataParam);
+            System.err.println("data" + dataParam + "=" + value);
+            if (value == null) {
+              out.print("data" + dataParam + " is null");
+            } else {
+              out.print(value);
+            }
+          }
         }
       }
     }
