@@ -41,6 +41,7 @@ public class GenericListTestApp extends GenericTestApp {
     lists.add(new Vector());
     lists.add(new Stack());
     lists.add(new MyArrayList());
+    lists.add(new MyArrayList5());
     lists.add(new MyLinkedList());
     lists.add(new MyVector());
     lists.add(new MyStack());
@@ -53,6 +54,7 @@ public class GenericListTestApp extends GenericTestApp {
     sharedMap.put("arrayforStack", new Object[2]);
     sharedMap.put("arrayforAbstractListSubclass", new Object[2]);
     sharedMap.put("arrayforMyArrayList", new Object[2]);
+    sharedMap.put("arrayforMyArrayList5", new Object[2]);
     sharedMap.put("arrayforMyLinkedList", new Object[2]);
     sharedMap.put("arrayforMyVector", new Object[2]);
     sharedMap.put("arrayforMyStack", new Object[2]);
@@ -1207,6 +1209,7 @@ public class GenericListTestApp extends GenericTestApp {
   }
   
   private Object getMySubclassArray(List list) {
+    if (list instanceof MyArrayList5) { return (Object[])sharedMap.get("arrayforMyArrayList5"); }
     if (list instanceof MyArrayList) { return (Object[])sharedMap.get("arrayforMyArrayList"); }
     if (list instanceof MyLinkedList) { return (Object[])sharedMap.get("arrayforMyLinkedList"); }
     if (list instanceof MyVector) { return (Object[])sharedMap.get("arrayforMyVector"); }
@@ -1315,6 +1318,14 @@ public class GenericListTestApp extends GenericTestApp {
       super.removeRange(fromIndex, toIndex); 
     } 
   } 
+  
+  private static class MyArrayList4 extends ArrayList {
+    //
+  }
+  
+  private static class MyArrayList5 extends MyArrayList4 {
+    //
+  }
 
   private static class MyLinkedList extends LinkedList {
     public MyLinkedList() {

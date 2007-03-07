@@ -94,8 +94,8 @@ class InstrumentationSpec {
     this.classSignature = signature;
     this.classInterfaces = interfaces;
     this.classVersion = version;
-    handleSubclassOfLogicalClass(access, classNameDots, superNameDots);
     decideOnInstrumentationAction(portability);
+    handleSubclassOfLogicalClass(access, classNameDots, superNameDots);
   }
 
   private boolean isArray(String className) {
