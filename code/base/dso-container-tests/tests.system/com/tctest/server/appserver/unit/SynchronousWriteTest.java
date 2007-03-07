@@ -25,21 +25,18 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 /**
- * A container test will initiate transactions by adding data into session and same data into an external file. Right
- * after it's done with the transactionk, it kills the appserver. Synchronous-write lock will assure that the data was
- * sent actually made into DSO server and a 2nd client can verify the data integrity by comparing the data on server to
- * the data in the file.
+ *
  */
 public class SynchronousWriteTest extends AbstractAppServerTestCase {
 
   private static final int INTENSITY = 1000;
 
   public SynchronousWriteTest() {
-    //this.disableAllUntil("2007-03-08");
+    this.disableAllUntil("2007-03-08");
   }
 
   public final void testSessions() throws Exception {
-    AutoLock all = new AutoLock("* " + DsoPingPongServlet.class.getName() + ".*(..)", LockLevel.WRITE);
+    AutoLock all = new AutoLock("* " + DsoPingPongServlet.class.getName() + ".*(..)", LockLevel.SYNCHRONOUS_WRITE);
 
     List locks = new ArrayList();
     locks.add(all);
