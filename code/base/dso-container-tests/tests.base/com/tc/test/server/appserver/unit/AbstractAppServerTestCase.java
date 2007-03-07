@@ -92,7 +92,7 @@ import javax.servlet.http.HttpSessionListener;
  * the appserver)
  * </ul>
  * <p>
- * 
+ *
  * <pre>
  *                            outer class:
  *                            ...
@@ -101,17 +101,15 @@ import javax.servlet.http.HttpSessionListener;
  *                            assertTrue(values[0]);
  *                            assertFalse(values[1]);
  *                            ...
- * 
  *                            inner class servlet:
  *                            ...
  *                            response.setContentType(&quot;text/html&quot;);
  *                            PrintWriter out = response.getWriter();
- * 
  *                            out.println(&quot;true&quot;);
  *                            out.println(&quot;false&quot;);
  *                            ...
  * </pre>
- * 
+ *
  * <p>
  * <h3>Debugging Information:</h3>
  * There are a number of locations and files to consider when debugging appserver unit tests. Below is a list followed
@@ -146,17 +144,17 @@ import javax.servlet.http.HttpSessionListener;
  * <p>
  * As a final note: the <tt>UttpUtil</tt> class should be used (and added to as needed) to page servlets and validate
  * assertions.
- * 
+ *
  * @author eellis
  */
 public abstract class AbstractAppServerTestCase extends TCTestCase {
 
-  private static final SynchronizedInt    nodeCounter    = new SynchronizedInt(-1);
-  private static final String             NODE           = "node-";
-  private static final String             DOMAIN         = "127.0.0.1";
+  private static final SynchronizedInt    nodeCounter      = new SynchronizedInt(-1);
+  private static final String             NODE             = "node-";
+  private static final String             DOMAIN           = "127.0.0.1";
 
-  private final Object                    workingDirLock = new Object();
-  private final List                      appservers     = new ArrayList();
+  private final Object                    workingDirLock   = new Object();
+  private final List                      appservers       = new ArrayList();
   private TestConfigObject                config;
   private File                            serverInstallDir;
   private File                            workingDir;
@@ -167,9 +165,9 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   private File                            warFile;
   private DsoServer                       dsoServer;
   private TerracottaServerConfigGenerator configGen;
-  private List                            dsoServerJvmArgs;
-  private List                            roots;
-  private List                            locks;
+  private List                            dsoServerJvmArgs = new ArrayList();
+  private List                            roots            = new ArrayList();
+  private List                            locks            = new ArrayList();
   private boolean                         isSynchronousWrite;
 
   public AbstractAppServerTestCase() {
@@ -249,7 +247,6 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     }
   }
 
-
   /**
    * Starts a DSO server using a generated tc-config.xml
    */
@@ -277,7 +274,6 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
    * This method should be called before DSO server is started.
    */
   protected final void addDsoServerJvmArgs(List jvmArgs) {
-    dsoServerJvmArgs = new ArrayList(jvmArgs.size());
     dsoServerJvmArgs.addAll(jvmArgs);
   }
 
@@ -292,7 +288,6 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
    * This method should be called before DSO server is started.
    */
   protected final void addRoots(List rootsToAdd) {
-    roots = new ArrayList();
     roots.addAll(rootsToAdd);
   }
 
@@ -300,14 +295,13 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
    * This method should be called before DSO server is started.
    */
   protected final void addLocks(List locksToAdd) {
-    locks = new ArrayList();
     locks.addAll(locksToAdd);
   }
 
   /**
    * Starts an instance of the assigned default application server listed in testconfig.properties. Servlets and the WAR
    * are dynamically generated using the convention listed in the header of this document.
-   * 
+   *
    * @param dsoEnabled - enable or disable dso for this instance
    * @return AppServerResult - series of return values including the server port assigned to this instance
    */
@@ -396,7 +390,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
   /**
    * If overridden <tt>super.tearDown()</tt> must be called to ensure that servers are all shutdown properly
-   * 
+   *
    * @throws Exception
    */
   protected void tearDown() throws Exception {
@@ -514,23 +508,20 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     }
 
     configBuilder.addInclude("com.tctest..*");
+    configBuilder.addInclude("com.tctest..*$*");
 
-    if (roots != null && !roots.isEmpty()) {
-      for (Iterator iter = roots.iterator(); iter.hasNext();) {
-        Root root = (Root) iter.next();
-        configBuilder.addRoot(root.fieldName(), root.rootName());
-      }
+    for (Iterator iter = roots.iterator(); iter.hasNext();) {
+      Root root = (Root) iter.next();
+      configBuilder.addRoot(root.fieldName(), root.rootName());
     }
 
-    if (locks != null && !locks.isEmpty()) {
-      for (Iterator iter = locks.iterator(); iter.hasNext();) {
-        Lock lock = (Lock) iter.next();
-        String lockName = null;
-        if (!lock.isAutoLock()) {
-          lockName = lock.lockName();
-        }
-        configBuilder.addLock(lock.isAutoLock(), lock.methodExpression(), lock.lockLevel().toString(), lockName);
+    for (Iterator iter = locks.iterator(); iter.hasNext();) {
+      Lock lock = (Lock) iter.next();
+      String lockName = null;
+      if (!lock.isAutoLock()) {
+        lockName = lock.lockName();
       }
+      configBuilder.addLock(lock.isAutoLock(), lock.methodExpression(), lock.lockLevel().toString(), lockName);
     }
 
     return configGen = new TerracottaServerConfigGenerator(installation.getDataDirectory(), configBuilder);
