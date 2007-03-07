@@ -85,16 +85,7 @@
            behavior described-->
       <locks>
         <autolock>
-          <method-expression>void demo.chatter.ChatManager.send(demo.chatter.User, java.lang.String)</method-expression>
-          <lock-level>write</lock-level>
-        </autolock>
-        <autolock>
-          <method-expression>void demo.chatter.ChatManager.registerUser(demo.chatter.User)</method-expression>
-          <lock-level>write</lock-level>
-        </autolock>
-        <autolock>
-          <method-expression>String demo.chatter.ChatManager.removeUser(java.lang.String)</method-expression>
-          <lock-level>write</lock-level>
+          <method-expression>* *..*.*(..)</method-expression>
         </autolock>
       </locks>
     </dso>

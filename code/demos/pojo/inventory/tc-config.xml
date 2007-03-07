@@ -38,14 +38,13 @@
         </include>
       </instrumented-classes>
 
-      <!-- These methods (originating from local objects) operates on objects declared as shared. This 
+      <!-- These methods (originating from local objects) operates on objects declared as shared. This
            section tells DSO to assume a lock on those objects for the duration of the call; essentially this
-           section declares that all methods found in the 'demo.inventory.Main' class should assume the 
+           section declares that all methods found for all classes found for all packages should assume the
            behavior described -->
       <locks>
         <autolock>
-          <method-expression>* demo.inventory.Main*.*(..)</method-expression>
-          <lock-level>write</lock-level>
+          <method-expression>* *..*.*(..)</method-expression>
         </autolock>
       </locks>
 
