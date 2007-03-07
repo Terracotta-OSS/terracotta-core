@@ -55,7 +55,7 @@ public class GenericMapTestApp extends GenericTestApp {
 
     // This is just to make sure all the expected maps are here.
     // As new map classes get added to this test, you'll have to adjust this number obviously
-    Assert.assertEquals(23, maps.size());
+    Assert.assertEquals(24, maps.size());
 
     return maps.iterator();
   }
@@ -88,6 +88,7 @@ public class GenericMapTestApp extends GenericTestApp {
     maps.add(new MyFastHashMap());
     maps.add(new MyProperties());
     maps.add(new MyProperties2());
+    maps.add(new MyProperties3());
 
     // maps.add(new IdentityHashMap());
     // maps.add(new WeakHashMap());
@@ -128,6 +129,7 @@ public class GenericMapTestApp extends GenericTestApp {
     nonSharedArrayMap.put("arrayforMyFastHashMap", new Object[4]);
     nonSharedArrayMap.put("arrayforMyProperties", new Object[4]);
     nonSharedArrayMap.put("arrayforMyProperties2", new Object[4]);
+    nonSharedArrayMap.put("arrayforMyProperties3", new Object[4]);
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
@@ -1830,7 +1832,8 @@ public class GenericMapTestApp extends GenericTestApp {
     if (map instanceof MyHashtable) { return nonSharedArrayMap.get("arrayforMyHashtable"); }
     if (map instanceof MyTHashMap) { return sharedMap.get("arrayforMyTHashMap"); }
     if (map instanceof MyFastHashMap) { return nonSharedArrayMap.get("arrayforMyFastHashMap"); }
-    if (map instanceof MyProperties2) { return nonSharedArrayMap.get("arrayforMyProperties"); }
+    if (map instanceof MyProperties2) { return nonSharedArrayMap.get("arrayforMyProperties2"); }
+    if (map instanceof MyProperties3) { return nonSharedArrayMap.get("arrayforMyProperties3"); }
     if (map instanceof MyProperties) { return nonSharedArrayMap.get("arrayforMyProperties"); }
     return null;
   }
@@ -2281,6 +2284,20 @@ public class GenericMapTestApp extends GenericTestApp {
 
     public Object getLastGetKey() {
       return lastGetKey;
+    }
+  }
+  
+  private static class MyProperties3 extends Properties {
+    public MyProperties3() {
+      super();
+    }
+    
+    public void setDefault(Properties newDefaults) {
+      defaults = newDefaults;
+    }
+
+    public Object put(Object arg0, Object arg1) {
+      return super.put(arg0, arg1);
     }
   }
 

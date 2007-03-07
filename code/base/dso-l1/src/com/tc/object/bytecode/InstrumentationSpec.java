@@ -209,7 +209,6 @@ class InstrumentationSpec {
    */
   private byte isNeedManagedField(Portability portability) {
     if (isSubclassOfLogicalClass) { return IS_NOT_NEEDED; }
-    // String superClassName = superNameSlashes.replace('/', '.');
     ClassInfo superClassInfo = classInfo.getSuperclass();
     if (portability.isInstrumentationNotNeeded(superClassInfo.getName())) { return IS_NEEDED; }
     if (!spec.hasPhysicallyPortableSpecs(superClassInfo)) { return IS_NEEDED; }
@@ -223,13 +222,11 @@ class InstrumentationSpec {
 
     final Class superClazz;
     try {
-      // superClazz = Class.forName(superClassName, false, this.caller);
       superClazz = Class.forName(superClassName, false, this.classInfo.getClassLoader());
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     }
 
-    // if (!portability.isPortableClass(superClazz) || !portability.allowSubclassOf(superClazz)) { return true; }
     if (!portability.isPortableClass(superClazz)) { return true; }
     return false;
   }
@@ -264,7 +261,6 @@ class InstrumentationSpec {
   }
 
   boolean hasDelegatedToLogicalClass() {
-    // return (isSubclassOfLogicalClass && hasVisitedField);
     return needDelegateField();
   }
 
@@ -286,7 +282,6 @@ class InstrumentationSpec {
     } else if (isSubclassOfLogicalClass && !hasVisitedField) {
       hasVisitedField = true;
       try {
-        // Class superClazz = Class.forName(superNameDots, false, caller);
         Class superClazz = Class.forName(superNameDots, false, this.classInfo.getClassLoader());
 
         Method[] methods = superClazz.getMethods();
@@ -300,7 +295,6 @@ class InstrumentationSpec {
 
           String methodDesc = Type.getMethodDescriptor(m);
           shouldOverrideMethods.put(methodName + methodDesc, m);
-          // logicalExtendingMethodSpec.add(methodName + methodDesc);
         }
 
         methods = superClazz.getDeclaredMethods();
@@ -407,6 +401,10 @@ class InstrumentationSpec {
 
   boolean isLogical() {
     return spec.isLogical();
+  }
+  
+  boolean needInstrumentFieldInsn() {
+    return !spec.isLogical() && !(isSubclassOfLogicalClass && !hasVisitedField);
   }
 
   void shouldProceedInstrumentation(int access, String name, String desc) {

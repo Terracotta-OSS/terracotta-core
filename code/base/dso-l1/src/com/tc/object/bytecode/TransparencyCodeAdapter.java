@@ -322,7 +322,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   public void visitFieldInsn(final int opcode, final String classname, final String fieldName, final String desc) {
     spec.shouldProceedInstrumentation(fieldName, desc);
 
-    if (spec.isLogical() || !visitInit || !codeSpec.isFieldInstrumentationReq(fieldName)) {
+    if (!spec.needInstrumentFieldInsn() || !visitInit || !codeSpec.isFieldInstrumentationReq(fieldName)) {
       super.visitFieldInsn(opcode, classname, fieldName, desc);
       return;
     }

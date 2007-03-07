@@ -1293,7 +1293,7 @@ public class GenericListTestApp extends GenericTestApp {
     Assert.assertEquals(1, count);
 
   }
-
+  
   private static class MyArrayList extends ArrayList {
     public MyArrayList() {
       super();
