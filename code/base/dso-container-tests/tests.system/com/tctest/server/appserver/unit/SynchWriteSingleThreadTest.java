@@ -27,11 +27,11 @@ import javax.servlet.http.HttpSession;
 /**
  *
  */
-public class SynchronousWriteTest extends AbstractAppServerTestCase {
+public class SynchWriteSingleThreadTest extends AbstractAppServerTestCase {
 
   private static final int INTENSITY = 1000;
 
-  public SynchronousWriteTest() {
+  public SynchWriteSingleThreadTest() {
     this.disableAllUntil("2007-03-08");
   }
 
@@ -53,14 +53,14 @@ public class SynchronousWriteTest extends AbstractAppServerTestCase {
     int port1 = startAppServer(true).serverPort();
 
     // sanity check phase
-    URL url0 = new URL(createUrl(port0, SynchronousWriteTest.DsoPingPongServlet.class) + "?server=0&data=ping");
+    URL url0 = new URL(createUrl(port0, SynchWriteSingleThreadTest.DsoPingPongServlet.class) + "?server=0&data=ping");
     assertEquals("OK", HttpUtil.getResponseBody(url0, client));
-    URL url1 = new URL(createUrl(port1, SynchronousWriteTest.DsoPingPongServlet.class) + "?server=1&data=ping");
+    URL url1 = new URL(createUrl(port1, SynchWriteSingleThreadTest.DsoPingPongServlet.class) + "?server=1&data=ping");
     assertEquals("OK", HttpUtil.getResponseBody(url1, client));
 
     // create transactions on server0, after that it kill itself
     try {
-      url0 = new URL(createUrl(port0, SynchronousWriteTest.DsoPingPongServlet.class) + "?server=0&data=" + INTENSITY);
+      url0 = new URL(createUrl(port0, SynchWriteSingleThreadTest.DsoPingPongServlet.class) + "?server=0&data=" + INTENSITY);
       assertEquals("OK", HttpUtil.getResponseBody(url0, client));
     } catch (Throwable e) {
       // expected
@@ -68,13 +68,13 @@ public class SynchronousWriteTest extends AbstractAppServerTestCase {
     }
 
     // sanity check again, to see if we still ping=pong
-    url1 = new URL(createUrl(port1, SynchronousWriteTest.DsoPingPongServlet.class) + "?server=1&data=ping");
+    url1 = new URL(createUrl(port1, SynchWriteSingleThreadTest.DsoPingPongServlet.class) + "?server=1&data=ping");
     assertEquals("OK", HttpUtil.getResponseBody(url1, client));
 
     // query out first and last attributes
-    url1 = new URL(createUrl(port1, SynchronousWriteTest.DsoPingPongServlet.class) + "?server=1&data=0");
+    url1 = new URL(createUrl(port1, SynchWriteSingleThreadTest.DsoPingPongServlet.class) + "?server=1&data=0");
     assertEquals("0", HttpUtil.getResponseBody(url1, client));
-    url1 = new URL(createUrl(port1, SynchronousWriteTest.DsoPingPongServlet.class) + "?server=1&data="
+    url1 = new URL(createUrl(port1, SynchWriteSingleThreadTest.DsoPingPongServlet.class) + "?server=1&data="
                    + (INTENSITY - 1));
     assertEquals("" + (INTENSITY - 1), HttpUtil.getResponseBody(url1, client));
   }
