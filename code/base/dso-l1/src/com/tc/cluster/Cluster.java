@@ -53,7 +53,6 @@ public class Cluster {
   }
 
   public synchronized void nodeConnected(String nodeId) {
-    assertPre(thisNode != null);
     Node n = new Node(nodeId);
 
     // the server should not be sending this event to us
@@ -65,7 +64,6 @@ public class Cluster {
   }
 
   public synchronized void nodeDisconnected(String nodeId) {
-    assertPre(thisNode != null);
     nodes.remove(nodeId);
     debug("### Cluster: nodeDisconnected -> " + this);
     fireNodeDisconnectedEvent(nodeId);
@@ -119,7 +117,7 @@ public class Cluster {
   }
 
   private void fireNodeConnectedEvent(String newNodeId) {
-    assertPre(thisNode != null);
+    if (thisNode == null) { return; }
     for (Iterator i = listeners.keySet().iterator(); i.hasNext();) {
       ClusterEventListener l = (ClusterEventListener) i.next();
       try {
@@ -131,7 +129,7 @@ public class Cluster {
   }
 
   private void fireNodeDisconnectedEvent(String nodeId) {
-    assertPre(thisNode != null);
+    if (thisNode == null) { return; }
     for (Iterator i = listeners.keySet().iterator(); i.hasNext();) {
       ClusterEventListener l = (ClusterEventListener) i.next();
       try {
