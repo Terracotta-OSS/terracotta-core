@@ -32,7 +32,7 @@ public class SynchWriteSingleThreadTest extends AbstractAppServerTestCase {
   private static final int INTENSITY = 1000;
 
   public SynchWriteSingleThreadTest() {
-    this.disableAllUntil("2007-03-08");
+    //this.disableAllUntil("2007-03-08");
   }
 
   public final void testSessions() throws Exception {
