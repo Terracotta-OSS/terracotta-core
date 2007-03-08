@@ -55,7 +55,7 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
     GridLayout gridLayout = new GridLayout();
     gridLayout.numColumns = 1;
     topComp.setLayout(gridLayout);
-    topComp.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+    topComp.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
     GridData gridData = new GridData();
     gridData.grabExcessHorizontalSpace = true;
@@ -68,7 +68,7 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
     domainConfig.setLayout(gridLayout);
     domainConfig.setLayoutData(gridData);
 
-    m_configPathField = new Text(domainConfig, SWT.SINGLE);
+    m_configPathField = new Text(domainConfig, SWT.SINGLE|SWT.BORDER);
     m_configPathField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
     m_configFileButton = new Button(domainConfig, SWT.PUSH);
@@ -99,12 +99,14 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
     serverOptions.setLayout(gridLayout);
     serverOptions.setLayoutData(gridData);
 
-    m_serverOptionsField = new Text(serverOptions, SWT.SINGLE);
-    m_serverOptionsField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+    m_serverOptionsField = new Text(serverOptions, SWT.MULTI|SWT.BORDER|SWT.WRAP);
+    GridData gd = new GridData(GridData.FILL_HORIZONTAL|GridData.FILL_VERTICAL);
+    gd.minimumHeight = 60;
+    m_serverOptionsField.setLayoutData(gd);
 
     m_resetOptionsButton = new Button(serverOptions, SWT.PUSH);
     m_resetOptionsButton.setText("  Reset  ");
-    m_resetOptionsButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
+    m_resetOptionsButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END|GridData.VERTICAL_ALIGN_BEGINNING));
     m_resetOptionsButton.addSelectionListener(new SelectionAdapter() {
       public void widgetSelected(SelectionEvent e) {
         m_serverOptionsField.setText(DEFAULT_SERVER_OPTIONS);
