@@ -58,7 +58,8 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
   public void addNewObject(ManagedObject managed) {
     synchronized (extantObjectIDs) {
       assertNotInShutdown();
-      Assert.eval(extantObjectIDs.add(managed.getID()));
+      boolean result = extantObjectIDs.add(managed.getID());
+      Assert.eval(result);
     }
   }
 
@@ -88,12 +89,6 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     synchronized (extantObjectIDs) {
       assertNotInShutdown();
       return new ObjectIDSet2(this.extantObjectIDs);
-    }
-  }
-
-  public int getObjectCount() {
-    synchronized (extantObjectIDs) {
-      return extantObjectIDs.size();
     }
   }
 

@@ -30,8 +30,6 @@ public interface ManagedObjectStore extends ManagedObjectProvider, ObjectIDSeque
    */
   public Set getAllObjectIDs();
 
-  public int getObjectCount();
-
   public boolean containsObject(ObjectID id);
 
   public ObjectID getRootID(String name);
