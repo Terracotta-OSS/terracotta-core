@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tcspring;
 
@@ -13,7 +14,6 @@ import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.bytecode.NonDistributableObjectRegistry;
 import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.config.DSOSpringConfigHelper;
 import com.tc.object.field.TCField;
@@ -36,11 +36,9 @@ import java.util.Set;
 /**
  * Holds a unique ID for all the instance the mixin is applied to. Usage: 1. Call addLocation() 1 or more times 2. call
  * registerBeanDefinitions() once 3. Call getters (is...() or get...()) as many times as you like
- * 
+ *
  * @author Eugene Kuleshov
- * @author Jonas Bon&#233;r 
- * 
- * TODO performance optimization of the access to <code>DSOSpringConfigHelper</code>
+ * @author Jonas Bon&#233;r TODO performance optimization of the access to <code>DSOSpringConfigHelper</code>
  */
 public final class DistributableBeanFactoryMixin implements DistributableBeanFactory {
 
@@ -59,10 +57,8 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
   private boolean             isClustered         = false;
   private Map                 clusteredBeans      = new HashMap();
 
-  private ManagerUtilWrapper  managerUtilWrapper;
-
-  private Set                 nonDistributables;
-
+  private final ManagerUtilWrapper  managerUtilWrapper;
+  private final Set                 nonDistributables;
 
   public DistributableBeanFactoryMixin() {
     ApplicationHelper applicationHelper = new ApplicationHelper(getClass());
@@ -73,12 +69,20 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
       this.appName = null;
       this.dsoContext = null;
     }
-    NonDistributableObjectRegistry nonDistributableObjectRegistry = NonDistributableObjectRegistry.getInstance();
-    this.managerUtilWrapper = new ManagerUtilWrapperImpl(nonDistributableObjectRegistry);
-    this.nonDistributables = nonDistributableObjectRegistry.getNondistributables();
+
+    this.managerUtilWrapper = new ManagerUtilWrapperImpl();
+
+    // NonDistributableObjectRegistry nonDistributableObjectRegistry = NonDistributableObjectRegistry.getInstance();
+    // if (nonDistributableObjectRegistry.isAdded() == false) {
+    // ManagerUtil.addTraverseTest(nonDistributableObjectRegistry);
+    // nonDistributableObjectRegistry.setAdded();
+    // }
+    // this.nonDistributables = nonDistributableObjectRegistry.getNondistributables();
+    this.nonDistributables = Collections.EMPTY_SET;
   }
 
-  protected DistributableBeanFactoryMixin(String appName, DSOContext dsoContext, ManagerUtilWrapper managerUtilWrapper, Set nonDistributables) {
+  protected DistributableBeanFactoryMixin(String appName, DSOContext dsoContext, ManagerUtilWrapper managerUtilWrapper,
+                                          Set nonDistributables) {
     this.appName = appName;
     this.dsoContext = dsoContext;
     this.managerUtilWrapper = managerUtilWrapper;
@@ -115,13 +119,13 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
 
   public boolean isDistributedScoped(String beanName) {
     AbstractBeanDefinition definition = (AbstractBeanDefinition) beanDefinitions.get(beanName);
-    // method definition.isPrototype() is Spring 2.0+ 
-    return definition!=null && !definition.isSingleton() && !definition.isPrototype();
+    // method definition.isPrototype() is Spring 2.0+
+    return definition != null && !definition.isSingleton() && !definition.isPrototype();
   }
-  
+
   public boolean isDistributedSingleton(String beanName) {
     AbstractBeanDefinition definition = (AbstractBeanDefinition) beanDefinitions.get(beanName);
-    return definition!=null && definition.isSingleton();
+    return definition != null && definition.isSingleton();
   }
 
   public boolean isDistributedBean(String beanName) {
@@ -153,10 +157,8 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
   }
 
   private String calculateId(DSOSpringConfigHelper config) {
-    if(config!=null && config.getRootName()!=null) {
-      return config.getRootName();
-    }
-    
+    if (config != null && config.getRootName() != null) { return config.getRootName(); }
+
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     pw.println("app " + this.appName);
@@ -165,10 +167,10 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
       pw.println("params " + loc);
     }
 
-    if(config!=null && config.isLocationInfoEnabled()) {
+    if (config != null && config.isLocationInfoEnabled()) {
       new Throwable().printStackTrace(pw);
     }
-    
+
     return getDigest(sw.toString());
   }
 
@@ -194,13 +196,11 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
   private boolean isMatchingLocations(DSOSpringConfigHelper config) {
     for (Iterator iter = locations.iterator(); iter.hasNext();) {
       String location = (String) iter.next();
-      if (config.isMatchingConfig(location)) {
-        return true;
-      }
+      if (config.isMatchingConfig(location)) { return true; }
     }
     return false;
   }
-   
+
   public void registerBeanDefinitions(Map beanMap) {
     determineIfClustered();
 
@@ -218,7 +218,8 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
 
     managerUtilWrapper.beginLock(lockName, Manager.LOCK_TYPE_WRITE);
     try {
-      this.clusteredBeans = (Map) managerUtilWrapper.lookupOrCreateRoot("tc:spring_context:" + this.id, this.clusteredBeans);
+      this.clusteredBeans = (Map) managerUtilWrapper.lookupOrCreateRoot("tc:spring_context:" + this.id,
+                                                                        this.clusteredBeans);
     } finally {
       managerUtilWrapper.commitLock(lockName);
     }
@@ -246,8 +247,8 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
 
       Set excludedFields = (Set) distributedBeans.get(beanName);
       if (excludedFields != null) {
-        beanDefinitions.put(beanName, definition);  // need to unregister on reload/destroy
-        
+        beanDefinitions.put(beanName, definition); // need to unregister on reload/destroy
+
         String beanClassName = getBeanClassName(definition, beanMap);
 
         walker.walkClass(beanClassName, getClass().getClassLoader());
@@ -308,7 +309,7 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
         sb.append(hex.charAt((n & 0xF) >> 4)).append(hex.charAt(n & 0xF));
       }
       return sb.toString();
-      
+
     } catch (NoSuchAlgorithmException e) {
       // should never happens
       throw new RuntimeException(e.getMessage());
@@ -318,7 +319,6 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
     }
   }
 
-  
   public BeanContainer getBeanContainer(ComplexBeanId beanId) {
     ManagerUtil.monitorEnter(this.clusteredBeans, Manager.LOCK_TYPE_READ);
     try {
@@ -327,7 +327,7 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
       ManagerUtil.monitorExit(this.clusteredBeans);
     }
   }
-  
+
   public BeanContainer putBeanContainer(ComplexBeanId beanId, BeanContainer container) {
     ManagerUtil.monitorEnter(this.clusteredBeans, Manager.LOCK_TYPE_WRITE);
     try {
@@ -345,7 +345,7 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
       ManagerUtil.monitorExit(this.clusteredBeans);
     }
   }
-  
+
   public void initializeBean(ComplexBeanId beanId, Object bean, BeanContainer container) {
     logger.info(getId() + " Initializing distributed bean " + beanId);
 
@@ -353,25 +353,18 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
 
     Object distributed = container.getBean();
     try {
-      copyTransientFields(
-          beanId.getBeanName(), 
-          bean, 
-          distributed,
-          distributed.getClass(), 
-          ((Manageable) distributed).__tc_managed().getTCClass()
-      );
+      copyTransientFields(beanId.getBeanName(), bean, distributed, distributed.getClass(), ((Manageable) distributed)
+          .__tc_managed().getTCClass());
     } catch (Throwable e) {
       // TODO should we fail here?
       logger.warn(getId() + " Error when copying transient fields to " + beanId, e);
-    }        
-  }
-  
-  private void copyTransientFields(String beanName, Object sourceBean, Object targetBean, 
-        Class targetClass, TCClass tcClass) throws IllegalAccessException {
-    if(tcClass.isLogical()) {
-      return;
     }
-    
+  }
+
+  private void copyTransientFields(String beanName, Object sourceBean, Object targetBean, Class targetClass,
+                                   TCClass tcClass) throws IllegalAccessException {
+    if (tcClass.isLogical()) { return; }
+
     Field[] declaredFields = targetClass.getDeclaredFields();
     for (int i = 0; i < declaredFields.length; i++) {
       Field f = declaredFields[i];
@@ -389,7 +382,8 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
       f.setAccessible(true);
       Object value = f.get(sourceBean);
 
-      if (tcf == null || !tcf.isPortable() || !this.isDistributedField(beanName, fieldName) || nonDistributables.contains(value)) {
+      if (tcf == null || !tcf.isPortable() || !this.isDistributedField(beanName, fieldName)
+          || nonDistributables.contains(value)) {
         logger.info(this.getId() + " Initializing field " + fieldName + " in bean " + beanName);
         f.set(targetBean, value);
       }
@@ -401,9 +395,7 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
       copyTransientFields(beanName, sourceBean, targetBean, superclass, tcsuperclass);
     }
   }
-  
-  
-  
+
   interface ManagerUtilWrapper {
     void beginLock(String lockId, int type);
 
@@ -412,14 +404,10 @@ public final class DistributableBeanFactoryMixin implements DistributableBeanFac
     void commitLock(String lockId);
   }
 
-  
   private static class ManagerUtilWrapperImpl implements ManagerUtilWrapper {
 
-    public ManagerUtilWrapperImpl(NonDistributableObjectRegistry nonDistributableObjectRegistry) {
-//      if (nonDistributableObjectRegistry.isAdded() == false) {
-//        ManagerUtil.addTraverseTest(nonDistributableObjectRegistry);
-//        nonDistributableObjectRegistry.setAdded();
-//      }
+    public ManagerUtilWrapperImpl() {
+      //
     }
 
     public void beginLock(String lockId, int type) {

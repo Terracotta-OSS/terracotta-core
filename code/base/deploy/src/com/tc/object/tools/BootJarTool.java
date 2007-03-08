@@ -45,7 +45,6 @@ import com.tc.object.PortabilityImpl;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
-import com.tc.object.TraverseTest;
 import com.tc.object.bytecode.AbstractStringBuilderAdapter;
 import com.tc.object.bytecode.BufferedWriterAdapter;
 import com.tc.object.bytecode.ChangeClassNameHierarchyAdapter;
@@ -292,7 +291,6 @@ public class BootJarTool {
       loadTerracottaClass(TCNotSupportedMethodException.class.getName());
       loadTerracottaClass(ExceptionWrapper.class.getName());
       loadTerracottaClass(ExceptionWrapperImpl.class.getName());
-      loadTerracottaClass(TraverseTest.class.getName());
       loadTerracottaClass(Os.class.getName());
       loadTerracottaClass(Util.class.getName());
       loadTerracottaClass(NIOWorkarounds.class.getName());
@@ -1091,7 +1089,7 @@ public class BootJarTool {
       throw exit("Error sourcing bytes for class " + className, e);
     }
   }
-  
+
   public byte[] getBytesForClass(String className, ClassLoader loader) throws ClassNotFoundException {
     String resource = BootJar.classNameToFileName(className);
 
@@ -1120,7 +1118,7 @@ public class BootJarTool {
 
     return baos.toByteArray();
   }
-  
+
 
   private RuntimeException exit(String msg, Throwable t) {
     if (!WRITE_OUT_TEMP_FILE) {
@@ -1634,7 +1632,7 @@ public class BootJarTool {
     ClassWriter cw = new ClassWriter(true);
 
     ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, systemLoader);
-    
+
     TransparencyClassAdapter dsoAdapter = config.createDsoClassAdapterFor(cw, jClassInfo, instrumentationLogger,
                                                                           getClass().getClassLoader(), true);
 
@@ -1677,13 +1675,13 @@ public class BootJarTool {
 
     ClassWriter cw = new ClassWriter(true);
     ClassReader cr = new ClassReader(data);
-    ClassVisitor dsoAdapter = config.createDsoClassAdapterFor(cw, replacedClassInfo, instrumentationLogger, // 
+    ClassVisitor dsoAdapter = config.createDsoClassAdapterFor(cw, replacedClassInfo, instrumentationLogger, //
                                                               getClass().getClassLoader(), true);
     cr.accept(dsoAdapter, false);
 
     bootJar.loadClassIntoJar(replacedClassName, cw.toByteArray(), true);
   }
-  
+
   private byte[] changeClassNameAndGetBytes(String fullClassNameDots, String classNameDotsToBeChanged, String classNameDotsReplaced,
                                Map instrumentedContext) {
     ClassReader cr = new ClassReader(getSystemBytes(fullClassNameDots));
@@ -1691,11 +1689,11 @@ public class BootJarTool {
     ClassVisitor cv = new ChangeClassNameRootAdapter(cw, fullClassNameDots, classNameDotsToBeChanged,
                                                      classNameDotsReplaced, instrumentedContext, null);
     cr.accept(cv, false);
-    
+
     byte[] data = cw.toByteArray();
-    
+
     AsmClassInfo.getClassInfo(data, systemLoader);
-    
+
     return data;
   }
 
@@ -1705,7 +1703,7 @@ public class BootJarTool {
     ClassWriter cw = new ClassWriter(true);
 
     ClassInfo classInfo = AsmClassInfo.getClassInfo(className, systemLoader);
-    
+
     ClassVisitor cv = config.createClassAdapterFor(cw, classInfo, instrumentationLogger, getClass().getClassLoader(),
                                                    true);
     cv = new ChangePackageClassAdapter(cv, targetClassName, targetPackageName, newPackageName, null);
