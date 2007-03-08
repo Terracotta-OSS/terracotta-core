@@ -14,7 +14,7 @@
 # already been put on disk (i.e., by running the tests); the only thing it knows
 # is where the XML result files should go, not any of the other stuff this class
 # knows.
-
+require 'fileutils'
 class TestRunResults
     # Creates a TestRunResults object for the next free testrun directory in the
     # build-results directory (usually 'build').
@@ -32,10 +32,8 @@ class TestRunResults
         root_dir.ensure_directory
         
         # create symlink to latest testrun
-        unless ENV['OS'] =~ /windows/i          
-          unixpath = root_dir.to_s.gsub(/\\/, "/")
-          `rm testrun-latest` if File.exist?("testrun-latest")
-          link=`ln -s #{unixpath} testrun-latest`        
+        unless ENV['OS'] =~ /windows/i
+          FileUtils.ln_sf(root_dir.to_s, "testrun-latest ")          
         end
         
         TestRunResults.new(root_dir)
