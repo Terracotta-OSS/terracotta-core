@@ -18,6 +18,8 @@ import com.tc.backport175.bytecode.AnnotationReader;
  */
 public class SimpleClassInfo implements ClassInfo {
 
+  private static final ClassInfo[] NO_INTERFACES = new ClassInfo[0];
+  
   private String className;
 
   protected SimpleClassInfo(String className) {
@@ -65,15 +67,11 @@ public class SimpleClassInfo implements ClassInfo {
   }
 
   public ClassInfo[] getInterfaces() {
-    throw new RuntimeException();
+    return NO_INTERFACES;
   }
 
   public ClassInfo getSuperclass() {
-    throw new RuntimeException();
-  }
-
-  public ClassInfo getSuperClass() {
-    throw new RuntimeException();
+    return null;
   }
 
   public ClassInfo getComponentType() {
