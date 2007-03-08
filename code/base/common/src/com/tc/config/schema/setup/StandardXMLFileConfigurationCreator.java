@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
@@ -46,10 +47,13 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
   private static final TCLogger     consoleLogger                        = CustomerLogging.getConsoleLogger();
 
-  private static final long         GET_CONFIGURATION_TOTAL_TIMEOUT      = 5 * 60 * 1000; // five minutes
-  private static final long         GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = 30 * 1000;     // thirty seconds
-  private static final long         MIN_RETRY_TIMEOUT                    = 5 * 1000;      // five seconds
-  
+  private static final long         GET_CONFIGURATION_TOTAL_TIMEOUT      = 5 * 60 * 1000;                     // five
+  // minutes
+  private static final long         GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = 30 * 1000;                         // thirty
+  // seconds
+  private static final long         MIN_RETRY_TIMEOUT                    = 5 * 1000;                          // five
+  // seconds
+
   protected final String            configurationSpec;
   protected final File              defaultDirectory;
   protected final ConfigBeanFactory beanFactory;
@@ -59,18 +63,13 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private String                    configDescription;
   private File                      directoryLoadedFrom;
 
-  public StandardXMLFileConfigurationCreator(String configurationSpec,
-                                             File defaultDirectory,
+  public StandardXMLFileConfigurationCreator(String configurationSpec, File defaultDirectory,
                                              ConfigBeanFactory beanFactory) {
-    this(TCLogging.getLogger(StandardXMLFileConfigurationCreator.class),
-         configurationSpec,
-         defaultDirectory,
-         beanFactory);
+    this(TCLogging.getLogger(StandardXMLFileConfigurationCreator.class), configurationSpec, defaultDirectory,
+        beanFactory);
   }
 
-  public StandardXMLFileConfigurationCreator(TCLogger logger,
-                                             String configurationSpec,
-                                             File defaultDirectory,
+  public StandardXMLFileConfigurationCreator(TCLogger logger, String configurationSpec, File defaultDirectory,
                                              ConfigBeanFactory beanFactory) {
     Assert.assertNotBlank(configurationSpec);
     Assert.assertNotNull(defaultDirectory);
@@ -83,7 +82,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     this.configDescription = null;
   }
 
-  private static final Pattern SERVER_PATTERN = Pattern.compile("(.*):(.*)", Pattern.CASE_INSENSITIVE);
+  private static final Pattern SERVER_PATTERN   = Pattern.compile("(.*):(.*)", Pattern.CASE_INSENSITIVE);
 
   private static final Pattern RESOURCE_PATTERN = Pattern.compile("resource://(.*)", Pattern.CASE_INSENSITIVE);
 
@@ -106,8 +105,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       if (source == null) {
         // formatting
         throw new ConfigurationSetupException("The location '" + thisComponent
-                                              + "' is not in any recognized format -- it doesn't "
-                                              + "seem to be a server, resource, URL, or file.");
+            + "' is not in any recognized format -- it doesn't " + "seem to be a server, resource, URL, or file.");
       }
 
       out[i] = source;
@@ -121,10 +119,11 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     if (matcher.matches()) {
       String host = matcher.group(1);
       String portText = matcher.group(2);
-      
+
       try {
         return new ServerConfigurationSource(host, Integer.parseInt(portText));
-      } catch(Exception e) {/**/}
+      } catch (Exception e) {/**/
+      }
     }
     return null;
   }
@@ -197,9 +196,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
     if (out == null) configurationFetchFailed(sources, startTime);
 
-    loadConfigurationData(out, trustedSource, descrip,
-                          l1BeanRepository, l2sBeanRepository, systemBeanRepository,
-                          applicationsRepository);
+    loadConfigurationData(out, trustedSource, descrip, l1BeanRepository, l2sBeanRepository, systemBeanRepository,
+        applicationsRepository);
     consoleLogger.info("Configuration loaded from the " + descrip + ".");
   }
 
@@ -209,7 +207,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     if (sources.length > 1) text += "" + sources.length + " different configuration sources";
     else text += "the " + sources[0];
     text += ". ";
-    
+
     if (sources.length > 1) {
       text += " The sources we tried are: ";
       for (int i = 0; i < sources.length; ++i) {
@@ -219,7 +217,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       }
       text += ". ";
     }
-    
+
     if (System.currentTimeMillis() - startTime >= GET_CONFIGURATION_TOTAL_TIMEOUT) {
       text += " Fetch attempt duration: " + ((System.currentTimeMillis() - startTime) / 1000) + " seconds.";
     }
@@ -285,8 +283,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     logger.info("Successfully loaded configuration from the " + descrip + ". Config is:\n\n" + sw.toString());
   }
 
-  private void loadConfigurationData(InputStream in, boolean trustedSource,
-                                     String descrip, MutableBeanRepository clientBeanRepository,
+  private void loadConfigurationData(InputStream in, boolean trustedSource, String descrip,
+                                     MutableBeanRepository clientBeanRepository,
                                      MutableBeanRepository serversBeanRepository,
                                      MutableBeanRepository systemBeanRepository,
                                      ApplicationsRepository applicationsRepository) throws ConfigurationSetupException {
@@ -309,56 +307,58 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
         for (int i = 0; i < beanWithErrors.errors().length; ++i) {
           XmlError error = beanWithErrors.errors()[i];
           buf.append("  [" + i + "]: Line " + error.getLine() + ", column " + error.getColumn() + ": "
-                     + error.getMessage() + "\n");
+              + error.getMessage() + "\n");
         }
 
         throw new ConfigurationSetupException("The configuration data in the " + descrip + " does not obey the "
-                                              + "Terracotta schema:\n" + buf);
+            + "Terracotta schema:\n" + buf);
       } else {
         logger.debug("Configuration is valid.");
       }
 
       TcConfig config = ((TcConfigDocument) beanWithErrors.bean()).getTcConfig();
       Servers servers = config.getServers();
-      
-      if(servers != null) {
-        Server  server;
-        String  host;
-        
-        for(int i = 0; i < servers.sizeOfServerArray(); i++) {
+      if (servers != null) {
+        Server server;
+        for (int i = 0; i < servers.sizeOfServerArray(); i++) {
           server = servers.getServerArray(i);
-          
-          if((host = server.getHost()) == null ||
-              host.trim().length() == 0 ||
-              host.trim().equals("localhost"))
-          {
+          // CDV-79: per our documentation in the schema itself, the host is supposed to default to the name if left
+          // unspecified
+          if (server.getHost() == null || server.getHost().trim().length() == 0) {
+            server.setHost(server.getName());
+          }
+          if ("localhost".equals(server.getHost())) {
             try {
               server.setHost(InetAddress.getLocalHost().getCanonicalHostName());
-            } catch(UnknownHostException uhe) {/**/}
+            } catch (UnknownHostException uhe) {
+              consoleLogger.warn("Unable to replace 'localhost' with the canonical hostname of this machine"
+                  + " for server configuration '" + server.getName()
+                  + "', the value for its 'host' attriubute is now '" + server.getHost() + "'", uhe);
+            }
           }
         }
       }
-      
+
       clientBeanRepository.setBean(config.getClients(), descrip);
       serversBeanRepository.setBean(config.getServers(), descrip);
       systemBeanRepository.setBean(config.getSystem(), descrip);
 
       if (config.isSetApplication()) {
-        applicationsRepository.repositoryFor(TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME)
-            .setBean(config.getApplication(), descrip);
+        applicationsRepository.repositoryFor(TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME).setBean(
+            config.getApplication(), descrip);
       }
     } catch (IOException ioe) {
       throw new ConfigurationSetupException("We were unable to read configuration data from the " + descrip + ": "
-                                            + ioe.getLocalizedMessage(), ioe);
+          + ioe.getLocalizedMessage(), ioe);
     } catch (SAXException saxe) {
       throw new ConfigurationSetupException("The configuration data in the " + descrip + " is not well-formed XML: "
-                                            + saxe.getLocalizedMessage(), saxe);
+          + saxe.getLocalizedMessage(), saxe);
     } catch (ParserConfigurationException pce) {
       throw Assert.failure("The XML parser can't be configured correctly; this should not happen.", pce);
     } catch (XmlException xmle) {
       throw new ConfigurationSetupException("The configuration data in the " + descrip + " does not obey the "
-                                            + "Terracotta schema: " + xmle.getLocalizedMessage(), xmle);
-    } 
+          + "Terracotta schema: " + xmle.getLocalizedMessage(), xmle);
+    }
   }
 
   public File directoryConfigurationLoadedFrom() {
@@ -368,7 +368,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   public boolean loadedFromTrustedSource() {
     return loadedFromTrustedSource;
   }
-  
+
   public String describeSources() {
     if (this.configDescription == null) {
       return "The configuration specified by '" + this.configurationSpec + "'";
