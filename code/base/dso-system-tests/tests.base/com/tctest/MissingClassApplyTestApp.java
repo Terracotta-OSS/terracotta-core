@@ -58,12 +58,14 @@ public class MissingClassApplyTestApp extends AbstractTransparentApp {
     barrier.barrier();
     checkSize(1);
     barrier.barrier();
-    // make sure that update that refer to MissingClass don't throw exceptions in those nodes that don't have access to it
+    // make sure that update that refer to MissingClass don't throw exceptions in those nodes that don't have access to
+    // it
     if (masterNode) {
       add(new MissingClass());
     }
-    barrier.barrier();
-    checkSize((masterNode) ? 2 : 1);
+    if (!masterNode) {
+      checkSize((masterNode) ? 2 : 1);
+    }
     barrier.barrier();
     // just for fun, check class availability again
     checkClassAvailability(masterNode);
@@ -81,7 +83,7 @@ public class MissingClassApplyTestApp extends AbstractTransparentApp {
       }
       if (exception == null) {
         notifyError("Expected exception was not thrown!");
-      } 
+      }
     }
   }
 

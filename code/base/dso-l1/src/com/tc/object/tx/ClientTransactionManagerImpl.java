@@ -4,6 +4,7 @@
  */
 package com.tc.object.tx;
 
+import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.tx.ClientTxMonitorMBean;
@@ -427,7 +428,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
           tcobj.hydrate(dna, force);
         } catch (ClassNotFoundException cnfe) {
           logger.warn("Could not apply change because class not local:" + cnfe.getMessage());
-          continue;
+          throw new TCClassNotFoundException(cnfe);
         }
       }
     }
@@ -623,9 +624,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
   public void enableTransactionLogging() {
     ThreadTransactionLoggingStack txnStack = (ThreadTransactionLoggingStack) txnLogging.get();
-    int size = txnStack.decrement();
-    // FIXME: wrong assumption?  Need to verify.
-    // Assert.assertTrue(size >= 0);
+    final int size = txnStack.decrement();
+    Assert.assertTrue("size=" + size, size >= 0);
   }
 
   public boolean isTransactionLoggingDisabled() {

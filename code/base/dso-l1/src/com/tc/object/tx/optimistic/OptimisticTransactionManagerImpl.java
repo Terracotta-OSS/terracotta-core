@@ -3,7 +3,6 @@
  */
 package com.tc.object.tx.optimistic;
 
-import com.tc.exception.TCClassNotFoundException;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.LiteralValues;
 import com.tc.object.TCObject;
@@ -80,7 +79,7 @@ public class OptimisticTransactionManagerImpl implements OptimisticTransactionMa
       try {
         tcobj.hydrate(new DNAToChangeBufferBridge(this, buf), true);
       } catch (ClassNotFoundException e) {
-        throw new TCClassNotFoundException(e);
+        throw e;
       }
 
       // Add the changes to the dso transaction
