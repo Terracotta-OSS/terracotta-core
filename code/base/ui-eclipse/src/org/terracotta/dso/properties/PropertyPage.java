@@ -54,21 +54,18 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
     final Composite topComp = new Composite(parent, SWT.NONE);
     GridLayout gridLayout = new GridLayout();
     gridLayout.numColumns = 1;
+    gridLayout.makeColumnsEqualWidth = false;
     topComp.setLayout(gridLayout);
     topComp.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
-    GridData gridData = new GridData();
-    gridData.grabExcessHorizontalSpace = true;
-    gridData.horizontalAlignment = GridData.FILL;
 
     Group domainConfig = new Group(topComp, SWT.SHADOW_ETCHED_IN);
     domainConfig.setText("Domain Configuration");
     gridLayout = new GridLayout();
     gridLayout.numColumns = 2;
     domainConfig.setLayout(gridLayout);
-    domainConfig.setLayoutData(gridData);
+    domainConfig.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-    m_configPathField = new Text(domainConfig, SWT.SINGLE|SWT.BORDER);
+    m_configPathField = new Text(domainConfig, SWT.SINGLE | SWT.BORDER);
     m_configPathField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
     m_configFileButton = new Button(domainConfig, SWT.PUSH);
@@ -97,16 +94,18 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
     gridLayout = new GridLayout();
     gridLayout.numColumns = 2;
     serverOptions.setLayout(gridLayout);
+    GridData gridData = new GridData();
+    gridData.horizontalAlignment = GridData.FILL;
+    gridData.heightHint = 60;
     serverOptions.setLayoutData(gridData);
 
-    m_serverOptionsField = new Text(serverOptions, SWT.MULTI|SWT.BORDER|SWT.WRAP);
-    GridData gd = new GridData(GridData.FILL_HORIZONTAL|GridData.FILL_VERTICAL);
-    gd.minimumHeight = 60;
+    m_serverOptionsField = new Text(serverOptions, SWT.MULTI | SWT.BORDER | SWT.V_SCROLL);
+    GridData gd = new GridData(GridData.FILL_BOTH);
     m_serverOptionsField.setLayoutData(gd);
 
     m_resetOptionsButton = new Button(serverOptions, SWT.PUSH);
     m_resetOptionsButton.setText("  Reset  ");
-    m_resetOptionsButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END|GridData.VERTICAL_ALIGN_BEGINNING));
+    m_resetOptionsButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END | GridData.VERTICAL_ALIGN_BEGINNING));
     m_resetOptionsButton.addSelectionListener(new SelectionAdapter() {
       public void widgetSelected(SelectionEvent e) {
         m_serverOptionsField.setText(DEFAULT_SERVER_OPTIONS);

@@ -59,21 +59,18 @@ public class SetupWizardPage extends WizardPage {
     final Composite topComp = new Composite(parent, SWT.NONE);
     GridLayout gridLayout = new GridLayout();
     gridLayout.numColumns = 1;
+    gridLayout.makeColumnsEqualWidth = false;
     topComp.setLayout(gridLayout);
-    topComp.setLayoutData(new GridData(GridData.FILL_VERTICAL));
-
-    GridData gridData = new GridData();
-    gridData.grabExcessHorizontalSpace = true;
-    gridData.horizontalAlignment = GridData.FILL;
+    topComp.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
     Group domainConfig = new Group(topComp, SWT.SHADOW_ETCHED_IN);
     domainConfig.setText("Domain Configuration");
     gridLayout = new GridLayout();
     gridLayout.numColumns = 2;
     domainConfig.setLayout(gridLayout);
-    domainConfig.setLayoutData(gridData);
+    domainConfig.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-    m_configPathField = new Text(domainConfig, SWT.SINGLE);
+    m_configPathField = new Text(domainConfig, SWT.SINGLE | SWT.BORDER);
     m_configPathField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
     m_configPathField.setText(DEFAULT_CONFIG_FILENAME);
 
@@ -97,27 +94,29 @@ public class SetupWizardPage extends WizardPage {
         });
       }
     });
-
     Group serverOptions = new Group(topComp, SWT.SHADOW_ETCHED_IN);
     serverOptions.setText("Server Options");
     gridLayout = new GridLayout();
     gridLayout.numColumns = 2;
     serverOptions.setLayout(gridLayout);
+    GridData gridData = new GridData();
+    gridData.horizontalAlignment = GridData.FILL;
+    gridData.heightHint = 60;
     serverOptions.setLayoutData(gridData);
 
-    m_serverOptionsField = new Text(serverOptions, SWT.SINGLE);
-    m_serverOptionsField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+    m_serverOptionsField = new Text(serverOptions, SWT.MULTI | SWT.BORDER | SWT.V_SCROLL);
+    GridData gd = new GridData(GridData.FILL_BOTH);
+    m_serverOptionsField.setLayoutData(gd);
     m_serverOptionsField.setText(DEFAULT_SERVER_OPTIONS);
 
     m_resetOptionsButton = new Button(serverOptions, SWT.PUSH);
     m_resetOptionsButton.setText("  Reset  ");
-    m_resetOptionsButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
+    m_resetOptionsButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END | GridData.VERTICAL_ALIGN_BEGINNING));
     m_resetOptionsButton.addSelectionListener(new SelectionAdapter() {
       public void widgetSelected(SelectionEvent e) {
         m_serverOptionsField.setText(DEFAULT_SERVER_OPTIONS);
       }
     });
-
     setControl(topComp);
   }
 
