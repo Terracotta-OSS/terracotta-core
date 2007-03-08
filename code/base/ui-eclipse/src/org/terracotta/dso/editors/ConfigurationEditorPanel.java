@@ -4,11 +4,9 @@
 package org.terracotta.dso.editors;
 
 import org.apache.xmlbeans.XmlObject;
+import org.dijon.Container;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.ui.PlatformUI;
-
-import org.dijon.Container;
-
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureChangeEvent;
 import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureListener;
@@ -24,6 +22,12 @@ public class ConfigurationEditorPanel extends Container {
   
   public ConfigurationEditorPanel() {
     super();
+
+    /*
+     * TODO: for some unknown reason this is required under Linux GTK
+     * or else the ConfigEditor Swing panels have white backgrounds. [gkeim]
+     */
+    setOpaque(true);
   }
 
   public static void ensureXmlObject(JComponent comp) {

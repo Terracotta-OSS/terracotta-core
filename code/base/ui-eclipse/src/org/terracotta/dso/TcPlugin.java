@@ -65,6 +65,8 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IDecoratorManager;
 import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IEditorReference;
+import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -81,6 +83,7 @@ import org.terracotta.dso.decorator.AdaptedModuleDecorator;
 import org.terracotta.dso.decorator.AdaptedPackageFragmentDecorator;
 import org.terracotta.dso.decorator.AdaptedTypeDecorator;
 import org.terracotta.dso.decorator.AutolockedDecorator;
+import org.terracotta.dso.decorator.ConfigFileDecorator;
 import org.terracotta.dso.decorator.DistributedMethodDecorator;
 import org.terracotta.dso.decorator.ExcludedModuleDecorator;
 import org.terracotta.dso.decorator.ExcludedTypeDecorator;
@@ -376,8 +379,10 @@ public class TcPlugin extends AbstractUIPlugin
   }
 
   public void setup(IProject project, String configFilePath, String serverOpts) {
+    clearConfigurationSessionProperties(project);
     setConfigurationFilePath(project, configFilePath);
     setPersistentProperty(project, SERVER_OPTIONS, serverOpts);
+    reloadConfiguration(project);    
   }
 
   public void addTerracottaNature(IJavaProject currentProject) {
@@ -749,12 +754,13 @@ public class TcPlugin extends AbstractUIPlugin
       
       setSessionProperty(project, CONFIGURATION, config);
   
-      getConfigurationHelper(project).validateAll();
-      JavaSetupParticipant.inspectAll();
-      updateDecorators();
-      fireConfigurationChange(project);
-      
-      writeSerializedConfigFile(project, lineLengths, config);
+      if(config != null) {
+        getConfigurationHelper(project).validateAll();
+        JavaSetupParticipant.inspectAll();
+        updateDecorators();
+        fireConfigurationChange(project);
+        writeSerializedConfigFile(project, lineLengths, config);
+      }
     }
   }
 
@@ -795,12 +801,13 @@ public class TcPlugin extends AbstractUIPlugin
     
       setSessionProperty(project, CONFIGURATION, config);
   
-      getConfigurationHelper(project).validateAll();
-      JavaSetupParticipant.inspectAll();
-      updateDecorators();
-      fireConfigurationChange(project);
-      
-      writeSerializedConfigFile(project, lineLengths, config);
+      if(config != null) {
+        getConfigurationHelper(project).validateAll();
+        JavaSetupParticipant.inspectAll();
+        updateDecorators();
+        fireConfigurationChange(project);
+        writeSerializedConfigFile(project, lineLengths, config);
+      }
     }
   }
 
@@ -952,10 +959,16 @@ public class TcPlugin extends AbstractUIPlugin
       } catch(XmlException e) {
         LineLengths lineLengths = getConfigurationLineLengths(project);
         handleXmlException(getConfigurationFile(project), lineLengths, e);
-      } catch(Exception e) {/**/}
-        catch(NoClassDefFoundError noClassDef) {
-          noClassDef.printStackTrace();
-        }
+      } catch(Exception e) {
+        /**/
+      } catch(NoClassDefFoundError noClassDef) {
+        noClassDef.printStackTrace();
+      }
+
+      if(config == null) {
+        config = TcConfig.Factory.newInstance();
+        setSessionProperty(project, CONFIGURATION, config);
+      }
     }
     
     return config;
@@ -1014,15 +1027,59 @@ public class TcPlugin extends AbstractUIPlugin
       default:                        return IMarker.SEVERITY_INFO;
     }
   }
+
+  ConfigurationEditor[] getConfigurationEditors(IProject project) {
+    ArrayList list = new ArrayList();
+    IWorkbenchWindow[] windows = PlatformUI.getWorkbench().getWorkbenchWindows();
+    
+    for(int i = 0; i < windows.length; i++) {
+      IWorkbenchPage[] pages = windows[i].getPages();
+      
+      for(int j = 0; j < pages.length; j++) {
+        IEditorReference[] editorRefs = pages[j].getEditorReferences();
+        
+        for(int k = 0; k < editorRefs.length; k++) {
+          IEditorPart editorPart = editorRefs[k].getEditor(false);
+          
+          if(editorPart != null) {
+            if(editorPart instanceof ConfigurationEditor) {
+              ConfigurationEditor configEditor = (ConfigurationEditor)editorPart;
+              IFile file = ((IFileEditorInput)editorPart.getEditorInput()).getFile();
+              
+              if(file.getProject().equals(project)) {
+                list.add(configEditor);
+              }
+            }
+          }
+        }
+      }
+    }
+    return (ConfigurationEditor[])list.toArray(new ConfigurationEditor[0]);
+  }
   
-  public synchronized void reloadConfiguration(IProject project) {
+  public void reloadConfiguration(IProject project) {
     clearConfigurationSessionProperties(project);
     getConfiguration(project);
+    
+    ConfigurationEditor[] configEditors = getConfigurationEditors(project);
+    for(int i = 0; i < configEditors.length; i++) {
+      IFileEditorInput fileEditorInput = (IFileEditorInput)configEditors[i].getEditorInput();
+      IFile file = fileEditorInput.getFile();
+      
+      configEditors[i].newInputFile(file);
+    }
   }
   
   public synchronized void clearConfigurationSessionProperties(
     IProject project)
   {
+    //clearConfigProblemMarkers(project);
+    
+    IFile file = getConfigurationFile(project);
+    if(file != null && file.exists()) {
+      setPersistentProperty(file, ACTIVE_CONFIGURATION_FILE, null);
+    }
+    
     setSessionProperty(project, CONFIGURATION_LINE_LENGTHS, null);
     setSessionProperty(project, CONFIGURATION_FILE, null);
     setSessionProperty(project, CONFIGURATION, null);
@@ -1152,13 +1209,13 @@ public class TcPlugin extends AbstractUIPlugin
   }
 
   public void setPersistentProperty(
-    IProject      project,
+    IResource     resource,
     QualifiedName name,
     String        value)
   {
-    if(project != null && project.exists() && project.isOpen()) {
+    if(resource != null && resource.exists() ) {
       try {
-        project.setPersistentProperty(name, value);
+        resource.setPersistentProperty(name, value);
       } catch(CoreException ce) {
         ce.printStackTrace();
       }
@@ -1166,12 +1223,12 @@ public class TcPlugin extends AbstractUIPlugin
   }
 
   public String getPersistentProperty(
-    IProject      project,
+    IResource     resource,
     QualifiedName name)
   {
-    if(project != null && project.exists() && project.isOpen()) {
+    if(resource != null && resource.exists()) {
       try {
-        return project.getPersistentProperty(name);
+        return resource.getPersistentProperty(name);
       } catch(CoreException ce) {
         return null;
       }
@@ -1180,12 +1237,20 @@ public class TcPlugin extends AbstractUIPlugin
     return null;
   }
 
-  public void setConfigurationEditor(IProject project, ConfigurationEditor editor) {
-    setSessionProperty(project, CONFIGURATION_EDITOR, editor);
-  }
-  
   public ConfigurationEditor getConfigurationEditor(IProject project) {
-    return (ConfigurationEditor)getSessionProperty(project, CONFIGURATION_EDITOR);
+    ConfigurationEditor[] configEditors = getConfigurationEditors(project);
+    IFile configFile = getConfigurationFile(project);
+    
+    for(int i = 0; i < configEditors.length; i++) {
+      IFileEditorInput fileEditorInput = (IFileEditorInput)configEditors[i].getEditorInput();
+      IFile file = fileEditorInput.getFile();
+      
+      if(file.equals(configFile)) {
+        return configEditors[i];
+      }
+    }
+
+    return null;
   }
 
   public ConfigurationEditor ensureConfigurationEditor(IProject project) {
@@ -1201,22 +1266,22 @@ public class TcPlugin extends AbstractUIPlugin
     
     return editor;
   }
-  
-  public void clearConfigurationEditor(IProject project) {
-    if(project != null && project.exists() && project.isOpen()) {
-      setConfigurationEditor(project, null);
-    }
-  }
-  
+ 
   public void setConfigurationFilePath(IProject project, String path) {
-    ConfigurationEditor configEditor = getConfigurationEditor(project);
+    IFile file = project.getFile(getConfigurationFilePath(project));
+    if(file != null && file.exists()) {
+      clearSAXMarkers(file);
+      setPersistentProperty(file, ACTIVE_CONFIGURATION_FILE, null);
+    }
     
     setPersistentProperty(project, CONFIGURATION_FILE_PATH, path);
 
-    IFile file = project.getFile(new Path(path));
+    file = project.getFile(new Path(path));
     setSessionProperty(project, CONFIGURATION_FILE, file);  
+    setPersistentProperty(file, ACTIVE_CONFIGURATION_FILE, "true");
     
-    if(configEditor != null) {
+    ConfigurationEditor configEditor = getConfigurationEditor(project);
+    if(false && configEditor != null) {
       configEditor.newInputFile(file);
     }
   }
@@ -1234,6 +1299,7 @@ public class TcPlugin extends AbstractUIPlugin
       if(path != null) {
         file = project.getFile(new Path(path));
         setSessionProperty(project, CONFIGURATION_FILE, file);
+        setPersistentProperty(file, ACTIVE_CONFIGURATION_FILE, "true");
       }
     }
     
@@ -1335,6 +1401,7 @@ public class TcPlugin extends AbstractUIPlugin
   
   private static final String[] DECORATOR_IDS = {
     "org.terracotta.dso.projectDecorator",
+    ConfigFileDecorator.DECORATOR_ID,
     ServerRunningDecorator.DECORATOR_ID,
     AdaptedModuleDecorator.DECORATOR_ID,
     AdaptedTypeDecorator.DECORATOR_ID,

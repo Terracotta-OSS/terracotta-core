@@ -5,8 +5,10 @@ package com.tc.admin;
 
 import org.apache.commons.io.IOUtils;
 import org.dijon.ApplicationManager;
+import org.dijon.Dialog;
 import org.dijon.DictionaryResource;
 import org.dijon.Image;
+import org.dijon.Label;
 
 import com.tc.util.ResourceBundleHelper;
 import com.tc.util.runtime.Os;
@@ -20,6 +22,9 @@ import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
+
+import javax.swing.ImageIcon;
+import javax.swing.UIManager;
 
 public class AdminClient extends ApplicationManager {
   private static AdminClient m_client;
@@ -93,7 +98,7 @@ public class AdminClient extends ApplicationManager {
   }
 
   /**
-   * We use java.util.prefs instead of Galaxy resources.
+   * We use java.util.prefs instead of Dijon resources.
    */
   public DictionaryResource loadPreferences() {
     return new DictionaryResource();
@@ -154,6 +159,7 @@ public class AdminClient extends ApplicationManager {
   public void start() {
     m_cntx.controller = new AdminClientFrame();
     ((AdminClientFrame)m_cntx.controller).setVisible(true);
+    retractSplashDialog();
   }
 
   public String[] parseArgs(String[] args) {
@@ -166,10 +172,34 @@ public class AdminClient extends ApplicationManager {
     return args;
   }
 
+  public static Dialog m_splashDialog;
+  
+  public static void displaySplashDialog() {
+    m_splashDialog = new Dialog("Starting Terracotta AdminConsole...");
+    Label label = new Label("");
+    label.setIcon(new ImageIcon(AdminClient.class.getResource("/com/tc/admin/icons/logo.gif")));
+    m_splashDialog.getContentPane().add(label);
+    m_splashDialog.pack();
+    m_splashDialog.center();
+    m_splashDialog.setVisible(true);
+  }
+  
+  public static void retractSplashDialog() {
+    m_splashDialog.setVisible(false);
+  }
+  
   public static final void main(final String[] args)
     throws Exception
   {
+    displaySplashDialog();
+    
     String[] appArgs = ApplicationManager.parseLAFArgs(args);
+
+    try {
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    } catch(Exception e) {
+      /**/
+    }
 
     AdminClient client = new AdminClient();
     client.parseArgs(appArgs);

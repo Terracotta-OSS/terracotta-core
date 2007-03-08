@@ -53,6 +53,9 @@ public class ResourceDeltaVisitor implements IResourceDeltaVisitor {
             String ext  = path.getFileExtension();
             
             if(ext.equals("xml")) {
+              if((flags & IResourceDelta.MARKERS) != 0) {
+                return false;
+              }
               if(plugin.getConfigurationFile(project).equals(res) &&
                  plugin.getConfigurationEditor(project) == null)
               {

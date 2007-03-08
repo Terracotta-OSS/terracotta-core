@@ -68,7 +68,14 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
 
       IPath configPath = configFile.getLocation();
       String configProp = " -Dtc.config=\"" + toOSString(configPath) + "\"";
-      String jreContainerPath = wc.getAttribute(ATTR_JRE_CONTAINER_PATH, (String) null);
+      
+      String portablePath = null;
+      IPath jrePath = JavaRuntime.computeJREEntry(javaProject).getPath();
+      if(jrePath != null) {
+        portablePath = jrePath.toPortableString();
+      }
+
+      String jreContainerPath = wc.getAttribute(ATTR_JRE_CONTAINER_PATH, portablePath);
       String bootJarName = BootJarHelper.getHelper().getBootJarName(jreContainerPath);
 
       if (bootJarName == null || bootJarName.length() == 0) {
@@ -87,7 +94,7 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
       IFile localBootJar = project.getFile(bootJarName);
       IPath bootPath;
 
-      testEnsureBootJar(plugin, javaProject, localBootJar);
+      testEnsureBootJar(plugin, javaProject, localBootJar, jreContainerPath);
 
       if (localBootJar.exists()) {
         bootPath = localBootJar.getLocation();
@@ -129,12 +136,17 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
     return path.makeAbsolute().toOSString();
   }
 
-  private void testEnsureBootJar(final TcPlugin plugin, final IJavaProject javaProject, final IFile bootJar) {
-    IProject project = javaProject.getProject();
-    ConfigurationHelper configHelper = plugin.getConfigurationHelper(project);
-    IFile configFile = plugin.getConfigurationFile(project);
-    boolean stdBootJarExists = false;
-    boolean configHasBootJarClasses = configHelper.hasBootJarClasses();
+  private void testEnsureBootJar(final TcPlugin     plugin,
+                                 final IJavaProject javaProject,
+                                 final IFile        bootJar,
+                                 final String       jreContainerPath)
+  {
+    IProject            project                 = javaProject.getProject();
+    ConfigurationHelper configHelper            = plugin.getConfigurationHelper(project);
+    IFile               configFile              = plugin.getConfigurationFile(project);
+    boolean             stdBootJarExists        = false;
+    boolean             configHasBootJarClasses = configHelper.hasBootJarClasses();
+    
     try {
       stdBootJarExists = BootJarHelper.getHelper().getBootJarFile().exists();
     } catch (CoreException ce) {/**/
@@ -148,6 +160,7 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
         Display.getDefault().syncExec(new Runnable() {
           public void run() {
             BuildBootJarAction bbja = new BuildBootJarAction(javaProject);
+            bbja.setJREContainerPath(jreContainerPath);
             bbja.run(null);
           }
         });
@@ -157,14 +170,20 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
 
   public IJavaProject getJavaProject(ILaunchConfiguration configuration) throws CoreException {
     String projectName = getJavaProjectName(configuration);
+    
     if (projectName != null) {
       projectName = projectName.trim();
+      
       if (projectName.length() > 0) {
-        IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
+        IProject     project     = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
         IJavaProject javaProject = JavaCore.create(project);
-        if (javaProject != null && javaProject.exists()) { return javaProject; }
+        
+        if (javaProject != null && javaProject.exists()) {
+          return javaProject;
+        }
       }
     }
+    
     return null;
   }
 
@@ -176,8 +195,9 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
     PluginModelManager manager = PDECore.getDefault().getModelManager();
     IProject[] projs = ResourcesPlugin.getWorkspace().getRoot().getProjects();
     for (int i = 0; i < projs.length; i++) {
-      if (!WorkspaceModelManager.isPluginProject(projs[i])) 
+      if (!WorkspaceModelManager.isPluginProject(projs[i])) {
         continue;
+      }
       IPluginModelBase base = manager.findModel(projs[i]);
       if(appNameRoot.equals(base.getPluginBase().getId())) {
         return projs[i].getName();

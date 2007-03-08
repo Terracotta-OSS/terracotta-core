@@ -123,7 +123,7 @@ public class AdminClientPanel extends XContainer
     
     FrameResource frameRes = acc.topRes.getFrame("MyFrame");
     load(frameRes.getContentPane());
-
+    
     m_tree       = (NavTree)findComponent("Tree");
     m_nodeView   = (XContainer)findComponent("NodeView");
     m_bottomPane = (XTabbedPane)findComponent("BottomPane");

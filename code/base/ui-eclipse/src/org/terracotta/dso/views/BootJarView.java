@@ -30,6 +30,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import org.terracotta.dso.BootJarHelper;
+import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.actions.ActionUtil;
 
 import java.io.IOException;
@@ -69,7 +70,8 @@ public class BootJarView extends ViewPart
     public Object[] getElements(Object parent) {
       ArrayList list = new ArrayList();
 
-      if(bootJarFile == null) {
+      if(bootJarFile == null ||
+          !TcPlugin.getDefault().hasTerracottaNature(bootJarFile.getProject())) {
         return new Object[0];
       }
 
@@ -159,7 +161,12 @@ public class BootJarView extends ViewPart
       return false;
     }
     
-    if(delta.getKind() == IResourceDelta.CHANGED) {
+    if((delta.getFlags() & IResourceDelta.DESCRIPTION) != 0) {
+      bootJarFile = getBootJarFile();
+      viewer.setContentProvider(new ViewContentProvider());
+      viewer.setInput(getViewSite());
+      return false;
+    } else if(delta.getKind() == IResourceDelta.CHANGED) {
       IResource res = delta.getResource();
         
       if(res instanceof IFile) {

@@ -61,8 +61,8 @@
                 </children>
                 <connections>
                   <item left="-1,left:n" top="-1,top:n" right="-1,right:sn" bottom="1,top:0" width="n" height="n"/>
-                  <item left="-1,left:n" top="0,bottom:s" right="-1,right:sn" bottom="0,top:0" width="n" height="n"/>
-                  <item left="-1,left:n" top="1,bottom:s" right="-1,right:sn" bottom="1,top:0" width="n" height="n"/>
+                  <item left="-1,left:n" top="0,bottom:s" right="-1,right:sn" bottom="2,top:0" width="n" height="n"/>
+                  <item left="-1,left:n" top="1,bottom:s" right="-1,right:sn" bottom="3,top:0" width="n" height="n"/>
                   <item left="-1,left:n" top="2,bottom:s" right="-1,right:sn" bottom="-1,bottom:sn" width="n" height="n"/>
                 </connections>
               </container>
@@ -351,36 +351,38 @@
             <children>
               <container name="PersistencePanel" class="org.terracotta.dso.editors.PersistencePanel">
                 <children>
+                  <label name="PersistenceComboLabel" text="Persistence mode" horizontal-text-position="leading" label-for="PersistenceCombo"/>
                   <combo name="PersistenceCombo" class="org.terracotta.dso.editors.xmlbeans.XmlStringEnumCombo">
                     <combo-model elem-type="str"/>
                   </combo>
-                  <label name="PersistenceComboLabel" text="Persistence mode" horizontal-text-position="leading" label-for="PersistenceCombo"/>
                 </children>
                 <connections>
-                  <item left="-1,left:0" top="1,bottom:0" right="-1,right:sn" bottom="-1,bottom:s" width="sn" height="n"/>
-                  <item left="0,left:0" top="-1,top:s" right="-1,right:sn" bottom="0,top:0" width="n" height="n"/>
+                  <item left="-1,left:0" top="1,top:s" right="1,left:n" bottom="1,bottom:s" width="n" height="n"/>
+                  <item left="0,right:n" top="-1,top:s" right="-1,right:sn" bottom="-1,bottom:s" width="ns" height="n"/>
                 </connections>
               </container>
               <container name="GarbageCollectionPanel" class="org.terracotta.dso.editors.GarbageCollectionPanel">
+<!--
                 <border>
                   <etched-border type="lowered"/>
                 </border>
+-->
                 <children>
                   <checkbox name="IsGCEnabled" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="Garbage collection"/>
                   <checkbox name="IsVerboseGC" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="verbose"/>
-                  <spinner name="GCInterval" class="org.terracotta.dso.editors.xmlbeans.XmlIntegerSpinner"/>
                   <label name="GCIntervalLabel" text="GC interval" horizontal-text-position="leading" label-for="GCInterval"/>
+                  <spinner name="GCInterval" class="org.terracotta.dso.editors.xmlbeans.XmlIntegerSpinner"/>
                 </children>
                 <connections>
-                  <item left="-1,left:n" top="-1,top:n" right="-1,right:sn" bottom="1,top:sn" width="n" height="n"/>
-                  <item left="-1,left:36" top="0,bottom:sn" right="-1,right:sn" bottom="3,top:sn" width="n" height="n"/>
-                  <item left="1,left:0" top="3,bottom:0" right="-1,right:sn" bottom="-1,bottom:sn" width="sn" height="n"/>
-                  <item left="2,left:0" top="1,bottom:sn" right="-1,right:sn" bottom="2,top:0" width="n" height="n"/>
+                  <item left="-1,left:0" top="-1,top:0" right="-1,right:sn" bottom="3,top:ns" width="n" height="n"/>
+                  <item left="-1,left:sn" top="0,bottom:ns" right="2,left:sn" bottom="-1,bottom:ns" width="n" height="n"/>
+                  <item left="1,right:ns" top="0,bottom:ns" right="3,left:n" bottom="-1,bottom:ns" width="n" height="n"/>
+                  <item left="2,right:n" top="0,bottom:ns" right="-1,right:sn" bottom="-1,bottom:sn" width="n" height="n"/>
                 </connections>
               </container>
             </children>
             <connections>
-              <item left="-1,left:n" top="-1,top:n" right="-1,right:n" bottom="1,top:n" width="sn" height="n"/>
+              <item left="-1,left:n" top="-1,top:n" right="-1,right:n" bottom="1,top:ns" width="sn" height="n"/>
               <item left="-1,left:n" top="0,bottom:sn" right="-1,right:n" bottom="-1,bottom:sn" width="sn" height="n"/>
             </connections>
           </container>
@@ -395,11 +397,11 @@
             </children>
             <connections>
               <item left="1,left:0" top="-1,top:sn" right="-1,right:s" bottom="1,top:0" width="n" height="n"/>
-              <item left="-1,left:n" top="0,bottom:0" right="2,left:n" bottom="3,top:0" width="sn" height="n"/>
-              <item left="1,right:sn" top="1,top:0" right="-1,right:n" bottom="1,bottom:0" width="n" height="n"/>
-              <item left="4,left:0" top="1,bottom:0" right="-1,right:s" bottom="4,top:0" width="n" height="n"/>
+              <item left="-1,left:n" top="0,bottom:0" right="2,left:n" bottom="3,top:3" width="sn" height="n"/>
+              <item left="1,right:sn" top="1,top:s" right="-1,right:n" bottom="1,bottom:s" width="n" height="n"/>
+              <item left="4,left:0" top="1,bottom:3" right="-1,right:s" bottom="4,top:0" width="n" height="n"/>
               <item left="-1,left:n" top="3,bottom:0" right="5,left:n" bottom="-1,bottom:sn" width="sn" height="n"/>
-              <item left="4,right:sn" top="4,top:0" right="-1,right:n" bottom="4,bottom:0" width="n" height="n"/>
+              <item left="4,right:sn" top="4,top:s" right="-1,right:n" bottom="4,bottom:s" width="n" height="n"/>
             </connections>
           </container>
         </children>

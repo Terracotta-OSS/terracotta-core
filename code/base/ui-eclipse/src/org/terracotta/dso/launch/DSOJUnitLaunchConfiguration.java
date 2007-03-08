@@ -18,6 +18,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.internal.junit.launcher.JUnitLaunchConfiguration;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
@@ -28,13 +29,21 @@ import org.terracotta.dso.ServerTracker;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.actions.BuildBootJarAction;
 
-public class DSOJUnitLaunchConfiguration extends JUnitLaunchConfiguration implements IJavaLaunchConfigurationConstants {
+public class DSOJUnitLaunchConfiguration extends JUnitLaunchConfiguration
+  implements IJavaLaunchConfigurationConstants
+{
   public void launch(ILaunchConfiguration config, String mode, ILaunch launch, IProgressMonitor monitor)
-      throws CoreException {
+    throws CoreException
+  {
     try {
-      IWorkbench workbench = PlatformUI.getWorkbench();
-
-      workbench.saveAllEditors(false);
+      Display.getDefault().syncExec(new Runnable() {
+        public void run() {
+          IWorkbench workbench = PlatformUI.getWorkbench();
+          if(workbench != null) {
+            workbench.saveAllEditors(false);
+          }
+        }
+      });
 
       ILaunchConfigurationWorkingCopy wc = config.getWorkingCopy();
       final IJavaProject javaProject = getJavaProject(wc);
@@ -54,7 +63,14 @@ public class DSOJUnitLaunchConfiguration extends JUnitLaunchConfiguration implem
 
       IPath configPath = configFile.getLocation();
       String configProp = " -Dtc.config=\"" + toOSString(configPath) + "\"";
-      String jreContainerPath = wc.getAttribute(ATTR_JRE_CONTAINER_PATH, (String) null);
+      
+      String portablePath = null;
+      IPath jrePath = JavaRuntime.computeJREEntry(javaProject).getPath();
+      if(jrePath != null) {
+        portablePath = jrePath.toPortableString();
+      }
+
+      String jreContainerPath = wc.getAttribute(ATTR_JRE_CONTAINER_PATH, portablePath);
       String bootJarName = BootJarHelper.getHelper().getBootJarName(jreContainerPath);
 
       if (bootJarName == null || bootJarName.length() == 0) {
@@ -73,7 +89,7 @@ public class DSOJUnitLaunchConfiguration extends JUnitLaunchConfiguration implem
       IFile localBootJar = project.getFile(bootJarName);
       IPath bootPath;
 
-      testEnsureBootJar(plugin, javaProject, localBootJar);
+      testEnsureBootJar(plugin, javaProject, localBootJar, jreContainerPath);
 
       if (localBootJar.exists()) {
         bootPath = localBootJar.getLocation();
@@ -115,29 +131,34 @@ public class DSOJUnitLaunchConfiguration extends JUnitLaunchConfiguration implem
     return path.makeAbsolute().toOSString();
   }
 
-  private void testEnsureBootJar(final TcPlugin plugin, final IJavaProject javaProject, final IFile bootJar) {
-    IProject project = javaProject.getProject();
-    ConfigurationHelper configHelper = plugin.getConfigurationHelper(project);
-    IFile configFile = plugin.getConfigurationFile(project);
-    boolean stdBootJarExists = false;
-    boolean configHasBootJarClasses = configHelper.hasBootJarClasses();
-    try {
-      stdBootJarExists = BootJarHelper.getHelper().getBootJarFile().exists();
-    } catch (CoreException ce) {/**/
-    }
-
-    if (!stdBootJarExists || (configFile != null && configHasBootJarClasses)) {
-      long bootStamp = bootJar.getLocalTimeStamp();
-      long confStamp = configFile.getLocalTimeStamp();
-
-      if (!bootJar.exists() || (configHasBootJarClasses && bootStamp < confStamp)) {
-        Display.getDefault().syncExec(new Runnable() {
-          public void run() {
-            BuildBootJarAction bbja = new BuildBootJarAction(javaProject);
-            bbja.run(null);
-          }
-        });
-      }
-    }
-  }
+  private void testEnsureBootJar(final TcPlugin     plugin,
+                                 final IJavaProject javaProject,
+                                 final IFile        bootJar,
+                                 final String       jreContainerPath)
+   {
+     IProject            project                 = javaProject.getProject();
+     ConfigurationHelper configHelper            = plugin.getConfigurationHelper(project);
+     IFile               configFile              = plugin.getConfigurationFile(project);
+     boolean             stdBootJarExists        = false;
+     boolean             configHasBootJarClasses = configHelper.hasBootJarClasses();
+     
+     try {
+       stdBootJarExists = BootJarHelper.getHelper().getBootJarFile().exists();
+     } catch(CoreException ce) {/**/}
+                     
+     if(!stdBootJarExists || (configFile != null && configHasBootJarClasses)) {
+       long bootStamp = bootJar.getLocalTimeStamp();
+       long confStamp = configFile.getLocalTimeStamp();
+       
+       if(!bootJar.exists() || (configHasBootJarClasses && bootStamp < confStamp)) {
+         Display.getDefault().syncExec(new Runnable() {
+           public void run() {
+             BuildBootJarAction bbja = new BuildBootJarAction(javaProject);
+             bbja.setJREContainerPath(jreContainerPath);
+             bbja.run(null);
+           }
+         });
+       }
+     }
+   }
 }

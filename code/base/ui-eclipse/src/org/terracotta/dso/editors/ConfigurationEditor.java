@@ -25,7 +25,6 @@ import org.eclipse.help.IHelpResource;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentListener;
@@ -63,7 +62,6 @@ import org.terracotta.dso.decorator.RootDecorator;
 import org.terracotta.dso.decorator.TransientDecorator;
 import org.terracotta.dso.editors.xml.XMLEditor;
 
-import com.tc.admin.AdminClientPanel;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.ConfigurationModel;
 import com.terracottatech.config.System;
@@ -71,7 +69,6 @@ import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.awt.Frame;
-import java.awt.Panel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -80,6 +77,7 @@ import java.text.MessageFormat;
 import javax.swing.JRootPane;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.UIManager;
 
 public class ConfigurationEditor extends MultiPageEditorPart
   implements IResourceChangeListener,
@@ -92,13 +90,13 @@ public class ConfigurationEditor extends MultiPageEditorPart
   private ClientsPanel         m_clientsPanel;
   private XMLEditor            m_xmlEditor;
   private int                  m_xmlEditorPageIndex;
-  private AdminClientPanel     m_monitorPanel;
   private ResourceDeltaVisitor m_resourceDeltaVisitor;
+  private boolean              m_haveActiveConfig;
   private DocumentListener     m_docListener;
   private ElementStateListener m_elementStateListener;
   private TextInputListener    m_textInputListener;
   private Timer                m_parseTimer;
-      
+  
   static {
     try {
       java.lang.System.setProperty("sun.awt.noerasebackground", "true");
@@ -118,17 +116,17 @@ public class ConfigurationEditor extends MultiPageEditorPart
   }
     
   private Composite createComposite() {
-    return new Composite(getContainer(), SWT.NO_BACKGROUND|SWT.EMBEDDED);
+    return new Composite(getContainer(), SWT.EMBEDDED);
   }
   
   void createDsoApplicationPage(int pageIndex) {
     final Composite composite = createComposite();
     final Frame     frame     = SWT_AWT.new_Frame(composite);
     JRootPane       rootPane  = new JRootPane();
-    Panel           root      = new RootPanel();
 
-    frame.add(root);
-    root.add(rootPane);
+    rootPane.setBackground(UIManager.getColor("control"));
+    rootPane.setOpaque(true);
+    frame.add(rootPane);
     ScrollPane scroller = new ScrollPane(m_dsoAppPanel = new DsoApplicationPanel()); 
     rootPane.getContentPane().add(scroller);
     m_dsoAppPanel.setup(m_project);
@@ -150,10 +148,10 @@ public class ConfigurationEditor extends MultiPageEditorPart
     final Composite composite = createComposite();
     final Frame     frame     = SWT_AWT.new_Frame(composite);
     JRootPane       rootPane  = new JRootPane();
-    Panel           root      = new RootPanel();
 
-    frame.add(root);
-    root.add(rootPane);
+    rootPane.setBackground(UIManager.getColor("control"));
+    rootPane.setOpaque(true);
+    frame.add(rootPane);
     ScrollPane scroller = new ScrollPane(m_serversPanel = new ServersPanel());
     rootPane.getContentPane().add(scroller);
     m_serversPanel.setup(m_project);
@@ -167,10 +165,10 @@ public class ConfigurationEditor extends MultiPageEditorPart
     final Composite composite = createComposite();
     final Frame     frame     = SWT_AWT.new_Frame(composite);
     JRootPane       rootPane  = new JRootPane();
-    Panel           root      = new RootPanel();
-    
-    frame.add(root);
-    root.add(rootPane);
+
+    frame.setBackground(UIManager.getColor("control"));
+    rootPane.setOpaque(true);
+    frame.add(rootPane);
     ScrollPane scroller = new ScrollPane(m_clientsPanel = new ClientsPanel());
     rootPane.getContentPane().add(scroller);
     m_clientsPanel.setup(m_project);
@@ -186,6 +184,7 @@ public class ConfigurationEditor extends MultiPageEditorPart
 
       addPage(m_xmlEditorPageIndex = pageIndex, m_xmlEditor = new XMLEditor(), input);
       setPageText(m_xmlEditorPageIndex, m_xmlEditor.getTitle());
+
       m_xmlEditor.addTextInputListener(m_textInputListener);
       m_xmlEditor.getDocument().addDocumentListener(m_docListener);
       m_xmlEditor.getDocumentProvider().addElementStateListener(m_elementStateListener);
@@ -198,51 +197,34 @@ public class ConfigurationEditor extends MultiPageEditorPart
         e.getStatus());
     }
   }
+  
+  public boolean isActiveConfig() {
+    TcPlugin plugin = TcPlugin.getDefault();
+    IFile configFile = plugin.getConfigurationFile(m_project);
+    IFileEditorInput fileEditorInput = (FileEditorInput)getEditorInput();
+    IFile file = fileEditorInput.getFile();
     
-  void createAdminConsolePage(int pageIndex) {
-    final Composite composite = createComposite();
-    final Frame     frame     = SWT_AWT.new_Frame(composite);
-    JRootPane       rootPane  = new JRootPane();
-    Panel           root      = new RootPanel();
-          
-    frame.add(root);
-    root.add(rootPane);
-    ScrollPane scroller = new ScrollPane(m_monitorPanel = new AdminClientPanel());
-    rootPane.getContentPane().add(scroller);
-    m_monitorPanel.setVisible(true);
-    
-    addPage(pageIndex, composite);
-    setPageText(pageIndex, "Monitor");
-    
-    ImageDescriptor imageDesc =
-      ImageDescriptor.createFromURL(
-        getClass().getResource("/com/tc/admin/icons/monitor_obj.gif"));
-    setPageImage(pageIndex, imageDesc.createImage());
+    return file != null && file.equals(configFile);
   }
-
+  
+  boolean haveActiveConfig() {
+    return m_haveActiveConfig;
+  }
+  
   protected void createPages() {
     createXMLEditorPage(0);
-    
-    createDsoApplicationPage(1);
-    createServersPage(2);
-    createClientPage(3);
-    createAdminConsolePage(4);
-  
-    ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
+
+    if(haveActiveConfig()) {
+      createDsoApplicationPage(1);
+      createServersPage(2);
+      createClientPage(3);
+
+      ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
+    }
   }
 
   public void dispose() {
     ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
-    TcPlugin.getDefault().clearConfigurationEditor(m_project);
-    
-    try {
-      SwingUtilities.invokeAndWait(new Runnable() {
-        public void run() {
-          m_monitorPanel.disconnectAll();
-        }
-      });
-    } catch(Exception e) {/**/}
-    
     super.dispose();
   }
  
@@ -351,7 +333,7 @@ public class ConfigurationEditor extends MultiPageEditorPart
     IDE.gotoMarker(getEditor(0), marker);
   }
 
-  public void newInputFile(IFile file) {
+  public void newInputFile(final IFile file) {
     if(file != null && file.exists()) {
       final FileEditorInput input = new FileEditorInput(file);
       
@@ -359,12 +341,27 @@ public class ConfigurationEditor extends MultiPageEditorPart
 
       m_project = file.getProject();
 
-      initPanels();
-
+      if(haveActiveConfig()) {
+        if(getPageCount() == 1) {
+          createDsoApplicationPage(1);
+          createServersPage(2);
+          createClientPage(3);
+        }
+        ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
+        initPanels();
+      } else {
+        ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
+        for(int i = getPageCount()-1; i > 0; i--) {
+          removePage(i);
+        }
+      }
+      
       syncExec(new Runnable() {
         public void run() {
           m_xmlEditor.setInput(input);
-          setPageText(m_xmlEditorPageIndex, m_xmlEditor.getTitle());
+          String name = file.getName();
+          setPartName(name);
+          setPageText(m_xmlEditorPageIndex, name);
         }
       });
     }
@@ -385,7 +382,6 @@ public class ConfigurationEditor extends MultiPageEditorPart
       throw new PartInitException("Invalid Input: Must be IFileEditorInput");
     }
    
-    TcPlugin         plugin          = TcPlugin.getDefault();
     IFileEditorInput fileEditorInput = (IFileEditorInput)editorInput;
     IFile            file            = fileEditorInput.getFile();
     IProject         project         = file.getProject();
@@ -403,22 +399,18 @@ public class ConfigurationEditor extends MultiPageEditorPart
       ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
       throw new PartInitException(msg);
     }
-    
-    IFile configFile = plugin.getConfigurationFile(project);
-    
-    if(!file.equals(configFile)) {
-      String msg = "File '"+file.getName()+"' must be Terrcotta project configuration file";
 
-      ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
-      plugin.openError(msg);
-      throw new PartInitException(msg);
-    }
-    
-    plugin.setConfigurationEditor(m_project = project, this);
-
+    m_project = project;
     super.init(site, editorInput);
+
+    setPartName(file.getName());
   }
   
+  protected void setInput(IEditorInput input) {
+    super.setInput(input);
+    m_haveActiveConfig = isActiveConfig();
+  }
+
   public boolean isSaveAsAllowed() {
     return true;
   }
@@ -446,8 +438,12 @@ public class ConfigurationEditor extends MultiPageEditorPart
           
         if(res instanceof IFile) {
           IProject project = res.getProject();
-
-          if(project != null && (delta.getFlags() & IResourceDelta.CONTENT) != 0) {
+          int flags = delta.getFlags();
+          
+          if(project != null && (flags & IResourceDelta.CONTENT) != 0) {
+            if((flags & IResourceDelta.MARKERS) != 0) {
+              return false;
+            }
             IFile configFile = plugin.getConfigurationFile(project);
             
             if(configFile != null && configFile.equals(res)) {
@@ -689,10 +685,11 @@ public class ConfigurationEditor extends MultiPageEditorPart
   public synchronized void _setDirty() {
     syncXmlDocument();
     internalSetDirty(Boolean.TRUE);
+
     JavaSetupParticipant.inspectAll();
     TcPlugin.getDefault().updateDecorators();
     TcPlugin.getDefault().fireConfigurationChange(m_project);
-
+    
     //TcPlugin.getDefault().saveConfigurationQuietly(m_project);
   }
 
@@ -706,8 +703,11 @@ public class ConfigurationEditor extends MultiPageEditorPart
   }
   
   public boolean isDirty() {
-    return m_project.isOpen() &&
-      TcPlugin.getDefault().isConfigurationFileDirty(m_project);
+    if(m_project != null && haveActiveConfig()) {
+      return m_project.isOpen() && TcPlugin.getDefault().isConfigurationFileDirty(m_project);
+    } else {
+      return super.isDirty();
+    }
   }
   
   public void modelChanged() {
@@ -755,9 +755,9 @@ public class ConfigurationEditor extends MultiPageEditorPart
     public void documentAboutToBeChanged(DocumentEvent event) {/**/}
     
     public void documentChanged(DocumentEvent event) {
-      m_parseTimer.stop();
+      if(haveActiveConfig()) m_parseTimer.stop();
       internalSetDirty(Boolean.TRUE);
-      m_parseTimer.start();
+      if(haveActiveConfig()) m_parseTimer.start();
     }
   }
   

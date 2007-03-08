@@ -581,7 +581,11 @@ public class ConfigViewPart extends ViewPart
       TcConfig config = null;
       
       if((m_javaProject = javaProject) != null) {
-        config = fPlugin.getConfiguration(javaProject.getProject());
+        IProject project = javaProject.getProject();
+        
+        if(TcPlugin.getDefault().hasTerracottaNature(project)) {
+          config = fPlugin.getConfiguration(project);
+        }
       }
       setConfig(config);
     }
@@ -624,15 +628,17 @@ public class ConfigViewPart extends ViewPart
   }
   
   public void configurationChanged(IProject project) {
-    if(m_javaProject != null && m_javaProject.getProject().equals(project)) {
-      m_javaProject = JavaCore.create(project);
-      setConfig(fPlugin.getConfiguration(project));
+    if(TcPlugin.getDefault().hasTerracottaNature(project)) {
+      if(m_javaProject != null && m_javaProject.getProject().equals(project)) {
+        m_javaProject = JavaCore.create(project);
+        setConfig(fPlugin.getConfiguration(project));
+      }
+    } else {
+      setConfig(null);
     }
   }
 
-  public void doubleClick(DoubleClickEvent event) {
-    System.out.println(event.getSelection());
-  }
+  public void doubleClick(DoubleClickEvent event) {/**/}
   
   public void resourceChanged(final IResourceChangeEvent event){
     switch(event.getType()) {

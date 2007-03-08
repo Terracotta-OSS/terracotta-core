@@ -42,9 +42,14 @@ public class ConfigurationDelegate extends JavaLaunchDelegate
     IProgressMonitor     monitor) throws CoreException
   {
     try {
-      IWorkbench workbench = PlatformUI.getWorkbench();
-  
-      workbench.saveAllEditors(false);
+      Display.getDefault().syncExec(new Runnable() {
+        public void run() {
+          IWorkbench workbench = PlatformUI.getWorkbench();
+          if(workbench != null) {
+            workbench.saveAllEditors(false);
+          }
+        }
+      });
   
       ILaunchConfigurationWorkingCopy wc          = config.getWorkingCopy();
       final IJavaProject              javaProject = getJavaProject(wc);
@@ -151,6 +156,7 @@ public class ConfigurationDelegate extends JavaLaunchDelegate
     IFile               configFile              = plugin.getConfigurationFile(project);
     boolean             stdBootJarExists        = false;
     boolean             configHasBootJarClasses = configHelper.hasBootJarClasses();
+    
     try {
       stdBootJarExists = BootJarHelper.getHelper().getBootJarFile().exists();
     } catch(CoreException ce) {/**/}

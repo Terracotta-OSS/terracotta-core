@@ -117,7 +117,9 @@ public class ConfigContentProvider implements ITreeContentProvider {
         return new Object[0];
       } else {
         Application app = config.getApplication();
+        if(app == null) app = config.addNewApplication();
         DsoApplication dsoApp = app.getDso();
+        if(dsoApp == null) dsoApp = app.addNewDso();
         
         return new Object[] {
             new RootsWrapper(dsoApp),

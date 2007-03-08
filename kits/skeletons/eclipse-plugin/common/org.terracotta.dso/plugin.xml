@@ -182,8 +182,8 @@
             class="org.terracotta.dso.editors.ConfigurationEditor"
             contributorClass="org.terracotta.dso.editors.ConfigurationEditorContributor"
             default="false"
+            filename="tc-config.xml"
             extensions="xml"
-            filenames="tc-config.xml"
             icon="images/eclipse/logo16.gif"
             id="editors.configurationEditor"
             name="Terracotta Config">
@@ -247,6 +247,31 @@
                id="workbenchServerAction">
          </action>
          <action
+               id="showConfigEditorAction"
+               label="Show Config Editor"
+               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group2"
+               tooltip="Show the DSO configuration editor"
+               helpContextId="show.config.editor.action.context"
+               class="org.terracotta.dso.actions.ShowConfigEditorAction"
+               enablesFor="*">
+               <enablement>
+                 <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
+               </enablement>
+         </action>
+         <action
+               id="showAdminConsoleAction"
+               label="Show AdminConsole..."
+               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group2"
+               tooltip="Show the Terracotta AdminConsole"
+               helpContextId="show.adminconsole.action.context"
+               icon="images/eclipse/monitor_obj.gif"
+               class="org.terracotta.dso.actions.ShowAdminConsoleAction"
+               enablesFor="*">
+               <enablement>
+                 <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
+               </enablement>
+         </action>
+         <action
                id="buildBootJarAction"
                label="Build BootJar..."
                menubarPath="org.terracotta.dso.workbenchActionSetMenu/group2"
@@ -259,22 +284,6 @@
                  <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
                </enablement>
          </action>
-<!--
-         <action
-               id="contactSalesAction"
-               label="Contact Terracotta Sales"
-               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group4"
-               class="org.terracotta.dso.actions.ContactTerracottaAction"
-               enablesFor="*">
-         </action>
-         <action
-               id="contactFieldAction"
-               label="Contact Terracotta Field Engineering"
-               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group4"
-               class="org.terracotta.dso.actions.ContactTerracottaAction"
-               enablesFor="*">
-         </action>
--->         
          <action
                id="contactSupportAction"
                label="Contact Terracotta Technical Support"
@@ -294,8 +303,38 @@
 
    <extension point="org.eclipse.ui.popupMenus">
       <objectContribution
+            objectClass="org.eclipse.core.resources.IFile"
+            id="filePopupMenusContribution"
+            adaptable="true"
+            nameFilter="*.xml">
+            <visibility>
+              <and>
+                <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
+                <not>
+                  <objectState name="persistentProperty" value="org.terracotta.dso.ActiveDomainConfigFile"/>
+                </not>
+              </and>
+            </visibility>
+         <menu
+            label="Terracotta"
+            path="additions"
+            id="filePopupMenu">
+            <separator name="group1"/>
+         </menu>
+         <action
+           id="makeConfigFileAction"
+           label="Make Current Config File"
+           menubarPath="filePopupMenu/group1"
+           tooltip="Make this file the current config file"
+           helpContextId="make.config.file.action.context"
+           class="org.terracotta.dso.actions.MakeConfigFileAction"
+           enablesFor="1">
+         </action>
+      </objectContribution>
+      
+      <objectContribution
             objectClass="org.eclipse.jdt.core.IJavaProject"
-            id="popupMenusContribution">
+            id="projectPopupMenusContribution">
          <menu
             label="Terracotta"
             path="additions"
@@ -353,6 +392,41 @@
                helpContextId="stop_server_context"
                id="stopTerracottaServerAction">
          </action>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IJavaProject"
+            id="showConfigEditorContribution">
+         <visibility>
+            <objectState name="nature" value="org.terracotta.dso.ProjectNature"/>
+         </visibility>
+       <action
+         id="showConfigEditorAction"
+         label="Show Config Editor"
+         menubarPath="projectPopupMenu/group1"
+         tooltip="Show the DSO configuration editor"
+         helpContextId="show.config.editor.action.context"
+         class="org.terracotta.dso.actions.ShowConfigEditorAction"
+         enablesFor="1">
+       </action>
+      </objectContribution>
+
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IJavaProject"
+            id="showAdminConsoleContribution">
+         <visibility>
+            <objectState name="nature" value="org.terracotta.dso.ProjectNature"/>
+         </visibility>
+       <action
+         id="showAdminConsoleAction"
+         label="Show AdminConsole..."
+         menubarPath="projectPopupMenu/group1"
+         tooltip="Show the Terracotta AdminConsole"
+         helpContextId="show.adminconsole.action.context"
+         icon="images/eclipse/monitor_obj.gif"
+         class="org.terracotta.dso.actions.ShowAdminConsoleAction"
+         enablesFor="1">
+       </action>
       </objectContribution>
 
       <objectContribution
@@ -673,6 +747,19 @@
                <objectClass name="org.eclipse.jdt.core.IJavaProject"/>
                <objectState name="nature" value="org.terracotta.dso.ProjectNature"/>
             </and>
+         </enablement>
+      </decorator>
+      <decorator
+            lightweight="true"
+            location="TOP_RIGHT"
+            adaptable="true"
+            label="Terracotta Config File"
+            state="true"
+            class="org.terracotta.dso.decorator.ConfigFileDecorator"
+            id="org.terracotta.dso.configFileDecorator">
+         <description>Flags a project's active Terracotta configuration file</description>
+         <enablement>
+            <objectClass name="org.eclipse.core.resources.IFile"/>
          </enablement>
       </decorator>
       <decorator

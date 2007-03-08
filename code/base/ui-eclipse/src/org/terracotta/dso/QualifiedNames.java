@@ -33,6 +33,11 @@ public interface QualifiedNames {
                         "DomainConfigFilePath");
 
   public static final QualifiedName
+    ACTIVE_CONFIGURATION_FILE =
+      new QualifiedName(TERRACOTTA_QUALIFIER,
+                        "ActiveDomainConfigFile");
+
+  public static final QualifiedName
     CONFIGURATION =
       new QualifiedName(TERRACOTTA_QUALIFIER,
                         "DomainConfig");

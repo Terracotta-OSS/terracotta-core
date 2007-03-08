@@ -3,14 +3,13 @@
  */
 package org.terracotta.dso.editors;
 
-import org.eclipse.core.resources.IProject;
-
 import org.dijon.ContainerResource;
 import org.dijon.DictionaryResource;
-
+import org.eclipse.core.resources.IProject;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureChangeEvent;
 import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureListener;
+
 import com.terracottatech.config.Application;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.TcConfigDocument.TcConfig;

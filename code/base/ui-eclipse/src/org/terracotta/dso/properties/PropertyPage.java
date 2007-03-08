@@ -150,9 +150,7 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
   private void updateProject() {
     TcPlugin plugin = TcPlugin.getDefault();
     IProject project = getProject();
-
-    plugin.setConfigurationFilePath(project, m_configPathField.getText());
-    plugin.setServerOptions(project, m_serverOptionsField.getText());
+    plugin.setup(project, m_configPathField.getText(), m_serverOptionsField.getText());
   }
 
   public boolean performOk() {
