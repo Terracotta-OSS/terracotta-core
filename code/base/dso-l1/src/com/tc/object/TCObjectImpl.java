@@ -105,8 +105,10 @@ public abstract class TCObjectImpl implements TCObject {
         tcClazz.hydrate(this, from, po, force);
         if (isNewLoad) performOnLoadActionIfNecessary(po);
       } catch (ClassNotFoundException e) {
+        logger.warn("Re-throwing Exception: " , e);
         throw e;
       } catch (IOException e) {
+        logger.warn("Re-throwing Exception: " , e);
         throw new DNAException(e);
       } 
     }

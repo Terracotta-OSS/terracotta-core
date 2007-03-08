@@ -495,6 +495,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
         Assert.assertFalse(dna.isDelta());
         obj.hydrate(dna, false);
       } catch (ClassNotFoundException e) {
+        logger.warn("Exception: ", e);
         throw e;
       } finally {
         if (obj != null) removeCreationInProgress(id);
