@@ -14,12 +14,12 @@ public abstract class SingleQueueFaultBase extends TransparentTestBase {
     t.getTransparentAppConfig().setClientCount(nodeCount());
     t.getTransparentAppConfig().setIntensity(1);
     t.initializeTestRunner();
-    t.getRunnerConfig().executionTimeout = TIMEOUT;
+    t.getRunnerConfig().setExecutionTimeout(TIMEOUT);
   }
 
   protected Class getApplicationClass() {
     return SingleQueueFaultTestApp.class;
   }
-  
+
   protected abstract int nodeCount();
 }

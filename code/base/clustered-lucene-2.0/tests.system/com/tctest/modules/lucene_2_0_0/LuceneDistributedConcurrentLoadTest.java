@@ -20,6 +20,6 @@ public class LuceneDistributedConcurrentLoadTest extends TransparentTestBase {
     t.getTransparentAppConfig().setClientCount(2);
     t.getTransparentAppConfig().setIntensity(1);
     t.initializeTestRunner();
-    t.getRunnerConfig().executionTimeout = TIMEOUT;
+    t.getRunnerConfig().setExecutionTimeout(TIMEOUT);
   }
 }

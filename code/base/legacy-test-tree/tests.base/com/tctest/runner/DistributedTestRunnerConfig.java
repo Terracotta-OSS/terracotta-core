@@ -5,15 +5,19 @@ package com.tctest.runner;
 
 public class DistributedTestRunnerConfig {
 
-  public long startTimeout     = 30 * 1000;
-  public long executionTimeout = 13 * 60 * 1000;
-  
+  private long startTimeout     = 30 * 1000;
+  private long executionTimeout = 13 * 60 * 1000;
+
   public long executionTimeout() {
     return this.executionTimeout;
   }
 
   public long startTimeout() {
     return this.startTimeout;
+  }
+
+  public void setExecutionTimeout(long executionTimeout) {
+    this.executionTimeout = executionTimeout;
   }
 
 }

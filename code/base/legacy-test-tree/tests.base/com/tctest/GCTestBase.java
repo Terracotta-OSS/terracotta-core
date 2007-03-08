@@ -28,7 +28,7 @@ public abstract class GCTestBase extends TransparentTestBase implements TestConf
     ((SettableConfigItem) factory.l2DSOConfig().garbageCollectionInterval()).setValue(getGarbageCollectionInterval());
     ((SettableConfigItem) factory.l2DSOConfig().persistenceMode()).setValue(PersistenceMode.TEMPORARY_SWAP_ONLY);
 
-    t.getRunnerConfig().executionTimeout = Long.MAX_VALUE;
+    t.getRunnerConfig().setExecutionTimeout(Long.MAX_VALUE);
     t.initializeTestRunner();
   }
 

@@ -179,7 +179,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     if (dsoServer != null) {
       dsoServer.dump();
     }
-    throw new IllegalStateException("DSO Server not running");
   }
 
   public DistributedObjectServer getDSOServer() {

@@ -20,11 +20,11 @@ public class LargeGraphTester extends TransparentTestBase implements TestConfigu
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT)
     .setIntensity(LOOP_ITERATION_COUNT);
-    
-    t.getRunnerConfig().executionTimeout = 300 * 60 * 1000;
+
+    t.getRunnerConfig().setExecutionTimeout(300 * 60 * 1000);
     t.initializeTestRunner();
   }
-  
+
   protected Class getApplicationClass() {
     return LargeGraphTestApp.class;
   }

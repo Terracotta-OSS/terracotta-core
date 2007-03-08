@@ -15,14 +15,14 @@ public abstract class TimedObjectFaultBase extends TransparentTestBase {
     t.getTransparentAppConfig().setClientCount(nodeCount());
     t.getTransparentAppConfig().setIntensity(writerCount());
     t.initializeTestRunner();
-    t.getRunnerConfig().executionTimeout = TIMEOUT;
+    t.getRunnerConfig().setExecutionTimeout(TIMEOUT);
   }
 
   protected Class getApplicationClass() {
     return TimedObjectFaultTestApp.class;
   }
-  
+
   protected abstract int nodeCount();
-  
+
   protected abstract int writerCount();
 }

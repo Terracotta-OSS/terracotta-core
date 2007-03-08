@@ -29,7 +29,7 @@ public class LongrunningGCTester extends TransparentTestBase implements TestConf
     ((SettableConfigItem) factory.l2DSOConfig().garbageCollectionVerbose()).setValue(true);
     ((SettableConfigItem) factory.l2DSOConfig().persistenceMode()).setValue(PersistenceMode.TEMPORARY_SWAP_ONLY);
 
-    t.getRunnerConfig().executionTimeout = Long.MAX_VALUE;
+    t.getRunnerConfig().setExecutionTimeout(Long.MAX_VALUE);
     t.initializeTestRunner();
   }
 

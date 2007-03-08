@@ -15,7 +15,7 @@ public class TimedSingleQueueThroughput extends TransparentTestBase {
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
-    t.getRunnerConfig().executionTimeout = TIMEOUT;
+    t.getRunnerConfig().setExecutionTimeout(TIMEOUT);
   }
 
   protected Class getApplicationClass() {
