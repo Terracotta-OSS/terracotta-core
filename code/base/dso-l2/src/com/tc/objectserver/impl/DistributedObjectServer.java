@@ -145,6 +145,7 @@ import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterManager;
 import com.tc.stats.counter.sampled.SampledCounterManagerImpl;
+import com.tc.util.Assert;
 import com.tc.util.SequenceValidator;
 import com.tc.util.StartupLock;
 import com.tc.util.TCTimeoutException;
@@ -169,8 +170,8 @@ import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 
 /**
- * Startup and shutdown point. Builds and starts the server. This is a quick and dirty dirty way of doing this stuff
- * 
+ * Startup and shutdown point. Builds and starts the server
+ *
  * @author steve
  */
 public class DistributedObjectServer extends SEDA {
@@ -212,6 +213,12 @@ public class DistributedObjectServer extends SEDA {
   public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy, Sink httpSink, TCServerInfoMBean tcServerInfoMBean) {
     super(threadGroup);
+
+    // This assertion is here because we want to assume that all threads spawned by the server (including any created in
+    // 3rd party libs) inherit their thread group from the current thread . Consider this before removing the assertion.
+    // Even in tests, we probably don't want different thread group configurations
+    Assert.assertEquals(threadGroup, Thread.currentThread().getThreadGroup());
+
     this.configSetupManager = configSetupManager;
     this.connectionPolicy = connectionPolicy;
     this.httpSink = httpSink;

@@ -17,8 +17,10 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.BaseDSOTestCase;
@@ -55,17 +57,32 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
   private DistributedObjectServer server;
   private DistributedObjectClient client;
   private ClientLockManagerImpl   lockManager;
+  private TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(TCLogging
+                                         .getLogger(DistributedObjectServer.class)));
+
+
+  private class StartAction implements StartupAction {
+    private final L2TVSConfigurationSetupManager l2Manager;
+
+    StartAction(L2TVSConfigurationSetupManager l2manager) {
+      this.l2Manager = l2manager;
+    }
+
+    public void execute() throws Throwable {
+      server = new DistributedObjectServer(new ConfigOverride(l2Manager),
+                                           group, new NullConnectionPolicy(),
+                                           new NullTCServerInfo());
+      server.start();
+    }
+  }
 
   public void setUp() throws Exception {
     TestTVSConfigurationSetupManagerFactory factory = createDistributedConfigFactory();
 
     ManagedObjectStateFactory.disableSingleton(true);
     L2TVSConfigurationSetupManager l2Manager = factory.createL2TVSConfigurationSetupManager(null);
-    server = new DistributedObjectServer(new ConfigOverride(l2Manager),
-                                         new TCThreadGroup(new ThrowableHandler(TCLogging
-                                             .getLogger(DistributedObjectServer.class))), new NullConnectionPolicy(),
-                                         new NullTCServerInfo());
-    server.start();
+
+    new StartupHelper(group, new StartAction(l2Manager)).startUp();
 
     makeClientUsePort(server.getListenPort());
 

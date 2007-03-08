@@ -10,6 +10,7 @@ import com.tc.cluster.ClusterEventListener;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.sessions.SessionMonitorMBean;
@@ -152,8 +153,7 @@ public class ManagerImpl implements Manager {
     final TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(TCLogging
         .getLogger(DistributedObjectClient.class)));
 
-    // Do the client startup in a dedicated thread to ensure all threads we create inherit the proper thread group
-    StartupHelper.StartupAction start = new StartupHelper.StartupAction() {
+    StartupAction action = new StartupHelper.StartupAction() {
       public void execute() throws Throwable {
         dso = new DistributedObjectClient(config, group, classProvider, connectionComponents, ManagerImpl.this, cluster);
         dso.start();
@@ -171,13 +171,8 @@ public class ManagerImpl implements Manager {
       }
     };
 
-    try {
-      new StartupHelper(group, start, "DSO Client Startup").startUp();
-    } catch (Throwable t) {
-      if (t instanceof Error) { throw (Error) t; }
-      if (t instanceof RuntimeException) { throw (RuntimeException) t; }
-      throw new RuntimeException(t);
-    }
+    StartupHelper startupHelper = new StartupHelper(group, action);
+    startupHelper.startUp();
   }
 
   public void stop() {

@@ -7,15 +7,10 @@ import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
-import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
-import com.tc.logging.TCLogging;
-import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.objectserver.impl.DistributedObjectServer;
-import com.tc.server.NullTCServerInfo;
+import com.tc.server.TCServerImpl;
 import com.tc.simulator.listener.MockListenerProvider;
 import com.tcsimulator.SimpleApplicationConfig;
 
@@ -23,7 +18,7 @@ public class DSOApplicationBuilderTest extends BaseDSOTestCase {
 
   private DSOApplicationBuilder   builder;
   private SimpleApplicationConfig applicationConfig;
-  private DistributedObjectServer server;
+  private TCServerImpl server;
 
   public void setUp() throws Exception {
     TestTVSConfigurationSetupManagerFactory factory = super.configFactory();
@@ -32,15 +27,14 @@ public class DSOApplicationBuilderTest extends BaseDSOTestCase {
     // minor hack to make server listen on an OS assigned port
     ((SettableConfigItem) factory.l2DSOConfig().listenPort()).setValue(0);
 
-    server = new DistributedObjectServer(manager, new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(DistributedObjectServer.class))), new NullConnectionPolicy(), new NullTCServerInfo());
+    server = new TCServerImpl(manager);
     server.start();
 
     DSOClientConfigHelper configHelper = configHelper();
 
     configHelper.addExcludePattern(SimpleApplicationConfig.class.getName());
 
-    makeClientUsePort(server.getListenPort());
+    makeClientUsePort(server.getDSOListenPort());
 
     this.applicationConfig = new SimpleApplicationConfig();
 

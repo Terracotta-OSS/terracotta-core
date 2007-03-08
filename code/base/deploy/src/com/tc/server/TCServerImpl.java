@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.server;
 
@@ -23,8 +24,10 @@ import com.tc.config.schema.NewSystemConfig;
 import com.tc.config.schema.messaging.http.ConfigServlet;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -66,6 +69,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   private final SynchronizedByte               state         = new SynchronizedByte(STATE_STOPPED);
 
   private final L2TVSConfigurationSetupManager configurationSetupManager;
+  private final ConnectionPolicy               connectionPolicy;
 
   /**
    * This should only be used for tests.
@@ -75,9 +79,14 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   public TCServerImpl(L2TVSConfigurationSetupManager configurationSetupManager, TCThreadGroup threadGroup) {
-    super(threadGroup);
-    Assert.assertNotNull(configurationSetupManager);
-    this.configurationSetupManager = configurationSetupManager;
+    this(configurationSetupManager, threadGroup, new ConnectionPolicyImpl(Integer.MAX_VALUE));
+  }
+
+  public TCServerImpl(L2TVSConfigurationSetupManager manager, TCThreadGroup group, ConnectionPolicy connectionPolicy) {
+    super(group);
+    this.connectionPolicy = connectionPolicy;
+    Assert.assertNotNull(manager);
+    this.configurationSetupManager = manager;
   }
 
   public L2Info[] infoForAllL2s() {
@@ -164,6 +173,17 @@ public class TCServerImpl extends SEDA implements TCServer {
   public int getDSOListenPort() {
     if (dsoServer != null) { return dsoServer.getListenPort(); }
     throw new IllegalStateException("DSO Server not running");
+  }
+
+  public void dump() {
+    if (dsoServer != null) {
+      dsoServer.dump();
+    }
+    throw new IllegalStateException("DSO Server not running");
+  }
+
+  public DistributedObjectServer getDSOServer() {
+    return dsoServer;
   }
 
   public boolean isStarted() {
@@ -256,40 +276,41 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   }
 
-  protected void startServer() throws Exception {
-    if (logger.isDebugEnabled()) {
-      logger.debug("Starting Terracotta server...");
-    }
+  private class StartAction implements StartupAction {
+    public void execute() throws Throwable {
+      if (logger.isDebugEnabled()) {
+        logger.debug("Starting Terracotta server...");
+      }
 
-    startTime = System.currentTimeMillis();
+      startTime = System.currentTimeMillis();
 
-    NewSystemConfig systemConfig = this.configurationSetupManager.systemConfig();
-    terracottaConnector = new TerracottaConnector();
-    startHTTPServer(systemConfig, terracottaConnector);
+      NewSystemConfig systemConfig = TCServerImpl.this.configurationSetupManager.systemConfig();
+      terracottaConnector = new TerracottaConnector();
+      startHTTPServer(systemConfig, terracottaConnector);
 
-    Stage stage = getStageManager().createStage("dso-http-bridge", new HttpConnectionHandler(terracottaConnector), 1,
-                                                100);
-    getStageManager().startAll(new NullContext(getStageManager()));
+      Stage stage = getStageManager().createStage("dso-http-bridge", new HttpConnectionHandler(terracottaConnector), 1,
+                                                  100);
+      getStageManager().startAll(new NullContext(getStageManager()));
 
-    // the following code starts the jmx server as well
-    startDSOServer(stage.getSink());
+      // the following code starts the jmx server as well
+      startDSOServer(stage.getSink());
 
-    consoleLogger.info("Terracotta Server has started up successfully, and is now ready for work.");
+      consoleLogger.info("Terracotta Server has started up successfully, and is now ready for work.");
 
-    activateTime = System.currentTimeMillis();
+      activateTime = System.currentTimeMillis();
 
-    if (activationListener != null) {
-      activationListener.serverActivated(this);
+      if (activationListener != null) {
+        activationListener.serverActivated(TCServerImpl.this);
+      }
     }
   }
 
-  protected ConnectionPolicy createConnectionPolicy() {
-    return new ConnectionPolicyImpl(Integer.MAX_VALUE);
+  protected void startServer() throws Exception {
+    new StartupHelper(getThreadGroup(), new StartAction()).startUp();
   }
 
   private void startDSOServer(Sink httpSink) throws Exception {
-    dsoServer = new DistributedObjectServer(configurationSetupManager, getThreadGroup(),
-                                            createConnectionPolicy(), httpSink,
+    dsoServer = new DistributedObjectServer(configurationSetupManager, getThreadGroup(), connectionPolicy, httpSink,
                                             new TCServerInfo(this));
     dsoServer.start();
 
@@ -304,8 +325,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     ServletHandler servletHandler = new ServletHandler();
 
     /**
-     * We don't serve up any files, just hook in a few servlets. It's required
-     * the ResourceBase be non-null.
+     * We don't serve up any files, just hook in a few servlets. It's required the ResourceBase be non-null.
      */
     context.setResourceBase(System.getProperty("user.dir"));
 

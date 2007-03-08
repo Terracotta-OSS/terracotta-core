@@ -4,47 +4,50 @@
  */
 package com.tc.lang;
 
+import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
+
 import com.tc.logging.NullTCLogger;
 
 import junit.framework.TestCase;
 
 public class StartupHelperTest extends TestCase {
 
-  final TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(new NullTCLogger()));
-
   public void testException() throws Throwable {
+    final SynchronizedRef error = new SynchronizedRef(null);
+
+    ThreadGroup group = new ThreadGroup("group") {
+      public void uncaughtException(Thread t, Throwable e) {
+        error.set(e);
+      }
+    };
+
+    final RuntimeException re = new RuntimeException("da bomb");
+
     StartupHelper helper = new StartupHelper(group, new StartupHelper.StartupAction() {
       public void execute() throws Throwable {
-        throw new RuntimeException("da bomb");
+        throw re;
       }
-    }, "name");
+    });
 
-    try {
-      helper.startUp();
-      fail();
-    } catch (RuntimeException re) {
-      assertEquals("da bomb", re.getMessage());
+    helper.startUp();
+
+    RuntimeException thrown = (RuntimeException) error.get();
+    if (re == null) {
+      fail("no exception delivered to group");
     }
+
+    assertTrue(thrown == re);
   }
 
   public void testGroup() throws Throwable {
+    final TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(new NullTCLogger()));
+
     StartupHelper helper = new StartupHelper(group, new StartupHelper.StartupAction() {
       public void execute() throws Throwable {
         ThreadGroup tg = Thread.currentThread().getThreadGroup();
         if (tg != group) { throw new AssertionError("wrong thread group: " + tg); }
       }
-    }, "name");
-
-    helper.startUp();
-  }
-
-  public void testName() throws Throwable {
-    StartupHelper helper = new StartupHelper(group, new StartupHelper.StartupAction() {
-      public void execute() throws Throwable {
-        String name = Thread.currentThread().getName();
-        if (!"bobcat".equals(name)) { throw new AssertionError("wrong thread name: " + name); }
-      }
-    }, "bobcat");
+    });
 
     helper.startUp();
   }

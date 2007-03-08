@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -23,7 +24,7 @@ import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.objectserver.impl.DistributedObjectServer;
-import com.tc.server.NullTCServerInfo;
+import com.tc.server.TCServerImpl;
 import com.tc.util.concurrent.ThreadUtil;
 
 /**
@@ -33,7 +34,7 @@ import com.tc.util.concurrent.ThreadUtil;
  */
 public class MaxConnectionTest extends BaseDSOTestCase {
 
-  private DistributedObjectServer server;
+  private TCServerImpl server;
 
   private DistributedObjectClient newClient() throws Exception {
     L1TVSConfigurationSetupManager manager = super.createL1ConfigManager();
@@ -41,7 +42,8 @@ public class MaxConnectionTest extends BaseDSOTestCase {
 
     PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(manager);
     return new DistributedObjectClient(configHelper, new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(DistributedObjectClient.class))), new MockClassProvider(), components, NullManager.getInstance(), new Cluster());
+        .getLogger(DistributedObjectClient.class))), new MockClassProvider(), components, NullManager.getInstance(),
+                                       new Cluster());
   }
 
   public void testsMaxConnectionLimitAndClientDisconnectAccounting() throws Exception {
@@ -49,11 +51,11 @@ public class MaxConnectionTest extends BaseDSOTestCase {
     ConnectionPolicy connectionPolicy = new ConnectionPolicyImpl(2);
     TestTVSConfigurationSetupManagerFactory factory = createDistributedConfigFactory();
     L2TVSConfigurationSetupManager l2Manager = factory.createL2TVSConfigurationSetupManager(null);
-    server = new DistributedObjectServer(l2Manager, new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(DistributedObjectServer.class))), connectionPolicy, new NullTCServerInfo());
+    server = new TCServerImpl(l2Manager, new TCThreadGroup(new ThrowableHandler(TCLogging
+        .getLogger(DistributedObjectServer.class))), connectionPolicy);
     server.start();
 
-    makeClientUsePort(server.getListenPort());
+    makeClientUsePort(server.getDSOListenPort());
 
     DistributedObjectClient client1 = newClient();
 

@@ -4,49 +4,61 @@
  */
 package com.tc.lang;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
+import java.lang.reflect.Field;
 
 /**
- * The purpose of this class to execute a startup action (ie. "start the server", or "start the client", etc) in a
- * thread in the specified thread group. The side effect of doing this is that any more threads spawned by the startup
- * action will inherit the given thread group. It is somewhat fragile, and sometimes impossible (see java.util.Timer) to
- * be explicit about the thread group when spawning threads
+ * The purpose of this class to execute a startup action (ie. "start the server", or "start the client", etc) in the
+ * specified thread group. The side effect of doing this is that any more threads spawned by the startup action will
+ * inherit the given thread group. It is somewhat fragile, and sometimes impossible (see java.util.Timer) to be explicit
+ * about the thread group when spawning threads <br>
+ * <br>
+ * XXX: At the moment, this class uses a hack of adjusting the current thread's group to the desired target group.
+ * A nicer approach would be to start a new thread in the desiered target group and run the action in that thread and
+ * join() it, except that can introduce locking problems (see MNK-65)
  */
 public class StartupHelper {
 
   private final StartupAction action;
-  private final String        name;
-  private final TCThreadGroup threadGroup;
+  private final ThreadGroup   targetThreadGroup;
 
-  public StartupHelper(TCThreadGroup threadGroup, StartupAction action, String name) {
-    this.threadGroup = threadGroup;
-    this.name = name;
+  public StartupHelper(ThreadGroup threadGroup, StartupAction action) {
+    this.targetThreadGroup = threadGroup;
     this.action = action;
   }
 
-  public void startUp() throws Throwable {
-    final SynchronizedRef error = new SynchronizedRef(null);
+  public void startUp() {
+    Thread currentThread = Thread.currentThread();
+    ThreadGroup origThreadGroup = currentThread.getThreadGroup();
 
-    Runnable r = new Runnable() {
-      public void run() {
-        try {
-          action.execute();
-        } catch (Throwable t) {
-          error.set(t);
-        }
-      }
-    };
+    setThreadGroup(currentThread, targetThreadGroup);
 
-    Thread th = new Thread(threadGroup, r, name);
-    th.start();
-    th.join();
+    Throwable actionError = null;
+    try {
+      action.execute();
+    } catch (Throwable t) {
+      actionError = t;
+    } finally {
+      setThreadGroup(currentThread, origThreadGroup);
+    }
 
-    Throwable t = (Throwable) error.get();
-    if (t != null) { throw t; }
+    if (actionError != null) {
+      targetThreadGroup.uncaughtException(currentThread, actionError);
+    }
   }
 
   public interface StartupAction {
     void execute() throws Throwable;
+  }
+
+  private static void setThreadGroup(Thread thread, ThreadGroup group) {
+    try {
+      Field groupField = thread.getClass().getDeclaredField("group");
+      groupField.setAccessible(true);
+      groupField.set(thread, group);
+    } catch (Exception e) {
+      if (e instanceof RuntimeException) { throw (RuntimeException) e; }
+      throw new RuntimeException(e);
+    }
   }
 
 }

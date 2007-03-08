@@ -14,12 +14,11 @@ import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.objectserver.impl.DistributedObjectServer;
-import com.tc.server.NullTCServerInfo;
+import com.tc.server.TCServerImpl;
 import com.tc.simulator.app.ApplicationBuilder;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.app.DSOApplicationBuilder;
@@ -57,7 +56,7 @@ public class DistributedTestRunner implements ResultsListener {
   private final Container[]                         containers;
   private final ContainerStateFactory               containerStateFactory;
   private final TestGlobalIdGenerator               globalIdGenerator;
-  private final DistributedObjectServer             server;
+  private final TCServerImpl                        server;
   private final List                                errors  = new ArrayList();
   private final List                                results = new ArrayList();
   private final DistributedTestRunnerConfig         config;
@@ -108,9 +107,8 @@ public class DistributedTestRunner implements ResultsListener {
     }
     L2TVSConfigurationSetupManager manager = configFactory.createL2TVSConfigurationSetupManager(null);
 
-    this.server = new DistributedObjectServer(manager, new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(DistributedObjectServer.class))), new ConnectionPolicyImpl(Integer.MAX_VALUE),
-                                              new NullTCServerInfo());
+    this.server = new TCServerImpl(manager, new TCThreadGroup(new ThrowableHandler(TCLogging
+        .getLogger(DistributedObjectServer.class))));
   }
 
   public void run() {
@@ -125,7 +123,7 @@ public class DistributedTestRunner implements ResultsListener {
 
         if (this.configFactory instanceof TestTVSConfigurationSetupManagerFactory) {
           TestTVSConfigurationSetupManagerFactory testFactory = (TestTVSConfigurationSetupManagerFactory) this.configFactory;
-          ((SettableConfigItem) testFactory.l2DSOConfig().listenPort()).setValue(this.server.getListenPort());
+          ((SettableConfigItem) testFactory.l2DSOConfig().listenPort()).setValue(getServerPort());
           testFactory.activateConfigurationChange();
         }
       }
@@ -146,7 +144,7 @@ public class DistributedTestRunner implements ResultsListener {
   }
 
   public int getServerPort() {
-    return this.server.getListenPort();
+    return this.server.getDSOListenPort();
   }
 
   public boolean success() {
