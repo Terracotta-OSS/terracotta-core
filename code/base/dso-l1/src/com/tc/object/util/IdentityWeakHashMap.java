@@ -58,44 +58,18 @@ public class IdentityWeakHashMap extends WeakHashMap {
     }
   }
 
-  /**
-   * Constructs a new, empty <tt>IdentityWeakHashMap</tt> with the given initial capacity and the given load factor.
-   *
-   * @param initialCapacity The initial capacity of the <tt>IdentityWeakHashMap</tt>
-   * @param loadFactor The load factor of the <tt>IdentityWeakHashMap</tt>
-   * @throws IllegalArgumentException If the initial capacity is negative, or if the load factor is nonpositive.
-   */
   public IdentityWeakHashMap(int initialCapacity, float loadFactor) {
     super(initialCapacity, loadFactor);
   }
 
-  /**
-   * Constructs a new, empty <tt>IdentityWeakHashMap</tt> with the given initial capacity and the default load factor,
-   * which is the same as the default loadFactor or WeakHashMap.
-   *
-   * @param initialCapacity The initial capacity of the <tt>IdentityWeakHashMap</tt>
-   * @throws IllegalArgumentException If the initial capacity is negative.
-   */
   public IdentityWeakHashMap(int initialCapacity) {
     super(initialCapacity);
   }
 
-  /**
-   * Constructs a new, empty <tt>IdentityWeakHashMap</tt> with the default initial capacity and the default load
-   * factor as WeakHashMap.
-   */
   public IdentityWeakHashMap() {
     super();
   }
 
-  /**
-   * Constructs a new <tt>IdentityWeakHashMap</tt> with the same mappings as the specified <tt>Map</tt>. The
-   * <tt>IdentityWeakHashMap</tt> is created with default load factor, and an initial capacity defined by WeakHashMap,
-   * sufficient to hold the mappings in the specified <tt>Map</tt>.
-   *
-   * @param m the map whose mappings are to be placed in this map.
-   * @throws NullPointerException if the specified map is null.
-   */
   public IdentityWeakHashMap(Map m) {
     super(m);
   }
