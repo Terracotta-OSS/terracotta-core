@@ -21,6 +21,7 @@ import com.tc.asm.tree.InnerClassNode;
 import com.tc.asm.tree.MethodNode;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
+import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.cluster.ClusterEventListener;
 import com.tc.config.Directories;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
@@ -976,7 +977,7 @@ public class BootJarTool {
       if (!config.isLogical(topClass.getName())) {
         Class clazz = topClass;
         while ((clazz != null) && (!portability.isInstrumentationNotNeeded(clazz.getName()))) {
-          if (config.isNeverAdaptable(clazz.getName())) {
+          if (config.isNeverAdaptable(JavaClassInfo.getClassInfo(clazz))) {
             if (tcSpecs) { throw new AssertionError("Not adaptable: " + clazz); }
 
             add = false;

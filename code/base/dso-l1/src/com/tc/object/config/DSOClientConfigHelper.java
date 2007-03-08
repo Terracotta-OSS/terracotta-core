@@ -33,7 +33,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   boolean shouldBeAdapted(ClassInfo classInfo);
 
-  boolean isNeverAdaptable(String fullName);
+  boolean isNeverAdaptable(ClassInfo classInfo);
 
   boolean isLogical(String theClass);
 
@@ -149,7 +149,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   boolean hasIncludeExcludePatterns();
 
-  boolean hasIncludeExcludePattern(String className);
+  boolean hasIncludeExcludePattern(ClassInfo classInfo);
 
   void addAspectModule(String pattern, String moduleName);
 

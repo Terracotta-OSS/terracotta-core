@@ -3,6 +3,8 @@
  */
 package com.tc.object.config;
 
+import com.tc.aspectwerkz.reflect.ClassInfo;
+
 /**
  * Describes the configuration policy for instrumenation of classes.
  * 
@@ -37,7 +39,7 @@ interface InstrumentationDescriptor {
   /**
    * @return true if the class name matches this descriptor.
    */
-  public boolean matches(String className);
+  public boolean matches(ClassInfo classInfo);
 
   /**
    * @return true if this is an explicit include, false otherwise. It is possible for both isInclude() and isExclude()

@@ -3,11 +3,13 @@
  */
 package com.tc.object.config;
 
+import com.tc.aspectwerkz.reflect.ClassInfo;
+
 public class TestClassExpressionMatcher implements ClassExpressionMatcher {
 
   public boolean shouldMatch;
   
-  public boolean match(String expression) {
+  public boolean match(ClassInfo classInfo) {
     return shouldMatch;
   }
 

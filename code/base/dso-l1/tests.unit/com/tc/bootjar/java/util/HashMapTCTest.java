@@ -590,7 +590,7 @@ public class HashMapTCTest extends TCTestCase {
       return false;
     }
 
-    public boolean isNeverAdaptable(String fullName) {
+    public boolean isNeverAdaptable(ClassInfo classInfo) {
       return true;
     }
 
@@ -762,7 +762,7 @@ public class HashMapTCTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public boolean hasIncludeExcludePattern(String className) {
+    public boolean hasIncludeExcludePattern(ClassInfo classInfo) {
       throw new ImplementMe();
     }
 

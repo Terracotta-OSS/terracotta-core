@@ -4,8 +4,6 @@
  */
 package com.tc.object.config;
 
-import org.apache.commons.lang.ArrayUtils;
-
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
 
 import com.tc.asm.ClassAdapter;
@@ -178,17 +176,11 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
   public StandardDSOClientConfigHelper(L1TVSConfigurationSetupManager configSetupManager, boolean interrogateBootJar)
       throws ConfigurationSetupException {
-    this(configSetupManager, new ClassInfoFactory(), new ExpressionHelper(), interrogateBootJar);
-  }
-
-  public StandardDSOClientConfigHelper(L1TVSConfigurationSetupManager configSetupManager,
-                                       ClassInfoFactory classInfoFactory, ExpressionHelper eh,
-                                       boolean interrogateBootJar) throws ConfigurationSetupException {
     this.portability = new PortabilityImpl(this);
     this.configSetupManager = configSetupManager;
     helperLogger = new DSOClientConfigHelperLogger(logger);
-    this.classInfoFactory = classInfoFactory;
-    this.expressionHelper = eh;
+    this.classInfoFactory = new ClassInfoFactory();
+    this.expressionHelper = new ExpressionHelper();
     modulesContext.setModules(configSetupManager.commonL1Config().modules() != null ? configSetupManager
         .commonL1Config().modules() : Modules.Factory.newInstance());
 
@@ -253,7 +245,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     logger.debug("roots: " + this.roots);
     logger.debug("transients: " + this.types);
     logger.debug("locks: " + this.locks);
-    logger.debug("distributed-methods: " + ArrayUtils.toString(this.distributedMethods));
+    logger.debug("distributed-methods: " + this.distributedMethods);
 
     rewriteHashtableAutLockSpecIfNecessary();
   }
@@ -305,16 +297,16 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   }
 
   private void addPermanentExcludePattern(String pattern) {
-    permanentExcludesMatcher.add(new ClassExpressionMatcherImpl(classInfoFactory, expressionHelper, pattern));
+    permanentExcludesMatcher.add(new ClassExpressionMatcherImpl(expressionHelper, pattern));
   }
 
   private void addNonportablePattern(String pattern) {
-    nonportablesMatcher.add(new ClassExpressionMatcherImpl(classInfoFactory, expressionHelper, pattern));
+    nonportablesMatcher.add(new ClassExpressionMatcherImpl(expressionHelper, pattern));
   }
 
   private InstrumentationDescriptor newInstrumentationDescriptor(InstrumentedClass classDesc) {
     return new InstrumentationDescriptorImpl(classDesc, //
-                                             new ClassExpressionMatcherImpl(classInfoFactory, expressionHelper,
+                                             new ClassExpressionMatcherImpl(expressionHelper, //
                                                                             classDesc.classExpression()));
   }
 
@@ -347,10 +339,9 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
                                           boolean oldStyleCallConstructorOnLoad, boolean honorVolatile,
                                           String lockExpression) {
     // The addition of the lock expression and the include need to be atomic -- see LKC-2616
-
     synchronized (this.instrumentationDescriptors) {
       // TODO see LKC-1893. Need to check for primitive types, logically managed classes, etc.
-      if (!hasIncludeExcludePattern(expression)) {
+      if (!hasIncludeExcludePattern(getClassInfo(expression))) {
         // only add include if not specified in tc-config
         addIncludePattern(expression, honorTransient, oldStyleCallConstructorOnLoad, honorVolatile);
         addWriteAutolock(lockExpression);
@@ -375,8 +366,8 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     }
   }
 
-  public boolean hasIncludeExcludePattern(String className) {
-    return getInstrumentationDescriptorFor(className) != DEAFULT_INSTRUMENTATION_DESCRIPTOR;
+  public boolean hasIncludeExcludePattern(ClassInfo classInfo) {
+    return getInstrumentationDescriptorFor(classInfo) != DEAFULT_INSTRUMENTATION_DESCRIPTOR;
   }
 
   public DSORuntimeLoggingOptions runtimeLoggingOptions() {
@@ -1114,7 +1105,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     if (false && "<init>".equals(methodName)) {
       // XXX: ConstructorInfo seems to really break things. Plus, locks in
       // constructors don't work yet.
-      // When locks in constructors work, we'll have to stort this problem out.
+      // When locks in constructors work, we'll have to sort this problem out.
       return getConstructorInfo(modifiers, className, methodName, description, exceptions);
     } else {
       return getMethodInfo(modifiers, className, methodName, description, exceptions);
@@ -1252,7 +1243,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     methodInfo = getMemberInfo(access, className, methodName, description, null);
     readOnlyLockMethodSpec.add(methodInfo);
 
-    Set readLockSpec = new HashSet();
     for (Iterator itr = readOnlyLockMethodSpec.iterator(); itr.hasNext();) {
       methodInfo = (MemberInfo) itr.next();
 
@@ -1261,15 +1251,12 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
         if (matches(lock, methodInfo)) {
           LockDefinition ld = lock.getLockDefinition();
           if (ld.isAutolock() && ld.getLockLevel() != ConfigLockLevel.READ) {
-            readLockSpec.add("* " + className + "." + methodInfo.getName() + "(..)");
+            addReadAutolock("* " + className + "." + methodInfo.getName() + "(..)");
           }
           break;
         }
       }
     }
-    String[] readLockSpecs = new String[readLockSpec.size()];
-    readLockSpec.toArray(readLockSpecs);
-    addReadAutolock(readLockSpecs);
   }
 
   public synchronized LockDefinition[] lockDefinitionsFor(int access, String className, String methodName,
@@ -1312,7 +1299,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   }
 
   private synchronized boolean cacheIsAdaptable(String name, boolean adaptable) {
-    adaptableCache.put(name, new Boolean(adaptable));
+    adaptableCache.put(name, adaptable ? Boolean.TRUE : Boolean.FALSE);
     return adaptable;
   }
 
@@ -1330,12 +1317,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
   public void addReadAutolock(String methodPattern) {
     addAutolock(methodPattern, ConfigLockLevel.READ);
-  }
-
-  private void addReadAutolock(String[] methodPatterns) {
-    for (int i = 0; i < methodPatterns.length; i++) {
-      addAutolock(methodPatterns[i], ConfigLockLevel.READ);
-    }
   }
 
   public synchronized void addAutolock(String methodPattern, ConfigLockLevel type) {
@@ -1357,7 +1338,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     if (cache != null) { return cache.booleanValue(); }
 
     // @see isTCPatternMatchingHack() note elsewhere
-    if (isTCPatternMatchingHack(fullClassName) || permanentExcludesMatcher.match(fullClassName)) {
+    if (isTCPatternMatchingHack(classInfo) || permanentExcludesMatcher.match(classInfo)) {
       // permanent Excludes
       return cacheIsAdaptable(fullClassName, false);
     }
@@ -1377,24 +1358,25 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     // existing class specs trump config
     if (hasSpec(fullClassName)) { return cacheIsAdaptable(fullClassName, true); }
 
-    InstrumentationDescriptor desc = getInstrumentationDescriptorFor(fullClassName);
+    InstrumentationDescriptor desc = getInstrumentationDescriptorFor(classInfo);
     return cacheIsAdaptable(fullClassName, desc.isInclude());
   }
 
-  private boolean isTCPatternMatchingHack(String fullClassName) {
+  private boolean isTCPatternMatchingHack(ClassInfo classInfo) {
+    String fullClassName = classInfo.getName();
     return fullClassName.startsWith("com.tc.") || fullClassName.startsWith("com.terracottatech.");
   }
 
-  public boolean isNeverAdaptable(String fullName) {
-    return (isTCPatternMatchingHack(fullName) || permanentExcludesMatcher.match(fullName) || nonportablesMatcher
-        .match(fullName));
+  public boolean isNeverAdaptable(ClassInfo classInfo) {
+    return isTCPatternMatchingHack(classInfo) || permanentExcludesMatcher.match(classInfo)
+           || nonportablesMatcher.match(classInfo);
   }
 
-  private InstrumentationDescriptor getInstrumentationDescriptorFor(String fullName) {
+  private InstrumentationDescriptor getInstrumentationDescriptorFor(ClassInfo classInfo) {
     synchronized (this.instrumentationDescriptors) {
       for (Iterator i = this.instrumentationDescriptors.iterator(); i.hasNext();) {
         InstrumentationDescriptor rv = (InstrumentationDescriptor) i.next();
-        if (rv.matches(fullName)) { return rv; }
+        if (rv.matches(classInfo)) { return rv; }
       }
     }
     return DEAFULT_INSTRUMENTATION_DESCRIPTOR;
@@ -1421,24 +1403,29 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     return (Modifier.isVolatile(modifiers) && isHonorJavaVolatile(classname));
   }
 
-  public boolean isHonorJavaTransient(String className) {
+  private boolean isHonorJavaTransient(String className) {
     TransparencyClassSpec spec = getSpec(className);
-    if ((spec != null) && (spec.isHonorTransientSet())) { return spec.isHonorJavaTransient(); }
-    return getInstrumentationDescriptorFor(className).isHonorTransient();
+    if (spec != null && spec.isHonorTransientSet()) { return spec.isHonorJavaTransient(); }
+    return getInstrumentationDescriptorFor(getClassInfo(className)).isHonorTransient();
   }
 
-  public boolean isHonorJavaVolatile(String className) {
+  private boolean isHonorJavaVolatile(String className) {
     TransparencyClassSpec spec = getSpec(className);
-    if ((spec != null) && (spec.isHonorVolatileSet())) { return spec.isHonorVolatile(); }
-    return getInstrumentationDescriptorFor(className).isHonorVolatile();
+    if (spec != null && spec.isHonorVolatileSet()) { return spec.isHonorVolatile(); }
+    return getInstrumentationDescriptorFor(getClassInfo(className)).isHonorVolatile();
   }
 
   public boolean isCallConstructorOnLoad(String className) {
     TransparencyClassSpec spec = getSpec(className);
-    if ((spec != null) && spec.isCallConstructorSet()) { return spec.isCallConstructorOnLoad(); }
-    return getInstrumentationDescriptorFor(className).isCallConstructorOnLoad();
+    if (spec != null && spec.isCallConstructorSet()) { return spec.isCallConstructorOnLoad(); }
+    return getInstrumentationDescriptorFor(getClassInfo(className)).isCallConstructorOnLoad();
   }
 
+  private ClassInfo getClassInfo(String className) {
+    // XXX need to get a real ClassInfo
+    return classInfoFactory.getClassInfo(className);
+  }
+  
   public String getPostCreateMethodIfDefined(String className) {
     TransparencyClassSpec spec = getSpec(className);
     if (spec != null) {
@@ -1450,14 +1437,14 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
   public String getOnLoadScriptIfDefined(String className) {
     TransparencyClassSpec spec = getSpec(className);
-    if ((spec != null) && spec.isExecuteScriptOnLoadSet()) { return spec.getOnLoadExecuteScript(); }
-    return getInstrumentationDescriptorFor(className).getOnLoadScriptIfDefined();
+    if (spec != null && spec.isExecuteScriptOnLoadSet()) { return spec.getOnLoadExecuteScript(); }
+    return getInstrumentationDescriptorFor(getClassInfo(className)).getOnLoadScriptIfDefined();
   }
 
   public String getOnLoadMethodIfDefined(String className) {
     TransparencyClassSpec spec = getSpec(className);
-    if ((spec != null) && spec.isCallMethodOnLoadSet()) { return spec.getOnLoadMethod(); }
-    return getInstrumentationDescriptorFor(className).getOnLoadMethodIfDefined();
+    if (spec != null && spec.isCallMethodOnLoadSet()) { return spec.getOnLoadMethod(); }
+    return getInstrumentationDescriptorFor(getClassInfo(className)).getOnLoadMethodIfDefined();
   }
 
   public Class getTCPeerClass(Class clazz) {

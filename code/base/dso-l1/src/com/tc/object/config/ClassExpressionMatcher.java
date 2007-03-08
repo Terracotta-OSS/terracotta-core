@@ -3,7 +3,9 @@
  */
 package com.tc.object.config;
 
+import com.tc.aspectwerkz.reflect.ClassInfo;
+
 public interface ClassExpressionMatcher {
-  public boolean match(String expression);
+  public boolean match(ClassInfo classInfo);
 
 }

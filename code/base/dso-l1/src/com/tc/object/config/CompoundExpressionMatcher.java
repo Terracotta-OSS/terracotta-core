@@ -3,6 +3,8 @@
  */
 package com.tc.object.config;
 
+import com.tc.aspectwerkz.reflect.ClassInfo;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -11,9 +13,9 @@ public class CompoundExpressionMatcher implements ClassExpressionMatcher {
 
   private final Collection matchers = new ArrayList();
   
-  public boolean match(String expression) {
+  public boolean match(ClassInfo classInfo) {
     for(Iterator i = matchers.iterator(); i.hasNext();) {
-      if (((ClassExpressionMatcher)i.next()).match(expression)) {
+      if (((ClassExpressionMatcher)i.next()).match(classInfo)) {
         return true;
       }
     }

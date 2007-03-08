@@ -5,6 +5,7 @@ package com.tc.object;
 
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
 
+import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.util.Assert;
@@ -60,7 +61,7 @@ public class PortabilityImpl implements Portability {
     // check if any class in the class hierarchy is not-adaptable (like java.lang.Thread etc.)
     for (Iterator i = classes.iterator(); i.hasNext();) {
       Class class2Inspect = (Class) i.next();
-      if (config.isNeverAdaptable(class2Inspect.getName())) {
+      if (config.isNeverAdaptable(JavaClassInfo.getClassInfo(class2Inspect))) {
         if (class2Inspect == topLevelClass) {
           return new NonPortableReason(topLevelClass, NonPortableReason.CLASS_NOT_ADAPTABLE);
         } else {

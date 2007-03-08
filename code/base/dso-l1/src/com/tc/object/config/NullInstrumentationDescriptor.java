@@ -3,6 +3,8 @@
  */
 package com.tc.object.config;
 
+import com.tc.aspectwerkz.reflect.ClassInfo;
+
 public class NullInstrumentationDescriptor implements InstrumentationDescriptor {
 
   public String getOnLoadMethodIfDefined() {
@@ -25,7 +27,7 @@ public class NullInstrumentationDescriptor implements InstrumentationDescriptor 
     return false;
   }
 
-  public boolean matches(String fullName) {
+  public boolean matches(ClassInfo classInfo) {
     throw new AssertionError();
   }
 

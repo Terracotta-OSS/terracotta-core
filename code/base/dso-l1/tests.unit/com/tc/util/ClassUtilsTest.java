@@ -417,8 +417,8 @@ public class ClassUtilsTest extends TestCase {
       return true;
     }
 
-    public boolean isNeverAdaptable(String fullName) {
-      return isNeverAdaptable.contains(fullName);
+    public boolean isNeverAdaptable(ClassInfo classInfo) {
+      return isNeverAdaptable.contains(classInfo);
     }
 
     public boolean isLogical(String theClass) {
@@ -593,7 +593,7 @@ public class ClassUtilsTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public boolean hasIncludeExcludePattern(String className) {
+    public boolean hasIncludeExcludePattern(ClassInfo classInfo) {
       throw new ImplementMe();
     }
 

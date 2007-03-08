@@ -3,6 +3,7 @@
  */
 package com.tc.object.config;
 
+import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.object.config.schema.InstrumentedClass;
 
 final class InstrumentationDescriptorImpl implements InstrumentationDescriptor {
@@ -36,8 +37,8 @@ final class InstrumentationDescriptorImpl implements InstrumentationDescriptor {
     return isExclude() ? false : classDescriptor.honorVolatile();
   }
 
-  public boolean matches(String className) {
-    return expressionMatcher.match(className);
+  public boolean matches(ClassInfo classInfo) {
+    return expressionMatcher.match(classInfo);
   }
 
   public boolean isInclude() {

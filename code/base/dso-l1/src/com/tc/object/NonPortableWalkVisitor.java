@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.walker.MemberValue;
@@ -82,7 +83,7 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
     if (isTransient(value)) { return " (transient)"; }
 
     Object o = value.getValueObject();
-    if (o != null && config.isNeverAdaptable(o.getClass().getName())) { return " (never portable)"; }
+    if (o != null && config.isNeverAdaptable(JavaClassInfo.getClassInfo(o.getClass()))) { return " (never portable)"; }
 
     return null;
   }
@@ -92,7 +93,7 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
     if (isTransient(val)) { return false; }
 
     Object o = val.getValueObject();
-    if ((o != null) && config.isNeverAdaptable(o.getClass().getName())) { return false; }
+    if (o != null && config.isNeverAdaptable(JavaClassInfo.getClassInfo(o.getClass()))) { return false; }
 
     return true;
   }

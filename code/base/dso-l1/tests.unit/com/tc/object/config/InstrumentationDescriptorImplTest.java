@@ -3,6 +3,8 @@
  */
 package com.tc.object.config;
 
+import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.object.bytecode.aspectwerkz.ClassInfoFactory;
 import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.config.schema.TestInstrumentedClass;
 
@@ -17,11 +19,13 @@ public void testBasics() {
     InstrumentationDescriptor idi = new InstrumentationDescriptorImpl(ic, em);
     
     String expression = "classExpression";
+    ClassInfoFactory classInfoFactory = new ClassInfoFactory();
+    ClassInfo classInfo = classInfoFactory.getClassInfo(expression);
+    
     em.shouldMatch = false;
-    assertFalse(idi.matches(expression));
+    assertFalse(idi.matches(classInfo));
     em.shouldMatch = true;
-    assertTrue(idi.matches(expression));
-
+    assertTrue(idi.matches(classInfo));
   }
 
 }
