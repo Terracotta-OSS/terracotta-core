@@ -27,70 +27,124 @@
         <border>
           <titled-border title="DSO Client Data"/>
         </border>
-        <children>
-          <container name="DsoClientDebugging" class="org.terracotta.dso.editors.DsoClientDebuggingPanel">
-            <children>
-              <container name="InstrumentationLogging" class="org.terracotta.dso.editors.InstrumentationLoggingPanel">
-                <border>
-                  <titled-border title="Instrumentation logging"/>
-                </border>
-                <children>
-                  <checkbox name="Class1" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="Class"/>
-                  <checkbox name="Locks" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="Locks"/>
-                  <checkbox name="TransientRoot" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="Transient root"/>
-                  <checkbox name="DistributedMethods" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="Distributed methods"/>
-                  <checkbox name="Roots" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="Roots"/>
-                </children>
-                <connections>
-                  <item left="-1,left:n" top="-1,top:n" right="-1,right:sn" bottom="1,top:0" width="n" height="n"/>
-                  <item left="-1,left:n" top="0,bottom:0" right="-1,right:sn" bottom="2,top:0" width="n" height="n"/>
-                  <item left="-1,left:n" top="1,bottom:0" right="-1,right:sn" bottom="3,top:0" width="n" height="n"/>
-                  <item left="-1,left:n" top="2,bottom:0" right="-1,right:sn" bottom="4,top:0" width="n" height="n"/>
-                  <item left="-1,left:n" top="3,bottom:0" right="-1,right:sn" bottom="-1,bottom:sn" width="n" height="n"/>
-                </connections>
-              </container>
-              <container name="RuntimeLogging" class="org.terracotta.dso.editors.RuntimeLoggingPanel">
-                <border>
-                  <titled-border title="Runtime logging"/>
-                </border>
-                <children>
-                  <checkbox name="LockDebug" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="Lock debug"/>
-                  <checkbox name="DistributedMethodDebug" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="Distributed-method debug"/>
-                  <checkbox name="WaitNotifyDebug" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="Wait-notify debug"/>
-                  <checkbox name="NewObjectDebug" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="New-object debug"/>
-                </children>
-                <connections>
-                  <item left="-1,left:n" top="-1,top:n" right="-1,right:sn" bottom="1,top:0" width="n" height="n"/>
-                  <item left="-1,left:n" top="0,bottom:s" right="-1,right:sn" bottom="2,top:0" width="n" height="n"/>
-                  <item left="-1,left:n" top="1,bottom:s" right="-1,right:sn" bottom="3,top:0" width="n" height="n"/>
-                  <item left="-1,left:n" top="2,bottom:s" right="-1,right:sn" bottom="-1,bottom:sn" width="n" height="n"/>
-                </connections>
-              </container>
-              <container name="RuntimeOutputOptions" class="org.terracotta.dso.editors.RuntimeOutputOptionsPanel">
-                <border>
-                  <titled-border title="Runtime output options"/>
-                </border>
-                <children>
-                  <checkbox name="AutoLockDetails" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="Autolock details"/>
-                  <checkbox name="Caller" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="Caller"/>
-                  <checkbox name="FullStack" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="Full stack"/>
-                </children>
-                <connections>
-                  <item left="-1,left:n" top="-1,top:n" right="-1,right:sn" bottom="1,top:0" width="n" height="n"/>
-                  <item left="-1,left:n" top="0,bottom:s" right="-1,right:sn" bottom="2,top:0" width="n" height="n"/>
-                  <item left="-1,left:n" top="1,bottom:s" right="-1,right:sn" bottom="-1,bottom:sn" width="n" height="n"/>
-                </connections>
-              </container>
-            </children>
-            <connections>
-              <item left="-1,left:0" top="-1,top:0" right="1,left:0" bottom="-1,bottom:s" width="n" height="n"/>
-              <item left="0,right:0" top="-1,top:0" right="2,left:0" bottom="-1,bottom:s" width="n" height="n"/>
-              <item left="1,right:0" top="-1,top:0" right="-1,right:s" bottom="-1,bottom:s" width="n" height="n"/>
-            </connections>
-          </container>
-        </children>
+				<children>
+					<container name="DsoClientDebugging" class="org.terracotta.dso.editors.DsoClientDebuggingPanel">
+						<children>
+							<container name="InstrumentationLogging" class="org.terracotta.dso.editors.InstrumentationLoggingPanel">
+								<border>
+									<titled-border title="Instrumentation logging"/>
+								</border>
+								<children>
+									<checkbox name="Class1" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="Class"/>
+									<checkbox name="Locks" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="Locks"/>
+									<checkbox name="TransientRoot" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" 
+										text="Transient root"/>
+									<checkbox name="DistributedMethods" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" 
+										text="Distributed methods"/>
+									<checkbox name="Roots" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="Roots"/>
+								</children>
+								<connections>
+									<item left="-1,left:n" top="-1,top:n" right="-1,right:sn" bottom="1,top:0" width="n" height="n"/>
+									<item left="-1,left:n" top="0,bottom:0" right="-1,right:sn" bottom="2,top:0" width="n" height="n"/>
+									<item left="-1,left:n" top="1,bottom:0" right="-1,right:sn" bottom="3,top:0" width="n" height="n"/>
+									<item left="-1,left:n" top="2,bottom:0" right="-1,right:sn" bottom="4,top:0" width="n" height="n"/>
+									<item left="-1,left:n" top="3,bottom:0" right="-1,right:sn" bottom="-1,bottom:sn" width="n" 
+										height="n"/>
+								</connections>
+							</container>
+							<container name="RuntimeLogging" class="org.terracotta.dso.editors.RuntimeLoggingPanel">
+								<border>
+									<titled-border title="Runtime logging"/>
+								</border>
+								<children>
+									<checkbox name="LockDebug" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" 
+										text="Lock debug"/>
+									<checkbox name="DistributedMethodDebug" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" 
+										text="Distributed-method debug"/>
+									<checkbox name="WaitNotifyDebug" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" 
+										text="Wait-notify debug"/>
+									<checkbox name="NewObjectDebug" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" 
+										text="New-object debug"/>
+								</children>
+								<connections>
+									<item left="-1,left:n" top="-1,top:n" right="-1,right:sn" bottom="1,top:0" width="n" height="n"/>
+									<item left="-1,left:n" top="0,bottom:s" right="-1,right:sn" bottom="0,top:0" width="n" height="n"/>
+									<item left="-1,left:n" top="1,bottom:s" right="-1,right:sn" bottom="1,top:0" width="n" height="n"/>
+									<item left="-1,left:n" top="2,bottom:s" right="-1,right:sn" bottom="-1,bottom:sn" width="n" 
+										height="n"/>
+								</connections>
+							</container>
+							<container name="RuntimeOutputOptions" class="org.terracotta.dso.editors.RuntimeOutputOptionsPanel">
+								<border>
+									<titled-border title="Runtime output options"/>
+								</border>
+								<children>
+									<checkbox name="AutoLockDetails" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" 
+										text="Autolock details"/>
+									<checkbox name="Caller" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" text="Caller"/>
+									<checkbox name="FullStack" class="org.terracotta.dso.editors.xmlbeans.XmlBooleanToggle" 
+										text="Full stack"/>
+								</children>
+								<connections>
+									<item left="-1,left:n" top="-1,top:n" right="-1,right:sn" bottom="1,top:0" width="n" height="n"/>
+									<item left="-1,left:n" top="0,bottom:s" right="-1,right:sn" bottom="2,top:0" width="n" height="n"/>
+									<item left="-1,left:n" top="1,bottom:s" right="-1,right:sn" bottom="-1,bottom:sn" width="n" 
+										height="n"/>
+								</connections>
+							</container>
+						</children>
+						<connections>
+							<item left="-1,left:0" top="-1,top:0" right="1,left:0" bottom="-1,bottom:s" width="n" height="n"/>
+							<item left="0,right:0" top="-1,top:0" right="2,left:0" bottom="-1,bottom:s" width="n" height="n"/>
+							<item left="1,right:0" top="-1,top:0" right="-1,right:s" bottom="-1,bottom:s" width="n" height="n"/>
+						</connections>
+					</container>
+					<container name="ModulesPanel" class="org.terracotta.dso.editors.ModulesPanel">
+						<children>
+							<scrollpane>
+								<table name="RepositoriesTable" class="com.tc.admin.common.XTable"/>
+							</scrollpane>
+							<label text="Repositories"/>
+							<container>
+								<children>
+									<button name="AddRepositoryButton" text="Add"/>
+									<button name="RemoveRepositoryButton" enabled="false" text="Remove"/>
+								</children>
+								<connections>
+									<item left="1,left:0" top="-1,top:sn" right="1,right:0" bottom="1,top:sn" width="sn" height="n"/>
+									<item left="-1,left:sn" top="0,bottom:n" right="-1,right:sn" bottom="-1,bottom:sn" width="n" 
+										height="n"/>
+								</connections>
+							</container>
+							<scrollpane>
+								<table name="ModulesTable" class="com.tc.admin.common.XTable"/>
+							</scrollpane>
+							<label text="Modules"/>
+							<container>
+								<children>
+									<button name="AddModuleButton" text="Add..."/>
+									<button name="RemoveModuleButton" enabled="false" text="Remove"/>
+								</children>
+								<connections>
+									<item left="1,left:0" top="-1,top:sn" right="1,right:0" bottom="1,top:n" width="sn" height="n"/>
+									<item left="-1,left:sn" top="0,bottom:sn" right="-1,right:sn" bottom="-1,bottom:sn" width="n" 
+										height="n"/>
+								</connections>
+							</container>
+						</children>
+						<connections>
+							<item left="-1,left:n" top="1,bottom:0" right="2,left:n" bottom="4,top:n" width="sn" height="sn"/>
+							<item left="-1,left:n" top="-1,top:n" right="-1,right:s" bottom="0,top:s" width="n" height="n"/>
+							<item left="0,right:sn" top="0,top:sn" right="-1,right:n" bottom="0,bottom:sn" width="n" height="n"/>
+							<item left="-1,left:n" top="4,bottom:s" right="5,left:n" bottom="-1,bottom:n" width="sn" height="sn"/>
+							<item left="3,left:0" top="0,bottom:sn" right="-1,right:s" bottom="3,top:0" width="n" height="n"/>
+							<item left="3,right:sn" top="3,top:s" right="-1,right:n" bottom="3,bottom:s" width="n" height="n"/>
+						</connections>
+					</container>
+				</children>
         <connections>
-          <item left="-1,left:0" top="-1,top:0" right="-1,right:s" bottom="-1,bottom:s" width="n" height="n"/>
+          <item left="-1,left:0" top="-1,top:0" right="-1,right:s" bottom="1,top:s" width="n" height="n"/>
+					<item left="-1,left:0" top="0,bottom:0" right="-1,right:0" bottom="-1,bottom:s" width="s" height="n"/>
         </connections>
       </container>
       <button name="LogsButton" text="Browse..."/>
