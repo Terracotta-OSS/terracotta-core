@@ -33,6 +33,7 @@ class TestRunResults
         
         # create symlink to latest testrun
         unless ENV['OS'] =~ /windows/i
+          `rm testrun-latest`
           `ln -s -f #{root_dir.to_s} testrun-latest`          
         end
         
