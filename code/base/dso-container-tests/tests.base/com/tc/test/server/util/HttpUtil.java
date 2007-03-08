@@ -12,7 +12,9 @@ import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.URL;
 
@@ -69,7 +71,14 @@ public final class HttpUtil {
         throw new ConnectException("The http client has encountered a status code other than ok for the url: " + url
                                    + " status: " + HttpStatus.getStatusText(status));
       }
-      return get.getResponseBodyAsString().trim();
+      StringBuffer response = new StringBuffer(100);
+      BufferedReader reader = new BufferedReader(new InputStreamReader(get.getResponseBodyAsStream()));
+      String line;
+      while ((line = reader.readLine()) != null) {
+        response.append(line).append("\n");
+      }
+      reader.close();
+      return response.toString().trim();
     } finally {
       get.releaseConnection();
     }

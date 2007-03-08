@@ -374,7 +374,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   /**
    * @return URL - the correct URL refering to the provied servlet class for the appserver running on the given port
    */
-  protected final URL createUrl(int port, Class servletClass, String query) throws MalformedURLException {
+  public URL createUrl(int port, Class servletClass, String query) throws MalformedURLException {
     if (query != null && query.length() > 0) {
       query = "?" + query;
     }
@@ -384,7 +384,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     return new URL("http://" + DOMAIN + ":" + port + "/" + testName() + "/" + servletUrl + query);
   }
 
-  protected final URL createUrl(int port, Class servletClass) throws MalformedURLException {
+  public URL createUrl(int port, Class servletClass) throws MalformedURLException {
     return createUrl(port, servletClass, "");
   }
 
