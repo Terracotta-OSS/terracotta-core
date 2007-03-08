@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.io.serializer;
 
@@ -38,7 +39,7 @@ public final class DSOSerializerPolicy implements SerializerPolicy {
   public DSOSerializerPolicy(StringIndex stringIndex) {
     this(stringIndex, false);
   }
-  
+
   public DSOSerializerPolicy() {
     this(null, true);
   }

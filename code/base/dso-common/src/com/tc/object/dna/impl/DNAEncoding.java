@@ -701,8 +701,10 @@ public class DNAEncoding {
 
   private byte[] decodeByteArray(int len, TCDataInput input) throws IOException {
     byte[] rv = new byte[len];
-    int read = input.read(rv, 0, len);
-    if (read != len) { throw new IOException("read " + read + " bytes, expected " + len); }
+    if (len != 0) {
+      int read = input.read(rv, 0, len);
+      if (read != len) { throw new IOException("read " + read + " bytes, expected " + len); }
+    }
     return rv;
   }
 

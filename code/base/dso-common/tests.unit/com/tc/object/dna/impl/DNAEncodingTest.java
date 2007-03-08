@@ -1,15 +1,21 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.dna.impl;
+
+import org.apache.commons.io.IOUtils;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.io.serializer.TCObjectInputStream;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.loaders.ClassProvider;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -24,6 +30,25 @@ public class DNAEncodingTest extends TestCase {
 
   Random        rnd           = new Random();
   ClassProvider classProvider = new MockClassProvider();
+
+  public void testZeroLengthByteArray() throws Exception {
+    TCByteBufferOutputStream output = new TCByteBufferOutputStream();
+
+    byte[] b = new byte[] {};
+
+    DNAEncoding encoding = getApplicatorEncoding();
+    encoding.encode(b, output);
+
+    // The bug this test is for only happens if DNAEncoding gets back -1 from the input stream upon being asked to read
+    // 0 bytes from a stream that is at EOF. ByteArrayInputStream happens to be one implemented in such a way
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    IOUtils.copy(new TCByteBufferInputStream(output.toArray()), baos);
+    TCObjectInputStream input = new TCObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+
+    assertTrue(Arrays.equals(b, (byte[]) encoding.decode(input)));
+
+    assertEquals(0, input.available());
+  }
 
   public void testNonPrimitiveArrays2() throws Exception {
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
@@ -186,7 +211,7 @@ public class DNAEncodingTest extends TestCase {
     DNAEncoding encoding = getApplicatorEncoding();
     encoding.encode("timmy", output);
     UTF8ByteDataHolder orgUTF;
-    encoding.encode((orgUTF =new UTF8ByteDataHolder("teck".getBytes("UTF-8"))), output);
+    encoding.encode((orgUTF = new UTF8ByteDataHolder("teck".getBytes("UTF-8"))), output);
 
     TCByteBuffer[] data = output.toArray();
 
@@ -222,7 +247,6 @@ public class DNAEncodingTest extends TestCase {
   private DNAEncoding getSerializerEncoder() {
     return new DNAEncoding(DNAEncoding.SERIALIZER);
   }
-
 
   public void testClassExpand() throws Exception {
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
