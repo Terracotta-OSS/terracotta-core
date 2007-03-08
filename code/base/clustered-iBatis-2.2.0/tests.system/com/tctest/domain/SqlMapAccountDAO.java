@@ -30,10 +30,8 @@ public class SqlMapAccountDAO extends SqlMapDaoTemplate implements AccountDAO {
 		}
 	}
 
-	public int updateAccount(Account account) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-	
+  public DaoManager getDaoManager() {
+    return daoManager;
+  }
 
 }

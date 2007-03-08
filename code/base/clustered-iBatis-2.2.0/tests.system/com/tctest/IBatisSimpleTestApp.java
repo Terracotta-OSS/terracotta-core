@@ -59,7 +59,6 @@ public class IBatisSimpleTestApp extends AbstractTransparentApp {
         cus.setLastName("Si");
         cus.setAccount(acc);
         insertCustomer(cus);
-        
 
       }
 
@@ -78,6 +77,11 @@ public class IBatisSimpleTestApp extends AbstractTransparentApp {
       }
 
       barrier.barrier();
+      
+      if (id == 0) {
+        dropAllTables();
+        shutdownDatabase();
+      }
 
     } catch (Throwable e) {
       e.printStackTrace(System.err);
@@ -100,15 +104,19 @@ public class IBatisSimpleTestApp extends AbstractTransparentApp {
         .prepareStatement("create table CUSTOMER (cus_id int not null, cus_first_name varchar(80) null, cus_last_name varchar(80) null, cus_email varchar(80) null, cus_account_id varchar(80) null, constraint pk_cus_id primary key (cus_id))");
     stmt.execute();
   }
+  
+  private void dropAllTables() throws Exception {
+    Connection conn = sqlMapper.getDataSource().getConnection();
+    PreparedStatement stmt = conn.prepareStatement("drop table ACCOUNT");
+    stmt.execute();
+    stmt = conn.prepareStatement("drop table CUSTOMER");
+    stmt.execute();
+  }
 
   private void shutdownDatabase() throws Exception {
     Connection conn = sqlMapper.getDataSource().getConnection();
     PreparedStatement stmt = conn.prepareStatement("shutdown immediately");
     stmt.execute();
-  }
-
-  public Account selectAccountById(int id) throws SQLException {
-    return (Account) sqlMapper.queryForObject("selectAccountById", new Integer(id));
   }
 
   public Customer selectCustomerById(int id) throws SQLException {
@@ -121,14 +129,6 @@ public class IBatisSimpleTestApp extends AbstractTransparentApp {
 
   public void insertCustomer(Customer customer) throws SQLException {
     sqlMapper.insert("insertCustomer", customer);
-  }
-
-  public void updateAccount(Account account) throws SQLException {
-    sqlMapper.update("updateAccount", account);
-  }
-
-  public void deleteAccount(int id) throws SQLException {
-    sqlMapper.delete("deleteAccount", new Integer(id));
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {

@@ -1323,6 +1323,8 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
     config.addIncludePattern(testClass + "$*");
     spec.addRoot("keyRoots", "keyRoots");
     spec.addRoot("valueRoots", "valueRoots");
+    spec.addRoot("hashKeys", "hashKeys");
+    spec.addRoot("hashValues", "hashValues");
   }
   
   private static class SimpleEntry implements Map.Entry {

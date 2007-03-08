@@ -509,6 +509,7 @@ module-groups:
     - dso-tests-jdk15
     - management
     - dso-memory-datastore
+    - clustered-iBatis-2.2.0
   spring:
     - dso-spring
     - dso-spring-tests

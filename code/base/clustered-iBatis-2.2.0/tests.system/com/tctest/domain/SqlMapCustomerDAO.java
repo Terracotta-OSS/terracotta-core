@@ -30,11 +30,6 @@ public class SqlMapCustomerDAO extends SqlMapDaoTemplate implements CustomerDAO 
 		}
 	}
 
-	public int updateCustomer(Customer customer) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-	
   public DaoManager getDaoManager() {
     return daoManager;
   }
