@@ -418,7 +418,7 @@ public class ClassUtilsTest extends TestCase {
     }
 
     public boolean isNeverAdaptable(ClassInfo classInfo) {
-      return isNeverAdaptable.contains(classInfo);
+      return isNeverAdaptable.contains(classInfo.getName());
     }
 
     public boolean isLogical(String theClass) {
