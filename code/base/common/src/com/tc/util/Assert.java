@@ -138,6 +138,10 @@ public class Assert {
   public static void assertEquals(double expected, double actual) {
     if (expected != actual) { throw new TCAssertionError("Expected <" + expected + "> but got <" + actual + ">"); }
   }
+  
+  public static void assertEquals(double expected, double actual, double epsilon) {
+    if (Math.abs(actual - expected) > Math.abs(epsilon)) { throw new TCAssertionError("Expected <" + expected + "> but got <" + actual + ">"); }
+  }
 
   public static void assertEquals(boolean expected, boolean actual) {
     if (expected != actual) { throw new TCAssertionError("Expected <" + expected + "> but got <" + actual + ">"); }
