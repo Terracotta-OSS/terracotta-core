@@ -68,8 +68,8 @@
 								</children>
 								<connections>
 									<item left="-1,left:n" top="-1,top:n" right="-1,right:sn" bottom="1,top:0" width="n" height="n"/>
-									<item left="-1,left:n" top="0,bottom:s" right="-1,right:sn" bottom="0,top:0" width="n" height="n"/>
-									<item left="-1,left:n" top="1,bottom:s" right="-1,right:sn" bottom="1,top:0" width="n" height="n"/>
+									<item left="-1,left:n" top="0,bottom:s" right="-1,right:sn" bottom="2,top:0" width="n" height="n"/>
+									<item left="-1,left:n" top="1,bottom:s" right="-1,right:sn" bottom="3,top:0" width="n" height="n"/>
 									<item left="-1,left:n" top="2,bottom:s" right="-1,right:sn" bottom="-1,bottom:sn" width="n" 
 										height="n"/>
 								</connections>
@@ -104,7 +104,7 @@
 							<scrollpane>
 								<table name="RepositoriesTable" class="com.tc.admin.common.XTable"/>
 							</scrollpane>
-							<label text="Repositories"/>
+							<label text="Module Repositories"/>
 							<container>
 								<children>
 									<button name="AddRepositoryButton" text="Add"/>
