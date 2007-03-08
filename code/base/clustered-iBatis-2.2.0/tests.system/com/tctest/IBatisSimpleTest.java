@@ -9,7 +9,7 @@ public class IBatisSimpleTest extends TransparentTestBase {
   private final static int LOOP_COUNT = 1;
   
   public IBatisSimpleTest() {
-    //disableAllUntil("2007-02-28");
+    disableAllUntil("2007-03-10");
   }
 
   public void setUp() throws Exception {
