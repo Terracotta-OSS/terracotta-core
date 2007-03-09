@@ -32,10 +32,10 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
   private CustomerDAO    customerDAO;
 
   private Customer       cus;
-  
-  private final Object sharedLock = new Object();
-  private boolean tablesDropped = false;
-  
+
+  private final Object   sharedLock    = new Object();
+  private boolean        tablesDropped = false;
+
   private static boolean pluginsLoaded = false;
 
   public static synchronized boolean pluginsLoaded() {
@@ -85,16 +85,13 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
         Assert.assertEquals("asi@yahoo.com", cus.getEmailAddress());
         Assert.assertEquals("Antonio", cus.getFirstName());
         Assert.assertEquals("Si", cus.getLastName());
-        
 
         barrier.barrier();
       } finally {
-        if (id == 0) {
-          synchronized (sharedLock) {
-            if (!tablesDropped) {
-              tablesDropped = true;
-              dropAllTables();
-            }
+        synchronized (sharedLock) {
+          if (!tablesDropped) {
+            tablesDropped = true;
+            dropAllTables();
           }
         }
       }
@@ -118,7 +115,7 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
       stmt = conn
           .prepareStatement("create table CUSTOMER (cus_id int not null, cus_first_name varchar(80) null, cus_last_name varchar(80) null, cus_email varchar(80) null, cus_account_id varchar(80) null, constraint pk_cus_id primary key (cus_id))");
       stmt.execute();
-      
+
       accountDAO = dao;
       customerDAO = (CustomerDAO) daoManager.getDao(CustomerDAO.class);
 
@@ -167,7 +164,8 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
     String testClass = IBatisSimpleDaoTestApp.class.getName();
 
     config.getOrCreateSpec(testClass).addRoot("barrier", "barrier").addRoot("cus", "cus").addRoot("list", "list")
-        .addRoot("customerDAO", "customerDAO").addRoot("accountDAO", "accountDAO").addRoot("sharedLock", "sharedLock").addRoot("tablesDropped", "tablesDropped");
+        .addRoot("customerDAO", "customerDAO").addRoot("accountDAO", "accountDAO").addRoot("sharedLock", "sharedLock")
+        .addRoot("tablesDropped", "tablesDropped");
 
     config.addWriteAutolock("* " + testClass + "*.*(..)");
     config.addIncludePattern("com.tctest.domain.*");

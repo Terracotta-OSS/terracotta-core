@@ -142,15 +142,20 @@ public class TransactionSequencer {
 
   private ClientTransactionBatch get() {
     boolean isInterrupted = false;
+    ClientTransactionBatch returnValue = null;
     while (true) {
       try {
-        return (ClientTransactionBatch) pendingBatches.poll(0);
+        returnValue = (ClientTransactionBatch) pendingBatches.poll(0);
+        break;
       } catch (InterruptedException e) {
         isInterrupted = true;
-      } finally {
-        Util.selfInterruptIfNeeded(isInterrupted);
+        if (returnValue != null) {
+          break;
+        }
       }
     }
+    Util.selfInterruptIfNeeded(isInterrupted);
+    return returnValue;
   }
 
   private ClientTransactionBatch peek() {
