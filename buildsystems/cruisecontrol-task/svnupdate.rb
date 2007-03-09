@@ -59,7 +59,7 @@ class SvnUpdate
         currently_good_rev = f.gets.to_i
       end
     rescue
-      currently_good_rev = 0
+      currently_good_rev = -1
     end
     currently_good_rev
   end
@@ -89,7 +89,7 @@ class SvnUpdate
         log("not general-monkey - updating to #{current_good_rev}")
         svn_update_with_error_tolerant(current_good_rev)
         exit(0)
-      elsif current_rev == current_good_rev
+      elsif current_good_rev = -1 || current_rev == current_good_rev
         log("current_rev == currently_good_rev - no svn update needed")
         exit(0)
       else # I have a revision that is greater than a good known reivision, so I sleep and wait
