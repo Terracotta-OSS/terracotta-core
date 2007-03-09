@@ -185,5 +185,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   int getSessionLockType(String appName);
 
+  Class getTCPeerClass(Class clazz);
 
 }

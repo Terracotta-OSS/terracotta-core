@@ -5,23 +5,6 @@ PUBLIC "-//iBATIS.com//DTD DAO Configuration 2.0//EN"
 
 <daoConfig>
 
-<!--
-	<context id="jdbc">
-		<transactionManager type="JDBC">
-			<property name="DataSource" value="SIMPLE"/>
-			<property name="JDBC.Driver" value="org.hsqldb.jdbcDriver"/>
-			<property name="JDBC.ConnectionURL" value="jdbc:hsqldb:file:testdb"/>
-			<property name="JDBC.Username" value="sa"/>
-			<property name="JDBC.Password" value=""/>
-			<property name="JDBC.DefaultAutoCommit" value="true" />
-			<property name="Pool.MaximumActiveConnections" value="10"/>
-			<property name="Pool.MaximumIdleConnections" value="5"/>
-			<property name="Pool.MaximumCheckoutTime" value="120000"/>
-		</transactionManager>
-		<dao interface="com.tctest.domain.AccountDAO" implementation="com.tctest.domain.JdbcAccountDAO" />
-	</context> 
--->
-	
 	<context>
 	  <transactionManager type="SQLMAP">
 	    <property name="SqlMapConfigResource"

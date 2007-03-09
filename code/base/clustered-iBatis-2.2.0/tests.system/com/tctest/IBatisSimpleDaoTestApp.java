@@ -32,7 +32,10 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
   private CustomerDAO    customerDAO;
 
   private Customer       cus;
-
+  
+  private final Object sharedLock = new Object();
+  private boolean tablesDropped = false;
+  
   private static boolean pluginsLoaded = false;
 
   public static synchronized boolean pluginsLoaded() {
@@ -48,50 +51,56 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
     try {
       int id = barrier.barrier();
 
-      if (id == 0) {
-        setupDatabase();
+      try {
 
-        synchronized (accountDAO) {
-          Account acc = new Account();
-          acc.setNumber("ASI-001");
-          accountDAO.insertAccount(acc);
-          Customer cus = new Customer();
-          cus.setEmailAddress("asi@yahoo.com");
-          cus.setFirstName("Antonio");
-          cus.setLastName("Si");
-          cus.setAccount(acc);
-          customerDAO.insertCustomer(cus);
-          shutdownDatabase();
+        if (id == 0) {
+          setupDatabase();
+
+          synchronized (accountDAO) {
+            Account acc = new Account();
+            acc.setNumber("ASI-001");
+            accountDAO.insertAccount(acc);
+            Customer cus = new Customer();
+            cus.setEmailAddress("asi@yahoo.com");
+            cus.setFirstName("Antonio");
+            cus.setLastName("Si");
+            cus.setAccount(acc);
+            customerDAO.insertCustomer(cus);
+            shutdownDatabase();
+          }
+        }
+
+        barrier.barrier();
+
+        if (id == 1) {
+          synchronized (customerDAO) {
+            cus = customerDAO.selectCustomer(0);
+            Account acc = cus.getAccount();
+            Assert.assertEquals("ASI-001", acc.getNumber());
+
+            shutdownDatabase();
+          }
+        }
+        barrier.barrier();
+        Assert.assertEquals("asi@yahoo.com", cus.getEmailAddress());
+        Assert.assertEquals("Antonio", cus.getFirstName());
+        Assert.assertEquals("Si", cus.getLastName());
+        
+
+        barrier.barrier();
+      } finally {
+        if (id == 0) {
+          synchronized (sharedLock) {
+            if (!tablesDropped) {
+              tablesDropped = true;
+              dropAllTables();
+            }
+          }
         }
       }
-
-      barrier.barrier();
-
-      if (id == 1) {
-        synchronized (customerDAO) {
-          cus = customerDAO.selectCustomer(0);
-
-          shutdownDatabase();
-        }
-      }
-      barrier.barrier();
-      Assert.assertEquals("asi@yahoo.com", cus.getEmailAddress());
-      Assert.assertEquals("Antonio", cus.getFirstName());
-      Assert.assertEquals("Si", cus.getLastName());
-
-      if (id == 0) {
-        Account acc = cus.getAccount();
-        Assert.assertEquals("ASI-001", acc.getNumber());
-
-        synchronized (customerDAO) {
-          dropAllTables();
-        }
-      }
-
-      barrier.barrier();
 
     } catch (Throwable e) {
-      e.printStackTrace(System.err);
+      notifyError(e);
     }
 
   }
@@ -109,17 +118,18 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
       stmt = conn
           .prepareStatement("create table CUSTOMER (cus_id int not null, cus_first_name varchar(80) null, cus_last_name varchar(80) null, cus_email varchar(80) null, cus_account_id varchar(80) null, constraint pk_cus_id primary key (cus_id))");
       stmt.execute();
-
+      
       accountDAO = dao;
       customerDAO = (CustomerDAO) daoManager.getDao(CustomerDAO.class);
 
-      //reader.close();
+      // reader.close();
 
     } catch (Exception e) {
       e.printStackTrace(System.err);
+      throw e;
     }
   }
-  
+
   private DaoManager connectDatabase() throws Exception {
     Reader reader = Resources.getResourceAsReader("com/tctest/DAOMap.xml");
     DaoManager daoManager = DaoManagerBuilder.buildDaoManager(reader);
@@ -157,7 +167,7 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
     String testClass = IBatisSimpleDaoTestApp.class.getName();
 
     config.getOrCreateSpec(testClass).addRoot("barrier", "barrier").addRoot("cus", "cus").addRoot("list", "list")
-        .addRoot("customerDAO", "customerDAO").addRoot("accountDAO", "accountDAO");
+        .addRoot("customerDAO", "customerDAO").addRoot("accountDAO", "accountDAO").addRoot("sharedLock", "sharedLock").addRoot("tablesDropped", "tablesDropped");
 
     config.addWriteAutolock("* " + testClass + "*.*(..)");
     config.addIncludePattern("com.tctest.domain.*");

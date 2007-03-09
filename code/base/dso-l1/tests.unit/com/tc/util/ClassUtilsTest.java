@@ -728,6 +728,10 @@ public class ClassUtilsTest extends TestCase {
     public void addDistributedMethodCall(DistributedMethodSpec dms) {
       throw new ImplementMe();
     }
+
+    public Class getTCPeerClass(Class clazz) {
+      throw new ImplementMe();
+    }
   }
 
 }

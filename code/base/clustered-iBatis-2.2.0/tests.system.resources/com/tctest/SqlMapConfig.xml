@@ -5,10 +5,11 @@
     "http://ibatis.apache.org/dtd/sql-map-config-2.dtd">
 
 <sqlMapConfig>
-<!--
+
   <settings
+        cacheModelsEnabled="false"
         lazyLoadingEnabled="true" />
--->
+
   <!-- Configure a built-in transaction manager.  If you're using an 
        app server, you probably want to use its transaction manager 
        and a managed datasource -->
