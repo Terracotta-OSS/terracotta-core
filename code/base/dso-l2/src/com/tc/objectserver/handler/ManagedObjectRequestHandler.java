@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.handler;
 
@@ -25,7 +26,7 @@ import java.util.Set;
 /**
  * Converts the request into a call to the objectManager with the proper next steps initialized I'm not convinced that
  * this stage is necessary. May be able to merge it with another stage.
- *
+ * 
  * @author steve
  */
 public class ManagedObjectRequestHandler extends AbstractEventHandler {
@@ -53,7 +54,7 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
   }
 
   private void handleEventFromServer(ManagedObjectRequestContext context) {
-    Collection ids = context.getRequestedObjectIDs();
+    Collection ids = context.getLookupIDs();
     // XXX::TODO:: Server initiated lookups are not updated to the channel counter for now
     final int numObjectsRequested = ids.size();
     if (numObjectsRequested != 0) {
@@ -65,7 +66,7 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
   private void handleEventFromClient(RequestManagedObjectMessage rmom) {
 
     MessageChannel channel = rmom.getChannel();
-    Collection requestedIDs = rmom.getObjectIDs();
+    Set requestedIDs = rmom.getObjectIDs();
     ChannelID channelID = rmom.getChannelID();
     Set removedIDs = rmom.getRemoved();
     int maxRequestDepth = rmom.getRequestDepth();

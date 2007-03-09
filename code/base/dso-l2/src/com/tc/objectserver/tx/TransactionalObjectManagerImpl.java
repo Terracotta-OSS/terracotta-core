@@ -144,8 +144,8 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
     // TODO:: make cache and stats right
     if (!newRequests.isEmpty()) {
-      LookupContext lookupContext = new LookupContext(newRequests);
-      if (objectManager.lookupObjectsForCreateIfNecessary(txn.getChannelID(), newRequests, lookupContext)) {
+      LookupContext lookupContext = new LookupContext(newRequests, txn.getNewObjectIDs());
+      if (objectManager.lookupObjectsForCreateIfNecessary(txn.getChannelID(), lookupContext)) {
         addLookedupObjects(lookupContext);
       } else {
         // New request went pending in object manager
@@ -410,16 +410,18 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     private boolean   pending = false;
     private Map       lookedUpObjects;
     private final Set oids;
+    private final Set newOids;
 
-    public LookupContext(Set oids) {
+    public LookupContext(Set oids, Set newOids) {
       this.oids = oids;
+      this.newOids = newOids;
     }
 
     public synchronized boolean isPendingRequest() {
       return pending;
     }
 
-    public synchronized void makePending(ChannelID channelID, Collection ids) {
+    public synchronized void makePending() {
       pending = true;
     }
 
@@ -437,6 +439,14 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     public String toString() {
       return "LookupContext [ " + oids + "] = { pending = " + pending + ", lookedupObjects = "
              + lookedUpObjects.keySet() + "}";
+    }
+
+    public Set getLookupIDs() {
+      return oids;
+    }
+
+    public boolean isNewObject(ObjectID id) {
+      return newOids.contains(id);
     }
   }
 

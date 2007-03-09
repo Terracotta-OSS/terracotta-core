@@ -1,10 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.context;
 
 import com.tc.async.api.Sink;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestID;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.text.PrettyPrintable;
@@ -21,7 +23,7 @@ import java.util.Set;
 public class ManagedObjectRequestContext implements ObjectManagerResultsContext, PrettyPrintable {
   private final long            timestamp;
   private final ChannelID       channelID;
-  private final Collection      requestedObjectIDs;
+  private final Set             requestedObjectIDs;
   private Map                   objects;
   private final ObjectRequestID requestID;
   private boolean               moreObjects    = false;
@@ -31,8 +33,8 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
   private boolean               pendingRequest = false;
   private final Sink            sink;
 
-  public ManagedObjectRequestContext(ChannelID channelID, ObjectRequestID requestID, Collection ids,
-                                     int maxRequestDepth, Sink sink) {
+  public ManagedObjectRequestContext(ChannelID channelID, ObjectRequestID requestID, Set ids, int maxRequestDepth,
+                                     Sink sink) {
     this.maxRequestDepth = maxRequestDepth;
     this.sink = sink;
     this.timestamp = System.currentTimeMillis();
@@ -61,7 +63,7 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
     return this.requestID;
   }
 
-  public Collection getRequestedObjectIDs() {
+  public Set getLookupIDs() {
     return requestedObjectIDs;
   }
 
@@ -87,19 +89,23 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
   public void setResults(ChannelID chID, Collection ids, ObjectManagerLookupResults results) {
     this.objects = results.getObjects();
     this.lookupPendingObjectIDs = results.getLookupPendingObjectIDs();
-    this.sink.add(this);  // Add to next stage
+    this.sink.add(this); // Add to next stage
   }
 
   public boolean isPendingRequest() {
     return pendingRequest;
   }
 
-  public void makePending(ChannelID chID, Collection ids) {
+  public void makePending() {
     pendingRequest = true;
   }
 
   public Sink getSink() {
     return this.sink;
+  }
+
+  public boolean isNewObject(ObjectID id) {
+    return false;
   }
 
 }

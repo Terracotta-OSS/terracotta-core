@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -9,7 +10,6 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.RequestManagedObjectMessage;
 
-import java.util.Collection;
 import java.util.Set;
 
 public class TestRequestManagedObjectMessage implements RequestManagedObjectMessage, EventContext {
@@ -18,7 +18,7 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
   private Set             removed;
   private ChannelID       channelID;
   private MessageChannel  channel;
-  private Collection      objectIDs;
+  private Set             objectIDs;
 
   public TestRequestManagedObjectMessage() {
     super();
@@ -28,11 +28,11 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
     return this.requestID;
   }
 
-  public Collection getObjectIDs() {
+  public Set getObjectIDs() {
     return this.objectIDs;
   }
 
-  public void setObjectIDs(Collection IDs) {
+  public void setObjectIDs(Set IDs) {
     this.objectIDs = IDs;
   }
 

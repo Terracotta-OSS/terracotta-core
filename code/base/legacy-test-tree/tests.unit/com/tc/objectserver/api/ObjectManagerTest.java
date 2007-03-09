@@ -82,7 +82,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -235,7 +234,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     objectManager.stop();
 
     try {
-      objectManager.lookupObjectsForCreateIfNecessary(null, Collections.EMPTY_SET, null);
+      objectManager.lookupObjectsForCreateIfNecessary(null, null);
       fail("Should have thrown a ShutdownError.");
     } catch (ShutdownError e) {
       // ok.
@@ -248,7 +247,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     objectManager.stop();
 
     try {
-      objectManager.lookupObjectsAndSubObjectsFor(null, Collections.EMPTY_LIST, null, -1);
+      objectManager.lookupObjectsAndSubObjectsFor(null, null, -1);
       fail("Should have thrown a ShutdownError.");
     } catch (ShutdownError e) {
       // ok.
@@ -260,15 +259,16 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     // accurate in the lookup results
     initObjectManager();
 
-    Collection ids = new HashSet(); // important to use a Set here
-    TestResultsContext results = new TestResultsContext();
+    Set ids = new HashSet(); // important to use a Set here
 
     ObjectID id1;
     ids.add((id1 = new ObjectID(1)));
     ObjectID id2;
     ids.add((id2 = new ObjectID(2)));
     ChannelID key = new ChannelID(0);
-    this.objectManager.lookupObjectsForCreateIfNecessary(key, ids, results);
+
+    TestResultsContext results = new TestResultsContext(ids, ids);
+    this.objectManager.lookupObjectsForCreateIfNecessary(key, results);
     assertEquals(2, results.objects.size());
 
     ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
@@ -287,7 +287,13 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     ids.add(new ObjectID(3));
     ids.add(new ObjectID(4));
-    this.objectManager.lookupObjectsForCreateIfNecessary(key, ids, results);
+    Set newIDs = new HashSet();
+    newIDs.add(new ObjectID(3));
+    newIDs.add(new ObjectID(4));
+
+    results = new TestResultsContext(ids, newIDs);
+
+    this.objectManager.lookupObjectsForCreateIfNecessary(key, results);
     assertEquals(4, results.objects.size());
 
     int count = 100;
@@ -306,14 +312,14 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   public void testArrayFacade() throws Exception {
     initObjectManager();
 
-    TestResultsContext responseContext = new TestResultsContext();
-    final Map lookedUpObjects = responseContext.objects;
-
     ObjectID id = new ObjectID(1);
-    ArrayList ids = new ArrayList();
+    HashSet ids = new HashSet();
     ids.add(id);
 
-    this.objectManager.lookupObjectsForCreateIfNecessary(null, ids, responseContext);
+    TestResultsContext responseContext = new TestResultsContext(ids, ids);
+    final Map lookedUpObjects = responseContext.objects;
+
+    this.objectManager.lookupObjectsForCreateIfNecessary(null, responseContext);
     assertEquals(ids.size(), lookedUpObjects.size());
 
     ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
@@ -356,15 +362,15 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   public void testDateFacades() throws NoSuchObjectException {
     initObjectManager();
 
-    TestResultsContext responseContext = new TestResultsContext();
-    final Map lookedUpObjects = responseContext.objects;
-
     ObjectID dateID = new ObjectID(1);
 
-    ArrayList ids = new ArrayList();
+    Set ids = new HashSet();
     ids.add(dateID);
 
-    this.objectManager.lookupObjectsForCreateIfNecessary(null, ids, responseContext);
+    TestResultsContext responseContext = new TestResultsContext(ids, ids);
+    final Map lookedUpObjects = responseContext.objects;
+
+    this.objectManager.lookupObjectsForCreateIfNecessary(null, responseContext);
     assertEquals(ids.size(), lookedUpObjects.size());
 
     ManagedObject dateManagedObject = (ManagedObject) lookedUpObjects.get(dateID);
@@ -384,15 +390,15 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   public void testLiteralFacades() throws NoSuchObjectException {
     initObjectManager();
 
-    TestResultsContext responseContext = new TestResultsContext();
-    final Map lookedUpObjects = responseContext.objects;
-
     ObjectID literalID = new ObjectID(1);
 
-    ArrayList ids = new ArrayList();
+    Set ids = new HashSet();
     ids.add(literalID);
 
-    this.objectManager.lookupObjectsForCreateIfNecessary(null, ids, responseContext);
+    TestResultsContext responseContext = new TestResultsContext(ids, ids);
+    final Map lookedUpObjects = responseContext.objects;
+
+    this.objectManager.lookupObjectsForCreateIfNecessary(null, responseContext);
     assertEquals(ids.size(), lookedUpObjects.size());
 
     ManagedObject managedObject = (ManagedObject) lookedUpObjects.get(literalID);
@@ -424,19 +430,19 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   public void testLogicalFacades() throws NoSuchObjectException {
     initObjectManager();
 
-    TestResultsContext responseContext = new TestResultsContext();
-    final Map lookedUpObjects = responseContext.objects;
-
     ObjectID mapID = new ObjectID(1);
     ObjectID listID = new ObjectID(2);
     ObjectID setID = new ObjectID(3);
 
-    ArrayList ids = new ArrayList();
+    Set ids = new HashSet();
     ids.add(mapID);
     ids.add(listID);
     ids.add(setID);
 
-    this.objectManager.lookupObjectsForCreateIfNecessary(null, ids, responseContext);
+    TestResultsContext responseContext = new TestResultsContext(ids, ids);
+    final Map lookedUpObjects = responseContext.objects;
+
+    this.objectManager.lookupObjectsForCreateIfNecessary(null, responseContext);
     assertEquals(ids.size(), lookedUpObjects.size());
 
     ManagedObject list = (ManagedObject) lookedUpObjects.get(listID);
@@ -635,14 +641,15 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     new TestMOFaulter(this.objectManager, store, faultSink).start();
     new TestMOFlusher(this.objectManager, flushSink).start();
 
-    TestResultsContext responseContext = new TestResultsContext();
-    final Map lookedUpObjects = responseContext.objects;
-
     ObjectID id = new ObjectID(1);
-    Collection ids = new LinkedList();
+    Set ids = new HashSet();
     ids.add(id);
     ChannelID key = new ChannelID(0);
-    objectManager.lookupObjectsForCreateIfNecessary(key, ids, responseContext);
+
+    TestResultsContext responseContext = new TestResultsContext(ids, ids);
+    Map lookedUpObjects = responseContext.objects;
+
+    objectManager.lookupObjectsForCreateIfNecessary(key, responseContext);
 
     ManagedObject lookedUpViaLookupObjectsForCreateIfNecessary = (ManagedObject) lookedUpObjects.get(id);
 
@@ -704,7 +711,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     tx.commit();
 
     // now do another lookup, change, and commit cycle
-    objectManager.lookupObjectsForCreateIfNecessary(key, ids, responseContext);
+    responseContext = new TestResultsContext(ids, Collections.EMPTY_SET);
+    lookedUpObjects = responseContext.objects;
+
+    objectManager.lookupObjectsForCreateIfNecessary(key, responseContext);
     lookedUpViaLookupObjectsForCreateIfNecessary = (ManagedObject) lookedUpObjects.get(id);
     countSlot.set(0, new Integer(1));
     ObjectID newReferenceID = new ObjectID(9324);
@@ -785,10 +795,11 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))), new NullCache(),
                       this.objectStore);
 
-    Collection objects = Arrays.asList(new ObjectID[] { new ObjectID(1) });
+    HashSet oids = new HashSet();
+    oids.add(new ObjectID(1));
 
-    final TestResultsContext context = new TestResultsContext();
-    this.objectManager.lookupObjectsForCreateIfNecessary(null, objects, context);
+    final TestResultsContext context = new TestResultsContext(oids, oids);
+    this.objectManager.lookupObjectsForCreateIfNecessary(null, context);
     context.waitTillComplete();
     ManagedObject mo = (ManagedObject) (context.objects).get(new ObjectID(1));
     assertTrue(mo.isNew());
@@ -859,7 +870,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     final ObjectID id = new ObjectID(0);
     final ObjectID id1 = new ObjectID(1);
 
-    LinkedList objectIDs = new LinkedList();
+    Set objectIDs = new HashSet();
 
     ManagedObject mo = new TestManagedObject(id, new ObjectID[0]);
     ManagedObject mo1 = new TestManagedObject(id1, new ObjectID[0]);
@@ -872,7 +883,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     TestObjectManagerResultsContext context;
     assertTrue(objectManager
-        .lookupObjectsAndSubObjectsFor(null, objectIDs, context = new TestObjectManagerResultsContext(new HashMap()),
+        .lookupObjectsAndSubObjectsFor(null, context = new TestObjectManagerResultsContext(new HashMap(), objectIDs),
                                        -1));
 
     ManagedObject retrievedMo = (ManagedObject) context.getResults().values().iterator().next();
@@ -885,8 +896,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     objectIDs.add(id1);
 
-    objectManager.lookupObjectsAndSubObjectsFor(null, objectIDs,
-                                                context = new TestObjectManagerResultsContext(new HashMap()), -1);
+    objectManager.lookupObjectsAndSubObjectsFor(null, context = new TestObjectManagerResultsContext(new HashMap(),
+                                                                                                    objectIDs), -1);
     assertTrue(context.isPendingRequest());
     objectManager.release(NULL_TRANSACTION, mo);
     assertFalse(context.isPendingRequest());
@@ -915,17 +926,17 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))),
                       new LRUEvictionPolicy(-1));
     objectManager.setStatsListener(this.stats);
-    TestResultsContext results = new TestResultsContext();
 
     assertEquals(0, stats.getTotalRequests());
     assertEquals(0, stats.getTotalCacheHits());
     assertEquals(0, stats.getTotalCacheMisses());
 
     createObjects(50, 10);
-    Collection ids = makeObjectIDCollection(0, 10);
+    Set ids = makeObjectIDSet(0, 10);
     // ThreadUtil.reallySleep(5000);
+    TestResultsContext results = new TestResultsContext(ids, Collections.EMPTY_SET);
 
-    objectManager.lookupObjectsAndSubObjectsFor(null, ids, results, -1);
+    objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     results.waitTillComplete();
     objectManager.releaseAll(NULL_TRANSACTION, results.objects.values());
 
@@ -933,17 +944,17 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     assertEquals(0, stats.getTotalCacheHits());
     assertEquals(10, stats.getTotalCacheMisses());
 
-    results = new TestResultsContext();
-    objectManager.lookupObjectsAndSubObjectsFor(null, ids, results, -1);
+    results = new TestResultsContext(ids, Collections.EMPTY_SET);
+    objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     results.waitTillComplete();
     objectManager.releaseAll(NULL_TRANSACTION, results.objects.values());
     assertEquals(20, stats.getTotalRequests());
     assertEquals(10, stats.getTotalCacheHits());
     assertEquals(10, stats.getTotalCacheMisses());
 
-    ids = makeObjectIDCollection(10, 20);
-    results = new TestResultsContext();
-    objectManager.lookupObjectsAndSubObjectsFor(null, ids, results, -1);
+    ids = makeObjectIDSet(10, 20);
+    results = new TestResultsContext(ids, Collections.EMPTY_SET);
+    objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     results.waitTillComplete();
     objectManager.releaseAll(NULL_TRANSACTION, results.objects.values());
     assertEquals(30, stats.getTotalRequests());
@@ -952,9 +963,9 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     evictCache(10);
 
-    ids = makeObjectIDCollection(14, 4);
-    results = new TestResultsContext();
-    objectManager.lookupObjectsAndSubObjectsFor(null, ids, results, -1);
+    ids = makeObjectIDSet(14, 4);
+    results = new TestResultsContext(ids, Collections.EMPTY_SET);
+    objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     results.waitTillComplete();
     objectManager.releaseAll(NULL_TRANSACTION, results.objects.values());
     assertEquals(40, stats.getTotalRequests());
@@ -977,8 +988,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     evictCache(inCache);
   }
 
-  private Collection makeObjectIDCollection(int begin, int end) {
-    List rv = new ArrayList();
+  private Set makeObjectIDSet(int begin, int end) {
+    Set rv = new HashSet();
 
     if (begin > end) {
       for (int i = begin; i > end; i--) {
@@ -1130,7 +1141,6 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     assertTrue(gc.waitFor_notifyGCComplete_ToBeCalled(5000));
     gcCaller.join();
   }
-
 
   private static class TestArrayDNA implements DNA {
 
@@ -1475,8 +1485,15 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   }
 
   private static class TestResultsContext implements ObjectManagerResultsContext {
-    public Map objects = new HashMap();
-    boolean    pending = false;
+    public Map        objects = new HashMap();
+    boolean           pending = false;
+    private final Set ids;
+    private final Set newIDS;
+
+    public TestResultsContext(Set ids, Set newIDS) {
+      this.ids = ids;
+      this.newIDS = newIDS;
+    }
 
     public synchronized void waitTillComplete() {
       while (pending) {
@@ -1492,7 +1509,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       return pending;
     }
 
-    public synchronized void makePending(ChannelID channelID, Collection ids) {
+    public synchronized void makePending() {
       pending = true;
     }
 
@@ -1500,6 +1517,14 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       pending = false;
       this.objects.putAll(results.getObjects());
       notifyAll();
+    }
+
+    public Set getLookupIDs() {
+      return ids;
+    }
+
+    public boolean isNewObject(ObjectID id) {
+      return newIDS.contains(id);
     }
   }
 
