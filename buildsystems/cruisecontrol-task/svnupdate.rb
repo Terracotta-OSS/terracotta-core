@@ -81,11 +81,11 @@ class SvnUpdate
       log("curr: #{current_rev}")
       log("good: #{current_good_rev}")
 
-      if @monkey_name == "general-monkey"
+      if @monkey_name == "general-monkey" || current_good_rev == -1
         log("general-monkey - updating to HEAD")
         svn_update_with_error_tolerant("HEAD")
         exit(0)
-      elsif current_good_rev == -1 || current_rev < current_good_rev
+      elsif current_rev < current_good_rev
         log("not general-monkey - updating to #{current_good_rev}")
         svn_update_with_error_tolerant(current_good_rev)
         exit(0)
