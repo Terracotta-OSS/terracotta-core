@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.impl;
 
@@ -11,14 +12,14 @@ import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.SyncObjectIdSet;
 
 import java.util.Collection;
 import java.util.Set;
 
 public class PersistentManagedObjectStore implements ManagedObjectStore {
 
-  private final Set                    extantObjectIDs;
+  private final SyncObjectIdSet        extantObjectIDs;
   private final ManagedObjectPersistor objectPersistor;
   private boolean                      inShutdown;
 
@@ -49,14 +50,14 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
   }
 
   public boolean containsObject(ObjectID id) {
-      assertNotInShutdown();
-      return extantObjectIDs.contains(id);
+    assertNotInShutdown();
+    return extantObjectIDs.contains(id);
   }
 
   public void addNewObject(ManagedObject managed) {
-      assertNotInShutdown();
-      boolean result = extantObjectIDs.add(managed.getID());
-      Assert.eval(result);
+    assertNotInShutdown();
+    boolean result = extantObjectIDs.add(managed.getID());
+    Assert.eval(result);
   }
 
   public void commitObject(PersistenceTransaction tx, ManagedObject managed) {
@@ -76,12 +77,12 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
   }
 
   private void basicRemoveAll(Collection ids) {
-      this.extantObjectIDs.removeAll(ids);
+    this.extantObjectIDs.removeAll(ids);
   }
 
-  public Set getAllObjectIDs() {
-      assertNotInShutdown();
-      return new ObjectIDSet2(this.extantObjectIDs);
+  public SyncObjectIdSet getAllObjectIDs() {
+    assertNotInShutdown();
+    return this.extantObjectIDs.snapshot();
   }
 
   public ManagedObject getObjectByID(ObjectID id) {

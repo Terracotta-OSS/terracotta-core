@@ -21,6 +21,7 @@ import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet2;
+import com.tc.util.SyncObjectIdSet;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.NullLifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
@@ -112,7 +113,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     gcStats.setStartTime(startMillis);
 
     Set rootIDs = null;
-    Set managedIDs = null;
+    SyncObjectIdSet managedIDs = null;
 
     this.referenceCollector = new NewReferenceCollector();
     

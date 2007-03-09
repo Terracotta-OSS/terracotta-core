@@ -7,6 +7,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ManagedObjectProvider;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.text.PrettyPrintable;
+import com.tc.util.SyncObjectIdSet;
 import com.tc.util.sequence.ObjectIDSequence;
 
 import java.util.Collection;
@@ -28,7 +29,7 @@ public interface ManagedObjectStore extends ManagedObjectProvider, ObjectIDSeque
   /**
    * Returns the set of object ids.
    */
-  public Set getAllObjectIDs();
+  public SyncObjectIdSet getAllObjectIDs();
 
   public boolean containsObject(ObjectID id);
 

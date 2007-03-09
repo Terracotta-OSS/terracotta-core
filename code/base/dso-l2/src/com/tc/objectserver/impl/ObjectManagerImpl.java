@@ -45,6 +45,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
+import com.tc.util.SyncObjectIdSet;
 import com.tc.util.concurrent.StoppableThread;
 
 import gnu.trove.THashSet;
@@ -576,7 +577,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return objectStore.getRoots();
   }
 
-  public Set getAllObjectIDs() {
+  public SyncObjectIdSet getAllObjectIDs() {
     return objectStore.getAllObjectIDs();
   }
 

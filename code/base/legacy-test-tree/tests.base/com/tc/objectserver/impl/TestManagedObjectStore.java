@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.impl;
 
@@ -8,17 +9,18 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.SyncObjectIdSet;
 
 import java.util.Collection;
 import java.util.Set;
 
 public class TestManagedObjectStore implements ManagedObjectStore {
 
-  public boolean       addNewWasCalled = false;
-  public boolean       containsKey;
-  public Set           keySet;
-  public ManagedObject managedObject;
-  private int          count;
+  public boolean         addNewWasCalled = false;
+  public boolean         containsKey;
+  public SyncObjectIdSet keySet;
+  public ManagedObject   managedObject;
+  private int            count;
 
   public boolean containsObject(ObjectID id) {
     return containsKey;
@@ -29,7 +31,7 @@ public class TestManagedObjectStore implements ManagedObjectStore {
     count++;
   }
 
-  public Set getAllObjectIDs() {
+  public SyncObjectIdSet getAllObjectIDs() {
     return keySet;
   }
 

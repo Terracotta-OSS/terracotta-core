@@ -5,8 +5,6 @@
 package com.tc.objectserver.persistence.sleepycat;
 
 import EDU.oswego.cs.dl.util.concurrent.CountDown;
-import EDU.oswego.cs.dl.util.concurrent.ReentrantWriterPreferenceReadWriteLock;
-import EDU.oswego.cs.dl.util.concurrent.SyncSet;
 
 import com.sleepycat.bind.serial.ClassCatalog;
 import com.sleepycat.je.Cursor;
@@ -16,7 +14,6 @@ import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
-import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -30,7 +27,7 @@ import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor.SleepycatPer
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.SyncObjectIdSet;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -131,18 +128,16 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     return rv;
   }
 
-  public SyncSet getAllObjectIDs() {
-    ReentrantWriterPreferenceReadWriteLock rwLock = new ReentrantWriterPreferenceReadWriteLock();
+  public SyncObjectIdSet getAllObjectIDs() {
     CountDown latch = new CountDown(1);
-    SyncSet rv = new SyncSet(new ObjectIDSet2(), rwLock);
-    Thread t = new Thread(new ObjectIdReader(rv, rwLock, latch));
-    t.setName("ObjectIdReader");
+    SyncObjectIdSet rv = new SyncObjectIdSet();
+    Thread t = new Thread(new ObjectIdReader(rv, latch), "ObjectIdReaderThread");
     t.setDaemon(true);
     t.start();
     try {
       latch.acquire();
     } catch (InterruptedException e) {
-      throw new TCRuntimeException(e);
+      Thread.currentThread().interrupt();
     }
     return rv;
   }
@@ -357,19 +352,17 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   }
 
   class ObjectIdReader implements Runnable {
-    private final Set                                    set;
-    private final ReentrantWriterPreferenceReadWriteLock rwLock;
-    private final CountDown                              locked;
+    private final SyncObjectIdSet set;
+    private final CountDown       locked;
 
-    public ObjectIdReader(Set set, ReentrantWriterPreferenceReadWriteLock rwLock, CountDown locked) {
+    public ObjectIdReader(SyncObjectIdSet set, CountDown locked) {
       this.set = set;
-      this.rwLock = rwLock;
       this.locked = locked;
     }
 
     public void run() {
       try {
-        rwLock.writeLock().acquire();
+        set.startPopulating();
         locked.release();
         PersistenceTransaction tx = ptp.newTransaction();
         Cursor cursor = objectDB.openCursor(pt2nt(tx), objectDBCursorConfig);
@@ -383,7 +376,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
       } catch (Throwable t) {
         throw new DBException(t);
       } finally {
-        rwLock.writeLock().release();
+        set.stopPopulating();
       }
     }
   }

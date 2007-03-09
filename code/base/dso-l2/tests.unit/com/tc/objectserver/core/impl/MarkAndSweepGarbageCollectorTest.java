@@ -18,6 +18,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.SyncObjectIdSet;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -298,8 +299,10 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     return roots;
   }
 
-  public Set getAllObjectIDs() {
-    return managed.keySet();
+  public SyncObjectIdSet getAllObjectIDs() {
+    SyncObjectIdSet rv = new SyncObjectIdSet();
+    rv.addAll(managed.keySet());
+    return rv;
   }
 
   public void addFaultedObject(ObjectID oid, ManagedObject mo, boolean removeOnRelease) {

@@ -4,9 +4,6 @@
  */
 package com.tc.objectserver.impl;
 
-import EDU.oswego.cs.dl.util.concurrent.ReentrantWriterPreferenceReadWriteLock;
-import EDU.oswego.cs.dl.util.concurrent.SyncSet;
-
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.impl.TestManagedObject;
@@ -14,7 +11,7 @@ import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransaction;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.ObjectIDSet2;
+import com.tc.util.SyncObjectIdSet;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.ArrayList;
@@ -99,8 +96,7 @@ public class PersistentManagedObjectStoreTest extends TestCase {
     public final NoExceptionLinkedQueue loadByObjectIDCalls = new NoExceptionLinkedQueue();
     public final Map                    map;
     public boolean                      closeCalled         = false;
-    public SyncSet                      allObjectIDs        = new SyncSet(new ObjectIDSet2(),
-                                                                          new ReentrantWriterPreferenceReadWriteLock());
+    public SyncObjectIdSet              allObjectIDs        = new SyncObjectIdSet();
 
     public TestManagedObjectPersistor(Map map) {
       this.map = map;
@@ -149,7 +145,7 @@ public class PersistentManagedObjectStoreTest extends TestCase {
       throw new RuntimeException("Implement Me");
     }
 
-    public SyncSet getAllObjectIDs() {
+    public SyncObjectIdSet getAllObjectIDs() {
       return allObjectIDs;
     }
 

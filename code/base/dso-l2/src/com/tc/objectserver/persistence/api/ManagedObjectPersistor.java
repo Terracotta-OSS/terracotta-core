@@ -3,11 +3,10 @@
  */
 package com.tc.objectserver.persistence.api;
 
-import EDU.oswego.cs.dl.util.concurrent.SyncSet;
-
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.SyncObjectIdSet;
 
 import java.util.Collection;
 import java.util.Set;
@@ -26,7 +25,7 @@ public interface ManagedObjectPersistor {
 
   public long nextObjectIDBatch(int batchSize);
 
-  public SyncSet getAllObjectIDs();
+  public SyncObjectIdSet getAllObjectIDs();
 
   public void saveObject(PersistenceTransaction tx, ManagedObject managedObject);
 

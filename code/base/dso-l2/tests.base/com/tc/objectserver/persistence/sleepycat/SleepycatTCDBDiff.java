@@ -17,6 +17,7 @@ import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.TransactionPersistor;
 import com.tc.objectserver.persistence.impl.StringIndexImpl;
 import com.tc.util.Assert;
+import com.tc.util.SyncObjectIdSet;
 
 import gnu.trove.TObjectLongHashMap;
 
@@ -112,8 +113,8 @@ public class SleepycatTCDBDiff {
 
   private void diffManagedObjects(ManagedObjectPersistor mp1, ManagedObjectPersistor mp2) {
     log("Diffing ManagedObjects...(Partial implementation)");
-    Set oids1 = mp1.getAllObjectIDs();
-    Set oids2 = mp2.getAllObjectIDs();
+    SyncObjectIdSet oids1 = mp1.getAllObjectIDs();
+    SyncObjectIdSet oids2 = mp2.getAllObjectIDs();
     if (!oids1.equals(oids2)) {
       log("*** [1] containing " + oids1.size() + " ObjectIDs differs from [2] containing " + oids2.size()
           + " ObjectIDs");
