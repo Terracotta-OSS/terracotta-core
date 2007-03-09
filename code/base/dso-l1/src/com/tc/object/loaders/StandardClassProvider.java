@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.loaders;
 
@@ -17,7 +18,7 @@ public class StandardClassProvider implements ClassProvider {
 
   private final ClassLoader   systemLoader = ClassLoader.getSystemClassLoader();
   private final Map           loaders      = new HashMap();
-  
+
   public StandardClassProvider() {
     //
   }
@@ -40,21 +41,19 @@ public class StandardClassProvider implements ClassProvider {
       if (loader == null) { throw new ClassNotFoundException("No registered loader for description: " + desc
                                                              + ", trying to load " + className); }
     }
-    
+
     try {
-      return Class.forName(className, false, loader);      
+      return Class.forName(className, false, loader);
     } catch (ClassNotFoundException e) {
       if (loader instanceof BytecodeProvider) {
         BytecodeProvider provider = (BytecodeProvider) loader;
         byte[] bytes = provider.__tc_getBytecodeForClass(className);
-        if (bytes != null && bytes.length != 0) {
-          return AsmHelper.defineClass(loader, bytes, className);             
-        }
+        if (bytes != null && bytes.length != 0) { return AsmHelper.defineClass(loader, bytes, className); }
       }
       throw e;
-    }    
+    }
   }
-           
+
   public void registerNamedLoader(NamedClassLoader loader) {
     final String name = getName(loader);
     synchronized (loaders) {
@@ -64,9 +63,8 @@ public class StandardClassProvider implements ClassProvider {
 
   private static String getName(NamedClassLoader loader) {
     String name = loader.__tc_getClassLoaderName();
-    if (name == null || name.length() == 0) {
-      throw new AssertionError("Invalid name [" + name + "] from loader " + loader);
-    }
+    if (name == null || name.length() == 0) { throw new AssertionError("Invalid name [" + name + "] from loader "
+                                                                       + loader); }
     return name;
   }
 
@@ -77,7 +75,16 @@ public class StandardClassProvider implements ClassProvider {
   public String getLoaderDescriptionFor(ClassLoader loader) {
     if (loader == null) { return BOOT; }
     if (loader instanceof NamedClassLoader) { return getName((NamedClassLoader) loader); }
-    throw new RuntimeException("No loader description for " + loader);
+    throw handleMissingLoader(loader);
+  }
+
+  private RuntimeException handleMissingLoader(ClassLoader loader) {
+    if ("org.apache.jasper.servlet.JasperLoader".equals(loader.getClass().getName())) {
+      // try to guve a better error message if you're trying to share a JSP
+      return new RuntimeException("JSP instances (and inner classes there of) cannot be distributed, loader = "
+                                  + loader);
+    }
+    return new RuntimeException("No loader description for " + loader);
   }
 
   private boolean isStandardLoader(String desc) {
