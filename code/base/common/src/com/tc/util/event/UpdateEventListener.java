@@ -6,5 +6,5 @@ package com.tc.util.event;
 
 public interface UpdateEventListener {
 
-  void handleUpdate();
+  void handleUpdate(Object arg);
 }

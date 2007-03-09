@@ -82,7 +82,7 @@ public final class ConnectDialog extends Dialog {
     m_emptyPanel.setLayout(new BorderLayout());
 
     m_authPanel = (Container) AdminClient.getContext().topRes.resolve("AuthPanel");
-    
+
     Container credentialsPanel = (Container) m_authPanel.findComponent("CredentialsPanel");
     m_authPanel.setVisible(false);
     this.m_usernameField = (JTextField) credentialsPanel.findComponent("UsernameField");
@@ -224,29 +224,26 @@ public final class ConnectDialog extends Dialog {
       try {
         m_error = null;
         m_jmxc = new AuthenticatingJMXConnector(m_url, m_env);
-        ((AuthenticatingJMXConnector) m_jmxc)
-            .addAuthenticationListener(new UpdateEventListener() {
-              public void handleUpdate() {
-                m_connectionTimer.stopTimer();
-                m_connectionTimer.interrupt();
-                enableAuthenticationDialog();
-              }
-            });
-        ((AuthenticatingJMXConnector) m_jmxc)
-            .addCollapseListener(new UpdateEventListener() {
-              public void handleUpdate() {
-                m_connectionTimer.setTimer();
-                disableAuthenticationDialog();
-              }
-            });
-        ((AuthenticatingJMXConnector) m_jmxc)
-            .addExceptionListener(new UpdateEventListener() {
-              public void handleUpdate() {
-                m_connectionTimer.setTimer();
-                m_connectionTimer.interrupt();
-                disableAuthenticationDialog();
-              }
-            });
+        ((AuthenticatingJMXConnector) m_jmxc).addAuthenticationListener(new UpdateEventListener() {
+          public void handleUpdate(Object obj) {
+            m_connectionTimer.stopTimer();
+            m_connectionTimer.interrupt();
+            enableAuthenticationDialog();
+          }
+        });
+        ((AuthenticatingJMXConnector) m_jmxc).addCollapseListener(new UpdateEventListener() {
+          public void handleUpdate(Object obj) {
+            m_connectionTimer.setTimer();
+            disableAuthenticationDialog();
+          }
+        });
+        ((AuthenticatingJMXConnector) m_jmxc).addExceptionListener(new UpdateEventListener() {
+          public void handleUpdate(Object obj) {
+            m_connectionTimer.setTimer();
+            m_connectionTimer.interrupt();
+            disableAuthenticationDialog();
+          }
+        });
 
         if (m_jmxc != null && m_error == null) {
           m_connectThread.start();
@@ -306,9 +303,7 @@ public final class ConnectDialog extends Dialog {
       } catch (IOException e) {
         m_error = e;
       } catch (RuntimeException e) {
-        if (e instanceof AuthenticatingJMXConnector.AuthenticationException) {
-          return;
-        }
+        if (e instanceof AuthenticatingJMXConnector.AuthenticationException) { return; }
         m_error = e;
       }
     }

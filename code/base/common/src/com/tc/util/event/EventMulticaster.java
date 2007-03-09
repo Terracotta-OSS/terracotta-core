@@ -4,56 +4,93 @@
  */
 package com.tc.util.event;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Generic Listener/Observer implementation.
+ * Generic Event/Listener implementation.
+ * <p>
+ * USAGE:
+ * </p>
  * 
- * <p>USAGE:</p>
  * <pre>
- * class Worker implements Runnable {
- * 
- *   private final EventMulticaster updateObserver;
- * 
- *   private void doWork() {
- *     if (stateChanged()) updateObserver.fireUpdateEvent();
- *     
- * ...
- * 
- *   public void addWorkEventListener(UpdateEventListener listener) {
- *     updateObserver.addListener(listener);
- *    
- * ...
- * 
- * class Master {
- * 
- *   private void delegateTask() {
- *     Worker worker = new Worker();
- *     worker.addWorkEventListener(new UpdateEventListener() {
- *       public void handleUpdate() {
- *         notifyUser();         
- *       }
- *     });
- *     
- * ...
- * 
- *   private void notifyUser() {
- *   
- * ...
+ *  class Worker implements Runnable {
+ *  
+ *  private final EventMulticaster updateObserver;
+ *  
+ *  private void doWork() {
+ *    if (stateChanged()) updateObserver.fireUpdateEvent();
+ *  
+ *  ...
+ *  
+ *  public void addWorkEventListener(UpdateEventListener listener) {
+ *    updateObserver.addListener(listener);
+ *  
+ *  ...
+ *  
+ *  class Master {
+ *  
+ *  private void delegateTask() {
+ *    Worker worker = new Worker();
+ *    worker.addWorkEventListener(new UpdateEventListener() {
+ *      public void handleUpdate(Object arg) {
+ *        System.out.println(arg);       
+ *      }
+ *    });
+ *  
+ *  ...
  * </pre>
  */
-public class EventMulticaster {
+public final class EventMulticaster implements Serializable {
 
-  private UpdateEventListener eventListener = new NullEventListener();
+  private transient UpdateEventListener eventListener;
+  private transient EventQueue          queue;
+  private transient Thread              dispatchThread;
+  private volatile boolean              dispatchInterrupted;
 
-  public synchronized void fireUpdateEvent() {
-    eventListener.handleUpdate();
+  public synchronized void enableDispatchThread() {
+    this.eventListener = null;
+    this.queue = new EventQueue();
+    this.dispatchThread = new Thread() {
+      public void run() {
+        UpdateEvent event = null;
+        try {
+          while (true) {
+            event = queue.take();
+            event.listener.handleUpdate(event.arg);
+          }
+        } catch (InterruptedException e) {
+          dispatchInterrupted = true;
+        }
+      }
+    };
+    dispatchThread.setDaemon(true);
+    dispatchThread.start();
+  }
+
+  public void fireUpdateEvent() {
+    fireUpdateEvent(null);
+  }
+
+  public synchronized void fireUpdateEvent(Object arg) {
+    if (dispatchInterrupted) throw new IllegalStateException();
+    if (eventListener != null) {
+      if (queue == null) eventListener.handleUpdate(arg);
+      else {
+        UpdateEvent event = new UpdateEvent();
+        event.listener = eventListener;
+        event.arg = arg;
+        queue.offer(event);
+      }
+    }
   }
 
   public synchronized void addListener(UpdateEventListener listener) {
-    if (eventListener instanceof EventMulticaster.NullEventListener) {
+    if (eventListener == null) {
       eventListener = listener;
     } else if (eventListener instanceof EventMulticaster.BroadcastListener) {
       EventMulticaster.BroadcastListener broadcast = (EventMulticaster.BroadcastListener) eventListener;
@@ -74,20 +111,26 @@ public class EventMulticaster {
       return true;
     } else {
       if (eventListener != listener) return false;
-      eventListener = new NullEventListener();
+      eventListener = null;
       return true;
     }
   }
 
   // --------------------------------------------------------------------------------
 
-  private class BroadcastListener implements UpdateEventListener {
+  private class BroadcastListener implements UpdateEventListener, Serializable {
 
-    private List listeners = new ArrayList();
+    private List listeners = Collections.synchronizedList(new ArrayList());
 
-    public void handleUpdate() {
+    public void handleUpdate(Object arg) {
       for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-        ((UpdateEventListener) iter.next()).handleUpdate();
+        if (queue == null) ((UpdateEventListener) iter.next()).handleUpdate(arg);
+        else {
+          UpdateEvent event = new UpdateEvent();
+          event.listener = (UpdateEventListener) iter.next();
+          event.arg = arg;
+          queue.offer(event);
+        }
       }
     }
 
@@ -110,10 +153,32 @@ public class EventMulticaster {
 
   // --------------------------------------------------------------------------------
 
-  private class NullEventListener implements UpdateEventListener {
+  private class UpdateEvent implements Serializable {
+    private UpdateEventListener listener;
+    private Object              arg;
+  }
 
-    public void handleUpdate() {
-    // do nothing
+  // --------------------------------------------------------------------------------
+
+  private class EventQueue implements Serializable {
+
+    private final List list = new LinkedList();
+
+    private void offer(UpdateEvent val) {
+      if (val == null) throw new NullPointerException();
+      synchronized (list) {
+        list.add(val);
+        list.notify();
+      }
+    }
+
+    private UpdateEvent take() throws InterruptedException {
+      synchronized (list) {
+        while (list.size() == 0) {
+          list.wait();
+        }
+        return (UpdateEvent) list.remove(0);
+      }
     }
   }
 }
