@@ -4,7 +4,6 @@
  */
 package com.tc.object.dna.impl;
 
-import com.sleepycat.util.IOExceptionWrapper;
 import com.tc.exception.TCRuntimeException;
 import com.tc.io.TCDataInput;
 import com.tc.io.TCDataOutput;
@@ -407,7 +406,7 @@ public class DNAEncoding {
    * private no arg constructor. XXX::This is an ugly hack that I would like to getaway from
    */
   private Object createStackTraceElement(String className, String fileName, String methodName, int lineNumber)
-      throws ClassNotFoundException, IOExceptionWrapper {
+      throws ClassNotFoundException, IOException {
     Class clazz = Class.forName("java.lang.StackTraceElement");
     Constructor constructors[] = clazz.getDeclaredConstructors();
     for (int i = 0; i < constructors.length; i++) {
@@ -425,7 +424,7 @@ public class DNAEncoding {
   }
 
   private Object createStackTraceElementJDK14(Class clazz, Constructor constructor, String className, String fileName,
-                                              String methodName, int lineNumber) throws IOExceptionWrapper {
+                                              String methodName, int lineNumber) throws IOException {
     try {
       constructor.setAccessible(true);
       Object i = constructor.newInstance(new Object[0]);
@@ -450,12 +449,14 @@ public class DNAEncoding {
       Assert.assertTrue(set == 0x0F);
       return i;
     } catch (Exception ex) {
-      throw new IOExceptionWrapper(ex);
+      IOException ioe = new IOException();
+      ioe.initCause(ex);
+      throw ioe;
     }
   }
 
   private Object createStackTraceElementJDK15(Class clazz, Constructor constructor, String className, String fileName,
-                                              String methodName, int lineNumber) throws IOExceptionWrapper {
+                                              String methodName, int lineNumber) throws IOException {
     try {
       Object params[] = new Object[4];
       params[0] = className;
@@ -464,7 +465,9 @@ public class DNAEncoding {
       params[3] = new Integer(lineNumber);
       return constructor.newInstance(params);
     } catch (Exception ex) {
-      throw new IOExceptionWrapper(ex);
+      IOException ioe = new IOException();
+      ioe.initCause(ex);
+      throw ioe;
     }
   }
 
