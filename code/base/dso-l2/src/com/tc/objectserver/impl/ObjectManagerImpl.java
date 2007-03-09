@@ -192,28 +192,29 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return objectStore.getRootID(name);
   }
 
-  public boolean lookupObjectsAndSubObjectsFor(ChannelID channelID, ObjectManagerResultsContext responseContext,
-                                               int maxReachableObjects) {
+  public boolean lookupObjectsAndSubObjectsFor(ChannelID channelID, Collection ids,
+                                               ObjectManagerResultsContext responseContext, int maxReachableObjects) {
     // maxReachableObjects is atleast 1 so that addReachableObjectsIfNecessary does the right thing
-    return lookupObjectsForOptionallyCreate(channelID, responseContext, false, maxReachableObjects <= 0 ? 1
+    return lookupObjectsForOptionallyCreate(channelID, ids, responseContext, false, maxReachableObjects <= 0 ? 1
         : maxReachableObjects);
   }
 
-  public boolean lookupObjectsForCreateIfNecessary(ChannelID channelID, ObjectManagerResultsContext responseContext) {
-    return lookupObjectsForOptionallyCreate(channelID, responseContext, true, -1);
+  public boolean lookupObjectsForCreateIfNecessary(ChannelID channelID, Collection ids,
+                                                   ObjectManagerResultsContext responseContext) {
+    return lookupObjectsForOptionallyCreate(channelID, ids, responseContext, true, -1);
   }
 
-  private synchronized boolean lookupObjectsForOptionallyCreate(ChannelID channelID,
+  private synchronized boolean lookupObjectsForOptionallyCreate(ChannelID channelID, Collection ids,
                                                                 ObjectManagerResultsContext responseContext,
                                                                 boolean create, int maxReachableObjects) {
     syncAssertNotInShutdown();
 
     if (collector.isPausingOrPaused()) {
       // XXX:: since we are making pending without trying to lookup, cache hit count might be skewed
-      makePending(channelID, responseContext, create, maxReachableObjects).setProcessPending(true);
+      makePending(channelID, ids, responseContext, create, maxReachableObjects).setProcessPending(true);
       return false;
     }
-    return basicLookupObjectsFor(channelID, responseContext, create, maxReachableObjects);
+    return basicLookupObjectsFor(channelID, ids, responseContext, create, maxReachableObjects);
   }
 
   public Iterator getRoots() {
@@ -433,17 +434,16 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   // Called from within Sync blocks only.
-  private boolean basicLookupObjectsFor(ChannelID channelID, ObjectManagerResultsContext context,
+  private boolean basicLookupObjectsFor(ChannelID channelID, Collection ids, ObjectManagerResultsContext context,
                                         boolean canCreate, int maxReachableObjects) {
     Set objects = createNewSet();
 
     boolean processPending = false;
     boolean available = true;
-    Set ids = context.getLookupIDs();
     for (Iterator i = ids.iterator(); i.hasNext();) {
       ObjectID id = (ObjectID) i.next();
       ManagedObjectReference reference;
-      if (!context.isNewObject(id)) {
+      if (objectStore.containsObject(id)) {
         // We dont check available flag before doing calling getOrLookupReference() for two reasons.
         // 1) To get the right hit/miss count and
         // 2) to Fault objects that are not available
@@ -484,7 +484,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       context.setResults(channelID, ids, results);
       return true;
     } else {
-      PendingList pendingList = makePending(channelID, context, canCreate, maxReachableObjects);
+      PendingList pendingList = makePending(channelID, ids, context, canCreate, maxReachableObjects);
       if (processPending) {
         pendingList.setProcessPending(processPending);
       }
@@ -781,15 +781,15 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     // TODO:: Can be optimized to process only requests that becames available.
     for (Iterator i = lp.iterator(); i.hasNext();) {
       Pending p = (Pending) i.next();
-      basicLookupObjectsFor(p.getChannelID(), p.getRequestContext(), p.canCreate(), p
+      basicLookupObjectsFor(p.getChannelID(), p.getIDs(), p.getRequestContext(), p.canCreate(), p
           .getMaxReachableObjects());
     }
   }
 
-  private PendingList makePending(ChannelID channelID, ObjectManagerResultsContext context, boolean canCreate,
-                                  int maxReachableObjects) {
-    context.makePending();
-    pending.add(new Pending(channelID, context, canCreate, maxReachableObjects));
+  private PendingList makePending(ChannelID channelID, Collection ids, ObjectManagerResultsContext context,
+                                  boolean canCreate, int maxReachableObjects) {
+    context.makePending(channelID, ids);
+    pending.add(new Pending(channelID, ids, context, canCreate, maxReachableObjects));
     return pending;
   }
 
@@ -862,26 +862,32 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private static class Pending {
+    private final Collection                  ids;
     private final boolean                     canCreate;
     private final ObjectManagerResultsContext context;
     private final ChannelID                   groupingKey;
     private final int                         maxReachableObjects;
 
-    public Pending(ChannelID groupingKey, ObjectManagerResultsContext context, boolean canCreate,
+    public Pending(ChannelID groupingKey, Collection ids, ObjectManagerResultsContext context, boolean canCreate,
                    int maxReachableObjects) {
       this.groupingKey = groupingKey;
+      this.ids = ids;
       this.context = context;
       this.canCreate = canCreate;
       this.maxReachableObjects = maxReachableObjects;
     }
 
     public String toString() {
-      return "ObjectManagerImpl.Pending[groupingKey=" + groupingKey + ", canCreate=" + canCreate + "]";
+      return "ObjectManagerImpl.Pending[groupingKey=" + groupingKey + ", canCreate=" + canCreate + ", ids=" + ids + "]";
 
     }
 
     public ChannelID getChannelID() {
       return this.groupingKey;
+    }
+
+    public Collection getIDs() {
+      return ids;
     }
 
     public ObjectManagerResultsContext getRequestContext() {

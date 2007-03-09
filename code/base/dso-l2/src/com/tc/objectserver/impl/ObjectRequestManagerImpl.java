@@ -44,7 +44,8 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
         return;
       }
     }
-    objectManager.lookupObjectsAndSubObjectsFor(responseContext.getChannelID(), responseContext, maxReachableObjects);
+    objectManager.lookupObjectsAndSubObjectsFor(responseContext.getChannelID(), requestedIDs, responseContext,
+                                                maxReachableObjects);
   }
 
   public synchronized void addResentServerTransactionIDs(Collection sTxIDs) {
@@ -79,7 +80,8 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     logger.info("Processing Pending Lookups = " + copy.size());
     for (Iterator iter = copy.iterator(); iter.hasNext();) {
       PendingRequest request = (PendingRequest) iter.next();
-      objectManager.lookupObjectsAndSubObjectsFor(request.getResponseContext().getChannelID(), request.getResponseContext(), request.getMaxReachableObjects());
+      objectManager.lookupObjectsAndSubObjectsFor(request.getResponseContext().getChannelID(), request
+          .getRequestedIDs(), request.getResponseContext(), request.getMaxReachableObjects());
     }
   }
 

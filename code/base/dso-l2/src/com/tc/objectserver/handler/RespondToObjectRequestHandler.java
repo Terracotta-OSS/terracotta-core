@@ -55,7 +55,7 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
     // Check to see if more objects needs to be looked for this request
     createNewLookupRequestsIfNecessary(morc);
 
-    Collection requestedObjectIDs = morc.getLookupIDs();
+    Collection requestedObjectIDs = morc.getRequestedObjectIDs();
     Set ids = new HashSet(Math.max((int) (objs.size() / .75f) + 1, 16));
     for (Iterator i = objs.iterator(); i.hasNext();) {
       ManagedObject mo = (ManagedObject) i.next();
@@ -87,7 +87,7 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
         if (newIds.contains(m.getID())) {
           m.toDNA(out, serializer);
           sendCount++;
-        } else if (morc.getLookupIDs().contains(m.getID())) {
+        } else if (morc.getRequestedObjectIDs().contains(m.getID())) {
           // logger.info("Ignoring request for look up from " + morc.getChannelID() + " for " + m.getID());
         }
         objectManager.releaseReadOnly(m);
@@ -121,7 +121,7 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
     if (oids.isEmpty()) { return; }
     if (logger.isDebugEnabled()) {
       logger.debug("Creating Server initiated requests for : " + morc.getChannelID() + " org request Id length = "
-                   + morc.getLookupIDs().size() + "  Reachable object(s) to be looked up  length = "
+                   + morc.getRequestedObjectIDs().size() + "  Reachable object(s) to be looked up  length = "
                    + oids.size());
     }
     if (oids.size() <= MAX_OBJECTS_TO_LOOKUP) {

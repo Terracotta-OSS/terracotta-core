@@ -235,12 +235,13 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     throw new ImplementMe();
   }
 
-  public boolean lookupObjectsAndSubObjectsFor(ChannelID channelID, ObjectManagerResultsContext responseContext,
-                                               int maxCount) {
+  public boolean lookupObjectsAndSubObjectsFor(ChannelID channelID, Collection ids,
+                                               ObjectManagerResultsContext responseContext, int maxCount) {
     throw new ImplementMe();
   }
 
-  public boolean lookupObjectsForCreateIfNecessary(ChannelID channelID, ObjectManagerResultsContext context) {
+  public boolean lookupObjectsForCreateIfNecessary(ChannelID channelID, Collection ids,
+                                                   ObjectManagerResultsContext context) {
     throw new ImplementMe();
   }
 

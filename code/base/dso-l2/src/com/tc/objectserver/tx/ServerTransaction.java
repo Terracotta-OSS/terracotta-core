@@ -16,7 +16,6 @@ import com.tc.util.SequenceID;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Represents an atomic change to the states of objects on the server
@@ -47,8 +46,6 @@ public interface ServerTransaction {
   public TxnType getTransactionType();
 
   public Collection getObjectIDs();
-  
-  public Set getNewObjectIDs();
 
   public Collection addNotifiesTo(List list);
 

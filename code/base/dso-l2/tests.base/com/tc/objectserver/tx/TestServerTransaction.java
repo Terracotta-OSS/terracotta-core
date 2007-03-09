@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public final class TestServerTransaction implements ServerTransaction {
 
@@ -82,10 +81,6 @@ public final class TestServerTransaction implements ServerTransaction {
   }
 
   public DmiDescriptor[] getDmiDescriptors() {
-    throw new ImplementMe();
-  }
-
-  public Set getNewObjectIDs() {
     throw new ImplementMe();
   }
 

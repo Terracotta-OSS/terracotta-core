@@ -17,11 +17,9 @@ import com.tc.util.SequenceID;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Represents an atomic change to the states of objects on the server
@@ -41,7 +39,6 @@ public class ServerTransactionImpl implements ServerTransaction {
   private final Collection             notifies;
   private final DmiDescriptor[]        dmis;
   private final Collection             objectIDs;
-  private final Set                    newObjectIDs;
   private final TxnBatchID             batchID;
 
   public ServerTransactionImpl(TxnBatchID batchID, TransactionID txID, SequenceID sequenceID, LockID[] lockIDs,
@@ -60,16 +57,10 @@ public class ServerTransactionImpl implements ServerTransaction {
     this.changes = dnas;
     this.serializer = serializer;
     List ids = new ArrayList(changes.size());
-    HashSet newIDs = new HashSet(changes.size());
     for (Iterator i = changes.iterator(); i.hasNext();) {
-      DNA dna = (DNA) i.next();
-      ids.add(dna.getObjectID());
-      if (!dna.isDelta()) {
-        newIDs.add(dna.getObjectID());
-      }
+      ids.add(((DNA) i.next()).getObjectID());
     }
     this.objectIDs = ids;
-    this.newObjectIDs = newIDs;
   }
 
   public ObjectStringSerializer getSerializer() {
@@ -106,10 +97,6 @@ public class ServerTransactionImpl implements ServerTransaction {
 
   public Collection getObjectIDs() {
     return this.objectIDs;
-  }
-
-  public Set getNewObjectIDs() {
-    return this.newObjectIDs;
   }
 
   public Collection addNotifiesTo(List list) {

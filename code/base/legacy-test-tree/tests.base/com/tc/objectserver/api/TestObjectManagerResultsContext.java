@@ -4,12 +4,10 @@
 package com.tc.objectserver.api;
 
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.object.ObjectID;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author steve
@@ -18,11 +16,9 @@ public class TestObjectManagerResultsContext implements ObjectManagerResultsCont
 
   private final Map results;
   private boolean   pending;
-  private final Set objectIDs;
 
-  public TestObjectManagerResultsContext(Map results, Set objectIDs) {
+  public TestObjectManagerResultsContext(Map results) {
     this.results = results;
-    this.objectIDs = objectIDs;
   }
 
   public Map getResults() {
@@ -38,16 +34,8 @@ public class TestObjectManagerResultsContext implements ObjectManagerResultsCont
     return pending;
   }
 
-  public void makePending() {
+  public void makePending(ChannelID channelID, Collection ids) {
     pending = true;
-  }
-
-  public Set getLookupIDs() {
-    return objectIDs;
-  }
-
-  public boolean isNewObject(ObjectID id) {
-    return false;
   }
 
 }
