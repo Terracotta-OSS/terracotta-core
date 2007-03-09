@@ -2,7 +2,7 @@
   <!--Server is colocated with client and DSO is listening on
        default port (9510).-->
   <servers>
-    <server name="localhost">
+    <server host="%i" name="sample">
       <dso>
         <persistence>
           <mode>temporary-swap-only</mode>

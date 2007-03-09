@@ -10,7 +10,7 @@
   <!-- Server is colocated with client and DSO is listening on
        default port (9510). -->
   <servers>
-    <server name="localhost"/>
+    <server host="%i"/>
   </servers>
 
   <!-- Tell DSO where to put the generated client logs

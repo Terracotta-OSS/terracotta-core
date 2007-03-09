@@ -15,7 +15,7 @@
     </system>
 
     <servers>
-        <server name="localhost">
+        <server host="%i">
             <data>%(user.home)/terracotta/server-data</data>
             <logs>%(user.home)/terracotta/server-logs</logs>
         </server>

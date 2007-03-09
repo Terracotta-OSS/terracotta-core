@@ -20,7 +20,7 @@
   </clients>
 
   <servers>
-    <server name="localhost" />
+    <server host="%i" />
   </servers>
 
   <application>

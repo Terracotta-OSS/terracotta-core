@@ -53,7 +53,7 @@
     </dso>
   </application>
   <servers>
-    <server name="dev" host="localhost">
+    <server host="%i" name="dev">
       <dso-port>9510</dso-port>
       <jmx-port>9520</jmx-port>
       <logs>terracotta/server-logs</logs>

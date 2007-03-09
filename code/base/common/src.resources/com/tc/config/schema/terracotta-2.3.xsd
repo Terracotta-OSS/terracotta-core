@@ -555,7 +555,8 @@
       use="required">
       <xs:annotation>
         <xs:documentation>
-          The name of the server. The name is required.
+          The name of the server, expansion parameters may
+          be used. The name is required.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -564,7 +565,8 @@
         <xs:documentation>
           The host that the server runs on. If the host is the
           same as the name of the server, then you can omit
-          it; otherwise, you must include it.
+          it; otherwise, you must include it.  Expansion parameters
+          may be used.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

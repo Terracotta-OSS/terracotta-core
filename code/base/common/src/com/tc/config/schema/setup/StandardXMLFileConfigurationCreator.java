@@ -11,6 +11,7 @@ import org.xml.sax.SAXException;
 
 import com.tc.config.schema.beanfactory.BeanWithErrors;
 import com.tc.config.schema.beanfactory.ConfigBeanFactory;
+import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.config.schema.repository.ApplicationsRepository;
 import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.setup.sources.ConfigurationSource;
@@ -327,6 +328,11 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
           if (server.getHost() == null || server.getHost().trim().length() == 0) {
             server.setHost(server.getName());
           }
+
+          // CDV-77: add parameter expansion to the <server> attributes ('host' and 'name')
+          server.setHost(ParameterSubstituter.substitute(server.getHost()));
+          server.setName(ParameterSubstituter.substitute(server.getName()));
+
           if ("localhost".equals(server.getHost())) {
             try {
               server.setHost(InetAddress.getLocalHost().getCanonicalHostName());

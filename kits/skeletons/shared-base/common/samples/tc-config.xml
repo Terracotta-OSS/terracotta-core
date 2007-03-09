@@ -7,7 +7,7 @@
   <!-- Tell DSO where the Terracotta server can be found; 
        See the Terracotta DSO Guide for additional information. -->
   <servers>
-    <server name="localhost">
+    <server host="%i" name="sample">
       <data>%(user.home)/terracotta/demo-server/server-data</data>
       <logs>%(user.home)/terracotta/demo-server/server-logs</logs>
     </server>
