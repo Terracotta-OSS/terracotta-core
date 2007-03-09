@@ -49,18 +49,14 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
   }
 
   public boolean containsObject(ObjectID id) {
-    synchronized (extantObjectIDs) {
       assertNotInShutdown();
       return extantObjectIDs.contains(id);
-    }
   }
 
   public void addNewObject(ManagedObject managed) {
-    synchronized (extantObjectIDs) {
       assertNotInShutdown();
       boolean result = extantObjectIDs.add(managed.getID());
       Assert.eval(result);
-    }
   }
 
   public void commitObject(PersistenceTransaction tx, ManagedObject managed) {
@@ -80,16 +76,12 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
   }
 
   private void basicRemoveAll(Collection ids) {
-    synchronized (extantObjectIDs) {
       this.extantObjectIDs.removeAll(ids);
-    }
   }
 
   public Set getAllObjectIDs() {
-    synchronized (extantObjectIDs) {
       assertNotInShutdown();
       return new ObjectIDSet2(this.extantObjectIDs);
-    }
   }
 
   public ManagedObject getObjectByID(ObjectID id) {

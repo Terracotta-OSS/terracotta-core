@@ -1,7 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.persistence.sleepycat;
+
+import EDU.oswego.cs.dl.util.concurrent.CountDown;
+import EDU.oswego.cs.dl.util.concurrent.ReentrantWriterPreferenceReadWriteLock;
+import EDU.oswego.cs.dl.util.concurrent.SyncSet;
 
 import com.sleepycat.bind.serial.ClassCatalog;
 import com.sleepycat.je.Cursor;
@@ -11,6 +16,7 @@ import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
+import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -125,21 +131,18 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     return rv;
   }
 
-  public ObjectIDSet2 getAllObjectIDs() {
-    ObjectIDSet2 rv = new ObjectIDSet2();
-    Cursor cursor = null;
+  public SyncSet getAllObjectIDs() {
+    ReentrantWriterPreferenceReadWriteLock rwLock = new ReentrantWriterPreferenceReadWriteLock();
+    CountDown latch = new CountDown(1);
+    SyncSet rv = new SyncSet(new ObjectIDSet2(), rwLock);
+    Thread t = new Thread(new ObjectIdReader(rv, rwLock, latch));
+    t.setName("ObjectIdReader");
+    t.setDaemon(true);
+    t.start();
     try {
-      PersistenceTransaction tx = ptp.newTransaction();
-      cursor = objectDB.openCursor(pt2nt(tx), objectDBCursorConfig);
-      DatabaseEntry key = new DatabaseEntry();
-      DatabaseEntry value = new DatabaseEntry();
-      while (OperationStatus.SUCCESS.equals(cursor.getNext(key, value, LockMode.DEFAULT))) {
-        rv.add(new ObjectID(Conversion.bytes2Long(key.getData())));
-      }
-      cursor.close();
-      tx.commit();
-    } catch (Throwable t) {
-      throw new DBException(t);
+      latch.acquire();
+    } catch (InterruptedException e) {
+      throw new TCRuntimeException(e);
     }
     return rv;
   }
@@ -352,4 +355,37 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     out = out.duplicateAndIndent();
     out.println("db: " + objectDB);
   }
+
+  class ObjectIdReader implements Runnable {
+    private final Set                                    set;
+    private final ReentrantWriterPreferenceReadWriteLock rwLock;
+    private final CountDown                              locked;
+
+    public ObjectIdReader(Set set, ReentrantWriterPreferenceReadWriteLock rwLock, CountDown locked) {
+      this.set = set;
+      this.rwLock = rwLock;
+      this.locked = locked;
+    }
+
+    public void run() {
+      try {
+        rwLock.writeLock().acquire();
+        locked.release();
+        PersistenceTransaction tx = ptp.newTransaction();
+        Cursor cursor = objectDB.openCursor(pt2nt(tx), objectDBCursorConfig);
+        DatabaseEntry key = new DatabaseEntry();
+        DatabaseEntry value = new DatabaseEntry();
+        while (OperationStatus.SUCCESS.equals(cursor.getNext(key, value, LockMode.DEFAULT))) {
+          set.add(new ObjectID(Conversion.bytes2Long(key.getData())));
+        }
+        cursor.close();
+        tx.commit();
+      } catch (Throwable t) {
+        throw new DBException(t);
+      } finally {
+        rwLock.writeLock().release();
+      }
+    }
+  }
+
 }

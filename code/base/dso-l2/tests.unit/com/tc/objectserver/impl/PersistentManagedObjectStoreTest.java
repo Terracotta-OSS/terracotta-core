@@ -1,7 +1,11 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.impl;
+
+import EDU.oswego.cs.dl.util.concurrent.ReentrantWriterPreferenceReadWriteLock;
+import EDU.oswego.cs.dl.util.concurrent.SyncSet;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -95,7 +99,8 @@ public class PersistentManagedObjectStoreTest extends TestCase {
     public final NoExceptionLinkedQueue loadByObjectIDCalls = new NoExceptionLinkedQueue();
     public final Map                    map;
     public boolean                      closeCalled         = false;
-    public ObjectIDSet2                 allObjectIDs        = new ObjectIDSet2();
+    public SyncSet                      allObjectIDs        = new SyncSet(new ObjectIDSet2(),
+                                                                          new ReentrantWriterPreferenceReadWriteLock());
 
     public TestManagedObjectPersistor(Map map) {
       this.map = map;
@@ -144,7 +149,7 @@ public class PersistentManagedObjectStoreTest extends TestCase {
       throw new RuntimeException("Implement Me");
     }
 
-    public ObjectIDSet2 getAllObjectIDs() {
+    public SyncSet getAllObjectIDs() {
       return allObjectIDs;
     }
 
