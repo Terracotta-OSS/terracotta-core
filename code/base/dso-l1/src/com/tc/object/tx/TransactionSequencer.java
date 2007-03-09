@@ -12,6 +12,7 @@ import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
+import com.tc.util.Util;
 
 public class TransactionSequencer {
 
@@ -140,10 +141,15 @@ public class TransactionSequencer {
   }
 
   private ClientTransactionBatch get() {
-    try {
-      return (ClientTransactionBatch) pendingBatches.poll(0);
-    } catch (InterruptedException e) {
-      throw new TCRuntimeException(e);
+    boolean isInterrupted = false;
+    while (true) {
+      try {
+        return (ClientTransactionBatch) pendingBatches.poll(0);
+      } catch (InterruptedException e) {
+        isInterrupted = true;
+      } finally {
+        Util.selfInterruptIfNeeded(isInterrupted);
+      }
     }
   }
 

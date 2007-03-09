@@ -83,10 +83,7 @@ public class DSOContextImpl implements DSOContext {
         .instrumentationLoggingOptions()));
 
     ModulesLoader.initPlugins(configHelper, false);
-    // TODO: This could result in a ConcurrentModificationException in the test framework when one thread
-    // finish the validation and continues to instrument user classes which may create new TransparencyClassSpec
-    // while another thread is still in the process of validating the boot jar.
-    // validateBootJar();
+    validateBootJar();
   }
 
   private void validateBootJar() {

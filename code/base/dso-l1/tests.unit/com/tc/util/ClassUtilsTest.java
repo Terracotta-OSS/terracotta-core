@@ -433,7 +433,7 @@ public class ClassUtilsTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public Iterator getAllSpecs() {
+    public TransparencyClassSpec[] getAllSpecs() {
       throw new ImplementMe();
     }
 

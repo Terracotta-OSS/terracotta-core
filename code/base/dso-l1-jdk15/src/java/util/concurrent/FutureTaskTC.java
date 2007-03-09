@@ -3,16 +3,6 @@
  */
 package java.util.concurrent;
 
-import com.tc.object.bytecode.ManagerUtil;
-import com.tc.util.DebugUtil;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -159,9 +149,6 @@ public class FutureTaskTC implements Future, Runnable {
     Object innerGet() throws InterruptedException, ExecutionException {
       lock.lock();
       try {
-        if (DebugUtil.DEBUG) {
-          System.err.println("In FutureTask innerGet: -- Client id: " + ManagerUtil.getClientID() + ", state: " + state + ", proxyRunner: " + proxyRunner);
-        }
         while (tryAcquireShared() < 0) {
           ran.await();
         }
@@ -234,9 +221,6 @@ public class FutureTaskTC implements Future, Runnable {
       } finally {
         lock.unlock();
       }
-      if (DebugUtil.DEBUG) {
-        System.err.println("In FutureTask managedInnerCancel: -- Client id: " + ManagerUtil.getClientID() + ", runner: " + r + ", state: " + state);
-      }
       if (r != null) {
         r.interrupt();
       }
@@ -250,9 +234,6 @@ public class FutureTaskTC implements Future, Runnable {
         setState(CANCELLED);
       } finally {
         lock.unlock();
-      }
-      if (DebugUtil.DEBUG) {
-        System.err.println("In FutureTask innerCancel: -- Client id: " + ManagerUtil.getClientID() + ", mayInterruptIfRunning: " + mayInterruptIfRunning);
       }
       lock.lock();
       try {
@@ -281,9 +262,6 @@ public class FutureTaskTC implements Future, Runnable {
           lock.unlock();
         }
         if (isRunning) {
-          if (DebugUtil.DEBUG) {
-            System.err.println("In FutureTask innerRun: -- Client id: " + ManagerUtil.getClientID() + ", state: " + state + ", proxyRunner: " + proxyRunner + ", runner: " + runner);
-          }
           Object o = callable.call();
           lock.lock();
           try {
@@ -294,9 +272,6 @@ public class FutureTaskTC implements Future, Runnable {
         } else {
           lock.lock();
           try {
-            if (DebugUtil.DEBUG) {
-              System.err.println("In FutureTask innerRun: -- Client id: " + ManagerUtil.getClientID() + ", finish");
-            }
             managedTryReleaseShared();
           } finally {
             lock.unlock();

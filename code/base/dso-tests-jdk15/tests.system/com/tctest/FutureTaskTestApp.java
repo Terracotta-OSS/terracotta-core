@@ -4,14 +4,12 @@
 package com.tctest;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.DebugUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.ArrayList;
@@ -109,8 +107,6 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
   private void testWithLinkedBlockingQueue(int index) throws Exception {
     long startTime = System.currentTimeMillis();
     if (index == 0) {
-      DebugUtil.DEBUG = true;
-      
       for (int i = 0; i < NUM_OF_ITEMS; i++) {
         System.err.println("Putting task " + i);
         FutureTask task = new MyFutureTask(new MyCallable(i));
@@ -134,13 +130,8 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
       for (int i = 0; i < NUM_OF_ITEMS; i++) {
         FutureTask task = (FutureTask) resultQueue.take();
         
-        if (DebugUtil.DEBUG) {
-          System.err.println("Getting task " + i);
-        }
         Assert.assertEquals(root, task.get());
       }
-      
-      DebugUtil.DEBUG = false;
     }
 
     long endTime = System.currentTimeMillis();
@@ -273,28 +264,18 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
 
   private void timeoutGetTask(int index, FutureTask longTask) throws Exception {
     if (index == 0) {
-      DebugUtil.DEBUG = true;
       root.setTask(longTask);
     }
 
     barrier.await();
 
     if (index == 1) {
-      if (DebugUtil.DEBUG) {
-        System.err.println("timeoutGet client: " + ManagerUtil.getClientID() + " run");
-      }
       root.getTask().run();
     } else if (index == 0) {
       try {
-        if (DebugUtil.DEBUG) {
-          System.err.println("timeoutGet client: " + ManagerUtil.getClientID() + " get");
-        }
         root.getTask().get(10000, TimeUnit.MILLISECONDS);
         throw new AssertionError("Should have thrown a TimeoutException.");
       } catch (TimeoutException e) {
-        if (DebugUtil.DEBUG) {
-          System.err.println("timeoutGet client: " + ManagerUtil.getClientID() + " cancel");
-        }
         root.getTask().cancel(true);
       }
     }
@@ -307,16 +288,10 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
 
     barrier.await();
     
-    if (index == 0) {
-      DebugUtil.DEBUG = false;
-    }
-
-    barrier.await();
   }
 
   private void basicCancelTask(int index, FutureTask longTask) throws Exception {
     if (index == 0) {
-      DebugUtil.DEBUG = true;
       root.setTask(longTask);
     }
 
@@ -343,12 +318,6 @@ public class FutureTaskTestApp extends AbstractTransparentApp {
 
     barrier.await();
     
-    if (index == 0) {
-      DebugUtil.DEBUG = false;
-    }
-    
-    barrier.await();
-
   }
 
   private void basicCancelTaskWithCompletion(int index, FutureTask longTask) throws Exception {

@@ -525,7 +525,7 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
     public RemoveMethodAdapter(MethodVisitor mv) {
       super(mv);
     }
-    
+    /*
     public void visitCode() {
       super.visitCode();
       Label l0 = new Label();
@@ -559,7 +559,7 @@ public class JavaUtilConcurrentHashMapSegmentAdapter extends ClassAdapter implem
       mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
       mv.visitLabel(l0);
     }
-
+  */
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {
       super.visitFieldInsn(opcode, owner, name, desc);
       if (PUTFIELD == opcode && "java/util/concurrent/ConcurrentHashMap$Segment".equals(owner) && "count".equals(name)

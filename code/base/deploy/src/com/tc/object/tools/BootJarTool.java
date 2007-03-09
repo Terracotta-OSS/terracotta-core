@@ -1038,8 +1038,9 @@ public class BootJarTool {
   private Map getTCSpecs() {
     Map map = new HashMap();
 
-    for (Iterator i = config.getAllSpecs(); i.hasNext();) {
-      TransparencyClassSpec spec = (TransparencyClassSpec) i.next();
+    TransparencyClassSpec[] allSpecs = config.getAllSpecs();
+    for (int i=0; i<allSpecs.length; i++) {
+      TransparencyClassSpec spec = allSpecs[i];
 
       if (!spec.isPreInstrumented()) {
         continue;

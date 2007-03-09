@@ -41,7 +41,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   void verifyBootJarContents() throws IncompleteBootJarException, UnverifiedBootJarException;
 
-  Iterator getAllSpecs();
+  TransparencyClassSpec[] getAllSpecs();
 
   Iterator getAllUserDefinedBootSpecs();
 

@@ -1647,8 +1647,9 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
       BootJar bootJar = BootJar.getDefaultBootJarForReading();
       Set bjClasses = bootJar.getAllPreInstrumentedClasses();
       bootJarPopulation = bjClasses.size();
-      for (Iterator i = getAllSpecs(); i.hasNext();) {
-        TransparencyClassSpec classSpec = (TransparencyClassSpec) i.next();
+      TransparencyClassSpec[] allSpecs = getAllSpecs();
+      for (int i=0; i<allSpecs.length; i++) {
+        TransparencyClassSpec classSpec = allSpecs[i];
         String message = "";
         if (classSpec.isPreInstrumented()) {
           message = "* " + classSpec.getClassName() + "... ";
@@ -1678,8 +1679,10 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
                                                                  + " pre-instrumented class(es) found missing."); }
   }
 
-  public Iterator getAllSpecs() {
-    return classSpecs.values().iterator();
+  public synchronized TransparencyClassSpec[] getAllSpecs() {
+    TransparencyClassSpec[] allspecs = new TransparencyClassSpec[classSpecs.values().size()];
+    classSpecs.values().toArray(allspecs);
+    return allspecs;
   }
 
   public void addDistributedMethodCall(DistributedMethodSpec dms) {

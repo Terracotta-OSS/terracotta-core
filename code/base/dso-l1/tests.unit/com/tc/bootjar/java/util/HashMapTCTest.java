@@ -606,12 +606,12 @@ public class HashMapTCTest extends TCTestCase {
       return null;
     }
 
-    public Iterator getAllSpecs() {
+    public TransparencyClassSpec[] getAllSpecs() {
       throw new ImplementMe();
     }
 
     public void verifyBootJarContents() {
-      throw new ImplementMe();
+      //
     }
 
     public Iterator getAllUserDefinedBootSpecs() {
