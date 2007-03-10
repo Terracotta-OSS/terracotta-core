@@ -9,14 +9,13 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectRequestContext;
 import com.tc.object.ObjectRequestID;
 
-import java.util.Collection;
 import java.util.Set;
 
 public interface RequestManagedObjectMessage extends Recyclable {
 
   public ObjectRequestID getRequestID();
 
-  public Collection getObjectIDs();
+  public Set getObjectIDs();
 
   public Set getRemoved();
 

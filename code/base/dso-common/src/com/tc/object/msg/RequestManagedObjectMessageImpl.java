@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
@@ -16,10 +17,8 @@ import com.tc.object.ObjectRequestID;
 import com.tc.object.session.SessionID;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Set;
 
 /**
@@ -32,7 +31,7 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
   private final static byte REQUEST_ID                 = 4;
   private final static byte REQUEST_DEPTH_ID           = 5;
 
-  private Collection        objectIDs                  = new LinkedList();
+  private Set               objectIDs                  = new HashSet();
   private Set               removed                    = new HashSet();
   private ObjectRequestID   requestID;
   private int               requestDepth;
@@ -42,8 +41,8 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
     super(monitor, out, channel, type);
   }
 
-  public RequestManagedObjectMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header,
-                                         TCByteBuffer[] data) {
+  public RequestManagedObjectMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
+                                         TCMessageHeader header, TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 
@@ -79,12 +78,12 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
         return false;
     }
   }
-  
+
   public ObjectRequestID getRequestID() {
     return requestID;
   }
 
-  public Collection getObjectIDs() {
+  public Set getObjectIDs() {
     return objectIDs;
   }
 

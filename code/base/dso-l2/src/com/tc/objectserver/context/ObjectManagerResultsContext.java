@@ -4,20 +4,19 @@
 package com.tc.objectserver.context;
 
 import com.tc.async.api.EventContext;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 
-import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author steve Interface for a context that needs ObjectManager look results
  */
 public interface ObjectManagerResultsContext extends EventContext {
+  
+  public Set getLookupIDs();
+  
+  public Set getNewObjectIDs();
 
-  public void setResults(ChannelID chID, Collection ids, ObjectManagerLookupResults results);
-  
-  public void makePending(ChannelID channelID, Collection ids);
-  
-  public boolean isPendingRequest();
+  public void setResults(ObjectManagerLookupResults results);
   
 }

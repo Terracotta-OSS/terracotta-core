@@ -3,11 +3,11 @@
  */
 package com.tc.objectserver.api;
 
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author steve
@@ -15,27 +15,28 @@ import java.util.Map;
 public class TestObjectManagerResultsContext implements ObjectManagerResultsContext {
 
   private final Map results;
-  private boolean   pending;
+  private final Set objectIDs;
 
-  public TestObjectManagerResultsContext(Map results) {
+  public TestObjectManagerResultsContext(Map results, Set objectIDs) {
     this.results = results;
+    this.objectIDs = objectIDs;
   }
 
   public Map getResults() {
     return results;
   }
 
-  public void setResults(ChannelID chID, Collection ids, ObjectManagerLookupResults results) {
-    pending = false;
+  public void setResults(ObjectManagerLookupResults results) {
     this.results.putAll(results.getObjects());
   }
 
-  public boolean isPendingRequest() {
-    return pending;
+  public Set getLookupIDs() {
+    return objectIDs;
   }
 
-  public void makePending(ChannelID channelID, Collection ids) {
-    pending = true;
+  public Set getNewObjectIDs() {
+    return Collections.EMPTY_SET;
   }
+
 
 }

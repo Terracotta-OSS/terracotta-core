@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.api;
 
@@ -19,7 +20,7 @@ import java.util.Set;
 
 /**
  * manages all access to objects on the server. This will be single threaded and only accessed via it's event handler.
- *
+ * 
  * @author steve
  */
 public interface ObjectManager extends ManagedObjectProvider, PrettyPrintable {
@@ -28,7 +29,7 @@ public interface ObjectManager extends ManagedObjectProvider, PrettyPrintable {
 
   /**
    * release object so that if anyone needs it they can have it
-   *
+   * 
    * @param object
    */
   public void release(PersistenceTransaction tx, ManagedObject object);
@@ -45,7 +46,7 @@ public interface ObjectManager extends ManagedObjectProvider, PrettyPrintable {
 
   /**
    * Release all objects in the given collection.
-   *
+   * 
    * @param collection
    */
   public void releaseAll(PersistenceTransaction tx, Collection collection);
@@ -54,32 +55,29 @@ public interface ObjectManager extends ManagedObjectProvider, PrettyPrintable {
    * Looks up the objects associated with the Object Lookups from the clients. What it does is if all the objects are
    * available it calls setResult() o ObjectManagerResultsContext. If not then it calls makesPending on
    * ObjectManagerResultsContext and hangs on to the request until it can be fullfilled.
-   *
+   * 
    * @param channelID - channelID of the client that is interested in lookup
-   * @param ids - ObjectIDs to be lookedup
-   * @param context - ResultContext that gets notifications.
    * @param maxCount - max number of objects reachable from the requested objects that should be looked up
+   * @param context - ResultContext that gets notifications.
    * @return true if all the objects are successfully looked up.
    */
-  public boolean lookupObjectsAndSubObjectsFor(ChannelID channelID, Collection ids,
-                                            ObjectManagerResultsContext responseContext, int maxCount);
+  public boolean lookupObjectsAndSubObjectsFor(ChannelID channelID, ObjectManagerResultsContext responseContext,
+                                               int maxCount);
 
   /**
    * Looks up the objects associated with the transaction. What it does is if all the objects are available to be
    * updated it calls setResult() on ObjectManagerResultsContext. If not then it calls makesPending on
    * ObjectManagerResultsContext and hangs on to the request until it can be fullfilled.
-   *
+   * 
    * @param channelID - channelID of the client that is interested in lookup
-   * @param ids - ObjectIDs to be lookedup
    * @param context - ResultContext that gets notifications.
    * @return true if all the objects are successfully looked up.
    */
-  public boolean lookupObjectsForCreateIfNecessary(ChannelID channelID, Collection ids,
-                                                   ObjectManagerResultsContext context);
+  public boolean lookupObjectsForCreateIfNecessary(ChannelID channelID, ObjectManagerResultsContext context);
 
   /**
    * The list of rootnames
-   *
+   * 
    * @return
    */
   public Iterator getRoots();
@@ -97,6 +95,7 @@ public interface ObjectManager extends ManagedObjectProvider, PrettyPrintable {
 
   /**
    * Called by GC thread (in object manager)
+   * 
    * @param toDelete
    */
   public void notifyGCComplete(Set toDelete);
@@ -114,8 +113,8 @@ public interface ObjectManager extends ManagedObjectProvider, PrettyPrintable {
   public SyncObjectIdSet getAllObjectIDs();
 
   public void addFaultedObject(ObjectID oid, ManagedObject mo, boolean removeOnRelease);
-  
-  //XXX::TODO:: This will change
+
+  // XXX::TODO:: This will change
   public void flushAndEvict(List objects2Flush);
 
 }

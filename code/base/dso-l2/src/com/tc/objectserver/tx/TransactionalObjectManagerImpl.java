@@ -143,9 +143,10 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       }
     }
     // TODO:: make cache and stats right
+    LookupContext lookupContext = null;
     if (!newRequests.isEmpty()) {
-      LookupContext lookupContext = new LookupContext(newRequests);
-      if (objectManager.lookupObjectsForCreateIfNecessary(txn.getChannelID(), newRequests, lookupContext)) {
+      lookupContext = new LookupContext(newRequests, txn.getNewObjectIDs());
+      if (objectManager.lookupObjectsForCreateIfNecessary(txn.getChannelID(), lookupContext)) {
         addLookedupObjects(lookupContext);
       } else {
         // New request went pending in object manager
@@ -157,6 +158,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     if (makePending) {
       // log("lookupObjectsForApplyAndAddToSink(): Make Pending : " + txn.getServerTransactionID());
       makePending(txn);
+      if (lookupContext != null) lookupContext.makePending();
     } else {
       ServerTransactionID txnID = txn.getServerTransactionID();
       TxnObjectGrouping newGrouping = new TxnObjectGrouping(txnID, txn.getNewRoots());
@@ -408,23 +410,26 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   private class LookupContext implements ObjectManagerResultsContext {
 
     private boolean   pending = false;
+    private boolean   resultsSet = false;
     private Map       lookedUpObjects;
     private final Set oids;
+    private final Set newOids;
 
-    public LookupContext(Set oids) {
+    public LookupContext(Set oids, Set newOids) {
       this.oids = oids;
+      this.newOids = newOids;
     }
 
-    public synchronized boolean isPendingRequest() {
-      return pending;
-    }
-
-    public synchronized void makePending(ChannelID channelID, Collection ids) {
+    public synchronized void makePending() {
       pending = true;
+      if (resultsSet) {
+        TransactionalObjectManagerImpl.this.addProcessedPending(this);
+      }
     }
 
-    public synchronized void setResults(ChannelID chID, Collection ids, ObjectManagerLookupResults results) {
+    public synchronized void setResults(ObjectManagerLookupResults results) {
       lookedUpObjects = results.getObjects();
+      resultsSet = true;
       if (pending) {
         TransactionalObjectManagerImpl.this.addProcessedPending(this);
       }
@@ -438,6 +443,15 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       return "LookupContext [ " + oids + "] = { pending = " + pending + ", lookedupObjects = "
              + lookedUpObjects.keySet() + "}";
     }
+
+    public Set getLookupIDs() {
+      return oids;
+    }
+
+    public Set getNewObjectIDs() {
+      return newOids;
+    }
+
   }
 
   private static final class PendingList {

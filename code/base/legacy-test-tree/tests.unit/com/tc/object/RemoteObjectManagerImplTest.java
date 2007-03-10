@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -76,8 +77,8 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
         expectedNotResent.put(rootID, rrm);
       }
     }
-    log("rt.getAliveCount() = " + rt.getAliveCount() + " expectedResent.size() = " + expectedResent.size() +
-          " expectedNotResent.size() = " + expectedNotResent.size());
+    log("rt.getAliveCount() = " + rt.getAliveCount() + " expectedResent.size() = " + expectedResent.size()
+        + " expectedNotResent.size() = " + expectedNotResent.size());
     assertEquals(count, rt.getAliveCount());
     // respond to some of the requests
     int objectIDCount = 1;
@@ -121,14 +122,14 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     rt.waitForLowWatermark(0);
 
   }
-  
+
   private static void log(String s) {
-    if(false) System.err.println(Thread.currentThread().getName() + " :: " + s);
+    if (false) System.err.println(Thread.currentThread().getName() + " :: " + s);
   }
 
   private void pauseAndStart() {
     manager.pause();
-    //manager.clearCache();
+    // manager.clearCache();
     manager.starting();
   }
 
@@ -381,10 +382,10 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
         public void run() {
           log("Starting .. " + rootID);
           manager.retrieveRootID(rootID);
-          log("Retrieved  rootID.. " + rootID );
+          log("Retrieved  rootID.. " + rootID);
           synchronized (inProgress) {
             if (!inProgress.remove(Thread.currentThread())) throw new RuntimeException("Thread not removed!");
-            log("Removed from  inProgress .. size =  " + inProgress.size() );
+            log("Removed from  inProgress .. size =  " + inProgress.size());
             inProgress.notifyAll();
           }
         }
@@ -470,13 +471,13 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
 
     public final NoExceptionLinkedQueue initializeQueue = new NoExceptionLinkedQueue();
     public final NoExceptionLinkedQueue sendQueue       = new NoExceptionLinkedQueue();
-    public Set                     objectIDs;
+    public Set                          objectIDs;
 
     public ObjectRequestID getRequestID() {
       throw new ImplementMe();
     }
 
-    public Collection getObjectIDs() {
+    public Set getObjectIDs() {
       throw new ImplementMe();
     }
 

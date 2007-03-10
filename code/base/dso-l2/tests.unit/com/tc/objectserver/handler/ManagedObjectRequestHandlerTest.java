@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.handler;
 
@@ -19,7 +20,6 @@ import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterImpl;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -38,7 +38,8 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
 
     TestServerConfigurationContext context = new TestServerConfigurationContext();
     context.objectManager = new TestObjectManager();
-    context.objectRequestManager = new ObjectRequestManagerImpl(context.objectManager, new TestServerTransactionManager());
+    context.objectRequestManager = new ObjectRequestManagerImpl(context.objectManager,
+                                                                new TestServerTransactionManager());
     context.clientStateManager = new TestClientStateManager();
     context.addStage(ServerConfigurationContext.RESPOND_TO_OBJECT_REQUEST_STAGE, new MockStage("yo"));
     context.channelStats = channelStats;
@@ -47,7 +48,9 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
     handler.initialize(context);
 
     TestRequestManagedObjectMessage msg = new TestRequestManagedObjectMessage();
-    msg.setObjectIDs(Arrays.asList(new Object[] { new ObjectID(1) }));
+    HashSet s = new HashSet();
+    s.add(new ObjectID(1));
+    msg.setObjectIDs(s);
     Set removed = makeRemovedSet(31);
     msg.setRemoved(removed);
 
@@ -77,15 +80,13 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
     public Counter getCounter(MessageChannel channel, String name) {
       if (OBJECT_FLUSH_RATE.equals(name)) {
         return remCounter;
-      } else if (OBJECT_REQUEST_RATE.equals(name)) {
-        return reqCounter;
-      }
+      } else if (OBJECT_REQUEST_RATE.equals(name)) { return reqCounter; }
       throw new RuntimeException(name);
     }
 
     public void notifyTransaction(ChannelID channelID) {
       throw new ImplementMe();
-      
+
     }
   }
 
