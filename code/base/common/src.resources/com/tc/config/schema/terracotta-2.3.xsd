@@ -551,22 +551,21 @@
         </xs:annotation>
       </xs:element>
     </xs:all>
-    <xs:attribute name="name" type="non-blank-token"
-      use="required">
-      <xs:annotation>
-        <xs:documentation>
-          The name of the server, expansion parameters may
-          be used. The name is required.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
     <xs:attribute name="host" type="host" use="optional">
       <xs:annotation>
         <xs:documentation>
-          The host that the server runs on. If the host is the
-          same as the name of the server, then you can omit
-          it; otherwise, you must include it.  Expansion parameters
-          may be used.
+          The host that the server runs on, expansion parameters
+          may be used in this attribute.  Defaults to "%i" (the
+          machine IP address).
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="name" type="non-blank-token"
+      use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          The symbolic name of the server, expansion parameters may
+          be used.  Defaults to "host:dso-port".
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

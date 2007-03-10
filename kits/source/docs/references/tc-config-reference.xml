@@ -35,36 +35,36 @@
        that its configuration source was that server. A client can specify that its
        configuration come from server by setting the 'tc.config' system propery as
        -Dtc.config=serverHost:dsoPort.
-       
+
        Default: 'development'. -->
     <configuration-model>development</configuration-model>
   </system>
-  
+
   <!--
     This section defines the servers present in your Terracotta system. You can
     omit this section entirely, in which case it behaves as if there's a
     single server with all values set at their default. You can include exactly
     one server entry here (the common case), or, if you're going to run multiple
     servers for failover, you can include multiple servers here.
-    
+
     If you include more than one server here, note that each server will need to know
     which configuration it should use as it starts up. If you name your servers
     according to the host that they run on (and no host contains more than
     one server), then they will find the hostname themselves and work
     automatically.
-    
+
     If you name your servers in any other fashion (and, again, only if there is
     more than one 'server' element present here), then you will need to pass the
     command-line option "-n <name>" to the start-tc-server script, passing it
     the name of a server configuration from this file.
   -->
   <servers>
-  
-    <!-- The name of the server, and the host that it runs on. The name is
-       required. If the host is the same as the name, then you can omit
-       it; otherwise, you must include it. -->
-    <server name="apple" host="artichoke">
-    
+
+    <!-- The host and symbolic name of the server; host defaults to "%i" (the machine's
+         IP address) and name defaults to "host:dso-port".  Expansion parameters may be
+         used in both attributes. -->
+    <server host="artichoke" name="apple">
+
       <!-- Where should the server store its persistent data? (This includes
          stored object data for DSO.) This value undergoes parameter substitution
          before being used; this allows you to use placeholders like '%h' (for the hostname)
@@ -73,45 +73,45 @@
          of 'server-data-%h' would expand to 'server-data-artichoke' if 
          running on host 'artichoke'. See the Product Guide for more
          details.
-         
+
          If this is a relative path, then it is interpreted relative to
          the current working directory of the server (that is, the directory
          you were in when you started the server). It is thus recommended that
          you specify an absolute path here.
-         
+
          Default: 'data'; this places the 'data' directory in the
          directory you were in when you invoked 'start-tc-server'.
       -->
-      <data>/opt/terracottaserver-data</data>
-      
+      <data>/opt/terracotta/server-data</data>
+
       <!-- In which directory should the server store its log files? Again,
          this value undergoes parameter substitution before being used;
          thus, a value like 'server-logs-%h' would expand to
          'server-logs-artichoke' if running on host 'artichoke'. See the
          Product Guide for more details.
-         
+
          If this is a relative path, then it is interpreted relative to
          the current working directory of the server (that is, the directory
          you were in when you started server). It is thus recommended that
          you specify an absolute path here.
-        
+
          Default: 'logs'; this places the 'logs' directory in the
          directory you were in when you invoked 'start-tc-server'.
       -->
       <logs>/opt/terracotta/server-logs</logs>
-      
+
       <!-- On what port should the DSO server listen for connections from DSO
          clients? This can be any port you like, but note that
          ports below 1024 typically require 'root' privileges to use
          on Un*x-style systems (Linux, Solaris).
-         
+
          Default: 9510
       -->
       <dso-port>9510</dso-port>
 
       <!-- Configuration data for DSO that's specific to the DSO server. -->
       <dso>
-      
+
         <!-- How much time should DSO server, upon restart, allow for previously
              connected clients to reconnect?  After this period, clients will
              not be allowed to reconnect.
@@ -184,7 +184,7 @@
       </dso>
     </server>
     
-    <server name="broccoli">
+    <server host="broccoli">
       <data>/usr/local/tc/data</data>
       <logs>/usr/local/tc/logs</logs>
       

@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
@@ -16,14 +17,6 @@ public class TestL2 extends TestXmlObject implements Server {
 
   public TestL2() {
     super();
-  }
-
-  public boolean isSetHost() {
-    throw new ImplementMe();
-  }
-
-  public void unsetHost() {
-    throw new ImplementMe();
   }
 
   public DsoServerData addNewDso() {
@@ -51,6 +44,14 @@ public class TestL2 extends TestXmlObject implements Server {
   }
 
   public void setName(String arg0) {
+    throw new ImplementMe();
+  }
+
+  public boolean isSetName() {
+    throw new ImplementMe();
+  }
+
+  public void unsetName() {
     throw new ImplementMe();
   }
 
@@ -249,4 +250,13 @@ public class TestL2 extends TestXmlObject implements Server {
   public void unsetAuthentication() {
     throw new ImplementMe();
   }
+
+  public boolean isSetHost() {
+    throw new ImplementMe();
+  }
+
+  public void unsetHost() {
+    throw new ImplementMe();
+  }
+
 }

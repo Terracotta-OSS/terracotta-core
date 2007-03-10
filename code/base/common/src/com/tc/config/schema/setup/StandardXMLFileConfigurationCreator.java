@@ -7,10 +7,13 @@ package com.tc.config.schema.setup;
 import org.apache.commons.io.CopyUtils;
 import org.apache.xmlbeans.XmlError;
 import org.apache.xmlbeans.XmlException;
+import org.apache.xmlbeans.XmlInteger;
 import org.xml.sax.SAXException;
 
 import com.tc.config.schema.beanfactory.BeanWithErrors;
 import com.tc.config.schema.beanfactory.ConfigBeanFactory;
+import com.tc.config.schema.defaults.DefaultValueProvider;
+import com.tc.config.schema.defaults.FromSchemaDefaultValueProvider;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.config.schema.repository.ApplicationsRepository;
 import com.tc.config.schema.repository.MutableBeanRepository;
@@ -34,8 +37,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -91,7 +92,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private static final Pattern URL_PATTERN      = Pattern.compile("[A-Za-z][A-Za-z]+://.*");
 
   private ConfigurationSource[] createConfigurationSources() throws ConfigurationSetupException {
-    String[] components = this.configurationSpec.split(",");
+    String[] components = configurationSpec.split(",");
     ConfigurationSource[] out = new ConfigurationSource[components.length];
 
     for (int i = 0; i < components.length; ++i) {
@@ -136,7 +137,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   }
 
   private ConfigurationSource attemptToCreateFileSource(String text) {
-    return new FileConfigurationSource(text, this.defaultDirectory);
+    return new FileConfigurationSource(text, defaultDirectory);
   }
 
   private ConfigurationSource attemptToCreateURLSource(String text) {
@@ -236,7 +237,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     try {
       logger.info("Attempting to load configuration from the " + remainingSources[i] + "...");
       out = remainingSources[i].getInputStream(GET_CONFIGURATION_ONE_SOURCE_TIMEOUT);
-      this.directoryLoadedFrom = remainingSources[i].directoryLoadedFrom();
+      directoryLoadedFrom = remainingSources[i].directoryLoadedFrom();
     } catch (ConfigurationSetupException cse) {
       String text = "We couldn't load configuration data from the " + remainingSources[i];
       text += "; this error is permanent, so this source will not be retried.";
@@ -290,8 +291,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
                                      MutableBeanRepository systemBeanRepository,
                                      ApplicationsRepository applicationsRepository) throws ConfigurationSetupException {
     try {
-      this.loadedFromTrustedSource = trustedSource;
-      this.configDescription = descrip;
+      loadedFromTrustedSource = trustedSource;
+      configDescription = descrip;
 
       ByteArrayOutputStream dataCopy = new ByteArrayOutputStream();
       CopyUtils.copy(in, dataCopy);
@@ -299,7 +300,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       logCopyOfConfig(new ByteArrayInputStream(dataCopy.toByteArray()), descrip);
 
       InputStream copyIn = new ByteArrayInputStream(dataCopy.toByteArray());
-      BeanWithErrors beanWithErrors = this.beanFactory.createBean(copyIn, descrip);
+      BeanWithErrors beanWithErrors = beanFactory.createBean(copyIn, descrip);
 
       if (beanWithErrors.errors() != null && beanWithErrors.errors().length > 0) {
         logger.debug("Configuration didn't parse; it had " + beanWithErrors.errors().length + " error(s).");
@@ -323,25 +324,27 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
         Server server;
         for (int i = 0; i < servers.sizeOfServerArray(); i++) {
           server = servers.getServerArray(i);
-          // CDV-79: per our documentation in the schema itself, the host is supposed to default to the name if left
-          // unspecified
-          if (server.getHost() == null || server.getHost().trim().length() == 0) {
-            server.setHost(server.getName());
+          // CDV-166: per our documentation in the schema itself, host is supposed to default to '%i' and name is
+          // supposed to default to 'host:dso-port'
+          if (!server.isSetHost() || server.getHost().trim().length() == 0) {
+            server.setHost("%i");
           }
-
+          if (!server.isSetName() || server.getName().trim().length() == 0) {
+            int dsoPort = server.getDsoPort();
+            if (dsoPort == 0) {
+              // Find the default value, if we can
+              final DefaultValueProvider defaultValueProvider = new FromSchemaDefaultValueProvider();
+              if (defaultValueProvider.hasDefault(server.schemaType(), "dso-port")) {
+                final XmlInteger defaultValue = (XmlInteger) defaultValueProvider.defaultFor(server.schemaType(),
+                    "dso-port");
+                dsoPort = defaultValue.getBigIntegerValue().intValue();
+              }
+            }
+            server.setName(server.getHost() + (dsoPort > 0 ? ":" + dsoPort : ""));
+          }
           // CDV-77: add parameter expansion to the <server> attributes ('host' and 'name')
           server.setHost(ParameterSubstituter.substitute(server.getHost()));
           server.setName(ParameterSubstituter.substitute(server.getName()));
-
-          if ("localhost".equals(server.getHost())) {
-            try {
-              server.setHost(InetAddress.getLocalHost().getCanonicalHostName());
-            } catch (UnknownHostException uhe) {
-              consoleLogger.warn("Unable to replace 'localhost' with the canonical hostname of this machine"
-                  + " for server configuration '" + server.getName()
-                  + "', the value for its 'host' attriubute is now '" + server.getHost() + "'", uhe);
-            }
-          }
         }
       }
 
@@ -368,7 +371,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   }
 
   public File directoryConfigurationLoadedFrom() {
-    return this.directoryLoadedFrom;
+    return directoryLoadedFrom;
   }
 
   public boolean loadedFromTrustedSource() {
@@ -376,10 +379,10 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   }
 
   public String describeSources() {
-    if (this.configDescription == null) {
-      return "The configuration specified by '" + this.configurationSpec + "'";
+    if (configDescription == null) {
+      return "The configuration specified by '" + configurationSpec + "'";
     } else {
-      return this.configDescription;
+      return configDescription;
     }
   }
 
