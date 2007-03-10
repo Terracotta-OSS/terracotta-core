@@ -412,11 +412,7 @@ public class TCLogging {
 
   private static void writeVersion() {
     ProductInfo info = ProductInfo.getThisProductInfo();
-    //String moniker = info.moniker();
-
     CustomerLogging.getConsoleLogger().info(info.toLongString());
-        //moniker + ", version " + info.rawVersion() + "-" + info.buildDesignation() + " as of " + info.buildTimestampAsString() + ".");
-    //getLogger(TCLogging.class).info(info.moniker() + " version: " + info.toLongString());
     getLogger(TCLogging.class).info(info.toLongString());
   }
 
