@@ -4,6 +4,7 @@
  */
 package com.terracotta.session.util;
 
+import com.tc.object.bytecode.Manager;
 import com.tc.properties.TCPropertiesImpl;
 import com.terracotta.session.SessionId;
 
@@ -28,7 +29,7 @@ public class DefaultCookieWriterTest extends TestCase {
                                      false);
     req = new MockHttpServletRequest();
     res = new MockHttpServletResponse();
-    id = new DefaultSessionId(idValue, idValue, idValue);
+    id = new DefaultSessionId(idValue, idValue, idValue, Manager.LOCK_TYPE_WRITE);
   }
 
   public final void testConstructor() {

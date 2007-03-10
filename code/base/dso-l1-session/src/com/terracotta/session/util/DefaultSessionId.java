@@ -4,7 +4,6 @@
  */
 package com.terracotta.session.util;
 
-import com.tc.object.bytecode.Manager;
 import com.terracotta.session.SessionId;
 
 public class DefaultSessionId implements SessionId {
@@ -13,11 +12,6 @@ public class DefaultSessionId implements SessionId {
   private final String requestedId;
   private final String externalId;
   private final Lock   lock;
-
-  // for non-synchronous-write tests
-  protected DefaultSessionId(final String internalKey, final String requestedId, final String externalId) {
-    this(internalKey, requestedId, externalId, Manager.LOCK_TYPE_WRITE);
-  }
 
   protected DefaultSessionId(final String internalKey, final String requestedId, final String externalId,
                              final int lockType) {

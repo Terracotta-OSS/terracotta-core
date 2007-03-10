@@ -1,11 +1,14 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session;
 
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.terracotta.session.util.Assert;
+import com.terracotta.session.util.ContextMgr;
+import com.terracotta.session.util.LifecycleEventMgr;
 import com.terracotta.session.util.Lock;
 import com.terracotta.session.util.Timestamp;
 
@@ -15,14 +18,19 @@ import java.util.Set;
 
 public class SessionDataStore {
 
-  private final Map store;                // <SessionData>
-  private final Map dtmStore;             // <Timestamp>
-  private final int maxIdleTimeoutSeconds;
+  private final Map               store;                // <SessionData>
+  private final Map               dtmStore;             // <Timestamp>
+  private final int               maxIdleTimeoutSeconds;
+  private final ContextMgr        ctxMgr;
+  private final LifecycleEventMgr lifecycleEventMgr;
 
-  public SessionDataStore(String appName, int maxIdleTimeoutSeconds) {
+  public SessionDataStore(String appName, int maxIdleTimeoutSeconds, LifecycleEventMgr lifecycleEventMgr,
+                          ContextMgr ctxMgr) {
     Assert.pre(appName != null && appName.length() > 0);
 
     this.maxIdleTimeoutSeconds = maxIdleTimeoutSeconds;
+    this.lifecycleEventMgr = lifecycleEventMgr;
+    this.ctxMgr = ctxMgr;
 
     final String sessionRootName = "tc:session_" + appName;
     final String dtmRootName = "@tc:session_timestamp_" + appName;
@@ -51,7 +59,8 @@ public class SessionDataStore {
     Assert.pre(sessId != null);
     SessionData rv = null;
     sessId.getWriteLock();
-    rv = new SessionData(sessId.getKey(), maxIdleTimeoutSeconds);
+    rv = new SessionData(maxIdleTimeoutSeconds);
+    rv.associate(sessId, lifecycleEventMgr, ctxMgr);
     store.put(sessId.getKey(), rv);
     dtmStore.put(sessId.getKey(), rv.getTimestamp());
     rv.startRequest();
@@ -73,6 +82,7 @@ public class SessionDataStore {
     try {
       rv = (SessionData) store.get(sessId.getKey());
       if (rv != null) {
+        rv.associate(sessId, lifecycleEventMgr, ctxMgr);
         rv.startRequest();
         if (!rv.isValid()) rv = null;
         else {
@@ -122,6 +132,9 @@ public class SessionDataStore {
 
   SessionData findSessionDataUnlocked(final SessionId sessId) {
     final SessionData rv = (SessionData) store.get(sessId.getKey());
+    if (rv != null) {
+      rv.associate(sessId, lifecycleEventMgr, ctxMgr);
+    }
     return rv;
   }
 

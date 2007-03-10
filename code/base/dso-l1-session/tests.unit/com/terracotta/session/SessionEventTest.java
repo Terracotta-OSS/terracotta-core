@@ -9,32 +9,28 @@ import com.terracotta.session.util.DefaultIdGenerator;
 import com.terracotta.session.util.MockContextMgr;
 import com.terracotta.session.util.MockLifecycleEventMgr;
 import com.terracotta.session.util.SessionIdGenerator;
-import com.terracotta.session.util.StandardSession;
 
 import junit.framework.TestCase;
 
 public class SessionEventTest extends TestCase {
 
-  private String                requestedSessionId;
   private String                serverId;
   private SessionId             sessionId;
-  private SessionData           sessionData;
   private MockLifecycleEventMgr eventMgr;
   private ContextMgr            contextMgr;
-  private Session               session;
+  private SessionData           session;
   private int                   maxIdleSeconds;
   private SessionIdGenerator    idGenerator;
 
   protected void setUp() throws Exception {
-    requestedSessionId = "SomeSessionId";
     maxIdleSeconds = 123;
     serverId = "someServerId";
     idGenerator = new DefaultIdGenerator(20, serverId);
     sessionId = idGenerator.generateNewId();
-    sessionData = new SessionData(requestedSessionId, maxIdleSeconds);
     eventMgr = new MockLifecycleEventMgr();
     contextMgr = new MockContextMgr();
-    session = new StandardSession(sessionId, sessionData, eventMgr, contextMgr);
+    session = new SessionData(maxIdleSeconds);
+    session.associate(sessionId, eventMgr, contextMgr);
   }
 
   public final void testEvents() {

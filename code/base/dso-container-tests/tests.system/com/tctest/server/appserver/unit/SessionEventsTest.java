@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.server.appserver.unit;
 
@@ -17,6 +18,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionAttributeListener;
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
@@ -46,7 +48,6 @@ public class SessionEventsTest extends AbstractAppServerTestCase {
       } else if ("isNew".equals(action)) {
         if (!req.getSession().isNew()) reply = "ERROR: OLD SESSION!";
       } else {
-
         reply = "INVALID REQUEST";
       }
       resp.getWriter().print(reply);
@@ -102,8 +103,25 @@ public class SessionEventsTest extends AbstractAppServerTestCase {
     }
 
     public void sessionDestroyed(HttpSessionEvent httpsessionevent) {
+      testAttributeAccess(httpsessionevent.getSession());
       System.err.println("### SessionListener.sessionDestroyed() is here!!!");
       ListenerReportingServlet.incrementCallCount("SessionListener.sessionDestroyed");
+    }
+
+    private void testAttributeAccess(HttpSession session) {
+      // While session destroyed event is being called, you should still be able to get
+      // attributes
+
+      String[] attrs = session.getValueNames();
+      if (attrs == null || attrs.length == 0) {
+        // please make at least one attribute is present
+        throw new AssertionError("Attributes should be present during this phase");
+      }
+
+      for (int i = 0; i < attrs.length; i++) {
+        String attr = attrs[i];
+        session.getAttribute(attr);
+      }
     }
   }
 

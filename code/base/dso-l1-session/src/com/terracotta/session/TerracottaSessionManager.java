@@ -17,7 +17,6 @@ import com.terracotta.session.util.LifecycleEventMgr;
 import com.terracotta.session.util.Lock;
 import com.terracotta.session.util.SessionCookieWriter;
 import com.terracotta.session.util.SessionIdGenerator;
-import com.terracotta.session.util.StandardSession;
 import com.terracotta.session.util.Timestamp;
 
 import javax.servlet.http.HttpServletRequest;
@@ -53,7 +52,7 @@ public class TerracottaSessionManager {
     this.eventMgr = eventMgr;
     this.contextMgr = contextMgr;
     this.factory = factory;
-    this.store = new SessionDataStore(contextMgr.getAppName(), cp.getSessionTimeoutSeconds());
+    this.store = new SessionDataStore(contextMgr.getAppName(), cp.getSessionTimeoutSeconds(), eventMgr, contextMgr);
     this.logger = ManagerUtil.getLogger("com.tc.tcsession." + contextMgr.getAppName());
     this.reqeustLogEnabled = cp.getRequestLogBenchEnabled();
     this.invalidatorLogEnabled = cp.getInvalidatorLogBenchEnabled();
@@ -236,7 +235,7 @@ public class TerracottaSessionManager {
     if (sd == null) return null;
     Assert.inv(sd.isValid());
     if (requestedSessionId.isServerHop()) cookieWriter.writeCookie(req, res, requestedSessionId);
-    return new StandardSession(requestedSessionId, sd, eventMgr, contextMgr);
+    return sd;
   }
 
   protected SessionCookieWriter getCookieWriter() {
@@ -256,8 +255,11 @@ public class TerracottaSessionManager {
   }
 
   private void expire(SessionId id, SessionData sd) {
-    StandardSession sess = new StandardSession(id, sd, eventMgr, contextMgr);
-    sess.invalidate();
+    try {
+      sd.invalidate();
+    } catch (Throwable t) {
+      logger.error("unhandled exception during invalidate() for session " + id.getKey());
+    }
     store.remove(id);
     mBean.sessionDestroyed();
   }
@@ -272,7 +274,8 @@ public class TerracottaSessionManager {
     if (sd == null) { return createNewSession(req, res); }
     Assert.inv(sd.isValid());
     if (requestedSessionId.isServerHop()) cookieWriter.writeCookie(req, res, requestedSessionId);
-    return new StandardSession(requestedSessionId, sd, eventMgr, contextMgr);
+
+    return sd;
   }
 
   private Session createNewSession(HttpServletRequest req, HttpServletResponse res) {
@@ -281,12 +284,11 @@ public class TerracottaSessionManager {
 
     SessionId id = idGenerator.generateNewId();
     SessionData sd = store.createSessionData(id);
-    Session rv = new StandardSession(id, sd, eventMgr, contextMgr);
     cookieWriter.writeCookie(req, res, id);
-    eventMgr.fireSessionCreatedEvent(rv);
+    eventMgr.fireSessionCreatedEvent(sd);
     mBean.sessionCreated();
-    Assert.post(rv != null);
-    return rv;
+    Assert.post(sd != null);
+    return sd;
   }
 
   private SessionId findSessionId(HttpServletRequest httpRequest) {
@@ -358,7 +360,7 @@ public class TerracottaSessionManager {
           }
         } catch (Throwable t) {
           errors++;
-          logger.error("Unhandled exception inspecting session " + key + " for possible invalidation", t);
+          logger.error("Unhandled exception inspecting session " + key + " for invalidation", t);
         }
       }
       if (invalidatorLogEnabled) {

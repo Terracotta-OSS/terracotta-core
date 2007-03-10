@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session;
 
@@ -10,12 +11,6 @@ public interface Session extends HttpSession {
   public SessionData getSessionData();
 
   public SessionId getSessionId();
-
-  public void bindAttribute(String name, Object newVal);
-
-  public void unbindAttribute(String name);
-
-  public void setInvalid();
 
   public boolean isValid();
 }

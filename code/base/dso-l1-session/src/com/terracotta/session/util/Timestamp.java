@@ -17,11 +17,11 @@ public class Timestamp {
     return millis;
   }
 
-  public void setMillis(long millis) {
+  public synchronized void setMillis(long millis) {
     this.millis = millis;
   }
 
   public String toString() {
-    return new Date(millis).toString();
+    return new Date(getMillis()).toString();
   }
 }

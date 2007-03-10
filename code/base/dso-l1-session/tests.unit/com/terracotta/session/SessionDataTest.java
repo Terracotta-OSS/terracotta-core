@@ -3,6 +3,9 @@
  */
 package com.terracotta.session;
 
+import com.terracotta.session.util.MockContextMgr;
+import com.terracotta.session.util.MockLifecycleEventMgr;
+
 import java.util.Arrays;
 
 import junit.framework.TestCase;
@@ -10,16 +13,15 @@ import junit.framework.TestCase;
 public class SessionDataTest extends TestCase {
 
   public final void testConstructor() {
-    final String id = "SomeSessionId";
     final int maxIdleSeconds = 123;
-    SessionData sd = new SessionData(id, maxIdleSeconds);
+    SessionData sd = new SessionData(maxIdleSeconds);
     assertEquals(maxIdleSeconds, sd.getMaxInactiveMillis() / 1000);
   }
 
   public final void testCollection() {
-    final String id = "SomeSessionId";
     final int maxIdleSeconds = 123;
-    SessionData sd = new SessionData(id, maxIdleSeconds);
+    SessionData sd = new SessionData(maxIdleSeconds);
+    sd.associate(new MockSessionId(), new MockLifecycleEventMgr(), new MockContextMgr());
     final String[] attributes = new String[] { "one", "two", "three", "four", "five" };
     for (int i = 0; i < attributes.length; i++) {
       String a = attributes[i];
@@ -30,7 +32,7 @@ public class SessionDataTest extends TestCase {
       assertSame(a, v);
 
       // test attribute names
-      String[] namesOut = sd.getAttributeNames();
+      String[] namesOut = sd.getValueNames();
       Arrays.sort(namesOut);
       assertEquals(i + 1, namesOut.length);
       for (int j = 0; j < i; j++)
@@ -38,14 +40,14 @@ public class SessionDataTest extends TestCase {
 
       // test replace/get
       final String newVal = new String("SomeNewString");
-      final String oldVal = (String) sd.setAttribute(a, newVal);
+      final String oldVal = (String) sd.setAttributeReturnOld(a, newVal);
       assertSame(a, oldVal);
       assertSame(newVal, sd.getAttribute(a));
 
       // test remove
-      final String removedVal = (String) sd.removeAttribute(a);
+      final String removedVal = (String) sd.removeAttributeReturnOld(a);
       assertSame(newVal, removedVal);
-      assertNull(sd.removeAttribute(a));
+      assertNull(sd.removeAttributeReturnOld(a));
 
       // put it back for further testing...
       sd.setAttribute(a, a);

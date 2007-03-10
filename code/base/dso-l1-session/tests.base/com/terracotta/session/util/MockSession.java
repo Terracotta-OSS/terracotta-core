@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session.util;
 
@@ -15,10 +16,6 @@ import javax.servlet.http.HttpSessionContext;
 
 public class MockSession implements Session {
 
-  public void bindAttribute(String name, Object newVal) {
-    throw new ImplementMe();
-  }
-
   public SessionData getSessionData() {
     throw new ImplementMe();
   }
@@ -28,14 +25,6 @@ public class MockSession implements Session {
   }
 
   public boolean isValid() {
-    throw new ImplementMe();
-  }
-
-  public void setInvalid() {
-    throw new ImplementMe();
-  }
-
-  public void unbindAttribute(String name) {
     throw new ImplementMe();
   }
 
