@@ -2,10 +2,11 @@
 # the safe way to play around with config is to make a file call build-config.local and
 # put your settings in there
 
-# NOTE: if the tc.build-control.version changes, Morris has to also make changes to Installer
-#        Anywhere. Make sure he is aware of such change.
+# NOTE: if the tc.build-control.version changes, You'll also need to make changes to 
+# to the Install Anywhere configuration. 
 
 tc.build-control.version=2.3.0
+tc.build-control.designation=stable1
 tc.build-control.branch=trunk
 tc.tests.configuration.appserver.factory.name=tomcat5
 tc.tests.configuration.appserver.major-version=5.0

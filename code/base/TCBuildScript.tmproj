@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>buildscripts/extensions/distribution.rb</string>
+	<string>buildscripts/modules_compile.rb</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -103,6 +103,64 @@
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
 		</dict>
+		<key>buildscripts/jvms.rb</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>12</integer>
+				<key>line</key>
+				<integer>197</integer>
+			</dict>
+			<key>columnSelection</key>
+			<false/>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>168</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>7</integer>
+				<key>line</key>
+				<integer>197</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>12</integer>
+				<key>line</key>
+				<integer>197</integer>
+			</dict>
+		</dict>
+		<key>buildscripts/modules_build.rb</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>68</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>11</integer>
+		</dict>
+		<key>buildscripts/modules_compile.rb</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>4</integer>
+				<key>line</key>
+				<integer>1</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>87</integer>
+		</dict>
 		<key>buildscripts/modules_copy.rb</key>
 		<dict>
 			<key>caret</key>
@@ -116,6 +174,20 @@
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
+		</dict>
+		<key>buildscripts/modules_paths.rb</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>0</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>271</integer>
 		</dict>
 		<key>buildscripts/paths.rb</key>
 		<dict>
@@ -167,6 +239,10 @@
 		<string>buildscripts/modules_copy.rb</string>
 		<string>buildscripts/build-tc.rb</string>
 		<string>buildscripts/extensions/distribution.rb</string>
+		<string>buildscripts/modules_paths.rb</string>
+		<string>buildscripts/modules_build.rb</string>
+		<string>buildscripts/jvms.rb</string>
+		<string>buildscripts/modules_compile.rb</string>
 		<string>buildscripts/paths.rb</string>
 		<string>buildscripts/testrun_record.rb</string>
 	</array>

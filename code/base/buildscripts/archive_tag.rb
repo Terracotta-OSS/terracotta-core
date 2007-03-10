@@ -23,6 +23,7 @@ class ArchiveTag
         host = @build_environment.build_hostname
         revision = @build_environment.current_revision
         version = @build_environment.specified_build_version
+        designation = @build_environment.specified_build_designation        
         branch = @build_environment.current_branch
         os_type = @build_environment.os_type(:nice)
         monkey_label = @build_environment.monkey_label

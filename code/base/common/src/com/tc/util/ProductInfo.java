@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -25,22 +26,23 @@ import java.util.Properties;
  * Utility class to retrieve the build information for the product.
  */
 public final class ProductInfo {
-  private static final ResourceBundleHelper bundleHelper              = new ResourceBundleHelper(ProductInfo.class);
+  private static final ResourceBundleHelper bundleHelper               = new ResourceBundleHelper(ProductInfo.class);
 
-  private static final DateFormat   DATE_FORMAT               = new SimpleDateFormat("yyyyMMdd-HHmmss");
+  private static final DateFormat           DATE_FORMAT                = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
-  private static final String       BUILD_DATA_RESOURCE_NAME  = "/build-data.txt";
+  private static final String               BUILD_DATA_RESOURCE_NAME   = "/build-data.txt";
 
-  private static final String       BUILD_DATA_ROOT_KEY       = "terracotta.build.";
-  private static final String       BUILD_DATA_VERSION_KEY    = "version";
-  private static final String       BUILD_DATA_TIMESTAMP_KEY  = "timestamp";
-  private static final String       BUILD_DATA_HOST_KEY       = "host";
-  private static final String       BUILD_DATA_USER_KEY       = "user";
-  private static final String       BUILD_DATA_CHANGESET_KEY  = "revision";
-  private static final String       BUILD_DATA_CHANGE_TAG_KEY = "change-tag";
-  private static final String       BUILD_DATA_BRANCH_KEY     = "branch";
+  private static final String               BUILD_DATA_ROOT_KEY        = "terracotta.build.";
+  private static final String               BUILD_DATA_VERSION_KEY     = "version";
+  private static final String               BUILD_DATA_DESIGNATION_KEY = "designation";
+  private static final String               BUILD_DATA_TIMESTAMP_KEY   = "timestamp";
+  private static final String               BUILD_DATA_HOST_KEY        = "host";
+  private static final String               BUILD_DATA_USER_KEY        = "user";
+  private static final String               BUILD_DATA_CHANGESET_KEY   = "revision";
+  private static final String               BUILD_DATA_CHANGE_TAG_KEY  = "change-tag";
+  private static final String               BUILD_DATA_BRANCH_KEY      = "branch";
 
-  private static final String       UNKNOWN_VALUE             = "[unknown]";
+  private static final String               UNKNOWN_VALUE              = "[unknown]";
 
   // WARNING: DO NOT DO NOT DO NOT MOVE THIS DECLARATION HIGHER!
   //
@@ -56,31 +58,33 @@ public final class ProductInfo {
   //
   // Yup, order of static initializers still *can* be a problem in Java, clearly. At least the order is defined, though.
   // ;)
-  private static final TCLogger   logger                      = TCLogging.getLogger(ProductInfo.class);
+  private static final TCLogger             logger                     = TCLogging.getLogger(ProductInfo.class);
 
-  private final String            moniker;
-  private final String            version;
-  private final Date              timestamp;
-  private final String            host;
-  private final String            user;
-  private final String            changeset;
-  private final String            changeTag;
-  private final String            branch;
+  private final String                      moniker;
+  private final String                      version;
+  private final String                      designation;
+  private final Date                        timestamp;
+  private final String                      host;
+  private final String                      user;
+  private final String                      changeset;
+  private final String                      changeTag;
+  private final String                      branch;
 
   private ProductInfo(InputStream in, String fromWhere) {
     Properties properties = new Properties();
 
     moniker = bundleHelper.getString("moniker");
-    
+
     if (in != null) {
       try {
         properties.load(in);
       } catch (IOException ioe) {
-        logger.warn(bundleHelper.format("load.properties.failure", new Object[] {fromWhere}));
+        logger.warn(bundleHelper.format("load.properties.failure", new Object[] { fromWhere }));
       }
     }
 
     this.version = getProperty(properties, BUILD_DATA_VERSION_KEY, UNKNOWN_VALUE);
+    this.designation = getProperty(properties, BUILD_DATA_DESIGNATION_KEY, UNKNOWN_VALUE);
     String timestampString = getProperty(properties, BUILD_DATA_TIMESTAMP_KEY, null);
     this.host = getProperty(properties, BUILD_DATA_HOST_KEY, UNKNOWN_VALUE);
     this.user = getProperty(properties, BUILD_DATA_USER_KEY, UNKNOWN_VALUE);
@@ -93,7 +97,7 @@ public final class ProductInfo {
       try {
         realTimestamp = DATE_FORMAT.parse(timestampString);
       } catch (ParseException pe) {
-        logger.warn(bundleHelper.format("invalid.timestamp", new Object[] {timestampString}));
+        logger.warn(bundleHelper.format("invalid.timestamp", new Object[] { timestampString }));
       }
     }
 
@@ -116,7 +120,7 @@ public final class ProductInfo {
 
     return thisProductInfo;
   }
-  
+
   public static boolean isUnknown(String value) {
     return value.equals(UNKNOWN_VALUE);
   }
@@ -124,9 +128,17 @@ public final class ProductInfo {
   public String moniker() {
     return this.moniker;
   }
-  
+
   public String rawVersion() {
     return this.version;
+  }
+  
+  public String buildVersion() {
+    return this.version + "-" + this.designation;
+  }
+
+  public String buildDesignation() {
+    return this.designation;
   }
 
   public Date buildTimestamp() {
@@ -137,7 +149,7 @@ public final class ProductInfo {
     if (this.timestamp == null) return UNKNOWN_VALUE;
     else return DATE_FORMAT.format(this.timestamp);
   }
-  
+
   public String buildHost() {
     return this.host;
   }
@@ -163,19 +175,19 @@ public final class ProductInfo {
   }
 
   public String toShortString() {
-    return moniker + " Version " + version;
+    return this.moniker + " version " + buildVersion();
   }
 
   public String toLongString() {
     return toShortString() + ", as of " + buildTimestampAsString() + " (Revision " + buildChangeset()
-           + (buildChangeTag() != null ? " (" + buildChangeTag() + ")" : "") + " by " + buildUser() + "@" + buildHost()
-           + " from " + buildBranch() + ")";
+        + (buildChangeTag() != null ? " (" + buildChangeTag() + ")" : "") + " by " + buildUser() + "@" + buildHost()
+        + " from " + buildBranch() + ")";
   }
 
   public String toString() {
     return toShortString();
   }
-
+  
   public static void main(String[] args) throws Exception {
     Options options = new Options();
     options.addOption("v", "verbose", false, bundleHelper.getString("option.verbose"));
