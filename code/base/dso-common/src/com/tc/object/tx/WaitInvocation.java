@@ -66,7 +66,7 @@ public final class WaitInvocation {
   public void adjust() {
     if (mark <= LockRequestMessage.UNITIALIZED_WAIT_TIME || signature == NO_ARGS) return;
     long now = System.currentTimeMillis();
-    millis = now - mark;
+    millis -= (now - mark);
 
     if (millis <= 0) {
       millis = 1;
