@@ -108,7 +108,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       if (txn == null) break;
       ServerTransactionID stxID = txn.getServerTransactionID();
       if (gtxm.needsApply(stxID)) {
-        lookupObjectsForApplyAndAddToSink(txn);
+        lookupObjectsForApplyAndAddToSink(txn, true);
       } else {
         // These txns are already applied, hence just sending it to the next stage.
         txnStageCoordinator.addToApplyStage(new ApplyTransactionContext(txn, Collections.EMPTY_MAP));
@@ -122,7 +122,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
   }
 
-  public synchronized void lookupObjectsForApplyAndAddToSink(ServerTransaction txn) {
+  public synchronized void lookupObjectsForApplyAndAddToSink(ServerTransaction txn, boolean newTxn) {
     Collection oids = txn.getObjectIDs();
     // log("lookupObjectsForApplyAndAddToSink(): START : " + txn.getServerTransactionID() + " : " + oids);
     Set newRequests = new HashSet();
@@ -145,7 +145,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     // TODO:: make cache and stats right
     LookupContext lookupContext = null;
     if (!newRequests.isEmpty()) {
-      lookupContext = new LookupContext(newRequests, txn.getNewObjectIDs());
+      lookupContext = new LookupContext(newRequests, (newTxn ? txn.getNewObjectIDs() : Collections.EMPTY_SET));
       if (objectManager.lookupObjectsForCreateIfNecessary(txn.getChannelID(), lookupContext)) {
         addLookedupObjects(lookupContext);
       } else {
@@ -278,7 +278,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     List copy = pendingTxnList.copy();
     for (Iterator i = copy.iterator(); i.hasNext();) {
       ServerTransaction txn = (ServerTransaction) i.next();
-      lookupObjectsForApplyAndAddToSink(txn);
+      lookupObjectsForApplyAndAddToSink(txn, false);
     }
   }
 
@@ -409,7 +409,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   private class LookupContext implements ObjectManagerResultsContext {
 
-    private boolean   pending = false;
+    private boolean   pending    = false;
     private boolean   resultsSet = false;
     private Map       lookedUpObjects;
     private final Set oids;
