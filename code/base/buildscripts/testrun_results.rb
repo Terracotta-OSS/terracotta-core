@@ -33,7 +33,7 @@ class TestRunResults
         
         # create symlink to latest testrun
         unless ENV['OS'] =~ /windows/i
-          `rm testrun-latest`
+          `rm testrun-latest` if File.exist?("testrun-latest")
           `ln -s -f #{root_dir.to_s} testrun-latest`          
         end
         
@@ -43,6 +43,7 @@ class TestRunResults
     # Removes all test-run results from the build-results directory by deleting all
     # test-run directories.
     def self.clean_all(build_results, ant)
+        return unless File.exist?(build_results.build_dir.to_s)
         Dir.entries(build_results.build_dir.to_s).each do |entry|
             FilePath.new(build_results.build_dir, entry).delete if entry =~ /testrun-\d\d\d\d/
         end
