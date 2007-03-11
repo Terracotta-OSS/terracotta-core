@@ -35,11 +35,12 @@ import javax.swing.event.HyperlinkListener;
 
 public abstract class HyperlinkFrame extends Frame implements HyperlinkListener {
   private static ResourceBundleHelper m_bundleHelper = new ResourceBundleHelper(HyperlinkFrame.class);
-  private File                m_installRoot;
-  private File                m_bootPath;
-  private File                m_javaCmd;
-  private File                m_tcLib;
-  private File                m_samplesDir;
+  
+  private File m_installRoot;
+  private File m_bootPath;
+  private File m_javaCmd;
+  private File m_tcLib;
+  private File m_samplesDir;
     
   public HyperlinkFrame() {
     super();
@@ -55,12 +56,6 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
                                          getBundleString("forums.url")));
     menu.add(new ContactTerracottaAction(getBundleString("contact.support.title"),
                                          getBundleString("support.url")));
-    /*
-    menu.add(new ContactTerracottaAction(getBundleString("contact.field.eng.title"),
-                                         getBundleString("field.eng.url")));
-    menu.add(new ContactTerracottaAction(getBundleString("contact.sales.title"),
-                                         getBundleString("sales.url")));
-    */
     menu.add(new Separator());
     menu.add(new AboutAction());
     
@@ -120,21 +115,28 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
   }
   
 
+  static File staticGetJavaCmd() {
+    File javaBin = new File(System.getProperty("java.home"), "bin");
+    return new File(javaBin, "java" + (Os.isWindows() ? ".exe" : ""));
+  }
+  
   protected File getJavaCmd() {
     if(m_javaCmd == null) {
-      File javaBin = new File(System.getProperty("java.home"), "bin");
-      m_javaCmd = new File(javaBin, "java" + (Os.isWindows() ? ".exe" : ""));
+      m_javaCmd = staticGetJavaCmd();
     }
 
     return m_javaCmd;
   }
 
+  static File staticGetTCLib() {
+    File file = new File(System.getProperty("tc.install-root"));
+    file = new File(file, "lib");
+    return new File(file, "tc.jar");
+  }
+  
   protected File getTCLib() {
     if(m_tcLib == null) {
-      File file = new File(System.getProperty("tc.install-root"));
-      file = new File(file, "lib");
-      file = new File(file, "tc.jar");
-      m_tcLib = file;
+      m_tcLib = staticGetTCLib();
     }
     return m_tcLib;
   }

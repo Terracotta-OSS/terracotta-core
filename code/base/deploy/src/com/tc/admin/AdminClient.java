@@ -5,14 +5,15 @@ package com.tc.admin;
 
 import org.apache.commons.io.IOUtils;
 import org.dijon.ApplicationManager;
-import org.dijon.Dialog;
 import org.dijon.DictionaryResource;
 import org.dijon.Image;
-import org.dijon.Label;
 
+import com.tc.admin.common.Splash;
 import com.tc.util.ResourceBundleHelper;
 import com.tc.util.runtime.Os;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -23,7 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
-import javax.swing.ImageIcon;
+import javax.swing.Timer;
 import javax.swing.UIManager;
 
 public class AdminClient extends ApplicationManager {
@@ -158,8 +159,14 @@ public class AdminClient extends ApplicationManager {
 
   public void start() {
     m_cntx.controller = new AdminClientFrame();
-    ((AdminClientFrame)m_cntx.controller).setVisible(true);
-    retractSplashDialog();
+    Timer t = new Timer(2000, new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        ((AdminClientFrame)m_cntx.controller).setVisible(true);
+        splashProc.destroy();
+      }
+    });
+    t.setRepeats(false);
+    t.start();
   }
 
   public String[] parseArgs(String[] args) {
@@ -172,37 +179,20 @@ public class AdminClient extends ApplicationManager {
     return args;
   }
 
-  public static Dialog m_splashDialog;
-  
-  public static void displaySplashDialog() {
-    m_splashDialog = new Dialog("Starting Terracotta AdminConsole...");
-    Label label = new Label("");
-    label.setIcon(new ImageIcon(AdminClient.class.getResource("/com/tc/admin/icons/logo.gif")));
-    m_splashDialog.getContentPane().add(label);
-    m_splashDialog.pack();
-    m_splashDialog.center();
-    m_splashDialog.setVisible(true);
-  }
-  
-  public static void retractSplashDialog() {
-    m_splashDialog.setVisible(false);
-  }
-  
+  private static Process splashProc;
+
   public static final void main(final String[] args)
     throws Exception
   {
-    displaySplashDialog();
+    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     
-    String[] appArgs = ApplicationManager.parseLAFArgs(args);
-
-    try {
-      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-    } catch(Exception e) {
-      /**/
-    }
-
-    AdminClient client = new AdminClient();
-    client.parseArgs(appArgs);
-    client.start();
+    splashProc = Splash.start("Starting Terracotta AdminConsole...", new Runnable() {
+      public void run() {
+        AdminClient client = new AdminClient();
+        client.parseArgs(ApplicationManager.parseLAFArgs(args));
+        client.start();
+      }
+    });
+    splashProc.waitFor();
   }
 }

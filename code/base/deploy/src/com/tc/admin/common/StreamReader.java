@@ -21,6 +21,14 @@ public class StreamReader extends Thread {
   boolean              m_stop;
   OutputStreamListener m_listener;
   String               m_trigger;
+
+  public StreamReader(
+    InputStream          stream,
+    OutputStreamListener listener,
+    String               trigger)
+  {
+    this(stream, null, listener, trigger);
+  }
   
   public StreamReader(
     InputStream          stream,
@@ -55,7 +63,9 @@ public class StreamReader extends Thread {
           return;
         }
         else {
-          update(line);
+          if(m_updater != null) {
+            update(line);
+          }
           if(m_listener != null && m_trigger != null &&
              StringUtils.contains(line, m_trigger))
           {

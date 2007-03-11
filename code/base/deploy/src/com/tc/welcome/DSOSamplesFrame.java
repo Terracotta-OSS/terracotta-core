@@ -38,26 +38,22 @@ import javax.swing.Timer;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.AttributeSet;
-import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.Document;
 import javax.swing.text.Element;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 
 public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener, PropertyChangeListener {
   private ResourceBundleHelper m_bundleHelper = new ResourceBundleHelper(DSOSamplesFrame.class);
-  private TextPane             m_textPane;
-  private TextPane             m_outputPane;
-  private ArrayList            m_processList;
-  private SimpleAttributeSet   m_underlineAttrSet;
+  
+  private TextPane  m_textPane;
+  private TextPane  m_outputPane;
+  private ArrayList m_processList;
 
   public DSOSamplesFrame() {
     super();
 
     setTitle(m_bundleHelper.getString("frame.title"));
-    m_underlineAttrSet = new SimpleAttributeSet();
 
     Container cp = getContentPane();
     cp.setLayout(new BorderLayout());
@@ -300,28 +296,13 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     }
   }
 
-  private void underlineElementText(Element elem, boolean b) {
-    DefaultStyledDocument doc = (DefaultStyledDocument) m_textPane.getDocument();
-    int start = elem.getStartOffset();
-    int len = elem.getEndOffset() - start;
-
-    if (len > 1) {
-      StyleConstants.setUnderline(m_underlineAttrSet, b);
-      doc.setCharacterAttributes(start, len, m_underlineAttrSet, false);
-    }
-  }
-
   public void hyperlinkUpdate(HyperlinkEvent e) {
     HyperlinkEvent.EventType type = e.getEventType();
     Element elem = e.getSourceElement();
 
-    if (elem == null) { return; }
-
-    if (type == HyperlinkEvent.EventType.ENTERED) {
-      underlineElementText(elem, true);
-      return;
-    } else if (type == HyperlinkEvent.EventType.EXITED) {
-      underlineElementText(elem, false);
+    if (elem == null ||
+        type == HyperlinkEvent.EventType.ENTERED ||
+        type == HyperlinkEvent.EventType.EXITED) {
       return;
     }
 

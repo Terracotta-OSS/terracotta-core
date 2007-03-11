@@ -10,6 +10,7 @@ import org.dijon.TextPane;
 
 import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.InputStreamDrainer;
+import com.tc.admin.common.Splash;
 import com.tc.util.ResourceBundleHelper;
 import com.tc.util.runtime.Os;
 
@@ -30,19 +31,19 @@ import javax.swing.Timer;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.AttributeSet;
-import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.Element;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 
-public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, PropertyChangeListener {
-  private static String[]     PRODUCTS       = { "Pojo", "Spring", "Sessions" };
+public class WelcomeFrame extends HyperlinkFrame
+  implements HyperlinkListener,
+             PropertyChangeListener
+{
+  private static String[]             PRODUCTS       = { "Pojo", "Spring", "Sessions" };
   private static ResourceBundleHelper m_bundleHelper = new ResourceBundleHelper(WelcomeFrame.class);
-  private TabbedPane          m_tabbedPane;
-  private SimpleAttributeSet  m_underlineAttrSet;
-  private ArrayList           m_startupList;
+  
+  private TabbedPane m_tabbedPane;
+  private ArrayList  m_startupList;
 
   public WelcomeFrame() {
     super();
@@ -54,8 +55,6 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
     Container cp = getContentPane();
     cp.setLayout(new BorderLayout());
     cp.add(m_tabbedPane = new TabbedPane());
-
-    m_underlineAttrSet = new SimpleAttributeSet();
 
     addWindowListener(new WindowAdapter() {
       public void windowDeactivated(WindowEvent e) {
@@ -112,13 +111,9 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
     HyperlinkEvent.EventType type = e.getEventType();
     Element elem = e.getSourceElement();
 
-    if (elem == null) { return; }
-
-    if (type == HyperlinkEvent.EventType.ENTERED) {
-      underlineElementText(elem, true);
-      return;
-    } else if (type == HyperlinkEvent.EventType.EXITED) {
-      underlineElementText(elem, false);
+    if (elem == null ||
+        type == HyperlinkEvent.EventType.ENTERED ||
+        type == HyperlinkEvent.EventType.EXITED) {
       return;
     }
 
@@ -186,18 +181,6 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
   protected File getProductDirectory() {
     int index = m_tabbedPane.getSelectedIndex();
     return new File(getSamplesDir(), PRODUCTS[index].toLowerCase());
-  }
-
-  private void underlineElementText(Element elem, boolean b) {
-    TextPane textPane = getTextPane();
-    DefaultStyledDocument doc = (DefaultStyledDocument) textPane.getDocument();
-    int start = elem.getStartOffset();
-    int len = elem.getEndOffset() - start;
-
-    if (len > 1) {
-      StyleConstants.setUnderline(m_underlineAttrSet, b);
-      doc.setCharacterAttributes(start, len, m_underlineAttrSet, false);
-    }
   }
 
   protected void openURL(String url) {
@@ -273,13 +256,27 @@ public class WelcomeFrame extends HyperlinkFrame implements HyperlinkListener, P
     if (m_startupList.isEmpty()) {
       pack();
       center();
-      setVisible(true);
+      Timer t = new Timer(2000, new ActionListener() {
+        public void actionPerformed(ActionEvent ae) {
+          setVisible(true);
+          splashProc.destroy();
+        }
+      });
+      t.setRepeats(false);
+      t.start();
     }
   }
 
-  public static void main(String[] args) {
-    ApplicationManager.parseLAFArgs(args);
-    WelcomeFrame welcome = new WelcomeFrame();
-    welcome.setResizable(false);
+  private static Process splashProc;
+  
+  public static void main(final String[] args) throws Exception {
+    splashProc = Splash.start("Starting Terracotta Welcome...", new Runnable() {
+      public void run() {
+        ApplicationManager.parseLAFArgs(args);
+        WelcomeFrame welcome = new WelcomeFrame();
+        welcome.setResizable(false);
+      }
+    });
+    splashProc.waitFor();
   }
 }

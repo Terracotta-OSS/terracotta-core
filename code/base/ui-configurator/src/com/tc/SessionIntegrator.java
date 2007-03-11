@@ -8,8 +8,11 @@ import org.dijon.ApplicationManager;
 import org.dijon.DictionaryResource;
 import org.dijon.Image;
 
+import com.tc.admin.common.Splash;
 import com.tc.util.ResourceBundleHelper;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -17,6 +20,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.prefs.Preferences;
+
+import javax.swing.Timer;
+import javax.swing.UIManager;
 
 public class SessionIntegrator extends ApplicationManager {
   private static SessionIntegrator m_client;
@@ -131,7 +137,14 @@ public class SessionIntegrator extends ApplicationManager {
 
   public void start() {
     m_cntx.frame = new SessionIntegratorFrame();
-    m_cntx.frame.setVisible(true);
+    Timer t = new Timer(1000, new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        m_cntx.frame.setVisible(true);
+        splashProc.destroy();
+      }
+    });
+    t.setRepeats(false);
+    t.start();
   }
 
   public String[] parseArgs(String[] args) {
@@ -144,13 +157,20 @@ public class SessionIntegrator extends ApplicationManager {
     return args;
   }
 
+  private static Process splashProc;
+
   public static final void main(final String[] args)
     throws Exception
   {
-    String[] appArgs = ApplicationManager.parseLAFArgs(args);
-
-    SessionIntegrator client = new SessionIntegrator();
-    client.parseArgs(appArgs);
-    client.start();
+    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    
+    splashProc = Splash.start("Starting Terracotta Sessions Configuration...", new Runnable() {
+      public void run() {
+        SessionIntegrator client = new SessionIntegrator();
+        client.parseArgs(ApplicationManager.parseLAFArgs(args));
+        client.start();
+      }
+    });
+    splashProc.waitFor();
   }
 }
