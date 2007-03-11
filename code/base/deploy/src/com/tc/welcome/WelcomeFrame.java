@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.swing.Timer;
+import javax.swing.UIManager;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.AttributeSet;
@@ -270,6 +271,8 @@ public class WelcomeFrame extends HyperlinkFrame
   private static Process splashProc;
   
   public static void main(final String[] args) throws Exception {
+    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
     splashProc = Splash.start("Starting Terracotta Welcome...", new Runnable() {
       public void run() {
         ApplicationManager.parseLAFArgs(args);
