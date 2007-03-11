@@ -19,23 +19,6 @@ POM_DEF = <<POM
 </project>
 POM
 
-def find_projects( proj_dir_set, dir_name )
-	# check if contains a .project and .classpath
-	if File.exist?( "#{dir_name}/.classpath" ) and File.exist?( "#{dir_name}/.project" )
-		proj_dir_set.add( dir_name )
-	else
-		Dir.foreach( dir_name ) { |current_dir_name|
-			next if current_dir_name =~ /^\.(\.)?$/
-			current_dir_name = "#{dir_name}/#{current_dir_name}"
-			next unless File.directory?( current_dir_name )
-			find_projects( proj_dir_set, current_dir_name )
-		}
-	end
-	return proj_dir_set
-end
-
-proj_dir_set = find_projects( Set.new, File.expand_path( ARGV.length < 1 ? "." : ARGV[0] ) )
-
 class Project
 	attr_reader :groupId, :artifactId, :deps
 	def initialize( groupId, artifactId )
@@ -51,11 +34,15 @@ class Project
 		return pom
 	end
 	def generate_deps()
-		dep_str = "<dependencies>\n"
-		@deps.each { |dep|
-			dep_str += dep.to_s
-		}
-		dep_str += "  <dependencies>"
+		unless @deps.nil? or @deps.empty?
+			dep_str = "<dependencies>\n"
+			@deps.each { |dep|
+				dep_str += dep.to_s
+			}
+			dep_str += "  </dependencies>"
+		else
+			return ""
+		end
 	end
 end
 
@@ -76,42 +63,61 @@ class Dependency
 	end
 end
 
-proj_dir_set.each { |project_dir|
-	File.open( "#{project_dir}/.classpath" ) { |file|
-		project_name = project_dir[ project_dir.rindex('/')+1, project_dir.length-1 ]
+def find_projects( proj_dir_set, dir_name )
+	# check if contains a .project and .classpath
+	if File.exist?( "#{dir_name}/.classpath" ) and File.exist?( "#{dir_name}/.project" )
+		proj_dir_set.add( dir_name )
+	else
+		Dir.foreach( dir_name ) { |current_dir_name|
+			next if current_dir_name =~ /^\.(\.)?$/
+			current_dir_name = "#{dir_name}/#{current_dir_name}"
+			next unless File.directory?( current_dir_name )
+			find_projects( proj_dir_set, current_dir_name )
+		}
+	end
+	return proj_dir_set
+end
 
-		project = Project.new( "org.terracotta", project_name )
+begin
+	proj_dir_set = find_projects( Set.new, File.expand_path( ARGV.length < 1 ? "." : ARGV[0] ) )
 
-		doc = REXML::Document.new( file )
-		doc.root.each_element( "classpathentry" ) { |kind|
-			# libs
-			if kind.attributes['kind'] == 'lib'
-				path = kind.attributes['path']
-				unless path.nil?
-					path = path.to_s
-					path = path[ path.rindex('/')+1, path.length-1 ]
-					version = ""
-					artifactId = path.scan( /(.*?)\-\d.*?$/ ).join.to_s
-					version = path.scan( /.*?\-(\d.*?)\.jar$/ ).join.to_s
-					project.add Dependency.new( nil, artifactId, version )
-				end
-			end
-			# other projects
-			if kind.attributes['kind'] == 'src'
-				path = kind.attributes['path']
-				unless path.nil?
-					path = path.to_s
-					if path[0] == 47
-						path = path[ path.rindex('/')+1, path.length-1 ].to_s
-						project.add Dependency.new( "org.terracotta", path, "" )
+	proj_dir_set.each { |project_dir|
+		File.open( "#{project_dir}/.classpath" ) { |file|
+			project_name = project_dir[ project_dir.rindex('/')+1, project_dir.length-1 ]
+
+			project = Project.new( "org.terracotta", project_name )
+
+			doc = REXML::Document.new( file )
+			doc.root.each_element( "classpathentry" ) { |kind|
+				# libs
+				if kind.attributes['kind'] == 'lib'
+					path = kind.attributes['path']
+					unless path.nil?
+						path = path.to_s
+						path = path[ path.rindex('/')+1, path.length-1 ]
+						version = ""
+						artifactId = path.scan( /(.*?)\-\d.*?$/ ).join.to_s
+						version = path.scan( /.*?\-(\d.*?)\.jar$/ ).join.to_s
+						project.add Dependency.new( nil, artifactId, version )
 					end
 				end
-			end
-		}
+				# other projects
+				if kind.attributes['kind'] == 'src'
+					path = kind.attributes['path']
+					unless path.nil?
+						path = path.to_s
+						if path[0] == 47
+							path = path[ path.rindex('/')+1, path.length-1 ].to_s
+							project.add Dependency.new( "org.terracotta", path, "" )
+						end
+					end
+				end
+			}
 
-		#write out to file...
-		File.open( "#{project_dir}/pom.xml", File::CREAT|File::RDWR|File::TRUNC ) { |pom_file|
-			pom_file.write( project.generate_pom )
+			#write out to file...
+			File.open( "#{project_dir}/pom.xml", File::CREAT|File::RDWR|File::TRUNC ) { |pom_file|
+				pom_file.write( project.generate_pom )
+			}
 		}
 	}
-}
+end

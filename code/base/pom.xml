@@ -2,6 +2,51 @@
   <groupId>org.terracotta</groupId>
   <artifactId>parent</artifactId>
   <version>2.3-SNAPSHOT</version>
+
+  <modules>
+    <module>aspectwerkz</module>
+    <module>clustered-apache-struts-1.1</module>
+    <module>clustered-cglib-2.1.3</module>
+    <module>clustered-commons-collections-3.1</module>
+    <module>clustered-iBatis-2.2.0</module>
+    <module>clustered-lucene-2.2.0</module>
+    <module>common</module>
+    <module>deploy</module>
+    <module>dso-alt-boot-jar-tests</module>
+    <module>dso-common</module>
+    <module>dso-common-jdk15</module>
+    <module>dso-container-tests</module>
+    <module>dso-crash-tests</module>
+    <module>dso-l1</module>
+    <module>dso-l1-jdk15</module>
+    <module>dso-l1-session</module>
+    <module>dso-l1-tomcat</module>
+    <module>dso-l1-tomcat50</module>
+    <module>dso-l1-tomcat55</module>
+    <module>dso-l1-weblogic</module>
+    <module>dso-l2</module>
+    <module>dso-memory-datastore</module>
+    <module>dso-performance-tests</module>
+    <module>dso-spring</module>
+    <module>dso-spring-aj</module>
+    <module>dso-spring-crash-tests</module>
+    <module>dso-spring-tests</module>
+    <module>dso-system-tests</module>
+    <module>dso-tests-jdk15</module>
+    <module>dso-weblogic-stubs</module>
+    <module>examples</module>
+    <module>installer</module>
+    <module>legacy-test-tree</module>
+    <module>linked-child-process</module>
+    <module>management</module>
+    <module>modules-common-1.0</module>
+    <module>services-tests</module>
+    <module>simulator</module>
+    <module>thirdparty</module>
+    <module>ui-configurator</module>
+    <module>ui-eclipse</module>
+  </modules>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
