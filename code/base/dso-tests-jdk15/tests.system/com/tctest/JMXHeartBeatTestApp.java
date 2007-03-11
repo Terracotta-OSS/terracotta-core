@@ -4,30 +4,21 @@
  */
 package com.tctest;
 
-import org.apache.commons.io.FileUtils;
-
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CyclicBarrier;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
-import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
@@ -45,10 +36,8 @@ public class JMXHeartBeatTestApp extends AbstractTransparentApp {
   private final CyclicBarrier     stage1           = new CyclicBarrier(initialNodeCount);
 
   private MBeanServerConnection   mbsc             = null;
-  private JMXConnector jmxc;
-  private ObjectName              tcServerInfoBean = null;
-  private List                    clusterBeanBag   = new ArrayList();
-  private Map                     eventsCount      = new HashMap();
+  private JMXConnector            jmxc;
+  private TCServerInfoMBean       serverMBean;
 
   public JMXHeartBeatTestApp(String appId, ApplicationConfig config, ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
@@ -69,16 +58,30 @@ public class JMXHeartBeatTestApp extends AbstractTransparentApp {
 
   public void run() {
     try {
-      createJMXConnection();
-      TCServerInfoMBean bean = (TCServerInfoMBean) MBeanServerInvocationHandler
-          .newProxyInstance(mbsc, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);      
-      String result = bean.getHealthStatus();
-      Assert.assertEquals("OK", result);
+      runTest();
     } catch (Throwable t) {
       notifyError(t);
     }
+  }
+
+  private boolean isServerAlive() {
+    boolean isAlive = false;
+    
+    try {
+      String theUrl = "service:jmx:rmi:///jndi/rmi://localhost:" + config.getAttribute(JMX_PORT) + "/jmxrmi";
+      JMXServiceURL url = new JMXServiceURL(theUrl);
+      jmxc = JMXConnectorFactory.connect(url, null);
+      mbsc = jmxc.getMBeanServerConnection();
+      serverMBean = (TCServerInfoMBean) MBeanServerInvocationHandler
+      .newProxyInstance(mbsc, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
+      String result = serverMBean.getHealthStatus();
+      jmxc.close();
+      isAlive = result.equals("OK"); 
+    } catch (Throwable e) {
+      e.printStackTrace();            
+    }    
     finally {
-      if (jmxc != null)  {
+      if (jmxc != null) {
         try {
           jmxc.close();
         } catch (IOException e) {
@@ -86,63 +89,25 @@ public class JMXHeartBeatTestApp extends AbstractTransparentApp {
         }
       }
     }
+    
+    return isAlive;
   }
 
   private void runTest() throws Throwable {
-    spawnNewClient();
 
-    config.getServerControl().crash();
-    while (config.getServerControl().isRunning()) {
-      Thread.sleep(5000);
-    }
+    Assert.assertEquals(true, isServerAlive());
+    echo("Server is alive");
+    config.getServerControl().crash();    
+    Assert.assertEquals(false, isServerAlive());
+    echo("Server is down");
     config.getServerControl().start(30 * 1000);
-    while (!config.getServerControl().isRunning()) {
-      Thread.sleep(5000);
-    }
-    echo("Server restarted successfully.");
     stage1.await();
-    synchronized (eventsCount) {
-      Assert.assertEquals(4, eventsCount.size());
-      Assert.assertTrue(eventsCount.containsKey("com.tc.cluster.event.nodeDisconnected"));
-      Assert.assertTrue(eventsCount.containsKey("com.tc.cluster.event.nodeConnected"));
-      Assert.assertTrue(eventsCount.containsKey("com.tc.cluster.event.thisNodeDisconnected"));
-      Assert.assertTrue(eventsCount.containsKey("com.tc.cluster.event.thisNodeConnected"));
-    }
-  }
-
-  private void createJMXConnection() throws Exception {
-    String theUrl = "service:jmx:rmi:///jndi/rmi://localhost:" + config.getAttribute(JMX_PORT) + "/jmxrmi";
-    System.err.println("$$$$$$ JMX URL: " + theUrl);
-    JMXServiceURL url = new JMXServiceURL(theUrl);
-    jmxc = JMXConnectorFactory.connect(url, null);    
-    mbsc = jmxc.getMBeanServerConnection();
+    echo("Server restarted successfully.");
+    Assert.assertEquals(true, isServerAlive());    
   }
 
   private static void echo(String msg) {
     System.out.println(msg);
-  }
-
-  public static class L1Client {
-    public static void main(String args[]) {
-      // nothing to do
-    }
-  }
-
-  private ExtraL1ProcessControl spawnNewClient() throws Exception {
-    final String hostName = config.getAttribute(HOST_NAME);
-    final int port = Integer.parseInt(config.getAttribute(PORT_NUMBER));
-    final File configFile = new File(config.getAttribute(CONFIG_FILE));
-    File workingDir = new File(configFile.getParentFile(), "client-0");
-    FileUtils.forceMkdir(workingDir);
-
-    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class, configFile
-        .getAbsolutePath(), new String[0], workingDir);
-    client.start(20000);
-    client.mergeSTDERR();
-    client.mergeSTDOUT();
-    client.waitFor();
-    System.err.println("\n### Started New Client");
-    return client;
   }
 
 }
