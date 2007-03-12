@@ -19,6 +19,7 @@ import com.tctest.domain.AccountDAO;
 import com.tctest.domain.Customer;
 import com.tctest.domain.CustomerDAO;
 import com.tctest.runner.AbstractTransparentApp;
+import com.tctest.server.HSqlDBServer;
 
 import java.io.Reader;
 import java.sql.Connection;
@@ -33,14 +34,7 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
 
   private Customer       cus;
 
-  private final Object   sharedLock    = new Object();
-  private boolean        tablesDropped = false;
-
-  private static boolean pluginsLoaded = false;
-
-  public static synchronized boolean pluginsLoaded() {
-    return pluginsLoaded;
-  }
+  private HSqlDBServer dbServer = null;
 
   public IBatisSimpleDaoTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -66,7 +60,6 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
             cus.setLastName("Si");
             cus.setAccount(acc);
             customerDAO.insertCustomer(cus);
-            shutdownDatabase();
           }
         }
 
@@ -77,8 +70,6 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
             cus = customerDAO.selectCustomer(0);
             Account acc = cus.getAccount();
             Assert.assertEquals("ASI-001", acc.getNumber());
-
-            shutdownDatabase();
           }
         }
         barrier.barrier();
@@ -88,11 +79,8 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
 
         barrier.barrier();
       } finally {
-        synchronized (sharedLock) {
-          if (!tablesDropped) {
-            tablesDropped = true;
-            dropAllTables();
-          }
+        if (id == 0) {
+          shutdownDatabase();
         }
       }
 
@@ -118,9 +106,6 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
 
       accountDAO = dao;
       customerDAO = (CustomerDAO) daoManager.getDao(CustomerDAO.class);
-
-      // reader.close();
-
     } catch (Exception e) {
       e.printStackTrace(System.err);
       throw e;
@@ -128,26 +113,16 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
   }
 
   private DaoManager connectDatabase() throws Exception {
+    dbServer = new HSqlDBServer();
+    dbServer.start();
     Reader reader = Resources.getResourceAsReader("com/tctest/DAOMap.xml");
     DaoManager daoManager = DaoManagerBuilder.buildDaoManager(reader);
     reader.close();
     return daoManager;
   }
 
-  private void dropAllTables() throws Exception {
-    DaoManager daoManager = connectDatabase();
-    CustomerDAO dao = (CustomerDAO) daoManager.getDao(CustomerDAO.class);
-    Connection conn = getConnection(daoManager, dao);
-    PreparedStatement stmt = conn.prepareStatement("drop table ACCOUNT");
-    stmt.execute();
-    stmt = conn.prepareStatement("drop table CUSTOMER");
-    stmt.execute();
-  }
-
   private void shutdownDatabase() throws Exception {
-    Connection conn = getConnection(customerDAO.getDaoManager(), customerDAO);
-    PreparedStatement stmt = conn.prepareStatement("shutdown immediately");
-    stmt.execute();
+    dbServer.stop();
   }
 
   private Connection getConnection(DaoManager daoManager, Dao dao) {
@@ -164,8 +139,7 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
     String testClass = IBatisSimpleDaoTestApp.class.getName();
 
     config.getOrCreateSpec(testClass).addRoot("barrier", "barrier").addRoot("cus", "cus").addRoot("list", "list")
-        .addRoot("customerDAO", "customerDAO").addRoot("accountDAO", "accountDAO").addRoot("sharedLock", "sharedLock")
-        .addRoot("tablesDropped", "tablesDropped");
+        .addRoot("customerDAO", "customerDAO").addRoot("accountDAO", "accountDAO");
 
     config.addWriteAutolock("* " + testClass + "*.*(..)");
     config.addIncludePattern("com.tctest.domain.*");
@@ -173,7 +147,6 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
 
     config.addNewModule("clustered-cglib", "2.1.3");
     config.addNewModule("clustered-iBatis", "2.2.0");
-    pluginsLoaded = true;
   }
 
 }

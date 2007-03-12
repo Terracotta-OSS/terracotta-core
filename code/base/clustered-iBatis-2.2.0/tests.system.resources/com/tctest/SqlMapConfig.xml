@@ -16,7 +16,7 @@
   <transactionManager type="JDBC" commitRequired="false">
     <dataSource type="SIMPLE">
       <property name="JDBC.Driver" value="org.hsqldb.jdbcDriver"/>
-      <property name="JDBC.ConnectionURL" value="jdbc:hsqldb:file:testdb"/>
+      <property name="JDBC.ConnectionURL" value="jdbc:hsqldb:hsql://localhost:9001/testdb"/>
       <property name="JDBC.Username" value="sa"/>
       <property name="JDBC.Password" value=""/>
     </dataSource>
