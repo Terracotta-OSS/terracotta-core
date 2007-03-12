@@ -104,7 +104,7 @@ public class HibernateTest extends AbstractTwoServerDeploymentTest {
       builder.setDispatcherServlet("httpinvoker", "/http/*", DispatcherServlet.class, null, true);
       builder.addDirectoryOrJARContainingClass(org.hibernate.Session.class);
       builder.addDirectoryOrJARContainingClass(org.dom4j.DocumentException.class);
-      builder.addDirectoryOrJARContainingClass(org.apache.xerces.jaxp.SAXParserFactoryImpl.class);
+      //builder.addDirectoryOrJARContainingClass(org.apache.xerces.jaxp.SAXParserFactoryImpl.class);
       builder.addDirectoryOrJARContainingClass(org.hsqldb.jdbcDriver.class);
       builder.addDirectoryOrJARContainingClass(net.sf.ehcache.CacheException.class);
       builder.addDirectoryOrJARContainingClass(net.sf.cglib.beans.BulkBeanException.class);

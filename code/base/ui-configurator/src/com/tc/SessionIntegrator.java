@@ -164,7 +164,7 @@ public class SessionIntegrator extends ApplicationManager {
   {
     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     
-    splashProc = Splash.start("Starting Terracotta Sessions Configuration...", new Runnable() {
+    splashProc = Splash.start("Starting Terracotta Sessions Configurator...", new Runnable() {
       public void run() {
         SessionIntegrator client = new SessionIntegrator();
         client.parseArgs(ApplicationManager.parseLAFArgs(args));
