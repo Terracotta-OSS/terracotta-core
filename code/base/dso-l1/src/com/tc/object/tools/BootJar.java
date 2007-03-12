@@ -327,7 +327,7 @@ public class BootJar {
         Object prev = manifest.getEntries().put(META_DATA_ATTRIBUTE_NAME, attributes);
         Assert.assertNull(prev);
       } else {
-        throw new AssertionError("unexptected metadata version: " + version);
+        throw new AssertionError("Unexptected metadata for version, expecting '" + VERSION_1_1 + "', but was '" + version + "'");
       }
     }
 
