@@ -159,7 +159,7 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>87</integer>
+			<integer>0</integer>
 		</dict>
 		<key>buildscripts/modules_copy.rb</key>
 		<dict>

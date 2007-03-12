@@ -97,11 +97,11 @@ public class BootJar {
     if (!expectedSignature.isCompatibleWith(signatureFromJar)) {
       // make formatter sane
       throw new InvalidJVMVersionException(
-                                           "Incompatible boot jar JVM version; expected "
+                                           "Incompatible boot jar JVM version; expected '"
                                                + expectedSignature
-                                               + " but was (in boot jar): "
+                                               + "' but was (in boot jar) '"
                                                + signatureFromJar
-                                               + ". Please regenerate the DSO boot jar to match this VM, or switch to a VM compatible with this boot jar");
+                                               + "'; Please regenerate the DSO boot jar to match this VM, or switch to a VM compatible with this boot jar");
     }
 
     return new BootJar(bootJar, false, metaData, jarFile);
@@ -301,11 +301,12 @@ public class BootJar {
       if (tcmoniker == null) throw new InvalidBootJarMetaDataException("Missing metadata: tcmoniker");
 
       ProductInfo productInfo = ProductInfo.getThisProductInfo();
-      String expect_tcversion = productInfo.rawVersion();
+      String expect_tcversion = productInfo.buildVersion();
 
       if (ProductInfo.isUnknown(expect_tcversion)) logger
-          .warn("The value for the DSO meta data, tcversion is: '" + expect_tcversion
-                + "'; this might not be correct, this value is used only when tests are being run.");
+          .warn("The value for the DSO meta data, tcversion is: '"
+                + expect_tcversion
+                + "'; this might not be correct, this value is used only under development mode or when tests are being run.");
 
       if (!ProductInfo.isUnknown(expect_tcversion) && !expect_tcversion.equals(tcversion)) throw new InvalidBootJarMetaDataException(
                                                                                                                                      "Incompatible DSO meta data: tcversion; expected '"
@@ -319,8 +320,8 @@ public class BootJar {
       if (VERSION_1_1.equals(version)) {
         ProductInfo productInfo = ProductInfo.getThisProductInfo();
         Attributes attributes = new Attributes();
-        attributes.put(new Attributes.Name(TC_VERSION), productInfo.rawVersion());
         attributes.put(new Attributes.Name(TC_MONIKER), productInfo.moniker());
+        attributes.put(new Attributes.Name(TC_VERSION), productInfo.buildVersion());
         attributes.put(new Attributes.Name(VERSION), getVersion());
         attributes.put(new Attributes.Name(VM_SIGNATURE), getVMSignature());
         Object prev = manifest.getEntries().put(META_DATA_ATTRIBUTE_NAME, attributes);
