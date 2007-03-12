@@ -45,7 +45,7 @@ public final class Dashboard
 	   final String IMAGE_CIRCLE       = "/images/circle.gif";
 	   final String IMAGE_FILLEDCIRCLE = "/images/filledcircle.gif";
 	   final String IMAGE_TEXT         = "/images/text.gif";
-	   final String IMAGE_BEDROOM      = "/images/bedroom.gif";
+	   final String IMAGE_BEDROOM      = "/images/bedroom.jpg";
 	   
 		this.dispatcher = dispatcher;
 		
@@ -133,7 +133,6 @@ public final class Dashboard
 		add(b2);
 		
 		// default settings
-		
 		dispatcher.setStroke(new BasicStroke(1));
 		dispatcher.setFillStyle(IFillStyleConsts.FILLSTYLE_SOLID);
 		dispatcher.setForeground(Color.DARK_GRAY);
