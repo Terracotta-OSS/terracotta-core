@@ -1268,7 +1268,8 @@ public class TcPlugin extends AbstractUIPlugin
   }
  
   public void setConfigurationFilePath(IProject project, String path) {
-    IFile file = project.getFile(getConfigurationFilePath(project));
+    String oldPath = getConfigurationFilePath(project);
+    IFile file = oldPath != null ? project.getFile(oldPath) : null;
     if(file != null && file.exists()) {
       clearSAXMarkers(file);
       setPersistentProperty(file, ACTIVE_CONFIGURATION_FILE, null);
