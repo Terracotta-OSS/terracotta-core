@@ -4,8 +4,6 @@
  */
 package com.tc.objectserver.persistence.sleepycat;
 
-import EDU.oswego.cs.dl.util.concurrent.CountDown;
-
 import com.sleepycat.bind.serial.ClassCatalog;
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.CursorConfig;
@@ -27,7 +25,9 @@ import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor.SleepycatPer
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
+import com.tc.util.ObjectIDSet2;
 import com.tc.util.SyncObjectIdSet;
+import com.tc.util.SyncObjectIdSetImpl;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -129,16 +129,11 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   }
 
   public SyncObjectIdSet getAllObjectIDs() {
-    CountDown latch = new CountDown(1);
-    SyncObjectIdSet rv = new SyncObjectIdSet();
-    Thread t = new Thread(new ObjectIdReader(rv, latch), "ObjectIdReaderThread");
+    SyncObjectIdSet rv = new SyncObjectIdSetImpl();
+    rv.startPopulating();
+    Thread t = new Thread(new ObjectIdReader(rv), "ObjectIdReaderThread");
     t.setDaemon(true);
     t.start();
-    try {
-      latch.acquire();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
     return rv;
   }
 
@@ -353,30 +348,28 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
 
   class ObjectIdReader implements Runnable {
     private final SyncObjectIdSet set;
-    private final CountDown       locked;
 
-    public ObjectIdReader(SyncObjectIdSet set, CountDown locked) {
+    public ObjectIdReader(SyncObjectIdSet set) {
       this.set = set;
-      this.locked = locked;
     }
 
     public void run() {
+      ObjectIDSet2 tmp = new ObjectIDSet2();
       try {
-        set.startPopulating();
-        locked.release();
         PersistenceTransaction tx = ptp.newTransaction();
         Cursor cursor = objectDB.openCursor(pt2nt(tx), objectDBCursorConfig);
         DatabaseEntry key = new DatabaseEntry();
         DatabaseEntry value = new DatabaseEntry();
         while (OperationStatus.SUCCESS.equals(cursor.getNext(key, value, LockMode.DEFAULT))) {
-          set.add(new ObjectID(Conversion.bytes2Long(key.getData())));
+          tmp.add(new ObjectID(Conversion.bytes2Long(key.getData())));
         }
         cursor.close();
         tx.commit();
       } catch (Throwable t) {
         throw new DBException(t);
       } finally {
-        set.stopPopulating();
+        set.stopPopulating(tmp);
+        tmp = null;
       }
     }
   }

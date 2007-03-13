@@ -19,6 +19,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.SyncObjectIdSet;
+import com.tc.util.SyncObjectIdSetImpl;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -299,7 +300,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
   }
 
   public SyncObjectIdSet getAllObjectIDs() {
-    SyncObjectIdSet rv = new SyncObjectIdSet();
+    SyncObjectIdSet rv = new SyncObjectIdSetImpl();
     rv.addAll(managed.keySet());
     return rv;
   }

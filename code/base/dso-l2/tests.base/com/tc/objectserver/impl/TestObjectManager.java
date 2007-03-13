@@ -21,6 +21,7 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.SyncObjectIdSet;
+import com.tc.util.SyncObjectIdSetImpl;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.Collection;
@@ -171,7 +172,7 @@ public class TestObjectManager implements ObjectManager {
   }
 
   public SyncObjectIdSet getAllObjectIDs() {
-    return new SyncObjectIdSet();
+    return new SyncObjectIdSetImpl();
   }
 
   public Object getLock() {
