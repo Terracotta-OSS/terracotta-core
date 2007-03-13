@@ -67,7 +67,8 @@ final class ConcreteReadOnlyAppServerInstallation {
   }
 
   private static String resolvePlatform() {
-    return System.getProperty("os.name").replaceAll("\\s", "_").toLowerCase();
+    return "generic";
+    //return System.getProperty("os.name").replaceAll("\\s", "_").toLowerCase();
   }
 
   private static URL appendPath(URL host, String serverType, String majorVersion, String minorVersion) throws Exception {
