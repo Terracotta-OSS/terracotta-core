@@ -121,8 +121,8 @@ public final class ProductInfo {
     return thisProductInfo;
   }
 
-  public static boolean isUnknown(String value) {
-    return value.equals(UNKNOWN_VALUE);
+  public boolean isDevMode() {
+    return this.version.endsWith(UNKNOWN_VALUE) && this.designation.equals(UNKNOWN_VALUE);
   }
 
   public String moniker() {
@@ -132,7 +132,7 @@ public final class ProductInfo {
   public String rawVersion() {
     return this.version;
   }
-  
+
   public String buildVersion() {
     return this.version + "-" + this.designation;
   }
@@ -187,7 +187,7 @@ public final class ProductInfo {
   public String toString() {
     return toShortString();
   }
-  
+
   public static void main(String[] args) throws Exception {
     Options options = new Options();
     options.addOption("v", "verbose", false, bundleHelper.getString("option.verbose"));

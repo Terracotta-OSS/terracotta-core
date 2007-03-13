@@ -303,12 +303,12 @@ public class BootJar {
       ProductInfo productInfo = ProductInfo.getThisProductInfo();
       String expect_tcversion = productInfo.buildVersion();
 
-      if (ProductInfo.isUnknown(expect_tcversion)) logger
+      if (productInfo.isDevMode()) logger
           .warn("The value for the DSO meta data, tcversion is: '"
                 + expect_tcversion
                 + "'; this might not be correct, this value is used only under development mode or when tests are being run.");
 
-      if (!ProductInfo.isUnknown(expect_tcversion) && !expect_tcversion.equals(tcversion)) throw new InvalidBootJarMetaDataException(
+      if (!productInfo.isDevMode() && !expect_tcversion.equals(tcversion)) throw new InvalidBootJarMetaDataException(
                                                                                                                                      "Incompatible DSO meta data: tcversion; expected '"
                                                                                                                                          + expect_tcversion
                                                                                                                                          + "' but was (in boot jar): '"
