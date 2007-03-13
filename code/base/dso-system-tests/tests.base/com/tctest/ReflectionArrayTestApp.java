@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -115,6 +116,20 @@ public class ReflectionArrayTestApp extends GenericTestApp {
       synchronized (root) {
         Array.setChar(root.getCharArray(), 0, Character.MAX_VALUE);
       }
+    }
+  }
+
+  void testSetReferenceArrayElementToNull(DataRoot root, boolean validate) {
+    if (validate) {
+      Assert.assertNull(root.getInstanceArray()[0]);
+    } else {
+      synchronized (root) {
+        Array.set(root.getInstanceArray(), 0, null);
+      }
+
+      // test on a non-shared array too (for good measure)
+      Object[] nonSharedArray = new Object[] { this };
+      Array.set(nonSharedArray, 0, null);
     }
   }
 

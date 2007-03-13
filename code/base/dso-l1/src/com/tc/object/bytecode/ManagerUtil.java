@@ -256,7 +256,12 @@ public class ManagerUtil {
     if (array == null) throw new NullPointerException();
 
     if (array instanceof Object[]) {
-      if (!array.getClass().getComponentType().isInstance(value)) throw new IllegalArgumentException();
+      Class componentType = array.getClass().getComponentType();
+      if (value != null && !componentType.isInstance(value)) {
+        //
+        throw new IllegalArgumentException("Cannot assign an instance of type " + value.getClass().getName()
+                                           + " to array with component type " + componentType.getName());
+      }
       ArrayManager.objectArrayChanged((Object[]) array, index, value);
     } else if (value instanceof Byte) setByte(array, index, ((Byte) value).byteValue());
     else if (value instanceof Short) setShort(array, index, ((Short) value).shortValue());
