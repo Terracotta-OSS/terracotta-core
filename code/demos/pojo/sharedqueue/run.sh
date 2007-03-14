@@ -27,6 +27,6 @@ CLASSPATH="${CWD}/classes"
 CLASSPATH="${CLASSPATH}:${CWD}/lib/org.mortbay.jetty-4.2.20.jar"
 CLASSPATH="${CLASSPATH}:${CWD}/lib/javax.servlet.jar"
 
-exec "${JAVA_HOME}/bin/java" ${JAVA_OPTS} ${JAVA_OPTS} \
+exec "${JAVA_HOME}/bin/java" ${TC_JAVA_OPTS} ${JAVA_OPTS} \
   -Dcom.sun.management.jmxremote \
   -cp "${CLASSPATH}" demo.sharedqueue.Main "$@"
