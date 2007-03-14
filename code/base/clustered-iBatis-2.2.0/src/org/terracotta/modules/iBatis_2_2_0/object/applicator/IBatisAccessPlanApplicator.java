@@ -4,6 +4,7 @@
  */
 package org.terracotta.modules.iBatis_2_2_0.object.applicator;
 
+import com.tc.exception.TCNotSupportedMethodException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
@@ -22,7 +23,6 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.IdentityHashMap;
 import java.util.Map;
 
 /**
@@ -69,7 +69,7 @@ public class IBatisAccessPlanApplicator extends BaseApplicator {
 
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
       IllegalArgumentException, ClassNotFoundException {
-    // TODO
+    // 
   }
 
   public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
@@ -130,10 +130,6 @@ public class IBatisAccessPlanApplicator extends BaseApplicator {
 
   public Map connectedCopy(Object source, Object dest, Map visited, ClientObjectManager objectManager,
                            OptimisticTransactionManager txManager) {
-    Map cloned = new IdentityHashMap();
-
-    // TODO
-
-    return cloned;
+    throw new TCNotSupportedMethodException();
   }
 }

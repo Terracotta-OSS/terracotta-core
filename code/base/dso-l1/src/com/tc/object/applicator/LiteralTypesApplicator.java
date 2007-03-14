@@ -3,7 +3,7 @@
  */
 package com.tc.object.applicator;
 
-import com.tc.exception.ImplementMe;
+import com.tc.exception.TCNotSupportedMethodException;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
@@ -62,6 +62,6 @@ public class LiteralTypesApplicator extends BaseApplicator {
 
   public Map connectedCopy(Object source, Object dest, Map visited, ClientObjectManager objectManager,
                            OptimisticTransactionManager txManager) {
-    throw new ImplementMe();
+    throw new TCNotSupportedMethodException();
   }
 }

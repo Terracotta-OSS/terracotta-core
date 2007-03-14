@@ -4,6 +4,7 @@
  */
 package com.tc.util;
 
+import java.lang.reflect.Method;
 import java.text.ParseException;
 
 public class ClassUtils {
@@ -44,6 +45,10 @@ public class ClassUtils {
     if (superClass == null) return false;
     if (((c.getModifiers() & 0x00004000) != 0) && "java.lang.Enum".equals(superClass.getName())) { return true; }
     return false;
+  }
+  
+  public static boolean isPortableReflectionClass(Class c) {
+    return (Method.class.getName().equals(c.getName()));
   }
 
   public interface ClassSpec {

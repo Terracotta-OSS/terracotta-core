@@ -136,7 +136,7 @@ public class PortabilityImpl implements Portability {
 
     boolean bool = literalValues.isLiteral(clazzName) || config.isLogical(clazzName) || clazz.isArray()
                    || Proxy.isProxyClass(clazz) || ClassUtils.isEnum(clazz) || isClassPhysicallyInstrumented(clazz)
-                   || isInstrumentationNotNeeded(clazzName) || config.isPortableModuleClass(clazz);
+                   || isInstrumentationNotNeeded(clazzName) || ClassUtils.isPortableReflectionClass(clazz) || config.isPortableModuleClass(clazz);
     portableCache.put(clazzName, Boolean.valueOf(bool));
     return bool;
   }

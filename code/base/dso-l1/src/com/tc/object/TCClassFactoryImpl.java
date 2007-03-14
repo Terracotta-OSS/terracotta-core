@@ -5,6 +5,7 @@
 package com.tc.object;
 
 import com.tc.exception.TCRuntimeException;
+import com.tc.object.applicator.AccessibleObjectApplicator;
 import com.tc.object.applicator.ArrayApplicator;
 import com.tc.object.applicator.ChangeApplicator;
 import com.tc.object.applicator.FileApplicator;
@@ -16,6 +17,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.dna.impl.DNAEncoding;
 import com.tc.object.field.TCFieldFactory;
 import com.tc.object.loaders.ClassProvider;
+import com.tc.util.ClassUtils;
 
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
@@ -95,6 +97,8 @@ public class TCClassFactoryImpl implements TCClassFactory {
         return new LiteralTypesApplicator(clazz, encoding);
       } else if (clazz.isProxyClass()) {
         return new ProxyApplicator(encoding);
+      } else if (ClassUtils.isPortableReflectionClass(clazz.getPeerClass())) {
+        return new AccessibleObjectApplicator(encoding);
       } else if ("java.io.File".equals(name)) {
         return new FileApplicator(clazz, encoding);
       } else {

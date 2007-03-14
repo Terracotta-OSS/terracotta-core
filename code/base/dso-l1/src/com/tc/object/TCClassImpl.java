@@ -102,7 +102,7 @@ public class TCClassImpl implements TCClass {
 
     introspectFields(peer, factory);
     this.portableFields = createPortableFields();
-    this.useNonDefaultConstructor = isProxyClass || useNonDefaultConstructor;
+    this.useNonDefaultConstructor = isProxyClass || ClassUtils.isPortableReflectionClass(peer) || useNonDefaultConstructor;
     this.logicalSuperClass = logicalSuperClass;
   }
 

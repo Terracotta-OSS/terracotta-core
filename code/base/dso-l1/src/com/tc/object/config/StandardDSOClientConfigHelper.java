@@ -675,6 +675,9 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
     spec = getOrCreateSpec("java.util.WeakHashMap");
     addCustomAdapter("java.util.WeakHashMap", new JavaUtilWeakHashMapAdapter());
+    
+    spec = getOrCreateSpec("java.lang.reflect.AccessibleObject");
+    spec.addTransient("securityCheckCache");
 
     addReflectionPreInstrumentedSpec();
 
