@@ -1192,7 +1192,6 @@ public class SessionIntegratorFrame extends Frame {
     setMonitorTabEnabled(enabled);
 
     m_startButton.setEnabled(enabled || isWebServer1Enabled() || isWebServer2Enabled());
-    m_stopButton.setEnabled(enabled || isWebServer1Enabled() || isWebServer2Enabled());
 
     if (isL2Ready()) {
       queryRestart();
@@ -1393,7 +1392,6 @@ public class SessionIntegratorFrame extends Frame {
     storePreferences();
 
     m_startButton.setEnabled(enabled || isWebServer2Enabled() || isDsoEnabled());
-    m_stopButton.setEnabled(enabled || isWebServer2Enabled() || isDsoEnabled());
   }
 
   private boolean isWebServer2Enabled() {
@@ -1405,7 +1403,6 @@ public class SessionIntegratorFrame extends Frame {
     storePreferences();
 
     m_startButton.setEnabled(enabled || isWebServer1Enabled() || isDsoEnabled());
-    m_stopButton.setEnabled(enabled || isWebServer1Enabled() || isDsoEnabled());
   }
 
   private String getWebServer1Label() {
