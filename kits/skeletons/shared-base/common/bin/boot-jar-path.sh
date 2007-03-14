@@ -39,4 +39,7 @@ if test \! -f "${DSO_BOOT_JAR}"; then
   else
    "${JAVACMD}" -cp "${TC_JAR}" com.tc.object.tools.BootJarTool -o "${DSO_BOOT_JAR}"
   fi
+  if test $? != 0; then
+    exit 14
+  fi
 fi
