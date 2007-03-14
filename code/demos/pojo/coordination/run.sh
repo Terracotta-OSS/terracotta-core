@@ -23,5 +23,5 @@ TC_CONFIG_PATH="${CWD}/tc-config.xml"
 . "${TC_INSTALL_DIR}/bin/dso-env.sh" -q
 
 exec "${JAVA_HOME}/bin/java" ${TC_JAVA_OPTS} ${JAVA_OPTS} \
-  -cp "${CWD}/classes:${CWD}lib/concurrent-1.3.4.jar" \
+  -cp "${CWD}/classes:${CWD}/lib/concurrent-1.3.4.jar" \
    demo.coordination.Main "$@"
