@@ -9,6 +9,8 @@ import java.text.ParseException;
 
 public class ClassUtils {
 
+  private static final Class METHOD_CLASS = Method.class;
+
   public static ClassSpec parseFullyQualifiedFieldName(String fieldName) throws ParseException {
     ClassSpecImpl rv = new ClassSpecImpl();
     rv.parseFullyQualifiedFieldName(fieldName);
@@ -46,9 +48,9 @@ public class ClassUtils {
     if (((c.getModifiers() & 0x00004000) != 0) && "java.lang.Enum".equals(superClass.getName())) { return true; }
     return false;
   }
-  
+
   public static boolean isPortableReflectionClass(Class c) {
-    return (Method.class.getName().equals(c.getName()));
+    return METHOD_CLASS == c;
   }
 
   public interface ClassSpec {
