@@ -30,7 +30,7 @@ class TerracottaAnt < Builder::AntBuilder
     # which we use. (The ant-contrib JAR must therefore be in the CLASSPATH of the JVM
     # running JRuby here.)
     def initialize
-        super(:debug => false)
+        super(:debug => false, :backtrace => :filtered)
         taskdef(:name => 'propertyselector', :classname => 'net.sf.antcontrib.property.PropertySelector')
     end
 

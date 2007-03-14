@@ -349,6 +349,23 @@ class PathSet
     # constructor, so you can pass in all kinds of garbage and it'll get cleaned up
     # properly.
     def <<(*parts)
+=begin
+      parts.each do |part|
+        part = part.to_s
+        unless part.blank?
+          this_parts = part.split(SPLIT_REGEX)
+          this_parts.each do |this_part|
+            unless this_part.blank?
+              canonicalized = FilePath.new(this_part).canonicalize.to_s
+              unless @set.include?(canonicalized)
+                @parts << this_part
+                @set << canonicalized
+              end
+            end
+          end
+        end
+      end
+=end
         parts.each do |part|
             part = part.to_s
             unless part.blank?
