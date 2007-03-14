@@ -405,7 +405,7 @@ modules:
         - thirdparty
         - legacy-test-tree
         - dso-memory-datastore
-  - clustered-lucene-2.0:
+  - clustered-lucene-2.0.0:
       options:
         jdk: J2SE-1.5
         module: true
