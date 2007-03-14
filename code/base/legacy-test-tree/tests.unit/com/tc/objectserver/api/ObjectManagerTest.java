@@ -733,6 +733,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     assertEquals(lookedUpViaLookup.getObjectReferences(), lookedUpViaLookupObjectsForCreateIfNecessary
         .getObjectReferences());
 
+    // to work around timing problem with this test, let's look up some object id...
+    // this should block this thread until trasaction reading all object ids from bdb completes,
+    // at which point, it's ok to close the DB
+    persistor.getManagedObjectPersistor().getAllObjectIDs().contains(new ObjectID(111));
     store.shutdown();
     persistor.close();
   }
@@ -896,8 +900,9 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     objectIDs.add(id1);
 
-    boolean notPending = objectManager.lookupObjectsAndSubObjectsFor(null, context = new TestObjectManagerResultsContext(new HashMap(),
-                                                                                                    objectIDs), -1);
+    boolean notPending = objectManager
+        .lookupObjectsAndSubObjectsFor(null, context = new TestObjectManagerResultsContext(new HashMap(), objectIDs),
+                                       -1);
     assertFalse(notPending);
     assertEquals(0, context.getResults().size());
     objectManager.release(NULL_TRANSACTION, mo);
@@ -1486,7 +1491,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   }
 
   private static class TestResultsContext implements ObjectManagerResultsContext {
-    public Map        objects = new HashMap();
+    public Map        objects  = new HashMap();
     boolean           complete = false;
     private final Set ids;
     private final Set newIDS;
