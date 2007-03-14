@@ -1,6 +1,5 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
 package com.tc.object;
 
@@ -76,11 +75,6 @@ public class PortabilityImpl implements Portability {
     // Now check if it is a subclass of logically managed class
     for (Iterator i = classes.iterator(); i.hasNext();) {
       Class class2Inspect = (Class) i.next();
-
-      if (!isPortableClass(class2Inspect)) {
-        break;
-      }
-
       if (config.isLogical(class2Inspect.getName())) {
         NonPortableReason reason = new NonPortableReason(topLevelClass,
                                                          NonPortableReason.SUBCLASS_OF_LOGICALLY_MANAGED_CLASS);
