@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2007 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved
+
+-->
+<xml-fragment>
+  <dso>
+    <instrumented-classes>
+      <include>
+        <class-expression>org.apache.lucene.store..*</class-expression>
+      </include>
+    </instrumented-classes>
+    <locks>
+      <named-lock>
+        <lock-name>lockOne</lock-name>
+        <method-expression>* org.apache.lucene.store.RAMDirectory.renameFile(..)</method-expression>
+      </named-lock>
+      <named-lock>
+        <lock-name>lockOne</lock-name>
+        <method-expression>* org.apache.lucene.store.RAMDirectory.createOutput(..)</method-expression>
+      </named-lock>
+      <named-lock>
+        <lock-name>lockOne</lock-name>
+        <method-expression>* org.apache.lucene.store.RAMDirectory.deleteFile(..)</method-expression>
+      </named-lock>
+      <named-lock>
+        <lock-name>lockOne</lock-name>
+        <method-expression>* org.apache.lucene.store.RAMOutputStream.close(..)</method-expression>
+      </named-lock>
+<!--
+      -- not sure if we need these named-locks --
+      
+      <named-lock>
+        <lock-name>lockOne</lock-name>
+        <method-expression>* fileExists(..)</method-expression>
+      </named-lock>
+      <named-lock>
+        <lock-name>lockOne</lock-name>
+        <method-expression>*	fileLength(..)</method-expression>
+      </named-lock>
+      <named-lock>
+        <lock-name>lockOne</lock-name>
+        <method-expression>*	fileModified(..) </method-expression>
+      </named-lock>
+      <named-lock>
+        <lock-name>lockOne</lock-name>
+        <method-expression>*	list(..) </method-expression>
+      </named-lock>
+      <named-lock>
+        <lock-name>lockOne</lock-name>
+        <method-expression>*	makeLock(..) </method-expression>
+      </named-lock>
+      <named-lock>
+        <lock-name>lockOne</lock-name>
+        <method-expression>*	openInput(..) </method-expression>
+      </named-lock>
+      <named-lock>
+        <lock-name>lockOne</lock-name>
+        <method-expression>*	touchFile(..) </method-expression>
+      </named-lock>
+-->
+      <autolock>
+        <method-expression>* *..*.*(..)</method-expression>
+      </autolock>
+    </locks>
+  </dso>
+</xml-fragment>
