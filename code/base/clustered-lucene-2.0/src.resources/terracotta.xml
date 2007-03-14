@@ -7,12 +7,12 @@
 
 -->
 <xml-fragment>
-  <dso>
     <instrumented-classes>
       <include>
         <class-expression>org.apache.lucene.store..*</class-expression>
       </include>
     </instrumented-classes>
+    
     <locks>
       <named-lock>
         <lock-name>lockOne</lock-name>
@@ -30,8 +30,9 @@
         <lock-name>lockOne</lock-name>
         <method-expression>* org.apache.lucene.store.RAMOutputStream.close(..)</method-expression>
       </named-lock>
+      
 <!--
-      -- not sure if we need these named-locks --
+      *** not sure if we need these named-locks ***
       
       <named-lock>
         <lock-name>lockOne</lock-name>
@@ -62,9 +63,9 @@
         <method-expression>*	touchFile(..) </method-expression>
       </named-lock>
 -->
+
       <autolock>
         <method-expression>* *..*.*(..)</method-expression>
       </autolock>
     </locks>
-  </dso>
 </xml-fragment>

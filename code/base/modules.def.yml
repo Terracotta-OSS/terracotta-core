@@ -408,6 +408,7 @@ modules:
   - clustered-lucene-2.0:
       options:
         jdk: J2SE-1.5
+        module: true
       dependencies:
         - aspectwerkz
         - linked-child-process
