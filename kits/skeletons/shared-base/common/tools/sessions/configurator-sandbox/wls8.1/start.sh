@@ -33,6 +33,8 @@ if test "$2" != "nodso"; then
   JAVA_OPTIONS="${TC_JAVA_OPTS} ${JAVA_OPTS}"
   JAVA_OPTIONS="${JAVA_OPTIONS} -Dwebserver.log.name=${PORT}"
   JAVA_OPTIONS="${JAVA_OPTIONS} -Dcom.sun.management.jmxremote"
+  JAVA_OPTIONS="${JAVA_OPTIONS} -Dtc.node-name=weblogic-${PORT}"
+
   export JAVA_OPTIONS
 fi
 

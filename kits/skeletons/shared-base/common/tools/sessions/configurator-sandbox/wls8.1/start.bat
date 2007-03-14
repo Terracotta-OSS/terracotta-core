@@ -34,7 +34,7 @@ if %ERRORLEVEL% NEQ 0 (
 
 if ""%2"" == ""nodso"" goto doRunWLS
 
-set TC_CONFIG_PATH=%SANDBOX%\tomcat5.5\tc-config.xml
+set TC_CONFIG_PATH=%SANDBOX%\wls8.1\tc-config.xml
 call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q
 
 if %ERRORLEVEL% neq 0 goto end
@@ -42,7 +42,7 @@ if %ERRORLEVEL% neq 0 goto end
 set JAVA_OPTIONS=%JAVA_OPTS% %TC_JAVA_OPTS%
 set JAVA_OPTIONS=%JAVA_OPTIONS% -Dwebserver.log.name=%1
 set JAVA_OPTIONS=%JAVA_OPTIONS% -Dcom.sun.management.jmxremote
-set JAVA_OPTS=%JAVA_OPTS% -Dtc.node-name=weblogic-%1
+set JAVA_OPTIONS=%JAVA_OPTIONS% -Dtc.node-name=weblogic-%1
 
 :doRunWLS
 cd %~d0%~p0%1
