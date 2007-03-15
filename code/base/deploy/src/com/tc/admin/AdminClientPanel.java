@@ -14,7 +14,6 @@ import org.dijon.CheckBox;
 import org.dijon.Dialog;
 import org.dijon.DialogResource;
 import org.dijon.FrameResource;
-import org.dijon.HelpManager;
 import org.dijon.Label;
 import org.dijon.ScrollPane;
 import org.dijon.Separator;
@@ -62,7 +61,6 @@ import java.util.StringTokenizer;
 import java.util.prefs.Preferences;
 
 import javax.swing.Icon;
-import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -307,7 +305,7 @@ public class AdminClientPanel extends XContainer
     
     public void actionPerformed(ActionEvent ae) {
       block();
-      HelpManager.getInstance().showHelp((JComponent)AdminClientPanel.this);
+      BrowserLauncher.openURL("http://www.terracotta.org/kit/reflector?kitID=2.3&pageID=ConsoleGuide");
       unblock();
     }
   }
