@@ -102,7 +102,7 @@ begin
 						version = ""
 						artifactId = path.scan( /(.*?)\-\d.*?$/ ).join.to_s
 						version = path.scan( /.*?\-(\d.*?)\.jar$/ ).join.to_s
-						project.add Dependency.new( nil, artifactId, version )
+						project.add Dependency.new( nil, artifactId, version ) unless version.nil? or version.length == 0
 					end
 				end
 				# other projects
