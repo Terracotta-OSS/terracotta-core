@@ -26,6 +26,6 @@ set TC_INSTALL_DIR=%~d0%~p0..\..\..
 cd %~d0%~p0
 if not exist "%JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
 call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q tc-config.xml
-set JAVA_OPTS=%JAVA_OPTS% -Djava.awt.Window.locationByPlatform=true
-start "jtable" /B "%JAVA_HOME%\bin\java" %TC_JAVA_OPTS% %JAVA_OPTS% -cp classes demo.jtable.Main %*
+set JAVA_OPTS=%TC_JAVA_OPTS% -Djava.awt.Window.locationByPlatform=true %JAVA_OPTS%
+start "jtable" /B "%JAVA_HOME%\bin\java" %JAVA_OPTS% -cp classes demo.jtable.Main %*
 endlocal

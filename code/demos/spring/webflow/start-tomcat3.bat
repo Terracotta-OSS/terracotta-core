@@ -27,11 +27,12 @@ set TC_INSTALL_DIR=..\..\..
 set CATALINA_HOME=%TC_INSTALL_DIR%\vendors\tomcat5.5
 if not exist "%JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
 call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q tc-config.xml
-set JAVA_OPTS=%TC_JAVA_OPTS% %JAVA_OPTS% -Dcom.sun.management.jmxremote
-set JAVA_OPTS=%JAVA_OPTS% -Dcom.sun.management.jmxremote.port=8093
-set JAVA_OPTS=%JAVA_OPTS% -Dcom.sun.management.jmxremote.authenticate=false
-set JAVA_OPTS=%JAVA_OPTS% -Dcom.sun.management.jmxremote.ssl=false
-set JAVA_OPTS=%JAVA_OPTS% -Dtc.node-name=Node3
+set OPTS=%TC_JAVA_OPTS% -Dcom.sun.management.jmxremote
+set OPTS=%OPTS% -Dcom.sun.management.jmxremote.port=8093
+set OPTS=%OPTS% -Dcom.sun.management.jmxremote.authenticate=false
+set OPTS=%OPTS% -Dcom.sun.management.jmxremote.ssl=false
+set OPTS=%OPTS% -Dtc.node-name=Node3
+set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 set CATALINA_BASE=tomcat3
 start "terracotta for spring: webflow sample: 8083" "%CATALINA_HOME%\bin\catalina.bat" run
 endlocal

@@ -39,10 +39,10 @@ call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q
 
 if %ERRORLEVEL% neq 0 goto end
 
-set JAVA_OPTIONS=%JAVA_OPTS% %TC_JAVA_OPTS%
-set JAVA_OPTIONS=%JAVA_OPTIONS% -Dwebserver.log.name=%1
-set JAVA_OPTIONS=%JAVA_OPTIONS% -Dcom.sun.management.jmxremote
-set JAVA_OPTIONS=%JAVA_OPTIONS% -Dtc.node-name=weblogic-%1
+set OPTS=%TC_JAVA_OPTS% -Dwebserver.log.name=%1
+set OPTS=%OPTS% -Dcom.sun.management.jmxremote
+set OPTS=%OPTS% -Dtc.node-name=weblogic-%1
+set JAVA_OPTIONS=%OPTS% %JAVA_OPTS%
 
 :doRunWLS
 cd %~d0%~p0%1
