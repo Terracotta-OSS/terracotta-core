@@ -142,11 +142,11 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
    * field. In such situation, we need to instantiate the added delegate field in the constructor.
    */
   private class LogicalInitMethodAdapter extends LocalVariablesSorter implements Opcodes {
+    private boolean methodEnter = false;
     private int[] localVariablesForMethodCall;
 
     public LogicalInitMethodAdapter(int access, String methodDesc, MethodVisitor mv) {
       super(access, methodDesc, mv);
-
     }
 
     private void storeStackValuesToLocalVariables(String methodInsnDesc) {
@@ -169,18 +169,19 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
 
     public void visitMethodInsn(int opcode, String owner, String name, String desc) {
       String superClassNameSlashes = spec.getSuperClassNameSlashes();
-      if (INVOKESPECIAL == opcode && owner.equals(superClassNameSlashes) && "<init>".equals(name)) {
+      if (!methodEnter && INVOKESPECIAL == opcode && owner.equals(superClassNameSlashes) && "<init>".equals(name)) {
+        methodEnter = true;
         storeStackValuesToLocalVariables(desc);
         loadLocalVariables(desc);
         super.visitMethodInsn(opcode, owner, name, desc);
-        mv.visitVarInsn(ALOAD, 0);
-        mv.visitTypeInsn(NEW, spec.getSuperClassNameSlashes());
-        mv.visitInsn(DUP);
+        super.visitVarInsn(ALOAD, 0);
+        super.visitTypeInsn(NEW, spec.getSuperClassNameSlashes());
+        super.visitInsn(DUP);
         loadLocalVariables(desc);
 
         String delegateFieldName = getDelegateFieldName(superClassNameSlashes);
-        mv.visitMethodInsn(INVOKESPECIAL, superClassNameSlashes, "<init>", desc);
-        mv.visitMethodInsn(INVOKESPECIAL, spec.getClassNameSlashes(),
+        super.visitMethodInsn(INVOKESPECIAL, superClassNameSlashes, "<init>", desc);
+        super.visitMethodInsn(INVOKESPECIAL, spec.getClassNameSlashes(),
                            ByteCodeUtil.fieldSetterMethod(delegateFieldName), "(L" + superClassNameSlashes + ";)V");
 
       } else {
