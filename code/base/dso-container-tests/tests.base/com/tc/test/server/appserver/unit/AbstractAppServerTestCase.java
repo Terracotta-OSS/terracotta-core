@@ -155,6 +155,11 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
   private final Object                    workingDirLock   = new Object();
   private final List                      appservers       = new ArrayList();
+  private final List                      dsoServerJvmArgs = new ArrayList();
+  private final List                      roots            = new ArrayList();
+  private final List                      locks            = new ArrayList();
+  private final List                      includes         = new ArrayList();
+
   private TestConfigObject                config;
   private File                            serverInstallDir;
   private File                            workingDir;
@@ -165,9 +170,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   private File                            warFile;
   private DsoServer                       dsoServer;
   private TerracottaServerConfigGenerator configGen;
-  private List                            dsoServerJvmArgs = new ArrayList();
-  private List                            roots            = new ArrayList();
-  private List                            locks            = new ArrayList();
+
   private boolean                         isSynchronousWrite;
 
   public AbstractAppServerTestCase() {
@@ -296,6 +299,10 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
    */
   protected final void addLocks(List locksToAdd) {
     locks.addAll(locksToAdd);
+  }
+
+  protected final void addInclude(String expression) {
+    includes.add(expression);
   }
 
   /**
@@ -510,6 +517,10 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     configBuilder.addInclude("com.tctest..*");
     configBuilder.addInclude("com.tctest..*$*");
 
+    for (Iterator iter = includes.iterator(); iter.hasNext();) {
+      configBuilder.addInclude((String) iter.next());
+    }
+
     for (Iterator iter = roots.iterator(); iter.hasNext();) {
       Root root = (Root) iter.next();
       configBuilder.addRoot(root.fieldName(), root.rootName());
@@ -526,5 +537,4 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
     return configGen = new TerracottaServerConfigGenerator(installation.getDataDirectory(), configBuilder);
   }
-
 }
