@@ -258,11 +258,10 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     try {
       String bootPath = getBootPath();
       File dir = new File(getProductDirectory(), "sharedqueue");
-      File lib = new File(dir, "lib");
-      File servlet = new File(lib, "javax.servlet.jar");
-      File jetty = new File(lib, "org.mortbay.jetty-4.2.20.jar");
       String pathSep = System.getProperty("path.separator");
-      String classpath = "classes" + pathSep + servlet.getAbsolutePath() + pathSep + jetty;
+      String fileSep = System.getProperty("file.separator");
+      String classpath = "classes" + pathSep + "lib" + fileSep + "javax.servlet.jar" + pathSep + "lib" + fileSep
+                         + "org.mortbay.jetty-4.2.20.jar";
       String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.config=tc-config.xml",
           "-Djava.awt.Window.locationByPlatform=true", "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
           "-Xbootclasspath/p:" + bootPath, "-cp", classpath, "demo.sharedqueue.Main" };
