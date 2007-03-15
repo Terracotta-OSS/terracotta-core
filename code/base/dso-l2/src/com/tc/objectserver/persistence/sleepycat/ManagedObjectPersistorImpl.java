@@ -355,23 +355,41 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
 
     public void run() {
       ObjectIDSet2 tmp = new ObjectIDSet2();
+      PersistenceTransaction tx = null;
+      Cursor cursor = null;
       try {
-        PersistenceTransaction tx = ptp.newTransaction();
-        Cursor cursor = objectDB.openCursor(pt2nt(tx), objectDBCursorConfig);
+        tx = ptp.newTransaction();
+        cursor = objectDB.openCursor(pt2nt(tx), objectDBCursorConfig);
         DatabaseEntry key = new DatabaseEntry();
         DatabaseEntry value = new DatabaseEntry();
         while (OperationStatus.SUCCESS.equals(cursor.getNext(key, value, LockMode.DEFAULT))) {
           tmp.add(new ObjectID(Conversion.bytes2Long(key.getData())));
         }
-        cursor.close();
-        tx.commit();
       } catch (Throwable t) {
-        throw new DBException(t);
+        logger.error("Error Reading Object IDs", t);
       } finally {
+        safeClose(cursor);
+        safeCommit(tx);
         set.stopPopulating(tmp);
         tmp = null;
       }
     }
+    private void safeCommit(PersistenceTransaction tx) {
+      if (tx == null) return;
+      try {
+        tx.commit();
+      } catch (Throwable t) {
+        logger.error("Error Committing Transaction", t);
+      }      
+    }
+    private void safeClose(Cursor c) {
+      if (c == null)return;
+      
+      try {
+        c.close();
+      } catch (DatabaseException e) {
+        logger.error("Error closing cursor", e);
+      }
+    }
   }
-
 }
