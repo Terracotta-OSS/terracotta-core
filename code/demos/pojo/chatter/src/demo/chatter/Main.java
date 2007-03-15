@@ -223,7 +223,7 @@ public class Main extends JFrame implements ActionListener, ChatterDisplay, Wind
 		   
 		final MBeanServer server = (MBeanServer)servers.get(0);
 		final ObjectName clusterBean = new ObjectName(
-				"com.terracottatech:type=Terracotta Cluster,name=Terracotta Cluster Bean");
+				"org.terracotta:type=Terracotta Cluster,name=Terracotta Cluster Bean");
 		final ObjectName delegateName = ObjectName
 				.getInstance("JMImplementation:type=MBeanServerDelegate");
 		final java.util.List clusterBeanBag = new java.util.ArrayList();
