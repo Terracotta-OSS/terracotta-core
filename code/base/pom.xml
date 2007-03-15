@@ -14,7 +14,7 @@
     <module>clustered-cglib-2.1.3</module>
     <module>clustered-commons-collections-3.1</module>
     <module>clustered-iBatis-2.2.0</module>
-    <module>clustered-lucene-2.2.0</module>
+    <module>clustered-lucene-2.0.0</module>
     <module>common</module>
     <module>deploy</module>
     <module>dso-alt-boot-jar-tests</module>
