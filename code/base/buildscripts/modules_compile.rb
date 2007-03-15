@@ -78,6 +78,14 @@ class BuildSubtree
             end
 
             create_build_data(config_source, build_results, build_environment)
+
+            if self.build_module.module?
+              build_src_dir = FilePath.new(
+                  build_results.classes_directory(self), 'src')
+              ant.copy(:todir => build_src_dir.to_s) {
+                ant.fileset(:dir => source_root.to_s)
+              }
+            end
         end
 
         if @resources_exists
