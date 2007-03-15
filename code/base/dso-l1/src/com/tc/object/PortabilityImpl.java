@@ -33,9 +33,6 @@ public class PortabilityImpl implements Portability {
     nonInstrumentedClass.add("java.lang.reflect.AccessibleObject");
     nonInstrumentedClass.add("java.util.concurrent.locks.AbstractQueuedSynchronizer");
     nonInstrumentedClass.add("java.util.concurrent.locks.AbstractQueuedSynchronizer$Node");
-    nonInstrumentedClass.add("com.ibatis.sqlmap.engine.accessplan.BaseAccessPlan");
-    // nonInstrumentedClass.add("java.util.concurrent.ConcurrentHashMap$SimpleEntry");
-    // nonInstrumentedClass.add("java.util.concurrent.ConcurrentHashMap$EntryIterator");
   }
 
   private final LiteralValues         literalValues        = new LiteralValues();
