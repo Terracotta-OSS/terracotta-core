@@ -16,6 +16,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -70,14 +71,23 @@ public class BootJarView extends ViewPart
     public Object[] getElements(Object parent) {
       ArrayList list = new ArrayList();
 
+      if(bootJarFile != null && !bootJarFile.isSynchronized(IResource.DEPTH_ZERO)) {
+        try {
+          bootJarFile.refreshLocal(IResource.DEPTH_ZERO, null);
+        } catch(CoreException ce) {/**/}
+      }
+      
       if(bootJarFile == null ||
-          !TcPlugin.getDefault().hasTerracottaNature(bootJarFile.getProject())) {
+         !bootJarFile.exists() ||
+         !TcPlugin.getDefault().hasTerracottaNature(bootJarFile.getProject()))
+      {
         return new Object[0];
       }
 
+      ZipFile zipFile = null;
       try {
         String fileName = bootJarFile.getLocation().toOSString();
-        ZipFile zipFile = new ZipFile(fileName);
+        zipFile = new ZipFile(fileName);
         Enumeration entries = zipFile.entries();
         while(entries.hasMoreElements()) {
           ZipEntry e = (ZipEntry)entries.nextElement();
@@ -90,6 +100,12 @@ public class BootJarView extends ViewPart
         }
       } catch(IOException ioe) {
         ioe.printStackTrace();
+      } finally {
+        if(zipFile != null) {
+          try {
+            zipFile.close();
+          } catch(IOException ioe) {/**/}
+        }
       }
       
       Collections.sort(list);
@@ -120,17 +136,16 @@ public class BootJarView extends ViewPart
   
   public static IFile getBootJarFile() {
     IWorkbenchWindow window      = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-    String           bootJarName = safeGetInstallBootJarName();
     
     if(window != null) {
       ISelection selection = window.getSelectionService().getSelection();
       
       if(selection != null) {
-        IJavaProject javaProject  = ActionUtil.locateSelectedJavaProject(selection);
+        IJavaProject javaProject = ActionUtil.locateSelectedJavaProject(selection);
 
         if(javaProject != null) {
           IProject project      = javaProject.getProject();
-          IFile    localBootJar = project.getFile(bootJarName);
+          IFile    localBootJar = project.getFile(safeGetInstallBootJarName(javaProject));
 
           if(localBootJar != null) {
             return localBootJar;
@@ -139,10 +154,26 @@ public class BootJarView extends ViewPart
       }
     }
     
+    String     bootJarName = safeGetInstallBootJarName();
     IPath      bootJarPath = BootJarHelper.getHelper().getBootJarPath(bootJarName);
     IWorkspace workspace   = ResourcesPlugin.getWorkspace(); 
     
     return workspace.getRoot().getFileForLocation(bootJarPath);
+  }
+
+
+  private static String safeGetInstallBootJarName(IJavaProject javaProject) {
+    try {
+      String portablePath = null;
+      IPath jrePath = JavaRuntime.computeJREEntry(javaProject).getPath();
+      if(jrePath != null) {
+        portablePath = jrePath.toPortableString();
+      }
+      return BootJarHelper.getHelper().getBootJarName(portablePath);
+    } catch(CoreException ce) {
+      ce.printStackTrace();
+      return null;
+    }
   }
 
   private static String safeGetInstallBootJarName() {
@@ -156,34 +187,38 @@ public class BootJarView extends ViewPart
   
   public boolean visit(IResourceDelta delta) {
     if(viewer == null ||
-        viewer.getTable().isDisposed() ||
-        PlatformUI.getWorkbench().isClosing()) {
+       viewer.getTable().isDisposed() ||
+       PlatformUI.getWorkbench().isClosing()) {
       return false;
     }
     
-    if((delta.getFlags() & IResourceDelta.DESCRIPTION) != 0) {
+    if((delta.getFlags() & IResourceDelta.DESCRIPTION) != 0 || isAffected(delta)) {
       bootJarFile = getBootJarFile();
       viewer.setContentProvider(new ViewContentProvider());
       viewer.setInput(getViewSite());
       return false;
-    } else if(delta.getKind() == IResourceDelta.CHANGED) {
-      IResource res = delta.getResource();
-        
-      if(res instanceof IFile) {
-        IProject project = res.getProject();
-
-        if(project != null && (delta.getFlags() & IResourceDelta.CONTENT) != 0) {
-          bootJarFile = getBootJarFile();
-          if(res.equals(bootJarFile)) {
-            viewer.setContentProvider(new ViewContentProvider());
-            viewer.setInput(getViewSite());
-            return false;
-          }
-        }
-      }
     }
     
     return true;
+  }
+  
+  private boolean isAffected(IResourceDelta delta) {
+    IResource res = delta.getResource();
+    
+    if(res instanceof IFile) {
+      if(res.equals(bootJarFile)) {
+        return true;
+      }
+
+      IResourceDelta[] children = delta.getAffectedChildren();
+      for(int i = 0; i < children.length; i++) {
+        if(isAffected(children[i])) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
   
   public void resourceChanged(final IResourceChangeEvent event){

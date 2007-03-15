@@ -202,7 +202,7 @@ public class BuildBootJarAction extends Action
       throw new RuntimeException(errMonitor.getContents());
     }
     else {
-      project.refreshLocal(IResource.DEPTH_ONE, null);
+      project.refreshLocal(IResource.DEPTH_INFINITE, null);
     }
   }
   
