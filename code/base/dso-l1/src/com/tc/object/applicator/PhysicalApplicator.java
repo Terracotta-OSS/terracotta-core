@@ -45,12 +45,13 @@ public class PhysicalApplicator extends BaseApplicator {
     Map map = new HashMap();
     Map cloned = new IdentityHashMap();
 
-    TransparentAccess ta = (TransparentAccess) source;
     TransparentAccess da = (TransparentAccess) dest;
 
-    Manageable sourceManageable = (Manageable) ta;
+    Manageable sourceManageable = (Manageable) source;
     Manageable destManaged = (Manageable) da;
-    ta.__tc_getallfields(map);
+
+    getAllFields(source, map);
+
     for (Iterator i = map.keySet().iterator(); i.hasNext();) {
       String k = (String) i.next();
       Object v = map.get(k);
@@ -67,8 +68,7 @@ public class PhysicalApplicator extends BaseApplicator {
     if (!(pojo instanceof TransparentAccess)) return addTo;
 
     Map map = new HashMap();
-    TransparentAccess ta = (TransparentAccess) pojo;
-    ta.__tc_getallfields(map);
+    getAllFields(pojo, map);
 
     TCField[] fields = clazz.getPortableFields();
     if (clazz.isNonStaticInner()) {
@@ -115,7 +115,7 @@ public class PhysicalApplicator extends BaseApplicator {
         fieldValues = new HashMap();
         if (pojo instanceof TransparentAccess) {
           // only need to do this once. The generated method takes care of walking up the class hierarchy
-          ((TransparentAccess) pojo).__tc_getallfields(fieldValues);
+          getAllFields(pojo, fieldValues);
         } else {
           throw new AssertionError("wrong type: " + pojo.getClass());
         }
@@ -163,4 +163,15 @@ public class PhysicalApplicator extends BaseApplicator {
   public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {
     throw new UnsupportedOperationException();
   }
+
+  private static void getAllFields(Object o, Map dest) {
+    // This is ugly, but doing the getStackTrace stuff inside of __tc_getallfields() seems
+    // to trip a hotspot bug (DEV-67)
+    if (o instanceof Throwable) {
+      // This has the side effect of getting the stack trace initilized in the target object
+      ((Throwable) o).getStackTrace();
+    }
+    ((TransparentAccess) o).__tc_getallfields(dest);
+  }
+
 }
