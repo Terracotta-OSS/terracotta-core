@@ -45,7 +45,7 @@
     <module>linked-child-process</module>
     <module>management</module>
     <module>modules-common-1.0</module>
-    <module>services-tests</module>
+    <!--module>services-tests</module-->
     <module>simulator</module>
     <module>thirdparty</module>
     <module>ui-configurator</module>
