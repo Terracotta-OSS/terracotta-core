@@ -44,6 +44,13 @@
       <systemPath>${basedir}/lib/tcconfigV2.jar</systemPath>
     </dependency>
     <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tctestconfig</artifactId>
+      <version>test</version>
+      <scope>system</scope>
+      <systemPath>${basedir}/lib.tests.unit/tctest-xmlbeans-generated.jar</systemPath>
+    </dependency>
+    <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
       <version>1.2.9</version>
