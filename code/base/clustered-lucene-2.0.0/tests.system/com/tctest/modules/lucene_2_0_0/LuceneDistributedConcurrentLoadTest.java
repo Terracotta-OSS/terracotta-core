@@ -5,21 +5,21 @@ import com.tctest.TransparentTestIface;
 
 public class LuceneDistributedConcurrentLoadTest extends TransparentTestBase {
 
-  public LuceneDistributedConcurrentLoadTest() {
-    disableAllUntil("2007-02-28");
-  }
+	public LuceneDistributedConcurrentLoadTest() {
+		disableAllUntil("2008-02-28");
+	}
 
-  private static final int TIMEOUT = 10 * 60 * 1000; // 10min;
+	private static final int TIMEOUT = 10 * 60 * 1000; // 10min;
 
-  protected Class getApplicationClass() {
-    // return LuceneDistributedConcurrentLoadTestApp.class;
-    return null;
-  }
+	protected Class getApplicationClass() {
+		// return LuceneDistributedConcurrentLoadTestApp.class;
+		return null;
+	}
 
-  public void doSetUp(TransparentTestIface t) throws Exception {
-    t.getTransparentAppConfig().setClientCount(2);
-    t.getTransparentAppConfig().setIntensity(1);
-    t.initializeTestRunner();
-    t.getRunnerConfig().setExecutionTimeout(TIMEOUT);
-  }
+	public void doSetUp(TransparentTestIface t) throws Exception {
+		t.getTransparentAppConfig().setClientCount(2);
+		t.getTransparentAppConfig().setIntensity(1);
+		t.initializeTestRunner();
+		t.getRunnerConfig().setExecutionTimeout(TIMEOUT);
+	}
 }

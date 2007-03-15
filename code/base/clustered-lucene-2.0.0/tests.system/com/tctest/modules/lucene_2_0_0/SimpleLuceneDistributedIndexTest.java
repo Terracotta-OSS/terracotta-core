@@ -7,16 +7,20 @@ import com.tctest.TransparentTestIface;
 
 public class SimpleLuceneDistributedIndexTest extends TransparentTestBase {
 
-  private static final int TIMEOUT = 10 * 60 * 1000; // 10min;
+	private static final int TIMEOUT = 10 * 60 * 1000; // 10min;
 
-  protected Class getApplicationClass() {
-    return SimpleLuceneDistributedIndexApp.class;
-  }
+	public SimpleLuceneDistributedIndexTest() {
+		disableAllUntil("2008-02-28");
+	}
 
-  public void doSetUp(TransparentTestIface t) throws Exception {
-    t.getTransparentAppConfig().setClientCount(2);
-    t.getTransparentAppConfig().setIntensity(1);
-    t.initializeTestRunner();
-    t.getRunnerConfig().setExecutionTimeout(TIMEOUT);
-  }
+	protected Class getApplicationClass() {
+		return SimpleLuceneDistributedIndexApp.class;
+	}
+
+	public void doSetUp(TransparentTestIface t) throws Exception {
+		t.getTransparentAppConfig().setClientCount(2);
+		t.getTransparentAppConfig().setIntensity(1);
+		t.initializeTestRunner();
+		t.getRunnerConfig().setExecutionTimeout(TIMEOUT);
+	}
 }

@@ -1,2 +1,2 @@
 include-dso-boot-jar=true
-timeout=1800
+timeout=90

@@ -8,9 +8,11 @@
 -->
 <xml-fragment>
     <instrumented-classes>
-      <include>
-        <class-expression>org.apache.lucene.store..*</class-expression>
-      </include>
+		<include>
+    		<class-expression>
+    			org.apache.lucene.store..*
+    		</class-expression>
+		</include>
     </instrumented-classes>
     
     <locks>
@@ -30,42 +32,8 @@
         <lock-name>lockOne</lock-name>
         <method-expression>* org.apache.lucene.store.RAMOutputStream.close(..)</method-expression>
       </named-lock>
-      
-<!--
-      *** not sure if we need these named-locks ***
-      
-      <named-lock>
-        <lock-name>lockOne</lock-name>
-        <method-expression>* fileExists(..)</method-expression>
-      </named-lock>
-      <named-lock>
-        <lock-name>lockOne</lock-name>
-        <method-expression>*	fileLength(..)</method-expression>
-      </named-lock>
-      <named-lock>
-        <lock-name>lockOne</lock-name>
-        <method-expression>*	fileModified(..) </method-expression>
-      </named-lock>
-      <named-lock>
-        <lock-name>lockOne</lock-name>
-        <method-expression>*	list(..) </method-expression>
-      </named-lock>
-      <named-lock>
-        <lock-name>lockOne</lock-name>
-        <method-expression>*	makeLock(..) </method-expression>
-      </named-lock>
-      <named-lock>
-        <lock-name>lockOne</lock-name>
-        <method-expression>*	openInput(..) </method-expression>
-      </named-lock>
-      <named-lock>
-        <lock-name>lockOne</lock-name>
-        <method-expression>*	touchFile(..) </method-expression>
-      </named-lock>
--->
-
-      <autolock>
-        <method-expression>* *..*.*(..)</method-expression>
-      </autolock>
+	  <autolock>
+      	<method-expression>* *..*.*(..)</method-expression>
+      </autolock>      
     </locks>
 </xml-fragment>
