@@ -102,6 +102,8 @@ import java.util.Set;
 
 public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
+  private static final String                    CGLIB_PATTERN                      = "$$EnhancerByCGLIB$$";
+
   private static final LiteralValues             literalValues                      = new LiteralValues();
 
   private static final TCLogger                  logger                             = CustomerLogging
@@ -159,6 +161,8 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   private ModuleSpec[]                           moduleSpecs                        = null;
 
   private final ModulesContext                   modulesContext                     = new ModulesContext();
+
+  private volatile boolean                       allowCGLIBInstrumentation          = false;
 
   public StandardDSOClientConfigHelper(L1TVSConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
@@ -248,6 +252,10 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     logger.debug("distributed-methods: " + this.distributedMethods);
 
     rewriteHashtableAutLockSpecIfNecessary();
+  }
+
+  public void allowCGLIBInstrumentation() {
+    this.allowCGLIBInstrumentation = true;
   }
 
   private void addUnsupportedJavaUtilConcurrentTypes() {
@@ -492,7 +500,8 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
                                   "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
     spec.addDistributedMethodCall("fireTreeStructureChanged",
                                   "(Ljava/lang/Object;[Ljava/lang/Object;[I[Ljava/lang/Object;)V", false);
-    spec.addDistributedMethodCall("fireTreeStructureChanged", "(Ljava/lang/Object;Ljavax/swing/tree/TreePath;)V", false);
+    spec
+        .addDistributedMethodCall("fireTreeStructureChanged", "(Ljava/lang/Object;Ljavax/swing/tree/TreePath;)V", false);
 
     spec = getOrCreateSpec("javax.swing.AbstractListModel");
     spec.addTransient("listenerList");
@@ -675,7 +684,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
     spec = getOrCreateSpec("java.util.WeakHashMap");
     addCustomAdapter("java.util.WeakHashMap", new JavaUtilWeakHashMapAdapter());
-    
+
     spec = getOrCreateSpec("java.lang.reflect.AccessibleObject");
     spec.addTransient("securityCheckCache");
 
@@ -1346,6 +1355,14 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
       return cacheIsAdaptable(fullClassName, false);
     }
 
+    if (fullClassName.indexOf(CGLIB_PATTERN) >= 0) {
+      if (!allowCGLIBInstrumentation) {
+        logger.error("Refusing to instrument CGLIB generated proxy type " + fullClassName
+                     + " (CGLIB terracotta plugin not installed)");
+        return cacheIsAdaptable(fullClassName, false);
+      }
+    }
+
     String outerClassname = outerClassnameWithoutInner(fullClassName);
     if (isLogical(outerClassname)) {
       // We make inner classes of logical classes not instrumented while logical
@@ -1428,7 +1445,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     // XXX need to get a real ClassInfo
     return classInfoFactory.getClassInfo(className);
   }
-  
+
   public String getPostCreateMethodIfDefined(String className) {
     TransparencyClassSpec spec = getSpec(className);
     if (spec != null) {
@@ -1651,7 +1668,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
       Set bjClasses = bootJar.getAllPreInstrumentedClasses();
       bootJarPopulation = bjClasses.size();
       TransparencyClassSpec[] allSpecs = getAllSpecs();
-      for (int i=0; i<allSpecs.length; i++) {
+      for (int i = 0; i < allSpecs.length; i++) {
         TransparencyClassSpec classSpec = allSpecs[i];
         String message = "";
         if (classSpec.isPreInstrumented()) {
@@ -1693,7 +1710,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   }
 
   public DistributedMethodSpec getDmiSpec(int modifiers, String className, String methodName, String description,
-                                         String[] exceptions) {
+                                          String[] exceptions) {
     if (Modifier.isStatic(modifiers) || "<init>".equals(methodName) || "<clinit>".equals(methodName)) { return null; }
     MemberInfo methodInfo = getMemberInfo(modifiers, className, methodName, description, exceptions);
     for (Iterator i = distributedMethods.iterator(); i.hasNext();) {
