@@ -3,7 +3,12 @@
  */
 package com.tc.admin;
 
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.dijon.Button;
 import org.dijon.CheckBox;
 import org.dijon.Dialog;
@@ -42,9 +47,11 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -598,6 +605,18 @@ public class AdminClientPanel extends XContainer
       Preferences updateCheckerPrefs = getUpdateCheckerPrefs();
       boolean shouldCheck = updateCheckerPrefs.getBoolean("checking-enabled", true);
       
+      Logger.getLogger("org.apache.commons.httpclient.HttpClient").setLevel(Level.OFF);
+      Logger.getLogger("org.apache.commons.httpclient.params.DefaultHttpParams").setLevel(Level.OFF);
+      Logger.getLogger("org.apache.commons.httpclient.methods.GetMethod").setLevel(Level.OFF);
+      Logger.getLogger("org.apache.commons.httpclient.HttpMethodDirector").setLevel(Level.OFF);
+      Logger.getLogger("org.apache.commons.httpclient.HttpConnection").setLevel(Level.OFF);
+      Logger.getLogger("org.apache.commons.httpclient.HttpMethodBase").setLevel(Level.OFF);
+      Logger.getLogger("org.apache.commons.httpclient.HttpState").setLevel(Level.OFF);
+      Logger.getLogger("org.apache.commons.httpclient.HttpParser").setLevel(Level.OFF);
+      Logger.getLogger("org.apache.commons.httpclient.cookie.CookieSpec").setLevel(Level.OFF);
+      Logger.getLogger("httpclient.wire.header").setLevel(Level.OFF);
+      Logger.getLogger("httpclient.wire.content").setLevel(Level.OFF);
+      
       if(shouldCheck) {
         long nextCheckTime = updateCheckerPrefs.getLong("next-check-time", 0L);
         
@@ -693,12 +712,12 @@ public class AdminClientPanel extends XContainer
     }
     
     URL constructCheckURL() throws MalformedURLException {
-      String defaultPropsUrl = "http://www.terracottatech.com/updateCheck/1.0/update-list.properties";
+      String defaultPropsUrl = "http://www.terracotta.org/kit/reflector?kitID=default&pageID=update.properties";
       String propsUrl = System.getProperty("terracotta.update-checker.url", defaultPropsUrl);
       StringBuffer sb = new StringBuffer(propsUrl);
       ProductInfo productInfo = getProductInfo();
       
-      sb.append("?os-name=");
+      sb.append("&os-name=");
       sb.append(URLEncoder.encode(System.getProperty("os.name")));
       sb.append("&jvm-name=");
       sb.append(URLEncoder.encode(System.getProperty("java.vm.name")));
@@ -726,6 +745,24 @@ public class AdminClientPanel extends XContainer
                                     JOptionPane.INFORMATION_MESSAGE);
     }
     
+    public Properties getResponseBody(URL url, HttpClient client) throws ConnectException, IOException {
+      GetMethod get = new GetMethod(url.toString());
+
+      get.setFollowRedirects(true);
+      try {
+        int status = client.executeMethod(get);
+        if (status != HttpStatus.SC_OK) {
+          throw new ConnectException("The http client has encountered a status code other than ok for the url: " + url
+                                     + " status: " + HttpStatus.getStatusText(status));
+        }
+        Properties props = new Properties();
+        props.load(get.getResponseBodyAsStream());
+        return props;
+      } finally {
+        get.releaseConnection();
+      }
+    }
+
     void startUpdateCheck(final boolean wasPrompted) {
       Thread t = new Thread() {
         public void run() {
@@ -738,9 +775,8 @@ public class AdminClientPanel extends XContainer
             String version = getProductInfo().getVersion();
             if(version.indexOf('.') != -1) {
               URL url = constructCheckURL();
-              is = url.openStream();
-              Properties props = new Properties();
-              props.load(is);
+              HttpClient httpClient = new HttpClient();
+              Properties props = getResponseBody(url, httpClient);
               
               String propVal = props.getProperty("general.notice");
               if(propVal != null && (propVal = propVal.trim()) != null && propVal.length() > 0) {
