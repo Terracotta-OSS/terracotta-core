@@ -17,6 +17,7 @@ import org.apache.lucene.search.Hit;
 import org.apache.lucene.search.Hits;
 
 import com.tc.util.Assert;
+import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -40,25 +41,19 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
 
 	    final String testClass = RAMDirectoryTestApp.class.getName();
 		config.addIncludePattern(testClass + "$*");
+		config.addAutolock("* *..*.*(..)", ConfigLockLevel.WRITE);
 		
 		final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
-		final java.lang.reflect.Field[] fields = RAMDirectoryTestApp.class
-				.getDeclaredFields();
-		for (int pos = 0; pos < fields.length; ++pos) {
-			final Class fieldType = fields[pos].getType();
-			if (fieldType == CyclicBarrier.class
-					|| fieldType == RAMDirectory.class) {
-				spec.addRoot(fields[pos].getName(), fields[pos].getName());
-			}
-		}
+		spec.addRoot("barrier", "barrier");
+		spec.addRoot("clusteredDirectory", "clusteredDirectory");
 	}
 
 	public RAMDirectoryTestApp(final String appId, final ApplicationConfig cfg,
 			final ListenerProvider listenerProvider) {
 		super(appId, cfg, listenerProvider);
-		barrier = new CyclicBarrier(getParticipantCount());
 		clusteredDirectory = new RAMDirectory();
 		analyzer = new StandardAnalyzer();
+		barrier = new CyclicBarrier(getParticipantCount());
 	}
 	
 	protected void runTest() throws Throwable {

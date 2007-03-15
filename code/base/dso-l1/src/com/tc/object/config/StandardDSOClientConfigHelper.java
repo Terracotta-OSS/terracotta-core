@@ -1373,8 +1373,10 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
     // If a root is defined then we automagically instrument
     if (classContainsAnyRoots(fullClassName)) { return cacheIsAdaptable(fullClassName, true); }
+
     // custom adapters trump config.
     if (hasCustomAdapter(fullClassName)) { return cacheIsAdaptable(fullClassName, true); }
+
     // existing class specs trump config
     if (hasSpec(fullClassName)) { return cacheIsAdaptable(fullClassName, true); }
 
@@ -1817,13 +1819,11 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
         return this.modules;
       } else {
         // this could happen only in test
-        synchronized (this) {
-          if (modulesInitialized) {
-            return Modules.Factory.newInstance();
-          } else {
-            modulesInitialized = true;
-            return this.modules;
-          }
+        if (modulesInitialized) {
+          return Modules.Factory.newInstance();
+        } else {
+          modulesInitialized = true;
+          return this.modules;
         }
       }
     }

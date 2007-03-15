@@ -32,8 +32,5 @@
         <lock-name>lockOne</lock-name>
         <method-expression>* org.apache.lucene.store.RAMOutputStream.close(..)</method-expression>
       </named-lock>
-	  <autolock>
-      	<method-expression>* *..*.*(..)</method-expression>
-      </autolock>      
     </locks>
 </xml-fragment>

@@ -36,50 +36,54 @@ public class ModulesLoader {
 
   private static final TCLogger logger = TCLogging.getLogger(ModulesLoader.class);
 
+  private static final Object   lock   = new Object();
+
   private ModulesLoader() {
     // cannot be instantiated
   }
 
   public static void initPlugins(final DSOClientConfigHelper configHelper, final boolean forBootJar) {
-    EmbeddedOSGiRuntime osgiRuntime;
+    synchronized (lock) {
+      EmbeddedOSGiRuntime osgiRuntime;
 
-    final Modules modules = configHelper.getModulesForInitialization();
-    if (modules != null && modules.sizeOfModuleArray() > 0) {
-      try {
-        osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-      } catch (Exception e) {
-        throw new RuntimeException("Unable to create runtime for plugins", e);
-      }
-      try {
-        initPlugins(osgiRuntime, configHelper, modules.getModuleArray());
-        if (!forBootJar) {
-          getPluginsCustomApplicatorSpecs(osgiRuntime, configHelper);
-        }
-      } catch (BundleException be1) {
+      final Modules modules = configHelper.getModulesForInitialization();
+      if (modules != null && modules.sizeOfModuleArray() > 0) {
         try {
-          osgiRuntime.shutdown();
-        } catch (BundleException be2) {
-          logger.error("Error shutting down plugin runtime", be2);
+          osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
+        } catch (Exception e) {
+          throw new RuntimeException("Unable to create runtime for plugins", e);
         }
-        throw new RuntimeException("Exception initializing plugins", be1);
-      } catch (InvalidSyntaxException be1) {
         try {
-          osgiRuntime.shutdown();
-        } catch (BundleException be2) {
-          logger.error("Error shutting down plugin runtime", be2);
-        }
-        throw new RuntimeException("Exception initializing plugins", be1);
-      } finally {
-        if (forBootJar) {
+          initPlugins(osgiRuntime, configHelper, modules.getModuleArray());
+          if (!forBootJar) {
+            getPluginsCustomApplicatorSpecs(osgiRuntime, configHelper);
+          }
+        } catch (BundleException be1) {
           try {
             osgiRuntime.shutdown();
           } catch (BundleException be2) {
             logger.error("Error shutting down plugin runtime", be2);
           }
+          throw new RuntimeException("Exception initializing plugins", be1);
+        } catch (InvalidSyntaxException be1) {
+          try {
+            osgiRuntime.shutdown();
+          } catch (BundleException be2) {
+            logger.error("Error shutting down plugin runtime", be2);
+          }
+          throw new RuntimeException("Exception initializing plugins", be1);
+        } finally {
+          if (forBootJar) {
+            try {
+              osgiRuntime.shutdown();
+            } catch (BundleException be2) {
+              logger.error("Error shutting down plugin runtime", be2);
+            }
+          }
         }
+      } else {
+        osgiRuntime = null;
       }
-    } else {
-      osgiRuntime = null;
     }
   }
 
