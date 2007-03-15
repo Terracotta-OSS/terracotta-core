@@ -38,11 +38,9 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
 	public static void visitL1DSOConfig(final ConfigVisitor visitor,
 			final DSOClientConfigHelper config) {
 	    config.addNewModule("clustered-lucene", "2.0.0");
+		config.addAutolock("* *..*.*(..)", ConfigLockLevel.WRITE);
 
 	    final String testClass = RAMDirectoryTestApp.class.getName();
-		config.addIncludePattern(testClass + "$*");
-		config.addAutolock("* *..*.*(..)", ConfigLockLevel.WRITE);
-		
 		final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 		spec.addRoot("barrier", "barrier");
 		spec.addRoot("clusteredDirectory", "clusteredDirectory");

@@ -29,16 +29,10 @@ public final class FastHashMapTestApp extends
 
 		final String testClass = FastHashMapTestApp.class.getName();
 		config.addIncludePattern(testClass + "$*");
-
+		
 		final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
-		final Field[] fields = FastHashMapTestApp.class.getDeclaredFields();
-		for (int pos = 0; pos < fields.length; ++pos) {
-			final Class fieldType = fields[pos].getType();
-			if (fieldType == CyclicBarrier.class
-					|| fieldType == FastHashMap.class) {
-				spec.addRoot(fields[pos].getName(), fields[pos].getName());
-			}
-		}
+		spec.addRoot("barrier", "barrier");
+		spec.addRoot("clusteredFastHashMap", "clusteredFastHashMap");
 	}
 
 	public FastHashMapTestApp(final String appId, final ApplicationConfig cfg,
