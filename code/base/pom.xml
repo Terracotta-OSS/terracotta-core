@@ -234,11 +234,11 @@
         <artifactId>modules-common-1.0</artifactId>
         <version>${tcVersion}</version>
       </dependency>
-      <dependency>
+      <!--dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>services-tests</artifactId>
         <version>${tcVersion}</version>
-      </dependency>
+      </dependency-->
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>simulator</artifactId>
@@ -265,4 +265,19 @@
   <properties>
     <tcVersion>2.3-SNAPSHOT</tcVersion>
   </properties>
+
+  <build>
+    <sourceDirectory>src</sourceDirectory>
+    <testSourceDirectory>tests.unit</testSourceDirectory>
+    <resources>
+      <resource>
+        <directory>src.resources</directory>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>tests.unit.resources</directory>
+      </testResource>
+    </testResources>
+  </build>
 </project>
