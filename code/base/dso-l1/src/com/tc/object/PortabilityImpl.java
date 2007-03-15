@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -75,6 +76,16 @@ public class PortabilityImpl implements Portability {
     // Now check if it is a subclass of logically managed class
     for (Iterator i = classes.iterator(); i.hasNext();) {
       Class class2Inspect = (Class) i.next();
+
+      if (class2Inspect == topLevelClass) {
+        continue;
+      }
+
+      // if a parent class simply wasn't included, don't report this a logical subclass issue until it really is
+      if (!config.shouldBeAdapted(JavaClassInfo.getClassInfo(class2Inspect))) {
+        break;
+      }
+
       if (config.isLogical(class2Inspect.getName())) {
         NonPortableReason reason = new NonPortableReason(topLevelClass,
                                                          NonPortableReason.SUBCLASS_OF_LOGICALLY_MANAGED_CLASS);
@@ -130,7 +141,8 @@ public class PortabilityImpl implements Portability {
 
     boolean bool = literalValues.isLiteral(clazzName) || config.isLogical(clazzName) || clazz.isArray()
                    || Proxy.isProxyClass(clazz) || ClassUtils.isEnum(clazz) || isClassPhysicallyInstrumented(clazz)
-                   || isInstrumentationNotNeeded(clazzName) || ClassUtils.isPortableReflectionClass(clazz) || config.isPortableModuleClass(clazz);
+                   || isInstrumentationNotNeeded(clazzName) || ClassUtils.isPortableReflectionClass(clazz)
+                   || config.isPortableModuleClass(clazz);
     portableCache.put(clazzName, Boolean.valueOf(bool));
     return bool;
   }
