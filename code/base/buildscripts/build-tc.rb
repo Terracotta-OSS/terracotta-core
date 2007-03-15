@@ -343,6 +343,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   # your changes to show up. ;)
   def generate_config_classes
     schema_dir = @static_resources.config_schema_source_directory(@module_set)
+    schema_config_dir = @static_resources.config_schema_config_directory(@module_set)
     dest_jar = @static_resources.compiled_config_schema_jar(@module_set)
     generated_source_dir = @build_results.config_schema_generation_directory
 
@@ -379,7 +380,8 @@ END
                 :executable => @jvm_set['J2SE-1.4'].javac.to_s,
     :debug => true, :classpath => @module_set['common'].subtree('src').classpath(@build_results, :full, :runtime).to_s,
     :srcgendir => generated_source_dir.to_s) {
-      ant.fileset(:dir => schema_dir.to_s, :includes => '*.xsd,*.xsdconfig')
+      ant.fileset(:dir => schema_dir.to_s, :includes => '*.xsd')
+      ant.fileset(:dir => schema_config_dir.to_s, :includes => '*.xsdconfig')
     }
   end
 

@@ -100,6 +100,11 @@ class StaticResources
         FilePath.new(module_set['common'].subtree('src').resource_root, "com", "tc", "config", "schema")
     end
 
+    # Where do the .xsdconfig files for configuration live?
+    def config_schema_config_directory(module_set)
+        FilePath.new(module_set['common'].subtree('src').resource_root, "com", "tc", "config", "schema-config")
+    end
+
     def demos_directory
         FilePath.new(@root_directory, '..', 'demos')
     end

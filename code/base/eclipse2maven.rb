@@ -70,7 +70,10 @@ end
 def find_projects( proj_dir_set, dir_name )
 	# check if contains a .project and .classpath
 	if File.exist?( "#{dir_name}/.classpath" ) and File.exist?( "#{dir_name}/.project" )
-		proj_dir_set.add( dir_name )
+		if dir_name =~ /^.*\/common$/
+		else
+			proj_dir_set.add( dir_name )
+		end
 	else
 		Dir.foreach( dir_name ) { |current_dir_name|
 			next if current_dir_name =~ /^\.(\.)?$/
