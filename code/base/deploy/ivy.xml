@@ -8,7 +8,7 @@
 	<dependency name="appframe" rev="1.0" org="terracotta"/>
 	<dependency name="treemap" rev="tc-1.0" org="terracotta"/>
 	<dependency name="jline" rev="0.9.9" org="terracotta"/>
-	<dependency name="commons-httpclient" rev="3.0.1" org="terracotta"/>
-	<dependency name="commons-codec" rev="1.3" org="terracotta"/>
+	<dependency name="commons-httpclient" rev="3.0.1"/>
+	<dependency name="commons-codec" rev="1.3"/>
   </dependencies>
 </ivy-module>

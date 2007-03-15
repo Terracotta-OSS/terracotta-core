@@ -19,7 +19,6 @@
 	<dependency name="xmlbeans" rev="jsr173_1.0_api" org="terracotta"/>
 	<dependency name="log4j" rev="1.2.9"/>
 	<dependency name="xml-resolver" rev="1.1"/>
-	<dependency name="serializer" rev="2.7.0" org="terracotta"/>
 	<dependency name="servlet-api" rev="2.4" org="terracotta"/>
 	<dependency name="slf4j-nop" rev="1.0.2" org="terracotta"/>
 	<dependency name="trove" rev="1.1b5" org="terracotta"/>
