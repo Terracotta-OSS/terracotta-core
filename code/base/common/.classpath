@@ -33,7 +33,6 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xbean_xpath-2.1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/trove-1.1b5.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/servlet-api-2.4.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/serializer-2.7.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/slf4j-nop-1.0.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/log4j-1.2.9.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/knopflerfish-2.0.1-tc.jar"/>

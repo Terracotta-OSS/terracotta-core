@@ -73,10 +73,6 @@ public class NullRuntimeLogger implements RuntimeLogger {
     return;
   }
 
-  public void logNonPortableDump(String objectDump) {
-    return;
-  }
-
   public boolean nonPortableDump() {
     return false;
   }

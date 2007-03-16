@@ -5,18 +5,19 @@
 package com.tc.object;
 
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
+import com.tc.logging.TCLogger;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.walker.MemberValue;
 import com.tc.object.walker.PrintVisitor;
 import com.tc.object.walker.Visitor;
 import com.tc.object.walker.WalkTest;
+import com.tc.object.walker.PrintVisitor.OutputSink;
 import com.tc.object.walker.PrintVisitor.ValueFormatter;
 
-import java.io.PrintStream;
 import java.lang.reflect.Field;
 
-public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest {
+public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest, OutputSink {
 
   public static final String          MARKER       = "!!";
   private static final String         NON_PORTABLE = MARKER + " ";
@@ -25,14 +26,23 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
 
   private final PrintVisitor          delegate;
   private final ClientObjectManager   objMgr;
-  private final PrintStream           out;
   private final DSOClientConfigHelper config;
+  private final TCLogger              logger;
+  private StringBuffer                buffer       = new StringBuffer();
 
-  public NonPortableWalkVisitor(PrintStream out, ClientObjectManager objMgr, DSOClientConfigHelper config) {
-    this.out = out;
+  public NonPortableWalkVisitor(TCLogger logger, ClientObjectManager objMgr, DSOClientConfigHelper config, Object root) {
+    this.logger = logger;
     this.objMgr = objMgr;
     this.config = config;
-    delegate = new PrintVisitor(out, this, this);
+    delegate = new PrintVisitor(this, this, this);
+
+    logger.warn("Dumping object graph of non-portable instance of type " + root.getClass().getName()
+                + ". Lines that start with " + NonPortableWalkVisitor.MARKER + " are non-portable types.");
+  }
+
+  public void output(String line) {
+    logger.warn(buffer.toString() + line);
+    buffer = new StringBuffer();
   }
 
   private static String spaces(int n) {
@@ -44,7 +54,7 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
   }
 
   public void visitMapEntry(int index, int depth) {
-    out.print(PORTABLE);
+    buffer.append(PORTABLE);
     delegate.visitMapEntry(index, depth);
   }
 
@@ -114,9 +124,9 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
 
   private void indicatePortability(MemberValue value) {
     if (objMgr.isPortableInstance(value.getValueObject())) {
-      out.print(PORTABLE);
+      buffer.append(PORTABLE);
     } else {
-      out.print(NON_PORTABLE);
+      buffer.append(NON_PORTABLE);
     }
   }
 

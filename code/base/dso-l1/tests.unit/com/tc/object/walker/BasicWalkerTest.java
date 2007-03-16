@@ -7,14 +7,9 @@ package com.tc.object.walker;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ClassUtils;
 
-import com.tc.object.walker.ObjectGraphWalker;
-import com.tc.object.walker.PrintVisitor;
-import com.tc.object.walker.WalkTest;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -36,14 +31,12 @@ public class BasicWalkerTest extends TestCase {
 
     WalkTest test = new MyWalkTestImpl();
 
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    PrintStream ps = new PrintStream(baos);
+    MyOutputSink sink = new MyOutputSink();
 
-    ObjectGraphWalker t = new ObjectGraphWalker(r, test, new PrintVisitor(ps, test, new MyValueFormatter()));
+    ObjectGraphWalker t = new ObjectGraphWalker(r, test, new PrintVisitor(sink, test, new MyValueFormatter()));
     t.walk();
 
-    ps.flush();
-    String output = new String(baos.toByteArray());
+    String output = sink.buffer.toString();
     System.err.println(output);
     validate(output);
   }
@@ -80,6 +73,14 @@ public class BasicWalkerTest extends TestCase {
 
     baos.flush();
     return new String(baos.toByteArray());
+  }
+
+  private static class MyOutputSink implements PrintVisitor.OutputSink {
+    final StringBuffer buffer = new StringBuffer();
+
+    public void output(String line) {
+      buffer.append(line + "\n");
+    }
   }
 
   private static class MyValueFormatter implements PrintVisitor.ValueFormatter {

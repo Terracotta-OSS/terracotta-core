@@ -52,6 +52,4 @@ public interface RuntimeLogger {
 
   void distributedMethodCallError(String obj, String methodName, String params, Throwable error);
 
-  void logNonPortableDump(String objectDump);
-
 }

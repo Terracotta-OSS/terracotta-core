@@ -7,8 +7,8 @@ package com.tc.object;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.exception.TCRuntimeException;
-import com.tc.io.TCByteArrayOutputStream;
 import com.tc.logging.ChannelIDLogger;
+import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.ChannelIDProvider;
@@ -46,7 +46,6 @@ import com.tc.util.State;
 import com.tc.util.Util;
 import com.tc.util.concurrent.StoppableThread;
 
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.ref.ReferenceQueue;
@@ -837,24 +836,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
 
   private void dumpObjectHierarchy0(Object root) {
     if (runtimeLogger.nonPortableDump()) {
-      // XXX: The hierarchy report is buffered in memory here so that it can logged as a single message
-      // XXX: Alternatively the dump go could be written as individual lines to the log file (which would prepend the
-      // logger formatting) and could become interleaved with outher logger output. The dump could also be written to a
-      // file, which should alleviate the memory issue, but means we need a file to write to
-      TCByteArrayOutputStream baos = new TCByteArrayOutputStream();
-      PrintStream ps = new PrintStream(baos);
-
-      ps.println("Dumping object graph of non-portable instance of type " + root.getClass().getName());
-      ps.println();
-      ps.println("  (lines that start with " + NonPortableWalkVisitor.MARKER + " are non-portable types)");
-      ps.println();
-      NonPortableWalkVisitor visitor = new NonPortableWalkVisitor(ps, this, this.clientConfiguration);
+      NonPortableWalkVisitor visitor = new NonPortableWalkVisitor(CustomerLogging.getDSORuntimeLogger(), this,
+                                                                  this.clientConfiguration, root);
       ObjectGraphWalker walker = new ObjectGraphWalker(root, visitor, visitor);
       walker.walk();
-
-      ps.flush();
-
-      runtimeLogger.logNonPortableDump(new String(baos.getInternalArray(), 0, baos.size()));
     }
   }
 

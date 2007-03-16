@@ -227,8 +227,5 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     // unreachable
   }
 
-  public void logNonPortableDump(String objectDump) {
-    logger.warn(objectDump);
-  }
 
 }

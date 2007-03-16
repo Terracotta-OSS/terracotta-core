@@ -112,14 +112,16 @@ public class NonPortableGraphTest extends TransparentTestBase {
     }
 
     private static class LogAppender implements TCAppender {
-      String currentLogEvent;
+      StringBuffer buffer = new StringBuffer();
 
       public void append(LogLevel arg0, Object arg1, Throwable arg2) {
-        currentLogEvent = (String) arg1;
+        buffer.append(arg1 + "\n");
       }
 
       public String getCurrentLogEvent() {
-        return currentLogEvent;
+        String s = buffer.toString();
+        buffer = new StringBuffer();
+        return s;
       }
 
     }

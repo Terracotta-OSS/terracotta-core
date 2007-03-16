@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -126,9 +127,8 @@ public class NonPortableInstancesTest extends TransparentTestBase {
     }
 
     private void validate(int i) throws IOException {
-      Event event = logEvents.takeSoleEvent();
       String expect = getExpected(i);
-      String actual = (String) event.getMessage();
+      String actual = logEvents.takeLoggedMessages();
 
       expect = expect.replaceAll("\r", "");
       actual = actual.replaceAll("\r", "");
@@ -212,9 +212,9 @@ public class NonPortableInstancesTest extends TransparentTestBase {
   }
 
   private static class NotPortable {
-    final Map            m            = makeGraphWithNonPortableNodes(this);
+    final Map m = makeGraphWithNonPortableNodes(this);
 
-    Thread               t            = Thread.currentThread();
+    Thread    t = Thread.currentThread();
 
     NotPortable() {
       if (this instanceof Manageable) { throw new AssertionError("this type should not be portable"); }
@@ -244,15 +244,16 @@ public class NonPortableInstancesTest extends TransparentTestBase {
       events.add(new Event(level, message, throwable));
     }
 
-    void clear() {
-      events.clear();
-    }
+    String takeLoggedMessages() {
+      StringBuffer buf = new StringBuffer();
+      for (Iterator iter = events.iterator(); iter.hasNext();) {
+        Event event = (Event) iter.next();
+        buf.append(event.getMessage() + "\n");
+      }
 
-    Event takeSoleEvent() {
-      if (events.size() != 1) { throw new AssertionError("Wrong number of events " + events.size() + ", " + events); }
-      Event rv = (Event) events.get(0);
       events.clear();
-      return rv;
+
+      return buf.toString();
     }
 
   }

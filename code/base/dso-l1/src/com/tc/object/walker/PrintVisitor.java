@@ -6,7 +6,6 @@ package com.tc.object.walker;
 
 import com.tc.util.ClassUtils;
 
-import java.io.PrintStream;
 import java.lang.reflect.Field;
 
 /**
@@ -14,70 +13,75 @@ import java.lang.reflect.Field;
  */
 public class PrintVisitor implements Visitor {
   private static final String  INDENT = "  ";
-  private final PrintStream    out;
+  private final OutputSink       out;
   private final WalkTest       walkTest;
   private final ValueFormatter formatter;
 
-  public PrintVisitor(PrintStream out, WalkTest walkTest, ValueFormatter formatter) {
-    this.out = out;
+  public PrintVisitor(OutputSink sink, WalkTest walkTest, ValueFormatter formatter) {
+    this.out = sink;
     this.walkTest = walkTest;
     this.formatter = formatter;
   }
 
   public void visitRootObject(MemberValue value) {
-    out.println(typeDisplay(value.getValueObject().getClass()) + " (id " + value.getId() + ")");
+    outputLine(typeDisplay(value.getValueObject().getClass()) + " (id " + value.getId() + ")");
+  }
+
+  private void outputLine(String line) {
+    out.output(line);
   }
 
   public void visitValue(MemberValue value, int depth) {
+    StringBuffer buf = new StringBuffer();
     boolean isLiteral = !walkTest.shouldTraverse(value);
 
-    indent(depth);
+    indent(depth, buf);
 
     if (value.isMapKey()) {
-      out.print("key ");
+      buf.append("key ");
     } else if (value.isMapValue()) {
-      out.print("value ");
+      buf.append("value ");
     }
 
     Field field = value.getSourceField();
     if (field != null) {
-      out.print(typeDisplay(field.getType()) + " ");
+      buf.append(typeDisplay(field.getType()) + " ");
       boolean shadowed = value.isShadowed();
       if (shadowed) {
-        out.print(field.getDeclaringClass().getName() + ".");
+        buf.append(field.getDeclaringClass().getName() + ".");
       }
 
-      out.print(field.getName() + " ");
+      buf.append(field.getName() + " ");
     }
 
     if (value.isElement()) {
-      out.print("[" + value.getIndex() + "] ");
+      buf.append("[" + value.getIndex() + "] ");
     }
 
-    out.print("= ");
+    buf.append("= ");
 
     Object o = value.getValueObject();
 
     if (isLiteral || o == null) {
-      out.print(formatter.format(value.getValueObject()));
+      buf.append(formatter.format(value.getValueObject()));
     } else {
       if (value.isRepeated()) {
-        out.print("(ref id " + value.getId() + ")");
+        buf.append("(ref id " + value.getId() + ")");
       } else {
         if ((field != null) && (o.getClass().equals(field.getType()))) {
-          out.print("(id " + value.getId() + ")");
+          buf.append("(id " + value.getId() + ")");
         } else {
-          out.print("(" + typeDisplay(o.getClass()) + ", id " + value.getId() + ")");
+          buf.append("(" + typeDisplay(o.getClass()) + ", id " + value.getId() + ")");
         }
       }
     }
 
     String adorn = formatter.valueAdornment(value);
     if (adorn != null) {
-      out.print(adorn);
+      buf.append(adorn);
     }
-    out.println();
 
+    outputLine(buf.toString());
   }
 
   private static final String JAVA_LANG     = "java.lang.";
@@ -108,14 +112,20 @@ public class PrintVisitor implements Visitor {
   }
 
   public void visitMapEntry(int index, int depth) {
-    indent(depth);
-    out.println("[entry " + index + "]");
+    StringBuffer buf = new StringBuffer();
+    indent(depth, buf);
+    buf.append("[entry ").append(index).append("]");
+    outputLine(buf.toString());
   }
 
-  private void indent(int currentDepth) {
+  private static void indent(int currentDepth, StringBuffer buffer) {
     while (currentDepth-- > 0) {
-      out.print(INDENT);
+      buffer.append(INDENT);
     }
+  }
+
+  public interface OutputSink {
+    void output(String line);
   }
 
   public interface ValueFormatter {
