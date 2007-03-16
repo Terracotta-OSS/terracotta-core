@@ -11,6 +11,7 @@ import org.dijon.TextPane;
 
 import com.tc.admin.TCStop;
 import com.tc.admin.common.BrowserLauncher;
+import com.tc.admin.common.Splash;
 import com.tc.admin.common.StreamReader;
 import com.tc.admin.common.TextPaneUpdater;
 import com.tc.admin.common.XTextPane;
@@ -35,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.swing.Timer;
+import javax.swing.UIManager;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.AttributeSet;
@@ -59,6 +61,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     cp.setLayout(new BorderLayout());
 
     m_textPane = new TextPane();
+    m_textPane.setBackground(Color.WHITE);
     cp.add(new ScrollPane(m_textPane));
     m_textPane.setEditable(false);
     m_textPane.addHyperlinkListener(this);
@@ -380,14 +383,30 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
   }
 
   public void propertyChange(PropertyChangeEvent pce) {
-    pack();
-    center();
-    setVisible(true);
+    Timer t = new Timer(2000, new ActionListener() {
+      public void actionPerformed(ActionEvent ae) {
+        pack();
+        center();
+        setVisible(true);
+        splashProc.destroy();
+      }
+    });
+    t.setRepeats(false);
+    t.start();
   }
 
-  public static void main(String[] args) {
-    ApplicationManager.parseLAFArgs(args);
-    new DSOSamplesFrame();
+  private static Process splashProc;
+
+  public static void main(final String[] args) throws Exception {
+    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
+    splashProc = Splash.start("Starting Pojo Sample Launcher...", new Runnable() {
+      public void run() {
+        ApplicationManager.parseLAFArgs(args);
+        new DSOSamplesFrame();
+      }
+    });
+    splashProc.waitFor();
   }
 }
 

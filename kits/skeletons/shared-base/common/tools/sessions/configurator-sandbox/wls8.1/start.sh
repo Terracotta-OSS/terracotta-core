@@ -28,13 +28,12 @@ PORT="$1"
 
 if test "$2" != "nodso"; then
   TC_CONFIG_PATH="${SANDBOX}/wls8.1/tc-config.xml"
-  . "${TC_INSTALL_DIR}/bin/dso-env.sh" -q
+  . "${TC_INSTALL_DIR}/bin/dso-env.sh" -q ${TC_CONFIG}
 
-  JAVA_OPTIONS="${TC_JAVA_OPTS} ${JAVA_OPTS}"
-  JAVA_OPTIONS="${JAVA_OPTIONS} -Dwebserver.log.name=${PORT}"
-  JAVA_OPTIONS="${JAVA_OPTIONS} -Dcom.sun.management.jmxremote"
-  JAVA_OPTIONS="${JAVA_OPTIONS} -Dtc.node-name=weblogic-${PORT}"
-
+  OPTS="${TC_JAVA_OPTS} -Dwebserver.log.name=${PORT}"
+  OPTS="${OPTS} -Dcom.sun.management.jmxremote"
+  OPTS="${OPTS} -Dtc.node-name=weblogic-${PORT}"
+  JAVA_OPTIONS="${OPTS} ${JAVA_OPTS}"
   export JAVA_OPTIONS
 fi
 

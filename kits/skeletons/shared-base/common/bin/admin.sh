@@ -13,7 +13,8 @@ fi
 
 TC_INSTALL_DIR=`dirname "$0"`/..
 
-exec "${JAVA_HOME}/bin/java" ${JAVA_OPTS} \
+exec "${JAVA_HOME}/bin/java" \
   -Dtc.install-root="${TC_INSTALL_DIR}" \
+  ${JAVA_OPTS} \
   -cp "${TC_INSTALL_DIR}/lib/tc.jar" \
   com.tc.admin.AdminClient "$@"

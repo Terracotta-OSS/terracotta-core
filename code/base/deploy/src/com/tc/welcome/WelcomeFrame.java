@@ -15,6 +15,7 @@ import com.tc.util.ResourceBundleHelper;
 import com.tc.util.runtime.Os;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
@@ -56,7 +57,7 @@ public class WelcomeFrame extends HyperlinkFrame
     Container cp = getContentPane();
     cp.setLayout(new BorderLayout());
     cp.add(m_tabbedPane = new TabbedPane());
-
+    
     addWindowListener(new WindowAdapter() {
       public void windowDeactivated(WindowEvent e) {
         setTextPaneCursor(Cursor.DEFAULT_CURSOR);
@@ -74,6 +75,7 @@ public class WelcomeFrame extends HyperlinkFrame
     for (int i = 0; i < PRODUCTS.length; i++) {
       TextPane textPane = new TextPane();
       m_startupList.add(textPane);
+      textPane.setBackground(Color.WHITE);
       textPane.setEditable(false);
       textPane.addHyperlinkListener(this);
       textPane.addPropertyChangeListener("page", this);
@@ -84,6 +86,7 @@ public class WelcomeFrame extends HyperlinkFrame
       }
 
       m_tabbedPane.add(PRODUCTS[i], textPane);
+      m_tabbedPane.setBackgroundAt(i, Color.WHITE);
     }
   }
 

@@ -16,11 +16,11 @@ export CATALINA_BASE
 
 if test "$2" != "nodso"; then
   TC_CONFIG_PATH="${SANDBOX}/tomcat5.0/tc-config.xml"
-  . "${TC_INSTALL_DIR}/bin/dso-env.sh" -q
+  . "${TC_INSTALL_DIR}/bin/dso-env.sh" -q ${TC_CONFIG}
 
-  JAVA_OPTS="${TC_JAVA_OPTS} ${JAVA_OPTS}"
-  JAVA_OPTS="${JAVA_OPTS} -Dwebserver.log.name=${PORT}"
-  JAVA_OPTS="${JAVA_OPTS} -Dcom.sun.management.jmxremote"
+  OPTS="${TC_JAVA_OPTS} -Dwebserver.log.name=${PORT}"
+  OPTS="${OPTS} -Dcom.sun.management.jmxremote"
+  JAVA_OPTS="${OPTS} ${JAVA_OPTS}"
   export JAVA_OPTS
 fi
 
