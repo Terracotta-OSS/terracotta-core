@@ -34,7 +34,7 @@ import java.util.List;
  */
 public class ClientMessageTransport extends MessageTransportBase {
   private static final TCLogger             logger          = TCLogging.getLogger(ClientMessageTransport.class);
-  private static final long                 SYN_ACK_TIMEOUT = 30000;
+  private static final long                 SYN_ACK_TIMEOUT = 120000; // 2 minutes timeout
   private final int                         maxReconnectTries;
   private final ClientConnectionEstablisher connectionEstablisher;
   private boolean                           wasOpened       = false;
