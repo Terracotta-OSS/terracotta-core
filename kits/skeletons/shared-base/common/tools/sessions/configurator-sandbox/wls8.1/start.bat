@@ -35,7 +35,7 @@ if %ERRORLEVEL% NEQ 0 (
 if ""%2"" == ""nodso"" goto doRunWLS
 
 set TC_CONFIG_PATH=%SANDBOX%\wls8.1\tc-config.xml
-call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q
+call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q "%TC_CONFIG%"
 
 if %ERRORLEVEL% neq 0 goto end
 

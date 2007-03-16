@@ -15,7 +15,8 @@ rem  TC_INSTALL_DIR: root of Terracotta installation
 rem
 rem Arguments to dso-env helper script:
 rem  -q: do not print value of TC_JAVA_OPTS
-rem  tc-config.xml: path to DSO config file
+rem  TC_CONFIG_PATH: location of Terracotta config file; overridden by value
+rem                  of optional TC_CONFIG
 rem
 rem Environment variable set by dso-env helper script:
 rem  TC_JAVA_OPTS: Java options needed to activate DSO
@@ -26,7 +27,8 @@ cd %~d0%~p0
 set TC_INSTALL_DIR=..\..\..
 set CATALINA_HOME=%TC_INSTALL_DIR%\vendors\tomcat5.5
 if not exist "%JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
-call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q tc-config.xml
+set TC_CONFIG_PATH=tc-config.xml
+call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q "%TC_CONFIG%"
 set JAVA_OPTS=%TC_JAVA_OPTS% -Dcounter.log.prefix="CounterService-Tomcat-Node-2: %JAVA_OPTS%"
 set CATALINA_BASE=tomcat2
 start "terracotta for spring: thread coordination sample: tomcat server node 2" "%CATALINA_HOME%\bin\catalina.bat" run
