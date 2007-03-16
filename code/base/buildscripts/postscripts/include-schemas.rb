@@ -8,6 +8,20 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   # - include the schema files for the configuration into the kit
   # - generate a javadoc style documentation for the schemas
   protected
+  
+  def getXSDFileAndVersion(srcdir)
+    xsd_file = nil
+    Dir.entries(srcdir).each do |f|
+      xsd_file = FilePath.new(srcdir, f) if f =~ /\.xsd$/i
+    end
+    raise("Cannot find any schema file in #{srcdir}") if xsd_file.nil?
+    version = "1"
+    if xsd_file =~ /terracotta-(\d+)\.xsd/
+      version = $1
+    end
+    return xsd_file, version
+  end
+  
   def postscript(ant, build_environment, product_directory, *args)
     srcdir = @static_resources.config_schema_source_directory(@module_set)
     tmpdir = FilePath.new(product_directory, 'tmp').ensure_directory
@@ -21,8 +35,8 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       docflex_lib       = FilePath.new(docflex, "lib")
       docflex_template  = FilePath.new(docflex, "templates", "XSDDocFrames.tpl")
       docflex_classpath = "#{docflex_lib.to_s}/xercesImpl.jar:#{docflex_lib.to_s}/xml-apis.jar:#{docflex_lib.to_s}/docflex-xml-kit.jar"
-      srcfiles          = FilePath.new(srcdir, "terracotta-3.xsd")
-
+      srcfiles, schema_version  = getXSDFileAndVersion(srcdir)
+      
       ant.java(
         :classname   => 'com.docflex.xml.Generator',
         :classpath   => docflex_classpath,
@@ -34,9 +48,9 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         ant.arg(:line => "-xmlconfig xmltypes.config")
         ant.arg(:line => "-template #{docflex_template.canonicalize.to_s}")
         ant.arg(:line => "-format HTML")
-        ant.arg(:line => "-p:docTitle=\"Terracotta Configuration Schema Version 3\"")
+        ant.arg(:line => "-p:docTitle=\"Terracotta Configuration Schema Version #{schema_version}\"")
         ant.arg(:line => "-d #{tmpdir.to_s}")
-        ant.arg(:line => "-f tc-config-v3")
+        ant.arg(:line => "-f tc-config-v#{schema_version}")
         ant.arg(:line => "-nodialog=true")
         ant.arg(:line => "-quiet=true")
         ant.arg(:line => "-launchviewer=false")
@@ -47,7 +61,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       File.open(index_file.to_s, 'w') do |out|
         out.puts "<html>"
         out.puts " <head>"
-        out.puts "   <META HTTP-EQUIV=\"REFRESH\" CONTENT=\"0; URL=tc-config-v3.html\">"
+        out.puts "   <META HTTP-EQUIV=\"REFRESH\" CONTENT=\"0; URL=tc-config-v#{schema_version}.html\">"
         out.puts " </head>"
         out.puts "</html>"
       end
