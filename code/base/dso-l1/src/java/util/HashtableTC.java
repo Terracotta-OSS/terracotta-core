@@ -49,8 +49,15 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
   }
 
   public synchronized Object clone() {
-    Manageable clone = (Manageable) super.clone();
-    return Util.fixTCObjectReferenceOfClonedObject(this, clone);
+    if (__tc_isManaged()) {
+      Hashtable clone = new Hashtable(this);
+
+      // This call to fixTCObjectReference isn't strictly required, but if someone every changes
+      // this method to actually use any built-in clone mechanism, it will be needed -- better safe than sorry here
+      return Util.fixTCObjectReferenceOfClonedObject(this, clone);
+    }
+
+    return super.clone();
   }
 
   // Values that contains ObjectIDs are already wrapped, so this should be fine
@@ -125,12 +132,12 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
       return super.put(key, value);
     }
   }
-  
+
   /**
-   * This method is only to be invoked from the applicator thread. This method does not need to check if the
-   * map is managed as it will always be managed when called by the applicator thread. In addition, this method
-   * does not need to be synchronized under getResolveLock() as the applicator thread is already under the
-   * scope of such synchronization.
+   * This method is only to be invoked from the applicator thread. This method does not need to check if the map is
+   * managed as it will always be managed when called by the applicator thread. In addition, this method does not need
+   * to be synchronized under getResolveLock() as the applicator thread is already under the scope of such
+   * synchronization.
    */
   public synchronized void __tc_applicator_put(Object key, Object value) {
     if (key == null || value == null) { throw new NullPointerException(); }
@@ -170,12 +177,12 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
       return super.remove(key);
     }
   }
-  
+
   /**
-   * This method is only to be invoked from the applicator thread. This method does not need to check if the
-   * map is managed as it will always be managed when called by the applicator thread. In addition, this method
-   * does not need to be synchronized under getResolveLock() as the applicator thread is already under the
-   * scope of such synchronization.
+   * This method is only to be invoked from the applicator thread. This method does not need to check if the map is
+   * managed as it will always be managed when called by the applicator thread. In addition, this method does not need
+   * to be synchronized under getResolveLock() as the applicator thread is already under the scope of such
+   * synchronization.
    */
   public synchronized void __tc_applicator_remove(Object key) {
     super.remove(key);
