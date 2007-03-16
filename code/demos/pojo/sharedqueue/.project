@@ -14,6 +14,5 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 		<nature>com.tc.ProjectNature</nature>
-		<nature>org.terracotta.dso.ProjectNature</nature>
 	</natures>
 </projectDescription>
