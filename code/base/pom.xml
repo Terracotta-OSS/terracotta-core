@@ -9,21 +9,20 @@
   <version>2.3-SNAPSHOT</version>
 
   <modules>
+    <module>linked-child-process</module>
+    <module>common</module>
     <module>aspectwerkz</module>
     <module>clustered-apache-struts-1.1</module>
     <module>clustered-cglib-2.1.3</module>
     <module>clustered-commons-collections-3.1</module>
     <module>clustered-iBatis-2.2.0</module>
     <module>clustered-lucene-2.0.0</module>
-    <module>common</module>
     <module>deploy</module>
     <module>dso-alt-boot-jar-tests</module>
     <module>dso-common</module>
-    <module>dso-common-jdk15</module>
     <module>dso-container-tests</module>
     <module>dso-crash-tests</module>
     <module>dso-l1</module>
-    <module>dso-l1-jdk15</module>
     <module>dso-l1-session</module>
     <module>dso-l1-tomcat</module>
     <module>dso-l1-tomcat50</module>
@@ -37,26 +36,255 @@
     <module>dso-spring-crash-tests</module>
     <module>dso-spring-tests</module>
     <module>dso-system-tests</module>
-    <module>dso-tests-jdk15</module>
     <module>dso-weblogic-stubs</module>
     <module>examples</module>
     <module>installer</module>
-    <module>legacy-test-tree</module>
-    <module>linked-child-process</module>
     <module>management</module>
     <module>modules-common-1.0</module>
     <!--module>services-tests</module-->
     <module>simulator</module>
+    <module>legacy-test-tree</module>
     <module>thirdparty</module>
+    <!--
     <module>ui-configurator</module>
     <module>ui-eclipse</module>
+    -->
   </modules>
 
+  <profiles>
+    <profile>
+      <id>J2SE-1.5</id>
+      <!-- <id>jdk1.5</id> -->
+      <activation>
+        <jdk>1.5</jdk>
+      </activation>
+      <modules>
+        <module>dso-common-jdk15</module>
+    <module>dso-l1-jdk15</module>
+    <module>dso-tests-jdk15</module>
+      </modules>
+    </profile>
+  </profiles>
+
   <dependencyManagement>
-    <dependencies>
+  <dependencies>
+      <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>1.2.9</version>
+      </dependency>
+      <dependency>
+        <groupId>bsh</groupId>
+        <artifactId>bsh</artifactId>
+        <version>2.0b4</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-nop</artifactId>
+        <version>1.3.0</version>
+      </dependency>
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>3.8.1</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>3.1</version>
+      </dependency>
+      <dependency>
+        <groupId>xmlbeans</groupId>
+        <artifactId>xbean</artifactId>
+        <version>2.1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-lang</groupId>
+        <artifactId>commons-lang</artifactId>
+        <version>2.0</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <version>1.0.3</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jdmk</groupId>
+        <artifactId>jmxtools</artifactId>
+        <version>1.2.1</version>
+      </dependency>
+      <dependency>
+        <groupId>junit-addons</groupId>
+        <artifactId>junit-addons</artifactId>
+        <version>1.4</version>
+      </dependency>
+      <dependency>
+        <groupId>xmlbeans</groupId>
+        <artifactId>xmlpublic</artifactId>
+        <version>2.1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>knopflerfish-tc</groupId>
+        <artifactId>knopflerfish-tc</artifactId>
+        <version>2.0.1</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>servlet-api</artifactId>
+        <version>2.4</version>
+      </dependency>
+      <dependency>
+        <groupId>xml-apis</groupId>
+        <artifactId>xml-apis</artifactId>
+        <version>1.3.02</version>
+      </dependency>
+      <dependency>
+        <groupId>xml-resolver</groupId>
+        <artifactId>xml-resolver</artifactId>
+        <version>1.1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>jetty-util</artifactId>
+        <version>6.0.1</version>
+      </dependency>
+      <dependency>
+        <groupId>concurrent</groupId>
+        <artifactId>concurrent</artifactId>
+        <version>1.3.4</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>jetty</artifactId>
+        <version>6.0.1</version>
+      </dependency>
+      <dependency>
+        <groupId>trove</groupId>
+        <artifactId>trove</artifactId>
+        <version>1.1b5</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-cli</groupId>
+        <artifactId>commons-cli</artifactId>
+        <version>1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>xmlbeans</groupId>
+        <artifactId>xbean_xpath</artifactId>
+        <version>2.1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>1.2</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.management</groupId>
+        <artifactId>jmxri</artifactId>
+        <version>1.2.1</version>
+      </dependency>
+      <dependency>
+        <groupId>berkeleydb</groupId>
+        <artifactId>je</artifactId>
+        <version>3.2.13</version>
+      </dependency>
+      <!--
+      <dependency>
+        <groupId>antlr</groupId>
+        <artifactId>antlr</artifactId>
+        <version>2.7.7</version>
+      </dependency>
+      -->
+      <dependency>
+        <groupId>ant</groupId>
+        <artifactId>ant-junit</artifactId>
+        <version>1.6.2</version>
+      </dependency>
+      <dependency>
+        <groupId>ant</groupId>
+        <artifactId>ant</artifactId>
+        <version>1.6.2</version>
+      </dependency>
+      <dependency>
+        <groupId>stax</groupId>
+    <artifactId>stax</artifactId>
+    <version>1.2.0</version>
+      </dependency>
+      <!--
+      <dependency>
+        <groupId>serializer</groupId>
+        <artifactId>serializer</artifactId>
+        <version>2.7.0</version>
+      </dependency>
+      -->
+      <dependency>
+        <groupId>jrexx</groupId>
+        <artifactId>jrexx</artifactId>
+        <version>1.1.1</version>
+      </dependency>
+      <dependency>
+        <groupId>backport175</groupId>
+        <artifactId>backport175</artifactId>
+        <version>1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>asm</groupId>
+        <artifactId>asm</artifactId>
+        <version>2.2.3</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.management</groupId>
+        <artifactId>jmxremote</artifactId>
+        <version>1.0.1_04</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.management</groupId>
+    <artifactId>jmxremote_optional</artifactId>
+        <version>1.0.1_04</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-httpclient</groupId>
+        <artifactId>commons-httpclient</artifactId>
+        <version>3.0.1</version>
+      </dependency>
+      <dependency>
+        <groupId>jline</groupId>
+        <artifactId>jline</artifactId>
+        <version>0.9.9</version>
+      </dependency>
+      <dependency>
+        <groupId>jfreechart</groupId>
+        <artifactId>jfreechart</artifactId>
+        <version>1.0.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.dijon</groupId>
+        <artifactId>appframe</artifactId>
+        <version>1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-codec</groupId>
+        <artifactId>commons-codec</artifactId>
+        <version>1.3</version>
+      </dependency>
+      <dependency>
+        <groupId>treemap</groupId>
+        <artifactId>treemap</artifactId>
+        <version>2.5.1</version>
+      </dependency>
+      <dependency>
+        <groupId>xstream</groupId>
+        <artifactId>xstream</artifactId>
+        <version>1.0.2</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-hibernate3</artifactId>
+        <version>2.0</version>
+      </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
-        <artifactId>aspectwerkz</artifactId>
+    <artifactId>aspectwerkz</artifactId>
         <version>${tcVersion}</version>
       </dependency>
       <dependency>
@@ -71,7 +299,7 @@
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
-        <artifactId>clustered-commons-collections-3.1</artifactId>
+    <artifactId>clustered-commons-collections-3.1</artifactId>
         <version>${tcVersion}</version>
       </dependency>
       <dependency>
@@ -234,11 +462,6 @@
         <artifactId>modules-common-1.0</artifactId>
         <version>${tcVersion}</version>
       </dependency>
-      <!--dependency>
-        <groupId>org.terracotta</groupId>
-        <artifactId>services-tests</artifactId>
-        <version>${tcVersion}</version>
-      </dependency-->
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>simulator</artifactId>
@@ -259,7 +482,13 @@
         <artifactId>ui-eclipse</artifactId>
         <version>${tcVersion}</version>
       </dependency>
-	</dependencies>
+
+      <!--dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>services-tests</artifactId>
+        <version>${tcVersion}</version>
+      </dependency-->
+    </dependencies>
   </dependencyManagement>
 
   <properties>
@@ -302,7 +531,8 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
+    <configuration>
+
           <includes>
             <include>**/*Test.java</include>
           </includes>

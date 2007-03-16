@@ -53,71 +53,54 @@
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
-      <version>1.2.9</version>
     </dependency>
     <dependency>
       <groupId>bsh</groupId>
       <artifactId>bsh</artifactId>
-      <version>2.0b4</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-nop</artifactId>
-      <version>1.3.0</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8.1</version>
     </dependency>
     <dependency>
       <groupId>commons-collections</groupId>
       <artifactId>commons-collections</artifactId>
-      <version>3.1</version>
     </dependency>
     <dependency>
       <groupId>xmlbeans</groupId>
       <artifactId>xbean</artifactId>
-      <version>2.1.0</version>
     </dependency>
     <dependency>
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
-      <version>2.0</version>
     </dependency>
     <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
-      <version>1.0.3</version>
     </dependency>
     <dependency>
       <groupId>com.sun.jdmk</groupId>
       <artifactId>jmxtools</artifactId>
-      <version>1.2_8</version>
     </dependency>
     <dependency>
       <groupId>junit-addons</groupId>
       <artifactId>junit-addons</artifactId>
-      <version>1.4</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>thirdparty</artifactId>
     </dependency>
     <dependency>
       <groupId>xmlbeans</groupId>
       <artifactId>xmlpublic</artifactId>
-      <version>2.1.0</version>
     </dependency>
     <dependency>
-      <groupId>org.knopflerfish</groupId>
-      <artifactId>knopflerfish</artifactId>
-      <version>2.0.1</version>
+      <groupId>knopflerfish-tc</groupId>
+      <artifactId>knopflerfish-tc</artifactId>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>servlet-api</artifactId>
-      <version>2.4</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -126,27 +109,22 @@
     <dependency>
       <groupId>xml-apis</groupId>
       <artifactId>xml-apis</artifactId>
-      <version>1.3.02</version>
     </dependency>
     <dependency>
       <groupId>xml-resolver</groupId>
       <artifactId>xml-resolver</artifactId>
-      <version>1.1</version>
     </dependency>
     <dependency>
       <groupId>org.mortbay.jetty</groupId>
       <artifactId>jetty-util</artifactId>
-      <version>6.0.1</version>
     </dependency>
     <dependency>
       <groupId>concurrent</groupId>
       <artifactId>concurrent</artifactId>
-      <version>1.3.4</version>
     </dependency>
     <dependency>
       <groupId>org.mortbay.jetty</groupId>
       <artifactId>jetty</artifactId>
-      <version>6.0.1</version>
     </dependency>
     <!--
     <dependency>
@@ -158,51 +136,54 @@
     <dependency>
       <groupId>commons-cli</groupId>
       <artifactId>commons-cli</artifactId>
-      <version>1.0</version>
     </dependency>
     <dependency>
       <groupId>xmlbeans</groupId>
       <artifactId>xbean_xpath</artifactId>
-      <version>2.1.0</version>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>javax.management</groupId>
       <artifactId>jmxri</artifactId>
-      <version>1.2.1</version>
     </dependency>
     <dependency>
       <groupId>berkeleydb</groupId>
       <artifactId>je</artifactId>
-      <version>3.2.13</version>
     </dependency>
     <!--
     <dependency>
       <groupId>antlr</groupId>
       <artifactId>antlr</artifactId>
-      <version>2.7.7</version>
     </dependency>
     -->
     <dependency>
       <groupId>ant</groupId>
       <artifactId>ant-junit</artifactId>
-      <version>1.6.2</version>
     </dependency>
     <dependency>
       <groupId>ant</groupId>
       <artifactId>ant</artifactId>
-      <version>1.6.2</version>
     </dependency>
     <!--
     <dependency>
       <groupId>serializer</groupId>
       <artifactId>serializer</artifactId>
-      <version>2.7.0</version>
     </dependency>
     -->
+    <dependency>
+      <groupId>jrexx</groupId>
+      <artifactId>jrexx</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>backport175</groupId>
+      <artifactId>backport175</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>asm</groupId>
+      <artifactId>asm</artifactId>
+    </dependency>
   </dependencies>
 </project>
