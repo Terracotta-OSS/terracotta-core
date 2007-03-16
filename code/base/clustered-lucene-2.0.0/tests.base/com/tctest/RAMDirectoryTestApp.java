@@ -25,6 +25,10 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
+/**
+ * RAMDirectory clustering test
+ * @author jgalang
+ */
 public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
 
 	static final int EXPECTED_THREAD_COUNT = 2;
@@ -35,6 +39,11 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
 
 	private final StandardAnalyzer analyzer;
 
+	/**
+	 * Inject Lucene 2.0.0 configuration, and instrument this test class
+	 * @param visitor
+	 * @param config
+	 */
 	public static void visitL1DSOConfig(final ConfigVisitor visitor,
 			final DSOClientConfigHelper config) {
 	    config.addNewModule("clustered-lucene", "2.0.0");
@@ -54,6 +63,10 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
 		barrier = new CyclicBarrier(getParticipantCount());
 	}
 	
+	/**
+	 * Test that the data written in the clustered RAMDirectory
+	 * by one node, becomes available in the other.
+	 */
 	protected void runTest() throws Throwable {
 		if (barrier.await() == 0) {
 			addDataToMap("DATA1");
@@ -81,6 +94,11 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
 		barrier.await();
 	}
 
+	/**
+	 * Add datum to RAMDirectory
+	 * @param value The datum to add
+	 * @throws Throwable
+	 */
 	private void addDataToMap(final String value)
 			throws Throwable {
 		final Document doc = new Document();
@@ -97,6 +115,11 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
 		}
 	}
 
+	/**
+	 * Attempt to retrieve datum from RAMDirectory. 
+	 * @param value The datum to retrieve
+	 * @throws Exception
+	 */
 	private void verifyEntries(final String value) throws Exception {
 		final StringBuffer data = new StringBuffer();
 		synchronized (clusteredDirectory) {
