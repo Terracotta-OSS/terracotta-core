@@ -1,10 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.core;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.debug.CCE;
 import com.tc.net.NIOWorkarounds;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEventListener;
@@ -323,11 +323,7 @@ final class TCConnectionJDK14 extends AbstractTCConnection implements TCJDK14Cha
       // after finishConnect(). Only after this selection occurs it is always safe to try
       // to write.
 
-      try {
-        comm.requestWriteInterest(this, channel);
-      } catch (ClassCastException cce) {
-        throw CCE.debug(channel, GatheringByteChannel.class, cce, this);
-      }
+      comm.requestWriteInterest(this, channel);
     }
   }
 
