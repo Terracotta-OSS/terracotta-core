@@ -111,6 +111,15 @@
       -->
       <dso-port>9510</dso-port>
 
+      <!-- On what port should the server listen for connections from the
+         Terracotta administration console? This can be any port you
+         like, but note that ports below 1024 typically require 'root'
+         privileges to use on Un*x-style systems (Linux, Solaris).
+        
+         Default: 9520
+      -->
+      <jmx-port>9520</jmx-port>
+
       <!-- Configuration data for DSO that's specific to the DSO server. -->
       <dso>
 
