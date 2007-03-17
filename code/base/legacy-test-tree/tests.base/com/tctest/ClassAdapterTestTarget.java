@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -11,17 +12,42 @@ import java.util.List;
  * Adaptation target for ClassAdapterTest
  */
 public class ClassAdapterTestTarget {
+  private static final String              C                                    = ClassAdapterTestTarget.class
+                                                                                    .getName()
+                                                                                  + ".";
+
+  public static final String               KEY                                  = C + "key";
+  public static final String               CSTR_THROW_EXCEPTION                 = C + "cstr-throw-exception";
+  public static final String               CSTR_AUTOLOCK_NO_EXCEPTION           = C + "cstr-autolock-noexception";
+  public static final String               CSTR_AUTOLOCK_THROW_EXCEPTION_INSIDE = C
+                                                                                  + "cstr-autolock-throw-exception-inside";
 
   // This isn't a real serialVersionUID, but it needs to be here for tests
-  private static final long                serialVersionUID       = 42L;
+  private static final long                serialVersionUID                     = 42L;
 
   // Again, this isn't really for serialization, but it needs to be here for tests
-  private static final ObjectStreamField[] serialPersistentFields = { new java.io.ObjectStreamField("foo", char[].class) };
+  private static final ObjectStreamField[] serialPersistentFields               = { new java.io.ObjectStreamField(
+                                                                                                                  "foo",
+                                                                                                                  char[].class) };
 
-  List                                     myRoot                 = new ArrayList();
+  List                                     myRoot                               = new ArrayList();
 
-  public ClassAdapterTestTarget() throws RuntimeException {
-    return;
+  public ClassAdapterTestTarget() {
+    String s = System.getProperty(KEY);
+
+    if (s != null) {
+      if (CSTR_THROW_EXCEPTION.equals(s)) { throw new RuntimeException(s); }
+
+      // This funny looking code is here to create mulitple exit paths from this constructor
+      // It is also here to get some autolocking going on
+      synchronized (s) {
+        if (CSTR_AUTOLOCK_THROW_EXCEPTION_INSIDE.equals(s)) { throw new RuntimeException(s); }
+
+        if (!CSTR_AUTOLOCK_NO_EXCEPTION.equals(s)) { throw new AssertionError(s); }
+
+        if (hashCode() != hashCode()) { return; }
+      }
+    }
   }
 
   public void doStuff() {

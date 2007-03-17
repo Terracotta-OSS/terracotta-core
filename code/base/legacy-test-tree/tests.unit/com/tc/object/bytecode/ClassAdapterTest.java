@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
 
@@ -43,6 +44,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
   private ClassLoader             origThreadContextClassLoader;
 
   protected void setUp() throws Exception {
+    System.getProperties().remove(ClassAdapterTestTarget.KEY);
     initializeConfig();
     this.testClientObjectManager = new TestClientObjectManager();
     this.testTransactionManager = new MockTransactionManager();
@@ -124,8 +126,8 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
   public void testWildcardPatternWithNamedLocksAdaptsOK() throws Exception {
     createNamedLockDefinition("test");
     createLockConfigurationForMethodExpression("*", "*", "(..)");
-
     callNoArgCtor();
+    assertTransactionCount(1);
   }
 
   public void testWildcardPatternWithAutolockAdaptsOK() throws Exception {
@@ -1081,32 +1083,107 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
   }
 
   public void testWithoutLocks() throws Exception {
-
     String methodName = "internalSynchronizedInstanceMethod";
 
     invokeWithNoArgs(methodName);
 
     assertTransactionCount(0);
-
   }
 
-  public void testAutolocksOnCtors() throws Exception {
-    // this test is off until constructor pattern matching works.
-    if (true) return;
-
+  public void testAutolockCtorNoException() throws Exception {
     String methodExpression = "* " + targetClassName + ".*(..)";
     LockDefinition ld = new LockDefinition(LockDefinition.TC_AUTOLOCK_NAME, ConfigLockLevel.WRITE);
+    ld.commit();
 
-    TransparencyClassSpec spec = config.getOrCreateSpec(targetClassName);
+    config.getOrCreateSpec(targetClassName);
     config.addLock(methodExpression, ld);
 
     this.testClientObjectManager.setIsManaged(true);
 
     assertNoTransactions();
+
+    System.setProperty(ClassAdapterTestTarget.KEY, ClassAdapterTestTarget.CSTR_AUTOLOCK_NO_EXCEPTION);
+
     callNoArgCtor();
     assertTransactionCount(1);
     assertAutolockCount(1);
+  }
 
+  public void testNamedlockCtorNoException() throws Exception {
+    String methodExpression = "* " + targetClassName + ".*(..)";
+    LockDefinition ld = new LockDefinition("test-lock", ConfigLockLevel.WRITE);
+    ld.commit();
+
+    config.getOrCreateSpec(targetClassName);
+    config.addLock(methodExpression, ld);
+
+    assertNoTransactions();
+
+    callNoArgCtor();
+    assertTransactionCount(1);
+    assertAutolockCount(0);
+  }
+
+  public void testNamedlockCtorThrowsException() throws Exception {
+    String methodExpression = "* " + targetClassName + ".*(..)";
+    LockDefinition ld = new LockDefinition("test-lock", ConfigLockLevel.WRITE);
+    ld.commit();
+
+    config.getOrCreateSpec(targetClassName);
+    config.addLock(methodExpression, ld);
+
+    assertNoTransactions();
+
+    System.setProperty(ClassAdapterTestTarget.KEY, ClassAdapterTestTarget.CSTR_THROW_EXCEPTION);
+
+    try {
+      callNoArgCtor();
+      throw new AssertionError();
+    } catch (RuntimeException re) {
+      if ((re.getClass() != RuntimeException.class)
+          || !re.getMessage().equals(ClassAdapterTestTarget.CSTR_THROW_EXCEPTION)) { throw re; }
+    }
+
+    assertTransactionCount(1);
+    assertAutolockCount(0);
+  }
+
+  private void testAutolockCtorException(boolean inside) throws Exception {
+    String methodExpression = "* " + targetClassName + ".*(..)";
+    LockDefinition ld = new LockDefinition(LockDefinition.TC_AUTOLOCK_NAME, ConfigLockLevel.WRITE);
+    ld.commit();
+
+    config.getOrCreateSpec(targetClassName);
+    config.addLock(methodExpression, ld);
+
+    this.testClientObjectManager.setIsManaged(true);
+
+    assertNoTransactions();
+
+    String cmd = inside ? ClassAdapterTestTarget.CSTR_AUTOLOCK_THROW_EXCEPTION_INSIDE
+        : ClassAdapterTestTarget.CSTR_THROW_EXCEPTION;
+
+    System.setProperty(ClassAdapterTestTarget.KEY, cmd);
+
+    try {
+      callNoArgCtor();
+      throw new AssertionError();
+    } catch (RuntimeException re) {
+      if ((re.getClass() != RuntimeException.class) || !re.getMessage().equals(cmd)) { throw re; }
+    }
+
+    int numTxn = inside ? 1 : 0;
+
+    assertTransactionCount(numTxn);
+    assertAutolockCount(numTxn);
+  }
+
+  public void testAutolockCtorExceptionOutsideSynch() throws Exception {
+    testAutolockCtorException(false);
+  }
+
+  public void testAutolockCtorExceptionInsideSynch() throws Exception {
+    testAutolockCtorException(true);
   }
 
   public void testNestedAutolocks() throws Exception {
@@ -1470,11 +1547,26 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     config.addLock(methodExpression, lockDefinition);
   }
 
-  private Object callNoArgCtor() throws ClassNotFoundException, NoSuchMethodException, InstantiationException,
-      IllegalAccessException, InvocationTargetException {
-    Class c = classLoader.loadClass(targetClassName);
+  private Object callNoArgCtor() throws Exception {
+    // we're going to be clearing the counts, so make sure the caller assumes no TXNs to start with
+    assertNoTransactions();
+
+    // this makes sure the class initializer is called
+    Class c = Class.forName(targetClassName, true, this.classLoader);
+
+    // depending on the compiler (eclipse vs. javac, there might methods called that obtain locks)
+    this.testTransactionManager.clearBegins();
+    this.testTransactionManager.clearCommitCount();
+
     Constructor ctor = c.getConstructor(new Class[] {});
-    return ctor.newInstance(new Object[] {});
+    try {
+      return ctor.newInstance(new Object[] {});
+    } catch (InvocationTargetException ite) {
+      Throwable t = ite.getTargetException();
+      if (t instanceof RuntimeException) { throw (RuntimeException) t; }
+      if (t instanceof Error) { throw (Error) t; }
+      throw new RuntimeException(t);
+    }
   }
 
 }
