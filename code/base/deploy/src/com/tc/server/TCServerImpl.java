@@ -294,8 +294,6 @@ public class TCServerImpl extends SEDA implements TCServer {
       // the following code starts the jmx server as well
       startDSOServer(stage.getSink());
 
-      consoleLogger.info("Terracotta Server has started up successfully, and is now ready for work.");
-
       activateTime = System.currentTimeMillis();
 
       if (activationListener != null) {

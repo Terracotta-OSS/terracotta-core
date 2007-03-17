@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.impl.TestManagedObject;
@@ -143,7 +144,11 @@ public class PersistentManagedObjectStoreTest extends TestCase {
     }
 
     public long nextObjectIDBatch(int batchSize) {
-      throw new RuntimeException("Implement Me");
+      throw new ImplementMe();
+    }
+
+    public void setNextAvailableObjectID(long startID) {
+      throw new ImplementMe();
     }
 
     public SyncObjectIdSet getAllObjectIDs() {
@@ -154,6 +159,10 @@ public class PersistentManagedObjectStoreTest extends TestCase {
       for (Iterator i = ids.iterator(); i.hasNext();) {
         deleteObjectByID(tx, (ObjectID) i.next());
       }
+    }
+
+    public Map loadRootNamesToIDs() {
+      return null;
     }
 
   }

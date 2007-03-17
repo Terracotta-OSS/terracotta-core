@@ -110,8 +110,8 @@ public class ChannelManagerTest extends TestCase {
     try {
       NetworkListener lsnr = serverComms.createListener(sessionManager,
                                                         new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0), true,
-                                                        new HashSet(), new DefaultConnectionIdFactory());
-      lsnr.start();
+                                                        new DefaultConnectionIdFactory());
+      lsnr.start(new HashSet());
       ChannelManager channelManager = lsnr.getChannelManager();
       assertEquals(0, channelManager.getChannels().length);
 

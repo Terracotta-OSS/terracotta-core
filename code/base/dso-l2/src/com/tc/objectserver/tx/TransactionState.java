@@ -5,11 +5,14 @@
 package com.tc.objectserver.tx;
 
 public class TransactionState {
-  private static final int APPLY_STARTED       = 0x01;
-  private static final int APPLY_COMMITTED     = 0x02;
-  private static final int BROADCAST_COMPLETED = 0x04;
+  private static final int APPLY_STARTED           = 0x01;
+  private static final int APPLY_COMMITTED         = 0x02;
+  private static final int BROADCAST_COMPLETED     = 0x04;
+  private static final int TXN_RELAYED             = 0x08;
 
-  private int              state               = 0x00;
+  private static final int TXN_PROCESSING_COMPLETE = (APPLY_COMMITTED | APPLY_STARTED | BROADCAST_COMPLETED | TXN_RELAYED);
+
+  private int              state                   = 0x00;
 
   public void applyAndCommitSkipped() {
     state |= APPLY_STARTED | APPLY_COMMITTED;
@@ -20,7 +23,7 @@ public class TransactionState {
   }
 
   public boolean isComplete() {
-    return (state == (APPLY_COMMITTED | APPLY_STARTED | BROADCAST_COMPLETED));
+    return (state == TXN_PROCESSING_COMPLETE);
   }
 
   public void broadcastCompleted() {
@@ -31,11 +34,15 @@ public class TransactionState {
     state |= APPLY_COMMITTED;
   }
 
-  // To keep the curly braces balanced {
   public String toString() {
-    return "TransactionState = { " + ((state & APPLY_STARTED) == APPLY_STARTED ? " APPLY_STARTED : " : " : ")
+    return "TransactionState = [ " + ((state & APPLY_STARTED) == APPLY_STARTED ? " APPLY_STARTED : " : " : ")
            + ((state & APPLY_COMMITTED) == APPLY_COMMITTED ? " APPLY_COMMITED : " : " : ")
-           + ((state & BROADCAST_COMPLETED) == BROADCAST_COMPLETED ? " BROADCAST_COMPLETE } " : " }");
+           + ((state & TXN_RELAYED) == TXN_RELAYED ? " TXN_RELAYED : " : " : ")
+           + ((state & BROADCAST_COMPLETED) == BROADCAST_COMPLETED ? " BROADCAST_COMPLETE } " : " ]");
+  }
+
+  public void relayTransactionComplete() {
+    state |= TXN_RELAYED;
   }
 
 }

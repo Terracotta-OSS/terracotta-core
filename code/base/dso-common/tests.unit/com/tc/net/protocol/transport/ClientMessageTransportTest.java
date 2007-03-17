@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -21,7 +22,7 @@ import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.object.session.NullSessionManager;
 import com.tc.test.TCTestCase;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -82,7 +83,7 @@ public class ClientMessageTransportTest extends TCTestCase {
     });
 
     // FIXME 2005-12-14 -- We should restore this test.
-//    assertNull(connection.connectCalls.poll(3000));
+    // assertNull(connection.connectCalls.poll(3000));
 
   }
 
@@ -112,10 +113,11 @@ public class ClientMessageTransportTest extends TCTestCase {
    */
   public void testConnectAndHandshakeActuallyConnected() throws Exception {
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
-                                                                   new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy());
-    NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true, new HashSet(),
+                                                                   new PlainNetworkStackHarnessFactory(),
+                                                                   new NullConnectionPolicy());
+    NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
-    listener.start();
+    listener.start(Collections.EMPTY_SET);
     int port = listener.getBindPort();
 
     transport = new ClientMessageTransport(0, new ConnectionInfo(TCSocketAddress.LOOPBACK_IP, port), 1000, commsMgr

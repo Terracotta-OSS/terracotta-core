@@ -9,6 +9,7 @@ import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TestMessageChannel;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.ObjectID;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockID;
@@ -76,11 +77,20 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
   private void initHandshakeManager() {
     this.hm = new ServerClientHandshakeManager(TCLogging.getLogger(ServerClientHandshakeManager.class), channelManager,
-                                               objectManager, sequenceValidator, clientStateManager,
-                                               existingUnconnectedClients, lockManager,
+                                               objectManager, sequenceValidator, clientStateManager, lockManager,
                                                new TestServerTransactionManager(), lockResponseSink,
                                                new ObjectIDSequenceProvider(objectIDSequenceStart), timer,
                                                reconnectTimeout, false);
+    this.hm.setStarting(convertToConnectionIds(existingUnconnectedClients));
+  }
+
+  private Set convertToConnectionIds(Set s) {
+    HashSet ns = new HashSet();
+    for (Iterator i = s.iterator(); i.hasNext();) {
+      ChannelID cid = (ChannelID) i.next();
+      ns.add(new ConnectionID(cid.toLong(), "FORTESTING"));
+    }
+    return ns;
   }
 
   public void testNoUnconnectedClients() throws Exception {
@@ -108,7 +118,8 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     assertTrue(timer.cancelCalls.isEmpty());
     scc.task.run();
     assertEquals(1, timer.cancelCalls.size());
-    assertUnconnectedClientsWereClosed();
+    assertEquals(1, channelManager.closeAllChannelIDs.size());
+    assertEquals(new ChannelID(101), channelManager.closeAllChannelIDs.get(0));
 
     // make sure everything is started properly
     assertStarted();
@@ -128,8 +139,8 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     // make sure that calling notify timeout causes the remaining unconnected
     // clients to be closed.
     hm.notifyTimeout();
-    assertEquals(1, channelManager.closeAllCalls.size());
-    assertUnconnectedClientsWereClosed();
+    assertEquals(2, channelManager.closeAllChannelIDs.size());
+    assertEquals(existingUnconnectedClients, new HashSet(channelManager.closeAllChannelIDs));
     assertStarted();
   }
 
@@ -170,7 +181,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     assertFalse(sequenceValidator.isNext(handshake.getChannelID(), new SequenceID(minSequenceID.toLong())));
     assertEquals(2, existingUnconnectedClients.size());
     assertFalse(hm.isStarted());
-    assertFalse(hm.isStarting());
+    assertTrue(hm.isStarting());
 
     // reset sequence validator
     sequenceValidator.remove(handshake.getChannelID());
@@ -180,7 +191,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     hm.notifyClientConnect(handshake);
     connectedClients.add(handshake);
 
-    // make sure the state change happened properly.
+    // make sure no state change happened.
     assertTrue(hm.isStarting());
     assertFalse(hm.isStarted());
 
@@ -190,9 +201,6 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     assertEquals(new Long(reconnectTimeout), scc.delay);
     assertTrue(scc.period == null);
     assertTrue(scc.time == null);
-
-    // make sure there are no more existing unconnected clients.
-    assertEquals(1, existingUnconnectedClients.size());
 
     // make sure the transaction sequence was set
     assertTrue(sequenceValidator.isNext(handshake.getChannelID(), new SequenceID(minSequenceID.toLong())));
@@ -241,9 +249,6 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     connectedClients.add(handshake);
 
     assertStarted();
-
-    // make sure it correctly removes outstanding unconnectedClients.
-    assertEquals(0, existingUnconnectedClients.size());
 
     // make sure it cancels the timeout timer.
     assertEquals(1, timer.cancelCalls.size());
@@ -331,10 +336,6 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     assertTrue(hm.isStarted());
   }
 
-  private void assertUnconnectedClientsWereClosed() {
-    assertEquals(existingUnconnectedClients, channelManager.closeAllCalls.get(0));
-  }
-
   private TestClientHandshakeMessage newClientHandshakeMessage(ChannelID channelID1) {
     TestClientHandshakeMessage handshake = new TestClientHandshakeMessage();
     handshake.channelID = channelID1;
@@ -346,12 +347,12 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
   private static final class TestChannelManager implements DSOChannelManager {
 
-    public final List       closeAllCalls     = new ArrayList();
+    public final List       closeAllChannelIDs     = new ArrayList();
     public final Map        handshakeMessages = new HashMap();
     public final Collection channelIDs        = new HashSet();
 
     public void closeAll(Collection theChannelIDs) {
-      closeAllCalls.add(theChannelIDs);
+      closeAllChannelIDs.addAll(theChannelIDs);
     }
 
     public MessageChannel getActiveChannel(ChannelID id) {

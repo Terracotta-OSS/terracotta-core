@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.tcm;
 
@@ -33,8 +34,8 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * This is a test case for MessageChannel.
- * XXX: This test could use some work.  It's not very coherent and uses sleeps. --Orion 12/19/2005
+ * This is a test case for MessageChannel. XXX: This test could use some work. It's not very coherent and uses sleeps.
+ * --Orion 12/19/2005
  */
 public class MessageChannelTest extends TCTestCase {
   static final int             ITERATIONS    = 100;
@@ -55,10 +56,10 @@ public class MessageChannelTest extends TCTestCase {
 
   private int                  port          = 0;
 
-//  public MessageChannelTest() {
-//    disableAllUntil("2006-02-15");
-//  }
-  
+  // public MessageChannelTest() {
+  // disableAllUntil("2006-02-15");
+  // }
+
   protected void setUp(int maxReconnectTries) throws Exception {
     setUp(maxReconnectTries, new PlainNetworkStackHarnessFactory(), new PlainNetworkStackHarnessFactory());
   }
@@ -88,8 +89,8 @@ public class MessageChannelTest extends TCTestCase {
       lsnr.stop(WAIT);
     }
 
-    lsnr = serverComms
-        .createListener(new NullSessionManager(), new TCSocketAddress(port), false, new HashSet(), new DefaultConnectionIdFactory());
+    lsnr = serverComms.createListener(new NullSessionManager(), new TCSocketAddress(port), false,
+                                      new DefaultConnectionIdFactory());
     lsnr.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     lsnr.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
       public void putMessage(TCMessage message) throws UnsupportedMessageTypeException {
@@ -108,7 +109,7 @@ public class MessageChannelTest extends TCTestCase {
         myServerSenderWatcher.addMessageSent(pong);
       }
     });
-    lsnr.start();
+    lsnr.start(new HashSet());
     this.port = lsnr.getBindPort();
   }
 
@@ -361,9 +362,10 @@ public class MessageChannelTest extends TCTestCase {
   }
 
   private ClientMessageChannel createClientMessageChannel(int maxReconnectTries) {
-    ClientMessageChannel ch = clientComms.createClientChannel(new NullSessionManager(), maxReconnectTries, TCSocketAddress.LOOPBACK_IP, lsnr
-        .getBindPort(), WAIT, new FixedValueConfigItem(new ConnectionInfo[] { new ConnectionInfo("localhost", lsnr
-        .getBindPort()) }));
+    ClientMessageChannel ch = clientComms
+        .createClientChannel(new NullSessionManager(), maxReconnectTries, TCSocketAddress.LOOPBACK_IP, lsnr
+            .getBindPort(), WAIT, new FixedValueConfigItem(new ConnectionInfo[] { new ConnectionInfo("localhost", lsnr
+            .getBindPort()) }));
     ch.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     return ch;
   }

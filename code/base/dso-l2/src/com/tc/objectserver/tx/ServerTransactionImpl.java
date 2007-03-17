@@ -43,16 +43,27 @@ public class ServerTransactionImpl implements ServerTransaction {
   private final Collection             objectIDs;
   private final Set                    newObjectIDs;
   private final TxnBatchID             batchID;
+  private final boolean                passive;
 
+  // for tests
   public ServerTransactionImpl(TxnBatchID batchID, TransactionID txID, SequenceID sequenceID, LockID[] lockIDs,
                                ChannelID channelID, List dnas, ObjectStringSerializer serializer, Map newRoots,
                                TxnType transactionType, Collection notifies, DmiDescriptor[] dmis) {
+
+    this(batchID, txID, sequenceID, lockIDs, channelID, dnas, serializer, newRoots, transactionType, notifies, dmis,
+         false);
+  }
+
+  public ServerTransactionImpl(TxnBatchID batchID, TransactionID txID, SequenceID sequenceID, LockID[] lockIDs,
+                               ChannelID channelID, List dnas, ObjectStringSerializer serializer, Map newRoots,
+                               TxnType transactionType, Collection notifies, DmiDescriptor[] dmis, boolean passive) {
     this.batchID = batchID;
     this.txID = txID;
     this.seqID = sequenceID;
     this.lockIDs = lockIDs;
     this.newRoots = newRoots;
     this.channelID = channelID;
+    this.passive = passive;
     this.serverTxID = new ServerTransactionID(channelID, txID);
     this.transactionType = transactionType;
     this.notifies = notifies;
@@ -132,5 +143,9 @@ public class ServerTransactionImpl implements ServerTransaction {
 
   public TxnBatchID getBatchID() {
     return batchID;
+  }
+
+  public boolean isPassive() {
+    return passive;
   }
 }

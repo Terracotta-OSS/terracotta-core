@@ -67,5 +67,42 @@ public class SleepycatSequenceTest extends TCTestCase {
     System.err.println("UID is " + uid3);
     assertNotEquals(uid1, uid3);
   }
+  
+  public void testBasic()  throws Exception {
+    DBEnvironment env = newEnv(true);
+    assertTrue(env.open().isClean());
+    SleepycatPersistenceTransactionProvider persistenceTransactionProvider = new SleepycatPersistenceTransactionProvider(env.getEnvironment());
+    TCLogger logger = TCLogging.getLogger(SleepycatSequenceTest.class);
+    SleepycatSequence sequence = new SleepycatSequence(persistenceTransactionProvider, logger, 1, 1, env.getClientIDDatabase());
+    long id = sequence.next();
+    assertEquals(1, id);
+    id = sequence.nextBatch(100);
+    assertEquals(2, id);
+    id = sequence.next();
+    assertEquals(102, id);
+    id = sequence.next();
+    assertEquals(103, id);
+    id = sequence.next();
+    assertEquals(104, id);
+    sequence.setNext(1000);
+    id = sequence.next();
+    assertEquals(1000, id);
+    id = sequence.nextBatch(100);
+    assertEquals(1001, id);
+    id = sequence.nextBatch(100);
+    assertEquals(1101, id);
+    boolean failed = false;
+    try {
+      sequence.setNext(100);
+      failed = true;
+    }catch(AssertionError er) {
+      //expected
+    }
+    id = sequence.next();
+    assertEquals(1201, id);
+    if(failed) {
+      throw new AssertionError("Didn't fail");
+    }
+  }
 
 }

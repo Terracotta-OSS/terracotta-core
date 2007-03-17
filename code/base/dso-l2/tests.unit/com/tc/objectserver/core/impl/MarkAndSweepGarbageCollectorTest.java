@@ -321,4 +321,8 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     throw new ImplementMe();
   }
 
+  public Map getRootNamesToIDsMap() {
+    throw new ImplementMe();
+  }
+
 }

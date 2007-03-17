@@ -58,7 +58,7 @@ public class TestClientHandshakeMessage implements ClientHandshakeMessage {
     return this.channelID;
   }
 
-  public Collection getObjectIDs() {
+  public Set getObjectIDs() {
     return clientObjectIds;
   }
 

@@ -7,10 +7,13 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.ServerTransactionID;
 
 import java.util.Collection;
+import java.util.Set;
 
 public interface ServerTransactionListener {
   
   public void addResentServerTransactionIDs(Collection sTxIDs);
+  
+  public void incomingTransactions(ChannelID cid, Set serverTxnIDs);
   
   public void transactionApplied(ServerTransactionID stxID);
   

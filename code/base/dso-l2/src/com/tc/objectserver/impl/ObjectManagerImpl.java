@@ -572,6 +572,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return objectStore.getRoots();
   }
 
+  public Map getRootNamesToIDsMap() {
+    return objectStore.getRootNamesToIDsMap();
+  }
+
   public SyncObjectIdSet getAllObjectIDs() {
     return objectStore.getAllObjectIDs();
   }

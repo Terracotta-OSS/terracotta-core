@@ -17,6 +17,10 @@ public class TransactionRecord {
     this.waitees = new HashSet();
   }
 
+  public void relayTransactionComplete() {
+    state.relayTransactionComplete();
+  }
+
   public void applyAndCommitSkipped() {
     state.applyAndCommitSkipped();
   }

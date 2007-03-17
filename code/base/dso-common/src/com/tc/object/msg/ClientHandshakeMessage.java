@@ -10,6 +10,7 @@ import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.WaitContext;
 
 import java.util.Collection;
+import java.util.Set;
 
 public interface ClientHandshakeMessage {
 
@@ -17,7 +18,7 @@ public interface ClientHandshakeMessage {
 
   public void addObjectID(ObjectID object);
 
-  public Collection getObjectIDs();
+  public Set getObjectIDs();
 
   public void addLockContext(LockContext ctxt);
 

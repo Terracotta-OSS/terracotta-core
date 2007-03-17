@@ -4,8 +4,11 @@
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.TransactionBatch;
+
+import java.util.Collection;
 
 /**
  * @author steve
@@ -17,6 +20,10 @@ public interface CommitTransactionMessage {
   public void setBatch(TransactionBatch batch, ObjectStringSerializer serializer);
 
   public TCByteBuffer[] getBatchData();
+  
+  public Collection addAcknowledgedTransactionIDsTo(Collection c);
 
   public void send();
+  
+  public ChannelID getChannelID();
 }

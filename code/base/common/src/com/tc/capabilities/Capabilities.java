@@ -8,5 +8,6 @@ public interface Capabilities {
   Date l2ExpiresOn();
   boolean canClusterPOJOs();
   boolean hasHA();
+  boolean hasHAOverNetwork();
   String describe();
 }

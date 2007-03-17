@@ -21,4 +21,6 @@ public interface ChannelManager {
   public void addEventListener(ChannelManagerEventListener listener);
 
   public Collection getAllChannelIDs();
+
+  public void closeAllChannels();
 }

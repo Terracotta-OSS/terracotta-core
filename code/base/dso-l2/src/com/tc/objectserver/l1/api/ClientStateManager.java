@@ -46,8 +46,6 @@ public interface ClientStateManager extends PrettyPrintable {
   
   public void addAllReferencedIdsTo(Set rescueIds);
 
-  public Collection getAllClientIDs();
-
   public void removeReferencedFrom(ChannelID channelID, Set secondPass);
 
   public Set addReferences(ChannelID channelID, Set oids);

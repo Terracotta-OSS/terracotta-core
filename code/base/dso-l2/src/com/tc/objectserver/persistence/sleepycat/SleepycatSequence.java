@@ -1,11 +1,11 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.persistence.sleepycat;
 
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
-import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.tc.logging.TCLogger;
@@ -22,7 +22,7 @@ class SleepycatSequence extends SleepycatPersistorBase implements PersistentSequ
   private final DatabaseEntry                  key;
   private final Database                       sequenceDB;
   private final PersistenceTransactionProvider ptxp;
-  private final String                           uid;
+  private final String                         uid;
 
   SleepycatSequence(PersistenceTransactionProvider ptxp, TCLogger logger, long sequenceID, long startValue,
                     Database sequenceDB) {
@@ -57,10 +57,10 @@ class SleepycatSequence extends SleepycatPersistorBase implements PersistentSequ
       }
       tx.commit();
       return newuid;
-    } catch (DatabaseException t) {
+    } catch (Exception t) {
       abortOnError(tx);
       t.printStackTrace();
-      throw new DBException(t);
+      throw (t instanceof DBException ? (DBException) t : new DBException(t));
     }
   }
 
@@ -95,14 +95,46 @@ class SleepycatSequence extends SleepycatPersistorBase implements PersistentSequ
                                                                            + status); }
       tx.commit();
       return currentValue;
-    } catch (DatabaseException t) {
+    } catch (Exception t) {
       abortOnError(tx);
       t.printStackTrace();
-      throw new DBException(t);
+      throw (t instanceof DBException ? (DBException) t : new DBException(t));
     }
   }
 
   public String getUID() {
     return uid;
+  }
+
+  public void setNext(long next) {
+    PersistenceTransaction tx = ptxp.newTransaction();
+    try {
+      DatabaseEntry value = new DatabaseEntry();
+      long currentValue = startValue;
+      OperationStatus status = this.sequenceDB.get(pt2nt(tx), key, value, LockMode.DEFAULT);
+
+      if (OperationStatus.SUCCESS.equals(status)) {
+        currentValue = Conversion.bytes2Long(value.getData());
+      } else if (!OperationStatus.NOTFOUND.equals(status)) {
+        // Formatting
+        throw new DBException("Unable to retrieve current value: " + status);
+      }
+
+      if (currentValue > next) {
+        abortOnError(tx);
+        throw new AssertionError("Cant setNext sequence to a value less than current: current = " + currentValue
+                                 + " next = " + next);
+      }
+
+      value.setData(Conversion.long2Bytes(next));
+      status = this.sequenceDB.put(pt2nt(tx), key, value);
+      if (!OperationStatus.SUCCESS.equals(status)) { throw new DBException("Unable to store next value: " + (next)
+                                                                           + "): " + status); }
+      tx.commit();
+    } catch (Exception t) {
+      abortOnError(tx);
+      t.printStackTrace();
+      throw (t instanceof DBException ? (DBException) t : new DBException(t));
+    }
   }
 }

@@ -4,6 +4,7 @@
 package com.tc.objectserver.tx;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.exception.ImplementMe;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
@@ -30,6 +31,7 @@ import com.tc.util.SequenceID;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -144,7 +146,7 @@ public class TransactionBatchTest extends TestCase {
     writer.wait4AllTxns2Serialize();
 
     TransactionBatchReaderImpl reader = new TransactionBatchReaderImpl(writer.getData(), channel, new HashSet(),
-                                                                       serializer);
+                                                                       serializer, false);
     assertEquals(2, reader.getNumTxns());
     assertEquals(batchID, reader.getBatchID());
 
@@ -216,6 +218,14 @@ public class TransactionBatchTest extends TestCase {
 
     public ObjectStringSerializer getSerializer() {
       return serializer;
+    }
+
+    public Collection addAcknowledgedTransactionIDsTo(Collection c) {
+      throw new ImplementMe();
+    }
+
+    public ChannelID getChannelID() {
+      return ChannelID.NULL_ID;
     }
 
   }

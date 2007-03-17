@@ -12,6 +12,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransaction;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 public interface ServerTransactionManager {
 
@@ -41,7 +42,7 @@ public interface ServerTransactionManager {
   public boolean isWaiting(ChannelID waiter, TransactionID requestID);
 
   /**
-   * received and acknowledgement from that client that the changes in the given transaction have been applied.
+   * received an acknowledgement from the client that the changes in the given transaction have been applied.
    * This could potentially trigger an acknowledgement to the orginating client.
    * 
    * @param waiter - ChannelID of the sender of the message that is waiting for a response
@@ -87,4 +88,8 @@ public interface ServerTransactionManager {
   public void setResentTransactionIDs(ChannelID channelID, Collection transactionIDs);
   
   public void addTransactionListener(ServerTransactionListener listener);
+
+  public void incomingTransactions(ChannelID channelID, Set serverTxnIDs, boolean relayed);
+
+  public void transactionsRelayed(ChannelID channelID, Set serverTxnIDs);
 }

@@ -6,6 +6,7 @@ package com.tc.objectserver.core.impl;
 
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
+import com.tc.l2.api.L2Coordinator;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.ObjectManager;
@@ -36,7 +37,8 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   private final ChannelStats                  channelStats;
   private final TransactionBatchReaderFactory transactionBatchReaderFactory;
   private final ObjectRequestManager          objectRequestManager;
-  private final TransactionalObjectManager      txnObjectManager;
+  private final TransactionalObjectManager    txnObjectManager;
+  private final L2Coordinator                 l2Coordinator;
 
   public ServerConfigurationContextImpl(StageManager stageManager, ObjectManager objectManager,
                                         ObjectRequestManager objectRequestManager, ManagedObjectStore objectStore,
@@ -45,6 +47,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
                                         ServerTransactionManager transactionManager,
                                         TransactionalObjectManager txnObjectManager,
                                         ServerClientHandshakeManager clientHandshakeManager, ChannelStats channelStats,
+                                        L2Coordinator l2Coordinator,
                                         TransactionBatchReaderFactory transactionBatchReaderFactory) {
     super(stageManager);
     this.objectManager = objectManager;
@@ -57,7 +60,12 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
     this.txnObjectManager = txnObjectManager;
     this.clientHandshakeManager = clientHandshakeManager;
     this.channelStats = channelStats;
+    this.l2Coordinator = l2Coordinator;
     this.transactionBatchReaderFactory = transactionBatchReaderFactory;
+  }
+
+  public L2Coordinator getL2Coordinator() {
+    return l2Coordinator;
   }
 
   public ObjectManager getObjectManager() {

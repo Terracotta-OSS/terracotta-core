@@ -10,10 +10,12 @@ import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.Assert;
 import com.tc.util.SyncObjectIdSet;
 import com.tc.util.SyncObjectIdSetImpl;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -133,8 +135,17 @@ public class InMemoryManagedObjectStore implements ManagedObjectStore {
     return rv;
   }
 
+  public void setNextAvailableObjectID(long startID) {
+    Assert.assertTrue(startID >= objectIDSequence);
+    objectIDSequence = startID;
+  }
+
   public void setTransientData(ManagedObjectStateFactory stateFactory) {
     assertNotInShutdown();
+  }
+
+  public Map getRootNamesToIDsMap() {
+    return Collections.unmodifiableMap(roots);
   }
 
 }

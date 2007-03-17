@@ -47,6 +47,7 @@ public class DBEnvironment {
   private static final String              STRING_INDEX_DB_NAME         = "stringindex";
   private static final String              CLASS_DB_NAME                = "classdefinitions";
   private static final String              MAP_DB_NAME                  = "mapsdatabase";
+  private static final String              CLUSTER_STATE_STORE          = "clusterstatestore";
 
   private static final Object              CONTROL_LOCK                 = new Object();
 
@@ -151,6 +152,7 @@ public class DBEnvironment {
       newDatabase(env, STRING_INDEX_DB_NAME);
       newDatabase(env, CLASS_DB_NAME);
       newDatabase(env, MAP_DB_NAME);
+      newDatabase(env, CLUSTER_STATE_STORE);
     } catch (DatabaseException e) {
       this.status = STATUS_ERROR;
       forceClose();
@@ -292,6 +294,11 @@ public class DBEnvironment {
   public Database getStringIndexDatabase() throws DatabaseException {
     assertOpen();
     return (Database) databasesByName.get(STRING_INDEX_DB_NAME);
+  }
+
+  public Database getClusterStateStoreDatabase() throws DatabaseException {
+    assertOpen();
+    return (Database) databasesByName.get(CLUSTER_STATE_STORE);
   }
 
   private void assertNotError() throws DatabaseException {

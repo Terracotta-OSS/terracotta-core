@@ -85,6 +85,10 @@ public final class TestServerTransaction implements ServerTransaction {
     throw new ImplementMe();
   }
 
+  public boolean isPassive() {
+    return false;
+  }
+
   public Set getNewObjectIDs() {
     throw new ImplementMe();
   }

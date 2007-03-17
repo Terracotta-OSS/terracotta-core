@@ -34,7 +34,6 @@ import com.tc.stats.counter.CounterImpl;
 import com.tc.util.SequenceID;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -154,7 +153,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     assertTrue(action.clientID == null && action.txID == null);
     Set txns = new HashSet();
     txns.add(tx1);
-    doStages(txns);
+    doStages(cid1, txns);
     assertTrue(action.clientID == cid1 && action.txID == tid1);
     assertFalse(transactionManager.isWaiting(cid1, tid1));
 
@@ -170,7 +169,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     assertTrue(transactionManager.isWaiting(cid1, tid1));
     transactionManager.acknowledgement(cid1, tid1, cid3);
     assertTrue(action.clientID == null && action.txID == null);
-    doStages(txns);
+    doStages(cid1, txns);
     assertTrue(action.clientID == cid1 && action.txID == tid1);
     assertFalse(transactionManager.isWaiting(cid1, tid1));
 
@@ -185,7 +184,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     assertTrue(this.clientStateManager.shutdownClientCalled);
     assertTrue(transactionManager.isWaiting(cid1, tid1));
     transactionManager.acknowledgement(cid1, tid1, cid2);
-    doStages(txns);
+    doStages(cid1, txns);
     assertTrue(action.clientID == cid1 && action.txID == tid1);
     assertFalse(transactionManager.isWaiting(cid1, tid1));
 
@@ -211,7 +210,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     transactionManager.acknowledgement(cid1, tid1, cid2);
     assertFalse(transactionManager.isWaiting(cid1, tid1));
     assertTrue(transactionManager.isWaiting(cid1, tid2));
-    doStages(txns);
+    doStages(cid1, txns);
     assertTrue(action.clientID == cid1 && action.txID == tid1);
 
     action.clear();
@@ -222,13 +221,16 @@ public class ServerTransactionManagerImplTest extends TestCase {
                                                       DmiDescriptor.EMPTY_ARRAY);
     txns.clear();
     txns.add(tx2);
-    doStages(txns);
+    doStages(cid1, txns);
     assertTrue(action.clientID == cid1 && action.txID == tid2);
     assertFalse(transactionManager.isWaiting(cid1, tid1));
     assertFalse(transactionManager.isWaiting(cid1, tid2));
   }
 
-  private void doStages(Set txns) {
+  private void doStages(ChannelID cid, Set txns) {
+
+    // process stage
+    transactionManager.incomingTransactions(cid, getServerTransactionIDs(txns), false);
 
     for (Iterator iter = txns.iterator(); iter.hasNext();) {
       ServerTransaction tx = (ServerTransaction) iter.next();
@@ -252,7 +254,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     }
   }
 
-  private Collection getServerTransactionIDs(Set txns) {
+  private Set getServerTransactionIDs(Set txns) {
     Set s = new HashSet();
     for (Iterator iter = txns.iterator(); iter.hasNext();) {
       s.add(((ServerTransaction) iter.next()).getServerTransactionID());

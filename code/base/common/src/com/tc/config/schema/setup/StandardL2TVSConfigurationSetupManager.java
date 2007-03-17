@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
@@ -126,8 +127,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
         if (l2Array.length > 1) {
           // formatting
           throw new ConfigurationSetupException("You have not specified a name for your L2, and there are "
-                                                + l2Array.length + " L2s defined in the configuration file. "
-                                                + "You must indicate which L2 this is.");
+              + l2Array.length + " L2s defined in the configuration file. " + "You must indicate which L2 this is.");
         } else {
           return l2Array[0];
         }
@@ -181,19 +181,14 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
       if ((!out.explicitlySpecifiedInConfigFile()) && name != null) {
         // formatting
-        throw new ConfigurationSetupException(
-                                              "Multiple <server> elements are defined in the configuration file. "
-                                                  + "As such, each server that you start needs to know which configuration "
-                                                  + "it should use.\n\n"
-                                                  + "However, this server couldn't figure out which one it is -- it thinks it's "
-                                                  + "called '"
-                                                  + name
-                                                  + "' (which, by default, is the host name of this machine), but you've only "
-                                                  + "created <server> elements in the config file called "
-                                                  + list
-                                                  + ".\n\nPlease re-start the server with a '-n <name>' argument on the command line to tell this "
-                                                  + "server which one it is, or change the 'name' attributes of the <server> "
-                                                  + "elements in the config file as appropriate.");
+        throw new ConfigurationSetupException("Multiple <server> elements are defined in the configuration file. "
+            + "As such, each server that you start needs to know which configuration " + "it should use.\n\n"
+            + "However, this server couldn't figure out which one it is -- it thinks it's " + "called '" + name
+            + "' (which, by default, is the host name of this machine), but you've only "
+            + "created <server> elements in the config file called " + list
+            + ".\n\nPlease re-start the server with a '-n <name>' argument on the command line to tell this "
+            + "server which one it is, or change the 'name' attributes of the <server> "
+            + "elements in the config file as appropriate.");
       }
 
       this.l2ConfigData.put(name, out);
@@ -232,18 +227,17 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       if (servers != null && servers.length > 1) {
         Capabilities capabilities = AbstractCapabilitiesFactory.getCapabilitiesManager();
 
-        if (!capabilities.hasHA() && capabilities.canClusterPOJOs()) {
-          throw new ConfigurationSetupException("Attempting to run multiple servers without license "+
-                                                "authorization of DSO High Availability.");
-        }
-        
+        if (!capabilities.hasHA() && capabilities.canClusterPOJOs()) { throw new ConfigurationSetupException(
+            "Attempting to run multiple servers without license " + "authorization of DSO High Availability."); }
+
         // We have clustered DSO; they must all be in permanent-store mode
         for (int i = 0; i < servers.length; ++i) {
           String name = servers[i].getName();
           L2ConfigData data = configDataFor(name);
 
           Assert.assertNotNull(data);
-          if (!(data.dsoL2Config().persistenceMode().getObject().equals(PersistenceMode.PERMANENT_STORE))) {
+          if (!capabilities.hasHAOverNetwork()
+              && !(data.dsoL2Config().persistenceMode().getObject().equals(PersistenceMode.PERMANENT_STORE))) {
             badServers.add(name);
           }
         }
@@ -251,40 +245,32 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
       if (badServers.size() > 0) {
         // formatting
-        throw new ConfigurationSetupException(
-                                              "Your Terracotta system has a clustered DSO configuration -- i.e., "
-                                                  + "DSO is enabled, and more than one server is defined in the configuration file -- but "
-                                                  + "at least one server is in the '"
-                                                  + PersistenceMode.TEMPORARY_SWAP_ONLY
-                                                  + "' persistence mode. (Servers in this mode: "
-                                                  + badServers
-                                                  + ".) In a "
-                                                  + "clustered DSO configuration, all servers must be in the '"
-                                                  + PersistenceMode.PERMANENT_STORE
-                                                  + "' mode. Please adjust the "
-                                                  + "persistence/mode element (inside the 'server' element) in your "
-                                                  + "configuration file; see the Terracotta documentation for more details.");
+        throw new ConfigurationSetupException("Your Terracotta system has a clustered DSO configuration -- i.e., "
+            + "DSO is enabled, and more than one server is defined in the configuration file -- but "
+            + "at least one server is in the '" + PersistenceMode.TEMPORARY_SWAP_ONLY
+            + "' persistence mode. (Servers in this mode: " + badServers + ".) In a "
+            + "clustered DSO configuration, all servers must be in the '" + PersistenceMode.PERMANENT_STORE
+            + "' mode. Please adjust the " + "persistence/mode element (inside the 'server' element) in your "
+            + "configuration file; see the Terracotta documentation for more details.");
       }
     }
   }
 
   private void validateLicenseModuleRestrictions() throws ConfigurationSetupException {
     Capabilities capabilities = AbstractCapabilitiesFactory.getCapabilitiesManager();
-  
+
     if (!capabilities.canClusterPOJOs()) {
       Object result = this.dsoApplicationConfigFor(TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME)
           .roots().getObject();
       if (result != null && Array.getLength(result) > 0) {
         // formatting
-        throw new ConfigurationSetupException(
-                                              "Your Terracotta license, "
-                                                  + capabilities.describe()
-                                                  + ", does not allow you to define DSO roots in your configuration file. Please remove them and try again.");
+        throw new ConfigurationSetupException("Your Terracotta license, " + capabilities.describe()
+            + ", does not allow you to define DSO roots in your configuration file. Please remove them and try again.");
       }
     }
 
   }
-  
+
   public NewCommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException {
     return configDataFor(name).commonL2Config();
   }
@@ -328,8 +314,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     System system = (System) this.systemBeanRepository().bean();
     Client client = (Client) this.clientBeanRepository().bean();
     Servers servers = (Servers) this.serversBeanRepository().bean();
-    Application application = (Application) this.applicationsRepository()
-        .repositoryFor(TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME).bean();
+    Application application = (Application) this.applicationsRepository().repositoryFor(
+        TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME).bean();
 
     if (system != null) config.setSystem(system);
     if (client != null) config.setClients(client);

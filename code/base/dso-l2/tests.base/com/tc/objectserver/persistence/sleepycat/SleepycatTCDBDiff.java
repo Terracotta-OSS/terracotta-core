@@ -95,20 +95,12 @@ public class SleepycatTCDBDiff {
 
   private void diffClientStates(ClientStatePersistor cp1, ClientStatePersistor cp2) {
     log("Diffing ClientStates...");
-    Set cids1 = getCids(cp1.loadClientIDs());
-    Set cids2 = getCids(cp2.loadClientIDs());
+    Set cids1 = cp1.loadClientIDs();
+    Set cids2 = cp2.loadClientIDs();
     if (!cids1.equals(cids2)) {
       log("*** [1] containing " + cids1.size() + " ClientIDs differs from [2] containing " + cids2.size()
           + " ClientIDs");
     }
-  }
-
-  private Set getCids(Iterator i) {
-    Set s = new HashSet();
-    while (i.hasNext()) {
-      s.add(i.next());
-    }
-    return s;
   }
 
   private void diffManagedObjects(ManagedObjectPersistor mp1, ManagedObjectPersistor mp2) {

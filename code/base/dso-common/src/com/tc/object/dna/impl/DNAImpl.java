@@ -200,7 +200,10 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
     return NULL_VERSION;
   }
 
-  public void serializeTo(TCByteBufferOutput serialOutput) {
+  /*
+   * This methods is synchronized coz both broadcast stage and L2 sync objects stage accesses it simultaneously
+   */
+  public synchronized void serializeTo(TCByteBufferOutput serialOutput) {
     serialOutput.write(dataOut);
   }
 

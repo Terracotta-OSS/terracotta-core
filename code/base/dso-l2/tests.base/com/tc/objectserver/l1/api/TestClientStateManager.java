@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -79,7 +80,11 @@ public class TestClientStateManager implements ClientStateManager {
   }
 
   public Set addReferences(ChannelID channelID, Set oids) {
-    throw new ImplementMe();
+    for (Iterator i = oids.iterator(); i.hasNext();) {
+      ObjectID oid = (ObjectID) i.next();
+      addReferenceCalls.add(new AddReferenceContext(channelID, oid));
+    }
+    return oids;
   }
 
 }

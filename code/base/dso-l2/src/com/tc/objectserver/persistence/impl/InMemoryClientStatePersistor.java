@@ -3,42 +3,27 @@
  */
 package com.tc.objectserver.persistence.impl;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
-
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.net.protocol.transport.ConnectionID;
-import com.tc.net.protocol.transport.ConnectionIdFactory;
-import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
-import com.tc.objectserver.l1.api.ClientState;
 import com.tc.objectserver.persistence.api.ClientStatePersistor;
+import com.tc.objectserver.persistence.api.PersistentSequence;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 public class InMemoryClientStatePersistor implements ClientStatePersistor {
 
-  private final DefaultConnectionIdFactory connectionIDFactory = new DefaultConnectionIdFactory();
   private final Map                        clients             = new HashMap();
+  private final PersistentSequence         connectionIDSequence = new InMemorySequenceProvider();
 
-  public ConnectionIdFactory getConnectionIDFactory() {
-    return this.connectionIDFactory;
+  public PersistentSequence getConnectionIDSequence() {
+    return this.connectionIDSequence;
   }
 
-  public long nextChangeIDFor(ChannelID id) throws ClientNotFoundException {
-    SynchronizedLong txIDs = null;
+  public Set loadClientIDs() {
     synchronized (clients) {
-      txIDs = (SynchronizedLong) clients.get(id);
-    }
-    if (txIDs == null) throw new ClientNotFoundException("Client not found: " + id);
-    return txIDs.increment();
-  }
-
-  public Iterator loadClientIDs() {
-    synchronized (clients) {
-      return new HashSet(clients.keySet()).iterator();
+      return new HashSet(clients.keySet());
     }
   }
 
@@ -48,9 +33,9 @@ public class InMemoryClientStatePersistor implements ClientStatePersistor {
     }
   }
 
-  public void saveClientState(ClientState clientState) {
+  public void saveClientState(ChannelID cid) {
     synchronized (clients) {
-      if (!containsClient(clientState.getClientID())) clients.put(clientState.getClientID(), new SynchronizedLong(0));
+      if (!containsClient(cid)) clients.put(cid, new Object());
     }
   }
 
@@ -60,14 +45,6 @@ public class InMemoryClientStatePersistor implements ClientStatePersistor {
       removed = clients.remove(id);
     }
     if (removed == null) throw new ClientNotFoundException("Client not found: " + id);
-  }
-
-  public Set loadConnectionIDs() {
-    Set connectionIDs = new HashSet();
-    for (Iterator i = loadClientIDs(); i.hasNext();) {
-      connectionIDs.add(new ConnectionID(((ChannelID) i.next()).toLong(), connectionIDFactory.getServerID()));
-    }
-    return connectionIDs;
   }
 
 }

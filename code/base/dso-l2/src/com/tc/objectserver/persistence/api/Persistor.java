@@ -24,4 +24,6 @@ public interface Persistor {
   public StringIndex getStringIndex();
   
   public PersistentCollectionFactory getPersistentCollectionFactory();
+  
+  public PersistentMapStore getClusterStateStore();
 }

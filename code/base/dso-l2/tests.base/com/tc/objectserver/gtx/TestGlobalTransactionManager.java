@@ -73,4 +73,8 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
   public void transactionApplied(ServerTransactionID stxID) {
     throw new ImplementMe();
   }
+
+  public void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
+    throw new ImplementMe();
+  }
 }

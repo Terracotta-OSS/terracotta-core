@@ -11,5 +11,7 @@ public interface PersistentSequence {
   public long next();
 
   public long nextBatch(int batchSize);
+  
+  public void setNext(long next);
 
 }

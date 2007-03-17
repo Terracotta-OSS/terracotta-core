@@ -15,6 +15,7 @@ import com.tc.util.Assert;
 import com.tc.util.SyncObjectIdSet;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 public class PersistentManagedObjectStore implements ManagedObjectStore {
@@ -33,6 +34,10 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     return rv;
   }
 
+  public void setNextAvailableObjectID(long startID) {
+    this.objectPersistor.setNextAvailableObjectID(startID);
+  }
+
   public void addNewRoot(PersistenceTransaction tx, String rootName, ObjectID id) {
     objectPersistor.addRoot(tx, rootName, id);
   }
@@ -47,6 +52,11 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
 
   public ObjectID getRootID(String name) {
     return objectPersistor.loadRootID(name);
+  }
+  
+
+  public Map getRootNamesToIDsMap() {
+    return objectPersistor.loadRootNamesToIDs();
   }
 
   public boolean containsObject(ObjectID id) {

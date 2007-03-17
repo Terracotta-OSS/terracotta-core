@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
@@ -12,6 +13,7 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.SyncObjectIdSet;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 public class TestManagedObjectStore implements ManagedObjectStore {
@@ -85,7 +87,15 @@ public class TestManagedObjectStore implements ManagedObjectStore {
   }
 
   public long nextObjectIDBatch(int batchSize) {
-    throw new RuntimeException("Implement me!");
+    throw new ImplementMe();
+  }
+
+  public void setNextAvailableObjectID(long startID) {
+    throw new ImplementMe();
+  }
+
+  public Map getRootNamesToIDsMap() {
+    return null;
   }
 
 }

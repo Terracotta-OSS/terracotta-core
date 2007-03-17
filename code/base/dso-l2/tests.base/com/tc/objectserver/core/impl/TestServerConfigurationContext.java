@@ -6,6 +6,7 @@ package com.tc.objectserver.core.impl;
 
 import com.tc.async.api.Stage;
 import com.tc.exception.ImplementMe;
+import com.tc.l2.api.L2Coordinator;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.net.ChannelStats;
@@ -36,7 +37,8 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
   public ObjectRequestManager         objectRequestManager;
   public Map                          stages = new HashMap();
   public ChannelStats                 channelStats;
-  public TransactionalObjectManager     txnObjectManager;
+  public TransactionalObjectManager   txnObjectManager;
+  public L2Coordinator                l2Coordinator;
 
   public void addStage(String name, Stage stage) {
     stages.put(name, stage);
@@ -92,6 +94,10 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
 
   public TransactionalObjectManager getTransactionalObjectManager() {
     return txnObjectManager;
+  }
+
+  public L2Coordinator getL2Coordinator() {
+    return l2Coordinator;
   }
 
 }

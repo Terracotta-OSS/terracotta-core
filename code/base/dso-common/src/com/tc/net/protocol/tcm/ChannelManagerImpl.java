@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.tcm;
 
@@ -7,6 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.util.Assert;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -17,7 +19,7 @@ import java.util.Map;
 
 /**
  * provides the sessionIDs
- *
+ * 
  * @author steve
  */
 class ChannelManagerImpl implements ChannelManager, ChannelEventListener, ServerMessageChannelFactory {
@@ -66,6 +68,14 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
     return (MessageChannelInternal[]) channels.values().toArray(EMPTY_CHANNEL_ARARY);
   }
 
+  public synchronized void closeAllChannels() {
+    MessageChannelInternal[] channelsCopy = getChannels();
+    for (int i = 0; i < channelsCopy.length; i++) {
+      channelsCopy[i].close();
+    }
+    Assert.assertEquals(0, channels.size());
+  }
+
   public synchronized Collection getAllChannelIDs() {
     return new HashSet(channels.keySet());
   }
@@ -90,7 +100,7 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
       removeChannel(channel);
     } else if (ChannelEventType.TRANSPORT_DISCONNECTED_EVENT.matches(event)) {
       if (this.transportDisconnectRemovesChannel) {
-        removeChannel(channel);
+        channel.close();
       }
     } else if (ChannelEventType.TRANSPORT_CONNECTED_EVENT.matches(event)) {
       fireChannelCreatedEvent(channel);

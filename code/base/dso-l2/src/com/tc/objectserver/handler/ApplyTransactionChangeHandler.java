@@ -52,6 +52,8 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     NotifiedWaiters notifiedWaiters = new NotifiedWaiters();
     final ServerTransactionID stxnID = txn.getServerTransactionID();
     final BackReferences includeIDs = new BackReferences();
+    
+    //TODO::Comeback and fix for passive
     GlobalTransactionID gtxnID = gtxm.createGlobalTransactionID(stxnID);
 
     // XXX::FIXME:: this needsApply() call only returns false after the txn is commited. If we see the same txn twice
@@ -65,14 +67,15 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
       getLogger().warn("Not applying previously applied transaction: " + stxnID);
     }
 
-    for (Iterator i = txn.addNotifiesTo(new LinkedList()).iterator(); i.hasNext();) {
-      Notify notify = (Notify) i.next();
-      lockManager.notify(notify.getLockID(), txn.getChannelID(), notify.getThreadID(), notify.getIsAll(),
-                         notifiedWaiters);
+    if (!txn.isPassive()) {
+      for (Iterator i = txn.addNotifiesTo(new LinkedList()).iterator(); i.hasNext();) {
+        Notify notify = (Notify) i.next();
+        lockManager.notify(notify.getLockID(), txn.getChannelID(), notify.getThreadID(), notify.getIsAll(),
+                           notifiedWaiters);
+      }
+      broadcastChangesSink.add(new BroadcastChangeContext(gtxnID, txn, gtxm.getLowGlobalTransactionIDWatermark(),
+                                                          notifiedWaiters, includeIDs));
     }
-
-    broadcastChangesSink.add(new BroadcastChangeContext(gtxnID, txn, gtxm.getLowGlobalTransactionIDWatermark(),
-                                                        notifiedWaiters, includeIDs));
   }
 
   public void initialize(ConfigurationContext context) {

@@ -9,6 +9,7 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.SyncObjectIdSet;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 public interface ManagedObjectPersistor {
@@ -25,6 +26,8 @@ public interface ManagedObjectPersistor {
 
   public long nextObjectIDBatch(int batchSize);
 
+  public void setNextAvailableObjectID(long startID);
+  
   public SyncObjectIdSet getAllObjectIDs();
 
   public void saveObject(PersistenceTransaction tx, ManagedObject managedObject);
@@ -34,5 +37,7 @@ public interface ManagedObjectPersistor {
   public void deleteAllObjectsByID(PersistenceTransaction tx, Collection ids);
   
   public void prettyPrint(PrettyPrinter out);
+
+  public Map loadRootNamesToIDs();
 
 }

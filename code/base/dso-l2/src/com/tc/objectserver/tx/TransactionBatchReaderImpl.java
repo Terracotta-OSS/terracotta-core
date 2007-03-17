@@ -37,9 +37,11 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
   private int                           numTxns;
   private final Collection              acknowledgedTransactionIDs;
   private ObjectStringSerializer        serializer;
+  private final boolean passive;
 
   public TransactionBatchReaderImpl(TCByteBuffer[] data, ChannelID source, Collection acknowledgedTransactionIDs,
-                                    ObjectStringSerializer serializer) throws IOException {
+                                    ObjectStringSerializer serializer, boolean passive) throws IOException {
+    this.passive = passive;
     this.in = new TCByteBufferInputStream(data);
     this.source = source;
     this.batchID = new TxnBatchID(in.readLong());
@@ -109,7 +111,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
 
     numTxns--;
     return new ServerTransactionImpl(getBatchID(), txnID, sequenceID, locks, source, dnas, serializer, newRoots,
-                                     txnType, notifies, dmis);
+                                     txnType, notifies, dmis, passive);
   }
 
   public TxnBatchID getBatchID() {

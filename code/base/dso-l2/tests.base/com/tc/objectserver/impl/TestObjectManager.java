@@ -195,4 +195,8 @@ public class TestObjectManager implements ObjectManager {
     throw new ImplementMe();
   }
 
+  public Map getRootNamesToIDsMap() {
+    throw new ImplementMe();
+  }
+
 }

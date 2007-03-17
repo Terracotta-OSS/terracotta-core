@@ -7,6 +7,10 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
+import com.tc.async.api.Sink;
+import com.tc.async.api.Stage;
+import com.tc.l2.context.IncomingTransactionContext;
+import com.tc.l2.objectserver.ReplicatedObjectManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -15,31 +19,33 @@ import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransaction;
+import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchReader;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.util.SequenceValidator;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * I'm going to keep this simple at first and block the thread of the Object request if the objects can't be retrieved.
- * I'll make this fancy later
- * 
- * @author steve
- */
 public class ProcessTransactionHandler extends AbstractEventHandler {
   private static final TCLogger            logger = TCLogging.getLogger(ProcessTransactionHandler.class);
+
   private TransactionBatchReaderFactory    batchReaderFactory;
+  private ReplicatedObjectManager          replicatedObjectMgr;
+
   private final TransactionBatchManager    transactionBatchManager;
   private final MessageRecycler            messageRecycler;
   private final SequenceValidator          sequenceValidator;
   private final TransactionalObjectManager txnObjectManager;
+
+  private Sink                             txnRelaySink;
+
+  private ServerTransactionManager         transactionManager;
 
   public ProcessTransactionHandler(TransactionBatchManager transactionBatchManager,
                                    TransactionalObjectManager txnObjectManager, SequenceValidator sequenceValidator,
@@ -58,16 +64,23 @@ public class ProcessTransactionHandler extends AbstractEventHandler {
       Collection completedTxnIds = reader.addAcknowledgedTransactionIDsTo(new HashSet());
       ServerTransaction txn;
 
-      List txns = new LinkedList();
-      Set serverTxnIDs = new HashSet();
+      List txns = new ArrayList(reader.getNumTxns());
+      Set serverTxnIDs = new HashSet(reader.getNumTxns());
       ChannelID channelID = reader.getChannelID();
       while ((txn = reader.getNextTransaction()) != null) {
         sequenceValidator.setCurrent(channelID, txn.getClientSequenceID());
         txns.add(txn);
         serverTxnIDs.add(txn.getServerTransactionID());
       }
-      messageRecycler.addMessage((CommitTransactionMessageImpl) context, serverTxnIDs);
-      txnObjectManager.addTransactions(reader.getChannelID(), txns, completedTxnIds);
+      messageRecycler.addMessage(ctm, serverTxnIDs);
+      if (replicatedObjectMgr.relayTransactions()) {
+        // TODO:: change it to become event based
+        transactionManager.incomingTransactions(channelID, serverTxnIDs, true);
+        txnRelaySink.add(new IncomingTransactionContext(channelID, ctm, txns, serverTxnIDs));
+      } else {
+        transactionManager.incomingTransactions(channelID, serverTxnIDs, false);
+      }
+      txnObjectManager.addTransactions(channelID, txns, completedTxnIds);
     } catch (Exception e) {
       logger.error("Error reading transaction batch. : ", e);
       MessageChannel c = ctm.getChannel();
@@ -80,5 +93,11 @@ public class ProcessTransactionHandler extends AbstractEventHandler {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;
     batchReaderFactory = oscc.getTransactionBatchReaderFactory();
+    transactionManager = oscc.getTransactionManager();
+    replicatedObjectMgr = oscc.getL2Coordinator().getReplicatedObjectManager();
+    Stage relayStage = oscc.getStage(ServerConfigurationContext.TRANSACTION_RELAY_STAGE);
+    if (relayStage != null) {
+      txnRelaySink = relayStage.getSink();
+    }
   }
 }

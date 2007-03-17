@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.l1.impl;
 
@@ -10,8 +11,6 @@ import com.tc.object.dna.api.DNA;
 import com.tc.objectserver.l1.api.ClientState;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.managedobject.BackReferences;
-import com.tc.objectserver.persistence.api.ClientStatePersistor;
-import com.tc.objectserver.persistence.impl.ClientNotFoundException;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet2;
@@ -30,27 +29,22 @@ import java.util.Set;
  */
 public class ClientStateManagerImpl implements ClientStateManager {
 
-  private static final State         STARTED = new State("STARTED");
-  private static final State         STOPPED = new State("STOPPED");
+  private static final State STARTED = new State("STARTED");
+  private static final State STOPPED = new State("STOPPED");
 
-  private State                      state   = STARTED;
+  private State              state   = STARTED;
 
-  private final Map                  clientStates;
-  private final ClientStatePersistor store;
-  private final TCLogger             logger;
+  private final Map          clientStates;
+  private final TCLogger     logger;
 
   // for testing
-  public ClientStateManagerImpl(TCLogger logger, Map states, ClientStatePersistor store) {
+  public ClientStateManagerImpl(TCLogger logger, Map states) {
     this.logger = logger;
     this.clientStates = states;
-    this.store = store;
-    for (Iterator i = store.loadClientIDs(); i.hasNext();) {
-      getOrCreateClientState((ChannelID) i.next());
-    }
   }
 
-  public ClientStateManagerImpl(TCLogger logger, ClientStatePersistor store) {
-    this(logger, new HashMap(), store);
+  public ClientStateManagerImpl(TCLogger logger) {
+    this(logger, new HashMap());
   }
 
   public synchronized List createPrunedChangesAndAddObjectIDTo(Collection changes, BackReferences includeIDs,
@@ -126,6 +120,10 @@ public class ClientStateManagerImpl implements ClientStateManager {
   public synchronized Set addReferences(ChannelID channelID, Set oids) {
     ClientState cs = getOrCreateClientState(channelID);
     Set refs = cs.getReferences();
+    if (refs.isEmpty()) {
+      refs.addAll(oids);
+      return oids;
+    }
     Set newReferences = new HashSet();
     for (Iterator i = oids.iterator(); i.hasNext();) {
       Object oid = i.next();
@@ -142,13 +140,7 @@ public class ClientStateManagerImpl implements ClientStateManager {
       // within the timeout period and be slain.
       return;
     }
-
-    Object removed = clientStates.remove(waitee);
-    try {
-      if (removed != null) store.deleteClientState(waitee);
-    } catch (ClientNotFoundException e) {
-      throw new AssertionError(e);
-    }
+    clientStates.remove(waitee);
   }
 
   public synchronized void stop() {
@@ -165,20 +157,11 @@ public class ClientStateManagerImpl implements ClientStateManager {
     if (state != STARTED) throw new AssertionError("Not started.");
   }
 
-  public synchronized Collection getAllClientIDs() {
-    Collection rv = new HashSet();
-    for (Iterator i = clientStates.values().iterator(); i.hasNext();) {
-      rv.add(((ClientState) i.next()).getClientID());
-    }
-    return rv;
-  }
-
   private ClientStateImpl getOrCreateClientState(ChannelID clientID) {
     ClientStateImpl clientState;
     if ((clientState = (ClientStateImpl) clientStates.get(clientID)) == null) {
       clientState = new ClientStateImpl(clientID);
       clientStates.put(clientID, clientState);
-      store.saveClientState(clientState);
     }
     return clientState;
   }
@@ -257,6 +240,5 @@ public class ClientStateManagerImpl implements ClientStateManager {
       return clientID;
     }
   }
-
 
 }

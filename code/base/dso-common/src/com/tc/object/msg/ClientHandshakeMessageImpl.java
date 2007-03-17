@@ -93,7 +93,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     }
   }
 
-  public Collection getObjectIDs() {
+  public Set getObjectIDs() {
     synchronized (objectIDs) {
       return new HashSet(objectIDs);
     }

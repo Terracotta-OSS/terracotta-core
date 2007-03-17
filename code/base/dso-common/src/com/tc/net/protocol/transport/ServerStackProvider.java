@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -31,7 +32,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   private final NetworkStackHarnessFactory       harnessFactory;
   private final ServerMessageChannelFactory      channelFactory;
   private final TransportHandshakeMessageFactory handshakeMessageFactory;
-  private final ConnectionIdFactory              connectionIdFactory;
+  private final ConnectionIDFactory              connectionIdFactory;
   private final ConnectionPolicy                 connectionPolicy;
   private final WireProtocolAdaptorFactory       wireProtocolAdaptorFactory;
   private final MessageTransportFactory          messageTransportFactory;
@@ -43,7 +44,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
                              ServerMessageChannelFactory channelFactory,
                              MessageTransportFactory messageTransportFactory,
                              TransportHandshakeMessageFactory handshakeMessageFactory,
-                             ConnectionIdFactory connectionIdFactory, ConnectionPolicy connectionPolicy,
+                             ConnectionIDFactory connectionIdFactory, ConnectionPolicy connectionPolicy,
                              WireProtocolAdaptorFactory wireProtocolAdaptorFactory) {
     this.messageTransportFactory = messageTransportFactory;
     this.connectionPolicy = connectionPolicy;
@@ -127,7 +128,18 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
    * A client disconnected.
    */
   public void notifyTransportDisconnected(MessageTransport transport) {
-    this.connectionPolicy.clientDisconnected();
+    // Currenly we dont care about this event here. In AbstractMessageChannel in the server, this event closes the
+    // channel
+    // so effectively a disconnected transport means a closed channel in the server. When we later implement clients
+    // reconnect
+    // this will change and this will trigger a reconnect window for that client here.
+  }
+
+  private void close(ConnectionID connectionId) {
+    NetworkStackHarness harness = removeNetworkStack(connectionId);
+    if (harness == null) { throw new AssertionError(
+                                                    "Receive a transport closed event for a transport that isn't in the map :"
+                                                        + connectionId); }
   }
 
   public void notifyTransportConnectAttempt(MessageTransport transport) {
@@ -139,8 +151,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
    * transport from the map of managed stacks.
    */
   public void notifyTransportClosed(MessageTransport transport) {
-    NetworkStackHarness harness = removeNetworkStack(transport.getConnectionId());
-    Assert.assertNotNull("Shouldn't receive a transport closed event from a transport that isn't in the map", harness);
+    close(transport.getConnectionId());
+    this.connectionPolicy.clientDisconnected();
   }
 
   /*********************************************************************************************************************
@@ -190,9 +202,10 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           handleSyn((SynMessage) message);
         } catch (StackNotFoundException e) {
           handleHandshakeError(new TransportHandshakeErrorContext(
-                                                                  "Unable to find communications stack. " + e.getMessage() +
-                                                                  ". This is usually caused by a client from a prior run trying to illegally reconnect to the server." +
-                                                                  " While that client is being rejected, everything else should proceed as normal. ",
+                                                                  "Unable to find communications stack. "
+                                                                      + e.getMessage()
+                                                                      + ". This is usually caused by a client from a prior run trying to illegally reconnect to the server."
+                                                                      + " While that client is being rejected, everything else should proceed as normal. ",
                                                                   e));
         }
       }

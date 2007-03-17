@@ -1,9 +1,11 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -22,9 +24,14 @@ public class MessageRecyclerImpl implements MessageRecycler {
 
   public synchronized void addMessage(DSOMessageBase message, Set keys) {
     if (!keys.isEmpty()) {
-      RecycleItem ri = new RecycleItem(message, keys);
+      final Set lkeys = new HashSet(keys.size());
+      RecycleItem ri = new RecycleItem(message, lkeys);
+      for (Iterator it = keys.iterator(); it.hasNext();) {
+        Object key = it.next();
+        lkeys.add(key);
+        keys2RecycleItem.put(key, ri);
+      }
       messages.addFirst(ri);
-      add(ri);
     } else {
       message.recycle();
     }
@@ -32,12 +39,6 @@ public class MessageRecyclerImpl implements MessageRecycler {
       // Let GC take care of it. We dont want a OOME !
       RecycleItem ri = (RecycleItem) messages.removeLast();
       remove(ri);
-    }
-  }
-
-  private void add(RecycleItem ri) {
-    for (Iterator it = ri.getKeys().iterator(); it.hasNext();) {
-      keys2RecycleItem.put(it.next(), ri);
     }
   }
 

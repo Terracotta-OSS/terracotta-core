@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -22,7 +23,7 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.TCAssertionError;
 
-import java.util.HashSet;
+import java.util.Collections;
 
 /**
  * Test case for MessageTransportImpl
@@ -70,8 +71,9 @@ public class MessageTransportTest extends TCTestCase {
     connManager.setConnection(clientConnection);
     commsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
                                                  connManager, new NullConnectionPolicy());
-    lsnr = commsManager.createListener(new NullSessionManager(), new TCSocketAddress(0), true, new HashSet(), new DefaultConnectionIdFactory());
-    lsnr.start();
+    lsnr = commsManager.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
+                                       new DefaultConnectionIdFactory());
+    lsnr.start(Collections.EMPTY_SET);
   }
 
   public void tearDown() throws Exception {
@@ -216,9 +218,8 @@ public class MessageTransportTest extends TCTestCase {
     assertFalse(clientTransport.isOpen.get());
 
     createServerTransport();
-    TransportHandshakeMessage ack = this.transportHandshakeMessageFactory.createAck(connectionId,
-                                                                                        this.serverTransport
-                                                                                            .getConnection());
+    TransportHandshakeMessage ack = this.transportHandshakeMessageFactory.createAck(connectionId, this.serverTransport
+        .getConnection());
     this.serverTransport.receiveTransportMessage(ack);
     assertTrue(serverEventMonitor.waitForConnect(1000));
     assertTrue(serverTransport.isConnected());

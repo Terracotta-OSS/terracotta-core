@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.tx;
 
@@ -20,7 +21,7 @@ import java.util.Set;
 
 /**
  * Represents an atomic change to the states of objects on the server
- *
+ * 
  * @author steve
  */
 
@@ -37,7 +38,7 @@ public interface ServerTransaction {
   public TransactionID getTransactionID();
 
   public SequenceID getClientSequenceID();
-  
+
   public ServerTransactionID getServerTransactionID();
 
   public List getChanges();
@@ -53,5 +54,11 @@ public interface ServerTransaction {
   public Collection addNotifiesTo(List list);
 
   public DmiDescriptor[] getDmiDescriptors();
+
+  /*
+   * This method returns true if the transaction arrives in the passive server. I see that this method name/signature
+   * will change and become more sane/complex in future.
+   */
+  public boolean isPassive();
 
 }

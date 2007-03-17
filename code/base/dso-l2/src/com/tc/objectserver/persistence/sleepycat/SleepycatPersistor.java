@@ -19,6 +19,7 @@ import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.PersistentCollectionFactory;
+import com.tc.objectserver.persistence.api.PersistentMapStore;
 import com.tc.objectserver.persistence.api.PersistentSequence;
 import com.tc.objectserver.persistence.api.Persistor;
 import com.tc.objectserver.persistence.api.StringIndexPersistor;
@@ -40,6 +41,7 @@ public class SleepycatPersistor implements Persistor {
   private final PersistenceTransactionProvider persistenceTransactionProvider;
   private final DBEnvironment                  env;
   private final SleepycatCollectionFactory     sleepycatCollectionFactory;
+  private final PersistentMapStore clusterStateStore;
 
   private SleepycatCollectionsPersistor        sleepycatCollectionsPersistor;
 
@@ -95,6 +97,7 @@ public class SleepycatPersistor implements Persistor {
     this.globalTransactionIDSequence = new SleepycatSequence(this.persistenceTransactionProvider, logger, 1, 1, env
         .getTransactionSequenceDatabase());
     this.classPersistor = new ClassPersistorImpl(this.persistenceTransactionProvider, logger, env.getClassDatabase());
+    this.clusterStateStore = new SleepycatMapStore(this.persistenceTransactionProvider, logger, env.getClusterStateStoreDatabase());
   }
 
   public StringIndex getStringIndex() {
@@ -127,6 +130,10 @@ public class SleepycatPersistor implements Persistor {
 
   public PersistentCollectionFactory getPersistentCollectionFactory() {
     return this.sleepycatCollectionFactory;
+  }
+
+  public PersistentMapStore getClusterStateStore() {
+    return clusterStateStore;
   }
 
   public void close() {

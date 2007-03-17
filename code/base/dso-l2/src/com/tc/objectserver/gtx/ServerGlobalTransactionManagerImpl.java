@@ -99,4 +99,8 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
   public void transactionApplied(ServerTransactionID stxID) {
     return;
   }
+
+  public void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
+    return;
+  }
 }

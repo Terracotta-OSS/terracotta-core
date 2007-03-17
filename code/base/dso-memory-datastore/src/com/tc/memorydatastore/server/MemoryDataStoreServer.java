@@ -67,7 +67,7 @@ public class MemoryDataStoreServer {
     this.communicationManager = new CommunicationsManagerImpl(new NullMessageMonitor(),
         new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy());
     this.lsnr = communicationManager.createListener(new NullSessionManager(), new TCSocketAddress(
-        TCSocketAddress.WILDCARD_ADDR, serverPort), true, Collections.EMPTY_SET, new DefaultConnectionIdFactory());
+        TCSocketAddress.WILDCARD_ADDR, serverPort), true, new DefaultConnectionIdFactory());
   }
 
   public void start() throws IOException {
@@ -88,7 +88,7 @@ public class MemoryDataStoreServer {
 
     stageManager.startAll(new NullContext(stageManager)); // temporary hack to
     // start the stage
-    lsnr.start();
+    lsnr.start(Collections.EMPTY_SET);
     this.state = STARTED;
   }
 

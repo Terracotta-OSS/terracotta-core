@@ -55,4 +55,8 @@ public class CommitTransactionMessageRecycler extends MessageRecyclerImpl implem
     return;
   }
 
+  public void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
+    return;
+  }
+
 }

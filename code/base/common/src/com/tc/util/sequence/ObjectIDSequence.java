@@ -12,4 +12,7 @@ public interface ObjectIDSequence {
    * @return The first id of the next batch of object ids.
    */
   public long nextObjectIDBatch(int batchSize);
+  
+  
+  public void setNextAvailableObjectID(long startID);
 }

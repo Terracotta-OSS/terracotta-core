@@ -18,6 +18,9 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
 import com.tc.io.TCRandomFileAccessImpl;
+import com.tc.l2.api.L2Coordinator;
+import com.tc.l2.ha.L2HACoordinator;
+import com.tc.l2.ha.L2HADisabledCooridinator;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -37,6 +40,7 @@ import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.object.cache.CacheConfigImpl;
 import com.tc.object.cache.CacheManager;
@@ -123,6 +127,7 @@ import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.NullTransactionPersistor;
 import com.tc.objectserver.persistence.impl.PersistentBatchSequenceProvider;
 import com.tc.objectserver.persistence.impl.TransactionStoreImpl;
+import com.tc.objectserver.persistence.sleepycat.ConnectionIDFactoryImpl;
 import com.tc.objectserver.persistence.sleepycat.CustomSerializationAdapterFactory;
 import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
 import com.tc.objectserver.persistence.sleepycat.DBException;
@@ -152,8 +157,6 @@ import com.tc.util.TCTimeoutException;
 import com.tc.util.TCTimerImpl;
 import com.tc.util.io.FileUtils;
 import com.tc.util.sequence.BatchSequence;
-import com.tc.util.sequence.ObjectIDSequence;
-import com.tc.util.sequence.ObjectIDSequenceProvider;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
 import com.tc.util.startuplock.FileNotCreatedException;
@@ -161,8 +164,8 @@ import com.tc.util.startuplock.LocationNotCreatedException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
@@ -171,7 +174,7 @@ import javax.management.NotCompliantMBeanException;
 
 /**
  * Startup and shutdown point. Builds and starts the server
- *
+ * 
  * @author steve
  */
 public class DistributedObjectServer extends SEDA {
@@ -182,7 +185,7 @@ public class DistributedObjectServer extends SEDA {
 
   private final L2TVSConfigurationSetupManager configSetupManager;
   private final Sink                           httpSink;
-  private NetworkListener                      lsnr;
+  private NetworkListener                      l1Listener;
   private CommunicationsManager                communicationsManager;
   private ServerConfigurationContext           context;
   private ObjectManagerImpl                    objectManager;
@@ -202,8 +205,11 @@ public class DistributedObjectServer extends SEDA {
 
   private final TCServerInfoMBean              tcServerInfoMBean;
   private L2Management                         l2Management;
+  private L2Coordinator                        l2Coordinator;
 
   private TCProperties                         l2Properties;
+
+  private ConnectionIDFactoryImpl              connectionIdFactory;
 
   public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean) {
@@ -328,7 +334,6 @@ public class DistributedObjectServer extends SEDA {
     persistenceTransactionProvider = persistor.getPersistenceTransactionProvider();
     PersistenceTransactionProvider nullPersistenceTransactionProvider = new NullPersistenceTransactionProvider();
     PersistenceTransactionProvider transactionStorePTP;
-    ObjectIDSequence objectIDSequenceProvider;
     if (persistent) {
       // XXX: This construction/initialization order is pretty lame. Perhaps
       // making the sequence provider its own
@@ -343,12 +348,10 @@ public class DistributedObjectServer extends SEDA {
 
       transactionPersistor = persistor.getTransactionPersistor();
       transactionStorePTP = persistenceTransactionProvider;
-      objectIDSequenceProvider = objectStore;
     } else {
       transactionPersistor = new NullTransactionPersistor();
       transactionStorePTP = nullPersistenceTransactionProvider;
       globalTransactionIDSequence = new SimpleSequence();
-      objectIDSequenceProvider = new ObjectIDSequenceProvider(1000);
     }
 
     clientStateStore = persistor.getClientStatePersistor();
@@ -366,10 +369,7 @@ public class DistributedObjectServer extends SEDA {
                                    + " MBean; this is a programming error. Please go fix that class.", ncmbe);
     }
 
-    clientStateManager = new ClientStateManagerImpl(TCLogging.getLogger(ClientStateManager.class), clientStateStore);
-    final Set previouslyConnectedClients = new HashSet(clientStateManager.getAllClientIDs());
-
-    Set initialConnectionIDs = clientStateStore.loadConnectionIDs();
+    clientStateManager = new ClientStateManagerImpl(TCLogging.getLogger(ClientStateManager.class));
 
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.garbageCollectionEnabled());
     boolean gcEnabled = l2DSOConfig.garbageCollectionEnabled().getBoolean();
@@ -418,17 +418,19 @@ public class DistributedObjectServer extends SEDA {
       logger.warn("CacheManager is Disabled");
     }
 
+    connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore);
+
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.listenPort());
     int serverPort = l2DSOConfig.listenPort().getInt();
-    lsnr = communicationsManager.createListener(sessionProvider, new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR,
-                                                                                     serverPort), true,
-                                                initialConnectionIDs, clientStateStore.getConnectionIDFactory(),
-                                                httpSink);
+    l1Listener = communicationsManager.createListener(sessionProvider,
+                                                      new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, serverPort),
+                                                      true, connectionIdFactory, httpSink);
 
     ClientTunnelingEventHandler cteh = new ClientTunnelingEventHandler();
 
-    DSOChannelManager channelManager = new DSOChannelManagerImpl(lsnr.getChannelManager());
+    DSOChannelManager channelManager = new DSOChannelManagerImpl(l1Listener.getChannelManager());
     channelManager.addEventListener(cteh);
+    channelManager.addEventListener(connectionIdFactory);
 
     ChannelStats channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
 
@@ -499,8 +501,7 @@ public class DistributedObjectServer extends SEDA {
     stageManager.createStage(ServerConfigurationContext.RESPOND_TO_OBJECT_REQUEST_STAGE,
                              new RespondToObjectRequestHandler(), 4, maxStageSize);
     Stage oidRequest = stageManager.createStage(ServerConfigurationContext.OBJECT_ID_BATCH_REQUEST_STAGE,
-                                                new RequestObjectIDBatchHandler(objectIDSequenceProvider), 1,
-                                                maxStageSize);
+                                                new RequestObjectIDBatchHandler(objectStore), 1, maxStageSize);
     Stage transactionAck = stageManager.createStage(ServerConfigurationContext.TRANSACTION_ACKNOWLEDGEMENT_STAGE,
                                                     new TransactionAcknowledgementHandler(), 1, maxStageSize);
     Stage clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE,
@@ -517,41 +518,42 @@ public class DistributedObjectServer extends SEDA {
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_TUNNEL_STAGE,
                                                                 cteh, 1, maxStageSize);
 
-    lsnr.addClassMapping(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE, BatchTransactionAcknowledgeMessageImpl.class);
-    lsnr.addClassMapping(TCMessageType.REQUEST_ROOT_MESSAGE, RequestRootMessageImpl.class);
-    lsnr.addClassMapping(TCMessageType.LOCK_REQUEST_MESSAGE, LockRequestMessage.class);
-    lsnr.addClassMapping(TCMessageType.LOCK_RESPONSE_MESSAGE, LockResponseMessage.class);
-    lsnr.addClassMapping(TCMessageType.LOCK_RECALL_MESSAGE, LockResponseMessage.class);
-    lsnr.addClassMapping(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, LockResponseMessage.class);
-    lsnr.addClassMapping(TCMessageType.COMMIT_TRANSACTION_MESSAGE, CommitTransactionMessageImpl.class);
-    lsnr.addClassMapping(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE, RequestRootResponseMessage.class);
-    lsnr.addClassMapping(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE, RequestManagedObjectMessageImpl.class);
-    lsnr.addClassMapping(TCMessageType.REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE,
-                         RequestManagedObjectResponseMessage.class);
-    lsnr.addClassMapping(TCMessageType.BROADCAST_TRANSACTION_MESSAGE, BroadcastTransactionMessageImpl.class);
-    lsnr.addClassMapping(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE, ObjectIDBatchRequestMessage.class);
-    lsnr.addClassMapping(TCMessageType.OBJECT_ID_BATCH_REQUEST_RESPONSE_MESSAGE,
-                         ObjectIDBatchRequestResponseMessage.class);
-    lsnr.addClassMapping(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE, AcknowledgeTransactionMessageImpl.class);
-    lsnr.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, ClientHandshakeMessageImpl.class);
-    lsnr.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
-    lsnr.addClassMapping(TCMessageType.JMX_MESSAGE, JMXMessage.class);
-    lsnr.addClassMapping(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
-    lsnr.addClassMapping(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
-    lsnr.addClassMapping(TCMessageType.CLIENT_JMX_READY_MESSAGE, L1JmxReady.class);
+    l1Listener.addClassMapping(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE,
+                               BatchTransactionAcknowledgeMessageImpl.class);
+    l1Listener.addClassMapping(TCMessageType.REQUEST_ROOT_MESSAGE, RequestRootMessageImpl.class);
+    l1Listener.addClassMapping(TCMessageType.LOCK_REQUEST_MESSAGE, LockRequestMessage.class);
+    l1Listener.addClassMapping(TCMessageType.LOCK_RESPONSE_MESSAGE, LockResponseMessage.class);
+    l1Listener.addClassMapping(TCMessageType.LOCK_RECALL_MESSAGE, LockResponseMessage.class);
+    l1Listener.addClassMapping(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, LockResponseMessage.class);
+    l1Listener.addClassMapping(TCMessageType.COMMIT_TRANSACTION_MESSAGE, CommitTransactionMessageImpl.class);
+    l1Listener.addClassMapping(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE, RequestRootResponseMessage.class);
+    l1Listener.addClassMapping(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE, RequestManagedObjectMessageImpl.class);
+    l1Listener.addClassMapping(TCMessageType.REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE,
+                               RequestManagedObjectResponseMessage.class);
+    l1Listener.addClassMapping(TCMessageType.BROADCAST_TRANSACTION_MESSAGE, BroadcastTransactionMessageImpl.class);
+    l1Listener.addClassMapping(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE, ObjectIDBatchRequestMessage.class);
+    l1Listener.addClassMapping(TCMessageType.OBJECT_ID_BATCH_REQUEST_RESPONSE_MESSAGE,
+                               ObjectIDBatchRequestResponseMessage.class);
+    l1Listener.addClassMapping(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE, AcknowledgeTransactionMessageImpl.class);
+    l1Listener.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, ClientHandshakeMessageImpl.class);
+    l1Listener.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
+    l1Listener.addClassMapping(TCMessageType.JMX_MESSAGE, JMXMessage.class);
+    l1Listener.addClassMapping(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
+    l1Listener.addClassMapping(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
+    l1Listener.addClassMapping(TCMessageType.CLIENT_JMX_READY_MESSAGE, L1JmxReady.class);
 
     Sink hydrateSink = hydrateStage.getSink();
-    lsnr.routeMessageType(TCMessageType.COMMIT_TRANSACTION_MESSAGE, processTx.getSink(), hydrateSink);
-    lsnr.routeMessageType(TCMessageType.LOCK_REQUEST_MESSAGE, requestLock.getSink(), hydrateSink);
-    lsnr.routeMessageType(TCMessageType.REQUEST_ROOT_MESSAGE, rootRequest.getSink(), hydrateSink);
-    lsnr.routeMessageType(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE, objectRequest.getSink(), hydrateSink);
-    lsnr.routeMessageType(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE, oidRequest.getSink(), hydrateSink);
-    lsnr.routeMessageType(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE, transactionAck.getSink(), hydrateSink);
-    lsnr.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, clientHandshake.getSink(), hydrateSink);
-    lsnr.routeMessageType(TCMessageType.JMX_MESSAGE, jmxEventsStage.getSink(), hydrateSink);
-    lsnr.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage.getSink(),
-                          hydrateSink);
-    lsnr.routeMessageType(TCMessageType.CLIENT_JMX_READY_MESSAGE, jmxRemoteTunnelStage.getSink(), hydrateSink);
+    l1Listener.routeMessageType(TCMessageType.COMMIT_TRANSACTION_MESSAGE, processTx.getSink(), hydrateSink);
+    l1Listener.routeMessageType(TCMessageType.LOCK_REQUEST_MESSAGE, requestLock.getSink(), hydrateSink);
+    l1Listener.routeMessageType(TCMessageType.REQUEST_ROOT_MESSAGE, rootRequest.getSink(), hydrateSink);
+    l1Listener.routeMessageType(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE, objectRequest.getSink(), hydrateSink);
+    l1Listener.routeMessageType(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE, oidRequest.getSink(), hydrateSink);
+    l1Listener.routeMessageType(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE, transactionAck.getSink(), hydrateSink);
+    l1Listener.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, clientHandshake.getSink(), hydrateSink);
+    l1Listener.routeMessageType(TCMessageType.JMX_MESSAGE, jmxEventsStage.getSink(), hydrateSink);
+    l1Listener.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage.getSink(),
+                                hydrateSink);
+    l1Listener.routeMessageType(TCMessageType.CLIENT_JMX_READY_MESSAGE, jmxRemoteTunnelStage.getSink(), hydrateSink);
 
     ObjectRequestManager objectRequestManager = new ObjectRequestManagerImpl(objectManager, transactionManager);
 
@@ -566,26 +568,33 @@ public class DistributedObjectServer extends SEDA {
                                                                                            objectManager,
                                                                                            sequenceValidator,
                                                                                            clientStateManager,
-                                                                                           previouslyConnectedClients,
                                                                                            lockManager,
                                                                                            transactionManager,
                                                                                            stageManager
                                                                                                .getStage(
                                                                                                          ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE)
                                                                                                .getSink(),
-                                                                                           objectIDSequenceProvider,
+                                                                                           objectStore,
                                                                                            new TCTimerImpl(
                                                                                                            "Reconnect timer",
                                                                                                            true),
                                                                                            reconnectTimeout, persistent);
+
+    boolean networkedHA = l2Properties.getBoolean("ha.network.enabled");
+    if (networkedHA) {
+      logger.info("L2 Networked HA Enabled ");
+      l2Coordinator = new L2HACoordinator(consoleLogger, this, stageManager, persistor.getClusterStateStore(),
+                                          objectManager);
+    } else {
+      l2Coordinator = new L2HADisabledCooridinator();
+    }
+
     context = new ServerConfigurationContextImpl(stageManager, objectManager, objectRequestManager, objectStore,
                                                  lockManager, channelManager, clientStateManager, transactionManager,
-                                                 txnObjectManager, clientHandshakeManager, channelStats,
+                                                 txnObjectManager, clientHandshakeManager, channelStats, l2Coordinator,
                                                  new CommitTransactionMessageToTransactionBatchReader());
 
     stageManager.startAll(context);
-
-    lsnr.start();
 
     DSOGlobalServerStats serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter, globalObjectFaultCounter,
                                                                     globalTxnCounter, objMgrStats);
@@ -596,8 +605,31 @@ public class DistributedObjectServer extends SEDA {
                                                     (DSOChannelManagerMBean) channelManager, serverStats, channelStats,
                                                     instanceMonitor, appEvents);
 
-    consoleLogger.info("DSO Server started on port " + lsnr.getBindPort() + ".");
     if (l2Properties.getBoolean("beanshell.enabled")) startBeanShell(l2Properties.getInt("beanshell.port"));
+    
+    if (networkedHA) {
+      l2Coordinator.start();
+    } else {
+      // In non-network enabled HA, Only active server reached here.
+      startActiveMode();
+    }
+  }
+
+  public boolean startActiveMode() throws IOException {
+    Set existingConnections = Collections.unmodifiableSet(connectionIdFactory.loadConnectionIDs());
+    context.getClientHandshakeManager().setStarting(existingConnections);
+    l1Listener.start(existingConnections);
+    consoleLogger.info("Terracotta Server has started up as ACTIVE node on port " + l1Listener.getBindPort()
+                       + " successfully, and is now ready for work.");
+    return true;
+  }
+
+  public boolean stopActiveMode() throws TCTimeoutException {
+    // TODO:: Make this not take timeout and force stop
+    consoleLogger.info("Stopping ACTIVE Terracotta Server on port " + l1Listener.getBindPort() + ".");
+    l1Listener.stop(10000);
+    l1Listener.getChannelManager().closeAllChannels();
+    return true;
   }
 
   private void startBeanShell(int port) {
@@ -616,7 +648,7 @@ public class DistributedObjectServer extends SEDA {
   }
 
   public int getListenPort() {
-    return this.lsnr.getBindPort();
+    return this.l1Listener.getBindPort();
   }
 
   public synchronized void stop() {
@@ -628,9 +660,9 @@ public class DistributedObjectServer extends SEDA {
 
     getStageManager().stopAll();
 
-    if (lsnr != null) {
+    if (l1Listener != null) {
       try {
-        lsnr.stop(5000);
+        l1Listener.stop(5000);
       } catch (TCTimeoutException e) {
         logger.warn("timeout trying to stop listener: " + e.getMessage());
       }
@@ -697,6 +729,14 @@ public class DistributedObjectServer extends SEDA {
     if (startupLock != null) {
       startupLock.release();
     }
+  }
+
+  public ConnectionIDFactory getConnectionIdFactory() {
+    return connectionIdFactory;
+  }
+
+  public ManagedObjectStore getManagedObjectStore() {
+    return objectStore;
   }
 
   public ServerConfigurationContext getContext() {

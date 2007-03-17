@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -20,7 +21,7 @@ public class ServerStackProviderTest extends TCTestCase {
   private MockNetworkStackHarness              harness;
   private MockTransportHandshakeMessageFactory transportHandshakeMessageFactory;
   private ConnectionID                         connId;
-  private ConnectionIdFactory                  connectionIdFactory;
+  private ConnectionIDFactory                  connectionIdFactory;
   private TestConnectionPolicy                 connectionPolicy;
   private TestWireProtocolAdaptorFactory       wpaFactory;
   private MockMessageTransportFactory          transportFactory;
@@ -37,11 +38,7 @@ public class ServerStackProviderTest extends TCTestCase {
 
     this.harnessFactory = new MockStackHarnessFactory();
     this.harnessFactory.harness = this.harness;
-    this.connectionIdFactory = new ConnectionIdFactory() {
-      public ConnectionID nextConnectionId() {
-        return connId;
-      }
-    };
+    this.connectionIdFactory = new TestConnectionIDFactory();
 
     transportFactory = new MockMessageTransportFactory();
     transportHandshakeMessageFactory = new MockTransportHandshakeMessageFactory();
@@ -140,6 +137,12 @@ public class ServerStackProviderTest extends TCTestCase {
     assertEquals(0, connectionPolicy.clientDisconnected);
     provider.notifyTransportDisconnected(transport);
 
+    // transport disconnect event doesnt close client
+    assertEquals(0, connectionPolicy.clientDisconnected);
+    
+    //send transport close event
+    provider.notifyTransportClosed(transport);
+    
     // make sure that the connection policy is decremented
     assertEquals(1, connectionPolicy.clientDisconnected);
 
@@ -225,6 +228,14 @@ public class ServerStackProviderTest extends TCTestCase {
       fail("was not virgin and had connId, but should not exist in provider");
     } catch (StackNotFoundException e) {
       // expected
+    }
+  }
+  
+  private class TestConnectionIDFactory extends DefaultConnectionIdFactory {
+
+    public synchronized ConnectionID nextConnectionId() {
+      connId = super.nextConnectionId();
+      return connId;
     }
   }
 

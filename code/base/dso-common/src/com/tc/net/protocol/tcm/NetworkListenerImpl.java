@@ -1,12 +1,13 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.tcm;
 
 import com.tc.async.api.Sink;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCListener;
-import com.tc.net.protocol.transport.ConnectionIdFactory;
+import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -15,7 +16,7 @@ import java.util.Set;
 
 /**
  * A handle to a specific server port listener
- *
+ * 
  * @author teck
  */
 class NetworkListenerImpl implements NetworkListener {
@@ -27,19 +28,17 @@ class NetworkListenerImpl implements NetworkListener {
   private boolean                         started;
   private final TCMessageFactory          msgFactory;
   private final boolean                   reuseAddr;
-  private final ConnectionIdFactory       connectionIdFactory;
-  private final Set                       initialConnectionIDs;
-  private final Sink httpSink;
+  private final ConnectionIDFactory       connectionIdFactory;
+  private final Sink                      httpSink;
 
   // this cstr is intentionally not public, only the Comms Manager should be
   // creating them
   NetworkListenerImpl(TCSocketAddress addr, CommunicationsManagerImpl commsMgr, ChannelManagerImpl channelManager,
-                      TCMessageFactory msgFactory, TCMessageRouter router, boolean reuseAddr, Set initialConnectionIDs,
-                      ConnectionIdFactory connectionIdFactory, Sink httpSink) {
+                      TCMessageFactory msgFactory, TCMessageRouter router, boolean reuseAddr,
+                      ConnectionIDFactory connectionIdFactory, Sink httpSink) {
     this.commsMgr = commsMgr;
     this.channelManager = channelManager;
     this.addr = addr;
-    this.initialConnectionIDs = initialConnectionIDs;
     this.connectionIdFactory = connectionIdFactory;
     this.httpSink = httpSink;
     this.started = false;
@@ -49,17 +48,15 @@ class NetworkListenerImpl implements NetworkListener {
   }
 
   /**
-   * Start this listener listening on the network. You probably don't want to
-   * start a listener until you have properly setup your protocol routes, since
-   * you might miss messages between the time the listener is
-   * <code>start()</code> 'ed and the time you add your routes.
-   *
-   * @throws IOException
-   *           if an IO error occurs (this will most likely be a problem binding
-   *           to the specified port/address)
+   * Start this listener listening on the network. You probably don't want to start a listener until you have properly
+   * setup your protocol routes, since you might miss messages between the time the listener is <code>start()</code>
+   * 'ed and the time you add your routes.
+   * 
+   * @throws IOException if an IO error occurs (this will most likely be a problem binding to the specified
+   *         port/address)
    */
-  public synchronized void start() throws IOException {
-    this.lsnr = commsMgr.createCommsListener(this.addr, this.channelManager, this.reuseAddr, this.initialConnectionIDs,
+  public synchronized void start(Set initialConnectionIDs) throws IOException {
+    this.lsnr = commsMgr.createCommsListener(this.addr, this.channelManager, this.reuseAddr, initialConnectionIDs,
                                              this.connectionIdFactory, this.httpSink);
     this.started = true;
     commsMgr.registerListener(this);

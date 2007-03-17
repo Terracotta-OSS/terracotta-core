@@ -12,6 +12,10 @@ public class State {
     this.name = name;
   }
   
+  public String getName() {
+    return name;
+  }
+  
   public boolean equals(Object o) {
     if(!(o instanceof State)) { return false; }
     return name.equals(((State)o).name);

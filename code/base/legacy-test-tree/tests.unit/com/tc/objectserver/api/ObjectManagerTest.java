@@ -56,7 +56,6 @@ import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.Persistor;
-import com.tc.objectserver.persistence.impl.InMemoryClientStatePersistor;
 import com.tc.objectserver.persistence.impl.InMemoryPersistor;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransaction;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
@@ -119,8 +118,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     this.logger = TCLogging.getLogger(getClass());
     this.managed = new HashMap();
     config = new TestObjectManagerConfig();
-    clientStateManager = new ClientStateManagerImpl(TCLogging.getLogger(ClientStateManager.class),
-                                                    new InMemoryClientStatePersistor());
+    clientStateManager = new ClientStateManagerImpl(TCLogging.getLogger(ClientStateManager.class));
     ManagedObjectStateFactory.disableSingleton(true);
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), new InMemoryPersistor());
     this.newObjectCounter = new SampledCounterImpl(new SampledCounterConfig(1, 1, true, 0L));

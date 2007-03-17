@@ -16,10 +16,6 @@ public abstract class AbstractIdentifier implements Serializable {
 
   public AbstractIdentifier(long id) {
     this.id = id;
-//    this is done to remove an unnecessary boolean to identify NULL Id for performance reason.
-//    if(id == NULL_ID) {
-//      throw new AssertionError("ID can't be -1");
-//    }
   }
 
   protected AbstractIdentifier() {
