@@ -5,7 +5,7 @@
 package com.tc.util.concurrent;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import junit.framework.TestCase;
@@ -41,7 +41,7 @@ public class CopyOnWriteArrayMapTest extends TestCase {
     assertArrayEquals(al.toArray(), cam.valuesArray());
 
     // test putall
-    Map m = new HashMap();
+    Map m = new LinkedHashMap();
     m.put(new Long(9), new Float(9.1));
     m.put(new Long(19), new Float(91.1));
     m.put(new Long(191), new Float(191.1));
