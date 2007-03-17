@@ -25,7 +25,7 @@ import javax.servlet.http.HttpSession;
 public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
 
   private static final int INTENSITY      = 1000;
-  private static final int NUM_OF_DRIVERS = 25;
+  private static final int NUM_OF_DRIVERS = 15;
 
   public SynchWriteMultiThreadsTest() {
     // this.disableAllUntil("2007-03-08");
