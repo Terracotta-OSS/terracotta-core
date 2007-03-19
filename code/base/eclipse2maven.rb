@@ -141,10 +141,10 @@ begin
 
 			#write out to file...
 			next if SKIP_ARTIFACT_LIST.include?( project_name )
-			File.delete( "#{project_dir}/pom.xml" )
-#			File.open( "#{project_dir}/pom.xml", File::CREAT|File::RDWR|File::TRUNC ) { |pom_file|
-#				pom_file.write( project.generate_pom )
-#			}
+#			File.delete( "#{project_dir}/pom.xml" )
+			File.open( "#{project_dir}/pom.xml", File::CREAT|File::RDWR|File::TRUNC ) { |pom_file|
+				pom_file.write( project.generate_pom )
+			}
 		}
 	}
 
