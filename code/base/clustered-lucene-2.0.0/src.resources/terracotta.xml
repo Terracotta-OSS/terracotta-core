@@ -13,11 +13,80 @@
 		</include>
     </instrumented-classes>
     <locks>
+	  <!-- RAMDirectory (read) -->
       <auto-lock>
-        <method-expression>* org.apache.lucene.store.RAMDirectory.*(..)</method-expression>
+        <method-expression>* org.apache.lucene.store.RAMDirectory.list(..)</method-expression>
+        <lock-level>read</lock-level>
       </auto-lock>
       <auto-lock>
-        <method-expression>* org.apache.lucene.store.RAMOutputStream.*(..)</method-expression>
+        <method-expression>* org.apache.lucene.store.RAMDirectory.fileExists(..)</method-expression>
+        <lock-level>read</lock-level>
+      </auto-lock>
+      <auto-lock>
+        <method-expression>* org.apache.lucene.store.RAMDirectory.fileModified(..)</method-expression>
+        <lock-level>read</lock-level>
+      </auto-lock>
+      <auto-lock>
+        <method-expression>* org.apache.lucene.store.RAMDirectory.fileLength(..)</method-expression>
+        <lock-level>read</lock-level>
+      </auto-lock>
+      <auto-lock>
+        <method-expression>* org.apache.lucene.store.RAMDirectory.sizeInBytes(..)</method-expression>
+        <lock-level>read</lock-level>
+      </auto-lock>
+      <auto-lock>
+        <method-expression>* org.apache.lucene.store.RAMDirectory.openInput(..)</method-expression>
+        <lock-level>read</lock-level>
+      </auto-lock>
+      
+	  <!-- RAMDirectory (write) -->
+      <auto-lock>
+        <method-expression>* org.apache.lucene.store.RAMDirectory.touchFile(..)</method-expression>
+        <lock-level>write</lock-level>
+      </auto-lock>
+      <auto-lock>
+        <method-expression>* org.apache.lucene.store.RAMDirectory.deleteFile(..)</method-expression>
+        <lock-level>write</lock-level>
+      </auto-lock>
+      <auto-lock>
+        <method-expression>* org.apache.lucene.store.RAMDirectory.renameFile(..)</method-expression>
+        <lock-level>write</lock-level>
+      </auto-lock>
+      <auto-lock>
+        <method-expression>* org.apache.lucene.store.RAMDirectory.createOutput(..)</method-expression>
+        <lock-level>write</lock-level>
+      </auto-lock>
+      <auto-lock>
+        <method-expression>* org.apache.lucene.store.RAMDirectory.close(..)</method-expression>
+        <lock-level>write</lock-level>
+      </auto-lock>
+
+	  <!-- RAMOutputStream (read) -->
+      <auto-lock>
+        <method-expression>* org.apache.lucene.store.RAMOutputStream.seek(..)</method-expression>
+        <lock-level>read</lock-level>
+      </auto-lock>
+      <auto-lock>
+        <method-expression>* org.apache.lucene.store.RAMOutputStream.length(..)</method-expression>
+        <lock-level>read</lock-level>
+      </auto-lock>
+      
+	  <!-- RAMOutputStream (write) -->
+      <auto-lock>
+        <method-expression>* org.apache.lucene.store.RAMOutputStream.writeTo(..)</method-expression>
+        <lock-level>write</lock-level>
+      </auto-lock>
+      <auto-lock>
+        <method-expression>* org.apache.lucene.store.RAMOutputStream.reset(..)</method-expression>
+        <lock-level>write</lock-level>
+      </auto-lock>
+      <auto-lock>
+        <method-expression>* org.apache.lucene.store.RAMOutputStream.flushBuffer(..)</method-expression>
+        <lock-level>write</lock-level>
+      </auto-lock>
+      <auto-lock>
+        <method-expression>* org.apache.lucene.store.RAMOutputStream.close(..)</method-expression>
+        <lock-level>write</lock-level>
       </auto-lock>
     </locks>
 </xml-fragment>
