@@ -79,8 +79,6 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
   }
 
   private void runTest() throws Throwable {
-    spawnNewClient();
-
     config.getServerControl().crash();
     while (config.getServerControl().isRunning()) {
       Thread.sleep(5000);
@@ -90,6 +88,7 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
       Thread.sleep(5000);
     }
     echo("Server restarted successfully.");
+    spawnNewClient();
     stage1.await();
     synchronized (eventsCount) {
       Assert.assertTrue("nodeDisconnected", eventsCount.containsKey("com.tc.cluster.event.nodeDisconnected"));
