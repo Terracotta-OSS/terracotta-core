@@ -38,36 +38,33 @@
     <module>dso-system-tests</module>
     <module>dso-weblogic-stubs</module>
     <module>examples</module>
-    <module>installer</module>
+    <!-- <module>installer</module> -->
     <module>management</module>
     <module>modules-common-1.0</module>
     <!--module>services-tests</module-->
     <module>simulator</module>
     <module>legacy-test-tree</module>
     <module>thirdparty</module>
-    <!--
     <module>ui-configurator</module>
-    <module>ui-eclipse</module>
-    -->
+    <!-- <module>ui-eclipse</module> -->
   </modules>
 
   <profiles>
     <profile>
       <id>J2SE-1.5</id>
-      <!-- <id>jdk1.5</id> -->
       <activation>
         <jdk>1.5</jdk>
       </activation>
       <modules>
         <module>dso-common-jdk15</module>
-    <module>dso-l1-jdk15</module>
-    <module>dso-tests-jdk15</module>
+        <module>dso-l1-jdk15</module>
+        <module>dso-tests-jdk15</module>
       </modules>
     </profile>
   </profiles>
 
   <dependencyManagement>
-  <dependencies>
+    <dependencies>
       <dependency>
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
@@ -239,7 +236,7 @@
       </dependency>
       <dependency>
         <groupId>javax.management</groupId>
-    <artifactId>jmxremote_optional</artifactId>
+        <artifactId>jmxremote_optional</artifactId>
         <version>1.0.1_04</version>
       </dependency>
       <dependency>
@@ -283,8 +280,168 @@
         <version>2.0</version>
       </dependency>
       <dependency>
+        <groupId>hsqldb</groupId>
+        <artifactId>hsqldb</artifactId>
+        <version>1.7.2.2</version>
+      </dependency>
+      <dependency>
+        <groupId>cglib</groupId>
+        <artifactId>cglib-nodep</artifactId>
+        <version>2.1_3</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ibatis</groupId>
+        <artifactId>ibatis2-dao</artifactId>
+        <version>2.1.7.597</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ibatis</groupId>
+        <artifactId>ibatis2-common</artifactId>
+        <version>2.1.7.597</version>
+      </dependency>
+      <dependency>
+        <groupId>com.ibatis</groupId>
+        <artifactId>ibatis2-sqlmap</artifactId>
+        <version>2.1.7.597</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-core</artifactId>
+        <version>2.0.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-demos</artifactId>
+        <version>2.0.0</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-codec</groupId>
+        <artifactId>commons-codec</artifactId>
+        <version>1.3</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-httpclient</groupId>
+        <artifactId>commons-httpclient</artifactId>
+        <version>3.0.1</version>
+      </dependency>	
+      <dependency>
+        <groupId>tomcat</groupId>
+        <artifactId>catalina</artifactId>
+        <version>5.0.28</version>
+      </dependency>
+      <dependency>
+        <groupId>tomcat</groupId>
+        <artifactId>tomcat-util</artifactId>
+        <version>5.0.28</version>
+      </dependency>     	
+      <dependency>
+        <groupId>tomcat</groupId>
+        <artifactId>catalina-cluster</artifactId>
+        <version>5.5.15</version>
+      </dependency>
+      <dependency>
+        <groupId>tomcat</groupId>
+        <artifactId>tomcat-coyote</artifactId>
+        <version>5.5.15</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-pool</groupId>
+        <artifactId>commons-pool</artifactId>
+        <version>1.2</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-dbcp</groupId>
+        <artifactId>commons-dbcp</artifactId>
+        <version>1.2.1</version>
+      </dependency>
+      <dependency>
+        <groupId>jmock</groupId>
+        <artifactId>jmock</artifactId>
+        <version>1.0.1</version>
+      </dependency>
+      <dependency>
+        <groupId>jmock</groupId>
+        <artifactId>jmock-cglib</artifactId>
+        <version>1.0.1</version>
+      </dependency>	
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-webflow</artifactId>
+        <version>1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-binding</artifactId>
+        <version>1.0</version>
+       </dependency>
+      <dependency>
+        <groupId>ognl</groupId>
+        <artifactId>ognl</artifactId>
+        <version>2.7</version>
+      </dependency>
+      <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate</artifactId>
+        <version>3.1.2</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring</artifactId>
+        <version>2.0.1</version>
+      </dependency>
+      <dependency>
+        <groupId>ehcache</groupId>
+        <artifactId>ehcache</artifactId>
+        <version>1.1</version>
+      </dependency>
+      <dependency>
+        <groupId>dom4j</groupId>
+        <artifactId>dom4j</artifactId>
+        <version>1.6.1</version>
+      </dependency>
+      <dependency>
+        <groupId>oro</groupId>
+        <artifactId>oro</artifactId>
+        <version>2.0.8</version>
+      </dependency>
+      <dependency>
+        <groupId>jstl</groupId>
+        <artifactId>jstl</artifactId>
+        <version>1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>jtidy</groupId>
+        <artifactId>jtidy</artifactId>
+        <version>4aug2000r7-dev</version>
+      </dependency>
+      <dependency>
         <groupId>org.terracotta</groupId>
-    <artifactId>aspectwerkz</artifactId>
+        <artifactId>tc_cargo-core-uberjar</artifactId>
+        <version>0.8</version>
+      </dependency>
+      <dependency>
+        <groupId>taglibs</groupId>
+        <artifactId>standard</artifactId>
+        <version>1.0.6</version>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.plexus</groupId>
+        <artifactId>plexus-utils</artifactId>
+        <version>1.1</version>
+      </dependency>
+      <dependency>
+        <groupId>httpunit</groupId>
+        <artifactId>httpunit</artifactId>
+        <version>1.6</version>
+      </dependency>
+      <dependency>
+        <groupId>aspectj</groupId>
+        <artifactId>aspectjrt</artifactId>
+        <version>1.5.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>aspectwerkz</artifactId>
         <version>${tcVersion}</version>
       </dependency>
       <dependency>
@@ -299,7 +456,7 @@
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
-    <artifactId>clustered-commons-collections-3.1</artifactId>
+        <artifactId>clustered-commons-collections-3.1</artifactId>
         <version>${tcVersion}</version>
       </dependency>
       <dependency>
@@ -482,7 +639,6 @@
         <artifactId>ui-eclipse</artifactId>
         <version>${tcVersion}</version>
       </dependency>
-
       <!--dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>services-tests</artifactId>
@@ -496,8 +652,10 @@
   </properties>
 
   <build>
+    <!--	  
     <sourceDirectory>src</sourceDirectory>
     <testSourceDirectory>tests.unit</testSourceDirectory>
+    -->
     <resources>
       <resource>
         <directory>src.resources</directory>
@@ -514,14 +672,26 @@
         <artifactId>build-helper-maven-plugin</artifactId>
         <executions>
           <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src</source>
+	            <source>tests.base</source>
+              </sources>
+            </configuration>
+          </execution>
+          <execution>
             <id>add-test-source</id>
             <phase>generate-sources</phase>
             <goals>
               <goal>add-test-source</goal>
             </goals>
             <configuration>
-              <sources>
-                <source>tests.base</source>
+              <sources>                
                 <source>tests.unit</source>
               </sources>
             </configuration>
@@ -531,8 +701,8 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-    <configuration>
-
+        <configuration>
+	      <skip>true</skip>
           <includes>
             <include>**/*Test.java</include>
           </includes>
@@ -540,4 +710,36 @@
       </plugin>
     </plugins>
   </build>
+
+  <repositories>
+    <repository>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>terracotta-repository</id>
+      <url>http://download.terracotta.org/maven2/</url>
+    </repository>
+    <repository>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>codehaus-repository</id>
+      <url>http://repository.codehaus.org/</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>              
+    <pluginRepository>
+      <id>codehaus-repository</id>
+      <name>Codehaus Repository</name>
+      <url>http://repository.codehaus.org/</url>
+    </pluginRepository>
+  </pluginRepositories>
+
 </project>

@@ -51,6 +51,10 @@
       <systemPath>${basedir}/lib.tests.unit/tctest-xmlbeans-generated.jar</systemPath>
     </dependency>
     <dependency>
+      <groupId>stax</groupId>
+      <artifactId>stax</artifactId>
+    </dependency>
+    <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
     </dependency>
