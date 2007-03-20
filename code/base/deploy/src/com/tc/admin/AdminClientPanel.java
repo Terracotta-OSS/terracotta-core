@@ -282,7 +282,7 @@ public class AdminClientPanel extends XContainer
     menuBar.add(menu);
 
     menu = new XMenu(getBundleString("help.menu.label"));
-    XMenuItem mitem = new XMenuItem("AdminClient Help",
+    XMenuItem mitem = new XMenuItem("AdminConsole Help",
                                     HelpHelper.getHelper().getHelpIcon());
     mitem.setAction(m_helpAction = new HelpAction());
     menu.add(mitem);
@@ -300,7 +300,7 @@ public class AdminClientPanel extends XContainer
 
   class HelpAction extends XAbstractAction {
     HelpAction() {
-      super("AdminClient Help");
+      super("AdminConsole Help");
     }
     
     public void actionPerformed(ActionEvent ae) {
