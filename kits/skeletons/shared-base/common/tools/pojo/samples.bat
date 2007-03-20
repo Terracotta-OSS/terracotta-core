@@ -7,7 +7,7 @@ rem  All rights reserved.
 rem
 
 setlocal
-set TC_INSTALL_DIR=%~d0%~p0..
+set TC_INSTALL_DIR=%~d0%~p0..\..
 if not exist "%JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
 set CLASSPATH=%TC_INSTALL_DIR%\lib\tc.jar
 set OPTS=-Djava.awt.Window.locationByPlatform=true

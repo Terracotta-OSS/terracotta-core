@@ -11,7 +11,7 @@ if test \! -d "${JAVA_HOME}"; then
   exit 2
 fi
 
-TC_INSTALL_DIR=`dirname "$0"`/..
+TC_INSTALL_DIR=`dirname "$0"`/../..
 
 exec "${JAVA_HOME}/bin/java" \
   -Dtc.install-root="${TC_INSTALL_DIR}" \
