@@ -6,7 +6,7 @@
 # to the Install Anywhere configuration. 
 
 tc.build-control.version=2.3.0
-tc.build-control.designation=stable1
+tc.build-control.designation=stable0
 tc.build-control.branch=trunk
 tc.tests.configuration.appserver.factory.name=tomcat5
 tc.tests.configuration.appserver.major-version=5.0

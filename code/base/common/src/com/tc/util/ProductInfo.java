@@ -134,9 +134,7 @@ public final class ProductInfo {
   }
 
   public String buildVersion() {
-    //@@@TODO: we'll incorporate build designation info later.
-    //return this.version + "-" + this.designation; 
-    return this.version;
+    return this.version + "-" + this.designation; 
   }
 
   public String buildDesignation() {
