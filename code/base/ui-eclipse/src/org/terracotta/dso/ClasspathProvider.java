@@ -38,7 +38,7 @@ public class ClasspathProvider extends StandardClasspathProvider {
       IRuntimeClasspathEntry[] result = new IRuntimeClasspathEntry[cpe.length + 1];
 
       System.arraycopy(cpe, 0, result, 0, cpe.length);
-      result[cpe.length] = JavaRuntime.newArchiveRuntimeClasspathEntry(jarPath);
+      result[cpe.length] = JavaRuntime.newArchiveRuntimeClasspathEntry(jarPath.makeAbsolute());
 
       return result;
     } else {

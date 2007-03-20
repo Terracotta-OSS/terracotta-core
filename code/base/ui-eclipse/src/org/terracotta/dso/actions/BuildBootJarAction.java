@@ -150,7 +150,7 @@ public class BuildBootJarAction extends Action
     if(portablePath == null) {
       IPath jrePath = JavaRuntime.computeJREEntry(m_javaProject).getPath();
       if(jrePath != null) {
-        portablePath = jrePath.toPortableString();
+        portablePath = jrePath.makeAbsolute().toPortableString();
       }
     }
 

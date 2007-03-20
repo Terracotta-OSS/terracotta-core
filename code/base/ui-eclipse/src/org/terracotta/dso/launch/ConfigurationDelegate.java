@@ -75,7 +75,7 @@ public class ConfigurationDelegate extends JavaLaunchDelegate
       String portablePath = null;
       IPath jrePath = JavaRuntime.computeJREEntry(javaProject).getPath();
       if(jrePath != null) {
-        portablePath = jrePath.toPortableString();
+        portablePath = jrePath.makeAbsolute().toPortableString();
       }
 
       String jreContainerPath = wc.getAttribute(ATTR_JRE_CONTAINER_PATH, portablePath);

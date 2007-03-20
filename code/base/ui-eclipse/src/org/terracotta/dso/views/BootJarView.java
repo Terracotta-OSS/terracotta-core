@@ -16,21 +16,28 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.ui.JavaPluginImages;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import org.terracotta.dso.BootJarHelper;
+import org.terracotta.dso.JdtUtils;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.actions.ActionUtil;
 
@@ -43,7 +50,8 @@ import java.util.zip.ZipFile;
 
 public class BootJarView extends ViewPart
   implements IResourceChangeListener,
-             IResourceDeltaVisitor
+             IResourceDeltaVisitor,
+             ISelectionChangedListener
 {
   public static final String ID_BOOTJAR_VIEW_PART = "org.terracotta.dso.ui.views.bootJarView";
 
@@ -60,6 +68,7 @@ public class BootJarView extends ViewPart
     viewer.setContentProvider(new ViewContentProvider());
     viewer.setLabelProvider(new ViewLabelProvider());
     viewer.setInput(getViewSite());
+    viewer.addSelectionChangedListener(this);
     ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
   }
 
@@ -69,7 +78,7 @@ public class BootJarView extends ViewPart
     public void dispose() {/**/}
 
     public Object[] getElements(Object parent) {
-      ArrayList list = new ArrayList();
+      ArrayList<String> list = new ArrayList<String>();
 
       if(bootJarFile != null && !bootJarFile.isSynchronized(IResource.DEPTH_ZERO)) {
         try {
@@ -125,8 +134,7 @@ public class BootJarView extends ViewPart
     }
 
     public Image getImage(Object obj) {
-      return PlatformUI.getWorkbench().getSharedImages().getImage(
-          ISharedImages.IMG_OBJ_ELEMENT);
+      return JavaPluginImages.get(JavaPluginImages.IMG_OBJS_CLASS);
     }
   }
 
@@ -232,6 +240,31 @@ public class BootJarView extends ViewPart
           }
         }
       });
+    }
+  }
+
+  public void selectionChanged(SelectionChangedEvent event) {
+    ISelection sel = event.getSelection();
+    
+    if(!sel.isEmpty()) {
+      if(sel instanceof StructuredSelection) {
+        StructuredSelection ss = (StructuredSelection)sel;
+        
+        if(ss.size() == 1) {
+          Object obj = ss.getFirstElement();
+          
+          if(obj instanceof String) {
+            String typeName = (String)obj;
+            try {
+              IJavaProject javaProject = JavaCore.create(bootJarFile.getProject());
+              IType type = JdtUtils.findType(javaProject, typeName);
+              if(type != null) {
+                ConfigUI.jumpToMember(type);
+              }
+            } catch(JavaModelException jme) {/**/}
+          }
+        }
+      }
     }
   }
 }
