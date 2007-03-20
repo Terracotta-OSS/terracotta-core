@@ -44,12 +44,6 @@ public class DSOApplicationBuilderTest extends BaseDSOTestCase {
     this.builder = new DSOApplicationBuilder(configHelper, this.applicationConfig, components);
   }
 
-  public void tearDown() throws Exception {
-    if (server != null) {
-      server.stop();
-    }
-  }
-
   public void testNewApplication() throws Exception {
     Application application = this.builder.newApplication("test", new MockListenerProvider());
     assertEquals(this.applicationConfig.getApplicationClassname(), application.getClass().getName());
