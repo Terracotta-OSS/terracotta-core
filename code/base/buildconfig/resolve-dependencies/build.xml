@@ -3,6 +3,7 @@
 	<property name="ivy.codebase.dir" value="${basedir}/../.."/>	
 	<property name="ivy.conf.dir" value="${basedir}/../config"/>
 	<property name="ivy.dependencies.dir" value="${ivy.codebase.dir}/dependencies/lib"/>
+	<property name="ivy.resolver.default.check.modified" value="false"/>
 	<path id="ivy.lib.path">
 		<fileset dir="${basedir}/../ivy" includes="*.jar"/>
 	</path>
