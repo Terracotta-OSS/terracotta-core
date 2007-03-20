@@ -46,25 +46,29 @@
     <module>legacy-test-tree</module>
     <module>thirdparty</module>
     <module>ui-configurator</module>
-    <!-- <module>ui-eclipse</module> -->
+    <!--
+    <module>ui-eclipse</module>
+    -->
   </modules>
 
   <profiles>
     <profile>
       <id>J2SE-1.5</id>
+      <!-- <id>jdk1.5</id> -->
       <activation>
         <jdk>1.5</jdk>
       </activation>
       <modules>
         <module>dso-common-jdk15</module>
-        <module>dso-l1-jdk15</module>
-        <module>dso-tests-jdk15</module>
+    <module>dso-l1-jdk15</module>
+    <module>dso-tests-jdk15</module>
+
       </modules>
     </profile>
   </profiles>
 
   <dependencyManagement>
-    <dependencies>
+  <dependencies>
       <dependency>
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
@@ -236,7 +240,7 @@
       </dependency>
       <dependency>
         <groupId>javax.management</groupId>
-        <artifactId>jmxremote_optional</artifactId>
+    <artifactId>jmxremote_optional</artifactId>
         <version>1.0.1_04</version>
       </dependency>
       <dependency>
@@ -323,7 +327,7 @@
         <groupId>commons-httpclient</groupId>
         <artifactId>commons-httpclient</artifactId>
         <version>3.0.1</version>
-      </dependency>	
+      </dependency>
       <dependency>
         <groupId>tomcat</groupId>
         <artifactId>catalina</artifactId>
@@ -333,7 +337,7 @@
         <groupId>tomcat</groupId>
         <artifactId>tomcat-util</artifactId>
         <version>5.0.28</version>
-      </dependency>     	
+      </dependency>
       <dependency>
         <groupId>tomcat</groupId>
         <artifactId>catalina-cluster</artifactId>
@@ -363,7 +367,7 @@
         <groupId>jmock</groupId>
         <artifactId>jmock-cglib</artifactId>
         <version>1.0.1</version>
-      </dependency>	
+      </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-webflow</artifactId>
@@ -456,7 +460,7 @@
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
-        <artifactId>clustered-commons-collections-3.1</artifactId>
+    <artifactId>clustered-commons-collections-3.1</artifactId>
         <version>${tcVersion}</version>
       </dependency>
       <dependency>
@@ -639,6 +643,7 @@
         <artifactId>ui-eclipse</artifactId>
         <version>${tcVersion}</version>
       </dependency>
+
       <!--dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>services-tests</artifactId>
@@ -652,7 +657,7 @@
   </properties>
 
   <build>
-    <!--	  
+    <!--
     <sourceDirectory>src</sourceDirectory>
     <testSourceDirectory>tests.unit</testSourceDirectory>
     -->
@@ -670,7 +675,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <executions>
+    <executions>
           <execution>
             <id>add-source</id>
             <phase>generate-sources</phase>
@@ -680,7 +685,7 @@
             <configuration>
               <sources>
                 <source>src</source>
-	            <source>tests.base</source>
+            <source>tests.base</source>
               </sources>
             </configuration>
           </execution>
@@ -691,7 +696,7 @@
               <goal>add-test-source</goal>
             </goals>
             <configuration>
-              <sources>                
+              <sources>
                 <source>tests.unit</source>
               </sources>
             </configuration>
@@ -701,8 +706,8 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <skip>false</skip>
+    <configuration>
+        <skip>true</skip>
           <includes>
             <include>**/*Test.java</include>
           </includes>
@@ -734,7 +739,7 @@
     </repository>
   </repositories>
 
-  <pluginRepositories>              
+  <pluginRepositories>
     <pluginRepository>
       <id>codehaus-repository</id>
       <name>Codehaus Repository</name>
