@@ -683,7 +683,7 @@ END
 
   # The short path to the build archive -- i.e., everything that's produced by the archive tag.
   def short_build_archive_path
-    @archive_tag.to_path("build-archive", "jar")
+    @archive_tag.to_path("build-archive", "zip")
   end
 
   # A 'pattern' for the build archive. This is used only to put it into a monkey XML file, so that
