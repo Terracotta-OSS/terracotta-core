@@ -144,17 +144,9 @@ class BuildModule
     # Creates a JAR file for a pluggable module and stores it in build/modules.
     def create_module_jar(ant, build_results)
       module_metainf_dir = FilePath.new(self.root, "META-INF").to_s
+      jarfile  = FilePath.new(build_results.modules_home, self.name + ".jar")
       basedir  = build_results.classes_directory(subtree('src')).ensure_directory
-      manifest = FilePath.new(module_metainf_dir, "MANIFEST.MF").to_s
-      module_version = extract_version_from_manifest(manifest)
-      jarfile  = FilePath.new(build_results.modules_home, "#{self.name}-#{module_version}.jar")
-      ant.jar(:destfile => jarfile.to_s, :basedir => basedir.to_s, :manifest => manifest)
-    end
-
-    private
-
-    def extract_version_from_manifest(manifest_file)
-      bundle_version = YAML.load_file(manifest_file)['Bundle-Version']
-      bundle_version ? bundle_version.strip : ''
+      manifest = FilePath.new(module_metainf_dir, "MANIFEST.MF")
+      ant.jar(:destfile => jarfile.to_s, :basedir => basedir.to_s, :manifest => manifest.to_s)
     end
 end
