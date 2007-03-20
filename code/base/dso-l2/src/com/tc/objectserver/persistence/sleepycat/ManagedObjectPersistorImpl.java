@@ -412,7 +412,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
       
       try {
         c.close();
-      } catch (DatabaseException e) {
+      } catch (Throwable e) {
         logger.error("Error closing cursor", e);
       }
     }
