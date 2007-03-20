@@ -10,10 +10,9 @@ Services:      http://www.terracottatech.com/support_services.shtml
 Getting Started
 ---------------
 
-Consult the appropriate Terracotta product guide for detailed installation
-instructions.  Below are abbreviated install steps for each product.
+Below are abbreviated install steps for Terracotta.
 
-Terracotta DSO
+Terracotta
    Unix/Linux:
       - Unzip/untar the Terracotta software.
       - cd into the the top-level directory.
@@ -23,7 +22,7 @@ Terracotta DSO
       - Run the Terracotta installer.
       - After a successful installation, the Welcome tool is launched.
       - Alternatively, you can launch the Welcome tool from the start menu:
-           Programs --> Terracotta --> Terracotta DSO Welcome
+           Programs --> Terracotta --> Terracotta Pojos Welcome
 
 Terracotta DSO Eclipse Plug-in
    Follow the installation directions at:
@@ -33,19 +32,20 @@ Terracotta DSO Eclipse Plug-in
 Configuration File Samples
 --------------------------
 
-The "config-examples" directory for each product contains a sample Terracotta
-configuration file with example settings appropriate for a typical deployment.
-The directory also contains a reference configuration file for a complete
-explanation of the options available.
+The "config-examples" directory contains sample Terracotta configuration file
+with example settings appropriate for a typical deployment. The directory also
+contains a reference configuration file for a complete explanation of the
+options available.
 
 
 Sample Applications
 -------------------
 
-Terracotta products ship with sample applications to show by example how to
-use Terracotta to cluster the JVM.  The sample applications for Terracotta
-Sessions are available from links in Configurator.  For Terracotta for Spring
-and Terracotta DSO, the sample applications are in the "samples" directory.
+Terracotta ships with sample applications to show by example how to use
+Terracotta to cluster the JVM.  The sample applications for Terracotta Sessions
+are available from links in Configurator.  For Terracotta for Spring, the sample
+applications are in the "samples/spring" directory. For Terracotta Pojos, the
+sample applications are in the "samples/pojo" directory.
 
 
 Administration Tools
@@ -64,7 +64,7 @@ The Console tool provides a view inside the Terracotta Server, letting you see
 activity inside Terracotta at run-time.
 
 
-Java Virtual Machine
+Java Virtual Machine (Windows only)
 --------------------
 
 The Terracotta Server runs with the Java Runtime Environment (JRE) that ships
@@ -75,9 +75,8 @@ contains a list of supported JREs.  The JRE used by Terracotta Clients need not
 match the one used by the Terracotta Server.
 
 It is possible to control the JVM that the Terracotta Server uses by
-setting the TC_JAVA_HOME environment variable.  This should be used with
-caution, as doing so may cause the Terracotta Server to run with an unsupported
-JVM.
+setting the JAVA_HOME environment variable.  This should be used with caution,
+as doing so may cause the Terracotta Server to run with an unsupported JVM.
 
 
 ----
