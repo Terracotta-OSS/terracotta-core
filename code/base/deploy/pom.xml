@@ -54,10 +54,10 @@
     </dependency>
     <dependency>
       <groupId>jline</groupId>
-      <artifactId>jline</artifactId>      
+      <artifactId>jline</artifactId>
     </dependency>
     <dependency>
-      <groupId>jfreechart</groupId>
+      <groupId>jfree</groupId>
       <artifactId>jfreechart</artifactId>
     </dependency>
     <dependency>
@@ -78,7 +78,7 @@
     </dependency>
     <dependency>
       <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>      
+      <artifactId>commons-codec</artifactId>
     </dependency>
   </dependencies>
 </project>

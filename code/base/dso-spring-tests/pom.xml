@@ -58,7 +58,7 @@
     </dependency>
     <dependency>
       <groupId>httpunit</groupId>
-      <artifactId>httpunit</artifactId>      
+      <artifactId>httpunit</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -85,7 +85,7 @@
       <artifactId>commons-dbcp</artifactId>
     </dependency>
     <dependency>
-      <groupId>jstl</groupId>
+      <groupId>javax.servlet</groupId>
       <artifactId>jstl</artifactId>
     </dependency>
     <dependency>
