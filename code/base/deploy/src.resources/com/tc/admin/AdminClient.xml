@@ -94,7 +94,7 @@
 		</connections>
 	</container>
 	<frame bounds="50,50,800,650" help-uri="/com/tc/admin/AdminClient.html" 
-		icon-image-uri="/com/tc/admin/icons/logo_small.gif" name="Main" tag="MyFrame" title="Terracotta AdminClient" 
+		icon-image-uri="/com/tc/admin/icons/logo_small.gif" name="Main" tag="MyFrame" title="Terracotta AdminConsole" 
 		visible="false">
 		<content-pane>
 			<children>
@@ -372,7 +372,7 @@
 			<item bottom="-1,bottom:n" height="s" left="-1,left:n" right="-1,right:n" top="-1,top:n" width="s"/>
 		</connections>
 	</container>
-	<dialog bounds="50,50,324,91" modal="true" resizable="false" tag="ConnectDialog" title="AdminClient" 
+	<dialog bounds="50,50,324,91" modal="true" resizable="false" tag="ConnectDialog" title="AdminConsole" 
 		undecorated="true" visible="false">
 		<content-pane>
 			<children>
