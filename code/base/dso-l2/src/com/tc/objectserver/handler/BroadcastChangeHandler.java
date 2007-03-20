@@ -117,6 +117,10 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
 
   private static DmiDescriptor[] pruneDmiDescriptors(DmiDescriptor[] dmiDescriptors, ChannelID clientID,
                                                      ClientStateManager clientStateManager) {
+    if(dmiDescriptors.length == 0) {
+      return dmiDescriptors;
+    }
+    
     List list = new ArrayList();
     for (int i = 0; i < dmiDescriptors.length; i++) {
       DmiDescriptor dd = dmiDescriptors[i];

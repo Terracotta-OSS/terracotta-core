@@ -85,7 +85,7 @@ public class ClientStateManagerImpl implements ClientStateManager {
     c.removeReferences(removed);
   }
 
-  public boolean hasReference(ChannelID clientID, ObjectID objectID) {
+  public synchronized boolean hasReference(ChannelID clientID, ObjectID objectID) {
     ClientStateImpl c = getOrCreateClientState(clientID);
     return c.containsReference(objectID);
   }
