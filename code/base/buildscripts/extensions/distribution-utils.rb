@@ -55,8 +55,7 @@ module DistributionUtils
   def package_filename
     "#{get_config(:short_internal_name).downcase}-" +
     "#{@build_environment.os_family.downcase}-" +
-    "#{@build_environment.processor_type}-" +
-    "#{@build_environment.build_username.downcase}-AT-" +
+    "#{@build_environment.processor_type}-" +    
     "#{@build_environment.build_hostname.downcase}-rev" +
     "#{@build_environment.current_revision}" 
   end
