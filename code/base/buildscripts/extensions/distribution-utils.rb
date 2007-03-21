@@ -3,8 +3,20 @@
 # except as may otherwise be noted in a separate copyright notice.
 # All rights reserved
 #
-
+require 'open-uri'
 module DistributionUtils
+  
+  def reachable?(url)
+    begin
+      open(url) do |f|
+        # nothing
+      end
+      return true
+    rescue
+      return false
+    end    
+  end
+
   def exec_section(name)
     get_spec(name, []).each do |section|
       (section[:install_directories] || [(section[:install_directory] || '')]).each do |directory|
