@@ -60,7 +60,6 @@ import com.tc.object.config.schema.IncludedInstrumentedClass;
 import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.config.schema.NewDSOApplicationConfig;
 import com.tc.object.config.schema.NewSpringApplicationConfig;
-import com.tc.object.loaders.NamedLoaderAdapter;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.tools.BootJar;
@@ -756,7 +755,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     // JBoss adapters
     addCustomAdapter("org.jboss.mx.loading.UnifiedClassLoader", new UCLAdapter());
     addCustomAdapter("org.jboss.Main", new MainAdapter());
-    addCustomAdapter("org.jboss.system.server.NoAnnotationURLClassLoader", new NamedLoaderAdapter());
 
     // TODO for the Event Swing sample only
     ld = new LockDefinition("setTextArea", ConfigLockLevel.WRITE);
@@ -1025,8 +1023,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     addCustomAdapter("org.apache.catalina.startup.Catalina", new CatalinaAdapter());
     addCustomAdapter("org.apache.catalina.core.ContainerBase", new ContainerBaseAdapter());
     addCustomAdapter("org.apache.catalina.startup.Bootstrap", new BootstrapAdapter());
-    addCustomAdapter("org.apache.catalina.loader.WebappClassLoader", new NamedLoaderAdapter());
-    addCustomAdapter("org.apache.catalina.loader.StandardClassLoader", new NamedLoaderAdapter());
   }
 
   private void addWeblogicCustomAdapters() {

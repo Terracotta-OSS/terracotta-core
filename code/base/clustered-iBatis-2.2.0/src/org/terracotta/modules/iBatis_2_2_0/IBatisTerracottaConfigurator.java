@@ -8,7 +8,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 import org.terracotta.modules.iBatis_2_2_0.object.config.IBatisChangeApplicatorSpec;
-import org.terracotta.modules.iBatis_2_2_0.object.config.IBatisPluginSpec;
+import org.terracotta.modules.iBatis_2_2_0.object.config.IBatisModuleSpec;
 
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.config.ConfigLockLevel;
@@ -23,6 +23,8 @@ import java.util.Hashtable;
 public final class IBatisTerracottaConfigurator extends TerracottaConfiguratorModule {
   protected final void addInstrumentation(final BundleContext context, final StandardDSOClientConfigHelper configHelper) {
     configHelper.addAutolock("* java.util.Collections$SynchronizedList.*(..)", ConfigLockLevel.WRITE);
+    
+    ClassAdapterFactory factory = new IBatisClassAdapter();
     
     TransparencyClassSpec spec = configHelper.getOrCreateSpec("com.ibatis.sqlmap.engine.mapping.result.loader.EnhancedLazyResultLoader$EnhancedLazyResultLoaderImpl");
     configHelper.addAutolock("* com.ibatis.sqlmap.engine.mapping.result.loader.EnhancedLazyResultLoader$EnhancedLazyResultLoaderImpl.loadObject(..)", ConfigLockLevel.WRITE);
@@ -40,6 +42,7 @@ public final class IBatisTerracottaConfigurator extends TerracottaConfiguratorMo
     
     spec = configHelper.getOrCreateSpec("com.ibatis.common.jdbc.SimpleDataSource");
     spec.setCallConstructorOnLoad(true);
+    spec.setCustomClassAdapter(factory);
     spec.addTransient("activeConnections");
     spec.addTransient("idleConnections");
     configHelper.addAutolock("* com.ibatis.common.jdbc.SimpleDataSource.*(..)", ConfigLockLevel.WRITE);
@@ -132,16 +135,14 @@ public final class IBatisTerracottaConfigurator extends TerracottaConfiguratorMo
     
     //addIncludePattern("com.ibatis.sqlmap.engine.accessplan.PropertyAccessPlan", false, false, false);
     
-    ClassAdapterFactory factory = new IBatisAddDefaultConstructorAdapter();
     configHelper.getOrCreateSpec("com.ibatis.sqlmap.engine.impl.SqlMapClientImpl").setCustomClassAdapter(factory);
-    configHelper.getOrCreateSpec("com.ibatis.common.jdbc.SimpleDataSource").setCustomClassAdapter(factory);
   }
   
   protected final void registerModuleSpec(final BundleContext context) {
     final Dictionary serviceProps = new Hashtable();
     serviceProps.put(Constants.SERVICE_VENDOR, "Terracotta, Inc.");
     serviceProps.put(Constants.SERVICE_DESCRIPTION, "IBatis Plugin Spec");
-    context.registerService(ModuleSpec.class.getName(), new IBatisPluginSpec(new IBatisChangeApplicatorSpec(getClass().getClassLoader())), serviceProps);
+    context.registerService(ModuleSpec.class.getName(), new IBatisModuleSpec(new IBatisChangeApplicatorSpec(getClass().getClassLoader())), serviceProps);
   }
 
 }

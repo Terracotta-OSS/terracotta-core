@@ -11,11 +11,11 @@ import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.ByteCodeUtil;
 
 /**
- * Adds NamedClassLoader interface to a class
+ * Adds NamedClassLoader interface to a class with a hard coded name (known at instrumentation time)
  */
 public class StandardClassLoaderAdapter extends ClassAdapter implements Opcodes {
 
-  private String loaderName;
+  private final String loaderName;
 
   public StandardClassLoaderAdapter(ClassVisitor cv, String loaderName) {
     super(cv);

@@ -8,10 +8,10 @@ import org.terracotta.modules.iBatis_2_2_0.object.dna.impl.IBatisAccessPlanInsta
 import com.tc.object.config.ChangeApplicatorSpec;
 import com.tc.object.config.ModuleSpec;
 
-public class IBatisPluginSpec implements ModuleSpec {
+public class IBatisModuleSpec implements ModuleSpec {
   private final ChangeApplicatorSpec changeAppSpec;
   
-  public IBatisPluginSpec(ChangeApplicatorSpec changeAppSpec) {
+  public IBatisModuleSpec(ChangeApplicatorSpec changeAppSpec) {
     this.changeAppSpec = changeAppSpec;
   }
   

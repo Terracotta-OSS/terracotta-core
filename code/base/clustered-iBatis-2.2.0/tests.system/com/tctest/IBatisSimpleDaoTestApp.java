@@ -14,7 +14,6 @@ import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.runtime.Vm;
 import com.tctest.domain.Account;
 import com.tctest.domain.AccountDAO;
 import com.tctest.domain.Customer;
@@ -40,14 +39,6 @@ public class IBatisSimpleDaoTestApp extends AbstractTransparentApp {
   public IBatisSimpleDaoTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     barrier = new CyclicBarrier(getParticipantCount());
-    if (Vm.isJDK16()) {
-      // A workaround for perhaps an iBatis bug for jdk 1.6
-      try {
-        Class.forName("org.hsqldb.jdbcDriver");
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
   }
 
   public void run() {

@@ -20,6 +20,7 @@ public class Namespace {
   public static final String  GERONIMO_NAMESPACE              = "Geronimo" + SEP;
   public static final String  WEBLOGIC_NAMESPACE              = "Weblogic" + SEP;
   public static final String  JBOSS_NAMESPACE                 = "JBoss" + SEP;
+  public static final String  MODULES_NAMESPACE               = "Modules" + SEP;
 
   private static final String SYSTEM_LOADER_NAME              = STANDARD_NAMESPACE + "system";
   private static final String EXT_LOADER_NAME                 = STANDARD_NAMESPACE + "ext";
@@ -44,7 +45,7 @@ public class Namespace {
   public static String getLogicalClassExtendsSeparator() {
     return LOGICAL_CLASS_EXTENDS_SEPARATOR;
   }
-
+  
   public static String createLogicalExtendingClassName(String className, String superClassName) {
     return className + LOGICAL_CLASS_EXTENDS_SEPARATOR + superClassName;
   }
@@ -66,7 +67,7 @@ public class Namespace {
     if (subName == null) { throw new IllegalArgumentException("subName is null"); }
 
     if (topLevel.equals(TOMCAT_NAMESPACE) || topLevel.equals(WEBLOGIC_NAMESPACE) || topLevel.equals(GERONIMO_NAMESPACE)
-        || topLevel.equals(JBOSS_NAMESPACE)) {
+        || topLevel.equals(JBOSS_NAMESPACE) || topLevel.equals(MODULES_NAMESPACE)) {
       // this check will probably need to evolve over time, it's obviously not fancy enough yet
       return new StringBuffer(topLevel).append(subName).toString();
     }

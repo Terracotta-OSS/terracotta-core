@@ -59,21 +59,21 @@ public class DSOContextImpl implements DSOContext {
   public static DSOContext createGlobalContext(ClassProvider globalProvider) throws ConfigurationSetupException {
     DSOClientConfigHelper configHelper = getGlobalConfigHelper();
     Manager manager = new ManagerImpl(configHelper, globalProvider, preparedComponentsFromL2Connection);
-    return new DSOContextImpl(configHelper, manager);
+    return new DSOContextImpl(configHelper, globalProvider, manager);
   }
 
   /**
    * For tests
    */
-  public static DSOContext createContext(DSOClientConfigHelper configHelper, Manager manager) {
-    return new DSOContextImpl(configHelper, manager);
+  public static DSOContext createContext(DSOClientConfigHelper configHelper, ClassProvider classProvider, Manager manager) {
+    return new DSOContextImpl(configHelper, classProvider, manager);
   }
 
   public static boolean isDSOSessions(String appName) throws ConfigurationSetupException {
     return getGlobalConfigHelper().isDSOSessions(appName);
   }
 
-  private DSOContextImpl(DSOClientConfigHelper configHelper, Manager manager) {
+  private DSOContextImpl(DSOClientConfigHelper configHelper, ClassProvider classProvider, Manager manager) {
     checkForProperlyInstrumentedBaseClasses();
     if (configHelper == null) { throw new NullPointerException(); }
 
@@ -82,7 +82,7 @@ public class DSOContextImpl implements DSOContext {
     weavingStrategy = new DefaultWeavingStrategy(configHelper, new InstrumentationLoggerImpl(configHelper
         .instrumentationLoggingOptions()));
 
-    ModulesLoader.initPlugins(configHelper, false);
+    ModulesLoader.initModules(configHelper, classProvider, false);
     validateBootJar();
   }
 

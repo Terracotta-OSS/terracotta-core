@@ -4,6 +4,8 @@
 package com.tc.object.bytecode;
 
 import com.tc.object.loaders.ClassProvider;
+import com.tc.object.loaders.NamedClassLoader;
+
 
 public class MockClassProvider implements ClassProvider {
 
@@ -26,6 +28,10 @@ public class MockClassProvider implements ClassProvider {
 
   public String getLoaderDescriptionFor(ClassLoader loader) {
     return "";
+  }
+
+  public void registerNamedLoader(NamedClassLoader loader) {
+    // do nothing
   }
 
 }

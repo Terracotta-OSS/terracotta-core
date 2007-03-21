@@ -26,8 +26,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ReentrantLockTestApp extends AbstractTransparentApp {
-  private static final int    NUM_OF_PUTS        = 1000;
-  private static final int    NUM_OF_LOOPS       = 3;
+  private static final int    NUM_OF_PUTS        = 100;
+  private static final int    NUM_OF_LOOPS       = 2;
 
   private final DataRoot      root               = new DataRoot();
   private final List          queue              = new LinkedList();

@@ -10,10 +10,10 @@ import com.tc.object.config.ChangeApplicatorSpec;
 import com.tc.object.config.ModuleSpec;
 
 
-public class CGLibPluginSpec implements ModuleSpec {
+public class CGLibModuleSpec implements ModuleSpec {
   private final ChangeApplicatorSpec changeAppSpec;
   
-  public CGLibPluginSpec(ChangeApplicatorSpec changeAppSpec) {
+  public CGLibModuleSpec(ChangeApplicatorSpec changeAppSpec) {
     this.changeAppSpec = changeAppSpec;
   }
   

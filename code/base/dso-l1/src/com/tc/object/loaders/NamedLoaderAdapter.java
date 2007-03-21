@@ -6,13 +6,14 @@ package com.tc.object.loaders;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
+import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterFactory;
 
 /**
- * Adds the NamedClassLoader interface (and required impl) to Tomcat's internal loader implementations
+ * Adds the NamedClassLoader interface (and required impl) to a loader implementation
  */
 public class NamedLoaderAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
 
@@ -22,7 +23,7 @@ public class NamedLoaderAdapter extends ClassAdapter implements Opcodes, ClassAd
   public NamedLoaderAdapter() {
     super(null);
   }
-  
+
   private NamedLoaderAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
   }
@@ -30,7 +31,7 @@ public class NamedLoaderAdapter extends ClassAdapter implements Opcodes, ClassAd
   public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
     return new NamedLoaderAdapter(visitor, loader);
   }
-  
+
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     interfaces = ByteCodeUtil.addInterfaces(interfaces, new String[] { NamedClassLoader.CLASS });
     super.visit(version, access, name, signature, superName, interfaces);
@@ -51,6 +52,30 @@ public class NamedLoaderAdapter extends ClassAdapter implements Opcodes, ClassAd
     mv.visitEnd();
 
     mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, "__tc_getClassLoaderName", "()Ljava/lang/String;", null, null);
+    mv.visitCode();
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitFieldInsn(GETFIELD, owner, LOADER_NAME_FIELD, "Ljava/lang/String;");
+    Label l1 = new Label();
+    mv.visitJumpInsn(IFNONNULL, l1);
+    mv.visitTypeInsn(NEW, "java/lang/IllegalStateException");
+    mv.visitInsn(DUP);
+    mv.visitTypeInsn(NEW, "java/lang/StringBuffer");
+    mv.visitInsn(DUP);
+    mv
+        .visitLdcInsn("Classloader name not set, instances defined from this loader not supported in Terracotta (loader: ");
+    mv.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuffer", "<init>", "(Ljava/lang/String;)V");
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getName", "()Ljava/lang/String;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append",
+                       "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
+    mv.visitLdcInsn(")");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "append",
+                       "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuffer", "toString", "()Ljava/lang/String;");
+    mv.visitMethodInsn(INVOKESPECIAL, "java/lang/IllegalStateException", "<init>", "(Ljava/lang/String;)V");
+    mv.visitInsn(ATHROW);
+    mv.visitLabel(l1);
     mv.visitVarInsn(ALOAD, 0);
     mv.visitFieldInsn(GETFIELD, owner, LOADER_NAME_FIELD, "Ljava/lang/String;");
     mv.visitInsn(ARETURN);
@@ -59,4 +84,17 @@ public class NamedLoaderAdapter extends ClassAdapter implements Opcodes, ClassAd
 
     super.visitEnd();
   }
+
+  String __tc_loaderName;
+
+  String get() {
+    if (__tc_loaderName == null) {
+      //
+      throw new IllegalStateException(
+                                      "Classloader name not set, instances defined from this loader not supported in Terracotta (loader: "
+                                          + getClass().getName() + ")");
+    }
+    return __tc_loaderName;
+  }
+
 }

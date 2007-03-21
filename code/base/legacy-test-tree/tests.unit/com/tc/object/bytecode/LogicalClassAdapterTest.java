@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
 
@@ -10,6 +11,7 @@ import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.bytecode.hook.impl.DSOContextImpl;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.loaders.ClassProvider;
 import com.tc.object.tx.MockTransactionManager;
 
 import java.util.ArrayList;
@@ -39,9 +41,10 @@ public class LogicalClassAdapterTest extends ClassAdapterTestBase {
 
     DSOClientConfigHelper config = configHelper();
 
-    DSOContext context = DSOContextImpl.createContext(config, new ManagerImpl(false, objManager,
-                                                                              new MockTransactionManager(), config,
-                                                                              new MockClassProvider(), null));
+    ClassProvider classProvider = new MockClassProvider();
+    DSOContext context = DSOContextImpl.createContext(config, classProvider,
+                                                      new ManagerImpl(false, objManager, new MockTransactionManager(),
+                                                                      config, classProvider, null));
 
     ClassProcessorHelper.setContext(Thread.currentThread().getContextClassLoader(), context);
   }

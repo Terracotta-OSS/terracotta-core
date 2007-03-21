@@ -98,6 +98,7 @@ import com.tc.object.field.TCField;
 import com.tc.object.loaders.BytecodeProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
+import com.tc.object.loaders.NamedLoaderAdapter;
 import com.tc.object.loaders.Namespace;
 import com.tc.object.loaders.StandardClassLoaderAdapter;
 import com.tc.object.loaders.StandardClassProvider;
@@ -178,7 +179,7 @@ public class BootJarTool {
     this.bootJarHandler = new BootJarHandler(WRITE_OUT_TEMP_FILE, this.outputFile);
     this.quiet = quiet;
     this.portability = new PortabilityImpl(this.config);
-    ModulesLoader.initPlugins(this.config, true);
+    ModulesLoader.initModules(this.config, null, true);
   }
 
   public BootJarTool(DSOClientConfigHelper configuration, File outputFile, ClassLoader systemProvider) {
@@ -1747,7 +1748,14 @@ public class BootJarTool {
     ClassLoaderPreProcessorImpl adapter = new ClassLoaderPreProcessorImpl();
     byte[] patched = adapter.preProcess(getSystemBytes("java.lang.ClassLoader"));
 
-    bootJar.loadClassIntoJar("java.lang.ClassLoader", patched, false);
+    ClassReader reader = new ClassReader(patched);
+    ClassWriter writer = new ClassWriter(true);
+
+    ClassVisitor cv = new NamedLoaderAdapter().create(writer, null);
+
+    reader.accept(cv, false);
+
+    bootJar.loadClassIntoJar("java.lang.ClassLoader", writer.toByteArray(), false);
   }
 
   protected byte[] doDSOTransform(String name, byte[] data) {

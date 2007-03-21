@@ -12,4 +12,6 @@ public interface ClassProvider {
   ClassLoader getClassLoader(String loaderDesc);
 
   String getLoaderDescriptionFor(ClassLoader loader);
+  
+  void registerNamedLoader(NamedClassLoader loader);
 }

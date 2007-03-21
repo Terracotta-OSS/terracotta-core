@@ -12,6 +12,7 @@ import com.tc.logging.TCLogging;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.loaders.ClassProvider;
+import com.tc.object.loaders.NamedClassLoader;
 import com.tc.util.Assert;
 
 import gnu.trove.TObjectIntHashMap;
@@ -806,6 +807,9 @@ public class DNAEncoding {
       throw new AssertionError();
     }
 
+    public void registerNamedLoader(NamedClassLoader loader) {
+      throw new AssertionError();
+    }
   }
 
   private static class LocalClassProvider implements ClassProvider {
@@ -834,6 +838,10 @@ public class DNAEncoding {
 
     public String getLoaderDescriptionFor(ClassLoader loader) {
       return LOADER_ID;
+    }
+
+    public void registerNamedLoader(NamedClassLoader loader) {
+      // do nothing
     }
   }
 

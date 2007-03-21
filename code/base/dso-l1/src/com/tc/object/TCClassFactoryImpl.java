@@ -47,9 +47,10 @@ public class TCClassFactoryImpl implements TCClassFactory {
     synchronized (classes) {
       TCClass rv = (TCClass) classes.get(clazz);
       if (rv == null) {
-        String loaderDesc = classProvider.getLoaderDescriptionFor(clazz);
+        Class tcPeerClass = config.getTCPeerClass(clazz);
+        String loaderDesc = classProvider.getLoaderDescriptionFor(tcPeerClass);
         String className = clazz.getName();
-        rv = new TCClassImpl(fieldFactory, this, objectManager, config.getTCPeerClass(clazz),
+        rv = new TCClassImpl(fieldFactory, this, objectManager, tcPeerClass,
                              getLogicalSuperClassWithDefaultConstructor(clazz), loaderDesc, config
                                  .getLogicalExtendingClassName(className), config.isLogical(className), config
                                  .isCallConstructorOnLoad(className), config.getOnLoadScriptIfDefined(className),

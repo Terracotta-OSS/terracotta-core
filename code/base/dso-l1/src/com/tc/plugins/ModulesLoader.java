@@ -19,12 +19,16 @@ import com.tc.object.config.ConfigLoader;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.ModuleSpec;
 import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.loaders.ClassProvider;
+import com.tc.object.loaders.NamedClassLoader;
+import com.tc.object.loaders.Namespace;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Dictionary;
@@ -42,10 +46,9 @@ public class ModulesLoader {
     // cannot be instantiated
   }
 
-  public static void initPlugins(final DSOClientConfigHelper configHelper, final boolean forBootJar) {
+  public static void initModules(final DSOClientConfigHelper configHelper, final ClassProvider classProvider, final boolean forBootJar) {
+    EmbeddedOSGiRuntime osgiRuntime = null;
     synchronized (lock) {
-      EmbeddedOSGiRuntime osgiRuntime;
-
       final Modules modules = configHelper.getModulesForInitialization();
       if (modules != null && modules.sizeOfModuleArray() > 0) {
         try {
@@ -54,9 +57,9 @@ public class ModulesLoader {
           throw new RuntimeException("Unable to create runtime for plugins", e);
         }
         try {
-          initPlugins(osgiRuntime, configHelper, modules.getModuleArray());
+          initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), forBootJar);
           if (!forBootJar) {
-            getPluginsCustomApplicatorSpecs(osgiRuntime, configHelper);
+            getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
           }
         } catch (BundleException be1) {
           try {
@@ -87,8 +90,8 @@ public class ModulesLoader {
     }
   }
 
-  private static void initPlugins(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
-                                  final Module[] modules) throws BundleException {
+  private static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
+                                  final ClassProvider classProvider, final Module[] modules, boolean forBootJar) throws BundleException {
     // The "modules-common" bundle contains a convenience superclass that some bundles extend
     osgiRuntime.installBundle("modules-common", "1.0");
     for (int pos = 0; pos < modules.length; ++pos) {
@@ -112,22 +115,44 @@ public class ModulesLoader {
 
       Bundle bundle = osgiRuntime.getBundle(name, version);
       if (bundle != null) {
+        if (!forBootJar) {
+          registerClassLoader(classProvider, bundle);
+        }
         loadConfiguration(configHelper, bundle);
       }
     }
   }
 
-  private static void getPluginsCustomApplicatorSpecs(final EmbeddedOSGiRuntime osgiRuntime,
+  private static void registerClassLoader(final ClassProvider classProvider, final Bundle bundle) throws BundleException {
+    NamedClassLoader ncl = getClassLoader(bundle);
+
+    String loaderName = Namespace.createLoaderName(Namespace.MODULES_NAMESPACE, ncl.toString());
+    ncl.__tc_setClassLoaderName(loaderName);
+    classProvider.registerNamedLoader(ncl);
+  }
+
+  private static NamedClassLoader getClassLoader(Bundle bundle) throws BundleException {
+    try {
+      Method m = bundle.getClass().getDeclaredMethod("getClassLoader", new Class[0]);
+      m.setAccessible(true);
+      ClassLoader classLoader = (ClassLoader) m.invoke(bundle, new Object[0]);
+      return (NamedClassLoader) classLoader;
+    } catch (Throwable t) {
+      throw new BundleException("Unable to get classloader for bundle.", t);
+    }
+  }
+
+  private static void getModulesCustomApplicatorSpecs(final EmbeddedOSGiRuntime osgiRuntime,
                                                       final DSOClientConfigHelper configHelper)
       throws InvalidSyntaxException {
     ServiceReference[] serviceReferences = osgiRuntime.getAllServiceReferences(ModuleSpec.class.getName(), null);
     if (serviceReferences == null) { return; }
-    ModuleSpec[] pluginSpecs = new ModuleSpec[serviceReferences.length];
+    ModuleSpec[] modulesSpecs = new ModuleSpec[serviceReferences.length];
     for (int i = 0; i < serviceReferences.length; i++) {
-      pluginSpecs[i] = (ModuleSpec) osgiRuntime.getService(serviceReferences[i]);
+      modulesSpecs[i] = (ModuleSpec) osgiRuntime.getService(serviceReferences[i]);
       osgiRuntime.ungetService(serviceReferences[i]);
     }
-    configHelper.setModuleSpecs(pluginSpecs);
+    configHelper.setModuleSpecs(modulesSpecs);
   }
 
   private static void loadConfiguration(final DSOClientConfigHelper configHelper, final Bundle bundle)

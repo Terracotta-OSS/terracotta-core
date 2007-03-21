@@ -6,31 +6,42 @@ package org.terracotta.modules.iBatis_2_2_0;
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.Label;
+import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.ClassAdapterFactory;
 
 
-public class IBatisAddDefaultConstructorAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
+public class IBatisClassAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
   private final static String SQLMAPCLIENT_CLASS_SLASHES = "com/ibatis/sqlmap/engine/impl/SqlMapClientImpl";
   private final static String SIMPLEDATASOURCE_CLASS_SLASHES = "com/ibatis/common/jdbc/SimpleDataSource";
   private String classNameSlashes;
-
-  public IBatisAddDefaultConstructorAdapter() {
+  
+  public IBatisClassAdapter() {
     super(null);
   }
   
-  public IBatisAddDefaultConstructorAdapter(ClassVisitor cv) {
+  public IBatisClassAdapter(ClassVisitor cv) {
     super(cv);
   }
   
   public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
-    return new IBatisAddDefaultConstructorAdapter(visitor);
+    return new IBatisClassAdapter(visitor);
   }
   
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     super.visit(version, access, name, signature, superName, interfaces);
     this.classNameSlashes = name;
+  }
+  
+  public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+    MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+    if (SIMPLEDATASOURCE_CLASS_SLASHES.equals(classNameSlashes)) {
+      if ("popConnection".equals(name) && "(Ljava/lang/String;Ljava/lang/String;)Lcom/ibatis/common/jdbc/SimpleDataSource$SimplePooledConnection;".equals(desc)) {
+        mv = new PopConnectionMethodAdapter(mv);
+      }
+    }
+    return mv;
   }
   
   public void visitEnd() {
@@ -113,9 +124,6 @@ public class IBatisAddDefaultConstructorAdapter extends ClassAdapter implements 
     Label l10 = new Label();
     mv.visitLabel(l10);
     mv.visitLineNumber(87, l10);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitInsn(LCONST_0);
-    mv.visitFieldInsn(PUTFIELD, SIMPLEDATASOURCE_CLASS_SLASHES, "hadToWaitCount", "J");
     Label l11 = new Label();
     mv.visitLabel(l11);
     mv.visitLineNumber(88, l11);
@@ -162,5 +170,19 @@ public class IBatisAddDefaultConstructorAdapter extends ClassAdapter implements 
     mv.visitLabel(l4);
     mv.visitMaxs(0, 0);
     mv.visitEnd();
+  }
+  
+  private static class PopConnectionMethodAdapter extends MethodAdapter implements Opcodes {
+    public PopConnectionMethodAdapter(MethodVisitor mv) {
+      super(mv);
+    }
+    
+    public void visitCode() {
+      super.visitCode();
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitFieldInsn(GETFIELD, SIMPLEDATASOURCE_CLASS_SLASHES, "jdbcDriver", "Ljava/lang/String;");
+      mv.visitMethodInsn(INVOKESTATIC, "com/ibatis/common/resources/Resources", "instantiate", "(Ljava/lang/String;)Ljava/lang/Object;");
+      mv.visitInsn(POP);
+    }
   }
 }

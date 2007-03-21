@@ -7,7 +7,7 @@ package org.terracotta.modules.cglib_2_1_3;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.terracotta.modules.cglib_2_1_3.object.config.CGLibChangeApplicatorSpec;
-import org.terracotta.modules.cglib_2_1_3.object.config.CGLibPluginSpec;
+import org.terracotta.modules.cglib_2_1_3.object.config.CGLibModuleSpec;
 import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 
 import com.tc.object.config.ModuleSpec;
@@ -26,7 +26,7 @@ public final class CGLibTerracottaConfigurator extends TerracottaConfiguratorMod
     final Dictionary serviceProps = new Hashtable();
     serviceProps.put(Constants.SERVICE_VENDOR, "Terracotta, Inc.");
     serviceProps.put(Constants.SERVICE_DESCRIPTION, "CGLIB Plugin Spec");
-    context.registerService(ModuleSpec.class.getName(), new CGLibPluginSpec(new CGLibChangeApplicatorSpec(getClass()
+    context.registerService(ModuleSpec.class.getName(), new CGLibModuleSpec(new CGLibChangeApplicatorSpec(getClass()
         .getClassLoader())), serviceProps);
   }
 
