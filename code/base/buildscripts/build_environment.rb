@@ -63,9 +63,9 @@ class BuildEnvironment < Environment
         if @branch.nil?
             case @svninfo["URL"]
                 when /trunk/: @branch="trunk"
-                when /branches\/private\/([^\/]+)\//: @branch = $1
-                when /branches\/([^\/]+)\//: @branch = $1
-                when /tags\/([^\/]+)\//: @branch = $1
+                when /branches\/private\/([^\/]+)/: @branch = $1
+                when /branches\/([^\/]+)/: @branch = $1
+                when /tags\/([^\/]+)/: @branch = $1
                 else @branch = "branch-unknown"
             end
         end
