@@ -8,6 +8,10 @@ bundled_jres:
       install_directory: jre
       version: 1.5.0_11
 bundled_demos:
+  - rife:
+      install_directory: samples/rife
+      manifest:
+        - continuations
   - pojo:
       install_directory: samples/pojo
       manifest:
@@ -110,6 +114,7 @@ postscripts:
         - schema
   - make-srcdocs:
       args:
+        - samples/rife
         - samples/pojo
         - samples/spring
         - samples/sessions
