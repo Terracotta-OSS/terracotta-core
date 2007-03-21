@@ -483,6 +483,7 @@
         <groupId>org.terracotta</groupId>
         <artifactId>dso-alt-boot-jar-tests</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -498,11 +499,13 @@
         <groupId>org.terracotta</groupId>
         <artifactId>dso-container-tests</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>dso-crash-tests</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -553,6 +556,7 @@
         <groupId>org.terracotta</groupId>
         <artifactId>dso-performance-tests</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -568,16 +572,19 @@
         <groupId>org.terracotta</groupId>
         <artifactId>dso-spring-crash-tests</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>dso-spring-tests</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>dso-system-tests</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -603,6 +610,7 @@
         <groupId>org.terracotta</groupId>
         <artifactId>legacy-test-tree</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -623,6 +631,7 @@
         <groupId>org.terracotta</groupId>
         <artifactId>simulator</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -646,6 +655,8 @@
       </dependency-->
     </dependencies>
   </dependencyManagement>
+
+
 
   <properties>
     <tcVersion>2.3-SNAPSHOT</tcVersion>
@@ -680,19 +691,20 @@
             <configuration>
               <sources>
                 <source>src</source>
-                <source>tests.base</source>
               </sources>
             </configuration>
           </execution>
           <execution>
             <id>add-test-source</id>
-            <phase>generate-sources</phase>
+            <phase>generate-test-sources</phase>
             <goals>
               <goal>add-test-source</goal>
             </goals>
             <configuration>
               <sources>
+                <source>tests.base</source>
                 <source>tests.unit</source>
+                <source>tests.system</source>
               </sources>
             </configuration>
           </execution>
