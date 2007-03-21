@@ -52,7 +52,7 @@ module ConfigSource
         if out.blank?
             out = nil
         else
-            out = out.split(/\s*,\s*/)
+            out = out.split(/(?<!\\),/).collect { |val| val.gsub(/\\,/, ',').strip }
         end
 
         out
