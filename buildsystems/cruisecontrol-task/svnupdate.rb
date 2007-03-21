@@ -24,7 +24,7 @@ class SvnUpdate
     @svninfo = YAML::load(`svn info #{@topdir}`)
     @branch  = get_branch()
 
-    @good_rev_file = File.join(build_archive_dir, @branch, "good_rev.txt")
+    @good_rev_file = File.join(build_archive_dir, "general-monkey", @branch, "good_rev.txt")
 
     clean_up_temp_dir
   end
@@ -32,9 +32,9 @@ class SvnUpdate
   def get_branch    
     branch = case @svninfo['URL']
       when /trunk/: branch="trunk"
-      when /branches\/private\/([^\/]+)\//: $1
-      when /branches\/([^\/]+)\//: $1
-      when /tags\/([^\/]+)\//: $1
+      when /branches\/private\/([^\/]+)/: $1
+      when /branches\/([^\/]+)/: $1
+      when /tags\/([^\/]+)/: $1
       else fail("Can't determine which branch I'm operating on")
     end
   end
