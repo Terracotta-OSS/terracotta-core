@@ -80,7 +80,6 @@ module DistributionUtils
   def get_config(symbol, default=nil)
     case symbol
     when :version           then @config[symbol.to_s] || @build_environment.specified_build_version
-    when :designation       then @config[symbol.to_s] || @build_environment.specified_build_designation
     when :package_directory then @config[symbol.to_s] || "#{get_config(:root_directory)}-#{get_config(:version)}"
     else
       out = @config[symbol.to_s] || default

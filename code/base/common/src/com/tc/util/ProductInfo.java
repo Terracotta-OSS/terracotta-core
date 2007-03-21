@@ -34,7 +34,6 @@ public final class ProductInfo {
 
   private static final String               BUILD_DATA_ROOT_KEY        = "terracotta.build.";
   private static final String               BUILD_DATA_VERSION_KEY     = "version";
-  private static final String               BUILD_DATA_DESIGNATION_KEY = "designation";
   private static final String               BUILD_DATA_TIMESTAMP_KEY   = "timestamp";
   private static final String               BUILD_DATA_HOST_KEY        = "host";
   private static final String               BUILD_DATA_USER_KEY        = "user";
@@ -62,7 +61,6 @@ public final class ProductInfo {
 
   private final String                      moniker;
   private final String                      version;
-  private final String                      designation;
   private final Date                        timestamp;
   private final String                      host;
   private final String                      user;
@@ -84,7 +82,6 @@ public final class ProductInfo {
     }
 
     this.version = getProperty(properties, BUILD_DATA_VERSION_KEY, UNKNOWN_VALUE);
-    this.designation = getProperty(properties, BUILD_DATA_DESIGNATION_KEY, UNKNOWN_VALUE);
     String timestampString = getProperty(properties, BUILD_DATA_TIMESTAMP_KEY, null);
     this.host = getProperty(properties, BUILD_DATA_HOST_KEY, UNKNOWN_VALUE);
     this.user = getProperty(properties, BUILD_DATA_USER_KEY, UNKNOWN_VALUE);
@@ -122,7 +119,7 @@ public final class ProductInfo {
   }
 
   public boolean isDevMode() {
-    return this.version.endsWith(UNKNOWN_VALUE) && this.designation.equals(UNKNOWN_VALUE);
+    return this.version.endsWith(UNKNOWN_VALUE);
   }
 
   public String moniker() {
@@ -134,11 +131,7 @@ public final class ProductInfo {
   }
 
   public String buildVersion() {
-    return this.version + "-" + this.designation; 
-  }
-
-  public String buildDesignation() {
-    return this.designation;
+    return this.version;
   }
 
   public Date buildTimestamp() {

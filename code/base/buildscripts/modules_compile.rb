@@ -120,7 +120,6 @@ class BuildSubtree
       File.open(build_data_file(build_results).to_s, "w") do |file|
         file.puts("terracotta.build.productname=terracotta")
         file.puts("terracotta.build.version=#{build_environment.specified_build_version}")
-        file.puts("terracotta.build.designation=#{build_environment.specified_build_designation}")
         file.puts("terracotta.build.host=#{build_environment.build_hostname}")
         file.puts("terracotta.build.user=#{build_environment.build_username}")
         file.puts("terracotta.build.timestamp=#{build_environment.build_timestamp.strftime('%Y%m%d-%H%m%S')}")

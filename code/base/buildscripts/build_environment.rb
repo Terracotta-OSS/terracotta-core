@@ -98,12 +98,6 @@ class BuildEnvironment < Environment
     @config_source['version'] || "[no-version]"
   end
 
-  # What designation is assigned for this build? This returns '[none]' if no 'designation'
-  # property is set in the configuration source supplied in the constructor.
-  def specified_build_designation
-    @config_source['designation'] || "[no-designation]"
-  end
-
   # When was this build started? This returns a timestamp (a Time object) that's created in
   # the constructor of this object.
   def build_timestamp
