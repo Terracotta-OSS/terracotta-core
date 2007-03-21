@@ -21,9 +21,22 @@ class SvnUpdate
       build_archive_dir = "o:"
     end
 
-    @good_rev_file = File.join(build_archive_dir, "currently_good_rev.txt")
+    @svninfo = YAML::load(`svn info #{@topdir}`)
+    @branch  = get_branch()
+
+    @good_rev_file = File.join(build_archive_dir, @branch, "good_rev.txt")
 
     clean_up_temp_dir
+  end
+
+  def get_branch    
+    branch = case @svninfo['URL']
+      when /trunk/: branch="trunk"
+      when /branches\/private\/([^\/]+)\//: $1
+      when /branches\/([^\/]+)\//: $1
+      when /tags\/([^\/]+)\//: $1
+      else fail("Can't determine which branch I'm operating on")
+    end
   end
 
   def log(msg)
@@ -33,7 +46,7 @@ class SvnUpdate
   end
 
   def get_current_rev
-    YAML::load(`svn info #{@topdir}`)["Last Changed Rev"].to_i
+    @svninfo["Last Changed Rev"].to_i
   end
 
   def svn_update_with_error_tolerant(revision)
