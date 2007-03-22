@@ -46,10 +46,10 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
 
   public boolean contains(Object o) {
     boolean rv = false;
-    synchronized(lock) {
+    synchronized (lock) {
       rv = set.contains(o);
       if (isBlocking && !rv) {
-        waitOn(lock);
+        waitWhileBlocked();
         rv = set.contains(o);
       }
     }
@@ -59,7 +59,7 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
   public boolean removeAll(Collection ids) {
     boolean rv = false;
     synchronized (lock) {
-      if (isBlocking) waitOn(lock);
+      waitWhileBlocked();
       rv = set.removeAll(ids);
     }
     return rv;
@@ -68,7 +68,7 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
   public boolean remove(Object o) {
     boolean rv = false;
     synchronized (lock) {
-      if(isBlocking) waitOn(lock);
+      waitWhileBlocked();
       rv = set.remove(o);
     }
     return rv;
@@ -77,7 +77,7 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
   public Iterator iterator() {
     Iterator rv = null;
     synchronized (lock) {
-      if (isBlocking) waitOn(lock);
+      waitWhileBlocked();
       rv = set.iterator();
     }
     return rv;
@@ -86,7 +86,7 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
   public int size() {
     int rv = 0;
     synchronized (lock) {
-      if (isBlocking) waitOn(lock);
+      waitWhileBlocked();
       rv = set.size();
     }
     return rv;
@@ -95,15 +95,17 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
   public SyncObjectIdSet snapshot() {
     SyncObjectIdSetImpl rv = new SyncObjectIdSetImpl();
     synchronized (lock) {
-      if (isBlocking) waitOn(lock);
+      waitWhileBlocked();
       rv.addAll(set);
     }
     return rv;
   }
 
-  private static void waitOn(Object l) {
+  private void waitWhileBlocked() {
     try {
-      l.wait();
+      while (isBlocking) {
+        lock.wait();
+      }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
