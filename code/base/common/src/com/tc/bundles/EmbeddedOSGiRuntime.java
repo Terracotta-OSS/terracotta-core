@@ -60,7 +60,6 @@ public interface EmbeddedOSGiRuntime {
       // There are two repositories that we [optionally] prepend: a system property (used by tests) and the installation
       // root (which is not set when running tests)
       try {
-        System.out.println("Prepending bundle repository: " + Directories.getInstallationRoot());
         if (Directories.getInstallationRoot() != null) {
           logger.debug("Prepending bundle repository: " + new File(Directories.getInstallationRoot(), "modules").toURL().toString());
           prependLocations.add(new File(Directories.getInstallationRoot(), "modules").toURL());
