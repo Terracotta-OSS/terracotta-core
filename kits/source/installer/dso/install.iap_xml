@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- This script was automatically generated using Macrovision's InstallAnywhere 8.0 Enterprise, Build 3063
      STATUS: Fully Functional LICENSED Edition
-     DATE:   Thu Feb 08 12:14:50 PST 2007 -->
-<InstallAnywhere_Deployment_Project increments="4106">
+     DATE:   Tue Mar 20 13:35:13 PST 2007 -->
+<InstallAnywhere_Deployment_Project increments="4112">
 	<!-- ** DO NOT EDIT ** Essential authorization and configuration data ** DO NOT EDIT ** -->
 	<essentialScriptInfo>
 		<versionID major="8" minor="0" revision="-1"/>
@@ -10,9 +10,9 @@
 		<scriptID>12,42,11,81,49,50,55,56,74,87,50,87,72,53,52,55</scriptID>
 		<buildID>3,13,71,87,105,110,100,111,119,115,32,88,80,44,32,53,46,49,44,32,120,56,54,59,32,74,97,118,97,32,49,46,53,46,48,44,32,83,117,110,32,77,105,99,114,111,115,121,115,116,101,109,115,32,73,110,99,46,44,32,104,116,116,112,58,47,47,106,97,118,97,46,115,117,110,46,99,111,109,47,59,32,101,110,44,32,85,110,107,110,111,119,110,59,32,67,112,49,50,53,50</buildID>
 		<!-- The authorizationID may change between project saves and builds.  This does not effect the integrity of the project, nor do changes in this value represent changes in the actual InstallAnywhere project. -->
-		<authorizationID>1,0,0,16,-93,-13,116,112,80,112,117,106,83,99,113,97,113,65,67,66,74,67,78,70,91,65,64,69,66,69,64,95,87,5,2,0,9,-50,98,0,1,0,0</authorizationID>
+		<authorizationID>1,0,0,16,115,70,117,-32,80,112,117,106,83,99,113,97,113,65,67,66,74,67,78,70,91,65,64,69,66,69,64,95,87,5,2,5,1,-58,97,1,1,0,0</authorizationID>
 	</essentialScriptInfo>
-	<installationObjects uniqueObjects="281">
+	<installationObjects uniqueObjects="282">
 		<object class="com.zerog.ia.installer.Installer" objectID="042cbab2a668">
 			<property name="wizardME">
 				<object class="com.zerog.ia.installer.actions.MakeExecutable" objectID="f7a39581b025">
@@ -153,16 +153,6 @@ it will search for ones in this list]]></string>
 								</object>
 							</method>
 							<method name="addElement">
-								<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="0740ed0989f3">
-									<property name="propertyValue">
-										<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
-									</property>
-									<property name="propertyName">
-										<string><![CDATA[tc.install-root]]></string>
-									</property>
-								</object>
-							</method>
-							<method name="addElement">
 								<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="f7a3a8cbb02a">
 									<property name="propertyValue">
 										<string><![CDATA[8.0]]></string>
@@ -176,7 +166,17 @@ it will search for ones in this list]]></string>
 								</object>
 							</method>
 							<method name="addElement">
-								<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="b67e2f0b87df">
+								<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="0740ed0989f3">
+									<property name="propertyValue">
+										<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
+									</property>
+									<property name="propertyName">
+										<string><![CDATA[tc.install-root]]></string>
+									</property>
+								</object>
+							</method>
+							<method name="addElement">
+								<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="84c5bb3787df">
 									<property name="propertyValue">
 										<string><![CDATA[com.tc.welcome.DSOSamplesFrame]]></string>
 									</property>
@@ -2458,16 +2458,6 @@ it will search for ones in this list]]></string>
 												</object>
 											</method>
 											<method name="addElement">
-												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="4d3662eba700">
-													<property name="propertyValue">
-														<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
-													</property>
-													<property name="propertyName">
-														<string><![CDATA[tc.install-root]]></string>
-													</property>
-												</object>
-											</method>
-											<method name="addElement">
 												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="4d3439a2a6e5">
 													<property name="propertyValue">
 														<string><![CDATA[7.0]]></string>
@@ -2481,7 +2471,17 @@ it will search for ones in this list]]></string>
 												</object>
 											</method>
 											<method name="addElement">
-												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="b67f255f8c56">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="4d3662eba700">
+													<property name="propertyValue">
+														<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
+													</property>
+													<property name="propertyName">
+														<string><![CDATA[tc.install-root]]></string>
+													</property>
+												</object>
+											</method>
+											<method name="addElement">
+												<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="84c5bbf28825">
 													<property name="propertyValue">
 														<string><![CDATA[com.tc.welcome.WelcomeFrame]]></string>
 													</property>
@@ -2781,7 +2781,7 @@ and any path to a file to read from that file]]></string>
 					</method>
 					<method name="put">
 						<string><![CDATA[com.zerog.ia.project.save.last.date]]></string>
-						<string><![CDATA[February 8, 2007 12:14:50 PM PST]]></string>
+						<string><![CDATA[March 20, 2007 1:35:13 PM PST]]></string>
 					</method>
 					<method name="put">
 						<string><![CDATA[com.zerog.ia.build.options.optimization.platform.cdrom]]></string>
@@ -3791,16 +3791,6 @@ it will search for ones in this list]]></string>
 														</object>
 													</method>
 													<method name="addElement">
-														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15dce97f97ac">
-															<property name="propertyValue">
-																<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
-															</property>
-															<property name="propertyName">
-																<string><![CDATA[tc.install-root]]></string>
-															</property>
-														</object>
-													</method>
-													<method name="addElement">
 														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15dbf4b0976f">
 															<property name="propertyValue">
 																<string><![CDATA[8.0]]></string>
@@ -3814,7 +3804,17 @@ it will search for ones in this list]]></string>
 														</object>
 													</method>
 													<method name="addElement">
-														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="b67e3051884a">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="15dce97f97ac">
+															<property name="propertyValue">
+																<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[tc.install-root]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="84c5bc608848">
 															<property name="propertyValue">
 																<string><![CDATA[com.tc.admin.AdminClient]]></string>
 															</property>
@@ -4225,7 +4225,7 @@ and any path to a file to read from that file]]></string>
 												<boolean>false</boolean>
 											</property>
 											<property name="existingFilePath">
-												<string><![CDATA[$USER_MAGIC_FOLDER_1$$/$samples$/$pojos$/$samples.html]]></string>
+												<string><![CDATA[$USER_MAGIC_FOLDER_1$$/$samples$/$pojo$/$samples.html]]></string>
 											</property>
 											<property name="workingDir">
 												<string><![CDATA[]]></string>
@@ -4424,16 +4424,6 @@ it will search for ones in this list]]></string>
 														</object>
 													</method>
 													<method name="addElement">
-														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="880510018ef4">
-															<property name="propertyValue">
-																<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
-															</property>
-															<property name="propertyName">
-																<string><![CDATA[tc.install-root]]></string>
-															</property>
-														</object>
-													</method>
-													<method name="addElement">
 														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="7486c0e68eea">
 															<property name="propertyValue">
 																<string><![CDATA[8.0]]></string>
@@ -4447,7 +4437,17 @@ it will search for ones in this list]]></string>
 														</object>
 													</method>
 													<method name="addElement">
-														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="b67e30618862">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="880510018ef4">
+															<property name="propertyValue">
+																<string><![CDATA[$USER_MAGIC_FOLDER_3$]]></string>
+															</property>
+															<property name="propertyName">
+																<string><![CDATA[tc.install-root]]></string>
+															</property>
+														</object>
+													</method>
+													<method name="addElement">
+														<object class="com.zerog.ia.installer.util.LAXPropertyData" objectID="84c5bc6e885e">
 															<property name="propertyValue">
 																<string><![CDATA[com.tc.SessionIntegrator]]></string>
 															</property>
@@ -4548,13 +4548,13 @@ and any path to a file to read from that file]]></string>
 												<boolean>false</boolean>
 											</property>
 											<property name="sourcePath">
-												<string><![CDATA[$IA_PROJECT_DIR$\install_build_output\Application Files\terracotta-2.3.0]]></string>
+												<string><![CDATA[$IA_PROJECT_DIR$\install_build_output\Application Files\terracotta]]></string>
 											</property>
 											<property name="shouldUninstall">
 												<boolean>true</boolean>
 											</property>
 											<property name="destinationName">
-												<string><![CDATA[terracotta-2.3.0]]></string>
+												<string><![CDATA[$SHORT_NAME$$TC_VERSION$]]></string>
 											</property>
 											<property name="removeRecursively">
 												<boolean>true</boolean>
