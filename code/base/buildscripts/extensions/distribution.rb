@@ -145,7 +145,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     
     unless config_source["release-dir"].nil?      
       tag     = config_source["version"].split(/-/).last
-      release_dir = FilePath.new(config_source["release-dir"], @build_environment.current_branch, tag).ensure_directory    
+      release_dir = FilePath.new(config_source["release-dir"]).ensure_directory    
     end
   
     destdir = release_dir || archive_dir              || 
