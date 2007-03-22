@@ -55,7 +55,7 @@ module DistributionUtils
 
   def package_filename
     pattern = get_config(:kit_name_pattern).downcase
-    tag     = config_source["tc.build-control.version"].split(/-/).last    
+    tag     = config_source["version"].split(/-/).last    
     
     pattern.sub!(/platform/, @build_environment.os_family.downcase)
     pattern.sub!(/branch/, @build_environment.current_branch)

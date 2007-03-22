@@ -142,10 +142,15 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   include Postscripts
   
   def __publish(archive_dir=nil)
-    #destdir = archive_dir || FilePath.new(config_source['build-archive-dir'] || ".", "kits", @build_environment.current_branch, @build_environment.os_type(:nice).downcase).ensure_directory    
-    destdir = archive_dir                             || 
+    
+    unless config_source["release-dir"].nil?      
+      tag     = config_source["version"].split(/-/).last
+      release_dir = FilePath.new(config_source["release-dir"], @build_environment.current_branch, tag).ensure_directory    
+    end
+  
+    destdir = release_dir || archive_dir              || 
       FilePath.new(config_source['build-archive-dir'] || 
-      ".", "kits", @build_environment.current_branch, "rev#{@build_environment.current_revision}", @build_environment.os_family.downcase).ensure_directory
+      ".", @build_environment.current_branch, "rev#{@build_environment.current_revision}", @build_environment.os_family.downcase).ensure_directory
       
     incomplete_tag = "__incomplete__"
     Dir.glob("#{@distribution_results.build_dir.to_s}/*").each do | entry |
