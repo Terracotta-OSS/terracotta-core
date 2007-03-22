@@ -54,11 +54,15 @@ module DistributionUtils
   end
 
   def package_filename
-    "#{get_config(:short_internal_name).downcase}-" +
-    "#{@build_environment.os_family.downcase}-" +
-    "#{@build_environment.processor_type}-" +    
-    "#{@build_environment.build_hostname.downcase}-rev" +
-    "#{@build_environment.current_revision}" 
+    pattern = get_config(:kit_name_pattern).downcase
+    tag     = config_source["tc.build-control.version"].split(/-/).last    
+    
+    pattern.sub!(/platform/, @build_environment.os_family.downcase)
+    pattern.sub!(/branch/, @build_environment.current_branch)
+    pattern.sub!(/tag/, tag)
+    pattern.sub!(/rev/, "rev#{@build_environment.current_revision}")    
+    
+    pattern
   end
 
   def get_spec(symbol, default=nil)

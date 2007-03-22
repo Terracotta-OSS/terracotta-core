@@ -6,7 +6,7 @@
 
 name: Website Product Content
 internal_name: web
-short_internal_name: os.web
+kit_name_pattern: terracotta-eclipse-plugin-branch-tag-rev
 root_directory: web
 bundled_components:
   - common:

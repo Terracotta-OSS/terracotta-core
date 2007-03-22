@@ -10,7 +10,7 @@ require 'open-uri'
 module BundledVendors
     def bundled_vendors(name, directory, spec)
       url       = "#{@static_resources.vendors_url}/#{name}.zip"
-      unless reachable?(url)
+      unless is_online?
         puts "*" * 30 + " WARNING " + "*" * 30
         puts "Unable to retrieve #{name} bundle... skipping"
         puts "*" * 30 + " WARNING " + "*" * 30
@@ -35,9 +35,9 @@ module BundledVendors
         FilePath.new(cache_dir, vendor).to_s
     end
       
-    def reachable?(url)
+    def is_online?
       begin
-        open(url) do |f|
+        open("http://download.terracotta.org/") do |f|
           # do nothing
         end
         return true
