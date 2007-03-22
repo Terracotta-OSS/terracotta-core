@@ -142,7 +142,7 @@ public class ArrayApplicator extends BaseApplicator {
     }
 
     // HAck hack big hack
-    ManagerUtil.register(dest, new TCObjectClone(ArrayManager.getCloneObject(source), txManager));
+    ManagerUtil.register(dest, new TCObjectClone(ArrayManager.getCloneObject(source), txManager, len));
     return cloned;
   }
 }

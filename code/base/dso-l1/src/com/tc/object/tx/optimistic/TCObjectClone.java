@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.tx.optimistic;
 
@@ -23,12 +24,18 @@ public class TCObjectClone implements TCObject {
   private final long                         version;
   private final OptimisticTransactionManager txManager;
   private final TCClass                      tcClass;
+  private final int arrayLength;
 
   public TCObjectClone(TCObject source, OptimisticTransactionManager txManager) {
+    this(source, txManager, -1);
+  }
+
+  public TCObjectClone(TCObject source, OptimisticTransactionManager txManager, int arrayLength) {
     this.version = source.getVersion();
     this.objectID = source.getObjectID();
     this.txManager = txManager;
     this.tcClass = source.getTCClass();
+    this.arrayLength = arrayLength;
   }
 
   public void setNext(TLinkable link) {
@@ -53,7 +60,6 @@ public class TCObjectClone implements TCObject {
 
   public Object getPeerObject() {
     throw new ImplementMe();
-
   }
 
   public TCClass getTCClass() {
@@ -221,7 +227,9 @@ public class TCObjectClone implements TCObject {
   }
 
   public ArrayIndexOutOfBoundsException checkArrayIndex(int index) {
-    throw new ImplementMe();
+    if (arrayLength < 0) { throw new AssertionError(); }
+    if (index < 0 || index >= arrayLength) { return new ArrayIndexOutOfBoundsException(index); }
+    return null;
   }
 
 }
