@@ -105,6 +105,7 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
 
   private void createWrapperMethod(int access, String name, String desc, String signature, String[] exceptions) {
     Type[] params = Type.getArgumentTypes(desc);
+    Type returnType = Type.getReturnType(desc);
 
     MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions);
     mv.visitCode();
@@ -135,7 +136,7 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
       mv.visitVarInsn(params[i].getOpcode(ILOAD), i + 1);
     }
     mv.visitMethodInsn(INVOKESPECIAL, CONCURRENT_HASH_MAP_SLASH, getNewName(name), desc);
-    mv.visitVarInsn(ISTORE, 4);
+    mv.visitVarInsn(returnType.getOpcode(ISTORE), 4);
     mv.visitLabel(l1);
     mv.visitLineNumber(812, l1);
     mv.visitVarInsn(ILOAD, 2);
@@ -149,8 +150,8 @@ public class JavaUtilConcurrentHashMapAdapter extends ClassAdapter implements Op
                        TC_FULLY_UNLOCK_METHOD_DESC);
     mv.visitLabel(l6);
     mv.visitLineNumber(810, l6);
-    mv.visitVarInsn(ILOAD, 4);
-    mv.visitInsn(IRETURN);
+    mv.visitVarInsn(returnType.getOpcode(ILOAD), 4);
+    mv.visitInsn(returnType.getOpcode(IRETURN));
     mv.visitLabel(l2);
     mv.visitLineNumber(811, l2);
     mv.visitVarInsn(ASTORE, 3);

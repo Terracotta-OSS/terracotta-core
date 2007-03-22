@@ -255,9 +255,11 @@ public class FutureTaskTC implements Future, Runnable {
         boolean isRunning = false;
         lock.lock();
         try {
-          runner = Thread.currentThread();
-          proxyRunner = runner.toString();
           isRunning = state == RUNNING;
+          if (isRunning) {
+            runner = Thread.currentThread();
+            proxyRunner = runner.toString();
+          }
         } finally {
           lock.unlock();
         }
