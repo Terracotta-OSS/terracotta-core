@@ -45,16 +45,21 @@ public class ShareInnerOfInnerClassTestApp extends AbstractTransparentApp {
 
     synchronized (count) {
       myId = count[0]++;
-    }
-
-    if (myId == 0) {
-      synchronized (innieRoot) {
-        innieRoot.setString("D'oh");
+      
+      if (myId == 0) {
+        synchronized (innieRoot) {
+          innieRoot.setString("D'oh");
+        }
       }
+      
     }
 
-    synchronized (innieRoot) {
-      Assert.assertEquals("D'oh", innieRoot.getString());
+    barrier();
+    
+    if (myId == 1) {
+      synchronized (innieRoot) {
+        Assert.assertEquals("D'oh", innieRoot.getString());
+      }
     }
 
   }
