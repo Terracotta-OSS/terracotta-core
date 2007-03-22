@@ -374,6 +374,10 @@ public class ArrayManagerTest extends TestCase {
       throw new ImplementMe();
     }
 
+    public ArrayIndexOutOfBoundsException checkArrayIndex(int index) {
+      throw new ImplementMe();
+    }
+
   }
 
 }

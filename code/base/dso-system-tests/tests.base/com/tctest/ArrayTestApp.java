@@ -32,6 +32,44 @@ public class ArrayTestApp extends AbstractTransparentApp {
     } catch (Exception e) {
       e.printStackTrace();
     }
+
+    arrayIndexTestCase();
+
+    testNullArrayAccess();
+  }
+
+  private void testNullArrayAccess() {
+    Object[] o = null;
+
+    try {
+      if (o[3] == null) { throw new AssertionError(); }
+    } catch (NullPointerException npe) {
+      // expecte
+    }
+  }
+
+  private void arrayIndexTestCase() {
+    // We had a bug where ArrayIndexOutOfBoundsException failed to release a monitor, this is the test case for it
+    try {
+      for (int i = 0; true; i++) {
+        Object o = myArrayTestRoot[i];
+
+        // silence warning about unread local variable
+        if (o == null) {
+          continue;
+        }
+      }
+    } catch (ArrayIndexOutOfBoundsException aioobe) {
+      //
+    }
+
+    try {
+      Object o = myArrayTestRoot[-1];
+      if (true || o == o) { throw new AssertionError(); }
+    } catch (ArrayIndexOutOfBoundsException aioobe) {
+      //
+    }
+
   }
 
   public void setArray(String[] blah) {

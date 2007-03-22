@@ -91,7 +91,7 @@ public abstract class TCObjectImpl implements TCObject {
    * Reconstitutes the object using the data in the DNA strand. XXX: We may need to signal (via a different signature or
    * args) that the hydration is intended to initialize the object from scratch or if it's a delta. We must avoid
    * creating a new instance of the peer object if the strand is just a delta.
-   * 
+   *
    * @throws ClassNotFoundException
    */
   public void hydrate(DNA from, boolean force) throws ClassNotFoundException {
@@ -110,7 +110,7 @@ public abstract class TCObjectImpl implements TCObject {
       } catch (IOException e) {
         logger.warn("Re-throwing Exception: " , e);
         throw new DNAException(e);
-      } 
+      }
     }
   }
 
@@ -218,6 +218,10 @@ public abstract class TCObjectImpl implements TCObject {
   }
 
   public void resolveArrayReference(int index) {
+    throw new AssertionError("shouldn't be called");
+  }
+
+  public ArrayIndexOutOfBoundsException checkArrayIndex(int index) {
     throw new AssertionError("shouldn't be called");
   }
 

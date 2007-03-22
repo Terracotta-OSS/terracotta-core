@@ -220,4 +220,8 @@ public class TCObjectClone implements TCObject {
     throw new ImplementMe();
   }
 
+  public ArrayIndexOutOfBoundsException checkArrayIndex(int index) {
+    throw new ImplementMe();
+  }
+
 }

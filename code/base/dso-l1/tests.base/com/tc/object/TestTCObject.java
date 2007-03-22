@@ -238,4 +238,8 @@ public class TestTCObject implements TCObject {
   public void setLiteralValue(Object newValue) {
     throw new ImplementMe();
   }
+
+  public ArrayIndexOutOfBoundsException checkArrayIndex(int index) {
+    throw new ImplementMe();
+  }
 }

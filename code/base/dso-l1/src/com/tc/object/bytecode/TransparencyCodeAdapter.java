@@ -244,11 +244,27 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
         case AALOAD:
           Label end = new Label();
           Label notManaged = new Label();
+          Label noIndexException = new Label();
           super.visitInsn(DUP2);
           super.visitInsn(POP);
           callArrayManagerMethod("getObject", "(Ljava/lang/Object;)Lcom/tc/object/TCObject;");
           super.visitInsn(DUP);
           super.visitJumpInsn(IFNULL, notManaged);
+          super.visitInsn(DUP2);
+          super.visitInsn(SWAP);
+          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "checkArrayIndex",
+                                "(I)Ljava/lang/ArrayIndexOutOfBoundsException;");
+          super.visitInsn(DUP);
+          super.visitJumpInsn(IFNULL, noIndexException);
+          super.visitInsn(SWAP);
+          super.visitInsn(POP);
+          super.visitInsn(SWAP);
+          super.visitInsn(POP);
+          super.visitInsn(SWAP);
+          super.visitInsn(POP);
+          super.visitInsn(ATHROW);
+          super.visitLabel(noIndexException);
+          super.visitInsn(POP);
           super.visitInsn(DUP_X2);
           super.visitInsn(DUP);
           super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "getResolveLock", "()Ljava/lang/Object;");
