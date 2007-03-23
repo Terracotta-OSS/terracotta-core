@@ -73,8 +73,7 @@
          or '%(com.mycompany.propname)' (to substitute in the value of
          Java system property 'com.mycompany.propname'). Thus, a value
          of 'server-data-%h' would expand to 'server-data-artichoke' if 
-         running on host 'artichoke'. See the Product Guide for more
-         details.
+         running on host 'artichoke'.
 
          If this is a relative path, then it is interpreted relative to
          the current working directory of the server (that is, the directory
@@ -89,8 +88,7 @@
       <!-- In which directory should the server store its log files? Again,
          this value undergoes parameter substitution before being used;
          thus, a value like 'server-logs-%h' would expand to
-         'server-logs-artichoke' if running on host 'artichoke'. See the
-         Product Guide for more details.
+         'server-logs-artichoke' if running on host 'artichoke'.
 
          If this is a relative path, then it is interpreted relative to
          the current working directory of the server (that is, the directory
@@ -274,8 +272,7 @@
     
        This value undergoes parameter substitution before being used;
        thus, a value like 'client-logs-%h' would expand to
-       'client-logs-banana' if running on host 'banana'. See the
-       Product Guide for more details.
+       'client-logs-banana' if running on host 'banana'.
     
        If this is a relative path, then it is interpreted relative to
        the current working directory of the client (that is, the directory
@@ -301,8 +298,7 @@
       <debugging>
       
         <!-- This section controls output from the DSO client related to
-           class instrumentation. See the Product Guide for more
-           details; each individual element controls a different kind
+           class instrumentation; each individual element controls a different kind
            of output. -->
            
         <instrumentation-logging>
@@ -314,9 +310,8 @@
         </instrumentation-logging>
         
         <!-- This section controls output from the DSO client related to
-           operations occurring at runtime. See the Product Guide for
-           more details; each individual element controls a different
-           kind of output. -->
+           operations occurring at runtime; each individual element controls a
+           different kind of output. -->
            
         <runtime-logging>
           <non-portable-dump>true</non-portable-dump>
@@ -327,9 +322,8 @@
         </runtime-logging>
         
         <!-- This section controls the exact format of the output from
-           any options enabled under 'runtime-logging', above. See
-           the Product Guide for more details; each individual element
-           controls a different kind of output. -->
+           any options enabled under 'runtime-logging', above.
+           Each individual element controls a different kind of output. -->
 
         <runtime-output-options>
           <auto-lock-details>false</auto-lock-details>
@@ -360,7 +354,7 @@
          pattern and no 'exclude' patterns.
          
          Patterns here are AspectWerkz-compatible class specification
-         expressions; see the Product Guide for details.
+         expressions.
          
          Default: none; no classes are instrumented. Thus for proper
          DSO functionality, you must specify at least one 'include'
@@ -370,8 +364,7 @@
         <!-- This includes a certain set of classes for instrumentation. -->
         <include>
           <!-- The class(es) to include, as an AspectWerkz-compatible
-             class specification expression. See the Product Guide
-             for more details. (REQUIRED) -->
+             class specification expression. (REQUIRED) -->
           <class-expression>com.mycompany.pkga.*</class-expression>
           
           <!-- If set to 'true', then any fields in the given class(es)
@@ -391,8 +384,7 @@
         </include>
         
         <!-- The class(es) to exclude, as an AspectWerkz-compatible
-           class specification expression. See the Product Guide for
-           more details. -->
+           class specification expression. -->
         <exclude>com.mycompany.pkga.subpkg.*</exclude>
         
         <include>
@@ -407,8 +399,7 @@
          across JVMs by DSO.
          
          The expressions in 'field-name' are AspectWerkz-compatible
-         field specification expressions. See the Product Guide for
-         more details.
+         field specification expressions.
          
          Default: no extra fields are specified as 'transient' -->
       <transient-fields>
@@ -417,8 +408,7 @@
       </transient-fields>
       
       <!-- This section lets you specify locks to Terracotta DSO. Locks
-         are critical to correct functioning of DSO. In general, see the
-         Product Guide for more details.
+         are critical to correct functioning of DSO.
          
          Two types of lock elements may be included here, in any order:
          'autolock' and 'named-lock'. Autolocks extend normal Java
@@ -428,14 +418,13 @@
          Named locks create a lock with the name specified below; no
          more than one thread in one VM, cluster-wide, can be inside
          any method protected by a lock with a given name at one time.
-         See the Product Guide for more details.
       -->
       <locks>
         <!-- Specifies an autolock. -->
         <autolock>
           <!-- The expression of method(s) to lock. This is an
              AspectWerkz-compatible method specification expression.
-             See the Product Guide for more details. (REQUIRED) -->
+             (REQUIRED) -->
           <method-expression>* com.mycompany.pkga.MyClassOne.set*(..)</method-expression>
           
           <!-- The level of the lock: 'read', 'write', or 'concurrent'.
@@ -478,7 +467,7 @@
           
           <!-- The expression of method(s) to lock. This is an
              AspectWerkz-compatible method specification expression.
-             See the Product Guide for more details. (REQUIRED) -->
+             (REQUIRED) -->
           <method-expression>* com.mycompany.pkgb.get*(int)</method-expression>
           
           <!-- The level of the lock: 'read', 'write', or 'concurrent'.
@@ -687,8 +676,7 @@
         </application-contexts>
   
         <!-- This section lets you specify locks to Terracotta DSO. Locks
-           are critical to correct functioning of DSO. In general, see the
-           Product Guide for more details.
+           are critical to correct functioning of DSO.
 
            Two types of lock elements may be included here, in any order:
            'autolock' and 'named-lock'. Autolocks extend normal Java
@@ -698,7 +686,6 @@
            Named locks create a lock with the name specified below; no
            more than one thread in one VM, cluster-wide, can be inside
            any method protected by a lock with a given name at one time.
-           See the Product Guide for more details.
            This section is optional, and most of the time it does NOT present.
         -->
         <locks>
@@ -706,7 +693,7 @@
           <autolock>
             <!-- The expression of method(s) to lock. This is an
                AspectWerkz-compatible method specification expression.
-               See the Product Guide for more details. (REQUIRED) -->
+               (REQUIRED) -->
             <method-expression>* com.mycompany.pkga.MyClassOne.set*(..)</method-expression>
 
             <!-- The level of the lock: 'read', 'write', or 'concurrent'.
@@ -749,7 +736,7 @@
 
             <!-- The expression of method(s) to lock. This is an
                AspectWerkz-compatible method specification expression.
-               See the Product Guide for more details. (REQUIRED) -->
+               (REQUIRED) -->
             <method-expression>* com.mycompany.pkgb.get*(int)</method-expression>
 
             <!-- The level of the lock: 'read', 'write', or 'concurrent'.
@@ -770,7 +757,7 @@
            pattern and no 'exclude' patterns.
 
            Patterns here are AspectWerkz-compatible class specification
-           expressions; see the Product Guide for details.
+           expressions.
 
            Default: none; no classes are instrumented. Thus for proper
            DSO functionality, you must specify at least one 'include'
@@ -781,8 +768,7 @@
           <!-- This includes a certain set of classes for instrumentation. -->
           <include>
             <!-- The class(es) to include, as an AspectWerkz-compatible
-               class specification expression. See the Product Guide
-               for more details. (REQUIRED) -->
+               class specification expression. (REQUIRED) -->
             <class-expression>com.mycompany.pkga.*</class-expression>
 
             <!-- If set to 'true', then any fields in the given class(es)
@@ -802,8 +788,7 @@
           </include>
 
           <!-- The class(es) to exclude, as an AspectWerkz-compatible
-             class specification expression. See the Product Guide for
-             more details. -->
+             class specification expression. -->
           <exclude>com.mycompany.pkga.subpkg.*</exclude>
 
           <include>
