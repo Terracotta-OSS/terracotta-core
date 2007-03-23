@@ -4,6 +4,8 @@
  */
 package com.tc.object;
 
+import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.applicator.AccessibleObjectApplicator;
 import com.tc.object.applicator.ArrayApplicator;
@@ -47,14 +49,16 @@ public class TCClassFactoryImpl implements TCClassFactory {
     synchronized (classes) {
       TCClass rv = (TCClass) classes.get(clazz);
       if (rv == null) {
-        Class tcPeerClass = config.getTCPeerClass(clazz);
-        String loaderDesc = classProvider.getLoaderDescriptionFor(tcPeerClass);
+        String loaderDesc = classProvider.getLoaderDescriptionFor(clazz);
         String className = clazz.getName();
-        rv = new TCClassImpl(fieldFactory, this, objectManager, tcPeerClass,
-                             getLogicalSuperClassWithDefaultConstructor(clazz), loaderDesc, config
-                                 .getLogicalExtendingClassName(className), config.isLogical(className), config
-                                 .isCallConstructorOnLoad(className), config.getOnLoadScriptIfDefined(className),
-                             config.getOnLoadMethodIfDefined(className), config.isUseNonDefaultConstructor(clazz));
+        ClassInfo classInfo = JavaClassInfo.getClassInfo(clazz);
+        rv = new TCClassImpl(fieldFactory, this,
+                             objectManager,
+                             config.getTCPeerClass(clazz),
+                             getLogicalSuperClassWithDefaultConstructor(clazz), //
+                             loaderDesc, config.getLogicalExtendingClassName(className), config.isLogical(className),
+                             config.isCallConstructorOnLoad(classInfo), config.getOnLoadScriptIfDefined(classInfo),
+                             config.getOnLoadMethodIfDefined(classInfo), config.isUseNonDefaultConstructor(clazz));
         classes.put(clazz, rv);
       }
       return rv;
