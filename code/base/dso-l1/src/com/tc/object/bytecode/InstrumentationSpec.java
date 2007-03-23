@@ -5,6 +5,11 @@ package com.tc.object.bytecode;
 
 import com.tc.asm.Type;
 import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.ConstructorInfo;
+import com.tc.aspectwerkz.reflect.MethodInfo;
+import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
+import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
+import com.tc.backport175.bytecode.AnnotationElement.Annotation;
 import com.tc.exception.TCLogicalSubclassNotPortableException;
 import com.tc.object.LiteralValues;
 import com.tc.object.Portability;
@@ -470,4 +475,198 @@ class InstrumentationSpec {
     }
 
   }
+
+  public MethodInfo getMethodInfo(int access, String name, String desc) {
+    if(!"<init>".equals(name)) {
+      MethodInfo[] methods = classInfo.getMethods();
+      for (int i = 0; i < methods.length; i++) {
+        MethodInfo methodInfo = methods[i];
+        if(methodInfo.getName().equals(name) && methodInfo.getSignature().equals(desc)) {
+          return methodInfo;
+        }
+      }
+    } else {
+      ConstructorInfo[] constructors = classInfo.getConstructors();
+      for (int i = 0; i < constructors.length; i++) {
+        ConstructorInfo info = constructors[i];
+        if(info.getName().equals(name) && info.getSignature().equals(desc)) {
+          return new ConstructorInfoWrapper(info);
+        }
+      }
+      // reflecting old DSO hack (see com.tc.object.bytecode.aspectwerkz.AsmMethodInfo) 
+      name = "__INIT__";
+    }
+
+    return new StubMethodInfo(name, desc, access, classInfo);
+  }
+
+  
+  private static final class StubMethodInfo implements MethodInfo {
+    private final String name;
+    private final String desc;
+    private final int    access;
+    private final ClassInfo declaringClassInfo;
+
+    private StubMethodInfo(String name, String desc, int access, ClassInfo classInfo) {
+      this.name = name;
+      this.desc = desc;
+      this.access = access;
+      this.declaringClassInfo = classInfo;
+    }
+
+    public ClassInfo[] getExceptionTypes() {
+      return new ClassInfo[0];
+    }
+
+    public String[] getParameterNames() {
+      return new String[0];
+    }
+
+    public ClassInfo[] getParameterTypes() {
+      Type[] types = Type.getArgumentTypes(desc);
+      ClassInfo[] parameterTypes = new ClassInfo[types.length];
+      for (int i = 0; i < types.length; i++) {
+        parameterTypes[i] = AsmClassInfo.getClassInfo(types[i].getClassName(), declaringClassInfo.getClassLoader());
+      }
+      return parameterTypes;
+    }
+
+    public ClassInfo getReturnType() {
+      Type type = Type.getReturnType(desc);
+      return AsmClassInfo.getClassInfo(type.getClassName(), declaringClassInfo.getClassLoader());
+    }
+
+    public ClassInfo getDeclaringType() {
+      return declaringClassInfo;
+    }
+
+    public Annotation[] getAnnotations() {
+      return new Annotation[0];
+    }
+
+    public String getGenericsSignature() {
+      return null;
+    }
+
+    public int getModifiers() {
+      return access;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getSignature() {
+      return desc;
+    }
+  }
+
+  
+  public class StubConstructorInfo implements ConstructorInfo {
+    private final String name;
+    private final String desc;
+    private final int    access;
+    private final ClassInfo declaringClassInfo;
+
+    private StubConstructorInfo(String name, String desc, int access, ClassInfo classInfo) {
+      this.name = name;
+      this.desc = desc;
+      this.access = access;
+      this.declaringClassInfo = classInfo;
+    }
+
+    public ClassInfo[] getExceptionTypes() {
+      return new ClassInfo[0];
+    }
+
+    public ClassInfo[] getParameterTypes() {
+      Type[] types = Type.getArgumentTypes(desc);
+      ClassInfo[] parameterTypes = new ClassInfo[types.length];
+      for (int i = 0; i < types.length; i++) {
+        parameterTypes[i] = AsmClassInfo.getClassInfo(types[i].getClassName(), declaringClassInfo.getClassLoader());
+      }
+      return parameterTypes;
+    }
+
+    public ClassInfo getDeclaringType() {
+      return declaringClassInfo;
+    }
+
+    public Annotation[] getAnnotations() {
+      return new Annotation[0];
+    }
+
+    public String getGenericsSignature() {
+      return null;
+    }
+
+    public int getModifiers() {
+      return access;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getSignature() {
+      return desc;
+    }
+
+  }
+
+  
+  public class ConstructorInfoWrapper implements MethodInfo {
+
+    private final ConstructorInfo constructorInfo;
+
+    public ConstructorInfoWrapper(ConstructorInfo constructorInfo) {
+      this.constructorInfo = constructorInfo;
+    }
+
+    public String getName() {
+      // return constructorInfo.getName();
+      // reflecting old DSO hack (see com.tc.object.bytecode.aspectwerkz.AsmMethodInfo) 
+      return "__INIT__";
+    }
+
+    public int getModifiers() {
+      return constructorInfo.getModifiers();
+    }
+    
+    public ClassInfo[] getParameterTypes() {
+      return constructorInfo.getParameterTypes();
+    }
+    
+    public String getSignature() {
+      return constructorInfo.getSignature();
+    }
+    
+    public String getGenericsSignature() {
+      return constructorInfo.getGenericsSignature();
+    }
+
+    public ClassInfo[] getExceptionTypes() {
+      return constructorInfo.getExceptionTypes();
+    }
+    
+    public Annotation[] getAnnotations() {
+      return constructorInfo.getAnnotations();
+    }
+    
+    public ClassInfo getDeclaringType() {
+      return constructorInfo.getDeclaringType();
+    }
+
+    // specific to MethodInfo
+    
+    public String[] getParameterNames() {
+      return new String[0];
+    }
+    
+    public ClassInfo getReturnType() {
+      return JavaClassInfo.getClassInfo(void.class);
+    }
+    
+  }
+  
 }

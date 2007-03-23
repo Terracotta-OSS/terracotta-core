@@ -6,6 +6,8 @@ package com.tc.object.config;
 
 import com.tc.asm.ClassVisitor;
 import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.MemberInfo;
+import com.tc.aspectwerkz.reflect.MethodInfo;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterBase;
 import com.tc.object.bytecode.ClassAdapterFactory;
@@ -120,19 +122,17 @@ public class TransparencyClassSpec {
     return preInstrumented;
   }
 
-  public synchronized LockDefinition[] lockDefinitionsFor(int modifiers, String methodName, String desc,
-                                                          String[] exceptions) {
-    return configuration.lockDefinitionsFor(modifiers, className, methodName, desc, exceptions);
+  public synchronized LockDefinition[] lockDefinitionsFor(MemberInfo memberInfo) {
+    return configuration.lockDefinitionsFor(memberInfo);
   }
 
-  public synchronized LockDefinition autolockDefinitionFor(int access, String methodName, String description,
-                                                           String[] exceptions) {
-    LockDefinition[] lds = lockDefinitionsFor(access, methodName, description, exceptions);
+  public synchronized LockDefinition autolockDefinitionFor(MethodInfo methodInfo) {
+    LockDefinition[] lds = lockDefinitionsFor(methodInfo);
     for (int i = 0; i < lds.length; i++) {
       if (lds[i].isAutolock()) { return lds[i]; }
     }
-    throw new AssertionError("Can't be an autolock and not have an autolock def:" + methodName + " className:"
-                             + className);
+    throw new AssertionError("Can't be an autolock and not have an autolock def:" //
+                             + methodInfo.getName() + methodInfo.getSignature() + " className:" + className);
   }
 
   /**
@@ -220,22 +220,22 @@ public class TransparencyClassSpec {
     return configuration.isRootDSOFinal(className, fieldName, isPrimitive);
   }
 
-  public boolean isTransient(int access, String fieldName) {
+  public boolean isTransient(int access, ClassInfo classInfo, String fieldName) {
     if (ClassAdapterBase.isDelegateFieldName(fieldName)) { return false; }
     if (transients.contains(fieldName)) return true;
-    return configuration.isTransient(access, className, fieldName);
+    return configuration.isTransient(access, classInfo, fieldName);
   }
 
-  public boolean isVolatile(int access, String fieldName) {
-    return configuration.isVolatile(access, className, fieldName);
+  public boolean isVolatile(int access, ClassInfo classInfo, String fieldName) {
+    return configuration.isVolatile(access, classInfo, fieldName);
   }
 
   public String rootNameFor(String fieldName) {
     return configuration.rootNameFor(className, fieldName);
   }
 
-  public boolean isLockMethod(int access, String methodName, String description, String[] exceptions) {
-    return configuration.isLockMethod(access, className, methodName, description, exceptions);
+  public boolean isLockMethod(MemberInfo memberInfo) {
+    return configuration.isLockMethod(memberInfo);
   }
 
   /**
@@ -250,23 +250,28 @@ public class TransparencyClassSpec {
     return null;
   }
 
-  public boolean hasCustomMethodAdapter(int access, String methodName, String description, String[] exceptions) {
-    return getMethodAdapter(access, methodName, description, exceptions) != null;
+  public boolean hasCustomMethodAdapter(MemberInfo memberInfo) {
+    return memberInfo!=null && getMethodAdapter(memberInfo) != null;
   }
 
   public MethodAdapter customMethodAdapterFor(ManagerHelper managerHelper, int access, String methodName,
                                               String origMethodName, String description, String signature,
-                                              String[] exceptions, InstrumentationLogger logger) {
-    MethodAdapter ma = getMethodAdapter(access, origMethodName, description, exceptions);
+                                              String[] exceptions, InstrumentationLogger logger, MemberInfo memberInfo) {
+    MethodAdapter ma = getMethodAdapter(memberInfo);
     ma.initialize(managerHelper, access, className, methodName, origMethodName, description, signature, exceptions,
-                  logger);
+                  logger, memberInfo);
     return ma;
   }
 
-  private MethodAdapter getMethodAdapter(int access, String methodName, String description, String[] exceptions) {
-    DistributedMethodSpec dms = configuration.getDmiSpec(access, className, methodName, description, exceptions);
-    if (dms == null) return (MethodAdapter) methodAdapters.get(methodName + description);
-    return new DistributedMethodCallAdapter(dms.runOnAllNodes());
+  private MethodAdapter getMethodAdapter(MemberInfo memberInfo) {
+    if(memberInfo==null) {
+      return null;
+    }
+    DistributedMethodSpec dms = configuration.getDmiSpec(memberInfo);
+    if (dms != null) {
+      return new DistributedMethodCallAdapter(dms.runOnAllNodes());
+    }
+    return (MethodAdapter) methodAdapters.get(memberInfo.getName() + memberInfo.getSignature());
   }
 
   public ChangeApplicatorSpec getChangeApplicatorSpec() {

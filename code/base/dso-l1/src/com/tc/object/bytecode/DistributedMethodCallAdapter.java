@@ -9,6 +9,7 @@ import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
+import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.object.logging.InstrumentationLogger;
 
 public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
@@ -24,7 +25,6 @@ public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
   private final boolean         runOnAllNodes;
 
   public DistributedMethodCallAdapter(boolean runOnAllNodes) {
-    super();
     this.runOnAllNodes = runOnAllNodes;
   }
 
@@ -104,15 +104,15 @@ public class DistributedMethodCallAdapter implements MethodAdapter, Opcodes {
 
   public void initialize(ManagerHelper aManagerHelper, int anAccess, String aClassName, String aMethodName,
                          String aOriginalMethodName, String aDescription, String sig, String[] anExceptions,
-                         InstrumentationLogger logger) {
+                         InstrumentationLogger logger, MemberInfo info) {
     this.managerHelper = aManagerHelper;
     this.access = anAccess;
     this.className = aClassName;
     this.methodName = aMethodName;
     this.description = aDescription;
     this.exceptions = anExceptions;
-    this.instrumentationLogger = logger;
     this.signature = sig;
+    this.instrumentationLogger = logger;
   }
 
 }

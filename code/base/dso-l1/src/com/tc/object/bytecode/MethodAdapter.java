@@ -6,6 +6,7 @@ package com.tc.object.bytecode;
 
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodVisitor;
+import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.object.logging.InstrumentationLogger;
 
 /**
@@ -18,6 +19,6 @@ public interface MethodAdapter {
 
   public void initialize(ManagerHelper managerHelper, int access, String owner, String methodName,
                          String originalMethodName, String description, String sig, String[] exceptions,
-                         InstrumentationLogger instrumentationLogger);
+                         InstrumentationLogger instrumentationLogger, MemberInfo memberInfo);
 
 }

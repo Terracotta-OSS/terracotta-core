@@ -9,6 +9,7 @@ import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
+import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.object.config.MethodSpec;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tcclient.util.MapEntrySetWrapper;
@@ -42,7 +43,7 @@ public class LogicalMethodAdapter implements MethodAdapter, Opcodes {
 
   public void initialize(ManagerHelper aManagerHelper, int anAccess, String aClassName, String aMethodName,
                          String aOriginalMethodName, String aDescription, String sig, String[] anExceptions,
-                         InstrumentationLogger logger) {
+                         InstrumentationLogger logger, MemberInfo info) {
     this.managerHelper = aManagerHelper;
     this.ownerSlashes = aClassName.replace('.', '/');
     this.methodName = aMethodName;

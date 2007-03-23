@@ -4,6 +4,7 @@
  */
 package com.tc.object.field;
 
+import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.object.TCClass;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -25,7 +26,9 @@ public class TCFieldFactory {
     TransparencyClassSpec spec = configuration.getSpec(tcClass.getName());
     boolean trans = false;
     if (spec != null) {
-      trans = spec.isTransient(field.getModifiers(), field.getName());
+      trans = spec.isTransient(field.getModifiers(), //
+                               JavaClassInfo.getClassInfo(tcClass.getPeerClass()), //
+                               field.getName());
     }
     return new GenericTCField(tcClass, field, !Modifier.isStatic(field.getModifiers()) && !trans);
   }

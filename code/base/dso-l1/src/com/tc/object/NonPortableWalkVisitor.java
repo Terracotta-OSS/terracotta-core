@@ -7,7 +7,6 @@ package com.tc.object;
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.logging.TCLogger;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.walker.MemberValue;
 import com.tc.object.walker.PrintVisitor;
 import com.tc.object.walker.Visitor;
@@ -112,10 +111,7 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
     Field f = val.getSourceField();
     if (f == null) { return false; }
 
-    TransparencyClassSpec spec = config.getSpec(f.getDeclaringClass().getName());
-    if (spec != null) { return spec.isTransient(f.getModifiers(), f.getName()); }
-
-    return false;
+    return config.isTransient(f.getModifiers(), JavaClassInfo.getClassInfo(f.getDeclaringClass()), f.getName());
   }
 
   private static boolean skipVisit(Field field) {

@@ -4,49 +4,28 @@
  */
 package com.tc.bootjar.java.util;
 
-import com.tc.asm.ClassAdapter;
-import com.tc.asm.ClassVisitor;
-import com.tc.asm.ClassWriter;
-import com.tc.aspectwerkz.reflect.ClassInfo;
-import com.tc.aspectwerkz.reflect.MemberInfo;
-import com.tc.config.schema.NewCommonL1Config;
-import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.exception.ImplementMe;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
-import com.tc.object.Portability;
 import com.tc.object.PortabilityImpl;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TestClientObjectManager;
 import com.tc.object.MockTCObject.MethodCall;
-import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.TransparencyClassAdapter;
-import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.DSOSpringConfigHelper;
-import com.tc.object.config.DistributedMethodSpec;
-import com.tc.object.config.Lock;
-import com.tc.object.config.LockDefinition;
-import com.tc.object.config.ModuleSpec;
-import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.config.schema.DSOInstrumentationLoggingOptions;
-import com.tc.object.config.schema.DSORuntimeLoggingOptions;
-import com.tc.object.config.schema.DSORuntimeOutputOptions;
-import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.loaders.IsolationClassLoader;
-import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.tx.MockTransactionManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
-import com.terracottatech.config.Modules;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -58,11 +37,36 @@ public class HashMapTCTest extends TCTestCase {
   private ClassLoader origThreadContextClassLoader;
 
   protected void setUp() throws Exception {
-    MockConfig config = new MockConfig();
+    ClassLoader loader = getClass().getClassLoader();
+    InvocationHandler handler = new InvocationHandler() {
+      public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        String name = method.getName();
+        if ("getNewCommonL1Config".equals(name) || "getInstrumentationLoggingOptions".equals(name)
+            || "instrumentationLoggingOptions".equals(name) || "getLogicalExtendingClassName".equals(name)
+            || "createDsoClassAdapterFor".equals(name) || "getModulesForInitialization".equals(name)
+            || "verifyBootJarContents".equals(name)) { 
+          return null; 
+        } else if("shouldBeAdapted".equals(name)) {
+          return Boolean.FALSE;
+        } else if("isNeverAdaptable".equals(name)) {
+          return Boolean.TRUE;
+        } else if("isLogical".equals(name)) {
+          return Boolean.TRUE;
+        } else if("getAspectModules".equals(name)) {
+          return new HashMap();
+        } else if("getPortability".equals(name)) {
+          return new PortabilityImpl((DSOClientConfigHelper) proxy);
+        }
+        
+        throw new ImplementMe();
+      }
+    };
+    Object proxy = Proxy.newProxyInstance(loader, new Class[] { DSOClientConfigHelper.class }, handler);
 
     TestClientObjectManager testClientObjectManager = new TestClientObjectManager();
     MockTransactionManager testTransactionManager = new MockTransactionManager();
-    IsolationClassLoader classLoader = new IsolationClassLoader(config, testClientObjectManager, testTransactionManager);
+    IsolationClassLoader classLoader = new IsolationClassLoader((DSOClientConfigHelper) proxy, testClientObjectManager,
+                                                                testTransactionManager);
     classLoader.init();
 
     this.origThreadContextClassLoader = Thread.currentThread().getContextClassLoader();
@@ -576,340 +580,6 @@ public class HashMapTCTest extends TCTestCase {
           throw new AssertionError();
       }
     }
-  }
-
-  private static class MockConfig implements DSOClientConfigHelper {
-
-    final Set isNeverAdaptable = new HashSet();
-
-    public NewCommonL1Config getNewCommonL1Config() {
-      return null;
-    }
-
-    public boolean shouldBeAdapted(ClassInfo classInfo) {
-      return false;
-    }
-
-    public boolean isNeverAdaptable(ClassInfo classInfo) {
-      return true;
-    }
-
-    public boolean isLogical(String theClass) {
-      return true;
-    }
-
-    public boolean isPhysical(String className) {
-      throw new ImplementMe();
-    }
-
-    public DSOInstrumentationLoggingOptions getInstrumentationLoggingOptions() {
-      return null;
-    }
-
-    public TransparencyClassSpec[] getAllSpecs() {
-      throw new ImplementMe();
-    }
-
-    public void verifyBootJarContents() {
-      //
-    }
-
-    public Iterator getAllUserDefinedBootSpecs() {
-      throw new ImplementMe();
-    }
-
-    public ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
-                                              ClassLoader caller) {
-      throw new ImplementMe();
-    }
-
-    public ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
-                                              ClassLoader caller, boolean disableSuperClassTypeChecking) {
-      throw new ImplementMe();
-    }
-
-    public boolean isCallConstructorOnLoad(String className) {
-      throw new ImplementMe();
-    }
-
-    public String getChangeApplicatorClassNameFor(String className) {
-      throw new ImplementMe();
-    }
-
-    public TransparencyClassSpec getOrCreateSpec(String className) {
-      throw new ImplementMe();
-    }
-
-    public TransparencyClassSpec getOrCreateSpec(String className, String applicator) {
-      throw new ImplementMe();
-    }
-
-    public LockDefinition[] lockDefinitionsFor(int access, String className, String methodName, String description,
-                                               String[] exceptions) {
-      throw new ImplementMe();
-    }
-
-    public boolean isRoot(String className, String fieldName) {
-      throw new ImplementMe();
-    }
-
-    public boolean isTransient(int modifiers, String classname, String field) {
-      throw new ImplementMe();
-    }
-
-    public String rootNameFor(String className, String fieldName) {
-      throw new ImplementMe();
-    }
-
-    public boolean isLockMethod(int access, String className, String methodName, String description, String[] exceptions) {
-      throw new ImplementMe();
-    }
-
-    public DistributedMethodSpec getDmiSpec(int modifiers, String className, String methodName, String description,
-                                           String[] exceptions) {
-      throw new ImplementMe();
-    }
-
-    public TransparencyClassSpec getSpec(String className) {
-      throw new ImplementMe();
-    }
-
-    public boolean isDSOSessions(String name) {
-      throw new ImplementMe();
-    }
-
-    public DSORuntimeLoggingOptions runtimeLoggingOptions() {
-      throw new ImplementMe();
-    }
-
-    public DSORuntimeOutputOptions runtimeOutputOptions() {
-      throw new ImplementMe();
-    }
-
-    public DSOInstrumentationLoggingOptions instrumentationLoggingOptions() {
-      return null;
-    }
-
-    public int getClientInMemoryObjectCount() {
-      throw new ImplementMe();
-    }
-
-    public int getFaultCount() {
-      throw new ImplementMe();
-    }
-
-    public void addWriteAutolock(String methodPattern) {
-      throw new ImplementMe();
-    }
-
-    public void addLock(String methodPattern, LockDefinition lockDefinition) {
-      throw new ImplementMe();
-    }
-
-    public void addReadAutolock(String methodPattern) {
-      throw new ImplementMe();
-    }
-
-    public void addAutolock(String methodPattern, ConfigLockLevel type) {
-      throw new ImplementMe();
-    }
-
-    public void setFaultCount(int count) {
-      throw new ImplementMe();
-    }
-
-    public void addRoot(String className, String fieldName, String rootName, boolean addSpecForClass) {
-      throw new ImplementMe();
-    }
-
-    public boolean matches(Lock lock, MemberInfo methodInfo) {
-      throw new ImplementMe();
-    }
-
-    public boolean matches(String expression, MemberInfo methodInfo) {
-      throw new ImplementMe();
-    }
-
-    public void addTransient(String className, String fieldName) {
-      throw new ImplementMe();
-    }
-
-    public String getOnLoadScriptIfDefined(String className) {
-      throw new ImplementMe();
-    }
-
-    public String getOnLoadMethodIfDefined(String className) {
-      throw new ImplementMe();
-    }
-
-    public boolean isUseNonDefaultConstructor(Class clazz) {
-      throw new ImplementMe();
-    }
-
-    public void addIncludePattern(String expression) {
-      throw new ImplementMe();
-    }
-
-    public void addIncludePattern(String expression, boolean honorTransient) {
-      throw new ImplementMe();
-    }
-
-    public void addExcludePattern(String expression) {
-      throw new ImplementMe();
-    }
-
-    public boolean hasIncludeExcludePatterns() {
-      throw new ImplementMe();
-    }
-
-    public boolean hasIncludeExcludePattern(ClassInfo classInfo) {
-      throw new ImplementMe();
-    }
-
-    public void addAspectModule(String pattern, String moduleName) {
-      throw new ImplementMe();
-    }
-
-    public Map getAspectModules() {
-      return new HashMap();
-    }
-
-    public void addDSOSpringConfig(DSOSpringConfigHelper config) {
-      throw new ImplementMe();
-    }
-
-    public Collection getDSOSpringConfigs() {
-      throw new ImplementMe();
-    }
-
-    public void addIncludePattern(String expression, boolean honorTransient, boolean oldStyleCallConstructorOnLoad) {
-      throw new ImplementMe();
-    }
-
-    public void addIncludePattern(String expression, boolean honorTransient, boolean oldStyleCallConstructorOnLoad,
-                                  boolean honorVolatile) {
-      throw new ImplementMe();
-    }
-
-    public void addIncludeAndLockIfRequired(String expression, boolean honorTransient,
-                                            boolean oldStyleCallConstructorOnLoad, boolean honorVolatile,
-                                            String lockExpression) {
-      throw new ImplementMe();
-    }
-
-    public boolean isVolatile(int modifiers, String classname, String field) {
-      throw new ImplementMe();
-    }
-
-    public void addRoot(String rootName, String rootFieldName) {
-      throw new ImplementMe();
-
-    }
-
-    public void writeTo(DSOApplicationConfigBuilder appConfigBuilder) {
-      throw new ImplementMe();
-
-    }
-
-    public boolean isRootDSOFinal(String className, String fieldName, boolean isPrimitive) {
-      throw new ImplementMe();
-    }
-
-    public void addRoot(String className, String fieldName, String rootName, boolean dsoFinal, boolean addSpecForClass) {
-      throw new ImplementMe();
-    }
-
-    public String getPostCreateMethodIfDefined(String className) {
-      throw new ImplementMe();
-    }
-
-    public Portability getPortability() {
-      return new PortabilityImpl(this);
-    }
-
-    public void removeSpec(String className) {
-      throw new ImplementMe();
-
-    }
-
-    public String getLogicalExtendingClassName(String className) {
-      return null;
-    }
-
-    public TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, ClassInfo classInfo,
-                                                             InstrumentationLogger lgr, ClassLoader caller,
-                                                             boolean forcePortable) {
-      return null;
-    }
-
-    public void addSynchronousWriteAutolock(String methodPattern) {
-      throw new ImplementMe();
-    }
-
-    public void addApplicationName(String name) {
-      throw new ImplementMe();
-    }
-
-    public void addInstrumentationDescriptor(InstrumentedClass classDesc) {
-      throw new ImplementMe();
-    }
-
-    public void addUserDefinedBootSpec(String className, TransparencyClassSpec spec) {
-      throw new ImplementMe();
-    }
-
-    public void addTransientType(String className, String fieldName) {
-      throw new ImplementMe();
-    }
-
-    public Modules getModules() {
-      throw new ImplementMe();
-    }
-
-    public boolean hasCustomAdapter(String fullName) {
-      throw new ImplementMe();
-    }
-
-    public Class getChangeApplicator(Class clazz) {
-      throw new ImplementMe();
-    }
-
-    public void setModuleSpecs(ModuleSpec[] pluginSpecs) {
-      throw new ImplementMe();
-    }
-
-    public void addNewModule(String name, String version) {
-      throw new ImplementMe();
-    }
-
-    public Modules getModulesForInitialization() {
-      return null;
-    }
-
-    public boolean isPortableModuleClass(Class clazz) {
-      throw new ImplementMe();
-    }
-
-    public void addCustomAdapter(String name, ClassAdapterFactory factory) {
-      throw new ImplementMe();
-    }
-
-    public int getSessionLockType(String appName) {
-      throw new ImplementMe();
-    }
-
-    public void addSynchronousWriteApplication(String name) {
-      throw new ImplementMe();
-    }
-
-    public void addDistributedMethodCall(DistributedMethodSpec dms) {
-      throw new ImplementMe();
-    }
-
-    public Class getTCPeerClass(Class clazz) {
-      throw new ImplementMe();
-    }
-
   }
 
   private static class SimpleEntry implements Map.Entry {

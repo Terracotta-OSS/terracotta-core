@@ -55,7 +55,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
                                      ClassLoader caller, boolean disableSuperClassTypeChecking);
 
-  boolean isCallConstructorOnLoad(String className);
+  boolean isCallConstructorOnLoad(ClassInfo classInfo);
 
   // String getChangeApplicatorClassNameFor(String className);
   Class getChangeApplicator(Class clazz);
@@ -68,23 +68,21 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   TransparencyClassSpec getOrCreateSpec(String className, String applicator);
 
-  LockDefinition[] lockDefinitionsFor(int access, String className, String methodName, String description,
-                                      String[] exceptions);
+  LockDefinition[] lockDefinitionsFor(MemberInfo memberInfo);
 
   boolean isRoot(String className, String fieldName);
 
   boolean isRootDSOFinal(String className, String fieldName, boolean isPrimitive);
 
-  boolean isTransient(int modifiers, String classname, String field);
+  boolean isTransient(int modifiers, ClassInfo classInfo, String field);
 
-  boolean isVolatile(int modifiers, String classname, String field);
+  boolean isVolatile(int modifiers, ClassInfo classInfo, String field);
 
   String rootNameFor(String className, String fieldName);
 
-  boolean isLockMethod(int access, String className, String methodName, String description, String[] exceptions);
+  boolean isLockMethod(MemberInfo memberInfo);
 
-  DistributedMethodSpec getDmiSpec(int modifiers, String className, String methodName, String description,
-                                  String[] exceptions);
+  DistributedMethodSpec getDmiSpec(MemberInfo memberInfo);
 
   TransparencyClassSpec getSpec(String className);
 
@@ -122,11 +120,11 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   void addTransientType(String className, String fieldName);
 
-  String getOnLoadScriptIfDefined(String className);
+  String getOnLoadScriptIfDefined(ClassInfo classInfo);
 
   String getPostCreateMethodIfDefined(String className);
 
-  String getOnLoadMethodIfDefined(String className);
+  String getOnLoadMethodIfDefined(ClassInfo classInfo);
 
   boolean isUseNonDefaultConstructor(Class clazz);
 
@@ -142,7 +140,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   // Used for testing and Spring
   void addIncludeAndLockIfRequired(String expression, boolean honorTransient, boolean oldStyleCallConstructorOnLoad,
-                                   boolean honorVolatile, String lockExpression);
+                                   boolean honorVolatile, String lockExpression, ClassInfo classInfo);
 
   // Used for testing
   void addExcludePattern(String expression);

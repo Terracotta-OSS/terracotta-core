@@ -3,6 +3,7 @@
  */
 package com.tc.object.bytecode.hook;
 
+import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.object.bytecode.Manager;
 
 import java.util.Collection;
@@ -16,7 +17,7 @@ public interface DSOContext extends ClassProcessor {
 
   public Collection getDSOSpringConfigHelpers();
 
-  public void addInclude(String expression, boolean callConstructorOnLoad, String lockExpression);
+  public void addInclude(String expression, boolean callConstructorOnLoad, String lockExpression, ClassInfo classInfo);
 
   public void addTransient(String beanClassName, String fieldName);
 

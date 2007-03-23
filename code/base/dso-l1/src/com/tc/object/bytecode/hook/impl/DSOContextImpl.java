@@ -6,6 +6,7 @@ package com.tc.object.bytecode.hook.impl;
 
 import org.apache.commons.io.CopyUtils;
 
+import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.transform.InstrumentationContext;
 import com.tc.aspectwerkz.transform.WeavingStrategy;
 import com.tc.config.schema.L2ConfigForL1.L2Data;
@@ -146,8 +147,8 @@ public class DSOContextImpl implements DSOContext {
   }
 
   // Needed by Spring
-  public void addInclude(String expression, boolean callConstructorOnLoad, String lockExpression) {
-    this.configHelper.addIncludeAndLockIfRequired(expression, true, callConstructorOnLoad, false, lockExpression);
+  public void addInclude(String expression, boolean callConstructorOnLoad, String lockExpression, ClassInfo classInfo) {
+    this.configHelper.addIncludeAndLockIfRequired(expression, true, callConstructorOnLoad, false, lockExpression, classInfo);
   }
 
   // Needed by Spring

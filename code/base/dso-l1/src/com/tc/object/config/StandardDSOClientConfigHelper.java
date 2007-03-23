@@ -9,14 +9,12 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
-import com.tc.asm.Opcodes;
 import com.tc.asm.commons.SerialVersionUIDAdder;
 import com.tc.aspectwerkz.expression.ExpressionContext;
 import com.tc.aspectwerkz.expression.ExpressionVisitor;
 import com.tc.aspectwerkz.reflect.ClassInfo;
-import com.tc.aspectwerkz.reflect.ConstructorInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
-import com.tc.aspectwerkz.reflect.MethodInfo;
+import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -47,9 +45,6 @@ import com.tc.object.bytecode.THashMapAdapter;
 import com.tc.object.bytecode.TransparencyClassAdapter;
 import com.tc.object.bytecode.TreeMapAdapter;
 import com.tc.object.bytecode.UnsafeAdapter;
-import com.tc.object.bytecode.aspectwerkz.AsmConstructorInfo;
-import com.tc.object.bytecode.aspectwerkz.AsmMethodInfo;
-import com.tc.object.bytecode.aspectwerkz.ClassInfoFactory;
 import com.tc.object.bytecode.aspectwerkz.ExpressionHelper;
 import com.tc.object.config.schema.DSOInstrumentationLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeLoggingOptions;
@@ -79,6 +74,7 @@ import com.tc.weblogic.transform.ServerAdapter;
 import com.tc.weblogic.transform.ServletResponseImplAdapter;
 import com.tc.weblogic.transform.TerracottaServletResponseImplAdapter;
 import com.tc.weblogic.transform.WebAppServletContextAdapter;
+import com.tc.wicket.WicketWebApplicationAdapter;
 import com.tcclient.util.DSOUnsafe;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Module;
@@ -127,7 +123,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   private final List                             distributedMethods                 = new LinkedList();                    // <DistributedMethodSpec>
   private final Map                              userDefinedBootSpecs               = new HashMap();
 
-  private final ClassInfoFactory                 classInfoFactory;
+//  private final ClassInfoFactory                 classInfoFactory;
   private final ExpressionHelper                 expressionHelper;
 
   private final Map                              adaptableCache                     = new HashMap();
@@ -182,7 +178,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     this.portability = new PortabilityImpl(this);
     this.configSetupManager = configSetupManager;
     helperLogger = new DSOClientConfigHelperLogger(logger);
-    this.classInfoFactory = new ClassInfoFactory();
+//    this.classInfoFactory = new ClassInfoFactory();
     this.expressionHelper = new ExpressionHelper();
     modulesContext.setModules(configSetupManager.commonL1Config().modules() != null ? configSetupManager
         .commonL1Config().modules() : Modules.Factory.newInstance());
@@ -344,11 +340,11 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
   public void addIncludeAndLockIfRequired(String expression, boolean honorTransient,
                                           boolean oldStyleCallConstructorOnLoad, boolean honorVolatile,
-                                          String lockExpression) {
+                                          String lockExpression, ClassInfo classInfo) {
     // The addition of the lock expression and the include need to be atomic -- see LKC-2616
     synchronized (this.instrumentationDescriptors) {
       // TODO see LKC-1893. Need to check for primitive types, logically managed classes, etc.
-      if (!hasIncludeExcludePattern(getClassInfo(expression))) {
+      if (!hasIncludeExcludePattern(classInfo)) {
         // only add include if not specified in tc-config
         addIncludePattern(expression, honorTransient, oldStyleCallConstructorOnLoad, honorVolatile);
         addWriteAutolock(lockExpression);
@@ -761,6 +757,9 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     ld.commit();
     addLock("* test.event.*.setTextArea(..)", ld);
 
+    // TODO move into its own plugin/module
+    addCustomAdapter("wicket.protocol.http.WebApplication", new WicketWebApplicationAdapter());
+    
     doAutoconfigForSpring();
     doAutoconfigForSpringWebFlow();
 
@@ -1064,14 +1063,15 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     this.faultCount = count;
   }
 
-  public boolean isLockMethod(int access, String className, String methodName, String description, String[] exceptions) {
-    helperLogger.logIsLockMethodBegin(access, className, methodName, description);
+  public boolean isLockMethod(MemberInfo memberInfo) {
+    helperLogger.logIsLockMethodBegin(memberInfo.getModifiers(), memberInfo.getDeclaringType().getName(), //
+                                      memberInfo.getName(), memberInfo.getSignature());
 
-    LockDefinition lockDefinitions[] = lockDefinitionsFor(access, className, methodName, description, exceptions);
+    LockDefinition lockDefinitions[] = lockDefinitionsFor(memberInfo);
 
     for (int j = 0; j < lockDefinitions.length; j++) {
       if (lockDefinitions[j].isAutolock()) {
-        if (isNotStaticAndIsSynchronized(access)) {
+        if (isNotStaticAndIsSynchronized(memberInfo.getModifiers())) {
           helperLogger.logIsLockMethodAutolock();
           return true;
         }
@@ -1080,7 +1080,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
       }
     }
 
-    helperLogger.logIsLockMethodNoMatch(className, methodName);
+    helperLogger.logIsLockMethodNoMatch(memberInfo.getDeclaringType().getName(), memberInfo.getName());
     return false;
   }
 
@@ -1092,33 +1092,32 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     String executionExpression = ExpressionHelper.expressionPattern2ExecutionExpression(expression);
     if (logger.isDebugEnabled()) logger
         .debug("==>Testing for match: " + executionExpression + " against " + methodInfo);
-    ExpressionContext ctxt = expressionHelper.createExecutionExpressionContext(methodInfo);
     ExpressionVisitor visitor = expressionHelper.createExpressionVisitor(executionExpression);
-    return visitor.match(ctxt);
+    return visitor.match(expressionHelper.createExecutionExpressionContext(methodInfo));
   }
 
-  private MethodInfo getMethodInfo(int modifiers, String className, String methodName, String description,
-                                   String[] exceptions) {
-    // TODO: This probably needs caching.
-    return new AsmMethodInfo(classInfoFactory, modifiers, className, methodName, description, exceptions);
-  }
+//  private MethodInfo getMethodInfo(int modifiers, String className, String methodName, String description,
+//                                   String[] exceptions) {
+//    // TODO: This probably needs caching.
+//    return new AsmMethodInfo(classInfoFactory, modifiers, className, methodName, description, exceptions);
+//  }
 
-  private ConstructorInfo getConstructorInfo(int modifiers, String className, String methodName, String description,
-                                             String[] exceptions) {
-    return new AsmConstructorInfo(classInfoFactory, modifiers, className, methodName, description, exceptions);
-  }
+//  private ConstructorInfo getConstructorInfo(int modifiers, String className, String methodName, String description,
+//                                             String[] exceptions) {
+//    return new AsmConstructorInfo(classInfoFactory, modifiers, className, methodName, description, exceptions);
+//  }
 
-  private MemberInfo getMemberInfo(int modifiers, String className, String methodName, String description,
-                                   String[] exceptions) {
-    if (false && "<init>".equals(methodName)) {
-      // XXX: ConstructorInfo seems to really break things. Plus, locks in
-      // constructors don't work yet.
-      // When locks in constructors work, we'll have to sort this problem out.
-      return getConstructorInfo(modifiers, className, methodName, description, exceptions);
-    } else {
-      return getMethodInfo(modifiers, className, methodName, description, exceptions);
-    }
-  }
+//  private MemberInfo getMemberInfo(int modifiers, String className, String methodName, String description,
+//                                   String[] exceptions) {
+//    if (false && "<init>".equals(methodName)) {
+//      // XXX: ConstructorInfo seems to really break things. Plus, locks in
+//      // constructors don't work yet.
+//      // When locks in constructors work, we'll have to sort this problem out.
+//      return getConstructorInfo(modifiers, className, methodName, description, exceptions);
+//    } else {
+//      return getMethodInfo(modifiers, className, methodName, description, exceptions);
+//    }
+//  }
 
   private static boolean isNotStaticAndIsSynchronized(int modifiers) {
     return !Modifier.isStatic(modifiers) && Modifier.isSynchronized(modifiers);
@@ -1197,84 +1196,44 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     // "synchronized * java.util.Hashtable.isEmpty(..)", "synchronized * java.util.Hashtable.keys(..)",
     // "synchronized * java.util.Hashtable.size(..)", "synchronized * java.util.Hashtable.toString(..)" });
 
-    Set readOnlyLockMethodSpec = new HashSet();
-
-    int access = Opcodes.ACC_PUBLIC;
     String className = "java.util.Hashtable";
-    String methodName = "get";
-    String description = "(Ljava/lang/Object;)Ljava/lang/Object;";
-    MemberInfo methodInfo = getMemberInfo(access, className, methodName, description, null);
-    readOnlyLockMethodSpec.add(methodInfo);
+    ClassInfo classInfo = AsmClassInfo.getClassInfo(className, getClass().getClassLoader());
+    
+    String patterns = "get(Ljava/lang/Object;)Ljava/lang/Object;|" + //
+                      "hashCode()I|" + // 
+                      "contains(Ljava/lang/Object;)Z|" + //
+                      "containsKey(Ljava/lang/Object;)Z|" + //
+                      "elements()Ljava/util/Enumeration;|" + //
+                      "equals(Ljava/lang/Object;)Z|" + //
+                      "isEmpty()Z|" + //
+                      "keys()Ljava/util/Enumeration;|" + //
+                      "size()I|" + //
+                      "toString()Ljava/lang/String;";
 
-    methodName = "hashCode";
-    description = "()I";
-    methodInfo = getMemberInfo(access, className, methodName, description, null);
-    readOnlyLockMethodSpec.add(methodInfo);
-
-    methodName = "contains";
-    description = "(Ljava/lang/Object;)Z";
-    methodInfo = getMemberInfo(access, className, methodName, description, null);
-    readOnlyLockMethodSpec.add(methodInfo);
-
-    methodName = "containsKey";
-    description = "(Ljava/lang/Object;)Z";
-    methodInfo = getMemberInfo(access, className, methodName, description, null);
-    readOnlyLockMethodSpec.add(methodInfo);
-
-    methodName = "elements";
-    description = "()Ljava/util/Enumeration;";
-    methodInfo = getMemberInfo(access, className, methodName, description, null);
-    readOnlyLockMethodSpec.add(methodInfo);
-
-    methodName = "equals";
-    description = "(Ljava/lang/Object;)Z";
-    methodInfo = getMemberInfo(access, className, methodName, description, null);
-    readOnlyLockMethodSpec.add(methodInfo);
-
-    methodName = "isEmpty";
-    description = "()Z";
-    methodInfo = getMemberInfo(access, className, methodName, description, null);
-    readOnlyLockMethodSpec.add(methodInfo);
-
-    methodName = "keys";
-    description = "()Ljava/util/Enumeration;";
-    methodInfo = getMemberInfo(access, className, methodName, description, null);
-    readOnlyLockMethodSpec.add(methodInfo);
-
-    methodName = "size";
-    description = "()I";
-    methodInfo = getMemberInfo(access, className, methodName, description, null);
-    readOnlyLockMethodSpec.add(methodInfo);
-
-    methodName = "toString";
-    description = "()Ljava/lang/String;";
-    methodInfo = getMemberInfo(access, className, methodName, description, null);
-    readOnlyLockMethodSpec.add(methodInfo);
-
-    for (Iterator itr = readOnlyLockMethodSpec.iterator(); itr.hasNext();) {
-      methodInfo = (MemberInfo) itr.next();
-
-      for (int i = 0; i < locks.length; i++) {
-        Lock lock = locks[i];
-        if (matches(lock, methodInfo)) {
-          LockDefinition ld = lock.getLockDefinition();
-          if (ld.isAutolock() && ld.getLockLevel() != ConfigLockLevel.READ) {
-            addReadAutolock("* " + className + "." + methodInfo.getName() + "(..)");
+    MemberInfo[] methods = classInfo.getMethods();
+    for (int j = 0; j < methods.length; j++) {
+      MemberInfo methodInfo = methods[j];
+      if (patterns.indexOf(methodInfo.getName() + methodInfo.getSignature()) > -1) {
+        for (int i = 0; i < locks.length; i++) {
+          Lock lock = locks[i];
+          if (matches(lock, methodInfo)) {
+            LockDefinition ld = lock.getLockDefinition();
+            if (ld.isAutolock() && ld.getLockLevel() != ConfigLockLevel.READ) {
+              addReadAutolock("* " + className + "." + methodInfo.getName() + "(..)");
+            }
+            break;
           }
-          break;
         }
       }
     }
   }
 
-  public synchronized LockDefinition[] lockDefinitionsFor(int access, String className, String methodName,
-                                                          String description, String[] exceptions) {
-    MemberInfo methodInfo = getMemberInfo(access, className, methodName, description, exceptions);
-    boolean isAutoLocksExcluded = matchesAutoLockExcludes(methodInfo);
+  public synchronized LockDefinition[] lockDefinitionsFor(MemberInfo memberInfo) {
+    boolean isAutoLocksExcluded = matchesAutoLockExcludes(memberInfo);
     List lockDefs = new ArrayList();
     // for (int i = 0; i < this.locks.length; i++) {
     for (int i = locks.length - 1; i >= 0; i--) {
-      if (matches(this.locks[i], methodInfo)) {
+      if (matches(this.locks[i], memberInfo)) {
         LockDefinition definition = this.locks[i].getLockDefinition();
         if (!(definition.isAutolock() && isAutoLocksExcluded)) {
           lockDefs.add(definition);
@@ -1369,10 +1328,8 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
     // If a root is defined then we automagically instrument
     if (classContainsAnyRoots(fullClassName)) { return cacheIsAdaptable(fullClassName, true); }
-
     // custom adapters trump config.
     if (hasCustomAdapter(fullClassName)) { return cacheIsAdaptable(fullClassName, true); }
-
     // existing class specs trump config
     if (hasSpec(fullClassName)) { return cacheIsAdaptable(fullClassName, true); }
 
@@ -1409,39 +1366,35 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     return indexOfInner < 0 ? fullName : fullName.substring(0, indexOfInner);
   }
 
-  public boolean isTransient(int modifiers, String classname, String field) {
+  public boolean isTransient(int modifiers, ClassInfo classInfo, String field) {
     if (ByteCodeUtil.isParent(field)) return true;
-    if (Modifier.isTransient(modifiers) && isHonorJavaTransient(classname)) return true;
-    Type type = (Type) types.get(classname);
+    String className = classInfo.getName();
+    if (Modifier.isTransient(modifiers) && isHonorJavaTransient(classInfo)) return true;
+    Type type = (Type) types.get(className);
     if (type != null) { return (type.containsTransient(field)); }
     return false;
   }
 
-  public boolean isVolatile(int modifiers, String classname, String field) {
-    return (Modifier.isVolatile(modifiers) && isHonorJavaVolatile(classname));
+  public boolean isVolatile(int modifiers, ClassInfo classInfo, String field) {
+    return Modifier.isVolatile(modifiers) && isHonorJavaVolatile(classInfo);
   }
 
-  private boolean isHonorJavaTransient(String className) {
-    TransparencyClassSpec spec = getSpec(className);
+  private boolean isHonorJavaTransient(ClassInfo classInfo) {
+    TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isHonorTransientSet()) { return spec.isHonorJavaTransient(); }
-    return getInstrumentationDescriptorFor(getClassInfo(className)).isHonorTransient();
+    return getInstrumentationDescriptorFor(classInfo).isHonorTransient();
   }
 
-  private boolean isHonorJavaVolatile(String className) {
-    TransparencyClassSpec spec = getSpec(className);
+  private boolean isHonorJavaVolatile(ClassInfo classInfo) {
+    TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isHonorVolatileSet()) { return spec.isHonorVolatile(); }
-    return getInstrumentationDescriptorFor(getClassInfo(className)).isHonorVolatile();
+    return getInstrumentationDescriptorFor(classInfo).isHonorVolatile();
   }
 
-  public boolean isCallConstructorOnLoad(String className) {
-    TransparencyClassSpec spec = getSpec(className);
+  public boolean isCallConstructorOnLoad(ClassInfo classInfo) {
+    TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isCallConstructorSet()) { return spec.isCallConstructorOnLoad(); }
-    return getInstrumentationDescriptorFor(getClassInfo(className)).isCallConstructorOnLoad();
-  }
-
-  private ClassInfo getClassInfo(String className) {
-    // XXX need to get a real ClassInfo
-    return classInfoFactory.getClassInfo(className);
+    return getInstrumentationDescriptorFor(classInfo).isCallConstructorOnLoad();
   }
 
   public String getPostCreateMethodIfDefined(String className) {
@@ -1453,16 +1406,16 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     }
   }
 
-  public String getOnLoadScriptIfDefined(String className) {
-    TransparencyClassSpec spec = getSpec(className);
+  public String getOnLoadScriptIfDefined(ClassInfo classInfo) {
+    TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isExecuteScriptOnLoadSet()) { return spec.getOnLoadExecuteScript(); }
-    return getInstrumentationDescriptorFor(getClassInfo(className)).getOnLoadScriptIfDefined();
+    return getInstrumentationDescriptorFor(classInfo).getOnLoadScriptIfDefined();
   }
 
-  public String getOnLoadMethodIfDefined(String className) {
-    TransparencyClassSpec spec = getSpec(className);
+  public String getOnLoadMethodIfDefined(ClassInfo classInfo) {
+    TransparencyClassSpec spec = getSpec(classInfo.getName());
     if (spec != null && spec.isCallMethodOnLoadSet()) { return spec.getOnLoadMethod(); }
-    return getInstrumentationDescriptorFor(getClassInfo(className)).getOnLoadMethodIfDefined();
+    return getInstrumentationDescriptorFor(classInfo).getOnLoadMethodIfDefined();
   }
 
   public Class getTCPeerClass(Class clazz) {
@@ -1666,7 +1619,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
       Set bjClasses = bootJar.getAllPreInstrumentedClasses();
       bootJarPopulation = bjClasses.size();
       TransparencyClassSpec[] allSpecs = getAllSpecs();
-      for (int i = 0; i < allSpecs.length; i++) {
+      for (int i=0; i<allSpecs.length; i++) {
         TransparencyClassSpec classSpec = allSpecs[i];
         String message = "";
         if (classSpec.isPreInstrumented()) {
@@ -1707,13 +1660,12 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     this.distributedMethods.add(dms);
   }
 
-  public DistributedMethodSpec getDmiSpec(int modifiers, String className, String methodName, String description,
-                                          String[] exceptions) {
-    if (Modifier.isStatic(modifiers) || "<init>".equals(methodName) || "<clinit>".equals(methodName)) { return null; }
-    MemberInfo methodInfo = getMemberInfo(modifiers, className, methodName, description, exceptions);
+  public DistributedMethodSpec getDmiSpec(MemberInfo memberInfo) {
+    if (Modifier.isStatic(memberInfo.getModifiers()) || "<init>".equals(memberInfo.getName())
+        || "<clinit>".equals(memberInfo.getName())) { return null; }
     for (Iterator i = distributedMethods.iterator(); i.hasNext();) {
       DistributedMethodSpec dms = (DistributedMethodSpec) i.next();
-      if (matches(dms.getMethodExpression(), methodInfo)) { return dms; }
+      if (matches(dms.getMethodExpression(), memberInfo)) { return dms; }
     }
     return null;
   }
@@ -1815,11 +1767,11 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
         return this.modules;
       } else {
         // this could happen only in test
-        if (modulesInitialized) {
-          return Modules.Factory.newInstance();
-        } else {
-          modulesInitialized = true;
-          return this.modules;
+          if (modulesInitialized) {
+            return Modules.Factory.newInstance();
+          } else {
+            modulesInitialized = true;
+            return this.modules;
         }
       }
     }

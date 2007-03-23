@@ -11,6 +11,7 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Type;
 import com.tc.aspectwerkz.exception.DefinitionException;
 import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.Portability;
@@ -67,7 +68,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   private boolean isRoot(int access, String fieldName) {
     try {
       boolean isRoot = getTransparencyClassSpec().isRootInThisClass(fieldName);
-      boolean isTransient = getTransparencyClassSpec().isTransient(access, fieldName);
+      boolean isTransient = getTransparencyClassSpec().isTransient(access, spec.getClassInfo(), fieldName);
       if (isTransient && isRoot) {
         if (instrumentationLogger.transientRootWarning()) {
           instrumentationLogger.transientRootWarning(this.spec.getClassNameDots(), fieldName);
@@ -152,7 +153,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   }
 
   private void generateGettersSetters(final int fieldAccess, final String name, final String desc, boolean isStatic) {
-    boolean isTransient = getTransparencyClassSpec().isTransient(fieldAccess, name);
+    boolean isTransient = getTransparencyClassSpec().isTransient(fieldAccess, spec.getClassInfo(), name);
     // Plain getter and setters are generated for transient fields as other instrumented classes might call them.
     boolean createPlainAccessors = isTransient && !isStatic;
     boolean createInstrumentedAccessors = !isTransient && !isStatic;
@@ -193,15 +194,17 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     try {
       physicalClassLogger.logVisitMethodBegin(access, name, desc, signature, exceptions);
 
+      MemberInfo memberInfo = getInstrumentationSpec().getMethodInfo(access, name, desc);
+      
       if (name.startsWith(ByteCodeUtil.TC_METHOD_PREFIX) || doNotInstrument.contains(name + desc)
           || getTransparencyClassSpec().doNotInstrument(name)) {
-        if (!getTransparencyClassSpec().hasCustomMethodAdapter(access, name, desc, exceptions)) {
+        if (!getTransparencyClassSpec().hasCustomMethodAdapter(memberInfo)) {
           physicalClassLogger.logVisitMethodIgnoring(name, desc);
           return cv.visitMethod(access, name, desc, signature, exceptions);
         }
       }
 
-      LockDefinition[] locks = getTransparencyClassSpec().lockDefinitionsFor(access, name, desc, exceptions);
+      LockDefinition[] locks = getTransparencyClassSpec().lockDefinitionsFor(memberInfo);
       LockDefinition ld = getTransparencyClassSpec().getAutolockDefinition(locks);
       boolean isAutolock = (ld != null);
       int lockLevel = -1;
@@ -239,12 +242,11 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       }
       MethodVisitor mv = null;
 
-      boolean hasCustomMethodAdapter = getTransparencyClassSpec().hasCustomMethodAdapter(access, originalName, desc,
-                                                                                         exceptions);
+      boolean hasCustomMethodAdapter = getTransparencyClassSpec().hasCustomMethodAdapter(memberInfo);
       if (hasCustomMethodAdapter) {
         MethodAdapter ma = getTransparencyClassSpec().customMethodAdapterFor(spec.getManagerHelper(), access, name,
                                                                              originalName, desc, signature, exceptions,
-                                                                             instrumentationLogger);
+                                                                             instrumentationLogger, memberInfo);
         mv = ma.adapt(cv);
 
         if (!ma.doesOriginalNeedAdapting()) return mv;
@@ -254,8 +256,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
         mv = cv.visitMethod(access, name, desc, signature, exceptions);
       }
 
-      return mv == null ? null : new TransparencyCodeAdapter(spec, isAutolock, lockLevel, mv, access, originalName,
-                                                             name, desc, signature, exceptions);
+      return mv == null ? null : new TransparencyCodeAdapter(spec, isAutolock, lockLevel, mv, memberInfo);
     } catch (RuntimeException e) {
       handleInstrumentationException(e);
       throw e;
@@ -637,7 +638,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   }
 
   private boolean isVolatile(int access, String fieldName) {
-    return getTransparencyClassSpec().isVolatile(access, fieldName);
+    return getTransparencyClassSpec().isVolatile(access, spec.getClassInfo(), fieldName);
   }
 
   private void createInstrumentedGetter(int methodAccess, int fieldAccess, String name, String desc) {
