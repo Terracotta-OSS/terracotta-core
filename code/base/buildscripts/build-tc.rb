@@ -578,6 +578,11 @@ END
     puts(find_jvms)
   end
 
+  def archive_build
+    depends :compile
+    archive_build_if_necessary
+  end
+
   protected
   # Overrides superclass method to provide for implicit targets.
   def target_missing(target)
@@ -643,6 +648,8 @@ END
       end
 
       @build_results.archive_to(ant, full_build_archive_path)
+    else
+      puts("Can't archive build: build-archive-dir not specified.")
     end
   end
 
