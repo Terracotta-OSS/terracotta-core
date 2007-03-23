@@ -103,7 +103,7 @@
 
   <xs:simpleType name="class-expression">
     <xs:restriction base="xs:token">
-      <xs:pattern value="[A-Za-z_0-9$\*\. ]+" />
+      <xs:pattern value="[A-Za-z_0-9$\*\. ]+\+?" />
     </xs:restriction>
   </xs:simpleType>
 
