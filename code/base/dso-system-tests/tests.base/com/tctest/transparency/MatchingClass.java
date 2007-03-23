@@ -8,6 +8,24 @@ package com.tctest.transparency;
  */
 public class MatchingClass {
   
-  // A super class used in the expression matching
-
+  private String foo1;
+  
+  private transient String boo1;
+  
+  public String getFoo1() {
+    return foo1;
+  }
+  
+  public void setFoo1(String foo1) {
+    this.foo1 = foo1;
+  }
+  
+  public String getBoo1() {
+    return boo1;
+  }
+  
+  public void setBoo1(String boo1) {
+    this.boo1 = boo1;
+  }
+  
 }

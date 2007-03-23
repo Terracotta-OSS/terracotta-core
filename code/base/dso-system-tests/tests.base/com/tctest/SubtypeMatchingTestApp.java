@@ -7,6 +7,7 @@ package com.tctest;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
@@ -28,26 +29,49 @@ public class SubtypeMatchingTestApp extends AbstractTransparentApp {
   }
 
   public void run() {
+    MatchingSubclass1 c1 = new MatchingSubclass1();
+    MatchingSubclass2 c2 = new MatchingSubclass2();
+    synchronized (list) {
+      list.add(c1);
+      list.add(c2);
+    }
+    
+    c1.setBoo1("boo1");
+    c1.setBoo("boo1");
+    
+    c2.setBoo("boo2");
+
     try {
-      synchronized (list) {
-        list.add(new MatchingSubclass1());
-        list.add(new MatchingSubclass2());
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException(e);
+      c2.setFoo("foo");
+      throw new RuntimeException("Should not allow to change MatchingSubclass2.foo without lock");
+    } catch (UnlockedSharedObjectException e) {
+      // 
+    }
+    
+    try {
+      c1.setFoo("foo");
+      throw new RuntimeException("Should not allow to change MatchingSubclass1.foo without lock");
+    } catch (UnlockedSharedObjectException e) {
+      // 
+    }
+
+    try {
+      c1.setFoo1("foo1");
+      throw new RuntimeException("Should not allow to change MatchingClass.foo1 without lock");
+    } catch (UnlockedSharedObjectException e) {
+      // 
     }
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    String testClass = ArrayTestApp.class.getName();
+    String testClass = SubtypeMatchingTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     spec.addRoot("list", "list");
     
     config.addWriteAutolock("* " + testClass + "*.*(..)");
 
-    config.addIncludePattern("com.tctest.transparency.MarkerInterface+");
-    config.addIncludePattern("com.tctest.transparency.MatchingClass+");
+    config.addIncludePattern("com.tctest.transparency.MarkerInterface+", true);
+    config.addIncludePattern("com.tctest.transparency.MatchingClass+", true);
   }
 
 }
