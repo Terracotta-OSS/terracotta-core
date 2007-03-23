@@ -55,7 +55,8 @@ public class ClassHierarchyWalker {
       
       String className = classInfo.getName();
       logger.info(this.id + " registering include for " + className);
-      dsoContext.addInclude(className, true, "* " + className + ".*(..)");
+      // TODO add matching for subclasses
+      dsoContext.addInclude(className, true, "* " + className + ".*(..)", classInfo);
 
       // TODO should we continue walking class hierarchy if include had been ignored?
 
