@@ -4,6 +4,7 @@
  */
 package com.tctest;
 
+import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -11,6 +12,7 @@ import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
+import com.tctest.transparency.MatchingAutolockedSubclass;
 import com.tctest.transparency.MatchingSubclass1;
 import com.tctest.transparency.MatchingSubclass2;
 
@@ -29,6 +31,11 @@ public class SubtypeMatchingTestApp extends AbstractTransparentApp {
   }
 
   public void run() {
+    testHonorTransient();
+    testAutolock();
+  }
+
+  private void testHonorTransient() {
     MatchingSubclass1 c1 = new MatchingSubclass1();
     MatchingSubclass2 c2 = new MatchingSubclass2();
     synchronized (list) {
@@ -63,6 +70,17 @@ public class SubtypeMatchingTestApp extends AbstractTransparentApp {
     }
   }
 
+  private void testAutolock() {
+    MatchingAutolockedSubclass c1 = new MatchingAutolockedSubclass();
+    synchronized (list) {
+      list.add(c1);
+    }
+    c1.setMoo("moo1");
+
+    MatchingAutolockedSubclass c2 = new MatchingAutolockedSubclass(list);
+    c2.setMoo("moo2");
+  }
+  
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = SubtypeMatchingTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
@@ -72,6 +90,11 @@ public class SubtypeMatchingTestApp extends AbstractTransparentApp {
 
     config.addIncludePattern("com.tctest.transparency.MarkerInterface+", true);
     config.addIncludePattern("com.tctest.transparency.MatchingClass+", true);
-  }
 
+    config.addAutolock("* com.tctest.transparency.MatchingClass+.set*(..)", ConfigLockLevel.WRITE);
+    config.addAutolock("* com.tctest.transparency.MatchingClass+.__INIT__(..)", ConfigLockLevel.WRITE);
+    // config.addAutolock("* " + MatchingAutolockedSubclass.class.getName() + ".*(..)", ConfigLockLevel.WRITE);
+  }
+  
 }
+
