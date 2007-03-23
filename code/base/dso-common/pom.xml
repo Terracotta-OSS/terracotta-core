@@ -9,10 +9,16 @@
     <version>2.3-SNAPSHOT</version>
   </parent>
   <artifactId>dso-common</artifactId>
-  <dependencies>
+  <dependencies>  
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>common</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
     </dependency>
     <dependency>
       <groupId>trove</groupId>

@@ -8,13 +8,17 @@
   <packaging>pom</packaging>
   <version>2.3-SNAPSHOT</version>
 
+  <properties>
+    <tcVersion>2.3-SNAPSHOT</tcVersion>
+  </properties>
+
   <modules>
     <module>linked-child-process</module>
     <module>common</module>
     <module>aspectwerkz</module>
     <module>clustered-apache-struts-1.1</module>
     <module>clustered-cglib-2.1.3</module>
-    <module>clustered-commons-collections-3.1</module>
+    <module>clustered-commons-collections-3.1</module>    
     <module>clustered-iBatis-2.2.0</module>
     <module>clustered-lucene-2.0.0</module>
     <module>deploy</module>
@@ -472,7 +476,7 @@
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>common</artifactId>
-        <version>${tcVersion}</version>
+        <version>${tcVersion}</version>        
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -483,6 +487,7 @@
         <groupId>org.terracotta</groupId>
         <artifactId>dso-alt-boot-jar-tests</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -498,11 +503,13 @@
         <groupId>org.terracotta</groupId>
         <artifactId>dso-container-tests</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>dso-crash-tests</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -553,6 +560,7 @@
         <groupId>org.terracotta</groupId>
         <artifactId>dso-performance-tests</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -568,21 +576,25 @@
         <groupId>org.terracotta</groupId>
         <artifactId>dso-spring-crash-tests</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>dso-spring-tests</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>dso-system-tests</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>dso-tests-jdk15</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -603,7 +615,8 @@
         <groupId>org.terracotta</groupId>
         <artifactId>legacy-test-tree</artifactId>
         <version>${tcVersion}</version>
-      </dependency>
+        <!--<scope>test</scope>
+      --></dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>linked-child-process</artifactId>
@@ -623,6 +636,7 @@
         <groupId>org.terracotta</groupId>
         <artifactId>simulator</artifactId>
         <version>${tcVersion}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -647,9 +661,9 @@
     </dependencies>
   </dependencyManagement>
 
-  <properties>
-    <tcVersion>2.3-SNAPSHOT</tcVersion>
-  </properties>
+
+
+
 
   <build>
     <!--
@@ -668,6 +682,17 @@
     </testResources>
     <plugins>
       <plugin>
+       <groupId>org.apache.maven.plugins</groupId>
+       <artifactId>maven-jar-plugin</artifactId>
+         <executions>
+           <execution>
+             <goals>
+               <goal>test-jar</goal>
+             </goals>
+           </execution>
+         </executions>
+       </plugin>
+      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
         <executions>
@@ -680,7 +705,6 @@
             <configuration>
               <sources>
                 <source>src</source>
-                <source>tests.base</source>
               </sources>
             </configuration>
           </execution>
@@ -692,7 +716,11 @@
             </goals>
             <configuration>
               <sources>
+                <source>tests.base</source>
                 <source>tests.unit</source>
+                <!--
+                <source>tests.system</source>
+                -->
               </sources>
             </configuration>
           </execution>
@@ -702,6 +730,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <skip>false</skip>
           <includes>
             <include>**/*Test.java</include>
           </includes>

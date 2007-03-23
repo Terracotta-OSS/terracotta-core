@@ -18,14 +18,6 @@
       <groupId>commons-httpclient</groupId>
       <artifactId>commons-httpclient</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>aspectwerkz</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-common</artifactId>
-    </dependency>
     <!--
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -33,24 +25,12 @@
     </dependency>
     -->
     <dependency>
-      <groupId>javax.management</groupId>
-      <artifactId>jmxremote</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>dso-l2</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>thirdparty</artifactId>
-    </dependency>
-    <dependency>
       <groupId>treemap</groupId>
       <artifactId>treemap</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.management</groupId>
-      <artifactId>jmxremote_optional</artifactId>
     </dependency>
     <dependency>
       <groupId>jline</groupId>
@@ -63,18 +43,6 @@
     <dependency>
       <groupId>org.dijon</groupId>
       <artifactId>appframe</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>linked-child-process</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>management</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>common</artifactId>
     </dependency>
     <dependency>
       <groupId>commons-codec</groupId>

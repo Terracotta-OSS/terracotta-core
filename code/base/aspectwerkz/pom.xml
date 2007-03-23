@@ -17,6 +17,8 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>common</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
     </dependency>
     <dependency>
       <groupId>dom4j</groupId>

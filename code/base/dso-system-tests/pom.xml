@@ -20,10 +20,6 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>simulator</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
       <artifactId>dso-common</artifactId>
     </dependency>
     <dependency>
@@ -33,6 +29,14 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>legacy-test-tree</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>deploy</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
     </dependency>
     <!--
     <dependency>
@@ -42,19 +46,11 @@
     -->
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>dso-l1-weblogic</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
       <artifactId>dso-l1</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>dso-l2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>deploy</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>

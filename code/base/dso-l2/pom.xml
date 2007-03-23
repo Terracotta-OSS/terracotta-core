@@ -12,10 +12,6 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>dso-common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
       <artifactId>management</artifactId>
     </dependency>
     <!--
@@ -26,11 +22,13 @@
     -->
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>common</artifactId>
-    </dependency>
+      <artifactId>thirdparty</artifactId>
+    </dependency>    
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>thirdparty</artifactId>
+      <artifactId>dso-common</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
     </dependency>
   </dependencies>
 </project>

@@ -14,17 +14,5 @@
       <groupId>org.terracotta</groupId>
       <artifactId>dso-l1</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>management</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>common</artifactId>
-    </dependency>
   </dependencies>
 </project>

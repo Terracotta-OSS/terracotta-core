@@ -11,10 +11,6 @@
   <artifactId>management</artifactId>
   <dependencies>
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>common</artifactId>
-    </dependency>
-    <dependency>
       <groupId>javax.management</groupId>
       <artifactId>jmxremote</artifactId>     
     </dependency>

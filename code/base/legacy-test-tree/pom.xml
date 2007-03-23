@@ -10,45 +10,7 @@
   </parent>
   <artifactId>legacy-test-tree</artifactId>
   <dependencies>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-l2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>linked-child-process</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>aspectwerkz</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>thirdparty</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>management</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>deploy</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-l1-weblogic</artifactId>
-    </dependency>
-    <!--
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-common-jdk15</artifactId>
-    </dependency>
-    -->
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>common</artifactId>
-    </dependency>
-    <dependency>
+  <dependency>
       <groupId>xstream</groupId>
       <artifactId>xstream</artifactId>
       <version>1.0.2</version>
@@ -59,15 +21,21 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>dso-l1</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
       <artifactId>simulator</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>dso-l1</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>dso-l2</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
     </dependency>
   </dependencies>
 </project>
