@@ -226,6 +226,7 @@
             <separator name="group2"/>
             <separator name="group3"/>
             <separator name="group4"/>
+            <separator name="group5"/>
          </menu>
          <action
                label="Add Terracotta nature"
@@ -283,6 +284,15 @@
                <enablement>
                  <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
                </enablement>
+         </action>
+         <action
+               label="Help"
+               style="pulldown"
+               class="org.terracotta.dso.actions.HelpHandler"
+               menubarPath="org.terracotta.dso.workbenchActionSetMenu/group5"
+               enablesFor="*"
+               helpContextId="help_handler_context"
+               id="workbenchHelperHandlerAction">
          </action>
          <action
                id="contactSupportAction"
@@ -1299,20 +1309,6 @@
        class="org.terracotta.dso.ClasspathProvider"
        id="org.terracotta.dso.classpathProvider">
      </classpathProvider>
-   </extension>
-
-   <extension point="org.eclipse.help.contexts">
-  	<contexts file="HelpContexts.xml" /> 
-   </extension>
-
-   <extension point="org.eclipse.help.toc">
-    <toc file="book.xml" primary="true" />
-   </extension>
-
-   <extension point="org.eclipse.help.toc">
-    <toc file="toc_Concepts.xml" />
-    <toc file="toc_Tasks.xml" />
-    <toc file="toc_Ref.xml" />
    </extension>
 
    <extension
