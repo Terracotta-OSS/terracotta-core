@@ -40,6 +40,8 @@ import com.tc.admin.common.XTreeNode;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -622,11 +624,15 @@ public class AdminClientPanel extends XContainer
           updateCheckerPrefs.putLong("next-check-time", nextCheckTime());
           storePreferences();
         } else if(nextCheckTime < System.currentTimeMillis()) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              Timer t = new Timer(1, UpdateCheckerAction.this);
-              t.setRepeats(false);
-              t.start();
+          AdminClientPanel.this.addComponentListener(new ComponentAdapter() {
+            public void componentShown(ComponentEvent e) {
+              SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                  Timer t = new Timer(1, UpdateCheckerAction.this);
+                  t.setRepeats(false);
+                  t.start();
+                }
+              });
             }
           });
         }

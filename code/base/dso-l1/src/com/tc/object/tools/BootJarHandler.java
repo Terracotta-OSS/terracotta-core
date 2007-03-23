@@ -141,14 +141,15 @@ public class BootJarHandler {
   }
 
   private void copyFile(File src, File dest) throws IOException {
-    File destpath = dest;
-    if (dest.isDirectory()) destpath = new File(dest, src.getName());
+    if (dest.isDirectory()) {
+      dest = new File(dest, src.getName());
+    }
 
     InputStream in = null;
     OutputStream out = null;
     FileLock lock = null;
     try {
-      File tmpdest = new File(destpath.getAbsolutePath() + ".tmp");
+      File tmpdest = new File(dest.getAbsolutePath() + ".tmp");
       out = new FileOutputStream(tmpdest);
       FileChannel channel = ((FileOutputStream) out).getChannel();
       lock = channel.lock();
@@ -170,7 +171,12 @@ public class BootJarHandler {
       out.close();
       out = null;
 
-      tmpdest.renameTo(dest);
+      if(dest.exists() && !dest.delete()) {
+        throw new IOException("Unable to delete '"+dest+"'");
+      }
+      if(!tmpdest.renameTo(dest)) {
+        throw new IOException("Unable to rename '"+tmpdest+"' to '"+dest+"'");
+      }
     } finally {
       if (in != null) in.close();
       if (lock != null) lock.release();
