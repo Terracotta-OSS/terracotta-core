@@ -381,7 +381,8 @@ public class ClassProcessorHelper {
       context.getManager().init();
       return context;
     } catch (Throwable t) {
-      handleError(t);
+      t.printStackTrace();
+      System.exit(-1);
       throw new AssertionError(); // shouldn't get here
     }
   }
