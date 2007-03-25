@@ -18,9 +18,10 @@
     <configuration-model>development</configuration-model>
   </system>
   <!--Tell DSO where to put the generated client logs
-       See the Terracotta DSO Guide for additional information.-->
+       See the Terracotta Configuration Guide and Reference for additional
+       information.-->
   <clients>
-    <logs>%(user.home)/terracotta/chatter/client-logs</logs>
+    <logs>%(user.home)/terracotta/client-logs/pojo/chatter/%D</logs>
   </clients>
   <application>
     <dso>

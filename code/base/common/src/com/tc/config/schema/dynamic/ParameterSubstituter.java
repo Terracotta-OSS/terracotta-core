@@ -10,6 +10,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Substitutes parameters into strings &mdash; for example, '%h' becomes the host name, and so on.
@@ -34,6 +36,10 @@ public class ParameterSubstituter {
             value = getUniqueTempDirectory();
             break;
 
+          case 'D':
+            value = getDatestamp();
+            break;
+            
           case 'h':
             value = getHostname();
             break;
@@ -136,6 +142,11 @@ public class ParameterSubstituter {
     return uniqueTempDirectory;
   }
 
+  private static synchronized String getDatestamp() {
+    SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+    return format.format(new Date(System.currentTimeMillis()));
+  }
+  
   private static String getHostname() {
     try {
       return InetAddress.getLocalHost().getCanonicalHostName();
