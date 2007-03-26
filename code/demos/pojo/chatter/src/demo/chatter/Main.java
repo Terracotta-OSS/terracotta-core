@@ -149,17 +149,10 @@
     public synchronized void handleDisconnectedUser(final String nodeId) {
        chatManager.removeUser(nodeId);
        populateCurrentUsers();
-       //synchronized (listModel) {
-       //   final String username = chatManager.removeUser(nodeId);
-       //   listModel.removeElement(username);
-       //}
     }
 
     public synchronized void handleNewUser(final String username) {
        populateCurrentUsers();
-       //synchronized (listModel) {
-       //   listModel.addElement(username);
-       //}
     }
 
     public void updateMessage(final String username, final String message,
@@ -245,16 +238,13 @@
     }
 
     private synchronized void populateCurrentUsers() {
-       //synchronized (listModel) {
-          DefaultListModel list = new DefaultListModel();
-          final Object[] currentUsers = chatManager.getCurrentUsers();
-          for (int i = 0; i < currentUsers.length; i++) {
-             list.addElement(new String(((User) currentUsers[i])
-                   .getName()));
-          }
-          //listModel = list;
-          buddyList.setModel(list);
-       //}
+        DefaultListModel list = new DefaultListModel();
+        final Object[] currentUsers = chatManager.getCurrentUsers();
+        for (int i = 0; i < currentUsers.length; i++) {
+           list.addElement(new String(((User) currentUsers[i])
+                 .getName()));
+        }
+        buddyList.setModel(list);
     }
 
     private void updateMessage(final String message) {
