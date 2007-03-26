@@ -35,9 +35,9 @@ if test -z "$DSO_BOOT_JAR"; then
 fi
 if test \! -f "${DSO_BOOT_JAR}"; then
   if test -n "${TC_CONFIG_PATH}"; then
-   "${JAVACMD}" -cp "${TC_JAR}" com.tc.object.tools.BootJarTool -o "${DSO_BOOT_JAR}" -f "${TC_CONFIG_PATH}"
+   "${JAVACMD}" -Dtc.install-root="${TC_INSTALL_DIR}" -cp "${TC_JAR}" com.tc.object.tools.BootJarTool -o "${DSO_BOOT_JAR}" -f "${TC_CONFIG_PATH}"
   else
-   "${JAVACMD}" -cp "${TC_JAR}" com.tc.object.tools.BootJarTool -o "${DSO_BOOT_JAR}"
+   "${JAVACMD}" -Dtc.install-root="${TC_INSTALL_DIR}" -cp "${TC_JAR}" com.tc.object.tools.BootJarTool -o "${DSO_BOOT_JAR}"
   fi
   if test $? != 0; then
     exit 14

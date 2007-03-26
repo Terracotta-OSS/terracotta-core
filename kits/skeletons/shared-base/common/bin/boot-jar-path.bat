@@ -57,12 +57,12 @@ goto tc_set_dso_boot_jar__1_2
 
  :tc_set_dso_boot_jar__1_3
    if not defined TC_CONFIG_PATH goto tc_set_dso_boot_jar__1_3_1
-   "%JAVACMD%" -cp "%TC_JAR%" com.tc.object.tools.BootJarTool -o "%DSO_BOOT_JAR%" -f "%TC_CONFIG_PATH%"
+   "%JAVACMD%" -Dtc.install-root="%TC_INSTALL_DIR%" -cp "%TC_JAR%" com.tc.object.tools.BootJarTool -o "%DSO_BOOT_JAR%" -f "%TC_CONFIG_PATH%"
     if %ERRORLEVEL% NEQ 0 goto error
     goto return
 
    :tc_set_dso_boot_jar__1_3_1
-    "%JAVACMD%" -cp "%TC_JAR%" com.tc.object.tools.BootJarTool -o "%DSO_BOOT_JAR%"
+    "%JAVACMD%" -Dtc.install-root="%TC_INSTALL_DIR%" -cp "%TC_JAR%" com.tc.object.tools.BootJarTool -o "%DSO_BOOT_JAR%"
     if %ERRORLEVEL% NEQ 0 goto error
     goto return
 
