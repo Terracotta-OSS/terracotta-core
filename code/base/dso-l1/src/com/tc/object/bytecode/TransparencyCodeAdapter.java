@@ -23,27 +23,30 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   private final int                  autoLockType;
   private final ManagerHelper        mgrHelper;
   private final InstrumentationSpec  spec;
+  private final MemberInfo           memberInfo;
+  private boolean                    isConstructor;
+
   private final TransparencyCodeSpec codeSpec;
   private final Label                labelZero = new Label();
 
   private int[]                      localVariablesForMethodCall;
 
   private boolean                    visitInit = false;
-  private MemberInfo memberInfo;
 
   public TransparencyCodeAdapter(InstrumentationSpec spec, boolean isAutolock, int autoLockType, MethodVisitor mv,
-                                 MemberInfo memberInfo) {
-    super(mv, memberInfo.getModifiers(), memberInfo.getName(), memberInfo.getSignature());
+                                 MemberInfo memberInfo, String originalName) {
+    super(mv, memberInfo.getModifiers(), originalName, memberInfo.getSignature());
     this.spec = spec;
     this.isAutolock = isAutolock;
     this.autoLockType = autoLockType;
     this.memberInfo = memberInfo;
 
     this.mgrHelper = spec.getManagerHelper();
-    this.codeSpec = spec.getTransparencyClassSpec().getCodeSpec(memberInfo.getName(), memberInfo.getSignature(),
-                                                                isAutolock);
+    this.codeSpec = spec.getTransparencyClassSpec().getCodeSpec(memberInfo.getName(), //
+                                                                memberInfo.getSignature(), isAutolock);
 
-    if (!"<init>".equals(memberInfo.getName())) {
+    isConstructor = "<init>".equals(originalName);
+    if (!isConstructor) {
       visitInit = true;
     }
   }
@@ -115,7 +118,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
    * there is no implementation of clone() defined in that classes' hierarchy. If it does, it a bug in the compiler ;-)
    * This adaption is needed for both PORTABLE and ADAPTABLE classes as we can have instance where Logical subclass of
    * ADAPTABLE class calls clone() to make a copy of itself.
-   *
+   * 
    * @see AbstractMap and HashMap
    */
   private boolean handleJavaLangObjectCloneCall(int opcode, String classname, String theMethodName, String desc) {
@@ -455,7 +458,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   }
 
   protected void onMethodEnter() {
-    if ("<init>".equals(memberInfo.getName())) {
+    if (isConstructor) {
       visitInit = true;
       if (getTransparencyClassSpec().isLockMethod(memberInfo)) {
         callTCBeginWithLocks(this);
@@ -465,7 +468,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   }
 
   protected void onMethodExit(int opcode) {
-    if ("<init>".equals(memberInfo.getName()) && getTransparencyClassSpec().isLockMethod(memberInfo)) {
+    if (isConstructor && getTransparencyClassSpec().isLockMethod(memberInfo)) {
 
       if (opcode == RETURN) {
         callTCCommit(this);
@@ -479,8 +482,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   }
 
   public void visitEnd() {
-    if ("<init>".equals(memberInfo.getName()) && getTransparencyClassSpec().isLockMethod(memberInfo)) {
-
+    if (isConstructor && getTransparencyClassSpec().isLockMethod(memberInfo)) {
       Label labelEnd = new Label();
       super.visitLabel(labelEnd);
       super.visitTryCatchBlock(labelZero, labelEnd, labelEnd, null);

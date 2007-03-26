@@ -225,7 +225,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
       // if (methodLD != null && (spec.isClassPortable() || (spec.isClassAdaptable() && !methodLD.isAutolock()))
       // && !name.equals("<init>")) {
-      if (isLockMethod && (!name.equals("<init>"))) {
+      if (isLockMethod && !"<init>".equals(name)) {
         physicalClassLogger.logVisitMethodCreateLockMethod(name);
         // This method is a lock method.
         Assert.assertNotNull(locks);
@@ -256,7 +256,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
         mv = cv.visitMethod(access, name, desc, signature, exceptions);
       }
 
-      return mv == null ? null : new TransparencyCodeAdapter(spec, isAutolock, lockLevel, mv, memberInfo);
+      return mv == null ? null : new TransparencyCodeAdapter(spec, isAutolock, lockLevel, mv, memberInfo, originalName);
     } catch (RuntimeException e) {
       handleInstrumentationException(e);
       throw e;
