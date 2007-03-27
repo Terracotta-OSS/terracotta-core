@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.persistence.impl;
 
@@ -24,8 +25,6 @@ import java.util.TreeSet;
 public class TransactionStoreImpl implements TransactionStore {
 
   private final Map                  serverTransactionIDMap = Collections.synchronizedMap(new HashMap());
-  private final Map                  globalTransactionIDMap = Collections.synchronizedMap(new HashMap());
-
   private final SortedSet            ids                    = Collections
                                                                 .synchronizedSortedSet(new TreeSet(
                                                                                                    GlobalTransactionID.COMPARATOR));
@@ -35,31 +34,11 @@ public class TransactionStoreImpl implements TransactionStore {
   public TransactionStoreImpl(TransactionPersistor persistor, Sequence globalIDSequence) {
     this.persistor = persistor;
     this.globalIDSequence = globalIDSequence;
-    // Ok, this is relying on the fact that GlobalTransactionIDs are never given out negative,
-    // except for NULL_ID which is -1
     // We don't want to hit the DB (globalIDsequence) until all the stages are started.
-    int negativeID = -2;
     for (Iterator i = this.persistor.loadAllGlobalTransactionDescriptors().iterator(); i.hasNext();) {
       GlobalTransactionDescriptor gtx = (GlobalTransactionDescriptor) i.next();
-      ServerTransactionID stxID = gtx.getServerTransactionID();
-      basicAdd(stxID, gtx);
-      // this will be reassigned later when the clients resend the transaction
-      addGlobalTransactionID(stxID, new GlobalTransactionID(negativeID--)); 
+      basicAdd(gtx);
     }
-  }
-
-  private GlobalTransactionID addGlobalTransactionID(ServerTransactionID serverTransactionID) {
-    return addGlobalTransactionID(serverTransactionID, new GlobalTransactionID(globalIDSequence.next()));
-  }
-
-  private GlobalTransactionID addGlobalTransactionID(ServerTransactionID serverTransactionID, GlobalTransactionID gid) {
-    Object previousID = globalTransactionIDMap.put(serverTransactionID, gid);
-    if (previousID != null) {
-      // GlobalTransactionID's will be remapped on server restarts
-      ids.remove(previousID);
-    }
-    ids.add(gid);
-    return gid;
   }
 
   public void commitTransactionDescriptor(PersistenceTransaction transaction, GlobalTransactionDescriptor gtx) {
@@ -71,13 +50,22 @@ public class TransactionStoreImpl implements TransactionStore {
   }
 
   public GlobalTransactionDescriptor createTransactionDescriptor(ServerTransactionID serverTransactionID) {
-    GlobalTransactionDescriptor rv = new GlobalTransactionDescriptor(serverTransactionID);
-    basicAdd(serverTransactionID, rv);
+    GlobalTransactionDescriptor rv = new GlobalTransactionDescriptor(serverTransactionID, getNextGlobalTransactionID());
+    basicAdd(rv);
     return rv;
   }
 
-  private void basicAdd(ServerTransactionID serverTransactionID, GlobalTransactionDescriptor gtx) {
-    this.serverTransactionIDMap.put(serverTransactionID, gtx);
+  private GlobalTransactionID getNextGlobalTransactionID() {
+    return new GlobalTransactionID(this.globalIDSequence.next());
+  }
+
+  private void basicAdd(GlobalTransactionDescriptor gtx) {
+    ServerTransactionID sid = gtx.getServerTransactionID();
+    GlobalTransactionID gid = gtx.getGlobalTransactionID();
+    Object prevDesc = this.serverTransactionIDMap.put(sid, gtx);
+    ids.add(gid);
+    if (prevDesc != null ) { throw new AssertionError("Adding new mapping for old txn IDs : "
+                                                                           + gtx + " Prev desc = " + prevDesc);}
   }
 
   public GlobalTransactionID getLeastGlobalTransactionID() {
@@ -92,11 +80,8 @@ public class TransactionStoreImpl implements TransactionStore {
       for (Iterator i = stxIDs.iterator(); i.hasNext();) {
         ServerTransactionID stxID = (ServerTransactionID) i.next();
         GlobalTransactionDescriptor desc = (GlobalTransactionDescriptor) this.serverTransactionIDMap.remove(stxID);
-        GlobalTransactionID gid = (GlobalTransactionID) this.globalTransactionIDMap.remove(stxID);
-        if (gid != null) {
-          ids.remove(gid);
-        }
         if (desc != null) {
+          ids.remove(desc.getGlobalTransactionID());
           toDelete.add(stxID);
         }
       }
@@ -104,8 +89,13 @@ public class TransactionStoreImpl implements TransactionStore {
     persistor.deleteAllByServerTransactionID(tx, toDelete);
   }
 
-  public GlobalTransactionID createGlobalTransactionID(ServerTransactionID stxnID) {
-    return addGlobalTransactionID(stxnID);
+  public GlobalTransactionID getGlobalTransactionID(ServerTransactionID stxnID) {
+    GlobalTransactionDescriptor gdesc = (GlobalTransactionDescriptor) serverTransactionIDMap.get(stxnID);
+    if(gdesc == null) {
+      return GlobalTransactionID.NULL_ID;
+    } else {
+      return gdesc.getGlobalTransactionID();
+    }
   }
 
   public void shutdownClient(PersistenceTransaction tx, ChannelID client) {

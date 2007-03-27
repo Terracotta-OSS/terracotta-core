@@ -3,16 +3,13 @@
  */
 package com.tc.object.tx;
 
-import java.io.Serializable;
-
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.object.tx.TransactionID;
 
 /**
  * A class that represents a particular client transaction from the server's perspective (ie. the combination of
  * ChannelID and a client TransactionID)
  */
-public class ServerTransactionID implements Serializable {
+public class ServerTransactionID {
   public static final ServerTransactionID NULL_ID = new ServerTransactionID(ChannelID.NULL_ID, TransactionID.NULL_ID);
 
   private final TransactionID             txnID;

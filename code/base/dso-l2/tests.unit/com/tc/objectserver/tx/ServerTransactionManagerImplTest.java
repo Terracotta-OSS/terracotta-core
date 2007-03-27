@@ -13,7 +13,6 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.tx.ServerTransactionID;
@@ -32,6 +31,7 @@ import com.tc.objectserver.persistence.impl.TestTransactionStore;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterImpl;
 import com.tc.util.SequenceID;
+import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,7 +56,6 @@ public class ServerTransactionManagerImplTest extends TestCase {
   private Counter                          transactionRateCounter;
   private TestChannelStats                 channelStats;
   private TestGlobalTransactionManager     gtxm;
-  private int                              idsequence;
   private ObjectInstanceMonitor            imo;
 
   protected void setUp() throws Exception {
@@ -125,6 +124,102 @@ public class ServerTransactionManagerImplTest extends TestCase {
       }
     });
     this.transactionManager.release(null, Collections.EMPTY_SET, roots);
+  }
+
+  public void testAddAndRemoveTransactionListeners() throws Exception {
+    TestServerTransactionListener l1 = new TestServerTransactionListener();
+    TestServerTransactionListener l2 = new TestServerTransactionListener();
+    transactionManager.addTransactionListener(l1);
+    transactionManager.addTransactionListener(l2);
+
+    Set txns = new HashSet();
+    ChannelID cid1 = new ChannelID(1);
+    List dnas = Collections.unmodifiableList(new LinkedList());
+    ObjectStringSerializer serializer = null;
+    Map newRoots = Collections.unmodifiableMap(new HashMap());
+    TxnType txnType = TxnType.NORMAL;
+
+    HashSet tids = new HashSet();
+    for (int i = 0; i < 10; i++) {
+      TransactionID tid1 = new TransactionID(i);
+      SequenceID sequenceID = new SequenceID(i);
+      LockID[] lockIDs = new LockID[0];
+      ServerTransaction tx = new ServerTransactionImpl(new TxnBatchID(1), tid1, sequenceID, lockIDs, cid1, dnas,
+                                                       serializer, newRoots, txnType, new LinkedList(),
+                                                       DmiDescriptor.EMPTY_ARRAY);
+      txns.add(tx);
+      tids.add(tx.getServerTransactionID());
+    }
+    doStages(cid1, txns, false);
+
+    // check for events
+    Object o[] = (Object[]) l1.incomingContext.take();
+    assertNotNull(o);
+    o = (Object[]) l2.incomingContext.take();
+    assertNotNull(o);
+
+    for (int i = 0; i < 10; i++) {
+      ServerTransactionID tid1 = (ServerTransactionID) l1.appliedContext.take();
+      ServerTransactionID tid2 = (ServerTransactionID) l2.appliedContext.take();
+      assertEquals(tid1, tid2);
+      // System.err.println("tid1 = " + tid1 + " tid2 = " + tid2 + " tids = " + tids);
+      assertTrue(tids.contains(tid1));
+      tid1 = (ServerTransactionID) l1.completedContext.take();
+      tid2 = (ServerTransactionID) l2.completedContext.take();
+      assertEquals(tid1, tid2);
+      assertTrue(tids.contains(tid1));
+    }
+
+    // No more events
+    o = (Object[]) l1.incomingContext.poll(2000);
+    assertNull(o);
+    o = (Object[]) l2.incomingContext.poll(2000);
+    assertNull(o);
+    ServerTransactionID tid = (ServerTransactionID) l1.appliedContext.poll(2000);
+    assertNull(tid);
+    tid = (ServerTransactionID) l2.appliedContext.poll(2000);
+    assertNull(tid);
+    tid = (ServerTransactionID) l1.completedContext.poll(2000);
+    assertNull(tid);
+    tid = (ServerTransactionID) l2.completedContext.poll(2000);
+    assertNull(tid);
+
+    // unregister one
+    transactionManager.removeTransactionListener(l2);
+
+    // more txn
+    tids.clear();
+    txns.clear();
+    for (int i = 10; i < 20; i++) {
+      TransactionID tid1 = new TransactionID(i);
+      SequenceID sequenceID = new SequenceID(i);
+      LockID[] lockIDs = new LockID[0];
+      ServerTransaction tx = new ServerTransactionImpl(new TxnBatchID(2), tid1, sequenceID, lockIDs, cid1, dnas,
+                                                       serializer, newRoots, txnType, new LinkedList(),
+                                                       DmiDescriptor.EMPTY_ARRAY);
+      txns.add(tx);
+      tids.add(tx.getServerTransactionID());
+    }
+    doStages(cid1, txns, false);
+
+    // Events to only l1
+    o = (Object[]) l1.incomingContext.take();
+    assertNotNull(o);
+    o = (Object[]) l2.incomingContext.poll(2000);
+    assertNull(o);
+
+    for (int i = 0; i < 10; i++) {
+      ServerTransactionID tid1 = (ServerTransactionID) l1.appliedContext.take();
+      ServerTransactionID tid2 = (ServerTransactionID) l2.appliedContext.poll(1000);
+      assertNotNull(tid1);
+      assertNull(tid2);
+      assertTrue(tids.contains(tid1));
+      tid1 = (ServerTransactionID) l1.completedContext.take();
+      tid2 = (ServerTransactionID) l2.completedContext.poll(1000);
+      assertNotNull(tid1);
+      assertNull(tid2);
+      assertTrue(tids.contains(tid1));
+    }
   }
 
   public void tests() throws Exception {
@@ -228,6 +323,10 @@ public class ServerTransactionManagerImplTest extends TestCase {
   }
 
   private void doStages(ChannelID cid, Set txns) {
+    doStages(cid, txns, true);
+  }
+
+  private void doStages(ChannelID cid, Set txns, boolean actionAsserted) {
 
     // process stage
     transactionManager.incomingTransactions(cid, getServerTransactionIDs(txns), false);
@@ -236,18 +335,19 @@ public class ServerTransactionManagerImplTest extends TestCase {
       ServerTransaction tx = (ServerTransaction) iter.next();
 
       // apply stage
-      transactionManager.apply(new GlobalTransactionID(idsequence++), tx, Collections.EMPTY_MAP, new BackReferences(),
-                               imo);
-      assertTrue(action.clientID == null && action.txID == null);
+      transactionManager.apply(tx, Collections.EMPTY_MAP, new BackReferences(), imo);
+      if (actionAsserted) assertTrue(action.clientID == null && action.txID == null);
+
       // release
       transactionManager.release(null, Collections.EMPTY_SET, Collections.EMPTY_MAP);
-      assertTrue(action.clientID == null && action.txID == null);
+      if (actionAsserted) assertTrue(action.clientID == null && action.txID == null);
+
       // commit stage
       gtxm.commitAll(null, getServerTransactionIDs(txns));
       ArrayList committedIDs = new ArrayList();
       committedIDs.add(tx.getServerTransactionID());
       transactionManager.committed(committedIDs);
-      assertTrue(action.clientID == null && action.txID == null);
+      if (actionAsserted) assertTrue(action.clientID == null && action.txID == null);
 
       // broadcast stage
       transactionManager.broadcasted(tx.getChannelID(), tx.getTransactionID());
@@ -296,6 +396,26 @@ public class ServerTransactionManagerImplTest extends TestCase {
     public void rootCreated(String name, ObjectID id) {
       rootsCreated.add(new Root(name, id));
     }
+  }
+
+  private static class TestServerTransactionListener implements ServerTransactionListener {
+
+    NoExceptionLinkedQueue incomingContext  = new NoExceptionLinkedQueue();
+    NoExceptionLinkedQueue appliedContext   = new NoExceptionLinkedQueue();
+    NoExceptionLinkedQueue completedContext = new NoExceptionLinkedQueue();
+
+    public void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
+      incomingContext.put(new Object[] { cid, serverTxnIDs });
+    }
+
+    public void transactionApplied(ServerTransactionID stxID) {
+      appliedContext.put(stxID);
+    }
+
+    public void transactionCompleted(ServerTransactionID stxID) {
+      completedContext.put(stxID);
+    }
+
   }
 
   public class TestTransactionAcknowledgeAction implements TransactionAcknowledgeAction {

@@ -54,7 +54,7 @@ public class TestObjectManager implements ObjectManager {
 
   public LinkedQueue lookupObjectForCreateIfNecessaryContexts = new LinkedQueue();
 
-  public boolean lookupObjectsForCreateIfNecessary(ChannelID channelID, ObjectManagerResultsContext context) {
+  public boolean lookupObjectsFor(ChannelID channelID, ObjectManagerResultsContext context) {
     Object[] args = new Object[] { channelID, context };
     try {
       lookupObjectForCreateIfNecessaryContexts.put(args);

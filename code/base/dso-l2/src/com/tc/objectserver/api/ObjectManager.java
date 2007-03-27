@@ -74,7 +74,7 @@ public interface ObjectManager extends ManagedObjectProvider, PrettyPrintable {
    * @param context - ResultContext that gets notifications.
    * @return true if all the objects are successfully looked up.
    */
-  public boolean lookupObjectsForCreateIfNecessary(ChannelID channelID, ObjectManagerResultsContext context);
+  public boolean lookupObjectsFor(ChannelID channelID, ObjectManagerResultsContext context);
 
   /**
    * The list of rootnames

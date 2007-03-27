@@ -25,7 +25,8 @@ public interface TransactionStore {
    */
   public void removeAllByServerTransactionID(PersistenceTransaction transaction, Collection collection);
 
-  public GlobalTransactionID createGlobalTransactionID(ServerTransactionID stxnID);
+  public GlobalTransactionID getGlobalTransactionID(ServerTransactionID stxnID);
   
   public void shutdownClient(PersistenceTransaction transaction, ChannelID client);
+
 }

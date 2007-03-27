@@ -16,7 +16,6 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.lockmanager.api.LockManager;
-import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.util.SequenceValidator;
 import com.tc.util.TCTimer;
 import com.tc.util.sequence.ObjectIDSequence;
@@ -28,43 +27,40 @@ import java.util.TimerTask;
 
 public class ServerClientHandshakeManager {
 
-  private static final State             INIT                              = new State("INIT");
-  private static final State             STARTING                          = new State("STARTING");
-  private static final State             STARTED                           = new State("STARTED");
-  private static final int               BATCH_SEQUENCE_SIZE               = 10000;
+  private static final State       INIT                              = new State("INIT");
+  private static final State       STARTING                          = new State("STARTING");
+  private static final State       STARTED                           = new State("STARTED");
+  private static final int         BATCH_SEQUENCE_SIZE               = 10000;
 
-  public static final Sink               NULL_SINK                         = new NullSink();
+  public static final Sink         NULL_SINK                         = new NullSink();
 
-  private State                          state                             = INIT;
+  private State                    state                             = INIT;
 
-  private final TCTimer                  timer;
-  private final ReconnectTimerTask       reconnectTimerTask;
-  private final ClientStateManager       clientStateManager;
-  private final LockManager              lockManager;
-  private final Sink                     lockResponseSink;
-  private final long                     reconnectTimeout;
-  private final ObjectManager            objectManager;
-  private final DSOChannelManager        channelManager;
-  private final TCLogger                 logger;
-  private final SequenceValidator        sequenceValidator;
-  private final Set                      existingUnconnectedClients        = new HashSet();
-  private final ServerTransactionManager transactionManager;
-  private final ObjectIDSequence         oidSequence;
-  private final Set                      clientsRequestingObjectIDSequence = new HashSet();
-  private final boolean                  persistent;
+  private final TCTimer            timer;
+  private final ReconnectTimerTask reconnectTimerTask;
+  private final ClientStateManager clientStateManager;
+  private final LockManager        lockManager;
+  private final Sink               lockResponseSink;
+  private final long               reconnectTimeout;
+  private final ObjectManager      objectManager;
+  private final DSOChannelManager  channelManager;
+  private final TCLogger           logger;
+  private final SequenceValidator  sequenceValidator;
+  private final Set                existingUnconnectedClients        = new HashSet();
+  private final ObjectIDSequence   oidSequence;
+  private final Set                clientsRequestingObjectIDSequence = new HashSet();
+  private final boolean            persistent;
 
   public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager, ObjectManager objectManager,
                                       SequenceValidator sequenceValidator, ClientStateManager clientStateManager,
-                                      LockManager lockManager, ServerTransactionManager transactionManager,
-                                      Sink lockResponseSink, ObjectIDSequence oidSequence, TCTimer timer,
-                                      long reconnectTimeout, boolean persistent) {
+                                      LockManager lockManager, Sink lockResponseSink, ObjectIDSequence oidSequence,
+                                      TCTimer timer, long reconnectTimeout, boolean persistent) {
     this.logger = logger;
     this.channelManager = channelManager;
     this.objectManager = objectManager;
     this.sequenceValidator = sequenceValidator;
     this.clientStateManager = clientStateManager;
     this.lockManager = lockManager;
-    this.transactionManager = transactionManager;
     this.lockResponseSink = lockResponseSink;
     this.oidSequence = oidSequence;
     this.reconnectTimeout = reconnectTimeout;
@@ -110,7 +106,6 @@ public class ServerClientHandshakeManager {
       }
 
       this.sequenceValidator.initSequence(handshake.getChannelID(), handshake.getTransactionSequenceIDs());
-      this.transactionManager.setResentTransactionIDs(handshake.getChannelID(), handshake.getResentTransactionIDs());
 
       clientStateManager.addReferences(channelID, handshake.getObjectIDs());
 
@@ -209,7 +204,7 @@ public class ServerClientHandshakeManager {
       start();
     } else {
       for (Iterator i = existingConnections.iterator(); i.hasNext();) {
-        existingUnconnectedClients.add(new ChannelID(((ConnectionID)i.next()).getChannelID()));
+        existingUnconnectedClients.add(new ChannelID(((ConnectionID) i.next()).getChannelID()));
       }
       logger.info("Starting reconnect window: " + this.reconnectTimeout + " ms.");
       timer.schedule(reconnectTimerTask, this.reconnectTimeout);

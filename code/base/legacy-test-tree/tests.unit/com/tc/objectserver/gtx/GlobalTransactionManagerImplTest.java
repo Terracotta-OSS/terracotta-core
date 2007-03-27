@@ -64,7 +64,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     TransactionID tx1 = new TransactionID(1);
     ServerTransactionID stxid = new ServerTransactionID(channel1, tx1);
 
-    GlobalTransactionID gtxid = gtxm.createGlobalTransactionID(stxid);
+    GlobalTransactionID gtxid = gtxm.getGlobalTransactionID(stxid);
     assertGlobalTxWasLoaded(stxid);
 
     assertTrue(gtxm.needsApply(stxid));
@@ -87,7 +87,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     assertNextGlobalTxNotCalled();
 
     // get a new global Txid number
-    GlobalTransactionID gtxid2 = gtxm.createGlobalTransactionID(stxid);
+    GlobalTransactionID gtxid2 = gtxm.getGlobalTransactionID(stxid);
     assertNotSame(gtxid, gtxid2);
     assertFalse(gtxid.equals(gtxid2));
     assertGlobalTxWasLoaded(stxid);
@@ -115,7 +115,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     assertNextGlobalTxNotCalled();
 
     // get a new global Txid number
-    GlobalTransactionID gtxid3 = gtxm.createGlobalTransactionID(stxid);
+    GlobalTransactionID gtxid3 = gtxm.getGlobalTransactionID(stxid);
     assertNotSame(gtxid2, gtxid3);
     assertFalse(gtxid3.equals(gtxid2));
     assertGlobalTxWasLoaded(stxid);

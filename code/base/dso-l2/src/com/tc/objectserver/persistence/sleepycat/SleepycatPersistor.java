@@ -1,9 +1,9 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.persistence.sleepycat;
 
-import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.CursorConfig;
 import com.sleepycat.je.DatabaseException;
@@ -11,8 +11,6 @@ import com.sleepycat.je.Transaction;
 import com.tc.io.serializer.api.StringIndex;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.tx.ServerTransactionID;
-import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.objectserver.persistence.api.ClassPersistor;
 import com.tc.objectserver.persistence.api.ClientStatePersistor;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
@@ -41,7 +39,7 @@ public class SleepycatPersistor implements Persistor {
   private final PersistenceTransactionProvider persistenceTransactionProvider;
   private final DBEnvironment                  env;
   private final SleepycatCollectionFactory     sleepycatCollectionFactory;
-  private final PersistentMapStore clusterStateStore;
+  private final PersistentMapStore             clusterStateStore;
 
   private SleepycatCollectionsPersistor        sleepycatCollectionsPersistor;
 
@@ -90,14 +88,13 @@ public class SleepycatPersistor implements Persistor {
                                                                                    logger, 1, 0, env
                                                                                        .getClientIDDatabase()), env
                                                                  .getClientStateDatabase());
-    this.transactionPerisistor = new TransactionPersistorImpl(env.getTransactionDatabase(), new SerialBinding(env
-        .getClassCatalogWrapper().getClassCatalog(), ServerTransactionID.class), new SerialBinding(env
-        .getClassCatalogWrapper().getClassCatalog(), GlobalTransactionDescriptor.class),
+    this.transactionPerisistor = new TransactionPersistorImpl(env.getTransactionDatabase(),
                                                               this.persistenceTransactionProvider);
     this.globalTransactionIDSequence = new SleepycatSequence(this.persistenceTransactionProvider, logger, 1, 1, env
         .getTransactionSequenceDatabase());
     this.classPersistor = new ClassPersistorImpl(this.persistenceTransactionProvider, logger, env.getClassDatabase());
-    this.clusterStateStore = new SleepycatMapStore(this.persistenceTransactionProvider, logger, env.getClusterStateStoreDatabase());
+    this.clusterStateStore = new SleepycatMapStore(this.persistenceTransactionProvider, logger, env
+        .getClusterStateStoreDatabase());
   }
 
   public StringIndex getStringIndex() {
@@ -163,25 +160,25 @@ public class SleepycatPersistor implements Persistor {
 
     protected void abortOnError(Transaction tx) {
       try {
-        if(tx != null) tx.abort();
+        if (tx != null) tx.abort();
       } catch (DatabaseException e) {
         // This doesnt throw an exception as we dont want to create a Red herring.
         logger.error("Error on abortOnError", e);
       }
-      
+
     }
 
     protected void abortOnError(Cursor cursor, PersistenceTransaction ptx) {
-     abortOnError(cursor, pt2nt(ptx)); 
+      abortOnError(cursor, pt2nt(ptx));
     }
-    
+
     protected void abortOnError(Cursor cursor, Transaction tx) {
-      if(cursor != null) {
+      if (cursor != null) {
         try {
           cursor.close();
         } catch (DatabaseException e) {
-        // This doesnt throw an exception as we dont want to create a Red herring.
-        logger.error("Error on abortOnError", e);
+          // This doesnt throw an exception as we dont want to create a Red herring.
+          logger.error("Error on abortOnError", e);
         }
       }
       abortOnError(tx);

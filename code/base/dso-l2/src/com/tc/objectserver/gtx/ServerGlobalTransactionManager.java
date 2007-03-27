@@ -8,11 +8,10 @@ import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionManager;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
-import com.tc.objectserver.tx.ServerTransactionListener;
 
 import java.util.Collection;
 
-public interface ServerGlobalTransactionManager extends GlobalTransactionManager, ServerTransactionListener {
+public interface ServerGlobalTransactionManager extends GlobalTransactionManager {
 
   /**
    * Returns true if the specified transaction hasn't been applied yet. This method is partially redundant with
@@ -40,6 +39,8 @@ public interface ServerGlobalTransactionManager extends GlobalTransactionManager
   
   public void shutdownClient(ChannelID channelID);
 
-  public GlobalTransactionID createGlobalTransactionID(ServerTransactionID stxnID);
+  public GlobalTransactionID getGlobalTransactionID(ServerTransactionID stxnID);
+
+  public GlobalTransactionID createGlobalTransactionID(ServerTransactionID serverTransactionID);
 
 }

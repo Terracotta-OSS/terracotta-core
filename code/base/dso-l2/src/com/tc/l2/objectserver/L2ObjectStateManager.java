@@ -8,7 +8,7 @@ import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.net.groups.NodeID;
 import com.tc.objectserver.api.ObjectManager;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 
 public interface L2ObjectStateManager {
@@ -21,5 +21,5 @@ public interface L2ObjectStateManager {
 
   public void close(ManagedObjectSyncContext mosc);
   
-  public List getL2ObjectStates();
+  public Collection getL2ObjectStates();
 }

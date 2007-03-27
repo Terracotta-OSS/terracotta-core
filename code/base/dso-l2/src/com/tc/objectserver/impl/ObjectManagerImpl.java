@@ -200,7 +200,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         : maxReachableObjects);
   }
 
-  public boolean lookupObjectsForCreateIfNecessary(ChannelID channelID, ObjectManagerResultsContext responseContext) {
+  public boolean lookupObjectsFor(ChannelID channelID, ObjectManagerResultsContext responseContext) {
     return lookupObjectsForOptionallyCreate(channelID, responseContext, -1);
   }
 

@@ -101,7 +101,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     ManagedObjectSyncContext lookupContext = l2ObjectStateMgr.getSomeObjectsToSyncContext(nodeID, 500, dehydrateSink);
     // TODO:: Remove ChannelID from ObjectManager interface
     if (lookupContext != null) {
-      objectManager.lookupObjectsAndSubObjectsFor(ChannelID.NULL_ID, lookupContext, -1);
+      objectManager.lookupObjectsFor(ChannelID.NULL_ID, lookupContext);
     }
   }
 

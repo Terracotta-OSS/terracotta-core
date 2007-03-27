@@ -23,8 +23,8 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransactionManager;
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 public class TransactionRelayHandler extends AbstractEventHandler {
   private static final TCLogger      logger = TCLogging.getLogger(TransactionRelayHandler.class);
@@ -42,7 +42,7 @@ public class TransactionRelayHandler extends AbstractEventHandler {
 
   public void handleEvent(EventContext context) {
     IncomingTransactionContext ict = (IncomingTransactionContext) context;
-    List states = l2ObjectStateMgr.getL2ObjectStates();
+    Collection states = l2ObjectStateMgr.getL2ObjectStates();
     for (Iterator i = states.iterator(); i.hasNext();) {
       L2ObjectState state = (L2ObjectState) i.next();
       NodeID nodeID = state.getNodeID();

@@ -52,20 +52,20 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     NotifiedWaiters notifiedWaiters = new NotifiedWaiters();
     final ServerTransactionID stxnID = txn.getServerTransactionID();
     final BackReferences includeIDs = new BackReferences();
-    
-    //TODO::Comeback and fix for passive
-    GlobalTransactionID gtxnID = gtxm.createGlobalTransactionID(stxnID);
 
-    // XXX::FIXME:: this needsApply() call only returns false after the txn is commited. If we see the same txn twice
-    // before commit, then we may apply it twice, though in the current state of affairs that is not possible (unless
-    // ofcourse there is a bug !)
+    // TODO::Comeback and fix for passive
+    GlobalTransactionID gtxnID = GlobalTransactionID.NULL_ID;
+
     if (gtxm.needsApply(stxnID)) {
-      transactionManager.apply(gtxnID, txn, atc.getObjects(), includeIDs, instanceMonitor);
+      gtxnID = transactionManager.apply(txn, atc.getObjects(), includeIDs, instanceMonitor);
       txnObjectMgr.applyTransactionComplete(stxnID);
     } else {
+      gtxnID = gtxm.getGlobalTransactionID(stxnID);
       transactionManager.skipApplyAndCommit(txn);
       getLogger().warn("Not applying previously applied transaction: " + stxnID);
     }
+    
+    if (gtxnID.isNull()) { throw new AssertionError("Global Transaction ID is null"); }
 
     if (!txn.isPassive()) {
       for (Iterator i = txn.addNotifiesTo(new LinkedList()).iterator(); i.hasNext();) {

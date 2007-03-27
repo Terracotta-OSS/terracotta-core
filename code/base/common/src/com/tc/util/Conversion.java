@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -9,8 +10,8 @@ import com.tc.exception.TCRuntimeException;
 import java.io.UnsupportedEncodingException;
 
 /**
- * Data conversion algorithms and whatnot can be found in java.io.DataInput and
- * java.io.DataOutput. Contains methods for converting from one kind of thing to another.
+ * Data conversion algorithms and whatnot can be found in java.io.DataInput and java.io.DataOutput. Contains methods for
+ * converting from one kind of thing to another.
  * 
  * @author orion
  */
@@ -57,8 +58,7 @@ public class Conversion {
     if ((length < 1) || (length > 4)) { throw new IllegalArgumentException("invalid byte array length: " + length); }
 
     if ((b.length - offset) < length) { throw new IllegalArgumentException("not enough data available for length "
-                                                                           + length + " starting at offset " + offset
-                                                                           + " in a byte array of length " + b.length); }
+        + length + " starting at offset " + offset + " in a byte array of length " + b.length); }
 
     long rv = 0;
 
@@ -239,24 +239,34 @@ public class Conversion {
   }
 
   public static long bytes2Long(byte[] bytes) {
-    return (((long) bytes[0] << 56) + ((long) (bytes[1] & 0xFF) << 48) + ((long) (bytes[2] & 0xFF) << 40)
-            + ((long) (bytes[3] & 0xFF) << 32) + ((long) (bytes[4] & 0xFF) << 24) + ((bytes[5] & 0xFF) << 16)
-            + ((bytes[6] & 0xFF) << 8) + ((bytes[7] & 0xFF) << 0));
+    return bytes2Long(bytes, 0);
+  }
+
+  public static long bytes2Long(byte[] bytes, int offset) {
+
+    return (((long) bytes[offset] << 56) + ((long) (bytes[offset + 1] & 0xFF) << 48)
+        + ((long) (bytes[offset + 2] & 0xFF) << 40) + ((long) (bytes[offset + 3] & 0xFF) << 32)
+        + ((long) (bytes[offset + 4] & 0xFF) << 24) + ((bytes[offset + 5] & 0xFF) << 16)
+        + ((bytes[offset + 6] & 0xFF) << 8) + ((bytes[offset + 7] & 0xFF) << 0));
   }
 
   public static byte[] long2Bytes(long l) {
     byte[] rv = new byte[8];
-
-    rv[0] = (byte) (l >>> 56);
-    rv[1] = (byte) (l >>> 48);
-    rv[2] = (byte) (l >>> 40);
-    rv[3] = (byte) (l >>> 32);
-    rv[4] = (byte) (l >>> 24);
-    rv[5] = (byte) (l >>> 16);
-    rv[6] = (byte) (l >>> 8);
-    rv[7] = (byte) (l >>> 0);
-
+    writeLong(l, rv, 0);
     return rv;
+  }
+
+  public static void writeLong(long l, byte[] rv, int offset) {
+
+    rv[offset] = (byte) (l >>> 56);
+    rv[offset + 1] = (byte) (l >>> 48);
+    rv[offset + 2] = (byte) (l >>> 40);
+    rv[offset + 3] = (byte) (l >>> 32);
+    rv[offset + 4] = (byte) (l >>> 24);
+    rv[offset + 5] = (byte) (l >>> 16);
+    rv[offset + 6] = (byte) (l >>> 8);
+    rv[offset + 7] = (byte) (l >>> 0);
+
   }
 
   public static short bytes2Short(byte[] bytes) {

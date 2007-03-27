@@ -58,7 +58,7 @@ public interface ServerTransactionManager {
    * 
    * @return The results of the transaction apply
    */
-  public void apply(GlobalTransactionID gtxID, ServerTransaction txn, Map objects, BackReferences includeIDs,
+  public GlobalTransactionID apply(ServerTransaction txn, Map objects, BackReferences includeIDs,
                     ObjectInstanceMonitor instanceMonitor);
   
   /**
@@ -85,9 +85,9 @@ public interface ServerTransactionManager {
    */
   public void skipApplyAndCommit(ServerTransaction txn);
 
-  public void setResentTransactionIDs(ChannelID channelID, Collection transactionIDs);
-  
   public void addTransactionListener(ServerTransactionListener listener);
+
+  public void removeTransactionListener(ServerTransactionListener listener);
 
   public void incomingTransactions(ChannelID channelID, Set serverTxnIDs, boolean relayed);
 

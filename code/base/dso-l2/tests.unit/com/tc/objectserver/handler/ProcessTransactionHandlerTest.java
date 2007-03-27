@@ -28,7 +28,6 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
@@ -277,10 +276,6 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
 
     public TransactionBatchReaderFactory getTransactionBatchReaderFactory() {
       return transactionBatchReaderFactory;
-    }
-
-    public ObjectRequestManager getObjectRequestManager() {
-      throw new ImplementMe();
     }
 
     public TransactionalObjectManager getTransactionalObjectManager() {

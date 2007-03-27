@@ -12,7 +12,6 @@ import com.tc.logging.TCLogging;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
@@ -34,7 +33,6 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
   public ServerTransactionManager     transactionManager;
   public ManagedObjectStore           objectStore;
   public ServerClientHandshakeManager clientHandshakeManager;
-  public ObjectRequestManager         objectRequestManager;
   public Map                          stages = new HashMap();
   public ChannelStats                 channelStats;
   public TransactionalObjectManager   txnObjectManager;
@@ -86,10 +84,6 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
 
   public TransactionBatchReaderFactory getTransactionBatchReaderFactory() {
     throw new ImplementMe();
-  }
-
-  public ObjectRequestManager getObjectRequestManager() {
-    return objectRequestManager;
   }
 
   public TransactionalObjectManager getTransactionalObjectManager() {

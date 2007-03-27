@@ -78,7 +78,6 @@ import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.objectserver.DSOApplicationEvents;
 import com.tc.objectserver.api.ObjectManagerMBean;
-import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -555,8 +554,6 @@ public class DistributedObjectServer extends SEDA {
                                 hydrateSink);
     l1Listener.routeMessageType(TCMessageType.CLIENT_JMX_READY_MESSAGE, jmxRemoteTunnelStage.getSink(), hydrateSink);
 
-    ObjectRequestManager objectRequestManager = new ObjectRequestManagerImpl(objectManager, transactionManager);
-
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.clientReconnectWindow());
     long reconnectTimeout = l2DSOConfig.clientReconnectWindow().getInt();
     logger.debug("Client Reconnect Window: " + reconnectTimeout + " seconds");
@@ -569,7 +566,6 @@ public class DistributedObjectServer extends SEDA {
                                                                                            sequenceValidator,
                                                                                            clientStateManager,
                                                                                            lockManager,
-                                                                                           transactionManager,
                                                                                            stageManager
                                                                                                .getStage(
                                                                                                          ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE)
@@ -589,7 +585,7 @@ public class DistributedObjectServer extends SEDA {
       l2Coordinator = new L2HADisabledCooridinator();
     }
 
-    context = new ServerConfigurationContextImpl(stageManager, objectManager, objectRequestManager, objectStore,
+    context = new ServerConfigurationContextImpl(stageManager, objectManager, objectStore,
                                                  lockManager, channelManager, clientStateManager, transactionManager,
                                                  txnObjectManager, clientHandshakeManager, channelStats, l2Coordinator,
                                                  new CommitTransactionMessageToTransactionBatchReader());

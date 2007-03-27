@@ -232,7 +232,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     objectManager.stop();
 
     try {
-      objectManager.lookupObjectsForCreateIfNecessary(null, null);
+      objectManager.lookupObjectsFor(null, null);
       fail("Should have thrown a ShutdownError.");
     } catch (ShutdownError e) {
       // ok.
@@ -266,7 +266,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     ChannelID key = new ChannelID(0);
 
     TestResultsContext results = new TestResultsContext(ids, ids);
-    this.objectManager.lookupObjectsForCreateIfNecessary(key, results);
+    this.objectManager.lookupObjectsFor(key, results);
     assertEquals(2, results.objects.size());
 
     ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
@@ -291,7 +291,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     results = new TestResultsContext(ids, newIDs);
 
-    this.objectManager.lookupObjectsForCreateIfNecessary(key, results);
+    this.objectManager.lookupObjectsFor(key, results);
     assertEquals(4, results.objects.size());
 
     int count = 100;
@@ -317,7 +317,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     TestResultsContext responseContext = new TestResultsContext(ids, ids);
     final Map lookedUpObjects = responseContext.objects;
 
-    this.objectManager.lookupObjectsForCreateIfNecessary(null, responseContext);
+    this.objectManager.lookupObjectsFor(null, responseContext);
     assertEquals(ids.size(), lookedUpObjects.size());
 
     ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
@@ -368,7 +368,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     TestResultsContext responseContext = new TestResultsContext(ids, ids);
     final Map lookedUpObjects = responseContext.objects;
 
-    this.objectManager.lookupObjectsForCreateIfNecessary(null, responseContext);
+    this.objectManager.lookupObjectsFor(null, responseContext);
     assertEquals(ids.size(), lookedUpObjects.size());
 
     ManagedObject dateManagedObject = (ManagedObject) lookedUpObjects.get(dateID);
@@ -396,7 +396,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     TestResultsContext responseContext = new TestResultsContext(ids, ids);
     final Map lookedUpObjects = responseContext.objects;
 
-    this.objectManager.lookupObjectsForCreateIfNecessary(null, responseContext);
+    this.objectManager.lookupObjectsFor(null, responseContext);
     assertEquals(ids.size(), lookedUpObjects.size());
 
     ManagedObject managedObject = (ManagedObject) lookedUpObjects.get(literalID);
@@ -440,7 +440,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     TestResultsContext responseContext = new TestResultsContext(ids, ids);
     final Map lookedUpObjects = responseContext.objects;
 
-    this.objectManager.lookupObjectsForCreateIfNecessary(null, responseContext);
+    this.objectManager.lookupObjectsFor(null, responseContext);
     assertEquals(ids.size(), lookedUpObjects.size());
 
     ManagedObject list = (ManagedObject) lookedUpObjects.get(listID);
@@ -647,7 +647,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     TestResultsContext responseContext = new TestResultsContext(ids, ids);
     Map lookedUpObjects = responseContext.objects;
 
-    objectManager.lookupObjectsForCreateIfNecessary(key, responseContext);
+    objectManager.lookupObjectsFor(key, responseContext);
 
     ManagedObject lookedUpViaLookupObjectsForCreateIfNecessary = (ManagedObject) lookedUpObjects.get(id);
 
@@ -712,7 +712,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     responseContext = new TestResultsContext(ids, Collections.EMPTY_SET);
     lookedUpObjects = responseContext.objects;
 
-    objectManager.lookupObjectsForCreateIfNecessary(key, responseContext);
+    objectManager.lookupObjectsFor(key, responseContext);
     lookedUpViaLookupObjectsForCreateIfNecessary = (ManagedObject) lookedUpObjects.get(id);
     countSlot.set(0, new Integer(1));
     ObjectID newReferenceID = new ObjectID(9324);
@@ -801,7 +801,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     oids.add(new ObjectID(1));
 
     final TestResultsContext context = new TestResultsContext(oids, oids);
-    this.objectManager.lookupObjectsForCreateIfNecessary(null, context);
+    this.objectManager.lookupObjectsFor(null, context);
     context.waitTillComplete();
     ManagedObject mo = (ManagedObject) (context.objects).get(new ObjectID(1));
     assertTrue(mo.isNew());

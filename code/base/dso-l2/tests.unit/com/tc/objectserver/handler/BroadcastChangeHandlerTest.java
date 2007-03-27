@@ -134,7 +134,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
   private EventContext getBroadcastTxnContext(ServerTransaction tx) {
     ServerTransactionID stxID = tx.getServerTransactionID();
-    GlobalTransactionID gid = gtxm.createGlobalTransactionID(stxID);
+    GlobalTransactionID gid = gtxm.getGlobalTransactionID(stxID);
     return new BroadcastChangeContext(gid, tx, gtxm.getLowGlobalTransactionIDWatermark(), new NotifiedWaiters(),
                                       new BackReferences());
   }

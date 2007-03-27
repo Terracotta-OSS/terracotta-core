@@ -57,7 +57,7 @@ public class ElectionManagerImpl implements ElectionManager {
         try {
           groupManager.sendTo(msg.messageFrom(), response);
         } catch (GroupException e) {
-          throw new AssertionError(e);
+          logger.error("Error sending Votes to : " + msg.messageFrom(), e);
         }
       } else {
         logger.info("Casted vote from " + msg);
@@ -88,7 +88,7 @@ public class ElectionManagerImpl implements ElectionManager {
       try {
         groupManager.sendTo(msg.messageFrom(), resultConflict);
       } catch (GroupException e) {
-        throw new AssertionError(e);
+        logger.error("Error sending Election result conflict message : " + resultConflict);
       }
     }
     if (state == ELECTION_IN_PROGRESS) {
@@ -100,7 +100,7 @@ public class ElectionManagerImpl implements ElectionManager {
     try {
       groupManager.sendTo(msg.messageFrom(), resultAgreed);
     } catch (GroupException e) {
-      throw new AssertionError(e);
+      logger.error("Error sending Election result agreed message : " + resultAgreed);
     }
   }
 
@@ -120,8 +120,7 @@ public class ElectionManagerImpl implements ElectionManager {
     try {
       this.groupManager.sendAll(msg);
     } catch (GroupException e) {
-      logger.error(e);
-      throw new AssertionError(e);
+      logger.error("Error declaring results : ", e);
     }
     logger.info("Declared as Winner: Winner is : " + this.winner);
     reset();
@@ -134,15 +133,18 @@ public class ElectionManagerImpl implements ElectionManager {
   }
 
   public NodeID runElection(NodeID myNodeId, boolean isNew) {
-    NodeID winnerID;
-    try {
-      while ((winnerID = doElection(myNodeId, isNew)).isNull()) {
-        // re-election
-        logger.info("Requesting Re-election !!!");
+    NodeID winnerID = NodeID.NULL_ID;
+    int count = 0;
+    while (winnerID.isNull()) {
+      if (count++ > 1) {
+        logger.info("Requesting Re-election !!! count = " + count);
       }
-    } catch (GroupException e1) {
-      logger.error("Error during election : ", e1);
-      throw new AssertionError(e1);
+      try {
+        winnerID = doElection(myNodeId, isNew);
+      } catch (GroupException e1) {
+        logger.error("Error during election : ", e1);
+        reset();
+      }
     }
     return winnerID;
   }

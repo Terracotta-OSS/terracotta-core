@@ -9,7 +9,6 @@ import com.tc.l2.api.L2Coordinator;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.lockmanager.api.LockManager;
@@ -72,7 +71,5 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public ChannelStats getChannelStats();
 
   public TransactionBatchReaderFactory getTransactionBatchReaderFactory();
-
-  public ObjectRequestManager getObjectRequestManager();
 
 }

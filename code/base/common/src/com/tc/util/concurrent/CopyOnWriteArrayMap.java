@@ -6,6 +6,7 @@ package com.tc.util.concurrent;
 
 import com.tc.exception.ImplementMe;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Map;
@@ -26,7 +27,7 @@ import java.util.Set;
  * In the above code, if multiple threads are accessing t, to avoid ConcurrentModificationException, you need to
  * synchronize the entire for loop.
  * <p>
- * Using CopyOnWriteArrayMap and using the special valuesArray() method will give you a snapshot of the values will
+ * Using CopyOnWriteArrayMap and using the values() method will give you a snapshot of the values thus 
  * avoid synchronizing the map for the entire duration of the for loop.
  * <p>
  * This is achieved by maintaining an internal copy of the values in an array and copying that on modification. So an in
@@ -107,12 +108,8 @@ public class CopyOnWriteArrayMap extends Hashtable {
     return old;
   }
 
-  public Collection values() {
-    throw new ImplementMe("This is not implemented yet due to lack to time."
-        + " Support for remove needs to be provided by wrapping super iterators with my own iterators");
+  public synchronized Collection values() {
+    return Arrays.asList(_values);
   }
   
-  public synchronized Object[] valuesArray() {
-    return _values;
-  }
 }

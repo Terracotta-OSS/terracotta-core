@@ -15,30 +15,30 @@ public class CopyOnWriteArrayMapTest extends TestCase {
   public void testBasic() throws Exception {
     CopyOnWriteArrayMap cam = new CopyOnWriteArrayMap();
     ArrayList al = new ArrayList();
-    assertArrayEquals(al.toArray(), cam.valuesArray());
+    assertArrayEquals(al.toArray(), cam.values().toArray());
 
     // test put new key
     String s1 = "Hello there";
     al.add(s1);
     cam.put(s1, s1);
-    assertArrayEquals(al.toArray(), cam.valuesArray());
+    assertArrayEquals(al.toArray(), cam.values().toArray());
 
     // test put new key
     String s2 = "Hello back";
     al.add(s2);
     cam.put(new Integer(10), s2);
-    assertArrayEquals(al.toArray(), cam.valuesArray());
+    assertArrayEquals(al.toArray(), cam.values().toArray());
 
     // test put old key
     String s3 = "Hello Saro";
     al.remove(1);
     al.add(s3);
     cam.put(new Integer(10), s3);
-    assertArrayEquals(al.toArray(), cam.valuesArray());
+    assertArrayEquals(al.toArray(), cam.values().toArray());
 
     // test remap
     cam.put(new Integer(10), s3);
-    assertArrayEquals(al.toArray(), cam.valuesArray());
+    assertArrayEquals(al.toArray(), cam.values().toArray());
 
     // test putall
     Map m = new LinkedHashMap();
@@ -47,24 +47,24 @@ public class CopyOnWriteArrayMapTest extends TestCase {
     m.put(new Long(191), new Float(191.1));
     al.addAll(m.values());
     cam.putAll(m);
-    assertArrayEquals(al.toArray(), cam.valuesArray());
+    assertArrayEquals(al.toArray(), cam.values().toArray());
 
     // test non-existent key removal
     cam.remove("uv rays");
-    assertArrayEquals(al.toArray(), cam.valuesArray());
+    assertArrayEquals(al.toArray(), cam.values().toArray());
 
     // test existent key removal
     al.remove(1);
     cam.remove(new Integer(10));
-    assertArrayEquals(al.toArray(), cam.valuesArray());
+    assertArrayEquals(al.toArray(), cam.values().toArray());
     al.remove(al.size() - 1);
     cam.remove(new Long(191));
-    assertArrayEquals(al.toArray(), cam.valuesArray());
+    assertArrayEquals(al.toArray(), cam.values().toArray());
 
     // test clear
     al.clear();
     cam.clear();
-    assertArrayEquals(al.toArray(), cam.valuesArray());
+    assertArrayEquals(al.toArray(), cam.values().toArray());
 
   }
 

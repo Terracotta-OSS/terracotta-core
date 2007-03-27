@@ -28,7 +28,6 @@ import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.TransactionStore;
 import com.tc.stats.counter.Counter;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -68,7 +67,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.action = action;
     this.transactionRateCounter = transactionRateCounter;
     this.channelStats = channelStats;
-    this.addTransactionListener(gtxm);
   }
 
   public void dump() {
@@ -98,16 +96,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     stateManager.shutdownClient(waitee);
     lockManager.clearAllLocksFor(waitee);
     gtxm.shutdownClient(waitee);
-    fireClientDisconnectedEvent(waitee);
-  }
-
-  public void setResentTransactionIDs(ChannelID channelID, Collection transactionIDs) {
-    Collection stxIDs = new ArrayList();
-    for (Iterator iter = transactionIDs.iterator(); iter.hasNext();) {
-      TransactionID txn = (TransactionID) iter.next();
-      stxIDs.add(new ServerTransactionID(channelID, txn));
-    }
-    fireAddResentTransactionIDsEvent(stxIDs);
   }
 
   public void addWaitingForAcknowledgement(ChannelID waiter, TransactionID txnID, ChannelID waitee) {
@@ -124,11 +112,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private void acknowledge(ChannelID waiter, TransactionID txnID) {
     final ServerTransactionID serverTxnID = new ServerTransactionID(waiter, txnID);
     fireTransactionCompleteEvent(serverTxnID);
-    if (!gtxm.needsApply(serverTxnID)) {
-      // the GlobalTransactionID can by null if the server crashed before the global transaction was stored. We only
-      // want to accept acknowledgements for the global transaction id that we actually persisted.
-      action.acknowledgeTransaction(serverTxnID);
-    }
+    action.acknowledgeTransaction(serverTxnID);
   }
 
   public void acknowledgement(ChannelID waiter, TransactionID txnID, ChannelID waitee) {
@@ -146,12 +130,16 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  public void apply(GlobalTransactionID gtxID, ServerTransaction txn, Map objects, BackReferences includeIDs,
-                    ObjectInstanceMonitor instanceMonitor) {
+  public GlobalTransactionID apply(ServerTransaction txn, Map objects, BackReferences includeIDs,
+                                   ObjectInstanceMonitor instanceMonitor) {
 
+    final ServerTransactionID stxnID = txn.getServerTransactionID();
     final ChannelID channelID = txn.getChannelID();
     final TransactionID txnID = txn.getTransactionID();
     final List changes = txn.getChanges();
+
+    // TODO:: Fix for passive
+    GlobalTransactionID gtxID = gtxm.createGlobalTransactionID(stxnID);
 
     TransactionAccount ci;
     if (txn.isPassive()) {
@@ -191,6 +179,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     transactionRateCounter.increment();
     if (!channelID.isNull()) channelStats.notifyTransaction(channelID);
 
+    fireTransactionAppliedEvent(stxnID);
+    return gtxID;
   }
 
   public void skipApplyAndCommit(ServerTransaction txn) {
@@ -253,8 +243,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         acknowledge(waiter, txnID);
       }
 
-      // TODO :: Move this to apply() and not commit(). Also check out DEV-473
-      fireTransactionAppliedEvent(txnId);
     }
   }
 
@@ -322,6 +310,11 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.txnEventListeners.add(listener);
   }
 
+  public void removeTransactionListener(ServerTransactionListener listener) {
+    if (listener == null) { throw new IllegalArgumentException("listener cannot be null"); }
+    this.txnEventListeners.remove(listener);
+  }
+
   private void fireIncomingTransactionsEvent(ChannelID cid, Set serverTxnIDs) {
     for (Iterator iter = txnEventListeners.iterator(); iter.hasNext();) {
       try {
@@ -367,33 +360,4 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  private void fireAddResentTransactionIDsEvent(Collection stxIDs) {
-    for (Iterator iter = txnEventListeners.iterator(); iter.hasNext();) {
-      try {
-        ServerTransactionListener listener = (ServerTransactionListener) iter.next();
-        listener.addResentServerTransactionIDs(stxIDs);
-      } catch (Exception e) {
-        if (logger.isDebugEnabled()) {
-          logger.debug(e);
-        } else {
-          logger.warn("Exception in addResentServerTransactionIDs()  event callback: " + e.getMessage());
-        }
-      }
-    }
-  }
-
-  private void fireClientDisconnectedEvent(ChannelID waitee) {
-    for (Iterator iter = txnEventListeners.iterator(); iter.hasNext();) {
-      try {
-        ServerTransactionListener listener = (ServerTransactionListener) iter.next();
-        listener.clearAllTransactionsFor(waitee);
-      } catch (Exception e) {
-        if (logger.isDebugEnabled()) {
-          logger.debug(e);
-        } else {
-          logger.warn("Exception in addResentServerTransactionIDs()  event callback: " + e.getMessage());
-        }
-      }
-    }
-  }
 }

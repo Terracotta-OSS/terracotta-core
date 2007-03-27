@@ -29,7 +29,6 @@ import com.tc.objectserver.l1.api.TestClientStateManager.AddReferenceContext;
 import com.tc.objectserver.lockmanager.api.TestLockManager;
 import com.tc.objectserver.lockmanager.api.TestLockManager.ReestablishLockContext;
 import com.tc.objectserver.lockmanager.api.TestLockManager.WaitCallContext;
-import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.SequenceID;
 import com.tc.util.SequenceValidator;
@@ -78,9 +77,8 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
   private void initHandshakeManager() {
     this.hm = new ServerClientHandshakeManager(TCLogging.getLogger(ServerClientHandshakeManager.class), channelManager,
                                                objectManager, sequenceValidator, clientStateManager, lockManager,
-                                               new TestServerTransactionManager(), lockResponseSink,
-                                               new ObjectIDSequenceProvider(objectIDSequenceStart), timer,
-                                               reconnectTimeout, false);
+                                               lockResponseSink, new ObjectIDSequenceProvider(objectIDSequenceStart),
+                                               timer, reconnectTimeout, false);
     this.hm.setStarting(convertToConnectionIds(existingUnconnectedClients));
   }
 
@@ -347,9 +345,9 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
   private static final class TestChannelManager implements DSOChannelManager {
 
-    public final List       closeAllChannelIDs     = new ArrayList();
-    public final Map        handshakeMessages = new HashMap();
-    public final Collection channelIDs        = new HashSet();
+    public final List       closeAllChannelIDs = new ArrayList();
+    public final Map        handshakeMessages  = new HashMap();
+    public final Collection channelIDs         = new HashSet();
 
     public void closeAll(Collection theChannelIDs) {
       closeAllChannelIDs.addAll(theChannelIDs);

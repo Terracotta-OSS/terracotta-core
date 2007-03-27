@@ -146,7 +146,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     LookupContext lookupContext = null;
     if (!newRequests.isEmpty()) {
       lookupContext = new LookupContext(newRequests, (newTxn ? txn.getNewObjectIDs() : Collections.EMPTY_SET));
-      if (objectManager.lookupObjectsForCreateIfNecessary(txn.getChannelID(), lookupContext)) {
+      if (objectManager.lookupObjectsFor(txn.getChannelID(), lookupContext)) {
         addLookedupObjects(lookupContext);
       } else {
         // New request went pending in object manager

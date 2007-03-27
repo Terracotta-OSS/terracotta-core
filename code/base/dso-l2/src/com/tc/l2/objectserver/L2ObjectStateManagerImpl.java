@@ -14,11 +14,10 @@ import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.concurrent.CopyOnWriteArrayMap;
 
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -69,8 +68,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     }
   }
 
-  public List getL2ObjectStates() {
-    return Arrays.asList(nodes.valuesArray());
+  public Collection getL2ObjectStates() {
+    return nodes.values();
   }
 
   private static final class L2ObjectStateimpl implements L2ObjectState {
