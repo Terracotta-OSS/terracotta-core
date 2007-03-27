@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2007 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved
+
+-->
+<xml-fragment>
+	<instrumented-classes>
+		<include>
+			<class-expression>*..*</class-expression>
+		</include>
+	</instrumented-classes>
+	<roots>
+		<root>
+			<field-name>com.uwyn.rife.engine.ContinuationManager.mContexts</field-name>
+			<root-name>mContexts</root-name>
+		</root>
+		<root>
+			<field-name>com.uwyn.rife.template.TemplateClassLoader.mBytecodeRepository</field-name>
+			<root-name>mBytecodeRepository</root-name>
+		</root>
+	</roots>
+	<locks>
+		<autolock>
+			<method-expression>* *..*.*(..)</method-expression>
+			<lock-level>write</lock-level>
+		</autolock>
+	</locks>
+	<transient-fields>
+		<field-name>com.uwyn.rife.engine.Gate.mInitException</field-name>
+		<field-name>com.uwyn.rife.engine.RequestState.mResponse</field-name>
+		<field-name>com.uwyn.rife.engine.ElementContext.mResponse</field-name>
+		<field-name>com.uwyn.rife.engine.ContinuationManager.mRandom</field-name>
+		<field-name>com.uwyn.rife.engine.Site$SiteData.mResourceModificationTimes</field-name>
+		<field-name>com.uwyn.rife.engine.Site$SiteData.mUrls</field-name>
+		<field-name>com.uwyn.rife.servlet.RifeFilter.mClassloader</field-name>
+		<field-name>com.uwyn.rife.servlet.HttpResponse.mResponse</field-name>
+		<field-name>com.uwyn.rife.servlet.HttpRequest.mHttpServletRequest</field-name>
+		<field-name>com.uwyn.rife.template.InternalString.mBytesValue_US_ASCII</field-name>
+		<field-name>com.uwyn.rife.template.InternalString.mBytesValue_ISO_8859_1</field-name>
+		<field-name>com.uwyn.rife.template.InternalString.mBytesValue_UTF_8</field-name>
+		<field-name>com.uwyn.rife.template.InternalString.mBytesValue_UTF_16</field-name>
+		<field-name>com.uwyn.rife.template.InternalString.mBytesValue_UTF_16BE</field-name>
+		<field-name>com.uwyn.rife.template.InternalString.mBytesValue_UTF_16LE</field-name>
+		<field-name>org.apache.catalina.core.ApplicationFilterConfig.context</field-name>
+	</transient-fields>
+</xml-fragment>
