@@ -18,8 +18,10 @@ if test "$1" = "-q" || test -n "${TC_INSTALL_DIR}"; then
     echo "can locate your Terracotta installation."
     exit 1
   fi
-  test "$1" = "-q" && shift
-  __DSO_ENV_QUIET="true"
+  if test "$1" = "-q"; then
+    shift
+    __DSO_ENV_QUIET="true"
+  fi
 else
   TC_INSTALL_DIR=`dirname "$0"`/..
 fi
