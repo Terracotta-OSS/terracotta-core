@@ -1,0 +1,67 @@
+Clustered Lucene 2.0.0
+----------------------
+
+Q: What is the feature for (what gap does it fill)? 
+A: Support for clustering the Lucene Framework.
+
+
+Q: What does the feature do? 
+A: It encapsulates the clustering configuration for the Lucene Framework, client apps using 
+the Clustered Lucene module will no longer need to worry about these details, allowing them 
+to concentrate on the details of configuring their app for clustering in Terracotta.
+
+
+Q: How does it work? 
+A: The Clustered Lucene module provides a fragment of Terracotta configuration to instrument
+the classes under the 'org.apache.lucene.store' package. It also specifies lock 
+configurations for the RAMDirectory and RAMOutputStream methods.
+
+To examine this fragment, you may extract the file named 'terracotta.xml' form the Clustered
+Lucene module's jar file, which can be found in the modules directory of a Terracotta 
+installation.
+
+Client applications can then declare a RAMDirectory field, and mark it as root.
+
+A sample application using the Clustered Lucene module can be downloaded from:
+http://svn.terracotta.org/svn/forge/projects/labs/terracotta-lucene-examples/trunk/terracotta-lucene-examples
+
+
+Q: Does it introduce any new concepts? If so, what are they? 
+A: No.
+
+
+Q: Is there an impact on configuration? 
+A: Yes. You'll need to specify in the client configuration that the Clustered Lucene module
+must be loaded.
+
+In the clients/modules section of the config, add the following entry:
+
+<clients>
+  <modules>
+    <module name="clustered-lucene" version="2.0.0"/>
+  </modules>
+</clients>
+
+
+Q: Is there an impact on development (e.g., new way of working with eclipse)? 
+A: None.
+
+
+A: Is there an impact on scalability or performance? 
+A: Although the configuration was written to make the locks more efficient (eg: write-locks 
+only on methods that actually modify data), we still need to write tests to measure performance
+and scalability.
+
+
+Q: Is there an impact on deployment and operation? 
+A: No. The Clustered Lucene module, starting at version 2.3.0, is one of the modules that 
+come pre-packaged with Terracotta.
+
+
+Q: Is there anything you'd like to add to the FAQ and/or the troubleshooting guide? 
+A: Yes. This module was written and tested against Lucene 2.0.0; though it might work against 
+subsequent releases, this is far from guaranteed.
+
+
+Q: Error messages?
+A: None.
