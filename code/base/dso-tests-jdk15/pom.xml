@@ -26,51 +26,38 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>linked-child-process</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>thirdparty</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
       <artifactId>legacy-test-tree</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-l1-jdk15</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-common-jdk15</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>deploy</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>dso-l1</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>simulator</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>aspectwerkz</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>dso-l2</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>common</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>simulator</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

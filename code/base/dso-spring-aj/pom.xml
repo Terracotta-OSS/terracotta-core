@@ -24,10 +24,6 @@
       <groupId>org.terracotta</groupId>
       <artifactId>dso-common</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>simulator</artifactId>
-    </dependency>
     <!--
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -45,6 +41,9 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>dso-spring-tests</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -57,14 +56,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>legacy-test-tree</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-container-tests</artifactId>
     </dependency>
     <dependency>
       <groupId>aspectj</groupId>

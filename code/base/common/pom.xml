@@ -177,17 +177,5 @@
       <artifactId>serializer</artifactId>
     </dependency>
     -->
-    <dependency>
-      <groupId>jrexx</groupId>
-      <artifactId>jrexx</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>backport175</groupId>
-      <artifactId>backport175</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>asm</groupId>
-      <artifactId>asm</artifactId>
-    </dependency>
   </dependencies>
 </project>

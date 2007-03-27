@@ -48,11 +48,7 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>thirdparty</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>simulator</artifactId>
-    </dependency>
+    </dependency>    
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>deploy</artifactId>
@@ -71,9 +67,24 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
+      <artifactId>common</artifactId>
+      <version>${tcVersion}</version>      
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>simulator</artifactId>
+      <version>${tcVersion}</version>      
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
       <artifactId>legacy-test-tree</artifactId>
       <version>${tcVersion}</version>
       <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>

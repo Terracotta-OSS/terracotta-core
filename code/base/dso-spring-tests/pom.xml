@@ -13,6 +13,28 @@
       <artifactId>dso-container-tests</artifactId>
       <version>${tcVersion}</version>
       <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>common</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>simulator</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>legacy-test-tree</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -46,10 +68,7 @@
       <groupId>org.terracotta</groupId>
       <artifactId>dso-l1</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>legacy-test-tree</artifactId>
-    </dependency>
+
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate</artifactId>

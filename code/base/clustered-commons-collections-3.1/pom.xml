@@ -19,6 +19,14 @@
       <artifactId>legacy-test-tree</artifactId>
       <version>${tcVersion}</version>
       <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>simulator</artifactId>
+      <version>${tcVersion}</version>      
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

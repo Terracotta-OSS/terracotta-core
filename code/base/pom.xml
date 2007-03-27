@@ -65,6 +65,17 @@
         <module>dso-tests-jdk15</module>
       </modules>
     </profile>
+    <profile>
+      <id>J2SE-1.6</id>
+      <activation>
+        <jdk>1.6</jdk>
+      </activation>
+      <modules>
+        <module>dso-common-jdk15</module>
+        <module>dso-l1-jdk15</module>
+        <module>dso-tests-jdk15</module>
+      </modules>
+    </profile>
   </profiles>
 
   <dependencyManagement>

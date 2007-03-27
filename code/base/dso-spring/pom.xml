@@ -14,9 +14,31 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
+      <artifactId>common</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>simulator</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
       <artifactId>legacy-test-tree</artifactId>
       <version>${tcVersion}</version>
       <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>dso-l1</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -41,10 +63,6 @@
     <dependency>
       <groupId>ehcache</groupId>
       <artifactId>ehcache</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>simulator</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>

@@ -11,6 +11,17 @@
   <artifactId>management</artifactId>
   <dependencies>
     <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>common</artifactId>
+      <version>${tcVersion}</version>      
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>javax.management</groupId>
       <artifactId>jmxremote</artifactId>     
     </dependency>
