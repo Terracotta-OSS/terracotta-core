@@ -118,8 +118,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   void addTransient(String className, String fieldName);
 
-  void addTransientType(String className, String fieldName);
-
   String getOnLoadScriptIfDefined(ClassInfo classInfo);
 
   String getPostCreateMethodIfDefined(String className);

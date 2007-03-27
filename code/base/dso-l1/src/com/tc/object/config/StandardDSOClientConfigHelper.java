@@ -34,6 +34,7 @@ import com.tc.object.PortabilityImpl;
 import com.tc.object.SerializationUtil;
 import com.tc.object.bytecode.AbstractListMethodCreator;
 import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.bytecode.ClassAdapterBase;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.DSOUnsafeAdapter;
 import com.tc.object.bytecode.JavaLangReflectArrayAdapter;
@@ -112,7 +113,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
   private Lock[]                                 locks                              = new Lock[0];
   private final Map                              roots                              = new ConcurrentHashMap();
-  private final Map                              types                              = new HashMap();
 
   private final Set                              applicationNames                   = Collections
                                                                                         .synchronizedSet(new HashSet());
@@ -123,7 +123,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   private final List                             distributedMethods                 = new LinkedList();                    // <DistributedMethodSpec>
   private final Map                              userDefinedBootSpecs               = new HashMap();
 
-//  private final ClassInfoFactory                 classInfoFactory;
+  // private final ClassInfoFactory classInfoFactory;
   private final ExpressionHelper                 expressionHelper;
 
   private final Map                              adaptableCache                     = new HashMap();
@@ -178,7 +178,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     this.portability = new PortabilityImpl(this);
     this.configSetupManager = configSetupManager;
     helperLogger = new DSOClientConfigHelperLogger(logger);
-//    this.classInfoFactory = new ClassInfoFactory();
+    // this.classInfoFactory = new ClassInfoFactory();
     this.expressionHelper = new ExpressionHelper();
     modulesContext.setModules(configSetupManager.commonL1Config().modules() != null ? configSetupManager
         .commonL1Config().modules() : Modules.Factory.newInstance());
@@ -242,7 +242,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     logger.debug("web-applications: " + this.applicationNames);
     logger.debug("synchronous-write web-applications: " + this.synchronousWriteApplications);
     logger.debug("roots: " + this.roots);
-    logger.debug("transients: " + this.types);
     logger.debug("locks: " + this.locks);
     logger.debug("distributed-methods: " + this.distributedMethods);
 
@@ -759,7 +758,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
     // TODO move into its own plugin/module
     addCustomAdapter("wicket.protocol.http.WebApplication", new WicketWebApplicationAdapter());
-    
+
     doAutoconfigForSpring();
     doAutoconfigForSpringWebFlow();
 
@@ -1096,28 +1095,28 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     return visitor.match(expressionHelper.createExecutionExpressionContext(methodInfo));
   }
 
-//  private MethodInfo getMethodInfo(int modifiers, String className, String methodName, String description,
-//                                   String[] exceptions) {
-//    // TODO: This probably needs caching.
-//    return new AsmMethodInfo(classInfoFactory, modifiers, className, methodName, description, exceptions);
-//  }
+  // private MethodInfo getMethodInfo(int modifiers, String className, String methodName, String description,
+  // String[] exceptions) {
+  // // TODO: This probably needs caching.
+  // return new AsmMethodInfo(classInfoFactory, modifiers, className, methodName, description, exceptions);
+  // }
 
-//  private ConstructorInfo getConstructorInfo(int modifiers, String className, String methodName, String description,
-//                                             String[] exceptions) {
-//    return new AsmConstructorInfo(classInfoFactory, modifiers, className, methodName, description, exceptions);
-//  }
+  // private ConstructorInfo getConstructorInfo(int modifiers, String className, String methodName, String description,
+  // String[] exceptions) {
+  // return new AsmConstructorInfo(classInfoFactory, modifiers, className, methodName, description, exceptions);
+  // }
 
-//  private MemberInfo getMemberInfo(int modifiers, String className, String methodName, String description,
-//                                   String[] exceptions) {
-//    if (false && "<init>".equals(methodName)) {
-//      // XXX: ConstructorInfo seems to really break things. Plus, locks in
-//      // constructors don't work yet.
-//      // When locks in constructors work, we'll have to sort this problem out.
-//      return getConstructorInfo(modifiers, className, methodName, description, exceptions);
-//    } else {
-//      return getMethodInfo(modifiers, className, methodName, description, exceptions);
-//    }
-//  }
+  // private MemberInfo getMemberInfo(int modifiers, String className, String methodName, String description,
+  // String[] exceptions) {
+  // if (false && "<init>".equals(methodName)) {
+  // // XXX: ConstructorInfo seems to really break things. Plus, locks in
+  // // constructors don't work yet.
+  // // When locks in constructors work, we'll have to sort this problem out.
+  // return getConstructorInfo(modifiers, className, methodName, description, exceptions);
+  // } else {
+  // return getMethodInfo(modifiers, className, methodName, description, exceptions);
+  // }
+  // }
 
   private static boolean isNotStaticAndIsSynchronized(int modifiers) {
     return !Modifier.isStatic(modifiers) && Modifier.isSynchronized(modifiers);
@@ -1198,9 +1197,9 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
     String className = "java.util.Hashtable";
     ClassInfo classInfo = AsmClassInfo.getClassInfo(className, getClass().getClassLoader());
-    
+
     String patterns = "get(Ljava/lang/Object;)Ljava/lang/Object;|" + //
-                      "hashCode()I|" + // 
+                      "hashCode()I|" + //
                       "contains(Ljava/lang/Object;)Z|" + //
                       "containsKey(Ljava/lang/Object;)Z|" + //
                       "elements()Ljava/util/Enumeration;|" + //
@@ -1368,10 +1367,13 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
   public boolean isTransient(int modifiers, ClassInfo classInfo, String field) {
     if (ByteCodeUtil.isParent(field)) return true;
+    if (ClassAdapterBase.isDelegateFieldName(field)) { return false; }
+
     String className = classInfo.getName();
     if (Modifier.isTransient(modifiers) && isHonorJavaTransient(classInfo)) return true;
-    Type type = (Type) types.get(className);
-    if (type != null) { return (type.containsTransient(field)); }
+
+    TransparencyClassSpec spec = getSpec(className);
+    if (spec != null) { return spec.getTransients().contains(field); }
     return false;
   }
 
@@ -1619,7 +1621,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
       Set bjClasses = bootJar.getAllPreInstrumentedClasses();
       bootJarPopulation = bjClasses.size();
       TransparencyClassSpec[] allSpecs = getAllSpecs();
-      for (int i=0; i<allSpecs.length; i++) {
+      for (int i = 0; i < allSpecs.length; i++) {
         TransparencyClassSpec classSpec = allSpecs[i];
         String message = "";
         if (classSpec.isPreInstrumented()) {
@@ -1673,16 +1675,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   public void addTransient(String className, String fieldName) {
     TransparencyClassSpec spec = this.getOrCreateSpec(className);
     spec.addTransient(fieldName);
-  }
-
-  public void addTransientType(String className, String fieldName) {
-    Type type = (Type) this.types.get(className);
-    if (type == null) {
-      type = new Type();
-      type.setName(className);
-      this.types.put(className, type);
-    }
-    type.addTransient(fieldName);
   }
 
   public String toString() {
@@ -1767,11 +1759,11 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
         return this.modules;
       } else {
         // this could happen only in test
-          if (modulesInitialized) {
-            return Modules.Factory.newInstance();
-          } else {
-            modulesInitialized = true;
-            return this.modules;
+        if (modulesInitialized) {
+          return Modules.Factory.newInstance();
+        } else {
+          modulesInitialized = true;
+          return this.modules;
         }
       }
     }

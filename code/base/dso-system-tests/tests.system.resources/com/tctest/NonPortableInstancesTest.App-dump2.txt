@@ -15,4 +15,4 @@ Dumping object graph of non-portable instance of type com.tctest.NonPortableInst
                        Object ref = (com.tctest.NonPortableInstancesTest$Ref, id 9)
 !!                       Object ref = (ref id 6)
 !!               Thread t = (java.lang.Thread) (never portable)
-!!   java.net.ServerSocket ss = (java.net.ServerSocket) (never portable)
+!!   java.net.ServerSocket ss = (java.net.ServerSocket) (transient)

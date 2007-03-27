@@ -9,7 +9,6 @@ import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.aspectwerkz.reflect.MethodInfo;
 import com.tc.object.bytecode.ByteCodeUtil;
-import com.tc.object.bytecode.ClassAdapterBase;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.DateMethodAdapter;
 import com.tc.object.bytecode.DistributedMethodCallAdapter;
@@ -221,9 +220,11 @@ public class TransparencyClassSpec {
   }
 
   public boolean isTransient(int access, ClassInfo classInfo, String fieldName) {
-    if (ClassAdapterBase.isDelegateFieldName(fieldName)) { return false; }
-    if (transients.contains(fieldName)) return true;
     return configuration.isTransient(access, classInfo, fieldName);
+  }
+
+  Set getTransients() {
+    return Collections.unmodifiableSet(transients);
   }
 
   public boolean isVolatile(int access, ClassInfo classInfo, String fieldName) {
@@ -251,7 +252,7 @@ public class TransparencyClassSpec {
   }
 
   public boolean hasCustomMethodAdapter(MemberInfo memberInfo) {
-    return memberInfo!=null && getMethodAdapter(memberInfo) != null;
+    return memberInfo != null && getMethodAdapter(memberInfo) != null;
   }
 
   public MethodAdapter customMethodAdapterFor(ManagerHelper managerHelper, int access, String methodName,
@@ -264,13 +265,9 @@ public class TransparencyClassSpec {
   }
 
   private MethodAdapter getMethodAdapter(MemberInfo memberInfo) {
-    if(memberInfo==null) {
-      return null;
-    }
+    if (memberInfo == null) { return null; }
     DistributedMethodSpec dms = configuration.getDmiSpec(memberInfo);
-    if (dms != null) {
-      return new DistributedMethodCallAdapter(dms.runOnAllNodes());
-    }
+    if (dms != null) { return new DistributedMethodCallAdapter(dms.runOnAllNodes()); }
     return (MethodAdapter) methodAdapters.get(memberInfo.getName() + memberInfo.getSignature());
   }
 
