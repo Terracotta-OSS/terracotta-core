@@ -45,7 +45,8 @@ public class GCRunner {
   }
 
   private static JMXConnector getJMXConnector(String hostName, int jmxPort) throws IOException {
-    JMXServiceURL jmxServerUrl = new JMXServiceURL("jmxmp", hostName, jmxPort);
+    String url = "service:jmx:rmi:///jndi/rmi://" + hostName + ":" + jmxPort + "/jmxrmi";
+    JMXServiceURL jmxServerUrl = new JMXServiceURL(url);
     JMXConnector jmxConnector = JMXConnectorFactory.newJMXConnector(jmxServerUrl, null);
     jmxConnector.connect();
     return jmxConnector;
