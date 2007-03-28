@@ -181,7 +181,7 @@ public class AsmClassInfo implements ClassInfo {
     try {
       ClassReader cr = new ClassReader(bytecode);
       ClassInfoClassAdapter visitor = new ClassInfoClassAdapter();
-      cr.accept(visitor, false);
+      cr.accept(visitor, 0);
     } catch (Throwable t) {
       t.printStackTrace();
     }
@@ -203,7 +203,7 @@ public class AsmClassInfo implements ClassInfo {
     try {
       ClassReader cr = new ClassReader(resourceStream);
       ClassInfoClassAdapter visitor = new ClassInfoClassAdapter();
-      cr.accept(visitor, false);
+      cr.accept(visitor, 0);
     } catch (Throwable t) {
       t.printStackTrace();
     }
@@ -313,15 +313,11 @@ public class AsmClassInfo implements ClassInfo {
   public static ClassInfo getClassInfo(final String name, final InputStream stream, final ClassLoader loader) {
     try {
       ClassReader cr = new ClassReader(stream);
-      // keep a copy of the bytecode, since me way want to "reuse the stream"
-      byte[] bytes = cr.b;
-      ClassNameRetrievalClassAdapter visitor = new ClassNameRetrievalClassAdapter();
-      cr.accept(visitor, true);
-      final String className = visitor.getClassName();
+      final String className = cr.getClassName().replace('/', '.');
       AsmClassInfoRepository repository = AsmClassInfoRepository.getRepository(loader);
       ClassInfo classInfo = repository.getClassInfo(className);
       if (classInfo == null) {
-        classInfo = new AsmClassInfo(bytes, loader);
+        classInfo = new AsmClassInfo(cr.b, loader);
       }
       return classInfo;
     } catch (IOException e) {
@@ -346,9 +342,7 @@ public class AsmClassInfo implements ClassInfo {
    */
   public static String retrieveClassNameFromBytecode(final byte[] bytecode) {
     ClassReader cr = new ClassReader(bytecode);
-    ClassNameRetrievalClassAdapter visitor = new ClassNameRetrievalClassAdapter();
-    cr.accept(visitor, true);
-    return visitor.getClassName();
+    return cr.getClassName().replace('/', '.');
   }
 
   /**
@@ -785,29 +779,6 @@ public class AsmClassInfo implements ClassInfo {
 //    }
 
   /**
-   * ASM bytecode visitor that retrieves the class name from the bytecode.
-   *
-   * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
-   */
-  public static class ClassNameRetrievalClassAdapter extends AsmNullAdapter.NullClassAdapter {
-
-    private String m_className;
-
-    public void visit(final int version,
-                      final int access,
-                      final String name,
-                      final String desc,
-                      final String superName,
-                      final String[] interfaces) {
-      m_className = name.replace('/', '.');
-    }
-
-    public String getClassName() {
-      return m_className;
-    }
-  }
-
-  /**
    * ASM bytecode visitor that gathers info about the class.
    *
    * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
@@ -865,7 +836,7 @@ public class AsmClassInfo implements ClassInfo {
       Integer hash = new Integer(AsmHelper.calculateFieldHash(name, desc));
       m_fields.put(hash, fieldInfo);
       m_sortedFieldHashes.add(hash);
-      return AsmNullAdapter.NullFieldAdapter.NULL_FIELD_ADAPTER;
+      return null;
     }
 
     public MethodVisitor visitMethod(final int access,
@@ -911,7 +882,7 @@ public class AsmClassInfo implements ClassInfo {
           methodInfo.m_parameterNames = EMPTY_STRING_ARRAY;
         }
       }
-      return AsmNullAdapter.NullMethodAdapter.NULL_METHOD_ADAPTER;
+      return null;
     }
 
     public void visitEnd() {

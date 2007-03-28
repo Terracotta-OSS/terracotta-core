@@ -41,7 +41,7 @@ import com.tc.asm.FieldVisitor;
 public class FieldNode extends MemberNode implements FieldVisitor {
 
     /**
-     * The field's access flags (see {@link org.objectweb.asm.Opcodes}). This
+     * The field's access flags (see {@link com.tc.asm.Opcodes}). This
      * field also indicates if the field is synthetic and/or deprecated.
      */
     public int access;
@@ -52,7 +52,7 @@ public class FieldNode extends MemberNode implements FieldVisitor {
     public String name;
 
     /**
-     * The field's descriptor (see {@link org.objectweb.asm.Type}).
+     * The field's descriptor (see {@link com.tc.asm.Type}).
      */
     public String desc;
 
@@ -72,10 +72,11 @@ public class FieldNode extends MemberNode implements FieldVisitor {
      * Constructs a new {@link FieldNode}.
      * 
      * @param access the field's access flags (see
-     *        {@link org.objectweb.asm.Opcodes}). This parameter also indicates
+     *        {@link com.tc.asm.Opcodes}). This parameter also indicates
      *        if the field is synthetic and/or deprecated.
      * @param name the field's name.
-     * @param desc the field's descriptor (see {@link org.objectweb.asm.Type}).
+     * @param desc the field's descriptor (see
+     *        {@link com.tc.asm.Type Type}).
      * @param signature the field's signature.
      * @param value the field's initial value. This parameter, which may be
      *        <tt>null</tt> if the field does not have an initial value, must
@@ -103,6 +104,9 @@ public class FieldNode extends MemberNode implements FieldVisitor {
      */
     public void accept(final ClassVisitor cv) {
         FieldVisitor fv = cv.visitField(access, name, desc, signature, value);
+        if (fv == null) {
+            return;
+        }
         int i, n;
         n = visibleAnnotations == null ? 0 : visibleAnnotations.size();
         for (i = 0; i < n; ++i) {

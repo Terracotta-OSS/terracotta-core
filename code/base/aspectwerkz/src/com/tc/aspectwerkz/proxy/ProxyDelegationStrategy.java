@@ -166,7 +166,7 @@ public class ProxyDelegationStrategy {
       if (SystemDefinitionContainer.isChildOf(other.getClassLoader(), loader)) {
         loader = other.getClassLoader();
       } else if (SystemDefinitionContainer.isChildOf(loader, other.getClassLoader())) {
-        ;// loader is fine
+        // loader is fine
       } else {
         throw new RuntimeException("parallel classloader hierarchy not supported");
       }

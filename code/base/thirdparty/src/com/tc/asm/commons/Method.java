@@ -104,7 +104,9 @@ public class Method {
      * @param method a Java method declaration, without argument names, of the
      *        form "returnType name (argumentType1, ... argumentTypeN)", where
      *        the types are in plain Java (e.g. "int", "float",
-     *        "java.util.List", ...).
+     *        "java.util.List", ...). Classes of the java.lang package can be
+     *        specified by their unqualified name; all other classes names must
+     *        be fully qualified.
      * @return a {@link Method} corresponding to the given Java method
      *         declaration.
      * @throws IllegalArgumentException if <code>method</code> could not get
@@ -112,6 +114,33 @@ public class Method {
      */
     public static Method getMethod(final String method)
             throws IllegalArgumentException
+    {
+        return getMethod(method, false);
+    }
+
+    /**
+     * Returns a {@link Method} corresponding to the given Java method
+     * declaration.
+     * 
+     * @param method a Java method declaration, without argument names, of the
+     *        form "returnType name (argumentType1, ... argumentTypeN)", where
+     *        the types are in plain Java (e.g. "int", "float",
+     *        "java.util.List", ...). Classes of the java.lang package may be
+     *        specified by their unqualified name, depending on the
+     *        defaultPackage argument; all other classes names must be fully
+     *        qualified.
+     * @param defaultPackage true if unqualified class names belong to the
+     *        default package, or false if they correspond to java.lang classes.
+     *        For instance "Object" means "Object" if this option is true, or
+     *        "java.lang.Object" otherwise.
+     * @return a {@link Method} corresponding to the given Java method
+     *         declaration.
+     * @throws IllegalArgumentException if <code>method</code> could not get
+     *         parsed.
+     */
+    public static Method getMethod(
+        final String method,
+        final boolean defaultPackage) throws IllegalArgumentException
     {
         int space = method.indexOf(' ');
         int start = method.indexOf('(', space) + 1;
@@ -126,20 +155,22 @@ public class Method {
         sb.append('(');
         int p;
         do {
+            String s;
             p = method.indexOf(',', start);
             if (p == -1) {
-                sb.append(map(method.substring(start, end).trim()));
+                s = map(method.substring(start, end).trim(), defaultPackage);
             } else {
-                sb.append(map(method.substring(start, p).trim()));
+                s = map(method.substring(start, p).trim(), defaultPackage);
                 start = p + 1;
             }
+            sb.append(s);
         } while (p != -1);
         sb.append(')');
-        sb.append(map(returnType));
+        sb.append(map(returnType, defaultPackage));
         return new Method(methodName, sb.toString());
     }
 
-    private static String map(final String type) {
+    private static String map(final String type, final boolean defaultPackage) {
         if (type.equals("")) {
             return type;
         }
@@ -157,7 +188,10 @@ public class Method {
         } else {
             sb.append('L');
             if (t.indexOf('.') < 0) {
-                sb.append("java/lang/" + t);
+                if (!defaultPackage) {
+                    sb.append("java/lang/");
+                }
+                sb.append(t);
             } else {
                 sb.append(t.replace('.', '/'));
             }

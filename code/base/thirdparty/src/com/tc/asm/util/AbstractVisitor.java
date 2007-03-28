@@ -34,8 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.tc.asm.Attribute;
-import com.tc.asm.util.attrs.ASMStackMapAttribute;
-import com.tc.asm.util.attrs.ASMStackMapTableAttribute;
 
 /**
  * An abstract visitor.
@@ -50,7 +48,7 @@ public abstract class AbstractVisitor {
     public final static String[] OPCODES;
     /**
      * Types for <code>operand</code> parameter of the
-     * {@link org.objectweb.asm.MethodVisitor#visitIntInsn} method when
+     * {@link com.tc.asm.MethodVisitor#visitIntInsn} method when
      * <code>opcode</code> is <code>NEWARRAY</code>.
      */
     public final static String[] TYPES;
@@ -123,14 +121,23 @@ public abstract class AbstractVisitor {
     }
 
     /**
-     * Returns the text printed by this visitor.
+     * Returns the text constructed by this visitor.
      * 
-     * @return the text printed by this visitor.
+     * @return the text constructed by this visitor.
      */
     public List getText() {
         return text;
     }
 
+    /**
+     * Prints the text constructed by this visitor.
+     * 
+     * @param pw the print writer to be used.
+     */
+    public void print(final PrintWriter pw) {
+        printList(pw, text);
+    }
+    
     /**
      * Appends a quoted string to a given buffer.
      * 
@@ -138,7 +145,7 @@ public abstract class AbstractVisitor {
      * @param s the string to be added.
      */
     public static void appendString(final StringBuffer buf, final String s) {
-        buf.append("\"");
+        buf.append('\"');
         for (int i = 0; i < s.length(); ++i) {
             char c = s.charAt(i);
             if (c == '\n') {
@@ -156,14 +163,14 @@ public abstract class AbstractVisitor {
                 } else if (c < 0x100) {
                     buf.append("00");
                 } else if (c < 0x1000) {
-                    buf.append("0");
+                    buf.append('0');
                 }
                 buf.append(Integer.toString(c, 16));
             } else {
                 buf.append(c);
             }
         }
-        buf.append("\"");
+        buf.append('\"');
     }
 
     /**
@@ -190,12 +197,6 @@ public abstract class AbstractVisitor {
      * @return the default {@link ASMifiable} prototypes.
      */
     public static Attribute[] getDefaultAttributes() {
-        try {
-            return new Attribute[] {
-                new ASMStackMapAttribute(),
-                new ASMStackMapTableAttribute() };
-        } catch (Exception e) {
-            return new Attribute[0];
-        }
+        return new Attribute[0];
     }
 }

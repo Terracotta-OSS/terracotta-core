@@ -55,7 +55,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     Type[] types = Type.getArgumentTypes(methodInsnDesc);
     localVariablesForMethodCall = new int[types.length];
     for (int i = 0; i < types.length; i++) {
-      localVariablesForMethodCall[i] = newLocal(types[i].getSize());
+      localVariablesForMethodCall[i] = newLocal(types[i]);
     }
     for (int i = types.length - 1; i >= 0; i--) {
       super.visitVarInsn(types[i].getOpcode(ISTORE), localVariablesForMethodCall[i]);
@@ -486,7 +486,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
       Label labelEnd = new Label();
       super.visitLabel(labelEnd);
       super.visitTryCatchBlock(labelZero, labelEnd, labelEnd, null);
-      int localVar = newLocal(1);
+      int localVar = newLocal(Type.getObjectType("java/lang/Object"));
       super.visitVarInsn(ASTORE, localVar);
       callTCCommit(mv);
       super.visitVarInsn(ALOAD, localVar);

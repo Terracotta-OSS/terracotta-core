@@ -80,7 +80,7 @@ public class HandlerVisitor extends ClassAdapter implements TransformationConsta
       m_catchLabels = catchLabels;
       m_loader = loader;
       m_callerClassInfo = callerClassInfo;
-      m_ctx = (InstrumentationContext) ctx;
+      m_ctx = ctx;
     }
 
     /**

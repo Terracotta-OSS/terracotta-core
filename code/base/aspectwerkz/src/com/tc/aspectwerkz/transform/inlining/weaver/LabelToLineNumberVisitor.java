@@ -20,7 +20,7 @@ public class LabelToLineNumberVisitor extends ClassAdapter {
 
   public LabelToLineNumberVisitor(ClassVisitor cv, InstrumentationContext ctx) {
     super(cv);
-    m_ctx = (InstrumentationContext) ctx;
+    m_ctx = ctx;
   }
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {

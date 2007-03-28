@@ -29,6 +29,8 @@
  */
 package com.tc.asm.tree;
 
+import java.util.Map;
+
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 
@@ -42,7 +44,7 @@ public class LdcInsnNode extends AbstractInsnNode {
     /**
      * The constant to be loaded on the stack. This parameter must be a non null
      * {@link Integer}, a {@link Float}, a {@link Long}, a {@link Double}, a
-     * {@link String} or a {@link org.objectweb.asm.Type}.
+     * {@link String} or a {@link com.tc.asm.Type}.
      */
     public Object cst;
 
@@ -58,11 +60,15 @@ public class LdcInsnNode extends AbstractInsnNode {
         this.cst = cst;
     }
 
+    public int getType() {
+        return LDC_INSN;
+    }
+
     public void accept(final MethodVisitor mv) {
         mv.visitLdcInsn(cst);
     }
 
-    public int getType() {
-        return LDC_INSN;
+    public AbstractInsnNode clone(final Map labels) {
+        return new LdcInsnNode(cst);
     }
 }

@@ -66,7 +66,7 @@ public class JavaLangReflectArrayAdapter extends ClassAdapter implements Opcodes
     } else if (isNative(access) && !excludeMethods.contains(name)) {
       MethodVisitor mv = super.visitMethod(access ^ Opcodes.ACC_NATIVE, name, description, signature, exceptions);
       addArrayUtilMethodCode(mv, name, description);
-      return mv;
+      return null;
     } else {
       return super.visitMethod(access, name, description, signature, exceptions);
     }

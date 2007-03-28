@@ -34,7 +34,6 @@ import java.util.HashMap;
 import com.tc.asm.AnnotationVisitor;
 import com.tc.asm.Attribute;
 import com.tc.asm.Type;
-import com.tc.asm.util.attrs.ASMifiable;
 
 /**
  * An abstract ASMifier visitor.
@@ -96,15 +95,12 @@ public class ASMifierAbstractVisitor extends AbstractVisitor {
      */
     public void visitAttribute(final Attribute attr) {
         buf.setLength(0);
+        buf.append("// ATTRIBUTE ").append(attr.type).append("\n");
         if (attr instanceof ASMifiable) {
             buf.append("{\n");
-            buf.append("// ATTRIBUTE\n");
             ((ASMifiable) attr).asmify(buf, "attr", labelNames);
             buf.append(name).append(".visitAttribute(attr);\n");
             buf.append("}\n");
-        } else {
-            buf.append("// WARNING! skipped a non standard attribute of type \"");
-            buf.append(attr.type).append("\"\n");
         }
         text.add(buf.toString());
     }
@@ -147,16 +143,16 @@ public class ASMifierAbstractVisitor extends AbstractVisitor {
             buf.append(((Type) cst).getDescriptor());
             buf.append("\")");
         } else if (cst instanceof Byte) {
-            buf.append("new Byte((byte)").append(cst).append(")");
+            buf.append("new Byte((byte)").append(cst).append(')');
         } else if (cst instanceof Boolean) {
-            buf.append("new Boolean(").append(cst).append(")");
+            buf.append(((Boolean) cst).booleanValue() ? "Boolean.TRUE" : "Boolean.FALSE");
         } else if (cst instanceof Short) {
-            buf.append("new Short((short)").append(cst).append(")");
+            buf.append("new Short((short)").append(cst).append(')');
         } else if (cst instanceof Character) {
             int c = ((Character) cst).charValue();
-            buf.append("new Character((char)").append(c).append(")");
+            buf.append("new Character((char)").append(c).append(')');
         } else if (cst instanceof Integer) {
-            buf.append("new Integer(").append(cst).append(")");
+            buf.append("new Integer(").append(cst).append(')');
         } else if (cst instanceof Float) {
             buf.append("new Float(\"").append(cst).append("\")");
         } else if (cst instanceof Long) {
@@ -169,21 +165,21 @@ public class ASMifierAbstractVisitor extends AbstractVisitor {
             for (int i = 0; i < v.length; i++) {
                 buf.append(i == 0 ? "" : ",").append(v[i]);
             }
-            buf.append("}");
+            buf.append('}');
         } else if (cst instanceof boolean[]) {
             boolean[] v = (boolean[]) cst;
             buf.append("new boolean[] {");
             for (int i = 0; i < v.length; i++) {
                 buf.append(i == 0 ? "" : ",").append(v[i]);
             }
-            buf.append("}");
+            buf.append('}');
         } else if (cst instanceof short[]) {
             short[] v = (short[]) cst;
             buf.append("new short[] {");
             for (int i = 0; i < v.length; i++) {
                 buf.append(i == 0 ? "" : ",").append("(short)").append(v[i]);
             }
-            buf.append("}");
+            buf.append('}');
         } else if (cst instanceof char[]) {
             char[] v = (char[]) cst;
             buf.append("new char[] {");
@@ -192,35 +188,35 @@ public class ASMifierAbstractVisitor extends AbstractVisitor {
                         .append("(char)")
                         .append((int) v[i]);
             }
-            buf.append("}");
+            buf.append('}');
         } else if (cst instanceof int[]) {
             int[] v = (int[]) cst;
             buf.append("new int[] {");
             for (int i = 0; i < v.length; i++) {
                 buf.append(i == 0 ? "" : ",").append(v[i]);
             }
-            buf.append("}");
+            buf.append('}');
         } else if (cst instanceof long[]) {
             long[] v = (long[]) cst;
             buf.append("new long[] {");
             for (int i = 0; i < v.length; i++) {
-                buf.append(i == 0 ? "" : ",").append(v[i]).append("L");
+                buf.append(i == 0 ? "" : ",").append(v[i]).append('L');
             }
-            buf.append("}");
+            buf.append('}');
         } else if (cst instanceof float[]) {
             float[] v = (float[]) cst;
             buf.append("new float[] {");
             for (int i = 0; i < v.length; i++) {
-                buf.append(i == 0 ? "" : ",").append(v[i]).append("f");
+                buf.append(i == 0 ? "" : ",").append(v[i]).append('f');
             }
-            buf.append("}");
+            buf.append('}');
         } else if (cst instanceof double[]) {
             double[] v = (double[]) cst;
             buf.append("new double[] {");
             for (int i = 0; i < v.length; i++) {
-                buf.append(i == 0 ? "" : ",").append(v[i]).append("d");
+                buf.append(i == 0 ? "" : ",").append(v[i]).append('d');
             }
-            buf.append("}");
+            buf.append('}');
         }
     }
 }

@@ -38,13 +38,13 @@ public class JavaUtilConcurrentLinkedBlockingQueueClassAdapter extends ClassAdap
     // injecting code.
     mv = new NodeMethodAdapter(mv);
     if ("remove".equals(name) && "(Ljava/lang/Object;)Z".equals(desc)) {
-      recreateRemoveMethod(mv);
+      return recreateRemoveMethod(mv);
     } else if ("offer".equals(name) && "(Ljava/lang/Object;)Z".equals(desc)) {
-      recreateOfferMethod(mv);
+      return recreateOfferMethod(mv);
     } else if ("offer".equals(name) && "(Ljava/lang/Object;JLjava/util/concurrent/TimeUnit;)Z".equals(desc)) {
-      recreateOfferTimeoutMethod(mv);
+      return recreateOfferTimeoutMethod(mv);
     } else if ("put".equals(name) && "(Ljava/lang/Object;)V".equals(desc)) {
-      recreatePutMethod(mv);
+      return recreatePutMethod(mv);
     } 
 
     return mv;
@@ -242,7 +242,7 @@ public class JavaUtilConcurrentLinkedBlockingQueueClassAdapter extends ClassAdap
     mv.visitEnd();
   }
   
-  private void recreateOfferTimeoutMethod(MethodVisitor mv) {
+  private MethodVisitor recreateOfferTimeoutMethod(MethodVisitor mv) {
     mv.visitCode();
     Label l0 = new Label();
     Label l1 = new Label();
@@ -450,9 +450,10 @@ public class JavaUtilConcurrentLinkedBlockingQueueClassAdapter extends ClassAdap
     mv.visitLocalVariable("ie", "Ljava/lang/InterruptedException;", null, l22, l24, 10);
     mv.visitMaxs(0, 0);
     mv.visitEnd();
+    return null;
   }
 
-  private void recreatePutMethod(MethodVisitor mv) {
+  private MethodVisitor recreatePutMethod(MethodVisitor mv) {
     mv.visitCode();
     Label l0 = new Label();
     Label l1 = new Label();
@@ -625,9 +626,10 @@ public class JavaUtilConcurrentLinkedBlockingQueueClassAdapter extends ClassAdap
     mv.visitLocalVariable("ie", "Ljava/lang/InterruptedException;", null, l11, l10, 5);
     mv.visitMaxs(0, 0);
     mv.visitEnd();
+    return null;
   }
 
-  private void recreateOfferMethod(MethodVisitor mv) {
+  private MethodVisitor recreateOfferMethod(MethodVisitor mv) {
     mv.visitCode();
     Label l0 = new Label();
     Label l1 = new Label();
@@ -787,10 +789,11 @@ public class JavaUtilConcurrentLinkedBlockingQueueClassAdapter extends ClassAdap
     mv.visitLocalVariable("putLock", "Ljava/util/concurrent/locks/ReentrantLock;", null, l7, l21, 4);
     mv.visitMaxs(0, 0);
     mv.visitEnd();
+    return null;
   }
 
   // Rewriting the remove(Object) method of LinkedBlockingQueue with instrumented code.
-  private void recreateRemoveMethod(MethodVisitor mv) {
+  private MethodVisitor recreateRemoveMethod(MethodVisitor mv) {
     mv.visitCode();
     Label l0 = new Label();
     Label l1 = new Label();
@@ -944,6 +947,7 @@ public class JavaUtilConcurrentLinkedBlockingQueueClassAdapter extends ClassAdap
     mv.visitLabel(l26);
     mv.visitMaxs(0, 0);
     mv.visitEnd();
+    return null;
   }
 
   private void addInitMethodCode() {

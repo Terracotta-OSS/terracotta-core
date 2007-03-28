@@ -36,9 +36,9 @@ import com.tc.asm.AnnotationVisitor;
 import com.tc.asm.Attribute;
 import com.tc.asm.ClassReader;
 import com.tc.asm.ClassVisitor;
+import com.tc.asm.FieldVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
-import com.tc.asm.FieldVisitor;
 import com.tc.asm.signature.SignatureReader;
 
 /**
@@ -118,7 +118,7 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
      */
     public static void main(final String[] args) throws Exception {
         int i = 0;
-        boolean skipDebug = true;
+        int flags = ClassReader.SKIP_DEBUG;
 
         boolean ok = true;
         if (args.length < 1 || args.length > 2) {
@@ -126,7 +126,7 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
         }
         if (ok && args[0].equals("-debug")) {
             i = 1;
-            skipDebug = false;
+            flags = 0;
             if (args.length != 2) {
                 ok = false;
             }
@@ -147,7 +147,7 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
         }
         cr.accept(new TraceClassVisitor(new PrintWriter(System.out)),
                 getDefaultAttributes(),
-                skipDebug);
+                flags);
     }
 
     /**
@@ -214,9 +214,7 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
             buf.append("@interface ");
         } else if ((access & Opcodes.ACC_INTERFACE) != 0) {
             buf.append("interface ");
-        } else if ((access & Opcodes.ACC_ENUM) != 0) {
-            buf.append("enum ");
-        } else {
+        } else if ((access & Opcodes.ACC_ENUM) == 0) {
             buf.append("class ");
         }
         appendDescriptor(INTERNAL_NAME, name);
@@ -273,11 +271,9 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
         buf.setLength(0);
         buf.append(tab).append("OUTERCLASS ");
         appendDescriptor(INTERNAL_NAME, owner);
-        // if enclosing name is null, so why should we show this info?
+        buf.append(' ');
         if (name != null) {
-            buf.append(' ').append(name).append(' ');
-        } else {
-            buf.append(' ');
+            buf.append(name).append(' ');
         }
         appendDescriptor(METHOD_DESCRIPTOR, desc);
         buf.append('\n');
@@ -317,14 +313,11 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
         final int access)
     {
         buf.setLength(0);
-        buf.append(tab).append("// access flags ").append(access
-                & ~Opcodes.ACC_SUPER).append('\n');
+        buf.append(tab).append("// access flags ");
+        buf.append(access & ~Opcodes.ACC_SUPER).append('\n');
         buf.append(tab);
         appendAccess(access);
         buf.append("INNERCLASS ");
-        if ((access & Opcodes.ACC_ENUM) != 0) {
-            buf.append("enum ");
-        }
         appendDescriptor(INTERNAL_NAME, name);
         buf.append(' ');
         appendDescriptor(INTERNAL_NAME, outerName);
@@ -366,9 +359,6 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
 
         buf.append(tab);
         appendAccess(access);
-        if ((access & Opcodes.ACC_ENUM) != 0) {
-            buf.append("enum ");
-        }
 
         appendDescriptor(FIELD_DESCRIPTOR, desc);
         buf.append(' ').append(name);
@@ -407,10 +397,11 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
             buf.append(tab).append("// DEPRECATED\n");
         }
         buf.append(tab).append("// access flags ").append(access).append('\n');
-        buf.append(tab);
-        appendDescriptor(METHOD_SIGNATURE, signature);
 
         if (signature != null) {
+            buf.append(tab);
+            appendDescriptor(METHOD_SIGNATURE, signature);
+
             TraceSignatureVisitor v = new TraceSignatureVisitor(0);
             SignatureReader r = new SignatureReader(signature);
             r.accept(v);
@@ -430,6 +421,7 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
             buf.append('\n');
         }
 
+        buf.append(tab);
         appendAccess(access);
         if ((access & Opcodes.ACC_NATIVE) != 0) {
             buf.append("native ");
@@ -467,7 +459,7 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
     public void visitEnd() {
         text.add("}\n");
 
-        printList(pw, text);
+        print(pw);
         pw.flush();
 
         if (cv != null) {
@@ -518,17 +510,14 @@ public class TraceClassVisitor extends TraceAbstractVisitor implements
         if ((access & Opcodes.ACC_TRANSIENT) != 0) {
             buf.append("transient ");
         }
-        // if ((access & Constants.ACC_NATIVE) != 0) {
-        // buf.append("native ");
-        // }
         if ((access & Opcodes.ACC_ABSTRACT) != 0) {
             buf.append("abstract ");
         }
         if ((access & Opcodes.ACC_STRICT) != 0) {
             buf.append("strictfp ");
         }
-        if ((access & Opcodes.ACC_SYNTHETIC) != 0) {
-            buf.append("synthetic ");
+        if ((access & Opcodes.ACC_ENUM) != 0) {
+            buf.append("enum ");
         }
     }
 }

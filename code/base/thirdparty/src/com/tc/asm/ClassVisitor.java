@@ -97,7 +97,8 @@ public interface ClassVisitor {
      * 
      * @param desc the class descriptor of the annotation class.
      * @param visible <tt>true</tt> if the annotation is visible at runtime.
-     * @return a non null visitor to visit the annotation values.
+     * @return a visitor to visit the annotation values, or <tt>null</tt> if
+     *         this visitor is not interested in visiting this annotation.
      */
     AnnotationVisitor visitAnnotation(String desc, boolean visible);
 
@@ -116,7 +117,7 @@ public interface ClassVisitor {
      *        {@link Type#getInternalName() getInternalName}).
      * @param outerName the internal name of the class to which the inner class
      *        belongs (see {@link Type#getInternalName() getInternalName}). May
-     *        be <tt>null</tt>.
+     *        be <tt>null</tt> for not member classes.
      * @param innerName the (simple) name of the inner class inside its
      *        enclosing class. May be <tt>null</tt> for anonymous inner
      *        classes.

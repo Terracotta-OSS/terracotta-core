@@ -88,7 +88,7 @@ public class AsmHelper implements TransformationConstants {
     Class annotation = null;
     try {
       annotation = Class.forName("java.lang.annotation.Annotation");
-      ClassReader cr = new ClassReader("java.lang.annotation.Annotation");
+      new ClassReader("java.lang.annotation.Annotation");
       JAVA_VERSION = V1_5;
     } catch (Throwable e) {
       annotation = null;
@@ -108,7 +108,7 @@ public class AsmHelper implements TransformationConstants {
    * @return
    */
   public static ClassWriter newClassWriter(boolean computeMax) {
-    return new ClassWriter(computeMax, true);
+    return new ClassWriter(computeMax ? ClassWriter.COMPUTE_MAXS : 0);
   }
 
   /**

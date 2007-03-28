@@ -29,6 +29,7 @@
  */
 package com.tc.asm;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 /**
@@ -237,6 +238,24 @@ public class Type {
             return getType(getDescriptor(c));
         }
     }
+    
+    /**
+     * Returns the {@link Type#OBJECT} type for the given internal class name.
+     * This is a shortcut method for <code>Type.getType("L"+name+";")</code>.
+     * <i>Note that opposed to {@link Type#getType(String)}, this method takes 
+     * internal class names and not class descriptor.</i> 
+     * 
+     * @param name an internal class name.
+     * @return the the {@link Type#OBJECT} type for the given class name.
+     */
+    public static Type getObjectType(String name) {
+        int l = name.length();
+        char[] buf = new char[l + 2];
+        buf[0] = 'L';
+        buf[l + 1] = ';';
+        name.getChars(0, l, buf, 1);
+        return new Type(OBJECT, buf, 0, l + 2);
+    }
 
     /**
      * Returns the Java types corresponding to the argument types of the given
@@ -355,7 +374,7 @@ public class Type {
                     }
                 }
                 return new Type(ARRAY, buf, off, len + 1);
-            // case 'L':
+                // case 'L':
             default:
                 len = 1;
                 while (buf[off + len] != ';') {
@@ -437,7 +456,7 @@ public class Type {
                     b.append("[]");
                 }
                 return b.toString();
-            // case OBJECT:
+                // case OBJECT:
             default:
                 return new String(buf, off + 1, len - 2).replace('/', '.');
         }
@@ -527,8 +546,8 @@ public class Type {
             case DOUBLE:
                 buf.append('D');
                 return;
-            // case ARRAY:
-            // case OBJECT:
+                // case ARRAY:
+                // case OBJECT:
             default:
                 buf.append(this.buf, off, len);
         }
@@ -560,6 +579,22 @@ public class Type {
         StringBuffer buf = new StringBuffer();
         getDescriptor(buf, c);
         return buf.toString();
+    }
+
+    /**
+     * Returns the descriptor corresponding to the given constructor.
+     * 
+     * @param c a {@link Constructor Constructor} object.
+     * @return the descriptor of the given constructor.
+     */
+    public static String getConstructorDescriptor(final Constructor c) {
+        Class[] parameters = c.getParameterTypes();
+        StringBuffer buf = new StringBuffer();
+        buf.append('(');
+        for (int i = 0; i < parameters.length; ++i) {
+            getDescriptor(buf, parameters[i]);
+        }
+        return buf.append(")V").toString();
     }
 
     /**
@@ -640,7 +675,7 @@ public class Type {
      *         <tt>double</tt>, and 1 otherwise.
      */
     public int getSize() {
-        return (sort == LONG || sort == DOUBLE ? 2 : 1);
+        return sort == LONG || sort == DOUBLE ? 2 : 1;
     }
 
     /**
@@ -671,8 +706,8 @@ public class Type {
                     return opcode + 1;
                 case DOUBLE:
                     return opcode + 3;
-                // case ARRAY:
-                // case OBJECT:
+                    // case ARRAY:
+                    // case OBJECT:
                 default:
                     return opcode + 4;
             }
@@ -692,8 +727,8 @@ public class Type {
                     return opcode + 1;
                 case DOUBLE:
                     return opcode + 3;
-                // case ARRAY:
-                // case OBJECT:
+                    // case ARRAY:
+                    // case OBJECT:
                 default:
                     return opcode + 4;
             }
@@ -714,7 +749,7 @@ public class Type {
         if (this == o) {
             return true;
         }
-        if (o == null || !(o instanceof Type)) {
+        if (!(o instanceof Type)) {
             return false;
         }
         Type t = (Type) o;

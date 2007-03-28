@@ -32,6 +32,13 @@ package com.tc.asm.util;
 import com.tc.asm.Opcodes;
 import com.tc.asm.signature.SignatureVisitor;
 
+/**
+ * A {@link SignatureVisitor} that prints a disassembled view of the signature
+ * it visits.
+ * 
+ * @author Eugene Kuleshov
+ * @author Eric Bruneton
+ */
 public class TraceSignatureVisitor implements SignatureVisitor {
 
     private StringBuffer declaration;
@@ -67,16 +74,16 @@ public class TraceSignatureVisitor implements SignatureVisitor {
 
     private String separator = "";
 
-    public TraceSignatureVisitor(int access) {
+    public TraceSignatureVisitor(final int access) {
         isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
         this.declaration = new StringBuffer();
     }
 
-    private TraceSignatureVisitor(StringBuffer buf) {
+    private TraceSignatureVisitor(final StringBuffer buf) {
         this.declaration = buf;
     }
 
-    public void visitFormalTypeParameter(String name) {
+    public void visitFormalTypeParameter(final String name) {
         declaration.append(seenFormalParameter ? ", " : "<").append(name);
         seenFormalParameter = true;
         seenInterfaceBound = false;
@@ -103,9 +110,9 @@ public class TraceSignatureVisitor implements SignatureVisitor {
     }
 
     public SignatureVisitor visitInterface() {
-        separator = seenInterface ? ", " : (isInterface
+        separator = seenInterface ? ", " : isInterface
                 ? " extends "
-                : " implements ");
+                : " implements ";
         seenInterface = true;
         startType();
         return this;
@@ -145,7 +152,7 @@ public class TraceSignatureVisitor implements SignatureVisitor {
         return new TraceSignatureVisitor(exceptions);
     }
 
-    public void visitBaseType(char descriptor) {
+    public void visitBaseType(final char descriptor) {
         switch (descriptor) {
             case 'V':
                 declaration.append("void");
@@ -171,17 +178,15 @@ public class TraceSignatureVisitor implements SignatureVisitor {
             case 'F':
                 declaration.append("float");
                 break;
-            case 'D':
+            // case 'D':
+            default:
                 declaration.append("double");
                 break;
-            default:
-                throw new IllegalArgumentException("Invalid descriptor "
-                        + descriptor);
         }
         endType();
     }
 
-    public void visitTypeVariable(String name) {
+    public void visitTypeVariable(final String name) {
         declaration.append(name);
         endType();
     }
@@ -192,7 +197,7 @@ public class TraceSignatureVisitor implements SignatureVisitor {
         return this;
     }
 
-    public void visitClassType(String name) {
+    public void visitClassType(final String name) {
         if (!"java/lang/Object".equals(name)) {
             declaration.append(separator).append(name.replace('/', '.'));
         } else {
@@ -201,7 +206,7 @@ public class TraceSignatureVisitor implements SignatureVisitor {
             // abstract public V get(Object key); (seen in Dictionary.class)
             // should have Object
             // but java.lang.String extends java.lang.Object is unnecessary
-            boolean needObjectClass = argumentStack % 2 == 1 || seenParameter;
+            boolean needObjectClass = argumentStack % 2 != 0 || seenParameter;
             if (needObjectClass) {
                 declaration.append(separator).append(name.replace('/', '.'));
             }
@@ -210,8 +215,12 @@ public class TraceSignatureVisitor implements SignatureVisitor {
         argumentStack *= 2;
     }
 
-    public void visitInnerClassType(String name) {
-        // TODO tests
+    public void visitInnerClassType(final String name) {
+        if (argumentStack % 2 != 0) {
+            declaration.append('>');
+        }
+        argumentStack /= 2;
+        declaration.append('.');
         declaration.append(separator).append(name.replace('/', '.'));
         separator = "";
         argumentStack *= 2;
@@ -220,17 +229,17 @@ public class TraceSignatureVisitor implements SignatureVisitor {
     public void visitTypeArgument() {
         if (argumentStack % 2 == 0) {
             ++argumentStack;
-            declaration.append("<");
+            declaration.append('<');
         } else {
             declaration.append(", ");
         }
-        declaration.append("?");
+        declaration.append('?');
     }
 
-    public SignatureVisitor visitTypeArgument(char tag) {
+    public SignatureVisitor visitTypeArgument(final char tag) {
         if (argumentStack % 2 == 0) {
             ++argumentStack;
-            declaration.append("<");
+            declaration.append('<');
         } else {
             declaration.append(", ");
         }
@@ -246,8 +255,8 @@ public class TraceSignatureVisitor implements SignatureVisitor {
     }
 
     public void visitEnd() {
-        if (argumentStack % 2 == 1) {
-            declaration.append(">");
+        if (argumentStack % 2 != 0) {
+            declaration.append('>');
         }
         argumentStack /= 2;
         endType();
@@ -269,7 +278,7 @@ public class TraceSignatureVisitor implements SignatureVisitor {
 
     private void endFormals() {
         if (seenFormalParameter) {
-            declaration.append(">");
+            declaration.append('>');
             seenFormalParameter = false;
         }
     }
@@ -279,8 +288,8 @@ public class TraceSignatureVisitor implements SignatureVisitor {
     }
 
     private void endType() {
-        if (arrayStack % 2 == 1) {
-            while (arrayStack % 2 == 1) {
+        if (arrayStack % 2 != 0) {
+            while (arrayStack % 2 != 0) {
                 arrayStack /= 2;
                 declaration.append("[]");
             }

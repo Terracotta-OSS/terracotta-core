@@ -130,7 +130,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   private byte[] basicCreateClassBytes(ClassSpec cs, ObjectID parentID, List fields) {
     String classNameSlash = cs.getGeneratedClassName().replace('.', '/');
     String superClassNameSlash = cs.getSuperClassName().replace('.', '/');
-    ClassWriter cw = new ClassWriter(false);
+    ClassWriter cw = new ClassWriter(0);  // don't compute maxs
 
     cw.visit(V1_2, ACC_PUBLIC | ACC_SUPER, classNameSlash, null, superClassNameSlash, null);
 

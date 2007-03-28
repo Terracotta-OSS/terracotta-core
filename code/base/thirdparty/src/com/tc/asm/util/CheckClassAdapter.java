@@ -34,21 +34,20 @@ import java.io.PrintWriter;
 import java.util.List;
 
 import com.tc.asm.AnnotationVisitor;
-import com.tc.asm.FieldVisitor;
+import com.tc.asm.Attribute;
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassReader;
 import com.tc.asm.ClassVisitor;
+import com.tc.asm.FieldVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
-import com.tc.asm.Attribute;
 import com.tc.asm.Type;
-import com.tc.asm.tree.AbstractInsnNode;
-import com.tc.asm.tree.MethodNode;
 import com.tc.asm.tree.ClassNode;
+import com.tc.asm.tree.MethodNode;
 import com.tc.asm.tree.TryCatchBlockNode;
 import com.tc.asm.tree.analysis.Analyzer;
-import com.tc.asm.tree.analysis.SimpleVerifier;
 import com.tc.asm.tree.analysis.Frame;
+import com.tc.asm.tree.analysis.SimpleVerifier;
 
 /**
  * A {@link ClassAdapter} that checks that its methods are properly used. More
@@ -112,74 +111,78 @@ public class CheckClassAdapter extends ClassAdapter {
     /**
      * Checks a given class
      * 
-     * @param cr a <code>ClassReader</code> that contains bytecode for the analysis. 
-     * @param dump true if bytecode should be printed out not only when errors are found.
+     * @param cr a <code>ClassReader</code> that contains bytecode for the
+     *        analysis.
+     * @param dump true if bytecode should be printed out not only when errors
+     *        are found.
      * @param pw write where results going to be printed
      */
-    public static void verify(ClassReader cr, boolean dump, PrintWriter pw) {
+    public static void verify(
+        final ClassReader cr,
+        final boolean dump,
+        final PrintWriter pw)
+    {
         ClassNode cn = new ClassNode();
-        cr.accept(new CheckClassAdapter(cn), true);
+        cr.accept(new CheckClassAdapter(cn), ClassReader.SKIP_DEBUG);
 
         List methods = cn.methods;
         for (int i = 0; i < methods.size(); ++i) {
             MethodNode method = (MethodNode) methods.get(i);
-            if (method.instructions.size() > 0) {
-                Analyzer a = new Analyzer(new SimpleVerifier(Type.getType("L"
-                        + cn.name + ";"),
-                        Type.getType("L" + cn.superName + ";"),
-                        (cn.access & Opcodes.ACC_INTERFACE) != 0));
-                try {
-                    a.analyze(cn.name, method);
-                    if (!dump) {
-                        continue;
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+            Analyzer a = new Analyzer(new SimpleVerifier(Type.getObjectType(cn.name),
+                    Type.getObjectType(cn.superName),
+                    false));
+            try {
+                a.analyze(cn.name, method);
+                if (!dump) {
+                    continue;
                 }
-                Frame[] frames = a.getFrames();
-
-                TraceMethodVisitor mv = new TraceMethodVisitor();
-
-                pw.println(method.name + method.desc);
-                for (int j = 0; j < method.instructions.size(); ++j) {
-                    ((AbstractInsnNode) method.instructions.get(j)).accept(mv);
-                    
-                    StringBuffer s = new StringBuffer();
-                    Frame f = frames[j];
-                    if (f == null) {
-                        s.append('?');
-                    } else {
-                        for (int k = 0; k < f.getLocals(); ++k) {
-                            s.append(getShortName(f.getLocal(k).toString()))
-                                    .append(' ');
-                        }
-                        s.append(" : ");
-                        for (int k = 0; k < f.getStackSize(); ++k) {
-                            s.append(getShortName(f.getStack(k).toString()))
-                                    .append(' ');
-                        }
-                    }
-                    while (s.length() < method.maxStack + method.maxLocals + 1)
-                    {
-                        s.append(' ');
-                    }
-                    pw.print(Integer.toString(j + 100000).substring(1));
-                    pw.print(" " + s + " : " + mv.buf); // mv.text.get(j));
-                }
-                for (int j = 0; j < method.tryCatchBlocks.size(); ++j) {
-                    ((TryCatchBlockNode) method.tryCatchBlocks.get(j)).accept(mv);
-                    pw.print(" " + mv.buf);
-                }
-                pw.println();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+            Frame[] frames = a.getFrames();
+
+            TraceMethodVisitor mv = new TraceMethodVisitor();
+
+            pw.println(method.name + method.desc);
+            for (int j = 0; j < method.instructions.size(); ++j) {
+                method.instructions.get(j).accept(mv);
+
+                StringBuffer s = new StringBuffer();
+                Frame f = frames[j];
+                if (f == null) {
+                    s.append('?');
+                } else {
+                    for (int k = 0; k < f.getLocals(); ++k) {
+                        s.append(getShortName(f.getLocal(k).toString()))
+                                .append(' ');
+                    }
+                    s.append(" : ");
+                    for (int k = 0; k < f.getStackSize(); ++k) {
+                        s.append(getShortName(f.getStack(k).toString()))
+                                .append(' ');
+                    }
+                }
+                while (s.length() < method.maxStack + method.maxLocals + 1) {
+                    s.append(' ');
+                }
+                pw.print(Integer.toString(j + 100000).substring(1));
+                pw.print(" " + s + " : " + mv.buf); // mv.text.get(j));
+            }
+            for (int j = 0; j < method.tryCatchBlocks.size(); ++j) {
+                ((TryCatchBlockNode) method.tryCatchBlocks.get(j)).accept(mv);
+                pw.print(" " + mv.buf);
+            }
+            pw.println();
         }
     }
 
-    private static String getShortName(String name) {
+    private static String getShortName(final String name) {
         int n = name.lastIndexOf('/');
         int k = name.length();
-        if(name.charAt(k-1)==';') k--;
-        return n==-1 ? name : name.substring(n+1, k);
+        if (name.charAt(k - 1) == ';') {
+            k--;
+        }
+        return n == -1 ? name : name.substring(n + 1, k);
     }
 
     /**
@@ -214,7 +217,9 @@ public class CheckClassAdapter extends ClassAdapter {
                 + Opcodes.ACC_ABSTRACT + Opcodes.ACC_SYNTHETIC
                 + Opcodes.ACC_ANNOTATION + Opcodes.ACC_ENUM
                 + Opcodes.ACC_DEPRECATED);
-        CheckMethodAdapter.checkInternalName(name, "class name");
+        if (!name.endsWith("package-info")) {
+            CheckMethodAdapter.checkInternalName(name, "class name");
+        }
         if ("java/lang/Object".equals(name)) {
             if (superName != null) {
                 throw new IllegalArgumentException("The super class name of the Object class must be 'null'");
@@ -255,7 +260,7 @@ public class CheckClassAdapter extends ClassAdapter {
     {
         checkState();
         if (outer) {
-            throw new IllegalStateException("visitSource can be called only once.");
+            throw new IllegalStateException("visitOuterClass can be called only once.");
         }
         outer = true;
         if (owner == null) {
@@ -399,15 +404,15 @@ public class CheckClassAdapter extends ClassAdapter {
             throw new IllegalArgumentException("Invalid access flags: "
                     + access);
         }
-        int pub = ((access & Opcodes.ACC_PUBLIC) != 0 ? 1 : 0);
-        int pri = ((access & Opcodes.ACC_PRIVATE) != 0 ? 1 : 0);
-        int pro = ((access & Opcodes.ACC_PROTECTED) != 0 ? 1 : 0);
+        int pub = (access & Opcodes.ACC_PUBLIC) != 0 ? 1 : 0;
+        int pri = (access & Opcodes.ACC_PRIVATE) != 0 ? 1 : 0;
+        int pro = (access & Opcodes.ACC_PROTECTED) != 0 ? 1 : 0;
         if (pub + pri + pro > 1) {
             throw new IllegalArgumentException("public private and protected are mutually exclusive: "
                     + access);
         }
-        int fin = ((access & Opcodes.ACC_FINAL) != 0 ? 1 : 0);
-        int abs = ((access & Opcodes.ACC_ABSTRACT) != 0 ? 1 : 0);
+        int fin = (access & Opcodes.ACC_FINAL) != 0 ? 1 : 0;
+        int abs = (access & Opcodes.ACC_ABSTRACT) != 0 ? 1 : 0;
         if (fin + abs > 1) {
             throw new IllegalArgumentException("final and abstract are mutually exclusive: "
                     + access);

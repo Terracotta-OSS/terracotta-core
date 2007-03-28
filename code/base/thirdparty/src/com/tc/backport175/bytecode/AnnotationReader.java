@@ -8,20 +8,15 @@
 package com.tc.backport175.bytecode;
 
 import com.tc.backport175.Annotation;
-//import com.tc.backport175.ReaderException;
 import com.tc.backport175.bytecode.spi.BytecodeProvider;
 import com.tc.backport175.proxy.ProxyFactory;
 
 import com.tc.asm.AnnotationVisitor;
-import com.tc.asm.Attribute;
-import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassReader;
-import com.tc.asm.ClassVisitor;
-import com.tc.asm.ClassWriter;
 import com.tc.asm.FieldVisitor;
-import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Type;
+import com.tc.asm.commons.EmptyVisitor;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -945,8 +940,7 @@ public class AnnotationReader {
 //            );
         }
         ClassReader classReader = new ClassReader(bytes);
-        ClassWriter writer = new ClassWriter(true);
-        classReader.accept(new AnnotationRetrievingVisitor(writer), false);
+        classReader.accept(new AnnotationRetrievingVisitor(), ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
     }
 
     /**
@@ -967,14 +961,9 @@ public class AnnotationReader {
      *
      * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
      */
-    private class AnnotationRetrievingVisitor extends ClassAdapter {
-
-        public AnnotationRetrievingVisitor(final ClassVisitor cv) {
-            super(cv);
-        }
+    private class AnnotationRetrievingVisitor extends EmptyVisitor {
 
         public AnnotationVisitor visitAnnotation(final String desc, final boolean visible) {
-            cv.visitAnnotation(desc, visible);
             String annotationClassName = toJavaName(desc);
             final AnnotationElement.Annotation annotation = new AnnotationElement.Annotation(annotationClassName);
             m_classAnnotationElements.put(annotationClassName, annotation);
@@ -986,10 +975,8 @@ public class AnnotationReader {
                                        final String desc,
                                        final String signature,
                                        final Object value) {
-            final FieldVisitor visitor = cv.visitField(access, name, desc, signature, value);
-
             final MemberKey key = new MemberKey(name, desc);
-            return new AnnotationRetrievingFieldVisitor(key, visitor, AnnotationReader.this);
+            return new AnnotationRetrievingFieldVisitor(key, AnnotationReader.this);
         }
 
         public MethodVisitor visitMethod(final int access,
@@ -997,13 +984,11 @@ public class AnnotationReader {
                                          final String desc,
                                          final String signature,
                                          final String[] exceptions) {
-            MethodVisitor visitor = cv.visitMethod(access, name, desc, signature, exceptions);
-
             final MemberKey key = new MemberKey(name, desc);
             if (name.equals(INIT_METHOD_NAME)) {
-                return new AnnotationRetrievingConstructorVisitor(visitor, key, AnnotationReader.this);
+                return new AnnotationRetrievingConstructorVisitor(key, AnnotationReader.this);
             } else {
-                return new AnnotationRetrievingMethodVisitor(visitor, key, AnnotationReader.this);
+                return new AnnotationRetrievingMethodVisitor(key, AnnotationReader.this);
             }
         }
 
@@ -1022,12 +1007,11 @@ public class AnnotationReader {
 //            return new TraceAnnotationVisitor();
     }
 
-    private static final class AnnotationRetrievingConstructorVisitor extends MethodAdapter {
+    private static final class AnnotationRetrievingConstructorVisitor extends EmptyVisitor {
       private final MemberKey key;
       private final AnnotationReader reader;
 
-      private AnnotationRetrievingConstructorVisitor(MethodVisitor mv, MemberKey key, AnnotationReader reader) {
-        super(mv);
+      private AnnotationRetrievingConstructorVisitor(MemberKey key, AnnotationReader reader) {
         this.key = key;
         this.reader = reader;
       }
@@ -1046,12 +1030,11 @@ public class AnnotationReader {
       }
     }
     
-    private static final class AnnotationRetrievingMethodVisitor extends MethodAdapter {
+    private static final class AnnotationRetrievingMethodVisitor extends EmptyVisitor {
       private final MemberKey key;
       private final AnnotationReader reader;
 
-      private AnnotationRetrievingMethodVisitor(MethodVisitor mv, MemberKey key, AnnotationReader reader) {
-        super(mv);
+      private AnnotationRetrievingMethodVisitor(MemberKey key, AnnotationReader reader) {
         this.key = key;
         this.reader = reader;
       }
@@ -1070,14 +1053,12 @@ public class AnnotationReader {
       }
     }
     
-    private static final class AnnotationRetrievingFieldVisitor implements FieldVisitor {
+    private static final class AnnotationRetrievingFieldVisitor extends EmptyVisitor {
       private final MemberKey    key;
-      private final FieldVisitor visitor;
       private final AnnotationReader reader;
 
-      private AnnotationRetrievingFieldVisitor(MemberKey key, FieldVisitor visitor, AnnotationReader reader) {
+      private AnnotationRetrievingFieldVisitor(MemberKey key, AnnotationReader reader) {
         this.key = key;
-        this.visitor = visitor;
         this.reader = reader;
       }
 
@@ -1094,13 +1075,6 @@ public class AnnotationReader {
           return reader.createAnnotationVisitor(annotation);
       }
 
-      public void visitAttribute(final Attribute attribute) {
-          visitor.visitAttribute(attribute);
-      }
-
-      public void visitEnd() {
-          visitor.visitEnd();
-      }
     }
     
 

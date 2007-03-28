@@ -64,7 +64,7 @@ public class MethodCallVisitor extends ClassAdapter implements TransformationCon
     super(cv);
     m_loader = loader;
     m_callerClassInfo = classInfo;
-    m_ctx = (InstrumentationContext) ctx;
+    m_ctx = ctx;
   }
 
   /**

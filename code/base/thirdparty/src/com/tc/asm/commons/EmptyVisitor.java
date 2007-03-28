@@ -49,52 +49,59 @@ public class EmptyVisitor implements
 {
 
     public void visit(
-        int version,
-        int access,
-        String name,
-        String signature,
-        String superName,
-        String[] interfaces)
+        final int version,
+        final int access,
+        final String name,
+        final String signature,
+        final String superName,
+        final String[] interfaces)
     {
     }
 
-    public void visitSource(String source, String debug) {
+    public void visitSource(final String source, final String debug) {
     }
 
-    public void visitOuterClass(String owner, String name, String desc) {
+    public void visitOuterClass(
+        final String owner,
+        final String name,
+        final String desc)
+    {
     }
 
-    public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+    public AnnotationVisitor visitAnnotation(
+        final String desc,
+        final boolean visible)
+    {
         return this;
     }
 
-    public void visitAttribute(Attribute attr) {
+    public void visitAttribute(final Attribute attr) {
     }
 
     public void visitInnerClass(
-        String name,
-        String outerName,
-        String innerName,
-        int access)
+        final String name,
+        final String outerName,
+        final String innerName,
+        final int access)
     {
     }
 
     public FieldVisitor visitField(
-        int access,
-        String name,
-        String desc,
-        String signature,
-        Object value)
+        final int access,
+        final String name,
+        final String desc,
+        final String signature,
+        final Object value)
     {
         return this;
     }
 
     public MethodVisitor visitMethod(
-        int access,
-        String name,
-        String desc,
-        String signature,
-        String[] exceptions)
+        final int access,
+        final String name,
+        final String desc,
+        final String signature,
+        final String[] exceptions)
     {
         return this;
     }
@@ -107,9 +114,9 @@ public class EmptyVisitor implements
     }
 
     public AnnotationVisitor visitParameterAnnotation(
-        int parameter,
-        String desc,
-        boolean visible)
+        final int parameter,
+        final String desc,
+        final boolean visible)
     {
         return this;
     }
@@ -117,95 +124,115 @@ public class EmptyVisitor implements
     public void visitCode() {
     }
 
-    public void visitInsn(int opcode) {
+    public void visitFrame(
+        final int type,
+        final int nLocal,
+        final Object[] local,
+        final int nStack,
+        final Object[] stack)
+    {
     }
 
-    public void visitIntInsn(int opcode, int operand) {
+    public void visitInsn(final int opcode) {
     }
 
-    public void visitVarInsn(int opcode, int var) {
+    public void visitIntInsn(final int opcode, final int operand) {
     }
 
-    public void visitTypeInsn(int opcode, String desc) {
+    public void visitVarInsn(final int opcode, final int var) {
+    }
+
+    public void visitTypeInsn(final int opcode, final String desc) {
     }
 
     public void visitFieldInsn(
-        int opcode,
-        String owner,
-        String name,
-        String desc)
+        final int opcode,
+        final String owner,
+        final String name,
+        final String desc)
     {
     }
 
     public void visitMethodInsn(
-        int opcode,
-        String owner,
-        String name,
-        String desc)
+        final int opcode,
+        final String owner,
+        final String name,
+        final String desc)
     {
     }
 
-    public void visitJumpInsn(int opcode, Label label) {
+    public void visitJumpInsn(final int opcode, final Label label) {
     }
 
-    public void visitLabel(Label label) {
+    public void visitLabel(final Label label) {
     }
 
-    public void visitLdcInsn(Object cst) {
+    public void visitLdcInsn(final Object cst) {
     }
 
-    public void visitIincInsn(int var, int increment) {
+    public void visitIincInsn(final int var, final int increment) {
     }
 
     public void visitTableSwitchInsn(
-        int min,
-        int max,
-        Label dflt,
-        Label labels[])
+        final int min,
+        final int max,
+        final Label dflt,
+        final Label labels[])
     {
     }
 
-    public void visitLookupSwitchInsn(Label dflt, int keys[], Label labels[]) {
+    public void visitLookupSwitchInsn(
+        final Label dflt,
+        final int keys[],
+        final Label labels[])
+    {
     }
 
-    public void visitMultiANewArrayInsn(String desc, int dims) {
+    public void visitMultiANewArrayInsn(final String desc, final int dims) {
     }
 
     public void visitTryCatchBlock(
-        Label start,
-        Label end,
-        Label handler,
-        String type)
+        final Label start,
+        final Label end,
+        final Label handler,
+        final String type)
     {
     }
 
     public void visitLocalVariable(
-        String name,
-        String desc,
-        String signature,
-        Label start,
-        Label end,
-        int index)
+        final String name,
+        final String desc,
+        final String signature,
+        final Label start,
+        final Label end,
+        final int index)
     {
     }
 
-    public void visitLineNumber(int line, Label start) {
+    public void visitLineNumber(final int line, final Label start) {
     }
 
-    public void visitMaxs(int maxStack, int maxLocals) {
+    public void visitMaxs(final int maxStack, final int maxLocals) {
     }
 
-    public void visit(String name, Object value) {
+    public void visit(final String name, final Object value) {
     }
 
-    public void visitEnum(String name, String desc, String value) {
+    public void visitEnum(
+        final String name,
+        final String desc,
+        final String value)
+    {
     }
 
-    public AnnotationVisitor visitAnnotation(String name, String desc) {
+    public AnnotationVisitor visitAnnotation(
+        final String name,
+        final String desc)
+    {
         return this;
     }
 
-    public AnnotationVisitor visitArray(String name) {
+    public AnnotationVisitor visitArray(final String name) {
         return this;
     }
 }

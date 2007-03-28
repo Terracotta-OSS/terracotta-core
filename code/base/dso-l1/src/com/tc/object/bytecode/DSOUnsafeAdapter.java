@@ -87,9 +87,9 @@ public class DSOUnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdap
     Type[] params = Type.getArgumentTypes(description);
     Type returnType = Type.getReturnType(description);
 
-    int newLocalVar1 = ((FieldMethodAdapter)mv).addNewVar(1);
-    int newLocalVar2 = ((FieldMethodAdapter)mv).addNewVar(1);
-    int newLocalVar3 = ((FieldMethodAdapter)mv).addNewVar(1);
+    int newLocalVar1 = ((FieldMethodAdapter)mv).newLocal(Type.INT_TYPE);
+    int newLocalVar2 = ((FieldMethodAdapter)mv).newLocal(Type.getObjectType("java/lang/Object"));
+    int newLocalVar3 = ((FieldMethodAdapter)mv).newLocal(Type.getObjectType("java/lang/Object"));
 
     mv.visitCode();
 
@@ -181,10 +181,6 @@ public class DSOUnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdap
   private class FieldMethodAdapter extends LocalVariablesSorter implements Opcodes {
     public FieldMethodAdapter(int access, String desc, MethodVisitor mv) {
       super(access, desc, mv);
-    }
-
-    public int addNewVar(int size) {
-      return newLocal(size);
     }
   }
 

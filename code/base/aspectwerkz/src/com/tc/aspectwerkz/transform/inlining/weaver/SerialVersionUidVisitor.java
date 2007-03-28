@@ -97,7 +97,7 @@ public class SerialVersionUidVisitor extends ClassAdapter implements Opcodes {
       ClassReader cr = new ClassReader(klass.getName());
       ClassWriter cw = AsmHelper.newClassWriter(true);
       SerialVersionUidVisitor sv = new SerialVersionUidVisitor(cw);
-      cr.accept(sv, true);
+      cr.accept(sv, ClassReader.SKIP_DEBUG);
       return sv.m_SVUID;
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -432,7 +432,7 @@ public class SerialVersionUidVisitor extends ClassAdapter implements Opcodes {
 
     public Add(ClassVisitor classVisitor, InstrumentationContext ctx, ClassInfo classInfo) {
       super(classVisitor);
-      m_ctx = (InstrumentationContext) ctx;
+      m_ctx = ctx;
       m_classInfo = classInfo;
     }
 
@@ -441,7 +441,7 @@ public class SerialVersionUidVisitor extends ClassAdapter implements Opcodes {
         ClassReader cr = new ClassReader(m_ctx.getInitialBytecode());
         ClassWriter cw = AsmHelper.newClassWriter(true);
         SerialVersionUidVisitor sv = new SerialVersionUidVisitor(cw);
-        cr.accept(sv, true);
+        cr.accept(sv, ClassReader.SKIP_DEBUG);
         if (sv.m_computeSVUID && !sv.m_hadSVUID) {
           cv.visitField(ACC_FINAL + ACC_STATIC, SVUID_NAME, "J", null, new Long(sv.m_SVUID));
         }

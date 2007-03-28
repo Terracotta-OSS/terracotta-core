@@ -50,13 +50,11 @@ public class CGLibProxyEnhancerAdapter extends ClassAdapter implements ClassAdap
     // public final Object intercept(Object object, Method method, Object args[], MethodProxy proxy)
 
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-
     if ("getMethods".equals(name)
-        && "(Ljava/lang/Class;[Ljava/lang/Class;Ljava/util/List;Ljava/util/List;Ljava/util/Set;)V".equals(desc)) { return new InterceptAdapter(
-                                                                                                                                               mv); }
-
+        && "(Ljava/lang/Class;[Ljava/lang/Class;Ljava/util/List;Ljava/util/List;Ljava/util/Set;)V".equals(desc)) { //
+      return new InterceptAdapter(mv);
+    }
     return mv;
-
   }
 
   public void visitEnd() {
@@ -69,7 +67,7 @@ public class CGLibProxyEnhancerAdapter extends ClassAdapter implements ClassAdap
       byte[] bytes = getBytesForClass(bundle, FilterTCMethods.class);
       ClassReader tcCR = new ClassReader(bytes);
       ClassNode tcCN = new ClassNode();
-      tcCR.accept(tcCN, true);
+      tcCR.accept(tcCN, ClassReader.SKIP_DEBUG);
 
       List tcMethods = tcCN.methods;
       for (Iterator i = tcMethods.iterator(); i.hasNext();) {

@@ -29,8 +29,10 @@
  */
 package com.tc.asm.tree;
 
-import com.tc.asm.Opcodes;
+import java.util.Map;
+
 import com.tc.asm.MethodVisitor;
+import com.tc.asm.Opcodes;
 
 /**
  * A node that represents a MULTIANEWARRAY instruction.
@@ -40,7 +42,7 @@ import com.tc.asm.MethodVisitor;
 public class MultiANewArrayInsnNode extends AbstractInsnNode {
 
     /**
-     * An array type descriptor (see {@link org.objectweb.asm.Type}).
+     * An array type descriptor (see {@link com.tc.asm.Type}).
      */
     public String desc;
 
@@ -52,7 +54,7 @@ public class MultiANewArrayInsnNode extends AbstractInsnNode {
     /**
      * Constructs a new {@link MultiANewArrayInsnNode}.
      * 
-     * @param desc an array type descriptor (see {@link org.objectweb.asm.Type}).
+     * @param desc an array type descriptor (see {@link com.tc.asm.Type}).
      * @param dims number of dimensions of the array to allocate.
      */
     public MultiANewArrayInsnNode(final String desc, final int dims) {
@@ -61,11 +63,16 @@ public class MultiANewArrayInsnNode extends AbstractInsnNode {
         this.dims = dims;
     }
 
+    public int getType() {
+        return MULTIANEWARRAY_INSN;
+    }
+
     public void accept(final MethodVisitor mv) {
         mv.visitMultiANewArrayInsn(desc, dims);
     }
 
-    public int getType() {
-        return MULTIANEWARRAY_INSN;
+    public AbstractInsnNode clone(final Map labels) {
+        return new MultiANewArrayInsnNode(desc, dims);
     }
+
 }

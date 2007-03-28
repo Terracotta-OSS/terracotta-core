@@ -51,7 +51,7 @@ public class AnnotationNode implements AnnotationVisitor {
      * as two consecutive elements in the list. The name is a {@link String},
      * and the value may be a {@link Byte}, {@link Boolean}, {@link Character},
      * {@link Short}, {@link Integer}, {@link Long}, {@link Float},
-     * {@link Double}, {@link String} or {@link org.objectweb.asm.Type}, or an
+     * {@link Double}, {@link String} or {@link com.tc.asm.Type}, or an
      * two elements String array (for enumeration values), a
      * {@link AnnotationNode}, or a {@link List} of values of one of the
      * preceding types. The list may be <tt>null</tt> if there is no name
@@ -142,23 +142,25 @@ public class AnnotationNode implements AnnotationVisitor {
     /**
      * Makes the given visitor visit this annotation.
      * 
-     * @param av an annotation visitor.
+     * @param av an annotation visitor. Maybe <tt>null</tt>.
      */
     public void accept(final AnnotationVisitor av) {
-        if (values != null) {
-            for (int i = 0; i < values.size(); i += 2) {
-                String name = (String) values.get(i);
-                Object value = values.get(i + 1);
-                accept(av, name, value);
+        if (av != null) {
+            if (values != null) {
+                for (int i = 0; i < values.size(); i += 2) {
+                    String name = (String) values.get(i);
+                    Object value = values.get(i + 1);
+                    accept(av, name, value);
+                }
             }
+            av.visitEnd();
         }
-        av.visitEnd();
     }
 
     /**
      * Makes the given visitor visit a given annotation value.
      * 
-     * @param av an annotation visitor.
+     * @param av an annotation visitor. Maybe <tt>null</tt>.
      * @param name the value name.
      * @param value the actual value.
      */
@@ -167,21 +169,23 @@ public class AnnotationNode implements AnnotationVisitor {
         final String name,
         final Object value)
     {
-        if (value instanceof String[]) {
-            String[] typeconst = (String[]) value;
-            av.visitEnum(name, typeconst[0], typeconst[1]);
-        } else if (value instanceof AnnotationNode) {
-            AnnotationNode an = (AnnotationNode) value;
-            an.accept(av.visitAnnotation(name, an.desc));
-        } else if (value instanceof List) {
-            AnnotationVisitor v = av.visitArray(name);
-            List array = (List) value;
-            for (int j = 0; j < array.size(); ++j) {
-                accept(v, null, array.get(j));
+        if (av != null) {
+            if (value instanceof String[]) {
+                String[] typeconst = (String[]) value;
+                av.visitEnum(name, typeconst[0], typeconst[1]);
+            } else if (value instanceof AnnotationNode) {
+                AnnotationNode an = (AnnotationNode) value;
+                an.accept(av.visitAnnotation(name, an.desc));
+            } else if (value instanceof List) {
+                AnnotationVisitor v = av.visitArray(name);
+                List array = (List) value;
+                for (int j = 0; j < array.size(); ++j) {
+                    accept(v, null, array.get(j));
+                }
+                v.visitEnd();
+            } else {
+                av.visit(name, value);
             }
-            v.visitEnd();
-        } else {
-            av.visit(name, value);
         }
     }
 }

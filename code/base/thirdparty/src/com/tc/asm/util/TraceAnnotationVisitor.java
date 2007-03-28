@@ -141,8 +141,6 @@ public class TraceAnnotationVisitor extends TraceAbstractVisitor implements
                 }
             }
             buf.append('}');
-        } else {
-            buf.append(value);
         }
 
         text.add(buf.toString());
@@ -152,43 +150,43 @@ public class TraceAnnotationVisitor extends TraceAbstractVisitor implements
         }
     }
 
-    private void visitInt(int value) {
+    private void visitInt(final int value) {
         buf.append(value);
     }
 
-    private void visitLong(long value) {
+    private void visitLong(final long value) {
         buf.append(value).append('L');
     }
 
-    private void visitFloat(float value) {
+    private void visitFloat(final float value) {
         buf.append(value).append('F');
     }
 
-    private void visitDouble(double value) {
+    private void visitDouble(final double value) {
         buf.append(value).append('D');
     }
 
-    private void visitChar(char value) {
+    private void visitChar(final char value) {
         buf.append("(char)").append((int) value);
     }
 
-    private void visitShort(short value) {
+    private void visitShort(final short value) {
         buf.append("(short)").append(value);
     }
 
-    private void visitByte(byte value) {
+    private void visitByte(final byte value) {
         buf.append("(byte)").append(value);
     }
 
-    private void visitBoolean(boolean value) {
+    private void visitBoolean(final boolean value) {
         buf.append(value);
     }
 
-    private void visitString(String value) {
+    private void visitString(final String value) {
         appendString(buf, value);
     }
 
-    private void visitType(Type value) {
+    private void visitType(final Type value) {
         buf.append(value.getClassName()).append(".class");
     }
 
@@ -260,11 +258,7 @@ public class TraceAnnotationVisitor extends TraceAbstractVisitor implements
     // Utility methods
     // ------------------------------------------------------------------------
 
-    protected TraceAnnotationVisitor createTraceAnnotationVisitor() {
-        return new TraceAnnotationVisitor();
-    }
-
-    private void appendComa(int i) {
+    private void appendComa(final int i) {
         if (i != 0) {
             buf.append(", ");
         }

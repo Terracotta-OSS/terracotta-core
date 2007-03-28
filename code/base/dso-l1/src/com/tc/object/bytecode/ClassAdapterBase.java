@@ -1,3 +1,4 @@
+
 /*
  * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
@@ -153,7 +154,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
       Type[] types = Type.getArgumentTypes(methodInsnDesc);
       localVariablesForMethodCall = new int[types.length];
       for (int i = 0; i < types.length; i++) {
-        localVariablesForMethodCall[i] = newLocal(types[i].getSize());
+        localVariablesForMethodCall[i] = newLocal(types[i]);
       }
       for (int i = types.length - 1; i >= 0; i--) {
         super.visitVarInsn(types[i].getOpcode(ISTORE), localVariablesForMethodCall[i]);

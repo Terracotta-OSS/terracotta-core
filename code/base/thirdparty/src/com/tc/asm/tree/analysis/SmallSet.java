@@ -47,7 +47,7 @@ class SmallSet extends AbstractSet implements Iterator {
 
     final static SmallSet EMPTY_SET = new SmallSet(null, null);
 
-    SmallSet(Object e1, Object e2) {
+    SmallSet(final Object e1, final Object e2) {
         this.e1 = e1;
         this.e2 = e2;
     }
@@ -86,7 +86,7 @@ class SmallSet extends AbstractSet implements Iterator {
     // Utility methods
     // -------------------------------------------------------------------------
 
-    Set union(SmallSet s) {
+    Set union(final SmallSet s) {
         if ((s.e1 == e1 && s.e2 == e2) || (s.e1 == e2 && s.e2 == e1)) {
             return this; // if the two sets are equal, return this
         }

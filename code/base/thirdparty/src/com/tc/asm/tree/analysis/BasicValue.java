@@ -32,7 +32,7 @@ package com.tc.asm.tree.analysis;
 import com.tc.asm.Type;
 
 /**
- * A {@link Value} that is represented by its type in a seven types type sytem.
+ * A {@link Value} that is represented by its type in a seven types type system.
  * This type system distinguishes the UNINITIALZED, INT, FLOAT, LONG, DOUBLE,
  * REFERENCE and RETURNADDRESS types.
  * 
@@ -50,7 +50,7 @@ public class BasicValue implements Value {
 
     public final static Value DOUBLE_VALUE = new BasicValue(Type.DOUBLE_TYPE);
 
-    public final static Value REFERENCE_VALUE = new BasicValue(Type.getType("Ljava/lang/Object;"));
+    public final static Value REFERENCE_VALUE = new BasicValue(Type.getObjectType("java/lang/Object"));
 
     public final static Value RETURNADDRESS_VALUE = new BasicValue(null);
 

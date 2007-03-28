@@ -11,12 +11,9 @@ import com.tc.backport175.ReaderException;
 import com.tc.backport175.bytecode.AnnotationElement.Annotation;
 
 import com.tc.asm.AnnotationVisitor;
-import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassReader;
-import com.tc.asm.ClassVisitor;
-import com.tc.asm.ClassWriter;
-import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
+import com.tc.asm.commons.EmptyVisitor;
 
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -55,37 +52,34 @@ class AnnotationDefaults {
                 throw new ReaderException("could not retrieve the bytecode from the bytecode provider for class [" + annotationClassName+ "]", e);
             }
             ClassReader cr = new ClassReader(bytes);
-            ClassWriter cw = new ClassWriter(false, true);
-            cr.accept(new AnnotationDefaultsClassVisitor(cw, newDefaults, loader), true);
+            cr.accept(new AnnotationDefaultsClassVisitor(newDefaults, loader), //
+                ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
             defaults = newDefaults;
             s_annotationDefaults.put(key, newDefaults);
         }
         return defaults;
     }
 
-    private static final class AnnotationDefaultsClassVisitor extends ClassAdapter {
-
+    private static final class AnnotationDefaultsClassVisitor extends EmptyVisitor {
       private final AnnotationElement.Annotation  defaults;
       private final ClassLoader loader;
 
-      private AnnotationDefaultsClassVisitor(ClassVisitor cv, AnnotationElement.Annotation defaults, ClassLoader loader) {
-        super(cv);
+      private AnnotationDefaultsClassVisitor(AnnotationElement.Annotation defaults, ClassLoader loader) {
         this.defaults = defaults;
         this.loader = loader;
       }
 
       public MethodVisitor visitMethod(int access, final String name, String desc, String signature, String[] exceptions) {
-          return new AnnotationDefaultsMethodVisitor(super.visitMethod(access, name, desc, signature, exceptions), name, defaults, loader);
+          return new AnnotationDefaultsMethodVisitor(name, defaults, loader);
       }
     }
 
-    private static final class AnnotationDefaultsMethodVisitor extends MethodAdapter {
+    private static final class AnnotationDefaultsMethodVisitor extends EmptyVisitor {
       private final String name;
       private final Annotation defaults;
       private final ClassLoader loader;
       
-      private AnnotationDefaultsMethodVisitor(MethodVisitor mv, String name, Annotation defaults, ClassLoader loader) {
-        super(mv);
+      private AnnotationDefaultsMethodVisitor(String name, Annotation defaults, ClassLoader loader) {
         this.name = name;
         this.defaults = defaults;
         this.loader = loader;

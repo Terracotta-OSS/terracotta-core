@@ -46,7 +46,9 @@ public class CheckFieldAdapter implements FieldVisitor {
         this.fv = fv;
     }
 
-    public AnnotationVisitor visitAnnotation(final String desc, boolean visible)
+    public AnnotationVisitor visitAnnotation(
+        final String desc,
+        final boolean visible)
     {
         checkEnd();
         CheckMethodAdapter.checkDesc(desc, false);

@@ -1,6 +1,6 @@
 /***
- * ASM XML Adapter
- * Copyright (c) 2004, Eugene Kuleshov
+ * ASM: a very small and fast Java bytecode manipulation framework
+ * Copyright (c) 2000-2005 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,51 +27,66 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.tc.asm.xml;
+package com.tc.asm.tree.analysis;
 
-import com.tc.asm.AnnotationVisitor;
-import com.tc.asm.Attribute;
-import com.tc.asm.FieldVisitor;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.AttributesImpl;
+import java.util.Set;
+
+import com.tc.asm.tree.AbstractInsnNode;
 
 /**
- * SAXFieldAdapter
+ * A {@link Value} that is represented by its type in a two types type system.
+ * This type system distinguishes the ONEWORD and TWOWORDS types.
  * 
- * @author Eugene Kuleshov
+ * @author Eric Bruneton
  */
-public class SAXFieldAdapter implements FieldVisitor {
-    private final ContentHandler h;
+public class SourceValue implements Value {
 
-    public SAXFieldAdapter(ContentHandler h, AttributesImpl att) {
-        this.h = h;
+    /**
+     * The size of this value.
+     */
+    public final int size;
 
-        try {
-            h.startElement("", "field", "field", att);
-        } catch (SAXException ex) {
-            throw new RuntimeException(ex.toString());
-        }
+    /**
+     * The instructions that can produce this value. For example, for the Java
+     * code below, the instructions that can produce the value of <tt>i</tt>
+     * at line 5 are the txo ISTORE instructions at line 1 and 3:
+     * 
+     * <pre>
+     * 1: i = 0;
+     * 2: if (...) {
+     * 3:   i = 1;
+     * 4: }
+     * 5: return i;
+     * </pre>
+     * 
+     * This field is a set of {@link AbstractInsnNode} objects.
+     */
+    public final Set insns;
+
+    public SourceValue(final int size) {
+        this(size, SmallSet.EMPTY_SET);
     }
 
-    public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-        return new SAXAnnotationAdapter(h,
-                "annotation",
-                visible ? 1 : -1,
-                null,
-                desc);
+    public SourceValue(final int size, final AbstractInsnNode insn) {
+        this.size = size;
+        this.insns = new SmallSet(insn, null);
     }
 
-    public void visitAttribute(Attribute attr) {
-        // TODO Auto-generated method stub
+    public SourceValue(final int size, final Set insns) {
+        this.size = size;
+        this.insns = insns;
     }
 
-    public void visitEnd() {
-        try {
-            h.endElement("", "field", "field");
-        } catch (SAXException ex) {
-            throw new RuntimeException(ex.toString());
-        }
+    public int getSize() {
+        return size;
     }
 
+    public boolean equals(final Object value) {
+        SourceValue v = (SourceValue) value;
+        return size == v.size && insns.equals(v.insns);
+    }
+
+    public int hashCode() {
+        return insns.hashCode();
+    }
 }

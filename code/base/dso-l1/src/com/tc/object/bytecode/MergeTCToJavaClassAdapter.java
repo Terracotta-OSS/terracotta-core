@@ -77,22 +77,18 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
     if (!isInitMethod(name)) {
       for (Iterator i = tcMethods.iterator(); i.hasNext();) {
         MethodNode mNode = (MethodNode) i.next();
-        if (mNode.name.equals(name) && mNode.desc.equals(desc)) { return super
-            .visitMethod(ACC_PRIVATE, getNewName(name), desc, signature, exceptions); }
+        if (mNode.name.equals(name) && mNode.desc.equals(desc)) { //
+          return super.visitMethod(ACC_PRIVATE, getNewName(name), desc, signature, exceptions);
+        }
       }
     }
+    
+    MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
     if (LogicalClassSerializationAdapter.WRITE_OBJECT_SIGNATURE.equals(methodDesc)
-        || LogicalClassSerializationAdapter.READ_OBJECT_SIGNATURE.equals(methodDesc)) { return new LogicalClassSerializationAdapter.LogicalClassSerializationMethodAdapter(
-                                                                                                                                                                           super
-                                                                                                                                                                               .visitMethod(
-                                                                                                                                                                                            access,
-                                                                                                                                                                                            name,
-                                                                                                                                                                                            desc,
-                                                                                                                                                                                            signature,
-                                                                                                                                                                                            exceptions),
-                                                                                                                                                                           jFullClassSlashes); }
-
-    return super.visitMethod(access, name, desc, signature, exceptions);
+        || LogicalClassSerializationAdapter.READ_OBJECT_SIGNATURE.equals(methodDesc)) { //
+      return new LogicalClassSerializationAdapter.LogicalClassSerializationMethodAdapter(mv, jFullClassSlashes);
+    }
+    return mv;
   }
 
   public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {

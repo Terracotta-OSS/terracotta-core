@@ -29,6 +29,8 @@
  */
 package com.tc.asm.tree;
 
+import java.util.Map;
+
 import com.tc.asm.MethodVisitor;
 
 /**
@@ -41,7 +43,7 @@ public class MethodInsnNode extends AbstractInsnNode {
 
     /**
      * The internal name of the method's owner class (see
-     * {@link org.objectweb.asm.Type#getInternalName() getInternalName}).
+     * {@link com.tc.asm.Type#getInternalName() getInternalName}).
      */
     public String owner;
 
@@ -51,7 +53,7 @@ public class MethodInsnNode extends AbstractInsnNode {
     public String name;
 
     /**
-     * The method's descriptor (see {@link org.objectweb.asm.Type}).
+     * The method's descriptor (see {@link com.tc.asm.Type}).
      */
     public String desc;
 
@@ -62,9 +64,9 @@ public class MethodInsnNode extends AbstractInsnNode {
      *        opcode must be INVOKEVIRTUAL, INVOKESPECIAL, INVOKESTATIC or
      *        INVOKEINTERFACE.
      * @param owner the internal name of the method's owner class (see
-     *        {@link org.objectweb.asm.Type#getInternalName() getInternalName}).
+     *        {@link com.tc.asm.Type#getInternalName() getInternalName}).
      * @param name the method's name.
-     * @param desc the method's descriptor (see {@link org.objectweb.asm.Type}).
+     * @param desc the method's descriptor (see {@link com.tc.asm.Type}).
      */
     public MethodInsnNode(
         final int opcode,
@@ -88,11 +90,15 @@ public class MethodInsnNode extends AbstractInsnNode {
         this.opcode = opcode;
     }
 
+    public int getType() {
+        return METHOD_INSN;
+    }
+
     public void accept(final MethodVisitor mv) {
         mv.visitMethodInsn(opcode, owner, name, desc);
     }
 
-    public int getType() {
-        return METHOD_INSN;
+    public AbstractInsnNode clone(final Map labels) {
+        return new MethodInsnNode(opcode, owner, name, desc);
     }
 }

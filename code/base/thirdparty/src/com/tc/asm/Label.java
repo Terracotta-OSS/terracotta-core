@@ -38,24 +38,84 @@ package com.tc.asm;
 public class Label {
 
     /**
+     * Indicates if this label is only used for debug attributes. Such a label
+     * is not the start of a basic block, the target of a jump instruction, or
+     * an exception handler. It can be safely ignored in control flow graph
+     * analysis algorithms (for optimization purposes).
+     */
+    final static int DEBUG = 1;
+
+    /**
+     * Indicates if the position of this label is known.
+     */
+    final static int RESOLVED = 2;
+
+    /**
+     * Indicates if this label has been updated, after instruction resizing.
+     */
+    final static int RESIZED = 4;
+
+    /**
+     * Indicates if this basic block has been pushed in the basic block stack.
+     * See {@link MethodWriter#visitMaxs visitMaxs}.
+     */
+    final static int PUSHED = 8;
+
+    /**
+     * Indicates if this label is the target of a jump instruction, or the start
+     * of an exception handler.
+     */
+    final static int TARGET = 16;
+
+    /**
+     * Indicates if a stack map frame must be stored for this label.
+     */
+    final static int STORE = 32;
+
+    /**
+     * Indicates if this label corresponds to a reachable basic block.
+     */
+    final static int REACHABLE = 64;
+
+    /**
+     * Indicates if this basic block ends with a JSR instruction.
+     */
+    final static int JSR = 128;
+
+    /**
+     * Indicates if this basic block ends with a RET instruction.
+     */
+    final static int RET = 256;
+
+    /**
+     * Field used to associate user information to a label.
+     */
+    public Object info;
+
+    /**
+     * Flags that indicate the status of this label.
+     * 
+     * @see #DEBUG
+     * @see #RESOLVED
+     * @see #RESIZED
+     * @see #PUSHED
+     * @see #TARGET
+     * @see #STORE
+     * @see #REACHABLE
+     * @see #JSR
+     * @see #RET
+     */
+    int status;
+
+    /**
      * The line number corresponding to this label, if known.
      */
     int line;
 
     /**
-     * Indicates if the position of this label is known.
-     */
-    boolean resolved;
-
-    /**
      * The position of this label in the code, if known.
      */
     int position;
-
-    /**
-     * If the label position has been updated, after instruction resizing.
-     */
-    boolean resized;
 
     /**
      * Number of forward references to this label, times two.
@@ -73,30 +133,73 @@ public class Label {
      */
     private int[] srcAndRefPositions;
 
+    // ------------------------------------------------------------------------
+
     /*
-     * Fields for the control flow graph analysis algorithm (used to compute the
-     * maximum stack size). A control flow graph contains one node per "basic
-     * block", and one edge per "jump" from one basic block to another. Each
-     * node (i.e., each basic block) is represented by the Label object that
-     * corresponds to the first instruction of this basic block. Each node also
-     * stores the list of it successors in the graph, as a linked list of Edge
-     * objects.
+     * Fields for the control flow and data flow graph analysis algorithms (used
+     * to compute the maximum stack size or the stack map frames). A control
+     * flow graph contains one node per "basic block", and one edge per "jump"
+     * from one basic block to another. Each node (i.e., each basic block) is
+     * represented by the Label object that corresponds to the first instruction
+     * of this basic block. Each node also stores the list of its successors in
+     * the graph, as a linked list of Edge objects.
+     * 
+     * The control flow analysis algorithms used to compute the maximum stack
+     * size or the stack map frames are similar and use two steps. The first
+     * step, during the visit of each instruction, builds information about the
+     * state of the local variables and the operand stack at the end of each
+     * basic block, called the "output frame", <i>relatively</i> to the frame
+     * state at the beginning of the basic block, which is called the "input
+     * frame", and which is <i>unknown</i> during this step. The second step,
+     * in {@link MethodWriter#visitMaxs}, is a fix point algorithm that
+     * computes information about the input frame of each basic block, from the
+     * input state of the first basic block (known from the method signature),
+     * and by the using the previously computed relative output frames.
+     * 
+     * The algorithm used to compute the maximum stack size only computes the
+     * relative output and absolute input stack heights, while the algorithm
+     * used to compute stack map frames computes relative output frames and
+     * absolute input frames.
      */
 
     /**
-     * The stack size at the beginning of this basic block. This size is
-     * initially unknown. It is computed by the control flow analysis algorithm
-     * (see {@link MethodWriter#visitMaxs visitMaxs}).
+     * Start of the output stack relatively to the input stack. The exact
+     * semantics of this field depends on the algorithm that is used.
+     * 
+     * When only the maximum stack size is computed, this field is the number of
+     * elements in the input stack.
+     * 
+     * When the stack map frames are completely computed, this field is the
+     * offset of the first output stack element relatively to the top of the
+     * input stack. This offset is always negative or null. A null offset means
+     * that the output stack must be appended to the input stack. A -n offset
+     * means that the first n output stack elements must replace the top n input
+     * stack elements, and that the other elements must be appended to the input
+     * stack.
      */
-    int beginStackSize;
+    int inputStackTop;
 
     /**
-     * The (relative) maximum stack size corresponding to this basic block. This
-     * size is relative to the stack size at the beginning of the basic block,
-     * i.e., the true maximum stack size is equal to {@link #beginStackSize
-     * beginStackSize} + {@link #maxStackSize maxStackSize}.
+     * Maximum height reached by the output stack, relatively to the top of the
+     * input stack. This maximum is always positive or null.
      */
-    int maxStackSize;
+    int outputStackMax;
+
+    /**
+     * Information about the input and output stack map frames of this basic
+     * block. This field is only used when {@link ClassWriter#COMPUTE_FRAMES}
+     * option is used.
+     */
+    Frame frame;
+
+    /**
+     * The successor of this label, in the order they are visited. This linked
+     * list does not include labels used for debug info only. If
+     * {@link ClassWriter#COMPUTE_FRAMES} option is used then, in addition, it
+     * does not contain successive labels that denote the same bytecode position
+     * (in this case only the first label appears in this list).
+     */
+    Label successor;
 
     /**
      * The successors of this node in the control flow graph. These successors
@@ -106,16 +209,13 @@ public class Label {
     Edge successors;
 
     /**
-     * The next basic block in the basic block stack. See
-     * {@link MethodWriter#visitMaxs visitMaxs}.
+     * The next basic block in the basic block stack. This stack is used in the
+     * main loop of the fix point algorithm used in the second step of the
+     * control flow analysis algorithms.
+     * 
+     * @see MethodWriter#visitMaxs
      */
     Label next;
-
-    /**
-     * <tt>true</tt> if this basic block has been pushed in the basic block
-     * stack. See {@link MethodWriter#visitMaxs visitMaxs}.
-     */
-    boolean pushed;
 
     // ------------------------------------------------------------------------
     // Constructor
@@ -125,6 +225,15 @@ public class Label {
      * Constructs a new label.
      */
     public Label() {
+    }
+
+    /**
+     * Constructs a new label.
+     * 
+     * @param debug if this label is only used for debug attributes.
+     */
+    Label(final boolean debug) {
+        this.status = debug ? DEBUG : 0;
     }
 
     // ------------------------------------------------------------------------
@@ -141,7 +250,7 @@ public class Label {
      * @throws IllegalStateException if this label is not resolved yet.
      */
     public int getOffset() {
-        if (!resolved) {
+        if ((status & RESOLVED) == 0) {
             throw new IllegalStateException("Label offset position has not been resolved yet");
         }
         return position;
@@ -168,7 +277,7 @@ public class Label {
         final int source,
         final boolean wideOffset)
     {
-        if (resolved) {
+        if ((status & RESOLVED) != 0) {
             if (wideOffset) {
                 out.putInt(position - source);
             } else {
@@ -242,7 +351,7 @@ public class Label {
         final byte[] data)
     {
         boolean needUpdate = false;
-        this.resolved = true;
+        this.status |= RESOLVED;
         this.position = position;
         int i = 0;
         while (i < referenceCount) {
@@ -282,6 +391,18 @@ public class Label {
             }
         }
         return needUpdate;
+    }
+
+    /**
+     * Returns the first label of the series to which this label belongs. For an
+     * isolated label or for the first label in a series of successive labels,
+     * this method returns the label itself. For other labels it returns the
+     * first label of the series.
+     * 
+     * @return the first label of the series to which this label belongs.
+     */
+    Label getFirst() {
+        return frame == null ? this : frame.owner;
     }
 
     // ------------------------------------------------------------------------

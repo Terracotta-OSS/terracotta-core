@@ -7,6 +7,7 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.asm.Type;
 import com.tc.asm.commons.LocalVariablesSorter;
 import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueClassAdapter.NodeMethodAdapter;
 
@@ -33,13 +34,13 @@ public class JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter extends C
     
     public RemoveMethodAdapter(int access, String desc, MethodVisitor mv) {
       super(access, desc, mv);
-      newLocalVar = newLocal(1);
+      newLocalVar = newLocal(Type.INT_TYPE);
     }
     
     public void visitCode() {
       super.visitCode();
-      mv.visitInsn(ICONST_0);
-      mv.visitVarInsn(ISTORE, newLocalVar);
+      super.visitInsn(ICONST_0);
+      super.visitVarInsn(ISTORE, newLocalVar);
     }
     
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {

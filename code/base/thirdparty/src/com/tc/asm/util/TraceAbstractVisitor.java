@@ -31,7 +31,6 @@ package com.tc.asm.util;
 
 import com.tc.asm.AnnotationVisitor;
 import com.tc.asm.Attribute;
-import com.tc.asm.util.attrs.Traceable;
 
 /**
  * An abstract trace visitor.
@@ -135,7 +134,7 @@ public abstract class TraceAbstractVisitor extends AbstractVisitor {
         if (attr instanceof Traceable) {
             ((Traceable) attr).trace(buf, null);
         } else {
-            buf.append(" : ").append(attr.toString()).append("\n");
+            buf.append(" : unknown\n");
         }
 
         text.add(buf.toString());

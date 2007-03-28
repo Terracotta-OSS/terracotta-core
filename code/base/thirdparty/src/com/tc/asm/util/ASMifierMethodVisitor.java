@@ -30,8 +30,8 @@
 package com.tc.asm.util;
 
 import com.tc.asm.AnnotationVisitor;
-import com.tc.asm.MethodVisitor;
 import com.tc.asm.Label;
+import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 
 import java.util.HashMap;
@@ -86,6 +86,57 @@ public class ASMifierMethodVisitor extends ASMifierAbstractVisitor implements
 
     public void visitCode() {
         text.add("mv.visitCode();\n");
+    }
+
+    public void visitFrame(
+        final int type,
+        final int nLocal,
+        final Object[] local,
+        final int nStack,
+        final Object[] stack)
+    {
+        buf.setLength(0);
+        switch (type) {
+            case Opcodes.F_NEW:
+            case Opcodes.F_FULL:
+                declareFrameTypes(nLocal, local);
+                declareFrameTypes(nStack, stack);
+                if (type == Opcodes.F_NEW) {
+                    buf.append("mv.visitFrame(Opcodes.F_NEW, ");
+                } else {
+                    buf.append("mv.visitFrame(Opcodes.F_FULL, ");
+                }
+                buf.append(nLocal).append(", new Object[] {");
+                appendFrameTypes(nLocal, local);
+                buf.append("}, ").append(nStack).append(", new Object[] {");
+                appendFrameTypes(nStack, stack);
+                buf.append("}");
+                break;
+            case Opcodes.F_APPEND:
+                declareFrameTypes(nLocal, local);
+                buf.append("mv.visitFrame(Opcodes.F_APPEND,")
+                        .append(nLocal)
+                        .append(", new Object[] {");
+                appendFrameTypes(nLocal, local);
+                buf.append("}, 0, null");
+                break;
+            case Opcodes.F_CHOP:
+                buf.append("mv.visitFrame(Opcodes.F_CHOP,")
+                        .append(nLocal)
+                        .append(", null, 0, null");
+                break;
+            case Opcodes.F_SAME:
+                buf.append("mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null");
+                break;
+            case Opcodes.F_SAME1:
+                declareFrameTypes(1, stack);
+                buf.append("mv.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[] {");
+                appendFrameTypes(1, stack);
+                buf.append("}");
+                break;
+        }
+        buf.append(");\n");
+        text.add(buf.toString());
     }
 
     public void visitInsn(final int opcode) {
@@ -316,6 +367,51 @@ public class ASMifierMethodVisitor extends ASMifierAbstractVisitor implements
                 .append(maxLocals)
                 .append(");\n");
         text.add(buf.toString());
+    }
+
+    private void declareFrameTypes(final int n, final Object[] o) {
+        for (int i = 0; i < n; ++i) {
+            if (o[i] instanceof Label) {
+                declareLabel((Label) o[i]);
+            }
+        }
+    }
+
+    private void appendFrameTypes(final int n, final Object[] o) {
+        for (int i = 0; i < n; ++i) {
+            if (i > 0) {
+                buf.append(", ");
+            }
+            if (o[i] instanceof String) {
+                appendConstant(o[i]);
+            } else if (o[i] instanceof Integer) {
+                switch (((Integer) o[i]).intValue()) {
+                    case 0:
+                        buf.append("Opcodes.TOP");
+                        break;
+                    case 1:
+                        buf.append("Opcodes.INTEGER");
+                        break;
+                    case 2:
+                        buf.append("Opcodes.FLOAT");
+                        break;
+                    case 3:
+                        buf.append("Opcodes.DOUBLE");
+                        break;
+                    case 4:
+                        buf.append("Opcodes.LONG");
+                        break;
+                    case 5:
+                        buf.append("Opcodes.NULL");
+                        break;
+                    case 6:
+                        buf.append("Opcodes.UNINITIALIZED_THIS");
+                        break;
+                }
+            } else {
+                appendLabel((Label) o[i]);
+            }
+        }
     }
 
     /**

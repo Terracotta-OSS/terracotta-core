@@ -93,7 +93,7 @@ public class BasicVerifier extends BasicInterpreter {
         return value;
     }
 
-    public Value unaryOperation(final AbstractInsnNode insn, Value value)
+    public Value unaryOperation(final AbstractInsnNode insn, final Value value)
             throws AnalyzerException
     {
         Value expected;
@@ -141,8 +141,7 @@ public class BasicVerifier extends BasicInterpreter {
                 expected = BasicValue.DOUBLE_VALUE;
                 break;
             case GETFIELD:
-                expected = newValue(Type.getType("L"
-                        + ((FieldInsnNode) insn).owner + ";"));
+                expected = newValue(Type.getObjectType(((FieldInsnNode) insn).owner));
                 break;
             case CHECKCAST:
                 if (!((BasicValue) value).isReference()) {
@@ -175,7 +174,7 @@ public class BasicVerifier extends BasicInterpreter {
                 expected = newValue(Type.getType(((FieldInsnNode) insn).desc));
                 break;
             default:
-                throw new RuntimeException("Internal error.");
+                throw new Error("Internal error.");
         }
         if (!isSubTypeOf(value, expected)) {
             throw new AnalyzerException(null, expected, value);
@@ -292,11 +291,11 @@ public class BasicVerifier extends BasicInterpreter {
                 break;
             case PUTFIELD:
                 FieldInsnNode fin = (FieldInsnNode) insn;
-                expected1 = newValue(Type.getType("L" + fin.owner + ";"));
+                expected1 = newValue(Type.getObjectType(fin.owner));
                 expected2 = newValue(Type.getType(fin.desc));
                 break;
             default:
-                throw new RuntimeException("Internal error.");
+                throw new Error("Internal error.");
         }
         if (!isSubTypeOf(value1, expected1)) {
             throw new AnalyzerException("First argument", expected1, value1);
@@ -356,7 +355,7 @@ public class BasicVerifier extends BasicInterpreter {
                 expected3 = BasicValue.REFERENCE_VALUE;
                 break;
             default:
-                throw new RuntimeException("Internal error.");
+                throw new Error("Internal error.");
         }
         if (!isSubTypeOf(value1, expected1)) {
             throw new AnalyzerException("First argument", "a " + expected1

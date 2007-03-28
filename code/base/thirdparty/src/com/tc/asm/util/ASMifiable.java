@@ -1,5 +1,4 @@
-<html>
-<!--
+/**
  * ASM: a very small and fast Java bytecode manipulation framework
  * Copyright (c) 2000-2005 INRIA, France Telecom
  * All rights reserved.
@@ -27,22 +26,28 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
--->
-<body>
-Provides an implementation for optional class, field and method attributes.
+ */
+package com.tc.asm.util;
 
-<p>
+import java.util.Map;
 
-By default ASM strips optional attributes, in order to keep them in
-the bytecode that is being readed you should pass an array of required attribute
-instances to {@link org.objectweb.asm.ClassReader#accept(org.objectweb.asm.ClassVisitor, org.objectweb.asm.Attribute[], boolean) ClassReader.accept()} method.
-In order to add custom attributes to the manually constructed bytecode concrete
-subclasses of the {@link org.objectweb.asm.Attribute Attribute} can be passed to 
-the visitAttribute methods of the 
-{@link org.objectweb.asm.ClassVisitor ClassVisitor}, 
-{@link org.objectweb.asm.FieldVisitor FieldVisitor} and
-{@link org.objectweb.asm.MethodVisitor MethodVisitor} interfaces.
+/**
+ * An attribute that can print the ASM code to create an equivalent attribute.
+ * 
+ * Implementation should print the ASM code that generates attribute data
+ * structures for current attribute state.
+ * 
+ * @author Eugene Kuleshov
+ */
+public interface ASMifiable {
 
-@since ASM 1.4.1
-</body>
-</html>
+    /**
+     * Prints the ASM code to create an attribute equal to this attribute.
+     * 
+     * @param buf A buffer used for printing Java code.
+     * @param varName name of the variable in a printed code used to store
+     *        attribute instance.
+     * @param labelNames map of label instances to their names.
+     */
+    void asmify(StringBuffer buf, String varName, Map labelNames);
+}

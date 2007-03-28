@@ -31,12 +31,11 @@ package com.tc.asm.util;
 
 import com.tc.asm.AnnotationVisitor;
 import com.tc.asm.Attribute;
-import com.tc.asm.MethodVisitor;
 import com.tc.asm.Label;
+import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
 import com.tc.asm.signature.SignatureReader;
-import com.tc.asm.util.attrs.Traceable;
 
 import java.util.HashMap;
 
@@ -117,7 +116,7 @@ public class TraceMethodVisitor extends TraceAbstractVisitor implements
         if (attr instanceof Traceable) {
             ((Traceable) attr).trace(buf, labelNames);
         } else {
-            buf.append(" : ").append(attr.toString()).append("\n");
+            buf.append(" : unknown\n");
         }
 
         text.add(buf.toString());
@@ -128,7 +127,7 @@ public class TraceMethodVisitor extends TraceAbstractVisitor implements
 
     public AnnotationVisitor visitAnnotationDefault() {
         text.add(tab2 + "default=");
-        TraceAnnotationVisitor tav = new TraceAnnotationVisitor();
+        TraceAnnotationVisitor tav = createTraceAnnotationVisitor();
         text.add(tav.getText());
         text.add("\n");
         if (mv != null) {
@@ -147,7 +146,7 @@ public class TraceMethodVisitor extends TraceAbstractVisitor implements
         appendDescriptor(FIELD_DESCRIPTOR, desc);
         buf.append('(');
         text.add(buf.toString());
-        TraceAnnotationVisitor tav = new TraceAnnotationVisitor();
+        TraceAnnotationVisitor tav = createTraceAnnotationVisitor();
         text.add(tav.getText());
         text.add(visible ? ") // parameter " : ") // invisible, parameter ");
         text.add(new Integer(parameter));
@@ -161,6 +160,49 @@ public class TraceMethodVisitor extends TraceAbstractVisitor implements
     public void visitCode() {
         if (mv != null) {
             mv.visitCode();
+        }
+    }
+
+    public void visitFrame(
+        final int type,
+        final int nLocal,
+        final Object[] local,
+        final int nStack,
+        final Object[] stack)
+    {
+        buf.setLength(0);
+        buf.append(ltab);
+        buf.append("FRAME ");
+        switch (type) {
+            case Opcodes.F_NEW:
+            case Opcodes.F_FULL:
+                buf.append("FULL [");
+                appendFrameTypes(nLocal, local);
+                buf.append("] [");
+                appendFrameTypes(nStack, stack);
+                buf.append("]");
+                break;
+            case Opcodes.F_APPEND:
+                buf.append("APPEND [");
+                appendFrameTypes(nLocal, local);
+                buf.append("]");
+                break;
+            case Opcodes.F_CHOP:
+                buf.append("CHOP ").append(nLocal);
+                break;
+            case Opcodes.F_SAME:
+                buf.append("SAME");
+                break;
+            case Opcodes.F_SAME1:
+                buf.append("SAME1 ");
+                appendFrameTypes(1, stack);
+                break;
+        }
+        buf.append("\n");
+        text.add(buf.toString());
+
+        if (mv != null) {
+            mv.visitFrame(type, nLocal, local, nStack, stack);
         }
     }
 
@@ -469,13 +511,55 @@ public class TraceMethodVisitor extends TraceAbstractVisitor implements
     // Utility methods
     // ------------------------------------------------------------------------
 
+    private void appendFrameTypes(final int n, final Object[] o) {
+        for (int i = 0; i < n; ++i) {
+            if (i > 0) {
+                buf.append(' ');
+            }
+            if (o[i] instanceof String) {
+                String desc = (String) o[i];
+                if (desc.startsWith("[")) {
+                    appendDescriptor(FIELD_DESCRIPTOR, desc);
+                } else {
+                    appendDescriptor(INTERNAL_NAME, desc);
+                }
+            } else if (o[i] instanceof Integer) {
+                switch (((Integer) o[i]).intValue()) {
+                    case 0:
+                        appendDescriptor(FIELD_DESCRIPTOR, "T");
+                        break;
+                    case 1:
+                        appendDescriptor(FIELD_DESCRIPTOR, "I");
+                        break;
+                    case 2:
+                        appendDescriptor(FIELD_DESCRIPTOR, "F");
+                        break;
+                    case 3:
+                        appendDescriptor(FIELD_DESCRIPTOR, "D");
+                        break;
+                    case 4:
+                        appendDescriptor(FIELD_DESCRIPTOR, "J");
+                        break;
+                    case 5:
+                        appendDescriptor(FIELD_DESCRIPTOR, "N");
+                        break;
+                    case 6:
+                        appendDescriptor(FIELD_DESCRIPTOR, "U");
+                        break;
+                }
+            } else {
+                appendLabel((Label) o[i]);
+            }
+        }
+    }
+
     /**
      * Appends the name of the given label to {@link #buf buf}. Creates a new
      * label name if the given label does not yet have one.
      * 
      * @param l a label.
      */
-    public void appendLabel(final Label l) {
+    protected void appendLabel(final Label l) {
         String name = (String) labelNames.get(l);
         if (name == null) {
             name = "L" + labelNames.size();

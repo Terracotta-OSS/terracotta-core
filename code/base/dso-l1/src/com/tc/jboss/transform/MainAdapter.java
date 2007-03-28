@@ -8,6 +8,7 @@ import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.asm.Type;
 import com.tc.asm.commons.LocalVariablesSorter;
 import com.tc.object.bytecode.ClassAdapterFactory;
 
@@ -40,8 +41,8 @@ public class MainAdapter extends ClassAdapter implements ClassAdapterFactory {
 
     public BootAdapter(int access, String desc, MethodVisitor mv) {
       super(access, desc, mv);
-      serverSlot = newLocal(1);
-      configSlot = newLocal(1);
+      serverSlot = newLocal(Type.getObjectType("org/jboss/system/server/Server"));
+      configSlot = newLocal(Type.getObjectType("org/jboss/system/server/ServerConfig"));
     }
 
     public void visitMethodInsn(int opcode, String owner, String name, String desc) {

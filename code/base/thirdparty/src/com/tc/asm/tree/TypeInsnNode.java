@@ -29,6 +29,8 @@
  */
 package com.tc.asm.tree;
 
+import java.util.Map;
+
 import com.tc.asm.MethodVisitor;
 
 /**
@@ -41,7 +43,7 @@ public class TypeInsnNode extends AbstractInsnNode {
 
     /**
      * The operand of this instruction. This operand is a type descriptor (see
-     * {@link org.objectweb.asm.Type}).
+     * {@link com.tc.asm.Type}).
      */
     public String desc;
 
@@ -51,7 +53,7 @@ public class TypeInsnNode extends AbstractInsnNode {
      * @param opcode the opcode of the type instruction to be constructed. This
      *        opcode must be NEW, ANEWARRAY, CHECKCAST or INSTANCEOF.
      * @param desc the operand of the instruction to be constructed. This
-     *        operand is a type descriptor (see {@link org.objectweb.asm.Type}).
+     *        operand is a type descriptor (see {@link com.tc.asm.Type}).
      */
     public TypeInsnNode(final int opcode, final String desc) {
         super(opcode);
@@ -68,11 +70,15 @@ public class TypeInsnNode extends AbstractInsnNode {
         this.opcode = opcode;
     }
 
+    public int getType() {
+        return TYPE_INSN;
+    }
+
     public void accept(final MethodVisitor mv) {
         mv.visitTypeInsn(opcode, desc);
     }
 
-    public int getType() {
-        return TYPE_INSN;
+    public AbstractInsnNode clone(final Map labels) {
+        return new TypeInsnNode(opcode, desc);
     }
 }

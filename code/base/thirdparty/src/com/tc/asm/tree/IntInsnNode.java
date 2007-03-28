@@ -29,6 +29,8 @@
  */
 package com.tc.asm.tree;
 
+import java.util.Map;
+
 import com.tc.asm.MethodVisitor;
 
 /**
@@ -65,11 +67,15 @@ public class IntInsnNode extends AbstractInsnNode {
         this.opcode = opcode;
     }
 
+    public int getType() {
+        return INT_INSN;
+    }
+
     public void accept(final MethodVisitor mv) {
         mv.visitIntInsn(opcode, operand);
     }
 
-    public int getType() {
-        return INT_INSN;
+    public AbstractInsnNode clone(final Map labels) {
+        return new IntInsnNode(opcode, operand);
     }
 }

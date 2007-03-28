@@ -8,6 +8,7 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.asm.Type;
 import com.tc.asm.commons.LocalVariablesSorter;
 import com.tcclient.util.HashtableEntrySetWrapper;
 
@@ -142,14 +143,14 @@ public class HashtableAdapter {
 
       public void visitInsn(final int opcode) {
         if (MONITORENTER == opcode) {
-          int newVarIndex = newLocal(1);
-          mv.visitInsn(DUP);
-          mv.visitInsn(DUP);
-          mv.visitVarInsn(ASTORE, newVarIndex);
-          mv.visitInsn(ICONST_2);
-          mv.visitVarInsn(ALOAD, newVarIndex);
+          int newVarIndex = newLocal(Type.getObjectType("java/lang/Object"));
+          super.visitInsn(DUP);
+          super.visitInsn(DUP);
+          super.visitVarInsn(ASTORE, newVarIndex);
+          super.visitInsn(ICONST_2);
+          super.visitVarInsn(ALOAD, newVarIndex);
 
-          mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "monitorEnter",
+          super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "monitorEnter",
                              "(Ljava/lang/Object;ILcom/tc/object/bytecode/Manager;)V");
         }
         super.visitInsn(opcode);

@@ -211,7 +211,7 @@ public class ByteVector {
         // if we find that this assumption is wrong, we continue with the
         // general method.
         data[len++] = (byte) (charLength >>> 8);
-        data[len++] = (byte) (charLength);
+        data[len++] = (byte) charLength;
         for (int i = 0; i < charLength; ++i) {
             char c = s.charAt(i);
             if (c >= '\001' && c <= '\177') {
@@ -229,7 +229,7 @@ public class ByteVector {
                     }
                 }
                 data[length] = (byte) (byteLength >>> 8);
-                data[length + 1] = (byte) (byteLength);
+                data[length + 1] = (byte) byteLength;
                 if (length + 2 + byteLength > data.length) {
                     length = len;
                     enlarge(2 + byteLength);

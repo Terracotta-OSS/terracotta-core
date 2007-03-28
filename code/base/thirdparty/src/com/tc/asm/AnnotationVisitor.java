@@ -46,7 +46,10 @@ public interface AnnotationVisitor {
      * @param value the actual value, whose type must be {@link Byte},
      *        {@link Boolean}, {@link Character}, {@link Short},
      *        {@link Integer}, {@link Long}, {@link Float}, {@link Double},
-     *        {@link String} or {@link Type}.
+     *        {@link String} or {@link Type}. This value can also be an array
+     *        of byte, boolean, short, char, int, long, float or double values
+     *        (this is equivalent to using {@link #visitArray visitArray} and
+     *        visiting each array element in turn, but is more convenient).
      */
     void visit(String name, Object value);
 
@@ -64,20 +67,26 @@ public interface AnnotationVisitor {
      * 
      * @param name the value name.
      * @param desc the class descriptor of the nested annotation class.
-     * @return a non null visitor to visit the actual nested annotation value.
-     *         <i>The nested annotation value must be fully visited before
-     *         calling other methods on this annotation visitor</i>.
+     * @return a visitor to visit the actual nested annotation value, or
+     *         <tt>null</tt> if this visitor is not interested in visiting
+     *         this nested annotation. <i>The nested annotation value must be
+     *         fully visited before calling other methods on this annotation
+     *         visitor</i>.
      */
     AnnotationVisitor visitAnnotation(String name, String desc);
 
     /**
-     * Visits an array value of the annotation.
+     * Visits an array value of the annotation. Note that arrays of primitive
+     * types (such as byte, boolean, short, char, int, long, float or double)
+     * can be passed as value to {@link #visit visit}. This is what
+     * {@link ClassReader} does.
      * 
      * @param name the value name.
-     * @return a non null visitor to visit the actual array value elements. The
-     *         'name' parameters passed to the methods of this visitor are
-     *         ignored. <i>All the array values must be visited before calling
-     *         other methods on this annotation visitor</i>.
+     * @return a visitor to visit the actual array value elements, or
+     *         <tt>null</tt> if this visitor is not interested in visiting
+     *         these values. The 'name' parameters passed to the methods of this
+     *         visitor are ignored. <i>All the array values must be visited
+     *         before calling other methods on this annotation visitor</i>.
      */
     AnnotationVisitor visitArray(String name);
 

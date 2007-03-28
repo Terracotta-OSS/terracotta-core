@@ -59,19 +59,18 @@ public class ProxyWeavingStrategy implements WeavingStrategy {
       }
 
       // prepare ctor call jp
-      final ClassReader crLookahead = new ClassReader(bytecode);
-
       Set addedMethods = new HashSet();
-//            crLookahead.accept(new AlreadyAddedMethodAdapter(addedMethods), true);
+      // final ClassReader crLookahead = new ClassReader(bytecode);
+      // crLookahead.accept(new AlreadyAddedMethodAdapter(addedMethods), true);
 
       // ------------------------------------------------
       // -- Phase 1 -- type change (ITDs)
-      final ClassWriter writerPhase1 = AsmHelper.newClassWriter(true);
       final ClassReader readerPhase1 = new ClassReader(bytecode);
+      final ClassWriter writerPhase1 = new ClassWriter(readerPhase1, ClassWriter.COMPUTE_MAXS);
       ClassVisitor reversedChainPhase1 = writerPhase1;
       reversedChainPhase1 = new AddMixinMethodsVisitor(reversedChainPhase1, classInfo, context, addedMethods);
       reversedChainPhase1 = new AddInterfaceVisitor(reversedChainPhase1, classInfo, context);
-      readerPhase1.accept(reversedChainPhase1, null, false);
+      readerPhase1.accept(reversedChainPhase1, 0);
       context.setCurrentBytecode(writerPhase1.toByteArray());
 
       // ------------------------------------------------
@@ -80,24 +79,24 @@ public class ProxyWeavingStrategy implements WeavingStrategy {
 
       // ------------------------------------------------
       // -- Phase 2 -- advice
-      final ClassWriter writerPhase2 = AsmHelper.newClassWriter(true);
       final ClassReader readerPhase2 = new ClassReader(context.getCurrentBytecode());
+      final ClassWriter writerPhase2 = new ClassWriter(readerPhase2, ClassWriter.COMPUTE_MAXS);
       ClassVisitor reversedChainPhase2 = writerPhase2;
 //            reversedChainPhase2 = new InstanceLevelAspectVisitor(reversedChainPhase2, classInfo, context);
       reversedChainPhase2 = new MethodExecutionVisitor(reversedChainPhase2, classInfo, context, addedMethods);
 //            reversedChainPhase2 = new LabelToLineNumberVisitor(reversedChainPhase2, context);
-      readerPhase2.accept(reversedChainPhase2, null, false);
+      readerPhase2.accept(reversedChainPhase2, 0);
       context.setCurrentBytecode(writerPhase2.toByteArray());
 
       // ------------------------------------------------
       // -- AW Finalization -- JP init code and wrapper methods
       if (context.isAdvised()) {
-        final ClassWriter writerPhase3 = AsmHelper.newClassWriter(true);
         ClassReader readerPhase3 = new ClassReader(context.getCurrentBytecode());
+        final ClassWriter writerPhase3 = new ClassWriter(readerPhase3, ClassWriter.COMPUTE_MAXS);
         ClassVisitor reversedChainPhase3 = writerPhase3;
         reversedChainPhase3 = new AddWrapperVisitor(reversedChainPhase3, context, addedMethods);
         reversedChainPhase3 = new JoinPointInitVisitor(reversedChainPhase3, context);
-        readerPhase3.accept(reversedChainPhase3, null, false);
+        readerPhase3.accept(reversedChainPhase3, 0);
         context.setCurrentBytecode(writerPhase3.toByteArray());
       }
     } catch (Throwable t) {
@@ -166,40 +165,40 @@ public class ProxyWeavingStrategy implements WeavingStrategy {
     return true;
   }
 
-  private static boolean classFilterFor(final Set definitions, final ExpressionContext[] ctxs) {
-    for (Iterator defs = definitions.iterator(); defs.hasNext();) {
-      if (classFilterFor((SystemDefinition) defs.next(), ctxs)) {
-        continue;
-      } else {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private static boolean classFilterFor(final SystemDefinition definition, final ExpressionContext[] ctxs) {
-    if (definition.isAdvised(ctxs)) {
-      return false;
-    }
-    return true;
-  }
-
-  private static boolean hasPointcut(final Set definitions, final ExpressionContext ctx) {
-    for (Iterator defs = definitions.iterator(); defs.hasNext();) {
-      if (hasPointcut((SystemDefinition) defs.next(), ctx)) {
-        return true;
-      } else {
-        continue;
-      }
-    }
-    return false;
-  }
-
-  private static boolean hasPointcut(final SystemDefinition definition, final ExpressionContext ctx) {
-    if (definition.hasPointcut(ctx)) {
-      return true;
-    }
-    return false;
-  }
+//  private static boolean classFilterFor(final Set definitions, final ExpressionContext[] ctxs) {
+//    for (Iterator defs = definitions.iterator(); defs.hasNext();) {
+//      if (classFilterFor((SystemDefinition) defs.next(), ctxs)) {
+//        continue;
+//      } else {
+//        return false;
+//      }
+//    }
+//    return true;
+//  }
+//
+//  private static boolean classFilterFor(final SystemDefinition definition, final ExpressionContext[] ctxs) {
+//    if (definition.isAdvised(ctxs)) {
+//      return false;
+//    }
+//    return true;
+//  }
+//
+//  private static boolean hasPointcut(final Set definitions, final ExpressionContext ctx) {
+//    for (Iterator defs = definitions.iterator(); defs.hasNext();) {
+//      if (hasPointcut((SystemDefinition) defs.next(), ctx)) {
+//        return true;
+//      } else {
+//        continue;
+//      }
+//    }
+//    return false;
+//  }
+//
+//  private static boolean hasPointcut(final SystemDefinition definition, final ExpressionContext ctx) {
+//    if (definition.hasPointcut(ctx)) {
+//      return true;
+//    }
+//    return false;
+//  }
 }
     

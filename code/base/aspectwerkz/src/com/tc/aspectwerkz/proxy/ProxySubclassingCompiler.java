@@ -3,8 +3,13 @@
  */
 package com.tc.aspectwerkz.proxy;
 
-import com.tc.asm.*;
-
+import com.tc.asm.AnnotationVisitor;
+import com.tc.asm.Attribute;
+import com.tc.asm.ClassReader;
+import com.tc.asm.ClassVisitor;
+import com.tc.asm.ClassWriter;
+import com.tc.asm.MethodVisitor;
+import com.tc.asm.Type;
 import com.tc.aspectwerkz.exception.WrappedRuntimeException;
 import com.tc.aspectwerkz.transform.TransformationConstants;
 import com.tc.aspectwerkz.transform.inlining.AsmCopyAdapter;
@@ -67,12 +72,12 @@ public class ProxySubclassingCompiler implements TransformationConstants {
       try {
         in.close();
       } catch (Throwable t) {
-        ;
+        // ignore
       }
     }
 
     ClassVisitor createProxy = new ProxyCompilerClassVisitor(proxyWriter, proxyClassName.replace('.', '/'));
-    classReader.accept(createProxy, true);// no need for debug info
+    classReader.accept(createProxy, ClassReader.SKIP_DEBUG);// no need for debug info
     return proxyWriter.toByteArray();
   }
 

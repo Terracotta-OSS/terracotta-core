@@ -30,12 +30,13 @@
 package com.tc.asm.tree;
 
 import com.tc.asm.Label;
-import com.tc.asm.Opcodes;
 import com.tc.asm.MethodVisitor;
+import com.tc.asm.Opcodes;
 
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 
 /**
  * A node that represents a LOOKUPSWITCH instruction.
@@ -47,7 +48,7 @@ public class LookupSwitchInsnNode extends AbstractInsnNode {
     /**
      * Beginning of the default handler block.
      */
-    public Label dflt;
+    public LabelNode dflt;
 
     /**
      * The values of the keys. This list is a list of {@link Integer} objects.
@@ -55,8 +56,8 @@ public class LookupSwitchInsnNode extends AbstractInsnNode {
     public List keys;
 
     /**
-     * Beginnings of the handler blocks. This list is a list of {@link Label}
-     * objects.
+     * Beginnings of the handler blocks. This list is a list of
+     * {@link LabelNode} objects.
      */
     public List labels;
 
@@ -69,9 +70,9 @@ public class LookupSwitchInsnNode extends AbstractInsnNode {
      *        the beginning of the handler block for the <tt>keys[i]</tt> key.
      */
     public LookupSwitchInsnNode(
-        final Label dflt,
+        final LabelNode dflt,
         final int[] keys,
-        final Label[] labels)
+        final LabelNode[] labels)
     {
         super(Opcodes.LOOKUPSWITCH);
         this.dflt = dflt;
@@ -87,17 +88,26 @@ public class LookupSwitchInsnNode extends AbstractInsnNode {
         }
     }
 
+    public int getType() {
+        return LOOKUPSWITCH_INSN;
+    }
+
     public void accept(final MethodVisitor mv) {
         int[] keys = new int[this.keys.size()];
         for (int i = 0; i < keys.length; ++i) {
             keys[i] = ((Integer) this.keys.get(i)).intValue();
         }
         Label[] labels = new Label[this.labels.size()];
-        this.labels.toArray(labels);
-        mv.visitLookupSwitchInsn(dflt, keys, labels);
+        for (int i = 0; i < labels.length; ++i) {
+            labels[i] = ((LabelNode) this.labels.get(i)).getLabel();
+        }
+        mv.visitLookupSwitchInsn(dflt.getLabel(), keys, labels);
     }
 
-    public int getType() {
-        return LOOKUPSWITCH_INSN;
+    public AbstractInsnNode clone(final Map labels) {
+        LookupSwitchInsnNode clone = new LookupSwitchInsnNode(clone(dflt,
+                labels), null, clone(this.labels, labels));
+        clone.keys.addAll(keys);
+        return clone;
     }
 }

@@ -72,14 +72,14 @@ public class BasicInterpreter implements Opcodes, Interpreter {
             case Type.OBJECT:
                 return BasicValue.REFERENCE_VALUE;
             default:
-                throw new RuntimeException("Internal error.");
+                throw new Error("Internal error");
         }
     }
 
     public Value newOperation(final AbstractInsnNode insn) {
         switch (insn.getOpcode()) {
             case ACONST_NULL:
-                return newValue(Type.getType("Lnull;"));
+                return newValue(Type.getObjectType("null"));
             case ICONST_M1:
             case ICONST_0:
             case ICONST_1:
@@ -112,7 +112,7 @@ public class BasicInterpreter implements Opcodes, Interpreter {
                 } else if (cst instanceof Double) {
                     return BasicValue.DOUBLE_VALUE;
                 } else if (cst instanceof Type) {
-                    return newValue(Type.getType("Ljava/lang/Class;"));
+                    return newValue(Type.getObjectType("java/lang/Class"));
                 } else {
                     return newValue(Type.getType(cst.getClass()));
                 }
@@ -121,10 +121,9 @@ public class BasicInterpreter implements Opcodes, Interpreter {
             case GETSTATIC:
                 return newValue(Type.getType(((FieldInsnNode) insn).desc));
             case NEW:
-                return newValue(Type.getType("L" + ((TypeInsnNode) insn).desc
-                        + ";"));
+                return newValue(Type.getObjectType(((TypeInsnNode) insn).desc));
             default:
-                throw new RuntimeException("Internal error.");
+                throw new Error("Internal error.");
         }
     }
 
@@ -216,7 +215,7 @@ public class BasicInterpreter implements Opcodes, Interpreter {
                 if (desc.charAt(0) == '[') {
                     return newValue(Type.getType(desc));
                 } else {
-                    return newValue(Type.getType("L" + desc + ";"));
+                    return newValue(Type.getObjectType(desc));
                 }
             case INSTANCEOF:
                 return BasicValue.INT_VALUE;
@@ -226,7 +225,7 @@ public class BasicInterpreter implements Opcodes, Interpreter {
             case IFNONNULL:
                 return null;
             default:
-                throw new RuntimeException("Internal error.");
+                throw new Error("Internal error.");
         }
     }
 
@@ -280,12 +279,7 @@ public class BasicInterpreter implements Opcodes, Interpreter {
             case DREM:
                 return BasicValue.DOUBLE_VALUE;
             case AALOAD:
-                Type t = ((BasicValue) value1).getType();
-                if (t != null && t.getSort() == Type.ARRAY) {
-                    return newValue(t.getElementType());
-                } else {
-                    return BasicValue.REFERENCE_VALUE;
-                }
+                return BasicValue.REFERENCE_VALUE;
             case LCMP:
             case FCMPL:
             case FCMPG:
@@ -303,7 +297,7 @@ public class BasicInterpreter implements Opcodes, Interpreter {
             case PUTFIELD:
                 return null;
             default:
-                throw new RuntimeException("Internal error.");
+                throw new Error("Internal error.");
         }
     }
 

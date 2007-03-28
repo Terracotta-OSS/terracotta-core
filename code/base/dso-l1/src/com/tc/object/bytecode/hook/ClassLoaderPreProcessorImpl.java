@@ -52,10 +52,10 @@ public class ClassLoaderPreProcessorImpl {
    */
   public byte[] preProcess(byte[] classLoaderBytecode) {
     try {
-      ClassWriter cw = new ClassWriter(true);
-      ClassLoaderVisitor cv = new ClassLoaderVisitor(cw);
       ClassReader cr = new ClassReader(classLoaderBytecode);
-      cr.accept(cv, false);
+      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      ClassLoaderVisitor cv = new ClassLoaderVisitor(cw);
+      cr.accept(cv, 0);
       return cw.toByteArray();
     } catch (Exception e) {
       System.err.println("failed to patch ClassLoader:");

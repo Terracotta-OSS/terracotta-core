@@ -30,7 +30,6 @@
 package com.tc.asm.tree;
 
 import com.tc.asm.MethodVisitor;
-import com.tc.asm.Label;
 
 /**
  * A node that represents a local variable declaration.
@@ -58,13 +57,13 @@ public class LocalVariableNode {
      * The first instruction corresponding to the scope of this local variable
      * (inclusive).
      */
-    public Label start;
+    public LabelNode start;
 
     /**
      * The last instruction corresponding to the scope of this local variable
      * (exclusive).
      */
-    public Label end;
+    public LabelNode end;
 
     /**
      * The local variable's index.
@@ -88,8 +87,8 @@ public class LocalVariableNode {
         final String name,
         final String desc,
         final String signature,
-        final Label start,
-        final Label end,
+        final LabelNode start,
+        final LabelNode end,
         final int index)
     {
         this.name = name;
@@ -106,6 +105,11 @@ public class LocalVariableNode {
      * @param mv a method visitor.
      */
     public void accept(final MethodVisitor mv) {
-        mv.visitLocalVariable(name, desc, signature, start, end, index);
+        mv.visitLocalVariable(name,
+                desc,
+                signature,
+                start.getLabel(),
+                end.getLabel(),
+                index);
     }
 }

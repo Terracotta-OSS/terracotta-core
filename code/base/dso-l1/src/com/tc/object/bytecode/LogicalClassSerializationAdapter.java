@@ -106,15 +106,10 @@ public class LogicalClassSerializationAdapter implements Opcodes {
 
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       String methodDesc = name + desc;
-      if (WRITE_OBJECT_SIGNATURE.equals(methodDesc) || READ_OBJECT_SIGNATURE.equals(methodDesc)) { return new LogicalClassSerializationAdapter.LogicalClassSerializationMethodAdapter(
-                                                                                                                                                                                      super
-                                                                                                                                                                                          .visitMethod(
-                                                                                                                                                                                                       access,
-                                                                                                                                                                                                       name,
-                                                                                                                                                                                                       desc,
-                                                                                                                                                                                                       signature,
-                                                                                                                                                                                                       exceptions),
-                                                                                                                                                                                      classNameSlashes); }
+      if (WRITE_OBJECT_SIGNATURE.equals(methodDesc) || READ_OBJECT_SIGNATURE.equals(methodDesc)) { //
+        return new LogicalClassSerializationAdapter.LogicalClassSerializationMethodAdapter(super
+            .visitMethod(access, name, desc, signature, exceptions), classNameSlashes);
+      }
 
       return super.visitMethod(access, name, desc, signature, exceptions);
     }

@@ -29,7 +29,6 @@
  */
 package com.tc.asm.tree;
 
-import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 
 /**
@@ -42,17 +41,17 @@ public class TryCatchBlockNode {
     /**
      * Beginning of the exception handler's scope (inclusive).
      */
-    public Label start;
+    public LabelNode start;
 
     /**
      * End of the exception handler's scope (exclusive).
      */
-    public Label end;
+    public LabelNode end;
 
     /**
      * Beginning of the exception handler's code.
      */
-    public Label handler;
+    public LabelNode handler;
 
     /**
      * Internal name of the type of exceptions handled by the handler. May be
@@ -71,9 +70,9 @@ public class TryCatchBlockNode {
      *        blocks).
      */
     public TryCatchBlockNode(
-        final Label start,
-        final Label end,
-        final Label handler,
+        final LabelNode start,
+        final LabelNode end,
+        final LabelNode handler,
         final String type)
     {
         this.start = start;
@@ -88,6 +87,8 @@ public class TryCatchBlockNode {
      * @param mv a method visitor.
      */
     public void accept(final MethodVisitor mv) {
-        mv.visitTryCatchBlock(start, end, handler, type);
+        mv.visitTryCatchBlock(start.getLabel(), end.getLabel(), handler == null
+                ? null
+                : handler.getLabel(), type);
     }
 }

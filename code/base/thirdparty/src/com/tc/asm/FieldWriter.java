@@ -185,10 +185,6 @@ final class FieldWriter implements FieldVisitor {
             cw.newUTF8("Deprecated");
             size += 6;
         }
-        if (cw.version == Opcodes.V1_4 && (access & Opcodes.ACC_ENUM) != 0) {
-            cw.newUTF8("Enum");
-            size += 6;
-        }
         if (signature != 0) {
             cw.newUTF8("Signature");
             size += 8;
@@ -226,9 +222,6 @@ final class FieldWriter implements FieldVisitor {
         if ((access & Opcodes.ACC_DEPRECATED) != 0) {
             ++attributeCount;
         }
-        if (cw.version == Opcodes.V1_4 && (access & Opcodes.ACC_ENUM) != 0) {
-            ++attributeCount;
-        }
         if (signature != 0) {
             ++attributeCount;
         }
@@ -253,9 +246,6 @@ final class FieldWriter implements FieldVisitor {
         }
         if ((access & Opcodes.ACC_DEPRECATED) != 0) {
             out.putShort(cw.newUTF8("Deprecated")).putInt(0);
-        }
-        if (cw.version == Opcodes.V1_4 && (access & Opcodes.ACC_ENUM) != 0) {
-            out.putShort(cw.newUTF8("Enum")).putInt(0);
         }
         if (signature != 0) {
             out.putShort(cw.newUTF8("Signature"));

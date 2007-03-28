@@ -3,7 +3,12 @@
  */
 package com.tc.aspectwerkz.transform.inlining;
 
-import com.tc.asm.*;
+import com.tc.asm.AnnotationVisitor;
+import com.tc.asm.Attribute;
+import com.tc.asm.ClassVisitor;
+import com.tc.asm.FieldVisitor;
+import com.tc.asm.Label;
+import com.tc.asm.MethodVisitor;
 
 /**
  * Visitors that are not writing any bytecode and using a Null ClassVisitor / Code Visitor as a target instead.
@@ -131,6 +136,9 @@ public class AsmNullAdapter {
     }
 
     public void visitEnd() {
+    }
+
+    public void visitFrame(int type, int local, Object[] local2, int stack, Object[] stack2) {
     }
   }
 

@@ -49,10 +49,7 @@ public class CheckAnnotationAdapter implements AnnotationVisitor {
         this(av, true);
     }
 
-    CheckAnnotationAdapter(
-        final AnnotationVisitor av,
-        final boolean named)
-    {
+    CheckAnnotationAdapter(final AnnotationVisitor av, final boolean named) {
         this.av = av;
         this.named = named;
     }
@@ -72,7 +69,9 @@ public class CheckAnnotationAdapter implements AnnotationVisitor {
         {
             throw new IllegalArgumentException("Invalid annotation value");
         }
-        av.visit(name, value);
+        if (av != null) {
+            av.visit(name, value);
+        }
     }
 
     public void visitEnum(
@@ -86,7 +85,9 @@ public class CheckAnnotationAdapter implements AnnotationVisitor {
         if (value == null) {
             throw new IllegalArgumentException("Invalid enum value");
         }
-        av.visitEnum(name, desc, value);
+        if (av != null) {
+            av.visitEnum(name, desc, value);
+        }
     }
 
     public AnnotationVisitor visitAnnotation(
@@ -96,19 +97,25 @@ public class CheckAnnotationAdapter implements AnnotationVisitor {
         checkEnd();
         checkName(name);
         CheckMethodAdapter.checkDesc(desc, false);
-        return new CheckAnnotationAdapter(av.visitAnnotation(name, desc));
+        return new CheckAnnotationAdapter(av == null
+                ? null
+                : av.visitAnnotation(name, desc));
     }
 
     public AnnotationVisitor visitArray(final String name) {
         checkEnd();
         checkName(name);
-        return new CheckAnnotationAdapter(av.visitArray(name), false);
+        return new CheckAnnotationAdapter(av == null
+                ? null
+                : av.visitArray(name), false);
     }
 
     public void visitEnd() {
         checkEnd();
         end = true;
-        av.visitEnd();
+        if (av != null) {
+            av.visitEnd();
+        }
     }
 
     private void checkEnd() {

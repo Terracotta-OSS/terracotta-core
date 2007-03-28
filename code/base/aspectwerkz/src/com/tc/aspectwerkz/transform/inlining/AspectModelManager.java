@@ -94,7 +94,7 @@ public class AspectModelManager {
         final String className = tokenizer.nextToken();
         try {
           final Class modelClass = ContextClassLoader.forName(className);
-          ASPECT_MODELS.add((AspectModel) modelClass.newInstance());
+          ASPECT_MODELS.add(modelClass.newInstance());
         } catch (ClassNotFoundException e) {
           throw new DefinitionException(
                   "aspect model implementation class not found [" +

@@ -29,6 +29,8 @@
  */
 package com.tc.asm.tree;
 
+import java.util.Map;
+
 import com.tc.asm.MethodVisitor;
 
 /**
@@ -41,7 +43,7 @@ public class FieldInsnNode extends AbstractInsnNode {
 
     /**
      * The internal name of the field's owner class (see
-     * {@link org.objectweb.asm.Type#getInternalName() getInternalName}).
+     * {@link com.tc.asm.Type#getInternalName() getInternalName}).
      */
     public String owner;
 
@@ -51,7 +53,7 @@ public class FieldInsnNode extends AbstractInsnNode {
     public String name;
 
     /**
-     * The field's descriptor (see {@link org.objectweb.asm.Type}).
+     * The field's descriptor (see {@link com.tc.asm.Type}).
      */
     public String desc;
 
@@ -61,9 +63,9 @@ public class FieldInsnNode extends AbstractInsnNode {
      * @param opcode the opcode of the type instruction to be constructed. This
      *        opcode must be GETSTATIC, PUTSTATIC, GETFIELD or PUTFIELD.
      * @param owner the internal name of the field's owner class (see
-     *        {@link org.objectweb.asm.Type#getInternalName() getInternalName}).
+     *        {@link com.tc.asm.Type#getInternalName() getInternalName}).
      * @param name the field's name.
-     * @param desc the field's descriptor (see {@link org.objectweb.asm.Type}).
+     * @param desc the field's descriptor (see {@link com.tc.asm.Type}).
      */
     public FieldInsnNode(
         final int opcode,
@@ -87,11 +89,15 @@ public class FieldInsnNode extends AbstractInsnNode {
         this.opcode = opcode;
     }
 
+    public int getType() {
+        return FIELD_INSN;
+    }
+
     public void accept(final MethodVisitor cv) {
         cv.visitFieldInsn(opcode, owner, name, desc);
     }
 
-    public int getType() {
-        return FIELD_INSN;
+    public AbstractInsnNode clone(final Map labels) {
+        return new FieldInsnNode(opcode, owner, name, desc);
     }
 }

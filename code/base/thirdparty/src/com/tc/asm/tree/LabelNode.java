@@ -29,6 +29,8 @@
  */
 package com.tc.asm.tree;
 
+import java.util.Map;
+
 import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 
@@ -37,18 +39,33 @@ import com.tc.asm.MethodVisitor;
  */
 public class LabelNode extends AbstractInsnNode {
 
-    public Label label;
+    private Label label;
+
+    public LabelNode() {
+        super(-1);
+    }
 
     public LabelNode(final Label label) {
         super(-1);
         this.label = label;
     }
 
-    public void accept(final MethodVisitor cv) {
-        cv.visitLabel(label);
-    }
-
     public int getType() {
         return LABEL;
+    }
+
+    public Label getLabel() {
+        if (label == null) {
+            label = new Label();
+        }
+        return label;
+    }
+
+    public void accept(final MethodVisitor cv) {
+        cv.visitLabel(getLabel());
+    }
+
+    public AbstractInsnNode clone(final Map labels) {
+        return (LabelNode) labels.get(this);
     }
 }

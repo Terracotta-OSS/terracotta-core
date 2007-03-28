@@ -30,11 +30,11 @@
 package com.tc.asm.util;
 
 import com.tc.asm.AnnotationVisitor;
+import com.tc.asm.Attribute;
 import com.tc.asm.Label;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
-import com.tc.asm.Attribute;
 import com.tc.asm.Type;
 
 import java.util.HashMap;
@@ -86,7 +86,7 @@ public class CheckMethodAdapter extends MethodAdapter {
                 + "KLBBBBBBFFFFGGGGAECEBBEEBBAMHHAA";
         TYPE = new int[s.length()];
         for (int i = 0; i < TYPE.length; ++i) {
-            TYPE[i] = (s.charAt(i) - 'A' - 1);
+            TYPE[i] = s.charAt(i) - 'A' - 1;
         }
     }
 
@@ -351,6 +351,71 @@ public class CheckMethodAdapter extends MethodAdapter {
         mv.visitCode();
     }
 
+    public void visitFrame(
+        final int type,
+        final int nLocal,
+        final Object[] local,
+        final int nStack,
+        final Object[] stack)
+    {
+        int mLocal;
+        int mStack;
+        switch (type) {
+            case Opcodes.F_NEW:
+            case Opcodes.F_FULL:
+                mLocal = Integer.MAX_VALUE;
+                mStack = Integer.MAX_VALUE;
+                break;
+
+            case Opcodes.F_SAME:
+                mLocal = 0;
+                mStack = 0;
+                break;
+
+            case Opcodes.F_SAME1:
+                mLocal = 0;
+                mStack = 1;
+                break;
+
+            case Opcodes.F_APPEND:
+            case Opcodes.F_CHOP:
+                mLocal = 3;
+                mStack = 0;
+                break;
+
+            default:
+                throw new IllegalArgumentException("Invalid frame type " + type);
+        }
+
+        if (nLocal > mLocal) {
+            throw new IllegalArgumentException("Invalid nLocal=" + nLocal
+                    + " for frame type " + type);
+        }
+        if (nStack > mStack) {
+            throw new IllegalArgumentException("Invalid nStack=" + nStack
+                    + " for frame type " + type);
+        }
+
+        if (nLocal > 0 && (local == null || local.length < nLocal)) {
+            throw new IllegalArgumentException("Array local[] is shorter than nLocal");
+        }
+        if (nStack > 0 && (stack == null || stack.length < nStack)) {
+            throw new IllegalArgumentException("Array stack[] is shorter than nStack");
+        }
+
+        /*
+         * TODO check values of the individual frames. Primitive types are
+         * represented by Opcodes.TOP, Opcodes.INTEGER, Opcodes.FLOAT,
+         * Opcodes.LONG, Opcodes.DOUBLE,Opcodes.NULL or
+         * Opcodes.UNINITIALIZED_THIS (long and double are represented by a
+         * single element). Reference types are represented by String objects,
+         * and uninitialized types by Label objects (this label designates the
+         * NEW instruction that created this uninitialized value).
+         */
+
+        mv.visitFrame(type, nLocal, local, nStack, stack);
+    }
+
     public void visitInsn(final int opcode) {
         checkStartCode();
         checkEndCode();
@@ -505,7 +570,7 @@ public class CheckMethodAdapter extends MethodAdapter {
         checkLabel(dflt, false, "default label");
         if (keys == null || labels == null || keys.length != labels.length) {
             throw new IllegalArgumentException("There must be the same number of keys and labels");
-       }
+        }
         for (int i = 0; i < labels.length; ++i) {
             checkLabel(labels[i], false, "label at index " + i);
         }
@@ -721,7 +786,7 @@ public class CheckMethodAdapter extends MethodAdapter {
             throw new IllegalArgumentException("Invalid " + msg
                     + " (must be a valid Java identifier): " + name);
         }
-        int max = (end == -1 ? name.length() : end);
+        int max = end == -1 ? name.length() : end;
         for (int i = start + 1; i < max; ++i) {
             if (!Character.isJavaIdentifierPart(name.charAt(i))) {
                 throw new IllegalArgumentException("Invalid " + msg
@@ -791,7 +856,7 @@ public class CheckMethodAdapter extends MethodAdapter {
             throw new IllegalArgumentException("Invalid " + msg
                     + " (must not be null or empty)");
         }
-        int max = (end == -1 ? name.length() : end);
+        int max = end == -1 ? name.length() : end;
         try {
             int begin = start;
             int slash;

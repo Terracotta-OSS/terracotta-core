@@ -31,8 +31,8 @@ package com.tc.asm.tree;
 
 import com.tc.asm.Attribute;
 import com.tc.asm.ClassVisitor;
-import com.tc.asm.MethodVisitor;
 import com.tc.asm.FieldVisitor;
+import com.tc.asm.MethodVisitor;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -51,14 +51,14 @@ public class ClassNode extends MemberNode implements ClassVisitor {
     public int version;
 
     /**
-     * The class's access flags (see {@link org.objectweb.asm.Opcodes}). This
+     * The class's access flags (see {@link com.tc.asm.Opcodes}). This
      * field also indicates if the class is deprecated.
      */
     public int access;
 
     /**
      * The internal name of the class (see
-     * {@link org.objectweb.asm.Type#getInternalName() getInternalName}).
+     * {@link com.tc.asm.Type#getInternalName() getInternalName}).
      */
     public String name;
 
@@ -69,7 +69,7 @@ public class ClassNode extends MemberNode implements ClassVisitor {
 
     /**
      * The internal of name of the super class (see
-     * {@link org.objectweb.asm.Type#getInternalName() getInternalName}). For
+     * {@link com.tc.asm.Type#getInternalName() getInternalName}). For
      * interfaces, the super class is {@link Object}. May be <tt>null</tt>,
      * but only for the {@link Object} class.
      */
@@ -77,7 +77,7 @@ public class ClassNode extends MemberNode implements ClassVisitor {
 
     /**
      * The internal names of the class's interfaces (see
-     * {@link org.objectweb.asm.Type#getInternalName() getInternalName}). This
+     * {@link com.tc.asm.Type#getInternalName() getInternalName}). This
      * list is a list of {@link String} objects.
      */
     public List interfaces;
@@ -116,7 +116,7 @@ public class ClassNode extends MemberNode implements ClassVisitor {
      * Informations about the inner classes of this class. This list is a list
      * of {@link InnerClassNode} objects.
      * 
-     * @associates org.objectweb.asm.tree.InnerClassNode
+     * @associates com.tc.asm.tree.InnerClassNode
      */
     public List innerClasses;
 
@@ -124,7 +124,7 @@ public class ClassNode extends MemberNode implements ClassVisitor {
      * The fields of this class. This list is a list of {@link FieldNode}
      * objects.
      * 
-     * @associates org.objectweb.asm.tree.FieldNode
+     * @associates com.tc.asm.tree.FieldNode
      */
     public List fields;
 
@@ -132,7 +132,7 @@ public class ClassNode extends MemberNode implements ClassVisitor {
      * The methods of this class. This list is a list of {@link MethodNode}
      * objects.
      * 
-     * @associates org.objectweb.asm.tree.MethodNode
+     * @associates com.tc.asm.tree.MethodNode
      */
     public List methods;
 

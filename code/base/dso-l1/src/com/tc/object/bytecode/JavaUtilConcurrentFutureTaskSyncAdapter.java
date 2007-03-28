@@ -36,21 +36,21 @@ public class JavaUtilConcurrentFutureTaskSyncAdapter implements Opcodes {
       if ("<init>".equals(name)) {
         mv = new Constructor(mv);
       } else if ("innerGet".equals(name) && "()Ljava/lang/Object;".equals(desc)) {
-        rewriteInnerGetMethod(mv);
+        return rewriteInnerGetMethod(mv);
       } else if ("innerGet".equals(name) && "(J)Ljava/lang/Object;".equals(desc)) {
-        rewriteTimedInnerGetMethod(mv);
+        return rewriteTimedInnerGetMethod(mv);
       } else if ("innerSet".equals(name)) {
-        rewriteInnerSetMethod(mv);
+        return rewriteInnerSetMethod(mv);
       } else if ("innerSetException".equals(name)) {
-        rewriteInnerSetExceptionMethod(mv);
+        return rewriteInnerSetExceptionMethod(mv);
       } else if ("innerCancel".equals(name)) {
-        rewriteInnerCancelMethod(mv);
+        return rewriteInnerCancelMethod(mv);
       } else if ("innerIsDone".equals(name)) {
-        rewriteInnerIsDoneMethod(mv);
+        return rewriteInnerIsDoneMethod(mv);
       } else if ("innerRun".equals(name)) {
-        rewriteInnerRunMethod(mv);
+        return rewriteInnerRunMethod(mv);
       } else if ("tryReleaseShared".equals(name)) {
-        rewriteTryReleaseSharedMethod(mv);
+        return rewriteTryReleaseSharedMethod(mv);
       }
 
       return mv;
@@ -119,7 +119,7 @@ public class JavaUtilConcurrentFutureTaskSyncAdapter implements Opcodes {
       mv.visitEnd();
     }
 
-    private void rewriteTryReleaseSharedMethod(MethodVisitor mv) {
+    private MethodVisitor rewriteTryReleaseSharedMethod(MethodVisitor mv) {
       mv.visitCode();
       Label l0 = new Label();
       mv.visitLabel(l0);
@@ -134,9 +134,10 @@ public class JavaUtilConcurrentFutureTaskSyncAdapter implements Opcodes {
       mv.visitLabel(l2);
       mv.visitMaxs(0, 0);
       mv.visitEnd();
+      return null;
     }
 
-    private void rewriteInnerRunMethod(MethodVisitor mv) {
+    private MethodVisitor rewriteInnerRunMethod(MethodVisitor mv) {
       mv.visitCode();
       Label l0 = new Label();
       Label l1 = new Label();
@@ -350,9 +351,10 @@ public class JavaUtilConcurrentFutureTaskSyncAdapter implements Opcodes {
       mv.visitLabel(l39);
       mv.visitMaxs(0, 0);
       mv.visitEnd();
+      return null;
     }
 
-    private void rewriteInnerIsDoneMethod(MethodVisitor mv) {
+    private MethodVisitor rewriteInnerIsDoneMethod(MethodVisitor mv) {
       mv.visitCode();
       Label l0 = new Label();
       Label l1 = new Label();
@@ -418,9 +420,10 @@ public class JavaUtilConcurrentFutureTaskSyncAdapter implements Opcodes {
       mv.visitLabel(l10);
       mv.visitMaxs(0, 0);
       mv.visitEnd();
+      return null;
     }
 
-    private void rewriteInnerSetExceptionMethod(MethodVisitor mv) {
+    private MethodVisitor rewriteInnerSetExceptionMethod(MethodVisitor mv) {
       mv.visitCode();
       Label l0 = new Label();
       Label l1 = new Label();
@@ -570,9 +573,10 @@ public class JavaUtilConcurrentFutureTaskSyncAdapter implements Opcodes {
       mv.visitLabel(l29);
       mv.visitMaxs(0, 0);
       mv.visitEnd();
+      return null;
     }
 
-    private void rewriteInnerSetMethod(MethodVisitor mv) {
+    private MethodVisitor rewriteInnerSetMethod(MethodVisitor mv) {
       mv.visitCode();
       Label l0 = new Label();
       Label l1 = new Label();
@@ -678,9 +682,10 @@ public class JavaUtilConcurrentFutureTaskSyncAdapter implements Opcodes {
       mv.visitLabel(l20);
       mv.visitMaxs(0, 0);
       mv.visitEnd();
+      return null;
     }
 
-    private void rewriteTimedInnerGetMethod(MethodVisitor mv) {
+    private MethodVisitor rewriteTimedInnerGetMethod(MethodVisitor mv) {
       mv.visitCode();
       Label l0 = new Label();
       Label l1 = new Label();
@@ -801,9 +806,10 @@ public class JavaUtilConcurrentFutureTaskSyncAdapter implements Opcodes {
       mv.visitLabel(l18);
       mv.visitMaxs(0, 0);
       mv.visitEnd();
+      return null;
     }
 
-    private void rewriteInnerGetMethod(MethodVisitor mv) {
+    private MethodVisitor rewriteInnerGetMethod(MethodVisitor mv) {
       mv.visitCode();
       Label l0 = new Label();
       Label l1 = new Label();
@@ -890,9 +896,10 @@ public class JavaUtilConcurrentFutureTaskSyncAdapter implements Opcodes {
       mv.visitLabel(l13);
       mv.visitMaxs(0, 0);
       mv.visitEnd();
+      return null;
     }
 
-    private void rewriteInnerCancelMethod(MethodVisitor mv) {
+    private MethodVisitor rewriteInnerCancelMethod(MethodVisitor mv) {
       mv.visitCode();
       Label l0 = new Label();
       Label l1 = new Label();
@@ -995,6 +1002,7 @@ public class JavaUtilConcurrentFutureTaskSyncAdapter implements Opcodes {
       mv.visitLabel(l20);
       mv.visitMaxs(0, 0);
       mv.visitEnd();
+      return null;
     }
 
     private void addManagedTryReleaseSharedMethod() {

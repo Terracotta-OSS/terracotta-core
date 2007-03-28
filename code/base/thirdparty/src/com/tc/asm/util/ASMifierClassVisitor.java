@@ -38,7 +38,6 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.FieldVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
-import com.tc.asm.Type;
 
 /**
  * A {@link ClassVisitor} that prints the ASM code that generates the classes it
@@ -51,26 +50,26 @@ import com.tc.asm.Type;
  * <tt>Hello</tt> class is the following: <p> <blockquote>
  * 
  * <pre>
- * import org.objectweb.asm.*;
- * 
+ * import com.tc.asm.*;
+ *
  * public class HelloDump implements Opcodes {
- * 
+ *
  *     public static byte[] dump() throws Exception {
- * 
- *         ClassWriter cw = new ClassWriter(false);
+ *
+ *         ClassWriter cw = new ClassWriter(0);
  *         FieldVisitor fv;
  *         MethodVisitor mv;
  *         AnnotationVisitor av0;
- * 
+ *
  *         cw.visit(49,
  *                 ACC_PUBLIC + ACC_SUPER,
  *                 &quot;Hello&quot;,
  *                 null,
  *                 &quot;java/lang/Object&quot;,
  *                 null);
- * 
+ *
  *         cw.visitSource(&quot;Hello.java&quot;, null);
- * 
+ *
  *         {
  *             mv = cw.visitMethod(ACC_PUBLIC, &quot;&lt;init&gt;&quot;, &quot;()V&quot;, null, null);
  *             mv.visitVarInsn(ALOAD, 0);
@@ -102,18 +101,18 @@ import com.tc.asm.Type;
  *             mv.visitEnd();
  *         }
  *         cw.visitEnd();
- * 
+ *
  *         return cw.toByteArray();
  *     }
  * }
- * 
+ *
  * </pre>
  * 
  * </blockquote> where <tt>Hello</tt> is defined by: <p> <blockquote>
  * 
  * <pre>
  * public class Hello {
- * 
+ *
  *     public static void main(String[] args) {
  *         System.out.println(&quot;hello&quot;);
  *     }
@@ -161,7 +160,7 @@ public class ASMifierClassVisitor extends ASMifierAbstractVisitor implements
      */
     public static void main(final String[] args) throws Exception {
         int i = 0;
-        boolean skipDebug = true;
+        int flags = ClassReader.SKIP_DEBUG;
 
         boolean ok = true;
         if (args.length < 1 || args.length > 2) {
@@ -169,7 +168,7 @@ public class ASMifierClassVisitor extends ASMifierAbstractVisitor implements
         }
         if (ok && args[0].equals("-debug")) {
             i = 1;
-            skipDebug = false;
+            flags = 0;
             if (args.length != 2) {
                 ok = false;
             }
@@ -182,14 +181,15 @@ public class ASMifierClassVisitor extends ASMifierAbstractVisitor implements
         }
         ClassReader cr;
         if (args[i].endsWith(".class") || args[i].indexOf('\\') > -1
-                || args[i].indexOf('/') > -1) {
+                || args[i].indexOf('/') > -1)
+        {
             cr = new ClassReader(new FileInputStream(args[i]));
         } else {
             cr = new ClassReader(args[i]);
         }
         cr.accept(new ASMifierClassVisitor(new PrintWriter(System.out)),
                 getDefaultAttributes(),
-                skipDebug);
+                flags);
     }
 
     /**
@@ -224,11 +224,11 @@ public class ASMifierClassVisitor extends ASMifierAbstractVisitor implements
             simpleName = name;
         }
         text.add("import java.util.*;\n");
-        text.add("import org.objectweb.asm.*;\n");
-        text.add("import org.objectweb.asm.attrs.*;\n");
+        text.add("import com.tc.asm.*;\n");
+        text.add("import com.tc.asm.attrs.*;\n");
         text.add("public class " + simpleName + "Dump implements Opcodes {\n\n");
         text.add("public static byte[] dump () throws Exception {\n\n");
-        text.add("ClassWriter cw = new ClassWriter(false);\n");
+        text.add("ClassWriter cw = new ClassWriter(0);\n");
         text.add("FieldVisitor fv;\n");
         text.add("MethodVisitor mv;\n");
         text.add("AnnotationVisitor av0;\n\n");
@@ -383,10 +383,14 @@ public class ASMifierClassVisitor extends ASMifierAbstractVisitor implements
         }
         buf.append(");\n");
         text.add(buf.toString());
-        ASMifierMethodVisitor acv = new ASMifierMethodVisitor();
+        ASMifierMethodVisitor acv = createASMifierMethodVisitor();
         text.add(acv.getText());
         text.add("}\n");
         return acv;
+    }
+
+    protected ASMifierMethodVisitor createASMifierMethodVisitor() {
+        return new ASMifierMethodVisitor();
     }
 
     public AnnotationVisitor visitAnnotation(
@@ -433,16 +437,10 @@ public class ASMifierClassVisitor extends ASMifierAbstractVisitor implements
             first = false;
         }
         if ((access & Opcodes.ACC_PRIVATE) != 0) {
-            if (!first) {
-                buf.append(" + ");
-            }
             buf.append("ACC_PRIVATE");
             first = false;
         }
         if ((access & Opcodes.ACC_PROTECTED) != 0) {
-            if (!first) {
-                buf.append(" + ");
-            }
             buf.append("ACC_PROTECTED");
             first = false;
         }
@@ -527,7 +525,7 @@ public class ASMifierClassVisitor extends ASMifierAbstractVisitor implements
             first = false;
         }
         if ((access & Opcodes.ACC_ANNOTATION) != 0
-                && ((access & ACCESS_CLASS) != 0))
+                && (access & ACCESS_CLASS) != 0)
         {
             if (!first) {
                 buf.append(" + ");
@@ -572,36 +570,6 @@ public class ASMifierClassVisitor extends ASMifierAbstractVisitor implements
         }
         if (first) {
             buf.append("0");
-        }
-    }
-
-    /**
-     * Appends a string representation of the given constant to the given
-     * buffer.
-     * 
-     * @param buf a string buffer.
-     * @param cst an {@link java.lang.Integer Integer}, {@link java.lang.Float
-     *        Float}, {@link java.lang.Long Long},
-     *        {@link java.lang.Double Double} or {@link String String} object.
-     *        May be <tt>null</tt>.
-     */
-    static void appendConstant(final StringBuffer buf, final Object cst) {
-        if (cst == null) {
-            buf.append("null");
-        } else if (cst instanceof String) {
-            AbstractVisitor.appendString(buf, (String) cst);
-        } else if (cst instanceof Type) {
-            buf.append("Type.getType(\"")
-                    .append(((Type) cst).getDescriptor())
-                    .append("\")");
-        } else if (cst instanceof Integer) {
-            buf.append("new Integer(").append(cst).append(")");
-        } else if (cst instanceof Float) {
-            buf.append("new Float(\"").append(cst).append("\")");
-        } else if (cst instanceof Long) {
-            buf.append("new Long(").append(cst).append("L)");
-        } else if (cst instanceof Double) {
-            buf.append("new Double(\"").append(cst).append("\")");
         }
     }
 }

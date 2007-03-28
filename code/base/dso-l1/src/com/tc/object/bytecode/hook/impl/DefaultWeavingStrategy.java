@@ -6,6 +6,7 @@ package com.tc.object.bytecode.hook.impl;
 import com.tc.asm.ClassReader;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
+import com.tc.asm.commons.EmptyVisitor;
 import com.tc.asm.commons.SerialVersionUIDAdder;
 import com.tc.aspectwerkz.definition.SystemDefinition;
 import com.tc.aspectwerkz.definition.deployer.StandardAspectModuleDeployer;
@@ -17,7 +18,6 @@ import com.tc.aspectwerkz.reflect.ClassInfoHelper;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.aspectwerkz.transform.InstrumentationContext;
 import com.tc.aspectwerkz.transform.WeavingStrategy;
-import com.tc.aspectwerkz.transform.inlining.AsmHelper;
 import com.tc.aspectwerkz.transform.inlining.weaver.AddInterfaceVisitor;
 import com.tc.aspectwerkz.transform.inlining.weaver.AddMixinMethodsVisitor;
 import com.tc.aspectwerkz.transform.inlining.weaver.AddWrapperVisitor;
@@ -180,32 +180,32 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
           newInvocationsByCallerMemberHash = new HashMap();
           crLookahead.accept(
               new ConstructorCallVisitor.LookaheadNewDupInvokeSpecialInstructionClassAdapter(newInvocationsByCallerMemberHash),
-              true);
+              ClassReader.SKIP_DEBUG);
         }
 
         // prepare handler jp, by gathering ALL catch blocks and their exception type
         List catchLabels = new ArrayList();
         if (!filterForHandler) {
-          final ClassWriter cw2 = AsmHelper.newClassWriter(true);
+          final ClassVisitor cv = new EmptyVisitor();
           HandlerVisitor.LookaheadCatchLabelsClassAdapter lookForCatches = //
-              new HandlerVisitor.LookaheadCatchLabelsClassAdapter(cw2, loader, classInfo, context, catchLabels);
+              new HandlerVisitor.LookaheadCatchLabelsClassAdapter(cv, loader, classInfo, context, catchLabels);
           // we must visit exactly as we will do further on with debug info (that produces extra labels)
           final ClassReader crLookahead2 = new ClassReader(bytecode);
-          crLookahead2.accept(lookForCatches, null, false);
+          crLookahead2.accept(lookForCatches, 0);
         }
 
         // gather wrapper methods to support multi-weaving
         // skip annotations visit and debug info by using the lookahead read-only classreader
         Set addedMethods = new HashSet();
-        crLookahead.accept(new AlreadyAddedMethodAdapter(addedMethods), true);
+        crLookahead.accept(new AlreadyAddedMethodAdapter(addedMethods), ClassReader.SKIP_DEBUG);
 
         // ------------------------------------------------
         // -- Phase 1 -- type change (ITDs)
-        final ClassWriter writerPhase1 = AsmHelper.newClassWriter(true);
+        final ClassReader readerPhase1 = new ClassReader(bytecode);
+        final ClassWriter writerPhase1 = new ClassWriter(readerPhase1, ClassWriter.COMPUTE_MAXS);
         ClassVisitor reversedChainPhase1 = new AddMixinMethodsVisitor(writerPhase1, classInfo, context, addedMethods);
         reversedChainPhase1 = new AddInterfaceVisitor(reversedChainPhase1, classInfo, context);
-        final ClassReader readerPhase1 = new ClassReader(bytecode);
-        readerPhase1.accept(reversedChainPhase1, null, false);
+        readerPhase1.accept(reversedChainPhase1, 0);
         context.setCurrentBytecode(writerPhase1.toByteArray());
 
         // ------------------------------------------------
@@ -214,7 +214,8 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
         // ------------------------------------------------
         // -- Phase 2 -- advice
-        final ClassWriter writerPhase2 = AsmHelper.newClassWriter(true);
+        final ClassReader readerPhase2 = new ClassReader(context.getCurrentBytecode());
+        final ClassWriter writerPhase2 = new ClassWriter(readerPhase2, ClassWriter.COMPUTE_MAXS);
         ClassVisitor reversedChainPhase2 = new InstanceLevelAspectVisitor(writerPhase2, classInfo, context);
         reversedChainPhase2 = new MethodExecutionVisitor(reversedChainPhase2, classInfo, context, addedMethods);
         reversedChainPhase2 = new ConstructorBodyVisitor(reversedChainPhase2, classInfo, context, addedMethods);
@@ -232,18 +233,17 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         }
         reversedChainPhase2 = new LabelToLineNumberVisitor(reversedChainPhase2, context);
 
-        final ClassReader readerPhase2 = new ClassReader(context.getCurrentBytecode());
-        readerPhase2.accept(reversedChainPhase2, null, false);
+        readerPhase2.accept(reversedChainPhase2, 0);
         context.setCurrentBytecode(writerPhase2.toByteArray());
 
         // ------------------------------------------------
         // -- AW Finalization -- JP init code and wrapper methods
         if (context.isAdvised()) {
-          final ClassWriter writerPhase3 = AsmHelper.newClassWriter(true);
+          ClassReader readerPhase3 = new ClassReader(context.getCurrentBytecode());
+          final ClassWriter writerPhase3 = new ClassWriter(readerPhase3, ClassWriter.COMPUTE_MAXS);
           ClassVisitor reversedChainPhase3 = new AddWrapperVisitor(writerPhase3, context, addedMethods);
           reversedChainPhase3 = new JoinPointInitVisitor(reversedChainPhase3, context);
-          ClassReader readerPhase3 = new ClassReader(context.getCurrentBytecode());
-          readerPhase3.accept(reversedChainPhase3, null, false);
+          readerPhase3.accept(reversedChainPhase3, 0);
           context.setCurrentBytecode(writerPhase3.toByteArray());
         }
       }
@@ -251,12 +251,11 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       // ------------------------------------------------
       // -- Phase DSO -- DSO clustering
       if (isDsoAdaptable) {
-        final ClassWriter dsoWriter = AsmHelper.newClassWriter(true);
-        ClassVisitor dsoVisitor = m_configHelper.createClassAdapterFor(dsoWriter, classInfo, m_logger, loader);
-
         final ClassReader dsoReader = new ClassReader(context.getCurrentBytecode());
+        final ClassWriter dsoWriter = new ClassWriter(dsoReader, ClassWriter.COMPUTE_MAXS);
+        ClassVisitor dsoVisitor = m_configHelper.createClassAdapterFor(dsoWriter, classInfo, m_logger, loader);
         try {
-          dsoReader.accept(dsoVisitor, false);
+          dsoReader.accept(dsoVisitor, 0);
           context.setCurrentBytecode(dsoWriter.toByteArray());
         } catch (TCLogicalSubclassNotPortableException e) {
           List l = new ArrayList(1);
@@ -269,9 +268,9 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       // -- Generic finalization -- serialVersionUID
       if (context.isAdvised() || isDsoAdaptable) {
         if (ClassInfoHelper.implementsInterface(classInfo, "java.io.Serializable")) {
-          final ClassWriter writerPhase3 = AsmHelper.newClassWriter(true);
           ClassReader readerPhase3 = new ClassReader(context.getCurrentBytecode());
-          readerPhase3.accept(new SerialVersionUIDAdder(writerPhase3), false);
+          final ClassWriter writerPhase3 = new ClassWriter(readerPhase3, ClassWriter.COMPUTE_MAXS);
+          readerPhase3.accept(new SerialVersionUIDAdder(writerPhase3), 0);
           context.setCurrentBytecode(writerPhase3.toByteArray());
         }
       }
