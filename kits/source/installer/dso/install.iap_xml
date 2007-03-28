@@ -3914,39 +3914,6 @@ and any path to a file to read from that file]]></string>
 												</object>
 											</rules>
 										</object>
-										<object class="com.zerog.ia.installer.actions.CreateShortcut" objectID="044690d5a8bb">
-											<property name="useInstalledFile">
-												<boolean>false</boolean>
-											</property>
-											<property name="existingFilePath">
-												<string><![CDATA[$USER_MAGIC_FOLDER_1$$/$docs$/$TerracottaDSOGuide.html]]></string>
-											</property>
-											<property name="workingDir">
-												<string><![CDATA[]]></string>
-											</property>
-											<property name="shouldUninstall">
-												<boolean>true</boolean>
-											</property>
-											<property name="destinationName">
-												<string><![CDATA[Installation and Setup Guide]]></string>
-											</property>
-											<property name="args">
-												<string><![CDATA[]]></string>
-											</property>
-											<rules logicalOperation="AND">
-												<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="4c78d567a796">
-													<property name="operation">
-														<string><![CDATA[equals]]></string>
-													</property>
-													<property name="operandOne">
-														<string><![CDATA[$STARTMENU_SHORTCUT_RESULT$]]></string>
-													</property>
-													<property name="operandTwo">
-														<string><![CDATA[1]]></string>
-													</property>
-												</object>
-											</rules>
-										</object>
 										<object class="com.zerog.ia.installer.actions.CreateShortcut" objectID="fd0f0056966f">
 											<property name="useInstalledFile">
 												<boolean>false</boolean>
@@ -4102,7 +4069,7 @@ and any path to a file to read from that file]]></string>
 												<boolean>true</boolean>
 											</property>
 											<property name="destinationName">
-												<string><![CDATA[Terracotta Pojos Guide]]></string>
+												<string><![CDATA[Terracotta Pojos Quick Start Guide]]></string>
 											</property>
 											<property name="args">
 												<string><![CDATA[]]></string>
@@ -4168,7 +4135,7 @@ and any path to a file to read from that file]]></string>
 												<boolean>true</boolean>
 											</property>
 											<property name="destinationName">
-												<string><![CDATA[Terracotta for Spring Guide]]></string>
+												<string><![CDATA[Terracotta for Spring Quick Start Guide]]></string>
 											</property>
 											<property name="args">
 												<string><![CDATA[]]></string>
