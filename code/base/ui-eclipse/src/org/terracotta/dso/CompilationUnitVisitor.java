@@ -542,10 +542,10 @@ public class CompilationUnitVisitor extends ASTVisitor {
   }
   
   private void addProblemMarker(String markerID, String msg, ASTNode node) {
-    HashMap map      = new HashMap();
-    int     startPos = node.getStartPosition();
-    int     endPos   = startPos + node.getLength();
-    int     line     = m_ast.lineNumber(startPos);
+    HashMap<String, Integer> map      = new HashMap<String, Integer>();
+    int                      startPos = node.getStartPosition();
+    int                      endPos   = startPos + node.getLength();
+    int                      line     = m_ast.lineNumber(startPos);
       
     MarkerUtilities.setMessage(map, msg);
     MarkerUtilities.setCharStart(map, startPos);

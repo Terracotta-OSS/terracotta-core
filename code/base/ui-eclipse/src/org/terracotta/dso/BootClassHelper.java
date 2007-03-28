@@ -14,6 +14,7 @@ import com.tc.object.tools.BootJarSignature;
 
 import java.io.File;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -22,7 +23,7 @@ import java.util.Set;
 
 public class BootClassHelper {
   private static BootClassHelper m_helper;
-  private Set                    m_bootClasses;
+  private Set<String>            m_bootClasses;
   
   public static BootClassHelper getHelper() {
     return m_helper;    
@@ -50,11 +51,16 @@ public class BootClassHelper {
       File    bootJarFile = bootJarPath.toFile();
       BootJar bootJar     = BootJar.getBootJarForReading(bootJarFile);
     
-      m_bootClasses = bootJar.getAllPreInstrumentedClasses();
+      m_bootClasses = new HashSet<String>();
+      Set classes = bootJar.getAllPreInstrumentedClasses();
+      Iterator iter = classes.iterator();
+      while(iter.hasNext()) {
+        m_bootClasses.add(iter.next().toString());
+      }
     }
     
     if(m_bootClasses == null) {
-      m_bootClasses = new HashSet();
+      m_bootClasses = new HashSet<String>();
     }
     
     m_bootClasses.add("java.lang.Integer");

@@ -27,11 +27,11 @@ import java.util.Iterator;
 
 public class JavaSetupParticipant implements IDocumentSetupParticipant {
   private static JavaSetupParticipant m_setupParticipant;
-  private ArrayList                   m_fileList;
+  private ArrayList<IFile>            m_fileList;
   
   public JavaSetupParticipant() {
     m_setupParticipant = this;
-    m_fileList         = new ArrayList();
+    m_fileList         = new ArrayList<IFile>();
     
     FileBuffers.getTextFileBufferManager().addFileBufferListener(
       new IFileBufferListener() {

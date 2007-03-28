@@ -2962,7 +2962,7 @@ public class ConfigurationHelper {
     }
   }
   
-  private static final String[]  PRIMITIVE_NAMES = new String[] {
+  private static final String[] PRIMITIVE_NAMES = new String[] {
     "java.lang.String",
     "java.lang.Integer",
     "java.lang.Boolean",
@@ -2971,7 +2971,7 @@ public class ConfigurationHelper {
     "java.lang.Byte"
   };
   
-  private static final ArrayList PRIMITIVES = new ArrayList(Arrays.asList(PRIMITIVE_NAMES));
+  private static final ArrayList<String> PRIMITIVES = new ArrayList<String>(Arrays.asList(PRIMITIVE_NAMES));
   
   private static boolean isPrimitive(IType type) {
     try {
@@ -3194,10 +3194,10 @@ public class ConfigurationHelper {
   }
 
   private String findTypeExpressionPrefix(String typeExpr) {
-    String[]  elems    = StringUtils.split(typeExpr, '.');
-    char[]    codes    = new char[] {'*', '?', '.', '$'};
-    ArrayList list     = new ArrayList();
-    String    elem;
+    String[]          elems = StringUtils.split(typeExpr, '.');
+    char[]            codes = new char[] {'*', '?', '.', '$'};
+    ArrayList<String> list  = new ArrayList<String>();
+    String            elem;
     
     for(int i = 0; i < elems.length; i++) {
       elem = elems[i];
@@ -3417,12 +3417,12 @@ public class ConfigurationHelper {
   }
 
   private String findMethodExpressionPrefix(String methodExpr) {
-    String[]  comps    = StringUtils.split(methodExpr);
-    String    exprBody = comps.length > 1 ? comps[1] : comps[0];
-    String[]  elems    = StringUtils.split(exprBody, '.');
-    char[]    codes    = new char[] {'*', '?', '(', ')', '$'};
-    ArrayList list     = new ArrayList();
-    String    elem;
+    String[]          comps    = StringUtils.split(methodExpr);
+    String            exprBody = comps.length > 1 ? comps[1] : comps[0];
+    String[]          elems    = StringUtils.split(exprBody, '.');
+    char[]            codes    = new char[] {'*', '?', '(', ')', '$'};
+    ArrayList<String> list     = new ArrayList<String>();
+    String            elem;
     
     for(int i = 0; i < elems.length; i++) {
       elem = elems[i];
@@ -3556,10 +3556,10 @@ public class ConfigurationHelper {
     try {
       text = "\\Q"+text+"\\E";
       if((region = finder.find(0, text, true, true, false, true)) != null) {
-        HashMap map   = new HashMap();
-        int     start = region.getOffset();
-        int     end   = start + region.getLength();
-        int     line  = doc.getLineOfOffset(start)-1;
+        HashMap<String, Object> map   = new HashMap<String, Object>();
+        int                     start = region.getOffset();
+        int                     end   = start + region.getLength();
+        int                     line  = doc.getLineOfOffset(start)-1;
         
         MarkerUtilities.setMessage(map, msg);
         MarkerUtilities.setLineNumber(map, line);
@@ -3770,7 +3770,7 @@ public class ConfigurationHelper {
   }
   
   private static IPackageFragment[] getSourceFragments(IJavaProject javaProject) {
-    ArrayList list = new ArrayList();
+    ArrayList<IPackageFragment> list = new ArrayList<IPackageFragment>();
 
     try {
       IPackageFragment[] fragments = javaProject.getPackageFragments();
@@ -3782,7 +3782,7 @@ public class ConfigurationHelper {
       }
     } catch(JavaModelException jme) {/**/}
     
-    return (IPackageFragment[])list.toArray(new IPackageFragment[0]);
+    return list.toArray(new IPackageFragment[0]);
 
   }
   

@@ -51,11 +51,11 @@ import javax.swing.ImageIcon;
  */
 
 public abstract class ProjectNode extends XTreeNode {
-  private static HashMap                  m_imageMap;
+  private static HashMap<String, Image>   m_imageMap;
   private static JavaElementLabelProvider m_javaLabelProvider;
 
   static {
-    m_imageMap          = new HashMap();
+    m_imageMap          = new HashMap<String, Image>();
     m_javaLabelProvider = new JavaElementLabelProvider();
   }
   
@@ -75,7 +75,7 @@ public abstract class ProjectNode extends XTreeNode {
     if(swtImage != null) {
       String swtHandle = swtImage.toString();
       
-      if((awtImage = (Image)m_imageMap.get(swtHandle)) == null) {
+      if((awtImage = m_imageMap.get(swtHandle)) == null) {
         m_imageMap.put(swtHandle, awtImage = swt2Swing(swtImage));
       }
     }

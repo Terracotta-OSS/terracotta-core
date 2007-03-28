@@ -17,7 +17,7 @@ import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
 public class ConfigurationEditorPanel extends Container {
-  private transient ArrayList                     m_listenerList; 
+  private transient ArrayList<XmlObjectStructureListener> m_listenerList; 
   private transient XmlObjectStructureChangeEvent m_changeEvent;
   
   public ConfigurationEditorPanel() {
@@ -79,7 +79,7 @@ public class ConfigurationEditorPanel extends Container {
   public synchronized void addXmlObjectStructureListener(XmlObjectStructureListener listener) {
     if(listener != null) {
       if(m_listenerList == null) {
-        m_listenerList = new ArrayList();
+        m_listenerList = new ArrayList<XmlObjectStructureListener>();
       }
       m_listenerList.add(listener);
     }
@@ -105,8 +105,7 @@ public class ConfigurationEditorPanel extends Container {
   }
   
   private XmlObjectStructureListener[] getListenerArray() {
-    return (XmlObjectStructureListener[])
-      m_listenerList.toArray(new XmlObjectStructureListener[0]);
+    return m_listenerList.toArray(new XmlObjectStructureListener[0]);
   }
     
   protected void fireXmlObjectStructureChanged(XmlObjectStructureChangeEvent e) {

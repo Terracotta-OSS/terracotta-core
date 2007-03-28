@@ -263,8 +263,8 @@
 
         The <module> element(s) is optional.
       -->
-      <module name="clustered-apache-struts" version="1.1"/>
-      <module name="clustered-commons-collections" version="3.1"/>
+      <module name="clustered-apache-struts-1.1" version="1.0.0"/>
+      <module name="clustered-commons-collections-3.1" version="1.0.0"/>
 
     </modules>
 

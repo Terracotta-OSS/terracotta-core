@@ -170,16 +170,16 @@ public class TcPlugin extends AbstractUIPlugin
              IJavaLaunchConfigurationConstants,
              TcPluginStatusConstants
 {
-  private static TcPlugin        m_plugin;
-  private DictionaryResource     m_topRes;
-  private Loader                 m_configLoader;
-  private CompilationUnitVisitor m_compilationUnitVisitor;
-  private ResourceListener       m_resourceListener;
-  private ResourceDeltaVisitor   m_resourceDeltaVisitor;
-  private XmlOptions             m_xmlOptions;
-  private DecoratorUpdateAction  m_decoratorUpdateAction;
-  private ArrayList              m_projectActionList;
-  private BootClassHelper        m_bootClassHelper;
+  private static TcPlugin           m_plugin;
+  private DictionaryResource        m_topRes;
+  private Loader                    m_configLoader;
+  private CompilationUnitVisitor    m_compilationUnitVisitor;
+  private ResourceListener          m_resourceListener;
+  private ResourceDeltaVisitor      m_resourceDeltaVisitor;
+  private XmlOptions                m_xmlOptions;
+  private DecoratorUpdateAction     m_decoratorUpdateAction;
+  private ArrayList<IProjectAction> m_projectActionList;
+  private BootClassHelper           m_bootClassHelper;
   
   public  static final String PLUGIN_ID     = "org.terracotta.dso";
   private static final String RESOURCE_FILE = "Resources.xml";
@@ -298,7 +298,7 @@ public class TcPlugin extends AbstractUIPlugin
     }
     
     m_xmlOptions = createXmlOptions();
-    m_projectActionList = new ArrayList();
+    m_projectActionList = new ArrayList<IProjectAction>();
     
     IAdapterManager manager = Platform.getAdapterManager();
     IAdapterFactory factory = new JavaElementAdapter();
@@ -437,14 +437,14 @@ public class TcPlugin extends AbstractUIPlugin
         IProject            project     = m_javaProject.getProject();
         IProjectDescription description = project.getDescription();
         String[]            natures     = description.getNatureIds();
-        ArrayList           natureList  = new ArrayList();
+        ArrayList<String>   natureList  = new ArrayList<String>();
         
         for(int i = 0; i < natures.length; i++) {
           if(!natures[i].equals(ProjectNature.NATURE_ID)) {
             natureList.add(natures[i]);
           }
         }
-        description.setNatureIds((String[])natureList.toArray(new String[0]));
+        description.setNatureIds(natureList.toArray(new String[0]));
         project.setDescription(description, monitor);
         project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
         monitor.worked(1);
@@ -995,13 +995,13 @@ public class TcPlugin extends AbstractUIPlugin
       while(errors.hasNext()) {
         error = (XmlError)errors.next();
 
-        HashMap map      = new HashMap();
-        int     line     = error.getLine();
-        int     col      = error.getColumn();
-        String  msg      = error.getMessage();
-        int     severity = XmlError2IMarkerSeverity(error.getSeverity());
-        int     start    = lineLengths.offset(line-1);
-        int     end      = start + ((col == -1) ? lineLengths.lineSize(line-1) : col);
+        HashMap<String, Object> map      = new HashMap<String, Object>();
+        int                     line     = error.getLine();
+        int                     col      = error.getColumn();
+        String                  msg      = error.getMessage();
+        int                     severity = XmlError2IMarkerSeverity(error.getSeverity());
+        int                     start    = lineLengths.offset(line-1);
+        int                     end      = start + ((col == -1) ? lineLengths.lineSize(line-1) : col);
         
         MarkerUtilities.setMessage(map, msg);
         MarkerUtilities.setLineNumber(map, line);
@@ -1029,7 +1029,7 @@ public class TcPlugin extends AbstractUIPlugin
   }
 
   ConfigurationEditor[] getConfigurationEditors(IProject project) {
-    ArrayList list = new ArrayList();
+    ArrayList<ConfigurationEditor> list = new ArrayList<ConfigurationEditor>();
     IWorkbenchWindow[] windows = PlatformUI.getWorkbench().getWorkbenchWindows();
     
     for(int i = 0; i < windows.length; i++) {
@@ -1054,7 +1054,7 @@ public class TcPlugin extends AbstractUIPlugin
         }
       }
     }
-    return (ConfigurationEditor[])list.toArray(new ConfigurationEditor[0]);
+    return list.toArray(new ConfigurationEditor[0]);
   }
   
   public void reloadConfiguration(IProject project) {
@@ -1073,8 +1073,6 @@ public class TcPlugin extends AbstractUIPlugin
   public synchronized void clearConfigurationSessionProperties(
     IProject project)
   {
-    //clearConfigProblemMarkers(project);
-    
     IFile file = getConfigurationFile(project);
     if(file != null && file.exists()) {
       setPersistentProperty(file, ACTIVE_CONFIGURATION_FILE, null);

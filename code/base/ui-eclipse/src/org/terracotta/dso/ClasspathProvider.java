@@ -19,6 +19,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -42,14 +44,14 @@ public class ClasspathProvider extends StandardClasspathProvider {
 
       return result;
     } else {
-      ArrayList list = new ArrayList(Arrays.asList(cpe));
+      ArrayList<IRuntimeClasspathEntry> list = new ArrayList<IRuntimeClasspathEntry>(Arrays.asList(cpe));
       IPath[] paths = gatherDevClasspathEntries();
 
       for (int i = 0; i < paths.length; i++) {
         list.add(JavaRuntime.newArchiveRuntimeClasspathEntry(paths[i]));
       }
 
-      return (IRuntimeClasspathEntry[]) list.toArray(new IRuntimeClasspathEntry[0]);
+      return list.toArray(new IRuntimeClasspathEntry[0]);
     }
   }
 
@@ -66,9 +68,21 @@ public class ClasspathProvider extends StandardClasspathProvider {
     return sb.toString();
   }
 
+  private static Collection<File> listArchives(File dir) {
+    Collection c = FileUtils.listFiles(dir, new String[] { "jar" }, false);
+    Collection<File> result = new HashSet<File>();
+    Iterator iter = c.iterator();
+
+    while (iter.hasNext()) {
+      result.add((File) iter.next());
+    }
+
+    return result;
+  }
+  
   private static IPath[] gatherDevClasspathEntries() {
     IPath location = TcPlugin.getDefault().getLocation();
-    List list = new ArrayList();
+    List<IPath> list = new ArrayList<IPath>();
     IPath buildPath = location.append("..");
 
     String[] dirs = { "deploy", "common", "management", "aspectwerkz", "thirdparty", "dso-common", "dso-common-jdk15",
@@ -78,15 +92,14 @@ public class ClasspathProvider extends StandardClasspathProvider {
       list.add(buildPath.append(dirs[i]).append("build.eclipse").append("src.classes"));
     }
 
-    String[] extensions = new String[] { "jar" };
-    final List fileList = new ArrayList();
+    final List<File> fileList = new ArrayList<File>();
     File libDir;
 
     for (int i = 0; i < dirs.length; i++) {
       libDir = location.append("..").append(dirs[i]).append("lib").toFile();
 
       if (libDir.exists()) {
-        fileList.addAll(FileUtils.listFiles(libDir, extensions, false));
+        fileList.addAll(listArchives(libDir));
       }
     }
 
@@ -127,6 +140,6 @@ public class ClasspathProvider extends StandardClasspathProvider {
       }
     }
 
-    return (IPath[]) list.toArray(new IPath[list.size()]);
+    return list.toArray(new IPath[list.size()]);
   }
 }

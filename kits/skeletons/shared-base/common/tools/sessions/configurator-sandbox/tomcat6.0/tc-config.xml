@@ -27,7 +27,7 @@
   <clients>
     <logs>logs/client-logs/%(webserver.log.name)</logs>
     <modules>
-      <module name="clustered-apache-struts" version="1.1"/>
+      <module name="clustered-apache-struts-1.1" version="1.0.0"/>
     </modules>
   </clients>
 

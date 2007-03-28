@@ -721,7 +721,9 @@ public class AdminClientPanel extends XContainer
       StringBuffer sb = new StringBuffer(propsUrl);
       ProductInfo productInfo = getProductInfo();
       
-      sb.append("&os-name=");
+      sb.append(defaultPropsUrl.equals(propsUrl) ? '&' : '?');
+
+      sb.append("os-name=");
       sb.append(URLEncoder.encode(System.getProperty("os.name")));
       sb.append("&jvm-name=");
       sb.append(URLEncoder.encode(System.getProperty("java.vm.name")));

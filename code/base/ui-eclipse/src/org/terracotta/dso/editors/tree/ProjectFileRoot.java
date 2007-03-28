@@ -113,7 +113,7 @@ public class ProjectFileRoot extends XRootNode implements IResourceNode {
       IResource   member;
       
       if(m_extension != null) {
-        ArrayList list = new ArrayList();
+        ArrayList<IResource> list = new ArrayList<IResource>();
         
         for(int i = 0; i < members.length; i++) {
           member = members[i];
@@ -123,7 +123,7 @@ public class ProjectFileRoot extends XRootNode implements IResourceNode {
             list.add(member);
           }
         }
-        members = (IResource[])list.toArray(new IResource[0]);
+        members = list.toArray(new IResource[0]);
       }
       
       return members;

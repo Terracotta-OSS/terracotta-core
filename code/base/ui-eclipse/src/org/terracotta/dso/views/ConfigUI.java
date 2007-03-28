@@ -38,7 +38,7 @@ public class ConfigUI {
 
     if (project != null && selection instanceof IStructuredSelection) {
       IStructuredSelection structuredSelection= (IStructuredSelection) selection;
-      List javaElements= new ArrayList();
+      List<IJavaElement> javaElements= new ArrayList<IJavaElement>();
       for (Iterator iter= structuredSelection.iterator(); iter.hasNext();) {
           Object element= iter.next();
           if (element instanceof Root) {
@@ -52,7 +52,7 @@ public class ConfigUI {
                 }
               }
           } else if (element instanceof IMember) {
-            javaElements.add(element);
+            javaElements.add((IMember)element);
           }
       }
       return new StructuredSelection(javaElements);

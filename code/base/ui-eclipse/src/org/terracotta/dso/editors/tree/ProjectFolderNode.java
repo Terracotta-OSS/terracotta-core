@@ -163,7 +163,7 @@ public class ProjectFolderNode extends ProjectNode implements IResourceNode {
   
   private IResource[] internalGetMembers() {
     try {
-      ArrayList   list    = new ArrayList();
+      ArrayList<IResource> list = new ArrayList<IResource>();
       IResource[] members = m_folder.members();
 
       for(int i = 0; i < members.length; i++) {
@@ -172,7 +172,7 @@ public class ProjectFolderNode extends ProjectNode implements IResourceNode {
         }
       }
       
-      return (IResource[])list.toArray(new IResource[0]);
+      return list.toArray(new IResource[0]);
     } catch(CoreException ce) {
       return new IResource[0];
     }

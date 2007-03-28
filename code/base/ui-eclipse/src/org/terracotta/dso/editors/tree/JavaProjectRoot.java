@@ -68,14 +68,14 @@ public class JavaProjectRoot extends XRootNode {
   }
   
   public String[] getFields() {
-    ArrayList list       = new ArrayList();
-    int       childCount = getChildCount();
+    ArrayList<String> list = new ArrayList<String>();
+    int childCount = getChildCount();
     
     for(int i = 0; i < childCount; i++) {
       list.addAll(Arrays.asList(((JavaProjectNode)getChildAt(i)).getFields()));
     }
     
-    return (String[])list.toArray(new String[0]);
+    return list.toArray(new String[0]);
   }
   
   public String toString() {

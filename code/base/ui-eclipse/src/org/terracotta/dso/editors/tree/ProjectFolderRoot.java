@@ -100,16 +100,16 @@ public class ProjectFolderRoot extends XRootNode implements IResourceNode {
   
   private IFolder[] internalGetFolders() {
     try {
-      ArrayList   list    = new ArrayList();
+      ArrayList<IFolder> list = new ArrayList<IFolder>();
       IResource[] members = m_project.members();
           
       for(int i = 0; i < members.length; i++) {
         if(members[i].getType() == IResource.FOLDER) {
-          list.add(members[i]);
+          list.add((IFolder)members[i]);
         }
       }
 
-      return (IFolder[])list.toArray(new IFolder[0]);
+      return list.toArray(new IFolder[0]);
     } catch(CoreException ce) {
       return new IFolder[0];
     }

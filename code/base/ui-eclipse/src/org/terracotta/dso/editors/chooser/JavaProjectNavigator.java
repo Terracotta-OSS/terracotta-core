@@ -40,12 +40,12 @@ public abstract class JavaProjectNavigator extends BaseProjectNavigator {
 
   public String[] getSelectedFields() {
     ProjectNode[] nodes = getSelection();
-    ArrayList     list  = new ArrayList();
+    ArrayList<String> list  = new ArrayList<String>();
 
     for(int i = 0; i < nodes.length; i++) {
       list.addAll(Arrays.asList(((JavaProjectNode)nodes[i]).getFields()));
     }
     
-    return (String[])list.toArray(new String[0]);
+    return list.toArray(new String[0]);
   }
 }

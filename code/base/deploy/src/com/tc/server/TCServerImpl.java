@@ -142,6 +142,9 @@ public class TCServerImpl extends SEDA implements TCServer {
             throw new AssertionError("Server in incorrect state (" + state.get() + ") to be active.");
           }
         } catch (Throwable t) {
+          if(t instanceof RuntimeException) {
+            throw (RuntimeException)t;
+          }
           throw new RuntimeException(t);
         }
       } else {

@@ -118,14 +118,14 @@ public class PackageFragmentNode extends JavaProjectNode {
   }
   
   public String[] getFields() {
-    ArrayList list       = new ArrayList();
-    int       childCount = getChildCount();
+    ArrayList<String> list = new ArrayList<String>();
+    int childCount = getChildCount();
     
     for(int i = 0; i < childCount; i++) {
       list.addAll(Arrays.asList(((JavaProjectNode)getChildAt(i)).getFields()));
     }
     
-    return (String[])list.toArray(new String[0]);
+    return list.toArray(new String[0]);
   }
   
   public String toString() {
@@ -160,10 +160,10 @@ public class PackageFragmentNode extends JavaProjectNode {
   
   private IClassFile[] internalGetClassFiles() {
     try {
-      IClassFile[] classFiles = m_fragment.getClassFiles();
-      ArrayList    list       = new ArrayList();
-      IType        type;
-      int          flags;
+      IClassFile[]          classFiles = m_fragment.getClassFiles();
+      ArrayList<IClassFile> list       = new ArrayList<IClassFile>();
+      IType                 type;
+      int                   flags;
       
       for(int i = 0; i < classFiles.length; i++) {
         type  = classFiles[i].getType();
@@ -182,7 +182,7 @@ public class PackageFragmentNode extends JavaProjectNode {
         }
       }
 
-      classFiles = (IClassFile[])list.toArray(new IClassFile[0]);
+      classFiles = list.toArray(new IClassFile[0]);
       return (IClassFile[])JavaElementComparable.sort(classFiles);
     } catch(JavaModelException jme) {
       jme.printStackTrace();

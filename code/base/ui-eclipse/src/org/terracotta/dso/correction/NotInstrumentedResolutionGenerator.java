@@ -57,8 +57,7 @@ public class NotInstrumentedResolutionGenerator
   }
   
   public IMarkerResolution[] getResolutions(IMarker marker) {
-    
-    ArrayList list = new ArrayList();
+    ArrayList<IMarkerResolution> list = new ArrayList<IMarkerResolution>();
     
     if((m_element = getSelectedElement()) != null) {
       IJavaProject javaProject = m_element.getJavaProject();
@@ -81,7 +80,7 @@ public class NotInstrumentedResolutionGenerator
       }
     }
     
-    return (IMarkerResolution[])list.toArray(new IMarkerResolution[0]) ;
+    return list.toArray(new IMarkerResolution[0]) ;
   }
 }
 

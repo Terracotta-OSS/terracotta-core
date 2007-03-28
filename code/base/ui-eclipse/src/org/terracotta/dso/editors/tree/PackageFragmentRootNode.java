@@ -98,11 +98,11 @@ public class PackageFragmentRootNode extends JavaProjectNode {
   
   private IPackageFragment[] internalGetPackageFragments() {
     try {
-      IJavaElement[]     elements = m_packageFragmentRoot.getChildren();
-      ArrayList          list     = new ArrayList();
-      IJavaElement       element;
-      IPackageFragment[] fragments;
-      IPackageFragment   fragment;
+      IJavaElement[]              elements = m_packageFragmentRoot.getChildren();
+      ArrayList<IPackageFragment> list     = new ArrayList<IPackageFragment>();
+      IJavaElement                element;
+      IPackageFragment[]          fragments;
+      IPackageFragment            fragment;
       
       for(int i = 0; i < elements.length; i++) {
         element = elements[i];
@@ -111,12 +111,12 @@ public class PackageFragmentRootNode extends JavaProjectNode {
           fragment = (IPackageFragment)element;
           
           if(fragment.containsJavaResources()) {
-            list.add(element);
+            list.add(fragment);
           }
         }
       }
       
-      fragments = (IPackageFragment[])list.toArray(new IPackageFragment[0]); 
+      fragments = list.toArray(new IPackageFragment[0]); 
       return (IPackageFragment[])JavaElementComparable.sort(fragments);
     } catch(JavaModelException jme) {
       return new IPackageFragment[0];
@@ -128,14 +128,14 @@ public class PackageFragmentRootNode extends JavaProjectNode {
   }
   
   public String[] getFields() {
-    ArrayList list       = new ArrayList();
-    int       childCount = getChildCount();
+    ArrayList<String> list = new ArrayList<String>();
+    int childCount = getChildCount();
     
     for(int i = 0; i < childCount; i++) {
       list.addAll(Arrays.asList(((JavaProjectNode)getChildAt(i)).getFields()));
     }
     
-    return (String[])list.toArray(new String[0]);
+    return list.toArray(new String[0]);
   }
   
   public String toString() {

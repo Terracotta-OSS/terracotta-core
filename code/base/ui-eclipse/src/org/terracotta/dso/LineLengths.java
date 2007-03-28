@@ -71,7 +71,7 @@ public class LineLengths implements java.io.Serializable {
     throws ConcurrentModificationException,
            IOException
   {
-    ArrayList list  = new ArrayList();
+    ArrayList<String> list = new ArrayList<String>();
     
     try {
       BufferedReader br = new BufferedReader(reader);
@@ -93,7 +93,7 @@ public class LineLengths implements java.io.Serializable {
     int size = list.size();
     m_lines = new int[size];
     for(int i = 0; i < size; i++) {
-      m_lines[i] = ((String)list.get(i)).length();
+      m_lines[i] = list.get(i).length();
     }
   }
 

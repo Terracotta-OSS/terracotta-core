@@ -37,11 +37,10 @@ public class RuleModel extends XObjectTableModel {
   }
   
   public void setRules(XmlObject[] objects) {
-    ArrayList list = new ArrayList();
+    ArrayList<RuleHolder> list = new ArrayList<RuleHolder>();
     for(int i = 0; i < objects.length; i++) {
       list.add(new RuleHolder(m_instrumentedClasses, Rule.create(objects[i])));
     }
-
     set(list.toArray(new RuleHolder[0]));
   }
                                      

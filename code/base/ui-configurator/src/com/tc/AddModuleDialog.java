@@ -33,7 +33,7 @@ public class AddModuleDialog extends XContainer {
     addHierarchyListener(new HierarchyListener() {
       private volatile boolean working;
 
-      public void hierarchyChanged(HierarchyEvent e) {
+      public void hierarchyChanged(HierarchyEvent he) {
         if (working) return;
         working = true;
         new Thread() {

@@ -210,11 +210,11 @@ public class ProjectWizard extends Wizard {
      * Make sure the terracotta artifact directory isn't considered
      * a package fragment.
      */
-    IPath             relPath   = folder.getProjectRelativePath();
-    IPath             exclusion = relPath.addTrailingSeparator();
-    ArrayList         list      = new ArrayList();
-    IClasspathEntry[] entries   = m_javaProject.getRawClasspath();
-    IClasspathEntry   entry;
+    IPath                      relPath   = folder.getProjectRelativePath();
+    IPath                      exclusion = relPath.addTrailingSeparator();
+    ArrayList<IClasspathEntry> list      = new ArrayList<IClasspathEntry>();
+    IClasspathEntry[]          entries   = m_javaProject.getRawClasspath();
+    IClasspathEntry            entry;
     
     for(int i = 0; i < entries.length; i++) {
       entry = entries[i];
@@ -222,19 +222,19 @@ public class ProjectWizard extends Wizard {
       if(entry.getEntryKind() == IClasspathEntry.CPE_SOURCE &&
          entry.getPath().equals(m_javaProject.getPath()))
       {
-        List exclusions = new ArrayList(Arrays.asList(entry.getExclusionPatterns()));
+        List<IPath> exclusions = new ArrayList<IPath>(Arrays.asList(entry.getExclusionPatterns()));
 
         exclusions.add(exclusion);
         entry = JavaCore.newSourceEntry(entry.getPath(),
                                         entry.getInclusionPatterns(),
-                                        (IPath[])exclusions.toArray(new IPath[0]),
+                                        exclusions.toArray(new IPath[0]),
                                         entry.getOutputLocation(),
                                         entry.getExtraAttributes());
       }
       list.add(entry);
     }
     
-    entries = (IClasspathEntry[])list.toArray(new IClasspathEntry[0]);
+    entries = list.toArray(new IClasspathEntry[0]);
     m_javaProject.setRawClasspath(entries, monitor);
 
     /**

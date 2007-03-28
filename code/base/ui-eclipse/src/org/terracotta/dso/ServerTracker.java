@@ -20,9 +20,9 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.terracotta.dso.decorator.ServerRunningDecorator;
 
 import com.tc.admin.TCStop;
-import org.terracotta.dso.decorator.ServerRunningDecorator;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -43,8 +43,8 @@ import java.util.Iterator;
  */
 
 public class ServerTracker {
-  private static ServerTracker m_instance = new ServerTracker();
-  private HashMap              m_servers  = new HashMap();
+  private static ServerTracker          m_instance = new ServerTracker();
+  private HashMap<IProcess, ServerInfo> m_servers  = new HashMap<IProcess, ServerInfo>();
  
   /**
    * This name is used in plugin.xml for managing the start/stop menu items.
@@ -71,7 +71,7 @@ public class ServerTracker {
           Object source = events[0].getSource();
   
           if(source instanceof IProcess) {
-            ServerInfo serverInfo = (ServerInfo)m_servers.get(source);
+            ServerInfo serverInfo = m_servers.get(source);
   
             if(serverInfo != null) {
               m_servers.remove(source);
@@ -102,7 +102,7 @@ public class ServerTracker {
       
       while(iter.hasNext()) {
         proc       = (IProcess)iter.next();
-        serverInfo = (ServerInfo)m_servers.get(proc);
+        serverInfo = m_servers.get(proc);
         serverName = serverInfo.getName();
 
         if(name.equals(serverName)) {
@@ -162,7 +162,7 @@ public class ServerTracker {
 
     while(iter.hasNext()) {
       proc = (IProcess)iter.next();
-      info = (ServerInfo)m_servers.get(proc);
+      info = m_servers.get(proc);
       
       if(info.getJavaProject().equals(javaProject)) {
         try {
@@ -189,7 +189,7 @@ public class ServerTracker {
   
     try {
       IRunnableWithProgress op = new TCStopper(javaProject, restart, name);
-      new ProgressMonitorDialog(shell).run(true, true, op);
+      new ProgressMonitorDialog(shell).run(true, false, op);
     } catch(InvocationTargetException e) {
       TcPlugin.getDefault().openError("Cannot stop Terracotta server", e.getCause());
     } catch(InterruptedException e) {/**/}  
@@ -216,9 +216,6 @@ public class ServerTracker {
       try {
         monitor.beginTask("Stopping Terracotta Server...", IProgressMonitor.UNKNOWN);
         doStopServer(m_javaProject, m_name, monitor);
-        if(monitor.isCanceled()) {
-          return;
-        }
         if(m_restart) {
           internalStartServer(m_javaProject, m_name);
         }
@@ -238,7 +235,7 @@ public class ServerTracker {
     
     while(iter.hasNext()) {
       proc        = (IProcess)iter.next();
-      serverInfo  = (ServerInfo)m_servers.get(proc);
+      serverInfo  = m_servers.get(proc);
       javaProject = serverInfo.getJavaProject();
       jmxPort     = serverInfo.getJmxPort();
       name        = serverInfo.getName();
@@ -251,15 +248,20 @@ public class ServerTracker {
         
         try {
           stopper.stop();
+          
+          int count = 0;
           while(true) {
-            if(monitor.isCanceled()) {
-              return;
-            }
             try {
               proc.getExitValue();
+              iter.remove();
               return;
             } catch(DebugException de) {
               try {
+                if(count++ == 6) {
+                  proc.terminate();
+                  iter.remove();
+                  return;
+                }
                 Thread.sleep(1000);
               } catch(InterruptedException ie) {/**/}
             }
@@ -308,5 +310,9 @@ class ServerInfo {
   
   int getJmxPort() {
     return m_jmxPort;
+  }
+  
+  public String toString() {
+    return m_name+":"+m_jmxPort;
   }
 }
