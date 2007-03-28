@@ -14,7 +14,6 @@ import com.tc.object.bytecode.ManagerUtil;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.File;
 import java.util.HashSet;
@@ -58,7 +57,6 @@ public class ClusterMembershipEventTestApp extends ServerCrashingAppBase impleme
       System.err.println("### masterNode=" + thisNode + " -> crashing server...");
       getConfig().getServerControl().crash();
       System.err.println("### masterNode=" + thisNode + " -> crashed server");
-      ThreadUtil.reallySleep(25 * 1000);
       System.err.println("### masterNode=" + thisNode + " -> restarting server...");
       getConfig().getServerControl().start(30 * 1000);
       System.err.println("### masterNode=" + thisNode + " -> restarted server");
@@ -158,7 +156,7 @@ public class ClusterMembershipEventTestApp extends ServerCrashingAppBase impleme
 
   public void thisNodeDisconnected(String thisNodeId) {
     new Throwable("### TRACE: ClusterMembershipEventTestApp.thisNodeDisconnected()").printStackTrace();
-    thisNodeDisCnt.increment(); 
+    thisNodeDisCnt.increment();
     System.err.println("\n### thisNodeDisconnected->thisNodeId=" + thisNodeId + ", threadId="
                        + Thread.currentThread().getName() + ", cnt=" + thisNodeDisCnt.get());
     synchronized (nodes) {

@@ -50,6 +50,7 @@ public class Cluster {
   public synchronized void thisNodeDisconnected() {
     debug("### Cluster: thisNodeDisconnected -> " + this);
     fireThisNodeDisconnectedEvent();
+    thisNode = null;
   }
 
   public synchronized void nodeConnected(String nodeId) {

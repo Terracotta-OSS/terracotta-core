@@ -73,6 +73,9 @@ public class ClusterTest extends TestCase {
 
     cluster.thisNodeDisconnected();
     assertEquals("thisNodeDisconnected", cel.getLastMethodCalled());
+    cel.reset();
+    cluster.thisNodeDisconnected();
+    assertNull(cel.getLastMethodCalled());
   }
 
   public void testNodeConnected() {
