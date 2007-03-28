@@ -14,6 +14,7 @@ import com.tc.object.bytecode.ManagerUtil;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.File;
 import java.util.HashSet;
@@ -57,7 +58,7 @@ public class ClusterMembershipEventTestApp extends ServerCrashingAppBase impleme
       System.err.println("### masterNode=" + thisNode + " -> crashing server...");
       getConfig().getServerControl().crash();
       System.err.println("### masterNode=" + thisNode + " -> crashed server");
-
+      ThreadUtil.reallySleep(25 * 1000);
       System.err.println("### masterNode=" + thisNode + " -> restarting server...");
       getConfig().getServerControl().start(30 * 1000);
       System.err.println("### masterNode=" + thisNode + " -> restarted server");
@@ -119,8 +120,10 @@ public class ClusterMembershipEventTestApp extends ServerCrashingAppBase impleme
   }
 
   public void nodeConnected(String nodeId) {
-    System.err.println("\n### nodeConnected: thisNode=" + thisNode + ", nodeId=" + nodeId);
+    new Throwable("### TRACE: ClusterMembershipEventTestApp.nodeConnected()").printStackTrace();
     nodeConCnt.increment();
+    System.err.println("\n### nodeConnected: thisNode=" + thisNode + ", nodeId=" + nodeId + ", threadId="
+                       + Thread.currentThread().getName() + ", cnt=" + nodeConCnt.get());
     synchronized (nodes) {
       nodes.add(nodeId);
       nodes.notifyAll();
@@ -128,8 +131,10 @@ public class ClusterMembershipEventTestApp extends ServerCrashingAppBase impleme
   }
 
   public void nodeDisconnected(String nodeId) {
-    System.err.println("\n### nodeDisconnected: thisNode=" + thisNode + ", nodeId=" + nodeId);
+    new Throwable("### TRACE: ClusterMembershipEventTestApp.nodeDisconnected()").printStackTrace();
     nodeDisCnt.increment();
+    System.err.println("\n### nodeDisconnected: thisNode=" + thisNode + ", nodeId=" + nodeId + ", threadId="
+                       + Thread.currentThread().getName() + ", cnt=" + nodeDisCnt.get());
     synchronized (nodes) {
       nodes.remove(nodeId);
       nodes.notifyAll();
@@ -137,9 +142,11 @@ public class ClusterMembershipEventTestApp extends ServerCrashingAppBase impleme
   }
 
   public void thisNodeConnected(String thisNodeId, String[] nodesCurrentlyInCluster) {
-    System.err.println("\n### thisNodeConnected->thisNodeId=" + thisNodeId);
+    new Throwable("### TRACE: ClusterMembershipEventTestApp.thisNodeConnected()").printStackTrace();
     thisNodeConCnt.increment();
     thisNode = thisNodeId;
+    System.err.println("\n### thisNodeConnected->thisNodeId=" + thisNodeId + ", threadId="
+                       + Thread.currentThread().getName() + ", cnt=" + thisNodeConCnt.get());
     synchronized (nodes) {
       nodes.add(thisNode);
       for (int i = 0; i < nodesCurrentlyInCluster.length; i++) {
@@ -150,8 +157,10 @@ public class ClusterMembershipEventTestApp extends ServerCrashingAppBase impleme
   }
 
   public void thisNodeDisconnected(String thisNodeId) {
-    System.err.println("\n### thisNodeDisconnected->thisNodeId=" + thisNodeId);
-    thisNodeDisCnt.increment();
+    new Throwable("### TRACE: ClusterMembershipEventTestApp.thisNodeDisconnected()").printStackTrace();
+    thisNodeDisCnt.increment(); 
+    System.err.println("\n### thisNodeDisconnected->thisNodeId=" + thisNodeId + ", threadId="
+                       + Thread.currentThread().getName() + ", cnt=" + thisNodeDisCnt.get());
     synchronized (nodes) {
       nodes.clear();
       nodes.notifyAll();
