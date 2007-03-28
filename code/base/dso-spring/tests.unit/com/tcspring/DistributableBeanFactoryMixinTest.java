@@ -93,10 +93,10 @@ public class DistributableBeanFactoryMixinTest extends MockObjectTestCase {
     String eventClass = "com.tcspring.events.ChildEvent";
     String baseEventClass = "com.tcspring.events.BaseEvent";
 
-    dsoContextMock.expects(once()).method("addInclude")
-        .with(eq(eventClass), ANYTHING, eq("* " + eventClass + ".*(..)"));
-    dsoContextMock.expects(once()).method("addInclude").with(eq(baseEventClass), ANYTHING,
-                                                             eq("* " + baseEventClass + ".*(..)"));
+    dsoContextMock.expects(once()).method("addInclude") //
+        .with(eq(eventClass), ANYTHING, eq("* " + eventClass + ".*(..)"), ANYTHING);
+    dsoContextMock.expects(once()).method("addInclude") //
+        .with(eq(baseEventClass), ANYTHING, eq("* " + baseEventClass + ".*(..)"), ANYTHING);
     distributableBeanFactoryMixin.registerDistributedEvents(Collections.singletonList(eventClass));
   }
 
@@ -142,7 +142,7 @@ public class DistributableBeanFactoryMixinTest extends MockObjectTestCase {
   }
 
   private void expectsAddInclude(String name) {
-    dsoContextMock.expects(once()).method("addInclude").with(eq(name), ANYTHING, eq(("* " + name + ".*(..)")));
+    dsoContextMock.expects(once()).method("addInclude").with(eq(name), ANYTHING, eq(("* " + name + ".*(..)")), ANYTHING);
   }
 
   public void testIsDistibutedBean_yes() {

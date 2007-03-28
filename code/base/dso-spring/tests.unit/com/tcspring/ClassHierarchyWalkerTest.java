@@ -37,7 +37,7 @@ public class ClassHierarchyWalkerTest extends MockObjectTestCase implements Opco
 
     for (int i = 0; i < classNames.length; i++) {
       String className = classNames[i];
-      dsoContextMock.expects(once()).method("addInclude").with(eq(className), ANYTHING, eq("* " + className + ".*(..)"));
+      dsoContextMock.expects(once()).method("addInclude").with(eq(className), ANYTHING, eq("* " + className + ".*(..)"), ANYTHING);
     }
 
     walker.walkClass(classNames[0], getClass().getClassLoader());
@@ -57,7 +57,7 @@ public class ClassHierarchyWalkerTest extends MockObjectTestCase implements Opco
 
     for (int i = 0; i < classNames.length; i++) {
       String className = classNames[i];
-      dsoContextMock.expects(once()).method("addInclude").with(eq(className), ANYTHING, eq("* " + className + ".*(..)"));
+      dsoContextMock.expects(once()).method("addInclude").with(eq(className), ANYTHING, eq("* " + className + ".*(..)"), ANYTHING);
     }
     
     /* 
@@ -68,7 +68,7 @@ public class ClassHierarchyWalkerTest extends MockObjectTestCase implements Opco
      *   public Map<SimpleBean1, ArrayList<SimplePropertyBean>> map2;
      * }
      */
-    ClassWriter cw = new ClassWriter(true);
+    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 
     cw.visit(V1_5, ACC_PUBLIC + ACC_SUPER, "com/tcspring/beans/SimpleBeanWithGenerics", null, "java/lang/Object", null);
 
