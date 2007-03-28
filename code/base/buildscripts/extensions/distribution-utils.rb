@@ -55,12 +55,9 @@ module DistributionUtils
 
   def package_filename
     pattern = get_config(:kit_name_pattern).downcase
-    tag     = config_source["version"].split(/-/).last    
     
     pattern.sub!(/platform/, @build_environment.os_family.downcase)
-    pattern.sub!(/branch/, @build_environment.current_branch)
-    pattern.sub!(/tag/, tag)
-    pattern.sub!(/rev/, "rev#{@build_environment.current_revision}")    
+    pattern.sub!(/version/, @build_environment.specified_build_version)    
     
     pattern
   end

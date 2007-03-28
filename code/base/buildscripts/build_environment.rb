@@ -94,8 +94,16 @@ class BuildEnvironment < Environment
 
   # What version are we building? This returns '[none]' if no 'version'
   # property is set in the configuration source supplied in the constructor.
-  def specified_build_version
-    @config_source['version'] || "[no-version]"
+  def specified_build_version    
+    version_string = current_branch
+    if @config_source['tag']
+      version_string = "#{version_string}-#{@config_source['tag']}"
+    end
+    
+    version_string = "#{version_string}-rev#{current_revision}" 
+    
+    @config_source['version'] || version_string
+    
   end
 
   # When was this build started? This returns a timestamp (a Time object) that's created in
