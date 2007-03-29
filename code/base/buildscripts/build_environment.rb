@@ -96,13 +96,17 @@ class BuildEnvironment < Environment
   # property is set in the configuration source supplied in the constructor.
   def specified_build_version    
     version_string = current_branch
+    
     if @config_source['tag']
       version_string = "#{version_string}-#{@config_source['tag']}"
     end
     
-    version_string = "#{version_string}-rev#{current_revision}" 
+    # only add revision number if the tag is "nightly" or no tag given
+    if @config_source['tag'].nil? || @config_source['tag'] == 'nightly'
+      version_string = "#{version_string}-rev#{current_revision}" 
+    end
     
-    @config_source['version'] || version_string
+    version_string
     
   end
 

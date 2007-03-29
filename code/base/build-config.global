@@ -5,12 +5,6 @@
 # NOTE: if the tc.build-control.version changes, You'll also need to make changes to 
 # to the Install Anywhere configuration. 
 
-# uncomment this to overwrite our version string
-# tc.build-control.version=
-
-# our version string is built by the formula
-# version = $branch[-$tag]?-rev$rev_number
-
 tc.build-control.branch=trunk
 tc.tests.configuration.appserver.factory.name=tomcat5
 tc.tests.configuration.appserver.major-version=5.0
