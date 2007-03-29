@@ -144,7 +144,6 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   def __publish(archive_dir=nil)
     
     unless config_source["release-dir"].nil?      
-      tag     = config_source["version"].split(/-/).last
       release_dir = FilePath.new(config_source["release-dir"]).ensure_directory    
     end
   
