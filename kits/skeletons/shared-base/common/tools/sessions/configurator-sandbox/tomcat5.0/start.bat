@@ -37,7 +37,7 @@ rem --------------------------------------------------------------------
 
 if "%2" == "nodso" goto runCatalina
 
-set TC_CONFIG_PATH=%SANDBOX%\tomcat5.5\tc-config.xml
+set TC_CONFIG_PATH=%SANDBOX%\tomcat5.0\tc-config.xml
 call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q "%TC_CONFIG%"
 
 if %ERRORLEVEL% NEQ 0 goto end
