@@ -11,8 +11,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
@@ -128,14 +126,6 @@ public class BootJarHandler {
     }
   }
 
-//  private File getTempDir() {
-//    String tmpDir = System.getProperty("java.io.tmpdir");
-//    if (tmpDir == null) {
-//      tmpDir = outputFile.getParent();
-//    }
-//    return new File(tmpDir);
-//  }
-
   private void announce(String msg) {
     System.out.println(msg);
   }
@@ -145,14 +135,27 @@ public class BootJarHandler {
       dest = new File(dest, src.getName());
     }
 
+    File tmplck = null;
     InputStream in = null;
     OutputStream out = null;
-    FileLock lock = null;
     try {
-      File tmpdest = new File(dest.getAbsolutePath() + ".tmp");
+      // wait until it's okay to copy over the bootjar
+      tmplck = new File(dest.getParentFile(), "tc-bootjar.lck");
+      while (tmplck.exists()) {
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          //throw e;
+        }
+      }
+      
+      // block everyone else from copying over their bootjar
+      tmplck.createNewFile();
+      tmplck.deleteOnExit();
+      
+      // copy our new bootjar file over into a temporary file
+      File tmpdest = File.createTempFile("tc-bootjar", null, dest.getParentFile());
       out = new FileOutputStream(tmpdest);
-      FileChannel channel = ((FileOutputStream) out).getChannel();
-      lock = channel.lock();
       in = new FileInputStream(src);
 
       byte[] buffer = new byte[4096];
@@ -165,22 +168,25 @@ public class BootJarHandler {
       in.close();
       in = null;
 
-      lock.release();
-      lock = null;
-
       out.close();
       out = null;
 
+      // remove any existing bootjar... 
       if(dest.exists() && !dest.delete()) {
-        throw new IOException("Unable to delete '"+dest+"'");
+        throw new IOException("Unable to delete '" + dest + "'");
       }
+      
+      // ... and replace it with the one that we just copied over
       if(!tmpdest.renameTo(dest)) {
-        throw new IOException("Unable to rename '"+tmpdest+"' to '"+dest+"'");
+        throw new IOException("Unable to rename '" + tmpdest + "' to '" + dest + "'");
       }
     } finally {
+      // house keeping
       if (in != null) in.close();
-      if (lock != null) lock.release();
       if (out != null) out.close();
+
+      // now signal that it's okay for the other clients to copy over their bootjar
+      tmplck.delete();      
     }
   }
 }
