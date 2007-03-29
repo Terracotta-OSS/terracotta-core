@@ -12,9 +12,9 @@ public class ProductInfoBundle extends ListResourceBundle {
 
   static final Object[][] contents = {
     {"moniker", "Terracotta"},
-    {"invalid.timestamp", "The build timestamp string ''${0}'' does not appear to be valid."},
-    {"load.properties.failure", "Unable to load build properties from ''${0}''."},
-    {"copyright", "Copyright (c) 2003-2006 Terracotta, Inc. All rights reserved."},
+    {"invalid.timestamp", "The build timestamp string ''{0}'' does not appear to be valid."},
+    {"load.properties.failure", "Unable to load build properties from ''{0}''."},
+    {"copyright", "Copyright (c) 2003-2007 Terracotta, Inc. All rights reserved."},
     {"option.verbose", "Produces more detailed information."},
     {"option.help", "Shows this text."}
   };
