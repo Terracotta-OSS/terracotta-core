@@ -103,7 +103,7 @@ class BuildEnvironment < Environment
       version_string.sub!(/\{branch\}/, branch)
       version_string.sub!(/\{revision\}/, revision)      
     else      
-      version_string = "#{branch}-rev#{revision}"
+      version_string = "#{branch}"
     end
     version_string
   end

@@ -10,6 +10,7 @@
 # Ex: tc.build-control.version="{branch}-nightly-rev{revision}"
 
 tc.build-control.branch=trunk
+tc.build-control.version=trunk
 tc.tests.configuration.appserver.factory.name=tomcat5
 tc.tests.configuration.appserver.major-version=5.0
 tc.tests.configuration.appserver.minor-version=28
