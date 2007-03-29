@@ -46,7 +46,7 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
 	 */
 	public static void visitL1DSOConfig(final ConfigVisitor visitor,
 			final DSOClientConfigHelper config) {
-	    config.addNewModule("clustered-lucene", "2.0.0");
+	    config.addNewModule("clustered-lucene-2.0.0", "1.0.0");
 		config.addAutolock("* *..*.*(..)", ConfigLockLevel.WRITE);
 
 	    final String testClass = RAMDirectoryTestApp.class.getName();

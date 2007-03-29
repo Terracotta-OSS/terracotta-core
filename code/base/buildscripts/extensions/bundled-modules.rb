@@ -12,7 +12,9 @@ module BundledModules
 
         # make sure all the modules listed in the manifest were built
         spec[:manifest].each { |pluginmodule|
-          fail "Unable to locate the jar file for the module #{pluginmodule}" unless File.exists?(FilePath.new(srcdir, "#{pluginmodule}.jar").to_s)
+          build_module = @module_set[pluginmodule]
+          module_jar = @build_results.module_jar_file(build_module)
+          fail "Unable to locate the jar file for the module #{pluginmodule}" unless File.exists?(module_jar.to_s)
         }
 
         # now copy everything over to the kits' modules directory
