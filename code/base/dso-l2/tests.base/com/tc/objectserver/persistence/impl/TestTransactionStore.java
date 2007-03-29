@@ -10,6 +10,7 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
+import com.tc.objectserver.gtx.TransactionCommittedError;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.TransactionStore;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -58,10 +59,12 @@ public class TestTransactionStore implements TransactionStore {
 
   public void commitTransactionDescriptor(PersistenceTransaction persistenceTransaction,
                                           GlobalTransactionDescriptor txID) {
+    if(txID.isCommitted()) { throw new TransactionCommittedError("Already committed : " + txID); }
     try {
       commitContextQueue.put(new Object[] { persistenceTransaction, txID });
       if (!volatileMap.containsValue(txID)) throw new AssertionError();
       basicPut(durableMap, txID);
+      txID.commitComplete();
     } catch (Exception e) {
       throw new TCRuntimeException(e);
     }

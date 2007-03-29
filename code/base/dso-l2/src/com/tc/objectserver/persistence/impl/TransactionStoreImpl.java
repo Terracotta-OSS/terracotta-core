@@ -8,6 +8,7 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
+import com.tc.objectserver.gtx.TransactionCommittedError;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.TransactionPersistor;
 import com.tc.objectserver.persistence.api.TransactionStore;
@@ -38,11 +39,14 @@ public class TransactionStoreImpl implements TransactionStore {
     for (Iterator i = this.persistor.loadAllGlobalTransactionDescriptors().iterator(); i.hasNext();) {
       GlobalTransactionDescriptor gtx = (GlobalTransactionDescriptor) i.next();
       basicAdd(gtx);
+      gtx.commitComplete();
     }
   }
 
   public void commitTransactionDescriptor(PersistenceTransaction transaction, GlobalTransactionDescriptor gtx) {
+    if (gtx.isCommitted()) { throw new TransactionCommittedError("Already committed : " + gtx); }
     persistor.saveGlobalTransactionDescriptor(transaction, gtx);
+    gtx.commitComplete();
   }
 
   public GlobalTransactionDescriptor getTransactionDescriptor(ServerTransactionID serverTransactionID) {
@@ -64,8 +68,8 @@ public class TransactionStoreImpl implements TransactionStore {
     GlobalTransactionID gid = gtx.getGlobalTransactionID();
     Object prevDesc = this.serverTransactionIDMap.put(sid, gtx);
     ids.add(gid);
-    if (prevDesc != null ) { throw new AssertionError("Adding new mapping for old txn IDs : "
-                                                                           + gtx + " Prev desc = " + prevDesc);}
+    if (prevDesc != null) { throw new AssertionError("Adding new mapping for old txn IDs : " + gtx + " Prev desc = "
+                                                     + prevDesc); }
   }
 
   public GlobalTransactionID getLeastGlobalTransactionID() {
@@ -91,7 +95,7 @@ public class TransactionStoreImpl implements TransactionStore {
 
   public GlobalTransactionID getGlobalTransactionID(ServerTransactionID stxnID) {
     GlobalTransactionDescriptor gdesc = (GlobalTransactionDescriptor) serverTransactionIDMap.get(stxnID);
-    if(gdesc == null) {
+    if (gdesc == null) {
       return GlobalTransactionID.NULL_ID;
     } else {
       return gdesc.getGlobalTransactionID();

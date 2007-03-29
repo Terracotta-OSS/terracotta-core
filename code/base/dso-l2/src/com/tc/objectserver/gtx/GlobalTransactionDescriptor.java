@@ -12,10 +12,19 @@ import com.tc.object.tx.TransactionID;
 public class GlobalTransactionDescriptor {
   private final ServerTransactionID stxn;
   private final GlobalTransactionID gid;
+  private boolean committed = false;
 
   public GlobalTransactionDescriptor(ServerTransactionID serverTransactionID, GlobalTransactionID gid) {
     this.stxn = serverTransactionID;
     this.gid = gid;
+  }
+  
+  public void commitComplete() {
+    committed = true;
+  }
+  
+  public boolean isCommitted() {
+    return committed;
   }
 
   public String toString() {
