@@ -15,8 +15,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     dso_directory        = FilePath.new(eclipse_directory.to_s, 'org.terracotta.dso')
     common_lib_directory = FilePath.new(dso_directory.to_s, *relative_libpath.split('/'))
 
-    plugin_version = version = get_config(:version, "1.0.0")
-    plugin_version += ".0" if /[0-9]+.[0-9]+.[0-9]+/ !~ version 
+    plugin_version = createVersionString(build_environment)
 
     meta_directory = FilePath.new(dso_directory, 'META-INF').ensure_directory
     manifest_path = FilePath.new(meta_directory, 'MANIFEST.MF')
@@ -53,7 +52,31 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       out.puts "Bundle-Activator: org.terracotta.dso.TcPlugin"
     end  
 
-    destdir = dso_directory.to_s + "_" + version
+    destdir = dso_directory.to_s + "_" + plugin_version
     ant.move(:file => dso_directory.to_s, :tofile => destdir.to_s)
   end
+  
+  def createVersionString(build_environment)
+    # standard
+    #3.2.2.r322_v20070109
+    
+    # example data
+    #2.3-nightly-rev12131
+    #2.3-stable0
+    #2.3.0
+    #2.3.1
+    #trunk-nightly-rev12123
+
+    version = get_config(:version, "1.0.0")
+    version = version.split(/-/).first
+    
+    # if version='trunk' or any non number string, default it to 1.0.0
+    version = "1.0.0" unless version[0..0] =~ /\d/ 
+    version = "#{version}.0" unless version =~ /\d+\.\d+\.\d+/
+    
+    fail("verion string #{version} doesn't conform to Eclipse plugin standard") unless version =~ /\d+\.\d+\.\d+/
+    
+    version = "#{version}.r" + build_environment.current_revision.to_s + "_v" + Time.now.strftime("%Y%m%d") 
+  end
+  
 end
