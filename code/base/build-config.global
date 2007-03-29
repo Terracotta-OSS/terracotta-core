@@ -5,6 +5,10 @@
 # NOTE: if the tc.build-control.version changes, You'll also need to make changes to 
 # to the Install Anywhere configuration. 
 
+# version string can be passed in as a pattern
+# acceptable tokens are {branch}, {revision}
+# Ex: tc.build-control.version="{branch}-nightly-rev{revision}"
+
 tc.build-control.branch=trunk
 tc.tests.configuration.appserver.factory.name=tomcat5
 tc.tests.configuration.appserver.major-version=5.0
