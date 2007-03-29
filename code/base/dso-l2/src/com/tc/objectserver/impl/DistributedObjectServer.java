@@ -750,7 +750,15 @@ public class DistributedObjectServer extends SEDA {
 
   private void startJMXServer() throws Exception {
     l2Management = new L2Management(tcServerInfoMBean, configSetupManager);
-    l2Management.start();
+    
+    /*
+     * Some tests use this if they run with jdk1.4 and start multiple in-process
+     * DistributedObjectServers. When we no longer support 1.4, this can be
+     * removed. See com.tctest.LockManagerSystemTest.
+     */
+    if(!Boolean.getBoolean("org.terracotta.server.disableJmxConnector")) {
+      l2Management.start();
+    }
   }
 
   private void stopJMXServer() throws Exception {

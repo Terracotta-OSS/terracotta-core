@@ -60,6 +60,15 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
   private TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(TCLogging
                                          .getLogger(DistributedObjectServer.class)));
 
+  static {
+    /*
+     * This test run against JDK1.4 and creates and executes multiple embedded
+     * DistributedObjectServers. L2Management creates an RMI registry on the JMX port,
+     * which is randomly changing in this test. In 1.4 it's not possible to create
+     * multiple RMI Registries in a single VM. Remove this when we no longer support 1.4.
+     */
+    System.setProperty("org.terracotta.server.disableJmxConnector", "true");
+  }
 
   private class StartAction implements StartupAction {
     private final L2TVSConfigurationSetupManager l2Manager;
