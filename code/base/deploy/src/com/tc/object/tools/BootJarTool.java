@@ -762,6 +762,7 @@ public class BootJarTool {
     loadTerracottaClass("com.tc.asm.signature.SignatureVisitor");
     loadTerracottaClass("com.tc.asm.signature.SignatureWriter");
 
+    loadTerracottaClass("com.tc.asm.commons.EmptyVisitor");
     loadTerracottaClass("com.tc.asm.commons.SerialVersionUIDAdder");
     loadTerracottaClass("com.tc.asm.commons.SerialVersionUIDAdder$Item");
 
