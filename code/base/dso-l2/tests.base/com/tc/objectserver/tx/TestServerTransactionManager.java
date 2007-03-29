@@ -61,15 +61,16 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   public void addTransactionListener(ServerTransactionListener listener) {
     // NOP
   }
-  
+
   public void removeTransactionListener(ServerTransactionListener listener) {
     // NOP
   }
 
+  long gid = 0;
+
   public GlobalTransactionID apply(ServerTransaction txn, Map objects, BackReferences includeIDs,
                                    ObjectInstanceMonitor instanceMonitor) {
-    // NOP
-    return GlobalTransactionID.NULL_ID;
+    return new GlobalTransactionID(gid++);
   }
 
   public void committed(Collection tx) {
