@@ -19,6 +19,7 @@ import com.tc.object.config.LockDefinition;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.logging.InstrumentationLogger;
+import com.tc.text.Banner;
 import com.tc.util.Assert;
 
 import java.lang.reflect.Modifier;
@@ -35,9 +36,9 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   private final PhysicalClassAdapterLogger physicalClassLogger;
   private final InstrumentationLogger      instrumentationLogger;
 
-  public TransparencyClassAdapter(ClassInfo classInfo, TransparencyClassSpec spec, final ClassVisitor cv, ManagerHelper mgrHelper,
-                                  InstrumentationLogger instrumentationLogger, ClassLoader caller,
-                                  Portability portability) {
+  public TransparencyClassAdapter(ClassInfo classInfo, TransparencyClassSpec spec, final ClassVisitor cv,
+                                  ManagerHelper mgrHelper, InstrumentationLogger instrumentationLogger,
+                                  ClassLoader caller, Portability portability) {
     super(classInfo, spec, cv, mgrHelper, caller, portability);
     this.instrumentationLogger = instrumentationLogger;
     this.physicalClassLogger = new PhysicalClassAdapterLogger(logger);
@@ -195,7 +196,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       physicalClassLogger.logVisitMethodBegin(access, name, desc, signature, exceptions);
 
       MemberInfo memberInfo = getInstrumentationSpec().getMethodInfo(access, name, desc);
-      
+
       if (name.startsWith(ByteCodeUtil.TC_METHOD_PREFIX) || doNotInstrument.contains(name + desc)
           || getTransparencyClassSpec().doNotInstrument(name)) {
         if (!getTransparencyClassSpec().hasCustomMethodAdapter(memberInfo)) {
@@ -266,12 +267,12 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-//  protected void basicVisitEnd() {
-//    // if adaptee has DMI
-//    boolean hasCustomMethodAdapter = getTransparencyClassSpec().hasCustomMethodAdapter(access, originalName, desc,
-//                                                                                       exceptions);
-//    super.basicVisitEnd();
-//  }
+  // protected void basicVisitEnd() {
+  // // if adaptee has DMI
+  // boolean hasCustomMethodAdapter = getTransparencyClassSpec().hasCustomMethodAdapter(access, originalName, desc,
+  // exceptions);
+  // super.basicVisitEnd();
+  // }
 
   private void logCustomerLockMethod(String name, final String desc, LockDefinition[] locks) {
     if (instrumentationLogger.lockInsertion()) {
@@ -350,7 +351,13 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     } else {
       logger.fatal(e);
     }
-    logger.fatal("Calling System.exit(1)");
+
+    e.printStackTrace(System.err);
+    System.err.flush();
+    String msg = "Error detected -- Calling System.exit(1)";
+    Banner.errorBanner(msg);
+
+    logger.fatal(msg);
     System.exit(1);
   }
 

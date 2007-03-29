@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.aspectwerkz.reflect.impl.asm;
 
@@ -23,38 +24,37 @@ public class AsmMethodInfo extends AsmMemberInfo implements MethodInfo {
   /**
    * The return type name.
    */
-  private String m_returnTypeName = null;
+  private String      m_returnTypeName     = null;
 
   /**
-   * A list with the parameter names as they appear in the source code.
-   * This information may not be available.
+   * A list with the parameter names as they appear in the source code. This information may not be available.
    */
-  protected String[] m_parameterNames = null;
+  protected String[]  m_parameterNames     = null;
 
   /**
    * A list with the parameter type names.
    */
-  private String[] m_parameterTypeNames = null;
+  private String[]    m_parameterTypeNames = null;
 
   /**
    * A list with the exception type names.
    */
-  private String[] m_exceptionTypeNames = null;
+  private String[]    m_exceptionTypeNames = null;
 
   /**
    * The return type.
    */
-  private ClassInfo m_returnType = null;
+  private ClassInfo   m_returnType         = null;
 
   /**
    * A list with the parameter types.
    */
-  private ClassInfo[] m_parameterTypes = null;
+  private ClassInfo[] m_parameterTypes     = null;
 
   /**
    * A list with the exception types.
    */
-  private ClassInfo[] m_exceptionTypes = null;
+  private ClassInfo[] m_exceptionTypes     = null;
 
   /**
    * Creates a new method info instance.
@@ -73,7 +73,7 @@ public class AsmMethodInfo extends AsmMemberInfo implements MethodInfo {
       m_parameterTypeNames[i] = argTypes[i].getClassName();
     }
     // TODO how to do exceptions?
-    m_exceptionTypeNames = new String[]{};
+    m_exceptionTypeNames = new String[] {};
   }
 
   /**
@@ -85,9 +85,7 @@ public class AsmMethodInfo extends AsmMemberInfo implements MethodInfo {
    * @param loader
    * @return the method info
    */
-  public static MethodInfo getMethodInfo(final String methodName,
-                                         final String methodDesc,
-                                         final byte[] bytecode,
+  public static MethodInfo getMethodInfo(final String methodName, final String methodDesc, final byte[] bytecode,
                                          final ClassLoader loader) {
     String className = AsmClassInfo.retrieveClassNameFromBytecode(bytecode);
     AsmClassInfoRepository repository = AsmClassInfoRepository.getRepository(loader);
@@ -104,11 +102,11 @@ public class AsmMethodInfo extends AsmMemberInfo implements MethodInfo {
    * @return the signature for the element
    */
   public String getSignature() {
-    return AsmHelper.getMethodDescriptor(this);
+    return m_member.desc;
   }
-  
+
   public String getGenericsSignature() {
-    return m_member.signature; 
+    return m_member.signature;
   }
 
   /**
@@ -132,21 +130,16 @@ public class AsmMethodInfo extends AsmMemberInfo implements MethodInfo {
     if (m_parameterTypes == null) {
       m_parameterTypes = new ClassInfo[m_parameterTypeNames.length];
       for (int i = 0; i < m_parameterTypeNames.length; i++) {
-        m_parameterTypes[i] = AsmClassInfo.getClassInfo(
-                m_parameterTypeNames[i],
-                (ClassLoader) m_loaderRef.get()
-        );
+        m_parameterTypes[i] = AsmClassInfo.getClassInfo(m_parameterTypeNames[i], (ClassLoader) m_loaderRef.get());
       }
     }
     return m_parameterTypes;
   }
 
   /**
-   * Returns the parameter names as they appear in the source code.
-   * This information is available only when class are compiled with javac -g (debug info), but is required
-   * for Aspect that are using args() and target()/this() bindings.
-   * <p/>
-   * It returns null if not available.
+   * Returns the parameter names as they appear in the source code. This information is available only when class are
+   * compiled with javac -g (debug info), but is required for Aspect that are using args() and target()/this() bindings.
+   * <p/> It returns null if not available.
    *
    * @return
    */
@@ -163,10 +156,7 @@ public class AsmMethodInfo extends AsmMemberInfo implements MethodInfo {
     if (m_exceptionTypes == null) {
       m_exceptionTypes = new ClassInfo[m_exceptionTypeNames.length];
       for (int i = 0; i < m_exceptionTypeNames.length; i++) {
-        m_exceptionTypes[i] = AsmClassInfo.getClassInfo(
-                m_exceptionTypeNames[i],
-                (ClassLoader) m_loaderRef.get()
-        );
+        m_exceptionTypes[i] = AsmClassInfo.getClassInfo(m_exceptionTypeNames[i], (ClassLoader) m_loaderRef.get());
       }
     }
     return m_exceptionTypes;
@@ -182,27 +172,17 @@ public class AsmMethodInfo extends AsmMemberInfo implements MethodInfo {
   }
 
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof MethodInfo)) {
-      return false;
-    }
+    if (this == o) { return true; }
+    if (!(o instanceof MethodInfo)) { return false; }
     MethodInfo methodInfo = (MethodInfo) o;
-    if (!m_declaringTypeName.equals(methodInfo.getDeclaringType().getName())) {
-      return false;
-    }
-    if (!m_member.name.equals(methodInfo.getName())) {
-      return false;
-    }
+    if (!m_declaringTypeName.equals(methodInfo.getDeclaringType().getName())) { return false; }
+    if (!m_member.name.equals(methodInfo.getName())) { return false; }
     ClassInfo[] parameterTypes = methodInfo.getParameterTypes();
-    if (m_parameterTypeNames.length != parameterTypes.length) {//check on names length for lazyness optim
+    if (m_parameterTypeNames.length != parameterTypes.length) {// check on names length for lazyness optim
       return false;
     }
     for (int i = 0; i < m_parameterTypeNames.length; i++) {
-      if (!m_parameterTypeNames[i].equals(parameterTypes[i].getName())) {
-        return false;
-      }
+      if (!m_parameterTypeNames[i].equals(parameterTypes[i].getName())) { return false; }
     }
     return true;
   }
@@ -225,8 +205,8 @@ public class AsmMethodInfo extends AsmMemberInfo implements MethodInfo {
   }
 
   /**
-   * Update the parameter name given the parameter information
-   * the index is the one from the register ie a long or double will needs 2 register
+   * Update the parameter name given the parameter information the index is the one from the register ie a long or
+   * double will needs 2 register
    *
    * @param registerIndex
    * @param parameterName
@@ -243,10 +223,8 @@ public class AsmMethodInfo extends AsmMemberInfo implements MethodInfo {
     if (typeIndex >= 0 && typeIndex < m_parameterNames.length) {
       m_parameterNames[typeIndex] = parameterName;
     } else {
-      throw new DefinitionException(
-              "Could not register parameter named " + parameterName
-                      + " from register " + registerIndex + " for " + m_member.name + "." + m_member.desc
-      );
+      throw new DefinitionException("Could not register parameter named " + parameterName + " from register "
+                                    + registerIndex + " for " + m_member.name + "." + m_member.desc);
     }
   }
 }
