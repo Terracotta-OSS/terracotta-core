@@ -7,15 +7,15 @@
 
 -->
 <!-- This is a Terracotta configuration file that has been pre-configured
-for use with Tomcat Sessions.
+for use with Tomcat.
 
-For more information, please see the product documentation -->
+For more information, please see the product documentation.
+ -->
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-3.xsd">
 
-  <!-- Tell DSO where the Terracotta server can be found; 
-  See the Terracotta DSO Guide for additional information. -->
+  <!-- Tell DSO where the Terracotta server can be found -->
   <servers>
     <server name="localhost">
       <data>%(user.home)/terracotta/server-data</data>
@@ -23,26 +23,25 @@ For more information, please see the product documentation -->
     </server>
   </servers>
 
-  <!-- Tell DSO where to put the generated client logs
-  See the Terracotta DSO Guide for additional information. -->
+  <!-- Tell DSO where to put the generated client logs -->
   <clients>
     <logs>%(user.home)/terracotta/client-logs</logs>
   </clients>
 
   <application>
     <dso>
-      <!-- Our app requires these custom objects/classes to be shared - the following declarations
-      tells DSO which ones they are. When the app runs under DSO, instances of these classes
-      will broadcast changes in their state.
+      <!-- The following declarations tells DSO which classes should be instrumented to 
+      allow sharing. When the app runs under DSO, shared instances of these classes will
+      broadcast changes in their state.
 
-      A good idiom when writing an app that you intend to cluster via TC DSO, is to group the 
+      A good idiom when writing an app that you intend to cluster via TC DSO is to group the 
       classes you wish to share under a single package (although if you follow the MVC pattern
       this tends to happen naturally) - this way the list of classes you wish to instrument
       can be concise -->
       <instrumented-classes>
         <!-- Start by including all classes for instrumentation.
         It's more efficient to instrument only those classes that
-        hold shared roots or are part of a shared root graph -->
+        hold shared roots or are part of a shared root's graph -->
         <include>
           <class-expression>*..*</class-expression>
         </include>
@@ -54,7 +53,7 @@ For more information, please see the product documentation -->
         <exclude>org.apache.tomcat..*</exclude>
       </instrumented-classes>
 
-      <!-- Declare your web application context names here -->
+      <!-- Declare which web application context names should use DSO sessions -->
       <web-applications>
         <web-application>MyWebApp</web-application>
       </web-applications>

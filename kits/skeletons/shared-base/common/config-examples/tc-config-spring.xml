@@ -6,9 +6,16 @@
   All rights reserved.
 
 -->
+<!--
+ This is a sample Terracotta configuration file for use with DSO spring.
+     
+ For more information, please see the product documentation.
+-->
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-3.xsd">
+
+  <!-- Tell DSO where the Terracotta server can be found. -->
   <servers>
     <server name="localhost">
       <data>%(user.home)/terracotta/server-data</data>
@@ -16,13 +23,14 @@
     </server>
   </servers>
   
+  <!-- Tell DSO where to put the generated client logs -->  
   <clients>
     <logs>%(user.home)/terracotta/client-logs</logs>
   </clients>
   
   <application>
     <spring>
-    
+      
       <!-- The JEE application name is in most cases the name of the WAR, EAR
            or JAR file in which the Spring application resides. If you are
            using Spring in a stand-alone application then you can use "*" as
@@ -33,9 +41,9 @@
 
         <!-- Turns on clustering of the HTTP session. Needed for f.e. Spring
              WebFlow clustering. -->
-	  <session-support>false</session-support>
-
-	  <application-contexts>
+        <session-support>false</session-support>
+        
+        <application-contexts>
           <application-context>
             
             <!-- Specifies the bean definition resource patterns; The matching
@@ -49,7 +57,7 @@
                  should be the same name that the bean has in the Spring bean
                  config file. Matching has to be exact; -->
             <beans>
-
+              
               <bean name="clusteredBeanOne">
                 <!-- Specifies the names of non-distributed field references
                      within a Spring bean instance. They are used for

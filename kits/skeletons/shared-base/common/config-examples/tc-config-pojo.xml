@@ -17,12 +17,15 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-3.xsd">
   <servers>
+
+    <!-- Tell DSO where the Terracotta server can be found. -->
     <server name="localhost">
       <data>%(user.home)/terracotta/server-data</data>
       <logs>%(user.home)/terracotta/server-logs</logs>
     </server>
   </servers>
-  
+
+  <!-- Tell DSO where to put the generated client logs -->  
   <clients>
     <logs>%(user.home)/terracotta/client-logs</logs>
   </clients>
@@ -32,7 +35,7 @@
 
       <!-- Start by including all classes for instrumentation.
            It's more efficient to instrument only those classes that
-           hold shared roots or are part of a shared root graph.
+           hold shared roots or are part of a shared root's graph.
         -->
       <instrumented-classes>
         <include>
@@ -40,7 +43,7 @@
         </include>
       </instrumented-classes>
 
-      <!-- Create a single write autolock for all instrumented methods.
+      <!-- Apply write level autolocks for all instrumented methods.
            It's more efficient to create finer-grain locks as dictated
            by your application needs.
         -->
