@@ -3,6 +3,7 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.asm.MethodAdapter;
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.Label;
@@ -51,7 +52,7 @@ public class JavaLangReflectFieldAdapter extends ClassAdapter implements Opcodes
     String method = name + desc;
 
     if (setters.contains(method)) {
-      callFieldUtilSetter(mv, name, desc);
+      return new FieldSetterMethodAdapter(mv, name, desc);
     } else if (getters.contains(method)) {
       rewriteGetter(mv, name, desc);
       return null;
@@ -65,18 +66,6 @@ public class JavaLangReflectFieldAdapter extends ClassAdapter implements Opcodes
     StringBuffer sb = new StringBuffer(desc.substring(0, index));
     sb.append("Ljava/lang/reflect/Field;)Z");
     return sb.toString();
-  }
-
-  private void callFieldUtilSetter(MethodVisitor mv, String name, String desc) {
-    Type type = Type.getArgumentTypes(desc)[1];
-    Label notSet = new Label();
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(type.getOpcode(ILOAD), 2);
-    mv.visitVarInsn(ALOAD, 0);
-    mv.visitMethodInsn(INVOKESTATIC, FieldUtils.CLASS, name, getFieldUtilsSetterDesc(desc));
-    mv.visitJumpInsn(IFEQ, notSet);
-    mv.visitInsn(RETURN);
-    mv.visitLabel(notSet);
   }
 
   private void rewriteGetter(MethodVisitor mv, String name, String desc) {
@@ -95,4 +84,27 @@ public class JavaLangReflectFieldAdapter extends ClassAdapter implements Opcodes
     mv.visitEnd();
   }
 
+  private class FieldSetterMethodAdapter extends MethodAdapter implements Opcodes {
+    private final String name;
+    private final String desc;
+    
+    public FieldSetterMethodAdapter(MethodVisitor mv, String name, String desc) {
+      super(mv);
+      this.name = name;
+      this.desc = desc;
+    }
+    
+    public void visitCode() {
+      super.visitCode();
+      Type type = Type.getArgumentTypes(desc)[1];
+      Label notSet = new Label();
+      super.visitVarInsn(ALOAD, 1);
+      super.visitVarInsn(type.getOpcode(ILOAD), 2);
+      super.visitVarInsn(ALOAD, 0);
+      super.visitMethodInsn(INVOKESTATIC, FieldUtils.CLASS, name, getFieldUtilsSetterDesc(desc));
+      super.visitJumpInsn(IFEQ, notSet);
+      super.visitInsn(RETURN);
+      super.visitLabel(notSet);
+    }
+  }
 }
