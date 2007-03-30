@@ -31,7 +31,7 @@ public class LockContext implements TCSerializable {
   public LockContext() {
     return;
   }
-  
+
   public LockContext(LockID lockID, ChannelID channelID, ThreadID threadID, int lockLevel, boolean noBlock) {
     this.lockID = lockID;
     this.channelID = channelID;
@@ -39,14 +39,19 @@ public class LockContext implements TCSerializable {
     Assert.assertFalse(LockLevel.isSynchronous(lockLevel));
     this.lockLevel = lockLevel;
     this.noBlock = noBlock;
-    this.hashCode = new HashCodeBuilder(5503, 6737).append(lockID).append(channelID).append(threadID).append(lockLevel).append(noBlock)
-        .toHashCode();
+    this.hashCode = new HashCodeBuilder(5503, 6737).append(lockID).append(channelID).append(threadID).append(lockLevel)
+        .append(noBlock).toHashCode();
   }
 
   public LockContext(LockID lockID, ChannelID channelID, ThreadID threadID, int lockLevel) {
     this(lockID, channelID, threadID, lockLevel, false);
   }
-  
+
+  public String toString() {
+    return "LockContext [ " + lockID + ", " + LockLevel.toString(lockLevel) + ", " + channelID + ", " + threadID + ", "
+           + noBlock + ", " + hashCode + "] ";
+  }
+
   public ChannelID getChannelID() {
     return channelID;
   }
@@ -62,7 +67,7 @@ public class LockContext implements TCSerializable {
   public ThreadID getThreadID() {
     return threadID;
   }
-  
+
   public boolean noBlock() {
     return noBlock;
   }

@@ -61,7 +61,9 @@ class ServerThreadContext {
 
   synchronized void addLock(Lock lock) {
     boolean added = locksHeld.add(lock);
-    Assert.assertTrue(added);
+    if(!added) {
+      throw new AssertionError("Lock : " + lock + " is already held : " + this);
+    }
     clearWaitingOn();
   }
 

@@ -933,15 +933,6 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
     return localCount;
   }
 
-  private boolean localWaiterExist(ThreadID waiterThreadID, int waiterLockLevel) {
-    Object request = pendingLockRequests.get(waiterThreadID);
-    if (request instanceof WaitLockRequest) {
-      WaitLockRequest waitLockRequest = (WaitLockRequest) request;
-      return waitLockRequest.lockID().equals(lockID) && waitLockRequest.lockLevel() == waiterLockLevel;
-    }
-    return false;
-  }
-
   public LockID getLockID() {
     return lockID;
   }
