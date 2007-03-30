@@ -672,6 +672,7 @@ public class SessionIntegratorFrame extends Frame {
         m_serversDialog.load(dialogRes);
         m_serversDialog.addAcceptListener(new ActionListener() {
           public void actionPerformed(ActionEvent ae) {
+            int oldSelectedServerIndex = m_serverSelection.getSelectedServerIndex();
             m_serversDialog.finishEditing();
             m_serversDialog.setVisible(false);
             m_serverSelection.setServers(m_serversDialog.getServers());
@@ -680,6 +681,13 @@ public class SessionIntegratorFrame extends Frame {
             m_webServer1Label.setText(getWebServer1Label());
             m_webServer2Label.setText(getWebServer2Label());
 
+            // If the selected server changes, rebuild the webapp tree.
+            if(oldSelectedServerIndex != m_serverSelection.getSelectedServerIndex()) {
+              m_webAppTreeModel = new WebAppTreeModel(SessionIntegratorFrame.this, getWebApps());    
+              m_webAppTree.setModel(m_webAppTreeModel);
+            }
+
+            // Each time the user changes anything in the ServersDialog, cause JSP's to be recompiled.
             WebApp[] webApps = getWebApps();
             for (int i = 0; i < webApps.length; i++) {
               touch(webApps[i]);
