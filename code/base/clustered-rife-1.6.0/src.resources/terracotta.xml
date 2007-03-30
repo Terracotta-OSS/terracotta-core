@@ -9,7 +9,7 @@
 <xml-fragment>
 	<instrumented-classes>
 		<include>
-			<class-expression>*..*</class-expression>
+			<class-expression>com.uwyn.rife..*</class-expression>
 		</include>
 	</instrumented-classes>
 	<roots>
@@ -24,7 +24,7 @@
 	</roots>
 	<locks>
 		<autolock>
-			<method-expression>* *..*.*(..)</method-expression>
+			<method-expression>* com.uwyn.rife..*.*(..)</method-expression>
 			<lock-level>write</lock-level>
 		</autolock>
 	</locks>
@@ -44,6 +44,5 @@
 		<field-name>com.uwyn.rife.template.InternalString.mBytesValue_UTF_16</field-name>
 		<field-name>com.uwyn.rife.template.InternalString.mBytesValue_UTF_16BE</field-name>
 		<field-name>com.uwyn.rife.template.InternalString.mBytesValue_UTF_16LE</field-name>
-		<!-- field-name>org.apache.catalina.core.ApplicationFilterConfig.context</field-name -->
 	</transient-fields>
 </xml-fragment>
