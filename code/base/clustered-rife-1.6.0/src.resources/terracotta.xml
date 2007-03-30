@@ -44,6 +44,6 @@
 		<field-name>com.uwyn.rife.template.InternalString.mBytesValue_UTF_16</field-name>
 		<field-name>com.uwyn.rife.template.InternalString.mBytesValue_UTF_16BE</field-name>
 		<field-name>com.uwyn.rife.template.InternalString.mBytesValue_UTF_16LE</field-name>
-		<field-name>org.apache.catalina.core.ApplicationFilterConfig.context</field-name>
+		<!-- field-name>org.apache.catalina.core.ApplicationFilterConfig.context</field-name -->
 	</transient-fields>
 </xml-fragment>
