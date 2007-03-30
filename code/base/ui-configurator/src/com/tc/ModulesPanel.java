@@ -4,10 +4,12 @@
  */
 package com.tc;
 
+import org.apache.xmlbeans.XmlAnyURI;
 import org.dijon.Button;
 import org.dijon.ContainerResource;
 
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XObjectTableModel;
 import com.tc.admin.common.XTable;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Module;
@@ -21,7 +23,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.table.DefaultTableModel;
 
 // TODO: validate that the repo and modules actually exist (this may require a background thread due to request timeouts
 public class ModulesPanel extends XContainer implements TableModelListener {
@@ -142,14 +143,8 @@ public class ModulesPanel extends XContainer implements TableModelListener {
     m_modulesTableModel.clear();
     m_repositoriesTableModel.clear();
     if (m_modules != null) {
-      String[] repos = m_modules.getRepositoryArray();
-      for (int i = 0; i < repos.length; i++) {
-        m_repositoriesTableModel.addRepoLocation(repos[i]);
-      }
-      Module[] modules = m_modules.getModuleArray();
-      for (int i = 0; i < modules.length; i++) {
-        m_modulesTableModel.addModule(modules[i].getName(), modules[i].getVersion());
-      }
+      m_repositoriesTableModel.set(m_modules.xgetRepositoryArray());
+      m_modulesTableModel.set(m_modules.getModuleArray());
     }
   }
 
@@ -196,8 +191,9 @@ public class ModulesPanel extends XContainer implements TableModelListener {
   }
 
   private void internalAddRepositoryLocation(String repoLocation) {
-    ensureModulesElement().addRepository(repoLocation);
-    m_repositoriesTableModel.addRepoLocation(repoLocation);
+    XmlAnyURI elem = ensureModulesElement().addNewRepository();
+    elem.setStringValue(repoLocation);
+    m_repositoriesTableModel.addRepoLocation(elem);
     int row = m_repositoriesTableModel.getRowCount() - 1;
     m_repositoriesTable.setRowSelectionInterval(row, row);
   }
@@ -206,7 +202,7 @@ public class ModulesPanel extends XContainer implements TableModelListener {
     Module module = ensureModulesElement().addNewModule();
     module.setName(name);
     module.setVersion(version);
-    m_modulesTableModel.addModule(name, version);
+    m_modulesTableModel.addModule(module);
     int row = m_modulesTableModel.getRowCount() - 1;
     m_modulesTable.setRowSelectionInterval(row, row);
   }
@@ -226,37 +222,28 @@ public class ModulesPanel extends XContainer implements TableModelListener {
 
   // --------------------------------------------------------------------------------
 
-  class RepositoriesTableModel extends DefaultTableModel {
+  class RepositoriesTableModel extends XObjectTableModel {
     RepositoriesTableModel() {
-      super();
-      setColumnIdentifiers(new String[] { "Location" });
+      super(XmlAnyURI.class,
+            new String[] {"StringValue"},
+            new String[] {"Location"});
     }
 
-    void clear() {
-      setRowCount(0);
-    }
-
-    void addRepoLocation(String typeName) {
-      addRow(new Object[] { typeName });
-    }
-
-    int indexOf(String typeName) {
-      int count = getRowCount();
-      for (int i = 0; i < count; i++) {
-        if (((String) getValueAt(i, 0)).equals(typeName)) { return i; }
-      }
-      return -1;
+    void addRepoLocation(XmlAnyURI repoLocation) {
+      add(repoLocation);
+      int row = getRowCount();
+      fireTableRowsInserted(row, row);
     }
 
     public void setValueAt(Object value, int row, int col) {
-      m_modules.addRepository((String) value);
+      m_modules.setRepositoryArray(row, (String) value);
       super.setValueAt(value, row, col);
     }
 
     void removeRows(int[] rows) {
       removeTableModelListener(ModulesPanel.this);
       for (int i = rows.length - 1; i >= 0; i--) {
-        removeRow(rows[i]);
+        remove(rows[i]);
       }
       addTableModelListener(ModulesPanel.this);
       syncModel();
@@ -265,48 +252,23 @@ public class ModulesPanel extends XContainer implements TableModelListener {
 
   // --------------------------------------------------------------------------------
 
-  class ModulesTableModel extends DefaultTableModel {
+  private static final String[] MODULE_FIELDS = {"Name", "Version"};
+  
+  class ModulesTableModel extends XObjectTableModel {
     ModulesTableModel() {
-      super();
-      setColumnIdentifiers(new String[] { "Name", "Version" });
+      super(Module.class, MODULE_FIELDS, MODULE_FIELDS);
     }
 
-    void clear() {
-      setRowCount(0);
-    }
-
-    void addModule(String name, String version) {
-      addRow(new Object[] { name, version });
-    }
-
-    int indexOf(String typeName) {
-      int count = getRowCount();
-      for (int i = 0; i < count; i++) {
-        if (((String) getValueAt(i, 0)).equals(typeName)) { return i; }
-      }
-      return -1;
-    }
-
-    public void setValueAt(Object value, int row, int col) {
-      Module module = m_modules.addNewModule();
-      if (col == 0) switch (col) {
-        case 0:
-          module.setName((String) value);
-          break;
-        case 1:
-          module.setVersion((String) value);
-          break;
-
-        default:
-          break;
-      }
-      super.setValueAt(value, row, col);
+    void addModule(Module module) {
+      add(module);
+      int row = getRowCount();
+      fireTableRowsInserted(row, row);
     }
 
     void removeRows(int[] rows) {
       removeTableModelListener(ModulesPanel.this);
       for (int i = rows.length - 1; i >= 0; i--) {
-        removeRow(rows[i]);
+        remove(rows[i]);
       }
       addTableModelListener(ModulesPanel.this);
       syncModel();
