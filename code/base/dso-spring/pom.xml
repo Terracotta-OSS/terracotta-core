@@ -7,11 +7,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>dso-spring</artifactId>
-  <dependencies>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>common</artifactId>
-    </dependency>
+  <dependencies>    
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>common</artifactId>
@@ -39,19 +35,7 @@
       <version>${tcVersion}</version>
       <type>test-jar</type>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>thirdparty</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>linked-child-process</artifactId>
-    </dependency>
+    </dependency>           
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>dso-l1</artifactId>
@@ -63,15 +47,7 @@
     <dependency>
       <groupId>ehcache</groupId>
       <artifactId>ehcache</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>aspectwerkz</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-l2</artifactId>
-    </dependency>
+    </dependency>    
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate</artifactId>

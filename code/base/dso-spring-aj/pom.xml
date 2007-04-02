@@ -7,36 +7,24 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>dso-spring-aj</artifactId>
+  
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.5</source>
+          <target>1.5</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>dso-l2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
       <artifactId>dso-spring</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>aspectwerkz</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-common</artifactId>
-    </dependency>
-    <!--
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-common-jdk15</artifactId>
-    </dependency>
-    -->
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>thirdparty</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>linked-child-process</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -47,19 +35,19 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>dso-l1</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>deploy</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>common</artifactId>
+      <artifactId>dso-container-tests</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>aspectj</groupId>
       <artifactId>aspectjrt</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-aspects</artifactId>
+      <version>2.0.2</version>
     </dependency>
   </dependencies>
 </project>

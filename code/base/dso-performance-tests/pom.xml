@@ -11,32 +11,13 @@
   <artifactId>dso-performance-tests</artifactId>
   <dependencies>
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>linked-child-process</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-l1</artifactId>
-    </dependency>
-    <dependency>
       <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.3</version>
+      <artifactId>commons-codec</artifactId>      
     </dependency>
     <dependency>
       <groupId>jfree</groupId>
       <artifactId>jfreechart</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-common</artifactId>
-    </dependency>
-    <!--
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-l1-jdk15</artifactId>
-    </dependency>
-    -->
     <dependency>
       <groupId>commons-httpclient</groupId>
       <artifactId>commons-httpclient</artifactId>
@@ -44,26 +25,10 @@
     <dependency>
       <groupId>concurrent</groupId>
       <artifactId>concurrent</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>thirdparty</artifactId>
     </dependency>    
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>deploy</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>common</artifactId>
-    </dependency>
     <dependency>
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>aspectwerkz</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -88,13 +53,10 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>dso-l2</artifactId>
+      <artifactId>dso-l1</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
-    <!--
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-common-jdk15</artifactId>
-    </dependency>
-    -->
   </dependencies>
 </project>

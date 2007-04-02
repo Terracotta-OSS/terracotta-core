@@ -25,10 +25,6 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>dso-common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
       <artifactId>dso-common-jdk15</artifactId>
     </dependency>
     <dependency>
@@ -38,10 +34,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>dso-l1</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>common</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>

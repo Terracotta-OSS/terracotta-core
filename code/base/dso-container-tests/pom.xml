@@ -11,12 +11,12 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>dso-l1-session</artifactId>
-    </dependency>
+    </dependency><!--
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>dso-l2</artifactId>
     </dependency>
-    <dependency>
+    --><dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>common</artifactId>
       <version>${tcVersion}</version>      

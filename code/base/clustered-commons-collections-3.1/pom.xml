@@ -13,6 +13,9 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>dso-l1</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
