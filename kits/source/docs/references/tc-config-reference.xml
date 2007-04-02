@@ -63,8 +63,8 @@
   <servers>
 
     <!-- The host and symbolic name of the server; host defaults to "%i" (the machine's
-         IP address) and name defaults to "host:dso-port".  Expansion parameters may be
-         used in both attributes. -->
+       IP address) and name defaults to "host:dso-port".  Expansion parameters may be
+       used in both attributes. -->
     <server host="artichoke" name="apple">
 
       <!-- Where should the server store its persistent data? (This includes
@@ -121,7 +121,7 @@
       <!-- Configuration data for DSO that's specific to the DSO server. -->
       <dso>
 
-        <!-- How much time should DSO server, upon restart, allow for previously
+        <!-- How much time should the DSO server, upon restart, allow for previously
              connected clients to reconnect?  After this period, clients will
              not be allowed to reconnect.
 
@@ -153,7 +153,7 @@
              
              Default: 'temporary-swap-only'
           -->
-          <mode>permanent-store</mode>
+          <mode>temporary-swap-only</mode>
         </persistence>
         
         <!-- Information about how DSO should perform distributed
@@ -168,15 +168,19 @@
              applications, such as those that read a large amount
              of data into a Map and never remove it (merely look up
              values in it) can safely do this.
+
+             A setting of 'false' can also be used if distributed
+             garbage collection will be triggered externally
+             with the 'run-dgc' script
              
              Default: true
           -->
           <enabled>true</enabled>
           
-          <!-- If 'true', the DSO server will emit extra information when
-             it performs distributed garbage collection; this can
-             be useful when trying to performance-tune your
-             application.
+          <!-- If 'true', the DSO server will emit extra information 
+             to the log file when it performs distributed garbage
+             collection; this can be useful when trying to
+             performance-tune your application.
              
              Default: false
           -->
@@ -192,7 +196,10 @@
         
       </dso>
     </server>
-    
+
+    <!-- This additional <server> element is just to illustrate 
+       that multiple server definitions can be listed
+    -->
     <server host="broccoli">
       <data>/usr/local/tc/data</data>
       <logs>/usr/local/tc/logs</logs>
@@ -253,7 +260,7 @@
         The <repository> element(s) is optional.
       -->
       <repository>file:///my/modules/directory</repository>
-      <repository>http:///my/modules/webserver</repository>
+      <repository>http://webserver/my/modules</repository>
 
       <!--
         If you choose to use a module, define it here.  Distributed modules have the
@@ -347,11 +354,12 @@
       <!-- This section controls which classes are instrumented by
          Terracotta DSO. In order for an object to be shared among
          JVMs by DSO, or contain a root, its class must be instrumented.
-         
-         You can define 'include' and 'exclude' patterns here; 'exclude'
-         patterns take precedence over 'include'. In other words, for
-         a class to be instrumented, it must match at least one 'include'
-         pattern and no 'exclude' patterns.
+
+         You can define 'include' and 'exclude' patterns here; The patterns
+         are evaluated bottom up according to the order in this config file.
+         The first pattern that matches will determine whether the class will
+         or will not be instrumented. If no patterns match, the class will not
+         be instrumented
          
          Patterns here are AspectWerkz-compatible class specification
          expressions.
@@ -374,13 +382,16 @@
              Default: false -->
           <honor-transient>true</honor-transient>
           <on-load>
-            <!--This method will be called on instances of the specified class
-                on load of the object. Used to rewire transients. -->
-                  <!--<method>aMethod</method>-->
+            <!-- One of either <execute> or <method> is required within an <on-load> element -->
+
+            <!-- This (zero argument) method will be called on instances of the specified class
+               on load of the object. Used to intialize transient fields. You are free to use
+               whatever method name you please. -->
+            <!-- <method>initTransients</method> -->
 
             <!-- This bean shell script is called right after an object is loaded -->
-                  <execute><![CDATA[self.myTransientField = new ArrayList();]]></execute>
-              </on-load>  
+            <execute><![CDATA[self.myTransientField = new ArrayList();]]></execute>
+          </on-load>  
         </include>
         
         <!-- The class(es) to exclude, as an AspectWerkz-compatible
@@ -398,8 +409,8 @@
          simply means that the contents of these fields are not shared
          across JVMs by DSO.
          
-         The expressions in 'field-name' are AspectWerkz-compatible
-         field specification expressions.
+         The expressions in 'field-name' must be fully qualified
+         field names (expressions are not permitted)
          
          Default: no extra fields are specified as 'transient' -->
       <transient-fields>
@@ -411,16 +422,24 @@
          are critical to correct functioning of DSO.
          
          Two types of lock elements may be included here, in any order:
-         'autolock' and 'named-lock'. Autolocks extend normal Java
-         'synchronized' blocks across the entire cluster just as you'd
-         expect, by locking on the object you're synchronizing upon;
-         named locks are completely independent of Java synchronization.
-         Named locks create a lock with the name specified below; no
-         more than one thread in one VM, cluster-wide, can be inside
-         any method protected by a lock with a given name at one time.
+         'autolock' and 'named-lock'. 
+
+         Autolocks extend normal Java 'synchronized' blocks and methods
+         across the entire cluster just as you'd expect, by locking on
+         the object you're synchronizing upon; Applying autolocks to
+         methods that contain no synchronization (method or block)
+         is ineffective
+
+         Named locks are completely independent of Java synchronization.
+         Named locks create a lock with the specified name. Named locks
+         are always acquired when the methods to which they are applied
+         are invoked irrespective of whether the instance is shared or
+         not (additionally, the instance does not qualify the lock in
+         any way, named locks cause cluster-wide excecution serialization
+         to methods to which they applied).
       -->
       <locks>
-        <!-- Specifies an autolock. -->
+        <!-- Specifies an autolock (distributed synchronization). -->
         <autolock>
           <!-- The expression of method(s) to lock. This is an
              AspectWerkz-compatible method specification expression.
@@ -431,29 +450,24 @@
           
              Read locks may be used only when the method(s) being
              locked do not actually modify the data in question;
-             multiple threads in multiple JVMs may be inside a 
-             read lock at the same time. However, if a thread is
-             locked upon the same object but using a write lock,
+             multiple threads in multiple JVMs may be inside the 
+             same read lock at the same time. However, if a thread 
+             is locked upon the same object but using a write lock,
              then any threads that require a read lock must wait
-             until it has completed.
+             until the write locks has been released.
              
              Write locks are used when the method(s) being locked
              modify the data being protected. Only one thread in one
-             JVM, cluster-wide, may be inside a write lock at once.
-             Further, no threads may be inside a read lock on the
-             same object while one thread is inside a write lock.
+             JVM, cluster-wide, may be inside the same write lock 
+             at once. Further, no threads may be inside a read lock
+             while one thread holds a write lock of the same identity
              
              Concurrent locks are a looser form of write lock, and
              should be used with caution. Multiple threads can be
              inside a concurrent lock at the same time, and can all
-             write to the data; they will each see a consistent view
-             of the data at all times (i.e., none will see 'partial'
-             modifications made by another thread before it exits
-             the locked synchronized block), but, if multiple
-             threads are in the same block at once, only the changes
-             made by the last thread to exit the block actually
-             take effect. This is nondeterministic and thus is
-             generally used only with considerable caution.
+             write to the data; This can easily lead to nondeterministic
+             program behavior and thus is generally used only with
+             considerable caution.
           -->
           <lock-level>write</lock-level>
         </autolock>
@@ -483,7 +497,7 @@
          in every VM always sees the same object in that field (and
          in all fields of that object, and in all fields of those
          objects, and so on; the transitive closure of this data is
-         shared). 
+         shared, modulo transients). 
          
          Roots are specified using the fully-qualified name of a
          field. They can optionally be given a name.
@@ -495,7 +509,11 @@
           <field-name>com.mycompany.pkgc.AnotherClass.field1</field-name>
           
           <!-- The name for this root. This is optional, but can
-             help when debugging your system. -->
+             help when debugging your system, or to declare that
+             two (or more) unique root field names should use the
+             same root instance. A common root name applied to more
+             than one field name implies that the same root object
+             will be used in both fields -->
           <root-name>rootOne</root-name>
         </root>
         
@@ -507,12 +525,12 @@
       
       <!-- This section specifies methods to invoke in a distributed 
          fashion via Terracotta DSO. When a method matching one of the
-         patterns here is invoked in one JVM, Terracotta DSO will 
-         cause it to be invoked simultaneously in all JVMs throughout
-         the Terracotta cluster. This is often used for 'event listener'
-         methods (for example, those used by Swing), to make sure that
-         all JVMs throughout the cluster are informed when a particular
-         event occurs. -->
+         patterns here is invoked on a *shared* object in one JVM,
+         Terracotta DSO will  cause it to be invoked simultaneously in
+         all JVMs throughout the Terracotta cluster. This is often used
+         for 'event listener' methods (for example, those used by Swing),
+         to make sure that all JVMs throughout the cluster are informed
+         when a particular event occurs. -->
       <distributed-methods>
         <!-- An AspectWerkz-compatible method specification expression
            denoting which method(s) to distribute. -->
@@ -526,27 +544,28 @@
 
       </distributed-methods>
       
-      <!-- Classes that are part of the 'java.' hierarchy (in other words,
-         those classes included with the JVM) are instrumented by
+      <!-- The standard java runtime classes (typically anything in the
+           java.*, javax.*, sun.*, etc packages) are instrumented by
          Terracotta DSO in a special fashion. Specifically, they are
          instrumented and placed into a special "boot JAR", which is
          included on the Java boot-classpath (which is, in turn,
-         a different thing from the normal Java classpath) by the 
-         dso-java tool.
+         a different thing from the normal Java classpath) by the
+         dso-java script.
          
-         This "boot JAR" can be rebuilt by the 'dso-make-boot-jar' tool
+         This "boot JAR" can be rebuilt by the 'make-boot-jar' tool
          included with the Terracotta distribution, and must be rebuilt
          when transitioning from one vendor's JVM to another, or between
-         major releases of the JVM.
+         different releases of the JVM.
          
          Many commonly-used classes are included by default in the
          Terracotta boot JAR. However, if a class is not included by 
          default in the Terracotta boot JAR, then you can place its
          name here and specify this configuration file to the 
-         'dso-make-boot-jar' tool; this will cause it to be included
-         when the boot JAR is rebuilt. 
+         'make-boot-jar' tool; this will cause it to be included
+         when the boot JAR is rebuilt. Every class must be specified
+         individually (patterns are not supported here)
          
-         Note that Terracotta cannot guarantee that all 'java.' classes
+         Note that Terracotta cannot guarantee that all runtime classes
          can be safely added here, although many will work correctly.
          If in doubt, consult Terracotta for details.
          
@@ -558,20 +577,22 @@
       </additional-boot-jar-classes>
       
       <!-- When using Terracotta DSO within an application server, you
-         must specify the names of the J2EE applications under which
-         Terracotta DSO should operate. These must match the application
-         names as you have defined them in your application server's
-         configuration files, if you want to use Terracotta DSO in
-         those applications. -->
+         may wish to enabled DSO session management. To do so, list the 
+         context paths of the applications that should use DSO sessions.
+         For the default context path (ie. "/"), use the special value
+         'ROOT' (without the quotes)
+      -->
       <web-applications>
         <web-application>petstore</web-application>
         <web-application>billing_app</web-application>
+        <web-application>ROOT</web-application>
       </web-applications>
       
       <!-- When enabled, the default, mutations to shared objects made
          through reflection behave like normal shared object changes. When
          disabled, changes made to shared objects via reflection are not
-         cluster-wide. -->
+         cluster-wide (disable only if reflection is not used to mutate
+         shared objects). -->
       <dso-reflection-enabled>true</dso-reflection-enabled>      
     </dso>
     
@@ -612,8 +633,8 @@
           Spring-managed beans for specific Spring application context. If
           bean clustering is not needed, element can be skipped. 
         -->
-	  <application-contexts>
-		
+    <application-contexts>
+    
           <!-- Configuration for individual application context. Includes path
             to bean definition file (e.g. applicationContext.xml), list of
             beans and context events that should be clustered.
