@@ -19,7 +19,7 @@
     --><dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>common</artifactId>
-      <version>${tcVersion}</version>      
+      <version>${tcVersion}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
@@ -33,14 +33,14 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tc_cargo-core-uberjar</artifactId>
-    </dependency>    
+    </dependency>
     <dependency>
       <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>      
+      <artifactId>commons-codec</artifactId>
     </dependency>
     <dependency>
       <groupId>commons-httpclient</groupId>
-      <artifactId>commons-httpclient</artifactId>      
+      <artifactId>commons-httpclient</artifactId>
     </dependency>
   </dependencies>
 </project>

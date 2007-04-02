@@ -14,7 +14,7 @@
     </dependency>
     <dependency>
       <groupId>tomcat</groupId>
-      <artifactId>catalina</artifactId>      
+      <artifactId>catalina</artifactId>
     </dependency>
   </dependencies>
 </project>

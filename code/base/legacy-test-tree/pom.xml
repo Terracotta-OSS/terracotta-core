@@ -22,14 +22,14 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>common</artifactId>
-      <version>${tcVersion}</version>      
+      <version>${tcVersion}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>simulator</artifactId>
-      <version>${tcVersion}</version>      
+      <version>${tcVersion}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
@@ -39,25 +39,25 @@
       <version>${tcVersion}</version>
       <scope>test</scope>
       <type>test-jar</type>
-    </dependency>    
+    </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>dso-l2</artifactId>
-      <version>${tcVersion}</version>      
+      <version>${tcVersion}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>dso-common</artifactId>
-      <version>${tcVersion}</version>      
+      <version>${tcVersion}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>management</artifactId>
-      <version>${tcVersion}</version>      
+      <version>${tcVersion}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

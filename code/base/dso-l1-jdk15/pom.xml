@@ -9,7 +9,7 @@
     <version>2.3-SNAPSHOT</version>
   </parent>
   <artifactId>dso-l1-jdk15</artifactId>
-  
+
   <build>
     <plugins>
       <plugin>
@@ -41,6 +41,6 @@
       <version>${tcVersion}</version>
       <type>test-jar</type>
       <scope>test</scope>
-    </dependency>    
+    </dependency>
   </dependencies>
 </project>

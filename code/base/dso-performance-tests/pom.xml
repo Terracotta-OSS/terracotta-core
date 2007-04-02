@@ -12,7 +12,7 @@
   <dependencies>
     <dependency>
       <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>      
+      <artifactId>commons-codec</artifactId>
     </dependency>
     <dependency>
       <groupId>jfree</groupId>
@@ -25,7 +25,7 @@
     <dependency>
       <groupId>concurrent</groupId>
       <artifactId>concurrent</artifactId>
-    </dependency>    
+    </dependency>
     <dependency>
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
@@ -33,14 +33,14 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>common</artifactId>
-      <version>${tcVersion}</version>      
+      <version>${tcVersion}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>simulator</artifactId>
-      <version>${tcVersion}</version>      
+      <version>${tcVersion}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

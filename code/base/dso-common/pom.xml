@@ -17,7 +17,7 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>common</artifactId>
-      <version>${tcVersion}</version>      
+      <version>${tcVersion}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

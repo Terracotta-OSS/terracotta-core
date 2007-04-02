@@ -9,7 +9,7 @@
     <version>2.3-SNAPSHOT</version>
   </parent>
   <artifactId>dso-tests-jdk15</artifactId>
-  
+
   <build>
     <plugins>
       <plugin>
@@ -22,7 +22,7 @@
       </plugin>
     </plugins>
   </build>
-  
+
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>

@@ -19,7 +19,7 @@
     </dependency>
     <dependency>
       <groupId>tomcat</groupId>
-      <artifactId>tomcat-util</artifactId>     
+      <artifactId>tomcat-util</artifactId>
       <version>5.5.15</version>
     </dependency>
     <dependency>

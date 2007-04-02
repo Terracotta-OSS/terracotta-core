@@ -15,12 +15,12 @@
     <dependency>
       <groupId>tomcat</groupId>
       <artifactId>catalina</artifactId>
-      <version>5.0.28</version>      
+      <version>5.0.28</version>
     </dependency>
     <dependency>
       <groupId>tomcat</groupId>
-      <artifactId>tomcat-util</artifactId>     
-      <version>5.0.28</version> 
+      <artifactId>tomcat-util</artifactId>
+      <version>5.0.28</version>
     </dependency>
   </dependencies>
 </project>

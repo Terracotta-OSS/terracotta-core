@@ -10,23 +10,23 @@
   <dependencies>
     <dependency>
       <groupId>hsqldb</groupId>
-      <artifactId>hsqldb</artifactId>      
+      <artifactId>hsqldb</artifactId>
     </dependency>
     <dependency>
       <groupId>cglib</groupId>
-      <artifactId>cglib-nodep</artifactId>      
+      <artifactId>cglib-nodep</artifactId>
     </dependency>
     <dependency>
       <groupId>com.ibatis</groupId>
-      <artifactId>ibatis2-dao</artifactId>      
+      <artifactId>ibatis2-dao</artifactId>
     </dependency>
     <dependency>
       <groupId>com.ibatis</groupId>
-      <artifactId>ibatis2-common</artifactId>      
+      <artifactId>ibatis2-common</artifactId>
     </dependency>
     <dependency>
       <groupId>com.ibatis</groupId>
-      <artifactId>ibatis2-sqlmap</artifactId>      
+      <artifactId>ibatis2-sqlmap</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
