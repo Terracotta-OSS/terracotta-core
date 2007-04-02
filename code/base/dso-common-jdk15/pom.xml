@@ -34,9 +34,12 @@
       <scope>test</scope>      
     </dependency>
     <dependency>
-      <groupId>org.apache.catalina.tribes</groupId>
+      <groupId>org.apache.tomcat</groupId>
       <artifactId>tribes</artifactId>
-      <version>0.9.5.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tomcat</groupId>
+      <artifactId>juli</artifactId>
     </dependency>
   </dependencies>
 </project>

@@ -1043,6 +1043,16 @@
       <id>codehaus-repository</id>
       <url>http://repository.codehaus.org/</url>
     </repository>
+    <repository>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>tomcat-repository</id>
+      <url>http://tomcat.apache.org/dev/dist/m2-repository/</url>
+    </repository>
   </repositories>
 
   <pluginRepositories>
