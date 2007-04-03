@@ -245,7 +245,8 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     logger.debug("locks: " + this.locks);
     logger.debug("distributed-methods: " + this.distributedMethods);
 
-    rewriteHashtableAutLockSpecIfNecessary();
+    rewriteHashtableAutoLockSpecIfNecessary();
+    removeTomcatAdapters();
   }
 
   public void allowCGLIBInstrumentation() {
@@ -1019,8 +1020,15 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     addCustomAdapter("org.apache.jasper.runtime.JspWriterImpl", new JspWriterImplAdapter());
     addCustomAdapter("org.apache.catalina.loader.WebappLoader", new WebAppLoaderAdapter());
     addCustomAdapter("org.apache.catalina.startup.Catalina", new CatalinaAdapter());
-    addCustomAdapter("org.apache.catalina.core.ContainerBase", new ContainerBaseAdapter());
     addCustomAdapter("org.apache.catalina.startup.Bootstrap", new BootstrapAdapter());
+    addCustomAdapter("org.apache.catalina.core.ContainerBase", new ContainerBaseAdapter());
+  }
+
+  private void removeTomcatAdapters() {
+    // XXX: hack for starting Glassfish w/o session support
+    if (applicationNames.isEmpty()) {
+      removeCustomAdapter("org.apache.catalina.core.ContainerBase");
+    }
   }
 
   private void addWeblogicCustomAdapters() {
@@ -1031,6 +1039,10 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     addCustomAdapter("weblogic.servlet.internal.ServletResponseImpl", new ServletResponseImplAdapter());
     addCustomAdapter("weblogic.servlet.internal.TerracottaServletResponseImpl",
                      new TerracottaServletResponseImplAdapter());
+  }
+
+  private void removeCustomAdapter(String name) {
+    this.customAdapters.remove(name);
   }
 
   public void addCustomAdapter(String name, ClassAdapterFactory factory) {
@@ -1188,7 +1200,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     return roots.containsKey(className);
   }
 
-  private void rewriteHashtableAutLockSpecIfNecessary() {
+  private void rewriteHashtableAutoLockSpecIfNecessary() {
     // addReadAutolock(new String[] { "synchronized * java.util.Hashtable.get(..)",
     // "synchronized * java.util.Hashtable.hashCode(..)", "synchronized * java.util.Hashtable.contains*(..)",
     // "synchronized * java.util.Hashtable.elements(..)", "synchronized * java.util.Hashtable.equals(..)",
