@@ -7,10 +7,10 @@ package com.tctest;
 public class LockUpgrade1Reads1UpgradesTest extends TransparentTestBase {
 
   private static final int NODE_COUNT   = 2;
-  private static final int THREAD_COUNT = 2;
+  private static final int THREAD_COUNT = 1;
   
   public LockUpgrade1Reads1UpgradesTest() {
-    disableAllUntil("2007-04-03");
+    disableAllUntil("2007-04-10");
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
