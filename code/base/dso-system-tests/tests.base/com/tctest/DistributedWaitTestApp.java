@@ -27,7 +27,7 @@ public class DistributedWaitTestApp extends AbstractTransparentApp {
         long start = System.currentTimeMillis();
         myRoot.wait(WAIT_TIME);
         long end = System.currentTimeMillis();
-        Assert.assertEquals((double) WAIT_TIME, (double) (end - start), 500.0);
+        Assert.assertEquals((double) WAIT_TIME, (double) (end - start), 3*1000.0);
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
