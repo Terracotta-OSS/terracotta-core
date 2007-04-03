@@ -859,7 +859,7 @@ public class Lock {
       }
     }
   }
-
+  
   synchronized boolean holdsSomeLock(ChannelID ch) {
     for (Iterator iter = holders.values().iterator(); iter.hasNext();) {
       Holder holder = (Holder) iter.next();
@@ -960,6 +960,10 @@ public class Lock {
     for (Iterator i = holders.values().iterator(); i.hasNext();) {
       Holder holder = (Holder) i.next();
       if (holder.getChannelID().equals(ch)) {
+        ServerThreadContext txn = holder.getThreadContext();
+        txn.removeLock(this);
+        threadContextFactory.removeIfClear(txn);
+
         i.remove();
       }
     }

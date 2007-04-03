@@ -4,26 +4,22 @@
  */
 package com.tctest;
 
-public class LockUpgrade1Reads1UpgradesTest extends TransparentTestBase {
+/**
+ * This test is to make sure that the AssertionError described in DEV-587 will not be thrown
+ *
+ */
+public class LockUpgradeAndReadTest extends TransparentTestBase {
 
   private static final int NODE_COUNT   = 2;
   private static final int THREAD_COUNT = 1;
   
-  public LockUpgrade1Reads1UpgradesTest() {
-    disableAllUntil("2007-04-10");
-  }
-
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT).setApplicationInstancePerClientCount(THREAD_COUNT);
     t.initializeTestRunner();
   }
 
   protected Class getApplicationClass() {
-    return LockUpgrade1Reads1UpgradesTestApp.class;
-  }
-
-  protected boolean canRunCrash() {
-    return true;
+    return LockUpgradeAndReadTestApp.class;
   }
 
 }
