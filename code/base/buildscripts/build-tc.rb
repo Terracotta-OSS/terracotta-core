@@ -303,7 +303,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   def check_active_passive
     depends :init, :compile
     @internal_config_source['tc.tests.configuration.transparent-tests.mode'] = 'active-passive'
-    run_tests(FixedModuleTypeTestSet.new([ 'dso-crash-tests', 'dso-spring-crash-tests' ], [ 'system' ]))
+    run_tests(FixedModuleTypeTestSet.new([ 'dso-crash-tests' ], [ 'system' ]))
   end
 
   # Prepares to run tests in the given module of the given type, then writes out all the information
