@@ -254,7 +254,7 @@ public final class LinkedJavaProcessPollingAgent {
       if (socket == null) throw new NullPointerException();
       this.socket = socket;
       try {
-        this.socket.setSoTimeout(2 * NORMAL_HEARTBEAT_INTERVAL);
+        this.socket.setSoTimeout(1 * NORMAL_HEARTBEAT_INTERVAL);
       } catch (SocketException e) {
         throw new RuntimeException(e);
       }
@@ -263,19 +263,19 @@ public final class LinkedJavaProcessPollingAgent {
     }
 
     public boolean ping() {
-      boolean status = false;
+      boolean alive = false;
 
-      if (socket.isClosed() || socket.isInputShutdown() || socket.isOutputShutdown()) { return status; }
+      if (socket.isClosed() || socket.isInputShutdown() || socket.isOutputShutdown()) { return alive; }
 
       try {
-        out.write(ARE_YOU_ALIVE);
+        out.println(ARE_YOU_ALIVE);
         out.flush();
-        status = in.readLine().equals(I_AM_ALIVE);
+        alive = in.readLine().equals(I_AM_ALIVE);
       } catch (Exception e) {
-        status = false;
+        alive = false;
       }
 
-      return status;
+      return alive;
     }
 
     public synchronized void shutdown() throws IOException {

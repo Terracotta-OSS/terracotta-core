@@ -48,7 +48,7 @@ public class AppServerShutdownTest extends AbstractAppServerTestCase {
     //   1. Cargo didn't shutdown the appserver normally
     //   2. DSO didn't allow the appserver to shutdown -- We want to catch this    
     Thread.sleep(5 * 1000);
-    assertFalse(LinkedJavaProcessPollingAgent.isAnyAlive());
+    assertFalse("App server didn't shutdown", LinkedJavaProcessPollingAgent.isAnyAlive());    
   }
 
   public static final class ShutdownNormallyServlet extends HttpServlet {
