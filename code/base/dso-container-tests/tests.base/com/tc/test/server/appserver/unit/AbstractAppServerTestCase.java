@@ -402,6 +402,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
    */
   protected void tearDown() throws Exception {
     try {
+      System.out.println("in tearDown...");
       for (Iterator iter = appservers.iterator(); iter.hasNext();) {
         Server server = (Server) iter.next();
         server.stop();

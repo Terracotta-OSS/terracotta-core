@@ -270,7 +270,9 @@ public final class LinkedJavaProcessPollingAgent {
       try {
         out.println(ARE_YOU_ALIVE);
         out.flush();
-        alive = in.readLine().equals(I_AM_ALIVE);
+        String status = in.readLine();
+        alive = status.equals(I_AM_ALIVE);
+        System.out.println("Got response: " + status);
       } catch (Exception e) {
         alive = false;
       }
