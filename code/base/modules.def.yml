@@ -483,23 +483,10 @@ modules:
       options:
         jdk: J2SE-1.5
         module: true
-  # - clustered-ehcache-1.3.0:
-  #     options:
-  #       jdk: J2SE-1.5
-  #       module: true
-  #     dependencies:
-  #       - aspectwerkz
-  #       - linked-child-process
-  #       - common
-  #       - management
-  #       - dso-common
-  #       - dso-common-jdk15
-  #       - dso-l1
-  #       - dso-l2
-  #       - simulator
-  #       - deploy
-  #       - thirdparty
-  #       - legacy-test-tree
+  - clustered-ehcache-1.3.0:
+      options:
+        jdk: J2SE-1.5
+        module: true
 
 module-groups:
   container:
