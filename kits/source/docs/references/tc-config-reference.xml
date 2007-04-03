@@ -121,7 +121,7 @@
       <!-- Configuration data for DSO that's specific to the DSO server. -->
       <dso>
 
-        <!-- How much time should the DSO server, upon restart, allow for previously
+        <!-- How much time (in seconds) should the DSO server, upon restart, allow for previously
              connected clients to reconnect?  After this period, clients will
              not be allowed to reconnect.
 
@@ -539,7 +539,7 @@
            can be set to false to execute distributed only on those nodes
            that already have a reference to the object on which the method
            is called -->
-        <method-expression run-on-all-nodes="false">String[] com.mycompany.pkgc.AnotherClass.eventOccurred(Boolean, Double)</method-expression>
+        <method-expression run-on-all-nodes="false">String[] com.mycompany.pkgc.SomeOtherClass.eventOccurred(Boolean, Double)</method-expression>
 
       </distributed-methods>
 
