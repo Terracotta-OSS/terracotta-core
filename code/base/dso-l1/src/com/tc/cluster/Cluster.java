@@ -33,7 +33,8 @@ public class Cluster {
   }
 
   public synchronized void thisNodeConnected(final String thisNodeId, String[] nodesCurrentlyInCluster) {
-    nodes.clear();
+    // we might get multiple calls in a row, ignore all but the first in a row.
+    if (thisNode != null) return;
 
     thisNode = new Node(thisNodeId);
     nodes.put(thisNode.getNodeId(), thisNode);
@@ -49,7 +50,12 @@ public class Cluster {
 
   public synchronized void thisNodeDisconnected() {
     debug("### Cluster: thisNodeDisconnected -> " + this);
+    if (thisNode == null) {
+      // client channels be closed before we know thisNodeID. Skip the disconnect event in this case
+      return;
+    }
     fireThisNodeDisconnectedEvent();
+    nodes.clear();
     thisNode = null;
   }
 
@@ -103,10 +109,6 @@ public class Cluster {
   }
 
   private void fireThisNodeDisconnectedEvent() {
-    if (thisNode == null) {
-      // client channels be closed before we know thisNodeID. Skip the disconnect event in this case
-      return;
-    }
     for (Iterator i = listeners.keySet().iterator(); i.hasNext();) {
       ClusterEventListener l = (ClusterEventListener) i.next();
       try {

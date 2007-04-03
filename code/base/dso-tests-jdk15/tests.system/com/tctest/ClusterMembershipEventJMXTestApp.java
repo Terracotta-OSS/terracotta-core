@@ -154,15 +154,17 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
   }
 
   public void handleNotification(Notification notification, Object handback) {
-    String msgType = notification.getType();
-    if (eventsCount.containsKey(msgType)) {
-      Integer count = (Integer) eventsCount.get(msgType);
-      eventsCount.put(msgType, new Integer(count.intValue() + 1));
-    } else {
-      eventsCount.put(msgType, new Integer(1));
-    }
+    synchronized (eventsCount) {
+      String msgType = notification.getType();
+      if (eventsCount.containsKey(msgType)) {
+        Integer count = (Integer) eventsCount.get(msgType);
+        eventsCount.put(msgType, new Integer(count.intValue() + 1));
+      } else {
+        eventsCount.put(msgType, new Integer(1));
+      }
 
-    echo("type=" + notification.getType() + ", message=" + notification.getMessage());
+      echo("type=" + notification.getType() + ", message=" + notification.getMessage());
+    }
   }
 
   private static void echo(String msg) {

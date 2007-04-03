@@ -4,12 +4,12 @@
  */
 package com.tc.cluster;
 
+import com.tc.test.TCTestCase;
+
 import java.util.Arrays;
 import java.util.Map;
 
-import junit.framework.TestCase;
-
-public class ClusterTest extends TestCase {
+public class ClusterTest extends TCTestCase {
 
   private Cluster           cluster;
   private TestEventListener cel;
@@ -51,6 +51,19 @@ public class ClusterTest extends TestCase {
     assertEquals("thisNodeConnected", cel.getLastMethodCalled());
     assertEquals(thisNodeId, cel.getLastString());
     assertTrue(Arrays.equals(nodeIds, cel.getLastStringArray()));
+    
+    // should not fire multiple thisNodeConnected events in a row...
+    cel.reset();
+    cluster.thisNodeConnected(thisNodeId, nodeIds);
+    assertNull(cel.getLastMethodCalled());
+    
+    // but it should be fired after thisNodeDisconnected...
+    cluster.thisNodeDisconnected();
+    cluster.thisNodeConnected(thisNodeId, nodeIds);
+    assertEquals("thisNodeConnected", cel.getLastMethodCalled());
+    assertEquals(thisNodeId, cel.getLastString());
+    assertTrue(Arrays.equals(nodeIds, cel.getLastStringArray()));
+    
 
     // no callback if cel is added again
     cel.reset();
