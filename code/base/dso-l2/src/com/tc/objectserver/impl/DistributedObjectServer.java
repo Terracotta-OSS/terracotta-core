@@ -254,10 +254,10 @@ public class DistributedObjectServer extends SEDA {
     try {
       startJMXServer();
     } catch (Exception e) {
-      String msg = "Unable to start the JMX server";
+      String msg = "Unable to start the JMX server. Do you have another Terracotta Server running?";
       consoleLogger.error(msg);
       logger.error(msg, e);
-      throw new RuntimeException(msg, e);
+      System.exit(-1);
     }
 
     NIOWorkarounds.solaris10Workaround();

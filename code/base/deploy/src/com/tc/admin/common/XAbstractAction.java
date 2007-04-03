@@ -20,10 +20,12 @@ public abstract class XAbstractAction extends AbstractAction {
 
   public XAbstractAction(String name) {
     super(name);
+    setShortDescription(name);
   }
 
   public XAbstractAction(String name, Icon icon) {
     super(name, icon);
+    setShortDescription(name);
   }
 
   public void setName(String name) {

@@ -7,8 +7,8 @@
 #
 
 if test -z "${BEA_HOME}"; then
-    echo "BEA_HOME must be set to an 8.1 installation"
-    exit 1
+  echo "BEA_HOME must be set to an 8.1 installation"
+  exit 1
 fi
 
 if test -z "${WL_HOME}"; then
@@ -16,13 +16,18 @@ if test -z "${WL_HOME}"; then
   export WL_HOME
 fi
 
+if test \! -d "${WL_HOME}"; then
+  echo "WL_HOME '${WL_HOME}' does not exist. Did you set BEA_HOME correctly?"
+  exit 1
+fi
+
 PRODUCTION_MODE=
 JAVA_VENDOR=Sun
 export PRODUCTION_MODE JAVA_VENDOR
 
 if test -z "${JAVA_HOME}"; then
-    JAVA_HOME="${BEA_HOME}/jdk142_11"
-    export JAVA_HOME
+  JAVA_HOME="${BEA_HOME}/jdk142_11"
+  export JAVA_HOME
 fi
 
 . "${WL_HOME}/common/bin/commEnv.sh"

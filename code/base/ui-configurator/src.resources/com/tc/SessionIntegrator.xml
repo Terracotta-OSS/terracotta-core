@@ -350,9 +350,35 @@
 									<tab title="tc-config.xml">
 										<splitpane divider-location="-1" resize-weight="0.8">
 											<left>
-												<scrollpane>
-													<textpane name="XMLPane" class="com.tc.ConfigTextPane" font="monospaced-plain-12"/>
-												</scrollpane>
+											    <container>
+											      <children>
+                                                    <container name="ConfigPaneToolbar">
+                                                      <children>
+                                                        <button name="SaveButton" focusable="false"/>
+                                                        <button name="UndoButton" focusable="false"/>
+                                                        <button name="RedoButton" focusable="false"/>
+                                                        <button name="CutButton" focusable="false"/>
+                                                        <button name="CopyButton" focusable="false"/>
+                                                        <button name="PasteButton" focusable="false"/>
+                                                      </children>
+                                                      <connections>
+												        <item left="-1,left:3" top="-1,top:3" right="1,left:3" bottom="-1,bottom:3" width="n" height="n"/>
+                                                        <item left="0,right:3" top="-1,top:3" right="2,left:3" bottom="-1,bottom:3" width="n" height="n"/>
+                                                        <item left="1,right:3" top="-1,top:3" right="3,left:3" bottom="-1,bottom:3" width="n" height="n"/>
+                                                        <item left="2,right:3" top="-1,top:3" right="4,left:3" bottom="-1,bottom:3" width="n" height="n"/>
+                                                        <item left="3,right:3" top="-1,top:3" right="5,left:3" bottom="-1,bottom:3" width="n" height="n"/>
+                                                        <item left="4,right:3" top="-1,top:3" right="-1,right:sn" bottom="-1,bottom:3" width="n" height="n"/>
+											          </connections>
+                                                    </container>
+												    <scrollpane>
+													  <textpane name="XMLPane" class="com.tc.ConfigTextPane" font="monospaced-plain-12"/>
+												    </scrollpane>
+											      </children>
+											      <connections>
+												    <item left="-1,left:0" top="-1,top:0" right="-1,right:0" bottom="1,top:0" width="s" height="n"/>
+                                                    <item left="-1,left:0" top="0,bottom:0" right="-1,right:0" bottom="-1,bottom:0" width="s" height="s"/>
+											      </connections>
+											    </container>
 											</left>
 											<right>
 												<tabbedpane>

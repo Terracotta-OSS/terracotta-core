@@ -5,6 +5,7 @@ package com.tc.admin.common;
 
 import java.awt.event.ActionEvent;
 
+import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JPopupMenu;
 import javax.swing.event.CaretEvent;
@@ -58,18 +59,34 @@ public class TextComponentHelper extends XPopupListener
     popup.add(m_cutAction = new CutAction());
   }
   
+  public Action getCutAction() {
+    return m_cutAction;
+  }
+  
   protected void addCopyAction(JPopupMenu popup) {
     popup.add(m_copyAction = new CopyAction());
   }
 
+  public Action getCopyAction() {
+    return m_copyAction;
+  }
+  
   protected void addPasteAction(JPopupMenu popup) {
     popup.add(m_pasteAction = new PasteAction());
   }
 
+  public Action getPasteAction() {
+    return m_pasteAction;
+  }
+  
   protected void addClearAction(JPopupMenu popup) {
     popup.add(m_clearAction = new ClearAction());
   }
 
+  public Action getClearAction() {
+    return m_clearAction;
+  }
+  
   protected class CutAction extends XAbstractAction {
     protected CutAction() {
       super("Cut");

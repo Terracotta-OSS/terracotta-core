@@ -22,6 +22,12 @@ if not exist "%BEA_HOME%" (
 if NOT "x%WL_HOME%" == "x" goto haveWebLogicHome
 set WL_HOME=%BEA_HOME%\weblogic81
 
+if not exist "%WL_HOME%" (
+  echo WL_HOME '%WL_HOME%' does not exist. Did you set BEA_HOME correctly?
+  exit 1
+  endlocal
+)
+
 :haveWebLogicHome
 
 set PRODUCTION_MODE=

@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -134,11 +135,13 @@ public class ConfigTextPane extends XTextPane {
 
   class ConfigTextListener implements DocumentListener {
     public void insertUpdate(DocumentEvent e)  {
+      m_saveAction.setEnabled(true);
       m_parseTimer.stop();
       m_parseTimer.start();
     }
 
     public void removeUpdate(DocumentEvent e)  {
+      m_saveAction.setEnabled(true);
       m_parseTimer.stop();
       m_parseTimer.start();
     }
@@ -166,6 +169,7 @@ public class ConfigTextPane extends XTextPane {
       setAccelerator(SAVE_STROKE);
       String uri = "/com/tc/admin/icons/save_edit.gif";
       setSmallIcon(new ImageIcon(getClass().getResource(uri)));
+      setEnabled(false);
     }
 
     public void actionPerformed(ActionEvent ae) {
@@ -314,6 +318,10 @@ public class ConfigTextPane extends XTextPane {
       frame.saveXML(getContent());
     }
     addListeners();
+    m_undoManager.discardAllEdits();
+    m_saveAction.setEnabled(false);
+    m_undoAction.setEnabled(false);
+    m_redoAction.setEnabled(false);
   }
   
   private void saveAs() {
@@ -358,6 +366,7 @@ public class ConfigTextPane extends XTextPane {
       setAccelerator(UNDO_STROKE);
       String uri = "/com/tc/admin/icons/undo_edit.gif";
       setSmallIcon(new ImageIcon(getClass().getResource(uri)));
+      setEnabled(false);
     }
     
     public void actionPerformed(ActionEvent ae) {
@@ -378,6 +387,7 @@ public class ConfigTextPane extends XTextPane {
       setAccelerator(REDO_STROKE);
       String uri = "/com/tc/admin/icons/redo_edit.gif";
       setSmallIcon(new ImageIcon(getClass().getResource(uri)));
+      setEnabled(false);
     }
 
     public void actionPerformed(ActionEvent ae) {
@@ -385,8 +395,16 @@ public class ConfigTextPane extends XTextPane {
 
       if(next != null) {
         m_undoManager.redo();
-        setEnabled(isEnabled());
+        setEnabled(m_undoManager.canRedo());
+        m_undoAction.setEnabled(m_undoManager.canUndo());
       }
     }
   }
+  
+  Action getSaveAction() { return m_saveAction; }
+  Action getUndoAction() { return m_undoAction; }
+  Action getRedoAction() { return m_redoAction; }
+  Action getCutAction()  { return m_helper.getCutAction(); }
+  Action getCopyAction() { return m_helper.getCopyAction(); }
+  Action getPasteAction() { return m_helper.getPasteAction(); }
 }

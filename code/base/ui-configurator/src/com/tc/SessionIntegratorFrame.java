@@ -10,6 +10,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.xmlbeans.XmlError;
 import org.dijon.Button;
 import org.dijon.CheckBox;
+import org.dijon.Container;
 import org.dijon.ContainerResource;
 import org.dijon.Dialog;
 import org.dijon.DialogResource;
@@ -358,6 +359,35 @@ public class SessionIntegratorFrame extends Frame {
     m_xmlChangeListener = new XmlChangeListener();
     initXmlPane();
 
+    Container configPaneToolbar = (Container) findComponent("ConfigPaneToolbar");
+    Button button;
+    Insets emptyInsets = new Insets(1,1,1,1);
+    button = (Button) configPaneToolbar.findComponent("SaveButton");
+    button.setAction(m_xmlPane.getSaveAction());
+    button.setText(null);
+    button.setMargin(emptyInsets);
+    button = (Button) configPaneToolbar.findComponent("UndoButton");
+    button.setAction(m_xmlPane.getUndoAction());
+    button.setText(null);
+    button.setMargin(emptyInsets);
+    button = (Button) configPaneToolbar.findComponent("RedoButton");
+    button.setAction(m_xmlPane.getRedoAction());
+    button.setText(null);
+    button.setMargin(emptyInsets);
+
+    button = (Button) configPaneToolbar.findComponent("CutButton");
+    button.setAction(m_xmlPane.getCutAction());
+    button.setText(null);
+    button.setMargin(emptyInsets);
+    button = (Button) configPaneToolbar.findComponent("CopyButton");
+    button.setAction(m_xmlPane.getCopyAction());
+    button.setText(null);
+    button.setMargin(emptyInsets);
+    button = (Button) configPaneToolbar.findComponent("PasteButton");
+    button.setAction(m_xmlPane.getPasteAction());
+    button.setText(null);
+    button.setMargin(emptyInsets);
+    
     m_l2OutView = (ProcessOutputView) findComponent("L2OutView");
     m_l2Label = (Label) findComponent("L2Label");
     m_l2Status = new ProcessStatus("L2");
