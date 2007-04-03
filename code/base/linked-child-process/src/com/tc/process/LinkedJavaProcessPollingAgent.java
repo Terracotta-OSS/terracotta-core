@@ -4,9 +4,10 @@
  */
 package com.tc.process;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -29,8 +30,12 @@ import java.util.List;
 public final class LinkedJavaProcessPollingAgent {
 
   private static final int       NORMAL_HEARTBEAT_INTERVAL = 60 * 1000;
-  private static final byte[]    HEARTBEAT_DATA            = "Heartbeat".getBytes();       // must have same length
-  private static final byte[]    SHUTDOWN_DATA             = "shutdown0".getBytes();       // must have same length
+
+  private static final String    HEARTBEAT                 = "HEARTBEAT";
+  private static final String    SHUTDOWN                  = "SHUTDOWN";
+  private static final String    ARE_YOU_ALIVE             = "ARE_YOU_ALIVE";
+  private static final String    I_AM_ALIVE                = "I_AM_ALIVE";
+
   private static final int       MAX_HEARTBEAT_DELAY       = 4 * NORMAL_HEARTBEAT_INTERVAL;
   private static final int       EXIT_CODE                 = 42;
   private static HeartbeatServer server                    = null;
@@ -77,6 +82,10 @@ public final class LinkedJavaProcessPollingAgent {
     server.shutdown();
   }
 
+  public static synchronized boolean isAnyAlive() {
+    return server.isAnyAlive();
+  }
+
   private static void log(String msg) {
     System.err.println("LJP: [" + new Date() + "] " + msg);
   }
@@ -95,9 +104,11 @@ public final class LinkedJavaProcessPollingAgent {
   }
 
   private static class PingThread extends Thread {
-    private final int    pingPort;
-    private final String forClass;
-    private boolean      honorShutdownMsg;
+    private final int      pingPort;
+    private final String   forClass;
+    private boolean        honorShutdownMsg;
+    private BufferedReader in;
+    private PrintWriter    out;
 
     public PingThread(int port, String forClass, boolean honorShutdownMsg) {
       this(port, forClass);
@@ -118,38 +129,29 @@ public final class LinkedJavaProcessPollingAgent {
       int port = -1;
       try {
         Socket toServer = new Socket("localhost", this.pingPort);
-        port = toServer.getLocalPort();
-        InputStream inStream = toServer.getInputStream();
-
         toServer.setSoTimeout(MAX_HEARTBEAT_DELAY);
-        byte[] data = new byte[HEARTBEAT_DATA.length];
+
+        port = toServer.getLocalPort();
+
+        in = new BufferedReader(new InputStreamReader(toServer.getInputStream()));
+        out = new PrintWriter(toServer.getOutputStream(), true);
 
         while (true) {
-          int read = 0;
-          long startTime = System.currentTimeMillis();
-          while (read < data.length && System.currentTimeMillis() < (startTime + MAX_HEARTBEAT_DELAY)) {
-            int thisRead = inStream.read(data, read, data.length - read);
-            if (thisRead < 0) break;
-            read += thisRead;
-          }
+          long start = System.currentTimeMillis();
 
-          if (read != data.length) throw new IOException("Only got " + read + " bytes, not " + data.length
-                                                         + " bytes, within " + (System.currentTimeMillis() - startTime)
-                                                         + " ms.");
-
-          if (Arrays.equals(data, SHUTDOWN_DATA)) {
+          String data = in.readLine();
+          if (HEARTBEAT.equals(data)) {
+            log("Got heartbeat for main class " + this.forClass);
+          } else if (SHUTDOWN.equals(data)) {
             if (!honorShutdownMsg) continue;
             log("Client received shutdown message from server. Shutting Down...");
             System.exit(0);
+          } else if (ARE_YOU_ALIVE.equals(data)) {
+            out.println(I_AM_ALIVE);
           }
 
-          for (int i = 0; i < data.length; ++i) {
-            if (data[i] != HEARTBEAT_DATA[i]) throw new IOException("Got invalid data; byte " + i
-                                                                    + " should have been " + HEARTBEAT_DATA[i]
-                                                                    + ", but was " + data[i] + ".");
-          }
-
-          log("Read heartbeat for process with main class " + this.forClass + ".");
+          long elapsed = System.currentTimeMillis() - start;
+          if (elapsed > MAX_HEARTBEAT_DELAY) { throw new Exception("Client took too long to response."); }
         }
       } catch (Exception e) {
         log(e.getClass() + ": " + Arrays.asList(e.getStackTrace()));
@@ -197,6 +199,23 @@ public final class LinkedJavaProcessPollingAgent {
       }
     }
 
+    private synchronized boolean isAnyAlive() {
+      boolean isAnyAlive = false;
+      try {
+        synchronized (heartBeatThreads) {
+          for (Iterator it = heartBeatThreads.iterator(); it.hasNext();) {
+            HeartbeatThread ht = (HeartbeatThread) it.next();
+            if (!ht.isAlive() || ht.isInterrupted()) continue;
+            isAnyAlive = isAnyAlive || ht.ping();
+          }
+        }
+      } catch (Throwable e) {
+        isAnyAlive = false;
+      }
+
+      return isAnyAlive;
+    }
+
     public void run() {
       try {
         ServerSocket serverSocket = new ServerSocket(0);
@@ -225,40 +244,61 @@ public final class LinkedJavaProcessPollingAgent {
   }
 
   private static class HeartbeatThread extends Thread {
-    private final Socket socket;
-    private final int    port;
-    private OutputStream out;
+    private final Socket   socket;
+    private final int      port;
+
+    private BufferedReader in;
+    private PrintWriter    out;
 
     public HeartbeatThread(Socket socket) {
       if (socket == null) throw new NullPointerException();
       this.socket = socket;
+      try {
+        this.socket.setSoTimeout(2 * NORMAL_HEARTBEAT_INTERVAL);
+      } catch (SocketException e) {
+        throw new RuntimeException(e);
+      }
       this.port = socket.getPort();
       this.setDaemon(true);
     }
 
+    public boolean ping() {
+      boolean status = false;
+
+      if (socket.isClosed() || socket.isInputShutdown() || socket.isOutputShutdown()) { return status; }
+
+      try {
+        out.write(ARE_YOU_ALIVE);
+        out.flush();
+        status = in.readLine().equals(I_AM_ALIVE);
+      } catch (Exception e) {
+        status = false;
+      }
+
+      return status;
+    }
+
     public synchronized void shutdown() throws IOException {
       try {
-        out.write(SHUTDOWN_DATA);
+        out.println(SHUTDOWN);
         out.flush();
-      } catch (SocketException e) {
+      } catch (Exception e) {
         log("Socket Exception: client may have already shutdown.");
-        //log(e.getClass() + ": " + Arrays.asList(e.getStackTrace()));
       }
     }
 
     public void run() {
       try {
-        out = this.socket.getOutputStream();
+        out = new PrintWriter(this.socket.getOutputStream(), true);
+        in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
 
         while (true) {
           synchronized (this) {
             if (!socket.isOutputShutdown()) {
-              out.write(HEARTBEAT_DATA);
+              out.println(HEARTBEAT);
               out.flush();
             }
           }
-          // System.err.println("Wrote heartbeat to client.");
-
           reallySleep(NORMAL_HEARTBEAT_INTERVAL);
         }
       } catch (SocketException e) {
