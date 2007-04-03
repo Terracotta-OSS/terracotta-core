@@ -8,7 +8,7 @@
 -->
 <!--
   tc-config-reference.xml
-  
+
   This is a sample Terracotta configuration file. In it, you will find an
   example of every permitted element, along with a brief description of each.
   As such, it's a good reference, but vastly more than you need to get started.
@@ -22,10 +22,10 @@
   <!-- The 'system' section contains configuration data that affects the
      entire Terracotta system as a whole; things like whether to activate
      DSO services go here. -->
-  
+
   <system>
     <!-- The configuration model: 'development' or 'production'.
-    
+
        In 'development' mode, each client can have its own configuration,
        independent of the server or any other client. This mode can result in
        shared data being corrupted or lost if, for instance, two different
@@ -113,7 +113,7 @@
          Terracotta administration console? This can be any port you
          like, but note that ports below 1024 typically require 'root'
          privileges to use on Un*x-style systems (Linux, Solaris).
-        
+
          Default: 9520
       -->
       <jmx-port>9520</jmx-port>
@@ -128,39 +128,39 @@
              Default: 120 seconds
         --> 
         <client-reconnect-window>120</client-reconnect-window>
-      
+
         <!-- Information about how DSO should persist data to disk. -->
         <persistence>
           <!-- How should DSO persist data to disk? This can be one
              of two values:
-             
+
              'temporary-swap-only' causes the DSO server to use the
              disk as a temporary backing store. Data is not
              preserved across server restarts. This mode is somewhat
              faster than 'permanent-store' mode.
-             
+
              'permanent-store' causes the DSO server to write data
              immediately and permanently to disk. Upon server restart,
              data will be restored, meaning data underneath roots
              in your program will be restored to the exact state it
              was in when the server shut down.
-             
+
              Note that if you are using clustered DSO servers (i.e., if
              you have more than one <server> element defined,
              below), then you must use 'permanent-store' mode. This
              is required for proper operation of the DSO
              failover mechanism.
-             
+
              Default: 'temporary-swap-only'
           -->
           <mode>temporary-swap-only</mode>
         </persistence>
-        
+
         <!-- Information about how DSO should perform distributed
            garbage collection on the data underneath your
            application's roots. -->
         <garbage-collection>
-        
+
           <!-- If 'true', distributed garbage collection is enabled.
              You should only set this to 'false' if you are
              absolutely certain that none of the data underneath
@@ -172,28 +172,28 @@
              A setting of 'false' can also be used if distributed
              garbage collection will be triggered externally
              with the 'run-dgc' script
-             
+
              Default: true
           -->
           <enabled>true</enabled>
-          
+
           <!-- If 'true', the DSO server will emit extra information 
              to the log file when it performs distributed garbage
              collection; this can be useful when trying to
              performance-tune your application.
-             
+
              Default: false
           -->
           <verbose>false</verbose>
-          
+
           <!-- How often should the DSO server perform distributed 
              garbage collection, in seconds?
-             
+
              Default: 3600 (60 minutes)
           -->
           <interval>3600</interval>
         </garbage-collection>
-        
+
       </dso>
     </server>
 
@@ -203,14 +203,14 @@
     <server host="broccoli">
       <data>/usr/local/tc/data</data>
       <logs>/usr/local/tc/logs</logs>
-      
+
       <dso-port>8510</dso-port>
-      
+
       <dso>
         <persistence>
           <mode>permanent-store</mode>
         </persistence>
-        
+
         <garbage-collection>
           <enabled>true</enabled>
           <verbose>true</verbose>
@@ -219,14 +219,14 @@
       </dso>
     </server>
   </servers>
-  
+
   <!-- This section contains settings that affect all clients that connect to the
      system.
-     
+
      Note that while these settings are applied uniformly across all clients,
      this does not prevent you from applying different settings to various
      clients. There are two ways of doing this:
-     
+
       - Certain parameters ('logs', below) undergo parameter expansion
         before being used by the client. This allows you to use various predefined
         substitutions (like '%h' for host), or a general one
@@ -276,18 +276,17 @@
     </modules>
 
     <!-- Where should the client write its log files?
-    
+
        This value undergoes parameter substitution before being used;
        thus, a value like 'client-logs-%h' would expand to
        'client-logs-banana' if running on host 'banana'.
-    
+
        If this is a relative path, then it is interpreted relative to
        the current working directory of the client (that is, the directory
        you were in when you started the program that uses Terracotta
        services). It is thus recommended that you specify an absolute
        path here.
-       
-         
+
        Default: 'logs-%i'; this places the logs in a directory relative
        to the directory you were in when you invoked the program that uses
        Terracotta services (your client), and calls that directory, for example,
@@ -295,19 +294,19 @@
        address 10.0.0.57.
     -->
     <logs>logs-%i</logs>
-    
+
     <!-- This section contains data for Terracotta DSO that's specific to
        the DSO client only. -->
     <dso>
-    
+
       <!-- This section controls output from the DSO client that can help you
          debug your program. -->
       <debugging>
-      
+
         <!-- This section controls output from the DSO client related to
            class instrumentation; each individual element controls a different kind
            of output. -->
-           
+
         <instrumentation-logging>
           <class>false</class>
           <locks>false</locks>
@@ -315,11 +314,11 @@
           <roots>false</roots>
           <distributed-methods>false</distributed-methods>
         </instrumentation-logging>
-        
+
         <!-- This section controls output from the DSO client related to
            operations occurring at runtime; each individual element controls a
            different kind of output. -->
-           
+
         <runtime-logging>
           <non-portable-dump>true</non-portable-dump>
           <lock-debug>false</lock-debug>
@@ -327,7 +326,7 @@
           <distributed-method-debug>false</distributed-method-debug>
           <new-object-debug>false</new-object-debug>
         </runtime-logging>
-        
+
         <!-- This section controls the exact format of the output from
            any options enabled under 'runtime-logging', above.
            Each individual element controls a different kind of output. -->
@@ -340,17 +339,17 @@
       </debugging>
     </dso>
   </clients>
-  
+
   <!-- This section contains items that affect the core behavior of Terracotta
      as it relates to your application. This data must be kept consistent
      across clients and servers in order for Terracotta to function properly, and
      so the system will enforce this; see the comments for the
      'configuration-model' switch, above, for more details. -->
   <application>
-  
+
     <!-- This section controls how Terracotta DSO behaves in your application. -->
     <dso>
-    
+
       <!-- This section controls which classes are instrumented by
          Terracotta DSO. In order for an object to be shared among
          JVMs by DSO, or contain a root, its class must be instrumented.
@@ -360,10 +359,10 @@
          The first pattern that matches will determine whether the class will
          or will not be instrumented. If no patterns match, the class will not
          be instrumented
-         
+
          Patterns here are AspectWerkz-compatible class specification
          expressions.
-         
+
          Default: none; no classes are instrumented. Thus for proper
          DSO functionality, you must specify at least one 'include'
          section here.
@@ -374,11 +373,11 @@
           <!-- The class(es) to include, as an AspectWerkz-compatible
              class specification expression. (REQUIRED) -->
           <class-expression>com.mycompany.pkga.*</class-expression>
-          
+
           <!-- If set to 'true', then any fields in the given class(es)
              that have the Java 'transient' modifier are not shared
              across JVMs. If set to 'false', they are.
-             
+
              Default: false -->
           <honor-transient>true</honor-transient>
           <on-load>
@@ -393,34 +392,34 @@
             <execute><![CDATA[self.myTransientField = new ArrayList();]]></execute>
           </on-load>  
         </include>
-        
+
         <!-- The class(es) to exclude, as an AspectWerkz-compatible
            class specification expression. -->
         <exclude>com.mycompany.pkga.subpkg.*</exclude>
-        
+
         <include>
           <class-expression>com.mycompany.pkgb.*</class-expression>
         </include>
       </instrumented-classes>
-      
+
       <!-- This section lets you specify certain fields as 'transient' to
          Terracotta DSO. Note that this does not cause these fields
          to behave as 'transient' for Java serialization; rather, it
          simply means that the contents of these fields are not shared
          across JVMs by DSO.
-         
+
          The expressions in 'field-name' must be fully qualified
          field names (expressions are not permitted)
-         
+
          Default: no extra fields are specified as 'transient' -->
       <transient-fields>
         <field-name>com.mycompany.pkga.MyClassOne.fieldA</field-name>
         <field-name>com.mycompany.pkgb.subpkg2.fieldB</field-name>
       </transient-fields>
-      
+
       <!-- This section lets you specify locks to Terracotta DSO. Locks
          are critical to correct functioning of DSO.
-         
+
          Two types of lock elements may be included here, in any order:
          'autolock' and 'named-lock'. 
 
@@ -445,9 +444,9 @@
              AspectWerkz-compatible method specification expression.
              (REQUIRED) -->
           <method-expression>* com.mycompany.pkga.MyClassOne.set*(..)</method-expression>
-          
+
           <!-- The level of the lock: 'read', 'write', or 'concurrent'.
-          
+
              Read locks may be used only when the method(s) being
              locked do not actually modify the data in question;
              multiple threads in multiple JVMs may be inside the 
@@ -455,13 +454,13 @@
              is locked upon the same object but using a write lock,
              then any threads that require a read lock must wait
              until the write locks has been released.
-             
+
              Write locks are used when the method(s) being locked
              modify the data being protected. Only one thread in one
              JVM, cluster-wide, may be inside the same write lock 
              at once. Further, no threads may be inside a read lock
              while one thread holds a write lock of the same identity
-             
+
              Concurrent locks are a looser form of write lock, and
              should be used with caution. Multiple threads can be
              inside a concurrent lock at the same time, and can all
@@ -471,26 +470,26 @@
           -->
           <lock-level>write</lock-level>
         </autolock>
-        
+
         <!-- Specifies a named lock. If you create multiple named-lock
            sections in this file that share the same name, they are
            the same lock, and will behave as such. -->
         <named-lock>
           <!-- The name of the lock. (REQUIRED) -->
           <lock-name>lockOne</lock-name>
-          
+
           <!-- The expression of method(s) to lock. This is an
              AspectWerkz-compatible method specification expression.
              (REQUIRED) -->
           <method-expression>* com.mycompany.pkgb.get*(int)</method-expression>
-          
+
           <!-- The level of the lock: 'read', 'write', or 'concurrent'.
              See above for more details.
           -->
           <lock-level>read</lock-level>
         </named-lock>
       </locks>
-      
+
       <!-- This section specifies the roots for Terracotta DSO. Roots
          are the 'share points' in DSO; they specify fields in a class,
          such that DSO will make sure every instance of every class
@@ -498,7 +497,7 @@
          in all fields of that object, and in all fields of those
          objects, and so on; the transitive closure of this data is
          shared, modulo transients). 
-         
+
          Roots are specified using the fully-qualified name of a
          field. They can optionally be given a name.
       -->
@@ -507,7 +506,7 @@
           <!-- The name of the field to make a root. This must be
              the fully-qualified name of a field. (REQUIRED) -->
           <field-name>com.mycompany.pkgc.AnotherClass.field1</field-name>
-          
+
           <!-- The name for this root. This is optional, but can
              help when debugging your system, or to declare that
              two (or more) unique root field names should use the
@@ -516,13 +515,13 @@
              will be used in both fields -->
           <root-name>rootOne</root-name>
         </root>
-        
+
         <root>
           <field-name>com.mycompany.pkgc.ClassTwo.field3</field-name>
           <root-name>rootTwo</root-name>
         </root>
       </roots>
-      
+
       <!-- This section specifies methods to invoke in a distributed 
          fashion via Terracotta DSO. When a method matching one of the
          patterns here is invoked on a *shared* object in one JVM,
@@ -543,7 +542,7 @@
         <method-expression run-on-all-nodes="false">String[] com.mycompany.pkgc.AnotherClass.eventOccurred(Boolean, Double)</method-expression>
 
       </distributed-methods>
-      
+
       <!-- The standard java runtime classes (typically anything in the
            java.*, javax.*, sun.*, etc packages) are instrumented by
          Terracotta DSO in a special fashion. Specifically, they are
@@ -551,12 +550,12 @@
          included on the Java boot-classpath (which is, in turn,
          a different thing from the normal Java classpath) by the
          dso-java script.
-         
+
          This "boot JAR" can be rebuilt by the 'make-boot-jar' tool
          included with the Terracotta distribution, and must be rebuilt
          when transitioning from one vendor's JVM to another, or between
          different releases of the JVM.
-         
+
          Many commonly-used classes are included by default in the
          Terracotta boot JAR. However, if a class is not included by 
          default in the Terracotta boot JAR, then you can place its
@@ -564,18 +563,18 @@
          'make-boot-jar' tool; this will cause it to be included
          when the boot JAR is rebuilt. Every class must be specified
          individually (patterns are not supported here)
-         
+
          Note that Terracotta cannot guarantee that all runtime classes
          can be safely added here, although many will work correctly.
          If in doubt, consult Terracotta for details.
-         
+
          Default: no additional classes are included in the Terracotta
          boot JAR.
          -->
       <additional-boot-jar-classes>
         <include>java.awt.datatransfer.Clipboard</include>
       </additional-boot-jar-classes>
-      
+
       <!-- When using Terracotta DSO within an application server, you
          may wish to enabled DSO session management. To do so, list the 
          context paths of the applications that should use DSO sessions.
@@ -587,7 +586,7 @@
         <web-application>billing_app</web-application>
         <web-application>ROOT</web-application>
       </web-applications>
-      
+
       <!-- When enabled, the default, mutations to shared objects made
          through reflection behave like normal shared object changes. When
          disabled, changes made to shared objects via reflection are not
@@ -595,12 +594,12 @@
          shared objects). -->
       <dso-reflection-enabled>true</dso-reflection-enabled>      
     </dso>
-    
+
     <!-- This section is a self-contained configuration that controls how 
       Terracotta Spring behaves in your application. 
     -->
     <spring>
-    
+
       <!-- "jee-application" specifies the Spring application(s) that will be
         potentially clustered/shared by Terracotta server; It is a required
         element with minimum 1 occurence and can be repeated unbounded times;
@@ -634,14 +633,14 @@
           bean clustering is not needed, element can be skipped. 
         -->
     <application-contexts>
-    
+
           <!-- Configuration for individual application context. Includes path
             to bean definition file (e.g. applicationContext.xml), list of
             beans and context events that should be clustered.
             Optional; Internally, each "application-context" matches one
             config helper instance. -->
           <application-context>
-            
+
             <!-- Specifies the bean definition resource patterns; The matching
               applys OR logic for individual path element. Required. -->
             <paths>
@@ -653,7 +652,7 @@
               <path>*/beanfactory1.xml</path>
               <path>*/beanfactory2.xml</path>
             </paths>
-            
+
             <!-- Specifies list of clustered beans and their configuration for
               this application context. Spring beans with the same name in
               different contexts will be different logical beans. Required. -->
@@ -678,7 +677,7 @@
                 <non-distributed-field>myFieldOne</non-distributed-field>
                 <non-distributed-field>myFieldTwo</non-distributed-field>
               </bean>
-              
+
               <bean name="clusteredBeanTwo"/>
             </beans>
 
@@ -692,10 +691,10 @@
                  asterisk (*), which is the same as of the application name. -->
               <distributed-event>com.mycompany.pkgb.*</distributed-event>
             </distributed-events>
-            
+
           </application-context>
         </application-contexts>
-  
+
         <!-- This section lets you specify locks to Terracotta DSO. Locks
            are critical to correct functioning of DSO.
 
@@ -819,6 +818,6 @@
 
       </jee-application>
     </spring>
-    
+
   </application>
 </tc:tc-config>

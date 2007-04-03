@@ -17,7 +17,7 @@ For more information, please see the product documentation
 
   <!-- Tell DSO where the Terracotta server can be found. -->
   <servers>
-    <server name="localhost">
+    <server host="localhost">
       <data>%(user.home)/terracotta/server-data</data>
       <logs>%(user.home)/terracotta/server-logs</logs>
     </server>

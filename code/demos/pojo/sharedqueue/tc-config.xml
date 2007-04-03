@@ -53,7 +53,7 @@
 
       <!-- We declare the following fields from the 'demo.sharedqueue.Queue' class
            as roots, making it available for all instances of our app that runs via DSO 
-      
+
            The field 'demo.sharedqueue.Main.lastPortUsed' keeps track of the last port number
            used to launch the web server - subsequent instances of the application will use
            the next port number in the sequence to avoid collision with previous instances -->

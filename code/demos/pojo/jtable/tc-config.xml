@@ -27,12 +27,12 @@
       <!-- Our app requires these custom objects/classes to be shared - the following declarations
            tells DSO which ones they are. When the app runs under DSO, instances of these classes
            will broadcast changes in their state.
-        
+
            A good idiom when writing an app that you intend to cluster via TC DSO, is to group the 
            classes you wish to share under a single package (although if you follow the MVC pattern
            this tends to happen naturally) - this way the list of classes you wish to instrument
            can be concise
-        
+
            Here, we say, instrument all of the classes found in all of the 
            packages of our sample app -->
       <instrumented-classes>

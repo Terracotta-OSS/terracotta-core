@@ -1,33 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config">
-	<servers>
-		<server name="localhost">
-			<data>data/server-data</data>
-			<logs>logs/server-logs</logs>
-		</server>
-	</servers>
-	<clients>
-		<logs>logs/client-logs/%(webserver.log.name)</logs>
-		<modules>
-		  <module name="clustered-rife-1.6.0" version="1.0.0"/>
-		</modules>
-	</clients>
-	<application>
-		<dso>
-			<instrumented-classes>
-				<include>
-					<class-expression>*..*</class-expression>
-				</include>
-			</instrumented-classes>
-			<locks>
-				<autolock>
-					<method-expression>* *..*.*(..)</method-expression>
-					<lock-level>write</lock-level>
-				</autolock>
-			</locks>
-			<transient-fields>
-				<field-name>org.apache.catalina.core.ApplicationFilterConfig.context</field-name>
-			</transient-fields>
-		</dso>
-	</application>
+  <servers>
+    <server host="%i" name="sample"/>
+  </servers>
+  <clients>
+    <logs>logs/client-logs/%(webserver.log.name)</logs>
+    <modules>
+      <module name="clustered-rife-1.6.0" version="1.0.0"/>
+    </modules>
+  </clients>
+  <application>
+    <dso>
+      <instrumented-classes>
+        <include>
+          <class-expression>*..*</class-expression>
+        </include>
+      </instrumented-classes>
+      <locks>
+        <autolock>
+          <method-expression>* *..*.*(..)</method-expression>
+          <lock-level>write</lock-level>
+        </autolock>
+      </locks>
+      <transient-fields>
+        <field-name>org.apache.catalina.core.ApplicationFilterConfig.context</field-name>
+      </transient-fields>
+    </dso>
+  </application>
 </tc:tc-config>
