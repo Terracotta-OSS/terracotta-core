@@ -5,6 +5,7 @@
 package com.tc.net.groups;
 
 import com.tc.test.TCTestCase;
+import com.tc.util.PortChooser;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.io.IOException;
@@ -24,7 +25,10 @@ public class TribesGroupManagerTest extends TCTestCase {
   }
 
   public void testSendingReceivingMessages() throws Exception {
-    final Node[] allNodes = new Node[] { new Node("localhost", 7001), new Node("localhost", 7002) };
+    PortChooser pc = new PortChooser();
+    final int p1 = pc.chooseRandomPort();
+    final int p2 = pc.chooseRandomPort();
+    final Node[] allNodes = new Node[] { new Node("localhost", p1), new Node("localhost", p2) };
 
     TribesGroupManager gm1 = new TribesGroupManager();
     MyListener l1 = new MyListener();

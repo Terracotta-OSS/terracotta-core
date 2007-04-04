@@ -49,7 +49,7 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
     this.garbageCollectionInterval = this.context.intItem("dso/garbage-collection/interval");
     this.clientReconnectWindow = this.context.intItem("dso/client-reconnect-window");
     this.listenPort = this.context.intItem("dso-port");
-    this.host = this.context.stringItem("host");
+    this.host = this.context.stringItem("@host");
   }
 
   public IntConfigItem listenPort() {
