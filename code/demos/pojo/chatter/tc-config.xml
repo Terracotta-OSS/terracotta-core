@@ -1,3 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2003-2007 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-3.xsd">
@@ -19,6 +27,7 @@
   <clients>
     <logs>%(user.home)/terracotta/client-logs/pojo/chatter/%D</logs>
   </clients>
+
   <application>
     <dso>
       <!--Our app requires these custom objects/classes to be shared - the following declarations
