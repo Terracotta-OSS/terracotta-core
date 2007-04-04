@@ -175,9 +175,12 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   void addNewModule(String name, String version);
 
-  boolean hasCustomAdapter(String fullName);
+  boolean removeCustomAdapter(String name);
 
-  void addCustomAdapter(String name, ClassAdapterFactory adapterFactory);
+  /**
+   * @return true if the adapter was added (ie. it was not already present)
+   */
+  boolean addCustomAdapter(String name, ClassAdapterFactory adapterFactory);
 
   int getSessionLockType(String appName);
 

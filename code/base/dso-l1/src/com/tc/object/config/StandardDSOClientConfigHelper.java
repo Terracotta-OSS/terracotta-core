@@ -1041,17 +1041,19 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
                      new TerracottaServletResponseImplAdapter());
   }
 
-  private void removeCustomAdapter(String name) {
-    this.customAdapters.remove(name);
+  public boolean removeCustomAdapter(String name) {
+    synchronized (customAdapters) {
+      Object prev = this.customAdapters.remove(name);
+      return prev != null;
+    }
   }
 
-  public void addCustomAdapter(String name, ClassAdapterFactory factory) {
-    try {
-      // Constructor cstr = adapter.getConstructor(ADAPTER_CSTR_SIGNATURE);
+  public boolean addCustomAdapter(String name, ClassAdapterFactory factory) {
+    synchronized (customAdapters) {
+      if (customAdapters.containsKey(name)) { return false; }
       Object prev = this.customAdapters.put(name, factory);
       Assert.assertNull(prev);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+      return true;
     }
   }
 
@@ -1340,7 +1342,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     // If a root is defined then we automagically instrument
     if (classContainsAnyRoots(fullClassName)) { return cacheIsAdaptable(fullClassName, true); }
     // custom adapters trump config.
-    if (hasCustomAdapter(fullClassName)) { return cacheIsAdaptable(fullClassName, true); }
+    if (customAdapters.containsKey(fullClassName)) { return cacheIsAdaptable(fullClassName, true); }
     // existing class specs trump config
     if (hasSpec(fullClassName)) { return cacheIsAdaptable(fullClassName, true); }
 
@@ -1366,10 +1368,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
       }
     }
     return DEAFULT_INSTRUMENTATION_DESCRIPTOR;
-  }
-
-  public boolean hasCustomAdapter(String fullName) {
-    return customAdapters.containsKey(fullName);
   }
 
   private String outerClassnameWithoutInner(String fullName) {

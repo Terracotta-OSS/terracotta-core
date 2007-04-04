@@ -405,6 +405,16 @@ modules:
         - thirdparty
         - legacy-test-tree
         - dso-memory-datastore
+  - clustered-jetty-6.1:
+      options:
+        jdk: J2SE-1.4
+        module: true
+      dependencies:
+        - modules-common-1.0
+        - aspectwerkz
+        - dso-common
+        - dso-l1
+        - thirdparty
   - clustered-lucene-2.0.0:
       options:
         jdk: J2SE-1.5
