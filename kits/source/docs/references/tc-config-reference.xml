@@ -445,7 +445,21 @@
              (REQUIRED) -->
           <method-expression>* com.mycompany.pkga.MyClassOne.set*(..)</method-expression>
 
-          <!-- The level of the lock: 'read', 'write', or 'concurrent'.
+          <!-- The level of the lock: 'write', 'synchronous-write', 'read', or
+	       'concurrent'. 
+
+             Write locks are used when the method(s) being locked
+             modify the data being protected. Only one thread in one
+             JVM, cluster-wide, may be inside the same write lock 
+             at once. Further, no threads may be inside a read lock
+             while one thread holds a write lock of the same identity.
+	     
+	     Synchronous-write locks add a further guarantee over write locks.
+	     Where a write lock guarantees that all changes made in the scope of
+	     that lock will be applied prior to a thread acquiring that lock,
+	     synchronous-write locks guarantee that the thread holding the lock
+	     will not release the lock until the changes made under that lock
+	     are fully ACKed by the server.
 
              Read locks may be used only when the method(s) being
              locked do not actually modify the data in question;
@@ -454,12 +468,6 @@
              is locked upon the same object but using a write lock,
              then any threads that require a read lock must wait
              until the write locks has been released.
-
-             Write locks are used when the method(s) being locked
-             modify the data being protected. Only one thread in one
-             JVM, cluster-wide, may be inside the same write lock 
-             at once. Further, no threads may be inside a read lock
-             while one thread holds a write lock of the same identity
 
              Concurrent locks are a looser form of write lock, and
              should be used with caution. Multiple threads can be
@@ -716,34 +724,37 @@
                (REQUIRED) -->
             <method-expression>* com.mycompany.pkga.MyClassOne.set*(..)</method-expression>
 
-            <!-- The level of the lock: 'read', 'write', or 'concurrent'.
+          <!-- The level of the lock: 'write', 'synchronous-write', 'read', or
+	       'concurrent'. 
 
-               Read locks may be used only when the method(s) being
-               locked do not actually modify the data in question;
-               multiple threads in multiple JVMs may be inside a 
-               read lock at the same time. However, if a thread is
-               locked upon the same object but using a write lock,
-               then any threads that require a read lock must wait
-               until it has completed.
+             Write locks are used when the method(s) being locked
+             modify the data being protected. Only one thread in one
+             JVM, cluster-wide, may be inside the same write lock 
+             at once. Further, no threads may be inside a read lock
+             while one thread holds a write lock of the same identity.
+	     
+	     Synchronous-write locks add a further guarantee over write locks.
+	     Where a write lock guarantees that all changes made in the scope of
+	     that lock will be applied prior to a thread acquiring that lock,
+	     synchronous-write locks guarantee that the thread holding the lock
+	     will not release the lock until the changes made under that lock
+	     are fully ACKed by the server.
 
-               Write locks are used when the method(s) being locked
-               modify the data being protected. Only one thread in one
-               JVM, cluster-wide, may be inside a write lock at once.
-               Further, no threads may be inside a read lock on the
-               same object while one thread is inside a write lock.
+             Read locks may be used only when the method(s) being
+             locked do not actually modify the data in question;
+             multiple threads in multiple JVMs may be inside the 
+             same read lock at the same time. However, if a thread 
+             is locked upon the same object but using a write lock,
+             then any threads that require a read lock must wait
+             until the write locks has been released.
 
-               Concurrent locks are a looser form of write lock, and
-               should be used with caution. Multiple threads can be
-               inside a concurrent lock at the same time, and can all
-               write to the data; they will each see a consistent view
-               of the data at all times (i.e., none will see 'partial'
-               modifications made by another thread before it exits
-               the locked synchronized block), but, if multiple
-               threads are in the same block at once, only the changes
-               made by the last thread to exit the block actually
-               take effect. This is nondeterministic and thus is
-               generally used only with considerable caution.
-            -->
+             Concurrent locks are a looser form of write lock, and
+             should be used with caution. Multiple threads can be
+             inside a concurrent lock at the same time, and can all
+             write to the data; This can easily lead to nondeterministic
+             program behavior and thus is generally used only with
+             considerable caution.
+          -->
             <lock-level>write</lock-level>
           </autolock>
 
