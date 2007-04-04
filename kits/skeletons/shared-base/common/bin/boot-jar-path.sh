@@ -14,8 +14,26 @@
 #                 specific location under ${TC_INSTALL_DIR}/lib/dso-boot.
 #
 
+# OS specific support.  $var _must_ be set to either true or false.
+cygwin=false
+case "`uname`" in
+CYGWIN*) cygwin=true;;
+esac
+
+# For Cygwin, ensure paths are in UNIX format before anything is touched
+if $cygwin; then
+  [ -n "$JAVA_HOME" ] && JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
+  [ -n "$TC_INSTALL_DIR" ] && JAVA_HOME=`cygpath --unix "$TC_INSTALL_DIR"`
+fi
+
 JAVACMD=${JAVA_HOME}/bin/java
 TC_JAR=${TC_INSTALL_DIR}/lib/tc.jar
+
+# For Cygwin, ensure paths are in UNIX format before anything is touched
+if $cygwin; then
+  [ -n "$JAVACMD" ] && JAVA_HOME=`cygpath --windows "$JAVACMD"`
+  [ -n "$TC_JAR" ] && TC_INSTALL_DIR=`cygpath --windows "$TC_JAR"`
+fi
 
 if test -z "$DSO_BOOT_JAR"; then
   DSO_BOOT_JAR_NAME="`"${JAVACMD}" -cp "${TC_JAR}" com.tc.object.tools.BootJarSignature`"
@@ -33,6 +51,12 @@ if test -z "$DSO_BOOT_JAR"; then
 
   DSO_BOOT_JAR="${TC_INSTALL_DIR}/lib/dso-boot/${DSO_BOOT_JAR_NAME}"
 fi
+
+# For Cygwin, ensure paths are in UNIX format before anything is touched
+if $cygwin; then
+  [ -n "$DSO_BOOT_JAR" ] && JAVA_HOME=`cygpath --windows "$DSO_BOOT_JAR"`
+fi
+
 if test \! -f "${DSO_BOOT_JAR}"; then
   if test -n "${TC_CONFIG_PATH}"; then
    "${JAVACMD}" -Dtc.install-root="${TC_INSTALL_DIR}" -cp "${TC_JAR}" com.tc.object.tools.BootJarTool -o "${DSO_BOOT_JAR}" -f "${TC_CONFIG_PATH}"

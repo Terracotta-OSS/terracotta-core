@@ -6,6 +6,18 @@
 #  All rights reserved.
 #
 
+# OS specific support.  $var _must_ be set to either true or false.
+cygwin=false
+case "`uname`" in
+CYGWIN*) cygwin=true;;
+esac
+
+# For Cygwin, ensure paths are in UNIX format before anything is touched
+if $cygwin; then
+  [ -n "$JAVA_HOME" ] && JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
+  [ -n "$TC_INSTALL_DIR" ] && JAVA_HOME=`cygpath --unix "$TC_INSTALL_DIR"`
+fi
+
 if test \! -d "${JAVA_HOME}"; then
   echo "$0: the JAVA_HOME environment variable is not defined correctly"
   exit 2
@@ -31,6 +43,13 @@ if test -n "$1"; then
 fi
 
 . "${TC_INSTALL_DIR}/bin/boot-jar-path.sh"
+
+# For Cygwin, convert paths back to Windows
+if $cygwin; then
+  [ -n "$DSO_BOOT_JAR" ] && JAVA_HOME=`cygpath --windows "$DSO_BOOT_JAR"`
+  [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath --windows "$TC_INSTALL_DIR"`
+  [ -n "$TC_CONFIG_PATH" ] && TC_INSTALL_DIR=`cygpath --windows "$TC_CONFIG_PATH"`
+fi
 
 TC_JAVA_OPTS="-Xbootclasspath/p:${DSO_BOOT_JAR} \
  -Dtc.install-root=${TC_INSTALL_DIR} \
