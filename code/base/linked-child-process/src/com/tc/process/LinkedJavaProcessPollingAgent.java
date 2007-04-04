@@ -82,10 +82,6 @@ public final class LinkedJavaProcessPollingAgent {
     server.shutdown();
   }
 
-  public static synchronized boolean isAnyAlive() {
-    return server.isAnyAlive();
-  }
-
   private static void log(String msg) {
     System.err.println("LJP: [" + new Date() + "] " + msg);
   }
@@ -146,8 +142,8 @@ public final class LinkedJavaProcessPollingAgent {
             if (!honorShutdownMsg) continue;
             log("Client received shutdown message from server. Shutting Down...");
             System.exit(0);
-          } else if (ARE_YOU_ALIVE.equals(data)) {
-            out.println(I_AM_ALIVE);
+          } else {
+            throw new Exception("Doesn't recognize data: " + data);
           }
 
           long elapsed = System.currentTimeMillis() - start;
@@ -199,23 +195,6 @@ public final class LinkedJavaProcessPollingAgent {
       }
     }
 
-    private synchronized boolean isAnyAlive() {
-      boolean isAnyAlive = false;
-      try {
-        synchronized (heartBeatThreads) {
-          for (Iterator it = heartBeatThreads.iterator(); it.hasNext();) {
-            HeartbeatThread ht = (HeartbeatThread) it.next();
-            if (!ht.isAlive() || ht.isInterrupted()) continue;
-            isAnyAlive = isAnyAlive || ht.ping();
-          }
-        }
-      } catch (Throwable e) {
-        isAnyAlive = false;
-      }
-
-      return isAnyAlive;
-    }
-
     public void run() {
       try {
         ServerSocket serverSocket = new ServerSocket(0);
@@ -254,7 +233,7 @@ public final class LinkedJavaProcessPollingAgent {
       if (socket == null) throw new NullPointerException();
       this.socket = socket;
       try {
-        this.socket.setSoTimeout(1 * NORMAL_HEARTBEAT_INTERVAL);
+        this.socket.setSoTimeout(2 * NORMAL_HEARTBEAT_INTERVAL);
       } catch (SocketException e) {
         throw new RuntimeException(e);
       }
@@ -262,25 +241,7 @@ public final class LinkedJavaProcessPollingAgent {
       this.setDaemon(true);
     }
 
-    public boolean ping() {
-      boolean alive = false;
-
-      if (socket.isClosed() || socket.isInputShutdown() || socket.isOutputShutdown()) { return alive; }
-
-      try {
-        out.println(ARE_YOU_ALIVE);
-        out.flush();
-        String status = in.readLine();
-        alive = status.equals(I_AM_ALIVE);
-        System.out.println("Got response: " + status);
-      } catch (Exception e) {
-        alive = false;
-      }
-
-      return alive;
-    }
-
-    public synchronized void shutdown() throws IOException {
+     public synchronized void shutdown() throws IOException {
       try {
         out.println(SHUTDOWN);
         out.flush();
