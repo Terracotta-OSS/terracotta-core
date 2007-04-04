@@ -1,11 +1,11 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
 <!--
 
-All content copyright (c) 2003-2006 Terracotta, Inc.,
-except as may otherwise be noted in a separate copyright notice.
-All rights reserved
+  All content copyright (c) 2003-2007 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved
 
 -->
-
 <project name="rife" default="build" basedir=".">
 	<target name="init">
 		<mkdir dir="target/classes"/>
@@ -22,7 +22,7 @@ All rights reserved
 	
 	<target name="build" depends="init">
 		<javac srcdir="src/main/java" destdir="target/classes" classpathref="lib.dir" target="1.5" source="1.5"/>
-		<zip destfile="target/rife.war">
+		<zip destfile="target/continuations.war">
 			<zipfileset dir="src/main/webapp"/>
 			<zipfileset dir="target/classes" prefix="WEB-INF/classes"/>        
 			<zipfileset dir="src/main/java" prefix="WEB-INF/classes"/>        

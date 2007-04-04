@@ -1,10 +1,5 @@
-/*
- * Copyright 2001-2007 Geert Bevin <gbevin[remove] at uwyn dot com>
- * Distributed under the terms of either:
- * - the common development and distribution license (CDDL), v1.0; or
- * - the GNU Lesser General Public License, v2.1 or later
- * $Id$
- */
+package demo.continuations;
+
 import com.uwyn.rife.site.ConstrainedBean;
 import com.uwyn.rife.site.ConstrainedProperty;
 import com.uwyn.rife.site.MetaData;
