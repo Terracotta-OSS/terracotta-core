@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config.schema;
 
@@ -10,6 +11,7 @@ import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.dynamic.IntConfigItem;
+import com.tc.config.schema.dynamic.StringConfigItem;
 import com.tc.config.schema.dynamic.XPathBasedConfigItem;
 import com.tc.util.Assert;
 import com.terracottatech.config.PersistenceMode;
@@ -26,6 +28,7 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
   private final IntConfigItem     garbageCollectionInterval;
   private final IntConfigItem     listenPort;
   private final IntConfigItem     clientReconnectWindow;
+  private final StringConfigItem  host;
 
   public NewL2DSOConfigObject(ConfigContext context) {
     super(context);
@@ -46,10 +49,15 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
     this.garbageCollectionInterval = this.context.intItem("dso/garbage-collection/interval");
     this.clientReconnectWindow = this.context.intItem("dso/client-reconnect-window");
     this.listenPort = this.context.intItem("dso-port");
+    this.host = this.context.stringItem("host");
   }
 
   public IntConfigItem listenPort() {
     return this.listenPort;
+  }
+  
+  public StringConfigItem host() {
+    return host;
   }
 
   public ConfigItem persistenceMode() {

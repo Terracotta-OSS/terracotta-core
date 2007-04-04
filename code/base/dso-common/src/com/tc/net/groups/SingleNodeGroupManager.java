@@ -30,7 +30,7 @@ public class SingleNodeGroupManager implements GroupManager {
 
   NodeID                             thisNode;
 
-  public NodeID join() throws GroupException {
+  public NodeID join(final Node thisN, final Node[] allNodes) throws GroupException {
     if (thisNode != null) { throw new GroupException("Already Joined !"); }
     this.thisNode = new NodeID("CurrentNode", CURRENT_NODE_ID);
     return this.thisNode;

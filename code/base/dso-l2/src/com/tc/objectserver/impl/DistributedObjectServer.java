@@ -13,6 +13,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.NullSink;
+import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
 import com.tc.io.TCFile;
@@ -33,6 +34,7 @@ import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
 import com.tc.management.remote.protocol.terracotta.L1JmxReady;
 import com.tc.net.NIOWorkarounds;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.groups.Node;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
@@ -586,9 +588,9 @@ public class DistributedObjectServer extends SEDA {
       l2Coordinator = new L2HADisabledCooridinator();
     }
 
-    context = new ServerConfigurationContextImpl(stageManager, objectManager, objectStore,
-                                                 lockManager, channelManager, clientStateManager, transactionManager,
-                                                 txnObjectManager, clientHandshakeManager, channelStats, l2Coordinator,
+    context = new ServerConfigurationContextImpl(stageManager, objectManager, objectStore, lockManager, channelManager,
+                                                 clientStateManager, transactionManager, txnObjectManager,
+                                                 clientHandshakeManager, channelStats, l2Coordinator,
                                                  new CommitTransactionMessageToTransactionBatchReader());
 
     stageManager.startAll(context);
@@ -603,13 +605,36 @@ public class DistributedObjectServer extends SEDA {
                                                     instanceMonitor, appEvents);
 
     if (l2Properties.getBoolean("beanshell.enabled")) startBeanShell(l2Properties.getInt("beanshell.port"));
-    
+
     if (networkedHA) {
-      l2Coordinator.start();
+      final Node thisNode = makeThisNode();
+      final Node[] allNodes = makeAllNodes();
+      l2Coordinator.start(thisNode, allNodes);
     } else {
       // In non-network enabled HA, Only active server reached here.
       startActiveMode();
     }
+  }
+
+  private Node[] makeAllNodes() {
+    String[] l2s = configSetupManager.allCurrentlyKnownServers();
+    Node[] rv = new Node[l2s.length];
+    for (int i = 0; i < l2s.length; i++) {
+      NewL2DSOConfig l2;
+      try {
+        l2 = configSetupManager.dsoL2ConfigFor(l2s[i]);
+      } catch (ConfigurationSetupException e) {
+        throw new RuntimeException("Error getting l2 config for: " + l2s[i], e);
+      }
+      rv[i] = new Node(l2.host().getString(), l2.listenPort().getInt());
+    }
+    return rv;
+  }
+
+  private Node makeThisNode() {
+    NewL2DSOConfig l2 = configSetupManager.dsoL2Config();
+    final Node rv = new Node(l2.host().getString(), l2.listenPort().getInt());
+    return rv;
   }
 
   public boolean startActiveMode() throws IOException {
@@ -750,13 +775,12 @@ public class DistributedObjectServer extends SEDA {
 
   private void startJMXServer() throws Exception {
     l2Management = new L2Management(tcServerInfoMBean, configSetupManager);
-    
+
     /*
-     * Some tests use this if they run with jdk1.4 and start multiple in-process
-     * DistributedObjectServers. When we no longer support 1.4, this can be
-     * removed. See com.tctest.LockManagerSystemTest.
+     * Some tests use this if they run with jdk1.4 and start multiple in-process DistributedObjectServers. When we no
+     * longer support 1.4, this can be removed. See com.tctest.LockManagerSystemTest.
      */
-    if(!Boolean.getBoolean("org.terracotta.server.disableJmxConnector")) {
+    if (!Boolean.getBoolean("org.terracotta.server.disableJmxConnector")) {
       l2Management.start();
     }
   }

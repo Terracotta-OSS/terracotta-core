@@ -13,6 +13,7 @@ import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.dynamic.ConfigItemListener;
 import com.tc.config.schema.dynamic.IntConfigItem;
+import com.tc.config.schema.dynamic.StringConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
@@ -52,20 +53,19 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
   // please keep this set to true so that tests on slow/loaded machines don't fail. When working on this test though, it
   // can be convenient to temporarily flip it to false
-  private static final boolean    slow = true;
+  private static final boolean    slow  = true;
 
   private DistributedObjectServer server;
   private DistributedObjectClient client;
   private ClientLockManagerImpl   lockManager;
-  private TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(TCLogging
-                                         .getLogger(DistributedObjectServer.class)));
+  private TCThreadGroup           group = new TCThreadGroup(new ThrowableHandler(TCLogging
+                                            .getLogger(DistributedObjectServer.class)));
 
   static {
     /*
-     * This test run against JDK1.4 and creates and executes multiple embedded
-     * DistributedObjectServers. L2Management creates an RMI registry on the JMX port,
-     * which is randomly changing in this test. In 1.4 it's not possible to create
-     * multiple RMI Registries in a single VM. Remove this when we no longer support 1.4.
+     * This test run against JDK1.4 and creates and executes multiple embedded DistributedObjectServers. L2Management
+     * creates an RMI registry on the JMX port, which is randomly changing in this test. In 1.4 it's not possible to
+     * create multiple RMI Registries in a single VM. Remove this when we no longer support 1.4.
      */
     System.setProperty("org.terracotta.server.disableJmxConnector", "true");
   }
@@ -78,8 +78,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     }
 
     public void execute() throws Throwable {
-      server = new DistributedObjectServer(new ConfigOverride(l2Manager),
-                                           group, new NullConnectionPolicy(),
+      server = new DistributedObjectServer(new ConfigOverride(l2Manager), group, new NullConnectionPolicy(),
                                            new NullTCServerInfo());
       server.start();
     }
@@ -101,7 +100,8 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(manager);
 
     client = new DistributedObjectClient(configHelper, new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(DistributedObjectClient.class))), new MockClassProvider(), components, NullManager.getInstance(), new Cluster());
+        .getLogger(DistributedObjectClient.class))), new MockClassProvider(), components, NullManager.getInstance(),
+                                         new Cluster());
     client.start();
 
     lockManager = (ClientLockManagerImpl) client.getLockManager();
@@ -459,6 +459,28 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
       public XmlObject getBean() {
         return config.getBean();
+      }
+
+      public StringConfigItem host() {
+        return new StringConfigItem() {
+
+          public String getString() {
+            return "localhost";
+          }
+
+          public void addListener(ConfigItemListener changeListener) {
+            //
+          }
+
+          public Object getObject() {
+            return getString();
+          }
+
+          public void removeListener(ConfigItemListener changeListener) {
+            //
+          }
+
+        };
       }
 
     }

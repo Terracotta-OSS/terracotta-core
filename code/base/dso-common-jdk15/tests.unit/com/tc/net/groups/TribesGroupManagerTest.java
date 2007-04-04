@@ -13,6 +13,10 @@ import java.io.ObjectOutput;
 
 public class TribesGroupManagerTest extends TCTestCase {
 
+  public TribesGroupManagerTest() {
+//    disableTestUntil("testIfTribesGroupManagerLoads", "2007-04-27");
+  }
+
   public void testIfTribesGroupManagerLoads() throws Exception {
     GroupManager gm = GroupManagerFactory.createGroupManager();
     assertNotNull(gm);
@@ -20,16 +24,18 @@ public class TribesGroupManagerTest extends TCTestCase {
   }
 
   public void testSendingReceivingMessages() throws Exception {
+    final Node[] allNodes = new Node[] { new Node("localhost", 7001), new Node("localhost", 7002) };
+
     TribesGroupManager gm1 = new TribesGroupManager();
     MyListener l1 = new MyListener();
     gm1.registerForMessages(TestMessage.class, l1);
-    NodeID n1 = gm1.join();
+    NodeID n1 = gm1.join(allNodes[0], allNodes);
 
     TribesGroupManager gm2 = new TribesGroupManager();
     MyListener l2 = new MyListener();
     gm2.registerForMessages(TestMessage.class, l2);
-    NodeID n2 = gm2.join();
-    
+    NodeID n2 = gm2.join(allNodes[1], allNodes);
+
     assertNotEquals(n1, n2);
 
     TestMessage m1 = new TestMessage("Hello there");
@@ -37,17 +43,17 @@ public class TribesGroupManagerTest extends TCTestCase {
 
     TestMessage m2 = (TestMessage) l2.take();
     System.err.println(m2);
-    
+
     assertEquals(m1, m2);
-    
+
     TestMessage m3 = new TestMessage("Hello back");
     gm2.sendAll(m3);
 
     TestMessage m4 = (TestMessage) l1.take();
     System.err.println(m4);
-    
+
     assertEquals(m3, m4);
-    
+
   }
 
   private static final class MyListener implements GroupMessageListener {
@@ -70,7 +76,7 @@ public class TribesGroupManagerTest extends TCTestCase {
     public TestMessage() {
       super(0);
     }
-    
+
     public TestMessage(String message) {
       super(0);
       this.msg = message;
@@ -89,11 +95,11 @@ public class TribesGroupManagerTest extends TCTestCase {
       out.writeUTF(msg);
 
     }
-    
+
     public int hashCode() {
       return msg.hashCode();
     }
-    
+
     public boolean equals(Object o) {
       if (o instanceof TestMessage) {
         TestMessage other = (TestMessage) o;

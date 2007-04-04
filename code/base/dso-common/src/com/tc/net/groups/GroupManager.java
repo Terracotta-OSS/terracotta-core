@@ -8,7 +8,7 @@ import com.tc.async.api.Sink;
 
 public interface GroupManager {
 
-  public NodeID join() throws GroupException;
+  public NodeID join(final Node thisNode, final Node[] allNodes) throws GroupException;
   
   public NodeID getLocalNodeID() throws GroupException;
 

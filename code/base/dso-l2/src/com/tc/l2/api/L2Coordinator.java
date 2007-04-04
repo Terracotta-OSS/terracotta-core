@@ -7,10 +7,11 @@ package com.tc.l2.api;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
 import com.tc.l2.state.StateManager;
 import com.tc.net.groups.GroupManager;
+import com.tc.net.groups.Node;
 
 public interface L2Coordinator {
 
-  public void start();
+  public void start(Node thisNode, Node[] allNodes);
 
   public ReplicatedClusterStateManager getReplicatedClusterStateManager();
 
