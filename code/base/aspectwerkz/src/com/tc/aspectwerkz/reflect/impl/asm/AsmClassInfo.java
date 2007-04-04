@@ -727,6 +727,7 @@ public class AsmClassInfo implements ClassInfo {
         if (componentName.indexOf('[') > 0) {
           return getClassInfo(componentName, loader);
         }
+        
         System.out.println(
                 "AW::WARNING - could not load class ["
                         + componentName
@@ -734,10 +735,13 @@ public class AsmClassInfo implements ClassInfo {
                         + loader
                         + "]"
         );
+        
         componentInfo = new ClassInfo.NullClassInfo();
+        return componentInfo;
       }
+      
       try {
-        componentInfo = AsmClassInfo.getClassInfo(componentName, componentClassAsStream, loader);
+         componentInfo = AsmClassInfo.getClassInfo(componentName, componentClassAsStream, loader);
       } finally {
         try {
           componentClassAsStream.close();
