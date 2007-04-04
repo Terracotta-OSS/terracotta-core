@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.spring.integrationtests.framework;
 
@@ -35,8 +36,7 @@ public class ServerManager {
 
   static final boolean           MONKEY_MODE    = true;
 
-  public ServerManager(Class testClass) throws Exception {
-    this.testClass = testClass;
+  public ServerManager(final Class testClass) throws Exception {
     PropertiesHackForRunningInEclipse.initializePropertiesWhenRunningInEclipse();
 
     config = TestConfigObject.getInstance();
@@ -71,20 +71,19 @@ public class ServerManager {
 
   private File                  tempDir;
 
-  private final Class           testClass;
-
   private synchronized File serverInstallDir() {
     return makeDir(config.appserverServerInstallDir() + File.separator + SERVER_INSTALL);
   }
-
-  // FIXME reuse the same dir and cleanup each time
 
   private synchronized File workingDir() throws IOException {
     String osName = config.osName();
     File dir = null;
 
     if (osName != null && osName.startsWith("Windows")) {
+      // MNK-89: Lousy Windows file system!
       dir = makeDir(config.appserverWorkingDir() + File.separator);
+      File guaranteedUniqueFile = File.createTempFile("servermanager-unique-", "-marker", dir);
+      dir = makeDir(guaranteedUniqueFile.getAbsolutePath() + "-dir" + File.separator);
     } else {
       dir = makeDir(tempDir.getAbsolutePath());
     }
