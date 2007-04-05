@@ -46,7 +46,6 @@ public class TransparencyClassSpec {
   private final List                  supportMethodCreators      = new LinkedList();
   private final Map                   methodAdapters             = new HashMap();
   private final Map                   flags                      = new HashMap();
-  private final Set                   transients                 = new HashSet();
   private final Map                   codeSpecs                  = new HashMap();
   private final Set                   nonInstrumentedMethods     = Collections.synchronizedSet(new HashSet());
   private String                      changeApplicatorClassName;
@@ -175,7 +174,7 @@ public class TransparencyClassSpec {
   }
 
   public TransparencyClassSpec addTransient(String variableName) {
-    transients.add(variableName);
+    configuration.addTransient(className, variableName);
     return this;
   }
 
@@ -221,10 +220,6 @@ public class TransparencyClassSpec {
 
   public boolean isTransient(int access, ClassInfo classInfo, String fieldName) {
     return configuration.isTransient(access, classInfo, fieldName);
-  }
-
-  Set getTransients() {
-    return Collections.unmodifiableSet(transients);
   }
 
   public boolean isVolatile(int access, ClassInfo classInfo, String fieldName) {
