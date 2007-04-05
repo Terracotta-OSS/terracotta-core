@@ -38,23 +38,23 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TribesGroupManager implements GroupManager, ChannelListener, MembershipListener {
-  private static final int SEND_TIMEOUT_MILLIS = 6000;
+  private static final int                                SEND_TIMEOUT_MILLIS = 6000;
 
-  private static final TCLogger                           logger           = TCLogging
-                                                                               .getLogger(TribesGroupManager.class);
+  private static final TCLogger                           logger              = TCLogging
+                                                                                  .getLogger(TribesGroupManager.class);
 
   private final GroupChannel                              group;
   private TcpFailureDetector                              failuredetector;
   private Member                                          thisMember;
   private NodeID                                          thisNodeID;
 
-  private final CopyOnWriteArrayList<GroupEventsListener> groupListeners   = new CopyOnWriteArrayList<GroupEventsListener>();
-  private final Map<NodeID, Member>                       nodes            = Collections
-                                                                               .synchronizedMap(new HashMap<NodeID, Member>());
-  private final Map<String, GroupMessageListener>         messageListeners = new ConcurrentHashMap<String, GroupMessageListener>();
-  private final Map<MessageID, GroupResponse>             pendingRequests  = new Hashtable<MessageID, GroupResponse>();
+  private final CopyOnWriteArrayList<GroupEventsListener> groupListeners      = new CopyOnWriteArrayList<GroupEventsListener>();
+  private final Map<NodeID, Member>                       nodes               = Collections
+                                                                                  .synchronizedMap(new HashMap<NodeID, Member>());
+  private final Map<String, GroupMessageListener>         messageListeners    = new ConcurrentHashMap<String, GroupMessageListener>();
+  private final Map<MessageID, GroupResponse>             pendingRequests     = new Hashtable<MessageID, GroupResponse>();
 
-  private boolean                                         debug            = false;
+  private boolean                                         debug               = false;
 
   public TribesGroupManager() {
     group = new GroupChannel();
@@ -62,18 +62,56 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
 
   public NodeID join(final Node thisNode, final Node[] allNodes) throws GroupException {
     try {
-      setup(thisNode, allNodes);
-      failuredetector.start(Channel.DEFAULT);
+      // set up static nodes
+      StaticMembershipInterceptor smi = setupStaticMembers(thisNode, allNodes);
+      group.addInterceptor(smi);
+
+      // set up receiver
+      ReceiverBase receiver = (ReceiverBase) group.getChannelReceiver();
+      receiver.setAddress(thisNode.getHost());
+      receiver.setPort(thisNode.getPort());
+      receiver.setAutoBind(0);
+
+      // set up failure detector
+      failuredetector = new TcpFailureDetector();
+      group.addInterceptor(failuredetector);
+
+      // add listeners
+      group.addMembershipListener(this);
+      group.addChannelListener(this);
+
+      // config send timeout
       ReplicationTransmitter transmitter = (ReplicationTransmitter) group.getChannelSender();
       DataSender sender = transmitter.getTransport();
       sender.setTimeout(SEND_TIMEOUT_MILLIS);
 
-      group.start(Channel.SND_RX_SEQ | Channel.SND_TX_SEQ);
+      // start services
+      failuredetector.start(Channel.DEFAULT);
+      group.start(Channel.SND_RX_SEQ | Channel.SND_TX_SEQ | Channel.MBR_RX_SEQ);
+
       return this.thisNodeID;
     } catch (ChannelException e) {
       logger.error(e);
       throw new GroupException(e);
     }
+  }
+
+  private StaticMembershipInterceptor setupStaticMembers(final Node thisNode, final Node[] allNodes)
+      throws AssertionError {
+    StaticMembershipInterceptor smi = new StaticMembershipInterceptor();
+    for (int i = 0; i < allNodes.length; i++) {
+      final Node node = allNodes[i];
+      if (thisNode.equals(node)) continue;
+      StaticMember sm = makeMember(node);
+      if (sm == null) continue;
+      smi.addStaticMember(sm);
+    }
+    // set up this node
+    thisMember = makeMember(thisNode);
+    this.thisNodeID = new NodeID(thisMember.getName(), thisMember.getUniqueId());
+    if (thisMember == null) { throw new AssertionError("Error setting up this group member: " + thisNode); }
+    smi.setLocalMember(thisMember);
+    return smi;
   }
 
   public NodeID getLocalNodeID() throws GroupException {
@@ -133,20 +171,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   }
 
   private void setup(final Node thisNode, final Node[] allNodes) throws AssertionError {
-    // set up other nodes
-    StaticMembershipInterceptor smi = new StaticMembershipInterceptor();
-    for (int i = 0; i < allNodes.length; i++) {
-      final Node node = allNodes[i];
-      if (thisNode.equals(node)) continue;
-      StaticMember sm = makeMember(node);
-      if (sm == null) continue;
-      smi.addStaticMember(sm);
-    }
-    // set up this node
-    thisMember = makeMember(thisNode);
-    this.thisNodeID = new NodeID(thisMember.getName(), thisMember.getUniqueId());
-    if (thisMember == null) { throw new AssertionError("Error setting up this group member: " + thisNode); }
-    smi.setLocalMember(thisMember);
+    StaticMembershipInterceptor smi = setupStaticMembers(thisNode, allNodes);
 
     ReceiverBase receiver = (ReceiverBase) group.getChannelReceiver();
     receiver.setAddress(thisNode.getHost());
