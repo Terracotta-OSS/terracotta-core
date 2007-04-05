@@ -10,7 +10,9 @@ import org.apache.catalina.tribes.group.GroupChannel;
 import org.apache.catalina.tribes.group.interceptors.StaticMembershipInterceptor;
 import org.apache.catalina.tribes.group.interceptors.TcpFailureDetector;
 import org.apache.catalina.tribes.membership.StaticMember;
+import org.apache.catalina.tribes.transport.DataSender;
 import org.apache.catalina.tribes.transport.ReceiverBase;
+import org.apache.catalina.tribes.transport.ReplicationTransmitter;
 import org.apache.catalina.tribes.util.UUIDGenerator;
 
 import com.tc.async.api.EventContext;
@@ -36,6 +38,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TribesGroupManager implements GroupManager, ChannelListener, MembershipListener {
+  private static final int SEND_TIMEOUT_MILLIS = 6000;
+
   private static final TCLogger                           logger           = TCLogging
                                                                                .getLogger(TribesGroupManager.class);
 
@@ -60,6 +64,10 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     try {
       setup(thisNode, allNodes);
       failuredetector.start(Channel.DEFAULT);
+      ReplicationTransmitter transmitter = (ReplicationTransmitter) group.getChannelSender();
+      DataSender sender = transmitter.getTransport();
+      sender.setTimeout(SEND_TIMEOUT_MILLIS);
+
       group.start(Channel.SND_RX_SEQ | Channel.SND_TX_SEQ);
       return this.thisNodeID;
     } catch (ChannelException e) {
