@@ -28,7 +28,7 @@ import javax.servlet.http.HttpSession;
 public class AppServerShutdownTest extends AbstractAppServerTestCase {
   
   public AppServerShutdownTest() {
-    //this.disableAllUntil("2007-04-05");
+    this.disableAllUntil("2007-04-08");
   }
 
   public final void testShutdown() throws Exception {
