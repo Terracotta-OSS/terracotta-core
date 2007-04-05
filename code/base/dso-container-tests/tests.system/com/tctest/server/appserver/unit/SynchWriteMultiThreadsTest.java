@@ -8,6 +8,7 @@ import org.apache.commons.httpclient.HttpClient;
 
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
 import com.tc.test.server.util.HttpUtil;
+import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -55,7 +56,7 @@ public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
         URL url1 = parent.createUrl(port1, "server=1&command=ping");
         assertEquals("Receive pong", "OK", HttpUtil.getResponseBody(url1, client));
         generateTransactionRequests();
-      } catch (Exception e) {
+      } catch (Throwable e) {
         errors.add(e);
         throw new RuntimeException(e);
       }
@@ -101,7 +102,8 @@ public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
       drivers[i].join();
     }
 
-    // proceed only if there are no errors inside any threads
+    
+    // proceed only if there are no errors inside any threads    
     if (errors.size() == 0) {
       // send kill signal to server0
       killServer0(port0);
@@ -110,6 +112,8 @@ public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
       for (int i = 0; i < NUM_OF_DRIVERS; i++) {
         drivers[i].validate();
       }
+    } else {      
+      Assert.failure("Exception found in driver thread. ", (Throwable)errors.get(0));
     }
   }
 
