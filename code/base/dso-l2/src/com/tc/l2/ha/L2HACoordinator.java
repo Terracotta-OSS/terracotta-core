@@ -113,7 +113,6 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   public void start(final Node thisNode, final Node[] allNodes) {
     NodeID myNodeId;
     try {
-      // FIXME:
       myNodeId = groupManager.join(thisNode, allNodes);
     } catch (GroupException e) {
       logger.error("Caught Exception :", e);

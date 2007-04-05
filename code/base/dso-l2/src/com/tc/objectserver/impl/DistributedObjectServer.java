@@ -626,15 +626,20 @@ public class DistributedObjectServer extends SEDA {
       } catch (ConfigurationSetupException e) {
         throw new RuntimeException("Error getting l2 config for: " + l2s[i], e);
       }
-      rv[i] = new Node(l2.host().getString(), l2.listenPort().getInt());
+      rv[i] = makeNode(l2);
     }
     return rv;
   }
 
+  private static Node makeNode(NewL2DSOConfig l2) {
+    // NOTE: until we resolve Tribes stepping on TCComm's port
+    // we'll use TCComm.port + 1 in Tribes
+    return new Node(l2.host().getString(), l2.listenPort().getInt() + 1);
+  }
+
   private Node makeThisNode() {
     NewL2DSOConfig l2 = configSetupManager.dsoL2Config();
-    final Node rv = new Node(l2.host().getString(), l2.listenPort().getInt());
-    return rv;
+    return makeNode(l2);
   }
 
   public boolean startActiveMode() throws IOException {
