@@ -192,25 +192,25 @@ public class ServerInfo {
             }
             
             if(value != null) {
-              value = value+matcher.group(2);
-              break;
+              if((value = value+matcher.group(2)) != null) {
+                String fileSep = System.getProperty("file.separator");
+                File file = new File(value = StringUtils.replace(value, "/", fileSep));
+
+                if(file.exists()) {      
+                  try {
+                    value = file.getCanonicalPath();
+                  } catch(IOException ioe) {
+                    value = file.getAbsolutePath();
+                  }
+                  break;
+                }
+              }
             }
           }
         }
         else {
           break;
         }
-      }
-    }
-    
-    if(value != null) {
-      value = StringUtils.replace(value, "/", System.getProperty("file.separator"));
-      File file = new File(value);
-      
-      try {
-        value = file.getCanonicalPath();
-      } catch(IOException ioe) {
-        value = file.getAbsolutePath();
       }
     }
     
