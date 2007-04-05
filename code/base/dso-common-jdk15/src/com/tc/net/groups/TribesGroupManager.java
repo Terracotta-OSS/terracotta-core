@@ -19,6 +19,7 @@ import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 
 import java.io.IOException;
@@ -38,23 +39,23 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TribesGroupManager implements GroupManager, ChannelListener, MembershipListener {
-  private static final int                                SEND_TIMEOUT_MILLIS = 6000;
+  private static final String                             SEND_TIMEOUT_PROP = "send.timeout.millis";
 
-  private static final TCLogger                           logger              = TCLogging
-                                                                                  .getLogger(TribesGroupManager.class);
+  private static final TCLogger                           logger            = TCLogging
+                                                                                .getLogger(TribesGroupManager.class);
 
   private final GroupChannel                              group;
   private TcpFailureDetector                              failuredetector;
   private Member                                          thisMember;
   private NodeID                                          thisNodeID;
 
-  private final CopyOnWriteArrayList<GroupEventsListener> groupListeners      = new CopyOnWriteArrayList<GroupEventsListener>();
-  private final Map<NodeID, Member>                       nodes               = Collections
-                                                                                  .synchronizedMap(new HashMap<NodeID, Member>());
-  private final Map<String, GroupMessageListener>         messageListeners    = new ConcurrentHashMap<String, GroupMessageListener>();
-  private final Map<MessageID, GroupResponse>             pendingRequests     = new Hashtable<MessageID, GroupResponse>();
+  private final CopyOnWriteArrayList<GroupEventsListener> groupListeners    = new CopyOnWriteArrayList<GroupEventsListener>();
+  private final Map<NodeID, Member>                       nodes             = Collections
+                                                                                .synchronizedMap(new HashMap<NodeID, Member>());
+  private final Map<String, GroupMessageListener>         messageListeners  = new ConcurrentHashMap<String, GroupMessageListener>();
+  private final Map<MessageID, GroupResponse>             pendingRequests   = new Hashtable<MessageID, GroupResponse>();
 
-  private boolean                                         debug               = false;
+  private boolean                                         debug             = false;
 
   public TribesGroupManager() {
     group = new GroupChannel();
@@ -83,7 +84,9 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       // config send timeout
       ReplicationTransmitter transmitter = (ReplicationTransmitter) group.getChannelSender();
       DataSender sender = transmitter.getTransport();
-      sender.setTimeout(SEND_TIMEOUT_MILLIS);
+      
+      final long l = TCPropertiesImpl.getProperties().getPropertiesFor("nha").getLong(SEND_TIMEOUT_PROP);
+      sender.setTimeout(l);
 
       // start services
       failuredetector.start(Channel.DEFAULT);
@@ -168,21 +171,6 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     if (requestID.isNull() || !notifyPendingRequests(requestID, gmsg, sender)) {
       fireMessageReceivedEvent(from, gmsg);
     }
-  }
-
-  private void setup(final Node thisNode, final Node[] allNodes) throws AssertionError {
-    StaticMembershipInterceptor smi = setupStaticMembers(thisNode, allNodes);
-
-    ReceiverBase receiver = (ReceiverBase) group.getChannelReceiver();
-    receiver.setAddress(thisNode.getHost());
-    receiver.setPort(thisNode.getPort());
-    receiver.setAutoBind(0);
-
-    failuredetector = new TcpFailureDetector();
-    group.addInterceptor(failuredetector);
-    group.addInterceptor(smi);
-    group.addMembershipListener(this);
-    group.addChannelListener(this);
   }
 
   private StaticMember makeMember(final Node node) {
