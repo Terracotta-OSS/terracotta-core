@@ -28,7 +28,7 @@ import javax.servlet.http.HttpSession;
 public class AppServerShutdownTest extends AbstractAppServerTestCase {
   
   public AppServerShutdownTest() {
-    this.disableAllUntil("2007-04-08");
+    //this.disableAllUntil("2007-04-08");
   }
 
   public final void testShutdown() throws Exception {
@@ -48,10 +48,10 @@ public class AppServerShutdownTest extends AbstractAppServerTestCase {
     }
     System.out.println("Shutting down completed.");
      
-    // wait for 30s and poll. There shouldn't be any app server alive
     // There could be 2 kinds of failures: 
     //   1. Cargo didn't shutdown the appserver normally
     //   2. DSO didn't allow the appserver to shutdown -- We want to catch this    
+    Thread.sleep(5*1000);
     System.out.println("Checking to see if any app server is still alive...");
     String processes = ProcessInfo.ps_grep_java();
     System.out.println("Java processes found: " + processes);

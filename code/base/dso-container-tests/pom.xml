@@ -32,7 +32,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>tc_cargo-core-uberjar</artifactId>
+      <artifactId>tc-cargo-core-uberjar</artifactId>
     </dependency>
     <dependency>
       <groupId>commons-codec</groupId>

@@ -4,6 +4,6 @@
   <dependencies>
 	<dependency name="commons-codec" rev="1.3"/>
 	<dependency name="commons-httpclient" rev="3.0.1"/>
-	<dependency name="tc_cargo-core-uberjar" rev="0.8" org="terracotta"/>
+	<dependency name="tc-cargo-core-uberjar" rev="1.0" org="terracotta"/>
   </dependencies>
 </ivy-module>
