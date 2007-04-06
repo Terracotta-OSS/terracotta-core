@@ -5,6 +5,7 @@
 package com.tc.test.server.appserver;
 
 import org.apache.commons.io.FileUtils;
+import org.codehaus.cargo.util.log.LogLevel;
 import org.codehaus.cargo.util.log.Logger;
 
 import java.io.File;
@@ -109,10 +110,12 @@ public abstract class AbstractAppServer implements AppServer {
 
     private final String            instance;
     private final boolean           debugEnabled;
+    private LogLevel                logLevel;
 
     public ConsoleLogger(String instance, boolean debugEnabled) {
       this.instance = instance;
       this.debugEnabled = debugEnabled;
+      this.logLevel = LogLevel.INFO;
     }
 
     public void info(String message, String category) {
@@ -132,6 +135,14 @@ public abstract class AbstractAppServer implements AppServer {
     private void log(String severity, String message, String category) {
       System.out.println(FORMAT.format(new Date()) + " [" + severity + "][" + category + "][" + instance + "] "
                          + message);
+    }
+
+    public LogLevel getLevel() {
+      return logLevel;
+    }
+
+    public void setLevel(LogLevel level) {
+      logLevel = level;
     }
   }
 }

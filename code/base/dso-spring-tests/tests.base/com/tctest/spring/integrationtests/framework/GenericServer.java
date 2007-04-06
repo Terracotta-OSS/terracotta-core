@@ -7,8 +7,8 @@ import org.apache.commons.httpclient.HttpClient;
 import org.codehaus.cargo.container.deployable.WAR;
 import org.codehaus.cargo.container.property.RemotePropertySet;
 import org.codehaus.cargo.container.tomcat.Tomcat5xRemoteContainer;
+import org.codehaus.cargo.container.tomcat.Tomcat5xRemoteDeployer;
 import org.codehaus.cargo.container.tomcat.TomcatPropertySet;
-import org.codehaus.cargo.container.tomcat.TomcatRemoteDeployer;
 import org.codehaus.cargo.container.tomcat.TomcatRuntimeConfiguration;
 import org.codehaus.cargo.util.log.SimpleLogger;
 import org.springframework.jmx.support.MBeanServerConnectionFactoryBean;
@@ -236,7 +236,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
 
   // TODO - Tomcat specific code
 
-  private TomcatRemoteDeployer getRemoteDeployer() {
+  private Tomcat5xRemoteDeployer getRemoteDeployer() {
     TomcatRuntimeConfiguration runtimeConfiguration = new TomcatRuntimeConfiguration();
     runtimeConfiguration.setProperty(RemotePropertySet.USERNAME, "admin");
     runtimeConfiguration.setProperty(RemotePropertySet.PASSWORD, "");
@@ -244,7 +244,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
         + "/manager");
 
     Tomcat5xRemoteContainer remoteContainer = new Tomcat5xRemoteContainer(runtimeConfiguration);
-    TomcatRemoteDeployer deployer = new TomcatRemoteDeployer(remoteContainer);
+    Tomcat5xRemoteDeployer deployer = new Tomcat5xRemoteDeployer(remoteContainer);
     return deployer;
   }
 

@@ -8,7 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.taskdefs.War;
 import org.apache.tools.ant.types.ZipFileSet;
-import org.codehaus.cargo.container.internal.util.AntUtils;
+import org.codehaus.cargo.util.AntUtils;
 import org.codehaus.plexus.util.StringUtils;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.remoting.rmi.RmiRegistryFactoryBean;

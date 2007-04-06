@@ -6,7 +6,6 @@ package com.tc.test.server.appserver.weblogic8x;
 import org.codehaus.cargo.container.InstalledLocalContainer;
 import org.codehaus.cargo.container.configuration.LocalConfiguration;
 import org.codehaus.cargo.container.weblogic.WebLogic8xInstalledLocalContainer;
-import org.codehaus.cargo.container.weblogic.WebLogicPropertySet;
 
 import com.tc.test.server.appserver.AppServerParameters;
 import com.tc.test.server.appserver.cargo.CargoAppServer;
@@ -35,7 +34,7 @@ public final class Weblogic8xAppServer extends CargoAppServer {
   }
   
   protected void setConfigProperties(LocalConfiguration config) throws Exception {
-    config.setProperty(WebLogicPropertySet.DOMAIN, "domain");
+    //config.setProperty(WebLogicPropertySet.DOMAIN, "domain");
   }
   
   protected void initiateStartupAppender(File sandboxDir) throws Exception {
