@@ -529,6 +529,7 @@ module-groups:
     - management
     - dso-memory-datastore
     - clustered-iBatis-2.2.0
+    - clustered-lucene-2.0.0    
   spring:
     - dso-spring
     - dso-spring-tests
