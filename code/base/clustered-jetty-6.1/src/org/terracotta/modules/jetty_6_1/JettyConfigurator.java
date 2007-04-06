@@ -8,6 +8,8 @@ import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.ServiceReference;
+import org.terracotta.modules.jetty_6_1.adapters.ClassPathAdapter;
+import org.terracotta.modules.jetty_6_1.adapters.WebAppClassLoaderAdapter;
 
 import com.tc.object.config.StandardDSOClientConfigHelper;
 
@@ -30,8 +32,9 @@ public final class JettyConfigurator implements BundleActivator {
     // Ignore this, we don't need to stop anything
   }
 
-  private void addLoaderAdapters(final StandardDSOClientConfigHelper configHelper) {
-    // XXX: add loader adapters here
+  private void addLoaderAdapters(final StandardDSOClientConfigHelper config) {
+    config.addCustomAdapter("org.mortbay.start.Classpath", new ClassPathAdapter());
+    config.addCustomAdapter("org.mortbay.jetty.webapp.WebAppClassLoader", new WebAppClassLoaderAdapter());
   }
 
 }
