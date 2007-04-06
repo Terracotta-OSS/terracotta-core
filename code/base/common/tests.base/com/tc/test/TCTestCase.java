@@ -59,6 +59,7 @@ public class TCTestCase extends TestCase {
 
   private Date                             allDisabledUntil;
   private final Map                        disabledUntil             = new Hashtable();
+  private boolean                          allDisabledLogged = false;
 
   // This stuff is static since Junit new()'s up an instance of the test case for each test method,
   // and the timeout covers the entire test case (ie. all methods). It wouldn't be very effective to start
@@ -126,6 +127,10 @@ public class TCTestCase extends TestCase {
       System.out.println("NOTE: ALL tests in " + this.getClass().getName() + " are disabled until "
           + this.allDisabledUntil);
       System.out.flush();
+      if (!allDisabledLogged) {
+        logDisabledTest("all", allDisabledUntil, null);
+        allDisabledLogged = true;
+      }
       return;
     }
 
@@ -134,6 +139,7 @@ public class TCTestCase extends TestCase {
       System.out.println("NOTE: Test method " + testMethod + "() is disabled until "
           + this.disabledUntil.get(testMethod));
       System.out.flush();
+      logDisabledTest(testMethod, (Date) disabledUntil.get(testMethod), null);
       return;
     }
 
@@ -252,6 +258,20 @@ public class TCTestCase extends TestCase {
 
   protected final File getTempFile(String fileName) throws IOException {
     return getTempDirectoryHelper().getFile(fileName);
+  }
+
+  private static final String disabledTestLogPrefix = "!disabled_test: ";
+  protected void logDisabledTest(String testName, Date until, String platform) {
+    StringBuffer message = new StringBuffer();
+    message.append(disabledTestLogPrefix);
+    message.append(this.getClass().getName()).append("#").append(testName);
+    if (until != null) {
+      message.append(", until: ").append(DATE_FORMAT.format(until));
+    }
+    if (platform != null) {
+      message.append(", platform: ").append(platform);
+    }
+    System.out.println(message.toString());
   }
 
   /**
