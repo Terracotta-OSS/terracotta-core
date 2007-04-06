@@ -65,7 +65,6 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     try {
       // set up static nodes
       StaticMembershipInterceptor smi = setupStaticMembers(thisNode, allNodes);
-      group.addInterceptor(smi);
 
       // set up receiver
       ReceiverBase receiver = (ReceiverBase) group.getChannelReceiver();
@@ -73,24 +72,22 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       receiver.setPort(thisNode.getPort());
       receiver.setAutoBind(0);
 
-      // set up failure detector
-      failuredetector = new TcpFailureDetector();
-      group.addInterceptor(failuredetector);
-
-      // add listeners
-      group.addMembershipListener(this);
-      group.addChannelListener(this);
-
       // config send timeout
       ReplicationTransmitter transmitter = (ReplicationTransmitter) group.getChannelSender();
       DataSender sender = transmitter.getTransport();
-      
       final long l = TCPropertiesImpl.getProperties().getPropertiesFor("nha").getLong(SEND_TIMEOUT_PROP);
       sender.setTimeout(l);
 
       // start services
+      // set up failure detector
+      failuredetector = new TcpFailureDetector();
       failuredetector.start(Channel.DEFAULT);
-      group.start(Channel.SND_RX_SEQ | Channel.SND_TX_SEQ | Channel.MBR_RX_SEQ);
+      group.addInterceptor(failuredetector);
+      group.addInterceptor(smi);
+      // add listeners
+      group.addMembershipListener(this);
+      group.addChannelListener(this);
+      group.start(Channel.SND_RX_SEQ | Channel.SND_TX_SEQ);
 
       return this.thisNodeID;
     } catch (ChannelException e) {
