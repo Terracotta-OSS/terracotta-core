@@ -10,7 +10,6 @@ import com.tc.test.ProcessInfo;
 import com.tc.test.server.Server;
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
 import com.tc.test.server.util.HttpUtil;
-import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
 
 import java.io.IOException;
@@ -47,7 +46,7 @@ public class AppServerShutdownTest extends AbstractAppServerTestCase {
     assertEquals("cmd=query", "OK", HttpUtil.getResponseBody(url2, client));
 
     String processes_before = ProcessInfo.ps_grep_java();
-    
+
     System.out.println("Shut down app server normally...");
     for (Iterator iter = appservers.iterator(); iter.hasNext();) {
       Server server = (Server) iter.next();
@@ -59,12 +58,12 @@ public class AppServerShutdownTest extends AbstractAppServerTestCase {
     try {
       url1 = createUrl(port1, ShutdownNormallyServlet.class, "cmd=insert");
       HttpUtil.getResponseBody(url1, client);
-      fail("App server 1 is supposed to be shutdown!");      
+      fail("App server 1 is supposed to be shutdown!");
     } catch (IOException e) {
       // expected
       System.out.println("Expected exception 1: " + e.getMessage());
     }
-    
+
     try {
       url2 = createUrl(port2, ShutdownNormallyServlet.class, "cmd=query");
       HttpUtil.getResponseBody(url2, client);
@@ -73,8 +72,8 @@ public class AppServerShutdownTest extends AbstractAppServerTestCase {
       // expected
       System.out.println("Expected exception 2: " + e.getMessage());
     }
-    
-    
+
+
     // There could be 2 kinds of failures:
     // 1. Cargo didn't shutdown the appserver normally
     // 2. DSO didn't allow the appserver to shutdown -- We want to catch this
@@ -82,16 +81,16 @@ public class AppServerShutdownTest extends AbstractAppServerTestCase {
     System.out.println("Checking to see if any app server is still alive...");
     String processes_after = ProcessInfo.ps_grep_java();
     System.out.println("Java processes found: " + processes_after);
-    
-    if (Os.isLinux()) { 
+
+    if (Os.isLinux()) {
       // Linux limits the classpath to 4K so we can't rely on cmd line arguments
       String[] count_before = processes_before.split("\\n");
-      String[] count_after  = processes_after.split("\\n");      
+      String[] count_after  = processes_after.split("\\n");
       assertTrue("App server didn't shutdown", (count_after.length + 2 == count_before.length));
     } else {
       assertFalse("App server didn't shutdown", processes_after.indexOf("CargoLinkedChildProcess") > 0);
     }
-    
+
   }
 
   public static final class ShutdownNormallyServlet extends HttpServlet {
