@@ -328,6 +328,7 @@ modules:
         - aspectwerkz
         - thirdparty
         - dso-common
+        - management
         - dso-common-jdk15
         - dso-l1
         - dso-l2
