@@ -13,7 +13,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Properties;
 
 /**
@@ -133,8 +132,9 @@ public abstract class AbstractAppServer implements AppServer {
     }
 
     private void log(String severity, String message, String category) {
-      System.out.println(FORMAT.format(new Date()) + " [" + severity + "][" + category + "][" + instance + "] "
-                         + message);
+//      System.out.println(FORMAT.format(new Date()) + " [" + severity + "][" + category + "][" + instance + "] "
+//                         + message);
+      System.out.println("[" + severity + "]: " + message);
     }
 
     public LogLevel getLevel() {

@@ -11,10 +11,10 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -33,6 +33,7 @@ public final class LinkedJavaProcessPollingAgent {
 
   private static final String    HEARTBEAT                 = "HEARTBEAT";
   private static final String    SHUTDOWN                  = "SHUTDOWN";
+  private static final String    ARE_YOU_ALIVE             = "ARE_YOU_ALIVE";
 
   private static final int       MAX_HEARTBEAT_DELAY       = 2 * NORMAL_HEARTBEAT_INTERVAL;
   private static final int       EXIT_CODE                 = 42;
@@ -79,7 +80,11 @@ public final class LinkedJavaProcessPollingAgent {
   public static synchronized void destroy() {
     server.shutdown();
   }
-  
+
+  public static boolean isAnyAppServerAlive() {
+    return server.isAnyAppServerAlive();
+  }
+
   private static void log(String msg) {
     System.err.println("LJP: [" + new Date() + "] " + msg);
   }
@@ -121,8 +126,9 @@ public final class LinkedJavaProcessPollingAgent {
 
     public void run() {
       int port = -1;
+      Socket toServer = null;
       try {
-        Socket toServer = new Socket("localhost", this.pingPort);
+        toServer = new Socket("localhost", this.pingPort);
         toServer.setSoTimeout(MAX_HEARTBEAT_DELAY);
 
         port = toServer.getLocalPort();
@@ -140,6 +146,9 @@ public final class LinkedJavaProcessPollingAgent {
             if (!honorShutdownMsg) continue;
             log("Client received shutdown message from server. Shutting Down...");
             System.exit(0);
+          } else if (ARE_YOU_ALIVE.equals(data)) {
+            out.println(forClass);
+            out.flush();
           } else {
             throw new Exception("Doesn't recognize data: " + data);
           }
@@ -153,18 +162,39 @@ public final class LinkedJavaProcessPollingAgent {
             + ").");
       } finally {
         log("Ping thread exiting port (" + port + ")");
+        if (toServer != null) {
+          try {
+            toServer.close();
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
         System.exit(EXIT_CODE);
       }
     }
   }
 
   private static class HeartbeatServer extends Thread {
-    private int  port;
-    private List heartBeatThreads = new LinkedList();
+    private int          port;
+    private List         heartBeatThreads = new ArrayList();
+    private ServerSocket serverSocket     = null;
 
     public HeartbeatServer() {
       this.port = -1;
       this.setDaemon(true);
+    }
+
+    public synchronized boolean isAnyAppServerAlive() {
+      boolean foundAlive = false;
+      synchronized (heartBeatThreads) {
+        for (Iterator it = heartBeatThreads.iterator(); it.hasNext();) {
+          HeartbeatThread hb = (HeartbeatThread) it.next();
+          boolean alive = hb.isAppServerAlive();
+          System.out.println("pinging: " + hb.port + ", " + alive);
+          foundAlive = foundAlive || alive;
+        }
+      }
+      return foundAlive;
     }
 
     public synchronized int getPort() {
@@ -191,11 +221,20 @@ public final class LinkedJavaProcessPollingAgent {
           log(e.getClass() + ": " + Arrays.asList(e.getStackTrace()));
         }
       }
+
+      if (serverSocket != null) {
+        try {
+          serverSocket.close(); // this effectively interrupts the thread and force it to exit
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
     }
 
     public void run() {
+
       try {
-        ServerSocket serverSocket = new ServerSocket(0);
+        serverSocket = new ServerSocket(0);
 
         synchronized (this) {
           this.port = serverSocket.getLocalPort();
@@ -212,8 +251,7 @@ public final class LinkedJavaProcessPollingAgent {
           }
         }
       } catch (Exception e) {
-        log("Heartbeat server couldn't listen or accept a connection");
-        log(e.getClass() + ": " + Arrays.asList(e.getStackTrace()));
+        log("Heartbeat server couldn't listen or accept a connection or shutdown was called.");
       } finally {
         log("Heartbeat server terminating.");
       }
@@ -239,12 +277,32 @@ public final class LinkedJavaProcessPollingAgent {
       this.setDaemon(true);
     }
 
-     public synchronized void shutdown() throws IOException {
+    public synchronized void shutdown() throws IOException {
       try {
         out.println(SHUTDOWN);
         out.flush();
       } catch (Exception e) {
         log("Socket Exception: client may have already shutdown.");
+      }
+    }
+
+    public boolean isAppServerAlive() {
+      if (socket.isClosed() || socket.isInputShutdown() || socket.isOutputShutdown()) return false;
+
+      try {
+        System.out.println("sending ARE_YOU_ALIVE...");
+        out.println(ARE_YOU_ALIVE);
+        out.flush();
+        String result = in.readLine();
+        if (result.endsWith("TCServerMain")) {
+          // not an apserver
+          return false;
+        } else {
+          System.out.println("received: " + result);
+          return true;
+        }
+      } catch (IOException e) {
+        return false;
       }
     }
 
@@ -270,6 +328,11 @@ public final class LinkedJavaProcessPollingAgent {
         log(e.getClass() + ": " + Arrays.asList(e.getStackTrace()));
       } finally {
         log("Heartbeat thread for child process (port " + port + ") terminating.");
+        try {
+          socket.close();
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
   }
