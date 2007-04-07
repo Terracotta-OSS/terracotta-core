@@ -5,14 +5,15 @@
 package com.tc.test.server.appserver;
 
 import org.apache.commons.io.FileUtils;
+import org.codehaus.cargo.util.internal.log.AbstractLogger;
 import org.codehaus.cargo.util.log.LogLevel;
-import org.codehaus.cargo.util.log.Logger;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Properties;
 
 /**
@@ -103,46 +104,23 @@ public abstract class AbstractAppServer implements AppServer {
     }
   }
 
-  public final static class ConsoleLogger implements Logger {
+  public final static class ConsoleLogger extends AbstractLogger {
 
     private static final DateFormat FORMAT = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss.SSS");
 
     private final String            instance;
     private final boolean           debugEnabled;
-    private LogLevel                logLevel;
 
     public ConsoleLogger(String instance, boolean debugEnabled) {
       this.instance = instance;
       this.debugEnabled = debugEnabled;
-      this.logLevel = LogLevel.INFO;
     }
 
-    public void info(String message, String category) {
-      log("info", message, category);
-    }
-
-    public void debug(String message, String category) {
-      if (debugEnabled) {
-        log("debug", message, category);
-      }
-    }
-
-    public void warn(String message, String category) {
-      log("warn", message, category);
-    }
-
-    private void log(String severity, String message, String category) {
-//      System.out.println(FORMAT.format(new Date()) + " [" + severity + "][" + category + "][" + instance + "] "
-//                         + message);
-      System.out.println("[" + severity + "]: " + message);
-    }
-
-    public LogLevel getLevel() {
-      return logLevel;
-    }
-
-    public void setLevel(LogLevel level) {
-      logLevel = level;
+    protected void doLog(LogLevel level, String message, String category) {
+      String formattedCategory = category.length() <= 20 ? category : category.substring(category.length() - 20);
+      String msg = "[" + FORMAT.format(new Date()) + "]" + "[" + level.getLevel() + "][" + formattedCategory + "] "
+                   + message;
+      System.out.println(msg);
     }
   }
 }

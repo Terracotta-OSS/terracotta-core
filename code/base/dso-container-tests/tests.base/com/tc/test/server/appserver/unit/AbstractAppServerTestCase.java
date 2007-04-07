@@ -185,6 +185,9 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   }
 
   protected void setUp() throws Exception {
+    
+    LinkedJavaProcessPollingAgent.startHeartBeatServer();
+    
     isSynchronousWrite = false;
     config = TestConfigObject.getInstance();
     tempDir = getTempDirectory();
@@ -407,10 +410,12 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
         Server server = (Server) iter.next();
         server.stop();
       }
-      Thread.sleep(5000);
-      LinkedJavaProcessPollingAgent.destroy();
-      Thread.sleep(5000);
+      
+      System.out.println("Shutdown heartbeat server and its children...");
+      LinkedJavaProcessPollingAgent.shutdown(10 * 1000); // time out in 5s
+      
       if (dsoServer != null && dsoServer.isRunning()) dsoServer.stop();
+      
     } finally {
       VmStat.stop();
       synchronized (workingDirLock) {

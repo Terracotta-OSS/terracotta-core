@@ -30,7 +30,7 @@ import javax.servlet.http.HttpSession;
  */
 public class AppServerShutdownTest extends AbstractAppServerTestCase {
 
-  private static final int TIME_WAIT_FOR_SHUTDOWN = 30 * 1000;
+  private static final int TIME_WAIT_FOR_SHUTDOWN = 60 * 1000;
 
   public AppServerShutdownTest() {
     // this.disableAllUntil("2007-04-08");
