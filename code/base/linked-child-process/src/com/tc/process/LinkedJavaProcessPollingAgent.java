@@ -40,12 +40,16 @@ public final class LinkedJavaProcessPollingAgent {
   private static HeartbeatServer server                    = null;
   private static PingThread      client                    = null;
 
-  public static void startHeartBeatServer() {
-    if (server != null) {
-      server.shutdown();
+  public static synchronized void startHeartBeatServer() {
+    if (server == null || !server.isRunning()) {
+      server = new HeartbeatServer();
+      server.start();
     }
-    server = new HeartbeatServer();
-    server.start();
+  }
+
+  public static synchronized boolean isServerRunning() {
+    if (server == null) { return false; }
+    return server.isRunning();
   }
 
   /**
@@ -54,6 +58,7 @@ public final class LinkedJavaProcessPollingAgent {
    * @return server port - must be passed to {@link startClientWatchdogService()}
    */
   public static synchronized int getChildProcessHeartbeatServerPort() {
+    if (server == null) throw new IllegalStateException("Heartbeat Server has not started!");
     return server.getPort();
   }
 
@@ -69,7 +74,7 @@ public final class LinkedJavaProcessPollingAgent {
     if (client == null) {
       client = new PingThread(pingPort, childClass, honorShutdownMsg);
       client.start();
-      log("Child-process watchdog for class " + childClass + " monitoring server on port: " + pingPort);
+      System.err.println("Child-process watchdog for class " + childClass + " monitoring server on port: " + pingPort);
     }
   }
 
@@ -83,8 +88,7 @@ public final class LinkedJavaProcessPollingAgent {
   public static synchronized void shutdown(int timeout) {
     server.shutdown();
     long start = System.currentTimeMillis();
-    while (System.currentTimeMillis() - start < timeout &&
-           isAnyAppServerAlive()) {
+    while (System.currentTimeMillis() - start < timeout && isAnyAppServerAlive()) {
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {
@@ -190,7 +194,8 @@ public final class LinkedJavaProcessPollingAgent {
     private int          port;
     private List         heartBeatThreads = new ArrayList();
     private ServerSocket serverSocket     = null;
-    private boolean      alive            = false;
+    private boolean      running            = false;
+    private boolean      isStarting       = false;
 
     public HeartbeatServer() {
       this.port = -1;
@@ -211,16 +216,31 @@ public final class LinkedJavaProcessPollingAgent {
     }
 
     public synchronized int getPort() {
-      if (port == -1) throw new IllegalStateException("Heartbeat server has not started!");
+      while (port == -1) {
+        try {
+          wait(2000);
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }
       return this.port;
     }
 
-    public synchronized boolean isShutdown() {
-      return alive;
+    public synchronized boolean isRunning() {
+      synchronized (this) {
+        while (isStarting) {
+          try {
+            this.wait();
+          } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+        }
+        return running;
+      }
     }
 
-    public synchronized void setStatus(boolean status) {
-      alive = status;
+    public synchronized void setRunning(boolean status) {
+      running = status;
     }
 
     private synchronized void shutdown() {
@@ -244,14 +264,15 @@ public final class LinkedJavaProcessPollingAgent {
     public void run() {
 
       try {
-        serverSocket = new ServerSocket(0);
-
         synchronized (this) {
+          isStarting = true;
+          serverSocket = new ServerSocket(0);
           this.port = serverSocket.getLocalPort();
+          setRunning(true);
+          isStarting = false;
           this.notifyAll();
         }
 
-        setStatus(true);
         System.err.println("Child-process heartbeat server started on port: " + port);
 
         while (true) {
@@ -266,7 +287,7 @@ public final class LinkedJavaProcessPollingAgent {
       } catch (Exception e) {
         log("Heartbeat server couldn't listen or accept a connection or shutdown was called.");
       } finally {
-        setStatus(false);
+        setRunning(false);
         log("Heartbeat server terminating.");
       }
     }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.process;
 
@@ -112,13 +113,15 @@ public class LinkedJavaProcess {
       if (this.javaExecutable == null) {
         // formatting
         throw new IOException("Can't find the Java binary; perhaps you need to set it yourself? Tried "
-                              + javaPlain.getAbsolutePath() + " and " + javaExe.getAbsolutePath());
+            + javaPlain.getAbsolutePath() + " and " + javaExe.getAbsolutePath());
       }
     }
   }
 
   public synchronized void start() throws IOException {
     if (this.running) throw new IllegalStateException("This LinkedJavaProcess is already running.");
+
+    LinkedJavaProcessPollingAgent.startHeartBeatServer();
 
     List fullCommandList = new LinkedList();
     List allJavaArguments = new ArrayList();
