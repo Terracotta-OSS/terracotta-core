@@ -33,10 +33,8 @@ public final class LinkedJavaProcessPollingAgent {
 
   private static final String    HEARTBEAT                 = "HEARTBEAT";
   private static final String    SHUTDOWN                  = "SHUTDOWN";
-  private static final String    ARE_YOU_ALIVE             = "ARE_YOU_ALIVE";
-  private static final String    I_AM_ALIVE                = "I_AM_ALIVE";
 
-  private static final int       MAX_HEARTBEAT_DELAY       = 4 * NORMAL_HEARTBEAT_INTERVAL;
+  private static final int       MAX_HEARTBEAT_DELAY       = 2 * NORMAL_HEARTBEAT_INTERVAL;
   private static final int       EXIT_CODE                 = 42;
   private static HeartbeatServer server                    = null;
   private static PingThread      client                    = null;
@@ -81,7 +79,7 @@ public final class LinkedJavaProcessPollingAgent {
   public static synchronized void destroy() {
     server.shutdown();
   }
-
+  
   private static void log(String msg) {
     System.err.println("LJP: [" + new Date() + "] " + msg);
   }

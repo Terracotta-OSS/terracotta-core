@@ -53,7 +53,7 @@ public final class HttpUtil {
     return values;
   }
 
-  public static String getResponseBody(URL url, HttpClient client) throws ConnectException, IOException {
+  public static String getResponseBody(URL url, HttpClient client) throws IllegalStateException, IOException {
     Cookie[] cookies = client.getState().getCookies();
     for (int i = 0; i < cookies.length; i++) {
       debugPrint("localClient... cookie " + i + ": " + cookies[i].toString());
@@ -68,7 +68,7 @@ public final class HttpUtil {
       int status = client.executeMethod(get);
       if (status != HttpStatus.SC_OK) {
         // make formatter sane
-        throw new ConnectException("The http client has encountered a status code other than ok for the url: " + url
+        throw new IllegalStateException("The http client has encountered a status code other than ok for the url: " + url
                                    + " status: " + HttpStatus.getStatusText(status));
       }
       StringBuffer response = new StringBuffer(100);
