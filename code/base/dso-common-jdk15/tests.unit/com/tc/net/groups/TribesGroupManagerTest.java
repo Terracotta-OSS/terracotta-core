@@ -7,6 +7,7 @@ package com.tc.net.groups;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -15,7 +16,7 @@ import java.io.ObjectOutput;
 public class TribesGroupManagerTest extends TCTestCase {
 
   public TribesGroupManagerTest() {
-//    disableTestUntil("testIfTribesGroupManagerLoads", "2007-04-27");
+    // disableTestUntil("testIfTribesGroupManagerLoads", "2007-04-27");
   }
 
   public void testIfTribesGroupManagerLoads() throws Exception {
@@ -41,6 +42,8 @@ public class TribesGroupManagerTest extends TCTestCase {
     NodeID n2 = gm2.join(allNodes[1], allNodes);
 
     assertNotEquals(n1, n2);
+
+    ThreadUtil.reallySleep(5 * 1000);
 
     TestMessage m1 = new TestMessage("Hello there");
     gm1.sendAll(m1);
