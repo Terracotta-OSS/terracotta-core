@@ -222,13 +222,13 @@ public final class LinkedJavaProcessPollingAgent {
         }
       }
 
-      if (serverSocket != null) {
-        try {
-          serverSocket.close(); // this effectively interrupts the thread and force it to exit
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
+//      if (serverSocket != null) {
+//        try {
+//          serverSocket.close(); // this effectively interrupts the thread and force it to exit
+//        } catch (IOException e) {
+//          throw new RuntimeException(e);
+//        }
+//      }
     }
 
     public void run() {
