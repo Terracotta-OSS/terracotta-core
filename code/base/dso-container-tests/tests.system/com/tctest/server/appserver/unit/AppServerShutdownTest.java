@@ -5,6 +5,7 @@
 package com.tctest.server.appserver.unit;
 
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
 
 import com.tc.test.ProcessInfo;
 import com.tc.test.server.Server;
@@ -60,10 +61,10 @@ public class AppServerShutdownTest extends AbstractAppServerTestCase {
     // sanity check that all app servers are indeed shutdown
     // this is needed because when an appserver shutdowns (appears unavailable to Cargo)
     // doesn't mean the process has exited. We want to give ample time for the
-    // JVM to exit before checking for clean shutdown.    
+    // JVM to exit before checking for clean shutdown.
     checkAvalability(port1, client);
     checkAvalability(port2, client);
-    
+
     // There could be 2 kinds of failures:
     // 1. Cargo didn't shutdown the appserver normally
     // 2. DSO didn't allow the appserver to shutdown -- We want to catch this
@@ -85,12 +86,15 @@ public class AppServerShutdownTest extends AbstractAppServerTestCase {
   private void checkAvalability(int port, HttpClient client) throws Exception {
     long start = System.currentTimeMillis();
     do {
+      System.out.println("checkAvailability....");
       try {
         URL url = createUrl(port, ShutdownNormallyServlet.class);
         HttpUtil.getResponseBody(url, client);
-      } catch (IllegalStateException e) {
         // app server is still up
         // continue to hit it
+        Thread.sleep(1000);
+      } catch (HttpException e) {
+        System.out.println("app server still avalable..." + e.getMessage());
         Thread.sleep(1000);
       } catch (MalformedURLException e) {
         throw e;
@@ -103,7 +107,7 @@ public class AppServerShutdownTest extends AbstractAppServerTestCase {
     // timeout
     if (true) {
       System.err.println("Current java processes found: \n" + ProcessInfo.ps_grep_java());
-      throw new Exception("Appserver didn't shutdown after: " + TIME_WAIT_FOR_SHUTDOWN + " seconds");
+      throw new Exception("Appserver didn't shutdown after: " + TIME_WAIT_FOR_SHUTDOWN + " ms");
     }
   }
 

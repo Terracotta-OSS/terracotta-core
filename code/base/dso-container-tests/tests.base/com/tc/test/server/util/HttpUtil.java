@@ -5,6 +5,7 @@ package com.tc.test.server.util;
 
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpStatus;
@@ -53,7 +54,7 @@ public final class HttpUtil {
     return values;
   }
 
-  public static String getResponseBody(URL url, HttpClient client) throws IllegalStateException, IOException {
+  public static String getResponseBody(URL url, HttpClient client) throws HttpException, IOException {
     Cookie[] cookies = client.getState().getCookies();
     for (int i = 0; i < cookies.length; i++) {
       debugPrint("localClient... cookie " + i + ": " + cookies[i].toString());
@@ -68,8 +69,9 @@ public final class HttpUtil {
       int status = client.executeMethod(get);
       if (status != HttpStatus.SC_OK) {
         // make formatter sane
-        throw new IllegalStateException("The http client has encountered a status code other than ok for the url: " + url
+        throw new HttpException("The http client has encountered a status code other than ok for the url: " + url
                                    + " status: " + HttpStatus.getStatusText(status));
+
       }
       StringBuffer response = new StringBuffer(100);
       BufferedReader reader = new BufferedReader(new InputStreamReader(get.getResponseBodyAsStream()));
