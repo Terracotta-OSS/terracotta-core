@@ -191,11 +191,11 @@ public final class LinkedJavaProcessPollingAgent {
   }
 
   private static class HeartbeatServer extends Thread {
-    private int          port;
-    private List         heartBeatThreads = new ArrayList();
-    private ServerSocket serverSocket     = null;
-    private boolean      running            = false;
-    private boolean      isStarting       = false;
+    private int              port;
+    private List             heartBeatThreads = new ArrayList();
+    private ServerSocket     serverSocket     = null;
+    private boolean          running          = false;
+    private volatile boolean isStarting       = false;
 
     public HeartbeatServer() {
       this.port = -1;
@@ -218,25 +218,23 @@ public final class LinkedJavaProcessPollingAgent {
     public synchronized int getPort() {
       while (port == -1) {
         try {
-          wait(2000);
+          this.wait();
+        } catch (InterruptedException e) {
+          throw new RuntimeException("Server might have not started yet", e);
+        }
+      }
+      return port;
+    }
+
+    public synchronized boolean isRunning() {
+      while (isStarting) {
+        try {
+          this.wait();
         } catch (InterruptedException e) {
           throw new RuntimeException(e);
         }
       }
-      return this.port;
-    }
-
-    public synchronized boolean isRunning() {
-      synchronized (this) {
-        while (isStarting) {
-          try {
-            this.wait();
-          } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-          }
-        }
-        return running;
-      }
+      return running;
     }
 
     public synchronized void setRunning(boolean status) {
@@ -264,8 +262,8 @@ public final class LinkedJavaProcessPollingAgent {
     public void run() {
 
       try {
+        isStarting = true;
         synchronized (this) {
-          isStarting = true;
           serverSocket = new ServerSocket(0);
           this.port = serverSocket.getLocalPort();
           setRunning(true);
@@ -304,7 +302,7 @@ public final class LinkedJavaProcessPollingAgent {
       if (socket == null) throw new NullPointerException();
       this.socket = socket;
       try {
-        this.socket.setSoTimeout(2 * NORMAL_HEARTBEAT_INTERVAL);
+        this.socket.setSoTimeout(MAX_HEARTBEAT_DELAY);
       } catch (SocketException e) {
         throw new RuntimeException(e);
       }
