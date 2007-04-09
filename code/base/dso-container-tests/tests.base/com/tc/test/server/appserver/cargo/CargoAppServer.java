@@ -61,8 +61,10 @@ public abstract class CargoAppServer extends AbstractAppServer {
     setProperties(params, port, instance);
 
     ConfigurationFactory factory = new DefaultConfigurationFactory();
-    LocalConfiguration config = (LocalConfiguration)factory
-        .createConfiguration(cargoServerKey(), ContainerType.INSTALLED, ConfigurationType.STANDALONE, instance.getAbsolutePath());
+    LocalConfiguration config = (LocalConfiguration) factory.createConfiguration(cargoServerKey(),
+                                                                                 ContainerType.INSTALLED,
+                                                                                 ConfigurationType.STANDALONE, instance
+                                                                                     .getAbsolutePath());
     setConfigProperties(config);
     config.setProperty(ServletPropertySet.PORT, Integer.toString(port));
     config.setProperty(GeneralPropertySet.JVMARGS, params.jvmArgs());
@@ -87,7 +89,15 @@ public abstract class CargoAppServer extends AbstractAppServer {
       if (container.getState().equals(State.STARTED) || container.getState().equals(State.STARTING)
           || container.getState().equals(State.UNKNOWN)) {
         try {
-          container.stop(); // NOTE: stop is not guaranteed to work
+          // XXX: clear out the jvmargs so that the VMs spawned for stop() don't try to use DSO
+          // XXX: If you know a better way to do this, go for it
+          String jvmArgs = container.getConfiguration().getPropertyValue(GeneralPropertySet.JVMARGS);
+          try {
+            container.getConfiguration().setProperty(GeneralPropertySet.JVMARGS, null);
+            container.stop(); // NOTE: stop is not guaranteed to work
+          } finally {
+            container.getConfiguration().setProperty(GeneralPropertySet.JVMARGS, jvmArgs);
+          }
         } catch (ContainerException e) {
           throw new RuntimeException(e);
         }
@@ -110,7 +120,7 @@ public abstract class CargoAppServer extends AbstractAppServer {
 
   /**
    * Create a linked java process {@link LinkedJavaProcessPollingAgent}
-   * 
+   *
    * @throws InterruptedException
    */
   private void linkJavaProcess(File instance) throws InterruptedException {
