@@ -1,0 +1,27 @@
+svn info under ~/trunks
+-------
+Path: .
+URL: svn://svn.codehaus.org/cargo/trunks
+Repository Root: svn://svn.codehaus.org/cargo
+Repository UUID: 510c1196-63e1-0310-913f-de7095132486
+Revision: 1460
+Node Kind: directory
+Schedule: normal
+Last Changed Author: david
+Last Changed Rev: 1446
+Last Changed Date: 2007-03-09 12:04:12 -0800 (Fri, 09 Mar 2007)
+
+
+svn info under ~/trunks/core
+-------
+Path: .
+URL: https://svn.codehaus.org/cargo/core/trunk
+Repository Root: https://svn.codehaus.org/cargo
+Repository UUID: 510c1196-63e1-0310-913f-de7095132486
+Revision: 1460
+Node Kind: directory
+Schedule: normal
+Last Changed Author: grimsell
+Last Changed Rev: 1460
+Last Changed Date: 2007-04-03 23:56:14 -0700 (Tue, 03 Apr 2007)
+
