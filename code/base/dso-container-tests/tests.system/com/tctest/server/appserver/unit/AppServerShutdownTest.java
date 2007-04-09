@@ -5,6 +5,7 @@
 package com.tctest.server.appserver.unit;
 
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
 
 import com.tc.process.LinkedJavaProcessPollingAgent;
 import com.tc.test.ProcessInfo;
@@ -28,7 +29,7 @@ import javax.servlet.http.HttpSession;
  */
 public class AppServerShutdownTest extends AbstractAppServerTestCase {
 
-  private static final int TIME_WAIT_FOR_SHUTDOWN = 60 * 1000;
+  private static final int TIME_WAIT_FOR_SHUTDOWN = 3 * 60 * 1000;
 
   public AppServerShutdownTest() {
     // this.disableAllUntil("2007-04-08");
@@ -61,11 +62,10 @@ public class AppServerShutdownTest extends AbstractAppServerTestCase {
     // this is needed because when an appserver shutdowns (appears unavailable to Cargo)
     // doesn't mean the process has exited. We want to give ample time for the
     // JVM to exit before checking for clean shutdown.
-    checkAvalability();
+    checkAvalability(port1, client);
+    checkAvalability(port2, client);
+    checkAlive();
 
-    System.out.println("Polling heartbeat threads...");
-    assertFalse("Linked child processes are still alive", LinkedJavaProcessPollingAgent.isAnyAppServerAlive());
-    
     // There could be 2 kinds of failures:
     // 1. Cargo didn't shutdown the appserver normally
     // 2. DSO didn't allow the appserver to shutdown -- We want to catch this
@@ -82,14 +82,41 @@ public class AppServerShutdownTest extends AbstractAppServerTestCase {
       assertFalse("App server didn't shutdown", processes_after.indexOf("CargoLinkedChildProcess") > 0);
     }
 
-  }
+    System.out.println("Polling heartbeat threads...");
+    assertFalse("Linked child processes are still alive", LinkedJavaProcessPollingAgent.isAnyAppServerAlive());
 
-  private void checkAvalability() throws Exception {
+  }
+  
+  /**
+   * check app server status by ping servlet URL
+   */
+  private void checkAvalability(int port, HttpClient client) throws Exception {
+    long start = System.currentTimeMillis();
+    do {
+      System.out.println("ping servlet url....");
+      try {
+        Thread.sleep(1000);
+        URL url = createUrl(port, ShutdownNormallyServlet.class);
+        HttpUtil.getResponseBody(url, client);
+        System.out.println("  -- servlet still available");
+      } catch (HttpException e) {
+        System.out.println("  -- app server still available..." + e.getMessage());
+      } catch (IOException e) {
+        // expected
+        return;
+      }
+    } while (System.currentTimeMillis() - start < TIME_WAIT_FOR_SHUTDOWN);
+  }
+  
+  /**
+   * check server status by pinging its linked-child-process
+   */
+  private void checkAlive() throws Exception {
     long start = System.currentTimeMillis();
     boolean foundAlive = false;
     do {
       Thread.sleep(1000);
-      System.out.println("checkAvailability....");
+      System.out.println("ping linked-child-process....");
       foundAlive = LinkedJavaProcessPollingAgent.isAnyAppServerAlive();
     } while (foundAlive && System.currentTimeMillis() - start < TIME_WAIT_FOR_SHUTDOWN);
   }

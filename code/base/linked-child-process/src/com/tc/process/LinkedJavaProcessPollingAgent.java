@@ -319,8 +319,6 @@ public final class LinkedJavaProcessPollingAgent {
     }
 
     public boolean isAppServerAlive() {
-      if (socket.isClosed() || socket.isInputShutdown() || socket.isOutputShutdown()) return false;
-
       try {
         log("sending ARE_YOU_ALIVE...");
         out.println(ARE_YOU_ALIVE);
