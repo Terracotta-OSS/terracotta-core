@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver;
 
@@ -26,22 +27,27 @@ final class ConcreteReadOnlyAppServerInstallation {
 
   private static final DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG);
 
-  static File create(URL host, File serverDir, String serverType, String majorVersion, String minorVersion) throws Exception {
-    File serverInstallDir = new File(serverDir + File.separator + serverType + "-" + majorVersion + "." + minorVersion + "-install");
+  static File create(URL host, File serverDir, String serverType, String majorVersion, String minorVersion)
+      throws Exception {
+    File serverInstallDir = new File(serverDir + File.separator + serverType + "-" + majorVersion + "." + minorVersion
+                                     + "-install");
     serverInstallDir.mkdir();
     File timestampFile = new File(serverInstallDir + File.separator + "timestamp");
     if (equalTimestamps(host, serverType, majorVersion, minorVersion, timestampFile)) { return serverInstallDir; }
-    File deleteServer = new File(serverInstallDir + File.separator + serverType + "-" + majorVersion + "." + minorVersion);
+    File deleteServer = new File(serverInstallDir + File.separator + serverType + "-" + majorVersion + "."
+                                 + minorVersion);
     if (deleteServer.exists()) {
       deleteServer.delete();
     }
-    BufferedInputStream in = new BufferedInputStream(appendPath(host, serverType, majorVersion, minorVersion).openStream());
+    BufferedInputStream in = new BufferedInputStream(appendPath(host, serverType, majorVersion, minorVersion)
+        .openStream());
     ZipBuilder.unzip(in, serverInstallDir);
     in.close();
     return serverInstallDir;
   }
 
-  private static boolean equalTimestamps(URL host, String serverType, String majorVersion, String minorVersion, File timestampFile) throws Exception {
+  private static boolean equalTimestamps(URL host, String serverType, String majorVersion, String minorVersion,
+                                         File timestampFile) throws Exception {
     URLConnection conn = appendPath(host, serverType, majorVersion, minorVersion).openConnection();
     System.out.println("**Connection=" + host);
     System.out.println("**Connection=" + conn);
@@ -66,16 +72,16 @@ final class ConcreteReadOnlyAppServerInstallation {
     out.close();
   }
 
+  // right now we don't have platform specific app server.
+  // this function is here if the need arises
   private static String resolvePlatform() {
     return "generic";
-    //return System.getProperty("os.name").replaceAll("\\s", "_").toLowerCase();
   }
 
   private static URL appendPath(URL host, String serverType, String majorVersion, String minorVersion) throws Exception {
     String baseUrl = host.toExternalForm();
-    String appendedPath = serverType + "/" + resolvePlatform() + "/" +
-        majorVersion + "/" + majorVersion + "." + minorVersion + "/" +
-        serverType + "-" + majorVersion + "." + minorVersion + ".zip";
+    String appendedPath = serverType + "/" + resolvePlatform() + "/" + majorVersion + "/" + majorVersion + "."
+                          + minorVersion + "/" + serverType + "-" + majorVersion + "." + minorVersion + ".zip";
     return new URL(baseUrl + "/" + appendedPath);
   }
 }

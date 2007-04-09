@@ -412,7 +412,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       }
       
       System.out.println("Shutdown heartbeat server and its children...");
-      LinkedJavaProcessPollingAgent.shutdown(10 * 1000); // time out in 5s
+      LinkedJavaProcessPollingAgent.shutdown();
       
       if (dsoServer != null && dsoServer.isRunning()) dsoServer.stop();
       
