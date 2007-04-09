@@ -326,7 +326,7 @@ public final class LinkedJavaProcessPollingAgent {
         String result = in.readLine();
         log("received: " + result);
         if (result == null) {
-          return true;
+          return false;
         } else if (result.endsWith("TCServerMain")) {
           // not an apserver
           return false;
