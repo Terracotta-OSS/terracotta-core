@@ -23,11 +23,11 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
 
   public void stopPopulating(ObjectIDSet2 fullSet) {
     synchronized (lock) {
-      isBlocking = false;
       ObjectIDSet2 large = (fullSet.size() > set.size()) ? fullSet : set;
       ObjectIDSet2 small = (set == large) ? fullSet : set;
       large.addAll(small);
       set = large;
+      isBlocking = false;
       lock.notifyAll();
     }
   }
