@@ -44,10 +44,8 @@ import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.http.HttpServlet;
@@ -151,7 +149,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
   private static final SynchronizedInt    nodeCounter      = new SynchronizedInt(-1);
   private static final String             NODE             = "node-";
-  private static final String             DOMAIN           = "127.0.0.1";
+  private static final String             DOMAIN           = "localhost";
 
   private final Object                    workingDirLock   = new Object();
   protected final List                    appservers       = new ArrayList();
@@ -513,8 +511,6 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     StandardTerracottaAppServerConfig configBuilder = appServerFactory.createTcConfig(installation.getDataDirectory());
 
     if (isSynchronousWrite) {
-      Map attributes = new HashMap();
-      attributes.put("synchronous-write", "true");
       configBuilder.addWebApplication(testName(), isSynchronousWrite);
     } else {
       configBuilder.addWebApplication(testName());
