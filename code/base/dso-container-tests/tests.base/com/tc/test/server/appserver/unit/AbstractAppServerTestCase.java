@@ -426,7 +426,13 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       VmStat.stop();
       synchronized (workingDirLock) {
         File dest = new File(tempDir, getName());
-        com.tc.util.io.FileUtils.copyFile(workingDir, dest);
+        try {
+          com.tc.util.io.FileUtils.copyFile(workingDir, dest);
+          FileUtils.deleteDirectory(workingDir);
+        } catch (IOException e) {
+          e.printStackTrace();
+          // ingore
+        }
       }
     }
   }
