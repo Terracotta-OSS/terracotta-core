@@ -68,6 +68,32 @@ public class CopyOnWriteArrayMapTest extends TestCase {
 
   }
 
+  public void testSameValueMappedTo2Keys() throws Exception {
+    CopyOnWriteArrayMap cam = new CopyOnWriteArrayMap();
+    ArrayList al = new ArrayList();
+    assertArrayEquals(al.toArray(), cam.values().toArray());
+
+    Integer val = new Integer(0);
+    for (int i = 0; i < 10;) {
+      cam.put(Integer.toString(i), val);
+      al.add(val);
+      assertArrayEquals(al.toArray(), cam.values().toArray());
+      if (++i % 2 == 0) {
+        val = new Integer(i / 2);
+      }
+    }
+
+    // remove
+    for (int i = 0; i < 10; i++) {
+      Integer val1 = new Integer(i / 2);
+      Integer val2 = (Integer) cam.remove(Integer.toString(i));
+      assertEquals(val1, val2);
+      al.remove(val2);
+      assertArrayEquals(al.toArray(), cam.values().toArray());
+    }
+
+  }
+
   private void assertArrayEquals(Object[] a1, Object[] a2) {
     print("a1", a1);
     print("a2", a2);

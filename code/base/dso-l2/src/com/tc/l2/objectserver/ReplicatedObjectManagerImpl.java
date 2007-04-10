@@ -71,7 +71,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     }
   }
 
-  //TODO::Verify that message order is maintained.
+  // TODO::Verify that message order is maintained.
   public void messageReceived(NodeID fromNode, GroupMessage msg) {
     if (msg instanceof ObjectListSyncMessage) {
       ObjectListSyncMessage clusterMsg = (ObjectListSyncMessage) msg;
@@ -130,10 +130,9 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     groupManager.sendTo(nodeID, ObjectListSyncMessageFactory.createObjectListSyncResponseMessage(clusterMsg, knownIDs));
   }
 
-  /**
-   * TODO:: This method could be more intellegent to return true only when there are passives involved
-   */
   public boolean relayTransactions() {
-    return true;
+    // TODO:: Fix this there is an issue, a rare race, where some txns may go missing iff there are no objects yet in
+    // the objectmanager and the first passive joins the cluster. thing about it.
+    return l2ObjectStateManager.getL2Count() > 0;
   }
 }

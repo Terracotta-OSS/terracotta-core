@@ -18,6 +18,7 @@ import com.tc.object.tx.TransactionID;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -96,9 +97,8 @@ public class CommitTransactionMessageImpl extends DSOMessageBase implements Even
     return batchData;
   }
 
-  public Collection addAcknowledgedTransactionIDsTo(Collection c) {
-    c.addAll(this.acknowledgedTransactionIDs);
-    return c;
+  public Collection getAcknowledgedTransactionIDs() {
+    return Collections.unmodifiableCollection(this.acknowledgedTransactionIDs);
   }
 
   public void doRecycleOnRead() {

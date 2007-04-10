@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.tx;
 
@@ -11,7 +12,9 @@ import com.tc.object.ObjectID;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.dna.impl.DNAEncoding;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.gtx.DefaultGlobalTransactionIDGenerator;
 import com.tc.object.gtx.GlobalTransactionID;
+import com.tc.object.gtx.GlobalTransactionIDGenerator;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.lockmanager.api.ThreadID;
@@ -47,10 +50,13 @@ public class TransactionBatchTest extends TestCase {
   private TransactionBatchWriter              writer;
   private TestCommitTransactionMessageFactory messageFactory;
 
+  private GlobalTransactionIDGenerator        gidGenerator;
+
   public void setUp() throws Exception {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     messageFactory = new TestCommitTransactionMessageFactory();
     writer = new TransactionBatchWriter(new TxnBatchID(1), serializer, encoding, messageFactory);
+    gidGenerator = new DefaultGlobalTransactionIDGenerator();
   }
 
   public void testGetMinTransaction() throws Exception {
@@ -145,8 +151,8 @@ public class TransactionBatchTest extends TestCase {
     writer.addTransaction(txn2);
     writer.wait4AllTxns2Serialize();
 
-    TransactionBatchReaderImpl reader = new TransactionBatchReaderImpl(writer.getData(), channel, new HashSet(),
-                                                                       serializer, false);
+    TransactionBatchReaderImpl reader = new TransactionBatchReaderImpl(gidGenerator, writer.getData(), channel,
+                                                                       new HashSet(), serializer, false);
     assertEquals(2, reader.getNumTxns());
     assertEquals(batchID, reader.getBatchID());
 
@@ -220,7 +226,7 @@ public class TransactionBatchTest extends TestCase {
       return serializer;
     }
 
-    public Collection addAcknowledgedTransactionIDsTo(Collection c) {
+    public Collection getAcknowledgedTransactionIDs() {
       throw new ImplementMe();
     }
 

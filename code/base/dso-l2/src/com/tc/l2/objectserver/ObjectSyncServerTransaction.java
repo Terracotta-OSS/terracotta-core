@@ -7,6 +7,7 @@ package com.tc.l2.objectserver;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
@@ -37,6 +38,7 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
     this.serializer = serializer;
     this.changes = changes;
     this.rootsMap = rootsMap;
+    // XXX:: this is server generated txn, hence CID is Null
     this.serverTxnID = new ServerTransactionID(ChannelID.NULL_ID, txnID);
     Assert.assertEquals(dnaCount, oids.size());
     Assert.assertEquals(dnaCount, changes.size());
@@ -54,6 +56,7 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
     return changes;
   }
 
+  // XXX:: this is server generated txn, hence CID is Null
   public ChannelID getChannelID() {
     return ChannelID.NULL_ID;
   }
@@ -77,7 +80,7 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
   public Collection getObjectIDs() {
     return oids;
   }
-  
+
   /*
    * All objects contained in ObjectSync Message are new Objects for the passive
    */
@@ -103,6 +106,11 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
 
   public boolean isPassive() {
     return true;
+  }
+
+  // XXX:: this is server generated txn, hence GID is not assigned.
+  public GlobalTransactionID getGlobalTransactionID() {
+    return GlobalTransactionID.NULL_ID;
   }
 
 }

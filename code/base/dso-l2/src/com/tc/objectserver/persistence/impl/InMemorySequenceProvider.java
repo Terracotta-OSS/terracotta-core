@@ -4,11 +4,11 @@
  */
 package com.tc.objectserver.persistence.impl;
 
-import com.tc.objectserver.persistence.api.PersistentSequence;
 import com.tc.util.Assert;
 import com.tc.util.UUID;
+import com.tc.util.sequence.MutableSequence;
 
-public class InMemorySequenceProvider implements PersistentSequence {
+public class InMemorySequenceProvider implements MutableSequence {
 
   private final String uid = UUID.getUUID().toString();
   private long         id  = 0;

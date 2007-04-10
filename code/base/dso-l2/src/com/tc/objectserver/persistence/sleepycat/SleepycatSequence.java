@@ -11,12 +11,12 @@ import com.sleepycat.je.OperationStatus;
 import com.tc.logging.TCLogger;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
-import com.tc.objectserver.persistence.api.PersistentSequence;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor.SleepycatPersistorBase;
 import com.tc.util.Conversion;
 import com.tc.util.UUID;
+import com.tc.util.sequence.MutableSequence;
 
-class SleepycatSequence extends SleepycatPersistorBase implements PersistentSequence {
+class SleepycatSequence extends SleepycatPersistorBase implements MutableSequence {
   private static final String                  UID_KEY = "UIDKEY-3475674589230";
   private final long                           startValue;
   private final DatabaseEntry                  key;

@@ -100,7 +100,7 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
 
     final List dnaList = Collections.EMPTY_LIST;
     final Map newRootsMap = Collections.EMPTY_MAP;
-    ServerTransaction serverTransaction = new ServerTransactionImpl(batch.batchID, new TransactionID(1),
+    ServerTransaction serverTransaction = new ServerTransactionImpl(gtxm, batch.batchID, new TransactionID(1),
                                                                     new SequenceID(1), new LockID[0], batch.channelID,
                                                                     dnaList, new ObjectStringSerializer(), newRootsMap,
                                                                     TxnType.NORMAL, new LinkedList(),
@@ -149,7 +149,7 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     batch.channelID = new ChannelID(1);
     batch.batchID = new TxnBatchID(2);
 
-    serverTransaction = new ServerTransactionImpl(batch.batchID, new TransactionID(2), new SequenceID(2),
+    serverTransaction = new ServerTransactionImpl(gtxm, batch.batchID, new TransactionID(2), new SequenceID(2),
                                                   new LockID[0], batch.channelID, dnaList,
                                                   new ObjectStringSerializer(), newRootsMap, TxnType.NORMAL,
                                                   new LinkedList(), DmiDescriptor.EMPTY_ARRAY);

@@ -104,5 +104,4 @@ class TransactionPersistorImpl extends SleepycatPersistorBase implements Transac
       }
     }
   }
-
 }

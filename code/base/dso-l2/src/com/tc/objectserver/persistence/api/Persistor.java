@@ -4,6 +4,7 @@
 package com.tc.objectserver.persistence.api;
 
 import com.tc.io.serializer.api.StringIndex;
+import com.tc.util.sequence.MutableSequence;
 
 
 public interface Persistor {
@@ -17,7 +18,7 @@ public interface Persistor {
 
   public TransactionPersistor getTransactionPersistor();
 
-  public PersistentSequence getGlobalTransactionIDSequence();
+  public MutableSequence getGlobalTransactionIDSequence();
   
   public ClassPersistor getClassPersistor();
   

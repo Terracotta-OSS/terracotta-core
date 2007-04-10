@@ -26,15 +26,13 @@ import java.util.Map;
  */
 public class BroadcastChangeContext implements EventContext {
   private final ServerTransaction   tx;
-  private final GlobalTransactionID gtxID;
   private final GlobalTransactionID lowGlobalTransactionIDWatermark;
   private final NotifiedWaiters     notifiedWaiters;
   private final BackReferences      includeIDs;
 
-  public BroadcastChangeContext(GlobalTransactionID gtxID, ServerTransaction tx,
+  public BroadcastChangeContext(ServerTransaction tx,
                                 GlobalTransactionID lowGlobalTransactionIDWatermark, NotifiedWaiters notifiedWaiters,
                                 BackReferences includeIDs) {
-    this.gtxID = gtxID;
     this.tx = tx;
     this.lowGlobalTransactionIDWatermark = lowGlobalTransactionIDWatermark;
     this.notifiedWaiters = notifiedWaiters;
@@ -70,7 +68,7 @@ public class BroadcastChangeContext implements EventContext {
   }
 
   public GlobalTransactionID getGlobalTransactionID() {
-    return gtxID;
+    return tx.getGlobalTransactionID();
   }
 
   public GlobalTransactionID getLowGlobalTransactionIDWatermark() {

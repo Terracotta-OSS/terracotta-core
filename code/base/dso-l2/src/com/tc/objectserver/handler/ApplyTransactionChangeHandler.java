@@ -8,7 +8,6 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
-import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
@@ -53,27 +52,21 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     final ServerTransactionID stxnID = txn.getServerTransactionID();
     final BackReferences includeIDs = new BackReferences();
 
-    // TODO::Comeback and fix for passive
-    GlobalTransactionID gtxnID = GlobalTransactionID.NULL_ID;
-
     if (gtxm.needsApply(stxnID)) {
-      gtxnID = transactionManager.apply(txn, atc.getObjects(), includeIDs, instanceMonitor);
+      transactionManager.apply(txn, atc.getObjects(), includeIDs, instanceMonitor);
       txnObjectMgr.applyTransactionComplete(stxnID);
     } else {
-      gtxnID = gtxm.getGlobalTransactionID(stxnID);
       transactionManager.skipApplyAndCommit(txn);
       getLogger().warn("Not applying previously applied transaction: " + stxnID);
     }
     
-    if (gtxnID.isNull()) { throw new AssertionError("Global Transaction ID is null"); }
-
     if (!txn.isPassive()) {
       for (Iterator i = txn.addNotifiesTo(new LinkedList()).iterator(); i.hasNext();) {
         Notify notify = (Notify) i.next();
         lockManager.notify(notify.getLockID(), txn.getChannelID(), notify.getThreadID(), notify.getIsAll(),
                            notifiedWaiters);
       }
-      broadcastChangesSink.add(new BroadcastChangeContext(gtxnID, txn, gtxm.getLowGlobalTransactionIDWatermark(),
+      broadcastChangesSink.add(new BroadcastChangeContext(txn, gtxm.getLowGlobalTransactionIDWatermark(),
                                                           notifiedWaiters, includeIDs));
     }
   }

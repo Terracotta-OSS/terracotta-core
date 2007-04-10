@@ -105,8 +105,7 @@ public class ElectionManagerImpl implements ElectionManager {
   }
 
   private void basicAbort(L2StateMessage msg) {
-    this.winner = msg.getEnrollment();
-    reset();
+    reset(msg.getEnrollment());
     logger.info("Aborted Election : Winner is : " + this.winner);
     notifyAll();
   }
@@ -123,10 +122,11 @@ public class ElectionManagerImpl implements ElectionManager {
       logger.error("Error declaring results : ", e);
     }
     logger.info("Declared as Winner: Winner is : " + this.winner);
-    reset();
+    reset(winner);
   }
 
-  public synchronized void reset() {
+  public synchronized void reset(Enrollment winningEnrollment) {
+    this.winner = winningEnrollment;
     this.state = INIT;
     this.votes.clear();
     this.myVote = null;
@@ -143,7 +143,7 @@ public class ElectionManagerImpl implements ElectionManager {
         winnerID = doElection(myNodeId, isNew);
       } catch (GroupException e1) {
         logger.error("Error during election : ", e1);
-        reset();
+        reset(null);
       }
     }
     return winnerID;

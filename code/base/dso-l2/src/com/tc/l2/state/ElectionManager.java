@@ -19,6 +19,6 @@ public interface ElectionManager {
 
   public void handleElectionResultMessage(L2StateMessage msg);
 
-  public void reset();
+  public void reset(Enrollment winner);
 
 }

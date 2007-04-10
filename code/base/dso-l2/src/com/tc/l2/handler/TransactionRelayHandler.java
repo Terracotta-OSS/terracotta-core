@@ -27,14 +27,13 @@ import java.util.Collection;
 import java.util.Iterator;
 
 public class TransactionRelayHandler extends AbstractEventHandler {
-  private static final TCLogger      logger = TCLogging.getLogger(TransactionRelayHandler.class);
-  
+  private static final TCLogger          logger = TCLogging.getLogger(TransactionRelayHandler.class);
 
-  private final L2ObjectStateManager l2ObjectStateMgr;
-  private GroupManager groupManager;
+  private final L2ObjectStateManager     l2ObjectStateMgr;
 
+  private GroupManager                   groupManager;
 
-  private ServerTransactionManager transactionManager;
+  private ServerTransactionManager       transactionManager;
 
   public TransactionRelayHandler(L2ObjectStateManager objectStateManager) {
     this.l2ObjectStateMgr = objectStateManager;
@@ -50,8 +49,8 @@ public class TransactionRelayHandler extends AbstractEventHandler {
         // Just send the commitTransaction Message, no futher processing is needed
         sendCommitTransactionMessage(nodeID, ict);
       } else {
-        //TODO::
-        System.err.println("WARNING :: Unimplemented yet - " + state );
+        // TODO::
+        System.err.println("WARNING :: Unimplemented yet - " + state);
         throw new ImplementMe();
       }
     }
@@ -61,7 +60,7 @@ public class TransactionRelayHandler extends AbstractEventHandler {
   private void sendCommitTransactionMessage(NodeID nodeID, IncomingTransactionContext ict) {
     addWaitForNotification(nodeID, ict);
     RelayedCommitTransactionMessage msg = RelayedCommitTransactionMessageFactory
-        .createRelayedCommitTransactionMessage(ict.getCommitTransactionMessage());
+        .createRelayedCommitTransactionMessage(ict.getCommitTransactionMessage(), ict.getTxns());
     try {
       this.groupManager.sendTo(nodeID, msg);
     } catch (GroupException e) {
@@ -72,7 +71,7 @@ public class TransactionRelayHandler extends AbstractEventHandler {
 
   private void addWaitForNotification(NodeID nodeID, IncomingTransactionContext ict) {
     ChannelID waitee = nodeID.toChannelID();
-    //TODO::avoid this loop and thus N lookups in transactionManager
+    // TODO::avoid this loop and thus N lookups in transactionManager
     for (Iterator i = ict.getServerTransactionIDs().iterator(); i.hasNext();) {
       ServerTransactionID stxnID = (ServerTransactionID) i.next();
       transactionManager.addWaitingForAcknowledgement(ict.getChannelID(), stxnID.getClientTransactionID(), waitee);

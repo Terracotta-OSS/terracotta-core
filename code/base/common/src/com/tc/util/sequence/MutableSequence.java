@@ -1,14 +1,12 @@
 /*
  * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
-package com.tc.objectserver.persistence.api;
+package com.tc.util.sequence;
 
-public interface PersistentSequence {
+public interface MutableSequence extends Sequence {
 
-  // This provide a unique id for this instance of the sequence. (ideally unique for every sequence starting at 0)
+  // This provide a unique id for an instance of the sequence.
   public String getUID();
-
-  public long next();
 
   public long nextBatch(int batchSize);
   

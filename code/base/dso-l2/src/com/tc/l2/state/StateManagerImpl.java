@@ -90,10 +90,10 @@ public class StateManagerImpl implements StateManager, GroupMessageListener, Gro
     }
   }
 
-  private synchronized void moveToPassiveState(boolean initialized) {
-    electionMgr.reset();
+  private synchronized void moveToPassiveState(Enrollment winningEnrollment) {
+    electionMgr.reset(winningEnrollment);
     if (state == START_STATE) {
-      state = initialized ? PASSIVE_STANDBY : PASSIVE_UNINTIALIZED;
+      state = winningEnrollment.isANewCandidate() ? PASSIVE_STANDBY : PASSIVE_UNINTIALIZED;
       info("Moved to " + state, true);
       stateChangeSink.add(new StateChangedEvent(START_STATE, state));
     } else if (state == ACTIVE_COORDINATOR) {
@@ -197,7 +197,7 @@ public class StateManagerImpl implements StateManager, GroupMessageListener, Gro
     }
     Enrollment winningEnrollment = clusterMsg.getEnrollment();
     this.activeNode = winningEnrollment.getNodeID();
-    moveToPassiveState(winningEnrollment.isANewCandidate());
+    moveToPassiveState(winningEnrollment);
   }
 
   private void handleElectionResultMessage(L2StateMessage msg) throws GroupException {

@@ -16,7 +16,7 @@ public interface TransactionStore {
   
   public GlobalTransactionDescriptor getTransactionDescriptor(ServerTransactionID serverTransactionID);
   
-  public GlobalTransactionDescriptor createTransactionDescriptor(ServerTransactionID serverTransactionID);
+  public GlobalTransactionDescriptor getOrCreateTransactionDescriptor(ServerTransactionID serverTransactionID);
 
   public GlobalTransactionID getLeastGlobalTransactionID();
   
@@ -28,5 +28,7 @@ public interface TransactionStore {
   public GlobalTransactionID getGlobalTransactionID(ServerTransactionID stxnID);
   
   public void shutdownClient(PersistenceTransaction transaction, ChannelID client);
+
+  public void createGlobalTransactionDesc(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID);
 
 }

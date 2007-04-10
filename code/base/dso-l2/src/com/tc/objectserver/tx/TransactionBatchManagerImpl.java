@@ -107,6 +107,9 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager {
 
     public void shutdownClient() {
       this.killed = true;
+      if(txnCount == 0) {
+        cleanUp(channelID);
+      }
     }
   }
 }

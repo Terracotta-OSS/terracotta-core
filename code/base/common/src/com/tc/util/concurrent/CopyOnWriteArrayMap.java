@@ -99,9 +99,12 @@ public class CopyOnWriteArrayMap extends Hashtable {
       int length = old_values.length;
       _values = new Object[length - 1];
       int i = 0;
+      boolean found = false;
       for (int j = 0; j < length; j++) {
-        if (old != old_values[j]) {
+        if (found || old != old_values[j]) {
           _values[i++] = old_values[j];
+        } else {
+          found = true;
         }
       }
     }

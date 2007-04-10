@@ -17,13 +17,11 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.NoSuchChannelException;
-import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
@@ -93,8 +91,9 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     Map newRoots = Collections.unmodifiableMap(new HashMap());
     TxnType txnType = TxnType.NORMAL;
     SequenceID sequenceID = new SequenceID(1);
-    ServerTransaction tx = new ServerTransactionImpl(batchID, txID, sequenceID, lockIDs, channelID, dnas, serializer,
-                                                     newRoots, txnType, new LinkedList(), DmiDescriptor.EMPTY_ARRAY);
+    ServerTransaction tx = new ServerTransactionImpl(gtxm, batchID, txID, sequenceID, lockIDs, channelID, dnas,
+                                                     serializer, newRoots, txnType, new LinkedList(),
+                                                     DmiDescriptor.EMPTY_ARRAY);
 
     assertTrue(transactionBatchManager.batchComponentCompleteCalls.isEmpty());
     assertFalse(transactionBatchManager.isBatchComponentComplete.get());
@@ -133,9 +132,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
   }
 
   private EventContext getBroadcastTxnContext(ServerTransaction tx) {
-    ServerTransactionID stxID = tx.getServerTransactionID();
-    GlobalTransactionID gid = gtxm.getGlobalTransactionID(stxID);
-    return new BroadcastChangeContext(gid, tx, gtxm.getLowGlobalTransactionIDWatermark(), new NotifiedWaiters(),
+    return new BroadcastChangeContext(tx, gtxm.getLowGlobalTransactionIDWatermark(), new NotifiedWaiters(),
                                       new BackReferences());
   }
 

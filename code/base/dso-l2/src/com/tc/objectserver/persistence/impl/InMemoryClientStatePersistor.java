@@ -5,7 +5,7 @@ package com.tc.objectserver.persistence.impl;
 
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.persistence.api.ClientStatePersistor;
-import com.tc.objectserver.persistence.api.PersistentSequence;
+import com.tc.util.sequence.MutableSequence;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,9 +15,9 @@ import java.util.Set;
 public class InMemoryClientStatePersistor implements ClientStatePersistor {
 
   private final Map                        clients             = new HashMap();
-  private final PersistentSequence         connectionIDSequence = new InMemorySequenceProvider();
+  private final MutableSequence         connectionIDSequence = new InMemorySequenceProvider();
 
-  public PersistentSequence getConnectionIDSequence() {
+  public MutableSequence getConnectionIDSequence() {
     return this.connectionIDSequence;
   }
 

@@ -8,6 +8,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
@@ -90,6 +91,10 @@ public final class TestServerTransaction implements ServerTransaction {
   }
 
   public Set getNewObjectIDs() {
+    throw new ImplementMe();
+  }
+
+  public GlobalTransactionID getGlobalTransactionID() {
     throw new ImplementMe();
   }
 

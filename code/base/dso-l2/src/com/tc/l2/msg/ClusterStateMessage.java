@@ -21,10 +21,12 @@ public class ClusterStateMessage extends AbstractGroupMessage {
   public static final int OBJECT_ID              = 0x00;
   public static final int NEW_CONNECTION_CREATED = 0x01;
   public static final int CONNECTION_DESTROYED   = 0x02;
+  public static final int GLOBAL_TRANSACTION_ID  = 0x03;
   public static final int COMPLETE_STATE         = 0xF0;
   public static final int OPERATION_SUCCESS      = 0xFF;
 
   private long            nextAvailableObjectID;
+  private long            nextAvailableGID;
   private String          clusterID;
   private ConnectionID    connectionID;
   private long            nextAvailableChannelID;
@@ -53,12 +55,16 @@ public class ClusterStateMessage extends AbstractGroupMessage {
       case OBJECT_ID:
         nextAvailableObjectID = in.readLong();
         break;
+      case GLOBAL_TRANSACTION_ID:
+        nextAvailableGID = in.readLong();
+        break;
       case NEW_CONNECTION_CREATED:
       case CONNECTION_DESTROYED:
         connectionID = readConnectionID(in);
         break;
       case COMPLETE_STATE:
         nextAvailableObjectID = in.readLong();
+        nextAvailableGID = in.readLong();
         nextAvailableChannelID = in.readLong();
         clusterID = in.readUTF();
         int size = in.readInt();
@@ -79,12 +85,16 @@ public class ClusterStateMessage extends AbstractGroupMessage {
       case OBJECT_ID:
         out.writeLong(nextAvailableObjectID);
         break;
+      case GLOBAL_TRANSACTION_ID:
+        out.writeLong(nextAvailableGID);
+        break;
       case NEW_CONNECTION_CREATED:
       case CONNECTION_DESTROYED:
         writeConnectionID(connectionID, out);
         break;
       case COMPLETE_STATE:
         out.writeLong(nextAvailableObjectID);
+        out.writeLong(nextAvailableGID);
         out.writeLong(nextAvailableChannelID);
         out.writeUTF(clusterID);
         out.writeInt(connectionIDs.size());
@@ -113,6 +123,10 @@ public class ClusterStateMessage extends AbstractGroupMessage {
     return nextAvailableObjectID;
   }
 
+  public long getNextAvailableGlobalTxnID() {
+    return nextAvailableGID;
+  }
+
   public String getClusterID() {
     return clusterID;
   }
@@ -126,8 +140,12 @@ public class ClusterStateMessage extends AbstractGroupMessage {
       case OBJECT_ID:
         nextAvailableObjectID = state.getNextAvailableObjectID();
         break;
+      case GLOBAL_TRANSACTION_ID:
+        nextAvailableGID = state.getNextAvailableGlobalTxnID();
+        break;
       case COMPLETE_STATE:
         nextAvailableObjectID = state.getNextAvailableObjectID();
+        nextAvailableGID = state.getNextAvailableGlobalTxnID();
         nextAvailableChannelID = state.getNextAvailableChannelID();
         clusterID = state.getClusterID();
         connectionIDs = state.getAllConnections();
@@ -142,8 +160,12 @@ public class ClusterStateMessage extends AbstractGroupMessage {
       case OBJECT_ID:
         state.setNextAvailableObjectID(nextAvailableObjectID);
         break;
+      case GLOBAL_TRANSACTION_ID:
+        state.setNextAvailableGlobalTransactionID(nextAvailableGID);
+        break;
       case COMPLETE_STATE:
         state.setNextAvailableObjectID(nextAvailableObjectID);
+        state.setNextAvailableGlobalTransactionID(nextAvailableGID);
         state.setNextAvailableChannelID(nextAvailableChannelID);
         state.setClusterID(clusterID);
         for (Iterator i = connectionIDs.iterator(); i.hasNext();) {

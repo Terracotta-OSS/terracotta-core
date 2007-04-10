@@ -21,7 +21,7 @@ public interface CommitTransactionMessage {
 
   public TCByteBuffer[] getBatchData();
   
-  public Collection addAcknowledgedTransactionIDsTo(Collection c);
+  public Collection getAcknowledgedTransactionIDs();
 
   public void send();
   

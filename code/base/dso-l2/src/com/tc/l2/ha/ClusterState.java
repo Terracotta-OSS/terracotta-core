@@ -8,6 +8,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
+import com.tc.objectserver.gtx.GlobalTransactionIDSequenceProvider;
 import com.tc.objectserver.persistence.api.PersistentMapStore;
 import com.tc.util.Assert;
 import com.tc.util.State;
@@ -18,26 +19,30 @@ import java.util.Set;
 
 public class ClusterState {
 
-  private static final TCLogger     logger             = TCLogging.getLogger(ClusterState.class);
+  private static final TCLogger                          logger               = TCLogging.getLogger(ClusterState.class);
 
-  private static final String       L2_STATE_KEY       = "CLUSTER_STATE::L2_STATE_KEY";
-  private static final String       CLUSTER_ID_KEY     = "CLUSTER_STATE::CLUSTER_ID_KEY";
+  private static final String                            L2_STATE_KEY         = "CLUSTER_STATE::L2_STATE_KEY";
+  private static final String                            CLUSTER_ID_KEY       = "CLUSTER_STATE::CLUSTER_ID_KEY";
 
-  private final PersistentMapStore  clusterStateStore;
-  private final ObjectIDSequence    oidSequence;
-  private final ConnectionIDFactory connectionIdFactory;
+  private final PersistentMapStore                       clusterStateStore;
+  private final ObjectIDSequence                         oidSequence;
+  private final ConnectionIDFactory                      connectionIdFactory;
+  private final GlobalTransactionIDSequenceProvider gidSequenceProvider;
 
-  private final Set                 connections        = new HashSet();
-  private long                      nextAvailObjectID  = -1;
-  private long                      nextAvailChannelID = -1;
-  private State                     currentState;
-  private String                    clusterID;
+  private final Set                                      connections          = new HashSet();
+  private long                                           nextAvailObjectID    = -1;
+  private long                                           nextAvailChannelID   = -1;
+  private long                                           nextAvailGlobalTxnID = -1;
+  private State                                          currentState;
+  private String                                         clusterID;
 
   public ClusterState(PersistentMapStore clusterStateStore, ObjectIDSequence oidSequence,
-                      ConnectionIDFactory connectionIdFactory) {
+                      ConnectionIDFactory connectionIdFactory,
+                      GlobalTransactionIDSequenceProvider gidSequenceProvider) {
     this.clusterStateStore = clusterStateStore;
     this.oidSequence = oidSequence;
     this.connectionIdFactory = connectionIdFactory;
+    this.gidSequenceProvider = gidSequenceProvider;
     this.clusterID = clusterStateStore.get(CLUSTER_ID_KEY);
   }
 
@@ -59,6 +64,20 @@ public class ClusterState {
     return nextAvailChannelID;
   }
 
+  public long getNextAvailableGlobalTxnID() {
+    return nextAvailGlobalTxnID;
+  }
+
+  public void setNextAvailableGlobalTransactionID(long nextAvailGID) {
+    if (nextAvailGID < nextAvailGlobalTxnID) {
+      // Could happen when two actives fight it out. Dont want to assert, let the state manager fight it out.
+      logger.error("Trying to set Next Available Global Txn ID to a lesser value : known = " + nextAvailGlobalTxnID
+                   + " new value = " + nextAvailGID + " IGNORING");
+      return;
+    }
+    this.nextAvailGlobalTxnID = nextAvailGID;
+  }
+
   public void setNextAvailableChannelID(long nextAvailableCID) {
     if (nextAvailableCID < nextAvailChannelID) {
       // Could happen when two actives fight it out. Dont want to assert, let the state manager fight it out.
@@ -68,10 +87,11 @@ public class ClusterState {
     }
     this.nextAvailChannelID = nextAvailableCID;
   }
-  
+
   public void syncInternal() {
     syncConnectionIDs();
     syncOIDSequence();
+    syncGIDSequence();
   }
 
   private void syncConnectionIDs() {
@@ -104,6 +124,14 @@ public class ClusterState {
     }
   }
 
+  private void syncGIDSequence() {
+    long nextGID = getNextAvailableGlobalTxnID();
+    if (nextGID != -1) {
+      logger.info("Setting the Next Available Global Transaction ID to " + nextGID);
+      this.gidSequenceProvider.setNextAvailableGID(nextGID);
+    }
+  }
+
   public void setCurrentState(State state) {
     this.currentState = state;
     syncCurrentStateToDB();
@@ -122,7 +150,7 @@ public class ClusterState {
 
   public void removeConnection(ConnectionID connectionID) {
     boolean removed = connections.remove(connectionID);
-    if(!removed) {
+    if (!removed) {
       logger.warn("Connection ID not found : " + connectionID + " Current Connections count : " + connections.size());
     }
   }
@@ -130,5 +158,4 @@ public class ClusterState {
   public Set getAllConnections() {
     return new HashSet(connections);
   }
-
 }

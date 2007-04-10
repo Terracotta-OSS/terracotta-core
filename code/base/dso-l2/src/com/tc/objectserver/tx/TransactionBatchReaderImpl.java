@@ -11,6 +11,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.gtx.GlobalTransactionIDGenerator;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.tx.ServerTransactionID;
@@ -38,9 +39,11 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
   private final Collection              acknowledgedTransactionIDs;
   private ObjectStringSerializer        serializer;
   private final boolean passive;
+  private final GlobalTransactionIDGenerator gtxm;
 
-  public TransactionBatchReaderImpl(TCByteBuffer[] data, ChannelID source, Collection acknowledgedTransactionIDs,
+  public TransactionBatchReaderImpl(GlobalTransactionIDGenerator gtxm, TCByteBuffer[] data, ChannelID source, Collection acknowledgedTransactionIDs,
                                     ObjectStringSerializer serializer, boolean passive) throws IOException {
+    this.gtxm = gtxm;
     this.passive = passive;
     this.in = new TCByteBufferInputStream(data);
     this.source = source;
@@ -110,7 +113,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     }
 
     numTxns--;
-    return new ServerTransactionImpl(getBatchID(), txnID, sequenceID, locks, source, dnas, serializer, newRoots,
+    return new ServerTransactionImpl(gtxm, getBatchID(), txnID, sequenceID, locks, source, dnas, serializer, newRoots,
                                      txnType, notifies, dmis, passive);
   }
 

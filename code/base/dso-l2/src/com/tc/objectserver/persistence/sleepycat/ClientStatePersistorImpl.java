@@ -17,10 +17,10 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.persistence.api.ClientStatePersistor;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
-import com.tc.objectserver.persistence.api.PersistentSequence;
 import com.tc.objectserver.persistence.impl.ClientNotFoundException;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor.SleepycatPersistorBase;
 import com.tc.util.Conversion;
+import com.tc.util.sequence.MutableSequence;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -33,10 +33,10 @@ class ClientStatePersistorImpl extends SleepycatPersistorBase implements ClientS
   private final DatabaseEntry                  value;
   private final PersistenceTransactionProvider ptp;
   private final TCLogger                       logger;
-  private final PersistentSequence             connectionIDSequence;
+  private final MutableSequence             connectionIDSequence;
 
   ClientStatePersistorImpl(final TCLogger logger, final PersistenceTransactionProvider ptp,
-                           final PersistentSequence connectionIDSequence, final Database db) {
+                           final MutableSequence connectionIDSequence, final Database db) {
     this.logger = logger;
     this.ptp = ptp;
     this.cursorConfig = new CursorConfig();
@@ -47,7 +47,7 @@ class ClientStatePersistorImpl extends SleepycatPersistorBase implements ClientS
     this.connectionIDSequence = connectionIDSequence;
   }
 
-  public PersistentSequence getConnectionIDSequence() {
+  public MutableSequence getConnectionIDSequence() {
     return this.connectionIDSequence;
   }
 

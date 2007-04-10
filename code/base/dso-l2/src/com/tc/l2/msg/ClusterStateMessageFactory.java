@@ -37,4 +37,10 @@ public class ClusterStateMessageFactory {
     return msg;
   }
 
+  public static GroupMessage createNextAvailableGlobalTransactionIDMessage(ClusterState state) {
+    ClusterStateMessage msg = new ClusterStateMessage(ClusterStateMessage.GLOBAL_TRANSACTION_ID);
+    msg.initMessage(state);
+    return msg;
+  }
+
 }

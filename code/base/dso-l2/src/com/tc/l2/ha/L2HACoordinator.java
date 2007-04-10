@@ -35,8 +35,10 @@ import com.tc.net.groups.Node;
 import com.tc.net.groups.NodeID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.gtx.GlobalTransactionIDSequenceProvider;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.persistence.api.PersistentMapStore;
+import com.tc.objectserver.tx.ServerTransactionManager;
 
 import java.io.IOException;
 
@@ -56,26 +58,30 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   private ClusterState                  clusterState;
 
   public L2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server, StageManager stageManager,
-                         PersistentMapStore clusterStateStore, ObjectManager objectManager) {
+                         PersistentMapStore clusterStateStore, ObjectManager objectManager,
+                         ServerTransactionManager transactionManager,
+                         GlobalTransactionIDSequenceProvider gidSequenceProvider) {
     this.consoleLogger = consoleLogger;
     this.server = server;
-    init(stageManager, clusterStateStore, objectManager);
+    init(stageManager, clusterStateStore, objectManager, transactionManager, gidSequenceProvider);
   }
 
-  private void init(StageManager stageManager, PersistentMapStore clusterStateStore, ObjectManager objectManager) {
+  private void init(StageManager stageManager, PersistentMapStore clusterStateStore, ObjectManager objectManager,
+                    ServerTransactionManager transactionManager, GlobalTransactionIDSequenceProvider gidSequenceProvider) {
     try {
-      basicInit(stageManager, clusterStateStore, objectManager);
+      basicInit(stageManager, clusterStateStore, objectManager, transactionManager, gidSequenceProvider);
     } catch (GroupException e) {
       logger.error(e);
       throw new AssertionError(e);
     }
   }
 
-  private void basicInit(StageManager stageManager, PersistentMapStore clusterStateStore, ObjectManager objectManager)
-      throws GroupException {
+  private void basicInit(StageManager stageManager, PersistentMapStore clusterStateStore, ObjectManager objectManager,
+                         ServerTransactionManager transactionManager,
+                         GlobalTransactionIDSequenceProvider gidSequenceProvider) throws GroupException {
 
     this.clusterState = new ClusterState(clusterStateStore, server.getManagedObjectStore(), server
-        .getConnectionIdFactory());
+        .getConnectionIdFactory(), gidSequenceProvider);
 
     final Sink stateChangeSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE,
                                                           new L2StateChangeHandler(), 1, Integer.MAX_VALUE).getSink();
@@ -83,7 +89,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.stateManager = new StateManagerImpl(consoleLogger, groupManager, stateChangeSink);
     this.stateManager.registerForStateChangeEvents(this);
 
-    this.l2ObjectStateManager = new L2ObjectStateManagerImpl();
+    this.l2ObjectStateManager = new L2ObjectStateManagerImpl(transactionManager);
 
     final Sink objectsSyncSink = stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_STAGE,
                                                           new L2ObjectSyncHandler(this.l2ObjectStateManager), 1,
@@ -101,7 +107,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
                                                           objectManager, objectsSyncSink);
 
     this.rClusterStateMgr = new ReplicatedClusterStateManagerImpl(groupManager, stateManager, clusterState, server
-        .getConnectionIdFactory());
+        .getConnectionIdFactory(), stageManager.getStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE).getSink());
 
     this.groupManager.routeMessages(ObjectSyncMessage.class, objectsSyncSink);
     this.groupManager.routeMessages(RelayedCommitTransactionMessage.class, objectsSyncSink);

@@ -9,6 +9,8 @@ public interface ReplicatedClusterStateManager {
 
   public void publishNextAvailableObjectID(long l);
 
+  public void publishNextAvailableGlobalTransactionID(long l);
+  
   public void goActiveAndSyncState();
 
   public void publishClusterState(NodeID nodeID);

@@ -80,7 +80,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
         serverTxnIDs.add(txn.getServerTransactionID());
       }
       // TODO:: remove channelID.NULL_ID thingy
-      txnObjectMgr.addTransactions(ChannelID.NULL_ID, txns, Collections.EMPTY_LIST);
+      txnObjectMgr.addTransactions(ChannelID.NULL_ID, txns, reader.addAcknowledgedTransactionIDsTo(new HashSet()));
       return serverTxnIDs;
     } catch (IOException e) {
       throw new AssertionError(e);

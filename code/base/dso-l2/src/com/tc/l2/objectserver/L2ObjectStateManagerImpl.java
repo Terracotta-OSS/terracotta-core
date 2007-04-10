@@ -9,7 +9,11 @@ import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.NodeID;
+import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.ObjectManager;
+import com.tc.objectserver.tx.ServerTransactionListener;
+import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.concurrent.CopyOnWriteArrayMap;
@@ -23,34 +27,48 @@ import java.util.Set;
 
 public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
 
-  private static final TCLogger logger = TCLogging.getLogger(L2ObjectStateManagerImpl.class);
+  private static final TCLogger          logger = TCLogging.getLogger(L2ObjectStateManagerImpl.class);
 
-  CopyOnWriteArrayMap           nodes  = new CopyOnWriteArrayMap();
+  CopyOnWriteArrayMap                    nodes  = new CopyOnWriteArrayMap();
+
+  private final ServerTransactionManager transactionManager;
+
+  public L2ObjectStateManagerImpl(ServerTransactionManager transactionManager) {
+    this.transactionManager = transactionManager;
+  }
+
+  public int getL2Count() {
+    return nodes.size();
+  }
 
   public void removeL2(NodeID nodeID) {
     Object l2State = nodes.remove(nodeID);
     if (l2State == null) {
       logger.warn("L2State Not found for " + nodeID);
+    } else {
+      transactionManager.removeTransactionListener((ServerTransactionListener) l2State);
     }
   }
 
   public int addL2WithObjectIDs(NodeID nodeID, Set oids, ObjectManager objectManager) {
-    L2ObjectStateimpl l2State;
+    L2ObjectStateImpl l2State;
     synchronized (nodes) {
-      l2State = (L2ObjectStateimpl) nodes.get(nodeID);
+      l2State = (L2ObjectStateImpl) nodes.get(nodeID);
       if (l2State != null) {
         logger.warn("L2State already present for " + nodeID + ". IGNORING setExistingObjectsList : oids count = "
                     + oids.size());
         return 0;
       }
-      nodes.put(nodeID, l2State = new L2ObjectStateimpl(nodeID));
+      l2State = new L2ObjectStateImpl(nodeID);
+      nodes.put(nodeID, l2State);
+      transactionManager.addTransactionListener(l2State);
     }
     int missing = l2State.initialize(oids, objectManager);
     return missing;
   }
 
   public ManagedObjectSyncContext getSomeObjectsToSyncContext(NodeID nodeID, int count, Sink sink) {
-    L2ObjectStateimpl l2State = (L2ObjectStateimpl) nodes.get(nodeID);
+    L2ObjectStateImpl l2State = (L2ObjectStateImpl) nodes.get(nodeID);
     if (l2State != null) {
       return l2State.getSomeObjectsToSyncContext(count, sink);
     } else {
@@ -60,7 +78,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
   }
 
   public void close(ManagedObjectSyncContext mosc) {
-    L2ObjectStateimpl l2State = (L2ObjectStateimpl) nodes.get(mosc.getNodeID());
+    L2ObjectStateImpl l2State = (L2ObjectStateImpl) nodes.get(mosc.getNodeID());
     if (l2State != null) {
       l2State.close(mosc);
     } else {
@@ -72,7 +90,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     return nodes.values();
   }
 
-  private static final class L2ObjectStateimpl implements L2ObjectState {
+  private static final class L2ObjectStateImpl implements L2ObjectState, ServerTransactionListener {
 
     private final NodeID             nodeID;
     // XXX:: Tracking just the missing Oids is better in terms of memory overhead, but this might lead to difficult race
@@ -88,7 +106,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
 
     private ManagedObjectSyncContext syncingContext = null;
 
-    public L2ObjectStateimpl(NodeID nodeID) {
+    public L2ObjectStateImpl(NodeID nodeID) {
       this.nodeID = nodeID;
     }
 
@@ -129,6 +147,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     }
 
     private synchronized int initialize(Set oidsFromL2, ObjectManager objectManager) {
+      // TODO:: For a huge DB, when the active crashes and restarts (as active) this call may take a loong time and
+      // until this is finished the whole cluster might be struck.
       this.missingOids = objectManager.getAllObjectIDs();
       this.missingRoots = objectManager.getRootNamesToIDsMap();
       int objectCount = missingOids.size();
@@ -162,11 +182,31 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     }
 
     public synchronized boolean isInSync() {
+      while (state == UNINITIALIZED) {
+        // initialize is not run yet.
+        try {
+          wait();
+        } catch (InterruptedException e) {
+          throw new AssertionError(e);
+        }
+      }
       return (state == IN_SYNC);
     }
 
     public String toString() {
       return "L2StateObjectImpl [ " + nodeID + " ] : missing = " + missingOids.size() + " state = " + state;
+    }
+
+    public void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
+      // TODO::
+    }
+
+    public void transactionApplied(ServerTransactionID stxID) {
+      // TODO::
+    }
+
+    public void transactionCompleted(ServerTransactionID stxID) {
+      //NOP
     }
   }
 }

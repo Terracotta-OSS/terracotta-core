@@ -6,11 +6,10 @@ package com.tc.objectserver.tx;
 
 import com.tc.exception.ImplementMe;
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.managedobject.BackReferences;
-import com.tc.objectserver.persistence.api.PersistenceTransaction;
+import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.ArrayList;
@@ -66,19 +65,8 @@ public class TestServerTransactionManager implements ServerTransactionManager {
     // NOP
   }
 
-  long gid = 0;
-
-  public GlobalTransactionID apply(ServerTransaction txn, Map objects, BackReferences includeIDs,
-                                   ObjectInstanceMonitor instanceMonitor) {
-    return new GlobalTransactionID(gid++);
-  }
-
-  public void committed(Collection tx) {
+  public void apply(ServerTransaction txn, Map objects, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor) {
     // NOP
-  }
-
-  public void release(PersistenceTransaction ptx, Collection objects, Map newRoots) {
-    throw new ImplementMe();
   }
 
   public void incomingTransactions(ChannelID channelID, Set serverTxnIDs, boolean relayed) {
@@ -87,6 +75,11 @@ public class TestServerTransactionManager implements ServerTransactionManager {
 
   public void transactionsRelayed(ChannelID channelID, Set serverTxnIDs) {
     throw new ImplementMe();
+  }
+
+  public void commit(PersistenceTransactionProvider ptxp, Collection objects, Map newRoots,
+                     Collection appliedServerTransactionIDs, Set completedTransactionIDs) {
+    // NOP
   }
 
 }

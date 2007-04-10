@@ -13,9 +13,9 @@ import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.persistence.api.ClientStatePersistor;
-import com.tc.objectserver.persistence.api.PersistentSequence;
 import com.tc.objectserver.persistence.impl.ClientNotFoundException;
 import com.tc.util.Assert;
+import com.tc.util.sequence.MutableSequence;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -25,7 +25,7 @@ import java.util.Set;
 public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelManagerEventListener {
 
   private final ClientStatePersistor clientStateStore;
-  private final PersistentSequence   connectionIDSequence;
+  private final MutableSequence   connectionIDSequence;
   private String                     uid;
   private List                       listeners = new CopyOnWriteArrayList();
 

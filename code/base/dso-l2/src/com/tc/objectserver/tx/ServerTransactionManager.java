@@ -1,14 +1,14 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.tx;
 
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.managedobject.BackReferences;
-import com.tc.objectserver.persistence.api.PersistenceTransaction;
+import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 
 import java.util.Collection;
 import java.util.Map;
@@ -42,8 +42,8 @@ public interface ServerTransactionManager {
   public boolean isWaiting(ChannelID waiter, TransactionID requestID);
 
   /**
-   * received an acknowledgement from the client that the changes in the given transaction have been applied.
-   * This could potentially trigger an acknowledgement to the orginating client.
+   * received an acknowledgement from the client that the changes in the given transaction have been applied. This could
+   * potentially trigger an acknowledgement to the orginating client.
    * 
    * @param waiter - ChannelID of the sender of the message that is waiting for a response
    * @param requesterID - The id of the request sent by the channel ID that is waiting for a response
@@ -54,27 +54,20 @@ public interface ServerTransactionManager {
 
   /**
    * Apply the changes in the given transaction to the given set of checked out objects.
-   * @param instanceMonitor 
    * 
-   * @return The results of the transaction apply
+   * @param instanceMonitor
    */
-  public GlobalTransactionID apply(ServerTransaction txn, Map objects, BackReferences includeIDs,
-                    ObjectInstanceMonitor instanceMonitor);
-  
+  public void apply(ServerTransaction txn, Map objects, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor);
+
   /**
-   * The Objects will be checked back to the object manager
-   */
-  public void release(PersistenceTransaction ptx, Collection objects, Map newRoots);
-  
-  /**
-   * The set of transactions are commited.
+   * Commits all the changes in objects and releases the objects
    * This could potentially trigger an acknowledgement to the orginating client.
    */
-  public void committed(Collection txnIds);
+  public void commit(PersistenceTransactionProvider ptxp, Collection objects, Map newRoots,
+                     Collection appliedServerTransactionIDs, Set completedTransactionIDs);
   
   /**
-   * The broadcast stage is completed.
-   * This could potentially trigger an acknowledgement to the orginating client.
+   * The broadcast stage is completed. This could potentially trigger an acknowledgement to the orginating client.
    */
   public void broadcasted(ChannelID waiter, TransactionID requestID);
 
@@ -92,4 +85,5 @@ public interface ServerTransactionManager {
   public void incomingTransactions(ChannelID channelID, Set serverTxnIDs, boolean relayed);
 
   public void transactionsRelayed(ChannelID channelID, Set serverTxnIDs);
+
 }

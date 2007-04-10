@@ -20,4 +20,8 @@ public class NonReplicatedClusterStateManager implements ReplicatedClusterStateM
     //Nop
   }
 
+  public void publishNextAvailableGlobalTransactionID(long l) {
+    //Nop
+  }
+
 }

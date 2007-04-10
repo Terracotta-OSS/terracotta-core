@@ -16,6 +16,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
+import com.tc.objectserver.context.ChannelStateEventContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManager;
@@ -40,26 +41,25 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler {
   }
 
   public void handleEvent(EventContext context) {
-    Event event = (Event) context;
+    ChannelStateEventContext event = (ChannelStateEventContext) context;
 
-    switch (event.type) {
-      case Event.CREATE: {
-        channelCreated(event.channel);
+    switch (event.getType()) {
+      case ChannelStateEventContext.CREATE: {
+        channelCreated(event.getChannelID());
         break;
       }
-      case Event.REMOVE: {
-        channelRemoved(event.channel);
+      case ChannelStateEventContext.REMOVE: {
+        channelRemoved(event.getChannelID());
         break;
       }
       default: {
-        throw new AssertionError("unknown event: " + event.type);
+        throw new AssertionError("unknown event: " + event.getType());
       }
     }
   }
 
-  private void channelRemoved(MessageChannel channel) {
-    ChannelID channelID = channel.getChannelID();
-    broadcastClusterMemebershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, channel.getChannelID());
+  private void channelRemoved(ChannelID channelID) {
+    broadcastClusterMemebershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, channelID);
     if (commsManager.isInShutdown()) {
       logger.info("Ignoring transport disconnect for " + channelID + " while shutting down.");
     } else {
@@ -71,8 +71,8 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler {
     }
   }
 
-  private void channelCreated(MessageChannel channel) {
-    broadcastClusterMemebershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, channel.getChannelID());
+  private void channelCreated(ChannelID channelID) {
+    broadcastClusterMemebershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, channelID);
   }
 
   private void broadcastClusterMemebershipMessage(int eventType, ChannelID channelID) {
@@ -95,20 +95,6 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler {
     this.logger = scc.getLogger(ChannelLifeCycleHandler.class);
   }
 
-  public static class Event implements EventContext {
-    public static final int      CREATE = 0;
-    public static final int      REMOVE = 1;
-
-    private final int            type;
-    private final MessageChannel channel;
-
-    Event(int type, MessageChannel channel) {
-      this.type = type;
-      this.channel = channel;
-      if ((type != CREATE) && (type != REMOVE)) { throw new IllegalArgumentException("invalid type: " + type); }
-    }
-  }
-
   public static class EventListener implements DSOChannelManagerEventListener {
 
     private final Sink sink;
@@ -118,11 +104,11 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler {
     }
 
     public void channelCreated(MessageChannel channel) {
-      sink.add(new Event(Event.CREATE, channel));
+      sink.add(new ChannelStateEventContext(ChannelStateEventContext.CREATE, channel.getChannelID()));
     }
 
     public void channelRemoved(MessageChannel channel) {
-      sink.add(new Event(Event.REMOVE, channel));
+      sink.add(new ChannelStateEventContext(ChannelStateEventContext.REMOVE, channel.getChannelID()));
     }
 
   }

@@ -20,7 +20,6 @@ import com.tc.objectserver.managedobject.MapManagedObjectState;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
-import com.tc.objectserver.persistence.api.PersistentSequence;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor.SleepycatPersistorBase;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -28,6 +27,7 @@ import com.tc.util.Conversion;
 import com.tc.util.ObjectIDSet2;
 import com.tc.util.SyncObjectIdSet;
 import com.tc.util.SyncObjectIdSetImpl;
+import com.tc.util.sequence.MutableSequence;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -41,7 +41,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private final Database                       objectDB;
   private final SerializationAdapterFactory    saf;
   private final CursorConfig                   objectDBCursorConfig;
-  private final PersistentSequence             objectIDSequence;
+  private final MutableSequence             objectIDSequence;
   private final Database                       rootDB;
   private final CursorConfig                   rootDBCursorConfig;
   private long                                 saveCount;
@@ -53,7 +53,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
 
   public ManagedObjectPersistorImpl(TCLogger logger, ClassCatalog classCatalog,
                                     SerializationAdapterFactory serializationAdapterFactory, Database objectDB,
-                                    CursorConfig objectDBCursorConfig, PersistentSequence objectIDSequence,
+                                    CursorConfig objectDBCursorConfig, MutableSequence objectIDSequence,
                                     Database rootDB, CursorConfig rootDBCursorConfig,
                                     PersistenceTransactionProvider ptp,
                                     SleepycatCollectionsPersistor collectionsPersistor) {

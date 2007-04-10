@@ -8,23 +8,40 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.util.State;
 
 public class GlobalTransactionDescriptor {
+
+  private static final State        INIT            = new State("INIT");
+  private static final State        APPLY_COMPLETE  = new State("APPLY_COMPLETE");
+  private static final State        COMMIT_COMPLETE = new State("COMMIT_COMPLETE");
+
   private final ServerTransactionID stxn;
   private final GlobalTransactionID gid;
-  private boolean committed = false;
+  private State                     state;
 
   public GlobalTransactionDescriptor(ServerTransactionID serverTransactionID, GlobalTransactionID gid) {
     this.stxn = serverTransactionID;
     this.gid = gid;
+    this.state = INIT;
   }
-  
+
+  public void applyComplete() {
+    if (this.state != INIT) { throw new AssertionError("Not in valid state : " + state); }
+    this.state = APPLY_COMPLETE;
+  }
+
   public void commitComplete() {
-    committed = true;
+    if (this.state == COMMIT_COMPLETE) { throw new AssertionError("Already commited : " + state); }
+    this.state = COMMIT_COMPLETE;
   }
-  
+
+  public boolean isApplied() {
+    return this.state == APPLY_COMPLETE;
+  }
+
   public boolean isCommitted() {
-    return committed;
+    return this.state == COMMIT_COMPLETE;
   }
 
   public String toString() {

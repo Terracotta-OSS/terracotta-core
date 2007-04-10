@@ -41,8 +41,8 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     assertTrue(gtxm.needsApply(stxID2));
 
     //apply does create
-    GlobalTransactionID gtxID1 = gtxm.createGlobalTransactionID(stxID1);
-    GlobalTransactionID gtxID2 = gtxm.createGlobalTransactionID(stxID2);
+    GlobalTransactionID gtxID1 = gtxm.getOrCreateGlobalTransactionID(stxID1);
+    GlobalTransactionID gtxID2 = gtxm.getOrCreateGlobalTransactionID(stxID2);
     assertNotSame(gtxID1, gtxID2);
     
     // now commit them
@@ -97,7 +97,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     assertGlobalTxWasLoaded(stxid);
 
     //apply does create
-    gtxm.createGlobalTransactionID(stxid);
+    gtxm.getOrCreateGlobalTransactionID(stxid);
     
     gtxm.commit(null, stxid);
     assertGlobalTxWasLoaded(stxid);
@@ -142,7 +142,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     assertGlobalTxWasLoaded(stxid2);
 
     //apply does create
-    gtxm.createGlobalTransactionID(stxid2);
+    gtxm.getOrCreateGlobalTransactionID(stxid2);
     gtxm.commit(null, stxid2);
 
     assertFalse(gtxm.needsApply(stxid2));

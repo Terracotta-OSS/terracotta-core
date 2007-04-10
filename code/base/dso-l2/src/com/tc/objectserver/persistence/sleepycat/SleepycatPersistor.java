@@ -18,11 +18,11 @@ import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.PersistentCollectionFactory;
 import com.tc.objectserver.persistence.api.PersistentMapStore;
-import com.tc.objectserver.persistence.api.PersistentSequence;
 import com.tc.objectserver.persistence.api.Persistor;
 import com.tc.objectserver.persistence.api.StringIndexPersistor;
 import com.tc.objectserver.persistence.api.TransactionPersistor;
 import com.tc.objectserver.persistence.impl.StringIndexImpl;
+import com.tc.util.sequence.MutableSequence;
 
 import java.io.IOException;
 
@@ -34,7 +34,7 @@ public class SleepycatPersistor implements Persistor {
   private final ManagedObjectPersistorImpl     managedObjectPersistor;
   private final ClientStatePersistor           clientStatePersistor;
   private final TransactionPersistor           transactionPerisistor;
-  private final PersistentSequence             globalTransactionIDSequence;
+  private final MutableSequence             globalTransactionIDSequence;
   private final ClassPersistor                 classPersistor;
   private final PersistenceTransactionProvider persistenceTransactionProvider;
   private final DBEnvironment                  env;
@@ -105,7 +105,7 @@ public class SleepycatPersistor implements Persistor {
     return this.persistenceTransactionProvider;
   }
 
-  public PersistentSequence getGlobalTransactionIDSequence() {
+  public MutableSequence getGlobalTransactionIDSequence() {
     return this.globalTransactionIDSequence;
   }
 

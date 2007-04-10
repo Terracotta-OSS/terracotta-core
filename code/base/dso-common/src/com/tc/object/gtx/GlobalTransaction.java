@@ -6,6 +6,8 @@ package com.tc.object.gtx;
 import com.tc.util.SequenceID;
 
 public interface GlobalTransaction {
+  
   public GlobalTransactionID getGlobalTransactionID();
-  public SequenceID getSequenceID();
+  
+  public SequenceID getClientSequenceID();
 }

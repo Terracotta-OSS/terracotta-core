@@ -12,9 +12,9 @@ import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.PersistentCollectionFactory;
 import com.tc.objectserver.persistence.api.PersistentMapStore;
-import com.tc.objectserver.persistence.api.PersistentSequence;
 import com.tc.objectserver.persistence.api.Persistor;
 import com.tc.objectserver.persistence.api.TransactionPersistor;
+import com.tc.util.sequence.MutableSequence;
 
 public class InMemoryPersistor implements Persistor {
 
@@ -55,7 +55,7 @@ public class InMemoryPersistor implements Persistor {
     throw new ImplementMe();
   }
 
-  public PersistentSequence getGlobalTransactionIDSequence() {
+  public MutableSequence getGlobalTransactionIDSequence() {
     throw new ImplementMe();
   }
 
