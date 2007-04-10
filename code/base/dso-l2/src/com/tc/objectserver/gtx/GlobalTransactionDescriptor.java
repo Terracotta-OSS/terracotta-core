@@ -37,7 +37,7 @@ public class GlobalTransactionDescriptor {
   }
 
   public boolean isApplied() {
-    return this.state == APPLY_COMPLETE;
+    return this.state != INIT;
   }
 
   public boolean isCommitted() {
