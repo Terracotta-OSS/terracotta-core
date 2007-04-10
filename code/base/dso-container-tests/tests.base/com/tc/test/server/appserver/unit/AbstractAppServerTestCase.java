@@ -42,7 +42,9 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -196,11 +198,11 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       if (workDir.exists() && workDir.isDirectory()) {
         FileUtils.cleanDirectory(workDir);
       }
-    } catch (RuntimeException e) {
-      workDir = new File(config.appserverWorkingDir(), ""+System.currentTimeMillis());
+    } catch (IOException e) {
+      workDir = new File(config.appserverWorkingDir()+"-"+new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()));
     }
     
-    workingDir = makeDir(config.appserverWorkingDir());
+    workingDir = makeDir(workDir.getAbsolutePath());
     bootJar = new File(config.normalBootJar());
     appServerFactory = NewAppServerFactory.createFactoryFromProperties(config);
 
