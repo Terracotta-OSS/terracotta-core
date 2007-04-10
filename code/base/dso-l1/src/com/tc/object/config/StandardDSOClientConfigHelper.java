@@ -1636,13 +1636,11 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
         if (classSpec.isPreInstrumented()) {
           message = "* " + classSpec.getClassName() + "... ";
           preInstrumentedCount++;
-          if (bjClasses.contains(classSpec.getClassName()) || classSpec.isHonorJDKSubVersionSpecific()) {
-            message += "ok";
-          } else {
+          if (!(bjClasses.contains(classSpec.getClassName()) || classSpec.isHonorJDKSubVersionSpecific())) {
             message += "missing";
             missingCount++;
+            logger.info(message);
           }
-          logger.info(message);
         }
       }
     } catch (BootJarException bjex) {
@@ -1654,11 +1652,14 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
                                            "IOException occurred while attempting to verify the contents of the boot jar.",
                                            ioex);
     }
-    logger.info("Number of classes in the DSO boot jar:" + bootJarPopulation);
-    logger.info("Number of classes expected to be in the DSO boot jar:" + preInstrumentedCount);
-    logger.info("Number of classes found missing from the DSO boot jar:" + missingCount);
-    if (missingCount > 0) { throw new IncompleteBootJarException("Incomplete DSO boot jar; " + missingCount
-                                                                 + " pre-instrumented class(es) found missing."); }
+
+    if (missingCount > 0) {
+      logger.info("Number of classes in the DSO boot jar:" + bootJarPopulation);
+      logger.info("Number of classes expected to be in the DSO boot jar:" + preInstrumentedCount);
+      logger.info("Number of classes found missing from the DSO boot jar:" + missingCount);
+      throw new IncompleteBootJarException("Incomplete DSO boot jar; " + missingCount
+                                           + " pre-instrumented class(es) found missing.");
+    }
   }
 
   public synchronized TransparencyClassSpec[] getAllSpecs() {
