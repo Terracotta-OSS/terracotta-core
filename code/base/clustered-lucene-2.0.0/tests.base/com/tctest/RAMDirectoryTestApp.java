@@ -40,6 +40,20 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
 	private final StandardAnalyzer analyzer;
 
 	/**
+	 * 
+	 * @param appId
+	 * @param cfg
+	 * @param listenerProvider
+	 */
+	public RAMDirectoryTestApp(final String appId, final ApplicationConfig cfg,
+			final ListenerProvider listenerProvider) {
+		super(appId, cfg, listenerProvider);
+		clusteredDirectory = new RAMDirectory();
+		analyzer = new StandardAnalyzer();
+		barrier = new CyclicBarrier(getParticipantCount());
+	}
+	
+	/**
 	 * Inject Lucene 2.0.0 configuration, and instrument this test class
 	 * @param visitor
 	 * @param config
@@ -55,14 +69,6 @@ public class RAMDirectoryTestApp extends AbstractErrorCatchingTransparentApp {
 		spec.addRoot("clusteredDirectory", "clusteredDirectory");
 	}
 
-	public RAMDirectoryTestApp(final String appId, final ApplicationConfig cfg,
-			final ListenerProvider listenerProvider) {
-		super(appId, cfg, listenerProvider);
-		clusteredDirectory = new RAMDirectory();
-		analyzer = new StandardAnalyzer();
-		barrier = new CyclicBarrier(getParticipantCount());
-	}
-	
 	/**
 	 * Test that the data written in the clustered RAMDirectory
 	 * by one node, becomes available in the other.
