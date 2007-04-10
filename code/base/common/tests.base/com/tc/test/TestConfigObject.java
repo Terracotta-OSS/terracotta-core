@@ -331,7 +331,7 @@ public class TestConfigObject {
   }
 
   public String appserverServerInstallDir() {
-    File buildDir = new File(System.getProperty(TC_BASE_DIR), "build");
+    File buildDir = new File(System.getProperty(TC_BASE_DIR), ".tc-build-cache");
     return new File(buildDir, "app-server-install").getAbsolutePath();
   }
 
