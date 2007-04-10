@@ -282,12 +282,14 @@
 	</container>
 	<container tag="GCStatsPanel">
 		<children>
+		    <button name="RunGCButton" text="Run GC"/>
 			<scrollpane>
 				<table class="com.tc.admin.dso.GCStatsTable" name="GCStatsTable"/>
 			</scrollpane>
 		</children>
 		<connections>
-			<item bottom="-1,bottom:0" height="s" left="-1,left:0" right="-1,right:0" top="-1,top:0" width="s"/>
+			<item bottom="1,top:n" height="n" left="-1,left:sn" right="-1,right:n" top="-1,top:n" width="n"/>
+            <item bottom="-1,bottom:0" height="s" left="-1,left:0" right="-1,right:0" top="0,bottom:n" width="s"/>
 		</connections>
 	</container>
 	<container tag="StatsPanel">
