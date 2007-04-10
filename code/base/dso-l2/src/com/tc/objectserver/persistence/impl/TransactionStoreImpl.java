@@ -49,7 +49,6 @@ public class TransactionStoreImpl implements TransactionStore {
     gtx.commitComplete();
   }
 
-  // TODO:: This method maynot be needed anymore
   public GlobalTransactionDescriptor getTransactionDescriptor(ServerTransactionID serverTransactionID) {
     return (GlobalTransactionDescriptor) this.serverTransactionIDMap.get(serverTransactionID);
   }
@@ -86,14 +85,12 @@ public class TransactionStoreImpl implements TransactionStore {
 
   public void removeAllByServerTransactionID(PersistenceTransaction tx, Collection stxIDs) {
     Collection toDelete = new HashSet();
-    synchronized (ids) {
-      for (Iterator i = stxIDs.iterator(); i.hasNext();) {
-        ServerTransactionID stxID = (ServerTransactionID) i.next();
-        GlobalTransactionDescriptor desc = (GlobalTransactionDescriptor) this.serverTransactionIDMap.remove(stxID);
-        if (desc != null) {
-          ids.remove(desc.getGlobalTransactionID());
-          toDelete.add(stxID);
-        }
+    for (Iterator i = stxIDs.iterator(); i.hasNext();) {
+      ServerTransactionID stxID = (ServerTransactionID) i.next();
+      GlobalTransactionDescriptor desc = (GlobalTransactionDescriptor) this.serverTransactionIDMap.remove(stxID);
+      if (desc != null) {
+        ids.remove(desc.getGlobalTransactionID());
+        toDelete.add(stxID);
       }
     }
     if (!toDelete.isEmpty()) {
