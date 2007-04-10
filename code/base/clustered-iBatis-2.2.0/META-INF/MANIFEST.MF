@@ -3,6 +3,7 @@ Bundle-Activator: org.terracotta.modules.iBatis_2_2_0.IBatisTerracottaConfigurat
 Bundle-Category: terracotta
 Bundle-Copyright: Terracotta, Inc. (c) 2003-2007
 Bundle-Description: Terracotta configuration for clustering iBatis 2.2.0
+Bundle-DocURL: http://www.terracotta.org/kit/reflector?kitID=2.3&pageID=iBatisConfigModule
 Bundle-ManifestVersion: 2
 Bundle-Name: Terracotta Configuration for iBatis 2.2.0
 Bundle-RequiredExecutionEnvironment: J2SE-1.4

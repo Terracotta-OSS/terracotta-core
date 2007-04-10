@@ -3,6 +3,7 @@ Bundle-Activator: org.terracotta.modules.struts_1_1.StrutsTerracottaConfigurator
 Bundle-Category: terracotta
 Bundle-Copyright: Terracotta, Inc. (c) 2003-2007
 Bundle-Description: Terracotta configuration for clustering Apache Struts 1.1
+Bundle-DocURL: http://www.terracotta.org/kit/reflector?kitID=2.3&pageID=ApacheStrutsConfigModule
 Bundle-ManifestVersion: 2
 Bundle-Name: Terracotta Configuration for Apache Struts 1.1
 Bundle-RequiredExecutionEnvironment: J2SE-1.4
