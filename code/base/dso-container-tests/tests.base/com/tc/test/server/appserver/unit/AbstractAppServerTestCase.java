@@ -189,10 +189,17 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     config = TestConfigObject.getInstance();
     tempDir = getTempDirectory();
     serverInstallDir = makeDir(config.appserverServerInstallDir());
-    File workDir = new File(config.appserverWorkingDir());
-    if (workDir.exists() && workDir.isDirectory()) {
-      FileUtils.cleanDirectory(workDir);
+    File workDir;
+    
+    try {
+      workDir = new File(config.appserverWorkingDir());
+      if (workDir.exists() && workDir.isDirectory()) {
+        FileUtils.cleanDirectory(workDir);
+      }
+    } catch (RuntimeException e) {
+      workDir = new File(config.appserverWorkingDir(), ""+System.currentTimeMillis());
     }
+    
     workingDir = makeDir(config.appserverWorkingDir());
     bootJar = new File(config.normalBootJar());
     appServerFactory = NewAppServerFactory.createFactoryFromProperties(config);
