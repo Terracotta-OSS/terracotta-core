@@ -5,7 +5,9 @@
 package com.tc.objectserver.persistence.impl;
 
 import com.tc.exception.ImplementMe;
+import com.tc.l2.ha.L2HADisabledCooridinator;
 import com.tc.objectserver.api.TestSink;
+import com.tc.objectserver.core.impl.TestServerConfigurationContext;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler.GlobalTransactionIDBatchRequestContext;
 import com.tc.test.TCTestCase;
@@ -14,17 +16,28 @@ import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.sequence.BatchSequenceReceiver;
 import com.tc.util.sequence.MutableSequence;
 
-public class PersistentBatchSequenceProviderTest extends TCTestCase {
+public class GlobalTransactionIDBatchRequestHandlerTest extends TCTestCase {
 
-  public void tests() throws Exception {
-    TestMutableSequence persistentSequence = new TestMutableSequence();
-    TestSink requestBatchSink = new TestSink();
+  private GlobalTransactionIDBatchRequestHandler provider;
+  private TestBatchSequenceReceiver receiver;
+  private TestMutableSequence persistentSequence;
+  private TestSink requestBatchSink;
 
-    GlobalTransactionIDBatchRequestHandler provider = new GlobalTransactionIDBatchRequestHandler(persistentSequence);
+  public void setUp() throws Exception {
+    persistentSequence = new TestMutableSequence();
+    requestBatchSink = new TestSink();
+
+    provider = new GlobalTransactionIDBatchRequestHandler(persistentSequence);
     provider.setRequestBatchSink(requestBatchSink);
+    
+    TestServerConfigurationContext scc = new TestServerConfigurationContext();
+    scc.l2Coordinator = new L2HADisabledCooridinator();
+    provider.initialize(scc);
 
-    TestBatchSequenceReceiver receiver = new TestBatchSequenceReceiver();
-
+    receiver = new TestBatchSequenceReceiver();
+  }
+  
+  public void testx() throws Exception {
     int batchSize = 5;
     // make sure that the request context gets put in the sink properly.
     provider.requestBatch(receiver, batchSize);

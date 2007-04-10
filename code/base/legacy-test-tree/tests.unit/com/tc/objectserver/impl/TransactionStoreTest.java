@@ -18,6 +18,7 @@ import com.tc.test.TCTestCase;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.sequence.Sequence;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -300,7 +301,16 @@ public class TransactionStoreTest extends TCTestCase {
     public long                         sequence    = 0;
 
     public Collection loadAllGlobalTransactionDescriptors() {
-      return persisted.values();
+      return getNewGlobalTransactionDescs(persisted.values());
+    }
+
+    private Collection getNewGlobalTransactionDescs(Collection c) {
+      Collection newList = new ArrayList(c.size());
+      for (Iterator i = c.iterator(); i.hasNext();) {
+        GlobalTransactionDescriptor oldGD = (GlobalTransactionDescriptor) i.next();
+        newList.add(new GlobalTransactionDescriptor(oldGD.getServerTransactionID(), oldGD.getGlobalTransactionID()));
+      }
+      return newList;
     }
 
     public void saveGlobalTransactionDescriptor(PersistenceTransaction tx, GlobalTransactionDescriptor gtx) {
