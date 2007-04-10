@@ -47,12 +47,12 @@
     which calculates the number of clicks within each 30-second interval and retains this data for 24 hours. 
     <p/>
       
-  	Click <a href="<c:url value="/index.html"/>">here</a> to refresh the current page have an updated view of the 
-  	<code>Clustered Counter</code> value and captured invocation history.
+  	Refresh the current page have an updated view of the <code>Clustered Counter</code> value and captured 
+  	invocation history.
     <p/>
       
-    Click <a href="http://<%= request.getServerName() %>:<%= request.getServerPort() == 8081 ? 8082 : 8081 %>/jmx">here</a> 
-    to switch to and increment the <code>Clustered Counter</code> value from the other Tomcat server node.
+    You can also switch to the Tomcat server node in port <a href="http://<%= request.getServerName() %>:<%= request.getServerPort() == 8081 ? 8082 : 8081 %>/jmx"><%= request.getServerPort() == 8081 ? 8082 : 8081 %></a> 
+    and increment the <code>Clustered Counter</code> value from there.
     <p/>
 
     Data captured in <code>Counter</code> and <code>CounterHistoryAdvice</code> beans is exported using Spring 
