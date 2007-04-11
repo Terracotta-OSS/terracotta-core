@@ -25,7 +25,7 @@ public class CacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
     private final CacheManager clusteredCacheManager;
 
 	/**
-	 * 
+	 * Test that Ehcache's CacheManger and Cache objects can be clustered. 
 	 * @param appId
 	 * @param cfg
 	 * @param listenerProvider
@@ -85,7 +85,7 @@ public class CacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	}
 
 	/**
-	 * Add a cache into the CacheManager
+	 * Add a cache into the CacheManager.
 	 * @param name The name of the cache to add
 	 * @throws Throwable
 	 */
@@ -93,13 +93,14 @@ public class CacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 		synchronized(clusteredCacheManager) {
 	        Cache cache = new Cache(name, 1, true, true, 0, 0);
 			clusteredCacheManager.addCache(cache);
-	        //cache.put(new Element("key1", "value1"));
-	        //cache.put(new Element("key2", "value1"));
+	        cache.put(new Element(name + "key1", "value1"));
+	        cache.put(new Element(name + "key2", "value1"));
 		}
 	}
 
 	/**
-	 * Attempt to retrieve a cache from CacheManager
+	 * Verify that the named cache exists and that it's contents
+	 * can be retrieved.
 	 * @param name The name of the cache to retrieve
 	 * @throws Exception
 	 */
@@ -109,12 +110,13 @@ public class CacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 			Assert.assertNotNull(cache);
 			Assert.assertEquals(name, cache.getName());
 			Assert.assertEquals(Status.STATUS_ALIVE, cache.getStatus());
-	        //int sizeFromGetSize = cache.getSize();
-	        //int sizeFromKeys = cache.getKeys().size();
-	        //Assert.assertEquals(sizeFromGetSize, sizeFromKeys);
-	        //Assert.assertEquals(2, cache.getSize());
-	        //Assert.assertNotNull(cache.get("key1"));
-	        //Assert.assertNotNull(cache.get("key2"));
+			
+	        int sizeFromGetSize = cache.getSize();
+	        int sizeFromKeys = cache.getKeys().size();
+	        Assert.assertEquals(sizeFromGetSize, sizeFromKeys);
+	        Assert.assertEquals(2, cache.getSize());
+	        Assert.assertNotNull(cache.get(name + "key1"));
+	        Assert.assertNotNull(cache.get(name + "key2"));
 		}
 	}
 }
