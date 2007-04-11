@@ -3,13 +3,15 @@
  */
 package com.tc.objectserver.tx;
 
+import com.tc.exception.ImplementMe;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.gtx.DefaultGlobalTransactionIDGenerator;
+import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionIDGenerator;
 import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
@@ -48,7 +50,7 @@ public class TransactionSequencerTest extends TCTestCase {
     start = 1;
     channelID = new ChannelID(0);
     sequencer = new TransactionSequencer();
-    gidGenerator = new DefaultGlobalTransactionIDGenerator();
+    gidGenerator = new TestGlobalTransactionIDGenerator();
   }
 
   // Test 1
@@ -328,7 +330,7 @@ public class TransactionSequencerTest extends TCTestCase {
 
     Set pending = new HashSet();
 
-    for (int loop = 0; loop < 10000; loop++) {
+    for (int loop = 0; loop < 5000; loop++) {
       List txns = new ArrayList();
       for (int i = 0, n = rnd.nextInt(3) + 1; i < n; i++) {
         txns.add(createRandomTxn(rnd.nextInt(3) + 1, versionsIn, rnd, lock++));
@@ -477,5 +479,19 @@ public class TransactionSequencerTest extends TCTestCase {
       locks[j - s] = new LockID("@" + j);
     }
     return locks;
+  }
+
+  private final static class TestGlobalTransactionIDGenerator implements GlobalTransactionIDGenerator {
+
+    long id = 0;
+
+    public GlobalTransactionID getOrCreateGlobalTransactionID(ServerTransactionID serverTransactionID) {
+      return new GlobalTransactionID(id++);
+    }
+
+    public GlobalTransactionID getLowGlobalTransactionIDWatermark() {
+      throw new ImplementMe();
+    }
+
   }
 }

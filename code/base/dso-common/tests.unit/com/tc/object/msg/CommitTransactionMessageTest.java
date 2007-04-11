@@ -59,7 +59,7 @@ public class CommitTransactionMessageTest extends TCTestCase {
                                                                                .getPayload());
       msg2.hydrate();
 
-      assertEquals(acknowledged, msg2.getAcknowledgedTransactionIDs());
+      assertEquals(acknowledged, new HashSet(msg2.getAcknowledgedTransactionIDs()));
 
       TCByteBufferInputStream bbis = new TCByteBufferInputStream(msg2.getBatchData());
       byte[] compare = new byte[orig.length];

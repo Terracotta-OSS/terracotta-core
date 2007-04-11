@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.gtx;
 
@@ -20,7 +21,7 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
 
   public final NoExceptionLinkedQueue completeTransactionsContexts = new NoExceptionLinkedQueue();
   private long                        idSequence                   = 0;
-  private Set                         appliedSIDs                 = new HashSet();
+  private Set                         appliedSIDs                  = new HashSet();
   private Set                         commitedSIDs                 = new HashSet();
 
   public boolean needsApply(ServerTransactionID stxID) {

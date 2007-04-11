@@ -48,16 +48,16 @@ import junit.framework.TestCase;
 
 public class ServerTransactionManagerImplTest extends TestCase {
 
-  private ServerTransactionManagerImpl     transactionManager;
-  private TestTransactionAcknowledgeAction action;
-  private TestClientStateManager           clientStateManager;
-  private TestLockManager                  lockManager;
-  private TestObjectManager                objectManager;
-  private TestTransactionStore             transactionStore;
-  private Counter                          transactionRateCounter;
-  private TestChannelStats                 channelStats;
-  private TestGlobalTransactionManager     gtxm;
-  private ObjectInstanceMonitor            imo;
+  private ServerTransactionManagerImpl       transactionManager;
+  private TestTransactionAcknowledgeAction   action;
+  private TestClientStateManager             clientStateManager;
+  private TestLockManager                    lockManager;
+  private TestObjectManager                  objectManager;
+  private TestTransactionStore               transactionStore;
+  private Counter                            transactionRateCounter;
+  private TestChannelStats                   channelStats;
+  private TestGlobalTransactionManager       gtxm;
+  private ObjectInstanceMonitor              imo;
   private NullPersistenceTransactionProvider ptxp;
 
   protected void setUp() throws Exception {
@@ -226,10 +226,13 @@ public class ServerTransactionManagerImplTest extends TestCase {
   }
 
   public void tests() throws Exception {
-
     ChannelID cid1 = new ChannelID(1);
     TransactionID tid1 = new TransactionID(1);
     TransactionID tid2 = new TransactionID(2);
+    TransactionID tid3 = new TransactionID(3);
+    TransactionID tid4 = new TransactionID(4);
+    TransactionID tid5 = new TransactionID(5);
+
     ChannelID cid2 = new ChannelID(2);
     ChannelID cid3 = new ChannelID(3);
 
@@ -258,71 +261,93 @@ public class ServerTransactionManagerImplTest extends TestCase {
     // Test with 2 waiters
     action.clear();
     gtxm.clear();
-    transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid2);
-    transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid3);
+    txns.clear();
+    sequenceID = new SequenceID(2);
+    ServerTransaction tx2 = new ServerTransactionImpl(gtxm, new TxnBatchID(2), tid2, sequenceID, lockIDs, cid1, dnas,
+                                                      serializer, newRoots, txnType, new LinkedList(),
+                                                      DmiDescriptor.EMPTY_ARRAY);
+    txns.add(tx2);
+
+    transactionManager.addWaitingForAcknowledgement(cid1, tid2, cid2);
+    transactionManager.addWaitingForAcknowledgement(cid1, tid2, cid3);
     assertTrue(action.clientID == null && action.txID == null);
-    assertTrue(transactionManager.isWaiting(cid1, tid1));
-    transactionManager.acknowledgement(cid1, tid1, cid2);
+    assertTrue(transactionManager.isWaiting(cid1, tid2));
+    transactionManager.acknowledgement(cid1, tid2, cid2);
     assertTrue(action.clientID == null && action.txID == null);
-    assertTrue(transactionManager.isWaiting(cid1, tid1));
-    transactionManager.acknowledgement(cid1, tid1, cid3);
+    assertTrue(transactionManager.isWaiting(cid1, tid2));
+    transactionManager.acknowledgement(cid1, tid2, cid3);
     assertTrue(action.clientID == null && action.txID == null);
     doStages(cid1, txns);
-    assertTrue(action.clientID == cid1 && action.txID == tid1);
-    assertFalse(transactionManager.isWaiting(cid1, tid1));
+    assertTrue(action.clientID == cid1 && action.txID == tid2);
+    assertFalse(transactionManager.isWaiting(cid1, tid2));
 
     // Test shutdown client with 2 waiters
     action.clear();
     gtxm.clear();
-    transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid2);
-    transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid3);
+    txns.clear();
+    sequenceID = new SequenceID(3);
+    ServerTransaction tx3 = new ServerTransactionImpl(gtxm, new TxnBatchID(3), tid3, sequenceID, lockIDs, cid1, dnas,
+                                                      serializer, newRoots, txnType, new LinkedList(),
+                                                      DmiDescriptor.EMPTY_ARRAY);
+    txns.add(tx3);
+    transactionManager.addWaitingForAcknowledgement(cid1, tid3, cid2);
+    transactionManager.addWaitingForAcknowledgement(cid1, tid3, cid3);
     assertTrue(action.clientID == null && action.txID == null);
-    assertTrue(transactionManager.isWaiting(cid1, tid1));
+    assertTrue(transactionManager.isWaiting(cid1, tid3));
     transactionManager.shutdownClient(cid3);
     assertTrue(this.clientStateManager.shutdownClientCalled);
-    assertTrue(transactionManager.isWaiting(cid1, tid1));
-    transactionManager.acknowledgement(cid1, tid1, cid2);
+    assertTrue(transactionManager.isWaiting(cid1, tid3));
+    transactionManager.acknowledgement(cid1, tid3, cid2);
     doStages(cid1, txns);
-    assertTrue(action.clientID == cid1 && action.txID == tid1);
-    assertFalse(transactionManager.isWaiting(cid1, tid1));
+    assertTrue(action.clientID == cid1 && action.txID == tid3);
+    assertFalse(transactionManager.isWaiting(cid1, tid3));
 
     // Test shutdown client that no one is waiting for
     action.clear();
     gtxm.clear();
-    transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid2);
-    transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid3);
+    txns.clear();
+    transactionManager.addWaitingForAcknowledgement(cid1, tid4, cid2);
+    transactionManager.addWaitingForAcknowledgement(cid1, tid4, cid3);
     transactionManager.shutdownClient(cid1);
     assertTrue(action.clientID == null && action.txID == null);
-    assertFalse(transactionManager.isWaiting(cid1, tid1));
+    assertFalse(transactionManager.isWaiting(cid1, tid4));
 
     // Test with 2 waiters on different tx's
     action.clear();
     gtxm.clear();
-    transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid2);
-    transactionManager.addWaitingForAcknowledgement(cid1, tid2, cid2);
+    txns.clear();
+    sequenceID = new SequenceID(4);
+    ServerTransaction tx4 = new ServerTransactionImpl(gtxm, new TxnBatchID(4), tid4, sequenceID, lockIDs, cid1, dnas,
+                                                      serializer, newRoots, txnType, new LinkedList(),
+                                                      DmiDescriptor.EMPTY_ARRAY);
+    txns.add(tx4);
+
+    transactionManager.addWaitingForAcknowledgement(cid1, tid4, cid2);
+    transactionManager.addWaitingForAcknowledgement(cid1, tid5, cid2);
 
     assertTrue(action.clientID == null && action.txID == null);
-    assertTrue(transactionManager.isWaiting(cid1, tid1));
-    assertTrue(transactionManager.isWaiting(cid1, tid2));
+    assertTrue(transactionManager.isWaiting(cid1, tid4));
+    assertTrue(transactionManager.isWaiting(cid1, tid5));
 
-    transactionManager.acknowledgement(cid1, tid1, cid2);
-    assertFalse(transactionManager.isWaiting(cid1, tid1));
-    assertTrue(transactionManager.isWaiting(cid1, tid2));
+    transactionManager.acknowledgement(cid1, tid4, cid2);
+    assertFalse(transactionManager.isWaiting(cid1, tid4));
+    assertTrue(transactionManager.isWaiting(cid1, tid5));
     doStages(cid1, txns);
-    assertTrue(action.clientID == cid1 && action.txID == tid1);
+    assertTrue(action.clientID == cid1 && action.txID == tid4);
 
     action.clear();
     gtxm.clear();
-    transactionManager.acknowledgement(cid1, tid2, cid2);
-    ServerTransaction tx2 = new ServerTransactionImpl(gtxm, new TxnBatchID(2), tid2, sequenceID, lockIDs, cid1, dnas,
+    txns.clear();
+    sequenceID = new SequenceID(5);
+    ServerTransaction tx5 = new ServerTransactionImpl(gtxm, new TxnBatchID(4), tid5, sequenceID, lockIDs, cid1, dnas,
                                                       serializer, newRoots, txnType, new LinkedList(),
                                                       DmiDescriptor.EMPTY_ARRAY);
-    txns.clear();
-    txns.add(tx2);
+    txns.add(tx5);
+    transactionManager.acknowledgement(cid1, tid5, cid2);
     doStages(cid1, txns);
-    assertTrue(action.clientID == cid1 && action.txID == tid2);
-    assertFalse(transactionManager.isWaiting(cid1, tid1));
-    assertFalse(transactionManager.isWaiting(cid1, tid2));
+    assertTrue(action.clientID == cid1 && action.txID == tid5);
+    assertFalse(transactionManager.isWaiting(cid1, tid4));
+    assertFalse(transactionManager.isWaiting(cid1, tid5));
   }
 
   private void doStages(ChannelID cid, Set txns) {
@@ -344,7 +369,8 @@ public class ServerTransactionManagerImplTest extends TestCase {
       // commit stage
       Set committedIDs = new HashSet();
       committedIDs.add(tx.getServerTransactionID());
-      this.transactionManager.commit(ptxp, Collections.EMPTY_SET, Collections.EMPTY_MAP, committedIDs, Collections.EMPTY_SET);
+      this.transactionManager.commit(ptxp, Collections.EMPTY_SET, Collections.EMPTY_MAP, committedIDs,
+                                     Collections.EMPTY_SET);
       if (actionAsserted) assertTrue(action.clientID == null && action.txID == null);
 
       // broadcast stage
