@@ -87,11 +87,14 @@ public final class LinkedJavaProcessPollingAgent {
    * send a kill signal to child processes
    */
   public static synchronized void shutdown() {
-    server.shutdown();
-    server = null;
+    if (server != null) {
+      server.shutdown();
+      server = null;
+    }
   }
 
-  public static boolean isAnyAppServerAlive() {
+  public static synchronized boolean isAnyAppServerAlive() {
+    if (server == null) return false;
     return server.isAnyAppServerAlive();
   }
 
