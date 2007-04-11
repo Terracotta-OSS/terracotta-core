@@ -5,6 +5,7 @@ import java.util.concurrent.CyclicBarrier;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Element;
 
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
@@ -12,6 +13,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.Assert;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 public class CacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
@@ -56,14 +58,14 @@ public class CacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 */
 	protected void runTest() throws Throwable {
 		if (barrier.await() == 0) {
-			addDataToCache("DATA1");
+			addCache("CACHE1");
 			letOtherNodeProceed();
 			waitForPermissionToProceed();
-			verifyEntries("DATA2");
+			verifyCache("CACHE2");
 		} else {
 			waitForPermissionToProceed();
-			verifyEntries("DATA1");
-			addDataToCache("DATA2");
+			verifyCache("CACHE1");
+			addCache("CACHE2");
 			letOtherNodeProceed();
 		}
 		barrier.await();
@@ -82,18 +84,26 @@ public class CacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	}
 
 	/**
-	 * Add datum to CacheManager
-	 * @param value The datum to add
+	 * Add a cache into the CacheManager
+	 * @param name The name of the cache to add
 	 * @throws Throwable
 	 */
-	private void addDataToCache(final String value) throws Throwable {
+	private void addCache(final String name) throws Throwable {
+		synchronized(clusteredCacheManager) {
+			clusteredCacheManager.addCache(name);
+		}
 	}
 
 	/**
-	 * Attempt to retrieve datum from CacheManager 
-	 * @param value The datum to retrieve
+	 * Attempt to retrieve a cache from CacheManager
+	 * @param name The name of the cache to retrieve
 	 * @throws Exception
 	 */
-	private void verifyEntries(final String value) throws Exception {
+	private void verifyCache(final String name) throws Exception {
+		synchronized(clusteredCacheManager) {
+			Cache cache = clusteredCacheManager.getCache(name);
+			Assert.assertNotNull(cache);
+			Assert.assertEquals(name, cache.getName());
+		}
 	}
 }
