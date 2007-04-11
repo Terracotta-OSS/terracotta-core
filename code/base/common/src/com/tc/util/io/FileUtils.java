@@ -34,12 +34,15 @@ public class FileUtils {
         copyFile(new File(src.getAbsolutePath(), list[i]), new File(dest.getAbsolutePath(), list[i]));
       }
     } else {
-      FileInputStream fin = new FileInputStream(src);
+      byte[] buffer = new byte[1024*4];
+      FileInputStream in = new FileInputStream(src);      
       FileOutputStream fout = new FileOutputStream(dest);
       int c;
-      while ((c = fin.read()) >= 0)
-        fout.write(c);
-      fin.close();
+      while ((c = in.read(buffer)) >= 0) {        
+        fout.write(buffer, 0, c);
+      }
+      
+      in.close();
       fout.close();
     }
   }

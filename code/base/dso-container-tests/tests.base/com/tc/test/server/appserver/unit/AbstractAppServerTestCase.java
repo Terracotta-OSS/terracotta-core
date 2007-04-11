@@ -427,11 +427,9 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       synchronized (workingDirLock) {
         File dest = new File(tempDir, getName());
         try {
-          com.tc.util.io.FileUtils.copyFile(workingDir, dest);
-          FileUtils.deleteDirectory(workingDir);
-        } catch (IOException e) {
-          e.printStackTrace();
-          // ingore
+          workingDir.renameTo(dest);
+        } catch (Throwable e) {
+          throw new RuntimeException("Error moving logs files. There might be zombie processes.", e);
         }
       }
     }
