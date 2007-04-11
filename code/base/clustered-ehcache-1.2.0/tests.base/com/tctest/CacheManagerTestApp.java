@@ -38,13 +38,13 @@ public class CacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	}
 
 	/**
-	 * Inject Ehcache 1.3.0 configuration, and instrument this test class
+	 * Inject Ehcache 1.2.0 configuration, and instrument this test class
 	 * @param visitor
 	 * @param config
 	 */
 	public static void visitL1DSOConfig(final ConfigVisitor visitor,
 			final DSOClientConfigHelper config) {
-	    config.addNewModule("clustered-ehcache-1.3.0", "1.0.0");
+	    config.addNewModule("clustered-ehcache-1.2.0", "1.0.0");
 		config.addAutolock("* *..*.*(..)", ConfigLockLevel.WRITE);
 
 	    final String testClass = CacheManagerTestApp.class.getName();

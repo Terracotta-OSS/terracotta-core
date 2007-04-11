@@ -497,7 +497,7 @@ modules:
       options:
         jdk: J2SE-1.5
         module: true
-  - clustered-ehcache-1.3.0:
+  - clustered-ehcache-1.2.0:
       options:
         jdk: J2SE-1.5
         module: true
@@ -554,7 +554,7 @@ module-groups:
     - clustered-cglib-2.1.3
     - clustered-apache-struts-1.1
     - clustered-rife-1.6.0
-    - clustered-ehcache-1.3.0
+    - clustered-ehcache-1.2.0
     - clustered-commons-collections-3.1
     - clustered-jetty-6.1
     - clustered-iBatis-2.2.0    
