@@ -28,7 +28,7 @@ public class TestTVSConfigurationSetupManagerFactoryTest extends TCTestCase {
 
   public void setUp() throws Exception {
     this.factory = new TestTVSConfigurationSetupManagerFactory(
-                                                               TestTVSConfigurationSetupManagerFactory.MODE_DISTRIBUTED_CONFIG,
+                                                               TestTVSConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
                                                                null, new FatalIllegalConfigurationChangeHandler());
 
     ((SettableConfigItem) this.factory.l2CommonConfig().logsPath()).setValue(getTempFile("l2-logs").toString());

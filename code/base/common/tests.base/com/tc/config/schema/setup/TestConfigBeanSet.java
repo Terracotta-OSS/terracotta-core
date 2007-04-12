@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
@@ -25,17 +26,21 @@ import java.util.Map;
  */
 public class TestConfigBeanSet {
 
-  private final Client  rootClientBean;
-  private final Servers rootServersBean;
-  private final System  rootSystemBean;
-  private final Map     rootApplicationBeans;
+  public static final String DEFAULT_HOST        = "localhost";
+  public static final String DEFAULT_SERVER_NAME = "default";
+
+  private final Client       rootClientBean;
+  private final Servers      rootServersBean;
+  private final System       rootSystemBean;
+  private final Map          rootApplicationBeans;
 
   public TestConfigBeanSet() {
     this.rootClientBean = Client.Factory.newInstance();
 
     this.rootServersBean = Servers.Factory.newInstance();
     Server initialServer = this.rootServersBean.addNewServer();
-    initialServer.setName("localhost");
+    initialServer.setHost(DEFAULT_HOST);
+    initialServer.setName(DEFAULT_SERVER_NAME);
 
     this.rootSystemBean = System.Factory.newInstance();
 

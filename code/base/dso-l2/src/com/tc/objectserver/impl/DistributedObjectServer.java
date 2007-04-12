@@ -22,11 +22,13 @@ import com.tc.io.TCRandomFileAccessImpl;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.L2HADisabledCooridinator;
+import com.tc.l2.state.StateManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.L2Management;
+import com.tc.management.beans.L2State;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.remote.connect.ClientConnectEventHandler;
 import com.tc.management.remote.protocol.terracotta.ClientTunnelingEventHandler;
@@ -206,6 +208,7 @@ public class DistributedObjectServer extends SEDA {
   private CacheManager                         cacheManager;
 
   private final TCServerInfoMBean              tcServerInfoMBean;
+  private final L2State                        l2State;
   private L2Management                         l2Management;
   private L2Coordinator                        l2Coordinator;
 
@@ -213,13 +216,15 @@ public class DistributedObjectServer extends SEDA {
 
   private ConnectionIDFactoryImpl              connectionIdFactory;
 
+  // used by a test
   public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean) {
-    this(configSetupManager, threadGroup, connectionPolicy, new NullSink(), tcServerInfoMBean);
+    this(configSetupManager, threadGroup, connectionPolicy, new NullSink(), tcServerInfoMBean, new L2State());
   }
 
   public DistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
-                                 ConnectionPolicy connectionPolicy, Sink httpSink, TCServerInfoMBean tcServerInfoMBean) {
+                                 ConnectionPolicy connectionPolicy, Sink httpSink, TCServerInfoMBean tcServerInfoMBean,
+                                 L2State l2State) {
     super(threadGroup);
 
     // This assertion is here because we want to assume that all threads spawned by the server (including any created in
@@ -231,6 +236,7 @@ public class DistributedObjectServer extends SEDA {
     this.connectionPolicy = connectionPolicy;
     this.httpSink = httpSink;
     this.tcServerInfoMBean = tcServerInfoMBean;
+    this.l2State = l2State;
   }
 
   public void dump() {
@@ -277,6 +283,7 @@ public class DistributedObjectServer extends SEDA {
     TCFile location = new TCFileImpl(this.configSetupManager.commonl2Config().dataPath().getFile());
     startupLock = new StartupLock(location);
 
+    l2State.setState(StateManager.PASSIVE_STANDBY);
     if (!startupLock.canProceed(new TCRandomFileAccessImpl(), persistent)) {
       consoleLogger.error("Another L2 process is using the directory " + location + " as data directory.");
       if (!persistent) {
@@ -583,7 +590,9 @@ public class DistributedObjectServer extends SEDA {
       logger.info("L2 Networked HA Enabled ");
       l2Coordinator = new L2HACoordinator(consoleLogger, this, stageManager, persistor.getClusterStateStore(),
                                           objectManager, transactionManager, gidSequenceProvider);
+      l2Coordinator.getStateManager().registerForStateChangeEvents(l2State);
     } else {
+      l2State.setState(StateManager.ACTIVE_COORDINATOR);
       l2Coordinator = new L2HADisabledCooridinator();
     }
 

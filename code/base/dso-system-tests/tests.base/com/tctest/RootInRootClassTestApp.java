@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -14,9 +15,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-/**
- * TODO May 26, 2005: I, steve, am too lazy to write a single sentence describing what this class is for.
- */
 public class RootInRootClassTestApp extends AbstractTransparentApp {
 
   private Map myInnerInMap;
@@ -66,7 +64,7 @@ public class RootInRootClassTestApp extends AbstractTransparentApp {
     public void doStuff() {
       System.out.println("myInner:" + getMapSize());
     }
-    //blah
+    // blah
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {

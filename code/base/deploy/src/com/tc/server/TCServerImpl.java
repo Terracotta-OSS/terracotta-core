@@ -32,6 +32,7 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2MBeanNames;
+import com.tc.management.beans.L2State;
 import com.tc.management.beans.TCServerInfo;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.transport.ConnectionPolicy;
@@ -142,9 +143,7 @@ public class TCServerImpl extends SEDA implements TCServer {
             throw new AssertionError("Server in incorrect state (" + state.get() + ") to be active.");
           }
         } catch (Throwable t) {
-          if(t instanceof RuntimeException) {
-            throw (RuntimeException)t;
-          }
+          if (t instanceof RuntimeException) { throw (RuntimeException) t; }
           throw new RuntimeException(t);
         }
       } else {
@@ -300,7 +299,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       activateTime = System.currentTimeMillis();
 
       if (activationListener != null) {
-        activationListener.serverActivated(TCServerImpl.this);
+        activationListener.serverActivated();
       }
     }
   }
@@ -310,10 +309,10 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   private void startDSOServer(Sink httpSink) throws Exception {
+    L2State l2State = new L2State();
     dsoServer = new DistributedObjectServer(configurationSetupManager, getThreadGroup(), connectionPolicy, httpSink,
-                                            new TCServerInfo(this));
+                                            new TCServerInfo(this, l2State), l2State);
     dsoServer.start();
-
     registerDSOServer();
   }
 
@@ -358,6 +357,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     mBeanServer.registerMBean(mgmtContext.getDSOAppEventsMBean(), L2MBeanNames.DSO_APP_EVENTS);
   }
 
+  // TODO: check that this is not needed then remove
   private TCServerActivationListener activationListener;
 
   public void setActivationListener(TCServerActivationListener listener) {

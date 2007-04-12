@@ -48,16 +48,14 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
     loadedFromTrustedSource = this.configurationCreator.loadedFromTrustedSource();
 
     commonL1Config = new NewCommonL1ConfigObject(createContext(clientBeanRepository(), null));
-    l2ConfigForL1 = new L2ConfigForL1Object(createContext(serversBeanRepository(), null),
-                                            createContext(systemBeanRepository(), null));
+    l2ConfigForL1 = new L2ConfigForL1Object(createContext(serversBeanRepository(), null), createContext(
+        systemBeanRepository(), null));
     dsoL1Config = new NewL1DSOConfigObject(createContext(new ChildBeanRepository(clientBeanRepository(),
-                                                                                 DsoClientData.class,
-                                                                                 new ChildBeanFetcher() {
-                                                                                   public XmlObject getChild(
-                                                                                                             XmlObject parent) {
-                                                                                     return ((Client) parent).getDso();
-                                                                                   }
-                                                                                 }), null));
+        DsoClientData.class, new ChildBeanFetcher() {
+          public XmlObject getChild(XmlObject parent) {
+            return ((Client) parent).getDso();
+          }
+        }), null));
 
   }
 

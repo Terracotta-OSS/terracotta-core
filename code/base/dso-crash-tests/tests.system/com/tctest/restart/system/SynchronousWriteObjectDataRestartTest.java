@@ -34,8 +34,4 @@ public class SynchronousWriteObjectDataRestartTest extends TransparentTestBase i
     return true;
   }
 
-  protected boolean canRunRestart() {
-    return true;
-  }
-
 }

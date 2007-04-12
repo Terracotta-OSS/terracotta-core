@@ -20,8 +20,4 @@ public class ReentrantLockCrashTest extends TransparentTestBase {
     return true;
   }
   
-  protected boolean canRunRestart() {
-    return true;
-  }
-
 }

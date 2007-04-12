@@ -16,8 +16,4 @@ public class BatchRootFaultTest extends TransparentTestBase {
   protected Class getApplicationClass() {
     return BatchRootFaultTestApp.class;
   }
-
-  protected boolean getStartServer() {
-    return true;
-  }
 }

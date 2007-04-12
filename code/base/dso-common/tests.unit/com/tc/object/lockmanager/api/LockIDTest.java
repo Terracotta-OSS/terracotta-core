@@ -6,9 +6,6 @@ package com.tc.object.lockmanager.api;
 
 import junit.framework.TestCase;
 
-/**
- * TODO Nov 18, 2004:
- */
 public class LockIDTest extends TestCase {
   public void tests() throws Exception {
     assertTrue(LockLevel.isWrite(LockLevel.WRITE));

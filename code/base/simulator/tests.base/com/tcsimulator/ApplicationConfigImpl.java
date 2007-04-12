@@ -20,6 +20,7 @@ public class ApplicationConfigImpl implements ApplicationConfig {
   private final int    globalParticipantCount;
   private final Map    attributes;
   private int          hashCode;
+  private final int validatorCount;
 
   public static void visitDSOApplicationConfig(ConfigVisitor visitor, DSOApplicationConfig config) {
     String classname = ApplicationConfigImpl.class.getName();
@@ -28,9 +29,14 @@ public class ApplicationConfigImpl implements ApplicationConfig {
   }
   
   public ApplicationConfigImpl(String applicatonClassname, int intensity, int globalParticipantCount) {
+    this(applicatonClassname, intensity, globalParticipantCount, 0);
+  }
+  
+  public ApplicationConfigImpl(String applicatonClassname, int intensity, int globalParticipantCount, int validatorCount) {
     this.applicatonClassname = applicatonClassname;
     this.intensity = intensity;
     this.globalParticipantCount = globalParticipantCount;
+    this.validatorCount = validatorCount;
     attributes = new HashMap();
     hashCode = new HashCodeBuilder(17, 37).append(this.applicatonClassname).append(intensity).append(globalParticipantCount)
         .append(attributes).toHashCode();
@@ -46,6 +52,10 @@ public class ApplicationConfigImpl implements ApplicationConfig {
 
   public int getGlobalParticipantCount() {
     return this.globalParticipantCount;
+  }
+  
+  public int getValidatorCount() {
+    return validatorCount;
   }
 
   public boolean equals(ApplicationConfig appconfig) {
@@ -66,10 +76,14 @@ public class ApplicationConfigImpl implements ApplicationConfig {
   }
   
   public ApplicationConfig copy() {
-    return new ApplicationConfigImpl(applicatonClassname, intensity, globalParticipantCount);
+    return new ApplicationConfigImpl(applicatonClassname, intensity, globalParticipantCount, validatorCount);
   }
 
   public ServerControl getServerControl() {
     throw new UnsupportedOperationException("not implemented, should not be used");
+  }
+
+  public int getGlobalValidatorCount() {
+    throw new AssertionError("This method needs to be implemented");
   }
 }

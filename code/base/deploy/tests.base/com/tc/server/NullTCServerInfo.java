@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.server;
 
@@ -14,7 +15,7 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public NullTCServerInfo() throws NotCompliantMBeanException {
     super(TCServerInfoMBean.class, false);
   }
-  
+
   public void reset() {
     // nothing to reset
   }
@@ -34,7 +35,7 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public String getDescriptionOfCapabilities() {
     return "";
   }
-  
+
   public L2Info[] getL2Info() {
     return null;
   }
@@ -65,6 +66,18 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
 
   public String getHealthStatus() {
     return "";
+  }
+
+  public boolean isInStartState() {
+    return false;
+  }
+
+  public boolean isPassiveStandby() {
+    return false;
+  }
+
+  public boolean isPassiveUninitialized() {
+    return false;
   }
 
 }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.simulator.app;
 
@@ -14,11 +15,11 @@ import java.lang.reflect.Constructor;
 
 public class DSOApplicationBuilder implements ApplicationBuilder {
 
-  private final ApplicationConfig    applicationConfig;
-  private final ClassLoader classloader;
+  private final ApplicationConfig applicationConfig;
+  private final ClassLoader       classloader;
 
-  private Class                      applicationClass;
-  private Constructor                applicationConstructor;
+  private Class                   applicationClass;
+  private Constructor             applicationConstructor;
 
   public DSOApplicationBuilder(DSOClientConfigHelper config, ApplicationConfig applicationConfig,
                                PreparedComponentsFromL2Connection components) {
@@ -26,14 +27,18 @@ public class DSOApplicationBuilder implements ApplicationBuilder {
     this(applicationConfig, new IsolationClassLoader(config, components));
   }
 
-  public DSOApplicationBuilder(ApplicationConfig applicationConfig,
-                               ClassLoader classloader) {
+  public DSOApplicationBuilder(ApplicationConfig applicationConfig, ClassLoader classloader) {
     this.applicationConfig = applicationConfig;
     this.classloader = classloader;
   }
-  
+
+  public void setAppConfigAttribute(String key, String value) {
+    applicationConfig.setAttribute(key, value);
+  }
+
   // XXX:: Adding more debugs to figure out the OOME in Primitive ArrayTest.
   TCLogger logger = TCLogging.getLogger(DSOApplicationBuilder.class);
+
   public Application newApplication(String applicationId, ListenerProvider listenerProvider)
       throws ApplicationInstantiationException {
     try {
@@ -46,6 +51,7 @@ public class DSOApplicationBuilder implements ApplicationBuilder {
       this.applicationConstructor = this.applicationClass.getConstructor(new Class[] { String.class,
           applicationConfigClass, listenerProviderClass });
       logger.info("Before new Instance is created...");
+
       return (Application) this.applicationConstructor.newInstance(new Object[] { applicationId,
           this.applicationConfig, listenerProvider });
     } catch (Throwable t) {
@@ -57,7 +63,7 @@ public class DSOApplicationBuilder implements ApplicationBuilder {
 
   private void initializeClassLoader() {
     if (this.classloader instanceof IsolationClassLoader) {
-      ((IsolationClassLoader)this.classloader).init();
+      ((IsolationClassLoader) this.classloader).init();
     }
   }
 

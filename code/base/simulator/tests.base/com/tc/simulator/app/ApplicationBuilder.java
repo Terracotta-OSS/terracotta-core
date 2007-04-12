@@ -10,4 +10,6 @@ public interface ApplicationBuilder {
       throws ApplicationInstantiationException;
 
   public ClassLoader getContextClassLoader();
+  
+  void setAppConfigAttribute(String key, String value);
 }

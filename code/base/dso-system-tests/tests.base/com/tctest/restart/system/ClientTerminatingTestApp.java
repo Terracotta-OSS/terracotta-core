@@ -6,6 +6,9 @@ package com.tctest.restart.system;
 
 import org.apache.commons.io.FileUtils;
 
+import com.tc.object.config.ConfigVisitor;
+import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -17,6 +20,8 @@ import java.util.List;
 import java.util.Random;
 
 public class ClientTerminatingTestApp extends ServerCrashingAppBase {
+  private static boolean        DEBUG      = false;
+  private static boolean        isSynchronousWrite;
 
   public static final String    FORCE_KILL = "force-kill";
 
@@ -27,6 +32,7 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
   private long                  count      = 0;
   private ExtraL1ProcessControl client;
   private final boolean         forceKill;
+  private String                appId;
 
   public ClientTerminatingTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -37,14 +43,26 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
     } else {
       forceKill = false;
     }
+
+    this.appId = appId;
   }
 
-  public void run() {
+  public static void debugPrintln(String s) {
+    if (DEBUG) {
+      System.err.println(s);
+    }
+  }
+
+  public void runTest() throws Throwable {
     List myList = new ArrayList();
     synchronized (queue) {
       if (id != -1) { throw new AssertionError("Only one controller per Instance allowed. Check the Execution count"); }
       id = queue.size();
+
+      debugPrintln("******* appId=[" + appId + "] id=[" + id + "]");
       queue.add(myList);
+      debugPrintln("*******  adding to queue: mylistInQueue=[" + queue.contains(myList) + "]  isNull=["
+                   + (myList == null) + "]");
     }
 
     Random random = new Random();
@@ -102,11 +120,15 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
     private int     id;
     private long    addCount;
     private boolean shouldForceKill;
+    private List    clientQueue = new ArrayList();
 
     public Client(int i, long addCount, boolean shouldForceKill) {
       this.id = i;
       this.addCount = addCount;
       this.shouldForceKill = shouldForceKill;
+
+      debugPrintln("*******  id=[" + id + "]  addCount=[" + this.addCount + "]  shoudlForceKill=["
+                   + this.shouldForceKill + "]");
     }
 
     public static void main(String args[]) {
@@ -129,8 +151,8 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
       List myList = null;
       long count = 0;
       System.err.println(this + " execute : addCount = " + addCount);
-      synchronized (queue) {
-        myList = (List) queue.get(id);
+      synchronized (clientQueue) {
+        myList = (List) clientQueue.get(id);
       }
       synchronized (myList) {
         if (myList.size() > 0) {
@@ -157,6 +179,35 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
       return "Client(" + id + ") :";
     }
 
+  }
+
+  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
+    String testClassName = ClientTerminatingTestApp.class.getName();
+    String clientClassName = Client.class.getName();
+    TransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
+    TransparencyClassSpec spec2 = config.getOrCreateSpec(clientClassName);
+
+    String methodExpression = "* " + testClassName + "*.*(..)";
+    setLockLevel(config, methodExpression);
+    spec.addRoot("queue", "queue");
+
+    methodExpression = "* " + clientClassName + "*.*(..)";
+    config.addWriteAutolock(methodExpression);
+    spec2.addRoot("clientQueue", "queue");
+  }
+
+  private static void setLockLevel(DSOClientConfigHelper config, String methodExpression) {
+    if (isSynchronousWrite) {
+      config.addSynchronousWriteAutolock(methodExpression);
+      debugPrintln("****** doing synch write");
+    } else {
+      config.addWriteAutolock(methodExpression);
+      debugPrintln("***** doing regular write");
+    }
+  }
+
+  public static void setSynchronousWrite(boolean isSynchWrite) {
+    isSynchronousWrite = isSynchWrite;
   }
 
 }

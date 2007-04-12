@@ -14,8 +14,4 @@ public class CloneTest extends TransparentTestBase {
     return CloneTestApp.class;
   }
 
-  protected boolean getStartServer() {
-    return true;
-  }
-
 }

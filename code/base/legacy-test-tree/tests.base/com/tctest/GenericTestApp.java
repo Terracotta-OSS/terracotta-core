@@ -12,7 +12,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tctest.runner.AbstractTransparentApp;
+import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -23,7 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public abstract class GenericTestApp extends AbstractTransparentApp {
+public abstract class GenericTestApp extends AbstractErrorCatchingTransparentApp {
 
   private static final String METHOD_PREFIX  = "test";
   private static final String METHOD_PATTERN = "^" + METHOD_PREFIX + ".*$";
@@ -50,14 +50,6 @@ public abstract class GenericTestApp extends AbstractTransparentApp {
     this.tests = getTestNames();
   }
 
-  public final void run() {
-    try {
-      runTest();
-    } catch (Throwable t) {
-      notifyError(t);
-    }
-  }
-
   protected abstract Object getTestObject(String testName);
 
   protected abstract void setupTestObject(String testName);
@@ -69,7 +61,7 @@ public abstract class GenericTestApp extends AbstractTransparentApp {
     }
   }
 
-  private void runTest() throws Throwable {
+  public void runTest() throws Throwable {
     int num = barrier.barrier();
     boolean mutator = (num == 0);
 

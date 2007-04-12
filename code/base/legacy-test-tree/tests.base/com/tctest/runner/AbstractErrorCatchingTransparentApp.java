@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.runner;
 
@@ -18,6 +19,11 @@ public abstract class AbstractErrorCatchingTransparentApp extends AbstractTransp
     super(appId, cfg, listenerProvider);
   }
 
+  // used by external clients
+  public AbstractErrorCatchingTransparentApp() {
+    super();
+  }
+
   public final void run() {
     try {
       runTest();
@@ -25,11 +31,10 @@ public abstract class AbstractErrorCatchingTransparentApp extends AbstractTransp
       notifyError(t);
     }
   }
-  
+
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     config.addIncludePattern(AbstractErrorCatchingTransparentApp.class.getName());
   }
-
 
   protected abstract void runTest() throws Throwable;
 }

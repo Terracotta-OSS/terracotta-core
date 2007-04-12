@@ -10,10 +10,12 @@ import com.tc.util.State;
 
 public interface StateManager {
 
-  public static final State ACTIVE_COORDINATOR   = new State("ACTIVE-COORDINATOR");
-  public static final State PASSIVE_UNINTIALIZED = new State("PASSIVE-UNINITIALIZED");
-  public static final State PASSIVE_STANDBY      = new State("PASSIVE-STANDBY");
-  public static final State START_STATE          = new State("START-STATE");
+  public static final State   ACTIVE_COORDINATOR   = new State("ACTIVE-COORDINATOR");
+  public static final State   PASSIVE_UNINTIALIZED = new State("PASSIVE-UNINITIALIZED");
+  public static final State   PASSIVE_STANDBY      = new State("PASSIVE-STANDBY");
+  public static final State   START_STATE          = new State("START-STATE");
+  public static final State[] validStates          = new State[] { START_STATE, PASSIVE_UNINTIALIZED, PASSIVE_STANDBY,
+      ACTIVE_COORDINATOR                          };
 
   public void startElection();
 
@@ -24,5 +26,5 @@ public interface StateManager {
   public boolean isActiveCoordinator();
 
   public void moveNodeToPassiveStandby(NodeID nodeID);
-  
+
 }

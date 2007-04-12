@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
@@ -22,6 +23,7 @@ import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.util.Assert;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.Server;
+import com.terracottatech.config.Servers;
 
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -138,6 +140,7 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
   public static final int                MODE_DISTRIBUTED_CONFIG = 1;
 
   private final TestConfigBeanSet        beanSet;
+  private final TestConfigBeanSet        l1_beanSet;
 
   private final TestConfigurationCreator l1ConfigurationCreator;
   private final TestConfigurationCreator l2ConfigurationCreator;
@@ -158,6 +161,7 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     super(illegalConfigurationChangeHandler);
 
     this.beanSet = new TestConfigBeanSet();
+    this.l1_beanSet = new TestConfigBeanSet();
 
     this.l2ConfigurationCreator = new TestConfigurationCreator(this.beanSet, true);
 
@@ -165,7 +169,7 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     if (mode == MODE_CENTRALIZED_CONFIG) {
       this.l1ConfigurationCreator = new TestConfigurationCreator(this.beanSet, true);
     } else if (mode == MODE_DISTRIBUTED_CONFIG) {
-      this.l1ConfigurationCreator = new TestConfigurationCreator(this.beanSet, false);
+      this.l1ConfigurationCreator = new TestConfigurationCreator(this.l1_beanSet, false);
     } else {
       throw Assert.failure("Unknown mode: " + mode);
     }
@@ -174,7 +178,12 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
       Assert.assertNotBlank(l2Identifier);
       this.defaultL2Identifier = l2Identifier;
     } else {
-      this.defaultL2Identifier = this.beanSet.serversBean().getServerArray()[0].getName();
+      String defaultName = this.beanSet.serversBean().getServerArray()[0].getName();
+      if(!TestConfigBeanSet.DEFAULT_SERVER_NAME.equals(defaultName)) {
+        this.defaultL2Identifier = this.beanSet.serversBean().getServerArray()[0].getName();
+      } else {
+        this.defaultL2Identifier = TestConfigBeanSet.DEFAULT_HOST;
+      }
     }
 
     Assert.assertNotNull(this.defaultL2Identifier);
@@ -185,7 +194,7 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     L2TVSConfigurationSetupManager sampleL2Manager;
 
     try {
-      sampleL1Manager = this.createL1TVSConfigurationSetupManager(new TestConfigurationCreator(this.beanSet, true));
+      sampleL1Manager = this.createL1TVSConfigurationSetupManager(new TestConfigurationCreator(this.l1_beanSet, true));
       sampleL2Manager = this.createL2TVSConfigurationSetupManager(null);
     } catch (ConfigurationSetupException cse) {
       throw Assert.failure("Huh?", cse);
@@ -209,18 +218,18 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
   private static final String BOGUS_FILENAME = "nonexistent-directory-SHOULD-NEVER-EXIST/../";
 
   private void applyDefaultTestConfig() {
-//    // Use a license that lets us do anything.
-//    try {
-//      String path = getEverythingLicensePath();
-//      ((SettableConfigItem) systemConfig().licenseLocation()).setValue(path);
-//    } catch (IOException ioe) {
-//      throw Assert.failure("Unable to fetch data directory root to find license for tests.", ioe);
-//    }
-//
-//    ((SettableConfigItem) systemConfig().licenseType()).setValue(LicenseType.PRODUCTION);
-//
-//    // Make servers use dynamic ports, by default.
-//    ((SettableConfigItem) l2DSOConfig().listenPort()).setValue(0);
+    // // Use a license that lets us do anything.
+    // try {
+    // String path = getEverythingLicensePath();
+    // ((SettableConfigItem) systemConfig().licenseLocation()).setValue(path);
+    // } catch (IOException ioe) {
+    // throw Assert.failure("Unable to fetch data directory root to find license for tests.", ioe);
+    // }
+    //
+    // ((SettableConfigItem) systemConfig().licenseType()).setValue(LicenseType.PRODUCTION);
+    //
+    // // Make servers use dynamic ports, by default.
+    // ((SettableConfigItem) l2DSOConfig().listenPort()).setValue(0);
     ((SettableConfigItem) l2CommonConfig().jmxPort()).setValue(0);
 
     // We also set the data and log directories to strings that shouldn't be valid on any platform: you need to set
@@ -269,8 +278,7 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
 
   private Object proxify(Class theClass, XmlObject[] destObjects, Object realImplementation, String xpathPrefix) {
     return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { theClass },
-                                  new TestConfigObjectInvocationHandler(theClass, destObjects, realImplementation,
-                                                                        xpathPrefix));
+        new TestConfigObjectInvocationHandler(theClass, destObjects, realImplementation, xpathPrefix));
   }
 
   private Object proxify(Class theClass, XmlObject destObject, Object realImplementation, String xpathPrefix) {
@@ -293,17 +301,55 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     return (NewL1DSOConfig) proxify(NewL1DSOConfig.class, this.beanSet.clientBean(), this.sampleL1DSO, "dso");
   }
 
-  public void addServerConfig(String name) {
-    Server newL2 = this.beanSet.serversBean().addNewServer();
+  private void cleanBeanSetServersIfNeeded(TestConfigBeanSet beanSetArg) {
+    if (beanSetArg == null) { throw new AssertionError("beanSetArg is null"); }
 
-    newL2.setName(name);
-    newL2.setHost("localhost");
+    Servers l2s = beanSetArg.serversBean();
+    if (l2s.sizeOfServerArray() == 1) {
+      Server l2 = l2s.getServerArray(0);
+      if (l2.getName() != null && l2.getName().equals(TestConfigBeanSet.DEFAULT_SERVER_NAME)
+          && l2.getHost().equals(TestConfigBeanSet.DEFAULT_HOST)) {
+        l2s.removeServer(0);
+        if (l2s.sizeOfServerArray() != 0) { throw new AssertionError("Default server has not been cleared"); }
+      }
+    }
+  }
 
-    newL2.setDsoPort(0);
-    newL2.setJmxPort(0);
+  public void addServerToL1Config(String name, int dsoPort, int jmxPort) {
+    cleanBeanSetServersIfNeeded(l1_beanSet);
+
+    Server newL2 = l1_beanSet.serversBean().addNewServer();
+
+    if (name != null && !name.equals("")) {
+      newL2.setName(name);
+    }
+    newL2.setHost(TestConfigBeanSet.DEFAULT_HOST);
+
+    newL2.setDsoPort(dsoPort);
+
+    if (jmxPort >= 0) {
+      newL2.setJmxPort(jmxPort);
+    }
 
     newL2.setData(BOGUS_FILENAME);
     newL2.setLogs(BOGUS_FILENAME);
+  }
+
+  public void addServerToL2Config(String name, int dsoPort, int jmxPort) {
+    cleanBeanSetServersIfNeeded(beanSet);
+
+    Server newL2 = this.beanSet.serversBean().addNewServer();
+
+    if (name != null && !name.equals("")) {
+      newL2.setName(name);
+    }
+
+    newL2.setHost(TestConfigBeanSet.DEFAULT_HOST);
+    newL2.setDsoPort(dsoPort);
+    newL2.setJmxPort(jmxPort);
+
+//    newL2.setData(BOGUS_FILENAME);
+//    newL2.setLogs(BOGUS_FILENAME);
   }
 
   private Server findL2Bean(String name) {
@@ -382,16 +428,17 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
       System.setProperty(TVSConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME, l2sSpec.toString());
     }
 
-    return new StandardL1TVSConfigurationSetupManager(configCreator, this.defaultValueProvider,
-                                                      this.xmlObjectComparator, this.illegalChangeHandler);
+    StandardL1TVSConfigurationSetupManager configSetupManager = new StandardL1TVSConfigurationSetupManager(
+        configCreator, this.defaultValueProvider, this.xmlObjectComparator, this.illegalChangeHandler);
+
+    return configSetupManager;
   }
 
   public L2TVSConfigurationSetupManager createL2TVSConfigurationSetupManager(String l2Identifier)
       throws ConfigurationSetupException {
     String effectiveL2Identifier = l2Identifier == null ? this.defaultL2Identifier : l2Identifier;
     return new StandardL2TVSConfigurationSetupManager(this.l2ConfigurationCreator, effectiveL2Identifier,
-                                                      this.defaultValueProvider, this.xmlObjectComparator,
-                                                      this.illegalChangeHandler);
+        this.defaultValueProvider, this.xmlObjectComparator, this.illegalChangeHandler);
   }
 
 }

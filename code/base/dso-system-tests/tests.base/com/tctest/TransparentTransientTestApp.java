@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -12,9 +13,6 @@ import com.tctest.runner.AbstractTransparentApp;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * TODO Mar 10, 2005: I, steve, am too lazy to write a single sentence describing what this class is for.
- */
 public class TransparentTransientTestApp extends AbstractTransparentApp {
   private TestClass1 one         = new TestClass1();
   private TestClass2 two         = new TestClass2(new Object());

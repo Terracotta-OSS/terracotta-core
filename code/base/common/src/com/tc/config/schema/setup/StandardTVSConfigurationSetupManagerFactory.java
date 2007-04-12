@@ -28,6 +28,7 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
    * <code>public</code> for <strong>TESTS AND DOCUMENTATION ONLY</strong>.
    */
   public static final String    CONFIG_SPEC_ARGUMENT_WORD        = "--" + CONFIG_SPEC_ARGUMENT_NAME;
+  public static final String    SERVER_NAME_ARGUMENT_WORD        = "-n";
 
   private static final String   L2_NAME_PROPERTY_NAME            = "tc.server.name";
   public static final String    DEFAULT_CONFIG_SPEC              = "tc-config.xml";

@@ -55,4 +55,12 @@ public class LongrunningGCTestAppConfigObject implements LongrunningGCTestAppCon
   public ServerControl getServerControl() {
     throw new UnsupportedOperationException("not implemented, should not be used");
   }
+
+  public int getValidatorCount() {
+    throw new AssertionError();
+  }
+
+  public int getGlobalValidatorCount() {
+    throw new AssertionError();
+  }
 }

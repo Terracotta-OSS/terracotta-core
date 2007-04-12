@@ -1,25 +1,25 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.restart;
 
 import com.tc.objectserver.control.ServerControl;
 
-
 public class RestartTestHelper {
 
-  private final RestartTestEnvironment env;
+  private final RestartTestEnvironment  env;
   private final ServerCrasherConfigImpl serverCrasherConfig;
-  private final boolean isCrashy;
-  private final ServerControl server;
-  
+  private final boolean                 isCrashy;
+  private final ServerControl           server;
+
   public RestartTestHelper(boolean isCrashy, RestartTestEnvironment env) throws Exception {
     this.isCrashy = isCrashy;
     this.env = env;
     serverCrasherConfig = new ServerCrasherConfigImpl();
 
-    env.choosePorts();
-    env.setIsPersistent(true);
+    this.env.choosePorts();
+    this.env.setIsPersistent(true);
     initRestartEnv();
     env.setUp();
     server = env.newExtraProcessServer();
@@ -29,11 +29,15 @@ public class RestartTestHelper {
   public ServerControl getServerControl() {
     return this.server;
   }
-  
+
   public int getServerPort() {
     return env.getServerPort();
   }
-  
+
+  public int getAdminPort() {
+    return env.getAdminPort();
+  }
+
   private void initRestartEnv() {
     if (isCrashy) {
       initRestartEnvCrashy();
@@ -53,12 +57,11 @@ public class RestartTestHelper {
     env.setIsParanoid(true);
     serverCrasherConfig.setIsCrashy(true);
   }
-  
 
   public ServerCrasherConfig getServerCrasherConfig() {
     return serverCrasherConfig;
   }
-  
+
   public static final class ServerCrasherConfigImpl implements ServerCrasherConfig {
 
     private ServerControl serverControl;

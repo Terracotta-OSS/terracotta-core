@@ -13,7 +13,6 @@ import com.tc.config.schema.test.RootConfigBuilderImpl;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tctest.ServerCrashingTestBase;
 import com.tctest.restart.system.ClientTerminatingTestApp.Client;
-import com.tctest.runner.AbstractTransparentApp;
 
 public class ClientTerminatingTest extends ServerCrashingTestBase {
 
@@ -30,34 +29,37 @@ public class ClientTerminatingTest extends ServerCrashingTestBase {
   }
 
   protected Class getApplicationClass() {
+    ClientTerminatingTestApp.setSynchronousWrite(isSynchronousWrite);
     return ClientTerminatingTestApp.class;
   }
 
   protected void createConfig(TerracottaConfigBuilder cb) {
     String testClassName = ClientTerminatingTestApp.class.getName();
-    String testClassSuperName = AbstractTransparentApp.class.getName();
     String clientClassName = Client.class.getName();
 
     LockConfigBuilder lock1 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
-    lock1.setMethodExpression("* " + testClassName + ".run(..)");
+    lock1.setMethodExpression("* " + testClassName + "*.*(..)");
     setLockLevel(lock1);
 
     LockConfigBuilder lock2 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
-    lock2.setMethodExpression("* " + clientClassName + ".execute(..)");
+    lock2.setMethodExpression("* " + clientClassName + "*.*(..)");
     setLockLevel(lock2);
 
     cb.getApplication().getDSO().setLocks(new LockConfigBuilder[] { lock1, lock2 });
 
     RootConfigBuilder root = new RootConfigBuilderImpl();
     root.setFieldName(testClassName + ".queue");
-    // root.setRootName("queue");
-    cb.getApplication().getDSO().setRoots(new RootConfigBuilder[] { root });
+    root.setRootName("queue");
+    RootConfigBuilder root2 = new RootConfigBuilderImpl();
+    root2.setFieldName(clientClassName + ".clientQueue");
+    root2.setRootName("queue");
+    cb.getApplication().getDSO().setRoots(new RootConfigBuilder[] { root, root2 });
 
     InstrumentedClassConfigBuilder instrumented1 = new InstrumentedClassConfigBuilderImpl();
     instrumented1.setClassExpression(testClassName + "*");
 
     InstrumentedClassConfigBuilder instrumented2 = new InstrumentedClassConfigBuilderImpl();
-    instrumented2.setClassExpression(testClassSuperName + "*");
+    instrumented2.setClassExpression(clientClassName + "*");
 
     cb.getApplication().getDSO().setInstrumentedClasses(
                                                         new InstrumentedClassConfigBuilder[] { instrumented1,

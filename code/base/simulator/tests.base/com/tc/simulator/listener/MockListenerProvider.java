@@ -1,21 +1,19 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.simulator.listener;
 
-
 import java.util.Properties;
-
-
 
 public class MockListenerProvider implements ListenerProvider {
 
-  public OutputListener outputListener;
+  public OutputListener  outputListener;
   public ResultsListener resultsListener;
-  public StatsListener statsListener;
-  
+  public StatsListener   statsListener;
+
   public OutputListener getOutputListener() {
-    	return outputListener;
+    return outputListener;
   }
 
   public ResultsListener getResultsListener() {
@@ -28,6 +26,10 @@ public class MockListenerProvider implements ListenerProvider {
 
   public StatsListener newStatsListener(Properties properties) {
     return statsListener;
+  }
+
+  public MutationCompletionListener getMutationCompletionListener() {
+    throw new AssertionError("This method needs to be implemented");
   }
 
 }

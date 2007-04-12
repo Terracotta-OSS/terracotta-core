@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -11,9 +12,6 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
 
-/**
- * TODO May 17, 2005: I, steve, am too lazy to write a single sentence describing what this class is for.
- */
 public class InterfaceTestApp extends AbstractTransparentApp {
 
   public InterfaceTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {

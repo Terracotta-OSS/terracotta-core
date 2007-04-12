@@ -172,6 +172,10 @@ public class ContainerTest extends TestCase {
       return getClass().getClassLoader();
     }
 
+    public void setAppConfigAttribute(String key, String value) {
+      throw new AssertionError("This method needs to be implemented");
+    }
+
   }
 
   public class MockContainerConfig implements ContainerConfig {

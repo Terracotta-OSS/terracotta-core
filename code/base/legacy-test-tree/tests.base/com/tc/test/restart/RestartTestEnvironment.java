@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.restart;
 
@@ -95,6 +96,7 @@ public class RestartTestEnvironment {
 
   private void initConfig() throws Exception {
     // FIXME 2005-12-01 andrew -- This MockIllegalConfigurationChangeHandler probably isn't right. We should fix it.
+
     config = new StandardTVSConfigurationSetupManagerFactory(new String[] {
         StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFile.getAbsolutePath() },
                                                              true, new MockIllegalConfigurationChangeHandler());
@@ -235,6 +237,10 @@ public class RestartTestEnvironment {
 
   public int getServerPort() {
     return this.serverPort;
+  }
+
+  public int getAdminPort() {
+    return this.adminPort;
   }
 
   public static final class OperatingMode {

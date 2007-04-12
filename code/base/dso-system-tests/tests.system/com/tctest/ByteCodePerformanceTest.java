@@ -1,8 +1,8 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
-
 
 public class ByteCodePerformanceTest extends TransparentTestBase {
   private static final int NODE_COUNT = 1;
@@ -15,10 +15,6 @@ public class ByteCodePerformanceTest extends TransparentTestBase {
 
   protected Class getApplicationClass() {
     return ByteCodePerformanceTestApp.class;
-  }
-
-  protected boolean getStartServer() {
-    return true;
   }
 
 }

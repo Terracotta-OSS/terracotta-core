@@ -9,7 +9,7 @@ import org.apache.commons.io.CopyUtils;
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
@@ -30,7 +30,7 @@ public class JMXHeartBeatTest extends TransparentTestBase {
   private int              adminPort;
 
   public JMXHeartBeatTest() {
-    //this.disableAllUntil("2007-02-27");
+    // this.disableAllUntil("2007-02-27");
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
@@ -53,16 +53,15 @@ public class JMXHeartBeatTest extends TransparentTestBase {
     adminPort = pc.chooseRandomPort();
     configFile = getTempFile("config-file.xml");
     writeConfigFile();
-    StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
-                                                                                                          new String[] {
-                                                                                                              StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD,
-                                                                                                              configFile
-                                                                                                                  .getAbsolutePath() },
-                                                                                                          true,
-                                                                                                          new FatalIllegalConfigurationChangeHandler());
+    TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
+                                                                                                  TestTVSConfigurationSetupManagerFactory.MODE_DISTRIBUTED_CONFIG,
+                                                                                                  null,
+                                                                                                  new FatalIllegalConfigurationChangeHandler());
 
+    factory.addServerToL1Config(null, port, adminPort);
     L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
-    setUpControlledServer(factory, new StandardDSOClientConfigHelper(manager), port, adminPort, configFile.getAbsolutePath());
+    setUpControlledServer(factory, new StandardDSOClientConfigHelper(manager), port, adminPort, configFile
+        .getAbsolutePath());
     doSetUp(this);
   }
 

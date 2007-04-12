@@ -8,6 +8,8 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.cluster.ClusterEventListener;
 import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.config.ConfigVisitor;
+import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 
@@ -21,15 +23,7 @@ public class ServerCrashAndRestartTestApp extends ServerCrashingAppBase implemen
   private final CyclicBarrier barrier          = new CyclicBarrier(initialNodeCount);
   private String              thisNode;
 
-  public void run() {
-    try {
-      runTest();
-    } catch (Throwable t) {
-      notifyError(t);
-    }
-  }
-
-  private void runTest() throws Throwable {
+  public void runTest() throws Throwable {
     ManagerUtil.addClusterEventListener(this);
     final boolean isMasterNode = barrier.barrier() == 0;
     if (isMasterNode) {
@@ -58,5 +52,14 @@ public class ServerCrashAndRestartTestApp extends ServerCrashingAppBase implemen
 
   private void trace(String msg) {
     System.err.println("### " + msg + " -> nodeId=" + thisNode + ", ThreadId=" + Thread.currentThread().getName());
+  }
+
+  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
+    config.addIncludePattern(ServerCrashAndRestartTestApp.class.getName());
+    config.addRoot("barrier", ServerCrashAndRestartTestApp.class.getName() + ".barrier");
+    config.addWriteAutolock("* " + ServerCrashAndRestartTestApp.class.getName() + ".*(..)");
+
+    config.addIncludePattern(CyclicBarrier.class.getName());
+    config.addWriteAutolock("* " + CyclicBarrier.class.getName() + ".*(..)");
   }
 }

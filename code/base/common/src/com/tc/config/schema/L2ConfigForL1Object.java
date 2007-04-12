@@ -31,6 +31,10 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
   private final L2Data                defaultL2Data;
 
   public L2ConfigForL1Object(ConfigContext l2sContext, ConfigContext systemContext) {
+    this(l2sContext, systemContext, null);
+  }
+
+  public L2ConfigForL1Object(ConfigContext l2sContext, ConfigContext systemContext, int[] dsoPorts) {
     Assert.assertNotNull(l2sContext);
     Assert.assertNotNull(systemContext);
 
@@ -42,7 +46,7 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
 
     this.defaultL2Data = new L2Data(DEFAULT_HOST, getL2IntDefault("server/dso-port"));
 
-    this.l2Data = new ObjectArrayXPathBasedConfigItem(this.l2sContext, ".", new L2Data[] { this.defaultL2Data }) {
+    this.l2Data = new ObjectArrayXPathBasedConfigItem(this.l2sContext, ".", new L2Data[] { defaultL2Data }) {
       protected Object fetchDataFromXmlObject(XmlObject xmlObject) {
         Server[] l2Array = ((Servers) xmlObject).getServerArray();
         L2Data[] data;

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.control;
 
@@ -28,6 +29,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   protected final String      configFileLoc;
   protected final List        jvmArgs;
   private final File          runningDirectory;
+  private final String        serverName;
   private File                out;
   private FileOutputStream    fileOut;
   private StreamCopier        outCopier;
@@ -38,19 +40,32 @@ public class ExtraProcessServerControl extends ServerControlBase {
     this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, mergeOutput);
   }
 
+  public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput,
+                                   String servername, List additionalJvmArgs) throws FileNotFoundException {
+    this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, null, Directories.getInstallationRoot(),
+         mergeOutput, servername, additionalJvmArgs);
+  }
+
   public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
                                    String configFileLoc, boolean mergeOutput) throws FileNotFoundException {
     // 2006-07-11 andrew -- We should get rid of the reference to Directories.getInstallationRoot() here.
     // Tests don't run in an environment where such a thing even exists. If the server needs an
     // "installation directory", the tests should be creating one themselves.
-    this(debugParams, host, dsoPort, adminPort, configFileLoc, null, Directories.getInstallationRoot(), mergeOutput);
+    this(debugParams, host, dsoPort, adminPort, configFileLoc, null, Directories.getInstallationRoot(), mergeOutput,
+         null, new ArrayList());
   }
 
   public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
                                    String configFileLoc, File runningDirectory, File installationRoot,
-                                   boolean mergeOutput) {
+                                   boolean mergeOutput, String serverName, List additionalJvmArgs) {
     super(host, dsoPort, adminPort);
-    this.jvmArgs = new ArrayList();
+    this.serverName = serverName;
+    jvmArgs = new ArrayList();
+
+    if (additionalJvmArgs != null && additionalJvmArgs.size() > 0) {
+      jvmArgs.addAll(additionalJvmArgs);
+    }
+
     this.configFileLoc = configFileLoc;
     this.mergeOutput = mergeOutput;
     this.name = "DSO process @ " + getHost() + ":" + getDsoPort();
@@ -64,6 +79,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
                                    String configFileLoc, File runningDirectory, File installationRoot,
                                    boolean mergeOutput, List jvmArgs, String undefString) {
     super(host, dsoPort, adminPort);
+    serverName = null;
 
     this.jvmArgs = new ArrayList();
     for (Iterator i = jvmArgs.iterator(); i.hasNext();) {
@@ -95,7 +111,12 @@ public class ExtraProcessServerControl extends ServerControlBase {
   }
 
   protected String[] getMainClassArguments() {
-    return new String[] { StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc };
+    if (serverName != null && !serverName.equals("")) {
+      return new String[] { StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc,
+          StandardTVSConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName };
+    } else {
+      return new String[] { StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc };
+    }
   }
 
   public void writeOutputTo(File outputFile) {

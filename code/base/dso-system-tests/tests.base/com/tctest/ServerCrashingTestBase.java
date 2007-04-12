@@ -8,8 +8,7 @@ import org.apache.commons.io.CopyUtils;
 
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.util.Assert;
@@ -38,11 +37,13 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
     configFile = getTempFile("config-file.xml");
     writeConfigFile();
 
-    TVSConfigurationSetupManagerFactory factory;
-    factory = new StandardTVSConfigurationSetupManagerFactory(new String[] {
-        StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, configFile.getAbsolutePath() }, true,
-                                                              new FatalIllegalConfigurationChangeHandler());
+    TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
+                                                                                                  TestTVSConfigurationSetupManagerFactory.MODE_DISTRIBUTED_CONFIG,
+                                                                                                  null,
+                                                                                                  new FatalIllegalConfigurationChangeHandler());
 
+    factory.addServerToL1Config(null, port, adminPort);
+    factory.addServerToL2Config(null, port, adminPort);
     L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
     setUpControlledServer(factory, new StandardDSOClientConfigHelper(manager), port, adminPort, configFile
         .getAbsolutePath());

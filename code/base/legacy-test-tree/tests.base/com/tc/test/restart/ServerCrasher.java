@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.restart;
 
@@ -41,8 +42,7 @@ public class ServerCrasher implements Runnable {
             if (crash) {
               System.err.println("Crashing server...");
               server.crash();
-            }
-            else {
+            } else {
               System.err.println("Shutting server down...");
               server.shutdown();
             }
@@ -58,7 +58,7 @@ public class ServerCrasher implements Runnable {
   public void stop() throws Exception {
     synchronized (isRunning) {
       isRunning.set(false);
-      server.crash();
+      server.shutdown();
     }
   }
 }
