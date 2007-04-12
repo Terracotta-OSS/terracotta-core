@@ -70,6 +70,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 			letOtherNodeProceed();
 		}
 		barrier.await();
+		clusteredCacheManager.shutdown();
 	}
 
 	// This is lame but it makes runTest() slightly more readable
