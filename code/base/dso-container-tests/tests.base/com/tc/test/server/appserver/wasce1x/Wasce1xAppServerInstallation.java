@@ -24,6 +24,6 @@ public final class Wasce1xAppServerInstallation extends AbstractAppServerInstall
   }
 
   public String serverType() {
-    return "wasce1";
+    return "wasce";
   }
 }

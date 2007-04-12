@@ -2,19 +2,20 @@
 # the safe way to play around with config is to make a file call build-config.local and
 # put your settings in there
 
-# NOTE: if the tc.build-control.version changes, You'll also need to make changes to 
-# to the Install Anywhere configuration. 
-
 # version string can be passed in as a pattern
 # acceptable tokens are {branch}, {revision}
 # Ex: tc.build-control.version="{branch}-nightly-rev{revision}"
 
-tc.build-control.branch=trunk
 tc.build-control.version=trunk
-tc.tests.configuration.appserver.factory.name=tomcat5
-tc.tests.configuration.appserver.major-version=5.0
-tc.tests.configuration.appserver.minor-version=28
-tc.tests.configuration.appserver.repository=http://download.terracotta.org/appservers
+tc.build-control.branch=trunk
+tc.build-control.jvmargs=-Xms64m,-Xmx128m,-Dtc.base-dir=code/base
+
 tc.tests.configuration.transparent-tests.mode=normal
 tc.tests.configuration.variants.selected.spring=20
-tc.build-control.jvmargs=-Xms64m,-Xmx64m,-Dtc.base-dir=code/base
+
+# for container tests
+tc.tests.configuration.appserver.factory.name=tomcat
+tc.tests.configuration.appserver.major-version=5
+tc.tests.configuration.appserver.minor-version=0.28
+tc.tests.configuration.appserver.repository=http://kong.terracotta.lan/resources/appservers
+#tc.tests.info.appserver.home=path/to/tomcat

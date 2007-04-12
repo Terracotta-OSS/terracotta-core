@@ -19,6 +19,23 @@ public class Os {
   public static String getOsName() {
     return System.getProperty("os.name", "unknown");
   }
+  
+  public static String platform() {
+    String osname = System.getProperty("os.name", "generic").toLowerCase();
+    if (osname.startsWith("windows")) {
+      return "win32";
+    }
+    else if (osname.startsWith("linux")) {
+      return "linux";
+    }
+    else if (osname.startsWith("sunos")) {
+      return "solaris";
+    }
+    else if (osname.startsWith("mac")) {
+      return "mac";
+    }
+    else return "generic";
+  }
 
   public static boolean isWindows() {
     return (getOsName().toLowerCase().indexOf("windows") >= 0);

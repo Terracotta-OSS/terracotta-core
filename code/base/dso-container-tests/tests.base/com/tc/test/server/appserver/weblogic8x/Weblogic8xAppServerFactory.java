@@ -23,7 +23,7 @@ import java.util.Properties;
  */
 public final class Weblogic8xAppServerFactory extends NewAppServerFactory {
 
-  public static final String NAME = "weblogic8";
+  public static final String NAME = "weblogic";
 
   // This class may only be instantiated by it's parent which contains the ProtectedKey
   public Weblogic8xAppServerFactory(ProtectedKey protectedKey, TestConfigObject config) {

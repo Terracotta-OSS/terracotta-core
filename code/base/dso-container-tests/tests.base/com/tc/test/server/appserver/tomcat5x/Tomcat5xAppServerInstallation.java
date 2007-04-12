@@ -22,6 +22,6 @@ public final class Tomcat5xAppServerInstallation extends AbstractAppServerInstal
   }
 
   public String serverType() {
-    return "tomcat5";
+    return "tomcat";
   }
 }

@@ -22,6 +22,6 @@ public final class JBoss4xAppServerInstallation extends AbstractAppServerInstall
   }
 
   public String serverType() {
-    return "jboss4";
+    return "jboss";
   }
 }

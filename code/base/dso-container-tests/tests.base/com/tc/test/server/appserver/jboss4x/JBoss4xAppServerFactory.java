@@ -22,7 +22,7 @@ import java.util.Properties;
  */
 public final class JBoss4xAppServerFactory extends NewAppServerFactory {
 
-  public static final String     NAME         = "jboss4";
+  public static final String     NAME         = "jboss";
 
   // This class may only be instantiated by its parent which contains the ProtectedKey
   public JBoss4xAppServerFactory(ProtectedKey protectedKey, TestConfigObject config) {
