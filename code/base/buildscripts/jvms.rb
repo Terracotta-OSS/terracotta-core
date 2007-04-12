@@ -49,6 +49,8 @@ class JavaVersion
     # Returns a number less than zero, zero, or a number greater than zero as this
     # version is less than, exactly equal to, or greater than the other supplied version.
     def <=>(other)
+        other = JavaVersion.new(other) if other.is_a?(String)
+
         out = major <=> other.major
         out = minor <=> other.minor if out == 0
         out = patch <=> other.patch if out == 0
