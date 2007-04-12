@@ -17,7 +17,7 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
-public class CacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
+public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	static final int EXPECTED_THREAD_COUNT = 2;
 
 	private final CyclicBarrier barrier;
@@ -30,7 +30,7 @@ public class CacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * @param cfg
 	 * @param listenerProvider
 	 */
-	public CacheManagerTestApp(final String appId, final ApplicationConfig cfg,
+	public EhcacheManagerTestApp(final String appId, final ApplicationConfig cfg,
 			final ListenerProvider listenerProvider) {
 		super(appId, cfg, listenerProvider);
 		barrier = new CyclicBarrier(getParticipantCount());
@@ -47,7 +47,7 @@ public class CacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	    config.addNewModule("clustered-ehcache-1.2.0", "1.0.0");
 		config.addAutolock("* *..*.*(..)", ConfigLockLevel.WRITE);
 
-	    final String testClass = CacheManagerTestApp.class.getName();
+	    final String testClass = EhcacheManagerTestApp.class.getName();
 		final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 		spec.addRoot("barrier", "barrier");
 		spec.addRoot("clusteredCacheManager", "clusteredCacheManager");
