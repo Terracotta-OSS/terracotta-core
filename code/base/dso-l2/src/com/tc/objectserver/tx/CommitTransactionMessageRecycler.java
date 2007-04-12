@@ -8,6 +8,7 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.msg.MessageRecyclerImpl;
 import com.tc.object.tx.ServerTransactionID;
 
+import java.util.Collection;
 import java.util.Set;
 
 public class CommitTransactionMessageRecycler extends MessageRecyclerImpl implements ServerTransactionListener {
@@ -25,6 +26,14 @@ public class CommitTransactionMessageRecycler extends MessageRecyclerImpl implem
   }
 
   public void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
+    return;
+  }
+
+  public void addResentServerTransactionIDs(Collection stxIDs) {
+    return;
+  }
+
+  public void clearAllTransactionsFor(ChannelID killedClient) {
     return;
   }
 

@@ -82,4 +82,8 @@ public class TestServerTransactionManager implements ServerTransactionManager {
     // NOP
   }
 
+  public void setResentTransactionIDs(ChannelID channelID, Collection transactionIDs) {
+    // NOP
+  }
+
 }

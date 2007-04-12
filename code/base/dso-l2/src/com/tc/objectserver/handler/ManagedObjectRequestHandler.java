@@ -14,7 +14,7 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.object.net.ChannelStats;
-import com.tc.objectserver.api.ObjectManager;
+import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.context.ManagedObjectRequestContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
@@ -31,18 +31,21 @@ import java.util.Set;
  */
 public class ManagedObjectRequestHandler extends AbstractEventHandler {
 
-  private ObjectManager         objectManager;
-  private ClientStateManager    stateManager;
-  private ChannelStats          channelStats;
-  private final Counter         globalObjectRequestCounter;
-  private final Counter         globalObjectFlushCounter;
-  private Sink                  respondObjectRequestSink;
+  private ClientStateManager         stateManager;
+  private ChannelStats               channelStats;
+  private Sink                       respondObjectRequestSink;
 
-  private static final TCLogger logger = TCLogging.getLogger(ManagedObjectRequestHandler.class);
+  private final Counter              globalObjectRequestCounter;
+  private final Counter              globalObjectFlushCounter;
+  private final ObjectRequestManager objectRequestManager;
 
-  public ManagedObjectRequestHandler(Counter globalObjectRequestCounter, Counter globalObjectFlushCounter) {
+  private static final TCLogger      logger = TCLogging.getLogger(ManagedObjectRequestHandler.class);
+
+  public ManagedObjectRequestHandler(Counter globalObjectRequestCounter, Counter globalObjectFlushCounter,
+                                     ObjectRequestManager objectRequestManager) {
     this.globalObjectRequestCounter = globalObjectRequestCounter;
     this.globalObjectFlushCounter = globalObjectFlushCounter;
+    this.objectRequestManager = objectRequestManager;
   }
 
   public void handleEvent(EventContext context) {
@@ -60,7 +63,7 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
     if (numObjectsRequested != 0) {
       globalObjectRequestCounter.increment(numObjectsRequested);
     }
-    objectManager.lookupObjectsAndSubObjectsFor(context.getChannelID(), context, context.getMaxRequestDepth());
+    objectRequestManager.requestObjects(context, context.getMaxRequestDepth());
   }
 
   private void handleEventFromClient(RequestManagedObjectMessage rmom) {
@@ -93,14 +96,13 @@ public class ManagedObjectRequestHandler extends AbstractEventHandler {
       ManagedObjectRequestContext reqContext = new ManagedObjectRequestContext(channelID, rmom.getRequestID(),
                                                                                requestedIDs, maxRequestDepth,
                                                                                this.respondObjectRequestSink);
-      objectManager.lookupObjectsAndSubObjectsFor(reqContext.getChannelID(), reqContext, maxRequestDepth);
+      objectRequestManager.requestObjects(reqContext, maxRequestDepth);
     }
   }
 
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;
-    objectManager = oscc.getObjectManager();
     stateManager = oscc.getClientStateManager();
     channelStats = oscc.getChannelStats();
     this.respondObjectRequestSink = oscc.getStage(ServerConfigurationContext.RESPOND_TO_OBJECT_REQUEST_STAGE).getSink();

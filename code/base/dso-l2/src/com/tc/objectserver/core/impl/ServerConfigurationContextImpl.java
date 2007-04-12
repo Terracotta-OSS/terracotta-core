@@ -39,9 +39,8 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   private final L2Coordinator                 l2Coordinator;
 
   public ServerConfigurationContextImpl(StageManager stageManager, ObjectManager objectManager,
-                                        ManagedObjectStore objectStore,
-                                        LockManager lockManager, DSOChannelManager channelManager,
-                                        ClientStateManager clientStateManager,
+                                        ManagedObjectStore objectStore, LockManager lockManager,
+                                        DSOChannelManager channelManager, ClientStateManager clientStateManager,
                                         ServerTransactionManager transactionManager,
                                         TransactionalObjectManager txnObjectManager,
                                         ServerClientHandshakeManager clientHandshakeManager, ChannelStats channelStats,

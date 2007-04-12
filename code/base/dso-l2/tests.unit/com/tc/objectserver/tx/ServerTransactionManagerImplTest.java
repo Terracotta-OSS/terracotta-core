@@ -35,6 +35,7 @@ import com.tc.util.SequenceID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -438,6 +439,14 @@ public class ServerTransactionManagerImplTest extends TestCase {
 
     public void transactionCompleted(ServerTransactionID stxID) {
       completedContext.put(stxID);
+    }
+
+    public void addResentServerTransactionIDs(Collection stxIDs) {
+      throw new ImplementMe();
+    }
+
+    public void clearAllTransactionsFor(ChannelID killedClient) {
+      throw new ImplementMe();
     }
 
   }

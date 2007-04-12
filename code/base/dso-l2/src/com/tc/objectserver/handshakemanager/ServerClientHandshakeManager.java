@@ -13,9 +13,10 @@ import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.WaitContext;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.objectserver.api.ObjectManager;
+import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.lockmanager.api.LockManager;
+import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.util.SequenceValidator;
 import com.tc.util.TCTimer;
 import com.tc.util.sequence.ObjectIDSequence;
@@ -27,37 +28,41 @@ import java.util.TimerTask;
 
 public class ServerClientHandshakeManager {
 
-  private static final State       INIT                              = new State("INIT");
-  private static final State       STARTING                          = new State("STARTING");
-  private static final State       STARTED                           = new State("STARTED");
-  private static final int         BATCH_SEQUENCE_SIZE               = 10000;
+  private static final State             INIT                              = new State("INIT");
+  private static final State             STARTING                          = new State("STARTING");
+  private static final State             STARTED                           = new State("STARTED");
+  private static final int               BATCH_SEQUENCE_SIZE               = 10000;
 
-  public static final Sink         NULL_SINK                         = new NullSink();
+  public static final Sink               NULL_SINK                         = new NullSink();
 
-  private State                    state                             = INIT;
+  private State                          state                             = INIT;
 
-  private final TCTimer            timer;
-  private final ReconnectTimerTask reconnectTimerTask;
-  private final ClientStateManager clientStateManager;
-  private final LockManager        lockManager;
-  private final Sink               lockResponseSink;
-  private final long               reconnectTimeout;
-  private final ObjectManager      objectManager;
-  private final DSOChannelManager  channelManager;
-  private final TCLogger           logger;
-  private final SequenceValidator  sequenceValidator;
-  private final Set                existingUnconnectedClients        = new HashSet();
-  private final ObjectIDSequence   oidSequence;
-  private final Set                clientsRequestingObjectIDSequence = new HashSet();
-  private final boolean            persistent;
+  private final TCTimer                  timer;
+  private final ReconnectTimerTask       reconnectTimerTask;
+  private final ClientStateManager       clientStateManager;
+  private final LockManager              lockManager;
+  private final Sink                     lockResponseSink;
+  private final long                     reconnectTimeout;
+  private final ObjectRequestManager     objectRequestManager;
+  private final DSOChannelManager        channelManager;
+  private final TCLogger                 logger;
+  private final SequenceValidator        sequenceValidator;
+  private final Set                      existingUnconnectedClients        = new HashSet();
+  private final ObjectIDSequence         oidSequence;
+  private final Set                      clientsRequestingObjectIDSequence = new HashSet();
+  private final boolean                  persistent;
+  private final ServerTransactionManager transactionManager;
 
-  public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager, ObjectManager objectManager,
-                                      SequenceValidator sequenceValidator, ClientStateManager clientStateManager,
-                                      LockManager lockManager, Sink lockResponseSink, ObjectIDSequence oidSequence,
-                                      TCTimer timer, long reconnectTimeout, boolean persistent) {
+  public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager,
+                                      ObjectRequestManager objectRequestManager,
+                                      ServerTransactionManager transactionManager, SequenceValidator sequenceValidator,
+                                      ClientStateManager clientStateManager, LockManager lockManager,
+                                      Sink lockResponseSink, ObjectIDSequence oidSequence, TCTimer timer,
+                                      long reconnectTimeout, boolean persistent) {
     this.logger = logger;
     this.channelManager = channelManager;
-    this.objectManager = objectManager;
+    this.objectRequestManager = objectRequestManager;
+    this.transactionManager = transactionManager;
     this.sequenceValidator = sequenceValidator;
     this.clientStateManager = clientStateManager;
     this.lockManager = lockManager;
@@ -92,6 +97,10 @@ public class ServerClientHandshakeManager {
           //
           throw new ClientHandshakeException("Clients connected after startup should have no existing wait contexts.");
         }
+        if (!handshake.getResentTransactionIDs().isEmpty()) {
+          //
+          throw new ClientHandshakeException("Clients connected after startup should not resend transactions.");
+        }
         if (handshake.isObjectIDsRequested()) {
           logger.debug("Client " + channelID + " requested Object ID Sequences ");
           clientsRequestingObjectIDSequence.add(channelID);
@@ -103,6 +112,7 @@ public class ServerClientHandshakeManager {
 
       if (state == STARTING) {
         channelManager.makeChannelActiveNoAck(handshake.getChannel());
+        transactionManager.setResentTransactionIDs(channelID, handshake.getResentTransactionIDs());
       }
 
       this.sequenceValidator.initSequence(handshake.getChannelID(), handshake.getTransactionSequenceIDs());
@@ -189,7 +199,7 @@ public class ServerClientHandshakeManager {
   private void start() {
     logger.info("Starting DSO services...");
     lockManager.start();
-    objectManager.start();
+    objectRequestManager.start();
     for (Iterator i = channelManager.getRawChannelIDs().iterator(); i.hasNext();) {
       ChannelID channelID = (ChannelID) i.next();
       sendAckMessageFor(channelID);

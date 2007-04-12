@@ -206,7 +206,15 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     }
 
     public void transactionCompleted(ServerTransactionID stxID) {
-      //NOP
+      // NOP
+    }
+
+    public void addResentServerTransactionIDs(Collection stxIDs) {
+      // NOP
+    }
+
+    public void clearAllTransactionsFor(ChannelID killedClient) {
+      // NOP
     }
   }
 }

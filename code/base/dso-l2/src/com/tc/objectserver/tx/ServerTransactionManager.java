@@ -85,5 +85,7 @@ public interface ServerTransactionManager {
   public void incomingTransactions(ChannelID channelID, Set serverTxnIDs, boolean relayed);
 
   public void transactionsRelayed(ChannelID channelID, Set serverTxnIDs);
+  
+  public void setResentTransactionIDs(ChannelID channelID, Collection transactionIDs);
 
 }

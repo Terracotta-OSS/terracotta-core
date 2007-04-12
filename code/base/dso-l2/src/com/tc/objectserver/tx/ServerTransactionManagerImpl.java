@@ -30,6 +30,7 @@ import com.tc.objectserver.persistence.api.TransactionStore;
 import com.tc.stats.counter.Counter;
 import com.tc.util.Assert;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -98,6 +99,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     stateManager.shutdownClient(waitee);
     lockManager.clearAllLocksFor(waitee);
     gtxm.shutdownClient(waitee);
+    fireClientDisconnectedEvent(waitee);
   }
 
   public void addWaitingForAcknowledgement(ChannelID waiter, TransactionID txnID, ChannelID waitee) {
@@ -334,11 +336,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         ServerTransactionListener listener = (ServerTransactionListener) iter.next();
         listener.incomingTransactions(cid, serverTxnIDs);
       } catch (Exception e) {
-        if (logger.isDebugEnabled()) {
-          logger.debug(e);
-        } else {
-          logger.warn("Exception in Txn complete event callback: " + e.getMessage());
-        }
+        logger.error("Exception in Txn listener event callback: ", e);
+        throw new AssertionError(e);
       }
     }
   }
@@ -349,11 +348,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         ServerTransactionListener listener = (ServerTransactionListener) iter.next();
         listener.transactionCompleted(stxID);
       } catch (Exception e) {
-        if (logger.isDebugEnabled()) {
-          logger.debug(e);
-        } else {
-          logger.warn("Exception in Txn complete event callback: " + e.getMessage());
-        }
+        logger.error("Exception in Txn listener event callback: ", e);
+        throw new AssertionError(e);
       }
     }
   }
@@ -364,13 +360,42 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         ServerTransactionListener listener = (ServerTransactionListener) iter.next();
         listener.transactionApplied(stxID);
       } catch (Exception e) {
-        if (logger.isDebugEnabled()) {
-          logger.debug(e);
-        } else {
-          logger.warn("Exception in Txn Applied event callback: " + e.getMessage());
-        }
+        logger.error("Exception in Txn listener event callback: ", e);
+        throw new AssertionError(e);
       }
     }
   }
 
+  public void setResentTransactionIDs(ChannelID channelID, Collection transactionIDs) {
+    Collection stxIDs = new ArrayList();
+    for (Iterator iter = transactionIDs.iterator(); iter.hasNext();) {
+      TransactionID txn = (TransactionID) iter.next();
+      stxIDs.add(new ServerTransactionID(channelID, txn));
+    }
+    fireAddResentTransactionIDsEvent(stxIDs);
+  }
+
+  private void fireAddResentTransactionIDsEvent(Collection stxIDs) {
+    for (Iterator iter = txnEventListeners.iterator(); iter.hasNext();) {
+      try {
+        ServerTransactionListener listener = (ServerTransactionListener) iter.next();
+        listener.addResentServerTransactionIDs(stxIDs);
+      } catch (Exception e) {
+        logger.error("Exception in Txn listener event callback: ", e);
+        throw new AssertionError(e);
+      }
+    }
+  }
+
+  private void fireClientDisconnectedEvent(ChannelID waitee) {
+    for (Iterator iter = txnEventListeners.iterator(); iter.hasNext();) {
+      try {
+        ServerTransactionListener listener = (ServerTransactionListener) iter.next();
+        listener.clearAllTransactionsFor(waitee);
+      } catch (Exception e) {
+        logger.error("Exception in Txn listener event callback: ", e);
+        throw new AssertionError(e);
+      }
+    }
+  }
 }

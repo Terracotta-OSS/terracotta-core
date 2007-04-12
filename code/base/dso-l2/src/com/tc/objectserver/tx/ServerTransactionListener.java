@@ -6,6 +6,7 @@ package com.tc.objectserver.tx;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.ServerTransactionID;
 
+import java.util.Collection;
 import java.util.Set;
 
 public interface ServerTransactionListener {
@@ -15,5 +16,9 @@ public interface ServerTransactionListener {
   public void transactionApplied(ServerTransactionID stxID);
   
   public void transactionCompleted(ServerTransactionID stxID);
+
+  public void addResentServerTransactionIDs(Collection stxIDs);
+
+  public void clearAllTransactionsFor(ChannelID killedClient);
   
 }

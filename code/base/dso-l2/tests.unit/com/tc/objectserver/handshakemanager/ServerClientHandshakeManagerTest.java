@@ -23,12 +23,13 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.tx.WaitInvocation;
 import com.tc.objectserver.api.TestSink;
-import com.tc.objectserver.impl.TestObjectManager;
+import com.tc.objectserver.impl.TestObjectRequestManager;
 import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.l1.api.TestClientStateManager.AddReferenceContext;
 import com.tc.objectserver.lockmanager.api.TestLockManager;
 import com.tc.objectserver.lockmanager.api.TestLockManager.ReestablishLockContext;
 import com.tc.objectserver.lockmanager.api.TestLockManager.WaitCallContext;
+import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.SequenceID;
 import com.tc.util.SequenceValidator;
@@ -50,7 +51,7 @@ import java.util.Set;
 public class ServerClientHandshakeManagerTest extends TCTestCase {
 
   private ServerClientHandshakeManager hm;
-  private TestObjectManager            objectManager;
+  private TestObjectRequestManager     objectRequestManager;
   private TestClientStateManager       clientStateManager;
   private TestLockManager              lockManager;
   private TestSink                     lockResponseSink;
@@ -63,7 +64,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
   public void setUp() {
     existingUnconnectedClients = new HashSet();
-    objectManager = new TestObjectManager();
+    objectRequestManager = new TestObjectRequestManager();
     clientStateManager = new TestClientStateManager();
     lockManager = new TestLockManager();
     lockResponseSink = new TestSink();
@@ -76,9 +77,10 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
   private void initHandshakeManager() {
     this.hm = new ServerClientHandshakeManager(TCLogging.getLogger(ServerClientHandshakeManager.class), channelManager,
-                                               objectManager, sequenceValidator, clientStateManager, lockManager,
-                                               lockResponseSink, new ObjectIDSequenceProvider(objectIDSequenceStart),
-                                               timer, reconnectTimeout, false);
+                                               objectRequestManager, new TestServerTransactionManager(),
+                                               sequenceValidator, clientStateManager, lockManager, lockResponseSink,
+                                               new ObjectIDSequenceProvider(objectIDSequenceStart), timer,
+                                               reconnectTimeout, false);
     this.hm.setStarting(convertToConnectionIds(existingUnconnectedClients));
   }
 
@@ -328,7 +330,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     assertEquals(1, lockManager.startCalls.size());
 
     // make sure the object manager got started
-    assertNotNull(objectManager.startCalls.poll(1));
+    assertNotNull(objectRequestManager.startCalls.poll(1));
 
     // make sure the state change happens properly
     assertTrue(hm.isStarted());

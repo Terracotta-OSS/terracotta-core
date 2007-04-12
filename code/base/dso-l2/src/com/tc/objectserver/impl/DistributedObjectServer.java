@@ -82,6 +82,7 @@ import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.objectserver.DSOApplicationEvents;
 import com.tc.objectserver.api.ObjectManagerMBean;
+import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -456,6 +457,7 @@ public class DistributedObjectServer extends SEDA {
     transactionManager = new ServerTransactionManagerImpl(gtxm, transactionStore, lockManager, clientStateManager,
                                                           objectManager, taa, globalTxnCounter, channelStats);
     MessageRecycler recycler = new CommitTransactionMessageRecycler(transactionManager);
+    ObjectRequestManager objectRequestManager = new ObjectRequestManagerImpl(objectManager, transactionManager);
 
     stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE, new TransactionLookupHandler(), 1,
                              maxStageSize);
@@ -504,7 +506,8 @@ public class DistributedObjectServer extends SEDA {
                                                                                                            true, 0L));
     Stage objectRequest = stageManager.createStage(ServerConfigurationContext.MANAGED_OBJECT_REQUEST_STAGE,
                                                    new ManagedObjectRequestHandler(globalObjectFaultCounter,
-                                                                                   globalObjectFlushCounter), 1,
+                                                                                   globalObjectFlushCounter,
+                                                                                   objectRequestManager), 1,
                                                    maxStageSize);
     stageManager.createStage(ServerConfigurationContext.RESPOND_TO_OBJECT_REQUEST_STAGE,
                              new RespondToObjectRequestHandler(), 4, maxStageSize);
@@ -571,7 +574,8 @@ public class DistributedObjectServer extends SEDA {
                                                                                            TCLogging
                                                                                                .getLogger(ServerClientHandshakeManager.class),
                                                                                            channelManager,
-                                                                                           objectManager,
+                                                                                           objectRequestManager,
+                                                                                           transactionManager,
                                                                                            sequenceValidator,
                                                                                            clientStateManager,
                                                                                            lockManager,
