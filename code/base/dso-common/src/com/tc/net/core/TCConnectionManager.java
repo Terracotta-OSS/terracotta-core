@@ -16,7 +16,6 @@ import java.io.IOException;
  * @author teck
  */
 public interface TCConnectionManager {  
-  // TODO: There should be a way to enumerate existing listeners and connections
 
   /**
    * Create a new non-connected connection
