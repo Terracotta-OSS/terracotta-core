@@ -30,13 +30,11 @@ import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-
 import org.terracotta.dso.ProjectNature;
 import org.terracotta.dso.TcPlugin;
-import com.terracottatech.config.ConfigurationModel;
+
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
-import com.terracottatech.config.System;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
@@ -200,8 +198,6 @@ public class ProjectWizard extends Wizard {
     String   serverOpts = getServerOptions();
     IFolder  folder     = proj.getFolder("terracotta");
     
-    plugin.setup(proj, configPath, serverOpts);
-    
     if(!folder.exists()) {
       folder.create(true, true, monitor);
     }
@@ -268,6 +264,7 @@ public class ProjectWizard extends Wizard {
     }
     
     m_javaProject.getProject().refreshLocal(IResource.DEPTH_INFINITE, monitor);
+    plugin.setup(proj, configPath, serverOpts);
   }
 
   private static void ensureParent(IFile file) throws CoreException {
@@ -320,11 +317,8 @@ public class ProjectWizard extends Wizard {
   private static TcConfigDocument createTemplateConfigDoc() {
     TcConfigDocument doc     = TcConfigDocument.Factory.newInstance();
     TcConfig         config  = doc.addNewTcConfig();
-    System           system  = config.addNewSystem();
     Servers          servers = config.addNewServers();
     Server           server  = servers.addNewServer();
-
-    system.setConfigurationModel(ConfigurationModel.DEVELOPMENT);
 
     server.setName("localhost");
     server.setDsoPort(9510);

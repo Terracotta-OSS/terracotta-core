@@ -17,7 +17,6 @@
           id="org.terracotta.dso.newProjectWizard" 
           name="Terracotta DSO Project" 
           category="org.eclipse.jdt.ui.java/org.terracotta.dso.ui.project"
-          finalPerspective="org.terracotta.dso.terracottaPerspective"
           project="true"
           icon="images/eclipse/logo16.gif" 
           class="org.terracotta.dso.wizards.NewProjectWizard"
@@ -190,6 +189,7 @@
       </editor>
    </extension>
 
+<!--
    <extension point="org.eclipse.ui.views"> 
       <category id="org.terracotta.dso.views" name="Terracotta DSO"/> 
       <view 
@@ -204,7 +204,8 @@
          category="org.terracotta.dso.views"
          class="org.terracotta.dso.views.ConfigViewPart" 
          icon="images/eclipse/logo16.gif"/>
-   </extension> 
+   </extension>
+-->
 
    <extension point="org.eclipse.core.resources.natures"
             id="ProjectNature"
@@ -321,7 +322,7 @@
               <and>
                 <objectState name="projectNature" value="org.terracotta.dso.ProjectNature"/>
                 <not>
-                  <objectState name="persistentProperty" value="org.terracotta.dso.ActiveDomainConfigFile"/>
+                  <objectState name="sessionProperty" value="org.terracotta.dso.ActiveDomainConfigFile"/>
                 </not>
               </and>
             </visibility>
@@ -1311,6 +1312,20 @@
      </classpathProvider>
    </extension>
 
+   <extension point="org.eclipse.help.contexts">
+  	<contexts file="HelpContexts.xml" /> 
+   </extension>
+
+   <extension point="org.eclipse.help.toc">
+    <toc file="book.xml" primary="true" />
+   </extension>
+
+   <extension point="org.eclipse.help.toc">
+    <toc file="toc_Concepts.xml" />
+    <toc file="toc_Tasks.xml" />
+    <toc file="toc_Ref.xml" />
+   </extension>
+
    <extension
      point="org.eclipse.ui.ide.markerResolution">
      <markerResolutionGenerator
@@ -1448,6 +1463,7 @@
 	  </deleteParticipant>
    </extension> 
 
+<!--
   <extension point="org.eclipse.ui.perspectives">
       <perspective name="Terracotta"
             icon="images/eclipse/logo16.gif" 
@@ -1468,4 +1484,5 @@
       <perspectiveShortcut id="org.terracotta.dso.terracottaPerspective"/>
     </perspectiveExtension> 
   </extension>
+-->
 </plugin>

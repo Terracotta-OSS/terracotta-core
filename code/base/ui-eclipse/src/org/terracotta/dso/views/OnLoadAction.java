@@ -40,7 +40,7 @@ public class OnLoadAction extends Action implements IMenuCreator {
     fNoop = new Action("Do nothing", AS_RADIO_BUTTON) {
       public void run() {
         if(isChecked()) {
-          OnLoadAction.this.run();
+          fPart.setOnLoad(OnLoadAction.this, "");
         }
       }
     };
@@ -67,15 +67,19 @@ public class OnLoadAction extends Action implements IMenuCreator {
         boolean isExecute = isExecute();
         Shell shell = ActionUtil.findSelectedEditorPart().getSite().getShell();
         OnLoadDialog dialog = new OnLoadDialog(shell, wrapper, isExecute);
-        if(dialog.open() == IDialogConstants.OK_ID) {
-          fPart.setOnLoad(OnLoadAction.this, dialog.getResult());
+        try {
+          if(dialog.open() == IDialogConstants.OK_ID) {
+            fPart.setOnLoad(OnLoadAction.this, dialog.getResult());
+          }
+        } catch(Throwable t) {
+          t.printStackTrace();
         }
       }
     };
   }
   
   public void run() {
-    fPart.setOnLoad(this, "");
+    //fPart.setOnLoad(this, "");
   }
 
   boolean isNoop() {return fNoop.isChecked();}
@@ -167,8 +171,9 @@ public class OnLoadAction extends Action implements IMenuCreator {
       GridData gd = new GridData(GridData.FILL_BOTH);
       if(fIsExecute) gd.heightHint = 4 * fText.getLineHeight();
       fText.setLayoutData(gd);
-      OnLoad onload = fWrapper.getInclude().getOnLoad();
-      fText.setText(fIsExecute ? onload.getExecute() : onload.getMethod());
+      OnLoad onload = fWrapper.ensureOnLoad();
+      String text = fIsExecute ? onload.getExecute() : onload.getMethod(); 
+      fText.setText(text == null ? "" : text);
       fText.selectAll();
       return fText;
     }

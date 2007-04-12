@@ -191,6 +191,10 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
     String appNameRoot = configuration.getAttribute(IPDELauncherConstants.APPLICATION, (String)null);
     if(appNameRoot != null) {
       appNameRoot = appNameRoot.substring(0, appNameRoot.lastIndexOf('.'));
+    } else {
+      String msg = "No application specified for launch configuration '"+configuration.getName()+"'";
+      Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, null);
+      throw new CoreException(status);
     }
     PluginModelManager manager = PDECore.getDefault().getModelManager();
     IProject[] projs = ResourcesPlugin.getWorkspace().getRoot().getProjects();
@@ -203,7 +207,9 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
         return projs[i].getName();
       }
     }
-    return null;
+    String msg = "Unable to determine project for pluginId '"+appNameRoot+"'";
+    Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, null);
+    throw new CoreException(status);
   }
 
   public IVMInstall getVMInstall(ILaunchConfiguration configuration) throws CoreException {

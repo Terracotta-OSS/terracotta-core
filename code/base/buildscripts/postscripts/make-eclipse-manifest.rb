@@ -44,7 +44,14 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       out.puts " org.eclipse.jdt.ui,"
       out.puts " org.eclipse.help,"
       out.puts " org.eclipse.update.core,"
-      out.puts " org.eclipse.ltk.core.refactoring"
+      out.puts " org.eclipse.ltk.core.refactoring,"
+      out.puts " org.eclipse.ui.console,"
+      out.puts " org.eclipse.search,"
+      out.puts " org.eclipse.pde.core,"
+      out.puts " org.eclipse.pde.ui,"
+      out.puts " org.junit,"
+      out.puts " org.eclipse.jdt.junit"
+
       libfiles = Dir.entries(common_lib_directory.to_s).delete_if { |item| /\.jar$/ !~ item }
       out.puts "Bundle-ClassPath: #{relative_libpath}/#{libfiles.first},"
       libfiles[1..-2].each { |item| out.puts " #{relative_libpath}/#{item}," }

@@ -53,6 +53,7 @@ public class BuildBootJarAction extends Action
   private IJavaProject m_javaProject;
   private IAction      m_action;
   private String       m_jreContainerPath;
+  private IProcess     m_process;
   
   private static final String LAUNCH_LABEL       = "DSO BootJar Creator";
   private static final String MAIN_TYPE          = "com.tc.object.tools.BootJarTool";
@@ -95,7 +96,7 @@ public class BuildBootJarAction extends Action
         }
       };
 
-      new ProgressMonitorDialog(null).run(true, false, op);
+      new ProgressMonitorDialog(null).run(true, true, op);
     }
     catch(InterruptedException e) {
       /**/
@@ -134,6 +135,9 @@ public class BuildBootJarAction extends Action
     ILaunchConfigurationType type    = manager.getLaunchConfigurationType(ID_JAVA_APPLICATION);
     ILaunchConfiguration[]   configs = manager.getLaunchConfigurations(type);
     
+    checkCancel(monitor);
+    monitor.subTask("Please wait...");
+
     for(int i = 0; i < configs.length; i++) {
       ILaunchConfiguration config = configs[i];
       
@@ -178,11 +182,14 @@ public class BuildBootJarAction extends Action
     JavaLaunchDelegate delegate = new JavaLaunchDelegate();
     Launch             launch   = new Launch(wc, runMode, null);
 
+    checkCancel(monitor);
     delegate.launch(wc, runMode, launch, null);
+    checkCancel(monitor);
     
-    IProcess       process      = launch.getProcesses()[0];
-    IStreamsProxy  streamsProxy = process.getStreamsProxy();
-    IStreamMonitor outMonitor   = streamsProxy.getOutputStreamMonitor();    
+    m_process = launch.getProcesses()[0];
+    
+    IStreamsProxy  streamsProxy = m_process.getStreamsProxy();
+    IStreamMonitor outMonitor   = streamsProxy.getOutputStreamMonitor();
     IStreamMonitor errMonitor   = streamsProxy.getErrorStreamMonitor();
     
     outMonitor.addListener(new IStreamListener() {
@@ -192,20 +199,37 @@ public class BuildBootJarAction extends Action
       }
     });
     
-    while(!process.isTerminated()) {
+    checkCancel(monitor);
+    while(!m_process.isTerminated()) {
+      checkCancel(monitor);
       try {
         Thread.sleep(100);
       } catch(Exception e) {/**/}
     }
     
-    if(process.getExitValue() != 0) {
+    if(m_process.getExitValue() != 0) {
+      m_process = null;
       throw new RuntimeException(errMonitor.getContents());
     }
     else {
       project.refreshLocal(IResource.DEPTH_INFINITE, null);
     }
+    
+    m_process = null;
   }
   
+  private void checkCancel(IProgressMonitor monitor) throws InterruptedException {
+    if(monitor.isCanceled()) {
+      try {
+        if(m_process != null && !m_process.isTerminated()) {
+          m_process.terminate();
+        }
+        m_process = null;
+      } catch(Exception e) {/**/}
+      throw new InterruptedException("BootJar creation cancelled.");
+    }
+  }
+
   private static String toOSString(IPath path) {
     return "\"" + path.makeAbsolute().toOSString() + "\"";
   }

@@ -5,9 +5,13 @@
 package org.terracotta.dso.views;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
+import org.eclipse.core.resources.IResourceDelta;
+import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -18,7 +22,6 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.dnd.DelegatingDropAdapter;
-import org.eclipse.jdt.internal.ui.javaeditor.IClassFileEditorInput;
 import org.eclipse.jdt.internal.ui.util.SelectionUtil;
 import org.eclipse.jdt.internal.ui.viewsupport.SelectionProviderMediator;
 import org.eclipse.jdt.internal.ui.viewsupport.StatusBarUpdater;
@@ -44,14 +47,12 @@ import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IPartListener;
-import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.part.ViewPart;
@@ -60,6 +61,7 @@ import org.terracotta.dso.ConfigurationHelper;
 import org.terracotta.dso.IConfigurationListener;
 import org.terracotta.dso.JdtUtils;
 import org.terracotta.dso.TcPlugin;
+import org.terracotta.dso.actions.ActionUtil;
 import org.terracotta.dso.editors.ConfigurationEditor;
 
 import com.terracottatech.config.QualifiedClassName;
@@ -72,7 +74,8 @@ public class ConfigViewPart extends ViewPart
              IMenuListener,
              IConfigurationListener,
              IDoubleClickListener,
-             IResourceChangeListener
+             IResourceChangeListener,
+             IResourceDeltaVisitor
 {
   public static final String ID_CONFIG_VIEW_PART = "org.terracotta.dso.ui.views.configView";
   private static TcPlugin fPlugin = TcPlugin.getDefault();
@@ -157,11 +160,17 @@ public class ConfigViewPart extends ViewPart
     fLockActionGroup.setContext(null);
   }
   
-  public void setConfig(TcConfig config) {
-    fConfigViewer.setConfig(fConfig = config);
-
-    fRefreshAction.setEnabled(config != null);
-    fDeleteAction.setEnabled(config != null && fDeleteAction.canActionBeAdded());
+  public void setConfig(final TcConfig config) {
+    getSite().getShell().getDisplay().asyncExec(new Runnable () {
+      public void run() {
+        if(config == null) {
+          m_javaProject = null;
+        }
+        fConfigViewer.setConfig(fConfig = config);
+        fRefreshAction.setEnabled(config != null);
+        fDeleteAction.setEnabled(config != null && fDeleteAction.canActionBeAdded());
+      }
+    });
   }
   
   private void updateView() {
@@ -241,9 +250,13 @@ public class ConfigViewPart extends ViewPart
           
           if(obj instanceof RootWrapper) {
             RootWrapper wrapper = (RootWrapper)obj;
-            wrapper.remove();
-            if(editor != null) {
-              editor.updateRootsPanel();
+            if(false) {
+              wrapper.remove();
+              if(editor != null) {
+                editor.updateRootsPanel();
+              }
+            } else {
+              configHelper.ensureNotRoot(wrapper.getFieldName());
             }
           } else if(obj instanceof LockWrapper) {
             LockWrapper wrapper = (LockWrapper)obj;
@@ -567,16 +580,7 @@ public class ConfigViewPart extends ViewPart
     }
   }
   
-  private void initFromEditorInput(IEditorInput input) {
-    IJavaProject javaProject = null;
-    
-    if(input instanceof IFileEditorInput) {
-      IProject project = ((IFileEditorInput)input).getFile().getProject();
-      javaProject = JavaCore.create(project);
-    } else  if(input instanceof IClassFileEditorInput) {
-      javaProject = ((IClassFileEditorInput)input).getClassFile().getJavaProject();
-    }
-    
+  private void initFromJavaProject(IJavaProject javaProject) {
     if(javaProject == null || !javaProject.equals(m_javaProject)) {
       TcConfig config = null;
       
@@ -590,18 +594,18 @@ public class ConfigViewPart extends ViewPart
       setConfig(config);
     }
   }
-  
-  public void partActivated(IWorkbenchPart part) {
-    IWorkbenchWindow window = part.getSite().getWorkbenchWindow();
 
+  public void partActivated(IWorkbenchPart part) {
     if(part != this) {
+      IWorkbenchWindow window = part.getSite().getWorkbenchWindow();
+      
       if(window != null) {
-        IWorkbenchPage page = window.getActivePage();
-        if(page != null) {
-          IEditorPart editor = page.getActiveEditor();
-          if(editor != null) {
-            initFromEditorInput(editor.getEditorInput());
-          }
+        ISelection selection = window.getSelectionService().getSelection();
+        
+        if(selection != null) {
+          initFromJavaProject(ActionUtil.locateSelectedJavaProject(selection));
+        } else {
+          //setConfig(null);
         }
       }
     }
@@ -616,12 +620,12 @@ public class ConfigViewPart extends ViewPart
       IWorkbenchWindow window = part.getSite().getWorkbenchWindow();
       
       if(window != null) {
-        IWorkbenchPage page = window.getActivePage();
-        if(page != null) {
-          IEditorPart editor = page.getActiveEditor();
-          if(editor != null) {
-            initFromEditorInput(editor.getEditorInput());
-          }
+        ISelection selection = window.getSelectionService().getSelection();
+        
+        if(selection != null) {
+          initFromJavaProject(ActionUtil.locateSelectedJavaProject(selection));
+        } else {
+          //setConfig(null);
         }
       }
     }
@@ -640,8 +644,59 @@ public class ConfigViewPart extends ViewPart
 
   public void doubleClick(DoubleClickEvent event) {/**/}
   
+  public boolean visit(IResourceDelta delta) {
+    if(fConfigViewer == null ||
+       fConfigViewer.getTree().isDisposed() ||
+       PlatformUI.getWorkbench().isClosing()) {
+      return false;
+    }
+    
+    final IProject project;
+    if((project = isAffected(delta)) != null) {
+      Display.getDefault().asyncExec(new Runnable() {
+        public void run() {
+          m_javaProject = JavaCore.create(project);
+          setConfig(fPlugin.getConfiguration(project));
+        }
+      });
+      return false;
+    }
+    
+    return true;
+  }
+  
+  private IProject isAffected(IResourceDelta delta) {
+    IResource res = delta.getResource();
+    IProject project = null;
+    
+    if(res instanceof IProject) {
+      if(delta.getKind() == IResourceDelta.ADDED ||
+         (delta.getFlags() & IResourceDelta.DESCRIPTION) != 0)
+      {
+        project = (IProject)delta.getResource();
+        return TcPlugin.getDefault().hasTerracottaNature(project) ? project : null;
+      }
+    }
+    
+    IResourceDelta[] children = delta.getAffectedChildren();
+    for(int i = 0; i < children.length; i++) {
+      if((project = isAffected(children[i])) != null) {
+        return project;
+      }
+    }
+
+    return null;
+  }
+  
   public void resourceChanged(final IResourceChangeEvent event){
     switch(event.getType()) {
+      case IResourceChangeEvent.POST_CHANGE:
+        try {
+          event.getDelta().accept(this);
+        } catch(CoreException ce) {
+          ce.printStackTrace();
+        }
+        break;
       case IResourceChangeEvent.PRE_DELETE:
       case IResourceChangeEvent.PRE_CLOSE: {
         setConfig(null);
