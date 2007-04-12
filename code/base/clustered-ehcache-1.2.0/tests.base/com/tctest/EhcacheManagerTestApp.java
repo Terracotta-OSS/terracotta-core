@@ -73,22 +73,6 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 		barrier.await();
 	}
 	
-	private void shutdownCacheManager() {
-		clusteredCacheManager.shutdown();
-	}
-
-	// This is lame but it makes runTest() slightly more readable
-	private void letOtherNodeProceed() throws InterruptedException,
-			BrokenBarrierException {
-		barrier.await();
-	}
-
-	// This is lame but it makes runTest() slightly more readable
-	private void waitForPermissionToProceed() throws InterruptedException,
-			BrokenBarrierException {
-		barrier.await();
-	}
-
 	/**
 	 * Add a cache into the CacheManager.
 	 * @param name The name of the cache to add
@@ -126,5 +110,24 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	        Assert.assertNotNull(key1);
 	        Assert.assertNotNull(key2);
 		}
+	}
+
+	/**
+	 * Shuts down the clustered cache manager.
+	 */
+	private void shutdownCacheManager() {
+		clusteredCacheManager.shutdown();
+	}
+
+	// This is lame but it makes runTest() slightly more readable
+	private void letOtherNodeProceed() throws InterruptedException,
+			BrokenBarrierException {
+		barrier.await();
+	}
+
+	// This is lame but it makes runTest() slightly more readable
+	private void waitForPermissionToProceed() throws InterruptedException,
+			BrokenBarrierException {
+		barrier.await();
 	}
 }
