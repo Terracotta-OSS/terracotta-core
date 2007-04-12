@@ -5,7 +5,7 @@
 	<classpathentry excluding="**/SCCS/**" kind="src" path="tests.unit"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common"/>
-	<classpathentry kind="lib" path="/dependencies/lib/catalina-tribes-6.0.9.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/catalina-tribes-6.0.11-20070412.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/tomcat-juli-6.0.9.jar"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>
