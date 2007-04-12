@@ -75,9 +75,7 @@ public class ServerTracker {
   
             if(serverInfo != null) {
               m_servers.remove(source);
-              if(m_servers.isEmpty()) {
-                setRunning(serverInfo.getJavaProject(), null);
-              }
+              setRunning(serverInfo.getJavaProject(), null);
             }
           }
         }
