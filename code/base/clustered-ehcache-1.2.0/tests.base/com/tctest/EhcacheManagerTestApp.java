@@ -34,7 +34,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 			final ListenerProvider listenerProvider) {
 		super(appId, cfg, listenerProvider);
 		barrier = new CyclicBarrier(getParticipantCount());
-		clusteredCacheManager = CacheManager.create();
+		clusteredCacheManager = CacheManager.getInstance();
 	}
 
 	/**
@@ -64,18 +64,16 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
 			waitForPermissionToProceed();
 			verifyCache("CACHE2");
-			//shutdownCacheManager();
-			
-			//letOtherNodeProceed();
+			shutdownCacheManager();
+			letOtherNodeProceed();
 		} else {
 			waitForPermissionToProceed();
 			verifyCache("CACHE1");
 			addCache("CACHE2");
 			letOtherNodeProceed();
 			
-			//waitForPermissionToProceed();
-			//verifyCacheManagerShutdown();
-			//letOtherNodeProceed();
+			waitForPermissionToProceed();
+			verifyCacheManagerShutdown();
 		}
 		barrier.await();
 	}
@@ -87,10 +85,10 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 */
 	private void addCache(final String name) throws Throwable {
 		synchronized(clusteredCacheManager) {
-			clusteredCacheManager.addCache(name);
-			//Cache cache = clusteredCacheManager.getCache(name);
-	        //cache.put(new Element(name + "key1", "value1"));
-	        //cache.put(new Element(name + "key2", "value1"));
+	        Cache cache = new Cache(name, 2, false, true, 0, 2);
+			clusteredCacheManager.addCache(cache);
+	        cache.put(new Element(name + "key1", "value1"));
+	        cache.put(new Element(name + "key2", "value1"));
 		}
 	}
 
@@ -123,14 +121,18 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * Verify that the clustered cache manager has shut down.
 	 */
 	private void verifyCacheManagerShutdown() {
-        Assert.assertEquals(Status.STATUS_SHUTDOWN, clusteredCacheManager.getStatus());
+		synchronized(clusteredCacheManager) {
+			Assert.assertEquals(Status.STATUS_SHUTDOWN, clusteredCacheManager.getStatus());
+		}
 	}
 	
 	/**
 	 * Shuts down the clustered cache manager.
 	 */
 	private void shutdownCacheManager() {
-		clusteredCacheManager.shutdown();
+		synchronized(clusteredCacheManager) {
+			clusteredCacheManager.shutdown();
+		}
 	}
 
 	// This is lame but it makes runTest() slightly more readable

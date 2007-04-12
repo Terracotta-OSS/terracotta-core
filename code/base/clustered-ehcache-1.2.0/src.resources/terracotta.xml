@@ -34,8 +34,8 @@
 
   <locks>
     <autolock>
-      <lock-level>write</lock-level>
       <method-expression>* net.sf.ehcache.*..*.*(..)</method-expression>
+      <lock-level>write</lock-level>
     </autolock>
 
 
