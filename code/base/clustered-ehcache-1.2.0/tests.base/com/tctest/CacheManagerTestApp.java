@@ -91,8 +91,8 @@ public class CacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 */
 	private void addCache(final String name) throws Throwable {
 		synchronized(clusteredCacheManager) {
-	        Cache cache = new Cache(name, 1, true, true, 0, 0);
-			clusteredCacheManager.addCache(cache);
+			clusteredCacheManager.addCache(name);
+			Cache cache = clusteredCacheManager.getCache(name);
 	        cache.put(new Element(name + "key1", "value1"));
 	        cache.put(new Element(name + "key2", "value1"));
 		}
@@ -115,8 +115,11 @@ public class CacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	        int sizeFromKeys = cache.getKeys().size();
 	        Assert.assertEquals(sizeFromGetSize, sizeFromKeys);
 	        Assert.assertEquals(2, cache.getSize());
-	        Assert.assertNotNull(cache.get(name + "key1"));
-	        Assert.assertNotNull(cache.get(name + "key2"));
+	        
+	        Element key1 = cache.get(name + "key1");
+	        Element key2 = cache.get(name + "key2");
+	        Assert.assertNotNull(key1);
+	        Assert.assertNotNull(key2);
 		}
 	}
 }
