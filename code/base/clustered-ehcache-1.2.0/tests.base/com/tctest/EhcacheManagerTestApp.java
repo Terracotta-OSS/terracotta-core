@@ -63,6 +63,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 			letOtherNodeProceed();
 			waitForPermissionToProceed();
 			verifyCache("CACHE2");
+			shutdownCacheManager();
 		} else {
 			waitForPermissionToProceed();
 			verifyCache("CACHE1");
@@ -70,6 +71,9 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 			letOtherNodeProceed();
 		}
 		barrier.await();
+	}
+	
+	private void shutdownCacheManager() {
 		clusteredCacheManager.shutdown();
 	}
 
