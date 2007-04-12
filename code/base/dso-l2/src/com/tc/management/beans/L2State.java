@@ -10,7 +10,7 @@ import com.tc.l2.state.StateManager;
 import com.tc.util.State;
 
 public class L2State implements StateChangeListener {
-  private static final boolean DEBUG       = true;
+  private static final boolean DEBUG       = false;
   private State                serverState = StateManager.START_STATE;
   private StateChangeListener  changeListener;
 
