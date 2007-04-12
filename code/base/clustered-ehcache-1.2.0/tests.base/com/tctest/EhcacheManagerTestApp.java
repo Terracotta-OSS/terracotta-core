@@ -61,13 +61,20 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 		if (barrier.await() == 0) {
 			addCache("CACHE1");
 			letOtherNodeProceed();
+
 			waitForPermissionToProceed();
 			verifyCache("CACHE2");
 			shutdownCacheManager();
+			
+			letOtherNodeProceed();
 		} else {
 			waitForPermissionToProceed();
 			verifyCache("CACHE1");
 			addCache("CACHE2");
+			letOtherNodeProceed();
+			
+			waitForPermissionToProceed();
+			verifyCacheManagerShutdown();
 			letOtherNodeProceed();
 		}
 		barrier.await();
@@ -112,6 +119,13 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 		}
 	}
 
+	/**
+	 * Verify that the clustered cache manager has shut down.
+	 */
+	private void verifyCacheManagerShutdown() {
+        Assert.assertEquals(Status.STATUS_SHUTDOWN, clusteredCacheManager.getStatus());
+	}
+	
 	/**
 	 * Shuts down the clustered cache manager.
 	 */
