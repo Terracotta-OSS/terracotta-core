@@ -714,25 +714,27 @@ public class TcPlugin extends AbstractUIPlugin
     IFile configFile = getConfigurationFile(project);
 
     if(configFile != null) {
-      IPath path   = configFile.getLocation();
-      File  file   = path.toFile();
-      List  errors = new ArrayList();
-      
-      if(m_configLoader.testIsOld(file)) {
-        m_configLoader.updateToCurrent(file);
-      }
+      IPath   path      = configFile.getLocation();
+      File    file      = path.toFile();
+      List    errors    = new ArrayList();
+      boolean refreshed = false;
       
       if(!configFile.isSynchronized(IResource.DEPTH_ZERO)) {
         configFile.refreshLocal(IResource.DEPTH_ZERO, null);
-      }
-  
-      if(testLoadSerializedConfigFile(project)) {
-        return;
+        refreshed = true;
       }
       
       LineLengths lineLengths = new LineLengths(configFile);
       setSessionProperty(project, CONFIGURATION_LINE_LENGTHS, lineLengths);
-  
+    
+      if(m_configLoader.testIsOld(file)) {
+        m_configLoader.updateToCurrent(file);
+      }
+      
+      if(!refreshed && testLoadSerializedConfigFile(project)) {
+        return;
+      }
+      
       clearSAXMarkers(configFile);
       
       // The following line may throw XmlException if the doc is not well-formed.
@@ -949,6 +951,8 @@ public class TcPlugin extends AbstractUIPlugin
     return helper;
   }
 
+  public static final TcConfig BAD_CONFIG = TcConfig.Factory.newInstance();
+  
   public synchronized TcConfig getConfiguration(IProject project) {
     TcConfig config = (TcConfig)getSessionProperty(project, CONFIGURATION);
     
@@ -966,7 +970,7 @@ public class TcPlugin extends AbstractUIPlugin
       }
 
       if(config == null) {
-        config = TcConfig.Factory.newInstance();
+        config = BAD_CONFIG;
         setSessionProperty(project, CONFIGURATION, config);
       }
     }

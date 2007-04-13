@@ -1,17 +1,23 @@
 Terracotta DSO Eclipse Plug-in
 ==============================
 
-Forums:      http://www.terracotta.org/forums/
-Support:     support@terracottatech.com
-License Key: sales@terracottatech.com or +1 415-738-4000
+Forums:  http://www.terracotta.org/forums/
+Support: support@terracottatech.com
 
 
-Installation
+Manual Installation
 ------------
 
-From the "eclipse/update/plugins" directory, copy the 
-"org.terracotta.dso_2.3.0.jar" file into the Eclipse "plugins" 
-directory.
+Instructions for obtaining the current version of the plugin can be
+from the openTerracotta Eclipse update site can be found at
+http://www.terracotta.org/eclipse/.
+
+Nightly builds of the plugin are available at
+http://www.terracotta.org/confluence/display/orgsite/Download.
+
+After extracting the contents of the nightly build archive,
+extract the org.terracotta.dso plugin archive from the
+"eclipse/update/plugins" directory, into the Eclipse "plugins" directory.
 
 You'll have to restart Eclipse.
 
@@ -22,21 +28,9 @@ Tutorial
 --------
 
 Follow the DSO Tutorial to learn how to begin developing your DSO
-application.  On the Eclipse "Help" menu, choose the "Help Contents"
-item, expand "Terracotta DSO", and select "DSO Tutorial".
-
-
-Compatible Java Runtime
------------------------
-
-For developing DSO applications in the plug-in you must use the
-version of the Java Runtime Environment (JRE) that is shipped with
-the Terracotta distribution.  In the Eclipse Preferences dialog,
-under the Java|Installed JREs section, add the directory "jre"
-found in the Terracotta distribution and select it as the current
-JRE.
-
+application. See the Terracotta Help menu to access the DSO Tutorial
+and additional documentation.
 
 ----
-Copyright (c) 2006, Terracotta, Inc.
+Copyright (c) 2007, Terracotta, Inc.
 http://www.terracotta.org
