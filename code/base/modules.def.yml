@@ -505,16 +505,16 @@ modules:
       dependencies:
         - aspectwerkz
         - linked-child-process
-      - common
-      - management
-      - dso-common
-      - dso-common-jdk15
-      - dso-l1
-      - dso-l2
-      - simulator
-      - deploy
-      - thirdparty
-      - legacy-test-tree
+        - common
+        - management
+        - dso-common
+        - dso-common-jdk15
+        - dso-l1
+        - dso-l2
+        - simulator
+        - deploy
+        - thirdparty
+        - legacy-test-tree
 
 # these groups are used by the monkeys to run tests in each module. 
 
