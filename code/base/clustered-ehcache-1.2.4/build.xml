@@ -1,4 +1,4 @@
-<project name="clustered-ehcache-1.2.0" xmlns:ivy="antlib:fr.jayasoft.ivy.ant">
+<project name="clustered-ehcache-1.2.4" xmlns:ivy="antlib:fr.jayasoft.ivy.ant">
   
   <!-- ================================= 
   target: resolve              

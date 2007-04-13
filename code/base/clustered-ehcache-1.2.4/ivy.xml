@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <ivy-module version="1.0">
-  <info organisation="ibiblio" module="clustered-ehcache-1.2.0"/>
+  <info organisation="ibiblio" module="clustered-ehcache-1.2.4"/>
   <dependencies>
     <dependency name="ehcache" rev="1.2.4" org="terracotta"/>
   </dependencies>
