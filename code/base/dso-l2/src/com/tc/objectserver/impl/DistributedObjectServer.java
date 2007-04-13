@@ -284,7 +284,6 @@ public class DistributedObjectServer extends SEDA {
     TCFile location = new TCFileImpl(this.configSetupManager.commonl2Config().dataPath().getFile());
     startupLock = new StartupLock(location);
 
-    l2State.setState(StateManager.PASSIVE_STANDBY);
     if (!startupLock.canProceed(new TCRandomFileAccessImpl(), persistent)) {
       consoleLogger.error("Another L2 process is using the directory " + location + " as data directory.");
       if (!persistent) {

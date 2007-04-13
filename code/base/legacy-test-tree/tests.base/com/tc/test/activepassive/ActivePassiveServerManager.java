@@ -99,14 +99,14 @@ public class ActivePassiveServerManager {
     int startIndex = 0;
 
     if (DEBUG) {
-      dsoPorts[0] = 9510;
-      jmxPorts[0] = 9520;
+      dsoPorts[0] = 8510;
+      jmxPorts[0] = 8520;
       serverNames[0] = SERVER_NAME + 0;
       servers[0] = new ServerInfo(HOST, serverNames[0], dsoPorts[0], jmxPorts[0], getServerControl(dsoPorts[0],
                                                                                                    jmxPorts[0],
                                                                                                    serverNames[0]));
-      dsoPorts[1] = 8510;
-      jmxPorts[1] = 8520;
+      dsoPorts[1] = 7510;
+      jmxPorts[1] = 7520;
       serverNames[1] = SERVER_NAME + 1;
       servers[1] = new ServerInfo(HOST, serverNames[1], dsoPorts[1], jmxPorts[1], getServerControl(dsoPorts[1],
                                                                                                    jmxPorts[1],
@@ -264,7 +264,9 @@ public class ActivePassiveServerManager {
             MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
             TCServerInfoMBean mbean = (TCServerInfoMBean) MBeanServerInvocationHandler
                 .newProxyInstance(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, true);
-            if (mbean.isPassiveStandby()) { return; }
+            if (serverNetworkShare && mbean.isPassiveStandby()) {
+              return;
+            } else if (!serverNetworkShare && mbean.isStarted()) { return; }
           } catch (Exception e) {
             throw e;
           } finally {
@@ -275,7 +277,13 @@ public class ActivePassiveServerManager {
         }
       }
     }
-    throw new Exception("No passive-standby servers found.");
+    String msg;
+    if (serverNetworkShare) {
+      msg = "No passive-standby servers found.";
+    } else {
+      msg = "No started servers found.";
+    }
+    throw new Exception(msg);
   }
 
   private JMXConnector getJMXConnector(int jmxPort) throws IOException {
