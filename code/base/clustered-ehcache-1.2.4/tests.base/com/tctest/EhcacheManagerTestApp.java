@@ -62,43 +62,58 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 		final int CACHE_POPULATION = 10;
 
 		if (barrier.await() == 0) {
+			// create 2 caches, wait for the other node to verify 
 			addCache("CACHE1", true);
 			addCache("CACHE2", false);
 			letOtherNodeProceed();
 			
+			// check that the first cache was removed
 			waitForPermissionToProceed();
 			verifyCacheRemoved("CACHE1");
 			verifyCacheCount(1);
 			letOtherNodeProceed();
 
+			// check that the second cache was removed
 			waitForPermissionToProceed();
 			verifyCacheRemoved("CACHE2");
 			verifyCacheCount(0);
+			
+			// add a bunch of caches, wait for the other node to verify
 			addManyCaches(CACHE_POPULATION);
 			letOtherNodeProceed();
-			
+
+			// check that the entire bunch was removed
 			waitForPermissionToProceed();
 			verifyCacheCount(0);
 
+			// now shutdown the CacheManager, wait for the other node to verify
 			shutdownCacheManager();
 			letOtherNodeProceed();
 		} else {
+			// check that there are 2 caches
 			waitForPermissionToProceed();
 			verifyCacheCount(2);
 			verifyCache("CACHE1");
 			verifyCache("CACHE2");
+
+			// remove the first cache, wait for the other node to verify
 			removeCache("CACHE1");
 			letOtherNodeProceed();
 
+			// remove the second cache, wait for the other node to verify
 			waitForPermissionToProceed();
 			removeCache("CACHE2");
 			letOtherNodeProceed();
 
+			// check that a bunch of caches was created
 			waitForPermissionToProceed();
 			verifyCacheCount(CACHE_POPULATION);
+			
+			// now get rid of all of it, wait for the other node to verify
 			removeAllCaches();
 			letOtherNodeProceed();
-
+			
+			// check that the CacheManager was shutdown
 			waitForPermissionToProceed();
 			verifyCacheManagerShutdown();
 		}
