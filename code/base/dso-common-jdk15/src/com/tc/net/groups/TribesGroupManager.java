@@ -40,6 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TribesGroupManager implements GroupManager, ChannelListener, MembershipListener {
   private static final String                             SEND_TIMEOUT_PROP = "send.timeout.millis";
+  private static final String                             USE_MCAST         = "use.mcast";
 
   private static final TCLogger                           logger            = TCLogging
                                                                                 .getLogger(TribesGroupManager.class);
@@ -54,6 +55,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
                                                                                 .synchronizedMap(new HashMap<NodeID, Member>());
   private final Map<String, GroupMessageListener>         messageListeners  = new ConcurrentHashMap<String, GroupMessageListener>();
   private final Map<MessageID, GroupResponse>             pendingRequests   = new Hashtable<MessageID, GroupResponse>();
+  private boolean                                         stopped           = false;
 
   private boolean                                         debug             = false;
 
@@ -62,6 +64,35 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   }
 
   public NodeID join(final Node thisNode, final Node[] allNodes) throws GroupException {
+    final boolean useMcast = TCPropertiesImpl.getProperties().getPropertiesFor("nha").getBoolean(USE_MCAST);
+    if (useMcast) return joinMcast();
+    else return joinStatic(thisNode, allNodes);
+
+  }
+
+  public synchronized void stop() throws GroupException {
+    try {
+      group.stop(Channel.DEFAULT);
+    } catch (ChannelException e) {
+      logger.error(e);
+      throw new GroupException(e);
+    } finally {
+      stopped = true;
+    }
+  }
+
+  private void commonGroupChanelConfig() {
+    // config send timeout
+    ReplicationTransmitter transmitter = (ReplicationTransmitter) group.getChannelSender();
+    DataSender sender = transmitter.getTransport();
+    final long l = TCPropertiesImpl.getProperties().getPropertiesFor("nha").getLong(SEND_TIMEOUT_PROP);
+    sender.setTimeout(l);
+    // add listeners
+    group.addMembershipListener(this);
+    group.addChannelListener(this);
+  }
+
+  protected NodeID joinStatic(final Node thisNode, final Node[] allNodes) throws GroupException {
     try {
       // set up static nodes
       StaticMembershipInterceptor smi = setupStaticMembers(thisNode, allNodes);
@@ -72,11 +103,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       receiver.setPort(thisNode.getPort());
       receiver.setAutoBind(0);
 
-      // config send timeout
-      ReplicationTransmitter transmitter = (ReplicationTransmitter) group.getChannelSender();
-      DataSender sender = transmitter.getTransport();
-      final long l = TCPropertiesImpl.getProperties().getPropertiesFor("nha").getLong(SEND_TIMEOUT_PROP);
-      sender.setTimeout(l);
+      commonGroupChanelConfig();
 
       // start services
       // set up failure detector
@@ -84,11 +111,21 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       failuredetector.start(Channel.DEFAULT);
       group.addInterceptor(failuredetector);
       group.addInterceptor(smi);
-      // add listeners
-      group.addMembershipListener(this);
-      group.addChannelListener(this);
       group.start(Channel.SND_RX_SEQ | Channel.SND_TX_SEQ);
 
+      return this.thisNodeID;
+    } catch (ChannelException e) {
+      logger.error(e);
+      throw new GroupException(e);
+    }
+  }
+
+  protected NodeID joinMcast() throws GroupException {
+    try {
+      commonGroupChanelConfig();
+      group.start(Channel.DEFAULT);
+      this.thisMember = group.getLocalMember(false);
+      this.thisNodeID = new NodeID(this.thisMember.getName(), this.thisMember.getUniqueId());
       return this.thisNodeID;
     } catch (ChannelException e) {
       logger.error(e);
@@ -152,6 +189,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   }
 
   public boolean accept(Serializable msg, Member sender) {
+    if (stopped) return false;
     if (msg instanceof GroupMessage) { return true; }
     logger.warn("Rejecting unknown message : " + msg + " from " + sender.getName());
     return false;
