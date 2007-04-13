@@ -24,7 +24,8 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	private final CacheManager clusteredCacheManager;
 
 	/**
-	 * Test that Ehcache's CacheManger and Cache objects can be clustered. 
+	 * Test that Ehcache's CacheManger and Cache objects can be clustered.
+	 * 
 	 * @param appId
 	 * @param cfg
 	 * @param listenerProvider
@@ -38,6 +39,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
 	/**
 	 * Inject Ehcache 1.2.4 configuration, and instrument this test class
+	 * 
 	 * @param visitor
 	 * @param config
 	 */
@@ -53,15 +55,17 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	}
 
 	/**
-	 * Test that the data written in the clustered CacheManager
-	 * by one node, becomes available in the other.
+	 * Test that the data written in the clustered CacheManager by one node,
+	 * becomes available in the other.
 	 */
 	protected void runTest() throws Throwable {
+		final int CACHE_POPULATION = 10;
+
 		if (barrier.await() == 0) {
 			addCache("CACHE1", true);
 			addCache("CACHE2", false);
 			letOtherNodeProceed();
-
+			
 			waitForPermissionToProceed();
 			verifyCacheRemoved("CACHE1");
 			verifyCacheCount(1);
@@ -70,6 +74,12 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 			waitForPermissionToProceed();
 			verifyCacheRemoved("CACHE2");
 			verifyCacheCount(0);
+			addManyCaches(CACHE_POPULATION);
+			letOtherNodeProceed();
+			
+			waitForPermissionToProceed();
+			verifyCacheCount(0);
+
 			shutdownCacheManager();
 			letOtherNodeProceed();
 		} else {
@@ -85,13 +95,38 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 			letOtherNodeProceed();
 
 			waitForPermissionToProceed();
+			verifyCacheCount(CACHE_POPULATION);
+			removeAllCaches();
+			letOtherNodeProceed();
+
+			waitForPermissionToProceed();
 			verifyCacheManagerShutdown();
 		}
 		barrier.await();
 	}
 
 	/**
+	 * Create many caches.
+	 * 
+	 * @param count The number of caches to create
+	 * @throws Throwable
+	 */
+	private void addManyCaches(final int count) throws Throwable {
+		for (int i = 0; i < count; i++) {
+			addCache("CACHE" + i, true);
+		}
+	}
+
+	/**
+	 * Remove all the caches.
+	 */
+	private void removeAllCaches() {
+		clusteredCacheManager.removalAll();
+	}
+
+	/**
 	 * Verify that we have an expected number of caches created.
+	 * 
 	 * @param expected
 	 * @throws Exception
 	 */
@@ -102,8 +137,12 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
 	/**
 	 * Add a cache into the CacheManager.
-	 * @param name The name of the cache to add
-	 * @param mustDelegate create Manually create the cache or let the manager handle the details 
+	 * 
+	 * @param name
+	 *            The name of the cache to add
+	 * @param mustDelegate
+	 *            create Manually create the cache or let the manager handle the
+	 *            details
 	 * @throws Throwable
 	 */
 	private void addCache(final String name, boolean mustDelegate)
@@ -114,15 +153,17 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 			Cache cache = new Cache(name, 2, false, true, 0, 2);
 			clusteredCacheManager.addCache(cache);
 		}
-		//Cache cache = clusteredCacheManager.getCache(name); 
-		//cache.put(new Element(name + "key1", "value1"));
-		//cache.put(new Element(name + "key2", "value1"));
+		// Cache cache = clusteredCacheManager.getCache(name);
+		// cache.put(new Element(name + "key1", "value1"));
+		// cache.put(new Element(name + "key2", "value1"));
 	}
 
 	/**
-	 * Verify that the named cache exists and that it's contents
-	 * can be retrieved.
-	 * @param name The name of the cache to retrieve
+	 * Verify that the named cache exists and that it's contents can be
+	 * retrieved.
+	 * 
+	 * @param name
+	 *            The name of the cache to retrieve
 	 * @throws Exception
 	 */
 	private void verifyCache(final String name) throws Exception {
@@ -133,14 +174,15 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 		Assert.assertNotNull(cache);
 		Assert.assertEquals(name, cache.getName());
 		Assert.assertEquals(Status.STATUS_ALIVE, cache.getStatus());
-		//int sizeFromGetSize = cache.getSize();
-		//int sizeFromKeys = cache.getKeys().size();
-		//Assert.assertEquals(sizeFromGetSize, sizeFromKeys);
-		//Assert.assertEquals(2, cache.getSize());
+		// int sizeFromGetSize = cache.getSize();
+		// int sizeFromKeys = cache.getKeys().size();
+		// Assert.assertEquals(sizeFromGetSize, sizeFromKeys);
+		// Assert.assertEquals(2, cache.getSize());
 	}
 
 	/**
-	 * Remove the named cache 
+	 * Remove the named cache
+	 * 
 	 * @param name
 	 */
 	private void removeCache(final String name) {
@@ -149,6 +191,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
 	/**
 	 * Verify that the named cache no longer exists.
+	 * 
 	 * @param name
 	 * @throws Exception
 	 */

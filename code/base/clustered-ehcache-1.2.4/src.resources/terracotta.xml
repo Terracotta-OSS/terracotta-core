@@ -49,7 +49,7 @@
       <lock-level>write</lock-level>
     </autolock>
     <named-lock>
-      <lock-name>__ehcache_lock__</lock-name>
+      <lock-name>__ehcache_lock__CacheManager.shutdown</lock-name>
       <method-expression>* net.sf.ehcache.CacheManager.shutdown(..)</method-expression>
       <lock-level>write</lock-level>
     </named-lock>
