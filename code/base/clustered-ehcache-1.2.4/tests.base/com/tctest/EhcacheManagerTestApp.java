@@ -21,7 +21,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
 	private final CyclicBarrier barrier;
 
-    private final CacheManager clusteredCacheManager;
+	private final CacheManager clusteredCacheManager;
 
 	/**
 	 * Test that Ehcache's CacheManger and Cache objects can be clustered. 
@@ -29,8 +29,8 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * @param cfg
 	 * @param listenerProvider
 	 */
-	public EhcacheManagerTestApp(final String appId, final ApplicationConfig cfg,
-			final ListenerProvider listenerProvider) {
+	public EhcacheManagerTestApp(final String appId,
+			final ApplicationConfig cfg, final ListenerProvider listenerProvider) {
 		super(appId, cfg, listenerProvider);
 		barrier = new CyclicBarrier(getParticipantCount());
 		clusteredCacheManager = CacheManager.getInstance();
@@ -43,15 +43,15 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 */
 	public static void visitL1DSOConfig(final ConfigVisitor visitor,
 			final DSOClientConfigHelper config) {
-	    config.addNewModule("clustered-ehcache-1.2.4", "1.0.0");
+		config.addNewModule("clustered-ehcache-1.2.4", "1.0.0");
 		config.addAutolock("* *..*.*(..)", ConfigLockLevel.WRITE);
 
-	    final String testClass = EhcacheManagerTestApp.class.getName();
+		final String testClass = EhcacheManagerTestApp.class.getName();
 		final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 		spec.addRoot("barrier", "barrier");
 		spec.addRoot("clusteredCacheManager", "clusteredCacheManager");
 	}
-	
+
 	/**
 	 * Test that the data written in the clustered CacheManager
 	 * by one node, becomes available in the other.
@@ -61,42 +61,62 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 			addCache("CACHE1", true);
 			addCache("CACHE2", false);
 			letOtherNodeProceed();
+
 			waitForPermissionToProceed();
-			verifyCache("CACHE3");
-			verifyCache("CACHE4");
+			verifyCacheRemoved("CACHE1");
+			verifyCacheCount(1);
+			letOtherNodeProceed();
+
+			waitForPermissionToProceed();
+			verifyCacheRemoved("CACHE2");
+			verifyCacheCount(0);
 			shutdownCacheManager();
 			letOtherNodeProceed();
 		} else {
 			waitForPermissionToProceed();
+			verifyCacheCount(2);
 			verifyCache("CACHE1");
 			verifyCache("CACHE2");
-			addCache("CACHE3", true);
-			addCache("CACHE4", false);
+			removeCache("CACHE1");
 			letOtherNodeProceed();
+
+			waitForPermissionToProceed();
+			removeCache("CACHE2");
+			letOtherNodeProceed();
+
 			waitForPermissionToProceed();
 			verifyCacheManagerShutdown();
 		}
 		barrier.await();
 	}
-	
+
+	/**
+	 * Verify that we have an expected number of caches created.
+	 * @param expected
+	 * @throws Exception
+	 */
+	private void verifyCacheCount(final int expected) throws Exception {
+		final String[] cacheNames = clusteredCacheManager.getCacheNames();
+		Assert.assertEquals(expected, cacheNames.length);
+	}
+
 	/**
 	 * Add a cache into the CacheManager.
 	 * @param name The name of the cache to add
 	 * @param mustDelegate create Manually create the cache or let the manager handle the details 
 	 * @throws Throwable
 	 */
-	private void addCache(final String name, boolean mustDelegate) throws Throwable {
-		synchronized(clusteredCacheManager) {
-			if (mustDelegate) {
-				clusteredCacheManager.addCache(name);
-			} else {
-		        Cache cache = new Cache(name, 2, false, true, 0, 2);
-				clusteredCacheManager.addCache(cache);
-			}
-			//Cache cache = clusteredCacheManager.getCache(name); 
-	        //cache.put(new Element(name + "key1", "value1"));
-	        //cache.put(new Element(name + "key2", "value1"));
+	private void addCache(final String name, boolean mustDelegate)
+			throws Throwable {
+		if (mustDelegate) {
+			clusteredCacheManager.addCache(name);
+		} else {
+			Cache cache = new Cache(name, 2, false, true, 0, 2);
+			clusteredCacheManager.addCache(cache);
 		}
+		//Cache cache = clusteredCacheManager.getCache(name); 
+		//cache.put(new Element(name + "key1", "value1"));
+		//cache.put(new Element(name + "key2", "value1"));
 	}
 
 	/**
@@ -106,34 +126,53 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * @throws Exception
 	 */
 	private void verifyCache(final String name) throws Exception {
-		synchronized(clusteredCacheManager) {
-			Cache cache = clusteredCacheManager.getCache(name);
-			Assert.assertNotNull(cache);
-			Assert.assertEquals(name, cache.getName());
-			Assert.assertEquals(Status.STATUS_ALIVE, cache.getStatus());
-	        //int sizeFromGetSize = cache.getSize();
-	        //int sizeFromKeys = cache.getKeys().size();
-	        //Assert.assertEquals(sizeFromGetSize, sizeFromKeys);
-	        //Assert.assertEquals(2, cache.getSize());
-		}
+		boolean cacheExists = clusteredCacheManager.cacheExists(name);
+		Assert.assertEquals(true, cacheExists);
+
+		Cache cache = clusteredCacheManager.getCache(name);
+		Assert.assertNotNull(cache);
+		Assert.assertEquals(name, cache.getName());
+		Assert.assertEquals(Status.STATUS_ALIVE, cache.getStatus());
+		//int sizeFromGetSize = cache.getSize();
+		//int sizeFromKeys = cache.getKeys().size();
+		//Assert.assertEquals(sizeFromGetSize, sizeFromKeys);
+		//Assert.assertEquals(2, cache.getSize());
+	}
+
+	/**
+	 * Remove the named cache 
+	 * @param name
+	 */
+	private void removeCache(final String name) {
+		clusteredCacheManager.removeCache(name);
+	}
+
+	/**
+	 * Verify that the named cache no longer exists.
+	 * @param name
+	 * @throws Exception
+	 */
+	private void verifyCacheRemoved(final String name) throws Exception {
+		boolean cacheExists = clusteredCacheManager.cacheExists(name);
+		Assert.assertEquals(false, cacheExists);
+
+		Cache cache = clusteredCacheManager.getCache(name);
+		Assert.assertNull(cache);
+	}
+
+	/**
+	 * Shuts down the clustered cache manager.
+	 */
+	private void shutdownCacheManager() {
+		clusteredCacheManager.shutdown();
 	}
 
 	/**
 	 * Verify that the clustered cache manager has shut down.
 	 */
 	private void verifyCacheManagerShutdown() {
-		synchronized(clusteredCacheManager) {
-			Assert.assertEquals(Status.STATUS_SHUTDOWN, clusteredCacheManager.getStatus());
-		}
-	}
-	
-	/**
-	 * Shuts down the clustered cache manager.
-	 */
-	private void shutdownCacheManager() {
-		synchronized(clusteredCacheManager) {
-			clusteredCacheManager.shutdown();
-		}
+		Assert.assertEquals(Status.STATUS_SHUTDOWN, clusteredCacheManager
+				.getStatus());
 	}
 
 	// This is lame but it makes runTest() slightly more readable

@@ -21,7 +21,6 @@
     <field-name>net.sf.ehcache.CacheManager.cacheManagerEventListener</field-name>
     <field-name>net.sf.ehcache.CacheManager.cacheManagerPeerListener</field-name>
     <field-name>net.sf.ehcache.CacheManager.cacheManagerPeerProvider</field-name>
-	
 	<field-name>net.sf.ehcache.CacheManager.shutdownHook</field-name>
 	<field-name>net.sf.ehcache.store.DiskStore.spoolAndExpiryThread</field-name>
   </transient-fields>
@@ -49,7 +48,12 @@
       <method-expression>* net.sf.ehcache.*..*.*(..)</method-expression>
       <lock-level>write</lock-level>
     </autolock>
-
+    <named-lock>
+      <lock-name>__ehcache_lock__</lock-name>
+      <method-expression>* net.sf.ehcache.CacheManager.shutdown(..)</method-expression>
+      <lock-level>write</lock-level>
+    </named-lock>
+    
     <!-- @@@TODO: We need to instrument all of the Hashtable class' methods from a different config bundle -->
     <autolock>
       <method-expression>void java.util.Hashtable.clear()</method-expression>
