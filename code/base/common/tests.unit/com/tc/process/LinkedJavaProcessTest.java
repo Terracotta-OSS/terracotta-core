@@ -4,7 +4,6 @@
 package com.tc.process;
 
 import com.tc.test.TCTestCase;
-import com.tc.util.runtime.Os;
 
 import java.io.File;
 
