@@ -38,7 +38,8 @@ public abstract class TCObjectImpl implements TCObject {
   private static final int      AUTOLOCKS_DISABLED_OFFSET   = 4;
   private static final int      EVICTION_IN_PROGRESS_OFFSET = 8;
 
-  private long                  version                     = 0;
+  // XXX::This inital negative version number is important since GID is assigned in the server from 0.
+  private long                  version                     = -1;
 
   private final ObjectID        objectID;
   protected final TCClass       tcClazz;
@@ -91,7 +92,7 @@ public abstract class TCObjectImpl implements TCObject {
    * Reconstitutes the object using the data in the DNA strand. XXX: We may need to signal (via a different signature or
    * args) that the hydration is intended to initialize the object from scratch or if it's a delta. We must avoid
    * creating a new instance of the peer object if the strand is just a delta.
-   *
+   * 
    * @throws ClassNotFoundException
    */
   public void hydrate(DNA from, boolean force) throws ClassNotFoundException {
@@ -105,10 +106,10 @@ public abstract class TCObjectImpl implements TCObject {
         tcClazz.hydrate(this, from, po, force);
         if (isNewLoad) performOnLoadActionIfNecessary(po);
       } catch (ClassNotFoundException e) {
-        logger.warn("Re-throwing Exception: " , e);
+        logger.warn("Re-throwing Exception: ", e);
         throw e;
       } catch (IOException e) {
-        logger.warn("Re-throwing Exception: " , e);
+        logger.warn("Re-throwing Exception: ", e);
         throw new DNAException(e);
       }
     }
