@@ -135,6 +135,7 @@ public class StateManagerImpl implements StateManager, GroupMessageListener, Gro
   }
 
   public void moveNodeToPassiveStandby(NodeID nodeID) {
+    Assert.assertTrue(isActiveCoordinator());
     logger.info("Requesting node " + nodeID + " to move to " + PASSIVE_STANDBY);
     GroupMessage msg = L2StateMessageFactory.createMoveToPassiveStandbyMessage(EnrollmentFactory
         .createTrumpEnrollment(getLocalNodeID()));
