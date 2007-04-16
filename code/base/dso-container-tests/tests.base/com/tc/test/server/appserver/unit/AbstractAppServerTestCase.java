@@ -184,24 +184,25 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   }
 
   protected void setUp() throws Exception {
-    
+
     LinkedJavaProcessPollingAgent.startHeartBeatServer();
-    
+
     isSynchronousWrite = false;
     config = TestConfigObject.getInstance();
     tempDir = getTempDirectory();
     serverInstallDir = makeDir(config.appserverServerInstallDir());
     File workDir;
-    
+
     try {
       workDir = new File(config.appserverWorkingDir());
       if (workDir.exists() && workDir.isDirectory()) {
         FileUtils.cleanDirectory(workDir);
       }
     } catch (IOException e) {
-      workDir = new File(config.appserverWorkingDir()+"-"+new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()));
+      workDir = new File(config.appserverWorkingDir() + "-"
+                         + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()));
     }
-    
+
     workingDir = makeDir(workDir.getAbsolutePath());
     bootJar = new File(config.normalBootJar());
     appServerFactory = NewAppServerFactory.createFactoryFromProperties(config);
@@ -416,12 +417,12 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
         Server server = (Server) iter.next();
         server.stop();
       }
-      
+
       System.out.println("Shutdown heartbeat server and its children...");
       LinkedJavaProcessPollingAgent.shutdown();
-      
+
       if (dsoServer != null && dsoServer.isRunning()) dsoServer.stop();
-      
+
     } finally {
       VmStat.stop();
       synchronized (workingDirLock) {

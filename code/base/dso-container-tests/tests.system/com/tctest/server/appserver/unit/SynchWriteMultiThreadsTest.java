@@ -102,8 +102,7 @@ public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
       drivers[i].join();
     }
 
-    
-    // proceed only if there are no errors inside any threads    
+    // proceed only if there are no errors inside any threads
     if (errors.size() == 0) {
       // send kill signal to server0
       killServer0(port0);
@@ -112,8 +111,8 @@ public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
       for (int i = 0; i < NUM_OF_DRIVERS; i++) {
         drivers[i].validate();
       }
-    } else {      
-      Assert.failure("Exception found in driver thread. ", (Throwable)errors.get(0));
+    } else {
+      Assert.failure("Exception found in driver thread. ", (Throwable) errors.get(0));
     }
   }
 
@@ -174,10 +173,16 @@ public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
           out.println("ping is null");
         } else out.println("OK");
       } else if (command.equals("query")) {
+
+        String log = "## sessionId=" + session.getId() + "## command=" + command + "## data=" + data;
+
         String queried_data = (String) session.getAttribute("data" + data);
         if (queried_data == null) {
           out.println("data" + data + " is null");
         } else out.println(queried_data);
+
+        System.err.println(log + "## found=" + queried_data);
+        System.err.flush();
       }
     }
   }
