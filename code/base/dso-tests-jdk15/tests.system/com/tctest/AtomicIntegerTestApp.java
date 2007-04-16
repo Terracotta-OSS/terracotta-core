@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -13,6 +14,9 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class AtomicIntegerTestApp extends AbstractTransparentApp {
@@ -71,20 +75,27 @@ public class AtomicIntegerTestApp extends AbstractTransparentApp {
   }
 
   private void loadTest() throws Exception {
+    List errors = Collections.synchronizedList(new ArrayList());
+
     Loader[] loaders = new Loader[10];
+
     for (int i = 0; i < loaders.length; i++) {
-      loaders[i] = new Loader(sum);
+      loaders[i] = new Loader(sum, errors);
       loaders[i].start();
     }
 
     for (int i = 0; i < loaders.length; i++) {
       loaders[i].join();
     }
-    
-    barrier.barrier();
-    Assert.assertEquals(100*getParticipantCount()*loaders.length, sum.intValue());
+    if (errors.size() == 0) {
+      if (barrier.barrier() == 0) {
+        Assert.assertEquals(100 * getParticipantCount() * loaders.length, sum.intValue());
+      }
+    } else {
+      throw new Exception((Throwable) errors.get(0));
+    }
   }
-  
+
   private void basicSetTesting() throws Exception {
     clear();
     initialize();
@@ -297,19 +308,25 @@ public class AtomicIntegerTestApp extends AbstractTransparentApp {
       intValue.set(0);
     }
   }
-  
+
   private static class Loader extends Thread {
     private AtomicInteger sum;
-    public Loader(AtomicInteger sum) {
+    private List          errors;
+
+    public Loader(AtomicInteger sum, List errors) {
       this.sum = sum;
+      this.errors = errors;
     }
-    
+
     public void run() {
-      for (int i = 0; i < 100; i++) {
-        sum.addAndGet(1);
+      try {
+        for (int i = 0; i < 100; i++) {
+          sum.addAndGet(1);
+        }
+      } catch (Throwable t) {
+        errors.add(t);
       }
     }
   }
-  
-  
+
 }
