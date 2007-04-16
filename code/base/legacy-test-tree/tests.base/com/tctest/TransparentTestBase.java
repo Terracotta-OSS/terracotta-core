@@ -108,7 +108,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     controlledCrashMode = true;
     serverControl = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile, true);
     setUp(factory, helper);
-    
+
     configFactory().addServerToL1Config(null, serverPort, adminPort);
     configFactory().addServerToL2Config(null, serverPort, adminPort);
   }
@@ -267,7 +267,9 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected void doDumpServerDetails() {
     try {
       if (this.runner != null) {
-        this.runner.dumpServer();
+        if (getStartServer()) {
+          this.runner.dumpServer();
+        }
       } else {
         System.err.println("Runner is null !!");
       }
