@@ -315,7 +315,7 @@ public class BootJarTool {
 
       addManagementClasses();
 
-      addSpringClasses();
+      addRuntimeClasses();
 
       addSunStandardLoaders();
       addInstrumentedJavaLangThrowable();
@@ -365,15 +365,36 @@ public class BootJarTool {
 
   }
 
-  private void addSpringClasses() {
-    /*
-     * // Used by aspect definitions at deployment time
-     * loadTerracottaClass("com.tc.aspectwerkz.joinpoint.management.JoinPointType");
-     * loadTerracottaClass("com.tc.aspectwerkz.joinpoint.Signature");
-     * loadTerracottaClass("com.tc.aspectwerkz.joinpoint.EnclosingStaticJoinPoint");
-     * loadTerracottaClass("com.tc.aspectwerkz.joinpoint.StaticJoinPoint");
-     */
+  private void addRuntimeClasses() {
+    loadTerracottaClass("com.tc.asm.AnnotationVisitor");
+    loadTerracottaClass("com.tc.asm.AnnotationWriter");
+    loadTerracottaClass("com.tc.asm.Attribute");
+    loadTerracottaClass("com.tc.asm.ByteVector");
+    loadTerracottaClass("com.tc.asm.ClassAdapter");
+    loadTerracottaClass("com.tc.asm.ClassReader");
+    loadTerracottaClass("com.tc.asm.ClassVisitor");
+    loadTerracottaClass("com.tc.asm.ClassWriter");
+    loadTerracottaClass("com.tc.asm.Edge");
+    loadTerracottaClass("com.tc.asm.FieldVisitor");
+    loadTerracottaClass("com.tc.asm.FieldWriter");
+    loadTerracottaClass("com.tc.asm.Frame");
+    loadTerracottaClass("com.tc.asm.Handler");
+    loadTerracottaClass("com.tc.asm.Item");
+    loadTerracottaClass("com.tc.asm.Label");
+    loadTerracottaClass("com.tc.asm.MethodAdapter");
+    loadTerracottaClass("com.tc.asm.MethodVisitor");
+    loadTerracottaClass("com.tc.asm.MethodWriter");
+    loadTerracottaClass("com.tc.asm.Opcodes");
+    loadTerracottaClass("com.tc.asm.Type");
 
+    loadTerracottaClass("com.tc.asm.signature.SignatureReader");
+    loadTerracottaClass("com.tc.asm.signature.SignatureVisitor");
+    loadTerracottaClass("com.tc.asm.signature.SignatureWriter");
+
+    loadTerracottaClass("com.tc.asm.commons.EmptyVisitor");
+    loadTerracottaClass("com.tc.asm.commons.SerialVersionUIDAdder");
+    loadTerracottaClass("com.tc.asm.commons.SerialVersionUIDAdder$Item");
+    
     // FIXME extract AW runtime classes
     loadTerracottaClass("com.tc.aspectwerkz.AspectContext");
     loadTerracottaClass("com.tc.aspectwerkz.DeploymentModel$PointcutControlledDeploymentModel");
@@ -741,35 +762,6 @@ public class BootJarTool {
     loadTerracottaClass("com.tc.aspectwerkz.util.Strings");
     loadTerracottaClass("com.tc.aspectwerkz.util.Util");
     loadTerracottaClass("com.tc.aspectwerkz.util.UuidGenerator");
-
-    loadTerracottaClass("com.tc.asm.AnnotationVisitor");
-    loadTerracottaClass("com.tc.asm.AnnotationWriter");
-    loadTerracottaClass("com.tc.asm.Attribute");
-    loadTerracottaClass("com.tc.asm.ByteVector");
-    loadTerracottaClass("com.tc.asm.ClassAdapter");
-    loadTerracottaClass("com.tc.asm.ClassReader");
-    loadTerracottaClass("com.tc.asm.ClassVisitor");
-    loadTerracottaClass("com.tc.asm.ClassWriter");
-    loadTerracottaClass("com.tc.asm.Edge");
-    loadTerracottaClass("com.tc.asm.FieldVisitor");
-    loadTerracottaClass("com.tc.asm.FieldWriter");
-    loadTerracottaClass("com.tc.asm.Frame");
-    loadTerracottaClass("com.tc.asm.Handler");
-    loadTerracottaClass("com.tc.asm.Item");
-    loadTerracottaClass("com.tc.asm.Label");
-    loadTerracottaClass("com.tc.asm.MethodAdapter");
-    loadTerracottaClass("com.tc.asm.MethodVisitor");
-    loadTerracottaClass("com.tc.asm.MethodWriter");
-    loadTerracottaClass("com.tc.asm.Opcodes");
-    loadTerracottaClass("com.tc.asm.Type");
-
-    loadTerracottaClass("com.tc.asm.signature.SignatureReader");
-    loadTerracottaClass("com.tc.asm.signature.SignatureVisitor");
-    loadTerracottaClass("com.tc.asm.signature.SignatureWriter");
-
-    loadTerracottaClass("com.tc.asm.commons.EmptyVisitor");
-    loadTerracottaClass("com.tc.asm.commons.SerialVersionUIDAdder");
-    loadTerracottaClass("com.tc.asm.commons.SerialVersionUIDAdder$Item");
 
     loadTerracottaClass("com.tc.backport175.Annotation");
     loadTerracottaClass("com.tc.backport175.Annotations");
