@@ -4,6 +4,7 @@
 package com.tc.test.server.util;
 
 import org.apache.commons.httpclient.Cookie;
+import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethod;
@@ -55,15 +56,24 @@ public final class HttpUtil {
   }
 
   public static String getResponseBody(URL url, HttpClient client) throws HttpException, IOException {
+    return getResponseBody(url, client, false);
+  }
+  
+  public static String getResponseBody(URL url, HttpClient client, boolean retryIfFail) throws HttpException, IOException {
     Cookie[] cookies = client.getState().getCookies();
     for (int i = 0; i < cookies.length; i++) {
       debugPrint("localClient... cookie " + i + ": " + cookies[i].toString());
     }
 
     GetMethod get = new GetMethod(url.toString());
-
-    // this disables the automatic request retry junk in HttpClient
-    get.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, NoRetryHandler.INSTANCE);
+    
+    if (retryIfFail) {
+      // retries failed request 3 times
+      get.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler());
+    } else {
+      // this disables the automatic request retry junk in HttpClient
+      get.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, NoRetryHandler.INSTANCE);
+    }
 
     try {
       int status = client.executeMethod(get);
