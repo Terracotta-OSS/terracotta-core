@@ -172,6 +172,8 @@ public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
         out.println("OK");
       } else if (command.equals("kill")) {
         out.println("OK");
+        System.err.println("Execute order 66... halt.");
+        System.err.flush();
         Runtime.getRuntime().halt(1);
       }
     }
