@@ -25,7 +25,7 @@ public class ConcurrentLinkedListTest extends TransparentTestBase {
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(ActivePassiveTestSetupManager.CONTINUOUS_ACTIVE_CRASH);
-    setupManager.setServerCrashWaitInSec(15);
+    setupManager.setServerCrashWaitInSec(30);
     setupManager.setServerShareDataMode(ActivePassiveTestSetupManager.DISK);
     setupManager.setServerPersistenceMode(ActivePassiveTestSetupManager.PERMANENT_STORE);
   }
