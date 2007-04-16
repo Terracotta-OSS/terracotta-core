@@ -4,21 +4,21 @@
 package com.tc.util;
 
 /**
- * A little utility class that will write class files to disk for instrumented class files.
+ * A little utility class that will write class files to disk for uninstrumented class files.
  */
-public class AdaptedClassDumper extends AbstractClassDumper {
+public class InitialClassDumper extends AbstractClassDumper {
   
-  public final static AdaptedClassDumper INSTANCE = new AdaptedClassDumper();
+  public final static InitialClassDumper INSTANCE = new InitialClassDumper();
   
-  private AdaptedClassDumper()  {
+  private InitialClassDumper() {
     // make the default constructor private to turn this class into a singleton
   }
-  
+
   protected String getDumpDirectoryName() {
-    return "adapted";
+    return "initial";
   }
 
   protected String getPropertyName() {
-    return "tc.classloader.writeToDisk";
+    return "tc.classloader.writeToDisk.initial";
   }
 }

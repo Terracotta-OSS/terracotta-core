@@ -118,7 +118,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
 
   public byte[] createClassBytes(ClassSpec cs, ObjectID parentID, List fields) {
     byte data[] = basicCreateClassBytes(cs, parentID, fields);
-    AdaptedClassDumper.write(cs.getGeneratedClassName(), data);
+    AdaptedClassDumper.INSTANCE.write(cs.getGeneratedClassName(), data);
     return data;
   }
 
