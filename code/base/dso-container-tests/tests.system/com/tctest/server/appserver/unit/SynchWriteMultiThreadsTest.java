@@ -14,8 +14,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import javax.servlet.http.HttpServlet;
@@ -52,9 +54,9 @@ public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
     public void run() {
       try {
         URL url0 = parent.createUrl(port0, "server=0&command=ping");
-        assertEquals("Send ping", "OK", HttpUtil.getResponseBody(url0, client));
+        assertEquals("Send ping", "OK", hit(url0, client));
         URL url1 = parent.createUrl(port1, "server=1&command=ping");
-        assertEquals("Receive pong", "OK", HttpUtil.getResponseBody(url1, client));
+        assertEquals("Receive pong", "OK", hit(url1, client));
         generateTransactionRequests();
       } catch (Throwable e) {
         errors.add(e);
@@ -65,20 +67,32 @@ public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
     private void generateTransactionRequests() throws Exception {
       for (int i = 0; i < INTENSITY; i++) {
         URL url0 = parent.createUrl(port0, "server=0&command=insert&data=" + i);
-        assertEquals("Send data", "OK", HttpUtil.getResponseBody(url0, client));
+        assertEquals("Send data", "OK", hit(url0, client));
       }
     }
 
     public void validate() throws Exception {
       URL url1 = parent.createUrl(port1, "server=1&command=query&data=0");
-      assertEquals("Query 0", "0", HttpUtil.getResponseBody(url1, client));
+      assertEquals("Query 0", "0", hit(url1, client));
       url1 = parent.createUrl(port1, "server=1&command=query&data=" + (INTENSITY - 1));
-      assertEquals("Query last attr", "" + (INTENSITY - 1), HttpUtil.getResponseBody(url1, client));
+      assertEquals("Query last attr", "" + (INTENSITY - 1), hit(url1, client));
     }
   }
 
   public URL createUrl(int port, String query) throws MalformedURLException {
     return super.createUrl(port, SynchWriteMultiThreadsTest.DsoPingPongServlet.class, query);
+  }
+  
+  private static String hit(URL url, HttpClient client) throws Exception {
+    String response = "";
+    try {
+      response = HttpUtil.getResponseBody(url, client);
+    } catch (Throwable e) {
+      Thread.sleep(2000);
+      response = HttpUtil.getResponseBody(url, client);
+    }
+    
+    return response;
   }
 
   public final void testSessions() throws Exception {
@@ -119,7 +133,7 @@ public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
   private void killServer0(int port0) {
     try {
       URL url0 = createUrl(port0, "server=0&command=kill");
-      assertEquals("OK", HttpUtil.getResponseBody(url0, HttpUtil.createHttpClient()));
+      assertEquals("OK", hit(url0, HttpUtil.createHttpClient()));
     } catch (Throwable e) {
       // expected
       System.err.println("Caught exception from kill server0");
@@ -135,10 +149,6 @@ public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
       String server = request.getParameter("server");
       String command = request.getParameter("command");
       String data = request.getParameter("data");
-
-      // String log = "##sessionId = " + session.getId() + "##command = " + command + "##data = " + data;
-      // System.err.println(log);
-      // System.err.flush();
 
       switch (Integer.parseInt(server)) {
         case 0:
@@ -174,7 +184,8 @@ public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
         } else out.println("OK");
       } else if (command.equals("query")) {
 
-        String log = "## sessionId=" + session.getId() + "## command=" + command + "## data=" + data;
+        String log = "** " + new SimpleDateFormat("HH:mm:ss").format(new Date()) + " | sessionId="
+                     + session.getId().substring(0, 5) + " | command=" + command + " | data=" + data;
 
         String queried_data = (String) session.getAttribute("data" + data);
         if (queried_data == null) {
