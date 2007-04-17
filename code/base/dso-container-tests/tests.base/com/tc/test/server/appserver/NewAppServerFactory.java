@@ -30,6 +30,12 @@ import java.util.Properties;
  */
 public abstract class NewAppServerFactory {
 
+  public static final String       WEBLOGIC  = "weblogic";
+  public static final String       JBOSS     = "jboss";
+  public static final String       TOMCAT    = "tomcat";
+  public static final String       WASCE     = "wasce";
+  public static final String       GLASSFISH = "glassfish";
+
   protected final TestConfigObject config;
   private boolean                  licenseIsSet;
 
@@ -61,15 +67,15 @@ public abstract class NewAppServerFactory {
     String factoryName = config.appserverFactoryName();
     String majorVersion = config.appserverMajorVersion();
 
-    if ("tomcat".equals(factoryName)) {
+    if (TOMCAT.equals(factoryName)) {
       if ("5".equals(majorVersion)) return new Tomcat5xAppServerFactory(new ProtectedKey(), config);
-    } else if ("weblogic".equals(factoryName)) {
+    } else if (WEBLOGIC.equals(factoryName)) {
       if ("8".equals(majorVersion)) return new Weblogic8xAppServerFactory(new ProtectedKey(), config);
-    } else if ("wasce".equals(factoryName)) {
+    } else if (WASCE.equals(factoryName)) {
       if ("1".equals(majorVersion)) return new Wasce1xAppServerFactory(new ProtectedKey(), config);
-    } else if ("jboss".equals(factoryName)) {
+    } else if (JBOSS.equals(factoryName)) {
       if ("4".equals(majorVersion)) return new JBoss4xAppServerFactory(new ProtectedKey(), config);
-    } else if ("glassfish".equals(factoryName)) {
+    } else if (GLASSFISH.equals(factoryName)) {
       if ("v1".equals(majorVersion)) return new GlassfishV1AppServerFactory(new ProtectedKey(), config);
     }
 

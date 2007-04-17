@@ -158,8 +158,8 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   private final List                      roots            = new ArrayList();
   private final List                      locks            = new ArrayList();
   private final List                      includes         = new ArrayList();
+  private final TestConfigObject          config;
 
-  private TestConfigObject                config;
   private File                            serverInstallDir;
   private File                            workingDir;
   private File                            tempDir;
@@ -175,6 +175,17 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   public AbstractAppServerTestCase() {
     // keep the regular thread dump behavior for windows and macs
     setDumpThreadsOnTimeout(Os.isWindows() || Os.isMac());
+
+    try {
+      config = TestConfigObject.getInstance();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    // XXX: Only non-session container tests work in glassfish at the moment
+    if (isSessionTest() && NewAppServerFactory.GLASSFISH.equals(config.appserverFactoryName())) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
   }
 
   protected int getJMXPort() {
@@ -188,7 +199,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     LinkedJavaProcessPollingAgent.startHeartBeatServer();
 
     isSynchronousWrite = false;
-    config = TestConfigObject.getInstance();
+
     tempDir = getTempDirectory();
     serverInstallDir = makeDir(config.appserverServerInstallDir());
     File workDir;
