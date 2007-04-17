@@ -47,6 +47,7 @@ public class TransparentSetTestApp extends AbstractTransparentApp implements App
         set.add(to);
         Assert.eval(set.size() == size + 1);
       }
+      Thread.yield();
     }
     moveToStageAndWait(ADD_COMPLETE_STAGE);
 
@@ -62,6 +63,7 @@ public class TransparentSetTestApp extends AbstractTransparentApp implements App
         Assert.eval("Test object should have been removed  but wasn't: " + testObjects.get(i), wasRemoved);
         Assert.eval(set.size() == size - 1);
       }
+      Thread.yield();
     }
 
     moveToStageAndWait(REMOVE_COMPLETE_STAGE);
