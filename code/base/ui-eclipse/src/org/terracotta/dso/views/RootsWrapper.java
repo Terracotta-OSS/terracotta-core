@@ -32,5 +32,8 @@ public class RootsWrapper {
     if(roots != null) {
       roots.removeRoot(i);
     }
+    if(sizeOfRootArray() == 0) {
+      fApp.unsetRoots();
+    }
   }
 }

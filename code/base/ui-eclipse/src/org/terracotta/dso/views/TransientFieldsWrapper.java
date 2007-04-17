@@ -28,5 +28,8 @@ public class TransientFieldsWrapper {
     if(transientFields != null) {
       transientFields.removeFieldName(i);
     }
+    if(sizeOfFieldNameArray() == 0) {
+      fApp.unsetTransientFields();
+    }
   }
 }

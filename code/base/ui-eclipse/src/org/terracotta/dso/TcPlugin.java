@@ -924,11 +924,22 @@ public class TcPlugin extends AbstractUIPlugin
   public void setConfigurationFromString(IProject project, String xmlText)
     throws IOException
   {
+    TcConfig config = null;
+    
     try {
       loadConfiguration(project, xmlText);
+      config = (TcConfig)getSessionProperty(project, CONFIGURATION);
     } catch(XmlException e) {
       LineLengths lineLengths = getConfigurationLineLengths(project);
       handleXmlException(getConfigurationFile(project), lineLengths, e);
+    }
+
+    if(config == null) {
+      config = BAD_CONFIG;
+      setSessionProperty(project, CONFIGURATION, config);
+      JavaSetupParticipant.inspectAll();
+      updateDecorators();
+      fireConfigurationChange(project);
     }
   }
   
@@ -951,7 +962,7 @@ public class TcPlugin extends AbstractUIPlugin
     return helper;
   }
 
-  public static final TcConfig BAD_CONFIG = TcConfig.Factory.newInstance();
+  public static final TcConfig BAD_CONFIG = ProjectWizard.createTemplateConfigDoc().getTcConfig();
   
   public synchronized TcConfig getConfiguration(IProject project) {
     TcConfig config = (TcConfig)getSessionProperty(project, CONFIGURATION);
@@ -972,6 +983,9 @@ public class TcPlugin extends AbstractUIPlugin
       if(config == null) {
         config = BAD_CONFIG;
         setSessionProperty(project, CONFIGURATION, config);
+        JavaSetupParticipant.inspectAll();
+        updateDecorators();
+        fireConfigurationChange(project);
       }
     }
     
@@ -1097,6 +1111,8 @@ public class TcPlugin extends AbstractUIPlugin
   {
     if(dirty.booleanValue()) {
       clearSerializedConfigFile(project);
+      setSessionProperty(project, CONFIGURATION_LINE_LENGTHS, null);
+      setSessionProperty(project, CONFIGURATION, null);
     }
     
     setSessionProperty(project, IS_DIRTY, dirty);

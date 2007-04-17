@@ -164,6 +164,7 @@ public class ModulesPanel extends XContainer implements TableModelListener {
   private void updateChildren() {
     m_modulesTableModel.clear();
     m_repositoriesTableModel.clear();
+    
     if (m_modules != null) {
       String[] repos = m_modules.getRepositoryArray();
       for (int i = 0; i < repos.length; i++) {
@@ -173,6 +174,9 @@ public class ModulesPanel extends XContainer implements TableModelListener {
       for (int i = 0; i < modules.length; i++) {
         m_modulesTableModel.addModule(modules[i].getName(), modules[i].getVersion());
       }
+    } else {
+      m_modulesTableModel.fireTableDataChanged();
+      m_repositoriesTableModel.fireTableDataChanged();
     }
   }
 

@@ -165,6 +165,8 @@ public class TransientFieldsPanel extends ConfigurationEditorPanel
       for(int i = 0; i < transients.length; i++) {
         m_transientTableModel.addField(transients[i]);
       }
+    } else {
+      m_transientTableModel.fireTableDataChanged();
     }
   }
 

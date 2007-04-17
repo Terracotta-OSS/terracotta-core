@@ -7,8 +7,10 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
@@ -73,7 +75,23 @@ public class BaseAction extends Action {
     display.asyncExec(new Runnable () {
       public void run() {
         if(getJavaElement() != null) {
-          performAction(event);
+          TcPlugin plugin  = TcPlugin.getDefault();
+          IProject project = getProject();
+          
+          if(plugin.getConfiguration(project) == TcPlugin.BAD_CONFIG) {
+            Shell  shell = Display.getDefault().getActiveShell();
+            String title = "Terracotta Plugin";
+            String msg   = "The configuration source is not parsable and cannot be\n used until these errors are resolved.";
+            
+            MessageDialog.openWarning(shell, title, msg);
+            try {
+              plugin.openConfigurationEditor(project);
+            } catch(Exception e) {
+              // TODO:
+            }
+          } else {
+            performAction(event);
+          }
         }
       }
     });

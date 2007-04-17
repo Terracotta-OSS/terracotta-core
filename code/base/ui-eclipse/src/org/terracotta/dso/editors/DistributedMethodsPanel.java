@@ -165,6 +165,8 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel
         vals[i] = mes[i].getStringValue();
       }
       m_methodModel.setMethods(vals);
+    } else {
+      m_methodModel.fireTableDataChanged();
     }
   }
 

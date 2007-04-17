@@ -42,6 +42,7 @@ import org.terracotta.dso.JdtUtils;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.actions.ActionUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,6 +60,9 @@ public class BootJarView extends ViewPart
 
   private TableViewer viewer;
   private IFile bootJarFile;
+  private IJavaProject lastJavaProject;
+  private static final String EMPTY_CONTENT_ELEM = "No boot JAR found.";
+  private static final Object[] EMPTY_CONTENT = {EMPTY_CONTENT_ELEM};
   
   public BootJarView() {
     super();
@@ -89,17 +93,33 @@ public class BootJarView extends ViewPart
         } catch(CoreException ce) {/**/}
       }
       
+      String fileName = null;
+      String tip = "";
+      String desc = "";
+      
       if(bootJarFile == null ||
          !bootJarFile.exists() ||
          !bootJarFile.getProject().isOpen() ||
          !TcPlugin.getDefault().hasTerracottaNature(bootJarFile.getProject()))
       {
-        return new Object[0];
+        fileName = getDefaultBootJarPath();
+        tip = fileName;
+        desc = "System bootjar: " + new File(fileName).getName();
+      } else {
+        fileName = bootJarFile.getLocation().toOSString();
+        tip = desc = bootJarFile.getProject().getName() + IPath.SEPARATOR + bootJarFile.getName();
       }
 
+      File file = new File(fileName);
+      setTitleToolTip(tip);
+      setContentDescription(desc);
+
+      if(fileName == null || !file.exists()) {
+        return EMPTY_CONTENT;
+      }
+      
       ZipFile zipFile = null;
       try {
-        String fileName = bootJarFile.getLocation().toOSString();
         zipFile = new ZipFile(fileName);
         Enumeration entries = zipFile.entries();
         while(entries.hasMoreElements()) {
@@ -138,7 +158,8 @@ public class BootJarView extends ViewPart
     }
 
     public Image getImage(Object obj) {
-      return JavaPluginImages.get(JavaPluginImages.IMG_OBJS_CLASS);
+      String imgName = (obj != EMPTY_CONTENT_ELEM) ? JavaPluginImages.IMG_OBJS_CLASS : JavaPluginImages.IMG_OBJS_REFACTORING_ERROR;
+      return JavaPluginImages.get(imgName);
     }
   }
 
@@ -146,7 +167,7 @@ public class BootJarView extends ViewPart
     viewer.getControl().setFocus();
   }
   
-  public static IFile getBootJarFile() {
+  public IFile getBootJarFile() {
     IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
     
     if(window != null) {
@@ -160,26 +181,29 @@ public class BootJarView extends ViewPart
           IFile    localBootJar = project.getFile(safeGetInstallBootJarName(javaProject));
 
           if(localBootJar != null) {
+            lastJavaProject = javaProject;
             return localBootJar;
           }
         }
       }
     }
     
-    /*
-    String bootJarName = safeGetInstallBootJarName();
-    if(bootJarName != null) {
-      IPath      bootJarPath = BootJarHelper.getHelper().getBootJarPath(bootJarName);
-      IWorkspace workspace   = ResourcesPlugin.getWorkspace(); 
-    
-      return workspace.getRoot().getFileForLocation(bootJarPath);
-    }
-    */
-    
     return null;
   }
 
+  private static String getDefaultBootJarPath() {
+    String bootJarName = safeGetInstallBootJarName();
+    
+    if(bootJarName != null) {
+      IPath path = BootJarHelper.getHelper().getBootJarPath(bootJarName);
+      if(path != null) {
+        return path.toOSString();
+      }
+    }
 
+    return null;
+  }
+  
   private static String safeGetInstallBootJarName(IJavaProject javaProject) {
     try {
       String portablePath = null;
@@ -310,8 +334,12 @@ public class BootJarView extends ViewPart
         ISelection selection = window.getSelectionService().getSelection();
         
         if(selection != null) {
-          bootJarFile = getBootJarFile();
-          reset();
+          IJavaProject javaProject = ActionUtil.locateSelectedJavaProject(selection);
+          
+          if(!javaProject.equals(lastJavaProject)) {
+            bootJarFile = getBootJarFile();
+            reset();
+          }
         }
       }
     }
@@ -320,21 +348,7 @@ public class BootJarView extends ViewPart
   public void partBroughtToTop(IWorkbenchPart part) {/**/}
   public void partClosed(IWorkbenchPart part) {/**/}
   public void partDeactivated(IWorkbenchPart part) {/**/}
-
-  public void partOpened(IWorkbenchPart part) {
-    if(false && part == this) {
-      IWorkbenchWindow window = part.getSite().getWorkbenchWindow();
-      
-      if(window != null) {
-        ISelection selection = window.getSelectionService().getSelection();
-        
-        if(selection != null) {
-          bootJarFile = getBootJarFile();
-          reset();
-        }
-      }
-    }
-  }
+  public void partOpened(IWorkbenchPart part) {/**/}
 
   void reset() {
     viewer.setContentProvider(new ViewContentProvider());
@@ -344,5 +358,13 @@ public class BootJarView extends ViewPart
   void clear() {
     bootJarFile = null;
     reset();
+  }
+  
+  public void dispose() {
+    viewer.removeSelectionChangedListener(this);
+    getSite().getPage().removePartListener(this);
+    ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
+    
+    super.dispose();
   }
 }

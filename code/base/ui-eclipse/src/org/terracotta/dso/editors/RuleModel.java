@@ -33,6 +33,8 @@ public class RuleModel extends XObjectTableModel {
     clear();
     if((m_instrumentedClasses = instrumentedClasses) != null) {
       setRules(m_instrumentedClasses.selectPath("*"));
+    } else {
+      fireTableDataChanged();
     }
   }
   

@@ -4,6 +4,7 @@
  */
 package org.terracotta.dso.views;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -12,6 +13,7 @@ import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -163,9 +165,19 @@ public class ConfigViewPart extends ViewPart
   public void setConfig(final TcConfig config) {
     getSite().getShell().getDisplay().asyncExec(new Runnable () {
       public void run() {
+        String configPath = "";
+        
         if(config == null) {
           m_javaProject = null;
+        } else {
+          IProject project = m_javaProject.getProject();
+          IFile configFile = TcPlugin.getDefault().getConfigurationFile(project);
+          configPath = project.getName() + IPath.SEPARATOR + configFile.getProjectRelativePath().toOSString();
         }
+
+        setTitleToolTip(configPath);
+        setContentDescription(configPath);
+
         fConfigViewer.setConfig(fConfig = config);
         fRefreshAction.setEnabled(config != null);
         fDeleteAction.setEnabled(config != null && fDeleteAction.canActionBeAdded());
@@ -241,7 +253,6 @@ public class ConfigViewPart extends ViewPart
       if(sel instanceof StructuredSelection) {
         IProject project = m_javaProject.getProject();
         ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
-        ConfigurationEditor editor = configHelper.getConfigurationEditor();
         StructuredSelection ss = (StructuredSelection)sel;
         Object[] objects = ss.toArray();
         
@@ -250,50 +261,25 @@ public class ConfigViewPart extends ViewPart
           
           if(obj instanceof RootWrapper) {
             RootWrapper wrapper = (RootWrapper)obj;
-            if(false) {
-              wrapper.remove();
-              if(editor != null) {
-                editor.updateRootsPanel();
-              }
-            } else {
-              configHelper.ensureNotRoot(wrapper.getFieldName());
-            }
+            wrapper.remove();
           } else if(obj instanceof LockWrapper) {
             LockWrapper wrapper = (LockWrapper)obj;
             wrapper.remove();
-            if(editor != null) {
-              editor.updateLocksPanel();
-            }
           } else if(obj instanceof BootClassWrapper) {
             BootClassWrapper wrapper = (BootClassWrapper)obj;
             wrapper.remove();
-            if(editor != null) {
-              editor.updateBootClassesPanel();
-            }
           } else if(obj instanceof TransientFieldWrapper) {
             TransientFieldWrapper wrapper = (TransientFieldWrapper)obj;
             wrapper.remove();
-            if(editor != null) {
-              editor.updateTransientsPanel();
-            }
           } else if(obj instanceof DistributedMethodWrapper) {
             DistributedMethodWrapper wrapper = (DistributedMethodWrapper)obj;
             wrapper.remove();
-            if(editor != null) {
-              editor.updateDistributedMethodsPanel();
-            }
           } else if(obj instanceof IncludeWrapper) {
             IncludeWrapper wrapper = (IncludeWrapper)obj;
             wrapper.remove();
-            if(editor != null) {
-              editor.updateInstrumentedClassesPanel();
-            }
           } else if(obj instanceof ExcludeWrapper) {
             ExcludeWrapper wrapper = (ExcludeWrapper)obj;
             wrapper.remove();
-            if(editor != null) {
-              editor.updateInstrumentedClassesPanel();
-            }
           }
         }
         configHelper.persistConfiguration();

@@ -28,5 +28,8 @@ public class DistributedMethodsWrapper {
     if(distributedMethods != null) {
       distributedMethods.removeMethodExpression(i);
     }
+    if(sizeOfMethodExpressionArray() == 0) {
+      fApp.unsetDistributedMethods();
+    }
   }
 }

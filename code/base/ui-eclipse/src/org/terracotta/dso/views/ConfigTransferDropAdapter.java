@@ -3,6 +3,7 @@
  */
 package org.terracotta.dso.views;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
@@ -12,10 +13,14 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.ui.packageview.SelectionTransferDropAdapter;
 import org.eclipse.jdt.internal.ui.util.SelectionUtil;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTargetEvent;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
+import org.terracotta.dso.TcPlugin;
 
 class ConfigTransferDropAdapter extends SelectionTransferDropAdapter {
   private static final int OPERATION = DND.DROP_LINK;
@@ -89,8 +94,24 @@ class ConfigTransferDropAdapter extends SelectionTransferDropAdapter {
   }
 
   public void drop(Object target, DropTargetEvent event) {
-    IJavaElement input = getInputElement(getSelection());
+    IJavaElement input   = getInputElement(getSelection());
+    IProject     project = input.getJavaProject().getProject();
+    TcPlugin     plugin  = TcPlugin.getDefault();
     
+    if(plugin.getConfiguration(project) == TcPlugin.BAD_CONFIG) {
+      Shell  shell = Display.getDefault().getActiveShell();
+      String title = "Terracotta Plugin";
+      String msg   = "The configuration source is not parsable and cannot be\n used until these errors are resolved.";
+      
+      MessageDialog.openWarning(shell, title, msg);
+      try {
+        plugin.openConfigurationEditor(project);
+      } catch(Exception e) {
+        // TODO:
+      }
+      return;
+    }
+
     switch(input.getElementType()) {
       case IJavaElement.FIELD:
         if(target instanceof RootsWrapper ||

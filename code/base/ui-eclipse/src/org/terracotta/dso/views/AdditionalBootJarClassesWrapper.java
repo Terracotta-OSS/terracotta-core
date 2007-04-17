@@ -28,5 +28,8 @@ public class AdditionalBootJarClassesWrapper {
     if(abjc != null) {
       abjc.removeInclude(i);
     }
+    if(sizeOfIncludeArray() == 0) {
+      fApp.unsetAdditionalBootJarClasses();
+    }
   }
 }

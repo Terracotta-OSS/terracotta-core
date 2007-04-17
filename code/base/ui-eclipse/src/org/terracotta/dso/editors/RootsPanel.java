@@ -161,11 +161,7 @@ public class RootsPanel extends ConfigurationEditorPanel
   }
   
   public void updateChildren() {
-    m_rootsModel.clear();
-
-    if(m_roots != null) {
-      m_rootsModel.set(m_roots.getRootArray());
-    }
+    m_rootsModel.set((m_roots != null) ? m_roots.getRootArray() : null);
   }
 
   public void updateModel() {

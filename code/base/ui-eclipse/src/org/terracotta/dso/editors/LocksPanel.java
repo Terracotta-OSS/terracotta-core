@@ -262,14 +262,8 @@ public class LocksPanel extends ConfigurationEditorPanel
   }
 
   public void updateChildren() {
-    if(m_locks != null) {
-      m_autoLocksModel.setAutoLocks(m_locks.getAutolockArray());
-      m_namedLocksModel.setNamedLocks(m_locks.getNamedLockArray());
-    }
-    else {
-      m_autoLocksModel.clear();
-      m_namedLocksModel.clear();
-    }
+    m_autoLocksModel.setAutoLocks(m_locks != null ? m_locks.getAutolockArray() : null);
+    m_namedLocksModel.setNamedLocks(m_locks != null ? m_locks.getNamedLockArray() : null);
   }
   
   public void updateModel() {

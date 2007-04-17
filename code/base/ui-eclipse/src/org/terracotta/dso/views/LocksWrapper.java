@@ -15,6 +15,11 @@ public class LocksWrapper {
     fApp = app;
   }
   
+  int sizeOfLocksArray() {
+    Locks locks = fApp.getLocks();
+    return locks != null ? locks.sizeOfAutolockArray()+locks.sizeOfNamedLockArray(): 0;
+  }
+  
   int sizeOfAutolockArray() {
     Locks locks = fApp.getLocks();
     return locks != null ? locks.sizeOfAutolockArray() : 0;
@@ -29,6 +34,9 @@ public class LocksWrapper {
     Locks locks = fApp.getLocks();
     if(locks != null) {
       locks.removeAutolock(i);
+    }
+    if(sizeOfLocksArray() == 0) {
+      fApp.unsetLocks();
     }
   }
   
@@ -46,6 +54,9 @@ public class LocksWrapper {
     Locks locks = fApp.getLocks();
     if(locks != null) {
       locks.removeNamedLock(i);
+    }
+    if(sizeOfLocksArray() == 0) {
+      fApp.unsetLocks();
     }
   }
 }

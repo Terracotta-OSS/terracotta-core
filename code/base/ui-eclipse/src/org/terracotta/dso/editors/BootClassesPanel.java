@@ -176,6 +176,8 @@ public class BootClassesPanel extends ConfigurationEditorPanel
       for(int i = 0; i < bootClasses.length; i++) {
         m_bootClassesTableModel.addBootClass(bootClasses[i]);
       }
+    } else {
+      m_bootClassesTableModel.fireTableDataChanged();      
     }
   }
 

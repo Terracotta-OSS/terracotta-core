@@ -314,12 +314,13 @@ public class ProjectWizard extends Wizard {
     }
   }
   
-  private static TcConfigDocument createTemplateConfigDoc() {
+  public static TcConfigDocument createTemplateConfigDoc() {
     TcConfigDocument doc     = TcConfigDocument.Factory.newInstance();
     TcConfig         config  = doc.addNewTcConfig();
     Servers          servers = config.addNewServers();
     Server           server  = servers.addNewServer();
 
+    server.setHost("%i");
     server.setName("localhost");
     server.setDsoPort(9510);
     server.setJmxPort(9520);

@@ -19,9 +19,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.help.IContext;
-import org.eclipse.help.IContextProvider;
-import org.eclipse.help.IHelpResource;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -33,6 +30,7 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.awt.SWT_AWT;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorSite;
@@ -63,8 +61,6 @@ import org.terracotta.dso.decorator.TransientDecorator;
 import org.terracotta.dso.editors.xml.XMLEditor;
 
 import com.terracottatech.config.Application;
-import com.terracottatech.config.ConfigurationModel;
-import com.terracottatech.config.System;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
@@ -138,6 +134,30 @@ public class ConfigurationEditor extends MultiPageEditorPart
 
   public DsoApplicationPanel getDsoApplicationPanel() {
     return m_dsoAppPanel;
+  }
+  
+  protected void pageChange(final int newPageIndex) {
+    if(newPageIndex != 0) {
+      if(m_project != null && m_project.isOpen()) {
+        TcPlugin plugin = TcPlugin.getDefault(); 
+        TcConfig config = plugin.getConfiguration(m_project);
+       
+        if(config == TcPlugin.BAD_CONFIG) {
+          Display.getDefault().syncExec(new Runnable() {
+            public void run() {
+              getControl(newPageIndex).setVisible(false);
+
+              Shell  shell = Display.getDefault().getActiveShell();
+              String title = "Terracotta Config Editor";
+              String msg   = "The source page has errors. The other pages cannot be\nused until these errors are resolved.";
+              
+              MessageDialog.openWarning(shell, title, msg);
+            }
+          });
+          setActivePage(0);
+        }
+      }
+    }
   }
   
   public void showDsoApplicationPanel() {
@@ -415,10 +435,6 @@ public class ConfigurationEditor extends MultiPageEditorPart
     return true;
   }
   
-  protected void pageChange(int newPageIndex) {
-    super.pageChange(newPageIndex);
-  }
-
   private ResourceDeltaVisitor getResourceDeltaVisitor() {
     if(m_resourceDeltaVisitor == null) {
       m_resourceDeltaVisitor = new ResourceDeltaVisitor();
@@ -462,22 +478,13 @@ public class ConfigurationEditor extends MultiPageEditorPart
   }
 
   /**
-   * Ensures that the config has both a System and Application element.
-   * The System element sets the config-mode to DEVELOPMENT.
+   * Ensures that the config has an Application element.
    */
   private void ensureRequiredConfigElements() {
     if(m_project != null && m_project.isOpen()) {
-      TcPlugin plugin = TcPlugin.getDefault(); 
-      TcConfig config = plugin.getConfiguration(m_project);
+      TcConfig config = TcPlugin.getDefault().getConfiguration(m_project);
     
       if(config != null) {
-        System system = config.getSystem();
-        
-        if(system == null) {
-          system = config.addNewSystem();
-          system.setConfigurationModel(ConfigurationModel.DEVELOPMENT);
-        }
-        
         m_application = config.getApplication();
       
         if(m_application == null) {
@@ -662,9 +669,9 @@ public class ConfigurationEditor extends MultiPageEditorPart
   }
 
   public synchronized void syncXmlModel() {
-    TcPlugin     plugin  = TcPlugin.getDefault();
-    IDocument    doc     = m_xmlEditor.getDocument();
-    String       xmlText = doc.get();
+    TcPlugin  plugin  = TcPlugin.getDefault();
+    IDocument doc     = m_xmlEditor.getDocument();
+    String    xmlText = doc.get();
     
     try {
       plugin.setConfigurationFromString(m_project, xmlText);
@@ -777,67 +784,5 @@ public class ConfigurationEditor extends MultiPageEditorPart
     ConfigurationHelper configHelper = plugin.getConfigurationHelper(m_project);
     
     configHelper.applyProblemToText(doc, text, msg, markerType);
-  }
-  
-  /**
-   * Help support
-   */
-  
-  private HelpContextProvider m_helpContextProvider;
-  private HelpContext         m_helpContext;
-  
-  private HelpContextProvider getHelpContextProvider() {
-    if(m_helpContextProvider == null) {
-      m_helpContextProvider = new HelpContextProvider();
-    }
-    return m_helpContextProvider;
-  }
-  
-  private HelpContext getHelpContext() {
-    if(m_helpContext == null) {
-      m_helpContext = new HelpContext();
-    }
-    return m_helpContext;
-  }
-  
-  public Object getAdapter(Class key) {
-    if(key.equals(IContextProvider.class)) {
-      return getHelpContextProvider();
-    }
-    return super.getAdapter(key);
-  }
-  
-  class HelpContext implements IContext, IHelpResource {
-    private IHelpResource[] m_helpResources = new IHelpResource[] {this};
-    
-    public IHelpResource[] getRelatedTopics() {
-      return m_helpResources;
-    }
-
-    public String getText() {
-      return "Terracotta Configuration Editor";
-    }
-
-    public String getHref() {
-      return "/org.terracotta.dso/html/tasks/config/Overview.html";
-    }
-
-    public String getLabel() {
-      return getText();
-    }
-  }
-  
-  class HelpContextProvider implements IContextProvider {
-    public int getContextChangeMask() {
-      return NONE;
-    }
-
-    public IContext getContext(Object target) {
-      return getHelpContext();
-    }
-
-    public String getSearchExpression(Object target) {
-      return "Terracotta";
-    }
   }
 }
