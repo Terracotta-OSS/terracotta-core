@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -36,7 +37,7 @@ import java.util.Map;
  * Peer of a Class under management.
  * <p>
  * This is used to cache the fields of each class by type.
- *
+ * 
  * @author orion
  */
 public class TCClassImpl implements TCClass {
@@ -102,7 +103,8 @@ public class TCClassImpl implements TCClass {
 
     introspectFields(peer, factory);
     this.portableFields = createPortableFields();
-    this.useNonDefaultConstructor = isProxyClass || ClassUtils.isPortableReflectionClass(peer) || useNonDefaultConstructor;
+    this.useNonDefaultConstructor = isProxyClass || ClassUtils.isPortableReflectionClass(peer)
+                                    || useNonDefaultConstructor;
     this.logicalSuperClass = logicalSuperClass;
   }
 
@@ -346,28 +348,37 @@ public class TCClassImpl implements TCClass {
     return o;
   }
 
-  public String getFieldNameByOffset(long fieldOffset) {
-    Long fieldOffsetObj = new Long(fieldOffset);
-    if (offsetToFields == null) {
-      offsetToFields = new HashMap();
-      if (unsafe != null) {
-        try {
-          Field[] fields = peer.equals(Object.class) ? new Field[0] : peer.getDeclaredFields();
-          for (int i = 0; i < fields.length; i++) {
-            try {
-              if (!Modifier.isStatic(fields[i].getModifiers())) {
-                fields[i].setAccessible(true);
-                offsetToFields.put(new Long(unsafe.objectFieldOffset(fields[i])), fields[i]);
-              }
-            } catch (Exception e) {
-              // Ignore those fields that throw an exception
+  private synchronized void setupFieldOffsetIfNecessary() {
+    if (offsetToFields != null) { return; }
+
+    offsetToFields = new HashMap();
+    if (unsafe != null) {
+      try {
+        Field[] fields = peer.equals(Object.class) ? new Field[0] : peer.getDeclaredFields();
+//        System.err.println("Thread " + Thread.currentThread().getName() + ", class: " + getName() + ", # of field: "
+//                           + fields.length);
+        for (int i = 0; i < fields.length; i++) {
+          try {
+            if (!Modifier.isStatic(fields[i].getModifiers())) {
+              fields[i].setAccessible(true);
+              offsetToFields.put(new Long(unsafe.objectFieldOffset(fields[i])), fields[i]);
+//              System.err.println("Thread " + Thread.currentThread().getName() + ", class: " + getName() + ", field: "
+//                                 + fields[i].getName() + ", offset: " + unsafe.objectFieldOffset(fields[i]));
             }
+          } catch (Exception e) {
+            // Ignore those fields that throw an exception
           }
-        } catch (Exception e) {
-          throw new TCRuntimeException(e);
         }
+      } catch (Exception e) {
+        throw new TCRuntimeException(e);
       }
     }
+  }
+
+  public String getFieldNameByOffset(long fieldOffset) {
+    Long fieldOffsetObj = new Long(fieldOffset);
+    setupFieldOffsetIfNecessary();
+
     Field field = (Field) this.offsetToFields.get(fieldOffsetObj);
     if (field == null) {
       if (superclazz != null) {

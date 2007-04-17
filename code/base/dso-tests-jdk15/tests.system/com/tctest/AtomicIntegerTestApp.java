@@ -77,7 +77,7 @@ public class AtomicIntegerTestApp extends AbstractTransparentApp {
   private void loadTest() throws Exception {
     List errors = Collections.synchronizedList(new ArrayList());
 
-    Loader[] loaders = new Loader[10];
+    Loader[] loaders = new Loader[3];
 
     for (int i = 0; i < loaders.length; i++) {
       loaders[i] = new Loader(sum, errors);
