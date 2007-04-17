@@ -29,6 +29,7 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.logging.InstrumentationLoggerImpl;
 import com.tc.plugins.ModulesLoader;
 import com.tc.util.Assert;
+import com.tc.util.InitialClassDumper;
 import com.tc.util.TCTimeoutException;
 import com.terracottatech.config.ConfigurationModel;
 
@@ -43,6 +44,15 @@ import java.util.Collection;
 import java.util.HashMap;
 
 public class DSOContextImpl implements DSOContext {
+
+  static {
+    // Eagerly load this class to avoid ClassCircularityError in preProcess()
+    try {
+      Class.forName(InitialClassDumper.class.getName());
+    } catch (ClassNotFoundException e) {
+      throw new AssertionError(e);
+    }
+  }
 
   private static final TCLogger                     logger = TCLogging.getLogger(DSOContextImpl.class);
 
@@ -66,7 +76,8 @@ public class DSOContextImpl implements DSOContext {
   /**
    * For tests
    */
-  public static DSOContext createContext(DSOClientConfigHelper configHelper, ClassProvider classProvider, Manager manager) {
+  public static DSOContext createContext(DSOClientConfigHelper configHelper, ClassProvider classProvider,
+                                         Manager manager) {
     return new DSOContextImpl(configHelper, classProvider, manager);
   }
 
@@ -127,7 +138,7 @@ public class DSOContextImpl implements DSOContext {
   /**
    * XXX::NOTE:: ClassLoader checks the returned byte array to see if the class is instrumented or not to maintain the
    * offset.
-   * 
+   *
    * @return new byte array if the class is instrumented and same input byte array if not.
    * @see ClassLoaderPreProcessorImpl
    */
@@ -148,7 +159,8 @@ public class DSOContextImpl implements DSOContext {
 
   // Needed by Spring
   public void addInclude(String expression, boolean callConstructorOnLoad, String lockExpression, ClassInfo classInfo) {
-    this.configHelper.addIncludeAndLockIfRequired(expression, true, callConstructorOnLoad, false, lockExpression, classInfo);
+    this.configHelper.addIncludeAndLockIfRequired(expression, true, callConstructorOnLoad, false, lockExpression,
+                                                  classInfo);
   }
 
   // Needed by Spring
