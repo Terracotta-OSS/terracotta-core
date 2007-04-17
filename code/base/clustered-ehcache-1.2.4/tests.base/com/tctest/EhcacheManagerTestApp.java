@@ -5,6 +5,7 @@ import java.util.concurrent.CyclicBarrier;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Element;
 import net.sf.ehcache.Status;
 
 import com.tc.object.config.ConfigLockLevel;
@@ -168,9 +169,9 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 			Cache cache = new Cache(name, 2, false, true, 0, 2);
 			clusteredCacheManager.addCache(cache);
 		}
-		// Cache cache = clusteredCacheManager.getCache(name);
-		// cache.put(new Element(name + "key1", "value1"));
-		// cache.put(new Element(name + "key2", "value1"));
+		//Cache cache = clusteredCacheManager.getCache(name);
+		//cache.put(new Element(name + "key1", "value1"));
+		//cache.put(new Element(name + "key2", "value1"));
 	}
 
 	/**

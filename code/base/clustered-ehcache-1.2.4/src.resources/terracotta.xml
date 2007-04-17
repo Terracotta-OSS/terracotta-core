@@ -14,15 +14,13 @@
   </instrumented-classes>
 
   <transient-fields>
-    <field-name>net.sf.ehcache.store.DiskStore.expiryThread</field-name>
-    <field-name>net.sf.ehcache.store.DiskStore.spoolThread</field-name>
+	<field-name>net.sf.ehcache.store.DiskStore.spoolAndExpiryThread</field-name>
     <field-name>net.sf.ehcache.store.DiskStore.randomAccessFile</field-name>
     <field-name>net.sf.ehcache.distribution.RMIAsynchronousCacheReplicator.replicationThread</field-name>
     <field-name>net.sf.ehcache.CacheManager.cacheManagerEventListener</field-name>
     <field-name>net.sf.ehcache.CacheManager.cacheManagerPeerListener</field-name>
     <field-name>net.sf.ehcache.CacheManager.cacheManagerPeerProvider</field-name>
 	<field-name>net.sf.ehcache.CacheManager.shutdownHook</field-name>
-	<field-name>net.sf.ehcache.store.DiskStore.spoolAndExpiryThread</field-name>
   </transient-fields>
 
   <roots>

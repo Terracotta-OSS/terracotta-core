@@ -502,6 +502,7 @@ modules:
         jdk: J2SE-1.5
         module: true
       dependencies:
+        - modules-common-1.0
         - aspectwerkz
         - linked-child-process
         - common
