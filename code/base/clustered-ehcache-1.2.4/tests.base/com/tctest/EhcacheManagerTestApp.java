@@ -128,8 +128,9 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * @throws Throwable
 	 */
 	private void addManyCaches(final int count) throws Throwable {
+		System.out.println(">> addManyCaches");
 		for (int i = 0; i < count; i++) {
-			addCache("CACHE" + i, true);
+			addCache("MANYCACHE" + i, true);
 		}
 	}
 
@@ -137,6 +138,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * Remove all the caches.
 	 */
 	private void removeAllCaches() {
+		System.out.println(">> removeAllCaches");
 		clusteredCacheManager.removalAll();
 	}
 
@@ -147,6 +149,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * @throws Exception
 	 */
 	private void verifyCacheCount(final int expected) throws Exception {
+		System.out.println(">> verifyCacheCount");
 		final String[] cacheNames = clusteredCacheManager.getCacheNames();
 		Assert.assertEquals(expected, cacheNames.length);
 	}
@@ -163,6 +166,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 */
 	private void addCache(final String name, boolean mustDelegate)
 			throws Throwable {
+		System.out.println(">> addCache");
 		if (mustDelegate) {
 			clusteredCacheManager.addCache(name);
 		} else {
@@ -183,6 +187,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * @throws Exception
 	 */
 	private void verifyCache(final String name) throws Exception {
+		System.out.println(">> verifyCache");
 		boolean cacheExists = clusteredCacheManager.cacheExists(name);
 		Assert.assertEquals(true, cacheExists);
 
@@ -190,10 +195,11 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 		Assert.assertNotNull(cache);
 		Assert.assertEquals(name, cache.getName());
 		Assert.assertEquals(Status.STATUS_ALIVE, cache.getStatus());
-		// int sizeFromGetSize = cache.getSize();
-		// int sizeFromKeys = cache.getKeys().size();
-		// Assert.assertEquals(sizeFromGetSize, sizeFromKeys);
-		// Assert.assertEquals(2, cache.getSize());
+
+		//int sizeFromGetSize = cache.getSize();
+		//int sizeFromKeys = cache.getKeys().size();
+		//Assert.assertEquals(sizeFromGetSize, sizeFromKeys);
+		//Assert.assertEquals(2, cache.getSize());
 	}
 
 	/**
@@ -202,6 +208,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * @param name
 	 */
 	private void removeCache(final String name) {
+		System.out.println(">> removeCache");
 		clusteredCacheManager.removeCache(name);
 	}
 
@@ -212,6 +219,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * @throws Exception
 	 */
 	private void verifyCacheRemoved(final String name) throws Exception {
+		System.out.println(">> verifyCacheRemoved");
 		boolean cacheExists = clusteredCacheManager.cacheExists(name);
 		Assert.assertEquals(false, cacheExists);
 
@@ -223,6 +231,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * Shuts down the clustered cache manager.
 	 */
 	private void shutdownCacheManager() {
+		System.out.println(">> shutdownCacheManager");
 		clusteredCacheManager.shutdown();
 	}
 
@@ -230,6 +239,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * Verify that the clustered cache manager has shut down.
 	 */
 	private void verifyCacheManagerShutdown() {
+		System.out.println(">> verifyCacheManagerShutdown");
 		Assert.assertEquals(Status.STATUS_SHUTDOWN, clusteredCacheManager
 				.getStatus());
 	}
