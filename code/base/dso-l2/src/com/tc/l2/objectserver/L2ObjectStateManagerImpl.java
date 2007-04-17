@@ -181,6 +181,10 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       return nodeID;
     }
 
+    /**
+     * XXX::Not a good idea to hold the transaction sync stage till this is initialized, especially since
+     * ObjectManager.getAllObjectIDs() could take ages to return in persistent large DB restart case !
+     */
     public synchronized boolean isInSync() {
       while (state == UNINITIALIZED) {
         // initialize is not run yet.

@@ -66,9 +66,9 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
 
   public synchronized void setLowWatermark(GlobalTransactionID lowWatermark) {
     if (this.lowWatermark.toLong() > lowWatermark.toLong()) {
-      // Formatting head ache
-      throw new AssertionError("Low water mark lower than exisiting one : mine : " + this.lowWatermark
+      logger.warn("Low water mark lower than exisiting one : mine : " + this.lowWatermark
                                + " server sent : " + lowWatermark);
+      return;
     }
     if (this.lowWatermark.toLong() + ALLOWED_LWM_DELTA > lowWatermark.toLong()) {
       if (ignoredCount++ > ALLOWED_LWM_DELTA * 10) {
