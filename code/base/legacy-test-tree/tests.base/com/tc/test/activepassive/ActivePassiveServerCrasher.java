@@ -4,34 +4,54 @@
  */
 package com.tc.test.activepassive;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
-
 public class ActivePassiveServerCrasher implements Runnable {
 
   private final ActivePassiveServerManager serverManger;
   private final long                       serverCrashWaitTimeInSec;
 
-  private SynchronizedBoolean              testIsRunning;
+  private Object                           lock = new Object();
+  private boolean                          testIsRunning;
 
   public ActivePassiveServerCrasher(ActivePassiveServerManager serverManager, long serverCrashWaitTimeInSec) {
     this.serverManger = serverManager;
     this.serverCrashWaitTimeInSec = serverCrashWaitTimeInSec;
-    testIsRunning = new SynchronizedBoolean(true);
+    testIsRunning = true;
   }
 
   public void run() {
-    while (testIsRunning.get()) {
-      try {
-        Thread.sleep(serverCrashWaitTimeInSec * 1000);
-        serverManger.crashActive();
-        serverManger.restartLastCrashedServer();
-      } catch (Exception e) {
-        serverManger.storeErrors(e);
+    boolean isRunning;
+    while (true) {
+      synchronized (lock) {
+        isRunning = testIsRunning;
+      }
+      if (isRunning) {
+        try {
+          Thread.sleep(serverCrashWaitTimeInSec * 1000);
+          serverManger.crashActive();
+        } catch (Exception e) {
+          serverManger.storeErrors(e);
+        }
+      } else {
+        break;
+      }
+      synchronized (lock) {
+        isRunning = testIsRunning;
+      }
+      if (isRunning) {
+        try {
+          serverManger.restartLastCrashedServer();
+        } catch (Exception e) {
+          serverManger.storeErrors(e);
+        }
+      } else {
+        break;
       }
     }
   }
 
   public void stop() {
-    testIsRunning.set(false);
+    synchronized (lock) {
+      testIsRunning = false;
+    }
   }
 }

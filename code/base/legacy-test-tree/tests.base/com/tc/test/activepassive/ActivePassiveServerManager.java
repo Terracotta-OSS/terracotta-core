@@ -112,8 +112,8 @@ public class ActivePassiveServerManager {
                                                                                                    jmxPorts[1],
                                                                                                    serverNames[1]));
       if (dsoPorts.length > 2) {
-        dsoPorts[2] = 7510;
-        jmxPorts[2] = 7520;
+        dsoPorts[2] = 6510;
+        jmxPorts[2] = 6520;
         serverNames[2] = SERVER_NAME + 2;
         servers[2] = new ServerInfo(HOST, serverNames[2], dsoPorts[2], jmxPorts[2], getServerControl(dsoPorts[2],
                                                                                                      jmxPorts[2],
@@ -251,8 +251,8 @@ public class ActivePassiveServerManager {
     }
   }
 
-  private void waitForPassiveStandby() throws Exception {
-    long duration = jmxPorts.length * 5000;
+  private void waitForPassive() throws Exception {
+    long duration = jmxPorts.length * 10000;
     long startTime = System.currentTimeMillis();
 
     while (duration > (System.currentTimeMillis() - startTime)) {
@@ -327,9 +327,9 @@ public class ActivePassiveServerManager {
 
     if (activeIndex < 0) { throw new AssertionError("Active index was not set."); }
 
-    debugPrintln("***** wait to find a passive-standby server.");
-    waitForPassiveStandby();
-    debugPrintln("***** finish  wait to find a passive-standby server.");
+    debugPrintln("***** wait to find an appropriate passive server.");
+    waitForPassive();
+    debugPrintln("***** finished waiting to find an appropriate passive server.");
 
     ServerControl server = servers[activeIndex].getServerControl();
     server.crash();
