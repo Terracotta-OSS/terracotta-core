@@ -303,6 +303,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   def check_active_passive
     depends :init, :compile
     @internal_config_source['tc.tests.configuration.transparent-tests.mode'] = 'active-passive'
+    @internal_config_source['test_timeout'] = (30 * 60).to_s
     run_tests(FixedModuleTypeTestSet.new([ 'dso-crash-tests' ], [ 'system' ]))
   end
 
