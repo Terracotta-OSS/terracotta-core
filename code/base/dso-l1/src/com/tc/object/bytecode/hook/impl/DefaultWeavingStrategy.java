@@ -55,6 +55,14 @@ import java.util.Set;
  */
 public class DefaultWeavingStrategy implements WeavingStrategy {
 
+  static {
+    // Load the InitialClassDumper class in the same class loader as the
+    // current class to ensure that it will not be transformed while
+    // being loaded by a child class loader as this would result in a
+    // ClassCircularityError exception
+    InitialClassDumper dummy = InitialClassDumper.INSTANCE;
+  }
+
   private final DSOClientConfigHelper m_configHelper;
   private final InstrumentationLogger m_logger;
   private final InstrumentationLogger m_instrumentationLogger;

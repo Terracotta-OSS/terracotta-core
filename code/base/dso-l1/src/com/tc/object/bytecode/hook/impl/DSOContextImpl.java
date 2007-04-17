@@ -29,7 +29,6 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.logging.InstrumentationLoggerImpl;
 import com.tc.plugins.ModulesLoader;
 import com.tc.util.Assert;
-import com.tc.util.InitialClassDumper;
 import com.tc.util.TCTimeoutException;
 import com.terracottatech.config.ConfigurationModel;
 
@@ -44,15 +43,6 @@ import java.util.Collection;
 import java.util.HashMap;
 
 public class DSOContextImpl implements DSOContext {
-
-  static {
-    // Eagerly load this class to avoid ClassCircularityError in preProcess()
-    try {
-      Class.forName(InitialClassDumper.class.getName());
-    } catch (ClassNotFoundException e) {
-      throw new AssertionError(e);
-    }
-  }
 
   private static final TCLogger                     logger = TCLogging.getLogger(DSOContextImpl.class);
 
