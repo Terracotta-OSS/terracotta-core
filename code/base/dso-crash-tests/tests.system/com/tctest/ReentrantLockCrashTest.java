@@ -3,6 +3,8 @@
  */
 package com.tctest;
 
+import com.tc.test.activepassive.ActivePassiveTestSetupManager;
+
 public class ReentrantLockCrashTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 3;
@@ -18,6 +20,18 @@ public class ReentrantLockCrashTest extends TransparentTestBase {
   
   protected boolean canRunCrash() {
     return true;
+  }
+  
+  protected boolean canRunActivePassive() {
+    return true;
+  }
+
+  public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
+    setupManager.setServerCount(2);
+    setupManager.setServerCrashMode(ActivePassiveTestSetupManager.CONTINUOUS_ACTIVE_CRASH);
+    setupManager.setServerCrashWaitInSec(30);
+    setupManager.setServerShareDataMode(ActivePassiveTestSetupManager.DISK);
+    setupManager.setServerPersistenceMode(ActivePassiveTestSetupManager.PERMANENT_STORE);
   }
   
 }
