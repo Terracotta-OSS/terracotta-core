@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver.tomcat5x;
 
@@ -22,8 +23,6 @@ import java.util.Properties;
  */
 public final class Tomcat5xAppServerFactory extends NewAppServerFactory {
 
-  public static final String     NAME         = "tomcat";
-
   // This class may only be instantiated by its parent which contains the ProtectedKey
   public Tomcat5xAppServerFactory(ProtectedKey protectedKey, TestConfigObject config) {
     super(protectedKey, config);
@@ -38,11 +37,13 @@ public final class Tomcat5xAppServerFactory extends NewAppServerFactory {
   }
 
   public AppServerInstallation createInstallation(URL host, File serverDir, File workingDir) throws Exception {
-    return new Tomcat5xAppServerInstallation(host, serverDir, workingDir, config.appserverMajorVersion(), config.appserverMinorVersion());
+    return new Tomcat5xAppServerInstallation(host, serverDir, workingDir, config.appserverMajorVersion(), config
+        .appserverMinorVersion());
   }
-  
+
   public AppServerInstallation createInstallation(File home, File workingDir) throws Exception {
-    return new Tomcat5xAppServerInstallation(home, workingDir, config.appserverMajorVersion(), config.appserverMinorVersion());
+    return new Tomcat5xAppServerInstallation(home, workingDir, config.appserverMajorVersion(), config
+        .appserverMinorVersion());
   }
 
   public War createWar(String appName) {

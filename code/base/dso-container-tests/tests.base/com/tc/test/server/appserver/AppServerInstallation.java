@@ -13,7 +13,7 @@ public interface AppServerInstallation {
 
   void uninstall() throws Exception;
 
-  File getDataDirectory();
+  File dataDirectory();
 
-  File getSandboxDirectory();
+  File sandboxDirectory();
 }

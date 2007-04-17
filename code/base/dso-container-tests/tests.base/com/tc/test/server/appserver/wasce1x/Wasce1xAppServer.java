@@ -8,6 +8,7 @@ import org.codehaus.cargo.container.geronimo.internal.GeronimoUtils;
 import org.codehaus.cargo.util.log.Logger;
 
 import com.tc.process.LinkedJavaProcessPollingAgent;
+import com.tc.process.StreamAppender;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.ServerParameters;
 import com.tc.test.server.ServerResult;
@@ -16,7 +17,6 @@ import com.tc.test.server.appserver.AppServerParameters;
 import com.tc.test.server.appserver.AppServerResult;
 import com.tc.test.server.appserver.cargo.CargoLinkedChildProcess;
 import com.tc.test.server.util.AppServerUtil;
-import com.tc.test.server.util.StreamAppender;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -105,7 +105,7 @@ public final class Wasce1xAppServer extends AbstractAppServer {
     for (int i = 0; i < jvmArgs.length; i++) {
       if (!("" + jvmArgs[i]).trim().equals("")) cl.add(jvmArgs[i]);
     }
-    cl.add("-DNODE=" + instance.getName());
+
     cl.add("-D" + ENDORSED_DIR_PROP + "=" + endorsedPath);
     cl.add("-D" + TMP_DIR_PROP + "=" + instance.getCanonicalPath() + File.separator + VAR + File.separator + "temp");
     cl.add("-D" + BASE_DIR_PROP + "=" + instance.getCanonicalPath());
@@ -119,7 +119,7 @@ public final class Wasce1xAppServer extends AbstractAppServer {
     cl.add(instance.toString());
     cl.add("--long"); // wasce args
 
-    consoleLogger = new ConsoleLogger(params.instanceName(), false);
+    consoleLogger = new ConsoleLogger(params.instanceName());
     consoleLogger.info(Arrays.asList(cl.toArray(new String[0])).toString(), LOG_CAT);
 
     final Logger logger = consoleLogger;

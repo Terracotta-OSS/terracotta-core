@@ -11,6 +11,8 @@ import java.io.File;
  */
 interface AppServerStartupEnvironment extends AppServerInstallation {
 
+  File serverBaseDir();
+
   File workingDirectory();
 
   File serverInstallDirectory();
@@ -20,6 +22,6 @@ interface AppServerStartupEnvironment extends AppServerInstallation {
   String majorVersion();
 
   String minorVersion();
-  
+
   boolean isRepoInstall();
 }

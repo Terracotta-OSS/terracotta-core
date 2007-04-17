@@ -8,6 +8,7 @@ import com.tc.config.Directories;
 import com.tc.exception.ImplementMe;
 import com.tc.test.TempDirectoryHelper;
 import com.tc.test.TestConfigObject;
+import com.tc.test.server.appserver.glassfishv1.GlassfishV1AppServerFactory;
 import com.tc.test.server.appserver.jboss4x.JBoss4xAppServerFactory;
 import com.tc.test.server.appserver.tomcat5x.Tomcat5xAppServerFactory;
 import com.tc.test.server.appserver.war.War;
@@ -59,29 +60,21 @@ public abstract class NewAppServerFactory {
     Assert.assertNotNull(config);
     String factoryName = config.appserverFactoryName();
     String majorVersion = config.appserverMajorVersion();
-    
+
     if ("tomcat".equals(factoryName)) {
-      if ("5".equals(majorVersion)) 
-        return new Tomcat5xAppServerFactory(new ProtectedKey(), config);
+      if ("5".equals(majorVersion)) return new Tomcat5xAppServerFactory(new ProtectedKey(), config);
+    } else if ("weblogic".equals(factoryName)) {
+      if ("8".equals(majorVersion)) return new Weblogic8xAppServerFactory(new ProtectedKey(), config);
+    } else if ("wasce".equals(factoryName)) {
+      if ("1".equals(majorVersion)) return new Wasce1xAppServerFactory(new ProtectedKey(), config);
+    } else if ("jboss".equals(factoryName)) {
+      if ("4".equals(majorVersion)) return new JBoss4xAppServerFactory(new ProtectedKey(), config);
+    } else if ("glassfish".equals(factoryName)) {
+      if ("v1".equals(majorVersion)) return new GlassfishV1AppServerFactory(new ProtectedKey(), config);
     }
-    else if ("weblogic".equals(factoryName)) {
-      if ("8".equals(majorVersion))
-        return new Weblogic8xAppServerFactory(new ProtectedKey(), config);
-    }
-    else if ("wasce".equals(factoryName)) {
-      if ("1".equals(majorVersion))
-        return new Wasce1xAppServerFactory(new ProtectedKey(), config);
-    }
-    else if ("jboss".equals(factoryName)) {
-      if ("4".equals(majorVersion))
-        return new JBoss4xAppServerFactory(new ProtectedKey(), config);
-    }
-    else if ("glassfish".equals(factoryName)) {
-      if ("v1".equals(majorVersion))
-        throw new ImplementMe("D'oh. Glassfish is not yet supported");
-    }
-    else throw new ImplementMe("App server named '" + factoryName + "' is not yet supported.");
-    return null;
+
+    throw new ImplementMe("App server named '" + factoryName + "' with major version " + majorVersion
+                          + " is not yet supported.");
   }
 
   private final synchronized void copyLicenseIfAvailable() {

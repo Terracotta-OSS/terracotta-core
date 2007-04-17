@@ -19,6 +19,10 @@ import javax.servlet.http.HttpSession;
 
 public class InstrumentEverythingInContainerTest extends AbstractAppServerTestCase {
 
+  protected boolean isSessionTest() {
+    return false;
+  }
+
   public void test() throws Exception {
     addInclude("*..*");
 

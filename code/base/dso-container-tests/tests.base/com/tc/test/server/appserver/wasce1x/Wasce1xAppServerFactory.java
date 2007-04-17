@@ -22,8 +22,6 @@ import java.util.Properties;
  */
 public final class Wasce1xAppServerFactory extends NewAppServerFactory {
 
-  public static final String NAME = "wasce";
-
   // This class may only be instantiated by its parent which contains the ProtectedKey
   public Wasce1xAppServerFactory(ProtectedKey protectedKey, TestConfigObject config) {
     super(protectedKey, config);

@@ -22,8 +22,6 @@ import java.util.Properties;
  */
 public final class JBoss4xAppServerFactory extends NewAppServerFactory {
 
-  public static final String     NAME         = "jboss";
-
   // This class may only be instantiated by its parent which contains the ProtectedKey
   public JBoss4xAppServerFactory(ProtectedKey protectedKey, TestConfigObject config) {
     super(protectedKey, config);
@@ -40,7 +38,7 @@ public final class JBoss4xAppServerFactory extends NewAppServerFactory {
   public AppServerInstallation createInstallation(URL host, File serverDir, File workingDir) throws Exception {
     return new JBoss4xAppServerInstallation(host, serverDir, workingDir, config.appserverMajorVersion(), config.appserverMinorVersion());
   }
-  
+
   public AppServerInstallation createInstallation(File home, File workingDir) throws Exception {
     return new JBoss4xAppServerInstallation(home, workingDir, config.appserverMajorVersion(), config.appserverMinorVersion());
   }

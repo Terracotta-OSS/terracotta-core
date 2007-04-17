@@ -10,6 +10,7 @@ import com.tc.config.Directories;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
+import com.tc.util.runtime.Os;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -375,6 +376,10 @@ public class TestConfigObject {
   }
 
   public String appserverServerInstallDir() {
+    // Glassfish gets mad (imqbrokersvc.exe crashes) if the install path is long on windows,
+    // maybe someday this hack won't be needed
+    if (Os.isWindows()) { return new File(effectiveShortPathNameTempDirectory(), "AS").getAbsolutePath(); }
+
     File buildDir = new File(System.getProperty(TC_BASE_DIR), ".tc-build-cache");
     return new File(buildDir, "app-server-install").getAbsolutePath();
   }

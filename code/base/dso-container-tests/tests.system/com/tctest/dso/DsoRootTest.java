@@ -25,6 +25,10 @@ import javax.servlet.http.HttpServletResponse;
 public class DsoRootTest extends AbstractAppServerTestCase {
   private static final int TOTAL_REQUEST_COUNT = 100;
 
+  protected boolean isSessionTest() {
+    return false;
+  }
+
   public void testRoot() throws Throwable {
     List roots = new ArrayList();
     String rootName = "counterObject";
@@ -65,7 +69,7 @@ public class DsoRootTest extends AbstractAppServerTestCase {
   }
 
   public static class RootCounterServlet extends HttpServlet {
-    private Counter counterObject = new Counter();
+    private final Counter counterObject = new Counter();
 
     private static class Counter {
       private int counter;

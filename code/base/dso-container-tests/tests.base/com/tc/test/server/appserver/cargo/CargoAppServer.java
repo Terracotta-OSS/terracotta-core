@@ -74,7 +74,7 @@ public abstract class CargoAppServer extends AbstractAppServer {
     container = container(config);
     container.setTimeout(8 * 60 * 1000);
     container.setHome(serverInstallDirectory().getAbsolutePath());
-    container.setLogger(new ConsoleLogger(params.instanceName(), false));
+    container.setLogger(new ConsoleLogger(params.instanceName()));
     setExtraClasspath(params);
 
     linkJavaProcess(instance);
@@ -113,7 +113,7 @@ public abstract class CargoAppServer extends AbstractAppServer {
       File warFile = (File) entry.getValue();
       warapp = new WAR(warFile.getPath());
       warapp.setContext(context);
-      warapp.setLogger(new ConsoleLogger(instanceName, true));
+      warapp.setLogger(new ConsoleLogger(instanceName));
       config.addDeployable(warapp);
     }
   }

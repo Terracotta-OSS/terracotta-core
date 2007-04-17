@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver;
 
@@ -23,6 +24,7 @@ public abstract class AbstractAppServerInstallation implements AppServerStartupE
   private final File    dataDirectory;
   private final File    sandboxDirectory;
   private final boolean isRepoInstall;
+  private final File    serverBaseDir;
 
   /**
    * Use existing installation (example: CATALINA_HOME)
@@ -36,6 +38,7 @@ public abstract class AbstractAppServerInstallation implements AppServerStartupE
     this.majorVersion = majorVersion;
     this.minorVersion = minorVersion;
     this.serverInstall = home;
+    this.serverBaseDir = null;
     this.isRepoInstall = false;
     this.workingDirectory = workingDir;
     (this.dataDirectory = new File(workingDirectory + File.separator + AppServerConstants.DATA_DIR)).mkdir();
@@ -43,6 +46,7 @@ public abstract class AbstractAppServerInstallation implements AppServerStartupE
     // description file for the working directory with filename indicating the server type. Can add more desciptive
     // information if needed.
     new File(workingDir + File.separator + serverType() + "-" + majorVersion + "." + minorVersion).createNewFile();
+
   }
 
   /**
@@ -60,6 +64,8 @@ public abstract class AbstractAppServerInstallation implements AppServerStartupE
     this.serverInstall = ConcreteReadOnlyAppServerInstallation.create(host, serverDir, serverType(), majorVersion,
                                                                       minorVersion);
 
+    this.serverBaseDir = new File(serverInstall, serverType() + "-" + majorVersion + "." + minorVersion);
+
     this.workingDirectory = workingDir;
     (this.dataDirectory = new File(workingDirectory + File.separator + AppServerConstants.DATA_DIR)).mkdir();
     this.sandboxDirectory = workingDirectory;
@@ -68,7 +74,7 @@ public abstract class AbstractAppServerInstallation implements AppServerStartupE
     new File(workingDir + File.separator + serverType() + "-" + majorVersion + "." + minorVersion).createNewFile();
   }
 
-  public final File getDataDirectory() {
+  public final File dataDirectory() {
     return dataDirectory;
   }
 
@@ -94,11 +100,16 @@ public abstract class AbstractAppServerInstallation implements AppServerStartupE
     return serverInstall;
   }
 
-  public File getSandboxDirectory() {
+  public File sandboxDirectory() {
     return sandboxDirectory;
   }
 
   public boolean isRepoInstall() {
     return isRepoInstall;
   }
+
+  public File serverBaseDir() {
+    return serverBaseDir;
+  }
+
 }
