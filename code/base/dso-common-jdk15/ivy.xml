@@ -2,7 +2,7 @@
 <ivy-module version="1.0">
   <info organisation="ibiblio" module="dso-common-jdk15"/>
   <dependencies>
-	<dependency name="catalina-tribes" rev="6.0.11-20070412" org="terracotta"/>
+	<dependency name="catalina-tribes" rev="6.0.11-20070418" org="terracotta"/>
 	<dependency name="tomcat-juli" rev="6.0.9" org="terracotta"/>
   </dependencies>
 </ivy-module>
