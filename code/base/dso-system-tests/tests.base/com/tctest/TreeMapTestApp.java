@@ -31,6 +31,8 @@ public class TreeMapTestApp extends AbstractTransparentApp {
   private final CyclicBarrier barrier;
 
   private final SubMapKey     subMapKeyRoot = new SubMapKey(0);
+  
+  private final int loopcount = 200;
 
   public TreeMapTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -39,8 +41,11 @@ public class TreeMapTestApp extends AbstractTransparentApp {
 
   public void run() {
     try {
-      run0();
-      run1();
+      for(int i = 0; i < loopcount; ++i) {
+        clear();
+        run0();
+        run1();
+      }
     } catch (Throwable t) {
       notifyError(t);
     }
