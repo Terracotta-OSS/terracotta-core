@@ -9,11 +9,14 @@ import org.apache.catalina.tribes.ChannelException.FaultyMember;
 import org.apache.catalina.tribes.group.GroupChannel;
 import org.apache.catalina.tribes.group.interceptors.StaticMembershipInterceptor;
 import org.apache.catalina.tribes.group.interceptors.TcpFailureDetector;
+import org.apache.catalina.tribes.group.interceptors.TcpPingInterceptor;
 import org.apache.catalina.tribes.membership.StaticMember;
 import org.apache.catalina.tribes.transport.DataSender;
 import org.apache.catalina.tribes.transport.ReceiverBase;
 import org.apache.catalina.tribes.transport.ReplicationTransmitter;
 import org.apache.catalina.tribes.util.UUIDGenerator;
+
+import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
@@ -55,6 +58,8 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
                                                                                 .synchronizedMap(new HashMap<NodeID, Member>());
   private final Map<String, GroupMessageListener>         messageListeners  = new ConcurrentHashMap<String, GroupMessageListener>();
   private final Map<MessageID, GroupResponse>             pendingRequests   = new Hashtable<MessageID, GroupResponse>();
+
+  private final SynchronizedLong                          currentId         = new SynchronizedLong(0);
   private boolean                                         stopped           = false;
 
   private boolean                                         debug             = false;
@@ -104,15 +109,18 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       receiver.setAutoBind(0);
 
       commonGroupChanelConfig();
+      TcpPingInterceptor tcp = new TcpPingInterceptor();
+      tcp.setUseThread(true);
+      tcp.setInterval(1000);
 
       // start services
       // set up failure detector
       failuredetector = new TcpFailureDetector();
-      failuredetector.start(Channel.DEFAULT);
+      group.addInterceptor(tcp);
       group.addInterceptor(failuredetector);
       group.addInterceptor(smi);
       group.start(Channel.SND_RX_SEQ | Channel.SND_TX_SEQ);
-
+      this.thisNodeID = new NodeID(this.thisMember.getName(), this.thisMember.getUniqueId());
       return this.thisNodeID;
     } catch (ChannelException e) {
       logger.error(e);

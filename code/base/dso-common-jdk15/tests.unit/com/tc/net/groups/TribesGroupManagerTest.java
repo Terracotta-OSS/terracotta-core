@@ -16,7 +16,7 @@ import java.io.ObjectOutput;
 public class TribesGroupManagerTest extends TCTestCase {
 
   public TribesGroupManagerTest() {
-    disableTestUntil("testGroupEventsStatic", "2007-04-27");
+    // disableTestUntil("testGroupEventsStatic", "2007-04-27");
   }
 
   public void testIfTribesGroupManagerLoads() throws Exception {
@@ -40,14 +40,14 @@ public class TribesGroupManagerTest extends TCTestCase {
     gm2.registerForGroupEvents(gel2);
     NodeID n2 = gm2.joinMcast();
 
-    assertEquals(n2, gel1.getLastNodeJoined());
-    assertEquals(n1, gel2.getLastNodeJoined());
+    assertTrue(checkGroupEvent("MCAST", n2, gel1, true));
+    assertTrue(checkGroupEvent("MCAST", n1, gel2, true));
 
     gm1.stop();
-    assertTrue(checkNodeLeftEvent("MCAST", n1, gel2));
+    assertTrue(checkGroupEvent("MCAST", n1, gel2, false));
     gm2.stop();
   }
-  
+
   public void testGroupEventsStatic() throws Exception {
     PortChooser pc = new PortChooser();
     final int p1 = pc.chooseRandomPort();
@@ -69,11 +69,11 @@ public class TribesGroupManagerTest extends TCTestCase {
     NodeID n2 = gm2.joinStatic(allNodes[1], allNodes);
     assertNotEquals(n1, n2);
 
-    assertEquals(n2, gel1.getLastNodeJoined());
-    assertEquals(n1, gel2.getLastNodeJoined());
+    assertTrue(checkGroupEvent("STATIC", n2, gel1, true));
+    assertTrue(checkGroupEvent("STATIC", n1, gel2, true));
 
     gm1.stop();
-    checkNodeLeftEvent("STATIC", n1, gel2);
+    assertTrue(checkGroupEvent("STATIC", n1, gel2, false));
     gm2.stop();
   }
 
@@ -113,7 +113,6 @@ public class TribesGroupManagerTest extends TCTestCase {
     gm1.stop();
     gm2.stop();
   }
-  
 
   private void checkSendingReceivingMessages(TribesGroupManager gm1, MyListener l1, TribesGroupManager gm2,
                                              MyListener l2) throws GroupException {
@@ -136,15 +135,18 @@ public class TribesGroupManagerTest extends TCTestCase {
     assertEquals(m3, m4);
   }
 
-  private boolean checkNodeLeftEvent(String msg, NodeID n1, MyGroupEventListener gel2) {
+  private boolean checkGroupEvent(String msg, NodeID n1, MyGroupEventListener gel2, boolean checkNodeJoined) {
+    final String event = (checkNodeJoined) ? "NodeJoined" : "NodeLeft";
     for (int i = 0; i < 10; i++) {
-      NodeID actual = gel2.getLastNodeLeft();
-      System.err.println("\n### [" + msg + "] attempt # " + i + " -> actualNodeLeft=" + actual);
+      NodeID actual = null;
+      if (checkNodeJoined) actual = gel2.getLastNodeJoined();
+      else actual = gel2.getLastNodeLeft();
+      System.err.println("\n### [" + msg + "] attempt # " + i + " -> actual" + event + "=" + actual);
       if (actual == null) {
         ThreadUtil.reallySleep(1 * 500);
       } else {
-        assertEquals(n1, actual);
-        System.err.println("\n### [" + msg + "] it took " + (i * 500) + " millis to get NodeLeft event");
+        assertTrue(n1.equals(actual) || n1.getName().equals(actual.getName()));
+        System.err.println("\n### [" + msg + "] it took " + (i * 500) + " millis to get " + event + " event");
         return true;
       }
     }
