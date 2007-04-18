@@ -87,7 +87,7 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   }
 
   public void start(Set cids) {
-    throw new ImplementMe();
+    // NOP
   }
 
 }
