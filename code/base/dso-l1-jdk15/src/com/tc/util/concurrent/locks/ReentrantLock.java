@@ -59,12 +59,14 @@ public class ReentrantLock implements Lock, java.io.Serializable {
 
   public void lock() {
     Thread currentThread = Thread.currentThread();
+    boolean isInterrupted = false;
     synchronized (lock) {
       while (owner != null && owner != currentThread && lockInUnShared.contains(Boolean.TRUE)) {
         try {
           lock.wait();
         } catch (InterruptedException e) {
-          throw new TCRuntimeException(e);
+          //throw new TCRuntimeException(e);
+          isInterrupted = true;
         }
       }
 
@@ -79,6 +81,9 @@ public class ReentrantLock implements Lock, java.io.Serializable {
       innerSetLockState();
       waitingQueue.remove(currentThread);
       numQueued--;
+    }
+    if (isInterrupted) {
+      currentThread.interrupt();
     }
   }
 
