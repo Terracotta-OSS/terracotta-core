@@ -83,8 +83,7 @@ public final class LinkedJavaProcessPollingAgent {
   }
 
   /**
-   * Shutdown heartbeat server and
-   * send a kill signal to child processes
+   * Shutdown heartbeat server and send a kill signal to child processes
    */
   public static synchronized void shutdown() {
     if (server != null) {
@@ -240,7 +239,7 @@ public final class LinkedJavaProcessPollingAgent {
 
     private synchronized void shutdown() {
       setRunning(false);
-      
+
       if (serverSocket != null) {
         try {
           serverSocket.close(); // this effectively interrupts the thread and force it to exit
@@ -248,7 +247,7 @@ public final class LinkedJavaProcessPollingAgent {
           throw new RuntimeException(e);
         }
       }
-      
+
       synchronized (heartBeatThreads) {
         HeartbeatThread ht;
         for (Iterator i = heartBeatThreads.iterator(); i.hasNext();) {
@@ -282,10 +281,8 @@ public final class LinkedJavaProcessPollingAgent {
           }
         }
       } catch (Exception e) {
-        if (!running)
-          log("Heartbeat server was shutdown.");
-        else
-          log("Got expcetion in heartbeat server: " + e.getMessage());
+        if (!running) log("Heartbeat server was shutdown.");
+        else log("Got expcetion in heartbeat server: " + e.getMessage());
       } finally {
         setRunning(false);
         log("Heartbeat server terminated.");
@@ -328,9 +325,7 @@ public final class LinkedJavaProcessPollingAgent {
         out.flush();
         String result = in.readLine();
         log("received: " + result);
-        if (result == null) {
-          return false;
-        } else if (result.endsWith("TCServerMain")) {
+        if (result == null || result.endsWith("TCServerMain")) {
           // not an apserver
           return false;
         } else {
@@ -349,10 +344,7 @@ public final class LinkedJavaProcessPollingAgent {
 
         while (true) {
           synchronized (this) {
-            if (!socket.isOutputShutdown()) {
-              out.println(HEARTBEAT);
-              out.flush();
-            }
+            out.println(HEARTBEAT);
           }
           reallySleep(NORMAL_HEARTBEAT_INTERVAL);
         }
