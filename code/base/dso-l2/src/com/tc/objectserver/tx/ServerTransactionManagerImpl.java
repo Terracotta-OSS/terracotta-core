@@ -82,24 +82,30 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   // TODO:: shutdown clients should not be cleared immediately. some time to apply all the transactions
   // on the wire should be given before removing if from accounting and releasing the lock.
   public void shutdownClient(ChannelID waitee) {
-    transactionAccounts.remove(waitee);
-    Map currentStates = new HashMap(transactionAccounts);
-    for (Iterator i = currentStates.keySet().iterator(); i.hasNext();) {
-      ChannelID key = (ChannelID) i.next();
-
-      TransactionAccount client = getTransactionAccount(key);
-      if (client != null) {
+    synchronized (transactionAccounts) {
+      transactionAccounts.remove(waitee);
+      for (Iterator i = transactionAccounts.entrySet().iterator(); i.hasNext();) {
+        Entry entry = (Entry) i.next();
+        TransactionAccount client = (TransactionAccount) entry.getValue();
         for (Iterator it = client.requestersWaitingFor(waitee).iterator(); it.hasNext();) {
           TransactionID reqID = (TransactionID) it.next();
           acknowledgement(client.getClientID(), reqID, waitee);
         }
       }
     }
-
     stateManager.shutdownClient(waitee);
     lockManager.clearAllLocksFor(waitee);
     gtxm.shutdownClient(waitee);
     fireClientDisconnectedEvent(waitee);
+  }
+
+  public void start(Set cids) {
+    // XXX:: The server could have crashed right after a client crash/disconnect before it had a chance to remove
+    // transactions from the DB. If we dont do this, then these will stick around for ever and cause low-water mark to
+    // remain the same for ever and ever.
+    // For Network enabled Active/Passive, when a passive becomes active, this will be called and the passive (now
+    // active) will correct itself.
+    gtxm.shutdownAllClientsExcept(cids);
   }
 
   public void addWaitingForAcknowledgement(ChannelID waiter, TransactionID txnID, ChannelID waitee) {

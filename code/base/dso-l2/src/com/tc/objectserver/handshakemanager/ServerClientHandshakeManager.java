@@ -21,6 +21,7 @@ import com.tc.util.SequenceValidator;
 import com.tc.util.TCTimer;
 import com.tc.util.sequence.ObjectIDSequence;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -196,11 +197,14 @@ public class ServerClientHandshakeManager {
     start();
   }
 
+  // Should be called from within the sync block
   private void start() {
     logger.info("Starting DSO services...");
     lockManager.start();
     objectRequestManager.start();
-    for (Iterator i = channelManager.getRawChannelIDs().iterator(); i.hasNext();) {
+    Set cids = Collections.unmodifiableSet(channelManager.getRawChannelIDs());
+    transactionManager.start(cids);
+    for (Iterator i = cids.iterator(); i.hasNext();) {
       ChannelID channelID = (ChannelID) i.next();
       sendAckMessageFor(channelID);
     }

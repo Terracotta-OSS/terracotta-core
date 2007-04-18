@@ -10,6 +10,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
 
 import java.util.Collection;
+import java.util.Set;
 
 public class TestDSOChannelManager implements DSOChannelManager {
 
@@ -55,11 +56,11 @@ public class TestDSOChannelManager implements DSOChannelManager {
     return allChannels;
   }
 
-  public Collection getAllActiveChannelIDs() {
+  public Set getAllActiveChannelIDs() {
     throw new ImplementMe();
   }
 
-  public Collection getRawChannelIDs() {
+  public Set getRawChannelIDs() {
     throw new ImplementMe();
   }
 

@@ -48,6 +48,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class BroadcastChangeHandlerTest extends TCTestCase {
 
@@ -205,7 +206,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       return btamsg;
     }
 
-    public Collection getAllActiveChannelIDs() {
+    public Set getAllActiveChannelIDs() {
       throw new ImplementMe();
     }
 
@@ -217,7 +218,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public Collection getRawChannelIDs() {
+    public Set getRawChannelIDs() {
       throw new ImplementMe();
     }
 

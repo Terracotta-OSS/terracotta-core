@@ -18,6 +18,7 @@ import com.tc.util.TCAssertionError;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.TestCase;
 
@@ -236,7 +237,7 @@ public class LockTimerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public Collection getAllActiveChannelIDs() {
+    public Set getAllActiveChannelIDs() {
       throw new ImplementMe();
     }
 
@@ -248,7 +249,7 @@ public class LockTimerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public Collection getRawChannelIDs() {
+    public Set getRawChannelIDs() {
       throw new ImplementMe();
     }
 

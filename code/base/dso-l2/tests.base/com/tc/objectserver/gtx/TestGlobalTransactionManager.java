@@ -73,4 +73,8 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
   public void createGlobalTransactionDesc(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID) {
     throw new ImplementMe();
   }
+
+  public void shutdownAllClientsExcept(Set cids) {
+    return;
+  }
 }

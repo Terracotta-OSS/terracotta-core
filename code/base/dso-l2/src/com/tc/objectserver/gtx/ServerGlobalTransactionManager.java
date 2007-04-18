@@ -11,6 +11,7 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 
 import java.util.Collection;
+import java.util.Set;
 
 public interface ServerGlobalTransactionManager extends GlobalTransactionIDGenerator {
 
@@ -41,6 +42,8 @@ public interface ServerGlobalTransactionManager extends GlobalTransactionIDGener
   public void completeTransactions(PersistenceTransaction tx, Collection collection);
 
   public void shutdownClient(ChannelID channelID);
+  
+  public void shutdownAllClientsExcept(Set cids);
 
   public GlobalTransactionID getGlobalTransactionID(ServerTransactionID stxnID);
 

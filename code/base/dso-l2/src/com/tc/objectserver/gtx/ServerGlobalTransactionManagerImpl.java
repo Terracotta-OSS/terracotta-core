@@ -15,6 +15,7 @@ import com.tc.util.SequenceValidator;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Set;
 
 public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransactionManager {
 
@@ -24,7 +25,6 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
 
   public ServerGlobalTransactionManagerImpl(SequenceValidator sequenceValidator, TransactionStore transactionStore,
                                             PersistenceTransactionProvider ptxp) {
-    super();
     this.sequenceValidator = sequenceValidator;
     this.transactionStore = transactionStore;
     this.persistenceTransactionProvider = ptxp;
@@ -34,6 +34,12 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
     this.sequenceValidator.remove(channelID);
     PersistenceTransaction tx = this.persistenceTransactionProvider.newTransaction();
     transactionStore.shutdownClient(tx, channelID);
+    tx.commit();
+  }
+
+  public void shutdownAllClientsExcept(Set cids) {
+    PersistenceTransaction tx = this.persistenceTransactionProvider.newTransaction();
+    transactionStore.shutdownAllClientsExcept(tx, cids);
     tx.commit();
   }
 

@@ -12,6 +12,7 @@ import com.tc.object.net.DSOChannelManagerEventListener;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author steve
@@ -42,8 +43,8 @@ public class NullChannelManager implements DSOChannelManager {
     throw new UnsupportedOperationException();
   }
 
-  public Collection getAllActiveChannelIDs() {
-    return Collections.EMPTY_LIST;
+  public Set getAllActiveChannelIDs() {
+    return Collections.EMPTY_SET;
   }
 
   public void addEventListener(DSOChannelManagerEventListener listener) {
@@ -54,8 +55,8 @@ public class NullChannelManager implements DSOChannelManager {
     //
   }
 
-  public Collection getRawChannelIDs() {
-    return Collections.EMPTY_LIST;
+  public Set getRawChannelIDs() {
+    return Collections.EMPTY_SET;
   }
 
   public void makeChannelActiveNoAck(MessageChannel channel) {

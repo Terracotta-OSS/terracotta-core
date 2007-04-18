@@ -347,9 +347,9 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
   private static final class TestChannelManager implements DSOChannelManager {
 
-    public final List       closeAllChannelIDs = new ArrayList();
-    public final Map        handshakeMessages  = new HashMap();
-    public final Collection channelIDs         = new HashSet();
+    public final List closeAllChannelIDs = new ArrayList();
+    public final Map  handshakeMessages  = new HashMap();
+    public final Set  channelIDs         = new HashSet();
 
     public void closeAll(Collection theChannelIDs) {
       closeAllChannelIDs.addAll(theChannelIDs);
@@ -363,7 +363,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return null;
     }
 
-    public Collection getAllActiveChannelIDs() {
+    public Set getAllActiveChannelIDs() {
       return this.channelIDs;
     }
 
@@ -398,7 +398,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public Collection getRawChannelIDs() {
+    public Set getRawChannelIDs() {
       return getAllActiveChannelIDs();
     }
 

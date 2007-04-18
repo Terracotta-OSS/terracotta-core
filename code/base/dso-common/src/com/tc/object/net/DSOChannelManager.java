@@ -9,6 +9,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Wraps the generic ChannelManager adding slightly different channel visibility than DSO requires (we don't want
@@ -26,14 +27,14 @@ public interface DSOChannelManager {
 
   public String getChannelAddress(ChannelID channelID);
 
-  public Collection getAllActiveChannelIDs();
+  public Set getAllActiveChannelIDs();
 
   public void addEventListener(DSOChannelManagerEventListener listener);
 
   public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(ChannelID channelID)
       throws NoSuchChannelException;
 
-  public Collection getRawChannelIDs();
+  public Set getRawChannelIDs();
 
   public void makeChannelActive(ChannelID channelID, long startIDs, long endIDs, boolean persistent);
 

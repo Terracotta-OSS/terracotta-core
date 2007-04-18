@@ -4,7 +4,7 @@
 
 package com.tc.net.protocol.tcm;
 
-import java.util.Collection;
+import java.util.Set;
 
 /**
  * provides the sessionIDs
@@ -20,7 +20,7 @@ public interface ChannelManager {
 
   public void addEventListener(ChannelManagerEventListener listener);
 
-  public Collection getAllChannelIDs();
+  public Set getAllChannelIDs();
 
   public void closeAllChannels();
 }

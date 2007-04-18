@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Wraps the generic ChannelManager to hide it from the rest of the DSO world and to provide delayed visibility of
@@ -97,9 +98,9 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     return (ClientHandshakeAckMessage) channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE);
   }
 
-  public Collection getAllActiveChannelIDs() {
+  public Set getAllActiveChannelIDs() {
     synchronized (activeChannels) {
-      return Collections.unmodifiableCollection(activeChannels.keySet());
+      return Collections.unmodifiableSet(activeChannels.keySet());
     }
   }
 
@@ -130,7 +131,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     eventListeners.add(listener);
   }
 
-  public Collection getRawChannelIDs() {
+  public Set getRawChannelIDs() {
     return genericChannelManager.getAllChannelIDs();
   }
 

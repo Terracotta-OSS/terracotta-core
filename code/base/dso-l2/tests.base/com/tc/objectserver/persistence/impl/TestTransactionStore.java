@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -111,5 +112,9 @@ public class TestTransactionStore implements TransactionStore {
   public void createGlobalTransactionDesc(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID) {
     GlobalTransactionDescriptor rv = new GlobalTransactionDescriptor(stxnID, globalTransactionID);
     basicPut(volatileMap, rv);
+  }
+
+  public void shutdownAllClientsExcept(PersistenceTransaction tx, Set cids) {
+    throw new ImplementMe();
   }
 }

@@ -4,6 +4,8 @@
  */
 package com.tc.objectserver.persistence.impl;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
@@ -20,10 +22,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 public class TransactionStoreImpl implements TransactionStore {
+
+  private static final TCLogger      logger                 = TCLogging.getLogger(TransactionStoreImpl.class);
 
   private final Map                  serverTransactionIDMap = Collections.synchronizedMap(new HashMap());
   private final SortedMap            ids                    = Collections
@@ -117,6 +122,21 @@ public class TransactionStoreImpl implements TransactionStore {
         }
       }
     }
+    logger.info("shutdownClient() : Removing txns from DB : " + stxIDs.size());
+    removeAllByServerTransactionID(tx, stxIDs);
+  }
+
+  public void shutdownAllClientsExcept(PersistenceTransaction tx, Set cids) {
+    Collection stxIDs = new HashSet();
+    synchronized (serverTransactionIDMap) {
+      for (Iterator iter = serverTransactionIDMap.keySet().iterator(); iter.hasNext();) {
+        ServerTransactionID stxID = (ServerTransactionID) iter.next();
+        if (!cids.contains(stxID.getChannelID())) {
+          stxIDs.add(stxID);
+        }
+      }
+    }
+    logger.info("shutdownAllClientsExcept() : Removing txns from DB : " + stxIDs.size());
     removeAllByServerTransactionID(tx, stxIDs);
   }
 

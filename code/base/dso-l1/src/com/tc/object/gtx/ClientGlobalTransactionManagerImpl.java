@@ -66,8 +66,10 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
 
   public synchronized void setLowWatermark(GlobalTransactionID lowWatermark) {
     if (this.lowWatermark.toLong() > lowWatermark.toLong()) {
-      logger.warn("Low water mark lower than exisiting one : mine : " + this.lowWatermark
-                               + " server sent : " + lowWatermark);
+      // XXX::This case is possible when the server crashes (both in diskbased and lanbased) Eventually the server will
+      // catch up
+      logger.warn("Low water mark lower than exisiting one : mine : " + this.lowWatermark + " server sent : "
+                  + lowWatermark);
       return;
     }
     if (this.lowWatermark.toLong() + ALLOWED_LWM_DELTA > lowWatermark.toLong()) {
