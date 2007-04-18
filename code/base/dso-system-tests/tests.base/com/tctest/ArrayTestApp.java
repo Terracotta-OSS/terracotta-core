@@ -9,6 +9,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.Random;
@@ -16,19 +17,26 @@ import java.util.Random;
 public class ArrayTestApp extends AbstractTransparentApp {
 
   private String[] myArrayTestRoot;
+  final private String[] stringAry = { "hee", "hoo", "haa", "terracotta", "google", "yahoo", "apple" };
+  final private static long runtime = 1000 * 200;   // 200 seconds
 
   public ArrayTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
-    this.myArrayTestRoot = new String[] { "hee", "hoo", "haa" };
+    this.myArrayTestRoot = new String[] { "hee", "hoo", "haa", "terracotta", "google", "yahoo", "apple" };
   }
 
   public void run() {
     Random rand = new Random();
+    long end = System.currentTimeMillis() + runtime;
     try {
-      synchronized (myArrayTestRoot) {
-        System.out.println(myArrayTestRoot[rand.nextInt(myArrayTestRoot.length)]);
+      while (end > System.currentTimeMillis()) {
+        synchronized (myArrayTestRoot) {
+          int idx = rand.nextInt(myArrayTestRoot.length);
+          // System.out.println(myArrayTestRoot[rand.nextInt(myArrayTestRoot.length)]);
+          Assert.assertTrue(myArrayTestRoot[idx].equals(stringAry[idx]));
+        }
+        Thread.sleep((int)(Math.random() * 10));
       }
-      Thread.sleep(1);
     } catch (Exception e) {
       e.printStackTrace();
     }
