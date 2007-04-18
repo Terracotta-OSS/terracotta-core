@@ -23,6 +23,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import com.tc.util.Conversion;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -42,7 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TribesGroupManager implements GroupManager, ChannelListener, MembershipListener {
-  private static final String                             L2_NHA = "l2.nha";
+  private static final String                             L2_NHA            = "l2.nha";
   private static final String                             SEND_TIMEOUT_PROP = "send.timeout.millis";
   private static final String                             USE_MCAST         = "use.mcast";
 
@@ -61,7 +62,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   private final Map<MessageID, GroupResponse>             pendingRequests   = new Hashtable<MessageID, GroupResponse>();
 
   private boolean                                         stopped           = false;
-  private boolean                                         debug             = false;
+  private boolean                                         debug             = true;
 
   public TribesGroupManager() {
     group = new GroupChannel();
@@ -92,13 +93,13 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     final long l = TCPropertiesImpl.getProperties().getPropertiesFor(L2_NHA).getLong(SEND_TIMEOUT_PROP);
     sender.setTimeout(l);
     ChannelCoordinator cc = (ChannelCoordinator) group.getNext();
-    final Properties mcastProps =  new Properties();
+    final Properties mcastProps = new Properties();
     TCPropertiesImpl.getProperties().getPropertiesFor("l2.nha.tribes.mcast").addAllPropertiesTo(mcastProps);
     cc.getMembershipService().setProperties(mcastProps);
     // add listeners
     group.addMembershipListener(this);
     group.addChannelListener(this);
-    
+
   }
 
   protected NodeID joinStatic(final Node thisNode, final Node[] allNodes) throws GroupException {
@@ -256,6 +257,9 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   }
 
   public void memberAdded(Member member) {
+    if (debug) {
+      logger.info("memberAdded -> name=" + member.getName() + ", uid=" + Conversion.bytesToHex(member.getUniqueId()));
+    }
     NodeID newNode = new NodeID(member.getName(), member.getUniqueId());
     Member old;
     if ((old = nodes.put(newNode, member)) == null) {
@@ -267,6 +271,10 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   }
 
   private void fireNodeEvent(NodeID newNode, boolean joined) {
+    if (debug) {
+      logger.info("fireNodeEvent: joined=" + joined + ", name=" + newNode.getName() + ", uid=" + Conversion.bytesToHex(newNode.getUID()));
+    }
+
     Iterator i = groupListeners.iterator();
     while (i.hasNext()) {
       GroupEventsListener listener = (GroupEventsListener) i.next();
@@ -279,6 +287,10 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   }
 
   public void memberDisappeared(Member member) {
+    if (debug) {
+      logger.info("memberDisappeared -> name=" + member.getName() + ", uid=" + Conversion.bytesToHex(member.getUniqueId()));
+    }
+    
     NodeID node = new NodeID(member.getName(), member.getUniqueId());
     if ((nodes.remove(node)) != null) {
       fireNodeEvent(node, false);
@@ -329,14 +341,13 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
 
   public void sendTo(NodeID node, GroupMessage msg) throws GroupException {
     if (debug) {
-      logger.info(this.thisNodeID + " : Sending to : " + node + " msg " + msg.getMessageID());
+      logger.info(this.thisNodeID + " : Sending to : " + node + " msg " + msg.getMessageID() + " node.name=" + node.getName() + ", node.uid=" + node.getUID());
     }
     try {
-      Member to[] = new Member[1];
-      to[0] = nodes.get(node);
-      if (to[0] != null) {
+      Member member = nodes.get(node);
+      if (member != null) {
         // TODO :: Validate the options flag
-        group.send(to, msg, Channel.SEND_OPTIONS_DEFAULT);
+        group.send(new Member[] { member }, msg, Channel.SEND_OPTIONS_DEFAULT);
       } else {
         // TODO:: These could be exceptions
         logger.warn("sendTo: Node " + node + " not present in the group. Ignoring Message : " + msg);
