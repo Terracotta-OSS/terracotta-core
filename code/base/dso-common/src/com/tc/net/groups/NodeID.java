@@ -11,6 +11,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Arrays;
 
 public class NodeID implements Externalizable {
 
@@ -40,18 +41,14 @@ public class NodeID implements Externalizable {
       lhash = 31 * lhash + uid[i];
     }
     hash = lhash;
-    
+
     return lhash;
   }
 
   public boolean equals(Object o) {
     if (o instanceof NodeID) {
-      NodeID n = (NodeID) o;
-      if (n.uid.length != uid.length) return false;
-      for (int i = uid.length - 1; i >= 0; i--) {
-        if (uid[i] != n.uid[i]) return false;
-      }
-      return true;
+      NodeID that = (NodeID) o;
+      return Arrays.equals(that.uid, this.uid);
     }
     return false;
   }
