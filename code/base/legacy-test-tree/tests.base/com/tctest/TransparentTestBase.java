@@ -267,9 +267,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected void doDumpServerDetails() {
     try {
       if (this.runner != null) {
-        if (getStartServer()) {
-          this.runner.dumpServer();
-        }
+        this.runner.dumpServer();
       } else {
         System.err.println("Runner is null !!");
       }

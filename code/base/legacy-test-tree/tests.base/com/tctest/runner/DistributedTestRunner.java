@@ -380,7 +380,9 @@ public class DistributedTestRunner implements ResultsListener {
   }
 
   public void dumpServer() {
-    this.server.dump();
+    if (server != null && startServer) {
+      server.dump();
+    }
   }
 
 }
