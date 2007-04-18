@@ -16,8 +16,6 @@ import org.apache.catalina.tribes.transport.ReceiverBase;
 import org.apache.catalina.tribes.transport.ReplicationTransmitter;
 import org.apache.catalina.tribes.util.UUIDGenerator;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
-
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.logging.TCLogger;
@@ -42,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TribesGroupManager implements GroupManager, ChannelListener, MembershipListener {
+  private static final String                             L2_NHA = "l2.nha";
   private static final String                             SEND_TIMEOUT_PROP = "send.timeout.millis";
   private static final String                             USE_MCAST         = "use.mcast";
 
@@ -59,9 +58,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   private final Map<String, GroupMessageListener>         messageListeners  = new ConcurrentHashMap<String, GroupMessageListener>();
   private final Map<MessageID, GroupResponse>             pendingRequests   = new Hashtable<MessageID, GroupResponse>();
 
-  private final SynchronizedLong                          currentId         = new SynchronizedLong(0);
   private boolean                                         stopped           = false;
-
   private boolean                                         debug             = false;
 
   public TribesGroupManager() {
@@ -69,7 +66,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   }
 
   public NodeID join(final Node thisNode, final Node[] allNodes) throws GroupException {
-    final boolean useMcast = TCPropertiesImpl.getProperties().getPropertiesFor("nha").getBoolean(USE_MCAST);
+    final boolean useMcast = TCPropertiesImpl.getProperties().getPropertiesFor(L2_NHA).getBoolean(USE_MCAST);
     if (useMcast) return joinMcast();
     else return joinStatic(thisNode, allNodes);
 
@@ -90,7 +87,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     // config send timeout
     ReplicationTransmitter transmitter = (ReplicationTransmitter) group.getChannelSender();
     DataSender sender = transmitter.getTransport();
-    final long l = TCPropertiesImpl.getProperties().getPropertiesFor("nha").getLong(SEND_TIMEOUT_PROP);
+    final long l = TCPropertiesImpl.getProperties().getPropertiesFor(L2_NHA).getLong(SEND_TIMEOUT_PROP);
     sender.setTimeout(l);
     // add listeners
     group.addMembershipListener(this);
