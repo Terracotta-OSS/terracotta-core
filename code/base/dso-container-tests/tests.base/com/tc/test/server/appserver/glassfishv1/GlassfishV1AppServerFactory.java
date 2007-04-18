@@ -119,7 +119,7 @@ public final class GlassfishV1AppServerFactory extends NewAppServerFactory {
     NodeList chmodTasks = document.getElementsByTagName("chmod");
     for (int i = 0; i < chmodTasks.getLength(); i++) {
       Element chmod = (Element) chmodTasks.item(i);
-      chmod.setAttribute("parallel", "true");
+      chmod.setAttribute("parallel", "false");
     }
 
     TransformerFactory transformerFactory = TransformerFactory.newInstance();
