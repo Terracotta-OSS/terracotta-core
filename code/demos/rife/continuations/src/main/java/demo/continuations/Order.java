@@ -18,7 +18,6 @@ import com.uwyn.rife.template.Template;
  *  the back button.
  *
  *@author     Geert Bevin (gbevin[remove] at uwyn dot com)
- *@version    $Revision$
  */
 @Elem(
          submissions={
