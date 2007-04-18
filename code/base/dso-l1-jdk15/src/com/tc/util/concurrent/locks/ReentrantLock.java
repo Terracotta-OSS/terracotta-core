@@ -163,11 +163,17 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         this.lockInUnShared.remove(Thread.currentThread());
       }
       UnsafeUtil.monitorExit(this);
-      if (needDSOUnlock) {
-        ManagerUtil.monitorExit(this);
-      } else {
+//      if (needDSOUnlock) {
+//        ManagerUtil.monitorExit(this);
+//      } else {
+//        lock.notifyAll();
+//      }
+      if (!needDSOUnlock) {
         lock.notifyAll();
       }
+    }
+    if (needDSOUnlock) {
+      ManagerUtil.monitorExit(this);
     }
   }
 
