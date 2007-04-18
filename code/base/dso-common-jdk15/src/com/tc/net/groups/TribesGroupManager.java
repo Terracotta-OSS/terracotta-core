@@ -6,6 +6,7 @@ import org.apache.catalina.tribes.ChannelListener;
 import org.apache.catalina.tribes.Member;
 import org.apache.catalina.tribes.MembershipListener;
 import org.apache.catalina.tribes.ChannelException.FaultyMember;
+import org.apache.catalina.tribes.group.ChannelCoordinator;
 import org.apache.catalina.tribes.group.GroupChannel;
 import org.apache.catalina.tribes.group.interceptors.StaticMembershipInterceptor;
 import org.apache.catalina.tribes.group.interceptors.TcpFailureDetector;
@@ -36,6 +37,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -89,9 +91,14 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     DataSender sender = transmitter.getTransport();
     final long l = TCPropertiesImpl.getProperties().getPropertiesFor(L2_NHA).getLong(SEND_TIMEOUT_PROP);
     sender.setTimeout(l);
+    ChannelCoordinator cc = (ChannelCoordinator) group.getNext();
+    final Properties mcastProps =  new Properties();
+    TCPropertiesImpl.getProperties().getPropertiesFor("l2.nha.tribes.mcast").addAllPropertiesTo(mcastProps);
+    cc.getMembershipService().setProperties(mcastProps);
     // add listeners
     group.addMembershipListener(this);
     group.addChannelListener(this);
+    
   }
 
   protected NodeID joinStatic(final Node thisNode, final Node[] allNodes) throws GroupException {
@@ -117,7 +124,6 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       group.addInterceptor(failuredetector);
       group.addInterceptor(smi);
       group.start(Channel.SND_RX_SEQ | Channel.SND_TX_SEQ);
-      this.thisNodeID = new NodeID(this.thisMember.getName(), this.thisMember.getUniqueId());
       return this.thisNodeID;
     } catch (ChannelException e) {
       logger.error(e);
@@ -333,7 +339,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
         group.send(to, msg, Channel.SEND_OPTIONS_DEFAULT);
       } else {
         // TODO:: These could be exceptions
-        logger.warn("Node " + node + " not present in the group. Ignoring Message : " + msg);
+        logger.warn("sendTo: Node " + node + " not present in the group. Ignoring Message : " + msg);
       }
     } catch (ChannelException e) {
       throw new GroupException(e);
