@@ -4,17 +4,14 @@
  */
 package com.tc.objectserver.persistence.impl;
 
-import com.tc.exception.ImplementMe;
 import com.tc.l2.ha.L2HADisabledCooridinator;
 import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.core.impl.TestServerConfigurationContext;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler.GlobalTransactionIDBatchRequestContext;
 import com.tc.test.TCTestCase;
-import com.tc.util.Assert;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.sequence.BatchSequenceReceiver;
-import com.tc.util.sequence.MutableSequence;
 
 public class GlobalTransactionIDBatchRequestHandlerTest extends TCTestCase {
 
@@ -73,32 +70,4 @@ public class GlobalTransactionIDBatchRequestHandlerTest extends TCTestCase {
     }
 
   }
-
-  private static final class TestMutableSequence implements MutableSequence {
-
-    public long                         sequence       = 1;
-    public final NoExceptionLinkedQueue nextBatchQueue = new NoExceptionLinkedQueue();
-
-    public long next() {
-      return sequence;
-    }
-
-    public long nextBatch(int batchSize) {
-      nextBatchQueue.put(new Object[] { new Integer(batchSize) });
-      long ls = sequence;
-      sequence += batchSize;
-      return ls;
-    }
-
-    public String getUID() {
-      throw new ImplementMe();
-    }
-
-    public void setNext(long next) {
-      Assert.assertTrue(this.sequence <= next);
-      sequence = next;
-    }
-
-  }
-
 }
