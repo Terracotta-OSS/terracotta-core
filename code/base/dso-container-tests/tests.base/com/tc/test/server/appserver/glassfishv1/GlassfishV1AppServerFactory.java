@@ -9,6 +9,7 @@ import org.apache.tools.ant.DefaultLogger;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.ProjectHelper;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -112,6 +113,13 @@ public final class GlassfishV1AppServerFactory extends NewAppServerFactory {
 
     while (createDomainTarget.getChildNodes().getLength() > 0) {
       createDomainTarget.removeChild(createDomainTarget.getChildNodes().item(0));
+    }
+
+    // Also workaround bug with long pathnames (https://glassfish.dev.java.net/issues/show_bug.cgi?id=2849)
+    NodeList chmodTasks = document.getElementsByTagName("chmod");
+    for (int i = 0; i < chmodTasks.getLength(); i++) {
+      Element chmod = (Element) chmodTasks.item(i);
+      chmod.setAttribute("parallel", "true");
     }
 
     TransformerFactory transformerFactory = TransformerFactory.newInstance();
