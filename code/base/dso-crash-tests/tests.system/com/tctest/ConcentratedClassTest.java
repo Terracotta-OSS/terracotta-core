@@ -5,6 +5,7 @@ package com.tctest;
 
 import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.terracottatech.config.PersistenceMode;
 
 /**
@@ -34,6 +35,18 @@ public class ConcentratedClassTest extends TransparentTestBase {
 
   protected boolean canRunCrash() {
     return true;
+  }
+
+  protected boolean canRunActivePassive() {
+    return true;
+  }
+
+  public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
+    setupManager.setServerCount(2);
+    setupManager.setServerCrashMode(ActivePassiveTestSetupManager.CONTINUOUS_ACTIVE_CRASH);
+    setupManager.setServerCrashWaitInSec(60);
+    setupManager.setServerShareDataMode(ActivePassiveTestSetupManager.DISK);
+    setupManager.setServerPersistenceMode(ActivePassiveTestSetupManager.PERMANENT_STORE);
   }
 
 }

@@ -20,8 +20,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class ConcentratedClassTestApp extends AbstractTransparentApp {
-  private static final int THREAD_COUNT = 2;
+  private static final int THREAD_COUNT = 5;
   private static Map       root         = new HashMap();
+  final private static long runtime     = 1000 * 200;  // 200 seconds
 
   public ConcentratedClassTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -68,8 +69,9 @@ public class ConcentratedClassTestApp extends AbstractTransparentApp {
     }
 
     Set all = new HashSet();
-
-    for (int i = 0; i < 10; i++) {
+    
+    long end = System.currentTimeMillis() + runtime;
+    while(end > System.currentTimeMillis()) {
       final ConcentratedClass prevCC;
       final ConcentratedClass newCC = new ConcentratedClass();
       all.add(newCC);
@@ -78,7 +80,13 @@ public class ConcentratedClassTestApp extends AbstractTransparentApp {
         prevCC = (ConcentratedClass) root.put(id, newCC);
         values = root.values();
       }
-
+      
+      try {
+        Thread.sleep((int)(Math.random() * 10));
+      } catch(Exception e) {
+        //
+      }
+ 
       if (values.size() != count) { throw new RuntimeException("unexpected size: " + values.size()); }
 
       all.add(prevCC);
@@ -113,7 +121,7 @@ public class ConcentratedClassTestApp extends AbstractTransparentApp {
 
     for (int i = 0; i < threads.length; i++) {
       try {
-        threads[i].join(5000);
+        threads[i].join(runtime+1000);
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
