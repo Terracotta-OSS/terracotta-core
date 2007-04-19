@@ -29,7 +29,7 @@ import java.util.List;
  */
 public final class LinkedJavaProcessPollingAgent {
 
-  private static final int       NORMAL_HEARTBEAT_INTERVAL = 60 * 1000;
+  private static final int       NORMAL_HEARTBEAT_INTERVAL = 15 * 1000;
 
   private static final String    HEARTBEAT                 = "HEARTBEAT";
   private static final String    SHUTDOWN                  = "SHUTDOWN";
