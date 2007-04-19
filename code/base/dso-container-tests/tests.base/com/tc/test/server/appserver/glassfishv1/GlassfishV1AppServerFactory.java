@@ -70,7 +70,7 @@ public final class GlassfishV1AppServerFactory extends NewAppServerFactory {
       DefaultLogger consoleLogger = new DefaultLogger();
       consoleLogger.setErrorPrintStream(System.err);
       consoleLogger.setOutputPrintStream(System.out);
-      consoleLogger.setMessageOutputLevel(Project.MSG_INFO);
+      consoleLogger.setMessageOutputLevel(Project.MSG_DEBUG);
       p.addBuildListener(consoleLogger);
 
       p.setUserProperty("ant.file", antScript.getAbsolutePath());
