@@ -440,11 +440,10 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       VmStat.stop();
       synchronized (workingDirLock) {
         File dest = new File(tempDir, getName());
-        if (workingDir.renameTo(dest) == false) { 
-          System.err.println(com.tc.test.ProcessInfo.ps_grep_java());
-          throw new RuntimeException("Error moving logs files. " +
-              "There might be zombie processes."); 
-        }
+        com.tc.util.io.FileUtils.copyFile(workingDir, dest);
+        try {
+          FileUtils.forceDelete(workingDir);
+        } catch (IOException ignored) { /* nop */ }
       }
     }
   }
