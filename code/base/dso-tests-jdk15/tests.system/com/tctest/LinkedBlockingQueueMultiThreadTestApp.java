@@ -21,8 +21,8 @@ public class LinkedBlockingQueueMultiThreadTestApp extends AbstractTransparentAp
 
   private LinkedBlockingQueue queue          = new LinkedBlockingQueue(2);
   private final CyclicBarrier barrier;
-  private int[] putCount;
-  private int[] getCount;
+  private int[]               putCount;
+  private int[]               getCount;
 
   public LinkedBlockingQueueMultiThreadTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -47,7 +47,6 @@ public class LinkedBlockingQueueMultiThreadTestApp extends AbstractTransparentAp
                 for (int j = 0; j < NUM_OF_PUTS; j++) {
                   int seed = (this.hashCode() ^ (int) System.nanoTime());
                   localPutCount[k] += seed;
-                  System.out.println("Putting " + seed);
                   queue.put(new Integer(seed));
                 }
                 localBarrier.await();
@@ -75,15 +74,14 @@ public class LinkedBlockingQueueMultiThreadTestApp extends AbstractTransparentAp
               try {
                 localBarrier.await();
                 for (int j = 0; j < NUM_OF_PUTS; j++) {
-                  Integer o = (Integer)queue.take();
+                  Integer o = (Integer) queue.take();
                   localGetCount[k] += o.intValue();
-                  System.out.println("Getting " + o.intValue());
                 }
                 localBarrier.await();
               } catch (Throwable t) {
                 throw new AssertionError(t);
               }
-              
+
             }
           });
         }
@@ -95,42 +93,20 @@ public class LinkedBlockingQueueMultiThreadTestApp extends AbstractTransparentAp
         this.getCount = localGetCount;
       }
       barrier.await();
-      
+
       if (index == 0) {
         int totalPutCount = 0;
         int totalGetCount = 0;
-        for (int i=0; i<NUM_OF_THREADS; i++) {
+        for (int i = 0; i < NUM_OF_THREADS; i++) {
           totalPutCount += putCount[i];
           totalGetCount += getCount[i];
         }
         Assert.assertEquals(totalPutCount, totalGetCount);
       }
-      
+
       barrier.await();
     } catch (Throwable t) {
       notifyError(t);
-    }
-  }
-
-  private void doGet() throws Exception {
-    while (true) {
-      Object o = queue.take();
-      if ("STOP".equals(o)) {
-        break;
-      }
-      WorkItem w = (WorkItem) o;
-      System.out.println("Getting " + w.getI());
-    }
-  }
-
-  private void doPut() throws Exception {
-    for (int i = 0; i < NUM_OF_PUTS; i++) {
-      System.out.println("Putting " + i);
-      queue.put(new WorkItem(i));
-    }
-    int numOfGet = getParticipantCount() - 1;
-    for (int i = 0; i < numOfGet; i++) {
-      queue.put("STOP");
     }
   }
 
@@ -149,15 +125,4 @@ public class LinkedBlockingQueueMultiThreadTestApp extends AbstractTransparentAp
     spec.addRoot("getCount", "getCount");
   }
 
-  private static class WorkItem {
-    private final int i;
-
-    public WorkItem(int i) {
-      this.i = i;
-    }
-
-    public int getI() {
-      return this.i;
-    }
-  }
 }
