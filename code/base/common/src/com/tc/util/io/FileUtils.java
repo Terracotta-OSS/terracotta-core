@@ -8,7 +8,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class FileUtils {
 
@@ -27,27 +29,58 @@ public class FileUtils {
    * copy one file to another. Can also copy directories
    */
   public static void copyFile(File src, File dest) throws IOException {
-    if (src.isDirectory()) {
-      dest.mkdirs();
-      String list[] = src.list();
-      for (int i = 0; i < list.length; i++) {
-        copyFile(new File(src.getAbsolutePath(), list[i]), new File(dest.getAbsolutePath(), list[i]));
-      }
-    } else {
-      FileInputStream in = null;
-      FileOutputStream out = null;
-      try {
-        byte[] buffer = new byte[1024 * 8];
-        in = new FileInputStream(src);
-        out = new FileOutputStream(dest);
-        int c;
-        while ((c = in.read(buffer)) >= 0) {
-          out.write(buffer, 0, c);
+    List stack = new ArrayList();
+    stack.add(new CopyTask(src.getCanonicalFile(), dest.getCanonicalFile()));
+    
+    while (stack.size() > 0) {
+      CopyTask item = (CopyTask)stack.remove(0);
+      if (item.getSrc().isDirectory()) {
+        item.getDest().mkdirs();
+        String[] list = item.getSrc().list();
+        for (int i = 0; i < list.length; i++) {
+          File _src = new File(item.getSrc(), list[i]);
+          File _dest = new File(item.getDest(), list[i]);
+          stack.add(0, new CopyTask(_src, _dest));
         }
-      } finally {
-        if (in != null) in.close();
-        if (out != null) out.close();
+      } else {
+        doCopy(item.getSrc(), item.getDest());
       }
+    }
+    
+  }
+
+  private static void doCopy(File src, File dest) throws IOException {
+    FileInputStream in = null;
+    FileOutputStream out = null;
+    byte[] buffer = new byte[1024 * 8];
+    int count;
+    try {
+      in = new FileInputStream(src);
+      out = new FileOutputStream(dest);
+      while ((count = in.read(buffer)) >= 0) {
+        out.write(buffer, 0, count);
+      }
+    } finally {
+      if (in != null) in.close();
+      if (out != null) out.close();
+    }
+  }
+  
+  private static class CopyTask {
+    private File src;
+    private File dest;
+    
+    public CopyTask(File src, File dest) {
+      this.src = src;
+      this.dest = dest;
+    }
+    
+    public File getSrc() {
+      return src;
+    }
+    
+    public File getDest() {
+      return dest;
     }
   }
 
