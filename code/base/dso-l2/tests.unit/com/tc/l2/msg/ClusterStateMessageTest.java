@@ -26,30 +26,41 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import junit.framework.TestCase;
 
 public class ClusterStateMessageTest extends TestCase {
+  private static final int CLUSTER_STATE_1 = 1;
+  private static final int CLUSTER_STATE_2 = 2;
 
-  private ClusterState clusterState;
+  private ClusterState     clusterState_1;
+  private ClusterState     clusterState_2;
 
   public void setUp() {
-    resetClusterState();
+    resetClusterState(CLUSTER_STATE_1);
+    resetClusterState(CLUSTER_STATE_2);
   }
 
   public void tearDown() {
-    clusterState = null;
+    clusterState_1 = null;
+    clusterState_2 = null;
   }
 
-  private void resetClusterState() {
+  private void resetClusterState(int clusterState) {
     Persistor persistor = new InMemoryPersistor();
     PersistentMapStore clusterStateStore = persistor.getClusterStateStore();
     ObjectIDSequence oidSequence = new PersistentManagedObjectStore(new TestManagedObjectPersistor(new HashMap()));
     ConnectionIDFactory connectionIdFactory = new ConnectionIDFactoryImpl(persistor.getClientStatePersistor());
     GlobalTransactionIDSequenceProvider gidSequenceProvider = new GlobalTransactionIDBatchRequestHandler(
                                                                                                          new TestMutableSequence());
-    clusterState = new ClusterState(clusterStateStore, oidSequence, connectionIdFactory, gidSequenceProvider);
-    clusterState.setClusterID("foobar");
+    if (clusterState == CLUSTER_STATE_1) {
+      clusterState_1 = new ClusterState(clusterStateStore, oidSequence, connectionIdFactory, gidSequenceProvider);
+      clusterState_1.setClusterID("foobar");
+    } else {
+      clusterState_2 = new ClusterState(clusterStateStore, oidSequence, connectionIdFactory, gidSequenceProvider);
+      clusterState_2.setClusterID("foobar");
+    }
   }
 
   private void validate(ClusterStateMessage csm, ClusterStateMessage csm1) {
@@ -59,6 +70,20 @@ public class ClusterStateMessageTest extends TestCase {
     assertEquals(csm.getConnectionID(), csm1.getConnectionID());
     assertEquals(csm.getMessageID(), csm1.getMessageID());
     assertEquals(csm.getType(), csm1.getType());
+  }
+
+  private void validate(ClusterState cs, ClusterState cs1) {
+    assertEquals(cs.getNextAvailableChannelID(), cs1.getNextAvailableChannelID());
+    assertEquals(cs.getNextAvailableGlobalTxnID(), cs1.getNextAvailableGlobalTxnID());
+    assertEquals(cs.getNextAvailableObjectID(), cs1.getNextAvailableObjectID());
+    assertEquals(cs.getAllConnections().size(), cs1.getAllConnections().size());
+
+    Iterator iter1 = cs1.getAllConnections().iterator();
+    for (Iterator iter = cs.getAllConnections().iterator(); iter.hasNext();) {
+      assertEquals(((ConnectionID) iter.next()).getID(), ((ConnectionID) iter1.next()).getID());
+    }
+
+    assertEquals(cs.getClusterID(), cs1.getClusterID());
   }
 
   private ClusterStateMessage writeAndRead(ClusterStateMessage csm) throws Exception {
@@ -73,31 +98,38 @@ public class ClusterStateMessageTest extends TestCase {
     return csm1;
   }
 
-  private void addConnectionIDs() {
+  private void modifyClusterState(int clusterState) {
     ConnectionID connectionID_1 = new ConnectionID(10, "foo");
     ConnectionID connectionID_2 = new ConnectionID(11, "foo");
     ConnectionID connectionID_3 = new ConnectionID(12, "goo");
 
-    clusterState.addNewConnection(connectionID_1);
-    clusterState.addNewConnection(connectionID_2);
-    clusterState.addNewConnection(connectionID_3);
-  }
+    if (clusterState == CLUSTER_STATE_1) {
+      clusterState_1.addNewConnection(connectionID_1);
+      clusterState_1.addNewConnection(connectionID_2);
+      clusterState_1.addNewConnection(connectionID_3);
+      clusterState_1.removeConnection(connectionID_2);
+      clusterState_1.setNextAvailableChannelID(13);
+      clusterState_1.setNextAvailableObjectID(222);
+      clusterState_1.setNextAvailableGlobalTransactionID(333);
+      clusterState_1.setCurrentState(new State("testing"));
+    } else {
+      clusterState_2.addNewConnection(connectionID_1);
+      clusterState_2.addNewConnection(connectionID_2);
+      clusterState_2.addNewConnection(connectionID_3);
+      clusterState_2.removeConnection(connectionID_2);
+      clusterState_2.setNextAvailableChannelID(13);
+      clusterState_2.setNextAvailableObjectID(222);
+      clusterState_2.setNextAvailableGlobalTransactionID(333);
+      clusterState_2.setCurrentState(new State("testing"));
 
-  private void modifyClusterState() {
-    addConnectionIDs();
-    ConnectionID connectionID = new ConnectionID(11, "foo");
-    clusterState.removeConnection(connectionID);
-
-    clusterState.setNextAvailableChannelID(13);
-    clusterState.setNextAvailableObjectID(222);
-    clusterState.setNextAvailableGlobalTransactionID(333);
-    clusterState.setCurrentState(new State("testing"));
+    }
   }
 
   public void testBasicSerialization() throws Exception {
-    modifyClusterState();
+    modifyClusterState(CLUSTER_STATE_1);
 
-    ClusterStateMessage csm = (ClusterStateMessage) ClusterStateMessageFactory.createClusterStateMessage(clusterState);
+    ClusterStateMessage csm = (ClusterStateMessage) ClusterStateMessageFactory
+        .createClusterStateMessage(clusterState_1);
     ClusterStateMessage csm1 = writeAndRead(csm);
     validate(csm, csm1);
 
@@ -110,57 +142,51 @@ public class ClusterStateMessageTest extends TestCase {
     ConnectionID connectionID = new ConnectionID(10, "foo");
 
     // COMPLETE_STATE
-    modifyClusterState();
-    ClusterStateMessage csm = (ClusterStateMessage) ClusterStateMessageFactory.createClusterStateMessage(clusterState);
+    modifyClusterState(CLUSTER_STATE_1);
+    ClusterStateMessage csm = (ClusterStateMessage) ClusterStateMessageFactory
+        .createClusterStateMessage(clusterState_1);
     ClusterStateMessage csm1 = writeAndRead(csm);
     validate(csm, csm1);
-    resetClusterState();
-    csm1.initState(clusterState);
-    csm = (ClusterStateMessage) ClusterStateMessageFactory.createClusterStateMessage(clusterState);
-    csm1 = writeAndRead(csm);
-    validate(csm, csm1);
+    csm1.initState(clusterState_2);
+    validate(clusterState_1, clusterState_2);
 
     // GLOBAL_TRANSACTION_ID
-    resetClusterState();
-    modifyClusterState();
-    csm = (ClusterStateMessage) ClusterStateMessageFactory.createNextAvailableGlobalTransactionIDMessage(clusterState);
+    resetClusterState(CLUSTER_STATE_1);
+    resetClusterState(CLUSTER_STATE_2);
+    clusterState_1.setNextAvailableGlobalTransactionID(3423);
+    csm = (ClusterStateMessage) ClusterStateMessageFactory
+        .createNextAvailableGlobalTransactionIDMessage(clusterState_1);
     csm1 = writeAndRead(csm);
     validate(csm, csm1);
-    resetClusterState();
-    csm1.initState(clusterState);
-    csm = (ClusterStateMessage) ClusterStateMessageFactory.createNextAvailableGlobalTransactionIDMessage(clusterState);
-    csm1 = writeAndRead(csm);
-    validate(csm, csm1);
+    csm1.initState(clusterState_2);
+    validate(clusterState_1, clusterState_2);
 
     // OBJECT_ID
-    resetClusterState();
-    modifyClusterState();
-    csm = (ClusterStateMessage) ClusterStateMessageFactory.createNextAvailableObjectIDMessage(clusterState);
+    resetClusterState(CLUSTER_STATE_1);
+    resetClusterState(CLUSTER_STATE_2);
+    clusterState_1.setNextAvailableObjectID(6868);
+    csm = (ClusterStateMessage) ClusterStateMessageFactory.createNextAvailableObjectIDMessage(clusterState_1);
     csm1 = writeAndRead(csm);
     validate(csm, csm1);
-    resetClusterState();
-    csm1.initState(clusterState);
-    csm = (ClusterStateMessage) ClusterStateMessageFactory.createNextAvailableObjectIDMessage(clusterState);
-    csm1 = writeAndRead(csm);
-    validate(csm, csm1);
+    csm1.initState(clusterState_2);
+    validate(clusterState_1, clusterState_2);
 
     // NEW_CONNECTION_CREATED
-    resetClusterState();
     csm = (ClusterStateMessage) ClusterStateMessageFactory.createNewConnectionCreatedMessage(connectionID);
     csm1 = writeAndRead(csm);
     validate(csm, csm1);
-    resetClusterState();
-    csm1.initState(clusterState);
-    assertEquals(connectionID, clusterState.getAllConnections().iterator().next());
+    resetClusterState(CLUSTER_STATE_2);
+    csm1.initState(clusterState_2);
+    assertEquals(connectionID, clusterState_2.getAllConnections().iterator().next());
 
     // CONNECTION_DESTROYED
-    resetClusterState();
     csm = (ClusterStateMessage) ClusterStateMessageFactory.createConnectionDestroyedMessage(connectionID);
     csm1 = writeAndRead(csm);
     validate(csm, csm1);
-    clusterState.addNewConnection(connectionID);
-    csm1.initState(clusterState);
-    assertEquals(0, clusterState.getAllConnections().size());
+    resetClusterState(CLUSTER_STATE_2);
+    clusterState_2.addNewConnection(connectionID);
+    csm1.initState(clusterState_2);
+    assertEquals(0, clusterState_2.getAllConnections().size());
   }
 
 }
