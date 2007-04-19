@@ -8,8 +8,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 public class FileUtils {
@@ -29,18 +29,18 @@ public class FileUtils {
    * copy one file to another. Can also copy directories
    */
   public static void copyFile(File src, File dest) throws IOException {
-    List stack = new ArrayList();
-    stack.add(new CopyTask(src.getCanonicalFile(), dest.getCanonicalFile()));
+    List queue = new LinkedList();
+    queue.add(new CopyTask(src.getCanonicalFile(), dest.getCanonicalFile()));
     
-    while (stack.size() > 0) {
-      CopyTask item = (CopyTask)stack.remove(0);
+    while (queue.size() > 0) {
+      CopyTask item = (CopyTask)queue.remove(0);
       if (item.getSrc().isDirectory()) {
         item.getDest().mkdirs();
         String[] list = item.getSrc().list();
         for (int i = 0; i < list.length; i++) {
           File _src = new File(item.getSrc(), list[i]);
           File _dest = new File(item.getDest(), list[i]);
-          stack.add(0, new CopyTask(_src, _dest));
+          queue.add(new CopyTask(_src, _dest));
         }
       } else {
         doCopy(item.getSrc(), item.getDest());
