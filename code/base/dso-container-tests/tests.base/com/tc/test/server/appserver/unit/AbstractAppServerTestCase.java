@@ -435,12 +435,13 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       LinkedJavaProcessPollingAgent.shutdown();
 
       if (dsoServer != null && dsoServer.isRunning()) dsoServer.stop();
-
+      Thread.sleep(5000);
     } finally {
       VmStat.stop();
       synchronized (workingDirLock) {
         File dest = new File(tempDir, getName());
         if (workingDir.renameTo(dest) == false) { 
+          System.err.println(com.tc.test.ProcessInfo.ps_grep_java());
           throw new RuntimeException("Error moving logs files. " +
               "There might be zombie processes."); 
         }
