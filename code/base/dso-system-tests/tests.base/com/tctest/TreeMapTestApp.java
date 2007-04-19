@@ -42,6 +42,7 @@ public class TreeMapTestApp extends AbstractTransparentApp {
   public void run() {
     try {
       for(int i = 0; i < loopcount; ++i) {
+        System.out.println("*** TreeMap LoopCount:"+i);
         clear();
         run0();
         run1();
