@@ -31,7 +31,7 @@ public class TransparentSetTest extends TransparentTestBase implements TestConfi
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(ActivePassiveTestSetupManager.CONTINUOUS_ACTIVE_CRASH);
-    setupManager.setServerCrashWaitInSec(60);
+    setupManager.setServerCrashWaitInSec(30);
     setupManager.setServerShareDataMode(ActivePassiveTestSetupManager.DISK);
     setupManager.setServerPersistenceMode(ActivePassiveTestSetupManager.PERMANENT_STORE);
   }
