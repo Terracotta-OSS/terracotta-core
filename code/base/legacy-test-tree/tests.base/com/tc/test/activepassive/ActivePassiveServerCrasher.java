@@ -24,7 +24,7 @@ public class ActivePassiveServerCrasher implements Runnable {
       synchronized (lock) {
         isRunning = testIsRunning;
       }
-      if (isRunning) {
+      if (isRunning && serverManger.getErrors().size() == 0) {
         try {
           Thread.sleep(serverCrashWaitTimeInSec * 1000);
           serverManger.crashActive();
@@ -37,7 +37,7 @@ public class ActivePassiveServerCrasher implements Runnable {
       synchronized (lock) {
         isRunning = testIsRunning;
       }
-      if (isRunning) {
+      if (isRunning && serverManger.getErrors().size() == 0) {
         try {
           serverManger.restartLastCrashedServer();
         } catch (Exception e) {
