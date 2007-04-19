@@ -418,6 +418,17 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     return createUrl(port, servletClass, "");
   }
 
+  private boolean awaitShutdown(int timewait) throws Exception {
+    long start = System.currentTimeMillis();
+    boolean foundAlive = false;
+    do {
+      Thread.sleep(1000);
+      foundAlive = LinkedJavaProcessPollingAgent.isAnyAppServerAlive();
+    } while (foundAlive && System.currentTimeMillis() - start < timewait);
+
+    return foundAlive;
+  }
+
   /**
    * If overridden <tt>super.tearDown()</tt> must be called to ensure that servers are all shutdown properly
    * 
@@ -430,12 +441,10 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
         Server server = (Server) iter.next();
         server.stop();
       }
-
+      awaitShutdown(10 * 1000);
       System.out.println("Shutdown heartbeat server and its children...");
       LinkedJavaProcessPollingAgent.shutdown();
-
       if (dsoServer != null && dsoServer.isRunning()) dsoServer.stop();
-      Thread.sleep(5000);
     } finally {
       VmStat.stop();
       synchronized (workingDirLock) {
@@ -443,7 +452,8 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
         com.tc.util.io.FileUtils.copyFile(workingDir, dest);
         try {
           FileUtils.forceDelete(workingDir);
-        } catch (IOException ignored) { /* nop */ }
+        } catch (IOException ignored) { /* nop */
+        }
       }
     }
   }
