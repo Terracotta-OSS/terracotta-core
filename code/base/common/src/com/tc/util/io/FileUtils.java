@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,22 +33,28 @@ public class FileUtils {
   public static void copyFile(File src, File dest) throws IOException {
     List queue = new LinkedList();
     queue.add(new CopyTask(src.getCanonicalFile(), dest.getCanonicalFile()));
-    
+
     while (queue.size() > 0) {
-      CopyTask item = (CopyTask)queue.remove(0);
+      CopyTask item = (CopyTask) queue.remove(0);
       if (item.getSrc().isDirectory()) {
-        item.getDest().mkdirs();
+        File destDir = item.getDest();
+        destDir.mkdirs();
+
+        if (!destDir.isDirectory()) { throw new IOException("Destination directory does not exist: " + destDir); }
+
         String[] list = item.getSrc().list();
         for (int i = 0; i < list.length; i++) {
           File _src = new File(item.getSrc(), list[i]);
           File _dest = new File(item.getDest(), list[i]);
           queue.add(new CopyTask(_src, _dest));
         }
-      } else {
+      } else if (item.getSrc().isFile()) {
         doCopy(item.getSrc(), item.getDest());
+      } else {
+        throw new IOException(item.getSrc() + " is neither a file or a directory");
       }
     }
-    
+
   }
 
   private static void doCopy(File src, File dest) throws IOException {
@@ -61,26 +69,46 @@ public class FileUtils {
         out.write(buffer, 0, count);
       }
     } finally {
-      if (in != null) in.close();
-      if (out != null) out.close();
+      closeQuietly(in);
+      closeQuietly(out);
     }
   }
-  
+
   private static class CopyTask {
-    private File src;
-    private File dest;
-    
+    private final File src;
+    private final File dest;
+
     public CopyTask(File src, File dest) {
       this.src = src;
       this.dest = dest;
     }
-    
+
     public File getSrc() {
       return src;
     }
-    
+
     public File getDest() {
       return dest;
+    }
+  }
+
+  public static void closeQuietly(InputStream is) {
+    if (is != null) {
+      try {
+        is.close();
+      } catch (IOException ioe) {
+        //
+      }
+    }
+  }
+
+  public static void closeQuietly(OutputStream os) {
+    if (os != null) {
+      try {
+        os.close();
+      } catch (IOException ioe) {
+        //
+      }
     }
   }
 

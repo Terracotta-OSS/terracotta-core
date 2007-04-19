@@ -24,7 +24,7 @@ public abstract class BaseDirectoryHelper {
     this.directoryPath = new File(directoryPath).getAbsoluteFile();
   }
 
-  public File getDirectory() throws IOException {
+  public synchronized File getDirectory() throws IOException {
     if (this.theDirectory == null) {
       this.theDirectory = fetchDirectory();
     }

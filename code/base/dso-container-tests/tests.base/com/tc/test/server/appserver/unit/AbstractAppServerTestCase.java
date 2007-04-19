@@ -32,6 +32,7 @@ import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
 import com.tc.test.server.tcconfig.TerracottaServerConfigGenerator;
 import com.tc.test.server.util.HttpUtil;
 import com.tc.test.server.util.VmStat;
+import com.tc.text.Banner;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.ThreadDump;
@@ -91,7 +92,7 @@ import javax.servlet.http.HttpSessionListener;
  * the appserver)
  * </ul>
  * <p>
- * 
+ *
  * <pre>
  *                            outer class:
  *                            ...
@@ -108,7 +109,7 @@ import javax.servlet.http.HttpSessionListener;
  *                            out.println(&quot;false&quot;);
  *                            ...
  * </pre>
- * 
+ *
  * <p>
  * <h3>Debugging Information:</h3>
  * There are a number of locations and files to consider when debugging appserver unit tests. Below is a list followed
@@ -143,21 +144,21 @@ import javax.servlet.http.HttpSessionListener;
  * <p>
  * As a final note: the <tt>UttpUtil</tt> class should be used (and added to as needed) to page servlets and validate
  * assertions.
- * 
+ *
  * @author eellis
  */
 public abstract class AbstractAppServerTestCase extends TCTestCase {
 
-  private static final SynchronizedInt    nodeCounter      = new SynchronizedInt(-1);
-  private static final String             NODE             = "node-";
-  private static final String             DOMAIN           = "localhost";
+  private static final SynchronizedInt    nodeCounter        = new SynchronizedInt(-1);
+  private static final String             NODE               = "node-";
+  private static final String             DOMAIN             = "localhost";
 
-  private final Object                    workingDirLock   = new Object();
-  protected final List                    appservers       = new ArrayList();
-  private final List                      dsoServerJvmArgs = new ArrayList();
-  private final List                      roots            = new ArrayList();
-  private final List                      locks            = new ArrayList();
-  private final List                      includes         = new ArrayList();
+  protected final List                    appservers         = new ArrayList();
+  private final Object                    workingDirLock     = new Object();
+  private final List                      dsoServerJvmArgs   = new ArrayList();
+  private final List                      roots              = new ArrayList();
+  private final List                      locks              = new ArrayList();
+  private final List                      includes           = new ArrayList();
   private final TestConfigObject          config;
 
   private File                            serverInstallDir;
@@ -170,7 +171,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   private DsoServer                       dsoServer;
   private TerracottaServerConfigGenerator configGen;
 
-  private boolean                         isSynchronousWrite;
+  private boolean                         isSynchronousWrite = false;
 
   public AbstractAppServerTestCase() {
     // keep the regular thread dump behavior for windows and macs
@@ -195,23 +196,25 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   }
 
   protected void setUp() throws Exception {
-
     LinkedJavaProcessPollingAgent.startHeartBeatServer();
-
-    isSynchronousWrite = false;
 
     tempDir = getTempDirectory();
     serverInstallDir = makeDir(config.appserverServerInstallDir());
-    File workDir;
+    File workDir = new File(config.appserverWorkingDir());
 
     try {
-      workDir = new File(config.appserverWorkingDir());
-      if (workDir.exists() && workDir.isDirectory()) {
-        FileUtils.cleanDirectory(workDir);
+      if (workDir.exists()) {
+        if (workDir.isDirectory()) {
+          FileUtils.cleanDirectory(workDir);
+        } else {
+          throw new RuntimeException(workDir + " exists, but is not a directory");
+        }
       }
     } catch (IOException e) {
+      File prev = workDir;
       workDir = new File(config.appserverWorkingDir() + "-"
                          + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()));
+      Banner.warnBanner("Caught IOException setting up workDir as " + prev + ", using " + workDir + " instead");
     }
 
     workingDir = makeDir(workDir.getAbsolutePath());
@@ -329,7 +332,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   /**
    * Starts an instance of the assigned default application server listed in testconfig.properties. Servlets and the WAR
    * are dynamically generated using the convention listed in the header of this document.
-   * 
+   *
    * @param dsoEnabled - enable or disable dso for this instance
    * @return AppServerResult - series of return values including the server port assigned to this instance
    */
@@ -357,7 +360,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       StandardAppServerParameters params;
       params = (StandardAppServerParameters) appServerFactory.createParameters(NODE + nodeNumber, props);
       AppServer appServer = appServerFactory.createAppServer(installation);
-      appservers.add(appServer);
+
       if (dsoEnabled) {
         params.enableDSO(configGen(), bootJar);
       }
@@ -386,7 +389,11 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       }
 
       params.addWar(warFile());
-      return (AppServerResult) appServer.start(params);
+      AppServerResult r = (AppServerResult) appServer.start(params);
+
+      // only add to this collection if start() actually returned w/o an exception
+      appservers.add(appServer);
+      return r;
     } catch (Exception e) {
       threadDumpGroup();
       throw e;
@@ -431,7 +438,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
   /**
    * If overridden <tt>super.tearDown()</tt> must be called to ensure that servers are all shutdown properly
-   * 
+   *
    * @throws Exception
    */
   protected void tearDown() throws Exception {
@@ -442,17 +449,28 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
         server.stop();
       }
       awaitShutdown(10 * 1000);
+      if (dsoServer != null && dsoServer.isRunning()) dsoServer.stop();
       System.out.println("Shutdown heartbeat server and its children...");
       LinkedJavaProcessPollingAgent.shutdown();
-      if (dsoServer != null && dsoServer.isRunning()) dsoServer.stop();
     } finally {
       VmStat.stop();
       synchronized (workingDirLock) {
         File dest = new File(tempDir, getName());
-        com.tc.util.io.FileUtils.copyFile(workingDir, dest);
+        System.err.println("Copying files from " + workingDir + " to " + dest);
+        try {
+          com.tc.util.io.FileUtils.copyFile(workingDir, dest);
+        } catch (IOException ioe) {
+          Banner.warnBanner("IOException caught while copying workingDir files");
+          ioe.printStackTrace();
+        }
+
+        System.err.println("Deleting working directory files in " + workingDir);
         try {
           FileUtils.forceDelete(workingDir);
-        } catch (IOException ignored) { /* nop */
+        } catch (IOException ioe) {
+          Banner.warnBanner("IOException caught while deleting workingDir");
+          // print this out, but don't fail test by re-throwing it
+          ioe.printStackTrace();
         }
       }
     }
@@ -514,7 +532,10 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
   private File makeDir(String dirPath) throws IOException {
     File dir = new File(dirPath);
-    if (dir.exists()) return dir;
+    if (dir.exists()) {
+      if (dir.isDirectory()) { return dir; }
+      throw new IOException(dir + " exists, but is not a directory");
+    }
     boolean created = dir.mkdirs();
     if (!created) { throw new IOException("Could not create directory " + dir); }
     return dir;
