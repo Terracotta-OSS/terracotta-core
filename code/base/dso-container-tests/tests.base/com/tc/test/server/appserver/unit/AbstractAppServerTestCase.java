@@ -91,7 +91,7 @@ import javax.servlet.http.HttpSessionListener;
  * the appserver)
  * </ul>
  * <p>
- *
+ * 
  * <pre>
  *                            outer class:
  *                            ...
@@ -108,7 +108,7 @@ import javax.servlet.http.HttpSessionListener;
  *                            out.println(&quot;false&quot;);
  *                            ...
  * </pre>
- *
+ * 
  * <p>
  * <h3>Debugging Information:</h3>
  * There are a number of locations and files to consider when debugging appserver unit tests. Below is a list followed
@@ -143,7 +143,7 @@ import javax.servlet.http.HttpSessionListener;
  * <p>
  * As a final note: the <tt>UttpUtil</tt> class should be used (and added to as needed) to page servlets and validate
  * assertions.
- *
+ * 
  * @author eellis
  */
 public abstract class AbstractAppServerTestCase extends TCTestCase {
@@ -329,7 +329,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   /**
    * Starts an instance of the assigned default application server listed in testconfig.properties. Servlets and the WAR
    * are dynamically generated using the convention listed in the header of this document.
-   *
+   * 
    * @param dsoEnabled - enable or disable dso for this instance
    * @return AppServerResult - series of return values including the server port assigned to this instance
    */
@@ -420,7 +420,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
   /**
    * If overridden <tt>super.tearDown()</tt> must be called to ensure that servers are all shutdown properly
-   *
+   * 
    * @throws Exception
    */
   protected void tearDown() throws Exception {
@@ -440,12 +440,9 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       VmStat.stop();
       synchronized (workingDirLock) {
         File dest = new File(tempDir, getName());
-        try {
-          workingDir.renameTo(dest);
-          // XXX: check return value?!!?
-
-        } catch (Throwable e) {
-          throw new RuntimeException("Error moving logs files. There might be zombie processes.", e);
+        if (workingDir.renameTo(dest) == false) { 
+          throw new RuntimeException("Error moving logs files. " +
+              "There might be zombie processes."); 
         }
       }
     }
