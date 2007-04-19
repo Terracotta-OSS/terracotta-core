@@ -44,12 +44,14 @@ public class EhcacheMemoryStoreAdapter extends ClassAdapter implements
 			String signature, String[] exceptions) {
 		MethodVisitor mv = super.visitMethod(access, name, desc, signature,
 				exceptions);
-
+		/**
 		if (className.equals(CLASS_NAME) 
 				&& name.equals(METHOD_NAME)
 				&& desc.equals(METHOD_DESC)) {
 			mv =  foo(mv);
 		} 
+		*/
+		
 		return mv;
 	}
 

@@ -45,7 +45,7 @@ public class EhcacheLruMemoryStoreAdapter extends ClassAdapter implements
 			String signature, String[] exceptions) {
 		MethodVisitor mv = super.visitMethod(access, name, desc, signature,
 				exceptions);
-
+		/**
 		if (className.equals(CLASS_NAME) 
 				&& name.equals(METHOD_NAME)
 				&& desc.equals(METHOD_DESC)) {
@@ -55,6 +55,8 @@ public class EhcacheLruMemoryStoreAdapter extends ClassAdapter implements
 				&& desc.equals("(Lnet/sf/ehcache/Element;)Z")) {
 			mv = foo(mv);
 		}
+		*/
+		
 		return mv;
 	}
 

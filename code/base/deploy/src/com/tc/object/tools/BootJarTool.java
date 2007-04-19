@@ -66,6 +66,7 @@ import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueIteratorClass
 import com.tc.object.bytecode.JavaUtilConcurrentLinkedBlockingQueueNodeClassAdapter;
 import com.tc.object.bytecode.JavaUtilTreeMapAdapter;
 import com.tc.object.bytecode.JavaUtilWeakHashMapAdapter;
+import com.tc.object.bytecode.LinkedHashMapClassAdapter;
 import com.tc.object.bytecode.LinkedListAdapter;
 import com.tc.object.bytecode.LogicalClassSerializationAdapter;
 import com.tc.object.bytecode.Manageable;
@@ -1599,6 +1600,7 @@ public class BootJarTool {
 
     ClassReader tcCR = new ClassReader(tcData);
     ClassNode tcCN = new ClassNode() {
+      
       public MethodVisitor visitMethod(int maccess, String mname, String mdesc, String msignature, String[] mexceptions) {
         if (replacedMethod != null && mname.equals(replacedMethod.name) && mdesc.equals(replacedMethod.desc)) {
           methods.add(replacedMethod);
@@ -1612,23 +1614,28 @@ public class BootJarTool {
     byte[] jData = getSystemBytes(jClassNameDots);
     ClassReader jCR = new ClassReader(jData);
     ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
+    ClassVisitor cv1 = new LinkedHashMapClassAdapter(cw);
+    
+    jCR.accept(cv1, ClassReader.SKIP_DEBUG);
+    jData = cw.toByteArray();
+    
+    jCR = new ClassReader(jData);
+    cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
 
     ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, systemLoader);
-
     TransparencyClassAdapter dsoAdapter = config.createDsoClassAdapterFor(cw, jClassInfo, instrumentationLogger,
                                                                           getClass().getClassLoader(), true);
-
     ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
                                                                               tcClassNameDots, tcCN,
                                                                               instrumentedContext));
     jCR.accept(cv, 0);
-
     bootJar.loadClassIntoJar(jClassNameDots, cw.toByteArray(), true);
 
     List innerClasses = tcCN.innerClasses;
     // load ClassInfo for all inner classes
     for (Iterator i = innerClasses.iterator(); i.hasNext();) {
       InnerClassNode innerClass = (InnerClassNode) i.next();
+      
       if (innerClass.outerName.equals(tcClassNameDots.replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER,
                                                               ChangeClassNameHierarchyAdapter.SLASH_DELIMITER))) {
         changeClassNameAndGetBytes(innerClass.name, tcClassNameDots, jClassNameDots, instrumentedContext);
