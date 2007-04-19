@@ -38,7 +38,7 @@ public class ConcentratedClassTest extends TransparentTestBase {
   }
 
   protected boolean canRunActivePassive() {
-    return true;
+    return false;
   }
 
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
