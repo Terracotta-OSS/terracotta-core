@@ -196,8 +196,10 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   }
 
   protected void setUp() throws Exception {
-    // XXX: temporary hack to discover how often container tests are being run
-    Debug.sendTestDetails(config.appserverFactoryName() + " " + getClass().getName() + "." + getName());
+    // XXX: temporary hack to discover how often glassfish tests are being run
+    if (NewAppServerFactory.GLASSFISH.equals(config.appserverFactoryName())) {
+      Debug.sendTestDetails(config.appserverFactoryName() + " " + getClass().getName() + "." + getName());
+    }
 
     LinkedJavaProcessPollingAgent.startHeartBeatServer();
 
