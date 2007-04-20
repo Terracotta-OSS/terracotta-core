@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<ivy-module version="1.0">
+<ivy-module version="1.0">  
   <info organisation="ibiblio" module="common-tests-base"/>
+  
   <dependencies>
-	<dependency name="ant" rev="1.6.2"/>
-	<dependency name="ant" rev="junit-1.6.2" org="terracotta"/>
-	<dependency name="junit" rev="3.8.1"/>
-	<dependency name="junit-addons" rev="1.4"/>
+    <dependency name="ant" rev="1.6.5"/>
+    <dependency name="ant" rev="junit-1.6.5"/>
+    <dependency name="junit" rev="3.8.1"/>
+    <dependency name="junit-addons" rev="1.4"/>
   </dependencies>
+  
+  <conflicts>
+    <!-- this will prevent ivy from being dumb and evicting the
+         ant-junit dependency -->
+    <manager name="all"/>
+  </conflicts>
 </ivy-module>

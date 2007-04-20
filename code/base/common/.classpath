@@ -24,8 +24,8 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-cli-1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/bsh-2.0b4.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/antlr-2.7.3.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/ant-junit-1.6.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/ant-1.6.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/ant-junit-1.6.5.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/ant-1.6.5.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xml-resolver-1.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xmlpublic-2.1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xml-apis-1.3.02.jar"/>

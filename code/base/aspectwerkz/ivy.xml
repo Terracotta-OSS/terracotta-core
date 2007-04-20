@@ -4,6 +4,6 @@
   <dependencies>
 	<!-- The build system depends on the following for compiling this module -->
 	<dependency name="junit" rev="3.8.1"/>
-	<dependency name="ant" rev="1.6.2"/>
+	<dependency name="ant" rev="1.6.5"/>
   </dependencies>
 </ivy-module>
