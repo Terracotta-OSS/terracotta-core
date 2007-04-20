@@ -20,13 +20,21 @@ public class ServerHelper extends BaseHelper {
 
   public boolean isActive(ConnectionContext cc) throws Exception {
     ObjectName infoMBean = getServerInfoMBean(cc);
-
     return infoMBean != null && cc.getBooleanAttribute(infoMBean, "Active");
   }
 
   public boolean isStarted(ConnectionContext cc) throws Exception {
     ObjectName infoMBean = getServerInfoMBean(cc);
-
     return infoMBean != null && cc.getBooleanAttribute(infoMBean, "Started");
+  }
+  
+  public boolean isPassiveUninitialized(ConnectionContext cc) throws Exception {
+    ObjectName infoMBean = getServerInfoMBean(cc);
+    return infoMBean != null && cc.getBooleanAttribute(infoMBean, "PassiveUninitialized");
+  }
+
+  public boolean isPassiveStandby(ConnectionContext cc) throws Exception {
+    ObjectName infoMBean = getServerInfoMBean(cc);
+    return infoMBean != null && cc.getBooleanAttribute(infoMBean, "PassiveStandby");
   }
 }

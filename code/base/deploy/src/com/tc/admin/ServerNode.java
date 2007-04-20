@@ -13,6 +13,7 @@ import com.tc.admin.common.XTreeNode;
 import com.tc.admin.dso.DSOHelper;
 import com.tc.admin.dso.DSONode;
 import com.tc.config.schema.L2Info;
+import com.tc.management.beans.L2MBeanNames;
 
 import java.awt.Color;
 import java.awt.Frame;
@@ -24,12 +25,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.text.MessageFormat;
-import java.util.Map;
 import java.util.prefs.Preferences;
 
+import javax.management.MBeanServerNotification;
+import javax.management.Notification;
+import javax.management.NotificationListener;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXServiceURL;
 import javax.naming.CommunicationException;
 import javax.naming.ServiceUnavailableException;
 import javax.swing.Icon;
@@ -47,7 +49,10 @@ import javax.swing.SwingUtilities;
  * notification handler (handleNotification) informs when the server goes from started->active state.
  */
 
-public class ServerNode extends ComponentNode implements ConnectionListener {
+public class ServerNode extends ComponentNode
+  implements ConnectionListener,
+             NotificationListener
+{
   private AdminClientContext      m_acc;
   private ServerConnectionManager m_connectManager;
   private Exception               m_connectException;
@@ -70,25 +75,23 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
   private static final String     PORT                           = ServersHelper.PORT;
   private static final String     AUTO_CONNECT                   = ServersHelper.AUTO_CONNECT;
 
-  private static final long       DEFAULT_CONNECT_TIMEOUT_MILLIS = 8000;
-
-  private static final long       CONNECT_TIMEOUT_MILLIS         = Long
-                                                                     .getLong(
-                                                                              "com.tc.admin.ServerNode.connect-timeout",
-                                                                              DEFAULT_CONNECT_TIMEOUT_MILLIS)
-                                                                     .longValue();
-
   ServerNode() {
     this(ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT, ConnectionContext.DEFAULT_AUTO_CONNECT);
   }
 
-  ServerNode(final String host, final int port, final boolean autoConnect) {
+  ServerNode(final String host, final int jmxPort, final boolean autoConnect) {
     super();
 
     m_acc = AdminClient.getContext();
     setRenderer(new ServerNodeTreeCellRenderer());
     AutoConnectionListener acl = new AutoConnectionListener();
-    m_connectManager = new ServerConnectionManager(host, port, autoConnect, acl);
+    m_connectManager = new ServerConnectionManager(host, jmxPort, autoConnect, acl);
+    if(autoConnect) {
+      String[] creds = ServerConnectionManager.getCachedCredentials(m_connectManager);
+      if(creds != null) {
+        m_connectManager.setCredentials(creds[0], creds[1]);
+      }
+    }
     initMenu(autoConnect);
     setComponent(m_serverPanel = new ServerPanel(this));
   }
@@ -157,6 +160,10 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     }
   }
 
+  ServerConnectionManager getServerConnectionManager() {
+    return m_connectManager;
+  }
+  
   ConnectionContext getConnectionContext() {
     return m_connectManager.getConnectionContext();
   }
@@ -240,6 +247,10 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
       m_connectException = null;
       if (m_connectManager.isActive()) {
         handleActivation();
+      } else if(m_connectManager.isPassiveStandby()) {
+        handlePassiveStandby();        
+      } else if(m_connectManager.isPassiveUninitialized()) {
+        handlePassiveUninitialized();
       } else if (m_connectManager.isStarted()) {
         handleStarting();
       }
@@ -265,18 +276,24 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     return m_connectManager != null && m_connectManager.isActive();
   }
 
+  boolean isPassiveUninitialized() {
+    return m_connectManager != null && m_connectManager.isPassiveUninitialized();
+  }
+
+  boolean isPassiveStandby() {
+    return m_connectManager != null && m_connectManager.isPassiveStandby();
+  }
+
   boolean hasConnectionException() {
     return m_connectException != null;
   }
 
-  private ConnectDialog getConnectDialog(JMXServiceURL url, Map env, long timeout, ConnectionListener listener) {
+  ConnectDialog getConnectDialog(ConnectionListener listener) {
     if (m_connectDialog == null) {
-      m_connectDialog = new ConnectDialog((Frame) m_serverPanel.getAncestorOfClass(java.awt.Frame.class), url, env,
-                                          timeout, listener);
+      Frame frame = (Frame) m_serverPanel.getAncestorOfClass(java.awt.Frame.class);
+      m_connectDialog = new ConnectDialog(frame, m_connectManager, listener);
     } else {
-      m_connectDialog.setServiceURL(url);
-      m_connectDialog.setEnvironment(env);
-      m_connectDialog.setTimeout(timeout);
+      m_connectDialog.setServerConnectionManager(m_connectManager);
       m_connectDialog.setConnectionListener(listener);
     }
 
@@ -299,14 +316,15 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
 
     m_connectException = null;
 
-    JMXServiceURL url = m_connectManager.getJMXServiceURL();
-    Map env = m_connectManager.getConnectionEnvironment();
-    ConnectDialog cd = getConnectDialog(url, env, CONNECT_TIMEOUT_MILLIS, this);
+    ConnectDialog cd = getConnectDialog(this);
+    Frame frame = (Frame) m_serverPanel.getAncestorOfClass(java.awt.Frame.class);
 
-    AdminClientPanel topPanel = (AdminClientPanel) SwingUtilities.getAncestorOfClass(AdminClientPanel.class,
-                                                                                     m_serverPanel);
+    String[] creds = ServerConnectionManager.getCachedCredentials(getServerConnectionManager());
+    if(creds != null) {
+      m_connectManager.setCredentials(creds[0], creds[1]);
+    }
 
-    cd.center(topPanel);
+    cd.center(frame);
     cd.setVisible(true);
   }
 
@@ -522,6 +540,13 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
       JCheckBoxMenuItem menuitem = (JCheckBoxMenuItem) ae.getSource();
       boolean autoConnect = menuitem.isSelected();
 
+      if(autoConnect) {
+        String[] creds = ServerConnectionManager.getCachedCredentials(getServerConnectionManager());
+        if(creds != null) {
+          m_connectManager.setCredentials(creds[0], creds[1]);
+        }
+      }
+      
       m_connectManager.setAutoConnect(autoConnect);
       m_serverPanel.setupConnectButton();
       m_acc.controller.updateServerPrefs();
@@ -536,6 +561,45 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     m_acc.controller.nodeChanged(ServerNode.this);
     m_serverPanel.started();
     m_shutdownAction.setEnabled(false);
+  }
+
+  void tryAddDSONode() {
+    if (getChildCount() == 0) {
+      ConnectionContext cntx = getConnectionContext();
+
+      if (DSOHelper.getHelper().getDSOMBean(cntx) != null) {
+        DSONode dsoNode = null;
+
+        add(dsoNode = new DSONode(cntx));
+        m_acc.controller.nodeStructureChanged(this);
+        m_acc.controller.expand(dsoNode);
+      } else {
+        try {
+          ObjectName mbsd = cntx.queryName("JMImplementation:type=MBeanServerDelegate");
+          if(mbsd != null) {
+            try {
+              cntx.removeNotificationListener(mbsd, this);
+            } catch(Exception e) {/**/}
+            cntx.addNotificationListener(mbsd, this);
+          }
+        } catch(Exception ioe) {
+          ioe.printStackTrace();
+        }
+      }
+    }
+    m_acc.controller.nodeChanged(ServerNode.this);
+  }
+  
+  void handlePassiveUninitialized() {
+    tryAddDSONode();
+    m_serverPanel.passiveUninitialized();
+    m_shutdownAction.setEnabled(false);
+  }
+
+  void handlePassiveStandby() {
+    tryAddDSONode();
+    m_serverPanel.passiveStandby();
+    m_shutdownAction.setEnabled(true);
   }
 
   static ObjectName getServerInfo(ConnectionContext cntx) throws Exception {
@@ -591,26 +655,32 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
   }
 
   void handleActivation() {
-    ConnectionContext cntx = getConnectionContext();
-    DSONode dsoNode = null;
-
-    if (DSOHelper.getHelper().getDSOMBean(cntx) != null) {
-      add(dsoNode = new DSONode(cntx));
-    }
-
-    /*
-     * ObjectName[] beanNames = SessionsHelper.getHelper().getSessionsProductMBeans(cntx); if(beanNames != null &&
-     * beanNames.length > 0) { add(new SessionsNode(cntx, beanNames)); }
-     */
-
-    m_acc.controller.nodeStructureChanged(this);
-
-    if (dsoNode != null) {
-      m_acc.controller.expand(dsoNode);
-    }
-
+    tryAddDSONode();
     m_serverPanel.activated();
     m_shutdownAction.setEnabled(true);
+  }
+
+  public void handleNotification(Notification notification, Object handback) {
+    if(notification instanceof MBeanServerNotification) {
+      MBeanServerNotification mbsn = (MBeanServerNotification)notification;
+      String                  type = notification.getType();
+      ObjectName              name = mbsn.getMBeanName();
+      
+      if(type.equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
+        if(name.getCanonicalName().equals(L2MBeanNames.DSO.getCanonicalName())) {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              DSONode dsoNode = new DSONode(getConnectionContext());
+
+              add(dsoNode);
+              m_acc.controller.nodeStructureChanged(ServerNode.this);
+              m_acc.controller.expand(dsoNode);
+              m_acc.controller.nodeChanged(ServerNode.this);
+            }
+          });
+        }
+      }
+    }
   }
 
   L2Info[] getClusterMembers() {
@@ -636,6 +706,27 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     m_acc.controller.nodeStructureChanged(ServerNode.this);
     m_acc.controller.select(this);
     m_shutdownAction.setEnabled(false);
+  }
+
+  Color getServerStatusColor() {
+    return getServerStatusColor(getServerConnectionManager());
+  }
+  
+  static Color getServerStatusColor(ServerConnectionManager scm) {
+    if(scm != null) {
+      if (scm.isActive()) {
+        return Color.GREEN;
+      } else if (scm.isPassiveStandby()) {
+        return Color.CYAN;
+      } else if (scm.isPassiveUninitialized()) {
+        return Color.ORANGE;
+      } else if (scm.isStarted()) {
+        return Color.YELLOW;
+      } else if (scm.getConnectionException() != null) {
+        return Color.RED;
+      }
+    }
+    return Color.LIGHT_GRAY;
   }
 
   private class ServerNodeTreeCellRenderer extends AbstractTreeCellRenderer {
@@ -666,17 +757,7 @@ public class ServerNode extends ComponentNode implements ConnectionListener {
     }
 
     public void setValue(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean focused) {
-      Color bg = Color.LIGHT_GRAY;
-
-      if (isActive()) {
-        bg = Color.GREEN;
-      } else if (isStarted()) {
-        bg = Color.YELLOW;
-      } else if (hasConnectionException()) {
-        bg = Color.RED;
-      }
-
-      m_statusView.setIndicator(bg);
+      m_statusView.setIndicator(ServerNode.this.getServerStatusColor());
       m_statusView.setLabel(value.toString());
     }
   }

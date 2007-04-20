@@ -13,18 +13,22 @@ import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XObjectTable;
 import com.tc.config.schema.L2Info;
 
-import java.awt.Color;
+import java.awt.Frame;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.util.Date;
 
+import javax.management.remote.JMXConnector;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumnModel;
 
 public class ServerPanel extends XContainer {
@@ -41,7 +45,6 @@ public class ServerPanel extends XContainer {
   private ProductInfoPanel        m_altProductInfoPanel;    // Displayed if the RuntimeInfoPanel is not.
   private XObjectTable            m_clusterMemberTable;
   private ClusterMemberTableModel m_clusterMemberTableModel;
-  private ClusterMemberListener   m_clusterMemberListener;
 
   static {
     m_connectIcon = new ImageIcon(ServerPanel.class.getResource("/com/tc/admin/icons/disconnect_co.gif"));
@@ -64,7 +67,6 @@ public class ServerPanel extends XContainer {
     m_productInfoPanel = (ProductInfoPanel) findComponent("ProductInfoPanel");
     m_clusterMemberTable = (XObjectTable) findComponent("ClusterMembersTable");
     m_clusterMemberTableModel = new ClusterMemberTableModel();
-    m_clusterMemberListener = new ClusterMemberListener();
     m_clusterMemberTable.setModel(m_clusterMemberTableModel);
     TableColumnModel colModel = m_clusterMemberTable.getColumnModel();
     colModel.getColumn(0).setCellRenderer(new ClusterMemberStatusRenderer());
@@ -155,7 +157,9 @@ public class ServerPanel extends XContainer {
 
     setStatusLabel(statusMsg);
     m_acc.controller.addServerLog(m_serverNode.getConnectionContext());
-    showRuntimeInfo();
+    if(!isRuntimeInfoShowing()) {
+      showRuntimeInfo();
+    }
 
     m_acc.controller.setStatus(m_serverNode + " activated at " + activateTime);
   }
@@ -174,9 +178,45 @@ public class ServerPanel extends XContainer {
 
     setupConnectButton();
     setStatusLabel(statusMsg);
-    showRuntimeInfo();
+    if(!isRuntimeInfoShowing()) {
+      showRuntimeInfo();
+    }
 
     m_acc.controller.setStatus("Started " + m_serverNode + " at " + startTime);
+  }
+
+  void passiveUninitialized() {
+    m_hostField.setEditable(false);
+    m_portField.setEditable(false);
+
+    Date now = new Date();
+    String startTime = DateFormat.getTimeInstance().format(now);
+    String statusMsg = "Initializing at " + startTime;
+
+    setupConnectButton();
+    setStatusLabel(statusMsg);
+    if(!isRuntimeInfoShowing()) {
+      showRuntimeInfo();
+    }
+
+    m_acc.controller.setStatus("Initializing " + m_serverNode + " at " + startTime);
+  }
+
+  void passiveStandby() {
+    m_hostField.setEditable(false);
+    m_portField.setEditable(false);
+
+    Date now = new Date();
+    String startTime = DateFormat.getTimeInstance().format(now);
+    String statusMsg = "Standing by at " + startTime;
+
+    setupConnectButton();
+    setStatusLabel(statusMsg);
+    if(!isRuntimeInfoShowing()) {
+      showRuntimeInfo();
+    }
+
+    m_acc.controller.setStatus(m_serverNode + " standing by at " + startTime);
   }
 
   private void disconnect() {
@@ -200,23 +240,14 @@ public class ServerPanel extends XContainer {
 
   void setStatusLabel(String msg) {
     m_statusView.setLabel(msg);
-    m_statusView.setIndicator(getServerStatusColor());
+    m_statusView.setIndicator(m_serverNode.getServerStatusColor());
   }
 
-  private Color getServerStatusColor() {
-    Color color = Color.LIGHT_GRAY;
-
-    if (m_serverNode.isActive()) {
-      color = Color.GREEN;
-    } else if (m_serverNode.isStarted()) {
-      color = Color.YELLOW;
-    } else if (m_serverNode.hasConnectionException()) {
-      color = Color.RED;
-    }
-
-    return color;
+  private boolean isRuntimeInfoShowing() {
+    return m_runtimeInfoPanel.isVisible() ||
+      (m_altProductInfoPanel != null && m_altProductInfoPanel.isVisible());
   }
-
+  
   private void showRuntimeInfo() {
     L2Info[] clusterMembers = m_serverNode.getClusterMembers();
 
@@ -255,7 +286,11 @@ public class ServerPanel extends XContainer {
   }
 
   private void hideRuntimeInfo() {
+    m_clusterMemberTableModel.clear();
     m_runtimeInfoPanel.setVisible(false);
+    if(m_altProductInfoPanel != null) {
+      m_altProductInfoPanel.setVisible(false);
+    }
     revalidate();
     repaint();
   }
@@ -269,45 +304,120 @@ public class ServerPanel extends XContainer {
       ServerConnectionManager member = m_clusterMemberTableModel.getClusterMemberAt(row);
 
       m_label.setText(member.getName());
-
-      Color bg = Color.LIGHT_GRAY;
-      if (member.isActive()) {
-        bg = Color.GREEN;
-      } else if (member.isStarted()) {
-        bg = Color.YELLOW;
-      } else if (member.getConnectionException() != null) {
-        bg = Color.RED;
-      }
-      m_indicator.setBackground(bg);
+      m_indicator.setBackground(ServerNode.getServerStatusColor(member));
     }
   }
 
   private class ClusterMemberListener implements ConnectionListener {
+    ServerConnectionManager m_scm;
+    ConnectDialog m_cd;
+    
+    void setServerConnectionManager(ServerConnectionManager scm) {
+      m_scm = scm;
+    }
+    
     public void handleConnection() {
-      if (m_clusterMemberTableModel != null) {
-        int count = m_clusterMemberTableModel.getRowCount();
-        m_clusterMemberTableModel.fireTableRowsUpdated(0, count - 1);
-      }
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          if (m_clusterMemberTableModel != null) {
+            int count = m_clusterMemberTableModel.getRowCount();
+            m_clusterMemberTableModel.fireTableRowsUpdated(0, count - 1);
+          }
+        }
+      });
     }
 
-    public void handleException() {
-      if (m_clusterMemberTableModel != null) {
-        m_clusterMemberTableModel.fireTableDataChanged();
+    class ConnectDialogListener implements ConnectionListener {
+      public void handleConnection() {
+        JMXConnector jmxc;
+        if ((jmxc = m_cd.getConnector()) != null) {
+          try {
+            m_scm.setJMXConnector(jmxc);
+            m_scm.setAutoConnect(true);
+          } catch (IOException ioe) {/**/}
+        }
       }
+      
+      public void handleException() {
+        final Exception error = m_cd.getError();
+        
+        m_acc.log("Failed to connect to '"+m_scm+"' ["+error.getMessage()+"]");
+
+        if(error instanceof SecurityException) {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              AdminClientPanel topPanel = (AdminClientPanel) ServerPanel.this.getAncestorOfClass(AdminClientPanel.class);
+              Frame frame = (Frame) topPanel.getAncestorOfClass(java.awt.Frame.class);
+              String msg = "Failed to connect to '"+m_scm+"'\n\n"+error.getMessage()+"\n\nTry again to connect?";
+              
+              int result = JOptionPane.showConfirmDialog(frame, msg, frame.getTitle(), JOptionPane.YES_NO_OPTION);
+              if(result == JOptionPane.OK_OPTION) {
+                m_cd.center(frame);
+                m_cd.setVisible(true);
+              }
+            }
+          });
+        }
+      }
+    }
+  
+    void connect() {
+      AdminClientPanel topPanel = (AdminClientPanel) ServerPanel.this.getAncestorOfClass(AdminClientPanel.class);
+      Frame frame = (Frame) topPanel.getAncestorOfClass(java.awt.Frame.class);
+
+      m_cd = m_serverNode.getConnectDialog(new ConnectDialogListener());
+      m_cd.setServerConnectionManager(m_scm);
+      m_cd.center(frame);
+      m_cd.setVisible(true);
+    }
+    
+    public void handleException() {
+      if(m_cd != null && m_cd.isVisible()) return;
+      
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          Exception e = m_scm.getConnectionException();
+          if(e instanceof SecurityException) {
+            connect();
+          }
+
+          if (m_clusterMemberTableModel != null) {
+            int count = m_clusterMemberTableModel.getRowCount();
+            m_clusterMemberTableModel.fireTableRowsUpdated(0, count - 1);
+          }
+        }
+      });
     }
   }
 
   void addClusterMember(L2Info clusterMember) {
-    String host = clusterMember.host();
-
-    if (host.equals("localhost") || host.equals(L2Info.IMPLICIT_L2_NAME)) {
-      clusterMember = new L2Info(clusterMember.name(), m_serverNode.getHost(), clusterMember.jmxPort());
+    ClusterMemberListener cml = new ClusterMemberListener();
+    ServerConnectionManager scm = new ServerConnectionManager(clusterMember, false, cml);
+    String[] creds = ServerConnectionManager.getCachedCredentials(scm);
+    
+    if(creds == null) {
+      creds = m_serverNode.getServerConnectionManager().getCredentials();
     }
-
-    ServerConnectionManager scm = new ServerConnectionManager(clusterMember, true, m_clusterMemberListener);
+    if(creds != null) {
+      scm.setCredentials(creds[0], creds[1]);
+    }
+    cml.setServerConnectionManager(scm);
+    scm.setAutoConnect(true);
+    
     m_clusterMemberTableModel.addClusterMember(scm);
   }
 
+  ServerConnectionManager[] getClusterMembers() {
+    int count = m_clusterMemberTableModel.getRowCount();
+    ServerConnectionManager[] result = new ServerConnectionManager[count];
+    
+    for(int i = 0; i < count; i++) {
+      result[i] = m_clusterMemberTableModel.getClusterMemberAt(i);
+    }
+    
+    return result;
+  }
+  
   public void tearDown() {
     super.tearDown();
 
@@ -325,6 +435,5 @@ public class ServerPanel extends XContainer {
     m_productInfoPanel = null;
     m_clusterMemberTable = null;
     m_clusterMemberTableModel = null;
-    m_clusterMemberListener = null;
   }
 }

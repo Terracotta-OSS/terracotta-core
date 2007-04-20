@@ -103,6 +103,7 @@ public class L2Management extends TerracottaManagement {
       credentialsMsg = "Credentials: " + configurationSetupManager.commonl2Config().authenticationPasswordFile() + " "
                        + configurationSetupManager.commonl2Config().authenticationAccessFile();
     }
+    env.put("jmx.remote.x.server.connection.timeout", new Long(Long.MAX_VALUE));
     url = new JMXServiceURL("service:jmx:rmi://");
     RMIJRMPServerImpl server = new RMIJRMPServerImpl(jmxPort, null, null, env);
     jmxConnectorServer = new RMIConnectorServer(url, env, server, mBeanServer);

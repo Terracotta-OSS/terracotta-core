@@ -386,7 +386,7 @@
 						<container>
 							<children>
 								<button name="CancelButton" text="Cancel"/>
-								<label text="Connecting.  Please wait..."/>
+								<label name="ConnectLabel" text="Connecting.  Please wait..." font="helvetica-plain-12"/>
 							</children>
 							<connections>
 								<item bottom="-1,bottom:sn" height="n" left="1,right:s10" right="-1,right:sn" top="-1,top:sn" width="n"/>

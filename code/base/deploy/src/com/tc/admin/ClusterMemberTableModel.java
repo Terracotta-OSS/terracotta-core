@@ -23,10 +23,15 @@ public class ClusterMemberTableModel extends XObjectTableModel {
     return (ServerConnectionManager)getObjectAt(row);
   }
   
-  public void tearDown() {
-    for(int i = 0; i < getRowCount(); i++) {
+  public void clear() {
+    int count = getRowCount();
+    for(int i = 0; i < count; i++) {
       getClusterMemberAt(i).tearDown();
     }
+    super.clear();
+  }
+  
+  public void tearDown() {
     clear();
   }
 }

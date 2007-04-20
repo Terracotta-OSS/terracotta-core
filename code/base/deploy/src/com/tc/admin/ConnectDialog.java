@@ -8,6 +8,7 @@ import org.dijon.Button;
 import org.dijon.Container;
 import org.dijon.Dialog;
 import org.dijon.DialogResource;
+import org.dijon.Label;
 import org.dijon.TextField;
 
 import com.tc.util.event.UpdateEventListener;
@@ -30,34 +31,38 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 public final class ConnectDialog extends Dialog {
+  private static final long DEFAULT_CONNECT_TIMEOUT_MILLIS = 8000;
+  public static final long  CONNECT_TIMEOUT_MILLIS         = Long.getLong("com.tc.admin.connect-timeout",
+                                                                          DEFAULT_CONNECT_TIMEOUT_MILLIS).longValue();
 
-  private JMXServiceURL        m_url;
-  private Map                  m_env;
-  private long                 m_timeout;
-  private ConnectionListener   m_listener;
-  private JMXConnector         m_jmxc;
-  private Thread               m_mainThread;
-  private Thread               m_connectThread;
-  private Timer                m_timer;
-  private Exception            m_error;
-  private Button               m_cancelButton;
-  private final JTextField     m_usernameField;
-  private final JPasswordField m_passwordField;
-  private final Button         m_okButton;
-  private final Button         m_authCancelButton;
-  private final Container      m_emptyPanel;
-  private final Container      m_authPanel;
+  private ServerConnectionManager m_connectManager;
+  private long                    m_timeout;
+  private ConnectionListener      m_listener;
+  private JMXConnector            m_jmxc;
+  private Thread                  m_mainThread;
+  private Thread                  m_connectThread;
+  private Timer                   m_timer;
+  private Exception               m_error;
+  private Label                   m_label;
+  private Button                  m_cancelButton;
+  private final JTextField        m_usernameField;
+  private final JPasswordField    m_passwordField;
+  private final Button            m_okButton;
+  private final Button            m_authCancelButton;
+  private final Container         m_emptyPanel;
+  private final Container         m_authPanel;
 
-  public ConnectDialog(Frame parent, JMXServiceURL url, Map env, long timeout, ConnectionListener listener) {
+  public ConnectDialog(Frame parent, ServerConnectionManager scm, ConnectionListener listener) {
     super(parent, true);
 
-    m_url = url;
-    m_env = env;
-    m_timeout = timeout;
+    m_connectManager = scm;
+    m_timeout = CONNECT_TIMEOUT_MILLIS;
     m_listener = listener;
 
     AdminClientContext acc = AdminClient.getContext();
     load((DialogResource) acc.topRes.child("ConnectDialog"));
+    m_label = (Label)findComponent("ConnectLabel");
+    m_label.setText("Connecting to "+scm+". Please wait...");
     pack();
 
     m_cancelButton = (Button) findComponent("CancelButton");
@@ -102,6 +107,7 @@ public final class ConnectDialog extends Dialog {
         final String password = new String(m_passwordField.getPassword()).trim();
         SwingUtilities.invokeLater(new Thread() {
           public void run() {
+            m_connectManager.setCredentials(username, password);
             ((AuthenticatingJMXConnector) m_jmxc).handleOkClick(username, password);
           }
         });
@@ -127,6 +133,7 @@ public final class ConnectDialog extends Dialog {
     m_authCancelButton.setVisible(false);
     m_cancelButton.setVisible(true);
     pack();
+    center(getOwner());
   }
 
   private void enableAuthenticationDialog() {
@@ -138,23 +145,18 @@ public final class ConnectDialog extends Dialog {
     m_authPanel.setVisible(true);
     m_authPanel.getRootPane().setDefaultButton(m_okButton);
     pack();
+    center(getOwner());
     m_usernameField.grabFocus();
   }
 
-  public void setServiceURL(JMXServiceURL url) {
-    m_url = url;
+  public void setServerConnectionManager(ServerConnectionManager scm) {
+    m_connectManager = scm;
+    m_label.setText("Connecting to "+scm+". Please wait...");
+    pack();
   }
 
-  public JMXServiceURL getServiceURL() {
-    return m_url;
-  }
-
-  public void setEnvironment(Map env) {
-    m_env = env;
-  }
-
-  public Map getEnvironment() {
-    return m_env;
+  public ServerConnectionManager getServerConnectionManager() {
+    return m_connectManager;
   }
 
   public void setTimeout(long millis) {
@@ -223,7 +225,9 @@ public final class ConnectDialog extends Dialog {
       m_connectThread = new ConnectThread();
       try {
         m_error = null;
-        m_jmxc = new AuthenticatingJMXConnector(m_url, m_env);
+        JMXServiceURL url = m_connectManager.getJMXServiceURL();
+        Map env = m_connectManager.getConnectionEnvironment();
+        m_jmxc = new AuthenticatingJMXConnector(url, env);
         ((AuthenticatingJMXConnector) m_jmxc).addAuthenticationListener(new UpdateEventListener() {
           public void handleUpdate(Object obj) {
             m_connectionTimer.stopTimer();
@@ -277,6 +281,11 @@ public final class ConnectDialog extends Dialog {
     }
 
     private synchronized void connectionJoin() {
+      if(m_connectionTimer.isAlive()) {
+        m_connectionTimer.stopTimer();
+        m_connectionTimer.interrupt();
+      }
+
       m_join = true;
       m_isConnecting = false;
       notifyAll();
@@ -298,7 +307,7 @@ public final class ConnectDialog extends Dialog {
 
     public void run() {
       try {
-        m_jmxc.connect(m_env);
+        m_jmxc.connect(m_connectManager.getConnectionEnvironment());
         ((MainThread) m_mainThread).connectionJoin();
       } catch (IOException e) {
         m_error = e;
@@ -360,12 +369,12 @@ public final class ConnectDialog extends Dialog {
   // --------------------------------------------------------------------------------
 
   void tearDown() {
-    if (m_env != null) {
-      m_env.clear();
+    Map env = m_connectManager.getConnectionEnvironment();
+    if (env != null) {
+      env.clear();
     }
 
-    m_url = null;
-    m_env = null;
+    m_connectManager = null;
     m_listener = null;
     m_jmxc = null;
     m_mainThread = null;

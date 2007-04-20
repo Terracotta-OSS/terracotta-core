@@ -15,7 +15,7 @@ public class AdminClientContext {
   public AdminClient           client;
   public AdminClientController controller;
   public UIDefaults            uiDefaults;
-  public ResourceBundleHelper          bundleHelper;
+  public ResourceBundleHelper  bundleHelper;
   public DictionaryResource    topRes;
   public Preferences           prefs;
 
