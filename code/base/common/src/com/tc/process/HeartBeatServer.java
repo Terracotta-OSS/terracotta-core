@@ -62,7 +62,7 @@ public class HeartBeatServer {
       Socket s = (Socket) it.next();
       alive = alive || pingAppServer(s);
     }
-    return false;
+    return alive;
   }
 
   private boolean pingAppServer(Socket s) {
