@@ -173,9 +173,9 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 			Cache cache = new Cache(name, 2, false, true, 0, 2);
 			clusteredCacheManager.addCache(cache);
 		}
-		//Cache cache = clusteredCacheManager.getCache(name);
-		//cache.put(new Element(name + "key1", "value1"));
-		//cache.put(new Element(name + "key2", "value1"));
+		Cache cache = clusteredCacheManager.getCache(name);
+		cache.put(new Element(name + "key1", "value1"));
+		cache.put(new Element(name + "key2", "value1"));
 	}
 
 	/**

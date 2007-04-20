@@ -13,9 +13,13 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.LinkedHashMap;
+import java.util.Set;
 import java.util.Vector;
 
 public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
@@ -55,6 +59,7 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
       getTesting();
       removeTesting();
       clearTesting();
+      //putAllTesting(); 
       barrier.barrier();
     } catch (Throwable t) {
       notifyError(t);
@@ -102,6 +107,25 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
     barrier.barrier();
   }
 
+  private void putAllTesting() throws Exception {
+    synchronized(linkedHashMap) {
+      Map expect = new HashMap();
+      expect.put("key1", "value1");
+      expect.put("key2", new Integer(2));
+      expect.put("key3", new Date());
+      expect.put("key4", new Boolean(false));
+      expect.put("key5", null);
+      linkedHashMap.putAll(expect);
+      Assert.assertEquals(expect.size(), linkedHashMap.size());
+      Set expectEntries = expect.entrySet();
+      Set actualEntries = linkedHashMap.entrySet();
+      for (Iterator iExpect = expectEntries.iterator(), iActual = actualEntries.iterator(); iExpect.hasNext();) {
+        Assert.assertEquals(iExpect.next(), iActual.next());
+      }
+    }
+    barrier.barrier();
+  }
+
   private void put(final Element element) {
     synchronized(linkedHashMap) {
       linkedHashMap.put(element.getKey(), element);
@@ -115,11 +139,11 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
   }
   
   private static final class CustomLinkedHashMap extends LinkedHashMap {
-    //private static final int INITIAL_CAPACITY = 100;
-    //private static final float GROWTH_FACTOR = .75F;
+    private static final int INITIAL_CAPACITY = 100;
+    private static final float GROWTH_FACTOR = .75F;
 
     public CustomLinkedHashMap() {
-        super(100, .75F, true);
+        super(INITIAL_CAPACITY, GROWTH_FACTOR, true);
     }
     
     protected final boolean removeEldestEntry(Map.Entry eldest) {
