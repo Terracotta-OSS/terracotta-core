@@ -7,7 +7,7 @@ import org.apache.commons.io.FileUtils;
 import org.codehaus.cargo.container.geronimo.internal.GeronimoUtils;
 import org.codehaus.cargo.util.log.Logger;
 
-import com.tc.process.LinkedJavaProcessPollingAgent;
+import com.tc.process.HeartBeatService;
 import com.tc.process.StreamAppender;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.ServerParameters;
@@ -115,7 +115,7 @@ public final class Wasce1xAppServer extends AbstractAppServer {
     cl.add(classpath + File.pathSeparatorChar + config.linkedChildProcessClasspath());
     cl.add(CargoLinkedChildProcess.class.getName());
     cl.add(className);
-    cl.add(String.valueOf(LinkedJavaProcessPollingAgent.getChildProcessHeartbeatServerPort()));
+    cl.add(String.valueOf(HeartBeatService.listenPort()));
     cl.add(instance.toString());
     cl.add("--long"); // wasce args
 

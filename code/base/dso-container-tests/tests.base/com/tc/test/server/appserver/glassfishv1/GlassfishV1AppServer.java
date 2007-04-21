@@ -12,7 +12,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.tc.process.Exec;
-import com.tc.process.LinkedJavaProcessPollingAgent;
+import com.tc.process.HeartBeatService;
 import com.tc.process.Exec.Result;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.ServerParameters;
@@ -299,7 +299,7 @@ public final class GlassfishV1AppServer extends AbstractAppServer {
 
     cmd.add(CargoLinkedChildProcess.class.getName());
     cmd.add(mainClass);
-    cmd.add(String.valueOf(LinkedJavaProcessPollingAgent.getChildProcessHeartbeatServerPort()));
+    cmd.add(String.valueOf(HeartBeatService.listenPort()));
     cmd.add(instanceDir.toString());
     cmd.add(mainArg);
 
