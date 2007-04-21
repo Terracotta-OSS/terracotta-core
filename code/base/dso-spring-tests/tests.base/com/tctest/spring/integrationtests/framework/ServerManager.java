@@ -65,14 +65,13 @@ public class ServerManager {
     }
   }
 
-  private static final String   SERVER_INSTALL = "server-install";
   private AppServerInstallation installation;
   private File                  workingDir;
 
   private File                  tempDir;
 
   private synchronized File serverInstallDir() {
-    return makeDir(config.appserverServerInstallDir() + File.separator + SERVER_INSTALL);
+    return makeDir(config.appserverServerInstallDir());
   }
 
   private synchronized File workingDir() throws IOException {
