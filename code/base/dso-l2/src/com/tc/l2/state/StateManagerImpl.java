@@ -12,7 +12,6 @@ import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.L2StateMessageFactory;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
@@ -23,7 +22,7 @@ import com.tc.util.State;
 
 import java.util.Iterator;
 
-public class StateManagerImpl implements StateManager, GroupMessageListener, GroupEventsListener {
+public class StateManagerImpl implements StateManager, GroupMessageListener {
 
   private static final TCLogger      logger       = TCLogging.getLogger(StateManagerImpl.class);
 
@@ -44,7 +43,6 @@ public class StateManagerImpl implements StateManager, GroupMessageListener, Gro
     this.stateChangeSink = stateChangeSink;
     this.electionMgr = new ElectionManagerImpl(groupManager);
     this.groupManager.registerForMessages(L2StateMessage.class, this);
-    this.groupManager.registerForGroupEvents(this);
   }
 
   /*
@@ -244,28 +242,24 @@ public class StateManagerImpl implements StateManager, GroupMessageListener, Gro
     }
   }
 
-  // TODO:: Make it a handler on a stage
-  public synchronized void nodeJoined(NodeID nodeID) {
-    info("Node : " + nodeID + " joined the cluster", true);
-    if (state == ACTIVE_COORDINATOR) {
-      // notify new node
-      GroupMessage msg = L2StateMessageFactory.createElectionWonMessage(EnrollmentFactory
-          .createTrumpEnrollment(getLocalNodeID()));
-      try {
-        groupManager.sendTo(nodeID, msg);
-      } catch (GroupException e) {
-        throw new AssertionError(e);
-      }
+  // notify new node
+  public synchronized void publishActiveState(NodeID nodeID) {
+    Assert.assertTrue(isActiveCoordinator());
+    GroupMessage msg = L2StateMessageFactory.createElectionWonMessage(EnrollmentFactory
+        .createTrumpEnrollment(getLocalNodeID()));
+    try {
+      groupManager.sendTo(nodeID, msg);
+    } catch (GroupException e) {
+      logger.error("Error publishing Active State. Zapping node " + nodeID, e);
+      groupManager.zapNode(nodeID);
     }
   }
 
-  // TODO:: Make it a handler on a stage
-  public void nodeLeft(NodeID nodeID) {
-    warn("Node : " + nodeID + " left the cluster", true);
+  public void startElectionIfNecessary(NodeID disconnectedNode) {
     boolean elect = false;
     synchronized (this) {
       if (state != PASSIVE_UNINTIALIZED && state != ACTIVE_COORDINATOR
-          && (activeNode.isNull() || activeNode.equals(nodeID))) {
+          && (activeNode.isNull() || activeNode.equals(disconnectedNode))) {
         elect = true;
         activeNode = NodeID.NULL_ID;
       }

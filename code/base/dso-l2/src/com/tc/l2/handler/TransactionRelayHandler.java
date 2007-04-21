@@ -7,7 +7,6 @@ package com.tc.l2.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
-import com.tc.exception.ImplementMe;
 import com.tc.l2.context.IncomingTransactionContext;
 import com.tc.l2.msg.RelayedCommitTransactionMessage;
 import com.tc.l2.msg.RelayedCommitTransactionMessageFactory;
@@ -27,13 +26,13 @@ import java.util.Collection;
 import java.util.Iterator;
 
 public class TransactionRelayHandler extends AbstractEventHandler {
-  private static final TCLogger          logger = TCLogging.getLogger(TransactionRelayHandler.class);
+  private static final TCLogger      logger = TCLogging.getLogger(TransactionRelayHandler.class);
 
-  private final L2ObjectStateManager     l2ObjectStateMgr;
+  private final L2ObjectStateManager l2ObjectStateMgr;
 
-  private GroupManager                   groupManager;
+  private GroupManager               groupManager;
 
-  private ServerTransactionManager       transactionManager;
+  private ServerTransactionManager   transactionManager;
 
   public TransactionRelayHandler(L2ObjectStateManager objectStateManager) {
     this.l2ObjectStateMgr = objectStateManager;
@@ -45,14 +44,7 @@ public class TransactionRelayHandler extends AbstractEventHandler {
     for (Iterator i = states.iterator(); i.hasNext();) {
       L2ObjectState state = (L2ObjectState) i.next();
       NodeID nodeID = state.getNodeID();
-      if (state.isInSync()) {
-        // Just send the commitTransaction Message, no futher processing is needed
-        sendCommitTransactionMessage(nodeID, ict);
-      } else {
-        // TODO::
-        System.err.println("WARNING :: Unimplemented yet - " + state);
-        throw new ImplementMe();
-      }
+      sendCommitTransactionMessage(nodeID, ict);
     }
     transactionManager.transactionsRelayed(ict.getChannelID(), ict.getServerTransactionIDs());
   }

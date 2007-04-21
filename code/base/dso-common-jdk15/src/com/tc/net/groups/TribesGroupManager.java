@@ -30,7 +30,6 @@ import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,6 +49,10 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   private static final TCLogger                           logger            = TCLogging
                                                                                 .getLogger(TribesGroupManager.class);
 
+  private static final boolean                            useMcast          = TCPropertiesImpl.getProperties()
+                                                                                .getPropertiesFor(L2_NHA)
+                                                                                .getBoolean(USE_MCAST);
+
   private final GroupChannel                              group;
   private TcpFailureDetector                              failuredetector;
   private Member                                          thisMember;
@@ -62,14 +65,13 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   private final Map<MessageID, GroupResponse>             pendingRequests   = new Hashtable<MessageID, GroupResponse>();
 
   private boolean                                         stopped           = false;
-  private boolean                                         debug             = true;
+  private boolean                                         debug             = false;
 
   public TribesGroupManager() {
     group = new GroupChannel();
   }
 
   public NodeID join(final Node thisNode, final Node[] allNodes) throws GroupException {
-    final boolean useMcast = TCPropertiesImpl.getProperties().getPropertiesFor(L2_NHA).getBoolean(USE_MCAST);
     if (useMcast) return joinMcast();
     else return joinStatic(thisNode, allNodes);
 
@@ -137,11 +139,37 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       commonGroupChanelConfig();
       group.start(Channel.DEFAULT);
       this.thisMember = group.getLocalMember(false);
-      this.thisNodeID = new NodeID(this.thisMember.getName(), this.thisMember.getUniqueId());
+      this.thisNodeID = makeNodeIDFrom(this.thisMember);
       return this.thisNodeID;
     } catch (ChannelException e) {
       logger.error(e);
       throw new GroupException(e);
+    }
+  }
+
+  /**
+   * XXX:: This method is a temperary hack to make TribesGroupManager work. Without this for static members, we get
+   * differernt UniqueID for the same members, one in nodeJoined event and one in the messages. Until that is fixed, the
+   * NodeIDs uid is going to be based on the host and port for static members.
+   */
+  private static NodeID makeNodeIDFrom(Member member) {
+    if (useMcast) {
+      return new NodeID(member.getName(), member.getUniqueId());
+    } else {
+      byte[] host = member.getHost();
+      int port = member.getPort();
+      if (port < 0) {
+        port = member.getSecurePort();
+        if (port < 0) {
+          // Ports shouldnt be 0 either, but in our test framework when there is only one inprocess active, it could be.
+          throw new AssertionError("Invalid port number : " + port + " for host " + Conversion.bytesToHex(host));
+        }
+      }
+      int length = host.length;
+      byte uid[] = new byte[length + 4];
+      System.arraycopy(host, 0, uid, 0, length);
+      Conversion.writeInt(port, uid, length);
+      return new NodeID(member.getName(), uid);
     }
   }
 
@@ -157,7 +185,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     }
     // set up this node
     thisMember = makeMember(thisNode);
-    this.thisNodeID = new NodeID(thisMember.getName(), thisMember.getUniqueId());
+    this.thisNodeID = makeNodeIDFrom(thisMember);
     if (thisMember == null) { throw new AssertionError("Error setting up this group member: " + thisNode); }
     smi.setLocalMember(thisMember);
     return smi;
@@ -210,17 +238,21 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   public void messageReceived(Serializable msg, Member sender) {
     GroupMessage gmsg = (GroupMessage) msg;
     if (debug) {
-      logger.info(this.thisNodeID + " recd msg " + gmsg.getMessageID() + " From " + sender.getName());
+      logger.info(this.thisNodeID + " recd msg " + gmsg.getMessageID() + " From " + sender.getName() + " Msg : " + msg);
     }
     MessageID requestID = gmsg.inResponseTo();
-    NodeID from = new NodeID(sender.getName(), sender.getUniqueId());
+    NodeID from = makeNodeIDFrom(sender);
+    if (!nodes.containsKey(from)) {
+      String warn = "Message from non-existing member " + sender + " nodes = " + nodes;
+      logger.warn(warn);
+    }
     gmsg.setMessageOrginator(from);
     if (requestID.isNull() || !notifyPendingRequests(requestID, gmsg, sender)) {
       fireMessageReceivedEvent(from, gmsg);
     }
   }
 
-  private StaticMember makeMember(final Node node) {
+  private static StaticMember makeMember(final Node node) {
     try {
       StaticMember rv = new StaticMember(node.getHost(), node.getPort(), 0);
       rv.setUniqueId(UUIDGenerator.randomUUID(true));
@@ -260,7 +292,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     if (debug) {
       logger.info("memberAdded -> name=" + member.getName() + ", uid=" + Conversion.bytesToHex(member.getUniqueId()));
     }
-    NodeID newNode = new NodeID(member.getName(), member.getUniqueId());
+    NodeID newNode = makeNodeIDFrom(member);
     Member old;
     if ((old = nodes.put(newNode, member)) == null) {
       fireNodeEvent(newNode, true);
@@ -272,7 +304,8 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
 
   private void fireNodeEvent(NodeID newNode, boolean joined) {
     if (debug) {
-      logger.info("fireNodeEvent: joined=" + joined + ", name=" + newNode.getName() + ", uid=" + Conversion.bytesToHex(newNode.getUID()));
+      logger.info("fireNodeEvent: joined=" + joined + ", name=" + newNode.getName() + ", uid="
+                  + Conversion.bytesToHex(newNode.getUID()));
     }
 
     Iterator i = groupListeners.iterator();
@@ -288,10 +321,11 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
 
   public void memberDisappeared(Member member) {
     if (debug) {
-      logger.info("memberDisappeared -> name=" + member.getName() + ", uid=" + Conversion.bytesToHex(member.getUniqueId()));
+      logger.info("memberDisappeared -> name=" + member.getName() + ", uid="
+                  + Conversion.bytesToHex(member.getUniqueId()));
     }
-    
-    NodeID node = new NodeID(member.getName(), member.getUniqueId());
+
+    NodeID node = makeNodeIDFrom(member);
     if ((nodes.remove(node)) != null) {
       fireNodeEvent(node, false);
     } else {
@@ -341,7 +375,8 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
 
   public void sendTo(NodeID node, GroupMessage msg) throws GroupException {
     if (debug) {
-      logger.info(this.thisNodeID + " : Sending to : " + node + " msg " + msg.getMessageID() + " node.name=" + node.getName() + ", node.uid=" + node.getUID());
+      logger.info(this.thisNodeID + " : Sending to : " + node + " msg " + msg.getMessageID() + " node.name="
+                  + node.getName() + ", node.uid=" + Conversion.bytesToHex(node.getUID()));
     }
     try {
       Member member = nodes.get(node);
@@ -350,7 +385,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
         group.send(new Member[] { member }, msg, Channel.SEND_OPTIONS_DEFAULT);
       } else {
         // TODO:: These could be exceptions
-        logger.warn("sendTo: Node " + node + " not present in the group. Ignoring Message : " + msg);
+        logger.warn("Ignoring Msg sent to: Node " + node + " not present in the group. Msg : " + msg);
       }
     } catch (ChannelException e) {
       throw new GroupException(e);
@@ -386,7 +421,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
 
   private static class GroupResponseImpl implements GroupResponse {
 
-    HashSet<Member>    waitFor   = new HashSet<Member>();
+    HashSet<NodeID>    waitFor   = new HashSet<NodeID>();
     List<GroupMessage> responses = new ArrayList<GroupMessage>();
 
     public synchronized List getResponses() {
@@ -404,9 +439,11 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     }
 
     public synchronized void sendTo(GroupChannel group, GroupMessage msg, Member[] m) {
-      waitFor.addAll(Arrays.asList(m));
       try {
         if (m.length > 0) {
+          for (int i = 0; i < m.length; i++) {
+            waitFor.add(makeNodeIDFrom(m[i]));
+          }
           group.send(m, msg, Channel.SEND_OPTIONS_DEFAULT);
         }
       } catch (ChannelException e) {
@@ -416,13 +453,18 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     }
 
     public synchronized void addResponseFrom(Member sender, GroupMessage gmsg) {
-      Assert.assertNotNull(waitFor.remove(sender));
+      if (!waitFor.remove(makeNodeIDFrom(sender))) {
+        String message = "Recd response from a member not in list : " + sender + " : waiting For : " + waitFor
+                         + " msg : " + gmsg;
+        logger.error(message);
+        throw new AssertionError(message);
+      }
       responses.add(gmsg);
       notifyAll();
     }
 
     public synchronized void notifyMemberDead(Member member) {
-      waitFor.remove(member);
+      waitFor.remove(makeNodeIDFrom(member));
       notifyAll();
     }
 
@@ -444,8 +486,10 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     private void reconsileWaitFor(ChannelException e) {
       FaultyMember fm[] = e.getFaultyMembers();
       for (int i = 0; i < fm.length; i++) {
-        waitFor.remove(fm[i].getMember());
+        logger.warn("Removing faulty Member " + fm[i] + " from list");
+        waitFor.remove(makeNodeIDFrom(fm[i].getMember()));
       }
+      logger.info("Current waiting members = " + waitFor);
     }
   }
 

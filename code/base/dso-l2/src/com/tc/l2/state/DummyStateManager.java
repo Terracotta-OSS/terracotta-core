@@ -29,4 +29,12 @@ public class DummyStateManager implements StateManager {
     // Nop
   }
 
+  public void publishActiveState(NodeID nodeID) {
+    // Nop
+  }
+
+  public void startElectionIfNecessary(NodeID disconnectedNode) {
+    // Nop
+  }
+
 }

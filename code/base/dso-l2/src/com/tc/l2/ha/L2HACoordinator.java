@@ -9,12 +9,14 @@ import com.tc.async.api.StageManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.context.StateChangedEvent;
+import com.tc.l2.handler.GroupEventsDispatchHandler;
 import com.tc.l2.handler.L2ObjectSyncDehydrateHandler;
 import com.tc.l2.handler.L2ObjectSyncHandler;
 import com.tc.l2.handler.L2ObjectSyncSendHandler;
 import com.tc.l2.handler.L2StateChangeHandler;
 import com.tc.l2.handler.ServerTransactionAckHandler;
 import com.tc.l2.handler.TransactionRelayHandler;
+import com.tc.l2.handler.GroupEventsDispatchHandler.GroupEventsDispatcher;
 import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.l2.msg.RelayedCommitTransactionMessage;
 import com.tc.l2.msg.ServerTxnAckMessage;
@@ -89,7 +91,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.stateManager = new StateManagerImpl(consoleLogger, groupManager, stateChangeSink);
     this.stateManager.registerForStateChangeEvents(this);
 
-    this.l2ObjectStateManager = new L2ObjectStateManagerImpl(transactionManager);
+    this.l2ObjectStateManager = new L2ObjectStateManagerImpl(objectManager, transactionManager);
 
     final Sink objectsSyncSink = stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_STAGE,
                                                           new L2ObjectSyncHandler(this.l2ObjectStateManager), 1,
@@ -113,7 +115,10 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.groupManager.routeMessages(RelayedCommitTransactionMessage.class, objectsSyncSink);
     this.groupManager.routeMessages(ServerTxnAckMessage.class, ackProcessingStage);
 
-    this.groupManager.registerForGroupEvents(this);
+    final Sink groupEventsSink = stageManager.createStage(ServerConfigurationContext.GROUP_EVENTS_DISPATCH_STAGE,
+                             new GroupEventsDispatchHandler(this), 1, Integer.MAX_VALUE).getSink();
+    GroupEventsDispatcher dispatcher = new GroupEventsDispatcher(groupEventsSink);
+    groupManager.registerForGroupEvents(dispatcher);
   }
 
   public void start(final Node thisNode, final Node[] allNodes) {
@@ -161,15 +166,30 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   }
 
   public void nodeJoined(NodeID nodeID) {
+    log(nodeID + " joined the cluster");
     if (stateManager.isActiveCoordinator()) {
+      stateManager.publishActiveState(nodeID);
       rClusterStateMgr.publishClusterState(nodeID);
       rObjectManager.query(nodeID);
     }
   }
 
+  private void log(String message) {
+    logger.info(message);
+    consoleLogger.info(message);
+  }
+
+  private void warn(String message) {
+    logger.warn(message);
+    consoleLogger.warn(message);
+  }
+
   public void nodeLeft(NodeID nodeID) {
+    warn(nodeID + " left the cluster");
     if (stateManager.isActiveCoordinator()) {
       l2ObjectStateManager.removeL2(nodeID);
+    } else {
+      stateManager.startElectionIfNecessary(nodeID);
     }
   }
 

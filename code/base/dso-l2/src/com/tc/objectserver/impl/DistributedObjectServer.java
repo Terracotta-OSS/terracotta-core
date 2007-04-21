@@ -645,7 +645,12 @@ public class DistributedObjectServer extends SEDA {
   private static Node makeNode(NewL2DSOConfig l2) {
     // NOTE: until we resolve Tribes stepping on TCComm's port
     // we'll use TCComm.port + 1 in Tribes
-    return new Node(l2.host().getString(), l2.listenPort().getInt() + 1);
+    int dsoPort = l2.listenPort().getInt();
+    if (dsoPort == 0) {
+      return new Node(l2.host().getString(), dsoPort);
+    } else {
+      return new Node(l2.host().getString(), dsoPort + 1);
+    }
   }
 
   private Node makeThisNode() {

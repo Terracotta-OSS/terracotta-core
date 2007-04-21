@@ -52,7 +52,7 @@ public class L2StateMessage extends AbstractGroupMessage {
   }
 
   public String toString() {
-    return "ClusterStateMessage [ " + messageFrom() + ", type = " + getTypeString() + ", " + enrollment + "]";
+    return "L2StateMessage [ " + messageFrom() + ", type = " + getTypeString() + ", " + enrollment + "]";
   }
 
   private String getTypeString() {

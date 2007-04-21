@@ -18,6 +18,8 @@ public interface StateManager {
       ACTIVE_COORDINATOR                          };
 
   public void startElection();
+  
+  public void startElectionIfNecessary(NodeID disconnectedNode);
 
   public void registerForStateChangeEvents(StateChangeListener listener);
 
@@ -26,5 +28,7 @@ public interface StateManager {
   public boolean isActiveCoordinator();
 
   public void moveNodeToPassiveStandby(NodeID nodeID);
+  
+  public void publishActiveState(NodeID nodeID);
 
 }

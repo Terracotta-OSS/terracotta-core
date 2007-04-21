@@ -118,12 +118,10 @@ public class Conversion {
    * @param index starting offset into the destination byte array
    */
   public static void writeInt(int i, byte[] dest, int index) {
-    int pos = index;
-
-    dest[pos++] = (byte) ((i >>> 24) & 0x000000FF);
-    dest[pos++] = (byte) ((i >>> 16) & 0x000000FF);
-    dest[pos++] = (byte) ((i >>> 8) & 0x000000FF);
-    dest[pos++] = (byte) ((i >>> 0) & 0x000000FF);
+    dest[index] = (byte) ((i >>> 24) & 0x000000FF);
+    dest[index + 1] = (byte) ((i >>> 16) & 0x000000FF);
+    dest[index + 2] = (byte) ((i >>> 8) & 0x000000FF);
+    dest[index + 3] = (byte) ((i >>> 0) & 0x000000FF);
 
     return;
   }

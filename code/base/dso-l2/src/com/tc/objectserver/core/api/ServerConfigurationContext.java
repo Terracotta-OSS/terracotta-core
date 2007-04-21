@@ -49,6 +49,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String OBJECTS_SYNC_SEND_STAGE                            = "object_sync_send_stage";
   public static final String TRANSACTION_RELAY_STAGE                            = "transaction_relay_stage";
   public static final String SERVER_TRANSACTION_ACK_PROCESSING_STAGE            = "server_transaction_ack_processing_stage";
+  public static final String GROUP_EVENTS_DISPATCH_STAGE                        = "group_events_dispatch_stage";
 
   public L2Coordinator getL2Coordinator();
 

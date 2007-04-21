@@ -4,6 +4,8 @@
  */
 package com.tc.l2.objectserver;
 
+import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
+
 import com.tc.async.api.Sink;
 import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.logging.TCLogger;
@@ -18,23 +20,40 @@ import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.concurrent.CopyOnWriteArrayMap;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
 
-  private static final TCLogger          logger = TCLogging.getLogger(L2ObjectStateManagerImpl.class);
+  private static final TCLogger                         logger     = TCLogging
+                                                                       .getLogger(L2ObjectStateManagerImpl.class);
 
-  CopyOnWriteArrayMap                    nodes  = new CopyOnWriteArrayMap();
+  private final ObjectManager                           objectManager;
+  private final UnappliedTransactionsInTheSystemMonitor txnMonitor = new UnappliedTransactionsInTheSystemMonitor();
+  private final CopyOnWriteArrayMap                     nodes      = new CopyOnWriteArrayMap();
+  private final CopyOnWriteArrayList                    listeners  = new CopyOnWriteArrayList();
 
-  private final ServerTransactionManager transactionManager;
+  public L2ObjectStateManagerImpl(ObjectManager objectManager, ServerTransactionManager transactionManager) {
+    this.objectManager = objectManager;
+    transactionManager.addTransactionListener(txnMonitor);
+  }
 
-  public L2ObjectStateManagerImpl(ServerTransactionManager transactionManager) {
-    this.transactionManager = transactionManager;
+  public void registerForL2ObjectStateChangeEvents(L2ObjectStateListener listener) {
+    listeners.add(listener);
+  }
+
+  private void fireMissingObjectsStateEvent(NodeID nodeID, int missingObjects) {
+    for (Iterator i = listeners.iterator(); i.hasNext();) {
+      L2ObjectStateListener l = (L2ObjectStateListener) i.next();
+      l.missingObjectsFor(nodeID, missingObjects);
+    }
   }
 
   public int getL2Count() {
@@ -45,26 +64,22 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     Object l2State = nodes.remove(nodeID);
     if (l2State == null) {
       logger.warn("L2State Not found for " + nodeID);
-    } else {
-      transactionManager.removeTransactionListener((ServerTransactionListener) l2State);
     }
   }
 
-  public int addL2WithObjectIDs(NodeID nodeID, Set oids, ObjectManager objectManager) {
+  public void addL2(NodeID nodeID, Set oids) {
     L2ObjectStateImpl l2State;
     synchronized (nodes) {
       l2State = (L2ObjectStateImpl) nodes.get(nodeID);
       if (l2State != null) {
-        logger.warn("L2State already present for " + nodeID + ". IGNORING setExistingObjectsList : oids count = "
-                    + oids.size());
-        return 0;
+        logger.warn("L2State already present for " + nodeID + ". " + l2State
+                    + " IGNORING setExistingObjectsList : oids count = " + oids.size());
+        return;
       }
-      l2State = new L2ObjectStateImpl(nodeID);
+      l2State = new L2ObjectStateImpl(nodeID, oids);
       nodes.put(nodeID, l2State);
-      transactionManager.addTransactionListener(l2State);
+      txnMonitor.callBackWhenAllCurrentTxnsApplied(l2State);
     }
-    int missing = l2State.initialize(oids, objectManager);
-    return missing;
   }
 
   public ManagedObjectSyncContext getSomeObjectsToSyncContext(NodeID nodeID, int count, Sink sink) {
@@ -90,27 +105,29 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     return nodes.values();
   }
 
-  private static final class L2ObjectStateImpl implements L2ObjectState, ServerTransactionListener {
+  private static final State START         = new State("START");
+  private static final State READY_TO_SYNC = new State("READY_TO_SYNC");
+  private static final State SYNC_STARTED  = new State("SYNC_STARTED");
+  private static final State IN_SYNC       = new State("IN_SYNC");
+
+  private final class L2ObjectStateImpl implements L2ObjectState {
 
     private final NodeID             nodeID;
-    // XXX:: Tracking just the missing Oids is better in terms of memory overhead, but this might lead to difficult race
-    // conditions. Rethink !!
+
     private Set                      missingOids;
     private Map                      missingRoots;
+    private Set                      existingOids;
 
-    private State                    state          = UNINITIALIZED;
-
-    private static final State       UNINITIALIZED  = new State("UNINITALIZED");
-    private static final State       NOT_IN_SYNC    = new State("NOT_IN_SYNC");
-    private static final State       IN_SYNC        = new State("IN_SYNC");
+    private volatile State           state          = START;
 
     private ManagedObjectSyncContext syncingContext = null;
 
-    public L2ObjectStateImpl(NodeID nodeID) {
+    public L2ObjectStateImpl(NodeID nodeID, Set oids) {
       this.nodeID = nodeID;
+      this.existingOids = oids;
     }
 
-    private synchronized void close(ManagedObjectSyncContext mosc) {
+    private void close(ManagedObjectSyncContext mosc) {
       Assert.assertTrue(mosc == syncingContext);
       mosc.close();
       if (missingOids.isEmpty()) {
@@ -119,8 +136,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       syncingContext = null;
     }
 
-    private synchronized ManagedObjectSyncContext getSomeObjectsToSyncContext(int count, Sink sink) {
-      Assert.assertTrue(state == NOT_IN_SYNC);
+    private ManagedObjectSyncContext getSomeObjectsToSyncContext(int count, Sink sink) {
+      Assert.assertTrue(state == SYNC_STARTED);
       Assert.assertNull(syncingContext);
       if (isRootsMissing()) { return getMissingRootsSynccontext(sink); }
       Set oids = new HashSet(count);
@@ -146,22 +163,21 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       return !this.missingRoots.isEmpty();
     }
 
-    private synchronized int initialize(Set oidsFromL2, ObjectManager objectManager) {
-      // TODO:: For a huge DB, when the active crashes and restarts (as active) this call may take a loong time and
-      // until this is finished the whole cluster might be struck.
+    private int computeDiff() {
       this.missingOids = objectManager.getAllObjectIDs();
       this.missingRoots = objectManager.getRootNamesToIDsMap();
       int objectCount = missingOids.size();
       Set missingHere = new HashSet();
-      for (Iterator i = oidsFromL2.iterator(); i.hasNext();) {
+      for (Iterator i = existingOids.iterator(); i.hasNext();) {
         Object o = i.next();
         if (!missingOids.remove(o)) {
           missingHere.add(o);
         }
       }
+      existingOids = null; // Let GC work for us
       missingRoots.values().retainAll(this.missingOids);
-      logger.info(nodeID + " : is missing " + missingOids.size() + " out of " + objectCount + " object of which "
-                  + missingRoots.size() + " are roots");
+      logger.info(nodeID + " : is missing " + missingOids.size() + " out of " + objectCount
+                  + " objects of which missing roots = " + missingRoots.size());
       if (!missingHere.isEmpty()) {
         // XXX:: This is possible because some message (Transaction message with new object creation or object delete
         // message from GC) from previous active reached the other node and not this node and the active crashed
@@ -171,9 +187,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       if (missingCount == 0) {
         state = IN_SYNC;
       } else {
-        state = NOT_IN_SYNC;
+        state = SYNC_STARTED;
       }
-      notifyAll();
       return missingCount;
     }
 
@@ -181,32 +196,79 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       return nodeID;
     }
 
-    /**
-     * XXX::Not a good idea to hold the transaction sync stage till this is initialized, especially since
-     * ObjectManager.getAllObjectIDs() could take ages to return in persistent large DB restart case !
-     */
-    public synchronized boolean isInSync() {
-      while (state == UNINITIALIZED) {
-        // initialize is not run yet.
-        try {
-          wait();
-        } catch (InterruptedException e) {
-          throw new AssertionError(e);
+    public String toString() {
+      return "L2StateObjectImpl [ " + nodeID + " ] : " + (missingOids != null ? "missing = " + missingOids.size() : "")
+             + " state = " + state;
+    }
+
+    private void moveToReadyToSyncState() {
+      state = READY_TO_SYNC;
+      int missingObjects = computeDiff();
+      fireMissingObjectsStateEvent(this.nodeID, missingObjects);
+    }
+  }
+
+  /**
+   * TODO::This adds some computational overhead. If found as a performance problem, this functionality could be
+   * provided by the ServerTransactionManager itself
+   */
+  private static class UnappliedTransactionsInTheSystemMonitor implements ServerTransactionListener {
+
+    private final Set unappliedTxns    = new HashSet();
+    private final Map pendingCallbacks = new HashMap();
+
+    public synchronized void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
+      unappliedTxns.addAll(serverTxnIDs);
+    }
+
+    public void callBackWhenAllCurrentTxnsApplied(L2ObjectStateImpl state) {
+      boolean callBack = false;
+      synchronized (this) {
+        if (unappliedTxns.isEmpty()) {
+          callBack = true;
+        } else {
+          Set copy = new HashSet(unappliedTxns);
+          logger.info(state + " : Pending Txn Applys to wait :" + copy);
+          pendingCallbacks.put(state, copy);
         }
       }
-      return (state == IN_SYNC);
-    }
-
-    public String toString() {
-      return "L2StateObjectImpl [ " + nodeID + " ] : missing = " + missingOids.size() + " state = " + state;
-    }
-
-    public void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
-      // TODO::
+      if (callBack) {
+        /**
+         * XXX:: callbacks are called outside sync scope so that objectmanager.getAllObjectIDs() call which can take a
+         * long time during startup in persisitent mode doesnt hold up incomming transactions.
+         */
+        state.moveToReadyToSyncState();
+      }
     }
 
     public void transactionApplied(ServerTransactionID stxID) {
-      // TODO::
+      List callBacks = null;
+      synchronized (this) {
+        unappliedTxns.remove(stxID);
+        if (pendingCallbacks.isEmpty()) return;
+        for (Iterator i = pendingCallbacks.entrySet().iterator(); i.hasNext();) {
+          Entry e = (Entry) i.next();
+          Set pendingTxns = (Set) e.getValue();
+          pendingTxns.remove(stxID);
+          if (pendingTxns.isEmpty()) {
+            L2ObjectStateImpl callback = (L2ObjectStateImpl) e.getKey();
+            if (callBacks == null) {
+              callBacks = new ArrayList(3);
+            }
+            callBacks.add(callback);
+            i.remove();
+          }
+        }
+      }
+      if (callBacks != null) {
+        /**
+         * @see comments above.
+         */
+        for (Iterator i = callBacks.iterator(); i.hasNext();) {
+          L2ObjectStateImpl callback = (L2ObjectStateImpl) i.next();
+          callback.moveToReadyToSyncState();
+        }
+      }
     }
 
     public void transactionCompleted(ServerTransactionID stxID) {

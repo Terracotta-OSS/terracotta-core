@@ -23,7 +23,8 @@ import com.tc.util.Assert;
 import java.util.Iterator;
 import java.util.Set;
 
-public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, GroupMessageListener {
+public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, GroupMessageListener,
+    L2ObjectStateListener {
 
   private static final TCLogger      logger = TCLogging.getLogger(ReplicatedObjectManagerImpl.class);
 
@@ -41,6 +42,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     this.objectManager = objectManager;
     this.objectsSyncSink = objectsSyncSink;
     this.l2ObjectStateManager = l2ObjectStateManager;
+    l2ObjectStateManager.registerForL2ObjectStateChangeEvents(this);
     this.groupManager.registerForMessages(ObjectListSyncMessage.class, this);
   }
 
@@ -116,8 +118,11 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   }
 
   private void add2L2StateManager(NodeID nodeID, Set oids) {
-    int missing = l2ObjectStateManager.addL2WithObjectIDs(nodeID, oids, objectManager);
-    if (missing == 0) {
+    l2ObjectStateManager.addL2(nodeID, oids);
+  }
+
+  public void missingObjectsFor(NodeID nodeID, int missingObjects) {
+    if (missingObjects == 0) {
       stateManager.moveNodeToPassiveStandby(nodeID);
     } else {
       objectsSyncSink.add(new SyncObjectsRequest(nodeID));
@@ -127,6 +132,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private void handleObjectListRequest(NodeID nodeID, ObjectListSyncMessage clusterMsg) throws GroupException {
     Assert.assertFalse(stateManager.isActiveCoordinator());
     Set knownIDs = objectManager.getAllObjectIDs();
+    logger.info("Send response to Active's query : known id lists = " + knownIDs.size());
     groupManager.sendTo(nodeID, ObjectListSyncMessageFactory.createObjectListSyncResponseMessage(clusterMsg, knownIDs));
   }
 

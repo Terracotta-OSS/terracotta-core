@@ -5,8 +5,8 @@ package com.tc.l2.objectserver;
 
 import com.tc.net.groups.NodeID;
 
-public interface L2ObjectState {
+public interface L2ObjectStateListener {
 
-  NodeID getNodeID();
+  public void missingObjectsFor(NodeID nodeID, int missingObjects);
 
 }
