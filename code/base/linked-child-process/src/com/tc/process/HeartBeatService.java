@@ -4,18 +4,49 @@
 package com.tc.process;
 
 public class HeartBeatService {
-  
-  public static synchronized void registerForHeartBeat(int listenPort, Class klass) {
-    registerForHeartBeat(listenPort, klass, false);
+  private static HeartBeatServer server;
+
+  public static synchronized void startHeartBeatService() {
+    if (server == null) {
+      server = new HeartBeatServer();
+      server.start();
+    }
   }
   
-  public static synchronized void registerForHeartBeat(int listenPort, Class klass, boolean isAppServer) {
-    
+  public static synchronized void stopHeartBeatServer() {
+    if (server != null) {
+      server.shutdown();
+      server = null;
+    }
   }
   
-  public static synchronized void forceShutdown() {
-    
+  public static synchronized int listenPort() {
+    ensureServerHasStarted();
+    return server.listeningPort();
   }
   
+  public static synchronized void registerForHeartBeat(int listenPort) {
+    registerForHeartBeat(listenPort, false);
+  }
   
+  public static synchronized void registerForHeartBeat(int listenPort, boolean isAppServer) {
+    ensureServerHasStarted();
+    HeartBeatClient client = new HeartBeatClient(listenPort, isAppServer);
+    client.setDaemon(true);
+    client.start();
+  }
+  
+  public static synchronized void sendKillSignalToChildren() {
+    ensureServerHasStarted();
+    server.sendKillSignalToChildren();
+  }
+  
+  public static synchronized boolean anyAppServerAlive() {
+    ensureServerHasStarted();
+    return server.anyAppServerAlive();
+  }
+  
+  private static void ensureServerHasStarted() {
+    if (server == null) new IllegalStateException("Heartbeat service has not started yet!");
+  }
 }
