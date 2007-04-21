@@ -4,6 +4,7 @@
  */
 package com.tc.test.server.appserver.cargo;
 
+import com.tc.process.HeartBeatService;
 import com.tc.process.LinkedJavaProcessPollingAgent;
 import com.tc.process.StartupAppender;
 
@@ -47,7 +48,7 @@ public final class CargoLinkedChildProcess {
 
     System.out.println("JAVA VERSION: " + System.getProperty("java.version"));
 
-    com.tc.process.HeartBeatService.registerForHeartBeat(port, true);
+    HeartBeatService.registerForHeartBeat(port, true);
     loadProperties();
 
     invokeStartupAppender();

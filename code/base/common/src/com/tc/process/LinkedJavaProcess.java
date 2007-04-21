@@ -132,8 +132,7 @@ public class LinkedJavaProcess {
   public synchronized void start() throws IOException {
     if (this.running) throw new IllegalStateException("This LinkedJavaProcess is already running.");
 
-    //LinkedJavaProcessPollingAgent.startHeartBeatServer();
-    com.tc.process.HeartBeatService.startHeartBeatService();
+    HeartBeatService.startHeartBeatService();
 
     List fullCommandList = new LinkedList();
     List allJavaArguments = new ArrayList();
@@ -143,7 +142,6 @@ public class LinkedJavaProcess {
 
     setJavaExecutableIfNecessary();
 
-    //int socketPort = LinkedJavaProcessPollingAgent.getChildProcessHeartbeatServerPort();
     int socketPort = HeartBeatService.listenPort();
 
     Map env = makeEnvMap(Arrays.asList(this.environment == null ? new String[] {} : this.environment));

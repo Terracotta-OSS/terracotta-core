@@ -201,8 +201,6 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       Debug.sendTestDetails(config.appserverFactoryName() + " " + getClass().getName() + "." + getName());
     }
 
-    //LinkedJavaProcessPollingAgent.startHeartBeatServer();
-
     tempDir = getTempDirectory();
     serverInstallDir = makeDir(config.appserverServerInstallDir());
     File workDir = new File(config.appserverWorkingDir());
@@ -455,7 +453,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       }
       awaitShutdown(10 * 1000);
       if (dsoServer != null && dsoServer.isRunning()) dsoServer.stop();
-      System.out.println("Shutdown heartbeat server and its children...");
+      System.out.println("Send kill signal to app servers...");
       HeartBeatService.sendKillSignalToChildren();
     } finally {
       VmStat.stop();
