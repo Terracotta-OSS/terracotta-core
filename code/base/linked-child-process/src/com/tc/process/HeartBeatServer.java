@@ -26,10 +26,6 @@ public class HeartBeatServer {
 
   private ListenThread       listenThread;
 
-  public HeartBeatServer() {
-    //
-  }
-
   public synchronized void start() {
     listenThread = new ListenThread(this);
     listenThread.setDaemon(true);
@@ -47,20 +43,24 @@ public class HeartBeatServer {
   }
 
   public synchronized void sendKillSignalToChildren() {
-    for (Iterator it = heartBeatThreads.iterator(); it.hasNext();) {
-      HeartBeatThread hb = (HeartBeatThread) it.next();
-      hb.sendKillSignal();
+    synchronized (heartBeatThreads) {
+      for (Iterator it = heartBeatThreads.iterator(); it.hasNext();) {
+        HeartBeatThread hb = (HeartBeatThread) it.next();
+        hb.sendKillSignal();
+      }
+      heartBeatThreads.clear();
     }
-    heartBeatThreads.clear();
   }
 
   public synchronized boolean anyAppServerAlive() {
-    boolean alive = false;
-    for (Iterator it = heartBeatThreads.iterator(); it.hasNext();) {
-      HeartBeatThread hb = (HeartBeatThread) it.next();
-      alive = alive || hb.pingAppServer();
+    synchronized (heartBeatThreads) {
+      boolean alive = false;
+      for (Iterator it = heartBeatThreads.iterator(); it.hasNext();) {
+        HeartBeatThread hb = (HeartBeatThread) it.next();
+        alive = alive || hb.pingAppServer();
+      }
+      return alive;
     }
-    return alive;
   }
 
   public synchronized int listeningPort() {
@@ -69,7 +69,10 @@ public class HeartBeatServer {
   }
 
   public void removeDeadClient(HeartBeatThread thread) {
-    heartBeatThreads.remove(thread);
+    synchronized (heartBeatThreads) {
+      System.out.println("Dead client detected... removing " + thread.getName());
+      heartBeatThreads.remove(thread);
+    }
   }
 
   private static class ListenThread extends Thread {
@@ -104,9 +107,11 @@ public class HeartBeatServer {
         while ((clientSocket = serverSocket.accept()) != null) {
           System.out.println("Heartbeat server got new client...");
           HeartBeatThread hb = new HeartBeatThread(server, clientSocket);
-          heartBeatThreads.add(hb);
           hb.setDaemon(true);
           hb.start();
+          synchronized (heartBeatThreads) {
+            heartBeatThreads.add(hb);
+          }
         }
       } catch (Exception e) {
         if (isShutdown) {
@@ -136,6 +141,7 @@ public class HeartBeatServer {
     private BufferedReader  in;
     private PrintWriter     out;
     private HeartBeatServer server;
+    private boolean         killed = false;
 
     public HeartBeatThread(HeartBeatServer server, Socket s) {
       this.server = server;
@@ -156,16 +162,22 @@ public class HeartBeatServer {
           Thread.sleep(PULSE_INTERVAL);
         }
       } catch (Exception e) {
-        server.removeDeadClient(this);
+        if (!killed) {
+          // only removed itself if client isn't being sent a kill signal
+          // this avoids ConcurrentModificationException in sendKillSignalToChildren
+          // iteration
+          server.removeDeadClient(this);
+        }
       }
     }
 
     public void sendKillSignal() {
       try {
+        killed = true;
         out.println(KILL);
         socket.close();
       } catch (Exception e) {
-        // ignored
+        // ignored - considered killed
       }
     }
 

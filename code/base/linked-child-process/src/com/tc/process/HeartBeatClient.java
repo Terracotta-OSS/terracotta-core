@@ -33,22 +33,24 @@ public class HeartBeatClient extends Thread {
         String signal = in.readLine();
 
         if (HeartBeatServer.PULSE.equals(signal)) {
-          System.out.println("Received pulse from server.");
+          System.out.println("Received pulse from heartbeat server.");
         } else if (HeartBeatServer.KILL.equals(signal)) {
-          System.out.println("Received KILL from server. Killing self.");
+          System.out.println("Received KILL from heartbeat server. Killing self.");
           System.exit(1);
         } else if (HeartBeatServer.IS_APP_SERVER_ALIVE.equals(signal)) {
-          System.out.println("Received app server ping.");
+          System.out.println("Received IS_APP_SERVER_ALIVE from heartbeat server. ");
           if (isAppServer) {
             out.println(HeartBeatServer.IM_ALIVE);
+            System.out.println("  responded: IM_ALIVE");
           } else {
             out.println("NOT_AN_APP_SERVER");
+            System.out.println("  responded: NOT_AN_APP_SERVER");
           }
         }
       }
 
     } catch (Throwable e) {
-      System.err.println("Caught exception in heartbeat client. Killing self." + e.getMessage());
+      System.err.println("Caught exception in heartbeat client. Killing self. " + e.getMessage());
       System.exit(1);
     }
   }
