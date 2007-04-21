@@ -275,8 +275,8 @@ class SubtreeTestRunRecord
     # subtree name); subtree_name is the name of the subtree this record is for.
     def initialize(module_testrun_directory, subtree_name)        
         @subtree_name = subtree_name
-        @subtree_testrun_directory = FilePath.new(module_testrun_directory, "%s.test-results" % subtree_name)
-        @subtree_tempdir = FilePath.new(module_testrun_directory, "%s.temp-files" % subtree_name)
+        @subtree_testrun_directory = FilePath.new(module_testrun_directory, "%s.results" % subtree_name)
+        @subtree_tempdir = FilePath.new(module_testrun_directory, "%s.temp" % subtree_name)
         @read = false
     end
     
