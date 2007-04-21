@@ -37,8 +37,10 @@ public class TempDirectoryHelper extends BaseDirectoryHelper {
     if (!root.exists()) {
       root.mkdirs();
     }
-    ClassBasedDirectoryTree tree = new ClassBasedDirectoryTree(getRoot());
-    File out = tree.getOrMakeDirectory(getTargetClass());
+    String shortClassName = getTargetClass().getName();
+    String[] tokens = shortClassName.split("\\.");
+    shortClassName = tokens[tokens.length-1];
+    File out = new File(shortClassName);
     if ((!out.exists()) && (!out.mkdirs())) {
       FileNotFoundException fnfe = new FileNotFoundException("Directory '" + out.getAbsolutePath()
           + "' can't be created.");
