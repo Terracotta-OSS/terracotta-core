@@ -105,6 +105,7 @@ public class HeartBeatServer {
           System.out.println("Heartbeat server got new client...");
           HeartBeatThread hb = new HeartBeatThread(server, clientSocket);
           heartBeatThreads.add(hb);
+          hb.setDaemon(true);
           hb.start();
         }
       } catch (Exception e) {
