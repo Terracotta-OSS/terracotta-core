@@ -124,7 +124,8 @@ public abstract class CargoAppServer extends AbstractAppServer {
    * @throws InterruptedException
    */
   private void linkJavaProcess(File instance) throws InterruptedException {
-    linkedPort = LinkedJavaProcessPollingAgent.getChildProcessHeartbeatServerPort();
+    //linkedPort = LinkedJavaProcessPollingAgent.getChildProcessHeartbeatServerPort();
+    linkedPort = com.tc.process.HeartBeatService.listenPort();
     Link.put(new CargoJava.Args(linkedPort, instance));
   }
 

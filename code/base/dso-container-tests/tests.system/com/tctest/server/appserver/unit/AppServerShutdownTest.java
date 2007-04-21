@@ -6,7 +6,7 @@ package com.tctest.server.appserver.unit;
 
 import org.apache.commons.httpclient.HttpClient;
 
-import com.tc.process.LinkedJavaProcessPollingAgent;
+import com.tc.process.HeartBeatService;
 import com.tc.test.ProcessInfo;
 import com.tc.test.server.Server;
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
@@ -97,7 +97,7 @@ public class AppServerShutdownTest extends AbstractAppServerTestCase {
     boolean foundAlive = false;
     do {
       Thread.sleep(1000);
-      foundAlive = LinkedJavaProcessPollingAgent.isAnyAppServerAlive();
+      foundAlive = HeartBeatService.anyAppServerAlive();
     } while (foundAlive && System.currentTimeMillis() - start < TIME_WAIT_FOR_SHUTDOWN);
 
     return foundAlive;
