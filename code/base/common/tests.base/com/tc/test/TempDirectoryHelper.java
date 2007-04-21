@@ -39,7 +39,9 @@ public class TempDirectoryHelper extends BaseDirectoryHelper {
     }
     String shortClassName = getTargetClass().getName();
     String[] tokens = shortClassName.split("\\.");
-    shortClassName = tokens[tokens.length-1];
+    if (tokens.length > 1) {
+      shortClassName = tokens[tokens.length-1];
+    }
     File out = new File(shortClassName);
     if ((!out.exists()) && (!out.mkdirs())) {
       FileNotFoundException fnfe = new FileNotFoundException("Directory '" + out.getAbsolutePath()
