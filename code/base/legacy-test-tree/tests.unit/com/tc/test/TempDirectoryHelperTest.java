@@ -23,8 +23,7 @@ public class TempDirectoryHelperTest extends TestCase {
     String root = TestConfigObject.getInstance().tempDirectoryRoot() + File.separator + "temp-TempDirectoryHelperTest";
     this.baseFile = new File(root);
     if (!this.baseFile.exists()) assertTrue(this.baseFile.mkdirs());
-    this.expectedDir = new File(this.baseFile, ClassBasedDirectoryTreeTest.joinWithFileSeparator(new String[] { "com",
-        "tc", "test", "TempDirectoryHelperTest" }));
+    this.expectedDir = new File(this.baseFile, "TempDirectoryHelperTest");
     if (this.expectedDir.exists()) FileUtils.deleteDirectory(this.expectedDir);
     this.helper = new TempDirectoryHelper(getClass(), root, true);
   }
