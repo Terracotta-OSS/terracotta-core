@@ -18,7 +18,7 @@ public class LinkedJavaProcessStarter {
     String[] realArgs = new String[args.length - 2];
     if (realArgs.length > 0) System.arraycopy(args, 2, realArgs, 0, realArgs.length);
 
-    LinkedJavaProcessPollingAgent.startClientWatchdogService(pingPort, childClass);
+    com.tc.process.HeartBeatService.registerForHeartBeat(pingPort);
 
     final Class mainClass;
     if (useSystemClassLoader) {
