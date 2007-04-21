@@ -313,6 +313,10 @@ public final class GlassfishV1AppServer extends AbstractAppServer {
     System.err.println("Modifying domain configuration at " + domainXML.getAbsolutePath());
 
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+
+    // disable the resolve of the external DTD -- The monkey failed once since it timed out talking to sun's web site
+    factory.setAttribute("http://apache.org/xml/features/nonvalidating/load-external-dtd", Boolean.FALSE);
+
     DocumentBuilder builder = factory.newDocumentBuilder();
     Document document = builder.parse(domainXML);
 
