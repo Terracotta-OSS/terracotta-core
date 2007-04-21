@@ -64,12 +64,15 @@ public class ClusterStateMessageTest extends TestCase {
   }
 
   private void validate(ClusterStateMessage csm, ClusterStateMessage csm1) {
+    assertEquals(csm.getMessageID(), csm1.getMessageID());
+    assertEquals(csm.getType(), csm1.getType());
+    assertEquals(csm.inResponseTo(), csm1.inResponseTo());
+    assertEquals(csm.messageFrom(), csm1.messageFrom());
+
     assertEquals(csm.getNextAvailableObjectID(), csm1.getNextAvailableObjectID());
     assertEquals(csm.getNextAvailableGlobalTxnID(), csm1.getNextAvailableGlobalTxnID());
     assertEquals(csm.getClusterID(), csm1.getClusterID());
     assertEquals(csm.getConnectionID(), csm1.getConnectionID());
-    assertEquals(csm.getMessageID(), csm1.getMessageID());
-    assertEquals(csm.getType(), csm1.getType());
   }
 
   private void validate(ClusterState cs, ClusterState cs1) {
