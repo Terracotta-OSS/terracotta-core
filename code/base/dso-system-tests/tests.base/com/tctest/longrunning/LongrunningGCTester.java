@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.longrunning;
 
@@ -29,7 +30,6 @@ public class LongrunningGCTester extends TransparentTestBase implements TestConf
     ((SettableConfigItem) factory.l2DSOConfig().garbageCollectionVerbose()).setValue(true);
     ((SettableConfigItem) factory.l2DSOConfig().persistenceMode()).setValue(PersistenceMode.TEMPORARY_SWAP_ONLY);
 
-    t.getRunnerConfig().setExecutionTimeout(Long.MAX_VALUE);
     t.initializeTestRunner();
   }
 

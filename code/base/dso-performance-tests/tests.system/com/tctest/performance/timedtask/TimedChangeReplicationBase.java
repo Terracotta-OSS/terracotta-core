@@ -13,8 +13,8 @@ public abstract class TimedChangeReplicationBase extends TransparentTestBase {
 
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(nodeCount());
-    t.initializeTestRunner();
     t.getRunnerConfig().setExecutionTimeout(TIMEOUT);
+    t.initializeTestRunner();
   }
 
   protected Class getApplicationClass() {

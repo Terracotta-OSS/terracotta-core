@@ -44,7 +44,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   private TestTVSConfigurationSetupManagerFactory configFactory;
   private DSOClientConfigHelper                   configHelper;
   protected DistributedTestRunner                 runner;
-  private DistributedTestRunnerConfig             runnerConfig            = new DistributedTestRunnerConfig();
+  private DistributedTestRunnerConfig             runnerConfig = new DistributedTestRunnerConfig(getTimeoutValueInSeconds());
   private TransparentAppConfig                    transparentAppConfig;
   private ApplicationConfigBuilder                possibleApplicationConfigBuilder;
 

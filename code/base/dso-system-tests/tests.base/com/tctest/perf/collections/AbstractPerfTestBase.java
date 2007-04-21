@@ -34,8 +34,8 @@ public class AbstractPerfTestBase extends TransparentTestBase {
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(nodes).setApplicationInstancePerClientCount(threads)
         .setIntensity(intensity);
-    t.initializeTestRunner();
     t.getRunnerConfig().setExecutionTimeout(maxTimeout * 60 * 1000);
+    t.initializeTestRunner();
   }
 
   protected Class getApplicationClass() {

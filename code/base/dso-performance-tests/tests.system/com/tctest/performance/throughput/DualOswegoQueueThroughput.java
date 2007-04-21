@@ -13,8 +13,8 @@ public class DualOswegoQueueThroughput extends TransparentTestBase {
 
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
-    t.initializeTestRunner();
     t.getRunnerConfig().setExecutionTimeout(TIMEOUT);
+    t.initializeTestRunner();
   }
 
   protected Class getApplicationClass() {

@@ -21,7 +21,6 @@ public class LargeGraphTester extends TransparentTestBase implements TestConfigu
     t.getTransparentAppConfig().setClientCount(NODE_COUNT)
     .setIntensity(LOOP_ITERATION_COUNT);
 
-    t.getRunnerConfig().setExecutionTimeout(300 * 60 * 1000);
     t.initializeTestRunner();
   }
 

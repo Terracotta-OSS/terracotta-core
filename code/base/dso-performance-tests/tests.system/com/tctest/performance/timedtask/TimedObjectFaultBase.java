@@ -14,8 +14,8 @@ public abstract class TimedObjectFaultBase extends TransparentTestBase {
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(nodeCount());
     t.getTransparentAppConfig().setIntensity(writerCount());
-    t.initializeTestRunner();
     t.getRunnerConfig().setExecutionTimeout(TIMEOUT);
+    t.initializeTestRunner();
   }
 
   protected Class getApplicationClass() {
