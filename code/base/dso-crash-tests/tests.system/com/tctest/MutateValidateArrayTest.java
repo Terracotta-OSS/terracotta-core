@@ -4,6 +4,9 @@
  */
 package com.tctest;
 
+import com.tc.test.activepassive.ActivePassiveCrashMode;
+import com.tc.test.activepassive.ActivePassivePersistenceMode;
+import com.tc.test.activepassive.ActivePassiveSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tctest.runner.TransparentAppConfig;
 
@@ -27,9 +30,9 @@ public class MutateValidateArrayTest extends TransparentTestBase {
 
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
-    setupManager.setServerCrashMode(ActivePassiveTestSetupManager.MUTATE_VALIDATE);
-    setupManager.setServerPersistenceMode(ActivePassiveTestSetupManager.PERMANENT_STORE);
-    setupManager.setServerShareDataMode(ActivePassiveTestSetupManager.DISK);
+    setupManager.setServerCrashMode(ActivePassiveCrashMode.MUTATE_VALIDATE);
+    setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.DISK);
+    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.PERMANENT_STORE);
   }
 
   protected boolean canRunActivePassive() {

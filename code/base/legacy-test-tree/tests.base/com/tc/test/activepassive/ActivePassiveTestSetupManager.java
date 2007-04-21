@@ -6,20 +6,12 @@ package com.tc.test.activepassive;
 
 public class ActivePassiveTestSetupManager {
 
-  public static final String MUTATE_VALIDATE         = "mutate-validate";
-  public static final String CONTINUOUS_ACTIVE_CRASH = "continuous-active-crash";
-  public static final String DISK                    = "disk";
-  public static final String NETWORK                 = "network";
-
-  // must match strings used in tc-config.xml
-  public static final String PERMANENT_STORE         = "permanent-store";
-  public static final String TEMPORARY_SWAP_ONLY     = "temporary-swap-only";
-
-  private int                serverCount;
-  private String             serverCrashMode;
-  private String             serverShareMode;
-  private String             persistenceMode;
-  private long               waitTimeInSec;
+  private int                          serverCount;
+  private long                         serverCrashWaitTimeInSec = 0;
+  private int                          maxCrashCount            = Integer.MAX_VALUE;
+  private ActivePassiveSharedDataMode  activePassiveMode;
+  private ActivePassivePersistenceMode persistenceMode;
+  private ActivePassiveCrashMode       crashMode;
 
   public void setServerCount(int count) {
     if (count < 2) { throw new AssertionError("Server count must be 2 or more:  count=[" + count + "]"); }
@@ -31,47 +23,48 @@ public class ActivePassiveTestSetupManager {
   }
 
   public void setServerCrashMode(String mode) {
-    if (!mode.equals(MUTATE_VALIDATE) && !mode.equals(CONTINUOUS_ACTIVE_CRASH)) { throw new AssertionError(
-                                                                                                           "Unrecognized crash mode ["
-                                                                                                               + mode
-                                                                                                               + "]"); }
-    serverCrashMode = mode;
+    crashMode = new ActivePassiveCrashMode(mode);
+  }
+
+  public void setMaxCrashCount(int count) {
+    if (count < 0) { throw new AssertionError("Max crash count should not be a neg number"); }
+    maxCrashCount = count;
+  }
+
+  public int getMaxCrashCount() {
+    return maxCrashCount;
   }
 
   public String getServerCrashMode() {
-    if (serverCrashMode == null) { throw new AssertionError("Server crash mode was not set."); }
-    return serverCrashMode;
+    if (crashMode == null) { throw new AssertionError("Server crash mode was not set."); }
+    return crashMode.getMode();
   }
 
   public void setServerShareDataMode(String mode) {
-    if (!mode.equals(DISK) && !mode.equals(NETWORK)) { throw new AssertionError("Unrecognized share data mode [" + mode
-                                                                                + "]"); }
-    serverShareMode = mode;
+    activePassiveMode = new ActivePassiveSharedDataMode(mode);
   }
 
   public boolean isNetworkShare() {
-    if (serverShareMode == null) { throw new AssertionError("Server share mode was not set."); }
-    return serverShareMode.equals(NETWORK);
+    if (activePassiveMode == null) { throw new AssertionError("Server share mode was not set."); }
+    return activePassiveMode.isNetworkShare();
   }
 
   public void setServerPersistenceMode(String mode) {
-    if (!mode.equals(PERMANENT_STORE) && !mode.equals(TEMPORARY_SWAP_ONLY)) { throw new AssertionError(
-                                                                                                       "Unrecognized persistence mode ["
-                                                                                                           + mode + "]"); }
-    persistenceMode = mode;
+    persistenceMode = new ActivePassivePersistenceMode(mode);
   }
 
   public String getServerPersistenceMode() {
     if (persistenceMode == null) { throw new AssertionError("Server persistence mode was not set."); }
-    return persistenceMode;
+    return persistenceMode.getMode();
   }
 
-  public void setServerCrashWaitInSec(long time) {
+  public void setServerCrashWaitTimeInSec(long time) {
     if (time < 0) { throw new AssertionError("Wait time should not be a negative number."); }
-    waitTimeInSec = time;
+    serverCrashWaitTimeInSec = time;
   }
 
-  public long getWaitTimeInSec() {
-    return waitTimeInSec;
+  public long getServerCrashWaitTimeInSec() {
+    return serverCrashWaitTimeInSec;
   }
+
 }

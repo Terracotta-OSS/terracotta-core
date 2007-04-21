@@ -24,9 +24,6 @@ import java.lang.reflect.Proxy;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-/**
- * TODO Sep 11, 2006: I, asi, am too lazy to write a single sentence describing what this class is for.
- */
 public class ProxyApplicator extends BaseApplicator {
   private static final String CLASSLOADER_FIELD_NAME        = "java.lang.reflect.Proxy.loader";
   private static final String INTERFACES_FIELD_NAME         = "java.lang.reflect.Proxy.interfaces";

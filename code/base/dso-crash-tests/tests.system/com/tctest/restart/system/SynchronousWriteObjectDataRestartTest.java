@@ -4,6 +4,9 @@
  */
 package com.tctest.restart.system;
 
+import com.tc.test.activepassive.ActivePassiveCrashMode;
+import com.tc.test.activepassive.ActivePassivePersistenceMode;
+import com.tc.test.activepassive.ActivePassiveSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tctest.TestConfigurator;
 import com.tctest.TransparentTestBase;
@@ -34,17 +37,17 @@ public class SynchronousWriteObjectDataRestartTest extends TransparentTestBase i
   protected boolean canRunCrash() {
     return true;
   }
-  
+
   protected boolean canRunActivePassive() {
     return true;
   }
 
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
-    setupManager.setServerCrashMode(ActivePassiveTestSetupManager.CONTINUOUS_ACTIVE_CRASH);
-    setupManager.setServerCrashWaitInSec(30);
-    setupManager.setServerShareDataMode(ActivePassiveTestSetupManager.DISK);
-    setupManager.setServerPersistenceMode(ActivePassiveTestSetupManager.PERMANENT_STORE);
+    setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
+    setupManager.setServerCrashWaitTimeInSec(30);
+    setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.DISK);
+    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.PERMANENT_STORE);
   }
 
 }

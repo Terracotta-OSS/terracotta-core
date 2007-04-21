@@ -27,9 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-/**
- * TODO Dec 21, 2004: I, steve, am too lazy to write a single sentence describing what this class is for.
- */
 public class ListApplicator extends BaseApplicator {
   private static final TCLogger logger = TCLogging.getLogger(ListApplicator.class);
 

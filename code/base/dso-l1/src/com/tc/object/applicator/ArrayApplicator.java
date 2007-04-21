@@ -26,9 +26,6 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-/**
- * TODO Dec 7, 2004:
- */
 public class ArrayApplicator extends BaseApplicator {
 
   public ArrayApplicator(DNAEncoding encoding) {

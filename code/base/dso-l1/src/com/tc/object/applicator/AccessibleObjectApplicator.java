@@ -21,9 +21,6 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-/**
- * TODO Sep 11, 2006: I, asi, am too lazy to write a single sentence describing what this class is for.
- */
 public class AccessibleObjectApplicator extends BaseApplicator {
   private static final String DECLARING_CLASS_FIELD_NAME        = "java.lang.reflect.AccessibleObject.declaringClass";
   private static final String ACCESSIBLE_OBJECT_NAME_FILED_NAME = "java.lang.reflect.AccessibleObject.name";

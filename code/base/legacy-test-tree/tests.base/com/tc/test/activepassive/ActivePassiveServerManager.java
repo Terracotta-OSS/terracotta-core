@@ -29,6 +29,7 @@ public class ActivePassiveServerManager {
   private static final String                    SERVER_NAME      = "testserver";
   private static final String                    CONFIG_FILE_NAME = "active-passive-server-config.xml";
   private static final boolean                   DEBUG            = false;
+  private static final int                       NULL_VAL         = -1;
 
   private final File                             tempDir;
   private final PortChooser                      portChooser;
@@ -52,9 +53,10 @@ public class ActivePassiveServerManager {
 
   private final List                             errors;
 
-  private int                                    activeIndex      = -1;
-  private int                                    lastCrashedIndex = -1;
+  private int                                    activeIndex      = NULL_VAL;
+  private int                                    lastCrashedIndex = NULL_VAL;
   private ActivePassiveServerCrasher             serverCrasher;
+  private int                                    maxCrashCount;
 
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
                                     String configModel, ActivePassiveTestSetupManager setupManger, long startTimeout)
@@ -77,7 +79,8 @@ public class ActivePassiveServerManager {
     this.startTimeout = startTimeout * 2;
 
     serverCrashMode = this.setupManger.getServerCrashMode();
-    serverCrashWaitTimeInSec = this.setupManger.getWaitTimeInSec();
+    serverCrashWaitTimeInSec = this.setupManger.getServerCrashWaitTimeInSec();
+    maxCrashCount = this.setupManger.getMaxCrashCount();
     serverPersistence = this.setupManger.getServerPersistenceMode();
     serverNetworkShare = this.setupManger.isNetworkShare();
 
@@ -93,6 +96,14 @@ public class ActivePassiveServerManager {
     serverConfigCreator.writeL2Config();
 
     errors = new ArrayList();
+  }
+
+  private void resetActiveIndex() {
+    activeIndex = NULL_VAL;
+  }
+
+  private void resetLastCrashedIndex() {
+    lastCrashedIndex = NULL_VAL;
   }
 
   private void createServers() throws FileNotFoundException {
@@ -171,23 +182,28 @@ public class ActivePassiveServerManager {
   }
 
   public void startServers() throws Exception {
-    if (activeIndex < 0) {
-      activeIndex = 0;
-    }
+    if (activeIndex >= 0) { throw new AssertionError("Server(s) has/have been already started"); }
+
+    activeIndex = 0;
+
     startActive();
     startPassives();
 
     if (serverNetworkShare) {
+      debugPrintln("***** startServers():  about to search for active  threadId=[" + Thread.currentThread().getName()
+                   + "]");
       activeIndex = getActiveIndex();
+    } else {
+      activeIndex = 0;
     }
 
-    if (serverCrashMode.equals(ActivePassiveTestSetupManager.CONTINUOUS_ACTIVE_CRASH)) {
+    if (serverCrashMode.equals(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH)) {
       startContinuousCrash();
     }
   }
 
   private void startContinuousCrash() {
-    serverCrasher = new ActivePassiveServerCrasher(this, serverCrashWaitTimeInSec);
+    serverCrasher = new ActivePassiveServerCrasher(this, serverCrashWaitTimeInSec, maxCrashCount);
     new Thread(serverCrasher).start();
   }
 
@@ -209,11 +225,13 @@ public class ActivePassiveServerManager {
 
   private int getActiveIndex() throws Exception {
     int index = -1;
+    long loopCount = 0;
 
-    long duration = jmxPorts.length * 5000;
-    long startTime = System.currentTimeMillis();
-
-    while (duration > (System.currentTimeMillis() - startTime)) {
+    while (index < 0) {
+      loopCount++;
+      if (loopCount % 10 == 0) {
+        System.out.println("Searching for active server... ");
+      }
       for (int i = 0; i < jmxPorts.length; i++) {
         if (i != lastCrashedIndex) {
           JMXConnector jmxConnector = getJMXConnector(jmxPorts[i]);
@@ -221,11 +239,13 @@ public class ActivePassiveServerManager {
           TCServerInfoMBean mbean = (TCServerInfoMBean) MBeanServerInvocationHandler
               .newProxyInstance(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, true);
 
-          debugPrintln("********  index=[" + index + "]  i=[" + i + "] active=[" + mbean.isActive() + "]");
+          debugPrintln("********  index=[" + index + "]  i=[" + i + "] active=[" + mbean.isActive() + "]  threadId=["
+                       + Thread.currentThread().getName() + "]");
 
           if (mbean.isActive()) {
             if (index < 0) {
               index = i;
+              debugPrintln("***** active found index=[" + index + "]");
             } else {
               jmxConnector.close();
               throw new Exception("More than one active server found.");
@@ -235,13 +255,7 @@ public class ActivePassiveServerManager {
           jmxConnector.close();
         }
       }
-      if (index >= 0) {
-        break;
-      }
     }
-
-    if (index < 0) { throw new Exception("No active server found."); }
-
     return index;
   }
 
@@ -252,10 +266,13 @@ public class ActivePassiveServerManager {
   }
 
   private void waitForPassive() throws Exception {
-    long duration = jmxPorts.length * 10000;
-    long startTime = System.currentTimeMillis();
+    long loopCount = 0;
 
-    while (duration > (System.currentTimeMillis() - startTime)) {
+    while (true) {
+      loopCount++;
+      if (loopCount % 10 == 0) {
+        System.out.println("Searching for appropriate passive server(s)... ");
+      }
       for (int i = 0; i < jmxPorts.length; i++) {
         if (i != activeIndex) {
           JMXConnector jmxConnector = null;
@@ -277,13 +294,6 @@ public class ActivePassiveServerManager {
         }
       }
     }
-    String msg;
-    if (serverNetworkShare) {
-      msg = "No passive-standby servers found.";
-    } else {
-      msg = "No started servers found.";
-    }
-    throw new Exception(msg);
   }
 
   private JMXConnector getJMXConnector(int jmxPort) throws IOException {
@@ -296,10 +306,12 @@ public class ActivePassiveServerManager {
 
   public void stopAllServers() throws Exception {
     if (serverCrasher != null) {
+      debugPrintln("***** stopping server crasher");
       serverCrasher.stop();
     }
 
     for (int i = 0; i < serverCount; i++) {
+      debugPrintln("***** stopping server=[" + servers[i].getDsoPort() + "]");
       ServerControl sc = servers[i].getServerControl();
       if (sc.isRunning()) {
         sc.shutdown();
@@ -338,9 +350,12 @@ public class ActivePassiveServerManager {
     debugPrintln("***** Done sleeping after crashing active server ");
 
     lastCrashedIndex = activeIndex;
+    resetActiveIndex();
     debugPrintln("***** lastCrashedIndex[" + lastCrashedIndex + "] ");
 
+    debugPrintln("***** about to search for active  threadId=[" + Thread.currentThread().getName() + "]");
     activeIndex = getActiveIndex();
+    debugPrintln("***** activeIndex[" + activeIndex + "] ");
   }
 
   private void waitForServerCrash(ServerControl server) throws Exception {
@@ -361,7 +376,7 @@ public class ActivePassiveServerManager {
 
     if (lastCrashedIndex >= 0) {
       servers[lastCrashedIndex].getServerControl().start(startTimeout);
-      lastCrashedIndex = -1;
+      resetLastCrashedIndex();
     } else {
       throw new AssertionError("No crashed servers to restart.");
     }
@@ -380,7 +395,7 @@ public class ActivePassiveServerManager {
   }
 
   public boolean crashActiveServerAfterMutate() {
-    if (serverCrashMode.equals(ActivePassiveTestSetupManager.MUTATE_VALIDATE)) { return true; }
+    if (serverCrashMode.equals(ActivePassiveCrashMode.MUTATE_VALIDATE)) { return true; }
     return false;
   }
 

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -20,9 +21,11 @@ import java.util.Map;
 import java.util.Set;
 
 public class ConcentratedClassTestApp extends AbstractTransparentApp {
-  private static final int THREAD_COUNT = 5;
-  private static Map       root         = new HashMap();
-  final private static long runtime     = 1000 * 200;  // 200 seconds
+  private static final boolean DEBUG        = false;
+
+  private static final int     THREAD_COUNT = 5;
+  private static Map           root         = new HashMap();
+  final private static long    runtime      = 1000 * 200;   // 200 seconds
 
   public ConcentratedClassTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -44,6 +47,9 @@ public class ConcentratedClassTestApp extends AbstractTransparentApp {
   }
 
   private void threadEntry(String id, int count) {
+
+    debugPrintln("threadEntry id=[" + id + "] count=[" + count + "]");
+
     ConcentratedClass cc = new ConcentratedClass();
 
     synchronized (root) {
@@ -51,10 +57,12 @@ public class ConcentratedClassTestApp extends AbstractTransparentApp {
       if (prev != null) { throw new RuntimeException("replaced an entry in the map for id " + id); }
 
       if (root.size() == count) {
+        debugPrintln("notifyingAll root size matches");
         root.notifyAll();
       } else {
         while (root.size() != count) {
           try {
+            debugPrintln("waiting until root size matches");
             root.wait();
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -69,9 +77,11 @@ public class ConcentratedClassTestApp extends AbstractTransparentApp {
     }
 
     Set all = new HashSet();
-    
+
     long end = System.currentTimeMillis() + runtime;
-    while(end > System.currentTimeMillis()) {
+    while (end > System.currentTimeMillis()) {
+      debugPrintln("inside while loop id=[" + id + "]");
+
       final ConcentratedClass prevCC;
       final ConcentratedClass newCC = new ConcentratedClass();
       all.add(newCC);
@@ -80,13 +90,13 @@ public class ConcentratedClassTestApp extends AbstractTransparentApp {
         prevCC = (ConcentratedClass) root.put(id, newCC);
         values = root.values();
       }
-      
+
       try {
-        Thread.sleep((int)(Math.random() * 10));
-      } catch(Exception e) {
+        Thread.sleep((int) (Math.random() * 10));
+      } catch (Exception e) {
         //
       }
- 
+
       if (values.size() != count) { throw new RuntimeException("unexpected size: " + values.size()); }
 
       all.add(prevCC);
@@ -95,11 +105,15 @@ public class ConcentratedClassTestApp extends AbstractTransparentApp {
         someCC.increment();
       }
     }
+
+    debugPrintln("while loop ends id=[" + id + "]");
   }
 
   public void run() {
     final SynchronizedRef error = new SynchronizedRef(null);
     final String id = getApplicationId();
+
+    debugPrintln("Starting app run id=[" + id + "] threadCount=[" + THREAD_COUNT + "]");
 
     Thread threads[] = new Thread[THREAD_COUNT];
     for (int i = 0; i < threads.length; i++) {
@@ -121,7 +135,7 @@ public class ConcentratedClassTestApp extends AbstractTransparentApp {
 
     for (int i = 0; i < threads.length; i++) {
       try {
-        threads[i].join(runtime+1000);
+        threads[i].join(runtime + 1000);
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
@@ -144,4 +158,9 @@ public class ConcentratedClassTestApp extends AbstractTransparentApp {
     }
   }
 
+  private void debugPrintln(String s) {
+    if (DEBUG) {
+      System.err.println("***** ConcentratedClassTestApp: " + s);
+    }
+  }
 }
