@@ -51,8 +51,8 @@ public class HeartBeatServer {
         HeartBeatThread hb = (HeartBeatThread) it.next();
         hb.sendKillSignal();
       }
-      heartBeatThreads.clear();
     }
+    heartBeatThreads.clear();
   }
 
   public synchronized boolean anyAppServerAlive() {

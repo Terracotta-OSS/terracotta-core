@@ -25,7 +25,7 @@ public class HeartBeatClient extends Thread {
     this.isAppServer = isAppServer;
     try {
       socket = new Socket("localhost", listenPort);
-      socket.setSoTimeout(HeartBeatServer.PULSE_INTERVAL * 2);
+      socket.setSoTimeout(HeartBeatServer.PULSE_INTERVAL + 5000);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

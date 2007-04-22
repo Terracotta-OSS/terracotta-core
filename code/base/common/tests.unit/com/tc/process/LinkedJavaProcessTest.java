@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.process;
 
@@ -123,38 +124,39 @@ public class LinkedJavaProcessTest extends TCTestCase {
 
     process.start();
 
-    StreamCollector collect = new StreamCollector(process.STDOUT());
-    collect.start();
-    StreamCollector collect2 = new StreamCollector(process.STDERR());
-    collect2.start();
+    StreamCollector stdout = new StreamCollector(process.STDOUT());
+    stdout.start();
+    StreamCollector stderr = new StreamCollector(process.STDERR());
+    stderr.start();
 
     long origSize = destFile.length();
-    Thread.sleep(30000);
+    Thread.sleep(5000);
     long newSize = destFile.length();
 
-    System.err.println("Parent first: " + newSize + " vs. " + origSize);
+    System.err.println("Parent first: new=" + newSize + "  old=" + origSize);
     assertTrue(newSize > origSize); // Make sure it's all started + working
 
     long child1OrigSize = child1File.length();
     long child2OrigSize = child2File.length();
-    Thread.sleep(30000);
+    Thread.sleep(5000);
     long child1NewSize = child1File.length();
     long child2NewSize = child2File.length();
 
-    System.err.println("Child 1 first: " + child1NewSize + " vs. " + child1OrigSize);
-    System.err.println("Child 2 first: " + child2NewSize + " vs. " + child2OrigSize);
+    System.err.println("Child 1 first: new=" + child1NewSize + "  old=" + child1OrigSize);
+    System.err.println("Child 2 first: new=" + child2NewSize + "  old=" + child2OrigSize);
     // Make sure the children are all started + working
     assertTrue(child1NewSize > child1OrigSize);
     assertTrue(child2NewSize > child2OrigSize);
 
     process.destroy();
-    Thread.sleep(25000);
+    // wait for child process heartbeat to time out and kill themselves
+    Thread.sleep(HeartBeatServer.PULSE_INTERVAL * 2);
 
     origSize = destFile.length();
     Thread.sleep(5000);
     newSize = destFile.length();
 
-    System.err.println("Parent after kill: " + newSize + " vs. " + origSize);
+    System.err.println("Parent after kill: new=" + newSize + "  old=" + origSize);
     assertEquals(origSize, newSize); // Make sure the parent is dead
 
     child1OrigSize = child1File.length();
@@ -162,11 +164,11 @@ public class LinkedJavaProcessTest extends TCTestCase {
     Thread.sleep(5000);
     child1NewSize = child1File.length();
     child2NewSize = child2File.length();
-    System.err.println("Child 1 after kill: " + child1NewSize + " vs. " + child1OrigSize);
-    System.err.println("Child 2 after kill: " + child2NewSize + " vs. " + child2OrigSize);
+    System.err.println("Child 1 after kill: new=" + child1NewSize + "  old=" + child1OrigSize);
+    System.err.println("Child 2 after kill: new=" + child2NewSize + "  old=" + child2OrigSize);
 
-    assertEquals(child1OrigSize, child1NewSize); // Make sure child 1 is dead
-    assertEquals(child2OrigSize, child2NewSize); // Make sure child 1 is dead
+    assertEquals(child1NewSize, child1OrigSize); // Make sure child 1 is dead
+    assertEquals(child2NewSize, child2OrigSize); // Make sure child 1 is dead
   }
 
 }
