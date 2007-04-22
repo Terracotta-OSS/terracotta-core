@@ -5,6 +5,7 @@ package com.tc.process;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.PrintStream;
 
 /**
  * A test program for {@link LinkedJavaProcessTest}that, in turn, spawns some of its own children as linked processes.
@@ -21,10 +22,12 @@ public class LinkedJavaProcessTestMain5 {
                                                        new String[] { args[0] + "-child-1", "false" });
       LinkedJavaProcess child2 = new LinkedJavaProcess(LinkedJavaProcessTestMain5.class.getName(),
                                                        new String[] { args[0] + "-child-2", "false" });
-      
       child1.start();
       child2.start();
     }
+    
+    File stdoutFile = new File(destFile + ".stdout.log");
+    System.setOut(new PrintStream(new FileOutputStream(stdoutFile)));
     
     while (true) {
       FileOutputStream out = new FileOutputStream(destFile, true);

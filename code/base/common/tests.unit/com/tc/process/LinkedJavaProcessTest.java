@@ -110,11 +110,6 @@ public class LinkedJavaProcessTest extends TCTestCase {
     assertContains(pwd.toLowerCase(), output.toLowerCase());
   }
 
-  private String strip(String s) {
-    if (s != null && s.startsWith("DATA: ")) return s.substring("DATA: ".length());
-    else return s;
-  }
-
   public void testKillingParentKillsChildren() throws Exception {
     File destFile = getTempFile("tkpkc-file");
     File child1File = new File(destFile.getAbsolutePath() + "-child-1");
@@ -130,7 +125,7 @@ public class LinkedJavaProcessTest extends TCTestCase {
     stderr.start();
 
     long origSize = destFile.length();
-    Thread.sleep(5000);
+    Thread.sleep(6000);
     long newSize = destFile.length();
 
     System.err.println("Parent first: new=" + newSize + "  old=" + origSize);
@@ -148,6 +143,9 @@ public class LinkedJavaProcessTest extends TCTestCase {
     assertTrue(child1NewSize > child1OrigSize);
     assertTrue(child2NewSize > child2OrigSize);
 
+    System.out.println(stdout.toString());
+    System.out.println(stderr.toString());
+    
     process.destroy();
     // wait for child process heartbeat to time out and kill themselves
     Thread.sleep(HeartBeatServer.PULSE_INTERVAL * 2);

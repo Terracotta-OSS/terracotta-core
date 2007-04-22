@@ -14,8 +14,9 @@ import java.util.Date;
 
 public class HeartBeatClient extends Thread {
   private Socket                  socket;
-  private boolean                 isAppServer = false;
-  private static final DateFormat dateFormat  = new SimpleDateFormat("HH:mm:ss.SSS");
+  private boolean                 isAppServer       = false;
+  private static final DateFormat dateFormat        = new SimpleDateFormat("HH:mm:ss.SSS");
+  private static final int        HEARTBEAT_TIMEOUT = HeartBeatServer.PULSE_INTERVAL + 5000;
 
   private static void log(String msg) {
     System.out.println("Heartbeat: [" + dateFormat.format(new Date()) + "] " + msg);
@@ -25,7 +26,7 @@ public class HeartBeatClient extends Thread {
     this.isAppServer = isAppServer;
     try {
       socket = new Socket("localhost", listenPort);
-      socket.setSoTimeout(HeartBeatServer.PULSE_INTERVAL + 5000);
+      socket.setSoTimeout(HEARTBEAT_TIMEOUT);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -37,8 +38,11 @@ public class HeartBeatClient extends Thread {
       PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
       while (true) {
+        long start = System.currentTimeMillis();
         // will time out if it didn't get any pulse from server
         String signal = in.readLine();
+
+        if (System.currentTimeMillis() - start > HEARTBEAT_TIMEOUT) { throw new Exception("Time expired for heartbeat."); }
 
         if (HeartBeatServer.PULSE.equals(signal)) {
           log("Received pulse from heartbeat server.");
@@ -58,7 +62,7 @@ public class HeartBeatClient extends Thread {
       }
 
     } catch (Throwable e) {
-      System.err.println("Caught exception in heartbeat client. Killing self. " + e.getMessage());
+      log("Caught exception in heartbeat client. Killing self. " + e.getMessage());
       System.exit(1);
     }
   }
