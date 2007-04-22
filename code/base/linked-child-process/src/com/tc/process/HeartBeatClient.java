@@ -8,16 +8,24 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class HeartBeatClient extends Thread {
-  private Socket  socket;
-  private boolean isAppServer = false;
+  private Socket                  socket;
+  private boolean                 isAppServer = false;
+  private static final DateFormat dateFormat  = new SimpleDateFormat("HH:mm:ss.SSS");
+
+  private static void log(String msg) {
+    System.out.println("Heartbeat: [" + dateFormat.format(new Date()) + "] " + msg);
+  }
 
   public HeartBeatClient(int listenPort, boolean isAppServer) {
     this.isAppServer = isAppServer;
     try {
       socket = new Socket("localhost", listenPort);
-      socket.setSoTimeout(HeartBeatServer.PULSE_INTERVAL + 1000);
+      socket.setSoTimeout(HeartBeatServer.PULSE_INTERVAL * 2);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -33,18 +41,18 @@ public class HeartBeatClient extends Thread {
         String signal = in.readLine();
 
         if (HeartBeatServer.PULSE.equals(signal)) {
-          System.out.println("Received pulse from heartbeat server.");
+          log("Received pulse from heartbeat server.");
         } else if (HeartBeatServer.KILL.equals(signal)) {
-          System.out.println("Received KILL from heartbeat server. Killing self.");
+          log("Received KILL from heartbeat server. Killing self.");
           System.exit(1);
         } else if (HeartBeatServer.IS_APP_SERVER_ALIVE.equals(signal)) {
-          System.out.println("Received IS_APP_SERVER_ALIVE from heartbeat server. ");
+          log("Received IS_APP_SERVER_ALIVE from heartbeat server. ");
           if (isAppServer) {
             out.println(HeartBeatServer.IM_ALIVE);
-            System.out.println("  responded: IM_ALIVE");
+            log("  responded: IM_ALIVE");
           } else {
             out.println("NOT_AN_APP_SERVER");
-            System.out.println("  responded: NOT_AN_APP_SERVER");
+            log("  responded: NOT_AN_APP_SERVER");
           }
         }
       }
