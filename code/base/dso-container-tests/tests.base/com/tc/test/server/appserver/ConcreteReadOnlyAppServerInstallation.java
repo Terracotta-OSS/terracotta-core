@@ -4,8 +4,6 @@
  */
 package com.tc.test.server.appserver;
 
-import org.apache.commons.io.FileUtils;
-
 import com.tc.util.ZipBuilder;
 import com.tc.util.runtime.Os;
 
@@ -34,12 +32,6 @@ final class ConcreteReadOnlyAppServerInstallation {
       throws Exception {
     File serverInstallDir = new File(serverDir + File.separator + serverType + "-" + majorVersion + "." + minorVersion
                                      + "-install");
-
-    if (NewAppServerFactory.GLASSFISH.equals(serverType)) {
-      // XXX: delete the glassfish install everytime. This is temporary to help debug problems in the monkey
-      FileUtils.deleteDirectory(serverInstallDir);
-    }
-
     serverInstallDir.mkdir();
     File timestampFile = new File(serverInstallDir + File.separator + "timestamp");
     if (equalTimestamps(host, serverType, majorVersion, minorVersion, timestampFile)) { return serverInstallDir; }

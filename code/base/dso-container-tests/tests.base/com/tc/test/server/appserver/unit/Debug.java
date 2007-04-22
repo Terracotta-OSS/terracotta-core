@@ -10,32 +10,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.Date;
 
 public class Debug {
 
   public static void sendTestDetails(String testName) {
     try {
-      StringWriter sw = new StringWriter();
-      PrintWriter pw = new PrintWriter(sw);
-
-      pw.println(new Date());
       String host = InetAddress.getLocalHost().getHostName();
-      pw.println();
-
-      String[] props = (String[]) System.getProperties().keySet().toArray(new String[] {});
-      Arrays.sort(props);
-      for (int i = 0; i < props.length; i++) {
-        pw.println(props[i] + " --> " + System.getProperty(props[i], "null"));
-      }
-
-      pw.flush();
-
-      mail("execution: (" + host + ") " + testName, sw.toString());
+      mail(testName + " (" + host + ")", "content yo");
     } catch (Exception e) {
       e.printStackTrace();
     }
