@@ -24,21 +24,25 @@ public class HeartBeatServer {
   public static final String      IS_APP_SERVER_ALIVE = "IS_APP_SERVER_ALIVE";
   public static final String      IM_ALIVE            = "IM_ALIVE";
   public static final int         PULSE_INTERVAL      = 15 * 1000;
-  private static final List       heartBeatThreads    = Collections.synchronizedList(new ArrayList());
   private static final DateFormat dateFormat          = new SimpleDateFormat("HH:mm:ss.SSS");
 
   private ListenThread            listenThread;
+  // @GuardBy(this)
+  private final List              heartBeatThreads    = Collections.synchronizedList(new ArrayList());
 
-  public synchronized void start() {
-    listenThread = new ListenThread(this);
-    listenThread.setDaemon(true);
-    listenThread.start();
+  public void start() {
+    if (listenThread == null) {
+      listenThread = new ListenThread(this);
+      listenThread.setDaemon(true);
+      listenThread.start();
+    }
   }
 
-  public synchronized void shutdown() {
+  public void shutdown() {
     try {
       listenThread.shutdown();
       listenThread.join();
+      listenThread = null;
     } catch (InterruptedException ignored) {
       // nop
     }
@@ -46,36 +50,34 @@ public class HeartBeatServer {
   }
 
   public synchronized void sendKillSignalToChildren() {
-    synchronized (heartBeatThreads) {
-      for (Iterator it = heartBeatThreads.iterator(); it.hasNext();) {
-        HeartBeatThread hb = (HeartBeatThread) it.next();
-        hb.sendKillSignal();
-      }
+    for (Iterator it = heartBeatThreads.iterator(); it.hasNext();) {
+      HeartBeatThread hb = (HeartBeatThread) it.next();
+      hb.sendKillSignal();
     }
     heartBeatThreads.clear();
   }
 
   public synchronized boolean anyAppServerAlive() {
-    synchronized (heartBeatThreads) {
-      boolean alive = false;
-      for (Iterator it = heartBeatThreads.iterator(); it.hasNext();) {
-        HeartBeatThread hb = (HeartBeatThread) it.next();
-        alive = alive || hb.pingAppServer();
-      }
-      return alive;
+    boolean alive = false;
+    for (Iterator it = heartBeatThreads.iterator(); it.hasNext();) {
+      HeartBeatThread hb = (HeartBeatThread) it.next();
+      alive = alive || hb.pingAppServer();
     }
+    return alive;
   }
 
-  public synchronized int listeningPort() {
+  public synchronized void removeDeadClient(HeartBeatThread thread) {
+    log("Dead client detected... removing " + thread.getName());
+    heartBeatThreads.remove(thread);
+  }
+
+  public synchronized void addThread(HeartBeatThread hb) {
+    heartBeatThreads.add(hb);
+  }
+
+  public int listeningPort() {
     if (!listenThread.isAlive()) throw new IllegalStateException("Heartbeat server has not started");
     return listenThread.listeningPort();
-  }
-
-  public void removeDeadClient(HeartBeatThread thread) {
-    synchronized (heartBeatThreads) {
-      log("Dead client detected... removing " + thread.getName());
-      heartBeatThreads.remove(thread);
-    }
   }
 
   private static class ListenThread extends Thread {
@@ -112,9 +114,7 @@ public class HeartBeatServer {
           HeartBeatThread hb = new HeartBeatThread(server, clientSocket);
           hb.setDaemon(true);
           hb.start();
-          synchronized (heartBeatThreads) {
-            heartBeatThreads.add(hb);
-          }
+          server.addThread(hb);
         }
       } catch (Exception e) {
         if (isShutdown) {
