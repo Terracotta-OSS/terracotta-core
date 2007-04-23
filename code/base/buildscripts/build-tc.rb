@@ -657,8 +657,6 @@ END
       end
 
       @build_results.archive_to(ant, full_build_archive_path)
-    else
-      puts("Can't archive build: build-archive-dir not specified.")
     end
   end
 
