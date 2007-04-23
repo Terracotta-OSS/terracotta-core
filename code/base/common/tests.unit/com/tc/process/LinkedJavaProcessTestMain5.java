@@ -29,7 +29,8 @@ public class LinkedJavaProcessTestMain5 {
     File stdoutFile = new File(destFile + ".stdout.log");
     System.setOut(new PrintStream(new FileOutputStream(stdoutFile)));
     
-    while (true) {
+    long start = System.currentTimeMillis();
+    while (System.currentTimeMillis() - start < 3 * 60 * 1000) {
       FileOutputStream out = new FileOutputStream(destFile, true);
       out.write("DATA: Just a line of text.\n".getBytes());
       out.flush();
