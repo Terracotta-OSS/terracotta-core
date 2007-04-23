@@ -6,11 +6,11 @@ package com.tctest.spring.integrationtests;
 import org.springframework.beans.factory.BeanFactory;
 
 import com.tc.test.TestConfigObject;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.appserver.deployment.FileSystemPath;
+import com.tc.test.server.appserver.deployment.TempDirectoryUtil;
+import com.tc.test.server.appserver.deployment.WARBuilder;
 import com.tctest.spring.bean.ISingleton;
-import com.tctest.spring.integrationtests.framework.DeploymentBuilder;
-import com.tctest.spring.integrationtests.framework.FileSystemPath;
-import com.tctest.spring.integrationtests.framework.TempDirectoryUtil;
-import com.tctest.spring.integrationtests.framework.WARBuilder;
 
 import junit.framework.TestCase;
 

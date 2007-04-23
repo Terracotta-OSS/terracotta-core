@@ -3,11 +3,11 @@
  */
 package com.tctest.spring.integrationtests.load;
 
+import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
+import com.tc.test.server.appserver.deployment.Deployment;
+import com.tc.test.server.appserver.deployment.TestCallback;
+import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.bean.EventManager;
-import com.tctest.spring.integrationtests.framework.AbstractDeploymentTest;
-import com.tctest.spring.integrationtests.framework.Deployment;
-import com.tctest.spring.integrationtests.framework.TestCallback;
-import com.tctest.spring.integrationtests.framework.WebApplicationServer;
 
 import java.util.ArrayList;
 import java.util.Date;

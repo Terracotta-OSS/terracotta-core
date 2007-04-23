@@ -4,11 +4,11 @@
 package com.tctest.spring.aj;
 
 import com.tc.test.TestConfigObject;
-import com.tctest.spring.integrationtests.framework.AbstractDeploymentTest;
-import com.tctest.spring.integrationtests.framework.Deployment;
-import com.tctest.spring.integrationtests.framework.DeploymentBuilder;
-import com.tctest.spring.integrationtests.framework.Server;
-import com.tctest.spring.integrationtests.framework.WebApplicationServer;
+import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
+import com.tc.test.server.appserver.deployment.Deployment;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.appserver.deployment.Server;
+import com.tc.test.server.appserver.deployment.WebApplicationServer;
 
 import java.util.ArrayList;
 import java.util.Iterator;

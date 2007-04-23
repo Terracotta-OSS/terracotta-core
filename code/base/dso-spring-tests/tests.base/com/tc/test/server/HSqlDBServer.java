@@ -7,9 +7,10 @@ import org.hsqldb.HsqlProperties;
 import org.hsqldb.Server;
 import org.hsqldb.ServerConfiguration;
 
+import com.tc.test.server.appserver.deployment.AbstractDBServer;
+
 
 public class HSqlDBServer extends AbstractDBServer {
-  private static final Class HSQLDB_MAIN = org.hsqldb.Server.class;
   private static final String DEFAULT_DB_NAME = "testdb";
   private static final int DEFAULT_PORT = ServerConfiguration.getDefaultPort(1, false);
   
@@ -19,8 +20,8 @@ public class HSqlDBServer extends AbstractDBServer {
   public HSqlDBServer(String name, int port) {
     super();
     
-    this.setDbName(name==null ? this.DEFAULT_DB_NAME : name);
-    this.setServerPort(port==0 ? this.DEFAULT_PORT : port);
+    this.setDbName(name==null ? DEFAULT_DB_NAME : name);
+    this.setServerPort(port==0 ? DEFAULT_PORT : port);
   }
 
   public void doStart() throws Exception {

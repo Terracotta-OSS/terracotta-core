@@ -2,15 +2,13 @@
  * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tctest.spring.integrationtests.framework;
+package com.tc.test.server.appserver.deployment;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.tc.test.TestConfigObject;
-import com.tc.test.server.AbstractDBServer;
-import com.tc.test.server.HSqlDBServer;
 import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.appserver.NewAppServerFactory;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
@@ -97,7 +95,7 @@ public class ServerManager {
     return dir;
   }
 
-  void addServerToStop(Stoppable stoppable) {
+  public void addServerToStop(Stoppable stoppable) {
     getServersToStop().add(0, stoppable);
   }
 
@@ -151,12 +149,12 @@ public class ServerManager {
     return makeWebApplicationServer(getTcConfigFile(tcConfigPath));
   }
 
-  public AbstractDBServer makeDBServer(String dbType, String dbName, int serverPort) {
-    // XXX this should use server factory
-    AbstractDBServer svr = new HSqlDBServer(dbName, serverPort);
-    this.addServerToStop(svr);
-    return svr;
-  }
+//  public AbstractDBServer makeDBServer(String dbType, String dbName, int serverPort) {
+//    // XXX this should use server factory
+//    AbstractDBServer svr = new HSqlDBServer(dbName, serverPort);
+//    this.addServerToStop(svr);
+//    return svr;
+//  }
 
   public FileSystemPath getTcConfigFile(String tcConfigPath) {
     URL url = getClass().getResource(tcConfigPath);

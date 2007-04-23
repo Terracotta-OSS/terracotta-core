@@ -4,10 +4,10 @@
 
 package com.tctest.spring.integrationtests.tests;
 
+import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
+import com.tc.test.server.appserver.deployment.Deployment;
+import com.tc.test.server.appserver.deployment.Server;
 import com.tctest.spring.bean.ISingleton;
-import com.tctest.spring.integrationtests.framework.AbstractDeploymentTest;
-import com.tctest.spring.integrationtests.framework.Deployment;
-import com.tctest.spring.integrationtests.framework.Server;
 
 
 public class StartServersStopDSOStartServersAgainTest extends AbstractDeploymentTest {

@@ -3,7 +3,7 @@
  */
 package com.tctest.spring.integrationtests.tests;
 
-import com.tctest.spring.integrationtests.framework.Server;
+import com.tc.test.server.appserver.deployment.Server;
 
 public interface TestServerCallback {
 

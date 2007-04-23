@@ -4,12 +4,12 @@
 
 package com.tctest.spring.integrationtests.tests;
 
+import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
+import com.tc.test.server.appserver.deployment.Deployment;
+import com.tc.test.server.appserver.deployment.Server;
+import com.tc.test.server.appserver.deployment.TestCallback;
+import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.bean.RedeploymentBean;
-import com.tctest.spring.integrationtests.framework.AbstractDeploymentTest;
-import com.tctest.spring.integrationtests.framework.Deployment;
-import com.tctest.spring.integrationtests.framework.Server;
-import com.tctest.spring.integrationtests.framework.TestCallback;
-import com.tctest.spring.integrationtests.framework.WebApplicationServer;
 
 import java.util.Date;
 

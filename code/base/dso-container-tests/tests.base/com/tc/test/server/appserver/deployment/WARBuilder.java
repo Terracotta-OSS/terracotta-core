@@ -1,7 +1,7 @@
 /*
  * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
-package com.tctest.spring.integrationtests.framework;
+package com.tc.test.server.appserver.deployment;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -9,14 +9,12 @@ import org.apache.log4j.Logger;
 import org.apache.tools.ant.taskdefs.War;
 import org.apache.tools.ant.types.ZipFileSet;
 import org.codehaus.cargo.util.AntUtils;
-import org.codehaus.plexus.util.StringUtils;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.remoting.rmi.RmiRegistryFactoryBean;
 import org.springframework.web.context.ContextLoader;
 import org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping;
 
 import com.tc.test.TestConfigObject;
-import com.tctest.spring.integrationtests.framework.web.RemoteContextListener;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -37,7 +35,6 @@ import java.util.StringTokenizer;
 
 import junit.framework.Assert;
 
-// TODO THIS SHOULD BE REWRITTEN TO USE Velocity as the templating engine.
 
 public class WARBuilder implements DeploymentBuilder {
 
@@ -83,7 +80,7 @@ public class WARBuilder implements DeploymentBuilder {
     this.tempDirPath = new FileSystemPath(tempDir);
     this.testConfig = config;
 
-    addDirectoryOrJARContainingClass(RemoteContextListener.class);  // test framework
+    addDirectoryOrJARContainingClass(WARBuilder.class);  // test framework
     addDirectoryOrJARContainingClass(LogFactory.class);  // commons-logging
     addDirectoryOrJARContainingClass(Logger.class);  // log4j
 
@@ -307,7 +304,7 @@ public class WARBuilder implements DeploymentBuilder {
       if(!beanDefinitionFiles.isEmpty()) {
         writeListener(pw, org.springframework.web.context.ContextLoaderListener.class.getName());
         if (this.dispatcherServletName == null) {
-          writeListener(pw, com.tctest.spring.integrationtests.framework.web.RemoteContextListener.class.getName());
+          writeListener(pw, com.tc.test.server.appserver.deployment.RemoteContextListener.class.getName());
         }
       }
       for (Iterator it = listeners.iterator(); it.hasNext();) {
@@ -406,10 +403,30 @@ public class WARBuilder implements DeploymentBuilder {
   }
 
   public DeploymentBuilder addRemoteService(String beanName, Class interfaceType) {
-    addRemoteService(StringUtils.capitaliseAllWords(beanName), beanName, interfaceType);
+    addRemoteService(capitalise(beanName), beanName, interfaceType);
     return this;
   }
 
+  private static String capitalise(String s) {
+    if (s == null) { return null; }
+    int size = s.length();
+    StringBuffer buffer = new StringBuffer(size);
+    boolean space = true;
+    for (int i = 0; i < size; i++) {
+      char c = s.charAt(i);
+      if (Character.isWhitespace(c)) {
+        buffer.append(c);
+        space = true;
+      } else if (space) {
+        buffer.append(Character.toTitleCase(c));
+        space = false;
+      } else {
+        buffer.append(c);
+      }
+    }
+    return buffer.toString();
+  }
+  
   public DeploymentBuilder addRemoteServiceBlock(String block) {
     remoteSvcDefBlock.append(block + "\n");
     return this;

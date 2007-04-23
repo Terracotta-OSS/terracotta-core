@@ -1,7 +1,7 @@
 /*
  * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
-package com.tctest.spring.integrationtests.framework;
+package com.tc.test.server.appserver.deployment;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.codehaus.cargo.container.deployable.WAR;
@@ -27,7 +27,6 @@ import com.tc.test.server.appserver.AppServer;
 import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.appserver.NewAppServerFactory;
 import com.tc.test.server.appserver.StandardAppServerParameters;
-import com.tc.test.server.tcconfig.SpringTerracottaAppServerConfig;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
 import com.tc.test.server.tcconfig.TerracottaServerConfigGenerator;
 import com.tc.test.server.util.AppServerUtil;

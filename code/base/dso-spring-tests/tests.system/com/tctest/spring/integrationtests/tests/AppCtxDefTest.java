@@ -4,12 +4,12 @@
 
 package com.tctest.spring.integrationtests.tests;
 
+import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
+import com.tc.test.server.appserver.deployment.Deployment;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.appserver.deployment.ServerTestSetup;
+import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.bean.AppCtxDefBean;
-import com.tctest.spring.integrationtests.framework.AbstractTwoServerDeploymentTest;
-import com.tctest.spring.integrationtests.framework.Deployment;
-import com.tctest.spring.integrationtests.framework.DeploymentBuilder;
-import com.tctest.spring.integrationtests.framework.ServerTestSetup;
-import com.tctest.spring.integrationtests.framework.WebApplicationServer;
 
 import junit.framework.Test;
 

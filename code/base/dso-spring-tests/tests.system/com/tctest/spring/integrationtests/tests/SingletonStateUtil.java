@@ -3,8 +3,8 @@
  */
 package com.tctest.spring.integrationtests.tests;
 
+import com.tc.test.server.appserver.deployment.Server;
 import com.tctest.spring.bean.ISingleton;
-import com.tctest.spring.integrationtests.framework.Server;
 
 import junit.framework.Assert;
 

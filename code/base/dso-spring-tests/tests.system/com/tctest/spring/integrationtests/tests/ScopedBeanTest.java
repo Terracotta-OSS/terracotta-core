@@ -6,10 +6,10 @@ package com.tctest.spring.integrationtests.tests;
 
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
-import com.tctest.spring.integrationtests.framework.AbstractTwoServerDeploymentTest;
-import com.tctest.spring.integrationtests.framework.Deployment;
-import com.tctest.spring.integrationtests.framework.ServerTestSetup;
-import com.tctest.spring.integrationtests.framework.WebApplicationServer;
+import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
+import com.tc.test.server.appserver.deployment.Deployment;
+import com.tc.test.server.appserver.deployment.ServerTestSetup;
+import com.tc.test.server.appserver.deployment.WebApplicationServer;
 
 import junit.framework.Test;
 

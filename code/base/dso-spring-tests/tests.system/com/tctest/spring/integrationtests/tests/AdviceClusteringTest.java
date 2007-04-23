@@ -3,11 +3,11 @@
  */
 package com.tctest.spring.integrationtests.tests;
 
+import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.CounterSaver;
 import com.tctest.spring.bean.ISingleton;
 import com.tctest.spring.bean.ISingletonAdvice;
-import com.tctest.spring.integrationtests.framework.AbstractTwoServerDeploymentTest;
-import com.tctest.spring.integrationtests.framework.DeploymentBuilder;
 
 import junit.extensions.TestSetup;
 import junit.framework.Test;

@@ -3,11 +3,11 @@
  */
 package com.tctest.spring.integrationtests.tests;
 
+import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
+import com.tc.test.server.appserver.deployment.Deployment;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.bean.ISingleton;
-import com.tctest.spring.integrationtests.framework.AbstractDeploymentTest;
-import com.tctest.spring.integrationtests.framework.Deployment;
-import com.tctest.spring.integrationtests.framework.DeploymentBuilder;
-import com.tctest.spring.integrationtests.framework.WebApplicationServer;
 
 public class StateMaintainedTest extends AbstractDeploymentTest {
 

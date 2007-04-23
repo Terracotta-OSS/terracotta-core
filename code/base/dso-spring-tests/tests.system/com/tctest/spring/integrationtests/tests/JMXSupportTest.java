@@ -3,9 +3,9 @@
  */
 package com.tctest.spring.integrationtests.tests;
 
+import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.ISingleton;
-import com.tctest.spring.integrationtests.framework.AbstractTwoServerDeploymentTest;
-import com.tctest.spring.integrationtests.framework.DeploymentBuilder;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;

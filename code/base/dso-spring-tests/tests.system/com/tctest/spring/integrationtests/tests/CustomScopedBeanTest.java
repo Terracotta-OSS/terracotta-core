@@ -21,12 +21,12 @@ import org.springframework.web.context.request.SessionScope;
 import org.springframework.web.servlet.DispatcherServlet;
 
 import com.tc.test.TestConfigObject;
+import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.appserver.deployment.ProxyBuilder;
 import com.tcspring.ComplexBeanId;
 import com.tcspring.DistributableBeanFactory;
 import com.tctest.spring.bean.ISimpleBean;
-import com.tctest.spring.integrationtests.framework.AbstractTwoServerDeploymentTest;
-import com.tctest.spring.integrationtests.framework.DeploymentBuilder;
-import com.tctest.spring.integrationtests.framework.ProxyBuilder;
 
 import java.io.IOException;
 import java.util.Collections;

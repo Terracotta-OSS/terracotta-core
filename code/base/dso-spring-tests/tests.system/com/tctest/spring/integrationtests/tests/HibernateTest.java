@@ -6,12 +6,13 @@ package com.tctest.spring.integrationtests.tests;
 import org.springframework.remoting.httpinvoker.HttpInvokerServiceExporter;
 import org.springframework.web.servlet.DispatcherServlet;
 
-import com.tc.test.server.AbstractDBServer;
+import com.tc.test.server.HSqlDBServer;
+import com.tc.test.server.appserver.deployment.AbstractDBServer;
+import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.appserver.deployment.ProxyBuilder;
+import com.tc.test.server.appserver.deployment.ServerManagerUtil;
 import com.tctest.spring.bean.IHibernateBean;
-import com.tctest.spring.integrationtests.framework.AbstractTwoServerDeploymentTest;
-import com.tctest.spring.integrationtests.framework.DeploymentBuilder;
-import com.tctest.spring.integrationtests.framework.ProxyBuilder;
-import com.tctest.spring.integrationtests.framework.ServerManagerUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -85,8 +86,12 @@ public class HibernateTest extends AbstractTwoServerDeploymentTest {
     protected void setUp() throws Exception {
       try {
         sm = ServerManagerUtil.startAndBind(HibernateTest.class, isWithPersistentStore());       
-        AbstractDBServer dbSvr = sm.makeDBServer("HSQL", DB_NAME, DB_PORT);
+        
+        // AbstractDBServer dbSvr = sm.makeDBServer("HSQL", DB_NAME, DB_PORT);
+        AbstractDBServer dbSvr = new HSqlDBServer(DB_NAME, DB_PORT);
+        sm.addServerToStop(dbSvr);
         dbSvr.start();
+        
         setUpTwoWebAppServers();
         
         Map initCtx = new HashMap(); 

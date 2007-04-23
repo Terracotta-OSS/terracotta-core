@@ -7,10 +7,10 @@ import org.springframework.remoting.httpinvoker.HttpInvokerServiceExporter;
 import org.springframework.web.servlet.DispatcherServlet;
 
 import com.tc.test.TestConfigObject;
+import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.appserver.deployment.ProxyBuilder;
 import com.tctest.spring.bean.ISimpleBean;
-import com.tctest.spring.integrationtests.framework.AbstractTwoServerDeploymentTest;
-import com.tctest.spring.integrationtests.framework.DeploymentBuilder;
-import com.tctest.spring.integrationtests.framework.ProxyBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
