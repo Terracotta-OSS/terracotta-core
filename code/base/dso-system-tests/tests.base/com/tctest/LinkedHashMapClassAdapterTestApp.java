@@ -13,7 +13,6 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -59,7 +58,7 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
       getTesting();
       removeTesting();
       clearTesting();
-      //putAllTesting(); 
+      putAllTesting(); 
       barrier.barrier();
     } catch (Throwable t) {
       notifyError(t);
@@ -110,11 +109,12 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
   private void putAllTesting() throws Exception {
     synchronized(linkedHashMap) {
       Map expect = new HashMap();
-      expect.put("key1", "value1");
-      expect.put("key2", new Integer(2));
-      expect.put("key3", new Date());
-      expect.put("key4", new Boolean(false));
-      expect.put("key5", null);
+      expect.put("key1", new Element("key1", "value1"));
+      expect.put("key2", new Element("key2", "value2"));
+      expect.put("key3", new Element("key3", "value3"));
+      expect.put("key4", new Element("key4", "value4"));
+      expect.put("key5", new Element("key5", "value1"));
+      linkedHashMap.clear();
       linkedHashMap.putAll(expect);
       Assert.assertEquals(expect.size(), linkedHashMap.size());
       Set expectEntries = expect.entrySet();

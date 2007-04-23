@@ -208,7 +208,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * @param name
 	 */
 	private void removeCache(final String name) {
-		System.out.println(">> removeCache");
+		System.out.println(">> removeCache(" + name + ") : " + clusteredCacheManager.cacheExists(name));
 		clusteredCacheManager.removeCache(name);
 	}
 
