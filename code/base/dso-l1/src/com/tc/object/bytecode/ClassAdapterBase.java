@@ -1,4 +1,3 @@
-
 /*
  * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
@@ -77,8 +76,8 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
     return getTransparencyClassSpec().isRootInThisClass(fieldName);
   }
 
-  public ClassAdapterBase(ClassInfo classInfo,  TransparencyClassSpec spec, ClassVisitor delegate, ManagerHelper mgrHelper,
-                          ClassLoader caller, Portability p) {
+  public ClassAdapterBase(ClassInfo classInfo, TransparencyClassSpec spec, ClassVisitor delegate,
+                          ManagerHelper mgrHelper, ClassLoader caller, Portability p) {
     super(delegate);
     this.portability = p;
     this.spec = new InstrumentationSpec(classInfo, spec, mgrHelper, caller);
@@ -111,12 +110,12 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
 
   private String[] getNewInterfacesForPortableObject(String[] interfaces) {
     Set ifaces = new LinkedHashSet(Arrays.asList(interfaces));
-    if (!ifaces.contains(Manageable.CLASS)) {
-      ifaces.add(Manageable.CLASS);
+    if (!ifaces.contains(ByteCodeUtil.MANAGEABLE_CLASS)) {
+      ifaces.add(ByteCodeUtil.MANAGEABLE_CLASS);
     }
 
-    if (!spec.isLogical() && !ifaces.contains(TransparentAccess.CLASS)) {
-      ifaces.add(TransparentAccess.CLASS);
+    if (!spec.isLogical() && !ifaces.contains(ByteCodeUtil.TRANSPARENT_ACCESS_CLASS)) {
+      ifaces.add(ByteCodeUtil.TRANSPARENT_ACCESS_CLASS);
     }
 
     return (String[]) ifaces.toArray(interfaces);
@@ -144,7 +143,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
    */
   private class LogicalInitMethodAdapter extends LocalVariablesSorter implements Opcodes {
     private boolean methodEnter = false;
-    private int[] localVariablesForMethodCall;
+    private int[]   localVariablesForMethodCall;
 
     public LogicalInitMethodAdapter(int access, String methodDesc, MethodVisitor mv) {
       super(access, methodDesc, mv);
@@ -182,8 +181,8 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
 
         String delegateFieldName = getDelegateFieldName(superClassNameSlashes);
         super.visitMethodInsn(INVOKESPECIAL, superClassNameSlashes, "<init>", desc);
-        super.visitMethodInsn(INVOKESPECIAL, spec.getClassNameSlashes(),
-                           ByteCodeUtil.fieldSetterMethod(delegateFieldName), "(L" + superClassNameSlashes + ";)V");
+        super.visitMethodInsn(INVOKESPECIAL, spec.getClassNameSlashes(), ByteCodeUtil
+            .fieldSetterMethod(delegateFieldName), "(L" + superClassNameSlashes + ";)V");
 
       } else {
         super.visitMethodInsn(opcode, owner, name, desc);
@@ -436,7 +435,6 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
         mv.visitLabel(l1);
       }
 
-      
       if (!portability.isInstrumentationNotNeeded(spec.getSuperClassNameDots())
           && getTransparencyClassSpec().hasPhysicallyPortableSpecs(spec.getClassInfo().getSuperclass())) {
         mv.visitVarInsn(ALOAD, 0);

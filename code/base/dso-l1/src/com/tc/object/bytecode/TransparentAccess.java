@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
 
@@ -9,8 +10,6 @@ import java.util.Map;
  * This interface is used to allow *physically* managed objects to be read and updated
  */
 public interface TransparentAccess {
-  public static final String CLASS = "com/tc/object/bytecode/TransparentAccess";
-  public static final String TYPE  = "L" + CLASS + ";";
 
   public void __tc_getallfields(Map map);
 

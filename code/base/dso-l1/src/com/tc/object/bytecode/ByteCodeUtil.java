@@ -27,7 +27,7 @@ public class ByteCodeUtil implements Opcodes {
   public static final String         TC_FIELD_PREFIX                   = "$__tc_";
   public static final String         TC_METHOD_PREFIX                  = "__tc_";
   public static final String         METHOD_RENAME_PREFIX              = TC_METHOD_PREFIX + "wrapped_";
-  public static final String         DMI_METHOD_RENAME_PREFIX              = TC_METHOD_PREFIX + "dmi_";
+  public static final String         DMI_METHOD_RENAME_PREFIX          = TC_METHOD_PREFIX + "dmi_";
 
   public static final String         VALUES_GETTER                     = TC_METHOD_PREFIX + "getallfields";
   public static final String         VALUES_GETTER_DESCRIPTION         = "(Ljava/util/Map;)V";
@@ -36,6 +36,12 @@ public class ByteCodeUtil implements Opcodes {
   public static final String         MANAGED_VALUES_GETTER             = TC_METHOD_PREFIX + "getmanagedfield";
   public static final String         MANAGED_VALUES_GETTER_DESCRIPTION = "(Ljava/lang/String;)Ljava/lang/Object;";
   public static final String         MANAGED_VALUES_SETTER             = TC_METHOD_PREFIX + "setmanagedfield";
+
+  public static final String         MANAGEABLE_CLASS                  = "com/tc/object/bytecode/Manageable";
+  public static final String         MANAGEABLE_TYPE                   = "L" + MANAGEABLE_CLASS + ";";
+
+  public static final String         TRANSPARENT_ACCESS_CLASS          = "com/tc/object/bytecode/TransparentAccess";
+  public static final String         TRANSPARENT_ACCESS_TYPE           = "L" + TRANSPARENT_ACCESS_CLASS + ";";
 
   private static final LiteralValues LITERAL_VALUES                    = new LiteralValues();
 
