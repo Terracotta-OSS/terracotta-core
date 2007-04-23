@@ -38,11 +38,9 @@ public class HeartBeatClient extends Thread {
       PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
       while (true) {
-        long start = System.currentTimeMillis();
         // will time out if it didn't get any pulse from server
         String signal = in.readLine();
-        if (System.currentTimeMillis() - start > HEARTBEAT_TIMEOUT) { throw new Exception("Time expired for heartbeat."); }
-        if (signal == null) { 
+        if (signal == null) {
           throw new Exception("Null signal");
         } else if (HeartBeatServer.PULSE.equals(signal)) {
           log("Received pulse from heartbeat server.");
@@ -65,6 +63,11 @@ public class HeartBeatClient extends Thread {
 
     } catch (Throwable e) {
       log("Caught exception in heartbeat client. Killing self. " + e.getMessage());
+    } finally {
+      try {
+        socket.close();
+      } catch (Exception ignored) {
+      }
       System.exit(1);
     }
   }
