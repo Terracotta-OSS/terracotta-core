@@ -41,10 +41,10 @@ public class HeartBeatClient extends Thread {
         long start = System.currentTimeMillis();
         // will time out if it didn't get any pulse from server
         String signal = in.readLine();
-
         if (System.currentTimeMillis() - start > HEARTBEAT_TIMEOUT) { throw new Exception("Time expired for heartbeat."); }
-
-        if (HeartBeatServer.PULSE.equals(signal)) {
+        if (signal == null) { 
+          throw new Exception("Null signal");
+        } else if (HeartBeatServer.PULSE.equals(signal)) {
           log("Received pulse from heartbeat server.");
         } else if (HeartBeatServer.KILL.equals(signal)) {
           log("Received KILL from heartbeat server. Killing self.");
@@ -58,6 +58,8 @@ public class HeartBeatClient extends Thread {
             out.println("NOT_AN_APP_SERVER");
             log("  responded: NOT_AN_APP_SERVER");
           }
+        } else {
+          throw new Exception("Unknown signal");
         }
       }
 
