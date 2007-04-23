@@ -196,11 +196,6 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   }
 
   protected void setUp() throws Exception {
-    // XXX: temporary hack to discover how often glassfish tests are being run
-    if (NewAppServerFactory.GLASSFISH.equals(config.appserverFactoryName())) {
-      Debug.sendTestDetails("[" + config.appserverFactoryName() + "] " + getClass().getName() + "." + getName());
-    }
-
     tempDir = getTempDirectory();
     serverInstallDir = makeDir(config.appserverServerInstallDir());
     File workDir = new File(config.appserverWorkingDir());
