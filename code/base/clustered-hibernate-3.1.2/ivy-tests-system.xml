@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ivy-module version="1.0">
+  <info organisation="ibiblio" module="clustered-hibernate-3.1.2"/>
+  <dependencies>
+  	<dependency name="hibernate" rev="3.1.2"/>
+  	<dependency name="hsqldb" rev="1.7.2.2"/>
+	<dependency name="cglib" rev="nodep-2.1_3"/>
+	<dependency name="jta" rev="1.0.1b"/>
+  </dependencies>
+</ivy-module>

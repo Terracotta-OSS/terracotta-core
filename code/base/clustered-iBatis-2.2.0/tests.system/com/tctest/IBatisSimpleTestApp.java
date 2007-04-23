@@ -10,11 +10,11 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.test.HSqlDBServer;
 import com.tc.util.Assert;
 import com.tctest.domain.Account;
 import com.tctest.domain.Customer;
 import com.tctest.runner.AbstractTransparentApp;
-import com.tctest.server.HSqlDBServer;
 
 import java.io.Reader;
 import java.sql.Connection;

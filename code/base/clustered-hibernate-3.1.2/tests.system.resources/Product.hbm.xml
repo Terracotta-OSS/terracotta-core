@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+  <class name="com.tctest.domain.Product" table="PRODUCT" lazy="true">
+    <id name="id" column="PROD_ID">
+      <generator class="native">
+      </generator>
+    </id>
+    <property name="number" type="string" column="PROD_NUMBER"/>
+
+    <join table="Customer_Products" fetch="select"
+        inverse="true" >
+        <key column="PROD_ID"/>
+        <many-to-one name="customer"
+            column="CUS_ID"
+            not-null="true"/>
+    </join>
+    
+    
+  </class>
+</hibernate-mapping>

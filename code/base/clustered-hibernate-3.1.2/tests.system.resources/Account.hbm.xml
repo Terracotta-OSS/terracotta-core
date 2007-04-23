@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+  <class name="com.tctest.domain.Account" table="ACCOUNT" lazy="true">
+    <id name="id" column="ACC_ID">
+      <generator class="native">
+      </generator>
+    </id>
+    <property name="number" type="string" column="ACC_NUMBER"/>
+    <!-- <many-to-one name="customer" column="cus_id" class="com.tctest.domain.Customer" not-null="true" lazy="proxy" /> -->
+    
+  </class>
+</hibernate-mapping>

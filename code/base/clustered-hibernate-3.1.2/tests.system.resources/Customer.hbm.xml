@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+  <class name="com.tctest.domain.Customer" table="CUSTOMER">
+    <id name="id" column="CUS_ID">
+      <generator class="native"/>
+    </id>
+    <property name="firstName" type="string" column="CUS_FIRST_NAME"/>
+    <property name="lastName" type="string" column="CUS_LAST_NAME"/>
+    <property name="emailAddress" type="string" column="CUS_EMAIL"/>
+
+    <many-to-one name="account" class="com.tctest.domain.Account" cascade="save-update,lock"
+        column="acc_id" 
+        unique="true"
+        not-null="true"/>
+
+        
+    <set name="products" 
+        table="Customer_Products" cascade="save-update,lock" lazy="true" fetch="select" batch-size="1">
+        <key column="CUS_ID"/>
+        <many-to-many column="PROD_ID"
+            class="com.tctest.domain.Product"/>
+    </set>
+    
+  </class>
+</hibernate-mapping>
