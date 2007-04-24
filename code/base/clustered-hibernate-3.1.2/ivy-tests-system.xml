@@ -5,6 +5,6 @@
   	<dependency name="hibernate" rev="3.1.2"/>
   	<dependency name="hsqldb" rev="1.7.2.2"/>
 	<dependency name="cglib" rev="nodep-2.1_3"/>
-	<dependency name="jta" rev="1.0.1b"/>
+	<dependency name="jta" rev="1.0.1b" org="terracotta"/>
   </dependencies>
 </ivy-module>
