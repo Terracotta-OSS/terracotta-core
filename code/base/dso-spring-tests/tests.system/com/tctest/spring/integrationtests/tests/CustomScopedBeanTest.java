@@ -57,6 +57,7 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
   
   
   public CustomScopedBeanTest() {
+    this.disableAllUntil("2007-04-30");
     this.disableVariant(TestConfigObject.SPRING_VARIANT, "128");
   }
   
