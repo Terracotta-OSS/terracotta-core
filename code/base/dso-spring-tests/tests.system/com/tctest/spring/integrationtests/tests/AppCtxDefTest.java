@@ -7,11 +7,12 @@ package com.tctest.spring.integrationtests.tests;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
-import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.bean.AppCtxDefBean;
+import com.tctest.spring.integrationtests.SpringServerTestSetup;
 
 import junit.framework.Test;
+import junit.framework.TestSuite;
 
 
 /**
@@ -65,7 +66,7 @@ public class AppCtxDefTest extends AbstractTwoServerDeploymentTest {
   }
 
   
-  private static class AppContextDefinitionTestSetup extends ServerTestSetup {
+  private static class AppContextDefinitionTestSetup extends SpringServerTestSetup {
 
     private AppContextDefinitionTestSetup() {
       super(AppCtxDefTest.class);
@@ -74,8 +75,15 @@ public class AppCtxDefTest extends AbstractTwoServerDeploymentTest {
     protected void setUp() throws Exception {
       super.setUp();
 
-      server1 = createServer();
-      server2 = createServer();
+      WebApplicationServer server1 = createServer();
+      WebApplicationServer server2 = createServer();
+      
+      TestSuite suite = (TestSuite) getTest();
+      for (int i = 0; i < suite.testCount(); i++) {
+        AbstractTwoServerDeploymentTest test = (AbstractTwoServerDeploymentTest) suite.testAt(i);
+        test.setServer1(server1);
+        test.setServer2(server2);
+      }
     }
 
     private WebApplicationServer createServer() throws Exception {

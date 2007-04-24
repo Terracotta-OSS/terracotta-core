@@ -3,18 +3,18 @@
  */
 package com.tctest.spring.integrationtests.tests;
 
-import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.Server;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.bean.ISingleton;
+import com.tctest.spring.integrationtests.SpringDeploymentTest;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class SingletonTest extends AbstractDeploymentTest {
+public class SingletonTest extends SpringDeploymentTest {
 
   private static final String REMOTE_SERVICE_NAME           = "Singleton";
   private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory.xml";

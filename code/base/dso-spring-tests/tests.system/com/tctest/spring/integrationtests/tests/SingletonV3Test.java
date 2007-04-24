@@ -10,11 +10,11 @@ import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.ProxyBuilder;
 import com.tctest.spring.bean.ISingleton;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import junit.extensions.TestSetup;
 import junit.framework.Test;
 
 
@@ -22,17 +22,29 @@ import junit.framework.Test;
  * Serve as an example for using the HttpInvoker framework.
  */
 public class SingletonV3Test extends AbstractTwoServerDeploymentTest {
-
+  private static final String APP_NAME                      = "test-singleton";
   private static final String REMOTE_SERVICE_NAME           = "singletonservice";
   private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory.xml";
   private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/singleton-tc-config.xml";
 
+  private ISingleton   singleton1;
+  private ISingleton   singleton2;
+  
 
-  private static ISingleton   singleton1;
-  private static ISingleton   singleton2;
-
+  protected void setUp() throws Exception {
+    super.setUp();
+    try {
+      String name = APP_NAME + "/http/" + REMOTE_SERVICE_NAME;
+      Map initCtx = new HashMap(); 
+      initCtx.put(ProxyBuilder.EXPORTER_TYPE_KEY, HttpInvokerServiceExporter.class);
+      singleton1 = (ISingleton) server1.getProxy(ISingleton.class, name, initCtx);
+      singleton2 = (ISingleton) server2.getProxy(ISingleton.class, name, initCtx);
+    } catch(Exception ex) {
+      ex.printStackTrace(); throw ex;
+    }
+  }
+  
   public void testSharedField() throws Exception {
-
     logger.debug("testing shared fields");
 
     assertEquals(singleton1.getCounter(), singleton2.getCounter());
@@ -45,7 +57,6 @@ public class SingletonV3Test extends AbstractTwoServerDeploymentTest {
   }
 
   public void testTransientField() throws Exception {
-
     logger.debug("Testing transient fields");
     assertEquals("aaa", singleton1.getTransientValue());
     assertEquals("aaa", singleton2.getTransientValue());
@@ -63,24 +74,10 @@ public class SingletonV3Test extends AbstractTwoServerDeploymentTest {
     assertTrue(singleton1.toggleBoolean());
   }
 
-  private static class SingletonTestSetup extends TwoSvrSetup {
-    private static final String APP_NAME = "test-singleton";
+  private static class SingletonTestSetup extends SpringTwoServerTestSetup {
 
     private SingletonTestSetup() {
       super(SingletonV3Test.class, CONFIG_FILE_FOR_TEST, APP_NAME);
-    }
-
-    protected void setUp() throws Exception {
-      try {
-        super.setUp();
-        
-        Map initCtx = new HashMap(); 
-        initCtx.put(ProxyBuilder.EXPORTER_TYPE_KEY, HttpInvokerServiceExporter.class);
-        singleton1 = (ISingleton) server1.getProxy(ISingleton.class, APP_NAME + "/http/" + REMOTE_SERVICE_NAME, initCtx);
-        singleton2 = (ISingleton) server2.getProxy(ISingleton.class, APP_NAME + "/http/" + REMOTE_SERVICE_NAME, initCtx);
-      } catch(Exception ex) {
-        ex.printStackTrace(); throw ex;
-      }
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -91,12 +88,8 @@ public class SingletonV3Test extends AbstractTwoServerDeploymentTest {
 
   }
 
-  /**
-   * JUnit test loader entry point
-   */
   public static Test suite() {
-    TestSetup setup = new SingletonTestSetup();
-    return setup;
+    return new SingletonTestSetup();
   }
 
 }

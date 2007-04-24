@@ -7,9 +7,9 @@ package com.tctest.spring.integrationtests.tests;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
-import com.tc.test.server.appserver.deployment.Deployment;
-import com.tc.test.server.appserver.deployment.ServerTestSetup;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import junit.framework.Test;
 
@@ -70,47 +70,59 @@ public class ScopedBeanTest extends AbstractTwoServerDeploymentTest {
   }
   
   
-  private static class SessionScopedBeanTestSetup extends ServerTestSetup {
+  private static class SessionScopedBeanTestSetup extends SpringTwoServerTestSetup {
 
     public SessionScopedBeanTestSetup() {
-      super(ScopedBeanTest.class);
+      super(ScopedBeanTest.class, "/tc-config-files/scopedbeans-tc-config.xml", "scopedBeans");
     }
+    
 
-    protected void setUp() throws Exception {
-      super.setUp();
+//    protected void setUp() throws Exception {
+//      super.setUp();
+//
+//      Deployment deployment = makeDeploymentBuilder("scopedBeans.war")
+//          .addDirectoryOrJARContainingClass(SessionScopedBeanTestSetup.class)
+//          .addDirectoryOrJARContainingClass(org.apache.taglibs.standard.Version.class)  // standard-1.0.6.jar
+//          .addDirectoryOrJARContainingClass(javax.servlet.jsp.jstl.core.Config.class)  // jstl-1.0.jar
+//
+//          .addDirectoryContainingResource("/tc-config-files/scopedbeans-tc-config.xml")
+//
+//          .addResource("/web-resources", "scopedBeans.jsp", "WEB-INF")
+//          .addResource("/web-resources", "weblogic.xml", "WEB-INF")
+//
+//          .addResource("/com/tctest/spring", "scopedBeans-servlet.xml", "WEB-INF")
+//
+//          .addServlet("scopedBeans", "*.html", org.springframework.web.servlet.DispatcherServlet.class, null, true)
+//          
+//          .makeDeployment();
+//
+//      server1 = createServer(deployment);
+//      server2 = createServer(deployment);
+//    }
+//
+//    private WebApplicationServer createServer(Deployment deployment) throws Exception {
+//      WebApplicationServer server = sm.makeWebApplicationServer("/tc-config-files/scopedbeans-tc-config.xml");
+//      
+//      server.addWarDeployment(deployment, "scopedBeans");
+//      server.start();
+//      
+//      return server;
+//    }
 
-      Deployment deployment = makeDeploymentBuilder("scopedBeans.war")
-          .addDirectoryOrJARContainingClass(SessionScopedBeanTestSetup.class)
-          .addDirectoryOrJARContainingClass(org.apache.taglibs.standard.Version.class)  // standard-1.0.6.jar
-          .addDirectoryOrJARContainingClass(javax.servlet.jsp.jstl.core.Config.class)  // jstl-1.0.jar
 
-          .addDirectoryContainingResource("/tc-config-files/scopedbeans-tc-config.xml")
+    protected void configureWar(DeploymentBuilder builder) {
+      builder
+        // .addDirectoryOrJARContainingClass(SessionScopedBeanTestSetup.class)
+        .addDirectoryOrJARContainingClass(org.apache.taglibs.standard.Version.class)  // standard-1.0.6.jar
+        .addDirectoryOrJARContainingClass(javax.servlet.jsp.jstl.core.Config.class)  // jstl-1.0.jar
 
-//          .addResource("/web-resources", "c.tld", "WEB-INF")
-//          .addResource("/web-resources", "fmt.tld", "WEB-INF")
-          .addResource("/web-resources", "scopedBeans.jsp", "WEB-INF")
-          .addResource("/web-resources", "weblogic.xml", "WEB-INF")
+        .addResource("/web-resources", "scopedBeans.jsp", "WEB-INF")
+        .addResource("/web-resources", "weblogic.xml", "WEB-INF")
 
-          .addResource("/com/tctest/spring", "scopedBeans-servlet.xml", "WEB-INF")
+        .addResource("/com/tctest/spring", "scopedBeans-servlet.xml", "WEB-INF")
 
-          .addServlet("scopedBeans", "*.html", org.springframework.web.servlet.DispatcherServlet.class, null, true)
-          
-//          .addTaglib("http://java.sun.com/jsp/jstl/core", "/WEB-INF/c.tld")
-//          .addTaglib("http://java.sun.com/jsp/jstl/fmt", "/WEB-INF/fmt.tld")
-          
-          .makeDeployment();
-
-      server1 = createServer(deployment);
-      server2 = createServer(deployment);
-    }
-
-    private WebApplicationServer createServer(Deployment deployment) throws Exception {
-      WebApplicationServer server = sm.makeWebApplicationServer("/tc-config-files/scopedbeans-tc-config.xml");
+        .addServlet("scopedBeans", "*.html", org.springframework.web.servlet.DispatcherServlet.class, null, true);
       
-      server.addWarDeployment(deployment, "scopedBeans");
-      server.start();
-      
-      return server;
     }
     
   }

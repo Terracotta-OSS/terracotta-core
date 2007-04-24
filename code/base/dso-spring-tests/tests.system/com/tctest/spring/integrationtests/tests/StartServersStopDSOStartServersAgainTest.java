@@ -4,13 +4,13 @@
 
 package com.tctest.spring.integrationtests.tests;
 
-import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.Server;
 import com.tctest.spring.bean.ISingleton;
+import com.tctest.spring.integrationtests.SpringDeploymentTest;
 
 
-public class StartServersStopDSOStartServersAgainTest extends AbstractDeploymentTest {
+public class StartServersStopDSOStartServersAgainTest extends SpringDeploymentTest {
   private static final String  REMOTE_SERVICE_NAME           = "Singleton";
   private static final String  BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory.xml";
   private static final String  CONFIG_FILE_FOR_TEST          = "/tc-config-files/singleton-tc-config.xml";

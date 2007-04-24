@@ -9,7 +9,6 @@ import org.apache.log4j.Logger;
 import org.apache.tools.ant.taskdefs.War;
 import org.apache.tools.ant.types.ZipFileSet;
 import org.codehaus.cargo.util.AntUtils;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.remoting.rmi.RmiRegistryFactoryBean;
 import org.springframework.web.context.ContextLoader;
 import org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping;
@@ -86,7 +85,7 @@ public class WARBuilder implements DeploymentBuilder {
 
     // XXX this should NOT be in such general purpose class!
     // XXX this should add ALL jars from the variant directory!
-    addDirectoryOrJARContainingClassOfSelectedVersion(BeanFactory.class, new String[]{TestConfigObject.SPRING_VARIANT});  // springframework
+    // addDirectoryOrJARContainingClassOfSelectedVersion(BeanFactory.class, new String[]{TestConfigObject.SPRING_VARIANT});  // springframework
     // addDirectoryOrJARContainingClass(BeanFactory.class);  // springframework
   }
 

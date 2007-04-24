@@ -6,16 +6,15 @@ package com.tctest.spring.integrationtests.tests;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.ISingleton;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 
-import junit.extensions.TestSetup;
 import junit.framework.Test;
 
 /**
  * Test TC-Spring working with Spring JMX support.
- * 
  */
 public class JMXSupportTest extends AbstractTwoServerDeploymentTest {
 
@@ -29,13 +28,25 @@ public class JMXSupportTest extends AbstractTwoServerDeploymentTest {
   private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory-jmx.xml";
   private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/singleton-tc-config.xml";
 
-  private static ISingleton   singleton1;
-  private static ISingleton   singleton2;
-  private static MBeanServerConnection mbeanServerConn1;
-  private static MBeanServerConnection mbeanServerConn2;
+  private ISingleton   singleton1;
+  private ISingleton   singleton2;
+  private MBeanServerConnection mbeanServerConn1;
+  private MBeanServerConnection mbeanServerConn2;
 
+  protected void setUp() throws Exception {
+    super.setUp();
+    try {
+      singleton1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+      singleton2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+      mbeanServerConn1 = server1.getMBeanServerConnection();
+      mbeanServerConn2 = server2.getMBeanServerConnection();
+    } catch (Exception e) {
+      e.printStackTrace(); 
+      throw e;
+    }      
+  }
+  
   public void testJMXSupport() throws Exception {
-
     logger.debug("testing JMX Support");
     singleton1.incrementCounter();
     singleton2.incrementCounter();
@@ -53,23 +64,9 @@ public class JMXSupportTest extends AbstractTwoServerDeploymentTest {
     logger.debug("!!!! Asserts passed !!!");
   }
 
-  private static class JMXSupportTestSetup extends TwoSvrSetup {
+  private static class JMXSupportTestSetup extends SpringTwoServerTestSetup {
     private JMXSupportTestSetup() {
       super(JMXSupportTest.class, CONFIG_FILE_FOR_TEST, "test-singleton");
-    }
-
-    protected void setUp() throws Exception {
-      try {
-        super.setUp();
-        if (this.shouldContinue) {
-          singleton1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
-          singleton2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
-          mbeanServerConn1 = server1.getMBeanServerConnection();
-          mbeanServerConn2 = server2.getMBeanServerConnection();
-        }
-      } catch (Exception e) {
-        e.printStackTrace(); throw e;
-      }      
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -78,12 +75,8 @@ public class JMXSupportTest extends AbstractTwoServerDeploymentTest {
     }
   }
 
-  /**
-   *  JUnit test loader entry point
-   */
   public static Test suite() {
-    TestSetup setup = new JMXSupportTestSetup();
-    return setup;
+    return new JMXSupportTestSetup();
   }
 
 }

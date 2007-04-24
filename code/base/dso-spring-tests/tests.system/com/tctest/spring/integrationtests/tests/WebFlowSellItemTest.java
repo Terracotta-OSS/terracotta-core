@@ -7,9 +7,9 @@ package com.tctest.spring.integrationtests.tests;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
-import com.tc.test.server.appserver.deployment.Deployment;
-import com.tc.test.server.appserver.deployment.ServerTestSetup;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collections;
@@ -141,58 +141,95 @@ public class WebFlowSellItemTest extends AbstractTwoServerDeploymentTest {
   }
 
 
-  private static class WebFlowTestSetup extends ServerTestSetup {
+  private static class WebFlowTestSetup extends SpringTwoServerTestSetup {
 
     public WebFlowTestSetup() {
-      super(WebFlowSellItemTest.class);
+      super(WebFlowSellItemTest.class, "/tc-config-files/sellitem-tc-config.xml", "sellitem");
+      setStart(false);
     }
 
-    protected void setUp() throws Exception {
-      super.setUp();
-
-      Deployment deployment2 = makeDeploymentBuilder("sellitem.war")
-          .addDirectoryOrJARContainingClass(WebFlowTestSetup.class)
-          .addDirectoryContainingResource("/tc-config-files/sellitem-tc-config.xml")
-          .addDirectoryContainingResource("/com/tctest/spring/sellitem-ctx.xml")
-          
-          .addDirectoryOrJARContainingClass(org.apache.taglibs.standard.Version.class)  // standard-1.0.6.jar
-          .addDirectoryOrJARContainingClass(javax.servlet.jsp.jstl.core.Config.class)  // jstl-1.0.jar
-          // .addDirectoryOrJARContainingClass(org.springframework.webflow.registry.XmlFlowRegistryFactoryBean.class)  // spring-webflow-1.0-rc3.jar
-          .addDirectoryOrJARContainingClass(org.springframework.webflow.engine.builder.xml.XmlFlowRegistryFactoryBean.class)  // spring-webflow-1.0-rc4.jar
-          .addDirectoryOrJARContainingClass(org.springframework.binding.convert.Converter.class)  // spring-binding-1.0-rc3.jar
-          .addDirectoryOrJARContainingClass(org.apache.commons.codec.StringDecoder.class)  // commons-codec-1.3.jar
-          .addDirectoryOrJARContainingClass(ognl.Ognl.class)  // ognl-2.7.jar
-          .addDirectoryOrJARContainingClass(EDU.oswego.cs.dl.util.concurrent.ReentrantLock.class)  // concurrent-1.3.4.jar for SWF on jdk1.4
-
-          .addDirectoryOrJARContainingClass(org.hsqldb.jdbcDriver.class)  // hsqldb*.jar
-          
-          .addResource("/web-resources/sellitem", "categoryForm.jsp", "WEB-INF/jsp")
-          .addResource("/web-resources/sellitem", "costOverview.jsp", "WEB-INF/jsp")
-          .addResource("/web-resources/sellitem", "error.jsp", "WEB-INF/jsp")
-          .addResource("/web-resources/sellitem", "includeTop.jsp", "WEB-INF/jsp")
-          .addResource("/web-resources/sellitem", "priceAndItemCountForm.jsp", "WEB-INF/jsp")
-          .addResource("/web-resources/sellitem", "shippingDetailsForm.jsp", "WEB-INF/jsp")
-          .addResource("/web-resources", "weblogic.xml", "/WEB-INF")
-          
-          .addResource("/com/tctest/spring", "sellitem.xml", "WEB-INF")
-          .addResource("/com/tctest/spring", "sellitem-shipping.xml", "WEB-INF")
-          .addResource("/com/tctest/spring", "sellitem-beans.xml", "WEB-INF")
-          .addResource("/com/tctest/spring", "sellitem-servlet.xml", "WEB-INF")
-          
-          .addServlet("sellitem", "*.htm", org.springframework.web.servlet.DispatcherServlet.class, 
-              Collections.singletonMap("contextConfigLocation", 
-                  "/WEB-INF/sellitem-servlet.xml\n" +
-                  "classpath:com/tctest/spring/sellitem-ctx.xml"), true)
-          .makeDeployment();
+    protected void configureWar(DeploymentBuilder builder) {
+      // .addDirectoryOrJARContainingClass(WebFlowTestSetup.class)
+      // .addDirectoryContainingResource("/tc-config-files/sellitem-tc-config.xml")
+      builder.addDirectoryContainingResource("/com/tctest/spring/sellitem-ctx.xml");
       
-      server1 = createServer(deployment2);
-      server2 = createServer(deployment2);
+      builder.addDirectoryOrJARContainingClass(org.apache.taglibs.standard.Version.class);  // standard-1.0.6.jar
+      builder.addDirectoryOrJARContainingClass(javax.servlet.jsp.jstl.core.Config.class);  // jstl-1.0.jar
+      // .addDirectoryOrJARContainingClass(org.springframework.webflow.registry.XmlFlowRegistryFactoryBean.class)  // spring-webflow-1.0-rc3.jar
+      builder.addDirectoryOrJARContainingClass(org.springframework.webflow.engine.builder.xml.XmlFlowRegistryFactoryBean.class);  // spring-webflow-1.0-rc4.jar
+      builder.addDirectoryOrJARContainingClass(org.springframework.binding.convert.Converter.class);  // spring-binding-1.0-rc3.jar
+      builder.addDirectoryOrJARContainingClass(org.apache.commons.codec.StringDecoder.class);  // commons-codec-1.3.jar
+      builder.addDirectoryOrJARContainingClass(ognl.Ognl.class);  // ognl-2.7.jar
+      builder.addDirectoryOrJARContainingClass(EDU.oswego.cs.dl.util.concurrent.ReentrantLock.class);  // concurrent-1.3.4.jar for SWF on jdk1.4
+
+      builder.addDirectoryOrJARContainingClass(org.hsqldb.jdbcDriver.class);  // hsqldb*.jar
+      
+      builder.addResource("/web-resources/sellitem", "categoryForm.jsp", "WEB-INF/jsp");
+      builder.addResource("/web-resources/sellitem", "costOverview.jsp", "WEB-INF/jsp");
+      builder.addResource("/web-resources/sellitem", "error.jsp", "WEB-INF/jsp");
+      builder.addResource("/web-resources/sellitem", "includeTop.jsp", "WEB-INF/jsp");
+      builder.addResource("/web-resources/sellitem", "priceAndItemCountForm.jsp", "WEB-INF/jsp");
+      builder.addResource("/web-resources/sellitem", "shippingDetailsForm.jsp", "WEB-INF/jsp");
+      builder.addResource("/web-resources", "weblogic.xml", "/WEB-INF");
+      
+      builder.addResource("/com/tctest/spring", "sellitem.xml", "WEB-INF");
+      builder.addResource("/com/tctest/spring", "sellitem-shipping.xml", "WEB-INF");
+      builder.addResource("/com/tctest/spring", "sellitem-beans.xml", "WEB-INF");
+      builder.addResource("/com/tctest/spring", "sellitem-servlet.xml", "WEB-INF");
+      
+      builder.addServlet("sellitem", "*.htm", org.springframework.web.servlet.DispatcherServlet.class, 
+          Collections.singletonMap("contextConfigLocation", 
+              "/WEB-INF/sellitem-servlet.xml\n" +
+              "classpath:com/tctest/spring/sellitem-ctx.xml"), true);
     }
 
-    private WebApplicationServer createServer(Deployment deployment) throws Exception {
-      return sm.makeWebApplicationServer("/tc-config-files/sellitem-tc-config.xml")
-          .addWarDeployment(deployment, "sellitem");
-    }
+    
+//    protected void setUp() throws Exception {
+//      super.setUp();
+//
+//      Deployment deployment2 = makeDeploymentBuilder("sellitem.war")
+//          .addDirectoryOrJARContainingClass(WebFlowTestSetup.class)
+//          .addDirectoryContainingResource("/tc-config-files/sellitem-tc-config.xml")
+//          .addDirectoryContainingResource("/com/tctest/spring/sellitem-ctx.xml")
+//          
+//          .addDirectoryOrJARContainingClass(org.apache.taglibs.standard.Version.class)  // standard-1.0.6.jar
+//          .addDirectoryOrJARContainingClass(javax.servlet.jsp.jstl.core.Config.class)  // jstl-1.0.jar
+//          // .addDirectoryOrJARContainingClass(org.springframework.webflow.registry.XmlFlowRegistryFactoryBean.class)  // spring-webflow-1.0-rc3.jar
+//          .addDirectoryOrJARContainingClass(org.springframework.webflow.engine.builder.xml.XmlFlowRegistryFactoryBean.class)  // spring-webflow-1.0-rc4.jar
+//          .addDirectoryOrJARContainingClass(org.springframework.binding.convert.Converter.class)  // spring-binding-1.0-rc3.jar
+//          .addDirectoryOrJARContainingClass(org.apache.commons.codec.StringDecoder.class)  // commons-codec-1.3.jar
+//          .addDirectoryOrJARContainingClass(ognl.Ognl.class)  // ognl-2.7.jar
+//          .addDirectoryOrJARContainingClass(EDU.oswego.cs.dl.util.concurrent.ReentrantLock.class)  // concurrent-1.3.4.jar for SWF on jdk1.4
+//
+//          .addDirectoryOrJARContainingClass(org.hsqldb.jdbcDriver.class)  // hsqldb*.jar
+//          
+//          .addResource("/web-resources/sellitem", "categoryForm.jsp", "WEB-INF/jsp")
+//          .addResource("/web-resources/sellitem", "costOverview.jsp", "WEB-INF/jsp")
+//          .addResource("/web-resources/sellitem", "error.jsp", "WEB-INF/jsp")
+//          .addResource("/web-resources/sellitem", "includeTop.jsp", "WEB-INF/jsp")
+//          .addResource("/web-resources/sellitem", "priceAndItemCountForm.jsp", "WEB-INF/jsp")
+//          .addResource("/web-resources/sellitem", "shippingDetailsForm.jsp", "WEB-INF/jsp")
+//          .addResource("/web-resources", "weblogic.xml", "/WEB-INF")
+//          
+//          .addResource("/com/tctest/spring", "sellitem.xml", "WEB-INF")
+//          .addResource("/com/tctest/spring", "sellitem-shipping.xml", "WEB-INF")
+//          .addResource("/com/tctest/spring", "sellitem-beans.xml", "WEB-INF")
+//          .addResource("/com/tctest/spring", "sellitem-servlet.xml", "WEB-INF")
+//          
+//          .addServlet("sellitem", "*.htm", org.springframework.web.servlet.DispatcherServlet.class, 
+//              Collections.singletonMap("contextConfigLocation", 
+//                  "/WEB-INF/sellitem-servlet.xml\n" +
+//                  "classpath:com/tctest/spring/sellitem-ctx.xml"), true)
+//          .makeDeployment();
+//      
+//      server1 = createServer(deployment2);
+//      server2 = createServer(deployment2);
+//    }
+//
+//    private WebApplicationServer createServer(Deployment deployment) throws Exception {
+//      return sm.makeWebApplicationServer("/tc-config-files/sellitem-tc-config.xml")
+//          .addWarDeployment(deployment, "sellitem");
+//    }
     
   }
 

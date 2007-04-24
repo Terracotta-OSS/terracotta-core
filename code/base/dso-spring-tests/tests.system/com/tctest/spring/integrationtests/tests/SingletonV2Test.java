@@ -6,8 +6,8 @@ package com.tctest.spring.integrationtests.tests;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.ISingleton;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
-import junit.extensions.TestSetup;
 import junit.framework.Test;
 
 /**
@@ -24,9 +24,16 @@ public class SingletonV2Test extends AbstractTwoServerDeploymentTest {
   private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory.xml";
   private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/singleton-tc-config.xml";
 
-  private static ISingleton   singleton1;
-  private static ISingleton   singleton2;
+  private ISingleton   singleton1;
+  private ISingleton   singleton2;
 
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    singleton1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+    singleton2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+  }
+  
   public void testSharedField() throws Exception {
 
     logger.debug("testing shared fields");
@@ -59,21 +66,9 @@ public class SingletonV2Test extends AbstractTwoServerDeploymentTest {
     assertTrue(singleton1.toggleBoolean());
   }
 
-  private static class SingletonTestSetup extends TwoSvrSetup {
+  private static class SingletonTestSetup extends SpringTwoServerTestSetup {
     private SingletonTestSetup() {
       super(SingletonV2Test.class, CONFIG_FILE_FOR_TEST, "test-singleton");
-    }
-
-    protected void setUp() throws Exception {
-      try {
-        super.setUp();
-
-        singleton1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
-        singleton2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
-      } catch (Exception e) {
-        e.printStackTrace();
-        throw e;
-      }
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -87,8 +82,7 @@ public class SingletonV2Test extends AbstractTwoServerDeploymentTest {
    * JUnit test loader entry point
    */
   public static Test suite() {
-    TestSetup setup = new SingletonTestSetup();
-    return setup;
+    return new SingletonTestSetup();
   }
 
 }

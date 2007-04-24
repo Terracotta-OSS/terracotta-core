@@ -3,13 +3,13 @@
  */
 package com.tctest.spring.integrationtests.tests;
 
-import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.bean.ISingleton;
+import com.tctest.spring.integrationtests.SpringDeploymentTest;
 
-public class StateMaintainedTest extends AbstractDeploymentTest {
+public class StateMaintainedTest extends SpringDeploymentTest {
 
   private static final String APP_NAME = "test-singleton";
   private static final String REMOTE_SERVICE_NAME           = "Singleton";

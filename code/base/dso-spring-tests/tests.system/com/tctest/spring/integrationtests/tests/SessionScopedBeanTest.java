@@ -11,11 +11,11 @@ import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.ProxyBuilder;
 import com.tctest.spring.bean.ISimpleBean;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import junit.extensions.TestSetup;
 import junit.framework.Test;
 
 
@@ -23,18 +23,18 @@ import junit.framework.Test;
  * Test clustering session scoped bean.
  */
 public class SessionScopedBeanTest extends AbstractTwoServerDeploymentTest {
+  private static final String APP_NAME                               = "test-sessionscope";
+  private static final String SERVICE_FOR_SHARED_SESSION_SCOPED_BEAN = "SimpleBeanSvc";
+  // private static final String SERVICE_FOR_LOCAL_SESSION_SCOPED_BEAN = "LocalSimpleBeanSvc";
+  private static final String BEAN_DEFINITION_FILE_FOR_TEST          = "classpath:/com/tctest/spring/beanfactory-sessionscope.xml";
+  private static final String CONFIG_FILE_FOR_TEST                   = "/tc-config-files/sessionscoped-tc-config.xml";
 
-  private static final String SERVICE_FOR_SHARED_SESSION_SCOPED_BEAN           = "SimpleBeanSvc";
-//  private static final String SERVICE_FOR_LOCAL_SESSION_SCOPED_BEAN           = "LocalSimpleBeanSvc";
-  private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory-sessionscope.xml";
-  private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/sessionscoped-tc-config.xml";
 
-
-  private static ISimpleBean   beanN1S1; // node1 session1
-  private static ISimpleBean   beanN1S2; // node1 session2
+  private ISimpleBean   beanN1S1; // node1 session1
+  private ISimpleBean   beanN1S2; // node1 session2
   
-  private static ISimpleBean   beanN2S1; // node2 session1
-  private static ISimpleBean   beanN2S2; // node2 session2
+  private ISimpleBean   beanN2S1; // node2 session1
+  private ISimpleBean   beanN2S2; // node2 session2
   
 //  private static ISimpleBean   beanN1S1Local; // node1 session1
 //  private static ISimpleBean   beanN2S1Local; // node2 session1
@@ -42,6 +42,29 @@ public class SessionScopedBeanTest extends AbstractTwoServerDeploymentTest {
   public SessionScopedBeanTest() {
     this.disableVariant(TestConfigObject.SPRING_VARIANT, "128");
   }
+
+  protected void setUp() throws Exception {
+    try {
+      super.setUp();
+      
+      Map initCtx = new HashMap(); 
+      initCtx.put(ProxyBuilder.EXPORTER_TYPE_KEY, HttpInvokerServiceExporter.class);
+      
+      String name = APP_NAME + "/http/" + SERVICE_FOR_SHARED_SESSION_SCOPED_BEAN;
+      beanN1S1 = (ISimpleBean) server1.getProxy(ISimpleBean.class, name, initCtx);
+      // beanN1S1Local = (ISimpleBean) server1.getProxy(ISimpleBean.class, name);
+      beanN2S1 = (ISimpleBean) server2.getProxy(ISimpleBean.class, name, initCtx);
+      // beanN2S1Local = (ISimpleBean) server2.getProxy(ISimpleBean.class, name);
+      
+      initCtx.remove(ProxyBuilder.HTTP_CLIENT_KEY); // this resets the internal client
+      
+      beanN1S2 = (ISimpleBean) server1.getProxy(ISimpleBean.class, name, initCtx);
+      beanN2S2 = (ISimpleBean) server2.getProxy(ISimpleBean.class, name, initCtx);
+    } catch (Exception e) {
+      e.printStackTrace(); throw e;
+    }      
+  }
+
   
 //  public void testLocalSessionScopedBeans() throws Exception {
 //    logger.debug("testing local beans");
@@ -83,50 +106,24 @@ public class SessionScopedBeanTest extends AbstractTwoServerDeploymentTest {
     assertEquals("Unexpected sharing: ", "newVal22", beanN2S2.getTransientField());
   }
 
-  private static class InnerTestSetup extends TwoSvrSetup {
-    private static final String APP_NAME = "test-sessionscope";
+  private static class InnerTestSetup extends SpringTwoServerTestSetup {
 
     private InnerTestSetup() {
       super(SessionScopedBeanTest.class, CONFIG_FILE_FOR_TEST, APP_NAME);
     }
 
-    protected void setUp() throws Exception {
-      try {
-        super.setUp();
-        
-        Map initCtx = new HashMap(); 
-        initCtx.put(ProxyBuilder.EXPORTER_TYPE_KEY, HttpInvokerServiceExporter.class);
-        
-        beanN1S1 = (ISimpleBean) server1.getProxy(ISimpleBean.class, APP_NAME + "/http/" + SERVICE_FOR_SHARED_SESSION_SCOPED_BEAN, initCtx);
-//        beanN1S1Local = (ISimpleBean) server1.getProxy(ISimpleBean.class, APP_NAME + "/http/" + SERVICE_FOR_LOCAL_SESSION_SCOPED_BEAN);
-        beanN2S1 = (ISimpleBean) server2.getProxy(ISimpleBean.class, APP_NAME + "/http/" + SERVICE_FOR_SHARED_SESSION_SCOPED_BEAN, initCtx);
-//        beanN2S1Local = (ISimpleBean) server2.getProxy(ISimpleBean.class, APP_NAME + "/http/" + SERVICE_FOR_LOCAL_SESSION_SCOPED_BEAN);
-        
-        initCtx.remove(ProxyBuilder.HTTP_CLIENT_KEY); // this resets the internal client
-        
-        beanN1S2 = (ISimpleBean) server1.getProxy(ISimpleBean.class, APP_NAME + "/http/" + SERVICE_FOR_SHARED_SESSION_SCOPED_BEAN, initCtx);
-        beanN2S2 = (ISimpleBean) server2.getProxy(ISimpleBean.class, APP_NAME + "/http/" + SERVICE_FOR_SHARED_SESSION_SCOPED_BEAN, initCtx);
-      } catch (Exception e) {
-        e.printStackTrace(); throw e;
-      }      
-    }
-
     protected void configureWar(DeploymentBuilder builder) {
       builder.addBeanDefinitionFile(BEAN_DEFINITION_FILE_FOR_TEST);
-      builder.addRemoteService(HttpInvokerServiceExporter.class,SERVICE_FOR_SHARED_SESSION_SCOPED_BEAN, "simplebean", ISimpleBean.class);
-//      builder.addRemoteService(HttpInvokerServiceExporter.class,SERVICE_FOR_LOCAL_SESSION_SCOPED_BEAN, "localsimplebean", ISimpleBean.class);
+      builder.addRemoteService(HttpInvokerServiceExporter.class, SERVICE_FOR_SHARED_SESSION_SCOPED_BEAN, "simplebean", ISimpleBean.class);
+      // builder.addRemoteService(HttpInvokerServiceExporter.class,SERVICE_FOR_LOCAL_SESSION_SCOPED_BEAN, "localsimplebean", ISimpleBean.class);
       builder.setDispatcherServlet("httpinvoker", "/http/*", DispatcherServlet.class, null, true);
       builder.addDirectoryOrJARContainingClass(net.sf.cglib.core.Constants.class);
     }
 
   }
 
-  /**
-   * JUnit test loader entry point
-   */
   public static Test suite() {
-    TestSetup setup = new InnerTestSetup();
-    return setup;
+    return new InnerTestSetup();
   }
 
 }

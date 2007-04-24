@@ -6,6 +6,7 @@ package com.tctest.spring.integrationtests.tests;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.ISimpleBean;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -32,17 +33,32 @@ public class ReferenceAndReplicationTest extends AbstractTwoServerDeploymentTest
   private static final String CONFIG_FILE_FOR_TEST                = "/tc-config-files/referenceandreplication-tc-config.xml";
 
   // for N1
-  private static ISimpleBean  sharedParentN1;
-  private static ISimpleBean  localChild1N1;
-  private static ISimpleBean  localChild2N1;
-  private static ISimpleBean  localChild3N1;
+  private ISimpleBean  sharedParentN1;
+  private ISimpleBean  localChild1N1;
+  private ISimpleBean  localChild2N1;
+  private ISimpleBean  localChild3N1;
 
   // for N2
-  private static ISimpleBean  sharedParentN2;
-  private static ISimpleBean  localChild1N2;
-  private static ISimpleBean  localChild2N2;
-  private static ISimpleBean  localChild3N2;
+  private ISimpleBean  sharedParentN2;
+  private ISimpleBean  localChild1N2;
+  private ISimpleBean  localChild2N2;
+  private ISimpleBean  localChild3N2;
 
+  protected void setUp() throws Exception {
+    super.setUp();
+    // for N1
+    localChild1N1 = (ISimpleBean) server1.getProxy(ISimpleBean.class, LOCALCHILD1_SERVICE_NAME);
+    localChild2N1 = (ISimpleBean) server1.getProxy(ISimpleBean.class, LOCALCHILD2_SERVICE_NAME);
+    localChild3N1 = (ISimpleBean) server1.getProxy(ISimpleBean.class, LOCALCHILD3_SERVICE_NAME);
+    sharedParentN1 = (ISimpleBean) server1.getProxy(ISimpleBean.class, SHAREDPARENT_SERVICE_NAME);
+    // for N2
+    localChild1N2 = (ISimpleBean) server2.getProxy(ISimpleBean.class, LOCALCHILD1_SERVICE_NAME);
+    localChild2N2 = (ISimpleBean) server2.getProxy(ISimpleBean.class, LOCALCHILD2_SERVICE_NAME);
+    localChild3N2 = (ISimpleBean) server2.getProxy(ISimpleBean.class, LOCALCHILD3_SERVICE_NAME);
+    sharedParentN2 = (ISimpleBean) server2.getProxy(ISimpleBean.class, SHAREDPARENT_SERVICE_NAME);
+  }
+
+  
   public void testReplication() throws Exception {
     logger.debug("testing replication of shared spring bean");
     // check pre-conditions
@@ -138,23 +154,9 @@ public class ReferenceAndReplicationTest extends AbstractTwoServerDeploymentTest
     logger.debug("!!!! Asserts passed !!!");
   }
 
-  private static class InnerTestSetup extends TwoSvrSetup {
+  private static class InnerTestSetup extends SpringTwoServerTestSetup {
     private InnerTestSetup() {
       super(ReferenceAndReplicationTest.class, CONFIG_FILE_FOR_TEST, "test-referenceandreplication");
-    }
-
-    protected void setUp() throws Exception {
-      super.setUp();
-      // for N1
-      localChild1N1 = (ISimpleBean) server1.getProxy(ISimpleBean.class, LOCALCHILD1_SERVICE_NAME);
-      localChild2N1 = (ISimpleBean) server1.getProxy(ISimpleBean.class, LOCALCHILD2_SERVICE_NAME);
-      localChild3N1 = (ISimpleBean) server1.getProxy(ISimpleBean.class, LOCALCHILD3_SERVICE_NAME);
-      sharedParentN1 = (ISimpleBean) server1.getProxy(ISimpleBean.class, SHAREDPARENT_SERVICE_NAME);
-      // for N2
-      localChild1N2 = (ISimpleBean) server2.getProxy(ISimpleBean.class, LOCALCHILD1_SERVICE_NAME);
-      localChild2N2 = (ISimpleBean) server2.getProxy(ISimpleBean.class, LOCALCHILD2_SERVICE_NAME);
-      localChild3N2 = (ISimpleBean) server2.getProxy(ISimpleBean.class, LOCALCHILD3_SERVICE_NAME);
-      sharedParentN2 = (ISimpleBean) server2.getProxy(ISimpleBean.class, SHAREDPARENT_SERVICE_NAME);
     }
 
     protected void configureWar(DeploymentBuilder builder) {

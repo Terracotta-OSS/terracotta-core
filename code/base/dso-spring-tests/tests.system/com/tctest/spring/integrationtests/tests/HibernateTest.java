@@ -13,6 +13,7 @@ import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.ProxyBuilder;
 import com.tc.test.server.appserver.deployment.ServerManagerUtil;
 import com.tctest.spring.bean.IHibernateBean;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,13 +25,32 @@ import junit.framework.Test;
  * 
  */
 public class HibernateTest extends AbstractTwoServerDeploymentTest {
-  private static IHibernateBean   hibernateBean1;
-  private static IHibernateBean   hibernateBean2;
+  private static final String APP_NAME = "test-hibernate";
+  private static final String REMOTE_SERVICE_NAME = "hibernateservice";
+
+  private IHibernateBean   hibernateBean1;
+  private IHibernateBean   hibernateBean2;
   
   public HibernateTest() {
     super();
     this.disableTestUntil("testLazyObj", "2010-03-01");
     this.disableTestUntil("testLazyChild", "2010-03-01");
+  }
+
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    try {
+      Map initCtx = new HashMap();
+      initCtx.put(ProxyBuilder.EXPORTER_TYPE_KEY, HttpInvokerServiceExporter.class);
+      String name = APP_NAME + "/http/" + REMOTE_SERVICE_NAME;
+      hibernateBean1 = (IHibernateBean) server1.getProxy(IHibernateBean.class, name, initCtx);
+      hibernateBean2 = (IHibernateBean) server2.getProxy(IHibernateBean.class, name, initCtx);
+
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      throw ex;
+    }
   }
   
   public void testSharePersitentObj() throws Exception {
@@ -72,11 +92,9 @@ public class HibernateTest extends AbstractTwoServerDeploymentTest {
   }
   
   
-  private static class HibernateTestSetup extends TwoSvrSetup {
+  private static class HibernateTestSetup extends SpringTwoServerTestSetup {
     private static final int DB_PORT = 0; // will use the default port - 9001
     private static final String DB_NAME = "testdb";
-    private static final String APP_NAME = "test-hibernate";
-    private static final String REMOTE_SERVICE_NAME = "hibernateservice";
     
 
     private HibernateTestSetup() {
@@ -84,6 +102,7 @@ public class HibernateTest extends AbstractTwoServerDeploymentTest {
     }
 
     protected void setUp() throws Exception {
+      super.setUp();
       try {
         sm = ServerManagerUtil.startAndBind(HibernateTest.class, isWithPersistentStore());       
         
@@ -92,14 +111,9 @@ public class HibernateTest extends AbstractTwoServerDeploymentTest {
         sm.addServerToStop(dbSvr);
         dbSvr.start();
         
-        setUpTwoWebAppServers();
-        
-        Map initCtx = new HashMap(); 
-        initCtx.put(ProxyBuilder.EXPORTER_TYPE_KEY, HttpInvokerServiceExporter.class);
-        hibernateBean1 = (IHibernateBean) server1.getProxy(IHibernateBean.class, APP_NAME + "/http/" + REMOTE_SERVICE_NAME, initCtx);
-        hibernateBean2 = (IHibernateBean) server2.getProxy(IHibernateBean.class, APP_NAME + "/http/" + REMOTE_SERVICE_NAME, initCtx);
       } catch(Exception ex) {
-        ex.printStackTrace(); throw ex;
+        ex.printStackTrace(); 
+        throw ex;
       }
     }
 

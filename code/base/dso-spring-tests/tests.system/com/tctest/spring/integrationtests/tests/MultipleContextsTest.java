@@ -8,6 +8,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.ISimpleBean;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -18,7 +19,6 @@ import java.util.Set;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
-import junit.extensions.TestSetup;
 import junit.framework.Test;
 
 /**
@@ -31,14 +31,25 @@ public class MultipleContextsTest extends AbstractTwoServerDeploymentTest {
   private static final String REMOTE_SERVICE_NAME  = "SimpleBean";
   private static final String CONFIG_FILE_FOR_TEST = "/tc-config-files/multicontext-tc-config.xml";
 
-  private static ISimpleBean  bean11;                                                              // shared
-  private static ISimpleBean  bean12;                                                              // shared
-  private static ISimpleBean  bean13;                                                              // NOT shared
+  private ISimpleBean  bean11;                                                              // shared
+  private ISimpleBean  bean12;                                                              // shared
+  private ISimpleBean  bean13;                                                              // NOT shared
 
-  private static ISimpleBean  bean21;                                                              // shared
-  private static ISimpleBean  bean22;                                                              // shared
-  private static ISimpleBean  bean23;                                                              // NOT shared
+  private ISimpleBean  bean21;                                                              // shared
+  private ISimpleBean  bean22;                                                              // shared
+  private ISimpleBean  bean23;                                                              // NOT shared
 
+  protected void setUp() throws Exception {
+    super.setUp();
+    bean11 = (ISimpleBean) server1.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "1");
+    bean12 = (ISimpleBean) server1.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "2");
+    bean13 = (ISimpleBean) server1.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "3");
+    
+    bean21 = (ISimpleBean) server2.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "1");
+    bean22 = (ISimpleBean) server2.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "2");
+    bean23 = (ISimpleBean) server2.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "3");
+  }
+  
   public void testBeansFrom2ClusteredContexts() throws Exception {
     // all of them have unique id
     Set s = new HashSet();
@@ -77,30 +88,20 @@ public class MultipleContextsTest extends AbstractTwoServerDeploymentTest {
     assertTrue("Replication test faled", bean21.getSharedId() != bean23.getSharedId());
   }
 
-  private static class MultipleContextsTestSetup extends TwoSvrSetup {
+  private static class MultipleContextsTestSetup extends SpringTwoServerTestSetup {
 
     private MultipleContextsTestSetup() {
       super(MultipleContextsTest.class, CONFIG_FILE_FOR_TEST, "test-multicontext");
     }
 
-    protected void setUp() throws Exception {
-      super.setUp();
-      bean11 = (ISimpleBean) server1.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "1");
-      bean12 = (ISimpleBean) server1.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "2");
-      bean13 = (ISimpleBean) server1.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "3");
-
-      bean21 = (ISimpleBean) server2.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "1");
-      bean22 = (ISimpleBean) server2.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "2");
-      bean23 = (ISimpleBean) server2.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "3");
-    }
-
     protected void configureWar(DeploymentBuilder builder) {
       builder.addListener(MultiContextLoaderListener.class);
     }
+    
   }
 
+  
   public static class MultiContextLoaderListener implements ServletContextListener {
-
     private List contexts = new ArrayList();
 
     public void contextInitialized(ServletContextEvent event) {
@@ -123,11 +124,7 @@ public class MultipleContextsTest extends AbstractTwoServerDeploymentTest {
     }
   }
 
-  /**
-   * JUnit test loader entry point
-   */
   public static Test suite() {
-    TestSetup setup = new MultipleContextsTestSetup();
-    return setup;
+    return new MultipleContextsTestSetup();
   }
 }

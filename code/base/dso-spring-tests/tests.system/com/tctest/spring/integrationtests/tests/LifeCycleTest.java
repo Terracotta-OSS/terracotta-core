@@ -6,10 +6,10 @@ package com.tctest.spring.integrationtests.tests;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.ILifeCycle;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import java.util.List;
 
-import junit.extensions.TestSetup;
 import junit.framework.Test;
 
 /**
@@ -24,11 +24,18 @@ public class LifeCycleTest extends AbstractTwoServerDeploymentTest {
   private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory.xml";
   private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/lifecycle-tc-config.xml";
 
-  private static ILifeCycle   mLifeCycleBean1;
-  private static ILifeCycle   mLifeCycleBean2;
+  private ILifeCycle   mLifeCycleBean1;
+  private ILifeCycle   mLifeCycleBean2;
+
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    mLifeCycleBean1 = (ILifeCycle) server1.getProxy(ILifeCycle.class, REMOTE_SERVICE_NAME);
+    mLifeCycleBean2 = (ILifeCycle) server2.getProxy(ILifeCycle.class, REMOTE_SERVICE_NAME);
+  }
+
 
   public void test() throws Exception {
-
     logger.debug("testing bean life cycle");
 
     long systemId1 = mLifeCycleBean1.getSystemId();
@@ -86,16 +93,9 @@ public class LifeCycleTest extends AbstractTwoServerDeploymentTest {
     logger.debug("!!!! Asserts passed !!!");
   }
 
-  private static class LifeCycleTestSetup extends TwoSvrSetup {
+  private static class LifeCycleTestSetup extends SpringTwoServerTestSetup {
     private LifeCycleTestSetup() {
       super(LifeCycleTest.class, CONFIG_FILE_FOR_TEST, "test-lifecycle");
-    }
-
-    protected void setUp() throws Exception {
-      super.setUp();
-
-      mLifeCycleBean1 = (ILifeCycle) server1.getProxy(ILifeCycle.class, REMOTE_SERVICE_NAME);
-      mLifeCycleBean2 = (ILifeCycle) server2.getProxy(ILifeCycle.class, REMOTE_SERVICE_NAME);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -115,12 +115,8 @@ public class LifeCycleTest extends AbstractTwoServerDeploymentTest {
     }
   }
 
-  /**
-   * JUnit test loader entry point
-   */
   public static Test suite() {
-    TestSetup setup = new LifeCycleTestSetup();
-    return setup;
+    return new LifeCycleTestSetup();
   }
 
 }

@@ -4,18 +4,18 @@
 package com.tctest.spring.aj;
 
 import com.tc.test.TestConfigObject;
-import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.Server;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
+import com.tctest.spring.integrationtests.SpringDeploymentTest;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 
-public class AspectJTest extends AbstractDeploymentTest {
+public class AspectJTest extends SpringDeploymentTest {
 
   private static final String REMOTE_SERVICE_NAME = "InstrumentedBean";
 

@@ -8,6 +8,7 @@ import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.CounterSaver;
 import com.tctest.spring.bean.ISingleton;
 import com.tctest.spring.bean.ISingletonAdvice;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import junit.extensions.TestSetup;
 import junit.framework.Test;
@@ -19,9 +20,6 @@ import junit.framework.Test;
  * 
  * @author Liyu Yi
  */
-/**
- * Testing Singleton works and also 
- */
 public class AdviceClusteringTest extends AbstractTwoServerDeploymentTest {
 
   private static final String PC_SERVICE_NAME           = "SingletonAdvice";
@@ -30,13 +28,25 @@ public class AdviceClusteringTest extends AbstractTwoServerDeploymentTest {
   private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory-aop.xml";
   private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/aop-tc-config.xml";
 
-  private static ISingleton   singletonWithPC1;
-  private static ISingleton   singletonWithPC2;
-  private static CounterSaver counterSaver1;
-  private static CounterSaver counterSaver2;
-  private static ISingletonAdvice pcAdvice1;
-  private static ISingletonAdvice pcAdvice2;
+  private ISingleton   singletonWithPC1;
+  private ISingleton   singletonWithPC2;
+  private CounterSaver counterSaver1;
+  private CounterSaver counterSaver2;
+  private ISingletonAdvice pcAdvice1;
+  private ISingletonAdvice pcAdvice2;
 
+  protected void setUp() throws Exception {
+    super.setUp();
+    
+    singletonWithPC1 = (ISingleton) server1.getProxy(ISingleton.class, SINGLETON_SERVICE_NAME);
+    singletonWithPC2 = (ISingleton) server2.getProxy(ISingleton.class, SINGLETON_SERVICE_NAME);
+    counterSaver1 = (CounterSaver) server1.getProxy(CounterSaver.class, IN_SERVICE_NAME);
+    counterSaver2 = (CounterSaver) server2.getProxy(CounterSaver.class, IN_SERVICE_NAME);
+    pcAdvice1 = (ISingletonAdvice) server1.getProxy(ISingletonAdvice.class, PC_SERVICE_NAME);
+    pcAdvice2 = (ISingletonAdvice) server2.getProxy(ISingletonAdvice.class, PC_SERVICE_NAME);
+  }
+
+  
   public void testAdviceClustering() throws Exception {
     logger.debug("testing shared aspects");
     
@@ -65,19 +75,9 @@ public class AdviceClusteringTest extends AbstractTwoServerDeploymentTest {
     logger.debug("!!!! Asserts passed !!!");
   }
 
-  private static class AdviceClusteringTestSetup extends TwoSvrSetup {
+  private static class AdviceClusteringTestSetup extends SpringTwoServerTestSetup {
     private AdviceClusteringTestSetup() {
       super(AdviceClusteringTest.class, CONFIG_FILE_FOR_TEST, "test-adviceclustering");
-    }
-
-    protected void setUp() throws Exception {
-      super.setUp();
-      singletonWithPC1 = (ISingleton) server1.getProxy(ISingleton.class, SINGLETON_SERVICE_NAME);
-      singletonWithPC2 = (ISingleton) server2.getProxy(ISingleton.class, SINGLETON_SERVICE_NAME);
-      counterSaver1 = (CounterSaver) server1.getProxy(CounterSaver.class, IN_SERVICE_NAME);
-      counterSaver2 = (CounterSaver) server2.getProxy(CounterSaver.class, IN_SERVICE_NAME);
-      pcAdvice1 = (ISingletonAdvice) server1.getProxy(ISingletonAdvice.class, PC_SERVICE_NAME);
-      pcAdvice2 = (ISingletonAdvice) server2.getProxy(ISingletonAdvice.class, PC_SERVICE_NAME);
     }
 
     protected void configureWar(DeploymentBuilder builder) {

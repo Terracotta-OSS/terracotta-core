@@ -27,6 +27,7 @@ import com.tc.test.server.appserver.deployment.ProxyBuilder;
 import com.tcspring.ComplexBeanId;
 import com.tcspring.DistributableBeanFactory;
 import com.tctest.spring.bean.ISimpleBean;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -44,19 +45,46 @@ import junit.framework.Test;
  * CONVERSATION parameter of the http request
  */
 public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
+  private static final String APP_NAME = "test-customscope";
 
   private static final String FASADE_NAME = "TestFasadeService";
   
-  private static ITestFacade beanN1C1; // node1 session1 conv1
-  private static ITestFacade beanN1C2; // node1 session1 conv2
+  private ITestFacade beanN1C1; // node1 session1 conv1
+  private ITestFacade beanN1C2; // node1 session1 conv2
   
-  private static ITestFacade beanN2C1; // node2 session1 conv1
-  private static ITestFacade beanN2C2; // node2 session1 conv2
+  private ITestFacade beanN2C1; // node2 session1 conv1
+  private ITestFacade beanN2C2; // node2 session1 conv2
   
   
   public CustomScopedBeanTest() {
     this.disableVariant(TestConfigObject.SPRING_VARIANT, "128");
   }
+  
+  protected void setUp() throws Exception {
+    try {
+      super.setUp();
+      
+      Map initCtx = new HashMap(); 
+      initCtx.put(ProxyBuilder.EXPORTER_TYPE_KEY, HttpInvokerServiceExporter.class);
+      
+      HttpClient clientS1C1 = new HttpClientWithParams(Collections.singletonMap(ConversationScope.CONV_KEY, "(1)"));
+      initCtx.put(ProxyBuilder.HTTP_CLIENT_KEY, clientS1C1);
+      
+      beanN1C1 = (ITestFacade) server1.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
+      beanN2C1 = (ITestFacade) server2.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
+      
+      HttpClient clientS1C2 = new HttpClientWithParams(Collections.singletonMap(ConversationScope.CONV_KEY, "(2)"));
+      clientS1C2.setState(clientS1C1.getState()); // share state across the clients, they should be in the same session now
+      initCtx.put(ProxyBuilder.HTTP_CLIENT_KEY, clientS1C2);
+      
+      beanN1C2 = (ITestFacade) server1.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
+      beanN2C2 = (ITestFacade) server2.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
+    } catch (Exception e) {
+      e.printStackTrace(); 
+      throw e;
+    }      
+  }
+
   
   public void testSharedFields() throws Exception {
     beanN1C1.setField("newVal1");   
@@ -120,36 +148,10 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
   }
 
   
-  private static class InnerTestSetup extends TwoSvrSetup {
-    private static final String APP_NAME = "test-customscope";
+  private static class InnerTestSetup extends SpringTwoServerTestSetup {
 
     private InnerTestSetup() {
       super(CustomScopedBeanTest.class, "/tc-config-files/customscoped-tc-config.xml", APP_NAME);
-    }
-
-    protected void setUp() throws Exception {
-      try {
-        super.setUp();
-        
-        Map initCtx = new HashMap(); 
-        initCtx.put(ProxyBuilder.EXPORTER_TYPE_KEY, HttpInvokerServiceExporter.class);
-        
-        HttpClient clientS1C1 = new HttpClientWithParams(Collections.singletonMap(ConversationScope.CONV_KEY, "(1)"));
-        initCtx.put(ProxyBuilder.HTTP_CLIENT_KEY, clientS1C1);
-        
-        beanN1C1 = (ITestFacade) server1.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
-        beanN2C1 = (ITestFacade) server2.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
-        
-        HttpClient clientS1C2 = new HttpClientWithParams(Collections.singletonMap(ConversationScope.CONV_KEY, "(2)"));
-        clientS1C2.setState(clientS1C1.getState()); // share state across the clients, they should be in the same session now
-        initCtx.put(ProxyBuilder.HTTP_CLIENT_KEY, clientS1C2);
-        
-        beanN1C2 = (ITestFacade) server1.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
-        beanN2C2 = (ITestFacade) server2.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
-      } catch (Exception e) {
-        e.printStackTrace(); 
-        throw e;
-      }      
     }
 
     protected void configureWar(DeploymentBuilder builder) {

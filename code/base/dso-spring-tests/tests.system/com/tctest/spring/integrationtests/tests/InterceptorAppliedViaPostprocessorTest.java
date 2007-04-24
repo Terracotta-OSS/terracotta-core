@@ -6,8 +6,8 @@ package com.tctest.spring.integrationtests.tests;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.FooService;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
-import junit.extensions.TestSetup;
 import junit.framework.Test;
 
 /**
@@ -19,26 +19,26 @@ public class InterceptorAppliedViaPostprocessorTest extends AbstractTwoServerDep
   private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/interceptor-via-postprocessor.xml";
   private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/interceptor-via-postprocessor-tc-config.xml";
 
-  private static FooService   singleton1;
-  private static FooService   singleton2;
+  private FooService   singleton1;
+  private FooService   singleton2;
 
+  
+  protected void setUp() throws Exception {
+    super.setUp();
+    
+    singleton1 = (FooService) server1.getProxy(FooService.class, REMOTE_SERVICE_NAME);
+    singleton2 = (FooService) server2.getProxy(FooService.class, REMOTE_SERVICE_NAME);
+  }
+  
   public void testInterceptor() throws Exception {
-
     assertEquals("interceptorInvoked-rawValue-0", singleton1.serviceMethod());
     assertEquals("interceptorInvoked-rawValue-1", singleton2.serviceMethod());
-
   }
 
-  private static class TS extends TwoSvrSetup {
+  
+  private static class TS extends SpringTwoServerTestSetup {
     private TS() {
       super(InterceptorAppliedViaPostprocessorTest.class, CONFIG_FILE_FOR_TEST, "test-interceptor");
-    }
-
-    protected void setUp() throws Exception {
-      super.setUp();
-
-      singleton1 = (FooService) server1.getProxy(FooService.class, REMOTE_SERVICE_NAME);
-      singleton2 = (FooService) server2.getProxy(FooService.class, REMOTE_SERVICE_NAME);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -48,12 +48,8 @@ public class InterceptorAppliedViaPostprocessorTest extends AbstractTwoServerDep
 
   }
 
-  /**
-   * JUnit test loader entry point
-   */
   public static Test suite() {
-    TestSetup setup = new TS();
-    return setup;
+    return new TS();
   }
 
 }

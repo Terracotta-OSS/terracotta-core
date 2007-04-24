@@ -6,10 +6,10 @@ package com.tctest.spring.integrationtests.tests;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.IMasterBean;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import java.util.List;
 
-import junit.extensions.TestSetup;
 import junit.framework.Test;
 
 /**
@@ -26,9 +26,15 @@ public class MultipleBeanDefsTest extends AbstractTwoServerDeploymentTest {
   private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory.xml \n classpath:/com/tctest/spring/beanfactory-master.xml";
   private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/multibeandef-tc-config.xml";
 
-  private static IMasterBean masterBean1;
-  private static IMasterBean masterBean2;
+  private IMasterBean masterBean1;
+  private IMasterBean masterBean2;
 
+  protected void setUp() throws Exception {
+    super.setUp();
+    masterBean1 = (IMasterBean) server1.getProxy(IMasterBean.class, REMOTE_SERVICE_NAME);
+    masterBean2 = (IMasterBean) server2.getProxy(IMasterBean.class, REMOTE_SERVICE_NAME);
+  }
+  
   /**
    * Test regular shared bean behavior
    */
@@ -62,16 +68,10 @@ public class MultipleBeanDefsTest extends AbstractTwoServerDeploymentTest {
     assertTrue("After a round trip, failed the check for ==", masterBean2.isTheSameSingletonReferenceUsed());
   }
 
-  private static class MultipleBeanDefsTestSetup extends TwoSvrSetup {
+  private static class MultipleBeanDefsTestSetup extends SpringTwoServerTestSetup {
 
     private MultipleBeanDefsTestSetup() {
       super(MultipleBeanDefsTest.class, CONFIG_FILE_FOR_TEST, "test-multibeandef");
-    }
-
-    protected void setUp() throws Exception {
-      super.setUp();
-      masterBean1 = (IMasterBean) server1.getProxy(IMasterBean.class, REMOTE_SERVICE_NAME);
-      masterBean2 = (IMasterBean) server2.getProxy(IMasterBean.class, REMOTE_SERVICE_NAME);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -80,12 +80,8 @@ public class MultipleBeanDefsTest extends AbstractTwoServerDeploymentTest {
     }
   }
 
-  /**
-   *  JUnit test loader entry point
-   */
   public static Test suite() {
-    TestSetup setup = new MultipleBeanDefsTestSetup();
-    return setup;
+    return new MultipleBeanDefsTestSetup();
   }
 
 }

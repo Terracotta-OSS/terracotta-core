@@ -6,6 +6,7 @@ package com.tctest.spring.integrationtests.tests;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.ISingleton;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import junit.framework.Test;
 
@@ -16,9 +17,16 @@ public class AppCtxMatchingTest extends AbstractTwoServerDeploymentTest {
   private static final String REMOTE_SERVICE_NAME = "Singleton";
   private static final String CONFIG_FILE_FOR_TEST = "/tc-config-files/app-ctx-matching-tc-config.xml";
 
-  static ISingleton   singleton1;
-  static ISingleton   singleton2;
+  ISingleton   singleton1;
+  ISingleton   singleton2;
 
+  protected void setUp() throws Exception {
+    super.setUp();
+    
+    singleton1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+    singleton2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+  }
+  
   public void testThatSingletonBeanIsNotDistributed() throws Exception {
     assertEquals(0, singleton1.getCounter());
     assertEquals(0, singleton2.getCounter());
@@ -32,16 +40,9 @@ public class AppCtxMatchingTest extends AbstractTwoServerDeploymentTest {
     assertEquals(2, singleton2.getCounter());
   }
 
-  private static class SingletonTestSetup extends TwoSvrSetup {
+  private static class SingletonTestSetup extends SpringTwoServerTestSetup {
     SingletonTestSetup() {
       super(AppCtxMatchingTest.class, CONFIG_FILE_FOR_TEST, "test-singleton");
-    }
-
-    protected void setUp() throws Exception {
-      super.setUp();
-
-      singleton1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
-      singleton2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -52,9 +53,6 @@ public class AppCtxMatchingTest extends AbstractTwoServerDeploymentTest {
 
   }
 
-  /**
-   *  JUnit test loader entry point
-   */
   public static Test suite() {
     return new SingletonTestSetup();
   }

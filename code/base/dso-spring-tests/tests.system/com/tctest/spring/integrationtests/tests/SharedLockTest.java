@@ -6,10 +6,10 @@ package com.tctest.spring.integrationtests.tests;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.ISharedLock;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import java.util.List;
 
-import junit.extensions.TestSetup;
 import junit.framework.Test;
 
 /**
@@ -24,9 +24,17 @@ public class SharedLockTest extends AbstractTwoServerDeploymentTest {
   private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory-sharedlock.xml";
   private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/sharedlock-tc-config.xml";
 
-  private static ISharedLock   sharedLock1;
-  private static ISharedLock   sharedLock2;
+  private ISharedLock   sharedLock1;
+  private ISharedLock   sharedLock2;
 
+  
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    sharedLock1 = (ISharedLock) server1.getProxy(ISharedLock.class, REMOTE_SERVICE_NAME);
+    sharedLock2 = (ISharedLock) server2.getProxy(ISharedLock.class, REMOTE_SERVICE_NAME);
+  }
+  
   public void testSharedLock() throws Exception {
 
     logger.debug("testing ShareLock");
@@ -98,16 +106,9 @@ public class SharedLockTest extends AbstractTwoServerDeploymentTest {
   }
 
   
-  private static class SharedLockTestSetup extends TwoSvrSetup {
+  private static class SharedLockTestSetup extends SpringTwoServerTestSetup {
     private SharedLockTestSetup() {
       super(SharedLockTest.class, CONFIG_FILE_FOR_TEST, "test-sharedlock");
-    }
-
-    protected void setUp() throws Exception {
-      super.setUp();
-
-      sharedLock1 = (ISharedLock) server1.getProxy(ISharedLock.class, REMOTE_SERVICE_NAME);
-      sharedLock2 = (ISharedLock) server2.getProxy(ISharedLock.class, REMOTE_SERVICE_NAME);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -116,12 +117,8 @@ public class SharedLockTest extends AbstractTwoServerDeploymentTest {
     }
   }
 
-  /**
-   *  JUnit test loader entry point
-   */
   public static Test suite() {
-    TestSetup setup = new SharedLockTestSetup();
-    return setup;
+    return new SharedLockTestSetup();
   }
 
 }

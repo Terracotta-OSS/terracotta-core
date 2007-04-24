@@ -3,14 +3,9 @@
  */
 package com.tctest.spring.integrationtests.tests;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import com.tc.config.schema.builder.SpringApplicationConfigBuilder;
 import com.tc.config.schema.builder.SpringApplicationContextConfigBuilder;
 import com.tc.config.schema.builder.SpringConfigBuilder;
-import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.Server;
@@ -18,12 +13,17 @@ import com.tc.test.server.appserver.deployment.SpringTerracottaAppServerConfig;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
 import com.tctest.spring.bean.ISingleton;
+import com.tctest.spring.integrationtests.SpringDeploymentTest;
 
-/** This is a simple smoke test for the Spring testing framework extensions.
- * Don't make it more ellaborate, i.e. spawn more than 2 servers etc
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+/** 
+ * This is a simple smoke test for the Spring testing framework extensions.
+ * Don't make it more elaborate, i.e. spawn more than 2 servers etc
  */
-
-public class SpringTestingFrameworkSmokeTest extends AbstractDeploymentTest {
+public class SpringTestingFrameworkSmokeTest extends SpringDeploymentTest {
 
   private static final String APP_NAME = "test-singleton";
   private static final String REMOTE_SERVICE_NAME           = "Singleton";
@@ -90,7 +90,7 @@ public class SpringTestingFrameworkSmokeTest extends AbstractDeploymentTest {
   }
 
   private Deployment makeDeployment() throws Exception {
-    DeploymentBuilder builder = makeDeploymentBuilder(this.APP_NAME + ".war");
+    DeploymentBuilder builder = makeDeploymentBuilder(APP_NAME + ".war");
     
     builder.addBeanDefinitionFile(BEAN_DEFINITION_FILE_FOR_TEST);
     

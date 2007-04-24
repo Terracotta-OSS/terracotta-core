@@ -7,8 +7,8 @@ import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.ISimpleInitializingSingleton;
 import com.tctest.spring.bean.SimpleInitializingSingleton;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
-import junit.extensions.TestSetup;
 import junit.framework.Test;
 
 /**
@@ -24,11 +24,18 @@ public class InitializingBean2Test extends AbstractTwoServerDeploymentTest {
   private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory-init2.xml";
   private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/init2-tc-config.xml";
 
-  private static ISimpleInitializingSingleton   singleton1;
-  private static ISimpleInitializingSingleton   singleton2;
+  private ISimpleInitializingSingleton   singleton1;
+  private ISimpleInitializingSingleton   singleton2;
 
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    singleton1 = (ISimpleInitializingSingleton) server1.getProxy(ISimpleInitializingSingleton.class, REMOTE_SERVICE_NAME);
+    singleton2 = (ISimpleInitializingSingleton) server2.getProxy(ISimpleInitializingSingleton.class, REMOTE_SERVICE_NAME);
+  }
+
+  
   public void testInitialization() throws Exception {
-
     logger.debug("testing initialization");
     
     // test pre-condition
@@ -56,16 +63,9 @@ public class InitializingBean2Test extends AbstractTwoServerDeploymentTest {
     logger.debug("!!!! Asserts passed !!!");
   }
 
-  private static class InitializingBean2Setup extends TwoSvrSetup {
+  private static class InitializingBean2Setup extends SpringTwoServerTestSetup {
     private InitializingBean2Setup() {
       super(InitializingBean2Test.class, CONFIG_FILE_FOR_TEST, "test-initializingbean2");
-    }
-
-    protected void setUp() throws Exception {
-      super.setUp();
-
-      singleton1 = (ISimpleInitializingSingleton) server1.getProxy(ISimpleInitializingSingleton.class, REMOTE_SERVICE_NAME);
-      singleton2 = (ISimpleInitializingSingleton) server2.getProxy(ISimpleInitializingSingleton.class, REMOTE_SERVICE_NAME);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
@@ -75,12 +75,8 @@ public class InitializingBean2Test extends AbstractTwoServerDeploymentTest {
 
   }
 
-  /**
-   *  JUnit test loader entry point
-   */
   public static Test suite() {
-    TestSetup setup = new InitializingBean2Setup();
-    return setup;
+    return new InitializingBean2Setup();
   }
 
 }

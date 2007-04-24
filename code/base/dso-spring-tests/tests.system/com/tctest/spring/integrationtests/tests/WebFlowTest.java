@@ -7,10 +7,10 @@ package com.tctest.spring.integrationtests.tests;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
-import com.tc.test.server.appserver.deployment.Deployment;
-import com.tc.test.server.appserver.deployment.ServerTestSetup;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.bean.WebFlowBean;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import java.util.Collections;
 
@@ -173,74 +173,79 @@ public class WebFlowTest extends AbstractTwoServerDeploymentTest {
 //  }
   
   
-  private static class WebFlowTestSetup extends ServerTestSetup {
+  private static class WebFlowTestSetup extends SpringTwoServerTestSetup {
 
     public WebFlowTestSetup() {
-      super(WebFlowTest.class);
+      super(WebFlowTest.class, "/tc-config-files/webflow-tc-config.xml", "webflow");
+      setStart(false);
     }
 
-    protected void setUp() throws Exception {
-      try {
-      super.setUp();
-
-//      Deployment deployment1 = new WARBuilder("higherlower.war")
+    protected void configureWar(DeploymentBuilder builder) {
+      builder
+        // .addDirectoryOrJARContainingClass(WebFlowTestSetup.class)
+        // .addDirectoryContainingResource("/tc-config-files/webflow-tc-config.xml")
+        
+        .addDirectoryOrJARContainingClass(org.apache.taglibs.standard.Version.class)  // standard-1.0.6.jar
+        .addDirectoryOrJARContainingClass(javax.servlet.jsp.jstl.core.Config.class)  // jstl-1.0.jar
+        // .addDirectoryOrJARContainingClass(org.springframework.webflow.registry.XmlFlowRegistryFactoryBean.class)  // spring-webflow-1.0-rc3.jar
+        .addDirectoryOrJARContainingClass(org.springframework.webflow.engine.builder.xml.XmlFlowRegistryFactoryBean.class)  // spring-webflow-1.0-rc4.jar
+        .addDirectoryOrJARContainingClass(org.springframework.binding.convert.Converter.class)  // spring-binding-1.0-rc3.jar
+        .addDirectoryOrJARContainingClass(org.apache.commons.codec.StringDecoder.class)  // commons-codec-1.3.jar
+        .addDirectoryOrJARContainingClass(ognl.Ognl.class)  // ognl-2.7.jar
+        .addDirectoryOrJARContainingClass(EDU.oswego.cs.dl.util.concurrent.ReentrantLock.class)  // concurrent-1.3.4.jar for SWF on jdk1.4
+        
+        .addResource("/web-resources", "webflow.jsp", "WEB-INF")
+        .addResource("/com/tctest/spring", "webflow.xml", "WEB-INF")
+        .addResource("/com/tctest/spring", "webflow-beans.xml", "WEB-INF")
+        .addResource("/com/tctest/spring", "webflow-servlet.xml", "WEB-INF")
+        .addResource("/web-resources", "weblogic.xml", "WEB-INF")
+      
+        .addServlet("webflow", "*.htm", org.springframework.web.servlet.DispatcherServlet.class,
+                      Collections.singletonMap("contextConfigLocation", "/WEB-INF/webflow-servlet.xml"), true);
+      
+    }
+    
+//    protected void setUp() throws Exception {
+//      super.setUp();
+//
+//      try {
+//
+//      Deployment deployment2 = makeDeploymentBuilder("webflow.war")
 //          .addDirectoryOrJARContainingClass(WebFlowTestSetup.class)
 //          .addDirectoryContainingResource("/tc-config-files/webflow-tc-config.xml")
 //          
 //          .addDirectoryOrJARContainingClass(org.apache.taglibs.standard.Version.class)  // standard-1.0.6.jar
 //          .addDirectoryOrJARContainingClass(javax.servlet.jsp.jstl.core.Config.class)  // jstl-1.0.jar
-//          .addDirectoryOrJARContainingClass(org.springframework.webflow.registry.XmlFlowRegistryFactoryBean.class)  // spring-webflow-1.0-rc3.jar
+//          // .addDirectoryOrJARContainingClass(org.springframework.webflow.registry.XmlFlowRegistryFactoryBean.class)  // spring-webflow-1.0-rc3.jar
+//          .addDirectoryOrJARContainingClass(org.springframework.webflow.engine.builder.xml.XmlFlowRegistryFactoryBean.class)  // spring-webflow-1.0-rc4.jar
 //          .addDirectoryOrJARContainingClass(org.springframework.binding.convert.Converter.class)  // spring-binding-1.0-rc3.jar
 //          .addDirectoryOrJARContainingClass(org.apache.commons.codec.StringDecoder.class)  // commons-codec-1.3.jar
 //          .addDirectoryOrJARContainingClass(ognl.Ognl.class)  // ognl-2.7.jar
+//          .addDirectoryOrJARContainingClass(EDU.oswego.cs.dl.util.concurrent.ReentrantLock.class)  // concurrent-1.3.4.jar for SWF on jdk1.4
 //          
-//          .addResource("/web-resources", "higherlower.jsp", "/WEB-INF")
-//          .addResource("/com/tctest/spring", "higherlower.xml", "/WEB-INF")
-//          .addResource("/com/tctest/spring", "higherlower-beans.xml", "/WEB-INF")
-//          .addResource("/com/tctest/spring", "higherlower-servlet.xml", "/WEB-INF")
+//          .addResource("/web-resources", "webflow.jsp", "WEB-INF")
+//          .addResource("/com/tctest/spring", "webflow.xml", "WEB-INF")
+//          .addResource("/com/tctest/spring", "webflow-beans.xml", "WEB-INF")
+//          .addResource("/com/tctest/spring", "webflow-servlet.xml", "WEB-INF")
+//          .addResource("/web-resources", "weblogic.xml", "WEB-INF")
 //          
-//          .addServlet("higherlower", "*.htm", org.springframework.web.servlet.DispatcherServlet.class, 
-//                Collections.singletonMap("contextConfigLocation", "/WEB-INF/higherlower-servlet.xml"), true)
+//          .addServlet("webflow", "*.htm", org.springframework.web.servlet.DispatcherServlet.class, 
+//              Collections.singletonMap("contextConfigLocation", "/WEB-INF/webflow-servlet.xml"), true)
 //          .makeDeployment();
-
-      Deployment deployment2 = makeDeploymentBuilder("webflow.war")
-          .addDirectoryOrJARContainingClass(WebFlowTestSetup.class)
-          .addDirectoryContainingResource("/tc-config-files/webflow-tc-config.xml")
-          
-          .addDirectoryOrJARContainingClass(org.apache.taglibs.standard.Version.class)  // standard-1.0.6.jar
-          .addDirectoryOrJARContainingClass(javax.servlet.jsp.jstl.core.Config.class)  // jstl-1.0.jar
-          // .addDirectoryOrJARContainingClass(org.springframework.webflow.registry.XmlFlowRegistryFactoryBean.class)  // spring-webflow-1.0-rc3.jar
-          .addDirectoryOrJARContainingClass(org.springframework.webflow.engine.builder.xml.XmlFlowRegistryFactoryBean.class)  // spring-webflow-1.0-rc4.jar
-          .addDirectoryOrJARContainingClass(org.springframework.binding.convert.Converter.class)  // spring-binding-1.0-rc3.jar
-          .addDirectoryOrJARContainingClass(org.apache.commons.codec.StringDecoder.class)  // commons-codec-1.3.jar
-          .addDirectoryOrJARContainingClass(ognl.Ognl.class)  // ognl-2.7.jar
-          .addDirectoryOrJARContainingClass(EDU.oswego.cs.dl.util.concurrent.ReentrantLock.class)  // concurrent-1.3.4.jar for SWF on jdk1.4
-          
-          .addResource("/web-resources", "webflow.jsp", "WEB-INF")
-          .addResource("/com/tctest/spring", "webflow.xml", "WEB-INF")
-          .addResource("/com/tctest/spring", "webflow-beans.xml", "WEB-INF")
-          .addResource("/com/tctest/spring", "webflow-servlet.xml", "WEB-INF")
-          .addResource("/web-resources", "weblogic.xml", "WEB-INF")
-          
-          .addServlet("webflow", "*.htm", org.springframework.web.servlet.DispatcherServlet.class, 
-              Collections.singletonMap("contextConfigLocation", "/WEB-INF/webflow-servlet.xml"), true)
-          .makeDeployment();
-      
-      server1 = createServer()
-//        .addWarDeployment(deployment1, "higherlower")
-        .addWarDeployment(deployment2, "webflow");
-
-      server2 = createServer()
-//        .addWarDeployment(deployment1, "higherlower")
-        .addWarDeployment(deployment2, "webflow");
-      } catch (Exception ex) {
-        ex.printStackTrace();
-      }
-    }
-
-    private WebApplicationServer createServer() throws Exception {
-      return sm.makeWebApplicationServer("/tc-config-files/webflow-tc-config.xml");
-    }
+//      
+//      server1 = createServer()
+//        .addWarDeployment(deployment2, "webflow");
+//
+//      server2 = createServer()
+//        .addWarDeployment(deployment2, "webflow");
+//      } catch (Exception ex) {
+//        ex.printStackTrace();
+//      }
+//    }
+//
+//    private WebApplicationServer createServer() throws Exception {
+//      return sm.makeWebApplicationServer("/tc-config-files/webflow-tc-config.xml");
+//    }
     
   }
   

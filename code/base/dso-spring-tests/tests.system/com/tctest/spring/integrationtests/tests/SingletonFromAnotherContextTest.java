@@ -6,6 +6,7 @@ package com.tctest.spring.integrationtests.tests;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.ISingleton;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import junit.extensions.TestSetup;
 import junit.framework.Test;
@@ -23,14 +24,24 @@ public class SingletonFromAnotherContextTest extends AbstractTwoServerDeployment
   private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory-another.xml";
   private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/anothersingleton-tc-config.xml";
 
-  private static ISingleton   singleton1N1;
-  private static ISingleton   singleton2N1;
+  private ISingleton   singleton1N1;
+  private ISingleton   singleton2N1;
 
-  private static ISingleton   singleton1N2;
-  private static ISingleton   singleton2N2;
+  private ISingleton   singleton1N2;
+  private ISingleton   singleton2N2;
 
+  
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    singleton1N1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+    singleton2N1 = (ISingleton) server1.getProxy(ISingleton.class, ANOTHER_REMOTE_SERVICE_NAME);
+
+    singleton1N2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+    singleton2N2 = (ISingleton) server2.getProxy(ISingleton.class, ANOTHER_REMOTE_SERVICE_NAME);
+  }
+  
   public void testSingletonFromAnotherContext() throws Exception {
-
     logger.debug("testing singleton from another context");
     
     // check pre-condition
@@ -63,19 +74,9 @@ public class SingletonFromAnotherContextTest extends AbstractTwoServerDeployment
     logger.debug("!!!! Asserts passed !!!");
   }
 
-  private static class InnerTestSetup extends TwoSvrSetup {
+  private static class InnerTestSetup extends SpringTwoServerTestSetup {
     private InnerTestSetup() {
       super(SingletonFromAnotherContextTest.class, CONFIG_FILE_FOR_TEST, "test-anothersingleton");
-    }
-
-    protected void setUp() throws Exception {
-      super.setUp();
-
-      singleton1N1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
-      singleton2N1 = (ISingleton) server1.getProxy(ISingleton.class, ANOTHER_REMOTE_SERVICE_NAME);
-
-      singleton1N2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
-      singleton2N2 = (ISingleton) server2.getProxy(ISingleton.class, ANOTHER_REMOTE_SERVICE_NAME);
     }
 
     protected void configureWar(DeploymentBuilder builder) {

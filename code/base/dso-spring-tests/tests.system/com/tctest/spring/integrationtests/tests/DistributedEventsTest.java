@@ -8,6 +8,7 @@ import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.TestCallback;
 import com.tctest.spring.bean.EventManager;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import junit.framework.Test;
 
@@ -16,8 +17,8 @@ public class DistributedEventsTest extends AbstractTwoServerDeploymentTest {
 
   private static final String REMOTE_SERVICE_NAME           = "EventManager";
 
-  private static EventManager eventManager1;
-  private static EventManager eventManager2;
+  private EventManager eventManager1;
+  private EventManager eventManager2;
 
 //  public DistributedEventsTest() {
 //    disableAllUntil("2007-02-27");
@@ -25,8 +26,13 @@ public class DistributedEventsTest extends AbstractTwoServerDeploymentTest {
 
   protected void setUp() throws Exception {
     super.setUp();
+    
+    eventManager1 = (EventManager) server1.getProxy(EventManager.class, REMOTE_SERVICE_NAME);
+    eventManager2 = (EventManager) server2.getProxy(EventManager.class, REMOTE_SERVICE_NAME);
+
     eventManager1.clear();
     eventManager2.clear();
+    
     assertEquals(0, eventManager1.size());
     assertEquals(0, eventManager2.size());
   }
@@ -50,17 +56,10 @@ public class DistributedEventsTest extends AbstractTwoServerDeploymentTest {
     assertEquals("Should not be distributed", 0, eventManager2.size());
   }
   
-  private static class SingletonTestSetup extends TwoSvrSetup {
+  private static class SingletonTestSetup extends SpringTwoServerTestSetup {
 
     private SingletonTestSetup() {
       super(DistributedEventsTest.class, "/tc-config-files/event-tc-config.xml", "distributed-events");
-    }
-
-    protected void setUp() throws Exception {
-      super.setUp();
-
-      eventManager1 = (EventManager) server1.getProxy(EventManager.class, REMOTE_SERVICE_NAME);
-      eventManager2 = (EventManager) server2.getProxy(EventManager.class, REMOTE_SERVICE_NAME);
     }
 
     protected void configureWar(DeploymentBuilder builder) {

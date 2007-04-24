@@ -6,6 +6,7 @@ package com.tctest.spring.integrationtests.tests;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tctest.spring.bean.ISingleton;
+import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import junit.extensions.TestSetup;
 import junit.framework.Test;
@@ -20,9 +21,16 @@ public class HierarchicalAppCtxTest extends AbstractTwoServerDeploymentTest {
   private static final String REMOTE_SERVICE_NAME           = "Singleton";
   private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/singleton-tc-config.xml";
 
-  private static ISingleton   singleton1;
-  private static ISingleton   singleton2;
+  private ISingleton   singleton1;
+  private ISingleton   singleton2;
 
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    singleton1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+    singleton2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+  }
+  
   public void testSharedField() throws Exception {
 
     logger.debug("testing shared fields");
@@ -55,16 +63,9 @@ public class HierarchicalAppCtxTest extends AbstractTwoServerDeploymentTest {
     assertTrue(singleton1.toggleBoolean());
   }
 
-  private static class SingletonTestSetup extends TwoSvrSetup {
+  private static class SingletonTestSetup extends SpringTwoServerTestSetup {
     private SingletonTestSetup() {
       super(HierarchicalAppCtxTest.class, CONFIG_FILE_FOR_TEST, "test-singleton");
-    }
-
-    protected void setUp() throws Exception {
-      super.setUp();
-
-      singleton1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
-      singleton2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
     }
 
     protected void configureWar(DeploymentBuilder builder) {
