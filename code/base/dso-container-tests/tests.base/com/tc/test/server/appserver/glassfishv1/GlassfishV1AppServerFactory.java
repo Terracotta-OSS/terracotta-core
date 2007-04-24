@@ -58,29 +58,34 @@ public final class GlassfishV1AppServerFactory extends NewAppServerFactory {
         .appserverMajorVersion(), config.appserverMinorVersion());
 
     File installDir = install.serverBaseDir();
+    File configDir = new File(installDir, "config");
+    File domainsDir = new File(installDir, "domains");
 
-    // execute the equivalent of "ant -f setup.xml" if config directory doesn't exist
-    if (!new File(installDir, "config").exists()) {
-      File antScript = new File(installDir, "setup.xml");
-      if (!antScript.isFile() || !antScript.canRead()) { throw new RuntimeException("missing ant script "
-                                                                                    + antScript.getAbsolutePath()); }
-      modifySetupXml(antScript);
+    // These directories should be cleaned for each run since there is VM specific information baked into files here
+    FileUtils.deleteDirectory(configDir);
+    FileUtils.deleteDirectory(domainsDir);
 
-      Project p = new Project();
-      DefaultLogger consoleLogger = new DefaultLogger();
-      consoleLogger.setErrorPrintStream(System.err);
-      consoleLogger.setOutputPrintStream(System.out);
-      consoleLogger.setMessageOutputLevel(Project.MSG_DEBUG);
-      p.addBuildListener(consoleLogger);
+    // execute the equivalent of "ant -f setup.xml"
+    File antScript = new File(installDir, "setup.xml");
+    if (!antScript.isFile() || !antScript.canRead()) { throw new RuntimeException("missing ant script "
+                                                                                  + antScript.getAbsolutePath()); }
+    modifySetupXml(antScript);
 
-      p.setUserProperty("ant.file", antScript.getAbsolutePath());
-      p.init();
-      ProjectHelper helper = ProjectHelper.getProjectHelper();
-      p.addReference("ant.projectHelper", helper);
-      helper.parse(p, antScript);
+    Project p = new Project();
+    DefaultLogger consoleLogger = new DefaultLogger();
+    consoleLogger.setErrorPrintStream(System.err);
+    consoleLogger.setOutputPrintStream(System.out);
+    consoleLogger.setMessageOutputLevel(Project.MSG_INFO);
+    // consoleLogger.setMessageOutputLevel(Project.MSG_DEBUG);
+    p.addBuildListener(consoleLogger);
 
-      p.executeTarget(p.getDefaultTarget());
-    }
+    p.setUserProperty("ant.file", antScript.getAbsolutePath());
+    p.init();
+    ProjectHelper helper = ProjectHelper.getProjectHelper();
+    p.addReference("ant.projectHelper", helper);
+    helper.parse(p, antScript);
+
+    p.executeTarget(p.getDefaultTarget());
 
     return install;
   }
