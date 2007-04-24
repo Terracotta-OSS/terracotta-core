@@ -4,8 +4,6 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.bytes.TCByteBuffer;
-import com.tc.exception.ImplementMe;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
@@ -19,12 +17,9 @@ import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.lockmanager.api.ThreadID;
 import com.tc.object.logging.NullRuntimeLogger;
-import com.tc.object.msg.CommitTransactionMessage;
-import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionImpl;
 import com.tc.object.tx.TestClientTransaction;
-import com.tc.object.tx.TransactionBatch;
 import com.tc.object.tx.TransactionBatchWriter;
 import com.tc.object.tx.TransactionContext;
 import com.tc.object.tx.TransactionID;
@@ -34,7 +29,6 @@ import com.tc.util.SequenceID;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -188,51 +182,6 @@ public class TransactionBatchTest extends TestCase {
     }
 
     assertEquals(2, count);
-
-  }
-
-  private static final class TestCommitTransactionMessageFactory implements CommitTransactionMessageFactory {
-
-    public final List messages = new LinkedList();
-
-    public CommitTransactionMessage newCommitTransactionMessage() {
-      CommitTransactionMessage rv = new TestCommitTransactionMessage();
-      messages.add(rv);
-      return rv;
-    }
-
-  }
-
-  private static final class TestCommitTransactionMessage implements CommitTransactionMessage {
-
-    public final List             setBatchCalls = new LinkedList();
-    public final List             sendCalls     = new LinkedList();
-    public ObjectStringSerializer serializer;
-
-    public void setBatch(TransactionBatch batch, ObjectStringSerializer serializer) {
-      setBatchCalls.add(batch);
-      this.serializer = serializer;
-    }
-
-    public TCByteBuffer[] getBatchData() {
-      return null;
-    }
-
-    public void send() {
-      this.sendCalls.add(new Object());
-    }
-
-    public ObjectStringSerializer getSerializer() {
-      return serializer;
-    }
-
-    public Collection getAcknowledgedTransactionIDs() {
-      throw new ImplementMe();
-    }
-
-    public ChannelID getChannelID() {
-      return ChannelID.NULL_ID;
-    }
 
   }
 

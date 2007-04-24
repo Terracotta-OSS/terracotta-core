@@ -1,10 +1,9 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
-import com.tc.bytes.TCByteBuffer;
-import com.tc.exception.ImplementMe;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
@@ -17,7 +16,6 @@ import com.tc.object.tx.TransactionID;
 import com.tc.test.TCTestCase;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -54,8 +52,8 @@ public class CommitTransactionMessageTest extends TCTestCase {
       msg.setBatch(batch, serializer);
       msg.dehydrate();
 
-      CommitTransactionMessageImpl msg2 = new CommitTransactionMessageImpl(SessionID.NULL_ID, new NullMessageMonitor(), null,
-                                                                           (TCMessageHeader) msg.getHeader(), msg
+      CommitTransactionMessageImpl msg2 = new CommitTransactionMessageImpl(SessionID.NULL_ID, new NullMessageMonitor(),
+                                                                           null, (TCMessageHeader) msg.getHeader(), msg
                                                                                .getPayload());
       msg2.hydrate();
 
@@ -70,31 +68,4 @@ public class CommitTransactionMessageTest extends TCTestCase {
 
   }
 
-  private static class TestTransactionBatch implements TransactionBatch {
-
-    private final TCByteBuffer[] batchData;
-    private final Collection     acknowledged;
-
-    public TestTransactionBatch(TCByteBuffer[] batchData, Collection acknowledged) {
-      this.batchData = batchData;
-      this.acknowledged = acknowledged;
-    }
-
-    public Collection getAcknowledgedTransactionIDs() {
-      return this.acknowledged;
-    }
-
-    public boolean isEmpty() {
-      throw new ImplementMe();
-    }
-
-    public TCByteBuffer[] getData() {
-      return batchData;
-    }
-
-    public void recycle() {
-      return;
-    }
-
-  }
 }

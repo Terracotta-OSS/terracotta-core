@@ -25,13 +25,19 @@ import java.util.Set;
 
 public final class TestServerTransaction implements ServerTransaction {
 
-  public List                 changes = new ArrayList();
-  private ServerTransactionID sid;
-  private TxnBatchID          bid;
+  public List                       changes = new ArrayList();
+  private ServerTransactionID       sid;
+  private TxnBatchID                bid;
+  private final GlobalTransactionID gtid;
 
   public TestServerTransaction(ServerTransactionID sid, TxnBatchID bid) {
+    this(sid, bid, null);
+  }
+
+  public TestServerTransaction(ServerTransactionID sid, TxnBatchID bid, GlobalTransactionID gtid) {
     this.sid = sid;
     this.bid = bid;
+    this.gtid = gtid;
   }
 
   public ObjectStringSerializer getSerializer() {
@@ -95,6 +101,7 @@ public final class TestServerTransaction implements ServerTransaction {
   }
 
   public GlobalTransactionID getGlobalTransactionID() {
+    if (gtid != null) { return gtid; }
     throw new ImplementMe();
   }
 
