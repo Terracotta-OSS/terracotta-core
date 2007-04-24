@@ -28,24 +28,11 @@ public class JMXSupportTest extends AbstractTwoServerDeploymentTest {
   private static final String BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory-jmx.xml";
   private static final String CONFIG_FILE_FOR_TEST          = "/tc-config-files/singleton-tc-config.xml";
 
-  private ISingleton   singleton1;
-  private ISingleton   singleton2;
-  private MBeanServerConnection mbeanServerConn1;
-  private MBeanServerConnection mbeanServerConn2;
+  private static ISingleton   singleton1;
+  private static ISingleton   singleton2;
+  private static MBeanServerConnection mbeanServerConn1;
+  private static MBeanServerConnection mbeanServerConn2;
 
-  protected void setUp() throws Exception {
-    super.setUp();
-    try {
-      singleton1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
-      singleton2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
-      mbeanServerConn1 = server1.getMBeanServerConnection();
-      mbeanServerConn2 = server2.getMBeanServerConnection();
-    } catch (Exception e) {
-      e.printStackTrace(); 
-      throw e;
-    }      
-  }
-  
   public void testJMXSupport() throws Exception {
     logger.debug("testing JMX Support");
     singleton1.incrementCounter();
@@ -69,6 +56,21 @@ public class JMXSupportTest extends AbstractTwoServerDeploymentTest {
       super(JMXSupportTest.class, CONFIG_FILE_FOR_TEST, "test-singleton");
     }
 
+    protected void setUp() throws Exception {
+      super.setUp();
+      try {
+        if(!shouldDisable()) {
+          singleton1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+          singleton2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+          mbeanServerConn1 = server1.getMBeanServerConnection();
+          mbeanServerConn2 = server2.getMBeanServerConnection();
+        }
+      } catch (Exception e) {
+        e.printStackTrace(); 
+        throw e;
+      }      
+    }
+    
     protected void configureWar(DeploymentBuilder builder) {
       builder.addBeanDefinitionFile(BEAN_DEFINITION_FILE_FOR_TEST);
       builder.addRemoteService(REMOTE_SERVICE_NAME, "singleton", ISingleton.class);
