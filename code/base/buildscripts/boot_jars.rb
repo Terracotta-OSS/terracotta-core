@@ -65,7 +65,19 @@ class BootJar
           @ant.redirector(:outputproperty => outputproperty, :alwayslog => true)
       end
 
-      out   = @ant.get_ant_property(outputproperty)
+      # Parse the output in case the JVM prints out additional messages, only the line
+      # that contains the actual boot jar name will be used.
+      # On MacOSX the JVM sometimes prints "HotSpot not at correct virtual address.
+      # Sharing disabled." for instance. Without parsing the output, the name of the
+      # bootjar file will be wrong.
+      rawout   = @ant.get_ant_property(outputproperty)
+      out      = rawout
+      rawout.each do |line|
+        if line =~ /^dso-boot-/
+          out = line
+          break
+        end
+      end
       @path = FilePath.new(@directory, out)
     end
 
