@@ -31,11 +31,14 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
   public static abstract class TwoServerTestSetup extends ServerTestSetup {
     private Log logger = LogFactory.getLog(getClass());
 
-    private String tcConfigFile;
-    private String context;
     private final Class testClass;
+    private final String tcConfigFile;
+    private final String context;
 
     private boolean start = true;
+
+    protected WebApplicationServer server1;
+    protected WebApplicationServer server2;
 
     protected TwoServerTestSetup(Class testClass, String tcConfigFile, String context) {
       super(testClass);
@@ -51,19 +54,24 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
     protected void setUp() throws Exception {
       super.setUp();
       
-      long l1 = System.currentTimeMillis();
-      Deployment deployment = makeWAR();
-      long l2 = System.currentTimeMillis();
-      logger.info("### WAR build "+ (l2-l1)/1000f + " at " + deployment.getFileSystemPath());
-
-      WebApplicationServer server1 = createServer(deployment);
-      WebApplicationServer server2 = createServer(deployment);
-
-      TestSuite suite = (TestSuite) getTest();
-      for (int i = 0; i < suite.testCount(); i++) {
-        AbstractTwoServerDeploymentTest test = (AbstractTwoServerDeploymentTest) suite.testAt(i);
-        test.setServer1(server1);
-        test.setServer2(server2);
+      try {
+        long l1 = System.currentTimeMillis();
+        Deployment deployment = makeWAR();
+        long l2 = System.currentTimeMillis();
+        logger.info("### WAR build "+ (l2-l1)/1000f + " at " + deployment.getFileSystemPath());
+  
+        server1 = createServer(deployment);
+        server2 = createServer(deployment);
+        
+        TestSuite suite = (TestSuite) getTest();
+        for (int i = 0; i < suite.testCount(); i++) {
+          AbstractTwoServerDeploymentTest test = (AbstractTwoServerDeploymentTest) suite.testAt(i);
+          test.setServer1(server1);
+          test.setServer2(server2);
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw e;
       }
     }
 
