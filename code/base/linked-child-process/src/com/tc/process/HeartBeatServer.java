@@ -13,7 +13,6 @@ import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -28,7 +27,7 @@ public class HeartBeatServer {
 
   private ListenThread            listenThread;
   // @GuardBy(this)
-  private final List              heartBeatThreads    = Collections.synchronizedList(new ArrayList());
+  private final List              heartBeatThreads    = new ArrayList();
 
   public void start() {
     if (listenThread == null) {
