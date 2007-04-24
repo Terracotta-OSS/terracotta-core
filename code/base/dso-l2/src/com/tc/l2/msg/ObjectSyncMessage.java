@@ -156,4 +156,14 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements EventCont
     return objectDNAs;
   }
 
+  /*
+   * For testing only
+   */
+  public TCByteBuffer[] getUnprocessedDNAs() {
+    TCByteBuffer[] tcbb = new TCByteBuffer[dnas.length];
+    for (int i = 0; i < dnas.length; i++) {
+      tcbb[i] = dnas[i];
+    }
+    return tcbb;
+  }
 }
