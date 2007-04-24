@@ -46,9 +46,9 @@ public class ShadowRootTestApp extends AbstractErrorCatchingTransparentApp {
   }
 
   protected void runTest() throws Throwable {
-    Assert.assertEquals(0, base.get1());
-    Assert.assertEquals(0, base.get2());
-    Assert.assertEquals(0, base.get3());
+    Assert.assertEquals(-1, base.get1());
+    Assert.assertEquals(-1, base.get2());
+    Assert.assertEquals(-1, base.get3());
     
     Assert.assertEquals(10, derived.get1());
     Assert.assertEquals(10, derived.get2());
@@ -72,9 +72,9 @@ public class ShadowRootTestApp extends AbstractErrorCatchingTransparentApp {
   }
 
   private static class BaseClass {
-    protected AtomicInteger sum1 = new AtomicInteger(0);
-    public AtomicInteger    sum2 = new AtomicInteger(0);
-    protected int           sum3 = 0;
+    protected AtomicInteger sum1 = new AtomicInteger(-1);
+    public AtomicInteger    sum2 = new AtomicInteger(-1);
+    protected int           sum3 = -1;
 
     public int addAndGet1(int delta) {
       return sum1.addAndGet(delta);
