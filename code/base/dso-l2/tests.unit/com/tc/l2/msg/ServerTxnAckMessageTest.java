@@ -85,10 +85,12 @@ public class ServerTxnAckMessageTest extends TestCase {
     Set acked = stam.getAckedServerTxnIDs();
     Set acked1 = stam1.getAckedServerTxnIDs();
     assertEquals(acked.size(), acked1.size());
-    Iterator iter1 = acked1.iterator();
     for (Iterator iter = acked.iterator(); iter.hasNext();) {
-      assertEquals(iter.next(), iter1.next());
+      ServerTransactionID stid = (ServerTransactionID) iter.next();
+      assertTrue(acked1.contains(stid));
+      acked1.remove(stid);
     }
+    assertTrue(acked1.isEmpty());
     
     assertEquals(stam.getDestinationID(), nodeID);
   }
