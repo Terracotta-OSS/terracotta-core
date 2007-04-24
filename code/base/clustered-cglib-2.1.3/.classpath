@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" output="build.eclipse/src.classes" path="src"/>
-	<classpathentry kind="src" output="build.eclipse/src.resources" path="src.resources"/>
+	<classpathentry kind="src" output="build.eclipse/src.classes" path="src.resources"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1"/>
