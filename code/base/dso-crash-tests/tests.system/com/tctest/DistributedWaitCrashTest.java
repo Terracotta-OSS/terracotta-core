@@ -8,7 +8,7 @@ public class DistributedWaitCrashTest extends TransparentTestBase {
   private static final int NODE_COUNT = 2;
   
   public DistributedWaitCrashTest() {
-    this.disableAllUntil("2007-05-01");
+    //this.disableAllUntil("2007-05-01");
   }
   
   public void doSetUp(TransparentTestIface t) throws Exception {
@@ -17,7 +17,7 @@ public class DistributedWaitCrashTest extends TransparentTestBase {
   }
 
   protected Class getApplicationClass() {
-    return DistributedWaitTestApp.class;
+    return DistributedWaitCrashTestApp.class;
   }
   
   protected boolean canRunCrash() {
