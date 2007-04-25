@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso.actions;
 
@@ -35,30 +36,26 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 import org.terracotta.dso.BootJarHelper;
-import org.terracotta.dso.ExceptionDialog;
 import org.terracotta.dso.ProjectNature;
 import org.terracotta.dso.TcPlugin;
+import org.terracotta.dso.dialogs.ExceptionDialog;
 
 import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
 
-import javax.swing.SwingUtilities;
+public class BuildBootJarAction extends Action implements IActionDelegate, IWorkbenchWindowActionDelegate,
+    IJavaLaunchConfigurationConstants, IProjectAction {
+  private IJavaProject        m_javaProject;
+  private IAction             m_action;
+  private String              m_jreContainerPath;
+  private IProcess            m_process;
 
-public class BuildBootJarAction extends Action
-  implements IActionDelegate,
-             IWorkbenchWindowActionDelegate,
-             IJavaLaunchConfigurationConstants,
-             IProjectAction
-{
-  private IJavaProject m_javaProject;
-  private IAction      m_action;
-  private String       m_jreContainerPath;
-  private IProcess     m_process;
-  
   private static final String LAUNCH_LABEL       = "DSO BootJar Creator";
   private static final String MAIN_TYPE          = "com.tc.object.tools.BootJarTool";
   private static final String CLASSPATH_PROVIDER = "org.terracotta.dso.classpathProvider";
-  
+  private static final String EXCEPTION_TITLE    = "Terracotta DSO";
+  private static final String EXCEPTION_MESSAGE  = "Problem Building BootJar";
+
   public BuildBootJarAction() {
     super("Build BootJar...");
     TcPlugin.getDefault().registerProjectAction(this);
@@ -68,27 +65,23 @@ public class BuildBootJarAction extends Action
     super("Build BootJar...");
     m_javaProject = javaProject;
   }
-  
+
   public void setJREContainerPath(String path) {
     m_jreContainerPath = path;
   }
-  
+
   public void run(IAction action) {
     IWorkbench workbench = PlatformUI.getWorkbench();
-    
-    if(!workbench.saveAllEditors(true)) {
-      return;
-    }
-    
+
+    if (!workbench.saveAllEditors(true)) { return; }
+
     try {
       IRunnableWithProgress op = new IRunnableWithProgress() {
-        public void run(IProgressMonitor monitor)
-          throws InvocationTargetException
-        {
+        public void run(IProgressMonitor monitor) throws InvocationTargetException {
           try {
             monitor.beginTask("Creating DSO BootJar...", IProgressMonitor.UNKNOWN);
             doFinish(monitor);
-          } catch(Exception e) {
+          } catch (Exception e) {
             throw new InvocationTargetException(e);
           } finally {
             monitor.done();
@@ -97,135 +90,114 @@ public class BuildBootJarAction extends Action
       };
 
       new ProgressMonitorDialog(null).run(true, true, op);
-    }
-    catch(InterruptedException e) {
+    } catch (InterruptedException e) {
       /**/
-    }
-    catch(final InvocationTargetException ite) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          Throwable       t = ite.getCause();
-          ExceptionDialog d = new ExceptionDialog();
-          
-          d.setTitle("Terracotta DSO");
-          d.setMessage("Problem building BootJar");
-          d.setErrorText(t.getMessage());
-          d.center();
-          d.setVisible(true);
-        }
-      });
-    }
-    catch(final Exception e) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          ExceptionDialog d = new ExceptionDialog();
-          
-          d.setTitle("Terracotta DSO");
-          d.setMessage("Problem building BootJar");
-          d.setError(e);
-          d.center();
-          d.setVisible(true);
-        }
-      });
+    } catch (final InvocationTargetException ite) {
+      Throwable t = ite.getCause();
+      ExceptionDialog dialog = new ExceptionDialog(TcPlugin.getStandardDisplay().getActiveShell(), EXCEPTION_TITLE,
+          EXCEPTION_MESSAGE, t.getMessage());
+      dialog.open();
+    } catch (final Exception e) {
+      Throwable t = e.getCause();
+      ExceptionDialog dialog = new ExceptionDialog(TcPlugin.getStandardDisplay().getActiveShell(), EXCEPTION_TITLE,
+          EXCEPTION_MESSAGE, t.getMessage());
+      dialog.open();
     }
   }
 
   private void doFinish(final IProgressMonitor monitor) throws Exception {
-    ILaunchManager           manager = DebugPlugin.getDefault().getLaunchManager();
-    ILaunchConfigurationType type    = manager.getLaunchConfigurationType(ID_JAVA_APPLICATION);
-    ILaunchConfiguration[]   configs = manager.getLaunchConfigurations(type);
-    
+    ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
+    ILaunchConfigurationType type = manager.getLaunchConfigurationType(ID_JAVA_APPLICATION);
+    ILaunchConfiguration[] configs = manager.getLaunchConfigurations(type);
+
     checkCancel(monitor);
     monitor.subTask("Please wait...");
 
-    for(int i = 0; i < configs.length; i++) {
+    for (int i = 0; i < configs.length; i++) {
       ILaunchConfiguration config = configs[i];
-      
-      if(config.getName().equals(LAUNCH_LABEL)) {
+
+      if (config.getName().equals(LAUNCH_LABEL)) {
         config.delete();
         break;
       }
     }
-    
-    ILaunchConfigurationWorkingCopy wc      = type.newInstance(null, LAUNCH_LABEL);
-    IProject                        project = m_javaProject.getProject();
-    
+
+    ILaunchConfigurationWorkingCopy wc = type.newInstance(null, LAUNCH_LABEL);
+    IProject project = m_javaProject.getProject();
+
     String portablePath = m_jreContainerPath;
-    if(portablePath == null) {
+    if (portablePath == null) {
       IPath jrePath = JavaRuntime.computeJREEntry(m_javaProject).getPath();
-      if(jrePath != null) {
+      if (jrePath != null) {
         portablePath = jrePath.makeAbsolute().toPortableString();
       }
     }
 
-    TcPlugin plugin      = TcPlugin.getDefault();
-    IFile    configFile  = plugin.getConfigurationFile(project);
-    IPath    configPath  = configFile.getLocation();
-    String   bootJarName = BootJarHelper.getHelper().getBootJarName(portablePath);
-    IPath    outPath     = project.getLocation().append(bootJarName);
-    String   args        = "-o " + toOSString(outPath) + " -f " + toOSString(configPath);
-    
-    if(configFile == null) {
-      throw new RuntimeException("No config file");
-    }
-      
-    if(!configFile.exists()) {
-      throw new FileNotFoundException(toOSString(configPath));
-    }
-    
+    TcPlugin plugin = TcPlugin.getDefault();
+    IFile configFile = plugin.getConfigurationFile(project);
+    IPath configPath = configFile.getLocation();
+    String bootJarName = BootJarHelper.getHelper().getBootJarName(portablePath);
+    IPath outPath = project.getLocation().append(bootJarName);
+    String args = "-o " + toOSString(outPath) + " -f " + toOSString(configPath);
+
+    if (configFile == null) { throw new RuntimeException("No config file"); }
+
+    if (!configFile.exists()) { throw new FileNotFoundException(toOSString(configPath)); }
+
     wc.setAttribute(ATTR_MAIN_TYPE_NAME, MAIN_TYPE);
     wc.setAttribute(ATTR_PROGRAM_ARGUMENTS, args);
     wc.setAttribute(ATTR_CLASSPATH_PROVIDER, CLASSPATH_PROVIDER);
     wc.setAttribute(ATTR_JRE_CONTAINER_PATH, portablePath);
-    
-    String             runMode  = ILaunchManager.RUN_MODE;
+
+    String runMode = ILaunchManager.RUN_MODE;
     JavaLaunchDelegate delegate = new JavaLaunchDelegate();
-    Launch             launch   = new Launch(wc, runMode, null);
+    Launch launch = new Launch(wc, runMode, null);
 
     checkCancel(monitor);
     delegate.launch(wc, runMode, launch, null);
     checkCancel(monitor);
-    
+
     m_process = launch.getProcesses()[0];
-    
-    IStreamsProxy  streamsProxy = m_process.getStreamsProxy();
-    IStreamMonitor outMonitor   = streamsProxy.getOutputStreamMonitor();
-    IStreamMonitor errMonitor   = streamsProxy.getErrorStreamMonitor();
-    
+
+    IStreamsProxy streamsProxy = m_process.getStreamsProxy();
+    IStreamMonitor outMonitor = streamsProxy.getOutputStreamMonitor();
+    IStreamMonitor errMonitor = streamsProxy.getErrorStreamMonitor();
+
     outMonitor.addListener(new IStreamListener() {
       public void streamAppended(final String text, IStreamMonitor streamMonitor) {
         monitor.subTask(text);
         monitor.worked(1);
       }
     });
-    
+
     checkCancel(monitor);
-    while(!m_process.isTerminated()) {
+    while (!m_process.isTerminated()) {
       checkCancel(monitor);
       try {
         Thread.sleep(100);
-      } catch(Exception e) {/**/}
+      } catch (Exception e) {/**/
+      }
     }
-    
-    if(m_process.getExitValue() != 0) {
+
+    if (m_process.getExitValue() != 0) {
       m_process = null;
       throw new RuntimeException(errMonitor.getContents());
-    }
-    else {
+    } else {
       project.refreshLocal(IResource.DEPTH_INFINITE, null);
     }
-    
+
     m_process = null;
   }
-  
+
   private void checkCancel(IProgressMonitor monitor) throws InterruptedException {
-    if(monitor.isCanceled()) {
+    if (monitor.isCanceled()) {
       try {
-        if(m_process != null && !m_process.isTerminated()) {
+        if (m_process != null && !m_process.isTerminated()) {
           m_process.terminate();
         }
         m_process = null;
-      } catch(Exception e) {/**/}
+      } catch (Exception e) {/**/
+      }
       throw new InterruptedException("BootJar creation cancelled.");
     }
   }
@@ -233,45 +205,43 @@ public class BuildBootJarAction extends Action
   private static String toOSString(IPath path) {
     return "\"" + path.makeAbsolute().toOSString() + "\"";
   }
-  
+
   public void selectionChanged(IAction action, ISelection selection) {
     m_action = action;
-    
-    if(m_javaProject == null || selection instanceof IStructuredSelection) {
+
+    if (m_javaProject == null || selection instanceof IStructuredSelection) {
       update(ActionUtil.locateSelectedJavaProject(selection));
-    }
-    else {
+    } else {
       action.setEnabled(true);
     }
   }
 
   private void update(IJavaProject javaProject) {
-    if(javaProject != null) {
+    if (javaProject != null) {
       try {
-        if(javaProject.getProject().hasNature(ProjectNature.NATURE_ID)) {
+        if (javaProject.getProject().hasNature(ProjectNature.NATURE_ID)) {
           m_javaProject = javaProject;
-        }
-        else {
+        } else {
           m_javaProject = null;
         }
-      } catch(CoreException ce) {/**/}
-    }
-    else {
+      } catch (CoreException ce) {/**/
+      }
+    } else {
       m_javaProject = null;
     }
-    
+
     m_action.setEnabled(m_javaProject != null);
   }
-  
+
   public void update(IProject project) {
     update(ActionUtil.findJavaProject(project));
   }
-  
+
   public void dispose() {
-    /**/
+  /**/
   }
 
   public void init(IWorkbenchWindow window) {
-    /**/
+  /**/
   }
 }

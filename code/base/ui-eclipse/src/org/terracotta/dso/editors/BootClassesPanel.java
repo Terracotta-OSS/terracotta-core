@@ -1,8 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso.editors;
 
+import org.apache.xmlbeans.XmlObject;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -13,270 +15,272 @@ import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.ui.IJavaElementSearchConstants;
 import org.eclipse.jdt.ui.JavaUI;
-import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.ui.dialogs.SelectionDialog;
+import org.terracotta.dso.editors.xmlbeans.XmlConfigContext;
+import org.terracotta.dso.editors.xmlbeans.XmlConfigEvent;
+import org.terracotta.dso.editors.xmlbeans.XmlConfigUndoContext;
+import org.terracotta.ui.util.SWTUtil;
 
-import org.dijon.Button;
-import org.dijon.ContainerResource;
-
-import com.tc.admin.common.XTable;
+import com.tc.util.event.UpdateEvent;
+import com.tc.util.event.UpdateEventListener;
 import com.terracottatech.config.AdditionalBootJarClasses;
-import com.terracottatech.config.DsoApplication;
+import com.terracottatech.config.QualifiedClassName;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+public class BootClassesPanel extends ConfigurationEditorPanel {
 
-import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.DefaultTableModel;
+  private static final String CLASS_SELECT_TITLE   = "DSO Application Configuration";
+  private static final String CLASS_SELECT_MESSAGE = "Select system classes to add to DSO Boot Jar";
+  private final Layout        m_layout;
+  private State               m_state;
 
-public class BootClassesPanel extends ConfigurationEditorPanel
-  implements TableModelListener
-{
-  private IProject                 m_project;
-  private DsoApplication           m_dsoApp;
-  private AdditionalBootJarClasses m_bootClasses;
-  private XTable                   m_bootClassesTable;
-  private BootClassTableModel      m_bootClassesTableModel;
-  private Button                   m_addButton;
-  private ActionListener           m_addListener;
-  private Button                   m_removeButton;
-  private ActionListener           m_removeListener;
-  private ListSelectionListener    m_bootClassesListener;
-  
-  public BootClassesPanel() {
-    super();
+  public BootClassesPanel(Composite parent, int style) {
+    super(parent, style);
+    this.m_layout = new Layout(this);
+  }
+
+  // ================================================================================
+  // INTERFACE
+  // ================================================================================
+
+  public synchronized void clearState() {
+    setActive(false);
+    m_layout.reset();
+    m_state.xmlContext.detachComponentModel(this);
+    m_state = null;
+  }
+
+  public synchronized void init(Object data) {
+    if (m_isActive && m_state.project == (IProject) data) return;
+    setActive(false);
+    m_state = new State((IProject) data);
+    createContextListeners();
+    initTableItems();
+    setActive(true);
+  }
+
+  public synchronized void refreshContent() {
+    m_layout.reset();
+    initTableItems();
   }
   
-  public void load(ContainerResource containerRes) {
-    super.load(containerRes);
+  public void detach() {
+    m_state.xmlContext.detachComponentModel(this);
+  }
 
-    m_bootClassesTable = (XTable)findComponent("BootClassesTable");
-    m_bootClassesTable.setModel(m_bootClassesTableModel = new BootClassTableModel());
-    m_bootClassesListener = new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent lse) {
-        if(!lse.getValueIsAdjusting()) {
-          int[] sel = m_bootClassesTable.getSelectedRows();
-          m_removeButton.setEnabled(sel != null && sel.length > 0);
-        }
+  // ================================================================================
+  // INIT LISTENERS
+  // ================================================================================
+
+  private void createContextListeners() {
+    m_layout.m_table.addSelectionListener(new SelectionAdapter() {
+      public void widgetSelected(SelectionEvent e) {
+        if (!m_isActive) return;
+        m_layout.m_removeButton.setEnabled(true);
       }
-    };        
-    
-    m_addButton = (Button)findComponent("AddBootClassButton");
-    m_addListener = new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        Display.getDefault().asyncExec(new Runnable() {
-          public void run() {
-            IJavaProject     javaProject = JavaCore.create(m_project);
-            int              filter      = IJavaSearchScope.SYSTEM_LIBRARIES;
-            IJavaElement[]   elements    = new IJavaElement[]{javaProject};
-            IJavaSearchScope scope       = SearchEngine.createJavaSearchScope(elements, filter);
-            int              style       = IJavaElementSearchConstants.CONSIDER_ALL_TYPES;
-            SelectionDialog  dialog;
-            
-            try {
-              dialog = JavaUI.createTypeDialog(null, null, scope, style, true);
-            } catch(JavaModelException jme) {
-              jme.printStackTrace();
-              return;
-            }
-              
-            dialog.setTitle("DSO Application Configuration");
-            dialog.setMessage("Select system classes to add to DSO Boot Jar");
-            dialog.open();
-            
-            final Object[] result = dialog.getResult();
-            
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                IType type;
-            
-                if(result != null) {
-                  for(int i = 0; i < result.length; i++) {
-                    type = (IType)result[i];
-                    internalAddBootClass(type.getFullyQualifiedName());
-                  }
-                }
-              }
-            });
+    });
+    m_layout.m_table.addListener(SWT.SetData, new Listener() {
+      public void handleEvent(Event e) {
+        if (!m_isActive) return;
+        TableItem item = (TableItem) e.item;
+        XmlConfigEvent event = new XmlConfigEvent(item.getText(e.index), null, null, XmlConfigEvent.BOOT_CLASS);
+        event.index = m_layout.m_table.getSelectionIndex();
+        m_state.xmlContext.notifyListeners(event);
+      }
+    });
+    m_state.xmlContext.addListener(new UpdateEventListener() {
+      public void handleUpdate(UpdateEvent e) {
+        if (!m_isActive) return;
+        XmlConfigEvent event = castEvent(e);
+        if (event.data == null) return;
+        TableItem[] items = m_layout.m_table.getItems();
+        for (int i = 0; i < items.length; i++) {
+          if (items[i].getText().equals(event.data)) {
+            items[i].setText((String) event.data);
           }
-        });
-      }
-    };
-
-    m_removeButton = (Button)findComponent("RemoveBootClassButton");
-    m_removeListener = new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        int[] selection  = m_bootClassesTable.getSelectedRows();
-        
-        for(int i = selection.length-1; i >= 0; i--) {
-          ensureAdditionalBootClasses().removeInclude(selection[i]);
-          m_bootClassesTableModel.removeRow(selection[i]);
         }
       }
-    };
-  }
-
-  public boolean hasAnySet() {
-    return m_bootClasses != null &&
-           m_bootClasses.sizeOfIncludeArray() > 0;
-  }
-  
-  private AdditionalBootJarClasses ensureAdditionalBootClasses() {
-    if(m_bootClasses == null) {
-      ensureXmlObject();
-    }
-    return m_bootClasses;
-  }
-  
-  public void ensureXmlObject() {
-    super.ensureXmlObject();
-
-    if(m_bootClasses == null) {
-      removeListeners();
-      m_bootClasses = m_dsoApp.addNewAdditionalBootJarClasses();
-      updateChildren();
-      addListeners();
-    }
-  }
-  
-  private void syncModel() {
-    if(!hasAnySet() && m_dsoApp.getAdditionalBootJarClasses() != null) {
-      m_dsoApp.unsetAdditionalBootJarClasses();
-      m_bootClasses = null;
-      fireXmlObjectStructureChanged(m_dsoApp);
-    }
-
-    setDirty();
-  }
-  
-  private void addListeners() {
-    m_bootClassesTableModel.addTableModelListener(this);
-    m_bootClassesTable.getSelectionModel().addListSelectionListener(m_bootClassesListener);
-    m_addButton.addActionListener(m_addListener);
-    m_removeButton.addActionListener(m_removeListener);
-  }
-  
-  private void removeListeners() {
-    m_bootClassesTableModel.removeTableModelListener(this);
-    m_bootClassesTable.getSelectionModel().removeListSelectionListener(m_bootClassesListener);
-    m_addButton.removeActionListener(m_addListener);
-    m_removeButton.removeActionListener(m_removeListener);
-  }
-  
-  public void updateChildren() {
-    m_bootClassesTableModel.clear();
-
-    if(m_bootClasses != null) {
-      String[] bootClasses = m_bootClasses.getIncludeArray();
-  
-      for(int i = 0; i < bootClasses.length; i++) {
-        m_bootClassesTableModel.addBootClass(bootClasses[i]);
+    }, XmlConfigEvent.BOOT_CLASS, this);
+    // - remove class
+    m_layout.m_removeButton.addSelectionListener(new SelectionAdapter() {
+      public void widgetSelected(SelectionEvent e) {
+        if (!m_isActive) return;
+        setActive(false);
+        m_layout.m_table.forceFocus();
+        int selected = m_layout.m_table.getSelectionIndex();
+        XmlConfigEvent event = new XmlConfigEvent(XmlConfigEvent.DELETE_BOOT_CLASS);
+        event.index = selected;
+        setActive(true);
+        m_state.xmlContext.notifyListeners(event);
       }
-    } else {
-      m_bootClassesTableModel.fireTableDataChanged();      
-    }
-  }
-
-  public void updateModel() {
-    removeListeners();
-    updateChildren();
-    addListeners();
-  }
-  
-  public void setup(IProject project, DsoApplication dsoApp) {
-    setEnabled(true);
-    removeListeners();
-
-    m_project     = project;
-    m_dsoApp      = dsoApp;
-    m_bootClasses = m_dsoApp != null ?
-                    m_dsoApp.getAdditionalBootJarClasses() : null;
-
-    updateChildren();
-    addListeners();
-  }
-  
-  public void tearDown() {
-    removeListeners();
-    
-    m_dsoApp      = null;
-    m_bootClasses = null;
-
-    m_bootClassesTableModel.clear();
-    
-    setEnabled(false);    
-  }
-  
-  class BootClassTableModel extends DefaultTableModel {
-    BootClassTableModel() {
-      super();
-      setColumnIdentifiers(new String[]{"Boot Classes"});
-    }
-    
-    void clear() {
-      setRowCount(0);
-    }
-    
-    void setBootClasses(AdditionalBootJarClasses bootClasses) {
-      clear();
-      
-      if(bootClasses != null) {
-        int count = bootClasses.sizeOfIncludeArray();
-        
-        for(int i = 0; i < count; i++) {
-          addBootClass(bootClasses.getIncludeArray(i));
+    });
+    m_state.xmlContext.addListener(new UpdateEventListener() {
+      public void handleUpdate(UpdateEvent e) {
+        if (!m_isActive) return;
+        m_layout.m_table.remove(((XmlConfigEvent) e).index);
+        m_layout.m_removeButton.setEnabled(false);
+      }
+    }, XmlConfigEvent.REMOVE_BOOT_CLASS, this);
+    // - add class
+    m_layout.m_addButton.addSelectionListener(new SelectionAdapter() {
+      public void widgetSelected(SelectionEvent e) {
+        if (!m_isActive) return;
+        setActive(false);
+        m_layout.m_table.forceFocus();
+        setActive(true);
+        IJavaProject javaProject = JavaCore.create(m_state.project);
+        int filter = IJavaSearchScope.SYSTEM_LIBRARIES;
+        IJavaElement[] elements = new IJavaElement[] { javaProject };
+        IJavaSearchScope scope = SearchEngine.createJavaSearchScope(elements, filter);
+        int style = IJavaElementSearchConstants.CONSIDER_ALL_TYPES;
+        SelectionDialog dialog;
+        try {
+          dialog = JavaUI.createTypeDialog(null, null, scope, style, true);
+        } catch (JavaModelException jme) {
+          jme.printStackTrace();
+          return;
+        }
+        dialog.setTitle(CLASS_SELECT_TITLE);
+        dialog.setMessage(CLASS_SELECT_MESSAGE);
+        dialog.open();
+        Object[] items = dialog.getResult();
+        if (items == null) return;
+        for (int i = 0; i < items.length; i++) {
+          XmlConfigEvent event = new XmlConfigEvent(XmlConfigEvent.CREATE_BOOT_CLASS);
+          event.data = ((IType) items[i]).getFullyQualifiedName();
+          m_state.xmlContext.notifyListeners(event);
         }
       }
-    }
-      
-    void addBootClass(String typeName) {
-      addRow(new Object[] {typeName});
-    }
-    
-    int indexOf(String typeName) {
-      int count = getRowCount();
-      
-      for(int i = 0; i < count; i++) {
-        if(((String)getValueAt(i, 0)).equals(typeName)) {
-          return i;
-        }
+    });
+    m_state.xmlContext.addListener(new UpdateEventListener() {
+      public void handleUpdate(UpdateEvent e) {
+        if (!m_isActive) return;
+        QualifiedClassName include = (QualifiedClassName) castEvent(e).element;
+        createTableItem(include);
       }
-      
-      return -1;
-    }
-    
-    public void setValueAt(Object value, int row, int col) {
-      m_bootClasses.setIncludeArray(row, (String)value);
-      super.setValueAt(value, row, col);
-    }
-  }
-  
-  public void tableChanged(TableModelEvent tme) {
-    syncModel();
-  }
-  
-  private void internalAddBootClass(String typeName) {
-    ensureAdditionalBootClasses().addInclude(typeName);
-    m_bootClassesTableModel.addBootClass(typeName);
-    
-    int row = m_bootClassesTableModel.getRowCount()-1;
-    m_bootClassesTable.setRowSelectionInterval(row, row);
+    }, XmlConfigEvent.NEW_BOOT_CLASS, this);
   }
 
-  public boolean isBootClass(String typeName) {
-    AdditionalBootJarClasses bootClasses = ensureAdditionalBootClasses();
-    int                      count       = bootClasses.sizeOfIncludeArray();
-    
-    for(int i = 0; i < count; i++) {
-      if(typeName.equals(bootClasses.getIncludeArray(i))) {
-        return true;
-      }
+  // ================================================================================
+  // HELPERS
+  // ================================================================================
+
+  private void initTableItems() {
+    AdditionalBootJarClasses bootClasses = m_state.xmlContext.getParentElementProvider().hasAdditionalBootJarClasses();
+    if (bootClasses == null) return;
+    XmlObject[] includes = bootClasses.selectPath("*");
+    for (int i = 0; i < includes.length; i++) {
+      createTableItem((QualifiedClassName) includes[i]);
     }
-    
-    return false;
+  }
+
+  private void createTableItem(QualifiedClassName element) {
+    TableItem item = new TableItem(m_layout.m_table, SWT.NONE);
+    item.setText(element.getStringValue());
+    item.setData(element);
+  }
+
+  // ================================================================================
+  // STATE
+  // ================================================================================
+
+  private class State {
+    final IProject             project;
+    final XmlConfigContext     xmlContext;
+    final XmlConfigUndoContext xmlUndoContext;
+
+    private State(IProject project) {
+      this.project = project;
+      this.xmlContext = XmlConfigContext.getInstance(project);
+      this.xmlUndoContext = XmlConfigUndoContext.getInstance(project);
+    }
+  }
+
+  // ================================================================================
+  // LAYOUT
+  // ================================================================================
+
+  private class Layout {
+
+    private static final String BOOT_CLASSES = "Boot Classes";
+    private static final String ADD          = "Add...";
+    private static final String REMOVE       = "Remove";
+
+    private Button              m_addButton;
+    private Button              m_removeButton;
+    private Table               m_table;
+
+    public void reset() {
+      m_removeButton.setEnabled(false);
+      m_table.removeAll();
+    }
+
+    private Layout(Composite parent) {
+      Composite comp = new Composite(parent, SWT.NONE);
+      GridLayout gridLayout = new GridLayout();
+      gridLayout.numColumns = 2;
+      gridLayout.marginWidth = 10;
+      gridLayout.marginHeight = 10;
+      gridLayout.makeColumnsEqualWidth = false;
+      comp.setLayout(gridLayout);
+
+      Composite sidePanel = new Composite(comp, SWT.NONE);
+      gridLayout = new GridLayout();
+      gridLayout.numColumns = 1;
+      gridLayout.marginWidth = 0;
+      gridLayout.marginHeight = 0;
+      sidePanel.setLayout(gridLayout);
+      sidePanel.setLayoutData(new GridData(GridData.FILL_BOTH));
+
+      Label label = new Label(sidePanel, SWT.NONE);
+      label.setText(BOOT_CLASSES);
+      label.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
+
+      Composite tablePanel = new Composite(sidePanel, SWT.BORDER);
+      tablePanel.setLayout(new FillLayout());
+      tablePanel.setLayoutData(new GridData(GridData.FILL_BOTH));
+      m_table = new Table(tablePanel, SWT.SINGLE | SWT.FULL_SELECTION | SWT.V_SCROLL);
+      m_table.setHeaderVisible(false);
+      m_table.setLinesVisible(true);
+      SWTUtil.makeTableColumnsEditable(m_table, new int[] { 0 });
+
+      TableColumn column = new TableColumn(m_table, SWT.NONE);
+      column.setText(BOOT_CLASSES);
+      column.pack();
+
+      Composite buttonPanel = new Composite(comp, SWT.NONE);
+      gridLayout = new GridLayout();
+      gridLayout.numColumns = 1;
+      gridLayout.marginWidth = 0;
+      gridLayout.marginHeight = 0;
+      buttonPanel.setLayout(gridLayout);
+      buttonPanel.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
+
+      new Label(buttonPanel, SWT.NONE); // filler
+
+      m_addButton = new Button(buttonPanel, SWT.PUSH);
+      m_addButton.setText(ADD);
+      m_addButton.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_END));
+      SWTUtil.applyDefaultButtonSize(m_addButton);
+
+      m_removeButton = new Button(buttonPanel, SWT.PUSH);
+      m_removeButton.setText(REMOVE);
+      m_removeButton.setEnabled(false);
+      m_removeButton.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
+      SWTUtil.applyDefaultButtonSize(m_removeButton);
+    }
   }
 }

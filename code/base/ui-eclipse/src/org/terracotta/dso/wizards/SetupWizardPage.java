@@ -4,8 +4,7 @@
  */
 package org.terracotta.dso.wizards;
 
-import org.eclipse.core.resources.IFolder;
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
@@ -15,41 +14,40 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
 import org.terracotta.dso.TcPlugin;
-import org.terracotta.dso.editors.chooser.ProjectFileNavigator;
+import org.terracotta.dso.editors.chooser.FileBehavior;
+import org.terracotta.dso.editors.chooser.NavigatorBehavior;
+import org.terracotta.dso.editors.chooser.PackageNavigator;
+import org.terracotta.ui.util.SWTUtil;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.SwingUtilities;
+import com.tc.util.event.UpdateEvent;
+import com.tc.util.event.UpdateEventListener;
 
 public class SetupWizardPage extends WizardPage {
-  private final Display        m_display;
-  private IJavaProject         m_javaProject;
-  private Text                 m_configPathField;
-  private Button               m_configFileButton;
-  private ProjectFileNavigator m_fileNavigator;
-  private Text                 m_serverOptionsField;
-  private Button               m_resetOptionsButton;
+  private IProject            m_project;
+  private Text                m_configPathField;
+  private Button              m_configFileButton;
+  private Text                m_serverOptionsField;
+  private Button              m_resetOptionsButton;
 
-  private static final String  PAGE_NAME               = "TCSetupWizardPage";
+  private static final String DOMAIN_CONFIG           = "Domain Configuration";
+  private static final String BROWSE                  = "Browse...";
+  private static final String RESET                   = "Reset";
+  private static final String SERVER_OPTIONS          = "Server Options";
+  private static final String PAGE_NAME               = "TCSetupWizardPage";
+  private static final String PAGE_TITLE              = "Terracotta Project Setup";
+  private static final String PAGE_DESC               = "Specify the location of your Terracotta domain configuration file and\n"
+                                                          + "Terracotta server Java runtime options";
 
-  private static final String  PAGE_TITLE              = "Terracotta Project Setup";
-
-  private static final String  PAGE_DESC               = "Specify the location of your Terracotta domain configuration file and\n"
-                                                           + "Terracotta server Java runtime options";
-
-  private static final String  DEFAULT_CONFIG_FILENAME = TcPlugin.DEFAULT_CONFIG_FILENAME;
-  private static final String  DEFAULT_SERVER_OPTIONS  = TcPlugin.DEFAULT_SERVER_OPTIONS;
+  private static final String DEFAULT_CONFIG_FILENAME = TcPlugin.DEFAULT_CONFIG_FILENAME;
+  private static final String DEFAULT_SERVER_OPTIONS  = TcPlugin.DEFAULT_SERVER_OPTIONS;
 
   public SetupWizardPage(IJavaProject project) {
     super(PAGE_NAME);
 
-    m_display = Display.getCurrent();
-    m_javaProject = project;
+    m_project = project.getProject();
 
     setTitle(PAGE_TITLE);
     setDescription(PAGE_DESC);
@@ -64,7 +62,7 @@ public class SetupWizardPage extends WizardPage {
     topComp.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
     Group domainConfig = new Group(topComp, SWT.SHADOW_ETCHED_IN);
-    domainConfig.setText("Domain Configuration");
+    domainConfig.setText(DOMAIN_CONFIG);
     gridLayout = new GridLayout();
     gridLayout.numColumns = 2;
     domainConfig.setLayout(gridLayout);
@@ -75,27 +73,23 @@ public class SetupWizardPage extends WizardPage {
     m_configPathField.setText(DEFAULT_CONFIG_FILENAME);
 
     m_configFileButton = new Button(domainConfig, SWT.PUSH);
-    m_configFileButton.setText("  Browse...  ");
+    m_configFileButton.setText(BROWSE);
     m_configFileButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
+    SWTUtil.applyDefaultButtonSize(m_configFileButton);
     m_configFileButton.addSelectionListener(new SelectionAdapter() {
       public void widgetSelected(SelectionEvent e) {
-        if (m_fileNavigator == null) {
-          m_fileNavigator = new ProjectFileNavigator(null, "xml");
-          m_fileNavigator.setActionListener(new NavigatorListener());
-        }
-        m_fileNavigator.init(m_javaProject.getProject());
-        m_fileNavigator.center();
-        m_display.asyncExec(new Runnable() {
-          public void run() {
-            m_fileNavigator.setVisible(true);
-            m_fileNavigator.toFront();
-            m_fileNavigator.setAlwaysOnTop(true);
+        NavigatorBehavior behavior = new FileBehavior();
+        PackageNavigator dialog = new PackageNavigator(getShell(), behavior.getTitle(), m_project, behavior);
+        dialog.addValueListener(new UpdateEventListener() {
+          public void handleUpdate(UpdateEvent event) {
+            m_configPathField.setText((String) event.data);
           }
         });
+        dialog.open();
       }
     });
     Group serverOptions = new Group(topComp, SWT.SHADOW_ETCHED_IN);
-    serverOptions.setText("Server Options");
+    serverOptions.setText(SERVER_OPTIONS);
     gridLayout = new GridLayout();
     gridLayout.numColumns = 2;
     serverOptions.setLayout(gridLayout);
@@ -110,35 +104,15 @@ public class SetupWizardPage extends WizardPage {
     m_serverOptionsField.setText(DEFAULT_SERVER_OPTIONS);
 
     m_resetOptionsButton = new Button(serverOptions, SWT.PUSH);
-    m_resetOptionsButton.setText("  Reset  ");
+    m_resetOptionsButton.setText(RESET);
     m_resetOptionsButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END | GridData.VERTICAL_ALIGN_BEGINNING));
+    SWTUtil.applyDefaultButtonSize(m_resetOptionsButton);
     m_resetOptionsButton.addSelectionListener(new SelectionAdapter() {
       public void widgetSelected(SelectionEvent e) {
         m_serverOptionsField.setText(DEFAULT_SERVER_OPTIONS);
       }
     });
     setControl(topComp);
-  }
-
-  class NavigatorListener implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          IResource member = m_fileNavigator.getSelectedMember();
-          if (member != null) {
-            if (member instanceof IFolder) {
-              member = ((IFolder) member).getFile(DEFAULT_CONFIG_FILENAME);
-            }
-            final IResource finalMember = member;
-            m_display.asyncExec(new Runnable() {
-              public void run() {
-                m_configPathField.setText(finalMember.getProjectRelativePath().toString());
-              }
-            });
-          }
-        }
-      });
-    }
   }
 
   public boolean isPageComplete() {

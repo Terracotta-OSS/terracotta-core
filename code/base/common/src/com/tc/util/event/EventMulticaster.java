@@ -37,8 +37,8 @@ import java.util.List;
  *  private void delegateTask() {
  *    Worker worker = new Worker();
  *    worker.addWorkEventListener(new UpdateEventListener() {
- *      public void handleUpdate(Object arg) {
- *        System.out.println(arg);       
+ *      public void handleUpdate(Object data) {
+ *        System.out.println(data);       
  *      }
  *    });
  *  
@@ -57,11 +57,11 @@ public final class EventMulticaster implements Serializable {
     this.queue = new EventQueue();
     this.dispatchThread = new Thread() {
       public void run() {
-        UpdateEvent event = null;
+        QueueEvent event = null;
         try {
           while (true) {
             event = queue.take();
-            event.listener.handleUpdate(event.arg);
+            event.listener.handleUpdate(event.data);
           }
         } catch (InterruptedException e) {
           dispatchInterrupted = true;
@@ -76,14 +76,14 @@ public final class EventMulticaster implements Serializable {
     fireUpdateEvent(null);
   }
 
-  public synchronized void fireUpdateEvent(Object arg) {
+  public synchronized void fireUpdateEvent(UpdateEvent data) {
     if (dispatchInterrupted) throw new IllegalStateException();
-    if (eventListener != null) {
-      if (queue == null) eventListener.handleUpdate(arg);
+    if (eventListener != null && eventListener != data.source) {
+      if (queue == null) eventListener.handleUpdate(data);
       else {
-        UpdateEvent event = new UpdateEvent();
+        QueueEvent event = new QueueEvent();
         event.listener = eventListener;
-        event.arg = arg;
+        event.data = data;
         queue.offer(event);
       }
     }
@@ -92,11 +92,10 @@ public final class EventMulticaster implements Serializable {
   public synchronized void addListener(UpdateEventListener listener) {
     if (eventListener == null) {
       eventListener = listener;
-    } else if (eventListener instanceof EventMulticaster.BroadcastListener) {
-      EventMulticaster.BroadcastListener broadcast = (EventMulticaster.BroadcastListener) eventListener;
-      broadcast.add(listener);
+    } else if (eventListener instanceof BroadcastListener) {
+      ((BroadcastListener) eventListener).add(listener);
     } else {
-      EventMulticaster.BroadcastListener broadcast = new BroadcastListener();
+      BroadcastListener broadcast = new BroadcastListener();
       broadcast.add(eventListener);
       broadcast.add(listener);
       eventListener = broadcast;
@@ -105,7 +104,7 @@ public final class EventMulticaster implements Serializable {
 
   public synchronized boolean removeListener(UpdateEventListener listener) {
     if (eventListener instanceof EventMulticaster.BroadcastListener) {
-      EventMulticaster.BroadcastListener broadcast = (EventMulticaster.BroadcastListener) eventListener;
+      BroadcastListener broadcast = (BroadcastListener) eventListener;
       if (!broadcast.remove(listener)) return false;
       if (broadcast.size() == 1) eventListener = broadcast.pop();
       return true;
@@ -122,13 +121,15 @@ public final class EventMulticaster implements Serializable {
 
     private List listeners = Collections.synchronizedList(new ArrayList());
 
-    public void handleUpdate(Object arg) {
+    public void handleUpdate(UpdateEvent data) {
       for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-        if (queue == null) ((UpdateEventListener) iter.next()).handleUpdate(arg);
+        UpdateEventListener listener = (UpdateEventListener) iter.next();
+        if (listener == data.source) continue;
+        if (queue == null) listener.handleUpdate(data);
         else {
-          UpdateEvent event = new UpdateEvent();
-          event.listener = (UpdateEventListener) iter.next();
-          event.arg = arg;
+          QueueEvent event = new QueueEvent();
+          event.listener = listener;
+          event.data = data;
           queue.offer(event);
         }
       }
@@ -153,9 +154,9 @@ public final class EventMulticaster implements Serializable {
 
   // --------------------------------------------------------------------------------
 
-  private class UpdateEvent implements Serializable {
+  private class QueueEvent implements Serializable {
     private UpdateEventListener listener;
-    private Object              arg;
+    private UpdateEvent         data;
   }
 
   // --------------------------------------------------------------------------------
@@ -164,7 +165,7 @@ public final class EventMulticaster implements Serializable {
 
     private final List list = new LinkedList();
 
-    private void offer(UpdateEvent val) {
+    private void offer(QueueEvent val) {
       if (val == null) throw new NullPointerException();
       synchronized (list) {
         list.add(val);
@@ -172,12 +173,12 @@ public final class EventMulticaster implements Serializable {
       }
     }
 
-    private UpdateEvent take() throws InterruptedException {
+    private QueueEvent take() throws InterruptedException {
       synchronized (list) {
         while (list.size() == 0) {
           list.wait();
         }
-        return (UpdateEvent) list.remove(0);
+        return (QueueEvent) list.remove(0);
       }
     }
   }

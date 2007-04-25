@@ -1,247 +1,287 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso.editors;
 
+import org.apache.xmlbeans.XmlObject;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TableItem;
+import org.terracotta.dso.editors.chooser.ExpressionChooser;
+import org.terracotta.dso.editors.chooser.FieldBehavior;
+import org.terracotta.dso.editors.chooser.NavigatorBehavior;
+import org.terracotta.dso.editors.xmlbeans.XmlConfigContext;
+import org.terracotta.dso.editors.xmlbeans.XmlConfigEvent;
+import org.terracotta.dso.editors.xmlbeans.XmlConfigUndoContext;
+import org.terracotta.ui.util.SWTUtil;
 
-import org.dijon.Button;
-import org.dijon.ContainerResource;
-
-import com.tc.admin.common.XObjectTableModel;
-import com.tc.admin.common.XTable;
-import org.terracotta.dso.editors.chooser.FieldChooser;
-import com.terracottatech.config.DsoApplication;
+import com.tc.util.event.UpdateEvent;
+import com.tc.util.event.UpdateEventListener;
 import com.terracottatech.config.Root;
 import com.terracottatech.config.Roots;
 
-import java.awt.Frame;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+public final class RootsPanel extends ConfigurationEditorPanel {
 
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
+  private static final int FIELD_COLUMN = 0;
+  private static final int NAME_COLUMN  = 1;
+  private final Layout     m_layout;
+  private State            m_state;
 
-public class RootsPanel extends ConfigurationEditorPanel
-  implements TableModelListener
-{
-  private IProject              m_project;
-  private DsoApplication        m_dsoApp;
-  private Roots                 m_roots;
-  private XTable                m_rootTable;
-  private RootsModel            m_rootsModel;
-  private Button                m_addButton;
-  private ActionListener        m_addListener;
-  private Button                m_removeButton;
-  private ActionListener        m_removeListener;
-  private ListSelectionListener m_rootsListener;
-  private FieldChooser          m_fieldChooser;
-  
-  public RootsPanel() {
-    super();
+  public RootsPanel(Composite parent, int style) {
+    super(parent, style);
+    this.m_layout = new Layout(this);
+  }
+
+  // ================================================================================
+  // INTERFACE
+  // ================================================================================
+
+  public synchronized void clearState() {
+    setActive(false);
+    m_layout.reset();
+    m_state.xmlContext.detachComponentModel(this);
+    m_state = null;
+  }
+
+  public synchronized void init(Object data) {
+    if (m_isActive && m_state.project == (IProject) data) return;
+    setActive(false);
+    m_state = new State((IProject) data);
+    createContextListeners();
+    initTableItems();
+    setActive(true);
+  }
+
+  public synchronized void refreshContent() {
+    m_layout.reset();
+    initTableItems();
   }
   
-  public void load(ContainerResource containerRes) {
-    super.load(containerRes);
+  public void detach() {
+    m_state.xmlContext.detachComponentModel(this);
+  }
+  
+  // ================================================================================
+  // INIT LISTENERS
+  // ================================================================================
 
-    m_rootTable = (XTable)findComponent("RootTable");
-    m_rootTable.setModel(m_rootsModel = new RootsModel());
-    m_rootsListener = new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent lse) {
-        if(!lse.getValueIsAdjusting()) {
-          int[] sel = m_rootTable.getSelectedRows();
-          m_removeButton.setEnabled(sel != null && sel.length > 0);
+  private void createContextListeners() {
+    m_layout.m_table.addSelectionListener(new SelectionAdapter() {
+      public void widgetSelected(SelectionEvent e) {
+        if (!m_isActive) return;
+        m_layout.m_removeButton.setEnabled(true);
+      }
+    });
+    m_layout.m_table.addListener(SWT.SetData, new Listener() {
+      public void handleEvent(Event event) {
+        if (!m_isActive) return;
+        TableItem item = (TableItem) event.item;
+        Root root = (Root) item.getData();
+        int type = (event.index == FIELD_COLUMN) ? XmlConfigEvent.ROOTS_FIELD : XmlConfigEvent.ROOTS_NAME;
+        m_state.xmlContext.notifyListeners(new XmlConfigEvent(item.getText(event.index), null, root, type));
+      }
+    });
+    m_state.xmlContext.addListener(new TableListener(), XmlConfigEvent.ROOTS_FIELD, this);
+    m_state.xmlContext.addListener(new TableListener(), XmlConfigEvent.ROOTS_NAME, this);
+    // - remove root
+    m_layout.m_removeButton.addSelectionListener(new SelectionAdapter() {
+      public void widgetSelected(SelectionEvent e) {
+        if (!m_isActive) return;
+        setActive(false);
+        m_layout.m_table.forceFocus();
+        int selected = m_layout.m_table.getSelectionIndex();
+        XmlConfigEvent event = new XmlConfigEvent(XmlConfigEvent.DELETE_ROOT);
+        event.index = selected;
+        setActive(true);
+        m_state.xmlContext.notifyListeners(event);
+      }
+    });
+    m_state.xmlContext.addListener(new UpdateEventListener() {
+      public void handleUpdate(UpdateEvent e) {
+        if (!m_isActive) return;
+        m_layout.m_table.remove(((XmlConfigEvent) e).index);
+        m_layout.m_removeButton.setEnabled(false);
+      }
+    }, XmlConfigEvent.REMOVE_ROOT, this);
+    // - add root
+    m_layout.m_addButton.addSelectionListener(new SelectionAdapter() {
+      public void widgetSelected(SelectionEvent e) {
+        if (!m_isActive) return;
+        setActive(false);
+        m_layout.m_table.forceFocus();
+        NavigatorBehavior behavior = new FieldBehavior();
+        ExpressionChooser chooser = new ExpressionChooser(getShell(), behavior.getTitle(), FieldBehavior.ADD_MSG,
+            m_state.project, behavior);
+        chooser.addValueListener(new UpdateEventListener() {
+          public void handleUpdate(UpdateEvent updateEvent) {
+            String[] items = (String[]) updateEvent.data;
+            for (int i = 0; i < items.length; i++) {
+              XmlConfigEvent event = new XmlConfigEvent(XmlConfigEvent.CREATE_ROOT);
+              event.data = new String[] { items[i], "" };
+              m_state.xmlContext.notifyListeners(event);
+            }
+          }
+        });
+        setActive(true);
+        chooser.open();
+      }
+    });
+    m_state.xmlContext.addListener(new UpdateEventListener() {
+      public void handleUpdate(UpdateEvent e) {
+        if (!m_isActive) return;
+        Root root = (Root) castEvent(e).element;
+        createTableItem(root, new String[] { root.getFieldName(), root.getRootName() });
+      }
+    }, XmlConfigEvent.NEW_ROOT, this);
+  }
+
+  // --------------------------------------------------------------------------------
+
+  private class TableListener implements UpdateEventListener {
+    public void handleUpdate(UpdateEvent e) {
+      if (!m_isActive) return;
+      XmlConfigEvent event = castEvent(e);
+      if (event.data == null) event.data = "";
+      XmlObject root = event.element;
+      TableItem[] items = m_layout.m_table.getItems();
+      for (int i = 0; i < items.length; i++) {
+        if (items[i].getData() == root) {
+          int column = (event.type == XmlConfigEvent.ROOTS_FIELD) ? FIELD_COLUMN : NAME_COLUMN;
+          items[i].setText(column, (String) event.data);
         }
       }
-    };        
-    
-    m_addButton = (Button)findComponent("AddRootButton");
-    m_addListener = new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        FieldChooser chsr = getFieldChooser();
-        
-        chsr.setup(m_project);
-        chsr.center(RootsPanel.this.getAncestorOfClass(Frame.class));
-        chsr.setVisible(true);
-      }
-    };
-
-    m_removeButton = (Button)findComponent("RemoveRootButton");
-    m_removeListener = new ActionListener() {
-      public void actionPerformed(ActionEvent ae) {
-        int[] selection = m_rootTable.getSelectedRows();
-        int   row;
-        
-        for(int i = selection.length-1; i >= 0; i--) {
-          row = selection[i];
-          
-          ensureRoots().removeRoot(row);
-          m_rootsModel.remove(row);
-          m_rootsModel.fireTableRowsDeleted(row, row);
-        }
-      }
-    };
-  }
-  
-  private FieldChooser getFieldChooser() {
-    if(m_fieldChooser == null) {
-      m_fieldChooser = new FieldChooser((Frame)getAncestorOfClass(Frame.class));
-      m_fieldChooser.setListener(new FieldChooserListener());
-    }
-    
-    return m_fieldChooser;
-  }
-
-  class FieldChooserListener implements ActionListener {
-    public void actionPerformed(ActionEvent ae) {
-      String[] fields = m_fieldChooser.getFieldNames();
-      String   field;
-      
-      for(int i = 0; i < fields.length; i++) {
-        field = fields[i];
-        
-        if(field != null &&
-           (field = field.trim()) != null &&
-            field.length() > 0 &&
-           !isRoot(field))
-        {
-          internalAddRoot(fields[i]);
-        }
-      }
     }
   }
-  
-  public boolean hasAnySet() {
-    return m_roots != null &&
-           m_roots.sizeOfRootArray() > 0;
-  }
-  
-  private Roots ensureRoots() {
-    if(m_roots == null) {
-      ensureXmlObject();
-    }
-    return m_roots;
-  }
 
-  public void ensureXmlObject() {
-    super.ensureXmlObject();
-    
-    if(m_roots == null) {
-      removeListeners();
-      m_roots = m_dsoApp.addNewRoots();
-      updateChildren();
-      addListeners();
+  // ================================================================================
+  // HELPERS
+  // ================================================================================
+
+  private void initTableItems() {
+    Roots rootsElement = m_state.xmlContext.getParentElementProvider().hasRoots();
+    if (rootsElement == null) return;
+    Root[] roots = rootsElement.getRootArray();
+    for (int i = 0; i < roots.length; i++) {
+      createTableItem(roots[i], new String[] { roots[i].getFieldName(), roots[i].getRootName() });
     }
   }
-  
-  private void syncModel() {
-    if(!hasAnySet() && m_dsoApp.getRoots() != null){
-      m_dsoApp.unsetRoots();
-      m_roots = null;
-      fireXmlObjectStructureChanged(m_dsoApp);
-    }
-    
-    setDirty();
+
+  private void createTableItem(Root root, String[] elements) {
+    TableItem item = new TableItem(m_layout.m_table, SWT.NONE);
+    item.setText(elements);
+    item.setData(root);
   }
 
-  private void addListeners() {
-    m_rootsModel.addTableModelListener(this);
-    m_rootTable.getSelectionModel().addListSelectionListener(m_rootsListener);
-    m_addButton.addActionListener(m_addListener);
-    m_removeButton.addActionListener(m_removeListener);
-  }
-  
-  private void removeListeners() {
-    m_rootsModel.removeTableModelListener(this);
-    m_rootTable.getSelectionModel().removeListSelectionListener(m_rootsListener);
-    m_addButton.removeActionListener(m_addListener);
-    m_removeButton.removeActionListener(m_removeListener);
-  }
-  
-  public void updateChildren() {
-    m_rootsModel.set((m_roots != null) ? m_roots.getRootArray() : null);
-  }
+  // ================================================================================
+  // STATE
+  // ================================================================================
 
-  public void updateModel() {
-    removeListeners();
-    updateChildren();
-    addListeners();
-  }
-  
-  public void setup(IProject project, DsoApplication dsoApp) {
-    setEnabled(true);
-    removeListeners();
-    
-    m_project = project;
-    m_dsoApp  = dsoApp;
-    m_roots   = m_dsoApp != null ? m_dsoApp.getRoots() : null;
-    
-    updateChildren();
-    addListeners();
-  }
-  
-  public void tearDown() {
-    removeListeners();
-    
-    m_project = null;
-    m_dsoApp  = null;
-    m_roots   = null;
+  private class State {
+    final IProject             project;
+    final XmlConfigContext     xmlContext;
+    final XmlConfigUndoContext xmlUndoContext;
 
-    m_rootsModel.clear();
-
-    setEnabled(false);
-  }
-  
-  private void internalAddRoot(String fieldName) {
-    Root root = ensureRoots().addNewRoot();
-
-    root.setFieldName(fieldName);
-    m_rootsModel.add(root);
-
-    int row = m_rootsModel.getRowCount()-1;
-    m_rootsModel.fireTableRowsInserted(row, row);
-    m_rootTable.setRowSelectionInterval(row, row);
-  }
-
-  private static final String[] COLUMNS = {"FieldName", "RootName"};
-  private static final String[] HEADERS = {"Field",     "Name"};
-  
-  class RootsModel extends XObjectTableModel {
-    RootsModel() {
-      super(Root.class, COLUMNS, HEADERS);
-    }
-    
-    int getFieldRow(String fieldName) {
-      Root root;
-      int  count = getRowCount();
-      
-      for(int i = 0; i < count; i++) {
-        root = (Root)getObjectAt(i);
-        if(root.getFieldName().equals(fieldName)) {
-          return i;
-        }
-      }
-
-      return -1;
+    private State(IProject project) {
+      this.project = project;
+      this.xmlContext = XmlConfigContext.getInstance(project);
+      this.xmlUndoContext = XmlConfigUndoContext.getInstance(project);
     }
   }
-  
-  public boolean isRoot(String fieldName) {
-    Roots roots = ensureRoots();
-    int   count = roots.sizeOfRootArray();
-    
-    for(int i = 0; i < count; i++) {
-      if(fieldName.equals(roots.getRootArray(i).getFieldName())) {
-        return true;
-      }
+
+  // ================================================================================
+  // LAYOUT
+  // ================================================================================
+
+  private class Layout {
+
+    private static final String ROOTS  = "Roots";
+    private static final String FIELD  = "Field";
+    private static final String NAME   = "Name";
+    private static final String ADD    = "Add...";
+    private static final String REMOVE = "Remove";
+
+    private Table               m_table;
+    private Button              m_addButton;
+    private Button              m_removeButton;
+
+    public void reset() {
+      m_removeButton.setEnabled(false);
+      m_table.removeAll();
     }
-    
-    return false;
-  }
-  
-  public void tableChanged(TableModelEvent e) {
-    syncModel();
+
+    private Layout(Composite parent) {
+      Composite comp = new Composite(parent, SWT.NONE);
+      GridLayout gridLayout = new GridLayout();
+      gridLayout.numColumns = 2;
+      gridLayout.marginWidth = 10;
+      gridLayout.marginHeight = 10;
+      gridLayout.makeColumnsEqualWidth = false;
+      comp.setLayout(gridLayout);
+
+      Composite sidePanel = new Composite(comp, SWT.NONE);
+      gridLayout = new GridLayout();
+      gridLayout.numColumns = 1;
+      gridLayout.marginWidth = 0;
+      gridLayout.marginHeight = 0;
+      sidePanel.setLayout(gridLayout);
+      sidePanel.setLayoutData(new GridData(GridData.FILL_BOTH));
+
+      Label label = new Label(sidePanel, SWT.NONE);
+      label.setText(ROOTS);
+      label.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
+
+      Composite tablePanel = new Composite(sidePanel, SWT.BORDER);
+      tablePanel.setLayout(new FillLayout());
+      tablePanel.setLayoutData(new GridData(GridData.FILL_BOTH));
+      m_table = new Table(tablePanel, SWT.SINGLE | SWT.FULL_SELECTION | SWT.V_SCROLL);
+      m_table.setHeaderVisible(true);
+      m_table.setLinesVisible(true);
+      SWTUtil.makeTableColumnsResizeWeightedWidth(tablePanel, m_table, new int[] { 2, 1 });
+      SWTUtil.makeTableColumnsEditable(m_table, new int[] { 0, 1 });
+
+      TableColumn fieldCol = new TableColumn(m_table, SWT.NONE);
+      fieldCol.setResizable(true);
+      fieldCol.setText(FIELD);
+      fieldCol.pack();
+
+      TableColumn nameCol = new TableColumn(m_table, SWT.NONE);
+      nameCol.setResizable(true);
+      nameCol.setText(NAME);
+      nameCol.pack();
+
+      Composite buttonPanel = new Composite(comp, SWT.NONE);
+      gridLayout = new GridLayout();
+      gridLayout.numColumns = 1;
+      gridLayout.marginWidth = 0;
+      gridLayout.marginHeight = 0;
+      buttonPanel.setLayout(gridLayout);
+      buttonPanel.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
+
+      new Label(buttonPanel, SWT.NONE); // filler
+
+      m_addButton = new Button(buttonPanel, SWT.PUSH);
+      m_addButton.setText(ADD);
+      m_addButton.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_END));
+      SWTUtil.applyDefaultButtonSize(m_addButton);
+
+      m_removeButton = new Button(buttonPanel, SWT.PUSH);
+      m_removeButton.setText(REMOVE);
+      m_removeButton.setEnabled(false);
+      m_removeButton.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
+      SWTUtil.applyDefaultButtonSize(m_removeButton);
+    }
   }
 }

@@ -10,6 +10,7 @@ import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
 import javax.swing.Icon;
 
+// XXX: DEPRECATED
 public abstract class XAbstractAction extends AbstractAction {
   protected static final int MENU_SHORTCUT_KEY_MASK =
     Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();

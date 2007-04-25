@@ -4,9 +4,7 @@
  */
 package org.terracotta.dso.properties;
 
-import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -16,32 +14,30 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
 import org.terracotta.dso.TcPlugin;
-import org.terracotta.dso.editors.chooser.ProjectFileNavigator;
+import org.terracotta.dso.editors.chooser.FileBehavior;
+import org.terracotta.dso.editors.chooser.NavigatorBehavior;
+import org.terracotta.dso.editors.chooser.PackageNavigator;
+import org.terracotta.ui.util.SWTUtil;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.SwingUtilities;
+import com.tc.util.event.UpdateEvent;
+import com.tc.util.event.UpdateEventListener;
 
 public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
-  private final Display        m_display;
-  private Text                 m_configPathField;
-  private Button               m_configFileButton;
-  private ProjectFileNavigator m_fileNavigator;
-  private Text                 m_serverOptionsField;
-  private Button               m_resetOptionsButton;
+  private static final String DOMAIN_CONFIG           = "Domain Configuration";
+  private static final String BROWSE                  = "Browse...";
+  private static final String RESET                   = "Reset";
+  private static final String SERVER_OPTIONS          = "Server Options";
 
-  private static final String  DEFAULT_CONFIG_FILENAME = TcPlugin.DEFAULT_CONFIG_FILENAME;
-  private static final String  DEFAULT_SERVER_OPTIONS  = TcPlugin.DEFAULT_SERVER_OPTIONS;
+  private Text                m_configPathField;
+  private Button              m_configFileButton;
+  private Text                m_serverOptionsField;
+  private Button              m_resetOptionsButton;
 
-  public PropertyPage() {
-    super();
-    m_display = Display.getCurrent();
-  }
+  private static final String DEFAULT_CONFIG_FILENAME = TcPlugin.DEFAULT_CONFIG_FILENAME;
+  private static final String DEFAULT_SERVER_OPTIONS  = TcPlugin.DEFAULT_SERVER_OPTIONS;
 
   private void fillControls() {
     TcPlugin plugin = TcPlugin.getDefault();
@@ -59,7 +55,7 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
     topComp.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
     Group domainConfig = new Group(topComp, SWT.SHADOW_ETCHED_IN);
-    domainConfig.setText("Domain Configuration");
+    domainConfig.setText(DOMAIN_CONFIG);
     gridLayout = new GridLayout();
     gridLayout.numColumns = 2;
     domainConfig.setLayout(gridLayout);
@@ -69,28 +65,23 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
     m_configPathField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
     m_configFileButton = new Button(domainConfig, SWT.PUSH);
-    m_configFileButton.setText("  Browse...  ");
+    m_configFileButton.setText(BROWSE);
     m_configFileButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
+    SWTUtil.applyDefaultButtonSize(m_configFileButton);
     m_configFileButton.addSelectionListener(new SelectionAdapter() {
       public void widgetSelected(SelectionEvent e) {
-        if (m_fileNavigator == null) {
-          m_fileNavigator = new ProjectFileNavigator(null, "xml");
-          m_fileNavigator.setActionListener(new NavigatorListener());
-        }
-        m_fileNavigator.init(getProject());
-        m_fileNavigator.center();
-        m_display.asyncExec(new Runnable() {
-          public void run() {
-            m_fileNavigator.setVisible(true);
-            m_fileNavigator.toFront();
-            m_fileNavigator.setAlwaysOnTop(true);
+        NavigatorBehavior behavior = new FileBehavior();
+        PackageNavigator dialog = new PackageNavigator(getShell(), behavior.getTitle(), getProject(), behavior);
+        dialog.addValueListener(new UpdateEventListener() {
+          public void handleUpdate(UpdateEvent event) {
+            m_configPathField.setText((String) event.data);
           }
         });
+        dialog.open();
       }
     });
-
     Group serverOptions = new Group(topComp, SWT.SHADOW_ETCHED_IN);
-    serverOptions.setText("Server Options");
+    serverOptions.setText(SERVER_OPTIONS);
     gridLayout = new GridLayout();
     gridLayout.numColumns = 2;
     serverOptions.setLayout(gridLayout);
@@ -104,8 +95,9 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
     m_serverOptionsField.setLayoutData(gd);
 
     m_resetOptionsButton = new Button(serverOptions, SWT.PUSH);
-    m_resetOptionsButton.setText("  Reset  ");
-    m_resetOptionsButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END | GridData.VERTICAL_ALIGN_BEGINNING));
+    m_resetOptionsButton.setText(RESET);
+    m_resetOptionsButton.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
+    SWTUtil.applyDefaultButtonSize(m_resetOptionsButton);
     m_resetOptionsButton.addSelectionListener(new SelectionAdapter() {
       public void widgetSelected(SelectionEvent e) {
         m_serverOptionsField.setText(DEFAULT_SERVER_OPTIONS);
@@ -116,27 +108,6 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
     composite.setLayoutData(new GridData(GridData.FILL_VERTICAL));
     fillControls();
     return topComp;
-  }
-
-  class NavigatorListener implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          IResource member = m_fileNavigator.getSelectedMember();
-          if (member != null) {
-            if (member instanceof IFolder) {
-              member = ((IFolder) member).getFile(TcPlugin.DEFAULT_CONFIG_FILENAME);
-            }
-            final IResource finalMember = member;
-            m_display.asyncExec(new Runnable() {
-              public void run() {
-                m_configPathField.setText(finalMember.getProjectRelativePath().toString());
-              }
-            });
-          }
-        }
-      });
-    }
   }
 
   protected void performDefaults() {

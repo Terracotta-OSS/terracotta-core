@@ -1,123 +1,111 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso.dialogs;
 
-import org.dijon.ButtonGroup;
-import org.dijon.Container;
-import org.dijon.ContainerResource;
-import org.dijon.DictionaryResource;
-import org.dijon.TextField;
-import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.awt.SWT_AWT;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Shell;
-import org.terracotta.dso.PatternHelper;
-import org.terracotta.dso.TcPlugin;
+import org.eclipse.swt.widgets.Text;
+import org.terracotta.ui.util.SWTUtil;
 
-import com.tc.admin.common.XAbstractAction;
+import com.tc.util.event.EventMulticaster;
+import com.tc.util.event.UpdateEvent;
+import com.tc.util.event.UpdateEventListener;
 import com.terracottatech.config.LockLevel;
 
-import java.awt.BorderLayout;
-import java.awt.Frame;
-import java.awt.Panel;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-
-import javax.swing.InputMap;
-import javax.swing.JComponent;
-import javax.swing.JRootPane;
-import javax.swing.KeyStroke;
-
-/**
- * Given an IMethod display a form letting the user specify the lock's name and level. 
- */
-
 public class LockAttributesDialog extends MessageDialog {
-  private static ContainerResource m_panelRes;
-  
-  private TextField    m_nameField;
-  private ButtonGroup  m_typeGroup;
-  private IJavaElement m_element;
-  
-  private static final String ENTER_CMD = "ENTER";
-  
-  static {
-    DictionaryResource topRes = TcPlugin.getDefault().getResources();
-    m_panelRes = (ContainerResource)topRes.findComponent("LockAttributesPanel"); 
+
+  private static final String    TITLE = "Specify Named-Lock Attributes";
+  private final Shell            m_parentShell;
+  private final EventMulticaster m_valueListener;
+  private Layout                 m_layout;
+
+  public LockAttributesDialog(Shell shell, String message) {
+    super(shell, TITLE, null, message, MessageDialog.NONE, new String[] {
+      IDialogConstants.OK_LABEL,
+      IDialogConstants.CANCEL_LABEL }, 0);
+    this.m_parentShell = shell;
+    this.m_valueListener = new EventMulticaster();
   }
   
-  public LockAttributesDialog(Shell parentShell, IJavaElement element) {
-    super(parentShell, "Specify Named-Lock Attributes", null,
-          PatternHelper.getExecutionPattern(element),
-          MessageDialog.NONE,
-          new String[] {IDialogConstants.OK_LABEL,
-                        IDialogConstants.CANCEL_LABEL}, 0);
-    m_element = element;
+  public void addValueListener(UpdateEventListener listener) {
+    m_valueListener.addListener(listener);
   }
-  
+
+  protected void configureShell(Shell shell) {
+    super.configureShell(shell);
+    shell.setSize(400, 180);
+    SWTUtil.placeDialogInCenter(m_parentShell, shell);
+  }
+
   protected Control createCustomArea(Composite parent) {
-    Composite composite = new Composite(parent, SWT.EMBEDDED);
-    
-    composite.setLayoutData(new GridData(GridData.FILL_BOTH));
-
-    Frame frame = SWT_AWT.new_Frame(composite);
-  
-    JRootPane rootPane = new JRootPane();
-    Panel     root     = new Panel(new BorderLayout());
-    Container panel    = new Container(m_panelRes);
-
-    frame.add(root);
-    root.add(rootPane);
-    rootPane.getContentPane().add(panel);
-
-    m_nameField = (TextField)panel.findComponent("NameField");
-    m_nameField.setText(m_element.getElementName());
-    
-    m_typeGroup = (ButtonGroup)panel.findComponent("TypeGroup");
-    m_typeGroup.setSelectedIndex(1);
-
-    panel.getActionMap().put(ENTER_CMD, new XAbstractAction() {
-      public void actionPerformed(ActionEvent ae) {
-        acceptValues();
-      }
-    });
-    
-    InputMap inputMap = panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false), ENTER_CMD);
-
-    frame.setVisible(true);
-
-    return composite;
+    m_layout = new Layout(parent);
+    return parent;
   }
-  
-  private void acceptValues() {
-    getShell().getDisplay().syncExec(new Runnable() {
-      public void run(){
-        buttonPressed(IDialogConstants.OK_ID);
-      }
-    });
+
+  protected void buttonPressed(int buttonId) {
+    if (buttonId == IDialogConstants.OK_ID) {
+      LockLevel.Enum lockLevel = null;
+      if (m_layout.m_read.getSelection()) lockLevel = LockLevel.READ;
+      if (m_layout.m_write.getSelection()) lockLevel = LockLevel.WRITE;
+      m_valueListener.fireUpdateEvent(new UpdateEvent(new Object[] { m_layout.m_name.getText(), lockLevel }));
+    }
+    super.buttonPressed(buttonId);
   }
-  
-  /*
-   * Return the user-specified lock name.
-   */
-  public String getLockName() {
-    return m_nameField.getText();
-  }
-  
-  /*
-   * Return the user-specified lock level:
-   *  LockLevel.READ
-   *  LockLevel.WRITE
-   */
-  public LockLevel.Enum getLockLevel() {
-    return "WriteButton".equals(m_typeGroup.getSelected()) ?
-        LockLevel.WRITE : LockLevel.READ;
+
+  // --------------------------------------------------------------------------------
+
+  private class Layout {
+
+    private static final String NAME  = "Name";
+    private static final String TYPE  = "Type";
+    private static final String READ  = "Read";
+    private static final String WRITE = "Write";
+    private final Text          m_name;
+    private final Button        m_read;
+    private final Button        m_write;
+
+    private Layout(Composite parent) {
+      Composite comp = new Composite(parent, SWT.NONE);
+      GridLayout gridLayout = new GridLayout();
+      gridLayout.numColumns = 2;
+      gridLayout.marginHeight = 5;
+      gridLayout.marginWidth = 5;
+      comp.setLayout(gridLayout);
+      comp.setLayoutData(new GridData(GridData.FILL_BOTH));
+
+      Group nameGroup = new Group(comp, SWT.BORDER);
+      gridLayout = new GridLayout();
+      gridLayout.numColumns = 1;
+      gridLayout.marginHeight = 5;
+      gridLayout.marginWidth = 5;
+      nameGroup.setText(NAME);
+      nameGroup.setLayout(gridLayout);
+      nameGroup.setLayoutData(new GridData(GridData.GRAB_HORIZONTAL | GridData.FILL_HORIZONTAL));
+      this.m_name = new Text(nameGroup, SWT.BORDER);
+      m_name.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+      Group typeGroup = new Group(comp, SWT.BORDER);
+      gridLayout = new GridLayout();
+      gridLayout.numColumns = 2;
+      gridLayout.marginHeight = 5;
+      gridLayout.marginWidth = 5;
+      typeGroup.setText(TYPE);
+      typeGroup.setLayout(gridLayout);
+      this.m_read = new Button(typeGroup, SWT.RADIO);
+      m_read.setText(READ);
+      m_write = new Button(typeGroup, SWT.RADIO);
+      m_write.setText(WRITE);
+      m_write.setSelection(true);
+    }
   }
 }

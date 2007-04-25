@@ -14,6 +14,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 
+// XXX: DEPRECATED
 public class TextComponentHelper extends XPopupListener
   implements CaretListener
 {

@@ -11,6 +11,7 @@ import org.dijon.DialogResource;
 import org.dijon.Label;
 import org.dijon.TextField;
 
+import com.tc.util.event.UpdateEvent;
 import com.tc.util.event.UpdateEventListener;
 
 import java.awt.BorderLayout;
@@ -229,20 +230,20 @@ public final class ConnectDialog extends Dialog {
         Map env = m_connectManager.getConnectionEnvironment();
         m_jmxc = new AuthenticatingJMXConnector(url, env);
         ((AuthenticatingJMXConnector) m_jmxc).addAuthenticationListener(new UpdateEventListener() {
-          public void handleUpdate(Object obj) {
+          public void handleUpdate(UpdateEvent obj) {
             m_connectionTimer.stopTimer();
             m_connectionTimer.interrupt();
             enableAuthenticationDialog();
           }
         });
         ((AuthenticatingJMXConnector) m_jmxc).addCollapseListener(new UpdateEventListener() {
-          public void handleUpdate(Object obj) {
+          public void handleUpdate(UpdateEvent obj) {
             m_connectionTimer.setTimer();
             disableAuthenticationDialog();
           }
         });
         ((AuthenticatingJMXConnector) m_jmxc).addExceptionListener(new UpdateEventListener() {
-          public void handleUpdate(Object obj) {
+          public void handleUpdate(UpdateEvent obj) {
             m_connectionTimer.setTimer();
             m_connectionTimer.interrupt();
             disableAuthenticationDialog();

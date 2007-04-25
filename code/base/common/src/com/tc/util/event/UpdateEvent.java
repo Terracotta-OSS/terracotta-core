@@ -4,9 +4,12 @@
  */
 package com.tc.util.event;
 
-import java.util.EventListener;
+public class UpdateEvent {
 
-public interface UpdateEventListener extends EventListener {
+  public Object              data;
+  public UpdateEventListener source; // may be null
 
-  void handleUpdate(UpdateEvent e);
+  public UpdateEvent(Object data) {
+    this.data = data;
+  }
 }
