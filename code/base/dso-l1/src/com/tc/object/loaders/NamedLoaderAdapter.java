@@ -85,16 +85,4 @@ public class NamedLoaderAdapter extends ClassAdapter implements Opcodes, ClassAd
     super.visitEnd();
   }
 
-  String __tc_loaderName;
-
-  String get() {
-    if (__tc_loaderName == null) {
-      //
-      throw new IllegalStateException(
-                                      "Classloader name not set, instances defined from this loader not supported in Terracotta (loader: "
-                                          + getClass().getName() + ")");
-    }
-    return __tc_loaderName;
-  }
-
 }
