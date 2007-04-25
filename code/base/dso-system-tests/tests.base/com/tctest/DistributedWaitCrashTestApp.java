@@ -12,30 +12,32 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
 import com.tc.util.Assert;
 
-public class DistributedWaitTestApp extends AbstractTransparentApp {
+public class DistributedWaitCrashTestApp extends AbstractTransparentApp {
 
   private static final long WAIT_TIME = 15 * 1000;
   private Object            myRoot    = new Object();
 
-  public DistributedWaitTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public DistributedWaitCrashTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
   }
 
   public void run() {
-    synchronized (myRoot) {
-      try {
-        long start = System.currentTimeMillis();
-        myRoot.wait(WAIT_TIME);
-        long end = System.currentTimeMillis();
-        Assert.assertEquals((double) WAIT_TIME, (double) (end - start), 3 * 1000.0);
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
+    int wokeupCount = 0;
+    for (int i = 0; i < 4; i++) {
+      synchronized (myRoot) {
+        try {
+          myRoot.wait(WAIT_TIME);
+          System.out.println("woke up count: " + wokeupCount++);
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
+    Assert.assertEquals(4, wokeupCount);
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    String testClass = DistributedWaitTestApp.class.getName();
+    String testClass = DistributedWaitCrashTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
     String methodExpression = "* " + testClass + "*.*(..)";
