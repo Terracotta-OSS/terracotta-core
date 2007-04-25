@@ -469,16 +469,6 @@ public class GenericSetTestApp extends GenericTestApp {
     config.addReadAutolock(readOnlyMethodExpression);
   }
 
-  private static class NullTolerantComparator implements Comparator {
-
-    public int compare(Object o1, Object o2) {
-      if (o1 == null && o2 == null) { return 0; }
-      if (o1 == null && o2 != null) { return -1; }
-      if (o1 != null && o2 == null) { return 1; }
-      return ((Comparable) o1).compareTo(o2);
-    }
-  }
-
   private static class MyHashSet extends HashSet {
     public MyHashSet() {
       super();
