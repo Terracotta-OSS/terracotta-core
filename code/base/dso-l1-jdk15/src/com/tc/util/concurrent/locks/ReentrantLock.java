@@ -322,28 +322,59 @@ public class ReentrantLock implements Lock, java.io.Serializable {
   }
 
   private static class SyncCondition implements java.io.Serializable {
+    private final static byte SIGNALLED     = 0;
+    private final static byte NOT_SIGNALLED = 1;
+
+    private int               version;
+    private byte              signalled;
+
     public SyncCondition() {
       super();
+      this.version = 0;
+      this.signalled = NOT_SIGNALLED;
+    }
+
+    public boolean isSignalled() {
+      return signalled == SIGNALLED;
+    }
+
+    public void setSignalled() {
+      signalled = SIGNALLED;
+    }
+
+    public void incrementVersionIfSignalled() {
+      if (isSignalled()) {
+        this.version++;
+        resetSignalled();
+      }
+    }
+
+    public int getVersion() {
+      return this.version;
+    }
+
+    public boolean hasNotSignalledOnVersion(int targetVersion) {
+      return !isSignalled() && (this.version == targetVersion);
+    }
+
+    private void resetSignalled() {
+      this.signalled = NOT_SIGNALLED;
     }
   }
 
   private static class ConditionObject implements Condition, java.io.Serializable {
-    //private static final int    SIGNALLED     = 1;
-    //private static final int    NOT_SIGNALLED = 0;
-
     private transient List      waitingThreads;
     private transient int       numOfWaitingThreards;
     private transient Map       waitOnUnshared;
 
     private final ReentrantLock originalLock;
-    private final Object        realCondition;
-    //private int                 signal        = NOT_SIGNALLED;
+    private final SyncCondition realCondition;
 
     private static long getSystemNanos() {
       return System.nanoTime();
     }
 
-    public ConditionObject(Object realCondition, ReentrantLock originalLock) {
+    public ConditionObject(SyncCondition realCondition, ReentrantLock originalLock) {
       this.originalLock = originalLock;
       this.realCondition = realCondition;
       this.waitingThreads = new ArrayList();
@@ -405,22 +436,26 @@ public class ReentrantLock implements Lock, java.io.Serializable {
 
       int numOfHolds = originalLock.getHoldCount();
 
+      realCondition.incrementVersionIfSignalled();
+      int version = realCondition.getVersion();
+      fullRelease();
       try {
         ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
         UnsafeUtil.monitorEnter(realCondition);
         boolean isLockInUnshared = isLockRealConditionInUnshared();
         try {
-          fullRelease();
-          waitingThreads.add(currentThread);
-          numOfWaitingThreards++;
+          if (realCondition.hasNotSignalledOnVersion(version)) {
+            waitingThreads.add(currentThread);
+            numOfWaitingThreards++;
 
-          addWaitOnUnshared();
-          try {
-            ManagerUtil.objectWait0(realCondition);
-          } finally {
-            waitOnUnshared.remove(currentThread);
-            waitingThreads.remove(currentThread);
-            numOfWaitingThreards--;
+            addWaitOnUnshared();
+            try {
+              ManagerUtil.objectWait0(realCondition);
+            } finally {
+              waitOnUnshared.remove(currentThread);
+              waitingThreads.remove(currentThread);
+              numOfWaitingThreards--;
+            }
           }
         } finally {
           UnsafeUtil.monitorExit(realCondition);
@@ -442,26 +477,30 @@ public class ReentrantLock implements Lock, java.io.Serializable {
 
       int numOfHolds = originalLock.getHoldCount();
       boolean isInterrupted = false;
+      realCondition.incrementVersionIfSignalled();
+      int version = realCondition.getVersion();
+      fullRelease();
       try {
         ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
         UnsafeUtil.monitorEnter(realCondition);
         boolean isLockInUnshared = isLockRealConditionInUnshared();
         try {
-          fullRelease();
-          while (true) {
-            waitingThreads.add(currentThread);
-            numOfWaitingThreards++;
+          if (realCondition.hasNotSignalledOnVersion(version)) {
+            while (true) {
+              waitingThreads.add(currentThread);
+              numOfWaitingThreards++;
 
-            addWaitOnUnshared();
-            try {
-              ManagerUtil.objectWait0(realCondition);
-              break;
-            } catch (InterruptedException e) {
-              isInterrupted = true;
-            } finally {
-              waitOnUnshared.remove(currentThread);
-              waitingThreads.remove(currentThread);
-              numOfWaitingThreards--;
+              addWaitOnUnshared();
+              try {
+                ManagerUtil.objectWait0(realCondition);
+                break;
+              } catch (InterruptedException e) {
+                isInterrupted = true;
+              } finally {
+                waitOnUnshared.remove(currentThread);
+                waitingThreads.remove(currentThread);
+                numOfWaitingThreards--;
+              }
             }
           }
         } finally {
@@ -485,30 +524,33 @@ public class ReentrantLock implements Lock, java.io.Serializable {
       if (!originalLock.isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
       if (Thread.interrupted()) { throw new InterruptedException(); }
 
-      // signal = NOT_SIGNALLED;
       int numOfHolds = originalLock.getHoldCount();
-      // fullRelease();
+      realCondition.incrementVersionIfSignalled();
+      int version = realCondition.getVersion();
+      fullRelease();
       try {
         ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
         UnsafeUtil.monitorEnter(realCondition);
         boolean isLockInUnshared = isLockRealConditionInUnshared();
         try {
-          fullRelease();
-          waitingThreads.add(currentThread);
-          numOfWaitingThreards++;
+          if (realCondition.hasNotSignalledOnVersion(version)) {
+            waitingThreads.add(currentThread);
+            numOfWaitingThreards++;
 
-          addWaitOnUnshared();
-          try {
-            long startTime = getSystemNanos();
-            TimeUnit.NANOSECONDS.timedWait(realCondition, nanosTimeout);
-            long remainingTime = nanosTimeout - (getSystemNanos() - startTime);
-            return remainingTime;
-          } finally {
-            waitOnUnshared.remove(currentThread);
-            waitingThreads.remove(currentThread);
-            numOfWaitingThreards--;
+            addWaitOnUnshared();
+            try {
+              long startTime = getSystemNanos();
+              TimeUnit.NANOSECONDS.timedWait(realCondition, nanosTimeout);
+              long remainingTime = nanosTimeout - (getSystemNanos() - startTime);
+              return remainingTime;
+            } finally {
+              waitOnUnshared.remove(currentThread);
+              waitingThreads.remove(currentThread);
+              numOfWaitingThreards--;
+            }
+          } else {
+            return nanosTimeout;
           }
-
         } finally {
           UnsafeUtil.monitorExit(realCondition);
           if (!isLockInUnshared) {
@@ -551,14 +593,13 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         if (hasWaitOnUnshared()) {
           realCondition.notify();
         }
-        //signal = SIGNALLED;
+        realCondition.setSignalled();
       } finally {
         UnsafeUtil.monitorExit(realCondition);
         if (!isLockInUnshared) {
           ManagerUtil.monitorExit(realCondition);
         }
       }
-
     }
 
     public void signalAll() {
@@ -571,7 +612,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         if (hasWaitOnUnshared()) {
           realCondition.notifyAll();
         }
-        //signal = SIGNALLED;
+        realCondition.setSignalled();
       } finally {
         UnsafeUtil.monitorExit(realCondition);
         if (!isLockInUnshared) {
@@ -599,7 +640,6 @@ public class ReentrantLock implements Lock, java.io.Serializable {
       this.waitingThreads = new ArrayList();
       this.numOfWaitingThreards = 0;
       this.waitOnUnshared = new HashMap();
-      //this.signal = NOT_SIGNALLED;
     }
 
     private void writeObject(java.io.ObjectOutputStream s) throws java.io.IOException {

@@ -43,8 +43,8 @@ public class ChangePackageClassAdapter extends ClassAdapter implements Opcodes {
     super(cv);
     this.targetName = targetPackage.replace(DOT_DELIMITER, SLASH_DELIMITER) + SLASH_DELIMITER + targetClassName;
     this.newName = newPackage.replace(DOT_DELIMITER, SLASH_DELIMITER) + SLASH_DELIMITER + targetClassName;
-    this.targetType = "L"+targetName+";";
-    this.newType = "L"+newName+";";
+    this.targetType = "L"+targetName;
+    this.newType = "L"+newName;
     this.innerClassNames = innerClassesHolder;
   }
 
