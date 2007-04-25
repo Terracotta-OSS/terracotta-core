@@ -5,7 +5,7 @@ package com.tc.test.server.tcconfig;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 
 /**
@@ -19,13 +19,13 @@ public final class TerracottaServerConfigGenerator {
 
   public TerracottaServerConfigGenerator(File location, StandardTerracottaAppServerConfig config)
       throws FileNotFoundException, IOException {
-
+    this.configFile = new File(location + File.separator + NAME);
     this.config = config;
-    configFile = new File(location + File.separator + NAME);
+
     config.build();
-    byte[] data = config.toString().getBytes();
-    FileOutputStream out = new FileOutputStream(configFile);
-    out.write(data);
+    
+    FileWriter out = new FileWriter(configFile);
+    out.write(config.toString());
     out.flush();
     out.close();
   }

@@ -82,7 +82,7 @@ public class StandardAppServerParameters implements AppServerParameters {
     appendSysProp(name, Integer.toString(value));
   }
 
-  private void appendSysProp(String name, String value) {
+  public void appendSysProp(String name, String value) {
     if (value == null) appendJvmArgs("-D" + name);
     else appendJvmArgs("-D" + name + "=" + value);
   }
