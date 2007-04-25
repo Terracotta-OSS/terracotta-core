@@ -28,22 +28,42 @@ resolve_dependencies
 compile
     Compiles all the code.
 
+smart_compile <project-name>
+    Compiles the project and all of its dependencies
+
 show_modules
     Prints a list of all the modules the system knows about.
 
+USEFUL OPTIONS
 
+compile_only=dso-container-tests,dso-spring-tests
+    Only compile specified projects
+    
+--no-ivy
+    Don't run ivy
+    
+--no-compile
+    Don't compile
+    
 TESTING
 
+check
+    Runs all tests
+
+check check_modules=dso-container-tests
+    Run all tests under module(s) (comma separated list)
+    
 check_one <test_name>
     Runs a single named test where <test_name> is the class
     name of the Java class containing the test to run.  This
     target will scan all modules to find the test.
 
-    Example: tcbuild check_one AssertTest
+    Example: tcbuild check_one AssertTest --no-ivy compile_only=common
 
-check
-    Runs all tests
-
+show_classpath <project> <subtree>
+    Show the classpath of the subtree in this project
+    Ex: tcbuild show_classpath dso-container-tets tests.system
+    
 check_prep <module> <type>
     Prepare to run tests from an external tool (e.g. Eclipse).
     <module> may be the name of a module as specified in modules.def.yml, or
@@ -88,16 +108,17 @@ show_test_results <test_run_name>
 
 PACKAGING & DISTRIBUTION
 
-dist <product_code> <distribution_type>
-    Assembles the kit. It takes 2 arguments: <product_code> <distribution_type> It
-    uses these values to locate the appropriate kit definition file used to build the
-    kit. By default, <product_code> is DSO and <distribution_type> is OPENSOURCE -
-    so it looks for the kit definition file named 'dso-opensource.def.yml' in
-    the code/base/buildconfig/distribution - if you want to know what values are
-    appropriate for these arguments, list the contents of this directory.
+NOTE: Output of binaries are placed under code/base/build/dist
 
-create_package <product_code> <distribution_type>
-    Assembles and packages the kit. Takes the same argument as the dist target.
+dist
+    Create distribution binaries
+    
+dist web
+    Create eclipse plugin binaries
+
+create_package <product_code>
+    Assembles and packages the kit. Product codes: dso, web
+    Default product_code is dso. 
 
 create_all_packages
     Assembles, packages, and publishes all possible kits, based on the
@@ -120,12 +141,6 @@ run_server
 
 
 MISCELLANEOUS
-
-show_classpath <module_name> <subtree>
-    Prints the CLASSPATH that is used when code is run against
-    the module with name <module_name> in the named <subtree>.
-
-    Example: tcbuild show_classpath common test.unit
 
 create_boot_jar <jvm_type>
     Creates a boot JAR file for <jvm_type>
