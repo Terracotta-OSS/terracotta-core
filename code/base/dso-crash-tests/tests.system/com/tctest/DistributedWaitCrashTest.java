@@ -3,7 +3,7 @@
  */
 package com.tctest;
 
-public class DistributedWaitTest extends TransparentTestBase {
+public class DistributedWaitCrashTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 2;
   
@@ -15,5 +15,9 @@ public class DistributedWaitTest extends TransparentTestBase {
   protected Class getApplicationClass() {
     return DistributedWaitTestApp.class;
   }
+  
+  protected boolean canRunCrash() {
+    return true;
+  }  
 
 }
