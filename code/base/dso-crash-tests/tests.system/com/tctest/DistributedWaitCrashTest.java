@@ -7,6 +7,10 @@ public class DistributedWaitCrashTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 2;
   
+  public DistributedWaitCrashTest() {
+    this.disableAllUntil("2007-05-01");
+  }
+  
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
