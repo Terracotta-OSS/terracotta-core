@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CyclicBarrier;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
@@ -38,9 +37,6 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
   public static final String      HOST_NAME        = "host-name";
 
   private final ApplicationConfig config;
-
-  private final int               initialNodeCount = getParticipantCount();
-  private final CyclicBarrier     barrier           = new CyclicBarrier(initialNodeCount);
 
   private MBeanServer             server           = null;
   private ObjectName              clusterBean      = null;
@@ -59,15 +55,11 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-
     String testClass = ClusterMembershipEventJMXTestApp.class.getName();
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     config.addIncludePattern(testClass + "$*");
-
-    // roots
-    spec.addRoot("stage1", "stage1");
   }
 
   public void run() {
@@ -89,9 +81,10 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     }
     echo("Server restarted successfully.");
     spawnNewClient();
-    Thread.sleep(5000);
-    barrier.await();
     synchronized (eventsCount) {
+      while (eventsCount.size() < 4) {
+        eventsCount.wait();
+      }
       Assert.assertEquals(1, ((Integer)eventsCount.get("com.tc.cluster.event.nodeDisconnected")).intValue());
       Assert.assertEquals(1, ((Integer)eventsCount.get("com.tc.cluster.event.nodeConnected")).intValue());
       Assert.assertEquals(1, ((Integer)eventsCount.get("com.tc.cluster.event.thisNodeDisconnected")).intValue());
@@ -157,14 +150,14 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
   public void handleNotification(Notification notification, Object handback) {
     synchronized (eventsCount) {
       String msgType = notification.getType();
-      if (eventsCount.containsKey(msgType)) {
-        Integer count = (Integer) eventsCount.get(msgType);
+      Integer count = (Integer) eventsCount.get(msgType); 
+      if (count != null) {
         eventsCount.put(msgType, new Integer(count.intValue() + 1));
       } else {
         eventsCount.put(msgType, new Integer(1));
       }
-
       echo("type=" + notification.getType() + ", message=" + notification.getMessage());
+      eventsCount.notifyAll();
     }
   }
 
@@ -174,7 +167,13 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
 
   public static class L1Client {
     public static void main(String args[]) {
-      // nothing to do
+      try {
+        Thread.sleep(2000);        
+      } catch (InterruptedException e) {
+        //ignored
+      } finally {
+        System.out.println("L1Client exiting.");
+      }
     }
   }
 
