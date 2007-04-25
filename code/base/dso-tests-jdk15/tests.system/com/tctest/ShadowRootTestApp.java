@@ -27,6 +27,7 @@ public class ShadowRootTestApp extends AbstractErrorCatchingTransparentApp {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = ShadowRootTestApp.class.getName();
+    config.addIncludePattern(testClass);
     config.addIncludePattern(BaseClass.class.getName());
     config.addIncludePattern(DerivedClass.class.getName());
 
