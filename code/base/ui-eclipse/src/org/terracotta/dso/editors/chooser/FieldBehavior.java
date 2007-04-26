@@ -84,7 +84,8 @@ public final class FieldBehavior implements NavigatorBehavior {
     list.add(field.getElementName());
     IJavaElement javaPart = field.getParent();
     while (javaPart != null) {
-      if (javaPart.getElementType() == IJavaElement.TYPE || javaPart.getElementType() == IJavaElement.PACKAGE_FRAGMENT) {
+      if (javaPart.getElementType() == IJavaElement.TYPE || javaPart.getElementType() == IJavaElement.PACKAGE_FRAGMENT
+          || javaPart.getElementType() == IJavaElement.PACKAGE_DECLARATION) {
         list.add(javaPart.getElementName());
 
       }
