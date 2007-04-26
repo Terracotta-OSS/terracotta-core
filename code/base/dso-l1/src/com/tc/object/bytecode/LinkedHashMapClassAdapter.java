@@ -17,12 +17,12 @@ public class LinkedHashMapClassAdapter extends ChangeClassNameHierarchyAdapter i
     super(cv);
   }
 
-  public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+  public final void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     super.visit(version, access, name, signature, superName, interfaces);
     this.className = name;
   }
 
-  public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+  public final MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 
     if (this.className.equals("java/util/LinkedHashMap") && name.equals("addEntry")) {
@@ -32,7 +32,7 @@ public class LinkedHashMapClassAdapter extends ChangeClassNameHierarchyAdapter i
     return mv;
   }
 
-  private static class AddEntryMethodAdapter extends MethodAdapter implements Opcodes {
+  private final static class AddEntryMethodAdapter extends MethodAdapter implements Opcodes {
     public AddEntryMethodAdapter(MethodVisitor mv) {
       super(mv);
     }
@@ -43,7 +43,7 @@ public class LinkedHashMapClassAdapter extends ChangeClassNameHierarchyAdapter i
      * This fixes the ClassCastException thrown when an instrumented class extends java.util.LinkedHashMap
      * and overrides the removeEldestEntry method.
      */
-    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+    public final void visitMethodInsn(int opcode, String owner, String name, String desc) {
       if ((opcode == INVOKEVIRTUAL)
           && (owner.equals("java/util/LinkedHashMap") && (name.equals("removeEldestEntry")) && (desc
               .equals("(Ljava/util/Map$Entry;)Z")))) {
