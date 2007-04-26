@@ -36,6 +36,8 @@ public class ShadowVariableTestApp extends AbstractTransparentApp {
 
     Assert.eval(root.getBaseMyNumber().equals(new Integer(1)));
     Assert.eval(root.getSubMyNumber().equals(new Integer(2)));
+    
+    Assert.assertEquals(0, root.getPublicInt());
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
@@ -68,6 +70,11 @@ public class ShadowVariableTestApp extends AbstractTransparentApp {
     public Integer getBaseMyNumber() {
       return this.myNumber;
     }
+    
+    public int getPublicInt() {
+      return publicInt;
+    }   
+
   }
 
   private static class ShadowSub extends ShadowBase {
@@ -76,7 +83,7 @@ public class ShadowVariableTestApp extends AbstractTransparentApp {
 
     protected final int finalInt = 2;
     
-    public int publicInt = 20;
+    public int publicInt;
 
     public int getFinalInt() {
       return finalInt;
