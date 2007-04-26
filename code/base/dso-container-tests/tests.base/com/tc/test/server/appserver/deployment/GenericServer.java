@@ -41,6 +41,7 @@ import javax.management.MBeanServerConnection;
 
 import junit.framework.Assert;
 
+
 public class GenericServer extends AbstractStoppable implements WebApplicationServer {
 
   private int                         jmxRemotePort;
@@ -226,10 +227,11 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     String fullURL = "http://localhost:" + result.serverPort() + url;
     logger.debug("Getting page: " + fullURL);
     
-    WebResponse page = wc.getResponse(fullURL);
-    Assert.assertEquals(200, page.getResponseCode());
+    wc.setExceptionsThrownOnErrorStatus(false);
+    WebResponse response = wc.getResponse(fullURL);
+    Assert.assertEquals("Server error:/n" + response.getText(), 200, response.getResponseCode());
     logger.debug("Got page: " + fullURL);
-    return page;
+    return response;
   }
 
   public void redeployWar(Deployment warDeployment, String context) {

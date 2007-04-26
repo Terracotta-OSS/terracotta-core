@@ -74,7 +74,6 @@ import com.tc.weblogic.transform.ServerAdapter;
 import com.tc.weblogic.transform.ServletResponseImplAdapter;
 import com.tc.weblogic.transform.TerracottaServletResponseImplAdapter;
 import com.tc.weblogic.transform.WebAppServletContextAdapter;
-import com.tc.wicket.WicketWebApplicationAdapter;
 import com.tcclient.util.DSOUnsafe;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Module;
@@ -759,8 +758,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     addLock("* test.event.*.setTextArea(..)", ld);
 
     // TODO move into its own plugin/module
-    addCustomAdapter("wicket.protocol.http.WebApplication", new WicketWebApplicationAdapter());
-
     doAutoconfigForSpring();
     doAutoconfigForSpringWebFlow();
 

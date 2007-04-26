@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2007 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved
+
+-->
+<xml-fragment>
+
+  <web-applications>
+    <web-application>wicket-examples</web-application>
+  </web-applications>
+
+  <transient-fields>
+    <field-name>org.apache.wicket.markup.html.PackageResource.locale</field-name>
+  </transient-fields>
+
+  <locks>
+    <autolock>
+      <method-expression>* org.apache.wicket.IClusterable+.*(..)</method-expression>
+    </autolock>
+  </locks>
+
+  <instrumented-classes>
+
+    <include>
+      <class-expression>org.apache.wicket.IClusterable+</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+
+    <include>
+      <class-expression>org.apache.wicket.PageParameters</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+
+    <include>
+      <class-expression>org.apache.wicket.util.value.*</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+
+    <include>
+      <class-expression>org.apache.wicket.util.lang.*</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+
+    <include>
+      <class-expression>org.apache.wicket.util.string..*</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+
+    <include>
+      <class-expression>org.apache.wicket.util.time.*</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+
+    <include>
+      <class-expression>org.apache.wicket.util.convert..*</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+
+    <include>
+      <class-expression>org.apache.wicket.util.collections.ArrayListStack</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+    <include>
+      <class-expression>org.apache.wicket.util.concurrent.CopyOnWriteArrayList</class-expression>
+      <honor-transient>false</honor-transient>
+    </include>
+
+    <include>
+      <class-expression>org.apache.wicket.protocol.http.HttpSessionStore</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+    <include>
+      <class-expression>org.apache.wicket.protocol.http.AbstractHttpSessionStore*</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+
+    <include>
+      <class-expression>org.apache.wicket.datetime.util..*</class-expression>
+    </include>
+    <include>
+      <class-expression>org.joda.time..*</class-expression>
+    </include>
+
+    <include>
+      <class-expression>org.apache.wicket.ajax.AjaxRequestTarget</class-expression>
+    </include>
+
+    <include>
+      <class-expression>org.apache.wicket.extensions.markup.html.tree.DefaultTreeState</class-expression>
+    </include>
+
+    <include>
+      <class-expression>org.apache.wicket.examples.ajax.builtin.tree.ModelBean</class-expression>
+    </include>
+
+    <exclude>org.apache.coyote..*</exclude>
+    <exclude>org.apache.catalina..*</exclude>
+    <exclude>org.apache.jasper..*</exclude>
+    <exclude>org.apache.tomcat..*</exclude>
+
+  </instrumented-classes>
+  
+
+  <additional-boot-jar-classes>
+    <include>java.util.Locale</include>
+    <include>java.awt.Font</include>
+    <include>java.awt.font.TextAttribute</include>
+    <include>java.awt.font.TransformAttribute</include>
+    <include>java.awt.geom.AffineTransform</include>
+
+    <include>java.net.URL</include>
+    <include>java.net.URLStreamHandler</include>
+    <include>java.net.InetAddress</include>
+    <include>java.net.Inet4Address</include>
+    <include>sun.net.www.protocol.http.Handler</include>
+
+    <include>java.text.Format</include>
+    <include>java.text.DateFormat</include>
+    <include>java.text.SimpleDateFormat</include>
+    <include>java.text.DateFormatSymbols</include>
+    <include>java.text.NumberFormat</include>
+    <include>java.text.DecimalFormat</include>
+    <include>java.text.DecimalFormatSymbols</include>
+    
+    <include>java.util.Calendar</include>
+    <include>java.util.GregorianCalendar</include>
+    <include>sun.util.calendar.CalendarDate</include>
+    <include>sun.util.calendar.Gregorian</include>
+    <include>sun.util.calendar.Gregorian$Date</include>
+    <include>sun.util.calendar.BaseCalendar</include>
+    <include>sun.util.calendar.BaseCalendar$Date</include>
+    <include>sun.util.calendar.AbstractCalendar</include>
+    <include>sun.util.calendar.CalendarSystem</include>
+    <include>sun.util.calendar.ZoneInfo</include>
+
+    <include>java.lang.AbstractStringBuilder</include>
+    <include>java.lang.StringBuffer</include>
+
+    <include>java.util.Currency</include>
+    
+    <include>java.util.TimeZone</include>
+    <include>java.util.SimpleTimeZone</include>
+    <include>java.text.DigitList</include>
+    <include>java.text.AttributedCharacterIterator$Attribute</include>
+  </additional-boot-jar-classes>
+
+</xml-fragment>

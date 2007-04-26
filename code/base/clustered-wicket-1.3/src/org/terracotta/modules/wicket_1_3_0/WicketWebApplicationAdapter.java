@@ -1,7 +1,7 @@
 /*
  * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
-package com.tc.wicket;
+package org.terracotta.modules.wicket_1_3_0;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
@@ -35,22 +35,23 @@ public class WicketWebApplicationAdapter extends ClassAdapter implements Opcodes
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 
-    if(!"newSessionStore".equals(name) || !"()Lwicket/session/ISessionStore;".equals(desc)) {
+    if(!"newSessionStore".equals(name) || !"()Lorg/apache/wicket/session/ISessionStore;".equals(desc)) {
       return mv;
     }
 
     mv.visitCode();
     Label l0 = new Label();
     mv.visitLabel(l0);
-    mv.visitLineNumber(603, l0);
-    mv.visitTypeInsn(NEW, "wicket/protocol/http/HttpSessionStore");
+    mv.visitLineNumber(591, l0);
+    mv.visitTypeInsn(NEW, "org/apache/wicket/protocol/http/HttpSessionStore");
     mv.visitInsn(DUP);
-    mv.visitMethodInsn(INVOKESPECIAL, "wicket/protocol/http/HttpSessionStore", "<init>", "()V");
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitMethodInsn(INVOKESPECIAL, "org/apache/wicket/protocol/http/HttpSessionStore", "<init>", "(Lorg/apache/wicket/Application;)V");
     mv.visitInsn(ARETURN);
     Label l1 = new Label();
     mv.visitLabel(l1);
-    mv.visitLocalVariable("this", "Lwicket/protocol/http/WebApplication;", null, l0, l1, 0);
-    mv.visitMaxs(2, 1);
+    mv.visitLocalVariable("this", "Lorg/apache/wicket/protocol/http/WebApplication;", null, l0, l1, 0);
+    mv.visitMaxs(3, 1);
     mv.visitEnd();
     
     return null;
