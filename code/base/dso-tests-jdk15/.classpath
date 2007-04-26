@@ -16,5 +16,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/legacy-test-tree"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common-jdk15"/>
+	<classpathentry kind="lib" path="C:/tc-active-passive/trunk/code/base/dependencies/lib/catalina-tribes-6.0.11-20070418.jar"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>
