@@ -16,6 +16,8 @@ import com.tc.net.groups.*;
 import com.tc.async.api.EventContext;
 import com.tc.async.impl.MockSink;
 import com.tc.net.groups.GroupManagerFactory;
+import com.tc.lang.ThrowableHandler;
+import com.tc.lang.TCThreadGroup;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -31,37 +33,128 @@ public class StateManagerTest extends TCTestCase {
   
   public void testStateManagerTwoServers() throws Exception {
     // 2 nodes join concurrently
-    nodesConcurrentJoining(2);
+    TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandler(logger), "StateManagerTestGroup");
+    // setup throwable ThreadGroup to catch AssertError from Tribes threads.
+    Thread throwableThread = new Thread(threadGroup, new Runnable() {
+        public void run() {
+          try {
+            nodesConcurrentJoining(2);
+          } catch (Exception e) {
+            throw new RuntimeException("testStateManagerTwoServers failed!");
+          }
+        }
+      }
+    );
+    throwableThread.start();
+    throwableThread.join();
   }
   
   public void testStateManagerThreeServers() throws Exception {
     // 3 nodes join concurrently
-    nodesConcurrentJoining(3);
+    TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandler(logger), "StateManagerTestGroup");
+    // setup throwable ThreadGroup to catch AssertError from Tribes threads.
+    Thread throwableThread = new Thread(threadGroup, new Runnable() {
+        public void run() {
+          try {
+            nodesConcurrentJoining(3);
+          } catch (Exception e) {
+            throw new RuntimeException("testStateManagerThreeServers failed!");
+          }
+        }
+      }
+    );
+    throwableThread.start();
+    throwableThread.join();
   }
 
   public void testStateManagerSixServers() throws Exception {
     // 6 nodes join concurrently
-    nodesConcurrentJoining(6);
+    TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandler(logger), "StateManagerTestGroup");
+    // setup throwable ThreadGroup to catch AssertError from Tribes threads.
+    Thread throwableThread = new Thread(threadGroup, new Runnable() {
+        public void run() {
+          try {
+            nodesConcurrentJoining(6);
+          } catch (Exception e) {
+            throw new RuntimeException("testStateManagerSixServers failed!");
+          }
+        }
+      }
+    );
+    throwableThread.start();
+    throwableThread.join();
   }
 
   public void testStateManagerMixJoinAndElect3() throws Exception {
     // 3 nodes mix join and election
-    nodesMixJoinAndElect(3);
+    TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandler(logger), "StateManagerTestGroup");
+    // setup throwable ThreadGroup to catch AssertError from Tribes threads.
+    Thread throwableThread = new Thread(threadGroup, new Runnable() {
+        public void run() {
+          try {
+            nodesMixJoinAndElect(3);
+          } catch (Exception e) {
+            throw new RuntimeException("testStateManagerMixJoinAndElect3 failed!");
+          }
+        }
+      }
+    );
+    throwableThread.start();
+    throwableThread.join();
   }
 
   public void testStateManagerMixJoinAndElect6() throws Exception {
     // 6 nodes mix join and election
-    nodesMixJoinAndElect(6);
+     TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandler(logger), "StateManagerTestGroup");
+    // setup throwable ThreadGroup to catch AssertError from Tribes threads.
+    Thread throwableThread = new Thread(threadGroup, new Runnable() {
+        public void run() {
+          try {
+            nodesMixJoinAndElect(6);
+          } catch (Exception e) {
+            throw new RuntimeException("testStateManagerMixJoinAndElect6 failed!");
+          }
+        }
+      }
+    );
+    throwableThread.start();
+    throwableThread.join();
   }
 
   public void testStateManagerJoinLater3() throws Exception {
     // first node shall be active and remaining 5 nodes join later
-    nodesJoinLater(3);
+    TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandler(logger), "StateManagerTestGroup");
+    // setup throwable ThreadGroup to catch AssertError from Tribes threads.
+    Thread throwableThread = new Thread(threadGroup, new Runnable() {
+        public void run() {
+          try {
+            nodesJoinLater(3);
+          } catch (Exception e) {
+            throw new RuntimeException("testStateManagerJoinLater3 failed!");
+          }
+        }
+      }
+    );
+    throwableThread.start();
+    throwableThread.join();
   }
   
   public void testStateManagerJoinLater6() throws Exception {
     // first node shall be active and remaining 5 nodes join later
-    nodesJoinLater(6);
+    TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandler(logger), "StateManagerTestGroup");
+    // setup throwable ThreadGroup to catch AssertError from Tribes threads.
+    Thread throwableThread = new Thread(threadGroup, new Runnable() {
+        public void run() {
+          try {
+            nodesJoinLater(6);
+          } catch (Exception e) {
+            throw new RuntimeException("testStateManagerJoinLater6 failed!");
+          }
+        }
+      }
+    );
+    throwableThread.start();
+    throwableThread.join();
   }
 
   // -----------------------------------------------------------------------
