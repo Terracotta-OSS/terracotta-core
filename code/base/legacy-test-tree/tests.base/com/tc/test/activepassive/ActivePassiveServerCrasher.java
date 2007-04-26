@@ -75,6 +75,7 @@ public class ActivePassiveServerCrasher implements Runnable {
 
   public void stop() {
     synchronized (lock) {
+      debugPrintln("*****  setting testIsRunning as false");
       testIsRunning = false;
     }
   }

@@ -57,6 +57,7 @@ public class ActivePassiveServerManager {
   private int                                    lastCrashedIndex = NULL_VAL;
   private ActivePassiveServerCrasher             serverCrasher;
   private int                                    maxCrashCount;
+  private final TestState                        testState;
 
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
                                     String configModel, ActivePassiveTestSetupManager setupManger, long startTimeout)
@@ -96,6 +97,7 @@ public class ActivePassiveServerManager {
     serverConfigCreator.writeL2Config();
 
     errors = new ArrayList();
+    testState = new TestState();
   }
 
   private void resetActiveIndex() {
@@ -225,13 +227,8 @@ public class ActivePassiveServerManager {
 
   private int getActiveIndex() throws Exception {
     int index = -1;
-    long loopCount = 0;
-
     while (index < 0) {
-      loopCount++;
-      if (loopCount % 10 == 0) {
-        System.out.println("Searching for active server... ");
-      }
+      System.out.println("Searching for active server... ");
       for (int i = 0; i < jmxPorts.length; i++) {
         if (i != lastCrashedIndex) {
           JMXConnector jmxConnector = getJMXConnector(jmxPorts[i]);
@@ -255,6 +252,7 @@ public class ActivePassiveServerManager {
           jmxConnector.close();
         }
       }
+      Thread.sleep(1000);
     }
     return index;
   }
@@ -266,13 +264,8 @@ public class ActivePassiveServerManager {
   }
 
   private void waitForPassive() throws Exception {
-    long loopCount = 0;
-
     while (true) {
-      loopCount++;
-      if (loopCount % 10 == 0) {
-        System.out.println("Searching for appropriate passive server(s)... ");
-      }
+      System.out.println("Searching for appropriate passive server(s)... ");
       for (int i = 0; i < jmxPorts.length; i++) {
         if (i != activeIndex) {
           JMXConnector jmxConnector = null;
@@ -292,6 +285,7 @@ public class ActivePassiveServerManager {
             }
           }
         }
+        Thread.sleep(1000);
       }
     }
   }
@@ -305,6 +299,9 @@ public class ActivePassiveServerManager {
   }
 
   public void stopAllServers() throws Exception {
+    debugPrintln("***** setting TestState to STOPPING");
+    testState.setTestState(TestState.STOPPING);
+
     if (serverCrasher != null) {
       debugPrintln("***** stopping server crasher");
       serverCrasher.stop();
@@ -314,7 +311,17 @@ public class ActivePassiveServerManager {
       debugPrintln("***** stopping server=[" + servers[i].getDsoPort() + "]");
       ServerControl sc = servers[i].getServerControl();
       if (sc.isRunning()) {
-        sc.shutdown();
+        if (i == activeIndex) {
+          sc.shutdown();
+        } else {
+          try {
+            sc.crash();
+          } catch (Exception e) {
+            if (DEBUG) {
+              e.printStackTrace();
+            }
+          }
+        }
       }
     }
   }
@@ -334,6 +341,10 @@ public class ActivePassiveServerManager {
   }
 
   public void crashActive() throws Exception {
+    if (!testState.isRunning()) {
+      debugPrintln("***** test state is not running ... skipping crash active");
+      return;
+    }
 
     debugPrintln("***** Crashing active server ");
 
@@ -372,6 +383,11 @@ public class ActivePassiveServerManager {
   }
 
   public void restartLastCrashedServer() throws Exception {
+    if (!testState.isRunning()) {
+      debugPrintln("***** test state is not running ... skipping restart");
+      return;
+    }
+
     debugPrintln("*****  restarting crashed server");
 
     if (lastCrashedIndex >= 0) {
@@ -463,6 +479,27 @@ public class ActivePassiveServerManager {
 
     public String getLogLocation() {
       return logLocation;
+    }
+  }
+
+  /*
+   * State inner class
+   */
+  private static class TestState {
+    public static final int RUNNING  = 0;
+    public static final int STOPPING = 1;
+    private int             state;
+
+    public TestState() {
+      state = RUNNING;
+    }
+
+    public synchronized void setTestState(int state) {
+      this.state = state;
+    }
+
+    public synchronized boolean isRunning() {
+      return state == RUNNING;
     }
   }
 
