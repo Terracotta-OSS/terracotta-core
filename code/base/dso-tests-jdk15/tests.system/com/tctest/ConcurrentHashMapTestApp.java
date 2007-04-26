@@ -74,6 +74,17 @@ public class ConcurrentHashMapTestApp extends GenericTestApp {
       Assert.assertTrue(o == hashValues[0]);
     }
   }
+  
+  void testPutWithClassKey(ConcurrentHashMap map, boolean validate) throws Exception {
+    if (validate) {
+      Assert.assertFalse(map.isEmpty());
+      Assert.assertEquals(1, map.size());
+      Assert.assertEquals(hashValues[0], map.get(HashKey.class));
+    } else {
+      Object o = map.put(HashKey.class, hashValues[0]);
+      Assert.assertNull(o);
+    }
+  }
 
   void testPutIfAbsent(ConcurrentHashMap map, boolean validate) throws Exception {
     if (validate) {

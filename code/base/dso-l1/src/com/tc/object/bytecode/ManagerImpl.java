@@ -545,7 +545,7 @@ public class ManagerImpl implements Manager {
   }
 
   public TCObject shareObjectIfNecessary(Object pojo) {
-    TCObject tobj = ((Manageable) pojo).__tc_managed();
+    TCObject tobj = lookupExistingOrNull(pojo);
     if (tobj != null) { return tobj; }
 
     try {
