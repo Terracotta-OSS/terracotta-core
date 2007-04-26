@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-Category: terracotta
 Bundle-Copyright: Terracotta, Inc. (c) 2003-2007
-Bundle-Description: Terracotta configuration for clustering Rife 1.6.0
+Bundle-Description: Terracotta configuration for clustering RIFE 1.6.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Terracotta Configuration for Rife 1.6.0
+Bundle-Name: Terracotta Configuration for RIFE 1.6.0
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-SymbolicName: org.terracotta.modules.clustered_rife_1.6.0
 Bundle-Vendor: Terracotta, Inc.

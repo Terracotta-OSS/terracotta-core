@@ -59,6 +59,8 @@ public class WARBuilder implements DeploymentBuilder {
 
   private List           servlets           = new ArrayList();
 
+  private List           filters           = new ArrayList();
+
   private Map            taglibs             = new HashMap();
 
   private StringBuffer   remoteSvcDefBlock   = new StringBuffer();
@@ -151,7 +153,8 @@ public class WARBuilder implements DeploymentBuilder {
       ZipFileSet zipfileset = new ZipFileSet();
       zipfileset.setDir(definition.location);
       zipfileset.setIncludes(definition.includes);
-      zipfileset.setPrefix(definition.prefix);
+      if (definition.prefix != null) zipfileset.setPrefix(definition.prefix);
+      if (definition.fullpath != null) zipfileset.setFullpath(definition.fullpath);
       warTask.addZipfileset(zipfileset);
     }
   }
@@ -322,6 +325,18 @@ public class WARBuilder implements DeploymentBuilder {
         pw.println("  </servlet-mapping>");
       }
       
+      for (Iterator it = filters.iterator(); it.hasNext();) {
+        FilterDefinition definition = (FilterDefinition) it.next();
+        writeFilter(pw, definition);
+      }
+      for (Iterator it = filters.iterator(); it.hasNext();) {
+        FilterDefinition definition = (FilterDefinition) it.next();
+        pw.println("  <filter-mapping>");
+        pw.println("    <filter-name>"+definition.name+"</filter-name>");
+        pw.println("    <url-pattern>"+definition.mapping+"</url-pattern>");
+        pw.println("  </filter-mapping>");
+      }
+      
       if(!taglibs.isEmpty()) {
         pw.println("  <jsp-config>");
         for (Iterator it = taglibs.entrySet().iterator(); it.hasNext();) {
@@ -373,6 +388,24 @@ public class WARBuilder implements DeploymentBuilder {
     }
     
     pw.println("  </servlet>");
+  }
+
+  private void writeFilter(PrintWriter pw, FilterDefinition definition) {
+    pw.println("  <filter>");
+    pw.println("    <filter-name>"+definition.name+"</filter-name>");
+    pw.println("    <filter-class>"+definition.filterClass.getName()+"</filter-class>");
+
+    if(definition.initParameters!=null) {
+      for (Iterator it = definition.initParameters.entrySet().iterator(); it.hasNext();) {
+        Map.Entry param = (Map.Entry) it.next();
+        pw.println("    <init-param>");
+        pw.println("      <param-name>"+param.getKey()+"</param-name>");
+        pw.println("      <param-value>"+param.getValue()+"</param-value>");
+        pw.println("    </init-param>");
+      }
+    }
+    
+    pw.println("  </filter>");
   }
   
   private String generateContextConfigLocationValue() {
@@ -460,12 +493,23 @@ public class WARBuilder implements DeploymentBuilder {
   }
 
   public DeploymentBuilder addResource(String location, String includes, String prefix) {
+    FileSystemPath path = getResourceDirPath(location, includes);
+    resources.add(new ResourceDefinition(path.getFile(), includes, prefix, null));
+    return this;
+  }
+  
+  public DeploymentBuilder addResourceFullpath(String location, String includes, String fullpath) {
+    FileSystemPath path = getResourceDirPath(location, includes);
+    resources.add(new ResourceDefinition(path.getFile(), includes, null, fullpath));
+    return this;
+  }
+
+  private FileSystemPath getResourceDirPath(String location, String includes) {
     String resource = location + "/" + includes;
     URL url = getClass().getResource(resource);
     Assert.assertNotNull("Not found: " + resource, url);
     FileSystemPath path = calculateDirectory(url, includes);
-    resources.add(new ResourceDefinition(path.getFile(), includes, prefix));
-    return this;
+    return path;
   }
   
   public DeploymentBuilder addContextParameter(String name, String value) {
@@ -487,6 +531,11 @@ public class WARBuilder implements DeploymentBuilder {
   
   public DeploymentBuilder addServlet(String name, String mapping, Class servletClass, Map params, boolean loadOnStartup) {
     servlets.add(new ServletDefinition(name, mapping, servletClass, params, loadOnStartup));
+    return this;
+  }
+  
+  public DeploymentBuilder addFilter(String name, String mapping, Class filterClass, Map params) {
+    filters.add(new FilterDefinition(name, mapping, filterClass, params));
     return this;
   }
   
@@ -569,11 +618,13 @@ public class WARBuilder implements DeploymentBuilder {
     public final File location;
     public final String prefix;
     public final String includes;
+    public final String fullpath;
 
-    public ResourceDefinition(File location, String includes, String prefix) {
+    public ResourceDefinition(File location, String includes, String prefix, String fullpath) {
       this.location = location;
       this.includes = includes;
       this.prefix = prefix;
+      this.fullpath = fullpath;
     }
   }
   
@@ -591,6 +642,21 @@ public class WARBuilder implements DeploymentBuilder {
       this.servletClass = servletClass;
       this.initParameters = initParameters;
       this.loadOnStartup = loadOnStartup;
+    }
+  }
+  
+  
+  private static class FilterDefinition {
+    public final String name;
+    public final String mapping;
+    public final Class filterClass;
+    public final Map initParameters;
+    
+    public FilterDefinition(String name, String mapping, Class filterClass, Map initParameters) {
+      this.name = name;
+      this.mapping = mapping;
+      this.filterClass = filterClass;
+      this.initParameters = initParameters;
     }
   }
   

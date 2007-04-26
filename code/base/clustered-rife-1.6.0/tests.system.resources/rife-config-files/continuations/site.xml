@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE site SYSTEM "/dtd/site.dtd">
+
+<site>
+    <element implementation="com.tctest.rife.elements.Counter"/>
+</site>

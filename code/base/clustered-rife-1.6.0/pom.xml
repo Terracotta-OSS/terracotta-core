@@ -37,6 +37,57 @@
       <groupId>com.uwyn.rife</groupId>
       <artifactId>rife</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>dso-container-tests</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>deploy</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>dso-l2</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>dso-l1-weblogic</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>thirdparty</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>httpunit</groupId>
+      <artifactId>httpunit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>linked-child-process</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>dso-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>dso-common-jdk15</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>management</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>aspectwerkz</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>jtidy</groupId>
+      <artifactId>jtidy</artifactId>
+    </dependency>
   </dependencies>
 </project>
 

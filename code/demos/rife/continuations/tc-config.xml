@@ -25,7 +25,7 @@
          information.-->
     <logs>logs/client-logs/%(webserver.log.name)</logs>
     
-    <!-- Tell DSO to load the Rife 1.6.0 module. -->
+    <!-- Tell DSO to load the RIFE 1.6.0 module. -->
     <modules>
       <module name="clustered-rife-1.6.0" version="1.0.0"/>
     </modules>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE rep SYSTEM "/dtd/rep.dtd">
+
+<rep>
+    <participant param="rife-config-files/continuations/site.xml">ParticipantSite</participant>
+</rep>

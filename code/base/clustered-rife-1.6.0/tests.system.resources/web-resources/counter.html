@@ -1,0 +1,17 @@
+<html>
+<body>
+  <r:v name="content"></r:v>
+  
+  <r:bv name="content">
+    <p id="currentcount"><r:v name="counter"/></p>
+    <form id="count" action="${v SUBMISSION:FORM:count/}" method="post">
+      <r:v name="SUBMISSION:PARAMS:count"/>
+      <input type="submit" value=" + " />
+    </form>
+  </r:bv>
+  
+  <r:b name="done">
+  	<p id="currentcount">finished</p>
+  </r:b>
+</body>
+</html>

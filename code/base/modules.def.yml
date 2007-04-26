@@ -497,6 +497,22 @@ modules:
       options:
         jdk: J2SE-1.5
         module: true
+      dependencies:
+        - modules-common-1.0
+        - aspectwerkz
+        - linked-child-process
+        - common
+        - management
+        - dso-common
+        - dso-common-jdk15
+        - dso-l1
+        - dso-l1-weblogic
+        - dso-l2
+        - simulator
+        - deploy
+        - thirdparty
+        - legacy-test-tree
+        - dso-container-tests
   - clustered-ehcache-1.2.4:
       options:
         jdk: J2SE-1.5

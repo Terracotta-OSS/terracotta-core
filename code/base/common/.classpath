@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="**/SCCS/**" output="build.eclipse/src.classes" kind="src" path="src"/>
-	<classpathentry excluding="**/SCCS/**" output="build.eclipse/src.classes" kind="src" path="src.resources"/>
-	<classpathentry excluding="**/SCCS/**" output="build.eclipse/tests.unit.classes" kind="src" path="tests.unit"/>
-	<classpathentry excluding="**/SCCS/**" output="build.eclipse/tests.base.classes" kind="src" path="tests.base"/>
+	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/src.classes" path="src"/>
+	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/src.classes" path="src.resources"/>
+	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.unit.classes" path="tests.unit"/>
+	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.base.classes" path="tests.base"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/linked-child-process"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
@@ -25,7 +25,7 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/bsh-2.0b4.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/antlr-2.7.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/ant-junit-1.6.5.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/ant-1.6.5.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/ant-1.6.5.jar" sourcepath="/Users/gbevin/Desktop/apache-ant-1.6.5/src/main"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xml-resolver-1.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xmlpublic-2.1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xml-apis-1.3.02.jar"/>

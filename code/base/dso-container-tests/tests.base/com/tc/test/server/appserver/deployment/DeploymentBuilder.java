@@ -4,9 +4,7 @@
 
 package com.tc.test.server.appserver.deployment;
 
-
 import java.util.Map;
-
 
 public interface DeploymentBuilder {
 
@@ -14,10 +12,12 @@ public interface DeploymentBuilder {
   public DeploymentBuilder addDirectoryOrJARContainingClassOfSelectedVersion(Class type, String[] variantNames);
   public DeploymentBuilder addDirectoryContainingResource(String resource);
   public DeploymentBuilder addResource(String location, String includes, String prefix);
+  public DeploymentBuilder addResourceFullpath(String location, String includes, String fullpath);
 
   public DeploymentBuilder addContextParameter(String name, String value);
   public DeploymentBuilder addListener(Class listenerName);
   public DeploymentBuilder addServlet(String name, String mapping, Class servletClass, Map params, boolean loadOnStartup);
+  public DeploymentBuilder addFilter(String name, String mapping, Class filterClass, Map params);
   public DeploymentBuilder setDispatcherServlet(String name, String mapping, Class servletClass, Map params, boolean loadOnStartup);
   public DeploymentBuilder addTaglib(String uri, String location);
 
@@ -31,5 +31,4 @@ public interface DeploymentBuilder {
   public Deployment makeDeployment() throws Exception;
 
   public void setParentApplicationContextRef(String locatorFactorySelector, String parentContextKey);
-  
 }
