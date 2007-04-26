@@ -237,14 +237,14 @@ public class StateManagerTest extends TCTestCase {
     for(int i=1; i < nodes; ++i) {
       managers[i].startElectionIfNecessary(ids[i]);
     }
-    Thread.sleep(2000);
+    Thread.sleep(2500);
  
     //verify
     activeCount = 0;
     for(int i=1; i < nodes; ++i) {
       boolean active = managers[i].isActiveCoordinator();
       if(active) ++activeCount;
-      System.out.println("*** Server["+i+"] state is " + sinks[i]);
+      System.out.println("*** Server["+i+"] ("+ (active? "active" : "non-active" )+ ")state is " + sinks[i]);
     }
     assertTrue(activeCount == 1);     
  
