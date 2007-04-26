@@ -95,15 +95,7 @@ public class ConfigurationEditor extends MultiPageEditorPart implements IResourc
   private boolean                  m_isXmlEditorVisible       = true;
   private int                      m_currentPage              = -1;
   private Display                  m_display;
-
-  static {
-    try {
-      java.lang.System.setProperty("sun.awt.noerasebackground", "true");
-      java.lang.System.setProperty("swing.volatileImageBufferEnabled", "false");
-    } catch (Throwable t) {/**/
-    }
-  }
-
+  
   public ConfigurationEditor() {
     super();
 
