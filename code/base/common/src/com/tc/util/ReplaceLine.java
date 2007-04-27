@@ -25,7 +25,7 @@ public final class ReplaceLine {
 
   /**
    * Replaces lines matching a token regular expression group.
-   * 
+   *
    * @return true if all tokens found matches
    */
   public static void parseFile(ReplaceLine.Token[] tokens, File file) throws FileNotFoundException, IOException {
@@ -34,22 +34,40 @@ public final class ReplaceLine {
         return new Integer(((Token) o1).lineNumber).compareTo(new Integer(((Token) o2).lineNumber));
       }
     });
+
     int tokenIndex = 0, lineIndex = 0;
     StringBuffer text = new StringBuffer();
     BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-    String line;
-    while ((line = reader.readLine()) != null) {
-      if (tokenIndex < tokens.length && ++lineIndex == tokens[tokenIndex].lineNumber) {
-        line = replaceToken(tokens[tokenIndex].replacePattern, line, tokens[tokenIndex].value);
-        tokenIndex++;
+
+    try {
+      String line;
+      while ((line = reader.readLine()) != null) {
+        if (tokenIndex < tokens.length && ++lineIndex == tokens[tokenIndex].lineNumber) {
+          line = replaceToken(tokens[tokenIndex].replacePattern, line, tokens[tokenIndex].value);
+          tokenIndex++;
+        }
+        text.append(line + "\n");
       }
-      text.append(line + "\n");
+    } finally {
+      try {
+        reader.close();
+      } catch (IOException ioe) {
+        // ignore
+      }
     }
-    reader.close();
+
     BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file));
-    out.write(text.toString().getBytes());
-    out.flush();
-    out.close();
+
+    try {
+      out.write(text.toString().getBytes());
+      out.flush();
+    } finally {
+      try {
+        out.close();
+      } catch (IOException ioe) {
+        // ignore
+      }
+    }
   }
 
   private static String replaceToken(String expression, String text, String value) {

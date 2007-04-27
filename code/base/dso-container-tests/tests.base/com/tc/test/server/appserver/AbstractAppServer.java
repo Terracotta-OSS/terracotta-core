@@ -34,7 +34,6 @@ public abstract class AbstractAppServer implements AppServer {
       FileUtils.deleteDirectory(instance);
     }
     instance.mkdir();
-    initiateStartupAppender(installation.sandboxDirectory());
     return instance;
   }
 
@@ -71,14 +70,6 @@ public abstract class AbstractAppServer implements AppServer {
 
   protected final File sandboxDirectory() {
     return installation.sandboxDirectory();
-  }
-
-  /**
-   * Subclasses may provide implementations to allow preprocessing to take place in the appserver child process JVM.
-   * Appenders must implement <tt>StartupAppender</tt>.
-   */
-  protected void initiateStartupAppender(File sandboxDir) throws Exception {
-    // not implemented
   }
 
   /**
