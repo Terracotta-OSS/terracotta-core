@@ -12,6 +12,7 @@ import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
 import com.tc.process.LinkedJavaProcess;
 import com.tc.process.StreamCopier;
 import com.tc.server.TCServerMain;
+import com.tc.test.TestConfigObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -109,6 +110,15 @@ public class ExtraProcessServerControl extends ServerControlBase {
   protected String getMainClassName() {
     return TCServerMain.class.getName();
   }
+  
+  protected File getJavaHome() {
+    try {
+      return new File(TestConfigObject.getInstance().getL2StartupJavaHome());
+    }
+    catch (Exception e) {
+      return null;
+    }
+  }
 
   protected String[] getMainClassArguments() {
     if (serverName != null && !serverName.equals("")) {
@@ -147,6 +157,10 @@ public class ExtraProcessServerControl extends ServerControlBase {
   protected LinkedJavaProcess createLinkedJavaProcess() {
     LinkedJavaProcess rv = new LinkedJavaProcess(getMainClassName(), getMainClassArguments());
     rv.setDirectory(this.runningDirectory);
+    File processJavaHome = getJavaHome();
+    if (processJavaHome != null) {
+      rv.setJavaHome(processJavaHome);
+    }
     return rv;
   }
 

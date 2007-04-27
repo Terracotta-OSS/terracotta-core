@@ -109,6 +109,7 @@ public class LinkedJavaProcess {
       if (javaHome == null) {
         javaHome = new File(System.getProperty("java.home"));
       }
+
       File javaBin = new File(javaHome, "bin");
       File javaPlain = new File(javaBin, "java");
       File javaExe = new File(javaBin, "java.exe");
@@ -155,7 +156,6 @@ public class LinkedJavaProcess {
     if (this.arguments != null) fullCommandList.addAll(Arrays.asList(this.arguments));
 
     String[] fullCommand = (String[]) fullCommandList.toArray(new String[fullCommandList.size()]);
-
     this.process = Runtime.getRuntime().exec(fullCommand, makeEnv(env), this.directory);
     this.running = true;
   }

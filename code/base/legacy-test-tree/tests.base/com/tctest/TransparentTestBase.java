@@ -4,9 +4,12 @@
  */
 package com.tctest;
 
+import org.apache.commons.io.CopyUtils;
+
 import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.objectserver.control.ExtraProcessServerControl;
@@ -20,6 +23,7 @@ import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.test.restart.RestartTestEnvironment;
 import com.tc.test.restart.RestartTestHelper;
 import com.tc.test.restart.ServerCrasher;
+import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.runtime.ThreadDump;
 import com.tctest.runner.DistributedTestRunner;
@@ -27,6 +31,8 @@ import com.tctest.runner.DistributedTestRunnerConfig;
 import com.tctest.runner.TestGlobalIdGenerator;
 import com.tctest.runner.TransparentAppConfig;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -57,11 +63,19 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   private ActivePassiveServerManager              apServerManager;
   private ActivePassiveTestSetupManager           apSetupManager;
 
+  protected TestConfigObject getTestConfigObject() {
+    try {
+      return TestConfigObject.getInstance();
+    }
+    catch (IOException e) {
+      throw new RuntimeException("Couldn't get instance of TestConfigObject.", e);
+    }
+  }
+
   protected void setUp() throws Exception {
     setUp(configFactory(), configHelper());
 
     RestartTestHelper helper = null;
-
     if (isCrashy() && canRunCrash()) {
       helper = new RestartTestHelper(mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_CRASH),
                                      new RestartTestEnvironment(getTempDirectory(), new PortChooser(),
@@ -74,6 +88,12 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       serverControl = helper.getServerControl();
     } else if (isActivePassive() && canRunActivePassive()) {
       setUpActivePassiveServers();
+    } else if (useExternalProcess()) {
+      PortChooser portChooser = new PortChooser();
+      int serverPort = portChooser.chooseRandomPort();
+      int adminPort = portChooser.chooseRandomPort();
+      this.setUpExternalProcess(configFactory(), getConfigHelper(), serverPort, adminPort,
+                                writeMinimalConfig(serverPort, adminPort).getAbsolutePath());
     } else {
       ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(0);
     }
@@ -101,16 +121,31 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     throw new AssertionError("The sub-class (test) should override this method.");
   }
+  
+  protected boolean useExternalProcess() {
+    return getTestConfigObject().isL2StartupModeExternal();
+  }
+
+  protected void setUpExternalProcess(TestTVSConfigurationSetupManagerFactory factory,
+                                      DSOClientConfigHelper helper, int serverPort, int adminPort,
+                                      String configFile) throws Exception {
+    String javaHome = getTestConfigObject().getL2StartupJavaHome();
+    if (javaHome == null) {
+      throw new IllegalStateException(TestConfigObject.L2_STARTUP_JAVA_HOME + " must be set to a valid JAVA_HOME");
+    }
+
+    serverControl = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile, true);
+    setUp(factory, helper);
+    
+    configFactory().addServerToL1Config(null, serverPort, adminPort);
+    configFactory().addServerToL2Config(null, serverPort, adminPort);
+  }
 
   protected final void setUpControlledServer(TestTVSConfigurationSetupManagerFactory factory,
                                              DSOClientConfigHelper helper, int serverPort, int adminPort,
                                              String configFile) throws Exception {
     controlledCrashMode = true;
-    serverControl = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile, true);
-    setUp(factory, helper);
-
-    configFactory().addServerToL1Config(null, serverPort, adminPort);
-    configFactory().addServerToL2Config(null, serverPort, adminPort);
+    setUpExternalProcess(factory, helper, serverPort, adminPort, configFile);
   }
 
   private final void setUp(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper)
@@ -125,11 +160,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
   protected synchronized final String mode() {
     if (mode == null) {
-      try {
-        mode = TestConfigObject.getInstance().transparentTestsMode();
-      } catch (IOException ioe) {
-        throw new RuntimeException("Can't get mode", ioe);
-      }
+      mode = getTestConfigObject().transparentTestsMode();
     }
 
     return mode;
@@ -140,11 +171,11 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   }
 
   private boolean isCrashy() {
-    return mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_CRASH);
+    return TestConfigObject.TRANSPARENT_TESTS_MODE_CRASH.equals(mode());
   }
 
   private boolean isActivePassive() {
-    return mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE);
+    return TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE.equals(mode());
   }
 
   public DSOClientConfigHelper getConfigHelper() {
@@ -189,7 +220,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
   private boolean getStartServer() {
     return getServerPortProp() == null && mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_NORMAL)
-           && !controlledCrashMode;
+           && !controlledCrashMode && !useExternalProcess();
   }
 
   public void initializeTestRunner() throws Exception {
@@ -197,12 +228,18 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   }
 
   public void initializeTestRunner(boolean isMutateValidateTest) throws Exception {
-    this.runner = new DistributedTestRunner(runnerConfig, configFactory, configHelper, getApplicationClass(),
-                                            getOptionalAttributes(), getApplicationConfigBuilder()
-                                                .newApplicationConfig(), transparentAppConfig.getClientCount(),
+    this.runner = new DistributedTestRunner(runnerConfig,
+                                            configFactory,
+                                            configHelper,
+                                            getApplicationClass(),
+                                            getOptionalAttributes(),
+                                            getApplicationConfigBuilder().newApplicationConfig(),
+                                            transparentAppConfig.getClientCount(),
                                             transparentAppConfig.getApplicationInstancePerClientCount(),
-                                            getStartServer(), isMutateValidateTest, transparentAppConfig
-                                                .getValidatorCount(), (isActivePassive() && canRunActivePassive()),
+                                            getStartServer(),
+                                            isMutateValidateTest,
+                                            transparentAppConfig.getValidatorCount(),
+                                            (isActivePassive() && canRunActivePassive()),
                                             apServerManager);
   }
 
@@ -230,6 +267,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
         serverControl.start(30 * 1000);
       } else if (controlledCrashMode) {
         apServerManager.startServers();
+      } else if (useExternalProcess()) {
+        serverControl.start(30 * 1000);
       }
       this.runner.run();
 
@@ -309,4 +348,29 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     }
   }
 
+  protected File writeMinimalConfig(int port, int adminPort) throws IOException {
+    TerracottaConfigBuilder builder = createConfigBuilder(port, adminPort);
+    FileOutputStream out = null;
+    File configFile = null;
+    try {
+      configFile = getTempFile("config-file.xml");
+      out = new FileOutputStream(configFile);
+      CopyUtils.copy(builder.toString(), out);
+    } catch (Exception e) {
+      throw Assert.failure("Can't create config file", e);
+    } finally {
+      try { out.close(); } catch (Exception e) { /* oh well, we tried */ }
+    }
+
+    return configFile;
+  }
+
+  protected TerracottaConfigBuilder createConfigBuilder(int port, int adminPort) {
+    TerracottaConfigBuilder out = new TerracottaConfigBuilder();
+
+    out.getServers().getL2s()[0].setDSOPort(port);
+    out.getServers().getL2s()[0].setJMXPort(adminPort);
+
+    return out;
+  }
 }
