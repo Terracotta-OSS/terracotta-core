@@ -107,7 +107,7 @@ public class TestConfigObject {
 
   private static final String     ACTIVE_PASSIVE_SERVER_DISKLESS    = ACTIVE_PASSIVE_PREFIX + "server.diskless";
 
-  private static final String     L2_STARTUP_PREFIX                 = STATIC_PROPERTIES_PREFIX + "l2.startup.";
+  private static final String     L2_STARTUP_PREFIX                 = DYNAMIC_PROPERTIES_PREFIX + "l2.startup.";
   public  static final String     L2_STARTUP_MODE                   = L2_STARTUP_PREFIX + "mode";
   public  static final String     L2_STARTUP_JAVA_HOME              = L2_STARTUP_PREFIX + "jvm";
 
