@@ -4,79 +4,59 @@
  */
 package com.tc.test.activepassive;
 
+import com.tc.test.activepassive.ActivePassiveServerManager.TestState;
+
 public class ActivePassiveServerCrasher implements Runnable {
   private static boolean                   DEBUG      = false;
   private final ActivePassiveServerManager serverManger;
   private final long                       serverCrashWaitTimeInSec;
   private final int                        maxCrashCount;
 
-  private Object                           lock       = new Object();
-  private boolean                          testIsRunning;
   private int                              crashCount = 0;
+  private final TestState                  testState;
 
   public ActivePassiveServerCrasher(ActivePassiveServerManager serverManager, long serverCrashWaitTimeInSec,
-                                    int maxCrashCount) {
+                                    int maxCrashCount, TestState testState) {
     this.serverManger = serverManager;
     this.serverCrashWaitTimeInSec = serverCrashWaitTimeInSec;
     this.maxCrashCount = maxCrashCount;
-    testIsRunning = true;
-  }
-
-  private boolean shouldRun() {
-    synchronized (lock) {
-      debugPrintln("maxCrashCount=[" + maxCrashCount + "] crashCount=[" + crashCount + "] testIsRunning=["
-                   + testIsRunning + "] errors=[" + serverManger.getErrors().size() + "]");
-      if ((maxCrashCount - crashCount) > 0 && testIsRunning && serverManger.getErrors().size() == 0) { return true; }
-    }
-    return false;
+    this.testState = testState;
   }
 
   public void run() {
     while (true) {
-      if (shouldRun()) {
-        try {
-          Thread.sleep(serverCrashWaitTimeInSec * 1000);
-
-          debugPrintln("***** ActivePassiveServerCrasher:  about to crash active  threadID=["
-                       + Thread.currentThread().getName() + "]");
-
-          serverManger.crashActive();
-        } catch (Exception e) {
-          debugPrintln("***** ActivePassiveServerCrasher:  error occured while crashing active  threadID=["
-                       + Thread.currentThread().getName() + "]");
-
-          e.printStackTrace();
-
-          serverManger.storeErrors(e);
-        }
-      } else {
-        debugPrintln("***** ActivePassiveServerCrasher:  break 1");
-        break;
+      try {
+        Thread.sleep(serverCrashWaitTimeInSec * 1000);
+      } catch (InterruptedException e1) {
+        serverManger.storeErrors(e1);
       }
-      if (shouldRun()) {
-        try {
-          debugPrintln("***** ActivePassiveServerCrasher:  about to restart crashed server threadID=["
-                       + Thread.currentThread().getName() + "]");
 
-          serverManger.restartLastCrashedServer();
-          crashCount++;
-        } catch (Exception e) {
-          debugPrintln("***** ActivePassiveServerCrasher:  error occured while restarting crashed server  threadID=["
-                       + Thread.currentThread().getName() + "]");
+      synchronized (testState) {
+        if (testState.isRunning() && (maxCrashCount - crashCount) > 0 && serverManger.getErrors().isEmpty()) {
+          try {
+            debugPrintln("***** ActivePassiveServerCrasher:  about to crash active  threadID=["
+                         + Thread.currentThread().getName() + "]");
+            serverManger.crashActive();
 
-          serverManger.storeErrors(e);
+            debugPrintln("***** ActivePassiveServerCrasher:  about to restart crashed server threadID=["
+                         + Thread.currentThread().getName() + "]");
+            serverManger.restartLastCrashedServer();
+
+            crashCount++;
+          } catch (Exception e) {
+            debugPrintln("***** ActivePassiveServerCrasher:  error occured while crashing/restarting active  threadID=["
+                         + Thread.currentThread().getName() + "]");
+
+            e.printStackTrace();
+
+            serverManger.storeErrors(e);
+          }
+        } else {
+          debugPrintln("***** ActivePassiveServerCrasher is done: testStateRunning[" + testState.isRunning()
+                       + "] errors[" + serverManger.getErrors().size() + "] crashCount[" + crashCount + "]");
+          break;
         }
-      } else {
-        debugPrintln("***** ActivePassiveServerCrasher:  break 2");
-        break;
       }
-    }
-  }
-
-  public void stop() {
-    synchronized (lock) {
-      debugPrintln("*****  setting testIsRunning as false");
-      testIsRunning = false;
     }
   }
 

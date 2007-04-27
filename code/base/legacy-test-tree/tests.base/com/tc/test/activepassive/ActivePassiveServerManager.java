@@ -205,7 +205,7 @@ public class ActivePassiveServerManager {
   }
 
   private void startContinuousCrash() {
-    serverCrasher = new ActivePassiveServerCrasher(this, serverCrashWaitTimeInSec, maxCrashCount);
+    serverCrasher = new ActivePassiveServerCrasher(this, serverCrashWaitTimeInSec, maxCrashCount, testState);
     new Thread(serverCrasher).start();
   }
 
@@ -299,27 +299,28 @@ public class ActivePassiveServerManager {
   }
 
   public void stopAllServers() throws Exception {
-    debugPrintln("***** setting TestState to STOPPING");
-    testState.setTestState(TestState.STOPPING);
+    synchronized (testState) {
+      debugPrintln("***** setting TestState to STOPPING");
+      testState.setTestState(TestState.STOPPING);
 
-    if (serverCrasher != null) {
-      debugPrintln("***** stopping server crasher");
-      serverCrasher.stop();
-    }
+      for (int i = 0; i < serverCount; i++) {
+        debugPrintln("***** stopping server=[" + servers[i].getDsoPort() + "]");
+        ServerControl sc = servers[i].getServerControl();
 
-    for (int i = 0; i < serverCount; i++) {
-      debugPrintln("***** stopping server=[" + servers[i].getDsoPort() + "]");
-      ServerControl sc = servers[i].getServerControl();
-      if (sc.isRunning()) {
+        if (!sc.isRunning()) {
+          continue;
+        }
+
         if (i == activeIndex) {
           sc.shutdown();
-        } else {
-          try {
-            sc.crash();
-          } catch (Exception e) {
-            if (DEBUG) {
-              e.printStackTrace();
-            }
+          continue;
+        }
+
+        try {
+          sc.crash();
+        } catch (Exception e) {
+          if (DEBUG) {
+            e.printStackTrace();
           }
         }
       }
@@ -485,7 +486,7 @@ public class ActivePassiveServerManager {
   /*
    * State inner class
    */
-  private static class TestState {
+  public static class TestState {
     public static final int RUNNING  = 0;
     public static final int STOPPING = 1;
     private int             state;
