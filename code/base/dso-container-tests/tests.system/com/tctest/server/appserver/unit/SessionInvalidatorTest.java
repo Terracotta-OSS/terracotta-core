@@ -4,10 +4,8 @@
  */
 package com.tctest.server.appserver.unit;
 
-import org.apache.commons.httpclient.HttpClient;
-
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
-import com.tc.test.server.util.HttpUtil;
+import com.tc.test.server.util.WebClient;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -205,7 +203,7 @@ public class SessionInvalidatorTest extends AbstractAppServerTestCase {
     props.add("-Dcom.tc.session.maxidle.seconds=" + String.valueOf(defaultMaxIdleSeconds));
     port = startAppServer(true, new Properties(), (String[]) props.toArray(new String[] {})).serverPort();
 
-    HttpClient client = HttpUtil.createHttpClient();
+    WebClient client = new WebClient(); //HttpUtil.createWebClient();
 
     // first, sanity check
     URL url = new URL(createUrl(port, SessionInvalidatorTest.ListenerReportingServlet.class) + "?action=0");
@@ -272,15 +270,15 @@ public class SessionInvalidatorTest extends AbstractAppServerTestCase {
     checkCallCount("SessionListener.sessionDestroyed", 2, client);
   }
 
-  private void checkResponse(String expectedResponse, URL url, HttpClient client) throws ConnectException, IOException {
+  private void checkResponse(String expectedResponse, URL url, WebClient client) throws ConnectException, IOException {
     System.err.println("=== Send Request [" + (new Date()) + "]: url=[" + url + "]");
-    final String actualResponse = HttpUtil.getResponseBody(url, client);
+    final String actualResponse = client.getResponseAsString(url);// HttpUtil.getResponseBody(url, client);
     System.err.println("=== Got Response [" + (new Date()) + "]: url=[" + url + "], response=[" + actualResponse + "]");
     assertTimeDirection();
     assertEquals(expectedResponse, actualResponse);
   }
 
-  private void checkCallCount(final String key, int expectedCount, HttpClient client) throws ConnectException,
+  private void checkCallCount(final String key, int expectedCount, WebClient client) throws ConnectException,
       IOException {
     URL url = new URL(createUrl(port, SessionInvalidatorTest.ListenerReportingServlet.class)
                       + "?action=call_count&key=" + key);
