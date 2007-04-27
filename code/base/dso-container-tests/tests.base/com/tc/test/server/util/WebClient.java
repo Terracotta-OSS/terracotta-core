@@ -34,10 +34,10 @@ public class WebClient {
     } else {
       modifiedUrl += "?&_wcserial=" + serial++;
     }
-    System.out.println("[WebClient]: " + modifiedUrl);
+    //System.out.println("[WebClient]: " + modifiedUrl);
     URL myUrl = new URL(modifiedUrl);
     HttpURLConnection http = (HttpURLConnection) myUrl.openConnection();
-    http.setRequestProperty("Cookie", getCookies());
+    http.setRequestProperty("Cookie", getCookiesAsString());
     http.connect();
     if (http.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new IOException("Response code is not OK: " + http.getResponseMessage());
@@ -65,7 +65,16 @@ public class WebClient {
     return Integer.parseInt(response);
   }
 
-  private String getCookies() {
+  public void setCookies(Map cookies) {
+    this.cookies = cookies;
+    System.out.println(cookies);
+  }
+  
+  public Map getCookies() {
+    return cookies;
+  }
+  
+  private String getCookiesAsString() {
     StringBuffer cookiesString = new StringBuffer(100);
     for (Iterator it = cookies.entrySet().iterator(); it.hasNext();) {
       Map.Entry e = (Map.Entry) it.next();
@@ -90,5 +99,4 @@ public class WebClient {
       }
     }
   }
-
 }

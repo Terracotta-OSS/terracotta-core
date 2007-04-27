@@ -4,31 +4,23 @@
  */
 package com.tc.test.server.appserver.load;
 
-import org.apache.commons.httpclient.Cookie;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpState;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
-
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.test.server.util.HttpUtil;
+import com.tc.test.server.util.WebClient;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 import junit.framework.Assert;
 
 public class Node implements Runnable {
   protected static final TCLogger logger = TCLogging.getLogger(Node.class);
-  protected final HttpClient      client;
-  protected final HttpState[]     sessions;
+  protected final WebClient[]     clients;
   protected final long            duration;
   protected final int             numRequests[];
   protected final SynchronizedRef error  = new SynchronizedRef(null);
@@ -41,15 +33,20 @@ public class Node implements Runnable {
   }
 
   public Node(URL[] mutateUrls, URL[] validateUrls, int numSessions, long duration) {
-    MultiThreadedHttpConnectionManager connMgr = new MultiThreadedHttpConnectionManager();
-    connMgr.getParams().setConnectionTimeout(120 * 1000);
-    this.client = new HttpClient(connMgr);
-
     this.mutateUrls = mutateUrls;
     this.validateUrls = validateUrls;
-    this.sessions = createStates(numSessions);
+    clients = createClients(numSessions);
     this.duration = duration;
-    this.numRequests = new int[sessions.length];
+    this.numRequests = new int[clients.length];
+  }
+
+  private WebClient[] createClients(int numSessions) {
+    WebClient[] _clients = new WebClient[numSessions];
+    for (int i = 0; i < numSessions; i++) {
+      _clients[i] = new WebClient();
+    }
+
+    return _clients;
   }
 
   public void checkError() throws Throwable {
@@ -68,15 +65,15 @@ public class Node implements Runnable {
   }
 
   private void validate() throws ConnectException, IOException {
-    for (int i = 0; i < sessions.length; i++) {
+    for (int i = 0; i < clients.length; i++) {
       int expect = numRequests[i];
       if (expect == 0) { throw new AssertionError("No requests were ever made for client " + i); }
-      HttpState httpState = sessions[i];
-      client.setState(httpState);
+
+      WebClient client = clients[i];
 
       for (int u = 0; u < validateUrls.length; u++) {
-        int actual = HttpUtil.getInt(validateUrls[u], client);
-        Assert.assertEquals(getSessionID(httpState), expect, actual);
+        int actual = client.getResponseAsInt(validateUrls[u]);
+        Assert.assertEquals(getSessionID(client), expect, actual);
         logger.info("validated value of " + expect + " for client " + i + " on " + validateUrls[u]);
         // Recording the request that was just made. This is needed for RequestCountTest.
         numRequests[i]++;
@@ -90,16 +87,15 @@ public class Node implements Runnable {
     int session = 0;
     final long end = System.currentTimeMillis() + duration;
     while (System.currentTimeMillis() <= end) {
-      HttpState httpState = sessions[session];
-      client.setState(httpState);
+      WebClient client = clients[session];
       URL mutateUrl = numURLS == 1 ? mutateUrls[0] : mutateUrls[random.nextInt(mutateUrls.length)];
 
       final long start = System.currentTimeMillis();
       try {
-        int newVal = HttpUtil.getInt(mutateUrl, client);
+        int newVal = client.getResponseAsInt(mutateUrl);
         numRequests[session]++;
-        Assert.assertEquals(getSessionID(httpState), numRequests[session], newVal);
-        session = (session + 1) % sessions.length;
+        Assert.assertEquals(getSessionID(client), numRequests[session], newVal);
+        session = (session + 1) % clients.length;
         ThreadUtil.reallySleep(random.nextInt(5) + 1);
       } catch (Exception e) {
         logger.error("Elapsed time for failed request was " + (System.currentTimeMillis() - start) + " millis, url = "
@@ -109,25 +105,8 @@ public class Node implements Runnable {
     }
   }
 
-  private String getSessionID(HttpState httpState) {
-    List sessionCookies = new ArrayList();
-    Cookie[] cookies = httpState.getCookies();
-    for (int i = 0; i < cookies.length; i++) {
-      Cookie cookie = cookies[i];
-      if (cookie.getName().toLowerCase().indexOf("jsessionid") >= 0) {
-        sessionCookies.add(cookie.getName() + "=" + cookie.getValue() + " at path " + cookie.getPath());
-      }
-    }
-
-    if (sessionCookies.isEmpty()) { return "no session cookie yet"; }
-    return sessionCookies.toString();
+  private String getSessionID(WebClient client) {
+    return (String) client.getCookies().get("jsessionid");
   }
 
-  private static HttpState[] createStates(int numSessions) {
-    HttpState[] rv = new HttpState[numSessions];
-    for (int i = 0; i < numSessions; i++) {
-      rv[i] = new HttpState();
-    }
-    return rv;
-  }
 }
