@@ -40,6 +40,8 @@ class SvnUpdate
   end
 
   def log(msg)
+    # things are good - turn off logging for now
+    return
     File.open(File.join(Dir.tmpdir, "svnupdate.log"), "a") do |f|
       f.puts("#{Time.now}: #{msg}")
     end
