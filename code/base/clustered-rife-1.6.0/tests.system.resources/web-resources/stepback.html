@@ -1,0 +1,11 @@
+<html>
+	<head><title><!--V 'subtotal'--><!--/V--> : <!--V 'stepback'-->false<!--/V--></title></head>
+	<body>
+		<form name="getanswer" action="[!V 'SUBMISSION:FORM:getanswer'/]" method="GET">
+			<!--V 'SUBMISSION:PARAMS:getanswer'/-->
+			<input name="start" type="checkbox" />
+			<input name="answer" type="text" value="[!V 'PARAM:answer'][!/V]" />
+			<input type="submit"/>
+		</form>
+	</body>
+</html>

@@ -4,4 +4,9 @@
 
 <site>
     <element implementation="com.tctest.rife.elements.Counter"/>
+    <element implementation="com.tctest.rife.elements.StepBack"/>
+    <element implementation="com.tctest.rife.elements.AllTypes"/>
+    <element implementation="com.tctest.rife.elements.SimpleInterface"/>
+    <element implementation="com.tctest.rife.elements.CallAnswer"/>
+    <element implementation="com.tctest.rife.elements.CallAnswerExit"/>
 </site>

@@ -27,14 +27,60 @@
 
 	<application>
 		<dso>
+			<additional-boot-jar-classes>
+				<include>java.lang.AbstractStringBuilder</include>
+				<include>java.lang.StringBuffer</include>
+			</additional-boot-jar-classes>
 			<instrumented-classes>
 				<include>
-					<class-expression>com.tctest.*..*</class-expression>
+					<class-expression>com.tctest.rife.*..*</class-expression>
 				</include>
 			</instrumented-classes>
+			<roots>
+				<root>
+					<field-name>com.tctest.rife.elements.AllTypes.sInt1</field-name>
+					<root-name>AllTypes_sInt1</root-name>
+				</root>
+				<root>
+					<field-name>com.tctest.rife.elements.AllTypes.sString1</field-name>
+					<root-name>AllTypes_sString1</root-name>
+				</root>
+				<root>
+					<field-name>com.tctest.rife.elements.AllTypes.sLongs1</field-name>
+					<root-name>AllTypes_sLongs1</root-name>
+				</root>
+				<root>
+					<field-name>com.tctest.rife.elements.AllTypes.sMultiInts1</field-name>
+					<root-name>AllTypes_sMultiInts1</root-name>
+				</root>
+				<root>
+					<field-name>com.tctest.rife.elements.AllTypes.sLong1</field-name>
+					<root-name>AllTypes_sLong1</root-name>
+				</root>
+				<root>
+					<field-name>com.tctest.rife.elements.AllTypes.sInt2</field-name>
+					<root-name>AllTypes_sInt2</root-name>
+				</root>
+				<root>
+					<field-name>com.tctest.rife.elements.AllTypes.sString2</field-name>
+					<root-name>AllTypes_sString2</root-name>
+				</root>
+				<root>
+					<field-name>com.tctest.rife.elements.AllTypes.sLongs2</field-name>
+					<root-name>AllTypes_sLongs2</root-name>
+				</root>
+				<root>
+					<field-name>com.tctest.rife.elements.AllTypes.sMultiInts2</field-name>
+					<root-name>AllTypes_sMultiInts2</root-name>
+				</root>
+				<root>
+					<field-name>com.tctest.rife.elements.AllTypes.sLong2</field-name>
+					<root-name>AllTypes_sLong2</root-name>
+				</root>
+			</roots>
 			<locks>
 				<autolock>
-					<method-expression>* com.tctest.*..*.*(..)</method-expression>
+					<method-expression>* com.tctest.rife.*..*.*(..)</method-expression>
 					<lock-level>write</lock-level>
 				</autolock>
 			</locks>

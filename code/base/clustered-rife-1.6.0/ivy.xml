@@ -2,6 +2,6 @@
 <ivy-module version="1.0">
   <info organisation="ibiblio" module="clustered-rife-1.6.0"/>
   <dependencies>
-    <dependency name="rife" rev="1.6-snapshot-jdk15-20070418" org="terracotta"/>
+    <dependency name="rife" rev="1.6-snapshot-jdk15-20070427" org="terracotta"/>
   </dependencies>
 </ivy-module>

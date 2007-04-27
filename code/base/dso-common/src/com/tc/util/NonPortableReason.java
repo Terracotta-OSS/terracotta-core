@@ -125,7 +125,7 @@ public class NonPortableReason implements Serializable {
           List classes = new ArrayList();
           classes.addAll(bootJarClasses);
           classes.add(this.className);
-          addDetail("Classses to add to boot jar", csvList(classes));
+          addDetail("Classes to add to boot jar", csvList(classes));
         } else {
           sb.append(" must be in the DSO boot jar. Please add this class to the boot jar configuration"
                     + " and re-create the DSO boot jar.");

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	
+	All content copyright (c) 2003-2006 Terracotta, Inc.,
+	except as may otherwise be noted in a separate copyright notice.
+	All rights reserved
+	
+-->
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.terracotta.org/config ..\..\..\common\src.resources\com\tc\config\schema\terracotta-2.2.xsd">
+
+	<system>
+		<configuration-model>development</configuration-model>
+	</system>
+
+	<clients>
+		<modules>
+			<module name="clustered-rife-1.6.0" version="1.0.0" />
+		</modules>
+	</clients>
+
+	<application>
+		<dso>
+			<!--
+			  -  this config file is just intended to add the required classes
+			  -  to the bootjar for running the tests
+			  -->
+			<additional-boot-jar-classes>
+				<include>java.lang.AbstractStringBuilder</include>
+				<include>java.lang.StringBuffer</include>
+			</additional-boot-jar-classes>
+			<instrumented-classes/>
+		</dso>
+	</application>
+
+</tc:tc-config>
