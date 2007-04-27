@@ -42,30 +42,31 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TribesGroupManager implements GroupManager, ChannelListener, MembershipListener {
-  private static final String                             L2_NHA            = "l2.nha";
-  private static final String                             SEND_TIMEOUT_PROP = "send.timeout.millis";
-  private static final String                             USE_MCAST         = "use.mcast";
+  private static final String                             L2_NHA              = "l2.nha";
+  private static final String                             SEND_TIMEOUT_PROP   = "send.timeout.millis";
+  private static final String                             USE_MCAST           = "use.mcast";
+  private static final int                                SEND_OPTIONS_NO_ACK = 0x00;
 
-  private static final TCLogger                           logger            = TCLogging
-                                                                                .getLogger(TribesGroupManager.class);
+  private static final TCLogger                           logger              = TCLogging
+                                                                                  .getLogger(TribesGroupManager.class);
 
-  private static final boolean                            useMcast          = TCPropertiesImpl.getProperties()
-                                                                                .getPropertiesFor(L2_NHA)
-                                                                                .getBoolean(USE_MCAST);
+  private static final boolean                            useMcast            = TCPropertiesImpl.getProperties()
+                                                                                  .getPropertiesFor(L2_NHA)
+                                                                                  .getBoolean(USE_MCAST);
 
   private final GroupChannel                              group;
   private TcpFailureDetector                              failuredetector;
   private Member                                          thisMember;
   private NodeID                                          thisNodeID;
 
-  private final CopyOnWriteArrayList<GroupEventsListener> groupListeners    = new CopyOnWriteArrayList<GroupEventsListener>();
-  private final Map<NodeID, Member>                       nodes             = Collections
-                                                                                .synchronizedMap(new HashMap<NodeID, Member>());
-  private final Map<String, GroupMessageListener>         messageListeners  = new ConcurrentHashMap<String, GroupMessageListener>();
-  private final Map<MessageID, GroupResponse>             pendingRequests   = new Hashtable<MessageID, GroupResponse>();
+  private final CopyOnWriteArrayList<GroupEventsListener> groupListeners      = new CopyOnWriteArrayList<GroupEventsListener>();
+  private final Map<NodeID, Member>                       nodes               = Collections
+                                                                                  .synchronizedMap(new HashMap<NodeID, Member>());
+  private final Map<String, GroupMessageListener>         messageListeners    = new ConcurrentHashMap<String, GroupMessageListener>();
+  private final Map<MessageID, GroupResponse>             pendingRequests     = new Hashtable<MessageID, GroupResponse>();
 
-  private boolean                                         stopped           = false;
-  private boolean                                         debug             = false;
+  private boolean                                         stopped             = false;
+  private boolean                                         debug               = false;
 
   public TribesGroupManager() {
     group = new GroupChannel();
@@ -243,8 +244,10 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     MessageID requestID = gmsg.inResponseTo();
     NodeID from = makeNodeIDFrom(sender);
     if (!nodes.containsKey(from)) {
-      String warn = "Message from non-existing member " + sender + " nodes = " + nodes;
+      String warn = "Message from non-existing member " + sender + " . Adding this node to nodes = " + nodes;
       logger.warn(warn);
+      //XXX:: Sometimes messages arrive before memberAdded event. So we are faking it.
+      memberAdded(sender);
     }
     gmsg.setMessageOrginator(from);
     if (requestID.isNull() || !notifyPendingRequests(requestID, gmsg, sender)) {
@@ -352,7 +355,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     try {
       Member m[] = group.getMembers();
       if (m.length > 0) {
-        group.send(m, msg, Channel.SEND_OPTIONS_DEFAULT);
+        group.send(m, msg, SEND_OPTIONS_NO_ACK);
       }
     } catch (ChannelException e) {
       throw new GroupException(e);
@@ -381,8 +384,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     try {
       Member member = nodes.get(node);
       if (member != null) {
-        // TODO :: Validate the options flag
-        group.send(new Member[] { member }, msg, Channel.SEND_OPTIONS_DEFAULT);
+        group.send(new Member[] { member }, msg, SEND_OPTIONS_NO_ACK);
       } else {
         // TODO:: These could be exceptions
         logger.warn("Ignoring Msg sent to: Node " + node + " not present in the group. Msg : " + msg);
@@ -444,7 +446,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
           for (int i = 0; i < m.length; i++) {
             waitFor.add(makeNodeIDFrom(m[i]));
           }
-          group.send(m, msg, Channel.SEND_OPTIONS_DEFAULT);
+          group.send(m, msg, SEND_OPTIONS_NO_ACK);
         }
       } catch (ChannelException e) {
         logger.error("Error sending msg : " + msg, e);
