@@ -76,21 +76,21 @@ public final class HttpUtil {
       get.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, NoRetryHandler.INSTANCE);
     }
 
+    BufferedReader reader = null;
     try {
       int status = client.executeMethod(get);
       if (status != HttpStatus.SC_OK) {
         // make formatter sane
         throw new HttpException("The http client has encountered a status code other than ok for the url: " + url
                                    + " status: " + HttpStatus.getStatusText(status));
-
       }      
-      BufferedReader reader = new BufferedReader(new InputStreamReader(get.getResponseBodyAsStream()));
+      reader = new BufferedReader(new InputStreamReader(get.getResponseBodyAsStream()));
       String line;
       while ((line = reader.readLine()) != null) {
         response.append(line).append("\n");
       }
-      reader.close();      
     } finally {
+      if (reader != null) reader.close();
       get.releaseConnection();
     }
     return response.toString().trim();
