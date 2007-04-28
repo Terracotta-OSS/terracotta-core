@@ -22,7 +22,7 @@ public class ServerCrashAndRestartTest extends ServerCrashingTestBase {
 
   public ServerCrashAndRestartTest() {
     super(NODE_COUNT);
-    this.disableAllUntil("2007-05-01");
+    //this.disableAllUntil("2007-05-01");
   }
 
   protected Class getApplicationClass() {

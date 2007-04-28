@@ -76,7 +76,7 @@ public class JMXHeartBeatTestApp extends AbstractTransparentApp {
       .newProxyInstance(mbsc, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
       String result = serverMBean.getHealthStatus();
       jmxc.close();
-      isAlive = result.equals("OK"); 
+      isAlive = result.startsWith("OK"); 
     } catch (Throwable e) {
       e.printStackTrace();            
     }    
