@@ -17,8 +17,9 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 public class ElectionManagerImpl implements ElectionManager {
 
@@ -32,10 +33,11 @@ public class ElectionManagerImpl implements ElectionManager {
                                                          .getLong("l2.ha.electionmanager.electionTimePeriod");
 
   private final GroupManager    groupManager;
+  private final Map             votes                = new HashMap();
+  
   private State                 state                = INIT;
 
   // XXX::NOTE:: These variables are not reset until next election
-  private HashSet               votes                = new HashSet();
   private Enrollment            myVote               = null;
   private Enrollment            winner;
 
@@ -43,13 +45,17 @@ public class ElectionManagerImpl implements ElectionManager {
     this.groupManager = groupManager;
   }
 
-  public synchronized void handleStartElectionRequest(L2StateMessage msg) {
+  public synchronized boolean handleStartElectionRequest(L2StateMessage msg) {
     Assert.assertEquals(L2StateMessage.START_ELECTION, msg.getType());
     if (state == ELECTION_IN_PROGRESS) {
       // Another node is also joining in the election process
       // Cast its vote and notify my vote
       Assert.assertNotNull(myVote);
-      votes.add(msg.getEnrollment());
+      Enrollment vote = msg.getEnrollment();
+      Object old;
+      if ((old = votes.put(vote.getNodeID(), vote)) != null) {
+        logger.warn("Received duplicate vote : Replacing with new one : " + vote + " old one : " + old);
+      }
       if (msg.inResponseTo().isNull()) {
         // This is not a response to this node initiating election. So notify this nodes vote
         GroupMessage response = createElectionStartedMessage(msg, myVote);
@@ -62,8 +68,10 @@ public class ElectionManagerImpl implements ElectionManager {
       } else {
         logger.info("Casted vote from " + msg);
       }
+      return true;
     } else {
       logger.info("Ignoring Start Election Request  : " + msg + " My state = " + state);
+      return false;
     }
   }
 
@@ -90,17 +98,18 @@ public class ElectionManagerImpl implements ElectionManager {
       } catch (GroupException e) {
         logger.error("Error sending Election result conflict message : " + resultConflict);
       }
-    }
-    if (state == ELECTION_IN_PROGRESS) {
-      // Agree to the result and abort the election
-      basicAbort(msg);
-    }
-    GroupMessage resultAgreed = L2StateMessageFactory.createResultAgreedMessage(msg, msg.getEnrollment());
-    logger.info("Agreed with Election Result from " + msg.messageFrom() + " : " + resultAgreed);
-    try {
-      groupManager.sendTo(msg.messageFrom(), resultAgreed);
-    } catch (GroupException e) {
-      logger.error("Error sending Election result agreed message : " + resultAgreed);
+    } else {
+      // Agree to the result, abort the election if necessary
+      if (state == ELECTION_IN_PROGRESS) {
+        basicAbort(msg);
+      }
+      GroupMessage resultAgreed = L2StateMessageFactory.createResultAgreedMessage(msg, msg.getEnrollment());
+      logger.info("Agreed with Election Result from " + msg.messageFrom() + " : " + resultAgreed);
+      try {
+        groupManager.sendTo(msg.messageFrom(), resultAgreed);
+      } catch (GroupException e) {
+        logger.error("Error sending Election result agreed message : " + resultAgreed);
+      }
     }
   }
 
@@ -136,7 +145,7 @@ public class ElectionManagerImpl implements ElectionManager {
     NodeID winnerID = NodeID.NULL_ID;
     int count = 0;
     while (winnerID.isNull()) {
-      if (count++ > 1) {
+      if (count++ > 0) {
         logger.info("Requesting Re-election !!! count = " + count);
       }
       try {
@@ -155,7 +164,7 @@ public class ElectionManagerImpl implements ElectionManager {
     this.myVote = e;
     this.winner = null;
     this.votes.clear();
-    this.votes.add(e); // Cast my vote
+    this.votes.put(e.getNodeID(), e); // Cast my vote
     logger.info("Election Started : " + e);
   }
 
@@ -203,7 +212,7 @@ public class ElectionManagerImpl implements ElectionManager {
   private synchronized Enrollment computeResult() {
     if (state == ELECTION_IN_PROGRESS) {
       state = ELECTION_COMPLETE;
-      logger.info("Election Complete : " + votes + " : " + state);
+      logger.info("Election Complete : " + votes.values() + " : " + state);
       winner = countVotes();
     }
     return winner;
@@ -211,7 +220,7 @@ public class ElectionManagerImpl implements ElectionManager {
 
   private Enrollment countVotes() {
     Enrollment computedWinner = null;
-    for (Iterator i = votes.iterator(); i.hasNext();) {
+    for (Iterator i = votes.values().iterator(); i.hasNext();) {
       Enrollment e = (Enrollment) i.next();
       if (computedWinner == null) {
         computedWinner = e;
@@ -230,7 +239,8 @@ public class ElectionManagerImpl implements ElectionManager {
       try {
         wait(diff);
       } catch (InterruptedException e) {
-        throw new AssertionError(e);
+        logger.error("Interrupted during election : ", e);
+        break;
       }
       diff = diff - (System.currentTimeMillis() - start);
     }

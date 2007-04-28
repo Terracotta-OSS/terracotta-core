@@ -24,18 +24,19 @@ import java.util.Iterator;
 
 public class StateManagerImpl implements StateManager, GroupMessageListener {
 
-  private static final TCLogger      logger       = TCLogging.getLogger(StateManagerImpl.class);
+  private static final TCLogger      logger             = TCLogging.getLogger(StateManagerImpl.class);
 
   private final TCLogger             consoleLogger;
   private final GroupManager         groupManager;
   private final ElectionManager      electionMgr;
   private final Sink                 stateChangeSink;
 
-  private final CopyOnWriteArrayList listeners    = new CopyOnWriteArrayList();
-  private final Object               electionLock = new Object();
+  private final CopyOnWriteArrayList listeners          = new CopyOnWriteArrayList();
+  private final Object               electionLock       = new Object();
 
-  private NodeID                     activeNode   = NodeID.NULL_ID;
-  private volatile State             state        = START_STATE;
+  private NodeID                     activeNode         = NodeID.NULL_ID;
+  private volatile State             state              = START_STATE;
+  private boolean                    electionInProgress = false;
 
   public StateManagerImpl(TCLogger consoleLogger, GroupManager groupManager, Sink stateChangeSink) {
     this.consoleLogger = consoleLogger;
@@ -51,12 +52,20 @@ public class StateManagerImpl implements StateManager, GroupMessageListener {
    */
   public void startElection() {
     synchronized (electionLock) {
+      if (electionInProgress) return;
+      electionInProgress = true;
+    }
+    try {
       if (state == START_STATE) {
         runElection(true);
       } else if (state == PASSIVE_STANDBY) {
         runElection(false);
       } else {
         info("Ignoring Election request since not in right state");
+      }
+    } finally {
+      synchronized (electionLock) {
+        electionInProgress = false;
       }
     }
   }
@@ -147,7 +156,7 @@ public class StateManagerImpl implements StateManager, GroupMessageListener {
   /**
    * Message Listener Interface, TODO::move to a stage
    */
-  public synchronized void messageReceived(NodeID fromNode, GroupMessage msg) {
+  public void messageReceived(NodeID fromNode, GroupMessage msg) {
     if (!(msg instanceof L2StateMessage)) { throw new AssertionError("StateManagerImpl : Received wrong message type :"
                                                                      + msg); }
     L2StateMessage clusterMsg = (L2StateMessage) msg;
@@ -186,7 +195,7 @@ public class StateManagerImpl implements StateManager, GroupMessageListener {
     moveToPassiveStandbyState();
   }
 
-  private void handleElectionWonMessage(L2StateMessage clusterMsg) {
+  private synchronized void handleElectionWonMessage(L2StateMessage clusterMsg) {
     if (state == ACTIVE_COORDINATOR) {
       // Cant get Election Won from another node : Split brain
       // TODO:: Add some reconcile path
@@ -199,7 +208,7 @@ public class StateManagerImpl implements StateManager, GroupMessageListener {
     moveToPassiveState(winningEnrollment);
   }
 
-  private void handleElectionResultMessage(L2StateMessage msg) throws GroupException {
+  private synchronized void handleElectionResultMessage(L2StateMessage msg) throws GroupException {
     if (activeNode.equals(msg.getEnrollment().getNodeID())) {
       Assert.assertFalse(NodeID.NULL_ID.equals(activeNode));
       // This wouldnt normally happen, but we agree - so ack
@@ -237,8 +246,8 @@ public class StateManagerImpl implements StateManager, GroupMessageListener {
           .createTrumpEnrollment(getLocalNodeID()));
       info("Forcing Abort Election for " + msg + " with " + abortMsg);
       groupManager.sendTo(msg.messageFrom(), abortMsg);
-    } else {
-      electionMgr.handleStartElectionRequest(msg);
+    } else if (!electionMgr.handleStartElectionRequest(msg)) {
+      startElectionIfNecessary(NodeID.NULL_ID);
     }
   }
 
