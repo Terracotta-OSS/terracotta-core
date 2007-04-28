@@ -15,7 +15,8 @@
 	</target>
 
 	<target name="build" depends="init" description="compile the source">
-		<javac target="1.4" source="1.4" srcdir="${src.dir}" destdir="${build.dir}" classpath="lib/org.mortbay.jetty-4.2.20.jar"/>
+		<javac target="1.4" source="1.4" srcdir="${src.dir}" destdir="${build.dir}"  
+		  classpath="lib/jetty-6.1.1.jar:lib/jetty-util-6.1.1.jar:lib/servlet-api-2.5-6.1.1.jar"/>
 	</target>
 
 	<target name="clean" description="clean up">

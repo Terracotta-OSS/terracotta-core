@@ -28,6 +28,9 @@ if not exist "%JAVA_HOME%" set JAVA_HOME=%TC_INSTALL_DIR%\jre
 set TC_CONFIG_PATH=tc-config.xml
 call "%TC_INSTALL_DIR%\bin\dso-env.bat" -q "%TC_CONFIG%"
 set JAVA_OPTS=%TC_JAVA_OPTS% -Dcom.sun.management.jmxremote %JAVA_OPTS%
-set CLASSPATH="classes;lib\org.mortbay.jetty-4.2.20.jar;lib\javax.servlet.jar"
+set CLASSPATH=classes
+set CLASSPATH=%CLASSPATH%;lib\jetty-6.1.1.jar
+set CLASSPATH=%CLASSPATH%;lib\jetty-util-6.1.1.jar
+set CLASSPATH=%CLASSPATH%;lib\servlet-api-2.5-6.1.1.jar
 start "sharedqueue" "%JAVA_HOME%\bin\java" %JAVA_OPTS% -cp %CLASSPATH% demo.sharedqueue.Main %*
 endlocal
