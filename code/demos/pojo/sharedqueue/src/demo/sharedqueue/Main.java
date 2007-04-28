@@ -32,20 +32,14 @@ public class Main {
 
 	private Worker worker;
 
-	/**
-	 *  Start a web server at the specified port.
-	 *
-	 *@param  port           Description of Parameter
-	 *@exception  Exception  Description of Exception
-	 */
-	public void start(int port) throws Exception {
+	public final void start(int port) throws Exception {
 		String nodeId = registerForNotifications();
 		port = setPort(port);
 
 		System.out.println("DSO SharedQueue (node " + nodeId + ")");
 		System.out.println("Open your browser and go to - http://"
 				+ getHostName() + ":" + port + "/webapp\n");
-		
+
 		Server server = new Server();
 		Connector connector = new SocketConnector();
 		connector.setPort(port);
@@ -73,7 +67,7 @@ public class Main {
 		server.join();
 	}
 
-	private int setPort(int port) {
+	private final int setPort(int port) {
 		if (port == -1) {
 			if (lastPortUsed == 0) {
 				port = lastPortUsed = 1990;
@@ -87,10 +81,10 @@ public class Main {
 	}
 
 	/**
-	 *  Starts a thread to identify dead workers (From nodes that have been
-	 *  brought down) and removes them from the (shared) list of workers.
+	 * Starts a thread to identify dead workers (From nodes that have been
+	 * brought down) and removes them from the (shared) list of workers.
 	 */
-	private void startReaper() {
+	private final void startReaper() {
 		Thread reaper = new Thread(new Runnable() {
 			public void run() {
 				while (true) {
@@ -106,29 +100,18 @@ public class Main {
 		reaper.start();
 	}
 
-	/**
-	 *  Starts the demo
-	 *
-	 *@param  args           The command line arguments
-	 *@exception  Exception  Description of Exception
-	 */
-	public static final void main(String[] args) throws Exception {
+	public final static void main(String[] args) throws Exception {
 		int port = -1;
 		try {
 			port = Integer.parseInt(args[0]);
 		} catch (Exception e) {
 		}
-
 		(new Main()).start(port);
 	}
 
-	/**
-	 *@return    The HostName value
-	 */
-	static String getHostName() {
+	static final String getHostName() {
 		try {
 			InetAddress addr = InetAddress.getLocalHost();
-			byte[] ipAddr = addr.getAddress();
 			return addr.getHostName();
 		} catch (UnknownHostException e) {
 			return "Unknown";
@@ -136,10 +119,11 @@ public class Main {
 	}
 
 	/**
-	 * Registers this client for JMX notifications. 
+	 * Registers this client for JMX notifications.
+	 * 
 	 * @returns This clients Node ID
 	 */
-	private String registerForNotifications() throws Exception {
+	private final String registerForNotifications() throws Exception {
 		java.util.List servers = MBeanServerFactory.findMBeanServer(null);
 		if (servers.size() == 0) {
 			System.err

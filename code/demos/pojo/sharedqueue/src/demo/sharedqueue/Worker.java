@@ -3,34 +3,32 @@
  */
 package demo.sharedqueue;
 
-import java.util.Date;
 import java.util.Collections;
-import java.util.ListIterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
+import java.util.ListIterator;
 
 class Worker implements Runnable {
 
-	private String name;
+	private final String name;
 
-	private int port;
+	private final int port;
 
-	private Queue queue;
+	private final Queue queue;
 
-	private List jobs;
+	private final List jobs;
 
-	private String nodeId;
+	private final String nodeId;
+
+	private final static int HEALTH_ALIVE = 0;
+
+	private final static int HEALTH_DYING = 1;
+
+	private final static int HEALTH_DEAD = 2;
+
+	private final static int MAX_LOAD = 10;
 
 	private int health = HEALTH_ALIVE;
-
-	private static int HEALTH_ALIVE = 0;
-
-	private static int HEALTH_DYING = 1;
-
-	private static int HEALTH_DEAD = 2;
-
-	private static final int MAX_LOAD = 10;
 
 	public Worker(Queue queue, int port, String nodeId) {
 		this.name = Queue.getHostName();
@@ -40,15 +38,15 @@ class Worker implements Runnable {
 		jobs = Collections.synchronizedList(new LinkedList());
 	}
 
-	public String getNodeId() {
+	public final String getNodeId() {
 		return this.nodeId;
 	}
 
-	public String getName() {
+	public final String getName() {
 		return "node: " + nodeId + " (" + name + ":" + port + ")";
 	}
 
-	public String toXml() {
+	public final String toXml() {
 		synchronized (jobs) {
 			String data = "<worker><name>" + getName() + "</name><jobs>";
 			ListIterator i = jobs.listIterator();
@@ -66,7 +64,7 @@ class Worker implements Runnable {
 	 * 
 	 * @return True if the Worker is dead.
 	 */
-	public synchronized boolean expire() {
+	public final synchronized boolean expire() {
 		if (HEALTH_DYING == health) {
 			// a dying Worker wont die until it has
 			// consumed all of it's jobs
@@ -85,7 +83,7 @@ class Worker implements Runnable {
 	 * 
 	 * @param health
 	 */
-	private synchronized void setHealth(int health) {
+	private final synchronized void setHealth(int health) {
 		this.health = health;
 	}
 
@@ -95,11 +93,11 @@ class Worker implements Runnable {
 	 * 
 	 * @param health
 	 */
-	public synchronized void markForExpiration() {
+	public final synchronized void markForExpiration() {
 		setHealth(HEALTH_DYING);
 	}
 
-	public void run() {
+	public final void run() {
 		while (HEALTH_DEAD != health) {
 			if ((HEALTH_ALIVE == health) && (jobs.size() < MAX_LOAD)) {
 				final Job job = queue.getJob();

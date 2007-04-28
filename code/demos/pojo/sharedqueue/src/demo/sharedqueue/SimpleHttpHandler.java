@@ -15,17 +15,22 @@ import org.mortbay.jetty.handler.AbstractHandler;
 
 public class SimpleHttpHandler extends AbstractHandler {
 
-	private Queue queue;
+	private final Queue queue;
 
-	public static final String ACTION = "/webapp";
+	public final static String ACTION = "/webapp";
 
-	public static final String UNITS_OF_WORK = "unitsOfWork";
+	public final static String ACTION_ADDWORK = "/add_work_item.asp";
+
+	public final static String ACTION_GETINFO = "/get_info_xml.asp";
+
+	public final static String UNITS_OF_WORK = "unitsOfWork";
 
 	public SimpleHttpHandler(Queue queue) {
 		this.queue = queue;
 	}
 
-	private final int getIntForParameter(HttpServletRequest request, final String name) {
+	private final int getIntForParameter(HttpServletRequest request,
+			final String name) {
 		String param = request.getParameter(name);
 		try {
 			return param == null ? 0 : Integer.parseInt(param);
@@ -33,41 +38,50 @@ public class SimpleHttpHandler extends AbstractHandler {
 			return 0;
 		}
 	}
-	
-	public final void handle(String pathInContext, HttpServletRequest request,
+
+	public final void handle(String target, HttpServletRequest request,
 			HttpServletResponse response, int dispatch) throws IOException,
 			ServletException {
-		Request base_request = (request instanceof Request) ? 
-				(Request)request :
-				HttpConnection.getCurrentConnection().getRequest();
-			
-		if (pathInContext.equals("/add_work_item.asp")) {
-			final int unitsOfWork = getIntForParameter(request, UNITS_OF_WORK);
-			Thread processor = new Thread(new Runnable() {
-				public void run() {
-					for (int i = 0; i < unitsOfWork; i++) {
-						queue.addJob();
-						try {
-							Thread.sleep(50);
-						}
-						// added slight delay to improve visuals
-						catch (InterruptedException ie) {
-							System.err.println(ie.getMessage());
-						}
+		Request base_request = (request instanceof Request) ? (Request) request
+				: HttpConnection.getCurrentConnection().getRequest();
+		if (target.equals(ACTION_ADDWORK)) {
+			doAddWork(base_request, response);
+		} else if (target.equals(ACTION_GETINFO)) {
+			doGetInfo(base_request, response);
+		}
+	}
+
+	private final void doAddWork(Request request, HttpServletResponse response)
+			throws IOException {
+		final int unitsOfWork = getIntForParameter(request, UNITS_OF_WORK);
+		final Thread processor = new Thread(new Runnable() {
+			public void run() {
+				for (int i = 0; i < unitsOfWork; i++) {
+					queue.addJob();
+					// added slight delay to improve visuals
+					try {
+						Thread.sleep(50);
+					} catch (InterruptedException ie) {
+						System.err.println(ie.getMessage());
 					}
 				}
-			});
-			processor.start();
-			response.sendRedirect(ACTION);
-		}
-		else if (pathInContext.equals("/get_info_xml.asp")) {
-			response.setContentType("text/xml");
-			response.setStatus(HttpServletResponse.SC_OK);
-			response.getWriter().println("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
-			response.getWriter().println("<root>");
-			response.getWriter().println(queue.getXmlData());
-			response.getWriter().println("</root>");
-			base_request.setHandled(true);
-		}
+			}
+		});
+		processor.start();
+		response.sendRedirect(ACTION);
+	}
+
+	private final void doGetInfo(Request request, HttpServletResponse response)
+			throws IOException {
+		response.setContentType("text/xml");
+		response.setStatus(HttpServletResponse.SC_OK);
+		response
+				.getWriter()
+				.println(
+						"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
+		response.getWriter().println("<root>");
+		response.getWriter().println(queue.getXmlData());
+		response.getWriter().println("</root>");
+		request.setHandled(true);
 	}
 }
