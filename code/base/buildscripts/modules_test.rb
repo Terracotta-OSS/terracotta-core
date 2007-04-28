@@ -99,7 +99,8 @@ class BuildSubtree
             
             # always set l2.startup.jvm for tests that selectively spawns server out of process
             test_jdk = Registry[:jvm_set]['tests-jdk']
-            jvm_15_plus = test_jdk.version >= '1.5.0' ? test_jdk : Registry[:jvm_set]['J2SE-1.5']
+            jvm_15_plus = (test_jdk && test_jdk.version >= '1.5.0') ? test_jdk : Registry[:jvm_set]['J2SE-1.5']
+            fail("Can't find JVM 15 or greater to run L2") if jvm_15_plus == nil
             write_dynamic_property(file, "l2.startup.jvm", jvm_15_plus.home.to_s)
             
             if jvm.version < '1.5.0'
