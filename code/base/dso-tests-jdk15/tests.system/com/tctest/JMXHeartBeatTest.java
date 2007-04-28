@@ -30,7 +30,7 @@ public class JMXHeartBeatTest extends TransparentTestBase {
   private int              adminPort;
 
   public JMXHeartBeatTest() {
-    // this.disableAllUntil("2007-02-27");
+    this.disableAllUntil("2007-05-01");
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
