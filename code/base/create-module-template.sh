@@ -1,4 +1,9 @@
 #!/bin/sh
+if [ "$1" = "" ]; then
+  echo "usage: $0 [module-name]"
+  exit 0
+fi
+
 MODULE_NAME=$1
 
 # directory structure
