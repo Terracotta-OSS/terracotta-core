@@ -28,7 +28,7 @@ public class Main {
 
 	private int lastPortUsed;
 
-	private Queue queue;
+	private demo.sharedqueue.Queue queue;
 
 	private Worker worker;
 

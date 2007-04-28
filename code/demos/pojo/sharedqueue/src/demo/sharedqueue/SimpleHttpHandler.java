@@ -15,13 +15,13 @@ import org.mortbay.jetty.handler.AbstractHandler;
 
 public class SimpleHttpHandler extends AbstractHandler {
 
-	private final Queue queue;
+	private final demo.sharedqueue.Queue queue;
 
 	public final static String ACTION = "/webapp";
 
-	public final static String ACTION_ADDWORK = "/add_work_item.asp";
+	public final static String ACTION_ADDWORK = "/addWork";
 
-	public final static String ACTION_GETINFO = "/get_info_xml.asp";
+	public final static String ACTION_GETINFO = "/getInfo";
 
 	public final static String UNITS_OF_WORK = "unitsOfWork";
 

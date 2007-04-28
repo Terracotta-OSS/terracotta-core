@@ -13,7 +13,7 @@ function startDemo()
 function getData() 
 {
    // branch for native XMLHttpRequest object
-   url = '/webapp/get_info_xml.asp';
+   url = '/webapp/getInfo';
    if (window.XMLHttpRequest) 
    {
       http_request = new XMLHttpRequest();
@@ -43,7 +43,7 @@ function getStatus()
 
 function populateQueue() 
 {
-   var url        = '/webapp/add_work_item.asp'
+   var url        = '/webapp/addWork'
    var parameters =  "unitsOfWork=" + encodeURI(document.getElementById("unitsOfWork").value);
    http_request   = false;
    if (window.XMLHttpRequest) { // Mozilla, Safari,...
