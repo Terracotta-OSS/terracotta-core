@@ -11,7 +11,6 @@ import com.tc.test.server.appserver.deployment.AbstractDBServer;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.ProxyBuilder;
-import com.tc.test.server.appserver.deployment.ServerManagerUtil;
 import com.tctest.spring.bean.IHibernateBean;
 import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
@@ -104,12 +103,15 @@ public class HibernateTest extends AbstractTwoServerDeploymentTest {
 
     protected void setUp() throws Exception {
       super.setUp();
+      
+      if(shouldDisable()) return;
+      
       try {
-        sm = ServerManagerUtil.startAndBind(HibernateTest.class, isWithPersistentStore());       
+        // sm = ServerManagerUtil.startAndBind(HibernateTest.class, isWithPersistentStore());       
         
         // AbstractDBServer dbSvr = sm.makeDBServer("HSQL", DB_NAME, DB_PORT);
         AbstractDBServer dbSvr = new HSqlDBServer(DB_NAME, DB_PORT);
-        sm.addServerToStop(dbSvr);
+        getServerManager().addServerToStop(dbSvr);
         dbSvr.start();
         
       } catch(Exception ex) {

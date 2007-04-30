@@ -40,7 +40,7 @@ public class SessionScopedBeanTest extends AbstractTwoServerDeploymentTest {
 //  private static ISimpleBean   beanN2S1Local; // node2 session1
 
   public SessionScopedBeanTest() {
-    this.disableAllUntil("2007-05-14");
+    // this.disableAllUntil("2007-05-14");
     this.disableVariant(TestConfigObject.SPRING_VARIANT, "128");
   }
 

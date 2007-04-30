@@ -18,11 +18,11 @@ public abstract class SpringTwoServerTestSetup extends TwoServerTestSetup {
   }
 
   public DeploymentBuilder makeDeploymentBuilder() throws IOException {
-    return addSpringVariant(sm.makeDeploymentBuilder());
+    return addSpringVariant(getServerManager().makeDeploymentBuilder());
   }
 
   public DeploymentBuilder makeDeploymentBuilder(String warFileName) {
-    return addSpringVariant(sm.makeDeploymentBuilder(warFileName));
+    return addSpringVariant(getServerManager().makeDeploymentBuilder(warFileName));
   }
 
   private DeploymentBuilder addSpringVariant(DeploymentBuilder builder) {

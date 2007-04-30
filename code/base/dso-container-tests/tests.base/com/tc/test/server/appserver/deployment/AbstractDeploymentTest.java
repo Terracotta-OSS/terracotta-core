@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +22,7 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
 
   protected Log            logger          = LogFactory.getLog(getClass());
 
-  protected ServerManager    serverManager;
+  private ServerManager    serverManager;
   private WatchDog         watchDog;
 
   Map disabledVariants = new HashMap();
@@ -29,12 +30,12 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
 
   private static final int TIMEOUT_DEFAULT = 30 * 60;
 
-  protected void setUp() throws Exception {
-    super.setUp();
-    serverManager = ServerManagerUtil.start(getClass(), isWithPersistentStore());
-  }
-
   public void runBare() throws Throwable {
+    getServerManager();
+    if(shouldDisable()) {
+      return;
+    }
+    
     watchDog = new WatchDog(getTimeout());
     try {
       watchDog.startWatching();
@@ -42,6 +43,17 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
     } finally {
       watchDog.stopWatching();
     }
+  }
+
+  protected ServerManager getServerManager() {
+    if (serverManager == null) {
+      try {
+        serverManager = ServerManagerUtil.start(getClass(), isWithPersistentStore());
+      } catch (Exception e) {
+        throw new RuntimeException("Unable to create server manager", e);
+      }
+    }
+    return serverManager;
   }
 
   protected int getTimeout() throws IOException {
@@ -59,23 +71,23 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   }
 
   protected WebApplicationServer makeWebApplicationServer(String tcConfig) throws Exception {
-    return serverManager.makeWebApplicationServer(tcConfig);
+    return getServerManager().makeWebApplicationServer(tcConfig);
   }
 
   protected WebApplicationServer makeWebApplicationServer(FileSystemPath tcConfigPath) throws Exception {
-    return serverManager.makeWebApplicationServer(tcConfigPath);
+    return getServerManager().makeWebApplicationServer(tcConfigPath);
   }
 
   protected WebApplicationServer makeWebApplicationServer(StandardTerracottaAppServerConfig tcConfig) throws Exception {
-    return serverManager.makeWebApplicationServer(tcConfig);
+    return getServerManager().makeWebApplicationServer(tcConfig);
   }
 
   protected void restartDSO() throws Exception {
-    serverManager.restartDSO(isWithPersistentStore());
+    getServerManager().restartDSO(isWithPersistentStore());
   }
 
   protected DeploymentBuilder makeDeploymentBuilder(String warFileName) {
-    return serverManager.makeDeploymentBuilder(warFileName);
+    return getServerManager().makeDeploymentBuilder(warFileName);
   }
 
 // XXX: This causes the bad war file name which breaks WLS tests  
@@ -105,11 +117,11 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   }
 
   protected StandardTerracottaAppServerConfig getConfigBuilder() {
-    return serverManager.getConfig();
+    return getServerManager().getConfig();
   }
 
   protected void stopAllWebServers() {
-    ServerManagerUtil.stopAllWebServers(serverManager);
+    ServerManagerUtil.stopAllWebServers(getServerManager());
   }
   
   public boolean isWithPersistentStore() {
@@ -117,7 +129,7 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   }
   
   protected void disableVariant(String variantName, String variantValue) {
-    List variantList = (List)disabledVariants.get(variantName);
+    List variantList = (List) disabledVariants.get(variantName);
     if (variantList == null) {
       variantList = new ArrayList();
       disabledVariants.put(variantName, variantList);
@@ -132,4 +144,34 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   void disableAllTests() {
     this.disableAllUntil(new Date(Long.MAX_VALUE));
   }
+  
+  public boolean shouldDisable() {
+    return shouldDisableForJavaVersion() || shouldDisableForVariants();
+  }
+  
+  private boolean shouldDisableForVariants() {
+    for (Iterator iter = disabledVariants.entrySet().iterator(); iter.hasNext();) {
+      Map.Entry entry = (Map.Entry) iter.next();
+      String variantName = (String) entry.getKey();
+      List variants = (List) entry.getValue();
+      String selected = getServerManager().getTestConfig().selectedVariantFor(variantName);
+      if (variants.contains(selected)) {
+        logger.warn("Test " + getName() + " is disabled for " + variantName + " = " + selected);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean shouldDisableForJavaVersion() {
+    for (Iterator iter = disabledJavaVersion.iterator(); iter.hasNext();) {
+      String version = (String) iter.next();
+      if (version.equals(System.getProperties().getProperty("java.version"))) {
+        logger.warn("Test " + getName() + " is disabled for " + version);
+        return true;
+      }
+    }
+    return false;
+  }
+
 }

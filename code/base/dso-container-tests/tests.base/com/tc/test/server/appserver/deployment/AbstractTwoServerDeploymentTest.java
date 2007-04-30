@@ -6,16 +6,10 @@ package com.tc.test.server.appserver.deployment;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import junit.framework.TestSuite;
 
 
 public abstract class AbstractTwoServerDeploymentTest extends AbstractDeploymentTest {
-
   public WebApplicationServer server1;
   public WebApplicationServer server2;
 
@@ -54,6 +48,8 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
     protected void setUp() throws Exception {
       super.setUp();
       
+      if(shouldDisable()) return;
+      
       try {
         long l1 = System.currentTimeMillis();
         Deployment deployment = makeWAR();
@@ -76,14 +72,13 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
     }
 
     private WebApplicationServer createServer(Deployment deployment) throws Exception {
-      WebApplicationServer server = sm.makeWebApplicationServer(tcConfigFile);
+      WebApplicationServer server = getServerManager().makeWebApplicationServer(tcConfigFile);
       server.addWarDeployment(deployment, context);
       if(start) {
         server.start();
       }
       return server;
     }
-    
     
     private Deployment makeWAR() throws Exception {
       DeploymentBuilder builder = makeDeploymentBuilder(this.context + ".war");
@@ -94,49 +89,7 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
     }
     
     protected abstract void configureWar(DeploymentBuilder builder);
-    
-    protected boolean shouldDisable() {
-      boolean rtv = false;
-      if (this.fTest instanceof TestSuite) {
-        for (Enumeration e=((TestSuite)fTest).tests(); e.hasMoreElements();) {
-          Object o = e.nextElement();
-          if (o instanceof AbstractTwoServerDeploymentTest) {
-            AbstractTwoServerDeploymentTest t = (AbstractTwoServerDeploymentTest)o;
-            if (shouldDisableForJavaVersion(t) || shouldDisableForVariants(t)) {
-              rtv = true;
-              t.disableAllTests();
-            }
-          }
-        }
-      }
-      return rtv;
-    }
-
-    boolean shouldDisableForVariants(AbstractTwoServerDeploymentTest t) {
-      for (Iterator iter=t.disabledVariants.entrySet().iterator(); iter.hasNext();) {
-        Map.Entry entry = (Map.Entry)iter.next();
-        String variantName = (String)entry.getKey();
-        List variants = (List)entry.getValue();
-        String selected = this.sm.getTestConfig().selectedVariantFor(variantName);
-        if (variants.contains(selected)) {
-          logger.warn("Test " + t.getName() + " is disabled for " + variantName + " = " + selected );
-          return true;
-        }
-      }
-      return false;
-    }
-
-    private boolean shouldDisableForJavaVersion(AbstractTwoServerDeploymentTest t) {
-      for (Iterator iter=t.disabledJavaVersion.iterator(); iter.hasNext();) {
-        String version = (String)iter.next();
-        if (version.equals(System.getProperties().getProperty("java.version"))) {
-          logger.warn("Test " + t.getName() + " is disabled for " + version );
-          return true;
-        }
-      }
-      return false;
-    }
-
+  
   }
-
+  
 }

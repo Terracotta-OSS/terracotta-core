@@ -5,6 +5,7 @@ package com.tc.test.server.appserver.deployment;
 
 
 import java.io.IOException;
+import java.util.Enumeration;
 
 import junit.extensions.TestSetup;
 import junit.framework.TestSuite;
@@ -12,19 +13,29 @@ import junit.framework.TestSuite;
 public class ServerTestSetup extends TestSetup {
 
   private final Class testClass;
-  protected ServerManager sm;
+
+  private ServerManager sm;
 
   public ServerTestSetup(Class testClass) {
     super(new TestSuite(testClass));
     this.testClass = testClass;
   }
 
-  protected void setUp() throws Exception {
-    sm = ServerManagerUtil.startAndBind(testClass, isWithPersistentStore());
-  }
-
   protected void tearDown() throws Exception {
-    ServerManagerUtil.stopAndRelease(sm);
+    if (sm != null) {
+      ServerManagerUtil.stopAndRelease(sm);
+    }
+  }
+  
+  protected ServerManager getServerManager() {
+    if (sm == null) {
+      try {
+        sm = ServerManagerUtil.startAndBind(testClass, isWithPersistentStore());
+      } catch (Exception e) {
+        throw new RuntimeException("Unable to create server manager", e);
+      }
+    }
+    return sm;
   }
 
   public DeploymentBuilder makeDeploymentBuilder() throws IOException {
@@ -36,6 +47,16 @@ public class ServerTestSetup extends TestSetup {
   }
 
   public boolean isWithPersistentStore() {
+    return false;
+  }
+  
+  public boolean shouldDisable() {
+    for (Enumeration e = ((TestSuite) fTest).tests(); e.hasMoreElements();) {
+      Object o = e.nextElement();
+      if (o instanceof AbstractDeploymentTest && ((AbstractDeploymentTest) o).shouldDisable()) {
+        return true;
+      }
+    }
     return false;
   }
   

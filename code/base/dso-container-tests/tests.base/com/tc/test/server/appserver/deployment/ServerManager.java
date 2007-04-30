@@ -32,7 +32,7 @@ public class ServerManager {
   private final TestConfigObject config;
   private NewAppServerFactory    factory;
 
-  static final boolean           MONKEY_MODE    = true;
+  static final boolean           MONKEY_MODE    = false;
 
   public ServerManager(final Class testClass) throws Exception {
     PropertiesHackForRunningInEclipse.initializePropertiesWhenRunningInEclipse();

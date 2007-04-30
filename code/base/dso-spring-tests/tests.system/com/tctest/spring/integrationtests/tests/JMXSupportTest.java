@@ -58,13 +58,14 @@ public class JMXSupportTest extends AbstractTwoServerDeploymentTest {
 
     protected void setUp() throws Exception {
       super.setUp();
+      
+      if(shouldDisable()) return;
+      
       try {
-        if(!shouldDisable()) {
-          singleton1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
-          singleton2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
-          mbeanServerConn1 = server1.getMBeanServerConnection();
-          mbeanServerConn2 = server2.getMBeanServerConnection();
-        }
+        singleton1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+        singleton2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+        mbeanServerConn1 = server1.getMBeanServerConnection();
+        mbeanServerConn2 = server2.getMBeanServerConnection();
       } catch (Exception e) {
         e.printStackTrace(); 
         throw e;

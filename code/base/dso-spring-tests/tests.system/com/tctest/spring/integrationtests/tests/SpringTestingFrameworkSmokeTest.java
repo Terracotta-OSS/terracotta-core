@@ -103,7 +103,7 @@ public class SpringTestingFrameworkSmokeTest extends SpringDeploymentTest {
   }
 
   public StandardTerracottaAppServerConfig buildTCConfig() throws Exception {
-    StandardTerracottaAppServerConfig tcConfigBuilder = new SpringTerracottaAppServerConfig(serverManager.getTcConfigFile(CONFIG_FILE_FOR_TEST).getFile()) ;
+    StandardTerracottaAppServerConfig tcConfigBuilder = new SpringTerracottaAppServerConfig(getServerManager().getTcConfigFile(CONFIG_FILE_FOR_TEST).getFile()) ;
     SpringConfigBuilder springConfigBuilder = tcConfigBuilder.getConfigBuilder().getApplication().getSpring();
     
     SpringApplicationConfigBuilder application = springConfigBuilder.getApplications()[0];

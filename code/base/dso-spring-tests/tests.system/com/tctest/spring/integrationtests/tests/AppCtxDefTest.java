@@ -74,6 +74,8 @@ public class AppCtxDefTest extends AbstractTwoServerDeploymentTest {
 
     protected void setUp() throws Exception {
       super.setUp();
+      
+      if(shouldDisable()) return;
 
       WebApplicationServer server1 = createServer();
       WebApplicationServer server2 = createServer();
@@ -87,7 +89,7 @@ public class AppCtxDefTest extends AbstractTwoServerDeploymentTest {
     }
 
     private WebApplicationServer createServer() throws Exception {
-      WebApplicationServer server = sm.makeWebApplicationServer("/tc-config-files/appctxdef-tc-config.xml");
+      WebApplicationServer server = getServerManager().makeWebApplicationServer("/tc-config-files/appctxdef-tc-config.xml");
       
       server.addWarDeployment(createAppCtxDef1war("appCtxDef1local"),  "appCtxDef1local");
       server.addWarDeployment(createAppCtxDef1war("appCtxDef1shared"), "appCtxDef1shared");

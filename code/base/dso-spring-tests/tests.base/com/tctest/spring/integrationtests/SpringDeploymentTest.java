@@ -12,7 +12,7 @@ import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 public class SpringDeploymentTest extends AbstractDeploymentTest {
 
   protected DeploymentBuilder makeDeploymentBuilder(String warFileName) {
-    DeploymentBuilder builder = serverManager.makeDeploymentBuilder(warFileName);
+    DeploymentBuilder builder = getServerManager().makeDeploymentBuilder(warFileName);
     
     builder.addDirectoryOrJARContainingClassOfSelectedVersion(BeanFactory.class,
                                                               new String[] { TestConfigObject.SPRING_VARIANT }); // springframework
