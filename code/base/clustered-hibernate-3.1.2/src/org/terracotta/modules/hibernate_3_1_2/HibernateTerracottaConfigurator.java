@@ -24,6 +24,9 @@ public final class HibernateTerracottaConfigurator extends TerracottaConfigurato
     TransparencyClassSpec spec = configHelper.getOrCreateSpec("org.hibernate.collection.AbstractPersistentCollection");
     spec.addTransient("session");
     
+    /**
+     * These name locks will be removed when the auto synchronous feature is implemented.
+     */
     LockDefinition lockDefinition = new LockDefinition("abstractPersistentCollectionLock", ConfigLockLevel.WRITE);
     lockDefinition.commit();
     configHelper.addLock("* org.hibernate.collection.AbstractPersistentCollection.*(..)", lockDefinition);
