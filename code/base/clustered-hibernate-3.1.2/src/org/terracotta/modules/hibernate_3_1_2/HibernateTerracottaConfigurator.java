@@ -24,19 +24,29 @@ public final class HibernateTerracottaConfigurator extends TerracottaConfigurato
     TransparencyClassSpec spec = configHelper.getOrCreateSpec("org.hibernate.collection.AbstractPersistentCollection");
     spec.addTransient("session");
     
+    LockDefinition lockDefinition = new LockDefinition("abstractPersistentCollectionLock", ConfigLockLevel.WRITE);
+    lockDefinition.commit();
+    configHelper.addLock("* org.hibernate.collection.AbstractPersistentCollection.*(..)", lockDefinition);
+
     configHelper.addIncludePattern("org.hibernate.collection.PersistentSet", false, false, false);
-    LockDefinition lockDefinition = new LockDefinition("ownerLock", ConfigLockLevel.WRITE);
+    lockDefinition = new LockDefinition("persistentSetLock", ConfigLockLevel.WRITE);
     lockDefinition.commit();
-    configHelper.addLock("* org.hibernate.collection.AbstractPersistentCollection.setOwner(..)", lockDefinition);
-    configHelper.addLock("* org.hibernate.collection.AbstractPersistentCollection.getOwner(..)", lockDefinition);
-    lockDefinition = new LockDefinition("snapshotLock", ConfigLockLevel.WRITE);
-    lockDefinition.commit();
-    configHelper.addLock("* org.hibernate.collection.AbstractPersistentCollection.setSnapshot(..)", lockDefinition);
-    configHelper.addLock("* org.hibernate.collection.AbstractPersistentCollection.getKey(..)", lockDefinition);
-    configHelper.addLock("* org.hibernate.collection.AbstractPersistentCollection.getRole(..)", lockDefinition);
-    configHelper.addLock("* org.hibernate.collection.AbstractPersistentCollection.getStoredSnapshot(..)", lockDefinition);
+    configHelper.addLock("* org.hibernate.collection.PersistentSet.*(..)", lockDefinition);
     
     configHelper.addIncludePattern("org.hibernate.collection.PersistentBag", false, false, false);
+    lockDefinition = new LockDefinition("persistentBagLock", ConfigLockLevel.WRITE);
+    lockDefinition.commit();
+    configHelper.addLock("* org.hibernate.collection.PersistentBag.*(..)", lockDefinition);
+    
+    configHelper.addIncludePattern("org.hibernate.collection.PersistentList", false, false, false);
+    lockDefinition = new LockDefinition("persistentListLock", ConfigLockLevel.WRITE);
+    lockDefinition.commit();
+    configHelper.addLock("* org.hibernate.collection.PersistentList.*(..)", lockDefinition);
+    
+    configHelper.addIncludePattern("org.hibernate.collection.PersistentMap", false, false, false);
+    lockDefinition = new LockDefinition("persistentMapLock", ConfigLockLevel.WRITE);
+    lockDefinition.commit();
+    configHelper.addLock("* org.hibernate.collection.PersistentMap.*(..)", lockDefinition);
     
     /**
      * Session
