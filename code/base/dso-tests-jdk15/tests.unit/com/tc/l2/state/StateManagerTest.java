@@ -300,7 +300,7 @@ public class StateManagerTest extends TCTestCase {
 
     System.out.println("***  Remaining nodes join");    
     for(int i=1; i < nodes; ++i) {
-      ids[i] = groupMgr[i].join(allNodes[i], allNodes);
+     ids[i] = groupMgr[i].join(allNodes[i], allNodes);
     }
     
     Thread.sleep(1000);
@@ -326,11 +326,18 @@ public class StateManagerTest extends TCTestCase {
     // stop active node
     groupMgr[0].stop();
     Thread.sleep(100);
-    
+  
+    ElectionIfNecessaryThread reElectThreads[] = new ElectionIfNecessaryThread[nodes];
     for(int i=1; i < nodes; ++i) {
-      managers[i].startElectionIfNecessary(ids[i]);
+      reElectThreads[i] = new ElectionIfNecessaryThread(managers[i], ids[0]);
     }
-    Thread.sleep(2500);
+    for(int i=1; i < nodes; ++i) {
+      reElectThreads[i].start();
+    }
+    for(int i=1; i < nodes; ++i) {
+      reElectThreads[i].join();
+    }
+    Thread.sleep(100);
  
     //verify
     activeCount = 0;
@@ -376,6 +383,20 @@ public class StateManagerTest extends TCTestCase {
     
     public void run() {
       mgr.startElection();
+    }
+  }
+  
+  private static class ElectionIfNecessaryThread extends Thread {
+    private StateManager mgr;
+    private NodeID disconnectedNode;
+    
+    public ElectionIfNecessaryThread(StateManager mgr, NodeID disconnectedNode) {
+      this.mgr = mgr;
+      this.disconnectedNode = disconnectedNode;
+    }
+   
+    public void run() {
+      mgr.startElectionIfNecessary(disconnectedNode);
     }
   }
   
