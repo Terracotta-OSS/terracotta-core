@@ -35,10 +35,7 @@ public class EhcacheTerracottaConfigurator extends TerracottaConfiguratorModule 
 			final StandardDSOClientConfigHelper configHelper) {
 	    ClassAdapterFactory factory = new EhcacheLruMemoryStoreAdapter();
 	    TransparencyClassSpec spec = configHelper.getOrCreateSpec("net.sf.ehcache.store.LruMemoryStore$SpoolingLinkedHashMap");
-	    spec.setCustomClassAdapter(factory);
-	    
-	    factory = new EhcacheMemoryStoreAdapter();
-	    spec = configHelper.getOrCreateSpec("net.sf.ehcache.store.MemoryStore");
+	    spec.setCallConstructorOnLoad(true);
 	    spec.setCustomClassAdapter(factory);
 	}
 }

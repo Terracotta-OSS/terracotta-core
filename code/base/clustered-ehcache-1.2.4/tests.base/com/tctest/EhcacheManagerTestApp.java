@@ -120,7 +120,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 		}
 		barrier.await();
 	}
-
+	
 	/**
 	 * Create many caches.
 	 * 
@@ -196,10 +196,10 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 		Assert.assertEquals(name, cache.getName());
 		Assert.assertEquals(Status.STATUS_ALIVE, cache.getStatus());
 
-		//int sizeFromGetSize = cache.getSize();
-		//int sizeFromKeys = cache.getKeys().size();
-		//Assert.assertEquals(sizeFromGetSize, sizeFromKeys);
-		//Assert.assertEquals(2, cache.getSize());
+		int sizeFromGetSize = cache.getSize();
+		int sizeFromKeys = cache.getKeys().size();
+		Assert.assertEquals(sizeFromGetSize, sizeFromKeys);
+		Assert.assertEquals(2, cache.getSize());
 	}
 
 	/**

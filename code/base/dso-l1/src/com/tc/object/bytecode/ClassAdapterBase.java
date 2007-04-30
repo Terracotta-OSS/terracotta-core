@@ -13,6 +13,7 @@ import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
 import com.tc.asm.commons.LocalVariablesSorter;
 import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.object.Portability;
 import com.tc.object.config.TransparencyClassSpec;
 
@@ -390,7 +391,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
     if (spec.isValuesGetterMethodNeeded()) {
       MethodVisitor mv = visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, VALUES_GETTER, VALUES_GETTER_DESCRIPTION, null, null);
       if (!portability.isInstrumentationNotNeeded(spec.getSuperClassNameDots())
-          && getTransparencyClassSpec().hasPhysicallyPortableSpecs(spec.getClassInfo().getSuperclass())) {
+          && getTransparencyClassSpec().hasPhysicallyPortableSpecs(AsmClassInfo.getClassInfo(spec.getSuperClassNameDots(), getClass().getClassLoader()))) {
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ALOAD, 1);
         mv.visitMethodInsn(INVOKESPECIAL, spec.getSuperClassNameSlashes(), VALUES_GETTER, VALUES_GETTER_DESCRIPTION);
@@ -436,7 +437,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
       }
 
       if (!portability.isInstrumentationNotNeeded(spec.getSuperClassNameDots())
-          && getTransparencyClassSpec().hasPhysicallyPortableSpecs(spec.getClassInfo().getSuperclass())) {
+          && getTransparencyClassSpec().hasPhysicallyPortableSpecs(AsmClassInfo.getClassInfo(spec.getSuperClassNameDots(), getClass().getClassLoader()))) {
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ALOAD, 1);
         mv.visitMethodInsn(INVOKESPECIAL, spec.getSuperClassNameSlashes(), MANAGED_VALUES_GETTER,
@@ -483,7 +484,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
         mv.visitLabel(l2);
       }
       if (!portability.isInstrumentationNotNeeded(spec.getSuperClassNameDots())
-          && getTransparencyClassSpec().hasPhysicallyPortableSpecs(spec.getClassInfo().getSuperclass())) {
+          && getTransparencyClassSpec().hasPhysicallyPortableSpecs(AsmClassInfo.getClassInfo(spec.getSuperClassNameDots(), getClass().getClassLoader()))) {
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ALOAD, 1);
         mv.visitVarInsn(ALOAD, 2);
@@ -531,7 +532,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
       }
 
       if (!portability.isInstrumentationNotNeeded(spec.getSuperClassNameDots())
-          && getTransparencyClassSpec().hasPhysicallyPortableSpecs(spec.getClassInfo().getSuperclass())) {
+          && getTransparencyClassSpec().hasPhysicallyPortableSpecs(AsmClassInfo.getClassInfo(spec.getSuperClassNameDots(), getClass().getClassLoader()))) {
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ALOAD, 1);
         mv.visitVarInsn(ALOAD, 2);

@@ -109,7 +109,7 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
 
   private void putAllTesting() throws Exception {
     synchronized(linkedHashMap) {
-      Map expect = new HashMap();
+      final Map expect = new HashMap();
       expect.put("key1", new Element("key1", "value1"));
       expect.put("key2", new Element("key2", "value2"));
       expect.put("key3", new Element("key3", "value3"));
@@ -118,8 +118,8 @@ public class LinkedHashMapClassAdapterTestApp extends AbstractTransparentApp {
       linkedHashMap.clear();
       linkedHashMap.putAll(expect);
       Assert.assertEquals(expect.size(), linkedHashMap.size());
-      Set expectEntries = expect.entrySet();
-      Set actualEntries = linkedHashMap.entrySet();
+      final Set expectEntries = expect.entrySet();
+      final Set actualEntries = linkedHashMap.entrySet();
       for (Iterator iExpect = expectEntries.iterator(), iActual = actualEntries.iterator(); iExpect.hasNext();) {
         Assert.assertEquals(iExpect.next(), iActual.next());
       }

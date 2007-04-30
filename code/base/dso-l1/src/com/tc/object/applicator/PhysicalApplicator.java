@@ -95,7 +95,6 @@ public class PhysicalApplicator extends BaseApplicator {
       Assert.eval(a.isTruePhysical());
       fieldName = a.getFieldName();
       fieldValue = a.getObject();
-
       tcObject.setValue(fieldName, fieldValue);
     }
   }
