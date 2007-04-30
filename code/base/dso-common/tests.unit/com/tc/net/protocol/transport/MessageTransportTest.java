@@ -121,9 +121,8 @@ public class MessageTransportTest extends TCTestCase {
 
     try {
       clientTransport.close();
-      fail("Should have thrown an AssertionError");
     } catch (TCAssertionError e) {
-      // expected
+      fail("Should not have thrown an AssertionError");
     }
   }
 
@@ -187,12 +186,7 @@ public class MessageTransportTest extends TCTestCase {
 
   public void testCloseBeforeOpen() throws Exception {
     createClientTransport(0);
-    try {
-      clientTransport.close();
-      fail("Should have thrown an assertion error.");
-    } catch (TCAssertionError e) {
-      // expected.
-    }
+    clientTransport.close();
   }
 
   public void testWasOpened() throws Exception {

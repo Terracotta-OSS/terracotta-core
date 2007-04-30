@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -146,7 +147,11 @@ abstract class MessageTransportBase implements NetworkLayer, TCConnectionEventLi
    */
   public final void close() {
     synchronized (isOpen) {
-      Assert.eval("Can only close an open connection", isOpen.get());
+      if (!isOpen.get()) {
+        // see DEV-659:  we used to throw an assertion error here if already closed
+        logger.warn("Can only close an open connection");
+        return;
+      }
       isOpen.set(false);
       fireTransportClosedEvent();
     }
