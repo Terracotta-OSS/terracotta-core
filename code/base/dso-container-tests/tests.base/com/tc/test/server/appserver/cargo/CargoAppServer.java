@@ -112,6 +112,7 @@ public abstract class CargoAppServer extends AbstractAppServer {
       Map.Entry entry = (Entry) it.next();
       String context = (String) entry.getKey();
       File warFile = (File) entry.getValue();
+      System.out.println("WAR: " + warFile);
       warapp = new WAR(warFile.getPath());
       warapp.setContext(context);
       warapp.setLogger(new ConsoleLogger(instanceName));

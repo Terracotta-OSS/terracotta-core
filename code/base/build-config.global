@@ -16,6 +16,6 @@ tc.tests.configuration.variants.selected.spring=20
 # for container tests
 tc.tests.configuration.appserver.factory.name=tomcat
 tc.tests.configuration.appserver.major-version=5
-tc.tests.configuration.appserver.minor-version=0.28
+tc.tests.configuration.appserver.minor-version=5.20
 tc.tests.configuration.appserver.repository=http://kong.terracotta.lan/resources/appservers
 #tc.tests.info.appserver.home=path/to/tomcat
