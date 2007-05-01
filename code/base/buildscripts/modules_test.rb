@@ -652,6 +652,16 @@ END
         out
     end
 
+    def get_compatible_vm(appserver)
+      Registry[:appserver_compatibility].keys.each do |k|
+        if appserver =~ Regexp.new(k)
+          return Registry[:appserver_compatibility][k]
+        end
+      end
+      nil
+    end
+    
+  
     # Which JVM should we use for this set of tests?
     def tests_jvm(jvm_set = Registry[:jvm_set])
       return @jvm if @jvm
@@ -680,9 +690,9 @@ END
         override = false
       end
 
-      if requires_container?
-        current_appserver = Registry[:appserver_generic]
-        compatibility = Registry[:appserver_compatibility][current_appserver] || {
+      if requires_container?       
+        current_appserver = Registry[:appserver]
+        compatibility = get_compatible_vm(current_appserver) || {
           'min_version' => JavaVersion::JAVA_MIN_VERSION,
           'max_version' => JavaVersion::JAVA_MAX_VERSION
         }

@@ -806,7 +806,7 @@ END
           testrun_proc.call(test_runs[subtree])
         rescue JvmVersionMismatchException => e
           if monkey?
-            STDERR.puts("#{e.message}\n...skipping subtree #{subtree}")
+            puts("#{e.message}\n...skipping subtree #{subtree}")
           else
             raise e
           end
