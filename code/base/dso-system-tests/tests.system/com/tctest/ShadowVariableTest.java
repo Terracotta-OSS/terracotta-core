@@ -3,12 +3,13 @@
  */
 package com.tctest;
 
+
 public class ShadowVariableTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 2;
 
   public ShadowVariableTest() {
-    this.disableAllUntil("2007-05-01");
+    this.disableAllUntil("2007-08-01");
   }
   
   public void setUp() throws Exception {
