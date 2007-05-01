@@ -8,7 +8,7 @@ public class ShadowRootTest extends TransparentTestBase {
   private static final int NODE_COUNT = 1;
 
   public ShadowRootTest() {
-    this.disableAllUntil("2007-05-01");    
+    this.disableAllUntil("2007-08-01");    
   }
   
   public void setUp() throws Exception {
