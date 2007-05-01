@@ -12,6 +12,7 @@ import org.codehaus.cargo.container.tomcat.TomcatPropertySet;
 import org.codehaus.cargo.container.tomcat.TomcatRuntimeConfiguration;
 import org.codehaus.cargo.util.log.SimpleLogger;
 import org.springframework.jmx.support.MBeanServerConnectionFactoryBean;
+import org.springframework.remoting.RemoteLookupFailureException;
 import org.springframework.remoting.httpinvoker.CommonsHttpInvokerRequestExecutor;
 import org.springframework.remoting.httpinvoker.HttpInvokerProxyFactoryBean;
 import org.springframework.remoting.httpinvoker.HttpInvokerServiceExporter;
@@ -138,11 +139,20 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     public Object createProxy(Class serviceType, String url, Map initialContext) throws Exception {
       String rmiURL = "rmi://localhost:" + rmiRegistryPort + "/" + url;
       logger.debug("Getting proxy for: " + rmiRegistryPort + " on " + result.serverPort());
-      RmiProxyFactoryBean prfb = new RmiProxyFactoryBean();
-      prfb.setServiceUrl(rmiURL);
-      prfb.setServiceInterface(serviceType);
-      prfb.afterPropertiesSet();
-      return prfb.getObject();
+      Exception e = null;
+      for (int i = 5; i >= 0; i++) {
+        try {
+          RmiProxyFactoryBean prfb = new RmiProxyFactoryBean();
+          prfb.setServiceUrl(rmiURL);
+          prfb.setServiceInterface(serviceType);
+          prfb.afterPropertiesSet();
+          return prfb.getObject();
+        } catch (RemoteLookupFailureException lookupException) {
+          e = lookupException;
+        }
+        Thread.sleep(30 * 1000L);
+      }
+      throw e;
     }
   }
   
