@@ -1,6 +1,8 @@
 
 package com.tctest.wicket;
 
+import java.io.Serializable;
+
 import org.apache.wicket.Page;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
@@ -15,6 +17,9 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.TransparentTestBase;
 import com.tctest.runner.AbstractTransparentApp;
 
+/**
+ * This is mainly a stub test just to see how WicketTester fits with DSO functional testing fraework
+ */
 public class DistributedWicketTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 2;
@@ -31,15 +36,8 @@ public class DistributedWicketTest extends TransparentTestBase {
   }
 
   
-  public static void main(String[] args) {
-    new DistributedWicketTestApp().run();
-  }
-  
   public static class DistributedWicketTestApp extends AbstractTransparentApp {
 
-    public DistributedWicketTestApp() {
-    }
-    
     public DistributedWicketTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
       super(appId, cfg, listenerProvider);
     }
@@ -61,17 +59,19 @@ public class DistributedWicketTest extends TransparentTestBase {
       tester.assertRenderedPage(Page2.class);
       tester.assertLabel("message2", "Hi!");
       
-      tester.startPage(new ITestPageSource() {
-        private static final long serialVersionUID = 1L;
-        public Page getTestPage() {
-          return new Page2("mock message");
-        }
-      });
+      tester.startPage(new Page2Source());
       tester.assertRenderedPage(Page2.class);
       tester.assertLabel("message2", "mock message");
       tester.assertInfoMessages(new String[] { "Hi again!" });
     }
     
+    private static final class Page2Source implements ITestPageSource, Serializable {
+      private static final long serialVersionUID = 1L;
+      
+      public Page getTestPage() {
+        return new Page2("mock message");
+      }
+    }
   }
 
   
