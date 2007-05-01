@@ -5,47 +5,36 @@ package com.tcclient.util;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
 public class LinkedHashMap implements Cloneable, Map, Serializable {
 
   private Map map = null;
-  private LinkedList list = null;
-  private boolean accessOrder = false;
 
   public LinkedHashMap() {
-    map = new HashMap();
-    list = new LinkedList();
+    map = new java.util.LinkedHashMap();
   }
   
   public LinkedHashMap(int initialCapacity) {
-    map = new HashMap(initialCapacity);
-    list = new LinkedList();
+    map = new java.util.LinkedHashMap(initialCapacity);
   }
   
   public LinkedHashMap(int initialCapacity, float loadFactor) {
-    map = new HashMap(initialCapacity, loadFactor);
-    list = new LinkedList();
+    map = new java.util.LinkedHashMap(initialCapacity, loadFactor);
   }
 
   public LinkedHashMap(int initialCapacity, float loadFactor, boolean accessOrder) {
-    map = new HashMap(initialCapacity, loadFactor);
-    list = new LinkedList();
-    this.accessOrder = accessOrder;    
+    map = new java.util.LinkedHashMap(initialCapacity, loadFactor, accessOrder);
   }
   
   public LinkedHashMap(Map m) {
-    map = new HashMap(m);
-    list = new LinkedList(map.entrySet());
+    map = new java.util.LinkedHashMap(m);
   }
 
   public void clear() {
     synchronized (this) {
       map.clear();
-      list.clear();
     }
   }
 
@@ -66,28 +55,24 @@ public class LinkedHashMap implements Cloneable, Map, Serializable {
   }
 
   public boolean isEmpty() {
-    return map.isEmpty() && list.isEmpty();
+    return map.isEmpty();
   }
 
   public Set keySet() {
-    System.err.println("this: " + System.identityHashCode(this));
     return map.keySet();
   }
 
   public Object put(Object key, Object value) {
     Object o = map.put(key, value);
-    list.add(o);
     return o;
   }
 
   public void putAll(Map t) {
     map.putAll(t);
-    list.addAll(map.entrySet());
   }
 
   public Object remove(Object key) {
     Object o = map.remove(key);
-    list.remove(o);
     return o;
   }
 
