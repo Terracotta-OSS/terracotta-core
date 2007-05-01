@@ -412,7 +412,7 @@ public class ActivePassiveServerManager {
   }
 
   public boolean crashActiveServerAfterMutate() {
-    if (serverCrashMode.equals(ActivePassiveCrashMode.MUTATE_VALIDATE)) { return true; }
+    if (serverCrashMode.equals(ActivePassiveCrashMode.CRASH_AFTER_MUTATE)) { return true; }
     return false;
   }
 
