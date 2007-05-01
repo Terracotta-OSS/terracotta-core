@@ -39,11 +39,11 @@ public class ServerTestSetup extends TestSetup {
   }
 
   public DeploymentBuilder makeDeploymentBuilder() throws IOException {
-    return sm.makeDeploymentBuilder();
+    return getServerManager().makeDeploymentBuilder();
   }
 
   public DeploymentBuilder makeDeploymentBuilder(String warFileName) {
-    return sm.makeDeploymentBuilder(warFileName);
+    return getServerManager().makeDeploymentBuilder(warFileName);
   }
 
   public boolean isWithPersistentStore() {
