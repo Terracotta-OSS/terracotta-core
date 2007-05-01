@@ -1,5 +1,6 @@
 package com.tctest;
 
+import java.util.Iterator;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
@@ -108,7 +109,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
 			// check that a bunch of caches was created
 			waitForPermissionToProceed();
-			verifyCacheCount(CACHE_POPULATION);
+			verifyManyCaches(CACHE_POPULATION);
 			
 			// now get rid of all of it, wait for the other node to verify
 			removeAllCaches();
@@ -146,9 +147,22 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * @param expected
 	 * @throws Exception
 	 */
-	private void verifyCacheCount(final int expected) throws Exception {
+	private void verifyCacheCount(final int expected) throws Throwable {
 		final String[] cacheNames = clusteredCacheManager.getCacheNames();
 		Assert.assertEquals(expected, cacheNames.length);
+	}
+	
+	/**
+	 * Verify many caches
+	 * 
+	 * @param count
+	 * @throws Throwable
+	 */
+	private void verifyManyCaches(final int count) throws Throwable {
+		verifyCacheCount(count);
+		for (int i = 0; i < count; i++) {
+			verifyCache("MANYCACHE" + i);
+		}
 	}
 
 	/**
@@ -207,6 +221,12 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * @param name
 	 */
 	private void removeCache(final String name) {
+		Cache cache = clusteredCacheManager.getCache(name);
+		for (Iterator i = cache.getKeys().iterator(); i.hasNext();) {
+			String key = (String)i.next();
+			cache.remove(key);
+			Assert.assertFalse(cache.isKeyInCache(key));
+		}
 		clusteredCacheManager.removeCache(name);
 	}
 
