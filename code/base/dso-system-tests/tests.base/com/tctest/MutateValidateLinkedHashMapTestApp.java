@@ -22,7 +22,7 @@ public class MutateValidateLinkedHashMapTestApp extends AbstractMutateValidateTr
   private final String appId;
   private final MapRoot map1 = new MapRoot(upbound);
   private final MapRoot map2 = new MapRoot(upbound+100);
-  final static EventNode eventIndex = new EventNode(0, "test");
+  private final EventNode eventIndex = new EventNode(0, "test");
 
   public MutateValidateLinkedHashMapTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -35,19 +35,22 @@ public class MutateValidateLinkedHashMapTestApp extends AbstractMutateValidateTr
     boolean empty;
     
     while(true) {
+      boolean todoPut = r.nextBoolean();
+      
       // if empty then do put
       synchronized(map1) {
         empty = map1.getMap().isEmpty();
-      }
-      
-      if(empty || r.nextBoolean()) {
-        synchronized(map1) {
-          event = EventNode.produce();
+        if(empty || todoPut) { 
+          synchronized(eventIndex) {
+            event = eventIndex.produce();
+          }
           map1.getMap().put(new Integer(event.getId()),event);
-          debugPrintln("*** Add item "+event.getId());
+          System.out.println("*** Add item "+event.getId());
         }
-      } else {
-        // move first item from set1 to set2
+      } 
+      
+      if(!todoPut && !empty) {
+        // move first item from map1 to map2
         synchronized(map1) {
           Set s = map1.getMap().keySet();
           Iterator it = s.iterator();
@@ -55,7 +58,7 @@ public class MutateValidateLinkedHashMapTestApp extends AbstractMutateValidateTr
             Integer key = (Integer) it.next();
             event = (EventNode) map1.getMap().remove(key);
             map2.getMap().put(new Integer(event.getId()), event);
-            debugPrintln("*** Move item "+event.getId());
+            System.out.println("*** Move item "+event.getId());
             
             if(event.getId() >= upbound) break;
           }    
@@ -64,7 +67,7 @@ public class MutateValidateLinkedHashMapTestApp extends AbstractMutateValidateTr
       }
       Thread.sleep(r.nextInt(10));
     }   
-    debugPrintln("*** Done with mutation");
+    System.out.println("*** Done with mutation");
   }
 
   protected void validate() throws Throwable {
@@ -101,11 +104,15 @@ public class MutateValidateLinkedHashMapTestApp extends AbstractMutateValidateTr
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = MutateValidateLinkedHashMapTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
-    config.addIncludePattern(EventNode.class.getName());
-    config.addIncludePattern(MapRoot.class.getName());
-
+    config.addIncludePattern(testClass + "$*", false, false, true);
+ 
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
+    methodExpression = "* " + MapRoot.class.getName() + "*.*(..)";
+    config.addWriteAutolock(methodExpression);
+    methodExpression = "* " + EventNode.class.getName() + "*.*(..)";
+    config.addWriteAutolock(methodExpression);
+   
     spec.addRoot("map1", "map1");
     spec.addRoot("map2", "map2");
     spec.addRoot("eventIndex", "eventIndex");
@@ -131,13 +138,11 @@ public class MutateValidateLinkedHashMapTestApp extends AbstractMutateValidateTr
     String name;
     int id;
     
-    public static EventNode produce() {
+    public EventNode produce() {
       EventNode node;
-      synchronized(eventIndex) {
-        node = new EventNode(eventIndex.getId(), "Event" + eventIndex.getId() );
-        eventIndex.setId(eventIndex.getId() + 1);
-      }
-      // System.out.println("*** Produce id=" + node.getId());
+      node = new EventNode(getId(), "Event" + getId() );
+      setId(getId() + 1);
+       // System.out.println("*** Produce id=" + node.getId());
       return(node);
     }
     
