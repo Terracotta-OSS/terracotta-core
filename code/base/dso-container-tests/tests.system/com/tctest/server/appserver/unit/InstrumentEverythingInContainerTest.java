@@ -19,6 +19,10 @@ import javax.servlet.http.HttpSession;
 
 public class InstrumentEverythingInContainerTest extends AbstractAppServerTestCase {
 
+  public InstrumentEverythingInContainerTest() {
+    disableAllUntil("2007-05-03");
+  }
+
   protected boolean isSessionTest() {
     return false;
   }
