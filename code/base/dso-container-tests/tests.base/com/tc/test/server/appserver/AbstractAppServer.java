@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.codehaus.cargo.util.internal.log.AbstractLogger;
 import org.codehaus.cargo.util.log.LogLevel;
 
+import com.tc.test.Handle;
 import com.tc.test.ProcessInfo;
 import com.tc.text.Banner;
 
@@ -37,7 +38,7 @@ public abstract class AbstractAppServer implements AppServer {
       try {
         FileUtils.deleteDirectory(instance);
       } catch (IOException e) {
-        Banner.warnBanner(instance + " exists.\n" + ProcessInfo.ps_grep_java());
+        Banner.warnBanner(instance + " exists.\n" + Handle.getJavaProcessFileHandles(instance));
         instance = new File(instance.getAbsolutePath() + "_"
                             + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()));
       }
