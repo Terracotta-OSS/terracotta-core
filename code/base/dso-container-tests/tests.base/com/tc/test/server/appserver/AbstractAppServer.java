@@ -8,6 +8,9 @@ import org.apache.commons.io.FileUtils;
 import org.codehaus.cargo.util.internal.log.AbstractLogger;
 import org.codehaus.cargo.util.log.LogLevel;
 
+import com.tc.test.ProcessInfo;
+import com.tc.text.Banner;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -31,7 +34,13 @@ public abstract class AbstractAppServer implements AppServer {
   protected final synchronized File createInstance(AppServerParameters params) throws Exception {
     instance = new File(installation.sandboxDirectory() + File.separator + params.instanceName());
     if (instance.exists()) {
-      FileUtils.deleteDirectory(instance);
+      try {
+        FileUtils.deleteDirectory(instance);
+      } catch (IOException e) {
+        Banner.warnBanner(instance + " exists.\n" + ProcessInfo.ps_grep_java());
+        instance = new File(instance.getAbsolutePath() + "_"
+                            + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()));
+      }
     }
     instance.mkdir();
     return instance;
