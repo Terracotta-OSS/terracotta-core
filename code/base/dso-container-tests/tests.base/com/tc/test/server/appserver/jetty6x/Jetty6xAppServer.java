@@ -22,6 +22,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Jetty6xAppServer extends AbstractAppServer {
@@ -103,16 +104,17 @@ public class Jetty6xAppServer extends AbstractAppServer {
 
   private AppServerResult startJetty(AppServerParameters params) throws Exception {
     prepareDeployment(params);
-    
-    List cmd = new ArrayList();
-    cmd.add(JAVA_CMD);
+
+    String[] jvmargs = getJVMArgs(params, new String[] {});
+    List cmd = new ArrayList(Arrays.asList(jvmargs));
+    cmd.add(0, JAVA_CMD);
+    cmd.add("-cp");
+    cmd.add(this.serverInstallDirectory() + File.separator + "start.jar" + File.pathSeparator
+            + TestConfigObject.getInstance().linkedChildProcessClasspath());
     cmd.add("-Djetty.home=" + this.serverInstallDirectory());
     cmd.add("-Djetty.port=" + jetty_port);
     cmd.add("-DSTOP.PORT=" + stop_port);
     cmd.add("-DSTOP.KEY=" + STOP_KEY);
-    cmd.add("-cp");
-    cmd.add(this.serverInstallDirectory() + File.separator + "start.jar" + File.pathSeparator
-            + TestConfigObject.getInstance().linkedChildProcessClasspath());
     cmd.add(CargoLinkedChildProcess.class.getName());
     cmd.add(JETTY_MAIN_CLASS);
     cmd.add(String.valueOf(HeartBeatService.listenPort()));
@@ -147,10 +149,10 @@ public class Jetty6xAppServer extends AbstractAppServer {
     stop_port = portChooser.chooseRandomPort();
 
     instanceName = params.instanceName();
-    instanceDir = new File (sandboxDirectory(), instanceName);
-    if (new File(instanceDir, "logs").mkdirs() == false) {
-      throw new Exception("Can't create logs directory for jetty instance: " + instanceName);
-    }
+    instanceDir = new File(sandboxDirectory(), instanceName);
+    if (new File(instanceDir, "logs").mkdirs() == false) { throw new Exception(
+                                                                               "Can't create logs directory for jetty instance: "
+                                                                                   + instanceName); }
     setProperties(params, jetty_port, instanceDir);
     createConfigFile();
   }
@@ -158,10 +160,8 @@ public class Jetty6xAppServer extends AbstractAppServer {
   private void createConfigFile() throws Exception {
     String origialConfig = this.serverInstallDirectory().getAbsolutePath() + File.separator + "etc" + File.separator
                            + "jetty.xml";
-    if (new File(origialConfig).exists() == false) {
-      throw new Exception(origialConfig + " doesn't exist.");
-    }
-    
+    if (new File(origialConfig).exists() == false) { throw new Exception(origialConfig + " doesn't exist."); }
+
     StringBuffer buffer = new StringBuffer(1024);
     BufferedReader in = null;
     PrintWriter out = null;
@@ -189,6 +189,19 @@ public class Jetty6xAppServer extends AbstractAppServer {
       closeQuietly(in);
       closeQuietly(out);
     }
+  }
+
+  private String[] getJVMArgs(AppServerParameters params, String[] extra_classpath) {
+    String raw = params.jvmArgs().replaceAll("'", "");
+    String[] args = raw.split("\\s+");
+    for (int i = 0; i < args.length; i++) {
+      if (args[i].equals("cp") || args[i].equals("classpath")) {
+        for (int cp = 0; cp < extra_classpath.length; cp++) {
+          args[i] += File.pathSeparator + extra_classpath[cp];
+        }
+      }
+    }
+    return args;
   }
 
   private void closeQuietly(Reader reader) {
