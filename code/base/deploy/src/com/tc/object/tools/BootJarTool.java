@@ -150,7 +150,7 @@ import java.util.Set;
  * Tool for creating the DSO boot jar
  */
 public class BootJarTool {
-  private final static String         OUTPUT_FILE_OPTION           = "o";
+  private final static String         TARGET_FILE_OPTION           = "o";
   private final static boolean        WRITE_OUT_TEMP_FILE          = true;
 
   private static final String         DEFAULT_CONFIG_PATH          = "default-config.xml";
@@ -208,6 +208,35 @@ public class BootJarTool {
       addInstrumentedJavaUtilConcurrentHashMap();
       addInstrumentedJavaUtilConcurrentCyclicBarrier();
       addInstrumentedJavaUtilConcurrentFutureTask();
+    }
+  }
+
+  public void scanJar(File bootJarFile) {
+    try {
+      final Set missing = new HashSet();
+      final Map internalSpecs = getTCSpecs();
+      final Map userSpecs = massageSpecs(getUserDefinedSpecs(internalSpecs), false);
+      final BootJar bootJar1 = BootJar.getBootJarForReading(bootJarFile);
+      Set bootJarClassNames = bootJar1.getAllPreInstrumentedClasses();
+      for (Iterator i = userSpecs.keySet().iterator(); i.hasNext();) {
+        String userClassName = (String) i.next();
+        if (!bootJarClassNames.contains(userClassName)) {
+          missing.add(userClassName);
+        }
+      }
+      if (!missing.isEmpty()) {
+        System.err.println("\nThe following classes was declared in the <additional-boot-jar-classes/> section "
+                           + "of your tc-config file but is not a part of your boot JAR file:");
+        for (Iterator i = missing.iterator(); i.hasNext();) {
+          System.err.println("- " + i.next());
+        }
+        System.err.println("\nUse the make-boot-jar tool to re-create and include these classes in your boot JAR.");
+        System.exit(1);
+      }
+    } catch (BootJarException e) {
+      throw new RuntimeException(e);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -395,7 +424,7 @@ public class BootJarTool {
     loadTerracottaClass("com.tc.asm.commons.EmptyVisitor");
     loadTerracottaClass("com.tc.asm.commons.SerialVersionUIDAdder");
     loadTerracottaClass("com.tc.asm.commons.SerialVersionUIDAdder$Item");
-    
+
     // FIXME extract AW runtime classes
     loadTerracottaClass("com.tc.aspectwerkz.AspectContext");
     loadTerracottaClass("com.tc.aspectwerkz.DeploymentModel$PointcutControlledDeploymentModel");
@@ -1600,7 +1629,7 @@ public class BootJarTool {
 
     ClassReader tcCR = new ClassReader(tcData);
     ClassNode tcCN = new ClassNode() {
-      
+
       public MethodVisitor visitMethod(int maccess, String mname, String mdesc, String msignature, String[] mexceptions) {
         if (replacedMethod != null && mname.equals(replacedMethod.name) && mdesc.equals(replacedMethod.desc)) {
           methods.add(replacedMethod);
@@ -1615,10 +1644,10 @@ public class BootJarTool {
     ClassReader jCR = new ClassReader(jData);
     ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
     ClassVisitor cv1 = new LinkedHashMapClassAdapter(cw);
-    
+
     jCR.accept(cv1, ClassReader.SKIP_DEBUG);
     jData = cw.toByteArray();
-    
+
     jCR = new ClassReader(jData);
     cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
 
@@ -1635,7 +1664,7 @@ public class BootJarTool {
     // load ClassInfo for all inner classes
     for (Iterator i = innerClasses.iterator(); i.hasNext();) {
       InnerClassNode innerClass = (InnerClassNode) i.next();
-      
+
       if (innerClass.outerName.equals(tcClassNameDots.replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER,
                                                               ChangeClassNameHierarchyAdapter.SLASH_DELIMITER))) {
         changeClassNameAndGetBytes(innerClass.name, tcClassNameDots, jClassNameDots, instrumentedContext);
@@ -1807,13 +1836,16 @@ public class BootJarTool {
     }
   }
 
+  private static final String MAKE_MODE = "make";
+  private static final String SCAN_MODE = "scan";
+
   public static void main(String[] args) throws Exception {
     File installDir = getInstallationDir();
-    String outputFileOptionMsg = "path to store boot JAR"
+    String outputFileOptionMsg = "path to boot JAR file"
                                  + (installDir != null ? "\ndefault: [TC_INSTALL_DIR]/lib/dso-boot" : "");
-    Option targetFileOption = new Option(OUTPUT_FILE_OPTION, true, outputFileOptionMsg);
+    Option targetFileOption = new Option(TARGET_FILE_OPTION, true, outputFileOptionMsg);
     targetFileOption.setArgName("file");
-    targetFileOption.setLongOpt("output-file");
+    targetFileOption.setLongOpt("bootjar-file");
     targetFileOption.setArgs(1);
     targetFileOption.setRequired(installDir == null);
     targetFileOption.setType(String.class);
@@ -1837,17 +1869,26 @@ public class BootJarTool {
     options.addOption(verboseOption);
     options.addOption(helpOption);
 
+    String mode = MAKE_MODE;
     CommandLine commandLine = null;
-
     try {
       commandLine = new PosixParser().parse(options, args);
+      if (commandLine.getArgList().size() > 0) {
+        mode = commandLine.getArgList().get(0).toString().toLowerCase();
+      }
     } catch (ParseException pe) {
       new HelpFormatter().printHelp("java " + BootJarTool.class.getName(), options);
       System.exit(1);
     }
 
+    final String MAKE_OR_SCAN_MODE = "<" + MAKE_MODE + "|" + SCAN_MODE + ">";
+    if (!mode.equals(MAKE_MODE) && !mode.equals(SCAN_MODE)) {
+      new HelpFormatter().printHelp("java " + BootJarTool.class.getName() + " " + MAKE_OR_SCAN_MODE, options);
+      System.exit(1);
+    }
+
     if (commandLine.hasOption("h")) {
-      new HelpFormatter().printHelp("java " + BootJarTool.class.getName(), options);
+      new HelpFormatter().printHelp("java " + BootJarTool.class.getName() + " " + MAKE_OR_SCAN_MODE, options);
       System.exit(1);
     }
 
@@ -1878,20 +1919,20 @@ public class BootJarTool {
     TCLogger logger = verbose ? CustomerLogging.getConsoleLogger() : new NullTCLogger();
     L1TVSConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager(logger);
 
-    File outputFile;
+    File targetFile;
 
-    if (!commandLine.hasOption(OUTPUT_FILE_OPTION)) {
+    if (!commandLine.hasOption(TARGET_FILE_OPTION)) {
       File libDir = new File(installDir, "lib");
-      outputFile = new File(libDir, "dso-boot");
-      if (!outputFile.exists()) {
-        outputFile.mkdirs();
+      targetFile = new File(libDir, "dso-boot");
+      if (!targetFile.exists()) {
+        targetFile.mkdirs();
       }
     } else {
-      outputFile = new File(commandLine.getOptionValue(OUTPUT_FILE_OPTION)).getAbsoluteFile();
+      targetFile = new File(commandLine.getOptionValue(TARGET_FILE_OPTION)).getAbsoluteFile();
     }
 
-    if (outputFile.isDirectory()) {
-      outputFile = new File(outputFile, BootJarSignature.getBootJarNameForThisVM());
+    if (targetFile.isDirectory()) {
+      targetFile = new File(targetFile, BootJarSignature.getBootJarNameForThisVM());
     }
 
     // This used to be a provider that read from a specified rt.jar (to let us create boot jars for other platforms).
@@ -1899,7 +1940,17 @@ public class BootJarTool {
     // WAS: systemProvider = new RuntimeJarBytesProvider(...)
 
     ClassLoader systemLoader = ClassLoader.getSystemClassLoader();
-    new BootJarTool(new StandardDSOClientConfigHelper(config, false), outputFile, systemLoader, !verbose).generateJar();
+    BootJarTool bjTool = new BootJarTool(new StandardDSOClientConfigHelper(config, false), targetFile, systemLoader,
+                                         !verbose);
+    if (mode.equals(MAKE_MODE)) {
+      bjTool.generateJar();
+    } else {
+      if (!targetFile.exists()) {
+        System.err.println("\nDSO boot JAR file not found: '" + targetFile
+                           + "'; you can specify the boot JAR file to scan using the -o or --bootjar-file option.");
+        System.exit(1);
+      }
+      bjTool.scanJar(targetFile);
+    }
   }
-
 }
