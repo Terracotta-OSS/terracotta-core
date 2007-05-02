@@ -105,7 +105,7 @@ public class Jetty6xAppServer extends AbstractAppServer {
   private AppServerResult startJetty(AppServerParameters params) throws Exception {
     prepareDeployment(params);
 
-    String[] jvmargs = getJVMArgs(params, new String[] {});
+    String[] jvmargs = getJVMArgs(params);
     List cmd = new ArrayList(Arrays.asList(jvmargs));
     cmd.add(0, JAVA_CMD);
     cmd.add("-cp");
@@ -191,16 +191,9 @@ public class Jetty6xAppServer extends AbstractAppServer {
     }
   }
 
-  private String[] getJVMArgs(AppServerParameters params, String[] extra_classpath) {
+  private String[] getJVMArgs(AppServerParameters params) {
     String raw = params.jvmArgs().replaceAll("'", "");
     String[] args = raw.split("\\s+");
-    for (int i = 0; i < args.length; i++) {
-      if (args[i].equals("cp") || args[i].equals("classpath")) {
-        for (int cp = 0; cp < extra_classpath.length; cp++) {
-          args[i] += File.pathSeparator + extra_classpath[cp];
-        }
-      }
-    }
     return args;
   }
 
