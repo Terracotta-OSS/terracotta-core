@@ -9,7 +9,6 @@ import org.codehaus.cargo.util.internal.log.AbstractLogger;
 import org.codehaus.cargo.util.log.LogLevel;
 
 import com.tc.test.Handle;
-import com.tc.test.ProcessInfo;
 import com.tc.text.Banner;
 
 import java.io.File;
