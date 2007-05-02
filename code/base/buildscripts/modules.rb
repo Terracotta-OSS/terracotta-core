@@ -149,7 +149,7 @@ end
 # A build module. This represents the largest-scale division of our codebase, like 'common',
 # 'dso-spring', or 'dso-l2'.
 class BuildModule
-    attr_reader :root, :name, :jdk, :aspectj, :module, :module_set, :dependencies
+    attr_reader :root, :name, :jdk, :aspectj, :module, :module_set, :dependencies, :groups
     alias module? module
     alias aspectj? aspectj
 
@@ -173,6 +173,7 @@ class BuildModule
         @aspectj = data[:aspectj] || false
         @module = data[:module] || false
         @dependencies = data[:dependencies] || [ ]
+        @groups = Array.new
 
         assert("Root ('#{@root.to_s}') must be an absolute path") { @root.absolute? }
         assert("Root ('#{@root.to_s}') must exist, and be a directory") { FileTest.directory?(@root.to_s) }
@@ -219,6 +220,8 @@ end
 # the right module data -- the stuff that reads modules.def.yml and creates modules
 # out of it uses this functionality.
 class BuildModuleSet
+  include Enumerable
+
     # Creates an instance with the given root directory.
     def initialize(root_dir)
         @root_dir = root_dir

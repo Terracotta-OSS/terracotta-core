@@ -401,6 +401,14 @@ END
     check_one('UsingCorrect14JVMTest')
   end
 
+  # Target that runs tests for all modules which are not assigned to a module group.
+  # This is to ensure that modules that are not assigned to a group are executed by
+  # the 'alltests' monkey.
+  def check_nogroup
+    groupless = @module_set.find_all { |mod| mod.groups.empty? }.map { |mod| mod.name }
+    run_tests(FixedModuleTypeTestSet.new(groupless, %w(all)))
+  end
+
   # Runs a class, as specified on the command line. Takes one argument, which is the name of the test;
   # you can also set 'jvm' (to point to the JAVA_HOME you want to use), 'module' and 'subtree' to point
   # to the module and subtree you want to run against (for CLASSPATH, etc.), 'jvmargs' to specify JVM

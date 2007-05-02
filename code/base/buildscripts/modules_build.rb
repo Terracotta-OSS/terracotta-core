@@ -46,11 +46,14 @@ class BuildModuleSetBuilder
                     module_groups_source = yaml['module-groups']
                     unless module_groups_source.nil?
                         module_groups_source.each do |module_group_name, module_group_contents|
+                            group_name = module_group_name.to_sym
                             arr = [ ]
                             module_group_contents.each do |module_name|
+                                mod = module_set[module_name]
+                                mod.groups << group_name
                                 arr << module_set[module_name]
                             end
-                            module_groups[module_group_name.to_sym] = arr
+                            module_groups[group_name] = arr
                         end
                     end
                 end
