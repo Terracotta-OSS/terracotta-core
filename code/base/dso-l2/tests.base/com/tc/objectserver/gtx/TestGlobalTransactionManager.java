@@ -50,10 +50,6 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
     }
   }
 
-  public GlobalTransactionID getGlobalTransactionID(ServerTransactionID stxnID) {
-    return new GlobalTransactionID(idSequence++);
-  }
-
   public void clear() {
     commitedSIDs.clear();
     while (!completeTransactionsContexts.isEmpty()) {

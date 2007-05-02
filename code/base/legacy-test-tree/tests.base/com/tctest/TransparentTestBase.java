@@ -203,11 +203,6 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     else return transparentAppConfig;
   }
 
-  public int getServerPort() {
-    if (getStartServer()) return this.runner.getServerPort();
-    else return new Integer(getServerPortProp()).intValue();
-  }
-
   protected abstract Class getApplicationClass();
 
   protected Map getOptionalAttributes() {
@@ -348,7 +343,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     }
   }
 
-  protected File writeMinimalConfig(int port, int adminPort) throws IOException {
+  protected File writeMinimalConfig(int port, int adminPort) {
     TerracottaConfigBuilder builder = createConfigBuilder(port, adminPort);
     FileOutputStream out = null;
     File configFile = null;

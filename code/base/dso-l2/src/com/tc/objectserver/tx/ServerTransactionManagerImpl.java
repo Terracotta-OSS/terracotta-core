@@ -29,6 +29,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.TransactionStore;
 import com.tc.stats.counter.Counter;
 import com.tc.util.Assert;
+import com.tc.util.State;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,6 +46,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private static final TCLogger                logger              = TCLogging
                                                                        .getLogger(ServerTransactionManager.class);
 
+  private static final State                   PASSIVE_MODE        = new State("PASSIVE-MODE");
+  private static final State                   ACTIVE_MODE         = new State("ACTIVE-MODE");
+
   private final Map                            transactionAccounts = Collections.synchronizedMap(new HashMap());
   private final ClientStateManager             stateManager;
   private final ObjectManager                  objectManager;
@@ -58,6 +62,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private final ChannelStats                   channelStats;
 
   private final ServerGlobalTransactionManager gtxm;
+
+  private volatile State                       state               = PASSIVE_MODE;
 
   public ServerTransactionManagerImpl(ServerGlobalTransactionManager gtxm, TransactionStore transactionStore,
                                       LockManager lockManager, ClientStateManager stateManager,
@@ -100,12 +106,24 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   public void start(Set cids) {
+    synchronized (transactionAccounts) {
+      int sizeB4 = transactionAccounts.size();
+      transactionAccounts.keySet().retainAll(cids);
+      int sizeAfter = transactionAccounts.size();
+      if (sizeB4 != sizeAfter) {
+        logger.warn("Cleaned up Transaction Accounts for : " + (sizeB4 - sizeAfter) + " clients");
+      }
+    }
     // XXX:: The server could have crashed right after a client crash/disconnect before it had a chance to remove
     // transactions from the DB. If we dont do this, then these will stick around for ever and cause low-water mark to
     // remain the same for ever and ever.
     // For Network enabled Active/Passive, when a passive becomes active, this will be called and the passive (now
     // active) will correct itself.
     gtxm.shutdownAllClientsExcept(cids);
+  }
+
+  public void goToActiveMode() {
+    state = ACTIVE_MODE;
   }
 
   public void addWaitingForAcknowledgement(ChannelID waiter, TransactionID txnID, ChannelID waitee) {
@@ -149,16 +167,11 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
     GlobalTransactionID gtxID = txn.getGlobalTransactionID();
 
-    TransactionAccount ci;
-    if (txn.isPassive()) {
-      ci = getOrCreateNullTransactionAccount(channelID);
-      if (!stxnID.isServerGeneratedTransacation()) gtxm.createGlobalTransactionDesc(stxnID, gtxID);
-    } else {
-      // There could potentically be a small leak if the clients crash and then shutdownClient() called before
-      // apply() is called. Will create a TransactionAccount which will never get removed.
-      ci = getOrCreateTransactionAccount(channelID);
-    }
-    ci.applyStarted(txnID);
+    // XXX::If the client got disconnected before the transactions are applied, this could be null.
+    TransactionAccount ci = getTransactionAccount(channelID);
+    if (ci != null) ci.applyStarted(txnID);
+
+    boolean active = isActive();
 
     for (Iterator i = changes.iterator(); i.hasNext();) {
       DNA orgDNA = (DNA) i.next();
@@ -170,7 +183,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       DNA change = new VersionizedDNAWrapper(orgDNA, version, true);
       ManagedObject mo = (ManagedObject) objects.get(change.getObjectID());
       mo.apply(change, txnID, includeIDs, instanceMonitor);
-      if (!change.isDelta() && !txn.isPassive()) {
+      if (active && !change.isDelta()) {
         // Only New objects reference are added here
         stateManager.addReference(txn.getChannelID(), mo.getID());
       }
@@ -186,8 +199,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         objectManager.createRoot(rootName, newID);
       }
     }
-    if (!stxnID.isServerGeneratedTransacation()) {
-      gtxm.applyComplete(stxnID);
+    gtxm.applyComplete(stxnID);
+    if (active) {
       channelStats.notifyTransaction(channelID);
     }
     transactionRateCounter.increment();
@@ -227,16 +240,25 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  public void incomingTransactions(ChannelID cid, Set serverTxnIDs, boolean relayed) {
+  public void incomingTransactions(ChannelID cid, Map txns, boolean relayed) {
+    boolean active = isActive();
     TransactionAccount ci = getOrCreateTransactionAccount(cid);
-    for (Iterator i = serverTxnIDs.iterator(); i.hasNext();) {
-      final ServerTransactionID txnId = (ServerTransactionID) i.next();
-      final TransactionID txnID = txnId.getClientTransactionID();
+    for (Iterator i = txns.values().iterator(); i.hasNext();) {
+      final ServerTransaction txn = (ServerTransaction) i.next();
+      final ServerTransactionID stxnID = txn.getServerTransactionID();
+      final TransactionID txnID = stxnID.getClientTransactionID();
       if (!relayed) {
         ci.relayTransactionComplete(txnID);
       }
+      if (!active) {
+        gtxm.createGlobalTransactionDesc(stxnID, txn.getGlobalTransactionID());
+      }
     }
-    fireIncomingTransactionsEvent(cid, serverTxnIDs);
+    fireIncomingTransactionsEvent(cid, txns.keySet());
+  }
+
+  private boolean isActive() {
+    return (state == ACTIVE_MODE);
   }
 
   public void transactionsRelayed(ChannelID channelID, Set serverTxnIDs) {
@@ -278,27 +300,22 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private TransactionAccount getOrCreateTransactionAccount(ChannelID clientID) {
     synchronized (transactionAccounts) {
       TransactionAccount ta = (TransactionAccount) transactionAccounts.get(clientID);
-      if ((ta == null) || (ta instanceof NullTransactionAccount)) {
-        Object old = transactionAccounts.put(clientID, (ta = new TransactionAccountImpl(clientID)));
-        if (old != null) {
-          logger.info("Transaction Account changed from : " + old + " to " + ta);
+      if (state == ACTIVE_MODE) {
+        if ((ta == null) || (ta instanceof PassiveTransactionAccount)) {
+          Object old = transactionAccounts.put(clientID, (ta = new TransactionAccountImpl(clientID)));
+          if (old != null) {
+            logger.info("Transaction Account changed from : " + old + " to " + ta);
+          }
+        }
+      } else {
+        if ((ta == null) || (ta instanceof TransactionAccountImpl)) {
+          Object old = transactionAccounts.put(clientID, (ta = new PassiveTransactionAccount(clientID)));
+          if (old != null) {
+            logger.info("Transaction Account changed from : " + old + " to " + ta);
+          }
         }
       }
       return ta;
-    }
-  }
-
-  private TransactionAccount getOrCreateNullTransactionAccount(ChannelID clientID) {
-    synchronized (transactionAccounts) {
-      TransactionAccount ta = (TransactionAccount) transactionAccounts.get(clientID);
-      if ((ta == null) || (ta instanceof TransactionAccountImpl)) {
-        Object old = transactionAccounts.put(clientID, (ta = new NullTransactionAccount(clientID)));
-        if (old != null) {
-          logger.info("Transaction Account changed from : " + old + " to " + ta);
-        }
-      }
-      return ta;
-
     }
   }
 

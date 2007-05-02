@@ -8,7 +8,6 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.ObjectManager;
@@ -80,7 +79,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   }
 
   // ProcessTransactionHandler Method
-  public void addTransactions(ChannelID channelID, List txns, Collection completedTxnIds) {
+  public void addTransactions(Collection txns, Collection completedTxnIds) {
     sequencer.addTransactions(txns);
     addCompletedTxnIds(completedTxnIds);
     txnStageCoordinator.initiateLookup();

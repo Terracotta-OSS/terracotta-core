@@ -38,8 +38,7 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
     this.serializer = serializer;
     this.changes = changes;
     this.rootsMap = rootsMap;
-    // XXX:: this is server generated txn, hence CID is Null
-    this.serverTxnID = new ServerTransactionID(ChannelID.NULL_ID, txnID);
+    this.serverTxnID = new ServerTransactionID(ChannelID.L2_SERVER_ID, txnID);
     Assert.assertEquals(dnaCount, oids.size());
     Assert.assertEquals(dnaCount, changes.size());
   }
@@ -56,9 +55,8 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
     return changes;
   }
 
-  // XXX:: this is server generated txn, hence CID is Null
   public ChannelID getChannelID() {
-    return ChannelID.NULL_ID;
+    return ChannelID.L2_SERVER_ID;
   }
 
   public SequenceID getClientSequenceID() {

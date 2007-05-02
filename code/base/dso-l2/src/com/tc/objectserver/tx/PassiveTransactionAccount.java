@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.tx;
 
@@ -9,16 +10,16 @@ import com.tc.object.tx.TransactionID;
 import java.util.Collections;
 import java.util.Set;
 
-public class NullTransactionAccount implements TransactionAccount {
+public class PassiveTransactionAccount implements TransactionAccount {
 
   private final ChannelID clientID;
 
-  public NullTransactionAccount(ChannelID clientID) {
+  public PassiveTransactionAccount(ChannelID clientID) {
     this.clientID = clientID;
   }
 
   public void addWaitee(ChannelID waitee, TransactionID requestID) {
-    //NOP
+    // NOP
   }
 
   public boolean applyCommitted(TransactionID requestID) {
@@ -26,7 +27,7 @@ public class NullTransactionAccount implements TransactionAccount {
   }
 
   public void applyStarted(TransactionID requestID) {
-    //NOP
+    // NOP
   }
 
   public boolean broadcastCompleted(TransactionID requestID) {

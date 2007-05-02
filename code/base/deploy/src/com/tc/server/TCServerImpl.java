@@ -10,8 +10,6 @@ import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.jetty.webapp.WebAppContext;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedByte;
-
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
@@ -53,9 +51,6 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   private static final TCLogger                logger        = TCLogging.getLogger(TCServer.class);
   private static final TCLogger                consoleLogger = CustomerLogging.getConsoleLogger();
-  private static final byte                    STATE_STOPPED = 0;
-  private static final byte                    STATE_STARTED = 1;
-  private static final byte                    STATE_ACTIVE  = 2;
 
   private long                                 startTime;
   private long                                 activateTime;
@@ -65,7 +60,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   private TerracottaConnector                  terracottaConnector;
 
   private final Object                         stateLock     = new Object();
-  private final SynchronizedByte               state         = new SynchronizedByte(STATE_STOPPED);
+  private final L2State                        state         = new L2State();
 
   private final L2TVSConfigurationSetupManager configurationSetupManager;
   private final ConnectionPolicy               connectionPolicy;
@@ -121,11 +116,11 @@ public class TCServerImpl extends SEDA implements TCServer {
    */
   public void stop() {
     synchronized (stateLock) {
-      if (state.commit(STATE_ACTIVE, STATE_STOPPED)) {
+      if (!state.isStartState()) {
         stopServer();
         logger.info("Server stopped.");
       } else {
-        logger.warn("Server in incorrect state (" + state.get() + ") to be stopped.");
+        logger.warn("Server in incorrect state (" + state.getState() + ") to be stopped.");
       }
     }
 
@@ -133,19 +128,15 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   public void start() {
     synchronized (stateLock) {
-      if (state.commit(STATE_STOPPED, STATE_STARTED)) {
+      if (state.isStartState()) {
         try {
           startServer();
-          if (!state.commit(STATE_STARTED, STATE_ACTIVE)) {
-            // formatting
-            throw new AssertionError("Server in incorrect state (" + state.get() + ") to be active.");
-          }
         } catch (Throwable t) {
           if (t instanceof RuntimeException) { throw (RuntimeException) t; }
           throw new RuntimeException(t);
         }
       } else {
-        logger.warn("Server in incorrect state (" + state.get() + ") to be started.");
+        logger.warn("Server in incorrect state (" + state.getState() + ") to be started.");
       }
     }
   }
@@ -186,15 +177,16 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   public boolean isStarted() {
-    return state.compareTo(STATE_STARTED) == 0;
+    return !state.isStartState();
   }
 
   public boolean isActive() {
-    return state.compareTo(STATE_ACTIVE) == 0;
+    return state.isActiveCoordinator();
   }
 
   public boolean isStopped() {
-    return state.compareTo(STATE_STOPPED) == 0;
+    // XXX:: introduce a new state when stop is officially supported.
+    return state.isStartState();
   }
 
   public String toString() {
@@ -293,9 +285,9 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   private void startDSOServer(Sink httpSink) throws Exception {
-    L2State l2State = new L2State();
+    Assert.assertTrue(state.isStartState());
     dsoServer = new DistributedObjectServer(configurationSetupManager, getThreadGroup(), connectionPolicy, httpSink,
-                                            new TCServerInfo(this, l2State), l2State);
+                                            new TCServerInfo(this, state), state);
     dsoServer.start();
     registerDSOServer();
   }

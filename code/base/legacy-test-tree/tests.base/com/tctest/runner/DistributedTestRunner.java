@@ -28,6 +28,7 @@ import com.tc.simulator.container.ContainerStateFactory;
 import com.tc.simulator.control.Control;
 import com.tc.simulator.listener.ResultsListener;
 import com.tc.test.activepassive.ActivePassiveServerManager;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tcsimulator.ControlImpl;
 import com.tcsimulator.container.ContainerStateFactoryObject;
 import com.tcsimulator.listener.QueuePrinter;
@@ -173,7 +174,7 @@ public class DistributedTestRunner implements ResultsListener {
         this.server.start();
 
         // ((SettableConfigItem) this.configFactory.l2DSOConfig().listenPort()).setValue(getServerPort());
-        this.configFactory.addServerToL1Config(null, getServerPort(), -1);
+        this.configFactory.addServerToL1Config(null, getActiveServerPort(), -1);
         this.configFactory.activateConfigurationChange();
       }
 
@@ -237,7 +238,11 @@ public class DistributedTestRunner implements ResultsListener {
     }
   }
 
-  public int getServerPort() {
+  private int getActiveServerPort() {
+    while (!server.isActive()) {
+      System.err.println("Waiting for Server to become Active ...");
+      ThreadUtil.reallySleep(500);
+    }
     return this.server.getDSOListenPort();
   }
 

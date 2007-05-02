@@ -10,10 +10,10 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
-import com.tc.objectserver.gtx.TransactionCommittedError;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.TransactionPersistor;
 import com.tc.objectserver.persistence.api.TransactionStore;
+import com.tc.util.Assert;
 import com.tc.util.sequence.Sequence;
 
 import java.util.Collection;
@@ -48,10 +48,24 @@ public class TransactionStoreImpl implements TransactionStore {
     }
   }
 
-  public void commitTransactionDescriptor(PersistenceTransaction transaction, GlobalTransactionDescriptor gtx) {
-    if (gtx.isCommitted()) { throw new TransactionCommittedError("Already committed : " + gtx); }
-    persistor.saveGlobalTransactionDescriptor(transaction, gtx);
-    gtx.commitComplete();
+  public synchronized void commitAllTransactionDescriptor(PersistenceTransaction persistenceTransaction,
+                                                          Collection stxIDs) {
+    for (Iterator i = stxIDs.iterator(); i.hasNext();) {
+      ServerTransactionID stxnID = (ServerTransactionID) i.next();
+      commitTransactionDescriptor(persistenceTransaction, stxnID);
+    }
+  }
+
+  public synchronized void commitTransactionDescriptor(PersistenceTransaction transaction, ServerTransactionID stxID) {
+    GlobalTransactionDescriptor gtx = getTransactionDescriptor(stxID);
+    Assert.assertNotNull(gtx);
+    if (gtx.commitComplete()) {
+      // reconsile when txn complete arrives before commit. Can happen in Passive server
+      this.serverTransactionIDMap.remove(gtx.getServerTransactionID());
+      ids.remove(gtx.getGlobalTransactionID());
+    } else {
+      persistor.saveGlobalTransactionDescriptor(transaction, gtx);
+    }
   }
 
   public GlobalTransactionDescriptor getTransactionDescriptor(ServerTransactionID serverTransactionID) {
@@ -77,7 +91,9 @@ public class TransactionStoreImpl implements TransactionStore {
     ServerTransactionID sid = gtx.getServerTransactionID();
     GlobalTransactionID gid = gtx.getGlobalTransactionID();
     Object prevDesc = this.serverTransactionIDMap.put(sid, gtx);
-    ids.put(gid, gtx);
+    if (!gid.isNull()) {
+      ids.put(gid, gtx);
+    }
     if (prevDesc != null) { throw new AssertionError("Adding new mapping for old txn IDs : " + gtx + " Prev desc = "
                                                      + prevDesc); }
   }
@@ -88,27 +104,23 @@ public class TransactionStoreImpl implements TransactionStore {
     }
   }
 
-  public void removeAllByServerTransactionID(PersistenceTransaction tx, Collection stxIDs) {
+  public synchronized void removeAllByServerTransactionID(PersistenceTransaction tx, Collection stxIDs) {
     Collection toDelete = new HashSet();
     for (Iterator i = stxIDs.iterator(); i.hasNext();) {
       ServerTransactionID stxID = (ServerTransactionID) i.next();
       GlobalTransactionDescriptor desc = (GlobalTransactionDescriptor) this.serverTransactionIDMap.remove(stxID);
       if (desc != null) {
-        ids.remove(desc.getGlobalTransactionID());
-        toDelete.add(stxID);
+        if (desc.complete()) {
+          ids.remove(desc.getGlobalTransactionID());
+          toDelete.add(stxID);
+        } else {
+          // reconsile, commit will remove this
+          this.serverTransactionIDMap.put(stxID, desc);
+        }
       }
     }
     if (!toDelete.isEmpty()) {
       persistor.deleteAllByServerTransactionID(tx, toDelete);
-    }
-  }
-
-  public GlobalTransactionID getGlobalTransactionID(ServerTransactionID stxnID) {
-    GlobalTransactionDescriptor gdesc = (GlobalTransactionDescriptor) serverTransactionIDMap.get(stxnID);
-    if (gdesc == null) {
-      return GlobalTransactionID.NULL_ID;
-    } else {
-      return gdesc.getGlobalTransactionID();
     }
   }
 
@@ -140,6 +152,7 @@ public class TransactionStoreImpl implements TransactionStore {
     removeAllByServerTransactionID(tx, stxIDs);
   }
 
+  // Used in Passive server
   public void createGlobalTransactionDesc(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID) {
     GlobalTransactionDescriptor rv = new GlobalTransactionDescriptor(stxnID, globalTransactionID);
     basicAdd(rv);

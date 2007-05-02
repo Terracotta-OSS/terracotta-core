@@ -4,17 +4,15 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.context.CommitTransactionContext;
 import com.tc.objectserver.context.RecallObjectsContext;
 
 import java.util.Collection;
-import java.util.List;
 
 public interface TransactionalObjectManager {
 
-  public void addTransactions(ChannelID channelID, List txns, Collection completedTxnIds);
+  public void addTransactions(Collection txns, Collection completedTxnIds);
 
   public void lookupObjectsForTransactions();
 

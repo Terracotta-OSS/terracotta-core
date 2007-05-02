@@ -30,13 +30,13 @@ public class TransactionSequencer {
   private int                   txnsCount;
   private boolean               reconcile   = false;
 
-  public synchronized void addTransactions(List txns) {
+  public synchronized void addTransactions(Collection txns) {
     if (false) log_incoming(txns);
     txnQ.addAll(txns);
     txnsCount += txns.size();
   }
 
-  private void log_incoming(List txns) {
+  private void log_incoming(Collection txns) {
     for (Iterator i = txns.iterator(); i.hasNext();) {
       ServerTransaction txn = (ServerTransaction) i.next();
       logger.info("Incoming : " + txn);

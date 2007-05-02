@@ -45,8 +45,6 @@ public interface ServerGlobalTransactionManager extends GlobalTransactionIDGener
   
   public void shutdownAllClientsExcept(Set cids);
 
-  public GlobalTransactionID getGlobalTransactionID(ServerTransactionID stxnID);
-
   public void createGlobalTransactionDesc(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID);
 
 }

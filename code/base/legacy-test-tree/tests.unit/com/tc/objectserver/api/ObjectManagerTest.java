@@ -690,7 +690,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
       }
     };
 
-    DNA dna = new TestDNA(cursor);
+    TestDNA dna = new TestDNA(cursor);
+    dna.version = 5;
 
     ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
     lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(1), new BackReferences(), imo);
@@ -718,6 +719,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     ObjectID newReferenceID = new ObjectID(9324);
     fieldValueSlot.set(0, newReferenceID);
     dna = new TestDNA(cursor);
+    dna.version = 10;
     lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(2), new BackReferences(), imo);
     // lookedUpViaLookupObjectsForCreateIfNecessary.commit();
     tx = ptp.newTransaction();
@@ -1162,14 +1164,22 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
   private static class TestArrayDNA implements DNA {
 
+    private static int _version;
+    
     private final ObjectID id;
+    private int version;
 
     public TestArrayDNA(ObjectID id) {
       this.id = id;
+      this.version  = getNextVersion();
+    }
+
+    private static int getNextVersion() {
+      return _version++;
     }
 
     public long getVersion() {
-      return 0;
+      return version;
     }
 
     public boolean hasLength() {

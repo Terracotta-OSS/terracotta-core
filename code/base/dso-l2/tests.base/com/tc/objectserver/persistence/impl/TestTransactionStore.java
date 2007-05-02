@@ -47,9 +47,12 @@ public class TestTransactionStore implements TransactionStore {
   }
 
   public GlobalTransactionDescriptor getOrCreateTransactionDescriptor(ServerTransactionID stxid) {
-    nextTransactionIDContextQueue.put(stxid);
-    GlobalTransactionDescriptor rv = new GlobalTransactionDescriptor(stxid, new GlobalTransactionID(idSequence++));
-    basicPut(volatileMap, rv);
+    GlobalTransactionDescriptor rv = (GlobalTransactionDescriptor) volatileMap.get(stxid);
+    if (rv == null) {
+      nextTransactionIDContextQueue.put(stxid);
+      rv = new GlobalTransactionDescriptor(stxid, new GlobalTransactionID(idSequence++));
+      basicPut(volatileMap, rv);
+    }
     return rv;
   }
 
@@ -57,11 +60,11 @@ public class TestTransactionStore implements TransactionStore {
     map.put(txID.getServerTransactionID(), txID);
   }
 
-  public void commitTransactionDescriptor(PersistenceTransaction persistenceTransaction,
-                                          GlobalTransactionDescriptor txID) {
+  public void commitTransactionDescriptor(PersistenceTransaction transaction, ServerTransactionID stxID) {
+    GlobalTransactionDescriptor txID = getTransactionDescriptor(stxID);
     if (txID.isCommitted()) { throw new TransactionCommittedError("Already committed : " + txID); }
     try {
-      commitContextQueue.put(new Object[] { persistenceTransaction, txID });
+      commitContextQueue.put(new Object[] { transaction, txID });
       if (!volatileMap.containsValue(txID)) throw new AssertionError();
       basicPut(durableMap, txID);
       txID.commitComplete();
@@ -95,16 +98,6 @@ public class TestTransactionStore implements TransactionStore {
     }
   }
 
-  public GlobalTransactionID getGlobalTransactionID(ServerTransactionID stxnID) {
-    loadContextQueue.put(stxnID);
-    GlobalTransactionDescriptor gdesc = (GlobalTransactionDescriptor) volatileMap.get(stxnID);
-    if (gdesc == null) {
-      return GlobalTransactionID.NULL_ID;
-    } else {
-      return gdesc.getGlobalTransactionID();
-    }
-  }
-
   public void shutdownClient(PersistenceTransaction transaction, ChannelID client) {
     throw new ImplementMe();
   }
@@ -117,4 +110,12 @@ public class TestTransactionStore implements TransactionStore {
   public void shutdownAllClientsExcept(PersistenceTransaction tx, Set cids) {
     throw new ImplementMe();
   }
+
+  public void commitAllTransactionDescriptor(PersistenceTransaction persistenceTransaction, Collection stxIDs) {
+    for (Iterator i = stxIDs.iterator(); i.hasNext();) {
+      ServerTransactionID sid = (ServerTransactionID) i.next();
+      commitTransactionDescriptor(persistenceTransaction, sid);
+    }
+  }
+
 }

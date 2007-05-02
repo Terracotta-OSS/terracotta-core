@@ -39,9 +39,14 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
   private final UnappliedTransactionsInTheSystemMonitor txnMonitor = new UnappliedTransactionsInTheSystemMonitor();
   private final CopyOnWriteArrayMap                     nodes      = new CopyOnWriteArrayMap();
   private final CopyOnWriteArrayList                    listeners  = new CopyOnWriteArrayList();
+  private final ServerTransactionManager                transactionManager;
 
   public L2ObjectStateManagerImpl(ObjectManager objectManager, ServerTransactionManager transactionManager) {
     this.objectManager = objectManager;
+    this.transactionManager = transactionManager;
+  }
+
+  public void goActive() {
     transactionManager.addTransactionListener(txnMonitor);
   }
 

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.managedobject;
 
@@ -55,7 +56,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
 
   final ObjectID                   id;
 
-  long                             version;
+  long                             version                  = -1;
   transient ManagedObjectState     state;
 
   // TODO::Split this flag into two so that concurrency is maintained
@@ -71,7 +72,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     Assert.assertNotNull(id);
     this.id = id;
   }
-  
+
   /**
    * This is here for testing, not production use.
    */
@@ -143,10 +144,16 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
       throw new AssertionError("Newly created Object is applied with a delta DNA ! ManagedObjectImpl = "
                                + this.toString() + " DNA = " + dna + " TransactionID = " + txnID);
     }
+    long dna_version = dna.getVersion();
+    if (dna_version <= this.version) {
+      // FIXME::this is a possible condition in passive that needs to be handled.
+      throw new AssertionError("Recd a DNA with version less than current version : " + this.version
+                               + " dna_version : " + dna_version);
+    }
     if (isNew) {
       instanceMonitor.instanceCreated(typeName);
     }
-    this.version = dna.getVersion();
+    this.version = dna_version;
     DNACursor cursor = dna.getCursor();
 
     initializeStateIfNecessary(dna.getParentObjectID(), typeName, dna.getDefiningLoaderDescription(), cursor);

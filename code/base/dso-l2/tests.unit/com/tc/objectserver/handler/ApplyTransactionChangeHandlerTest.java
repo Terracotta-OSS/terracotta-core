@@ -6,6 +6,7 @@ package com.tc.objectserver.handler;
 
 import com.tc.async.impl.MockSink;
 import com.tc.async.impl.MockStage;
+import com.tc.l2.ha.L2HADisabledCooridinator;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -61,6 +62,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     TestServerConfigurationContext context = new TestServerConfigurationContext();
     context.transactionManager = transactionManager;
     context.txnObjectManager = new NullTransactionalObjectManager();
+    context.l2Coordinator = new L2HADisabledCooridinator();
     context.addStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, stageBo);
     context.addStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE, stageCo);
     context.lockManager = lockManager;

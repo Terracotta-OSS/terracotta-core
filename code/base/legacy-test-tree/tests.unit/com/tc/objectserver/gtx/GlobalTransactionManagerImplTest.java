@@ -34,17 +34,16 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     ServerTransactionID stxID1 = new ServerTransactionID(new ChannelID(1), new TransactionID(1));
     ServerTransactionID stxID2 = new ServerTransactionID(new ChannelID(1), new TransactionID(2));
 
-    assertTrue(gtxm.needsApply(stxID1));
-    assertTrue(gtxm.needsApply(stxID2));
-
-    assertTrue(gtxm.needsApply(stxID1));
-    assertTrue(gtxm.needsApply(stxID2));
-
-    //apply does create
     GlobalTransactionID gtxID1 = gtxm.getOrCreateGlobalTransactionID(stxID1);
     GlobalTransactionID gtxID2 = gtxm.getOrCreateGlobalTransactionID(stxID2);
     assertNotSame(gtxID1, gtxID2);
     
+    assertTrue(gtxm.needsApply(stxID1));
+    assertTrue(gtxm.needsApply(stxID2));
+
+    assertTrue(gtxm.needsApply(stxID1));
+    assertTrue(gtxm.needsApply(stxID2));
+
     // now commit them
     gtxm.commit(null, stxID1);
     gtxm.commit(null, stxID2);
@@ -69,35 +68,25 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     TransactionID tx1 = new TransactionID(1);
     ServerTransactionID stxid = new ServerTransactionID(channel1, tx1);
 
-    GlobalTransactionID gtxid = gtxm.getGlobalTransactionID(stxid);
-    assertGlobalTxWasLoaded(stxid);
+    GlobalTransactionID gid1 = gtxm.getOrCreateGlobalTransactionID(stxid);
+    assertNextGlobalTXWasCalled(stxid);
 
     assertTrue(gtxm.needsApply(stxid));
     assertGlobalTxWasLoaded(stxid);
-    assertNextGlobalTxNotCalled();
 
-    assertTrue(gtxm.needsApply(stxid));
-    assertGlobalTxWasLoaded(stxid);
     assertNextGlobalTxNotCalled();
-
-    // make sure no new calls to load were made
-    assertGlobalTxWasNotLoaded();
 
     // RESTART
     transactionStore.restart();
-
+    GlobalTransactionID gid2 = gtxm.getOrCreateGlobalTransactionID(stxid);
+    assertFalse(gid1.equals(gid2));
+    
     // the transaction is still not applied
     assertTrue(gtxm.needsApply(stxid));
     assertGlobalTxWasLoaded(stxid);
-    assertNextGlobalTxNotCalled();
 
-    // get a new global Txid number
-    GlobalTransactionID gtxid2 = gtxm.getGlobalTransactionID(stxid);
-    assertEquals(gtxid, gtxid2);
-    assertGlobalTxWasLoaded(stxid);
-
-    //apply does create
-    gtxm.getOrCreateGlobalTransactionID(stxid);
+    GlobalTransactionID gid3  = gtxm.getOrCreateGlobalTransactionID(stxid);
+    assertTrue(gid2.equals(gid3));
     
     gtxm.commit(null, stxid);
     assertGlobalTxWasLoaded(stxid);
@@ -121,12 +110,6 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     assertGlobalTxWasLoaded(stxid);
     assertNextGlobalTxNotCalled();
 
-    // get a new global Txid number
-    GlobalTransactionID gtxid3 = gtxm.getGlobalTransactionID(stxid);
-    assertNotSame(gtxid2, gtxid3);
-    assertFalse(gtxid3.equals(gtxid2));
-    assertGlobalTxWasLoaded(stxid);
-
     try {
       gtxm.commit(null, stxid);
       fail("Should not be able to commit twice");
@@ -138,6 +121,9 @@ public class GlobalTransactionManagerImplTest extends TestCase {
 
     // APPLY A NEW TRANSACTION
     ServerTransactionID stxid2 = new ServerTransactionID(channel1, new TransactionID(2));
+    GlobalTransactionID gid4  = gtxm.getOrCreateGlobalTransactionID(stxid2);
+    assertNextGlobalTXWasCalled(stxid2);
+    assertNotSame(gid3, gid4);
     assertTrue(gtxm.needsApply(stxid2));
     assertGlobalTxWasLoaded(stxid2);
 
@@ -155,10 +141,6 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     gtxm.completeTransactions(txn,finished);
     txn.commit();
     
-
-    // Check if the servertransactions are removed from the databases
-    assertTrue(gtxm.needsApply(stxid));
-    assertTrue(gtxm.needsApply(stxid2));
   }
 
   private void assertNextGlobalTXWasCalled(ServerTransactionID stxid) {

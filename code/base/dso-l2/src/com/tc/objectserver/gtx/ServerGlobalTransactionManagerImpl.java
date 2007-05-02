@@ -10,11 +10,9 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.TransactionStore;
-import com.tc.util.Assert;
 import com.tc.util.SequenceValidator;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Set;
 
 public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransactionManager {
@@ -45,8 +43,7 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
 
   public boolean needsApply(ServerTransactionID stxID) {
     GlobalTransactionDescriptor gtx = this.transactionStore.getTransactionDescriptor(stxID);
-    // XXX:: In passive this mapping is not yet created
-    return gtx == null || !gtx.isApplied();
+    return !gtx.isApplied();
   }
 
   public void completeTransactions(PersistenceTransaction tx, Collection collection) {
@@ -55,26 +52,15 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
   }
 
   public void commit(PersistenceTransaction persistenceTransaction, ServerTransactionID stxID) {
-    if (!stxID.isServerGeneratedTransacation()) {
-      GlobalTransactionDescriptor desc = transactionStore.getTransactionDescriptor(stxID);
-      Assert.assertNotNull(desc);
-      transactionStore.commitTransactionDescriptor(persistenceTransaction, desc);
-    }
+    transactionStore.commitTransactionDescriptor(persistenceTransaction, stxID);
   }
 
   public void commitAll(PersistenceTransaction persistenceTransaction, Collection stxIDs) {
-    for (Iterator i = stxIDs.iterator(); i.hasNext();) {
-      ServerTransactionID stxID = (ServerTransactionID) i.next();
-      commit(persistenceTransaction, stxID);
-    }
+    transactionStore.commitAllTransactionDescriptor(persistenceTransaction, stxIDs);
   }
 
   public GlobalTransactionID getLowGlobalTransactionIDWatermark() {
     return transactionStore.getLeastGlobalTransactionID();
-  }
-
-  public GlobalTransactionID getGlobalTransactionID(ServerTransactionID stxnID) {
-    return transactionStore.getGlobalTransactionID(stxnID);
   }
 
   public GlobalTransactionID getOrCreateGlobalTransactionID(ServerTransactionID serverTransactionID) {

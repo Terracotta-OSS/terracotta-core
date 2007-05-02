@@ -152,6 +152,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   public void l2StateChanged(StateChangedEvent sce) {
     clusterState.setCurrentState(sce.getCurrentState());
     if (sce.movedToActive()) {
+      l2ObjectStateManager.goActive();
       rClusterStateMgr.goActiveAndSyncState();
       rObjectManager.sync();
       try {

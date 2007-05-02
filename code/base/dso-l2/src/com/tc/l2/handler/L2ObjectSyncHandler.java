@@ -21,15 +21,16 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransaction;
+import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchReader;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class L2ObjectSyncHandler extends AbstractEventHandler {
@@ -40,7 +41,8 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
   private TransactionBatchReaderFactory batchReaderFactory;
 
   private Sink                          dehydrateSink;
-  private Sink sendSink;
+  private Sink                          sendSink;
+  private ServerTransactionManager      transactionManager;
 
   public L2ObjectSyncHandler(L2ObjectStateManager l2StateManager) {
     l2ObjectStateMgr = l2StateManager;
@@ -62,7 +64,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     }
   }
 
-  //TODO:: Implement throttling between active/passive
+  // TODO:: Implement throttling between active/passive
   private void ackTransactions(RelayedCommitTransactionMessage commitMessage, Set serverTxnIDs) {
     ServerTxnAckMessage msg = ServerTxnAckMessageFactory.createServerTxnAckMessage(commitMessage, serverTxnIDs);
     sendSink.add(msg);
@@ -73,26 +75,25 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     try {
       final TransactionBatchReader reader = batchReaderFactory.newTransactionBatchReader(commitMessage);
       ServerTransaction txn;
-      List txns = new ArrayList(reader.getNumTxns());
-      Set serverTxnIDs = new HashSet(reader.getNumTxns());
+      // XXX:: Order has to be maintained.
+      Map txns = new LinkedHashMap(reader.getNumTxns());
       while ((txn = reader.getNextTransaction()) != null) {
-        txns.add(txn);
-        serverTxnIDs.add(txn.getServerTransactionID());
+        txns.put(txn.getServerTransactionID(), txn);
       }
-      // TODO:: remove channelID.NULL_ID thingy
-      txnObjectMgr.addTransactions(ChannelID.NULL_ID, txns, reader.addAcknowledgedTransactionIDsTo(new HashSet()));
-      return serverTxnIDs;
+      transactionManager.incomingTransactions(reader.getChannelID(), txns, false);
+      txnObjectMgr.addTransactions(txns.values(), reader.addAcknowledgedTransactionIDsTo(new HashSet()));
+      return txns.keySet();
     } catch (IOException e) {
       throw new AssertionError(e);
     }
   }
 
   private void doSyncObjectsResponse(ObjectSyncMessage syncMsg) {
-    ArrayList txns = new ArrayList(1);
+    Map txns = new LinkedHashMap(1);
     ServerTransaction txn = ServerTransactionFactory.createTxnFrom(syncMsg);
-    txns.add(txn);
-    // TODO:: remove channelID.NULL_ID thingy
-    txnObjectMgr.addTransactions(ChannelID.NULL_ID, txns, Collections.EMPTY_LIST);
+    txns.put(txn.getServerTransactionID(), txn);
+    transactionManager.incomingTransactions(ChannelID.L2_SERVER_ID, txns, false);
+    txnObjectMgr.addTransactions(txns.values(), Collections.EMPTY_LIST);
   }
 
   // TODO:: Update stats so that admin console reflects these data
@@ -111,6 +112,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     this.batchReaderFactory = oscc.getTransactionBatchReaderFactory();
     this.objectManager = oscc.getObjectManager();
     this.txnObjectMgr = oscc.getTransactionalObjectManager();
+    this.transactionManager = oscc.getTransactionManager();
     this.dehydrateSink = oscc.getStage(ServerConfigurationContext.OBJECTS_SYNC_DEHYDRATE_STAGE).getSink();
     this.sendSink = oscc.getStage(ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE).getSink();
   }

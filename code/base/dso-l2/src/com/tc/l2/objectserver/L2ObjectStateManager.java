@@ -30,4 +30,6 @@ public interface L2ObjectStateManager {
   public Collection getL2ObjectStates();
 
   public void registerForL2ObjectStateChangeEvents(L2ObjectStateListener listener);
+
+  public void goActive();
 }

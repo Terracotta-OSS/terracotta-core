@@ -8,6 +8,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
+import com.tc.l2.state.StateManager;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
@@ -38,6 +39,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   private final ObjectInstanceMonitor          instanceMonitor;
   private final ServerGlobalTransactionManager gtxm;
   private TransactionalObjectManager           txnObjectMgr;
+  private StateManager                         stateManager;
 
   public ApplyTransactionChangeHandler(ObjectInstanceMonitor instanceMonitor, ServerGlobalTransactionManager gtxm) {
     this.instanceMonitor = instanceMonitor;
@@ -59,8 +61,10 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
       transactionManager.skipApplyAndCommit(txn);
       getLogger().warn("Not applying previously applied transaction: " + stxnID);
     }
-    
-    if (!txn.isPassive()) {
+
+    // XXX:: There could be a race, after a passive moves to active there could be some transactions still in the
+    // system. Wait/clear it
+    if (stateManager.isActiveCoordinator()) {
       for (Iterator i = txn.addNotifiesTo(new LinkedList()).iterator(); i.hasNext();) {
         Notify notify = (Notify) i.next();
         lockManager.notify(notify.getLockID(), txn.getChannelID(), notify.getThreadID(), notify.getIsAll(),
@@ -78,5 +82,6 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     this.broadcastChangesSink = scc.getStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE).getSink();
     this.txnObjectMgr = scc.getTransactionalObjectManager();
     this.lockManager = scc.getLockManager();
+    this.stateManager = scc.getL2Coordinator().getStateManager();
   }
 }

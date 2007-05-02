@@ -137,8 +137,6 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   }
 
   public boolean relayTransactions() {
-    // TODO:: Fix this there is an issue, a rare race, where some txns may go missing iff there are no objects yet in
-    // the objectmanager and the first passive joins the cluster. think about it.
     return l2ObjectStateManager.getL2Count() > 0;
   }
 }

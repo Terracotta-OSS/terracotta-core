@@ -35,9 +35,8 @@ public class ServerTransactionID {
     return txnID;
   }
 
-  public boolean isServerGeneratedTransacation() {
-    // XXX:: Currently this relies on the fact that we set channel ID to NULL_ID in ObjectSyncServerTransaction
-    return channelID.isNull() && !txnID.isNull();
+  public boolean isServerGeneratedTransaction() {
+    return channelID.equals(ChannelID.L2_SERVER_ID);
   }
 
   public boolean isNull() {

@@ -82,12 +82,14 @@ public interface ServerTransactionManager {
 
   public void removeTransactionListener(ServerTransactionListener listener);
 
-  public void incomingTransactions(ChannelID channelID, Set serverTxnIDs, boolean relayed);
+  public void incomingTransactions(ChannelID channelID, Map txns, boolean relayed);
 
   public void transactionsRelayed(ChannelID channelID, Set serverTxnIDs);
   
   public void setResentTransactionIDs(ChannelID channelID, Collection transactionIDs);
 
   public void start(Set cids);
+  
+  public void goToActiveMode();
 
 }

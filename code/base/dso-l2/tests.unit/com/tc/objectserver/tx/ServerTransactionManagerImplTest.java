@@ -85,6 +85,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
                                                                this.clientStateManager, this.objectManager,
                                                                this.action, this.transactionRateCounter,
                                                                this.channelStats);
+    this.transactionManager.goToActiveMode();
   }
 
   public void testRootCreatedEvent() {
@@ -358,7 +359,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
   private void doStages(ChannelID cid, Set txns, boolean actionAsserted) {
 
     // process stage
-    transactionManager.incomingTransactions(cid, getServerTransactionIDs(txns), false);
+    transactionManager.incomingTransactions(cid, getServerTransactionMap(txns), false);
 
     for (Iterator iter = txns.iterator(); iter.hasNext();) {
       ServerTransaction tx = (ServerTransaction) iter.next();
@@ -379,12 +380,13 @@ public class ServerTransactionManagerImplTest extends TestCase {
     }
   }
 
-  private Set getServerTransactionIDs(Set txns) {
-    Set s = new HashSet();
+  private Map getServerTransactionMap(Set txns) {
+    Map m = new HashMap();
     for (Iterator iter = txns.iterator(); iter.hasNext();) {
-      s.add(((ServerTransaction) iter.next()).getServerTransactionID());
+      ServerTransaction st = (ServerTransaction) iter.next();
+      m.put(st.getServerTransactionID(),st);
     }
-    return s;
+    return m;
   }
 
   private static final class TestChannelStats implements ChannelStats {
