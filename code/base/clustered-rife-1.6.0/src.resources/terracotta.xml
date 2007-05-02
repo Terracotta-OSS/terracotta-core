@@ -15,11 +15,15 @@
 	<roots>
 		<root>
 			<field-name>com.uwyn.rife.continuations.ContinuationManager.mContexts</field-name>
-			<root-name>mContexts</root-name>
+			<root-name>ContinuationContext</root-name>
 		</root>
 		<root>
 			<field-name>com.uwyn.rife.template.TemplateClassLoader.mBytecodeRepository</field-name>
-			<root-name>mBytecodeRepository</root-name>
+			<root-name>TemplatesBytecodeRepository</root-name>
+		</root>
+		<root>
+			<field-name>com.uwyn.rife.authentication.sessionmanagers.MemorySessions.mSessions</field-name>
+			<root-name>MemorySessions</root-name>
 		</root>
 	</roots>
 	<locks>
