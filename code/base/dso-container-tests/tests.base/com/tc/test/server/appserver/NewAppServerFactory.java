@@ -10,6 +10,7 @@ import com.tc.test.TempDirectoryHelper;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.glassfishv1.GlassfishV1AppServerFactory;
 import com.tc.test.server.appserver.jboss4x.JBoss4xAppServerFactory;
+import com.tc.test.server.appserver.jetty6x.Jetty6xAppServerFactory;
 import com.tc.test.server.appserver.tomcat5x.Tomcat5xAppServerFactory;
 import com.tc.test.server.appserver.war.War;
 import com.tc.test.server.appserver.wasce1x.Wasce1xAppServerFactory;
@@ -35,6 +36,7 @@ public abstract class NewAppServerFactory {
   public static final String       TOMCAT    = "tomcat";
   public static final String       WASCE     = "wasce";
   public static final String       GLASSFISH = "glassfish";
+  public static final String       JETTY     = "jetty";
 
   protected final TestConfigObject config;
   private boolean                  licenseIsSet;
@@ -77,6 +79,8 @@ public abstract class NewAppServerFactory {
       if ("4".equals(majorVersion)) return new JBoss4xAppServerFactory(new ProtectedKey(), config);
     } else if (GLASSFISH.equals(factoryName)) {
       if ("v1".equals(majorVersion)) return new GlassfishV1AppServerFactory(new ProtectedKey(), config);
+    } else if (JETTY.equals(factoryName)) {
+      if ("6".equals(majorVersion)) return new Jetty6xAppServerFactory(new ProtectedKey(), config);
     }
 
     throw new ImplementMe("App server named '" + factoryName + "' with major version " + majorVersion
