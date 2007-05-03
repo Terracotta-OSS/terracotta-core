@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver;
 
@@ -75,6 +76,9 @@ public class StandardAppServerParameters implements AppServerParameters {
     sb.append("-Dtc.classpath='" + System.getProperty("java.class.path") + "'");
     sb.append(' ');
     sb.append("-Dtc.session.classpath='" + tcSessionClasspath + "'");
+    sb.append(' ');
+    sb.append("-Dtc.tests.configuration.modules.url='" + System.getProperty("tc.tests.configuration.modules.url")
+                + "'");
     appendJvmArgs(sb.toString());
   }
 
