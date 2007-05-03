@@ -557,7 +557,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       }
     }
     
-    if (NewAppServerFactory.GLASSFISH.equals(config.appserverFactoryName())) {
+    if (NewAppServerFactory.JETTY.equals(config.appserverFactoryName())) {
       configBuilder.addModule("clustered-jetty", "6.1");
     }
     
