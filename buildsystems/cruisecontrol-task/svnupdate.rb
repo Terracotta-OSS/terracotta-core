@@ -86,6 +86,8 @@ class SvnUpdate
     `rm -rf #{Dir.tmpdir}/open*`
     `rm -rf #{Dir.tmpdir}/*.dat`
     `rm -rf #{Dir.tmpdir}/sprint*`
+    `rm -rf #{Dir.tmpdir}/asm*`
+    `rm -rf #{Dir.tmpdir}/Jetty*`
   end
 
   def update
