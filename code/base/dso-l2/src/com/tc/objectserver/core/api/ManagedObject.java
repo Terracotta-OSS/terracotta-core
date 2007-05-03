@@ -28,7 +28,7 @@ public interface ManagedObject {
 
   public Set getObjectReferences();
 
-  public void apply(DNA dna, TransactionID txnID, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor)
+  public void apply(DNA dna, TransactionID txnID, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor, boolean ignoreIfOlderDNA)
       throws DNAException;
 
   public void toDNA(TCByteBufferOutputStream out, ObjectStringSerializer serializer);
@@ -45,4 +45,5 @@ public interface ManagedObject {
 
   public void addObjectReferencesTo(ManagedObjectTraverser traverser);
 
+  public long getVersion();
 }

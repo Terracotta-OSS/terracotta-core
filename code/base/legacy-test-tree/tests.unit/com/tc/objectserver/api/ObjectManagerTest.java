@@ -273,9 +273,9 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     ManagedObject mo = (ManagedObject) results.objects.get(id1);
     TestArrayDNA ta;
-    mo.apply((ta = new TestArrayDNA(id1)), new TransactionID(1), new BackReferences(), imo);
+    mo.apply((ta = new TestArrayDNA(id1)), new TransactionID(1), new BackReferences(), imo, false);
     mo = (ManagedObject) results.objects.get(id2);
-    mo.apply(new TestArrayDNA(id2), new TransactionID(2), new BackReferences(), imo);
+    mo.apply(new TestArrayDNA(id2), new TransactionID(2), new BackReferences(), imo, false);
 
     Map ic = imo.getInstanceCounts();
     assertEquals(1, ic.size());
@@ -298,7 +298,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     for (Iterator i = ids.iterator(); i.hasNext();) {
       ObjectID id = (ObjectID) i.next();
       mo = (ManagedObject) results.objects.get(id);
-      mo.apply(new TestArrayDNA(id), new TransactionID(count++), new BackReferences(), imo);
+      mo.apply(new TestArrayDNA(id), new TransactionID(count++), new BackReferences(), imo, false);
     }
     ic = imo.getInstanceCounts();
     assertEquals(1, ic.size());
@@ -322,7 +322,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
     ManagedObject mo = (ManagedObject) lookedUpObjects.get(id);
-    mo.apply(new TestArrayDNA(id), new TransactionID(1), new BackReferences(), imo);
+    mo.apply(new TestArrayDNA(id), new TransactionID(1), new BackReferences(), imo, false);
     objectManager.releaseAll(NULL_TRANSACTION, lookedUpObjects.values());
 
     ManagedObjectFacade facade;
@@ -374,7 +374,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     ManagedObject dateManagedObject = (ManagedObject) lookedUpObjects.get(dateID);
 
     ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
-    dateManagedObject.apply(new TestDateDNA("java.util.Date", dateID), new TransactionID(1), new BackReferences(), imo);
+    dateManagedObject.apply(new TestDateDNA("java.util.Date", dateID), new TransactionID(1), new BackReferences(), imo, false);
 
     objectManager.releaseAll(NULL_TRANSACTION, lookedUpObjects.values());
 
@@ -402,7 +402,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     ManagedObject managedObject = (ManagedObject) lookedUpObjects.get(literalID);
 
     ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
-    managedObject.apply(new TestLiteralValuesDNA(literalID), new TransactionID(1), new BackReferences(), imo);
+    managedObject.apply(new TestLiteralValuesDNA(literalID), new TransactionID(1), new BackReferences(), imo, false);
 
     objectManager.releaseAll(NULL_TRANSACTION, lookedUpObjects.values());
 
@@ -448,9 +448,9 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     ManagedObject map = (ManagedObject) lookedUpObjects.get(mapID);
 
     ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
-    map.apply(new TestMapDNA(mapID), new TransactionID(1), new BackReferences(), imo);
-    set.apply(new TestListSetDNA("java.util.HashSet", setID), new TransactionID(1), new BackReferences(), imo);
-    list.apply(new TestListSetDNA("java.util.LinkedList", listID), new TransactionID(1), new BackReferences(), imo);
+    map.apply(new TestMapDNA(mapID), new TransactionID(1), new BackReferences(), imo, false);
+    set.apply(new TestListSetDNA("java.util.HashSet", setID), new TransactionID(1), new BackReferences(), imo, false);
+    list.apply(new TestListSetDNA("java.util.LinkedList", listID), new TransactionID(1), new BackReferences(), imo, false);
 
     objectManager.releaseAll(NULL_TRANSACTION, lookedUpObjects.values());
 
@@ -694,7 +694,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     dna.version = 5;
 
     ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
-    lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(1), new BackReferences(), imo);
+    lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(1), new BackReferences(), imo, false);
 
     PersistenceTransaction tx = ptp.newTransaction();
     objectManager.release(tx, lookedUpViaLookupObjectsForCreateIfNecessary);
@@ -720,7 +720,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     fieldValueSlot.set(0, newReferenceID);
     dna = new TestDNA(cursor);
     dna.version = 10;
-    lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(2), new BackReferences(), imo);
+    lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(2), new BackReferences(), imo, false);
     // lookedUpViaLookupObjectsForCreateIfNecessary.commit();
     tx = ptp.newTransaction();
     objectManager.release(tx, lookedUpViaLookupObjectsForCreateIfNecessary);
@@ -822,7 +822,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     ManagedObject mo = (ManagedObject) (context.objects).get(new ObjectID(1));
     assertTrue(mo.isNew());
     ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
-    mo.apply(new TestPhysicalDNA(new ObjectID(1)), new TransactionID(1), new BackReferences(), imo);
+    mo.apply(new TestPhysicalDNA(new ObjectID(1)), new TransactionID(1), new BackReferences(), imo, false);
 
     PersistenceTransaction tx = ptp.newTransaction();
     this.objectManager.release(tx, mo);

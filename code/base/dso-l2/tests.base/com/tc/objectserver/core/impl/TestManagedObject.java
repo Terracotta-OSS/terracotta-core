@@ -7,6 +7,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
@@ -190,5 +191,13 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
 
   public void addObjectReferencesTo(ManagedObjectTraverser traverser) {
     return;
+  }
+
+  public void apply(DNA dna, TransactionID txnID, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor, boolean ignoreIfOlderDNA) throws DNAException {
+    throw new ImplementMe();
+  }
+
+  public long getVersion() {
+    throw new ImplementMe();
   }
 }

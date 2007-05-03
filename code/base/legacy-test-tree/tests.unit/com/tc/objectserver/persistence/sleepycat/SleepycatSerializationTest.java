@@ -153,36 +153,36 @@ public class SleepycatSerializationTest extends TCTestCase {
       byte type = loaded.getManagedObjectState().getType();
       switch (type) {
         case ManagedObjectState.PHYSICAL_TYPE:
-          loaded.apply(newPhysicalDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo);
+          loaded.apply(newPhysicalDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
           break;
         case ManagedObjectState.MAP_TYPE:
         case ManagedObjectState.PARTIAL_MAP_TYPE:
-          loaded.apply(newLogicalMapDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo);
+          loaded.apply(newLogicalMapDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
           break;
         case ManagedObjectState.LIST_TYPE:
-          loaded.apply(newLogicalListDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo);
+          loaded.apply(newLogicalListDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
           break;
         case ManagedObjectState.SET_TYPE:
-          loaded.apply(newLogicalSetDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo);
+          loaded.apply(newLogicalSetDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
           break;
         case ManagedObjectState.ARRAY_TYPE:
-          loaded.apply(newLogicalArrayDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo);
+          loaded.apply(newLogicalArrayDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
           break;
         case ManagedObjectState.LINKED_HASHMAP_TYPE:
           loaded.apply(newLogicalLinkedHashMapDNA(), new TransactionID(++transactionSequence), new BackReferences(),
-                       imo);
+                       imo, false);
           break;
         case ManagedObjectState.DATE_TYPE:
-          loaded.apply(newLogicalDateDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo);
+          loaded.apply(newLogicalDateDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
           break;
         case ManagedObjectState.LITERAL_TYPE:
-          loaded.apply(newLiteralDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo);
+          loaded.apply(newLiteralDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
           break;
         case ManagedObjectState.TREE_MAP_TYPE:
-          loaded.apply(newLogicalTreeMapDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo);
+          loaded.apply(newLogicalTreeMapDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
           break;
         case ManagedObjectState.TREE_SET_TYPE:
-          loaded.apply(newLogicalTreeSetDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo);
+          loaded.apply(newLogicalTreeSetDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
           break;
       }
 
@@ -328,7 +328,7 @@ public class SleepycatSerializationTest extends TCTestCase {
   private ManagedObject newLogicalObject(ObjectID objectID, TestDNA dna) {
     ManagedObjectImpl rv = new ManagedObjectImpl(objectID);
     assertTrue(rv.isNew());
-    rv.apply(dna, new TransactionID(++transactionSequence), new BackReferences(), imo);
+    rv.apply(dna, new TransactionID(++transactionSequence), new BackReferences(), imo, false);
     assertFalse(rv.isNew());
     return rv;
   }
@@ -351,7 +351,7 @@ public class SleepycatSerializationTest extends TCTestCase {
     ManagedObjectImpl rv = new ManagedObjectImpl(objectID);
     TestDNA dna = newPhysicalDNA();
     assertTrue(rv.isNew());
-    rv.apply(dna, new TransactionID(++transactionSequence), new BackReferences(), imo);
+    rv.apply(dna, new TransactionID(++transactionSequence), new BackReferences(), imo, false);
     assertFalse(rv.isNew());
     return rv;
   }

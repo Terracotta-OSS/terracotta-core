@@ -37,7 +37,7 @@ public class ManagedObjectSerializerTest extends TestCase {
     assertTrue(mo.isNew());
     TestDNA dna = newDNA(1);
     ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
-    mo.apply(dna, new TransactionID(1), new BackReferences(), imo);
+    mo.apply(dna, new TransactionID(1), new BackReferences(), imo, false);
     assertFalse(mo.isNew());
 
     ByteArrayOutputStream baout = new ByteArrayOutputStream();

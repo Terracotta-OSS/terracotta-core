@@ -182,7 +182,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       }
       DNA change = new VersionizedDNAWrapper(orgDNA, version, true);
       ManagedObject mo = (ManagedObject) objects.get(change.getObjectID());
-      mo.apply(change, txnID, includeIDs, instanceMonitor);
+      mo.apply(change, txnID, includeIDs, instanceMonitor, !active);
       if (active && !change.isDelta()) {
         // Only New objects reference are added here
         stateManager.addReference(txn.getChannelID(), mo.getID());

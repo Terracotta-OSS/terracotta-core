@@ -5,6 +5,8 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -43,6 +45,7 @@ import java.util.Set;
  * @author steve TODO:: Remove Cacheable interface from this Object.
  */
 public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference, Serializable, PrettyPrintable {
+  private static final TCLogger    logger                   = TCLogging.getLogger(ManagedObjectImpl.class);
   private static final DNAEncoding DNA_STORAGE_ENCODING     = new DNAEncoding(DNAEncoding.STORAGE);
 
   private final static byte        IS_NEW_OFFSET            = 1;
@@ -136,7 +139,8 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     state.addObjectReferencesTo(traverser);
   }
 
-  public void apply(DNA dna, TransactionID txnID, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor) {
+  public void apply(DNA dna, TransactionID txnID, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor,
+                    boolean ignoreIfOlderDNA) {
     boolean isNew = isNew();
     String typeName = dna.getTypeName();
     if (dna.isDelta() && isNew) {
@@ -146,9 +150,14 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     }
     long dna_version = dna.getVersion();
     if (dna_version <= this.version) {
-      // FIXME::this is a possible condition in passive that needs to be handled.
-      throw new AssertionError("Recd a DNA with version less than current version : " + this.version
-                               + " dna_version : " + dna_version);
+      if (ignoreIfOlderDNA) {
+        logger.info("Ignoring apply of an old DNA for " + typeName + " id = " + id + " current version = " + this.version
+                    + " dna_version = " + dna_version);
+        return;
+      } else {
+        throw new AssertionError("Recd a DNA with version less than or equal to the current version : " + this.version
+                                 + " dna_version : " + dna_version);
+      }
     }
     if (isNew) {
       instanceMonitor.instanceCreated(typeName);
@@ -156,16 +165,16 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     this.version = dna_version;
     DNACursor cursor = dna.getCursor();
 
-    initializeStateIfNecessary(dna.getParentObjectID(), typeName, dna.getDefiningLoaderDescription(), cursor);
-    if (state == null) { throw new AssertionError(
-                                                  "Attempt to apply a transaction to a managed object with null state: "
-                                                      + this); }
+    if (state == null) {
+      state = getStateFactory().createState(id, dna.getParentObjectID(), typeName, dna.getDefiningLoaderDescription(),
+                                            cursor);
+    }
     try {
       try {
         state.apply(id, cursor, includeIDs);
       } catch (ClassNotCompatableException cnce) {
         // reinitialize state object and try again
-        reinitializeState(dna.getParentObjectID(), dna.getTypeName(), dna.getDefiningLoaderDescription(), cursor, state);
+        reinitializeState(dna.getParentObjectID(), typeName, dna.getDefiningLoaderDescription(), cursor, state);
         state.apply(id, cursor, includeIDs);
       }
     } catch (IOException e) {
@@ -178,12 +187,6 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   private void reinitializeState(ObjectID pid, String className, String loaderDesc, DNACursor cursor,
                                  ManagedObjectState oldState) {
     state = getStateFactory().recreateState(id, pid, className, loaderDesc, cursor, oldState);
-  }
-
-  private void initializeStateIfNecessary(ObjectID pid, String className, String loaderDesc, DNACursor cursor) {
-    if (state == null) {
-      state = getStateFactory().createState(id, pid, className, loaderDesc, cursor);
-    }
   }
 
   private ManagedObjectStateFactory getStateFactory() {
@@ -360,6 +363,10 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
 
   public synchronized boolean canEvict() {
     return !(isPinned() || isReferenced() || isNew());
+  }
+
+  public long getVersion() {
+    return version;
   }
 
 }
