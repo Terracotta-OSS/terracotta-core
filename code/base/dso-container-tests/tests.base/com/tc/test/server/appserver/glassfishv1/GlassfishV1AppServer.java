@@ -21,10 +21,10 @@ import com.tc.test.server.appserver.AbstractAppServer;
 import com.tc.test.server.appserver.AppServerParameters;
 import com.tc.test.server.appserver.AppServerResult;
 import com.tc.test.server.appserver.cargo.CargoLinkedChildProcess;
+import com.tc.test.server.util.AppServerUtil;
 import com.tc.text.Banner;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
-import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
 
 import java.io.ByteArrayOutputStream;
@@ -32,7 +32,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -179,7 +178,7 @@ public final class GlassfishV1AppServer extends AbstractAppServer {
     runner.start();
     System.err.println("Starting " + params.instanceName() + " on port " + httpPort + "...");
 
-    waitForPort(adminPort);
+    AppServerUtil.waitForPort(adminPort, START_STOP_TIMEOUT);
 
     System.err.println("Started " + params.instanceName() + " on port " + httpPort);
 
@@ -230,31 +229,6 @@ public final class GlassfishV1AppServer extends AbstractAppServer {
       Result result = Exec.execute((String[]) cmd.toArray(new String[] {}));
       if (result.getExitCode() != 0) { throw new RuntimeException("Deploy failed for " + warName + ": " + result); }
     }
-  }
-
-  private static void waitForPort(int port) {
-    final long timeout = System.currentTimeMillis() + START_STOP_TIMEOUT;
-    while (System.currentTimeMillis() < timeout) {
-      Socket s = null;
-      try {
-        s = new Socket("127.0.0.1", port);
-        return;
-      } catch (IOException ioe) {
-        // try again
-      } finally {
-        if (s != null) {
-          try {
-            s.close();
-          } catch (IOException ioe) {
-            // ignore
-          }
-        }
-      }
-
-      ThreadUtil.reallySleep(1000);
-    }
-
-    throw new RuntimeException("Port " + port + " cannot be reached, timeout = " + START_STOP_TIMEOUT);
   }
 
   private String[] getStartupCommand(AppServerParameters params) throws Exception {
