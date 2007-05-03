@@ -1,13 +1,22 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.test;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Allows you to build valid config for the L1. This class <strong>MUST NOT</strong> invoke the actual XML beans to do
  * its work; one of its purposes is, in fact, to test that those beans are set up correctly.
  */
 public class L1ConfigBuilder extends BaseConfigBuilder {
+
+  private List modules = new ArrayList();
 
   public L1ConfigBuilder() {
     super(1, ALL_PROPERTIES);
@@ -145,6 +154,28 @@ public class L1ConfigBuilder extends BaseConfigBuilder {
     setProperty("logs", value);
   }
 
+  public void addModule(String name, String version) {
+    modules.add(new Module(name, version));
+  }
+
+  private String addModuleElement() {
+    StringBuffer moduleElement = new StringBuffer();
+    if (modules.size() > 0) {
+      moduleElement.append(openElement("modules"));
+    }
+
+    for (Iterator it = modules.iterator(); it.hasNext();) {
+      Module m = (Module) it.next();
+      moduleElement.append(selfCloseElement("module", m.asAttribute()));
+    }
+
+    if (modules.size() > 0) {
+      moduleElement.append(closeElement("modules"));
+    }
+
+    return moduleElement.toString();
+  }
+
   private static final String[] DSO_INSTRUMENTATION_LOGGING = new String[] { "class", "hierarchy", "locks",
       "transient-root", "roots", "distributed-methods"     };
   private static final String[] DSO_RUNTIME_LOGGING         = new String[] { "lock-debug", "partial-instrumentation",
@@ -156,20 +187,38 @@ public class L1ConfigBuilder extends BaseConfigBuilder {
       DSO_RUNTIME_LOGGING, DSO_RUNTIME_OUTPUT_OPTIONS      });
   private static final String[] DSO                         = concat(new Object[] { "max-in-memory-object-count",
       DSO_DEBUGGING                                        });
-
-  private static final String[] ALL_PROPERTIES              = concat(new Object[] { "logs", DSO });
+  private static final String[] MODULE_ATTRIBUTES           = new String[] { "name", "version" };
+  private static final String[] ALL_PROPERTIES              = concat(new Object[] { "modules", "logs", DSO });
 
   public String toString() {
-    return element("logs") + openElement("dso", DSO) + element("max-in-memory-object-count")
-           + openElement("debugging", DSO_DEBUGGING)
-           + elementGroup("instrumentation-logging", DSO_INSTRUMENTATION_LOGGING)
-           + elementGroup("runtime-logging", DSO_RUNTIME_LOGGING)
-           + elementGroup("runtime-output-options", DSO_RUNTIME_OUTPUT_OPTIONS)
-           + closeElement("debugging", DSO_DEBUGGING) + closeElement("dso", DSO);
+    return  addModuleElement()
+        + element("logs") + openElement("dso", DSO) + element("max-in-memory-object-count")
+        + openElement("debugging", DSO_DEBUGGING)
+        + elementGroup("instrumentation-logging", DSO_INSTRUMENTATION_LOGGING)
+        + elementGroup("runtime-logging", DSO_RUNTIME_LOGGING)
+        + elementGroup("runtime-output-options", DSO_RUNTIME_OUTPUT_OPTIONS) + closeElement("debugging", DSO_DEBUGGING)
+        + closeElement("dso", DSO);
   }
 
   public static L1ConfigBuilder newMinimalInstance() {
     return new L1ConfigBuilder();
+  }
+
+  private static class Module {
+    private String name;
+    private String version;
+
+    public Module(String name, String version) {
+      this.name = name;
+      this.version = version;
+    }
+
+    public Map asAttribute() {
+      Map attr = new HashMap();
+      attr.put(MODULE_ATTRIBUTES[0], name);
+      attr.put(MODULE_ATTRIBUTES[1], version);
+      return attr;
+    }
   }
 
   public static void main(String[] args) {
@@ -179,6 +228,7 @@ public class L1ConfigBuilder extends BaseConfigBuilder {
     builder.setROOCaller(true);
     builder.setROOFullStack(false);
     builder.setLogs("funk");
+    builder.addModule("testmo", "1.2");
     System.err.println(builder);
   }
 

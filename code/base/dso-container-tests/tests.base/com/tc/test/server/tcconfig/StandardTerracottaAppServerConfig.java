@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.tcconfig;
 
@@ -48,6 +49,7 @@ public class StandardTerracottaAppServerConfig {
   private final TerracottaConfigBuilder     configBuilder;
   private final int                         dsoPort;
   private final int                         jmxPort;
+  private L1ConfigBuilder                   l1cb         = new L1ConfigBuilder();
 
   public StandardTerracottaAppServerConfig(File baseDir) {
     PortChooser portChooser = new PortChooser();
@@ -77,7 +79,6 @@ public class StandardTerracottaAppServerConfig {
 
     configBuilder.setServers(l2scb);
 
-    L1ConfigBuilder l1cb = new L1ConfigBuilder();
     l1cb.setLogs(baseDir + File.separator + LOGSLOCATION);
 
     configBuilder.setClient(l1cb);
@@ -98,12 +99,16 @@ public class StandardTerracottaAppServerConfig {
     return jmxPort;
   }
 
+  public void addModule(String name, String version) {
+    l1cb.addModule(name, version);
+  }
+
   public void addWebApplication(String appName) {
     WebApplicationConfigBuilder wacbImpl = new WebApplicationConfigBuilderImpl();
     wacbImpl.setWebApplicationName(appName);
     webapps.add(wacbImpl);
   }
-  
+
   public void addWebApplication(String appName, boolean isSynchronousWrite) {
     WebApplicationConfigBuilder builder = new WebApplicationConfigBuilderImpl();
     builder.setWebApplicationName(appName);

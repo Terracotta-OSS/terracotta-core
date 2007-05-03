@@ -215,6 +215,12 @@ public abstract class BaseConfigBuilder {
     ++this.currentIndentLevel;
     return out;
   }
+  
+  protected final String selfCloseElement(String tagName, Map attributes) {
+    Assert.assertNotBlank(tagName);
+    String out = indent() + "<" + tagName + " " + attributesToString(attributes) + "/>";    
+    return out;
+  }
 
   protected final String openElement(String tagName, String[] properties) {
     Assert.assertNotBlank(tagName);
