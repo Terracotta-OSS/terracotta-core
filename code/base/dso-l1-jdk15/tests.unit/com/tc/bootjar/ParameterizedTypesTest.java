@@ -86,7 +86,7 @@ public class ParameterizedTypesTest extends TCTestCase {
     assertNotNull("Unable to find original rt.jar", resource);
     
     String path = resource.toString();
-    String jarPath = path.substring("jar:file:/".length(), path.indexOf('!'));
+    String jarPath = path.substring("jar:file:".length(), path.indexOf('!'));
     JarFile jarFile = new JarFile(jarPath);
     ZipEntry entry = jarFile.getEntry(className);
     InputStream is = jarFile.getInputStream(entry);
