@@ -11,7 +11,6 @@ public class SynchronousCommitClientTerminatingTest extends ClientTerminatingTes
   public SynchronousCommitClientTerminatingTest() {
     super();
     super.setSynchronousWrite();
-    this.disableAllUntil("2007-05-15");
   }
 
   public void doSetup(TransparentTestIface t) throws Exception {

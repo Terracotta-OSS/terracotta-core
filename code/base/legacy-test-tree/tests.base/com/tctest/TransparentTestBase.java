@@ -76,7 +76,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     setUp(configFactory(), configHelper());
 
     RestartTestHelper helper = null;
-    if (isCrashy() && canRunCrash()) {
+    if ((isCrashy() && canRunCrash()) || useExternalProcess()) {
       helper = new RestartTestHelper(mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_CRASH),
                                      new RestartTestEnvironment(getTempDirectory(), new PortChooser(),
                                                                 RestartTestEnvironment.PROD_MODE));
@@ -88,12 +88,6 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       serverControl = helper.getServerControl();
     } else if (isActivePassive() && canRunActivePassive()) {
       setUpActivePassiveServers();
-    } else if (useExternalProcess()) {
-      PortChooser portChooser = new PortChooser();
-      int serverPort = portChooser.chooseRandomPort();
-      int adminPort = portChooser.chooseRandomPort();
-      this.setUpExternalProcess(configFactory(), getConfigHelper(), serverPort, adminPort,
-                                writeMinimalConfig(serverPort, adminPort).getAbsolutePath());
     } else {
       ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(0);
     }

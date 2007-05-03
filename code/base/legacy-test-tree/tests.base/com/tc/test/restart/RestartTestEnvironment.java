@@ -18,6 +18,7 @@ import com.tc.objectserver.control.IntraProcessServerControl;
 import com.tc.objectserver.control.NullServerControl;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.objectserver.control.ExtraProcessServerControl.DebugParams;
+import com.tc.test.TestConfigObject;
 import com.tc.util.PortChooser;
 import com.tctest.restart.TestThreadGroup;
 
@@ -177,8 +178,18 @@ public class RestartTestEnvironment {
 
   public ServerControl newExtraProcessServer() throws FileNotFoundException {
     assertServerOff();
+    File javaHome = null;
+    try {
+      String javaHomeString = TestConfigObject.getInstance().getL2StartupJavaHome();
+      if (javaHomeString != null) {
+        javaHome = new File(javaHomeString);
+      }
+    }
+    catch (Exception e) {
+      // ignore, leaving javaHome as null
+    }
     this.server = new ExtraProcessServerControl(new DebugParams(), "localhost", serverPort, adminPort, this.configFile
-        .getAbsolutePath(), mergeServerOutput);
+        .getAbsolutePath(), mergeServerOutput, javaHome);
     return serverWrapper;
   }
 

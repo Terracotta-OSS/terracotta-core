@@ -12,7 +12,6 @@ import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
 import com.tc.process.LinkedJavaProcess;
 import com.tc.process.StreamCopier;
 import com.tc.server.TCServerMain;
-import com.tc.test.TestConfigObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -31,6 +30,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   protected final List        jvmArgs;
   private final File          runningDirectory;
   private final String        serverName;
+  private File                javaHome;
   private File                out;
   private FileOutputStream    fileOut;
   private StreamCopier        outCopier;
@@ -39,6 +39,13 @@ public class ExtraProcessServerControl extends ServerControlBase {
   public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput)
       throws FileNotFoundException {
     this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, mergeOutput);
+  }
+
+  public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc,
+                                   boolean mergeOutput, File javaHome)
+      throws FileNotFoundException {
+    this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, mergeOutput);
+    this.javaHome = javaHome;
   }
 
   public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput,
@@ -54,6 +61,14 @@ public class ExtraProcessServerControl extends ServerControlBase {
     // "installation directory", the tests should be creating one themselves.
     this(debugParams, host, dsoPort, adminPort, configFileLoc, null, Directories.getInstallationRoot(), mergeOutput,
          null, new ArrayList());
+  }
+
+  public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
+                                   String configFileLoc, boolean mergeOutput, File javaHome)
+  throws FileNotFoundException {
+    this(debugParams, host, dsoPort, adminPort, configFileLoc, null, Directories.getInstallationRoot(), mergeOutput,
+         null, new ArrayList());
+    this.javaHome = javaHome;
   }
 
   public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
@@ -110,14 +125,12 @@ public class ExtraProcessServerControl extends ServerControlBase {
   protected String getMainClassName() {
     return TCServerMain.class.getName();
   }
-  
-  protected File getJavaHome() {
-    try {
-      return new File(TestConfigObject.getInstance().getL2StartupJavaHome());
-    }
-    catch (Exception e) {
-      return null;
-    }
+
+  /**
+   * The JAVA_HOME for the JVM to use when creating a {@link LinkedChildProcess}.
+   */
+  public File getJavaHome() {
+    return javaHome;
   }
 
   protected String[] getMainClassArguments() {
