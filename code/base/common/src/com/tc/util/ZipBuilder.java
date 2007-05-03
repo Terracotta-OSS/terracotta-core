@@ -111,8 +111,9 @@ public class ZipBuilder implements ArchiveBuilder {
   }
 
   public static void unzip(InputStream archive, File destDir) throws IOException {
+    ZipInputStream zis = null;
     try {
-      ZipInputStream zis = new ZipInputStream(archive);
+      zis = new ZipInputStream(archive);
       ZipEntry entry;
       while ((entry = zis.getNextEntry()) != null) {
         File file = new File(destDir, entry.getName());
@@ -126,6 +127,8 @@ public class ZipBuilder implements ArchiveBuilder {
     } catch (IOException e) {
       e.printStackTrace();
       throw e;
+    } finally {
+      if (zis != null) zis.close();
     }
   }
 }
