@@ -80,6 +80,7 @@ class Environment
     if type =~ /linux/i && `uname -m` =~ /64/
       type = type + "64"
     end
+    type
   end
   
   # What's the name of the user running this Ruby code?

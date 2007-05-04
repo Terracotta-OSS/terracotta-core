@@ -287,7 +287,7 @@ class BuildSubtree
 
     # Figures out the subdirectory of the native library directory that we should use.
     # This implies that native libraries must be organized by operating-system test
-    def native_library_subdir(build_environment)
+    def native_library_subdir(build_environment)        
         build_environment.os_type_extra()
     end
 

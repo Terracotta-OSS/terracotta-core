@@ -46,7 +46,7 @@ public class Handle {
     if (!Os.isWindows())
       return "Not a Windows box";
 
-    String nativeLibPath = TestConfigObject.getInstance().executableSearchPath() + File.separator + "Windows";
+    String nativeLibPath = TestConfigObject.getInstance().executableSearchPath();
 
     String[] args = new String[] { nativeLibPath + File.separator + "handle.exe", "-p", "java", file.getAbsolutePath() };
     String handleResult = runProcess(args);
