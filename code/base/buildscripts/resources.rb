@@ -34,17 +34,23 @@ smart_compile <project-name>
 show_modules
     Prints a list of all the modules the system knows about.
 
+show_module_dependencies <module-name>
+    Prints the names of all modules that the named module depends on.
+
+show_dependent_modules <module-name>
+    Prints the names of all modules that depend on the named module.
+
 USEFUL OPTIONS
 
 compile_only=dso-container-tests,dso-spring-tests
     Only compile specified projects
-    
+
 --no-ivy
     Don't run ivy
-    
+
 --no-compile
     Don't compile
-    
+
 TESTING
 
 check
@@ -52,7 +58,7 @@ check
 
 check check_modules=dso-container-tests
     Run all tests under module(s) (comma separated list)
-    
+
 check_one <test_name>
     Runs a single named test where <test_name> is the class
     name of the Java class containing the test to run.  This
@@ -63,7 +69,7 @@ check_one <test_name>
 show_classpath <project> <subtree>
     Show the classpath of the subtree in this project
     Ex: tcbuild show_classpath dso-container-tets tests.system
-    
+
 check_prep <module> <type>
     Prepare to run tests from an external tool (e.g. Eclipse).
     <module> may be the name of a module as specified in modules.def.yml, or
@@ -112,13 +118,13 @@ NOTE: Output of binaries are placed under code/base/build/dist
 
 dist
     Create distribution binaries
-    
+
 dist web
     Create eclipse plugin binaries
 
 create_package <product_code>
     Assembles and packages the kit. Product codes: dso, web
-    Default product_code is dso. 
+    Default product_code is dso.
 
 create_all_packages
     Assembles, packages, and publishes all possible kits, based on the

@@ -143,6 +143,20 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     puts "Module set: %s" % @module_set.to_s
   end
 
+  # Show all of the modules that the named module depends on.
+  def show_module_dependencies(module_name)
+      puts("Module #{module_name} depends on:")
+      @module_set[module_name].dependencies.each do |dep| puts("\t#{dep}") end
+  end
+
+  # Show all of the modules that are dependent on the named module.
+  def show_dependent_modules(module_name)
+    puts("The following modules are dependent on #{module_name}:")
+    @module_set.each do |mod|
+      puts("\t#{mod.name}") if mod.dependencies.include?(module_name)
+    end
+  end
+
   # Um. Duh.
   def clean
     # DO NOT make 'clean' depend on 'init'. 'init' writes out certain files to the build/ directory;
