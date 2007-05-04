@@ -16,8 +16,6 @@ import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.jar.JarFile;
-import java.util.zip.ZipEntry;
 
 public class ParameterizedTypesTest extends TCTestCase {
   
@@ -82,14 +80,15 @@ public class ParameterizedTypesTest extends TCTestCase {
 
   private ClassNode getOriginalClass(String className) throws IOException {
     // original rt.jar - jar:file:/C:/jdk1.5.0_08/jre/lib/rt.jar!/java/lang/Void.class
-    URL resource = Void.class.getResource("/java/lang/Void.class");
+    String voidClass = "/java/lang/Void.class";
+    URL resource = Void.class.getResource(voidClass);
     assertNotNull("Unable to find original rt.jar", resource);
     
     String path = resource.toString();
-    String jarPath = path.substring("jar:file:".length(), path.indexOf('!'));
-    JarFile jarFile = new JarFile(jarPath);
-    ZipEntry entry = jarFile.getEntry(className);
-    InputStream is = jarFile.getInputStream(entry);
+    String classPath = path.substring(0, path.indexOf(voidClass) + 1) + className;
+    
+    URL classUrl = new URL(classPath);
+    InputStream is = classUrl.openStream();
     assertNotNull("Unable to find zip entry " + className, is);
     
     ClassReader cr = new ClassReader(is);
