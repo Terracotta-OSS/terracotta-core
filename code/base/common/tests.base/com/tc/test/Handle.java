@@ -35,18 +35,6 @@ public class Handle {
     return buffer.toString();
   }
 
-  private static String getPathFor(String path, String cmd) {
-    String[] dirs = path.split(File.pathSeparator);
-    String thePath = "";
-    for (int i = 0; i < dirs.length; i++) {
-      File test = new File(dirs[i] + File.separator + cmd);
-      if (test.exists()) {
-        thePath = dirs[i];
-        break;
-      }
-    }
-    return thePath;
-  }
 
   /**
    * @param file observed file
@@ -58,17 +46,16 @@ public class Handle {
     if (!Os.isWindows())
       return "Not a Windows box";
 
-    String searchPath = TestConfigObject.getInstance().executableSearchPath();
-    String thePath = getPathFor(searchPath, "handle.exe") + File.separator;
+    String nativeLibPath = TestConfigObject.getInstance().executableSearchPath() + File.separator + "Windows";
 
-    String[] args = new String[] { thePath + "handle.exe", "-p", "java", file.getAbsolutePath() };
+    String[] args = new String[] { nativeLibPath + File.separator + "handle.exe", "-p", "java", file.getAbsolutePath() };
     String handleResult = runProcess(args);
 
     String processResult = "";
     // if "No matching handles found" from handle.exe, no need to display java processes
     if (handleResult.indexOf("No matching handles found") < 0)
     {
-      args = new String[] { thePath + "pv.exe", "-l", "java.exe" };
+      args = new String[] { nativeLibPath + File.separator + "pv.exe", "-l", "java.exe" };
       processResult = runProcess(args);
     }
 
