@@ -63,6 +63,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
   private final ServerGlobalTransactionManager gtxm;
 
+  private final ServerTransactionLogger        txnLogger           = new ServerTransactionLogger(logger);
+
   private volatile State                       state               = PASSIVE_MODE;
 
   public ServerTransactionManagerImpl(ServerGlobalTransactionManager gtxm, TransactionStore transactionStore,
@@ -76,6 +78,19 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.action = action;
     this.transactionRateCounter = transactionRateCounter;
     this.channelStats = channelStats;
+  }
+
+  public void enableTransactionLogger() {
+    synchronized (txnLogger) {
+      removeTransactionListener(txnLogger);
+      addTransactionListener(txnLogger);
+    }
+  }
+
+  public void disableTransactionLogger() {
+    synchronized (txnLogger) {
+      removeTransactionListener(txnLogger);
+    }
   }
 
   public void dump() {

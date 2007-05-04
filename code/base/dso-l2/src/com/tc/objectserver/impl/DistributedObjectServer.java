@@ -140,9 +140,7 @@ import com.tc.objectserver.persistence.sleepycat.SerializationAdapterFactory;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
 import com.tc.objectserver.tx.CommitTransactionMessageRecycler;
 import com.tc.objectserver.tx.CommitTransactionMessageToTransactionBatchReader;
-import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.ServerTransactionManagerImpl;
-import com.tc.objectserver.tx.ServerTransactionManagerMBean;
 import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchManagerImpl;
 import com.tc.objectserver.tx.TransactionSequencer;
@@ -179,7 +177,7 @@ import javax.management.NotCompliantMBeanException;
 
 /**
  * Startup and shutdown point. Builds and starts the server
- * 
+ *
  * @author steve
  */
 public class DistributedObjectServer extends SEDA {
@@ -204,7 +202,7 @@ public class DistributedObjectServer extends SEDA {
 
   private ManagedObjectStore                   objectStore;
   private Persistor                            persistor;
-  private ServerTransactionManager             transactionManager;
+  private ServerTransactionManagerImpl         transactionManager;
 
   private CacheManager                         cacheManager;
 
@@ -455,6 +453,11 @@ public class DistributedObjectServer extends SEDA {
                                                                                  transactionStorePTP);
     transactionManager = new ServerTransactionManagerImpl(gtxm, transactionStore, lockManager, clientStateManager,
                                                           objectManager, taa, globalTxnCounter, channelStats);
+
+    if (l2Properties.getBoolean("transactionmanager.logging.enabled")) {
+      transactionManager.enableTransactionLogger();
+    }
+
     MessageRecycler recycler = new CommitTransactionMessageRecycler(transactionManager);
     ObjectRequestManager objectRequestManager = new ObjectRequestManagerImpl(objectManager, transactionManager);
 
@@ -610,8 +613,8 @@ public class DistributedObjectServer extends SEDA {
                                                                     globalTxnCounter, objMgrStats);
 
     // XXX: yucky casts
-    managementContext = new ServerManagementContext((ServerTransactionManagerMBean) transactionManager,
-                                                    (ObjectManagerMBean) objectManager, (LockManagerMBean) lockManager,
+    managementContext = new ServerManagementContext(transactionManager, (ObjectManagerMBean) objectManager,
+                                                    (LockManagerMBean) lockManager,
                                                     (DSOChannelManagerMBean) channelManager, serverStats, channelStats,
                                                     instanceMonitor, appEvents);
 
