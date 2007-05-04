@@ -20,6 +20,7 @@ import com.sleepycat.je.Transaction;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,6 +62,8 @@ public class DBEnvironment {
   private static final DatabaseEntry       CLEAN_FLAG_KEY               = new DatabaseEntry(new byte[] { 1 });
   private static final byte                IS_CLEAN                     = 1;
   private static final byte                IS_DIRTY                     = 2;
+  private static final long                SLEEP_TIME_ON_STARTUP_ERROR  = 500;
+  private static final int                 STARTUP_RETRY_COUNT          = 5;
 
   private final List                       createdDatabases;
   private final Map                        databasesByName;
@@ -127,7 +130,7 @@ public class DBEnvironment {
     assertInit();
     status = STATUS_OPENING;
     try {
-      env = newEnvironment();
+      env = openEnvironment();
       synchronized (CONTROL_LOCK) {
         // XXX: Note: this doesn't guard against multiple instances in different
         // classloaders...
@@ -363,8 +366,21 @@ public class DBEnvironment {
     databasesByName.put(name, db);
   }
 
-  private Environment newEnvironment() throws DatabaseException {
-    return new Environment(envHome, ecfg);
+  private Environment openEnvironment() throws DatabaseException {
+    int count = 0;
+    while (true) {
+      try {
+        return new Environment(envHome, ecfg);
+      } catch (DatabaseException dbe) {
+        if (++count <= STARTUP_RETRY_COUNT) {
+          logger.warn("Unable to open DB environment. " + dbe.getMessage() + " Retrying after "
+                      + SLEEP_TIME_ON_STARTUP_ERROR + " ms");
+          ThreadUtil.reallySleep(SLEEP_TIME_ON_STARTUP_ERROR);
+        } else {
+          throw dbe;
+        }
+      }
+    }
   }
 
   private static final class DBEnvironmentStatus {
