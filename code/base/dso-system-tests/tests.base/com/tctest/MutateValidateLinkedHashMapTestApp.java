@@ -68,6 +68,7 @@ public class MutateValidateLinkedHashMapTestApp extends AbstractMutateValidateTr
       Thread.sleep(r.nextInt(10));
     }   
     System.out.println("*** Done with mutation");
+    Thread.sleep(100);  // wait for others to complete
   }
 
   protected void validate() throws Throwable {
