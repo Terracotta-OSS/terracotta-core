@@ -200,7 +200,7 @@ public interface ClassInfo extends ReflectionInfo {
     }
 
     public String getName() {
-      return null;
+      return "__UNKNOWN__";
     }
 
     public String getSignature() {
