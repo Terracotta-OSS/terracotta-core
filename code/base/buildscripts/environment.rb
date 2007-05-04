@@ -72,6 +72,16 @@ class Environment
     @os_types[key]
   end
   
+  # same as os_type(:nice) but returns Linux64
+  # if it's a 64 bit. 
+  # XXX: need cases for Solaris64, Windows64
+  def os_type_extra
+    type = os_type(:nice)
+    if type =~ /linux/i && `uname -m` =~ /64/
+      type = type + "64"
+    end
+  end
+  
   # What's the name of the user running this Ruby code?
   def username
     if @username.nil?
