@@ -6,6 +6,7 @@ package com.tc.test.server.appserver.deployment;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.tc.process.HeartBeatService;
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
@@ -67,6 +68,7 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
 
   protected void tearDown() throws Exception {
     ServerManagerUtil.stop(serverManager);
+    HeartBeatService.sendKillSignalToChildren();
     super.tearDown();
   }
 
