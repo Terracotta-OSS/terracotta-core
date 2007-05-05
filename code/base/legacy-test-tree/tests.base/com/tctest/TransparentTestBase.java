@@ -33,7 +33,6 @@ import com.tctest.runner.TransparentAppConfig;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -50,7 +49,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   private TestTVSConfigurationSetupManagerFactory configFactory;
   private DSOClientConfigHelper                   configHelper;
   protected DistributedTestRunner                 runner;
-  private DistributedTestRunnerConfig             runnerConfig = new DistributedTestRunnerConfig(getTimeoutValueInSeconds());
+  private DistributedTestRunnerConfig             runnerConfig            = new DistributedTestRunnerConfig(
+                                                                                                            getTimeoutValueInSeconds());
   private TransparentAppConfig                    transparentAppConfig;
   private ApplicationConfigBuilder                possibleApplicationConfigBuilder;
 
@@ -64,12 +64,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   private ActivePassiveTestSetupManager           apSetupManager;
 
   protected TestConfigObject getTestConfigObject() {
-    try {
-      return TestConfigObject.getInstance();
-    }
-    catch (IOException e) {
-      throw new RuntimeException("Couldn't get instance of TestConfigObject.", e);
-    }
+    return TestConfigObject.getInstance();
   }
 
   protected void setUp() throws Exception {
@@ -115,22 +110,20 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     throw new AssertionError("The sub-class (test) should override this method.");
   }
-  
+
   protected boolean useExternalProcess() {
     return getTestConfigObject().isL2StartupModeExternal();
   }
 
-  protected void setUpExternalProcess(TestTVSConfigurationSetupManagerFactory factory,
-                                      DSOClientConfigHelper helper, int serverPort, int adminPort,
-                                      String configFile) throws Exception {
+  protected void setUpExternalProcess(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper,
+                                      int serverPort, int adminPort, String configFile) throws Exception {
     String javaHome = getTestConfigObject().getL2StartupJavaHome();
-    if (javaHome == null) {
-      throw new IllegalStateException(TestConfigObject.L2_STARTUP_JAVA_HOME + " must be set to a valid JAVA_HOME");
-    }
+    if (javaHome == null) { throw new IllegalStateException(TestConfigObject.L2_STARTUP_JAVA_HOME
+                                                            + " must be set to a valid JAVA_HOME"); }
 
     serverControl = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile, true);
     setUp(factory, helper);
-    
+
     configFactory().addServerToL1Config(null, serverPort, adminPort);
     configFactory().addServerToL2Config(null, serverPort, adminPort);
   }
@@ -217,18 +210,12 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   }
 
   public void initializeTestRunner(boolean isMutateValidateTest) throws Exception {
-    this.runner = new DistributedTestRunner(runnerConfig,
-                                            configFactory,
-                                            configHelper,
-                                            getApplicationClass(),
-                                            getOptionalAttributes(),
-                                            getApplicationConfigBuilder().newApplicationConfig(),
-                                            transparentAppConfig.getClientCount(),
+    this.runner = new DistributedTestRunner(runnerConfig, configFactory, configHelper, getApplicationClass(),
+                                            getOptionalAttributes(), getApplicationConfigBuilder()
+                                                .newApplicationConfig(), transparentAppConfig.getClientCount(),
                                             transparentAppConfig.getApplicationInstancePerClientCount(),
-                                            getStartServer(),
-                                            isMutateValidateTest,
-                                            transparentAppConfig.getValidatorCount(),
-                                            (isActivePassive() && canRunActivePassive()),
+                                            getStartServer(), isMutateValidateTest, transparentAppConfig
+                                                .getValidatorCount(), (isActivePassive() && canRunActivePassive()),
                                             apServerManager);
   }
 
@@ -348,7 +335,10 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     } catch (Exception e) {
       throw Assert.failure("Can't create config file", e);
     } finally {
-      try { out.close(); } catch (Exception e) { /* oh well, we tried */ }
+      try {
+        out.close();
+      } catch (Exception e) { /* oh well, we tried */
+      }
     }
 
     return configFile;

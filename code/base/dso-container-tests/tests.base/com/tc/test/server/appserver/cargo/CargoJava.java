@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver.cargo;
 
@@ -71,12 +72,8 @@ public final class CargoJava extends Java {
     java.setFailonerror(true);
 
     assignWrappedArgs(linkArgs);
-    try {
-      TestConfigObject config = TestConfigObject.getInstance();
-      classpath.setPath(classpath.toString() + File.pathSeparatorChar + config.linkedChildProcessClasspath());
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to load: " + TestConfigObject.class.getName());
-    }
+    TestConfigObject config = TestConfigObject.getInstance();
+    classpath.setPath(classpath.toString() + File.pathSeparatorChar + config.linkedChildProcessClasspath());
     java.setClassname(CargoLinkedChildProcess.class.getName());
     // java.setMaxmemory("128m");
     Environment.Variable envVar = new Environment.Variable();

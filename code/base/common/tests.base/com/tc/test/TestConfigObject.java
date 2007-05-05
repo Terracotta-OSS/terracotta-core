@@ -115,9 +115,13 @@ public class TestConfigObject {
 
   private final Properties        properties;
 
-  public static synchronized TestConfigObject getInstance() throws IOException {
+  public static synchronized TestConfigObject getInstance() {
     if (INSTANCE == null) {
-      INSTANCE = new TestConfigObject();
+      try {
+        INSTANCE = new TestConfigObject();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
     return INSTANCE;
   }

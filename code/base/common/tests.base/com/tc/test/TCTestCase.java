@@ -59,7 +59,7 @@ public class TCTestCase extends TestCase {
 
   private Date                             allDisabledUntil;
   private final Map                        disabledUntil             = new Hashtable();
-  private boolean                          allDisabledLogged = false;
+  private boolean                          allDisabledLogged         = false;
 
   // This stuff is static since Junit new()'s up an instance of the test case for each test method,
   // and the timeout covers the entire test case (ie. all methods). It wouldn't be very effective to start
@@ -261,6 +261,7 @@ public class TCTestCase extends TestCase {
   }
 
   private static final String disabledTestLogPrefix = "!disabled_test: ";
+
   protected void logDisabledTest(String testName, Date until, String platform) {
     StringBuffer message = new StringBuffer();
     message.append(disabledTestLogPrefix);
@@ -295,13 +296,9 @@ public class TCTestCase extends TestCase {
    */
   protected final void disableAllUntil(String theDate, String[] platforms) {
     List platform_list = Arrays.asList(platforms);
-    try {
-      String platform = TestConfigObject.getInstance().platform();
-      if (platform_list.contains(platform)) {
-        disableAllUntil(parseDate(theDate));
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
+    String platform = TestConfigObject.getInstance().platform();
+    if (platform_list.contains(platform)) {
+      disableAllUntil(parseDate(theDate));
     }
   }
 
@@ -319,13 +316,9 @@ public class TCTestCase extends TestCase {
    */
   protected final void disableTestUntil(String method, String date, String[] platforms) {
     List platform_list = Arrays.asList(platforms);
-    try {
-      String platform = TestConfigObject.getInstance().platform();
-      if (platform_list.contains(platform)) {
-        this.disabledUntil.put(method, parseDate(date));
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
+    String platform = TestConfigObject.getInstance().platform();
+    if (platform_list.contains(platform)) {
+      this.disabledUntil.put(method, parseDate(date));
     }
   }
 
@@ -557,10 +550,6 @@ public class TCTestCase extends TestCase {
    * Returns the timeout value
    */
   public int getTimeoutValueInSeconds() {
-    try {
-      return TestConfigObject.getInstance().getJunitTimeoutInSeconds();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return TestConfigObject.getInstance().getJunitTimeoutInSeconds();
   }
 }

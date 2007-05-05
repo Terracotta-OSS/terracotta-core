@@ -177,11 +177,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     // keep the regular thread dump behavior for windows and macs
     setDumpThreadsOnTimeout(Os.isWindows() || Os.isMac());
 
-    try {
-      config = TestConfigObject.getInstance();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    config = TestConfigObject.getInstance();
 
     String appserver = config.appserverFactoryName();
     // XXX: Only non-session container tests work in glassfish and jetty at the moment
@@ -556,7 +552,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
         configBuilder.addWebApplication(testName());
       }
     }
-    
+
     // add modules that needed for certain app server here
     if (NewAppServerFactory.JETTY.equals(config.appserverFactoryName())) {
       configBuilder.addModule("clustered-jetty-6.1", "1.0.0");

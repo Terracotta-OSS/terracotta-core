@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver.deployment;
 
@@ -21,40 +22,33 @@ import java.util.Map;
 
 public abstract class AbstractDeploymentTest extends TCTestCase {
 
-  protected Log            logger          = LogFactory.getLog(getClass());
+  protected Log            logger              = LogFactory.getLog(getClass());
 
   private ServerManager    serverManager;
   private WatchDog         watchDog;
 
-  Map disabledVariants = new HashMap();
-  List disabledJavaVersion = new ArrayList();
+  Map                      disabledVariants    = new HashMap();
+  List                     disabledJavaVersion = new ArrayList();
 
-  private static final int TIMEOUT_DEFAULT = 30 * 60;
+  private static final int TIMEOUT_DEFAULT     = 30 * 60;
 
-  public AbstractDeploymentTest() {    
-    try {
-      String appserver = TestConfigObject.getInstance().appserverFactoryName();
-      // XXX: Only non-session container tests work in glassfish and jetty at the moment
-      if (isSessionTest()
-          && (NewAppServerFactory.GLASSFISH.equals(appserver) || NewAppServerFactory.JETTY.equals(appserver))) {
-        disableAllUntil(new Date(Long.MAX_VALUE));
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
-      System.exit(1);
-    } 
+  public AbstractDeploymentTest() {
+    String appserver = TestConfigObject.getInstance().appserverFactoryName();
+    // XXX: Only non-session container tests work in glassfish and jetty at the moment
+    if (isSessionTest()
+        && (NewAppServerFactory.GLASSFISH.equals(appserver) || NewAppServerFactory.JETTY.equals(appserver))) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
   }
-  
+
   protected boolean isSessionTest() {
     return true;
   }
-  
+
   public void runBare() throws Throwable {
     getServerManager();
-    if(shouldDisable()) {
-      return;
-    }
-    
+    if (shouldDisable()) { return; }
+
     watchDog = new WatchDog(getTimeout());
     try {
       watchDog.startWatching();
@@ -109,10 +103,10 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
     return getServerManager().makeDeploymentBuilder(warFileName);
   }
 
-// XXX: This causes the bad war file name which breaks WLS tests  
-//  protected DeploymentBuilder makeDeploymentBuilder() throws IOException {
-//    return serverManager.makeDeploymentBuilder();
-//  }
+  // XXX: This causes the bad war file name which breaks WLS tests
+  // protected DeploymentBuilder makeDeploymentBuilder() throws IOException {
+  // return serverManager.makeDeploymentBuilder();
+  // }
 
   protected void waitForSuccess(int timeoutInSeconds, TestCallback callback) throws Throwable {
     long startingTime = System.currentTimeMillis();
@@ -142,11 +136,11 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   protected void stopAllWebServers() {
     ServerManagerUtil.stopAllWebServers(getServerManager());
   }
-  
+
   public boolean isWithPersistentStore() {
     return false;
   }
-  
+
   protected void disableVariant(String variantName, String variantValue) {
     List variantList = (List) disabledVariants.get(variantName);
     if (variantList == null) {
@@ -155,7 +149,7 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
     }
     variantList.add(variantValue);
   }
-  
+
   protected void disableForJavaVersion(String version) {
     this.disabledJavaVersion.add(version);
   }
@@ -163,11 +157,11 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   void disableAllTests() {
     this.disableAllUntil(new Date(Long.MAX_VALUE));
   }
-  
+
   public boolean shouldDisable() {
     return shouldDisableForJavaVersion() || shouldDisableForVariants();
   }
-  
+
   private boolean shouldDisableForVariants() {
     for (Iterator iter = disabledVariants.entrySet().iterator(); iter.hasNext();) {
       Map.Entry entry = (Map.Entry) iter.next();
