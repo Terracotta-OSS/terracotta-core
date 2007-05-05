@@ -32,7 +32,7 @@ public class ServerManager {
   private final TestConfigObject config;
   private NewAppServerFactory    factory;
 
-  static final boolean           MONKEY_MODE    = false;
+  static final boolean           MONKEY_MODE    = true;
 
   public ServerManager(final Class testClass) throws Exception {
     PropertiesHackForRunningInEclipse.initializePropertiesWhenRunningInEclipse();
@@ -149,12 +149,12 @@ public class ServerManager {
     return makeWebApplicationServer(getTcConfigFile(tcConfigPath));
   }
 
-//  public AbstractDBServer makeDBServer(String dbType, String dbName, int serverPort) {
-//    // XXX this should use server factory
-//    AbstractDBServer svr = new HSqlDBServer(dbName, serverPort);
-//    this.addServerToStop(svr);
-//    return svr;
-//  }
+// public AbstractDBServer makeDBServer(String dbType, String dbName, int serverPort) {
+// // XXX this should use server factory
+// AbstractDBServer svr = new HSqlDBServer(dbName, serverPort);
+// this.addServerToStop(svr);
+// return svr;
+// }
 
   public FileSystemPath getTcConfigFile(String tcConfigPath) {
     URL url = getClass().getResource(tcConfigPath);
