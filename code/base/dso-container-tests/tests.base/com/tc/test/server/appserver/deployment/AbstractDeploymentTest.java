@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
+import com.tc.test.server.appserver.NewAppServerFactory;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
 
 import java.io.IOException;
@@ -30,6 +31,24 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
 
   private static final int TIMEOUT_DEFAULT = 30 * 60;
 
+  public AbstractDeploymentTest() {    
+    try {
+      String appserver = TestConfigObject.getInstance().appserverFactoryName();
+      // XXX: Only non-session container tests work in glassfish and jetty at the moment
+      if (isSessionTest()
+          && (NewAppServerFactory.GLASSFISH.equals(appserver) || NewAppServerFactory.JETTY.equals(appserver))) {
+        disableAllUntil(new Date(Long.MAX_VALUE));
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+      System.exit(1);
+    } 
+  }
+  
+  protected boolean isSessionTest() {
+    return true;
+  }
+  
   public void runBare() throws Throwable {
     getServerManager();
     if(shouldDisable()) {
