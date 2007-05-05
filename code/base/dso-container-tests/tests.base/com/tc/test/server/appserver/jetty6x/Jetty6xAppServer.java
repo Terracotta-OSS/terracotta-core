@@ -1,5 +1,7 @@
 package com.tc.test.server.appserver.jetty6x;
 
+import org.apache.commons.io.IOUtils;
+
 import com.tc.process.Exec;
 import com.tc.process.HeartBeatService;
 import com.tc.process.Exec.Result;
@@ -18,8 +20,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -156,29 +156,8 @@ public class Jetty6xAppServer extends AbstractAppServer {
       out.println(buffer.toString());
 
     } finally {
-      closeQuietly(in);
-      closeQuietly(out);
+      IOUtils.closeQuietly(in);
+      IOUtils.closeQuietly(out);
     }
   }
-
-  private void closeQuietly(Reader reader) {
-    try {
-      if (reader != null) {
-        reader.close();
-      }
-    } catch (Exception e) {
-      // ignored
-    }
-  }
-
-  private void closeQuietly(Writer writer) {
-    try {
-      if (writer != null) {
-        writer.close();
-      }
-    } catch (Exception e) {
-      // ignored
-    }
-  }
-
 }
