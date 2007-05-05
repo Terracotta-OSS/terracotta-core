@@ -4,7 +4,7 @@
  */
 package com.tc.util;
 
-import org.apache.commons.io.CopyUtils;
+import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -117,10 +117,10 @@ public class ZipBuilder implements ArchiveBuilder {
       ZipEntry entry;
       while ((entry = zis.getNextEntry()) != null) {
         File file = new File(destDir, entry.getName());
-        if (!entry.getName().endsWith("/")) {
-          CopyUtils.copy(zis, new FileOutputStream(file));
-        } else {
+        if (entry.isDirectory()) {
           file.mkdirs();
+        } else {
+          IOUtils.copy(zis, new FileOutputStream(file));
         }
         zis.closeEntry();
       }
