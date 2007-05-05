@@ -11,7 +11,6 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogging;
-import com.tc.process.HeartBeatService;
 import com.tc.test.collections.CollectionAssert;
 import com.tc.util.Assert;
 import com.tc.util.EqualityComparator;
@@ -120,7 +119,6 @@ public class TCTestCase extends TestCase {
 
   // override this method if you want to do something before your test times out
   protected void beforeTimeout() throws Throwable {
-    HeartBeatService.stopHeartBeatServer();
     if (false) throw new AssertionError(); // silence compiler warning
   }
 
