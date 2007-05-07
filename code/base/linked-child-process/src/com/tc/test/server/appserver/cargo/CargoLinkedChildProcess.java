@@ -43,7 +43,7 @@ public final class CargoLinkedChildProcess {
 
     System.out.println("JAVA VERSION: " + System.getProperty("java.version"));
 
-    HeartBeatService.registerForHeartBeat(port, true);
+    HeartBeatService.registerForHeartBeat(port, className, true);
     loadProperties();
 
     try {

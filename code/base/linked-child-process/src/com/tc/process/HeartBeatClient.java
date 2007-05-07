@@ -17,13 +17,15 @@ public class HeartBeatClient extends Thread {
   private boolean                 isAppServer       = false;
   private static final DateFormat dateFormat        = new SimpleDateFormat("HH:mm:ss.SSS");
   private static final int        HEARTBEAT_TIMEOUT = HeartBeatServer.PULSE_INTERVAL + 5000;
+  private String                  clientName;
 
   private static void log(String msg) {
     System.out.println("Heartbeat: [" + dateFormat.format(new Date()) + "] " + msg);
   }
 
-  public HeartBeatClient(int listenPort, boolean isAppServer) {
+  public HeartBeatClient(int listenPort, String clientName, boolean isAppServer) {
     this.isAppServer = isAppServer;
+    this.clientName = clientName;
     try {
       socket = new Socket("localhost", listenPort);
       socket.setSoTimeout(HEARTBEAT_TIMEOUT);
@@ -36,14 +38,18 @@ public class HeartBeatClient extends Thread {
     try {
       BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
       PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-
+      
+      // introduce myself to the server
+      // sending clientName
+      out.println(clientName + ":" + socket.getLocalPort());
+      
       while (true) {
         // will time out if it didn't get any pulse from server
         String signal = in.readLine();
         if (signal == null) {
           throw new Exception("Null signal");
         } else if (HeartBeatServer.PULSE.equals(signal)) {
-          log("Received pulse from heartbeat server.");
+          log("Received pulse from heartbeat server, port " + socket.getLocalPort());
         } else if (HeartBeatServer.KILL.equals(signal)) {
           log("Received KILL from heartbeat server. Killing self.");
           System.exit(1);

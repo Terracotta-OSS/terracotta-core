@@ -22,7 +22,7 @@ public class HeartBeatServer {
   public static final String      KILL                = "KILL";
   public static final String      IS_APP_SERVER_ALIVE = "IS_APP_SERVER_ALIVE";
   public static final String      IM_ALIVE            = "IM_ALIVE";
-  public static final int         PULSE_INTERVAL      = 15 * 1000;
+  public static final int         PULSE_INTERVAL      = 30 * 1000;
   private static final DateFormat dateFormat          = new SimpleDateFormat("HH:mm:ss.SSS");
 
   private ListenThread            listenThread;
@@ -109,7 +109,6 @@ public class HeartBeatServer {
         log("Heartbeat server is online...");
         Socket clientSocket;
         while ((clientSocket = serverSocket.accept()) != null) {
-          log("Heartbeat server got new client...");
           HeartBeatThread hb = new HeartBeatThread(server, clientSocket);
           hb.setDaemon(true);
           hb.start();
@@ -144,12 +143,13 @@ public class HeartBeatServer {
     private PrintWriter     out;
     private HeartBeatServer server;
     private boolean         killed = false;
+    private String          clientName;
 
     public HeartBeatThread(HeartBeatServer server, Socket s) {
       this.server = server;
       socket = s;
       try {
-        socket.setSoTimeout(PULSE_INTERVAL);
+        socket.setSoTimeout(PULSE_INTERVAL + 5000);
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(socket.getOutputStream(), true);
       } catch (Exception e) {
@@ -159,7 +159,12 @@ public class HeartBeatServer {
 
     public void run() {
       try {
+        // read clientName
+        clientName = in.readLine();
+        log("got new client: " + clientName);
+        
         while (true) {
+          log("send pulse to client: " + clientName);
           out.println(PULSE);
           reallySleep(PULSE_INTERVAL);
         }

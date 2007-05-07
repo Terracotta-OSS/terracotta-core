@@ -25,13 +25,13 @@ public class HeartBeatService {
     return server.listeningPort();
   }
   
-  public static synchronized void registerForHeartBeat(int listenPort) {
-    registerForHeartBeat(listenPort, false);
+  public static synchronized void registerForHeartBeat(int listenPort, String clientName) {
+    registerForHeartBeat(listenPort, clientName, false);
   }
   
-  public static synchronized void registerForHeartBeat(int listenPort, boolean isAppServer) {
+  public static synchronized void registerForHeartBeat(int listenPort, String clientName, boolean isAppServer) {
     ensureServerHasStarted();
-    HeartBeatClient client = new HeartBeatClient(listenPort, isAppServer);
+    HeartBeatClient client = new HeartBeatClient(listenPort, clientName, isAppServer);
     client.setDaemon(true);
     client.start();
   }
