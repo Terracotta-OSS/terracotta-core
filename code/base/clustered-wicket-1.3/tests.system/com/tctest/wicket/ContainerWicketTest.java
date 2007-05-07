@@ -35,11 +35,11 @@ public class ContainerWicketTest extends AbstractTwoServerDeploymentTest {
   }
   
   public ContainerWicketTest() {
-    disableAllUntil("2007-05-21");
+    // disableAllUntil("2007-05-21");
   }
 
   public void testWicketInitialization() throws Exception {
-    server1.start();
+    // server1.start();
     
     WebConversation webConversation1 = new WebConversation();
 
@@ -53,7 +53,7 @@ public class ContainerWicketTest extends AbstractTwoServerDeploymentTest {
     assertEquals(1, links2.length);
     assertEquals("Action link clicked 1 times", links2[0].getText());
     
-    server2.start();
+    // server2.start();
     
     WebResponse response3 = request(server2, webConversation1, "?" + response2.getURL().getQuery());
     WebLink[] links3 = response3.getLinks();
