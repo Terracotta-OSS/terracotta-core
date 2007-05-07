@@ -171,7 +171,7 @@ public class HeartBeatServer {
       } catch (Exception e) {
         if (!killed) {
           // only removed itself if client isn't being sent a kill signal
-          log("Dead client dected: " + clientName + ". Exception message: " + e.getMessage());
+          log("Dead client detected: " + clientName + ". Exception message: " + e.getMessage());
           server.removeDeadClient(this);
         }
       }
