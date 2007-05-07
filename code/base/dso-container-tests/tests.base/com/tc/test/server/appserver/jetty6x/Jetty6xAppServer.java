@@ -36,6 +36,7 @@ public class Jetty6xAppServer extends AbstractAppServer {
   private String              configFile;
   private String              instanceName;
   private File                instanceDir;
+  private File                workDir;
 
   private int                 jetty_port         = 0;
   private int                 stop_port          = 0;
@@ -85,6 +86,7 @@ public class Jetty6xAppServer extends AbstractAppServer {
     cmd.add("-Djetty.port=" + jetty_port);
     cmd.add("-DSTOP.PORT=" + stop_port);
     cmd.add("-DSTOP.KEY=" + STOP_KEY);
+    cmd.add("-Djava.io.tmpdir=" + workDir.getAbsolutePath());
     cmd.add(CargoLinkedChildProcess.class.getName());
     cmd.add(JETTY_MAIN_CLASS);
     cmd.add(String.valueOf(HeartBeatService.listenPort()));
@@ -120,6 +122,9 @@ public class Jetty6xAppServer extends AbstractAppServer {
 
     instanceName = params.instanceName();
     instanceDir = new File(sandboxDirectory(), instanceName);
+    workDir = new File(sandboxDirectory(), "work");
+    workDir.mkdirs();
+    
     if (new File(instanceDir, "logs").mkdirs() == false) { throw new Exception(
                                                                                "Can't create logs directory for jetty instance: "
                                                                                    + instanceName); }
