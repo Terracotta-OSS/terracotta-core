@@ -13,6 +13,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Arrays;
 
 public class Enrollment implements Externalizable {
 
@@ -88,14 +89,10 @@ public class Enrollment implements Externalizable {
     }
   }
 
-  public int hashCode() {
-    return nodeID.hashCode();
-  }
-
   public boolean equals(Object o) {
     if (o instanceof Enrollment) {
       Enrollment oe = (Enrollment) o;
-      return nodeID.equals(oe.nodeID);
+      return nodeID.equals(oe.nodeID) && Arrays.equals(weights, oe.weights) && isNew == oe.isNew;
     }
     return false;
   }

@@ -7,7 +7,9 @@ package com.tc.l2.ha;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.objectserver.NonReplicatedObjectManager;
+import com.tc.l2.objectserver.NonReplicatedTransactionManager;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
+import com.tc.l2.objectserver.ReplicatedTransactionManager;
 import com.tc.l2.state.DummyStateManager;
 import com.tc.l2.state.StateManager;
 import com.tc.net.groups.GroupManager;
@@ -19,6 +21,7 @@ public class L2HADisabledCooridinator implements L2Coordinator {
   private GroupManager                  groupManager     = new SingleNodeGroupManager();
   private ReplicatedClusterStateManager clusterStateMgr  = new NonReplicatedClusterStateManager();
   private ReplicatedObjectManager       replicatedObjMgr = new NonReplicatedObjectManager();
+  private ReplicatedTransactionManager  replicatedTxnMgr = new NonReplicatedTransactionManager();
   private StateManager                  stateMgr         = new DummyStateManager();
 
   public GroupManager getGroupManager() {
@@ -39,6 +42,10 @@ public class L2HADisabledCooridinator implements L2Coordinator {
 
   public void start(Node thisNode, Node[] allNodes) {
     // Nop
+  }
+
+  public ReplicatedTransactionManager getReplicatedTransactionManager() {
+    return replicatedTxnMgr;
   }
 
 }

@@ -359,7 +359,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
   private void doStages(ChannelID cid, Set txns, boolean actionAsserted) {
 
     // process stage
-    transactionManager.incomingTransactions(cid, getServerTransactionMap(txns), false);
+    transactionManager.incomingTransactions(cid, getServerTransactionIDs(txns), txns, false);
 
     for (Iterator iter = txns.iterator(); iter.hasNext();) {
       ServerTransaction tx = (ServerTransaction) iter.next();
@@ -380,13 +380,13 @@ public class ServerTransactionManagerImplTest extends TestCase {
     }
   }
 
-  private Map getServerTransactionMap(Set txns) {
-    Map m = new HashMap();
+  private Set getServerTransactionIDs(Set txns) {
+    Set s = new HashSet(txns.size());
     for (Iterator iter = txns.iterator(); iter.hasNext();) {
       ServerTransaction st = (ServerTransaction) iter.next();
-      m.put(st.getServerTransactionID(),st);
+      s.add(st.getServerTransactionID());
     }
-    return m;
+    return s;
   }
 
   private static final class TestChannelStats implements ChannelStats {

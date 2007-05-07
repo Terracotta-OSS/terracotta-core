@@ -63,7 +63,7 @@ public class ProcessTransactionHandler extends AbstractEventHandler {
       Collection completedTxnIds = reader.addAcknowledgedTransactionIDsTo(new HashSet());
       ServerTransaction txn;
 
-      //XXX:: Has to be ordered.
+      // XXX:: Has to be ordered.
       Map txns = new LinkedHashMap(reader.getNumTxns());
       ChannelID channelID = reader.getChannelID();
       // NOTE::XXX:: GlobalTransactionID id assigned in the process transaction stage. The transaction could be
@@ -76,10 +76,10 @@ public class ProcessTransactionHandler extends AbstractEventHandler {
       }
       messageRecycler.addMessage(ctm, txns.keySet());
       if (replicatedObjectMgr.relayTransactions()) {
-        transactionManager.incomingTransactions(channelID, txns, true);
+        transactionManager.incomingTransactions(channelID, txns.keySet(), txns.values(), true);
         txnRelaySink.add(new IncomingTransactionContext(channelID, ctm, txns));
       } else {
-        transactionManager.incomingTransactions(channelID, txns, false);
+        transactionManager.incomingTransactions(channelID, txns.keySet(), txns.values(), false);
       }
       txnObjectManager.addTransactions(txns.values(), completedTxnIds);
     } catch (Exception e) {

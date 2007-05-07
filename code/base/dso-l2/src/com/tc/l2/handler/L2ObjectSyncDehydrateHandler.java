@@ -26,7 +26,6 @@ public class L2ObjectSyncDehydrateHandler extends AbstractEventHandler {
   public void handleEvent(EventContext context) {
     ManagedObjectSyncContext mosc = (ManagedObjectSyncContext) context;
     Map moObjects = mosc.getObjects();
-    // Only send objects that are NOT already there in the client. Look at the comment below.
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     TCByteBufferOutputStream out = new TCByteBufferOutputStream();
     for (Iterator i = moObjects.values().iterator(); i.hasNext();) {

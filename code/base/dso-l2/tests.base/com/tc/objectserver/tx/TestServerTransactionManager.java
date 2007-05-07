@@ -69,8 +69,8 @@ public class TestServerTransactionManager implements ServerTransactionManager {
     // NOP
   }
 
-  public void incomingTransactions(ChannelID channelID, Map txns, boolean relayed) {
-    incomingTxnContexts.add(new Object[] { channelID, txns.keySet(), Boolean.valueOf(relayed) });
+  public void incomingTransactions(ChannelID channelID, Set txnIDs, Collection txns, boolean relayed) {
+    incomingTxnContexts.add(new Object[] { channelID, txnIDs, Boolean.valueOf(relayed) });
   }
 
   public void transactionsRelayed(ChannelID channelID, Set serverTxnIDs) {

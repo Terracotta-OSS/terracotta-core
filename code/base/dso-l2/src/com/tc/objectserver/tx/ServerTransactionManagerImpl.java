@@ -255,10 +255,10 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  public void incomingTransactions(ChannelID cid, Map txns, boolean relayed) {
+  public void incomingTransactions(ChannelID cid, Set txnIDs, Collection txns, boolean relayed) {
     boolean active = isActive();
     TransactionAccount ci = getOrCreateTransactionAccount(cid);
-    for (Iterator i = txns.values().iterator(); i.hasNext();) {
+    for (Iterator i = txns.iterator(); i.hasNext();) {
       final ServerTransaction txn = (ServerTransaction) i.next();
       final ServerTransactionID stxnID = txn.getServerTransactionID();
       final TransactionID txnID = stxnID.getClientTransactionID();
@@ -269,7 +269,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         gtxm.createGlobalTransactionDesc(stxnID, txn.getGlobalTransactionID());
       }
     }
-    fireIncomingTransactionsEvent(cid, txns.keySet());
+    fireIncomingTransactionsEvent(cid, txnIDs);
   }
 
   private boolean isActive() {

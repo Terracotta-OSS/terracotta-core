@@ -115,11 +115,19 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
   protected void tearDown() {
     if (client != null) {
-      client.stop();
+      try {
+        client.stop();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
 
     if (server != null) {
-      server.stop();
+      try {
+        server.stop();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
   }
 

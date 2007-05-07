@@ -52,12 +52,14 @@ public class ElectionManagerImpl implements ElectionManager {
       // Cast its vote and notify my vote
       Assert.assertNotNull(myVote);
       Enrollment vote = msg.getEnrollment();
-      Object old;
-      if ((old = votes.put(vote.getNodeID(), vote)) != null) {
+      Enrollment old = (Enrollment) votes.put(vote.getNodeID(), vote);
+      boolean sendResponse = msg.inResponseTo().isNull();
+      if (old != null && !vote.equals(old)) {
         logger.warn("Received duplicate vote : Replacing with new one : " + vote + " old one : " + old);
+        sendResponse = true;
       }
-      if (msg.inResponseTo().isNull()) {
-        // This is not a response to this node initiating election. So notify this nodes vote
+      if (sendResponse) {
+        // This is either not a response to this node initiating election or a duplicate vote. Either case notify this nodes vote
         GroupMessage response = createElectionStartedMessage(msg, myVote);
         logger.info("Casted vote from " + msg + " My Response : " + response);
         try {

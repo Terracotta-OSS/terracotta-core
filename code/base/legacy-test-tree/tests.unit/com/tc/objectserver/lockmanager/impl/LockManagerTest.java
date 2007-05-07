@@ -7,15 +7,7 @@ import org.apache.commons.io.output.NullOutputStream;
 
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
-import com.tc.exception.ImplementMe;
-import com.tc.net.TCSocketAddress;
-import com.tc.net.protocol.NetworkStackID;
-import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.ServerThreadID;
@@ -34,7 +26,6 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -93,8 +84,6 @@ public class LockManagerTest extends TestCase {
 
   public void testLockMBean() throws IOException {
 
-    final MessageChannel channel = new TestMessageChannel();
-
     final long start = System.currentTimeMillis();
     final ChannelID cid1 = new ChannelID(1);
     ChannelID cid2 = new ChannelID(2);
@@ -105,11 +94,6 @@ public class LockManagerTest extends TestCase {
     WaitInvocation wait = new WaitInvocation(Integer.MAX_VALUE);
 
     lockManager = new LockManagerImpl(new NullChannelManager() {
-      public MessageChannel getChannel(ChannelID id) {
-        if (cid1.equals(id)) { return channel; }
-        return null;
-      }
-
       public String getChannelAddress(ChannelID channelID) {
         if (cid1.equals(channelID)) { return "127.0.0.1:6969"; }
         return "no longer connected";
@@ -928,70 +912,6 @@ public class LockManagerTest extends TestCase {
         fail();
       }
     }
-  }
-
-  private static class TestMessageChannel implements MessageChannel {
-
-    public TCSocketAddress getLocalAddress() {
-      throw new ImplementMe();
-    }
-
-    public TCSocketAddress getRemoteAddress() {
-      try {
-        return new TCSocketAddress("127.0.0.1", 6969);
-      } catch (UnknownHostException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    public void addListener(ChannelEventListener listener) {
-      throw new ImplementMe();
-    }
-
-    public ChannelID getChannelID() {
-      throw new ImplementMe();
-    }
-
-    public boolean isOpen() {
-      throw new ImplementMe();
-    }
-
-    public boolean isClosed() {
-      throw new ImplementMe();
-    }
-
-    public TCMessage createMessage(TCMessageType type) {
-      throw new ImplementMe();
-    }
-
-    public Object getAttachment(String key) {
-      throw new ImplementMe();
-    }
-
-    public void addAttachment(String key, Object value, boolean replace) {
-      throw new ImplementMe();
-    }
-
-    public Object removeAttachment(String key) {
-      throw new ImplementMe();
-    }
-
-    public boolean isConnected() {
-      throw new ImplementMe();
-    }
-
-    public void send(TCNetworkMessage message) {
-      throw new ImplementMe();
-    }
-
-    public NetworkStackID open() {
-      throw new ImplementMe();
-    }
-
-    public void close() {
-      throw new ImplementMe();
-    }
-
   }
 
   private static class TestDeadlockResults implements DeadlockResults {
