@@ -177,9 +177,10 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   }
 
   private boolean shouldDisableForJavaVersion() {
+    String currentVersion = System.getProperties().getProperty("java.version");
     for (Iterator iter = disabledJavaVersion.iterator(); iter.hasNext();) {
       String version = (String) iter.next();
-      if (version.equals(System.getProperties().getProperty("java.version"))) {
+      if (currentVersion.matches(version)) {
         logger.warn("Test " + getName() + " is disabled for " + version);
         return true;
       }

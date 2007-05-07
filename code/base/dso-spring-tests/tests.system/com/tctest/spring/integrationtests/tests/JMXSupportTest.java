@@ -19,9 +19,7 @@ import junit.framework.Test;
 public class JMXSupportTest extends AbstractTwoServerDeploymentTest {
 
   public JMXSupportTest() {
-    this.disableForJavaVersion("1.4.2_13");
-    this.disableForJavaVersion("1.4.2_12");
-    this.disableForJavaVersion("1.4.2_11");
+    this.disableForJavaVersion("1.4.2_(\\d)+");
   }
 
   private static final String REMOTE_SERVICE_NAME           = "Singleton";
