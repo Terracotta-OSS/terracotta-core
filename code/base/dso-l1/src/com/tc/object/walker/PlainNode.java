@@ -6,13 +6,13 @@ package com.tc.object.walker;
 
 import java.util.Iterator;
 
-public class PlainNode extends AbstractNode {
+class PlainNode extends AbstractNode {
 
   private Iterator fieldsIterator;
 
   protected PlainNode(Object o) {
     super(o);
-    this.fieldsIterator = AllFields.getAllFields(o).getFields();
+    this.fieldsIterator = AllFields.getAllFields(o, true).getFields();
   }
 
   public boolean done() {
