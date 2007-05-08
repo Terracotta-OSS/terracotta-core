@@ -21,6 +21,7 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransactionManager;
+import com.tc.util.sequence.SequenceGenerator;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -29,13 +30,15 @@ public class TransactionRelayHandler extends AbstractEventHandler {
   private static final TCLogger      logger = TCLogging.getLogger(TransactionRelayHandler.class);
 
   private final L2ObjectStateManager l2ObjectStateMgr;
+  private final SequenceGenerator    sequenceGenerator;
 
   private GroupManager               groupManager;
 
   private ServerTransactionManager   transactionManager;
 
-  public TransactionRelayHandler(L2ObjectStateManager objectStateManager) {
+  public TransactionRelayHandler(L2ObjectStateManager objectStateManager, SequenceGenerator generator) {
     this.l2ObjectStateMgr = objectStateManager;
+    this.sequenceGenerator = generator;
   }
 
   public void handleEvent(EventContext context) {
@@ -52,12 +55,14 @@ public class TransactionRelayHandler extends AbstractEventHandler {
   private void sendCommitTransactionMessage(NodeID nodeID, IncomingTransactionContext ict) {
     addWaitForNotification(nodeID, ict);
     RelayedCommitTransactionMessage msg = RelayedCommitTransactionMessageFactory
-        .createRelayedCommitTransactionMessage(ict.getCommitTransactionMessage(), ict.getTxns());
+        .createRelayedCommitTransactionMessage(ict.getCommitTransactionMessage(), ict.getTxns(), sequenceGenerator
+            .getNextSequence(nodeID));
     try {
       this.groupManager.sendTo(nodeID, msg);
     } catch (GroupException e) {
       logger.error("Removing " + nodeID + " from group because of Exception :", e);
       groupManager.zapNode(nodeID);
+      transactionManager.shutdownClient(nodeID.toChannelID());
     }
   }
 

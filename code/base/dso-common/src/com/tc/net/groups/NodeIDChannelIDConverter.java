@@ -27,6 +27,8 @@ public class NodeIDChannelIDConverter {
     synchronized (map) {
       if (!map.containsKey(nodeID)) {
         map.put(nodeID, (cid = new ChannelID(nextChannelID--)));
+      } else {
+        cid = (ChannelID) map.get(nodeID);
       }
     }
     return cid;

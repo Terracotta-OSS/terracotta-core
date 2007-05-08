@@ -4,6 +4,7 @@
  */
 package com.tc.l2.state;
 
+
 import com.tc.test.TCTestCase;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.state.StateManagerImpl;

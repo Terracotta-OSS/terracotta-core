@@ -30,6 +30,7 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
   private TCByteBuffer[]             dnas;
   private int                        dnaCount;
   private ObjectStringSerializer     serializer;
+  private long                       sequenceID;
 
   public ManagedObjectSyncContext(NodeID nodeID, Set oids, boolean more, Sink sink) {
     this.nodeID = nodeID;
@@ -55,7 +56,7 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
   public Set getLookupIDs() {
     return oids;
   }
-  
+
   public Map getRootsMap() {
     return rootsMap;
   }
@@ -102,5 +103,13 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
     return Collections.EMPTY_SET;
   }
 
+  public void setSequenceID(long nextSequence) {
+    this.sequenceID = nextSequence;
+  }
+
+  public long getSequenceID() {
+    Assert.assertTrue(this.sequenceID > 0);
+    return this.sequenceID;
+  }
 
 }

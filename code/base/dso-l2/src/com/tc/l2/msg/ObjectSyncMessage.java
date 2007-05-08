@@ -4,7 +4,7 @@
  */
 package com.tc.l2.msg;
 
-import com.tc.async.api.EventContext;
+import com.tc.async.api.OrderedEventContext;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-public class ObjectSyncMessage extends AbstractGroupMessage implements EventContext {
+public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEventContext {
 
   public static final int        MANAGED_OBJECT_SYNC_TYPE = 0;
 
@@ -35,6 +35,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements EventCont
   private TCByteBuffer[]         dnas;
   private ObjectStringSerializer serializer;
   private Map                    rootsMap;
+  private long                   sequenceID;
 
   public ObjectSyncMessage() {
     // Make serialization happy
@@ -52,6 +53,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements EventCont
     readRootsMap(in);
     serializer = readObjectStringSerializer(in);
     this.dnas = readByteBuffers(in);
+    this.sequenceID = in.readLong();
   }
 
   protected void basicWriteExternal(int msgType, ObjectOutput out) throws IOException {
@@ -59,10 +61,11 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements EventCont
     writeObjectIDS(out);
     out.writeInt(dnaCount);
     writeRootsMap(out);
-    writeObjectStringSerializer(out,serializer);
+    writeObjectStringSerializer(out, serializer);
     writeByteBuffers(out, dnas);
     recycle(dnas);
     dnas = null;
+    out.writeLong(this.sequenceID);
   }
 
   private void writeRootsMap(ObjectOutput out) throws IOException {
@@ -70,13 +73,13 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements EventCont
     for (Iterator i = rootsMap.entrySet().iterator(); i.hasNext();) {
       Entry e = (Entry) i.next();
       out.writeUTF((String) e.getKey());
-      out.writeLong(((ObjectID)e.getValue()).toLong());
+      out.writeLong(((ObjectID) e.getValue()).toLong());
     }
   }
-  
+
   private void readRootsMap(ObjectInput in) throws IOException {
     int size = in.readInt();
-    if(size == 0) {
+    if (size == 0) {
       this.rootsMap = Collections.EMPTY_MAP;
     } else {
       this.rootsMap = new HashMap(size);
@@ -85,7 +88,6 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements EventCont
       }
     }
   }
-
 
   private void recycle(TCByteBuffer[] buffers) {
     for (int i = 0; i < buffers.length; i++) {
@@ -110,12 +112,13 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements EventCont
   }
 
   public void initialize(Set dnaOids, int count, TCByteBuffer[] serializedDNAs,
-                         ObjectStringSerializer objectSerializer, Map roots) {
+                         ObjectStringSerializer objectSerializer, Map roots, long sID) {
     this.oids = dnaOids;
     this.dnaCount = count;
     this.dnas = serializedDNAs;
     this.serializer = objectSerializer;
     this.rootsMap = roots;
+    this.sequenceID = sID;
   }
 
   public int getDnaCount() {
@@ -165,5 +168,9 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements EventCont
       tcbb[i] = dnas[i];
     }
     return tcbb;
+  }
+
+  public long getSequenceID() {
+    return this.sequenceID;
   }
 }

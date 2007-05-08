@@ -8,18 +8,12 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
-import com.tc.l2.context.ManagedObjectSyncContext;
-import com.tc.l2.context.SyncObjectsRequest;
 import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.l2.msg.RelayedCommitTransactionMessage;
 import com.tc.l2.msg.ServerTxnAckMessage;
 import com.tc.l2.msg.ServerTxnAckMessageFactory;
-import com.tc.l2.objectserver.L2ObjectStateManager;
 import com.tc.l2.objectserver.ReplicatedTransactionManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
-import com.tc.net.groups.NodeID;
-import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.TransactionBatchReader;
@@ -33,23 +27,13 @@ import java.util.Set;
 
 public class L2ObjectSyncHandler extends AbstractEventHandler {
 
-  private final L2ObjectStateManager    l2ObjectStateMgr;
-  private ObjectManager                 objectManager;
   private TransactionBatchReaderFactory batchReaderFactory;
 
-  private Sink                          dehydrateSink;
   private Sink                          sendSink;
   private ReplicatedTransactionManager  rTxnManager;
 
-  public L2ObjectSyncHandler(L2ObjectStateManager l2StateManager) {
-    l2ObjectStateMgr = l2StateManager;
-  }
-
   public void handleEvent(EventContext context) {
-    if (context instanceof SyncObjectsRequest) {
-      SyncObjectsRequest request = (SyncObjectsRequest) context;
-      doSyncObjectsRequest(request);
-    } else if (context instanceof ObjectSyncMessage) {
+    if (context instanceof ObjectSyncMessage) {
       ObjectSyncMessage syncMsg = (ObjectSyncMessage) context;
       doSyncObjectsResponse(syncMsg);
     } else if (context instanceof RelayedCommitTransactionMessage) {
@@ -90,23 +74,11 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     rTxnManager.addObjectSyncTransaction(txn);
   }
 
-  // TODO:: Update stats so that admin console reflects these data
-  private void doSyncObjectsRequest(SyncObjectsRequest request) {
-    NodeID nodeID = request.getNodeID();
-    ManagedObjectSyncContext lookupContext = l2ObjectStateMgr.getSomeObjectsToSyncContext(nodeID, 500, dehydrateSink);
-    // TODO:: Remove ChannelID from ObjectManager interface
-    if (lookupContext != null) {
-      objectManager.lookupObjectsFor(ChannelID.NULL_ID, lookupContext);
-    }
-  }
-
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;
     this.batchReaderFactory = oscc.getTransactionBatchReaderFactory();
-    this.objectManager = oscc.getObjectManager();
     this.rTxnManager = oscc.getL2Coordinator().getReplicatedTransactionManager();
-    this.dehydrateSink = oscc.getStage(ServerConfigurationContext.OBJECTS_SYNC_DEHYDRATE_STAGE).getSink();
     this.sendSink = oscc.getStage(ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE).getSink();
   }
 

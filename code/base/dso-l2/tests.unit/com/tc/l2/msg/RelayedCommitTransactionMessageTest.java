@@ -121,6 +121,8 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
       assertEquals(tcbb[i].limit(), tcbb1[i].limit());
       assertEquals(tcbb[i].position(), tcbb1[i].position());
       assertEquals(tcbb[i].remaining(), tcbb1[i].remaining());
+
+      assertEquals(rctm.getSequenceID(), rctm1.getSequenceID());
     }
   }
 
@@ -138,7 +140,7 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
 
   public void testBasicSerialization() throws Exception {
     RelayedCommitTransactionMessage rctm = RelayedCommitTransactionMessageFactory
-        .createRelayedCommitTransactionMessage(testCommitTransactionMessage, transactions);
+        .createRelayedCommitTransactionMessage(testCommitTransactionMessage, transactions, 420);
     RelayedCommitTransactionMessage rctm1 = writeAndRead(rctm);
     validate(rctm, rctm1);
   }

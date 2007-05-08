@@ -84,7 +84,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
     L2Coordinator l2Coordinator = oscc.getL2Coordinator();
     this.groupManager = l2Coordinator.getGroupManager();
     this.stateManager = l2Coordinator.getStateManager();
-    this.syncRequestSink = oscc.getStage(ServerConfigurationContext.OBJECTS_SYNC_STAGE).getSink();
+    this.syncRequestSink = oscc.getStage(ServerConfigurationContext.OBJECTS_SYNC_REQUEST_STAGE).getSink();
   }
 
 }

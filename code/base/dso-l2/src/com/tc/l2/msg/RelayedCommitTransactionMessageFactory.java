@@ -16,10 +16,10 @@ public class RelayedCommitTransactionMessageFactory {
 
   public static RelayedCommitTransactionMessage createRelayedCommitTransactionMessage(
                                                                                       CommitTransactionMessage commitMsg,
-                                                                                      Collection txns) {
+                                                                                      Collection txns, long seqID) {
     RelayedCommitTransactionMessage msg = new RelayedCommitTransactionMessage(commitMsg.getChannelID(), commitMsg
         .getBatchData(), commitMsg.getSerializer(), getGlobalTransactionIDMapping(txns), commitMsg
-        .getAcknowledgedTransactionIDs());
+        .getAcknowledgedTransactionIDs(), seqID);
     return msg;
   }
 

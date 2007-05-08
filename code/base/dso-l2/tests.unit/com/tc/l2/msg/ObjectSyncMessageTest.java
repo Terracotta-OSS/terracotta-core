@@ -43,6 +43,7 @@ public class ObjectSyncMessageTest extends TestCase {
     tcByteBufferArray = new TCByteBuffer[] { tcbb };
     managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap, true, sink);
     managedObjectSyncContext.setDehydratedBytes(new TCByteBuffer[] { tcbb }, dnaCount, objectStringSerializer);
+    managedObjectSyncContext.setSequenceID(11);
   }
 
   public void tearDown() {
@@ -97,6 +98,8 @@ public class ObjectSyncMessageTest extends TestCase {
       assertEquals(tcByteBufferArray[i].position(), dnas1[i].position());
       assertEquals(tcByteBufferArray[i].remaining(), dnas1[i].remaining());
     }
+
+    assertEquals(osm.getSequenceID(), osm1.getSequenceID());
   }
 
   private ObjectSyncMessage writeAndRead(ObjectSyncMessage osm) throws Exception {

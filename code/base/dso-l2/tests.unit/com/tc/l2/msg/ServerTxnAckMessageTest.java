@@ -67,7 +67,7 @@ public class ServerTxnAckMessageTest extends TestCase {
     transactions.add(new TestServerTransaction(stid4, new TxnBatchID(9), new GlobalTransactionID(78)));
 
     relayedCommitTransactionMessage = RelayedCommitTransactionMessageFactory
-        .createRelayedCommitTransactionMessage(testCommitTransactionMessage, transactions);
+        .createRelayedCommitTransactionMessage(testCommitTransactionMessage, transactions, 700);
     relayedCommitTransactionMessage.setMessageOrginator(nodeID);
   }
 
