@@ -55,10 +55,6 @@ module DistributionUtils
 
   def package_filename
     pattern = get_config(:kit_name_pattern).downcase
-    
-    pattern.sub!(/platform/, @build_environment.os_family.downcase)
-    pattern.sub!(/version/, @build_environment.specified_build_version)    
-    
     pattern
   end
 
@@ -79,14 +75,13 @@ module DistributionUtils
   end
 
   def get_config(symbol, default=nil)
-    case symbol
-    when :version           then @config[symbol.to_s] || @build_environment.specified_build_version
-    when :package_directory then @config[symbol.to_s] || "#{get_config(:root_directory)}-#{get_config(:version)}"
-    else
-      out = @config[symbol.to_s] || default
-      #symbolise_keys(out) if out.instance_of?(Hash)
-      out
-    end 
+    out = case symbol
+        when :version           then @build_environment.version
+        when :package_directory then @config[symbol.to_s] || "#{get_config(:root_directory)}"
+        else
+          @config[symbol.to_s] || default          
+        end     
+    interpolate(out) unless out.nil?
   end
 
   def symbolise_keys(hash)
@@ -101,4 +96,14 @@ module DistributionUtils
    end
    FilePath.new(product_directory, (component[:install_directory] || ''), (suffix || ''))
  end 
+ 
+ def interpolate(s)
+  s.gsub!(/version/, @build_environment.version)
+  s.gsub!(/branch/, @build_environment.current_branch)
+  s.gsub!(/platform/, @build_environment.os_family.downcase)
+  s.gsub!(/revision/, @build_environment.current_revision.to_s)
+  s.gsub!(/edition/, @build_environment.edition)  
+  s
+end
+ 
 end

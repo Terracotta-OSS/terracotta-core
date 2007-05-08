@@ -1,7 +1,7 @@
 name: Terracotta DSO
 internal_name: dso
 kit_name_pattern: terracotta-platform-version
-root_directory: terracotta
+root_directory: terracotta-version
 bundled_jres:
   - jre15:
       assert: '@build_environment.os_type =~ /^\s*windows\s*$/i'

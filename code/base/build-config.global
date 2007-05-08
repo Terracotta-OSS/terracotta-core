@@ -2,10 +2,6 @@
 # the safe way to play around with config is to make a file call build-config.local and
 # put your settings in there
 
-# version string can be passed in as a pattern
-# acceptable tokens are {branch}, {revision}
-# Ex: tc.build-control.version="{branch}-nightly-rev{revision}"
-
 tc.build-control.version=trunk
 tc.build-control.branch=trunk
 tc.build-control.jvmargs=-Xms64m,-Xmx128m,-Dtc.base-dir=code/base

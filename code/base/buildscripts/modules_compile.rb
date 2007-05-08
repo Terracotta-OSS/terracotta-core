@@ -119,13 +119,14 @@ class BuildSubtree
     def create_build_data(config_source, build_results, build_environment)
       File.open(build_data_file(build_results).to_s, "w") do |file|
         file.puts("terracotta.build.productname=terracotta")
-        file.puts("terracotta.build.version=#{build_environment.specified_build_version}")
+        file.puts("terracotta.build.version=#{build_environment.version}")
         file.puts("terracotta.build.host=#{build_environment.build_hostname}")
         file.puts("terracotta.build.user=#{build_environment.build_username}")
         file.puts("terracotta.build.timestamp=#{build_environment.build_timestamp.strftime('%Y%m%d-%H%m%S')}")
         file.puts("terracotta.build.revision=#{build_environment.current_revision}")
         file.puts("terracotta.build.change-tag=#{build_environment.current_revision_tag}")
         file.puts("terracotta.build.branch=#{build_environment.current_branch}")
+        file.puts("terracotta.build.edition=#{build_environment.edition}")
       end
     end
 end
