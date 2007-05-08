@@ -4,6 +4,7 @@
  */
 package com.tctest;
 
+import com.tc.exception.TCNonPortableObjectError;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.LogLevel;
 import com.tc.logging.TCAppender;
@@ -23,9 +24,9 @@ public class NonPortableGraphTest extends TransparentTestBase {
   private static final int NODE_COUNT = 1;
 
   public NonPortableGraphTest() {
-    this.disableAllUntil("2007-05-10");
+    //
   }
-  
+
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
@@ -73,27 +74,27 @@ public class NonPortableGraphTest extends TransparentTestBase {
         synchronized (map) {
           map.put("mmkay", new NonPortable());
         }
-        throw new Exception("1. Expecting TCNonPortableObjectError");
-      } catch (Throwable e) {
-        if (!e.getClass().getName().equals("com.tc.exception.TCNonPortableObjectError")) throw new RuntimeException(e);
+        throw new AssertionError("1. Expecting TCNonPortableObjectError");
+      } catch (TCNonPortableObjectError e) {
+        // expected
       }
 
       assertTrue(dsoLogs.getCurrentLogEvent().replaceAll("\\s", "").indexOf(log1.replaceAll("\\s", "")) > 0);
 
       try {
         portable = new Portable(new NonPortable());
-        throw new Exception("2. Expecting TCNonPortableObjectError");
-      } catch (Throwable e) {
-        if (!e.getClass().getName().equals("com.tc.exception.TCNonPortableObjectError")) throw new RuntimeException(e);
+        throw new AssertionError("2. Expecting TCNonPortableObjectError");
+      } catch (TCNonPortableObjectError e) {
+        // expected
       }
 
       assertTrue(dsoLogs.getCurrentLogEvent().replaceAll("\\s", "").indexOf(log2.replaceAll("\\s", "")) > 0);
 
       try {
         non_portable = new NonPortable();
-        throw new Exception("3. Expecting TCNonPortableObjectError");
-      } catch (Throwable e) {
-        if (!e.getClass().getName().equals("com.tc.exception.TCNonPortableObjectError")) throw new RuntimeException(e);
+        throw new AssertionError("3. Expecting TCNonPortableObjectError");
+      } catch (TCNonPortableObjectError e) {
+        // expected
       }
 
       assertTrue(dsoLogs.getCurrentLogEvent().replaceAll("\\s", "").indexOf(log1.replaceAll("\\s", "")) > 0);
@@ -131,16 +132,12 @@ public class NonPortableGraphTest extends TransparentTestBase {
     }
 
     private static final String log1 = "!! com.tctest.NonPortableGraphTest$NonPortableGraphTestApp$NonPortable (id 0)"
-                                       + "     Map map = (HashMap, id 1)"
-                                       + "       [entry 0]"
-                                       + "         key = \"self\""
-                                       + "!!       value = (ref id 0)";
+                                       + "     Map map = (HashMap, id 1)" + "       [entry 0]"
+                                       + "         key = \"self\"" + "!!       value = (ref id 0)";
 
     private static final String log2 = "   com.tctest.NonPortableGraphTest$NonPortableGraphTestApp$Portable (id 0)"
-                                       + "!!   Object obj = (com.tctest.NonPortableGraphTest$NonPortableGraphTestApp$NonPortable, id 2)"
-                                       + "       Map map = (HashMap, id 3)"
-                                       + "         [entry 0]"
-                                       + "           key = \"self\""
-                                       + "!!         value = (ref id 2)";
+                                       + "!!   Object obj = (com.tctest.NonPortableGraphTest$NonPortableGraphTestApp$NonPortable, id 1)"
+                                       + "       Map map = (HashMap, id 2)" + "         [entry 0]"
+                                       + "           key = \"self\"" + "!!         value = (ref id 1)";
   }
 }
