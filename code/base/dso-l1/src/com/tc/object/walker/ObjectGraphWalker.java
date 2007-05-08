@@ -32,7 +32,7 @@ public class ObjectGraphWalker {
     visitor.visitRootObject(root);
     currentDepth++;
 
-    if (!walkTest.shouldTraverse(root)) { return;  }
+    if (!walkTest.shouldTraverse(root)) { return; }
 
     backtrack.addFirst(makeNode(root.getValueObject()));
 
@@ -74,7 +74,7 @@ public class ObjectGraphWalker {
 
       boolean shouldTraverse = walkTest.shouldTraverse(value);
 
-      if (shouldTraverse) {
+      if (o != null && shouldTraverse) {
         visited.visit(value);
       }
 
@@ -101,6 +101,7 @@ public class ObjectGraphWalker {
 
     void visit(MemberValue value) {
       Object o = value.getValueObject();
+      if (o == null) { throw new AssertionError("null value not expected"); }
 
       Integer id = (Integer) visited.get(o);
       if (id == null) {
@@ -113,5 +114,4 @@ public class ObjectGraphWalker {
       value.setId(id.intValue());
     }
   }
-
 }

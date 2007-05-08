@@ -201,6 +201,9 @@ public class NonPortableInstancesTest extends TransparentTestBase {
     transient Runtime honeredTransient = Runtime.getRuntime();
     ServerSocket      ss;                                     // transient by DSO config
 
+    final Thread      nullThread1      = null;
+    final Thread      nullThread2      = null;
+
     Portable() {
       ref.setRef(makeGraphWithNonPortableNodes(new NotPortable()));
       try {
@@ -232,6 +235,8 @@ public class NonPortableInstancesTest extends TransparentTestBase {
 
     Object[][] a = new Object[][] { { null }, { new Ref() } };
     ((Ref) a[1][0]).setRef(m);
+
+    m.put("array", a);
 
     return m;
   }
