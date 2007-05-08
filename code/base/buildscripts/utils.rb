@@ -10,15 +10,6 @@ def assert(message="Assertion Failed")
   raise RuntimeError, message unless yield
 end
   
-def interpolate(s)
-  s.gsub!(/version/, Registry[:config]['version'])
-  s.gsub!(/branch/, Registry[:config]['branch'])
-  s.gsub!(/platform/, Registry[:build_environment].os_family.downcase)
-  s.gsub!(/revision/, Registry[:build_environment].current_revision.to_s)
-  s.gsub!(/edition/, Registry[:build_environment].edition)
-  s
-end  
-
 module CallWithVariableArguments
     # A method to call a procedure that may take variable arguments, but
     # which issues much nicer error messages when something fails than
