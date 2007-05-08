@@ -13,6 +13,7 @@ import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.SetOnceFlag;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -20,6 +21,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 import java.nio.channels.SocketChannel;
@@ -77,19 +79,28 @@ final class TCConnectionJDK14 extends AbstractTCConnection implements TCJDK14Cha
   }
 
   protected void connectImpl(TCSocketAddress addr, int timeout) throws IOException, TCTimeoutException {
-    SocketChannel newSocket = createChannel();
-    newSocket.configureBlocking(true);
-
+    SocketChannel newSocket = null;
     InetSocketAddress inetAddr = new InetSocketAddress(addr.getAddress(), addr.getPort());
-    try {
-      newSocket.socket().connect(inetAddr, timeout);
-    } catch (SocketTimeoutException ste) {
-      comm.cleanupChannel(newSocket, null);
-      throw new TCTimeoutException("Timout of " + timeout + "ms occured connecting to " + addr, ste);
+    for (int i = 1; i <= 3; i++) {
+      try {
+        newSocket = createChannel();
+        newSocket.configureBlocking(true);
+        newSocket.socket().connect(inetAddr, timeout);
+        break;
+      } catch (SocketTimeoutException ste) {
+        comm.cleanupChannel(newSocket, null);
+        throw new TCTimeoutException("Timeout of " + timeout + "ms occured connecting to " + addr, ste);
+      } catch (ClosedSelectorException cse) {
+        if (NIOWorkarounds.windowsConnectWorkaround(cse)) {
+          logger.warn("Retrying connect to " + addr + ", attempt " + i);
+          ThreadUtil.reallySleep(500);
+          continue;
+        }
+        throw cse;
+      }
     }
 
     channel = newSocket;
-
     newSocket.configureBlocking(false);
     comm.requestReadInterest(this, newSocket);
   }

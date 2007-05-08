@@ -1,11 +1,13 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net;
 
 import com.tc.util.runtime.Os;
 
 import java.io.IOException;
+import java.nio.channels.ClosedSelectorException;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -92,6 +94,22 @@ public class NIOWorkarounds {
 
   public static void main(String args[]) {
     NIOWorkarounds.solaris10Workaround();
+  }
+
+  public static boolean windowsConnectWorkaround(ClosedSelectorException cse) {
+    // see DEV-671
+    if (!Os.isWindows()) { return false; }
+
+    StackTraceElement[] stackTrace = cse.getStackTrace();
+    if (stackTrace.length < 3) { return false; }
+
+    StackTraceElement f1 = stackTrace[0];
+    StackTraceElement f2 = stackTrace[1];
+    StackTraceElement f3 = stackTrace[2];
+
+    return f1.getClassName().equals("sun.nio.ch.SelectorImpl") && f1.getMethodName().equals("lockAndDoSelect")
+           && f2.getClassName().equals("sun.nio.ch.SelectorImpl") && f2.getMethodName().equals("selectNow")
+           && f3.getClassName().equals("sun.nio.ch.Util") && f3.getMethodName().equals("releaseTemporarySelector");
   }
 
 }
