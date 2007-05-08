@@ -5,6 +5,7 @@ import org.terracotta.modules.hibernate_3_1_2.util.HibernateUtil;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.spec.CyclicBarrierSpec;
@@ -119,13 +120,18 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
   }
   
   private void multiNodesShareTest(int index) throws Exception {
-    if (index == 0) {
-      cus = (Customer) loadByIdentifier(Customer.class, 2);
-    }
+    Assert.assertNull(cus);
     
     barrier.barrier();
     
+    if (index == 0) {
+      cus = (Customer) loadByIdentifier(Customer.class, 2);
+    }
+    barrier.barrier();
+    
     assertEqualNewEmailCustomer(cus);
+    
+    barrier.barrier();
     
     if (index == 1) {
       commitTransaction();
@@ -157,22 +163,10 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
     barrier.barrier();
   }
 
-  private void selectAllCustomers() throws Exception {
-    Session session = HibernateUtil.getSessionFactory().getCurrentSession();
-    session.beginTransaction();
-
-    List list = session.createQuery("select p from Customer p")
-        .list();
-
-    System.err.println(list);
-  }
-
   private Object loadByIdentifier(Class clazz, int id) throws Exception {
     Session session = HibernateUtil.getSessionFactory().getCurrentSession();
     session.beginTransaction();
-    selectAllCustomers();
     return session.load(clazz, new Integer(id));
-    // return session.get(clazz, new Integer(id));
   }
 
   private Object getByIdentifier(Class clazz, int id) {
@@ -215,6 +209,8 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
 
   private void assertEqualCustomer(Customer customer) {
     Account acc = customer.getAccount();
+    System.err.println("Client id: " + ManagerUtil.getClientID() + ", customer: " + customer);
+    System.err.println("Client id: " + ManagerUtil.getClientID() + ", account: " + acc);
     Assert.assertEquals("ASI-001", acc.getNumber());
 
     Assert.assertEquals("asi@yahoo.com", customer.getEmailAddress());
@@ -224,6 +220,8 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
 
   private void assertEqualNewEmailCustomer(Customer customer) {
     Account acc = customer.getAccount();
+    System.err.println("Client id: " + ManagerUtil.getClientID() + ", customer: " + customer);
+    System.err.println("Client id: " + ManagerUtil.getClientID() + ", account: " + acc);
     Assert.assertEquals("ASI-001", acc.getNumber());
 
     Assert.assertEquals("asi@gmail.com", customer.getEmailAddress());
