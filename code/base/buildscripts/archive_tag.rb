@@ -22,7 +22,7 @@ class ArchiveTag
         user = @build_environment.build_username
         host = @build_environment.build_hostname
         revision = @build_environment.current_revision
-        version = @build_environment.specified_build_version
+        version = @build_environment.version
         branch = @build_environment.current_branch
         os_type = @build_environment.os_type(:nice)
         monkey_label = @build_environment.monkey_label
