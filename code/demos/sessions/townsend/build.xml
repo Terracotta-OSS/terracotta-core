@@ -1,4 +1,10 @@
-<!-- Copyright (c) 2003-2007 Terracotta, Inc. All rights reserved.. -->
+<!--
+
+  All content copyright (c) 2003-2007 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved.
+
+-->
 <project name="Townsend" default="deploy" basedir=".">
 	<property name="bundled.server.home" value="${basedir}/../../../vendors/tomcat5.5"/>
 	<condition property="is.live" value="true">
