@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 
 public class VersionServlet extends HttpServlet {
   protected void service(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    ProductInfo productInfo = ProductInfo.getThisProductInfo();
+    ProductInfo productInfo = ProductInfo.getInstance();
 
     PrintWriter writer = response.getWriter();
     writer.println("<html><title>Version Information</title><body><pre>");

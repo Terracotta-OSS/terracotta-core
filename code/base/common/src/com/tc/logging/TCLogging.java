@@ -411,7 +411,7 @@ public class TCLogging {
   }
 
   private static void writeVersion() {
-    ProductInfo info = ProductInfo.getThisProductInfo();
+    ProductInfo info = ProductInfo.getInstance();
     CustomerLogging.getConsoleLogger().info(info.toLongString());
     getLogger(TCLogging.class).info(info.toLongString());
   }

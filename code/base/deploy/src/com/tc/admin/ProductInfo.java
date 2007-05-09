@@ -16,7 +16,7 @@ public class ProductInfo {
 
   public ProductInfo() {
     TCLogging.class.toString();
-    com.tc.util.ProductInfo productInfo = com.tc.util.ProductInfo.getThisProductInfo();
+    com.tc.util.ProductInfo productInfo = com.tc.util.ProductInfo.getInstance();
 
     m_version = productInfo.rawVersion();
     m_buildID = productInfo.toLongString();

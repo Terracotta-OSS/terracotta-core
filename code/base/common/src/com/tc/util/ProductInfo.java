@@ -23,32 +23,30 @@ import java.util.Properties;
  * Utility class to retrieve the build information for the product.
  */
 public final class ProductInfo {
-  private static final ResourceBundleHelper bundleHelper              = new ResourceBundleHelper(ProductInfo.class);
+  private static final ResourceBundleHelper bundleHelper             = new ResourceBundleHelper(ProductInfo.class);
 
-  private static final DateFormat           DATE_FORMAT               = new SimpleDateFormat("yyyyMMdd-HHmmss");
+  private static final DateFormat           DATE_FORMAT              = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
-  private static final String               BUILD_DATA_RESOURCE_NAME  = "/build-data.txt";
+  private static final String               BUILD_DATA_RESOURCE_NAME = "/build-data.txt";
 
-  private static final String               BUILD_DATA_ROOT_KEY       = "terracotta.build.";
-  private static final String               BUILD_DATA_VERSION_KEY    = "version";
-  private static final String               BUILD_DATA_EDITION_KEY    = "edition";
-  private static final String               BUILD_DATA_TIMESTAMP_KEY  = "timestamp";
-  private static final String               BUILD_DATA_HOST_KEY       = "host";
-  private static final String               BUILD_DATA_USER_KEY       = "user";
-  private static final String               BUILD_DATA_CHANGESET_KEY  = "revision";
-  private static final String               BUILD_DATA_CHANGE_TAG_KEY = "change-tag";
-  private static final String               BUILD_DATA_BRANCH_KEY     = "branch";
-  private static final String               UNKNOWN_VALUE             = "[unknown]";
+  private static final String               BUILD_DATA_ROOT_KEY      = "terracotta.build.";
+  private static final String               BUILD_DATA_VERSION_KEY   = "version";
+  private static final String               BUILD_DATA_EDITION_KEY   = "edition";
+  private static final String               BUILD_DATA_TIMESTAMP_KEY = "timestamp";
+  private static final String               BUILD_DATA_HOST_KEY      = "host";
+  private static final String               BUILD_DATA_USER_KEY      = "user";
+  private static final String               BUILD_DATA_REVISION_KEY  = "revision";
+  private static final String               BUILD_DATA_BRANCH_KEY    = "branch";
+  private static final String               UNKNOWN_VALUE            = "[unknown]";
 
   private final String                      moniker;
   private final String                      version;
   private final Date                        timestamp;
   private final String                      host;
   private final String                      user;
-  private final String                      changeset;
-  private final String                      changeTag;
   private final String                      branch;
   private final String                      edition;
+  private final String                      revision;
 
   private ProductInfo(InputStream in, String fromWhere) {
     Properties properties = new Properties();
@@ -70,9 +68,8 @@ public final class ProductInfo {
     String timestampString = getProperty(properties, BUILD_DATA_TIMESTAMP_KEY, null);
     this.host = getProperty(properties, BUILD_DATA_HOST_KEY, UNKNOWN_VALUE);
     this.user = getProperty(properties, BUILD_DATA_USER_KEY, UNKNOWN_VALUE);
-    this.changeset = getProperty(properties, BUILD_DATA_CHANGESET_KEY, UNKNOWN_VALUE);
-    this.changeTag = getProperty(properties, BUILD_DATA_CHANGE_TAG_KEY, null);
     this.branch = getProperty(properties, BUILD_DATA_BRANCH_KEY, UNKNOWN_VALUE);
+    this.revision = getProperty(properties, BUILD_DATA_REVISION_KEY, UNKNOWN_VALUE);
 
     Date realTimestamp = null;
     if (timestampString != null) {
@@ -93,15 +90,15 @@ public final class ProductInfo {
     return out;
   }
 
-  private static ProductInfo thisProductInfo = null;
+  private static ProductInfo PRODUCTINFO = null;
 
-  public static synchronized ProductInfo getThisProductInfo() {
-    if (thisProductInfo == null) {
+  public static synchronized ProductInfo getInstance() {
+    if (PRODUCTINFO == null) {
       InputStream in = ProductInfo.class.getResourceAsStream(BUILD_DATA_RESOURCE_NAME);
-      thisProductInfo = new ProductInfo(in, "resource '" + BUILD_DATA_RESOURCE_NAME + "'");
+      PRODUCTINFO = new ProductInfo(in, "resource '" + BUILD_DATA_RESOURCE_NAME + "'");
     }
 
-    return thisProductInfo;
+    return PRODUCTINFO;
   }
 
   public boolean isDevMode() {
@@ -137,14 +134,6 @@ public final class ProductInfo {
     return this.user;
   }
 
-  public String buildChangeset() {
-    return this.changeset;
-  }
-
-  public String buildChangeTag() {
-    return this.changeTag;
-  }
-
   public String buildBranch() {
     return this.branch;
   }
@@ -153,13 +142,17 @@ public final class ProductInfo {
     return bundleHelper.getString("copyright");
   }
 
+  public String buildRevision() {
+    return this.revision;
+  }
+
   public String toShortString() {
     return this.moniker + " " + ("opensource".equals(edition) ? "" : (edition + " ")) + buildVersion();
   }
 
   public String toLongString() {
-    return toShortString() + ", as of " + buildTimestampAsString() + " (Revision " + buildChangeset()
-        + (buildChangeTag() != null ? " (" + buildChangeTag() + ")" : "") + " by " + buildUser() + "@" + buildHost()
+    return toShortString() + ", as of " + buildTimestampAsString() + " (Revision " + buildRevision()
+        + " by " + buildUser() + "@" + buildHost()
         + " from " + buildBranch() + ")";
   }
 
@@ -180,9 +173,9 @@ public final class ProductInfo {
     }
 
     if (cli.hasOption("v")) {
-      System.out.println(getThisProductInfo().toLongString());
+      System.out.println(getInstance().toLongString());
     } else {
-      System.out.println(getThisProductInfo().toShortString());
+      System.out.println(getInstance().toShortString());
     }
   }
 }

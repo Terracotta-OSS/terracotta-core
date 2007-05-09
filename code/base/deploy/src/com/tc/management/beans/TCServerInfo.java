@@ -42,7 +42,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     this.server = server;
     this.l2State = l2State;
     this.l2State.registerStateChangeListener(this);
-    productInfo = ProductInfo.getThisProductInfo();
+    productInfo = ProductInfo.getInstance();
     buildID = makeBuildID(productInfo);
     nextSequenceNumber = 1;
     stateChangeNotificationInfo = new StateChangeNotificationInfo();
@@ -131,12 +131,11 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
 
   private static String makeBuildID(final ProductInfo productInfo) {
     String timeStamp = productInfo.buildTimestampAsString();
-    String cset = productInfo.buildChangeset();
-    String ctag = productInfo.buildChangeTag();
+    String revision = productInfo.buildRevision();
     String user = productInfo.buildUser();
     String host = productInfo.buildHost();
     String branch = productInfo.buildBranch();
-    return timeStamp + " (" + cset + (ctag != null ? " (" + ctag + ")" : "") + " by " + user + "@" + host + " from "
+    return timeStamp + " (" + revision + " by " + user + "@" + host + " from "
            + branch + ")";
   }
 

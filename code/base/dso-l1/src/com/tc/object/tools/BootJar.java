@@ -300,7 +300,7 @@ public class BootJar {
       tcmoniker = attributes.getValue(TC_MONIKER);
       if (tcmoniker == null) throw new InvalidBootJarMetaDataException("Missing metadata: tcmoniker");
 
-      ProductInfo productInfo = ProductInfo.getThisProductInfo();
+      ProductInfo productInfo = ProductInfo.getInstance();
       String expect_tcversion = productInfo.buildVersion();
 
       if (productInfo.isDevMode()) logger
@@ -318,7 +318,7 @@ public class BootJar {
 
     public void write(Manifest manifest) {
       if (VERSION_1_1.equals(version)) {
-        ProductInfo productInfo = ProductInfo.getThisProductInfo();
+        ProductInfo productInfo = ProductInfo.getInstance();
         Attributes attributes = new Attributes();
         attributes.put(new Attributes.Name(TC_MONIKER), productInfo.moniker());
         attributes.put(new Attributes.Name(TC_VERSION), productInfo.buildVersion());

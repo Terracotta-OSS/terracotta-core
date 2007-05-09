@@ -196,7 +196,7 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
         if(topRes != null) {
           m_aboutPanel = (org.dijon.Container)topRes.resolve("AboutPanel");
           
-          ProductInfo prodInfo = ProductInfo.getThisProductInfo();
+          ProductInfo prodInfo = ProductInfo.getInstance();
           Label       label    = (Label)m_aboutPanel.findComponent("TitleLabel");
           
           label.setText(prodInfo.toShortString());
