@@ -24,19 +24,10 @@ import java.util.Map;
  * @author hhuynh
  */
 public class WebClient {
-  private volatile int serial;
   private Map          cookies = new HashMap();
 
   public String getResponseAsString(URL url) throws IOException {
-    String modifiedUrl = url.toString();
-    if (modifiedUrl.indexOf("?") > 0) {
-      modifiedUrl += "&_wcserial=" + serial++;
-    } else {
-      modifiedUrl += "?&_wcserial=" + serial++;
-    }
-    //System.out.println("[WebClient]: " + modifiedUrl);
-    URL myUrl = new URL(modifiedUrl);
-    HttpURLConnection http = (HttpURLConnection) myUrl.openConnection();
+    HttpURLConnection http = (HttpURLConnection) url.openConnection();
     http.setRequestProperty("Cookie", getCookiesAsString());
     http.connect();
     if (http.getResponseCode() != HttpURLConnection.HTTP_OK) {
