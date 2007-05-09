@@ -573,7 +573,7 @@ class SubtreeTestRun
             # Use our two formatters -- the first for the XML output files, the second for
             # printing output.
             @ant.formatter(:type => 'xml')
-            @ant.formatter(:classname => 'com.tc.test.TCJUnitFormatter', :usefile => false)
+            @ant.formatter(:classname => 'com.tc.test.TCJUnitFormatter', :usefile => true)
 
             # Create a <batchtest> element for each pattern we have.
             @test_patterns.each do |pattern|
@@ -582,7 +582,7 @@ class SubtreeTestRun
                 failure_properties << failure_property_name
 
                 @ant.batchtest(:todir => @testrun_results.results_dir(@subtree).to_s, :fork => true, :failureproperty => failure_property_name) {
-                    @ant.formatter(:classname => "com.tc.test.TCXMLJUnitFormatter", :usefile => false)
+                    @ant.formatter(:classname => "com.tc.test.TCXMLJUnitFormatter", :usefile => true)
                     @ant.fileset(:dir => @build_results.classes_directory(@subtree).to_s, :includes => "**/#{pattern}.class")
                 }
             end
