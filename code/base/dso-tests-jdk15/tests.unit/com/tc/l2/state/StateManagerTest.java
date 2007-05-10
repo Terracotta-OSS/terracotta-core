@@ -195,7 +195,7 @@ public class StateManagerTest extends TCTestCase {
       elections[i].join();
     }
     
-    Thread.sleep(100);
+    Thread.sleep(500);
     // verification
     int activeCount = 0;
     for(int i=0; i < nodes; ++i) {
@@ -245,7 +245,7 @@ public class StateManagerTest extends TCTestCase {
       elections[i].join();
     }
     
-    Thread.sleep(100);
+    Thread.sleep(500);
     // verification
     int activeCount = 0;
     for(int i=0; i < nodes; ++i) {
@@ -338,7 +338,7 @@ public class StateManagerTest extends TCTestCase {
     for(int i=1; i < nodes; ++i) {
       reElectThreads[i].join();
     }
-    Thread.sleep(100);
+    Thread.sleep(500);
  
     //verify
     activeCount = 0;
