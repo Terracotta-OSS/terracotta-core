@@ -252,16 +252,11 @@ public class StateManagerImpl implements StateManager, GroupMessageListener {
   }
 
   // notify new node
-  public synchronized void publishActiveState(NodeID nodeID) {
+  public synchronized void publishActiveState(NodeID nodeID) throws GroupException {
     Assert.assertTrue(isActiveCoordinator());
     GroupMessage msg = L2StateMessageFactory.createElectionWonMessage(EnrollmentFactory
         .createTrumpEnrollment(getLocalNodeID()));
-    try {
-      groupManager.sendTo(nodeID, msg);
-    } catch (GroupException e) {
-      logger.error("Error publishing Active State. Zapping node " + nodeID, e);
-      groupManager.zapNode(nodeID);
-    }
+    groupManager.sendTo(nodeID, msg);
   }
 
   public void startElectionIfNecessary(NodeID disconnectedNode) {

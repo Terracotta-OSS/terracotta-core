@@ -3,6 +3,8 @@
  */
 package com.tc.l2.objectserver;
 
+import com.tc.net.groups.GroupException;
+import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.tx.ServerTransaction;
 
@@ -14,5 +16,9 @@ public interface ReplicatedTransactionManager {
   public void addCommitTransactionMessage(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs);
 
   public void addObjectSyncTransaction(ServerTransaction txn);
+
+  public void goActive();
+
+  public void publishResetRequest(NodeID nodeID) throws GroupException;
 
 }

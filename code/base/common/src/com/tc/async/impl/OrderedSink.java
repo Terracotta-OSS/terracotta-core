@@ -38,13 +38,19 @@ public class OrderedSink implements Sink {
                                      else return 1;
                                    }
                                  });
+  private AddPredicate predicate;
 
   public OrderedSink(TCLogger logger, Sink sink) {
     this.logger = logger;
     this.sink = sink;
+    this.predicate = DefaultAddPredicate.getInstance();
   }
 
   public synchronized void add(EventContext context) {
+    if(!predicate.accept(context)) {
+      logger.warn("Predicate forced to ignore message " + context);
+      return;
+    }
     OrderedEventContext oc = (OrderedEventContext) context;
     long seq = oc.getSequenceID();
     if (seq <= current) {
@@ -93,14 +99,14 @@ public class OrderedSink implements Sink {
     }
   }
 
-  public void clear() {
+  public synchronized void clear() {
     pending.clear();
     current = 0;
     sink.clear();
   }
 
-  public AddPredicate getPredicate() {
-    return sink.getPredicate();
+  public synchronized AddPredicate getPredicate() {
+    return predicate;
   }
 
   public void pause(List pauseEvents) {
@@ -108,8 +114,8 @@ public class OrderedSink implements Sink {
     sink.pause(pauseEvents);
   }
 
-  public void setAddPredicate(AddPredicate predicate) {
-    sink.setAddPredicate(predicate);
+  public synchronized void setAddPredicate(AddPredicate ap) {
+    this.predicate = ap;
   }
 
   public int size() {
@@ -139,5 +145,4 @@ public class OrderedSink implements Sink {
   public void resetStats() {
     sink.resetStats();
   }
-
 }

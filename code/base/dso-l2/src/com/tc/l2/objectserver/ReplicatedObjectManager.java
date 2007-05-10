@@ -4,6 +4,7 @@
  */
 package com.tc.l2.objectserver;
 
+import com.tc.net.groups.GroupException;
 import com.tc.net.groups.NodeID;
 
 public interface ReplicatedObjectManager {
@@ -16,6 +17,6 @@ public interface ReplicatedObjectManager {
 
   public boolean relayTransactions();
 
-  public void query(NodeID nodeID);
+  public void query(NodeID nodeID) throws GroupException;
 
 }

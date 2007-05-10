@@ -65,17 +65,10 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     }
   }
 
-  public synchronized void publishClusterState(NodeID nodeID) {
-
-    try {
-      ClusterStateMessage msg = (ClusterStateMessage) groupManager
-          .sendToAndWaitForResponse(nodeID, ClusterStateMessageFactory.createClusterStateMessage(state));
-      validateResponse(nodeID, msg);
-    } catch (GroupException e) {
-      logger.error("Error plublishing cluster state : " + nodeID + " terminating it");
-      groupManager.zapNode(nodeID);
-    }
-
+  public synchronized void publishClusterState(NodeID nodeID) throws GroupException {
+    ClusterStateMessage msg = (ClusterStateMessage) groupManager
+        .sendToAndWaitForResponse(nodeID, ClusterStateMessageFactory.createClusterStateMessage(state));
+    validateResponse(nodeID, msg);
   }
 
   private void validateResponse(NodeID nodeID, ClusterStateMessage msg) {

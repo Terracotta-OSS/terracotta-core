@@ -65,12 +65,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   }
 
   // Query current state of the other L2
-  public void query(NodeID nodeID) {
-    try {
-      groupManager.sendTo(nodeID, ObjectListSyncMessageFactory.createObjectListSyncRequestMessage());
-    } catch (GroupException e) {
-      logger.error("Error Writting Msg : ", e);
-    }
+  public void query(NodeID nodeID) throws GroupException {
+    groupManager.sendTo(nodeID, ObjectListSyncMessageFactory.createObjectListSyncRequestMessage());
   }
 
   // TODO::Verify that message order is maintained.

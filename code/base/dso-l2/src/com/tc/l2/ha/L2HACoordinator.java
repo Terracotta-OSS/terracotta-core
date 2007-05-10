@@ -122,12 +122,13 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.rObjectManager = new ReplicatedObjectManagerImpl(groupManager, stateManager, l2ObjectStateManager,
                                                           objectManager, objectsSyncRequestSink);
 
-    this.rTxnManager = new ReplicatedTransactionManagerImpl(transactionManager, txnObjectManager);
-
     this.rClusterStateMgr = new ReplicatedClusterStateManagerImpl(groupManager, stateManager, clusterState, server
         .getConnectionIdFactory(), stageManager.getStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE).getSink());
 
     OrderedSink orderedObjectsSyncSink = new OrderedSink(TCLogging.getLogger(L2HACoordinator.class), objectsSyncSink);
+    this.rTxnManager = new ReplicatedTransactionManagerImpl(groupManager, orderedObjectsSyncSink, transactionManager,
+                                                            txnObjectManager);
+
     this.groupManager.routeMessages(ObjectSyncMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(RelayedCommitTransactionMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(ServerTxnAckMessage.class, ackProcessingStage);
@@ -177,6 +178,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
       l2ObjectStateManager.goActive();
       rClusterStateMgr.goActiveAndSyncState();
       rObjectManager.sync();
+      rTxnManager.goActive();
       try {
         server.startActiveMode();
       } catch (IOException e) {
@@ -191,9 +193,15 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   public void nodeJoined(NodeID nodeID) {
     log(nodeID + " joined the cluster");
     if (stateManager.isActiveCoordinator()) {
-      stateManager.publishActiveState(nodeID);
-      rClusterStateMgr.publishClusterState(nodeID);
-      rObjectManager.query(nodeID);
+      try {
+        stateManager.publishActiveState(nodeID);
+        rClusterStateMgr.publishClusterState(nodeID);
+        rTxnManager.publishResetRequest(nodeID);
+        rObjectManager.query(nodeID);
+      } catch (GroupException ge) {
+        logger.error("Error publishing states to the newly joined node : " + nodeID + " Zapping it : ", ge);
+        groupManager.zapNode(nodeID);
+      }
     }
   }
 
