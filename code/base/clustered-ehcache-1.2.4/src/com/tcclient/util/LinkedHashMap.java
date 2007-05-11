@@ -10,18 +10,21 @@ import java.util.Set;
 
 public class LinkedHashMap implements Cloneable, Map, Serializable {
 
+  private static final int DEFAULT_CAPACITY = 16;
+  private static final float DEFAULT_LOAD_FACTOR = 0.75f;
+  private static final boolean DEFAULT_ACCESS_ORDER = false;
   private Map map = null;
 
   public LinkedHashMap() {
-    map = new java.util.LinkedHashMap();
+	this(DEFAULT_CAPACITY, DEFAULT_LOAD_FACTOR, DEFAULT_ACCESS_ORDER);
   }
   
   public LinkedHashMap(int initialCapacity) {
-    map = new java.util.LinkedHashMap(initialCapacity);
+    this(initialCapacity, DEFAULT_LOAD_FACTOR, DEFAULT_ACCESS_ORDER);
   }
   
   public LinkedHashMap(int initialCapacity, float loadFactor) {
-    map = new java.util.LinkedHashMap(initialCapacity, loadFactor);
+    this(initialCapacity, loadFactor, DEFAULT_ACCESS_ORDER);
   }
 
   public LinkedHashMap(int initialCapacity, float loadFactor, boolean accessOrder) {
