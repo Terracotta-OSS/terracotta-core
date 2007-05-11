@@ -12,6 +12,10 @@ public class DSOSamplesFrameBundle extends ListResourceBundle {
 
   static final Object[][] contents = {
     {"frame.title", "Sample Application Launcher"},
+    {"servers.action.name", "Servers"},
+    {"servers.use.local", "Use local server"},
+    {"servers.use.remote", "Use remote servers"},
+    {"servers.field.tip", "Example: server1:9510,server2:9510"},
     {"jvm.coordination", "JVM Coordination"},
     {"shared.work.queue", "Shared Work Queue"},
     {"starting.jtable", "Staring Shared JTable..."},

@@ -6,6 +6,7 @@ package com.tc.welcome;
 
 import org.dijon.ApplicationManager;
 import org.dijon.Frame;
+import org.dijon.Menu;
 import org.dijon.ScrollPane;
 import org.dijon.TextPane;
 
@@ -14,6 +15,7 @@ import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.Splash;
 import com.tc.admin.common.StreamReader;
 import com.tc.admin.common.TextPaneUpdater;
+import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XTextPane;
 import com.tc.util.ResourceBundleHelper;
 
@@ -22,6 +24,8 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -35,6 +39,12 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.event.HyperlinkEvent;
@@ -46,16 +56,15 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 
 public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener, PropertyChangeListener {
-  private ResourceBundleHelper m_bundleHelper = new ResourceBundleHelper(DSOSamplesFrame.class);
-  
-  private TextPane  m_textPane;
-  private TextPane  m_outputPane;
-  private ArrayList m_processList;
+  private ResourceBundleHelper m_bundleHelper;
+  private TextPane             m_textPane;
+  private TextPane             m_outputPane;
+  private ArrayList            m_processList;
 
   public DSOSamplesFrame() {
     super();
 
-    setTitle(m_bundleHelper.getString("frame.title"));
+    setTitle(getResourceBundleHelper().getString("frame.title"));
 
     Container cp = getContentPane();
     cp.setLayout(new BorderLayout());
@@ -80,6 +89,70 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
       m_textPane.setPage(getClass().getResource("SamplesPojo.html"));
     } catch (IOException ioe) {
       m_textPane.setText(ioe.getMessage());
+    }
+  }
+
+  private ResourceBundleHelper getResourceBundleHelper() {
+    if(m_bundleHelper == null) {
+      m_bundleHelper = new ResourceBundleHelper(DSOSamplesFrame.class);
+    }
+    return m_bundleHelper;
+  }
+  
+  protected void initFileMenu(Menu fileMenu) {
+    fileMenu.add(new ServersAction());
+    super.initFileMenu(fileMenu);
+  }
+
+  class ServersAction extends XAbstractAction {
+    JPanel m_panel;
+    JToggleButton m_useLocalToggle;
+    JTextField m_serversListField;
+    
+    ServersAction() {
+      super(getResourceBundleHelper().getString("servers.action.name"));
+    }
+
+    private JPanel createPanel() {
+      if(m_panel == null) {
+        m_panel = new JPanel();
+        m_panel.setLayout(new GridLayout(2, 1));
+        m_panel.add(m_useLocalToggle = new JCheckBox(m_bundleHelper.getString("servers.use.local")));
+        m_useLocalToggle.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent ae) {
+            m_serversListField.setEnabled(!m_useLocalToggle.isSelected());
+          }
+        });
+        JPanel otherPanel = new JPanel();
+        otherPanel.setLayout(new FlowLayout());
+        otherPanel.add(new JLabel(m_bundleHelper.getString("servers.use.remote")));
+        m_serversListField = new JTextField("server1:9510,server2:9510,server3:9510");
+        m_serversListField.setToolTipText(m_bundleHelper.getString("servers.field.tip"));
+        m_serversListField.setPreferredSize(m_serversListField.getPreferredSize());
+        String prop = System.getProperty("tc.servers");
+        m_serversListField.setText(prop);
+        otherPanel.add(m_serversListField);
+        m_panel.add(otherPanel);
+        
+        m_serversListField.setEnabled(prop != null);
+        m_useLocalToggle.setSelected(prop == null);
+      }
+      return m_panel;
+    }
+    
+    public void actionPerformed(ActionEvent ae) {
+      JPanel panel = createPanel();
+      int result;
+
+      result = JOptionPane.showConfirmDialog(DSOSamplesFrame.this, panel, DSOSamplesFrame.this.getTitle(),
+                                             JOptionPane.OK_CANCEL_OPTION);
+      if (result == JOptionPane.OK_OPTION) {
+        if(!m_useLocalToggle.isSelected()) {
+          System.setProperty("tc.servers", m_serversListField.getText());
+        } else {
+          System.getProperties().remove("tc.servers");
+        }
+      }
     }
   }
 
@@ -199,7 +272,8 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
       String bootPath = getBootPath();
       String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.config=tc-config.xml",
           "-Djava.awt.Window.locationByPlatform=true", "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
-          "-Xbootclasspath/p:" + bootPath, "-cp", "classes", className };
+          "-Dtc.servers=" + System.getProperty("tc.servers", ""), "-Xbootclasspath/p:" + bootPath, "-cp", "classes",
+          className };
 
       Process p = exec(cmdarray, null, new File(getProductDirectory(), dirName));
       StreamReader errDrainer = createStreamReader(p.getErrorStream());
@@ -238,7 +312,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
       m_processList.add(p);
       startFakeWaitPeriod();
 
-      Frame frame = new SampleFrame(this, m_bundleHelper.getString("jvm.coordination"));
+      Frame frame = new SampleFrame(this, getResourceBundleHelper().getString("jvm.coordination"));
       frame.getContentPane().add(new ScrollPane(textPane));
       frame.setSize(new Dimension(500, 300));
       frame.setVisible(true);
@@ -280,7 +354,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
       m_processList.add(p);
       startFakeWaitPeriod();
 
-      Frame frame = new SampleFrame(this, m_bundleHelper.getString("shared.work.queue"));
+      Frame frame = new SampleFrame(this, getResourceBundleHelper().getString("shared.work.queue"));
       frame.getContentPane().add(new ScrollPane(textPane));
       frame.setSize(new Dimension(500, 300));
       frame.setVisible(true);

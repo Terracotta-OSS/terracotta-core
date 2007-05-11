@@ -50,7 +50,7 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
     
     setJMenuBar(menubar);
     menubar.add(menu = new Menu(getBundleString("file.menu.title")));
-    menu.add(new QuitAction());
+    initFileMenu(menu);
     menubar.add(menu = new Menu(getBundleString("help.menu.title")));
     menu.add(new ContactTerracottaAction(getBundleString("visit.forums.title"),
                                          getBundleString("forums.url")));
@@ -73,6 +73,10 @@ public abstract class HyperlinkFrame extends Frame implements HyperlinkListener 
         quit();
       }
     });
+  }
+  
+  protected void initFileMenu(Menu fileMenu) {
+    fileMenu.add(new QuitAction());
   }
   
   private String getBundleString(String key) {
