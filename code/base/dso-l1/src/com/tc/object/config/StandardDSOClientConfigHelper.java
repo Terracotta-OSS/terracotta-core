@@ -216,6 +216,11 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     addPermanentExcludePattern("java.nio.channels.SocketChannel");
     addPermanentExcludePattern("java.util.logging.FileHandler");
     addPermanentExcludePattern("java.util.logging.SocketHandler");
+
+    // CDV-263
+    addPermanentExcludePattern("java.io.InputStream");
+    addPermanentExcludePattern("java.io.OutputStream");
+    
     addUnsupportedJavaUtilConcurrentTypes();
 
     addAutoLockExcludePattern("* java.lang.Throwable.*(..)");
