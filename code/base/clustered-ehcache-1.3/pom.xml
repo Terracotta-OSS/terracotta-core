@@ -6,7 +6,7 @@
     <version>2.3-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>clustered-ehcache-1.2.4</artifactId>
+  <artifactId>clustered-ehcache-1.3</artifactId>
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -39,4 +39,3 @@
     </dependency>
   </dependencies>
 </project>
-

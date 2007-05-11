@@ -1,0 +1,9 @@
+<project name="clustered-ehcache-1.3" xmlns:ivy="antlib:fr.jayasoft.ivy.ant">
+  <!-- ================================= 
+  target: resolve              
+  ================================= -->
+  <target name="resolve" description="--> retrieve dependencies with ivy">
+        <ivy:resolve file="${basedir}/ivy.xml"/>
+    <ivy:retrieve pattern="${ivy.dependencies.dir}/[artifact]-[revision].[ext]"/>
+  </target>
+</project>

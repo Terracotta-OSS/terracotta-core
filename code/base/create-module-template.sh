@@ -21,7 +21,7 @@ mkdir -p ${MODULE_NAME}/tests.system
   <!-- ================================= 
   target: resolve              
   ================================= -->
-  <target name="resolve" description="--> retreive dependencies with ivy">
+  <target name="resolve" description="--> retrieve dependencies with ivy">
         <ivy:resolve file="${basedir}/ivy.xml"/>
     <ivy:retrieve pattern="${ivy.dependencies.dir}/[artifact]-[revision].[ext]"/>
   </target>
