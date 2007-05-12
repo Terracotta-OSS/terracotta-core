@@ -59,14 +59,13 @@ class BuildEnvironment < Environment
   # if not, try to parse from "svn info" command
   def current_branch
       return @branch unless @branch.blank?
-      @branch = @config_source["branch"]
       if @branch.nil?
           case @svninfo["URL"]
               when /trunk/: @branch="trunk"
               when /branches\/private\/([^\/]+)/: @branch = $1
               when /branches\/([^\/]+)/: @branch = $1
               when /tags\/([^\/]+)/: @branch = $1
-              else @branch = "branch-unknown"
+              else @branch = @config_source["branch"] || "branch-unknown"
           end
       end
       @branch
