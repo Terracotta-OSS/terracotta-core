@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version = "1.0" encoding="UTF-8"?>
 <!--
 
   All content copyright (c) 2007 Terracotta, Inc.,
@@ -14,15 +14,15 @@
   </instrumented-classes>
 
   <transient-fields>
-  	<field-name>net.sf.ehcache.store.DiskStore.spoolAndExpiryThread</field-name>
-      <field-name>net.sf.ehcache.store.DiskStore.randomAccessFile</field-name>
-      <field-name>net.sf.ehcache.distribution.RMIAsynchronousCacheReplicator.replicationThread</field-name>
-      <field-name>net.sf.ehcache.CacheManager.cacheManagerEventListener</field-name>
-      <field-name>net.sf.ehcache.CacheManager.cacheManagerPeerListener</field-name>
-      <field-name>net.sf.ehcache.CacheManager.cacheManagerPeerProvider</field-name>
-  	<field-name>net.sf.ehcache.CacheManager.shutdownHook</field-name>
+	<field-name>net.sf.ehcache.store.DiskStore.spoolAndExpiryThread</field-name>
+    <field-name>net.sf.ehcache.store.DiskStore.randomAccessFile</field-name>
+    <field-name>net.sf.ehcache.distribution.RMIAsynchronousCacheReplicator.replicationThread</field-name>
+    <field-name>net.sf.ehcache.CacheManager.cacheManagerEventListener</field-name>
+    <field-name>net.sf.ehcache.CacheManager.cacheManagerPeerListener</field-name>
+    <field-name>net.sf.ehcache.CacheManager.cacheManagerPeerProvider</field-name>
+	<field-name>net.sf.ehcache.CacheManager.shutdownHook</field-name>
   </transient-fields>
-  
+
   <roots>
     <root>
       <field-name>net.sf.ehcache.CacheManager.singleton</field-name>
@@ -299,5 +299,6 @@
 
   <additional-boot-jar-classes>
     <include>java.util.Random</include>
+    <include>com.tcclient.util.LinkedHashMap</include>
   </additional-boot-jar-classes>
 </xml-fragment>
