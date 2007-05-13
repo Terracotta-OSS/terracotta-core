@@ -1023,7 +1023,16 @@ public class BootJarTool {
         continue;
       } else if (topClass.getClassLoader() != null) {
         if (!tcSpecs) {
-          System.out.println("-- " + topClass.getName());
+          
+          // HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK 
+          // This is a terrible hack to force the boot jar tool to allow
+          // com.tcclient.util.LinkedHashMap into the boot jar. Will get  
+          // rid of this ASAP... jg
+          // HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK 
+          if (topClass.getName().equals("com.tcclient.util.LinkedHashMap")) {
+            continue;
+          }
+          
           notBootstrapClasses.add(topClass.getName());
           continue;
         }
