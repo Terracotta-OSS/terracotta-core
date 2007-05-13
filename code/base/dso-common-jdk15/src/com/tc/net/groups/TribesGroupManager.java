@@ -8,6 +8,7 @@ import org.apache.catalina.tribes.MembershipListener;
 import org.apache.catalina.tribes.ChannelException.FaultyMember;
 import org.apache.catalina.tribes.group.ChannelCoordinator;
 import org.apache.catalina.tribes.group.GroupChannel;
+import org.apache.catalina.tribes.group.interceptors.OrderInterceptor;
 import org.apache.catalina.tribes.group.interceptors.StaticMembershipInterceptor;
 import org.apache.catalina.tribes.group.interceptors.TcpFailureDetector;
 import org.apache.catalina.tribes.group.interceptors.TcpPingInterceptor;
@@ -120,10 +121,14 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       TcpPingInterceptor tcp = new TcpPingInterceptor();
       tcp.setUseThread(true);
       tcp.setInterval(1000);
+      
+      OrderInterceptor oi = new OrderInterceptor();
+      oi.setExpire(60000);
 
       // start services
       // set up failure detector
       failuredetector = new TcpFailureDetector();
+      group.addInterceptor(oi);
       group.addInterceptor(tcp);
       group.addInterceptor(failuredetector);
       group.addInterceptor(smi);
@@ -138,6 +143,10 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   protected NodeID joinMcast() throws GroupException {
     try {
       commonGroupChanelConfig();
+      OrderInterceptor oi = new OrderInterceptor();
+      oi.setExpire(60000);
+
+      group.addInterceptor(oi);
       group.start(Channel.DEFAULT);
       this.thisMember = group.getLocalMember(false);
       this.thisNodeID = makeNodeIDFrom(this.thisMember);

@@ -18,19 +18,15 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 public class TribesGroupManagerTest extends TCTestCase {
-  
+
   private static final TCLogger logger = TCLogging.getLogger(TribesGroupManager.class);
-  
-  public TribesGroupManagerTest() {
-    disableTestUntil("testMessagesOrderingStatic", "2007-06-05");
-  }
 
   public void testIfTribesGroupManagerLoads() throws Exception {
     GroupManager gm = GroupManagerFactory.createGroupManager();
     assertNotNull(gm);
     assertEquals(TribesGroupManager.class.getName(), gm.getClass().getName());
   }
-  
+
   public void testGroupEventsMcast() throws Exception {
     TribesGroupManager gm1 = new TribesGroupManager();
     MyGroupEventListener gel1 = new MyGroupEventListener();
@@ -119,7 +115,7 @@ public class TribesGroupManagerTest extends TCTestCase {
     gm1.stop();
     gm2.stop();
   }
-  
+
   private void checkSendingReceivingMessages(TribesGroupManager gm1, MyListener l1, TribesGroupManager gm2,
                                              MyListener l2) throws GroupException {
     ThreadUtil.reallySleep(5 * 1000);
@@ -140,35 +136,53 @@ public class TribesGroupManagerTest extends TCTestCase {
 
     assertEquals(m3, m4);
   }
-  
+
   public void testMessagesOrderingStatic() throws Exception {
     PortChooser pc = new PortChooser();
     final int p1 = pc.chooseRandomPort();
     final int p2 = pc.chooseRandomPort();
     final Node[] allNodes = new Node[] { new Node("localhost", p1), new Node("localhost", p2) };
+    
+    System.err.println("Testing message Ordering - Static");
 
     TribesGroupManager gm1 = new TribesGroupManager();
     NodeID n1 = gm1.joinStatic(allNodes[0], allNodes);
     TribesGroupManager gm2 = new TribesGroupManager();
     NodeID n2 = gm2.joinStatic(allNodes[1], allNodes);
-    
+
     assertNotEquals(n1, n2);
-    
+
     checkMessagesOrdering(gm1, gm2);
-    
+
     gm1.stop();
     gm2.stop();
   }
   
-  private void checkMessagesOrdering(final TribesGroupManager mgr1,  final TribesGroupManager mgr2) throws GroupException {
+  public void testMessagesOrderingMcast() throws Exception {
+    System.err.println("Testing message Ordering - Mcast");
+    TribesGroupManager gm1 = new TribesGroupManager();
+    NodeID n1 = gm1.joinMcast();
+    TribesGroupManager gm2 = new TribesGroupManager();
+    NodeID n2 = gm2.joinMcast();
+
+    assertNotEquals(n1, n2);
     
-    final Integer upbound = new Integer(100);    
+    checkMessagesOrdering(gm1, gm2);
+
+    gm1.stop();
+    gm2.stop();
+  }
+
+  private void checkMessagesOrdering(final TribesGroupManager mgr1, final TribesGroupManager mgr2)
+      throws GroupException {
+
+    final Integer upbound = new Integer(100);
     final MyListener myl1 = new MyListener();
     final MyListener myl2 = new MyListener();
     mgr1.registerForMessages(TestMessage.class, myl1);
     mgr2.registerForMessages(TestMessage.class, myl2);
- 
-    //  setup throwable ThreadGroup to catch AssertError from threads.
+
+    // setup throwable ThreadGroup to catch AssertError from threads.
     TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandler(logger), "StateManagerTestGroup");
     ThreadUtil.reallySleep(1000);
 
@@ -176,26 +190,25 @@ public class TribesGroupManagerTest extends TCTestCase {
     Thread t2 = new SenderThread(threadGroup, "Node-1", mgr2, upbound);
     Thread vt1 = new ReceiverThread(threadGroup, "Node-0", myl1, upbound);
     Thread vt2 = new ReceiverThread(threadGroup, "Node-1", myl2, upbound);
-    
-    System.out.println("*** Start sending ordered messages....");
+
+    System.err.println("*** Start sending ordered messages....");
     t1.start();
     t2.start();
     vt1.start();
     vt2.start();
-    
+
     try {
       t1.join();
       t2.join();
       vt1.join();
       vt2.join();
-    } 
-    catch(InterruptedException x) {
-      throw new GroupException("Join interrupted:"+x);
+    } catch (InterruptedException x) {
+      throw new GroupException("Join interrupted:" + x);
     }
-    System.out.println("*** Done with messages odering test");
-    
+    System.err.println("*** Done with messages ordering test");
+
   }
-  
+
   private boolean checkGroupEvent(String msg, NodeID n1, MyGroupEventListener gel2, boolean checkNodeJoined) {
     final String event = (checkNodeJoined) ? "NodeJoined" : "NodeLeft";
     for (int i = 0; i < 10; i++) {
@@ -213,51 +226,51 @@ public class TribesGroupManagerTest extends TCTestCase {
     }
     return false;
   }
-  
+
   private static final class SenderThread extends Thread {
     TribesGroupManager mgr;
-    Integer upbound;
-    Integer index = new Integer(0);
-    
+    Integer            upbound;
+    Integer            index = new Integer(0);
+
     public SenderThread(ThreadGroup group, String name, TribesGroupManager mgr, Integer upbound) {
       super(group, name);
       this.mgr = mgr;
       this.upbound = upbound;
     }
-    
+
     public void run() {
-      while(index <= upbound) {
+      while (index <= upbound) {
         TestMessage msg = new TestMessage(index.toString());
-        System.out.println("*** "+getName()+" sends "+index);
+        System.err.println("*** " + getName() + " sends " + index);
         try {
           mgr.sendAll(msg);
         } catch (Exception x) {
-          throw new RuntimeException("sendAll GroupException:"+x);
+          throw new RuntimeException("sendAll GroupException:" + x);
         }
         ++index;
       }
     }
   }
-  
+
   private static final class ReceiverThread extends Thread {
     MyListener l;
-    Integer upbound;
-    Integer index = new Integer(0);
-    
+    Integer    upbound;
+    Integer    index = new Integer(0);
+
     public ReceiverThread(ThreadGroup group, String name, MyListener l, Integer upbound) {
       super(group, name);
       this.l = l;
       this.upbound = upbound;
     }
- 
+
     public void run() {
-      while(index < upbound) {
-        TestMessage msg = (TestMessage)l.take();
-        System.out.println("*** " + getName() + " receives " + msg);
-        //assertEquals(new TestMessage(index.toString()), msg);
+      while (index < upbound) {
+        TestMessage msg = (TestMessage) l.take();
+        System.err.println("*** " + getName() + " receives " + msg);
+        assertEquals(new TestMessage(index.toString()), msg);
         index++;
       }
-     }
+    }
 
   }
 
