@@ -1,4 +1,4 @@
-package org.terracotta.modules.ehcache_1_2_4;
+package org.terracotta.modules.ehcache_1_3;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
@@ -27,13 +27,16 @@ public class EhcacheLruMemoryStoreAdapter extends ClassAdapter implements
 
 	public EhcacheLruMemoryStoreAdapter() {
 		super(null);
+		System.err.println("1...................................");
 	}
 
 	private EhcacheLruMemoryStoreAdapter(ClassVisitor cv) {
 		super(cv);
+		System.err.println("2...................................");
 	}
 
 	public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
+		System.err.println("3...................................");
 		return new EhcacheLruMemoryStoreAdapter(visitor);
 	}
 
@@ -60,28 +63,8 @@ public class EhcacheLruMemoryStoreAdapter extends ClassAdapter implements
 				&& name.equals("<init>")
 				&& desc.equals("(Lnet/sf/ehcache/store/LruMemoryStore;)V")) {
 			mv = new SpoolingLinkedHashMapConstructorAdapter(mv);
-		} else if (this.className.equals(LRUMEMORYSTORE_CLASS_NAME)
-				&& name.equals("loadMapInstance")
-				&& desc.equals("()Ljava/util/Map;")) {
-			mv = new LruMemoryStoreLoadMapInstanceMethodAdapter(mv);
 		}
 		return mv;
-	}
-
-	private static class LruMemoryStoreLoadMapInstanceMethodAdapter extends
-			MethodAdapter implements Opcodes {
-
-		public LruMemoryStoreLoadMapInstanceMethodAdapter(MethodVisitor mv) {
-			super(mv);
-		}
-
-		public void visitLdcInsn(Object cst) {
-			if ((cst instanceof java.lang.String)
-					&& (cst.toString().equals(LINKEDHASHMAP_CLASS_NAME_DOTS))) {
-				cst = TC_LINKEDHASHMAP_CLASS_NAME_DOTS;
-			}
-			super.visitLdcInsn(cst);
-		}
 	}
 
 	private static class SpoolingLinkedHashMapConstructorAdapter extends
