@@ -33,12 +33,6 @@ public class EhcacheTerracottaConfigurator extends TerracottaConfiguratorModule 
 
 	private void addEhcacheInstrumentation(
 			final StandardDSOClientConfigHelper configHelper) {
-		System.err.println("1...................................");
-		System.err.println("1...................................");
-		System.err.println("1...................................");
-		System.err.println("1...................................");
-		System.err.println("1...................................");
-		System.err.println("1...................................");
 	    ClassAdapterFactory factory = new EhcacheLruMemoryStoreAdapter();
 	    TransparencyClassSpec spec = configHelper.getOrCreateSpec("net.sf.ehcache.store.LruMemoryStore$SpoolingLinkedHashMap");
 	    spec.setCallConstructorOnLoad(true);

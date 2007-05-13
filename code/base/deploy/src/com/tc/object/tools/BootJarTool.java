@@ -1023,6 +1023,7 @@ public class BootJarTool {
         continue;
       } else if (topClass.getClassLoader() != null) {
         if (!tcSpecs) {
+          System.out.println("-- " + topClass.getName());
           notBootstrapClasses.add(topClass.getName());
           continue;
         }

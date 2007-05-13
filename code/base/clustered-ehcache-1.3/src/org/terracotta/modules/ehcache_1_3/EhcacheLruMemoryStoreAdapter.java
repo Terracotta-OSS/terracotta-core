@@ -27,16 +27,13 @@ public class EhcacheLruMemoryStoreAdapter extends ClassAdapter implements
 
 	public EhcacheLruMemoryStoreAdapter() {
 		super(null);
-		System.err.println("1...................................");
 	}
 
 	private EhcacheLruMemoryStoreAdapter(ClassVisitor cv) {
 		super(cv);
-		System.err.println("2...................................");
 	}
 
 	public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
-		System.err.println("3...................................");
 		return new EhcacheLruMemoryStoreAdapter(visitor);
 	}
 
