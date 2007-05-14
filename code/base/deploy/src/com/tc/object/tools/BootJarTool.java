@@ -294,6 +294,7 @@ public class BootJarTool {
       addInstrumentedJavaUtilCollection();
 
       addJdk15SpecificPreInstrumentedClasses();
+      addLinkedHashMapWrapper();
 
       addInstrumentedWeakHashMap();
 
@@ -1023,16 +1024,6 @@ public class BootJarTool {
         continue;
       } else if (topClass.getClassLoader() != null) {
         if (!tcSpecs) {
-          
-          // HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK 
-          // This is a terrible hack to force the boot jar tool to allow
-          // com.tcclient.util.LinkedHashMap into the boot jar. Will get  
-          // rid of this ASAP... jg
-          // HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK 
-          if (topClass.getName().equals("com.tcclient.util.LinkedHashMap")) {
-            continue;
-          }
-          
           notBootstrapClasses.add(topClass.getName());
           continue;
         }
@@ -1408,6 +1399,11 @@ public class BootJarTool {
     TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.CyclicBarrier");
     bytes = doDSOTransform(spec.getClassName(), bytes);
     bootJar.loadClassIntoJar("java.util.concurrent.CyclicBarrier", bytes, true);
+  }
+  
+  private final void addLinkedHashMapWrapper() {
+    TransparencyClassSpec spec = config.getOrCreateSpec("com.tcclient.util.LinkedHashMap");
+    spec.markPreInstrumented();
   }
 
   private final void addInstrumentedJavaUtilConcurrentHashMap() {
