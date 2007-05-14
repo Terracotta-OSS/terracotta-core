@@ -1305,6 +1305,11 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     lockDefinition.commit();
     addLock(methodPattern, lockDefinition);
   }
+  
+  public void addAutoSynchronize(String methodPattern) {
+    // XXX: not always WRITE lock, need more info to decide
+    addAutolock(methodPattern, ConfigLockLevel.WRITE);
+  }
 
   public synchronized void addLock(String methodPattern, LockDefinition lockDefinition) {
     Lock[] result = new Lock[locks.length + 1];

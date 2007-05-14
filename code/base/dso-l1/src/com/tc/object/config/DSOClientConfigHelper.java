@@ -105,6 +105,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   void addReadAutolock(String methodPattern);
 
   void addAutolock(String methodPattern, ConfigLockLevel type);
+  
+  void addAutoSynchronize(String methodPattern);
 
   void setFaultCount(int count);
 
