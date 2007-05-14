@@ -47,13 +47,15 @@ public class AutoSynchTestApp extends AbstractErrorCatchingTransparentApp {
   }
 
   protected void runTest() throws Throwable {
-    if (barrier.barrier() == 0) {
+    try {
       root.add("one");
       root.add("two");
+    } catch (Throwable t) {
+      t.printStackTrace();
     }
 
     barrier.barrier();
-    Assert.assertEquals(2, root.getSize());
+    Assert.assertEquals(4, root.getSize());
   }
 
   static class BaseClass {
