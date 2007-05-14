@@ -12,6 +12,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogging;
 import com.tc.test.collections.CollectionAssert;
+import com.tc.text.Banner;
 import com.tc.util.Assert;
 import com.tc.util.EqualityComparator;
 import com.tc.util.SameObjectEqualityComparator;
@@ -281,6 +282,7 @@ public class TCTestCase extends TestCase {
   protected final void disableAllUntil(Date theDate) {
     Assert.eval(theDate != null);
     this.allDisabledUntil = theDate;
+    Banner.warnBanner(this.getClass().getName() + " disabled until " + theDate);
   }
 
   /**
