@@ -156,6 +156,7 @@ public class LinkedJavaProcess {
     if (this.arguments != null) fullCommandList.addAll(Arrays.asList(this.arguments));
 
     String[] fullCommand = (String[]) fullCommandList.toArray(new String[fullCommandList.size()]);
+
     this.process = Runtime.getRuntime().exec(fullCommand, makeEnv(env), this.directory);
     this.running = true;
   }

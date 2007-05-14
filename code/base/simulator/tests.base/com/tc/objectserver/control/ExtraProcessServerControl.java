@@ -11,6 +11,7 @@ import com.tc.config.Directories;
 import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
 import com.tc.process.LinkedJavaProcess;
 import com.tc.process.StreamCopier;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.TCServerMain;
 
 import java.io.File;
@@ -22,6 +23,8 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ExtraProcessServerControl extends ServerControlBase {
+  private static final String NOT_DEF = "";
+
   private final String        name;
   private final boolean       mergeOutput;
 
@@ -36,50 +39,69 @@ public class ExtraProcessServerControl extends ServerControlBase {
   private StreamCopier        outCopier;
   private StreamCopier        errCopier;
 
+  // constructor 1: used by container tests
   public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput)
       throws FileNotFoundException {
     this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, mergeOutput);
   }
 
-  public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc,
-                                   boolean mergeOutput, File javaHome)
-      throws FileNotFoundException {
-    this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, mergeOutput);
-    this.javaHome = javaHome;
-  }
-
-  public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput,
-                                   String servername, List additionalJvmArgs) throws FileNotFoundException {
-    this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, null, Directories.getInstallationRoot(),
-         mergeOutput, servername, additionalJvmArgs);
-  }
-
+  // constructor 2: used by ExtraL1ProceddControl and constructor 1
   public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
                                    String configFileLoc, boolean mergeOutput) throws FileNotFoundException {
     // 2006-07-11 andrew -- We should get rid of the reference to Directories.getInstallationRoot() here.
     // Tests don't run in an environment where such a thing even exists. If the server needs an
     // "installation directory", the tests should be creating one themselves.
     this(debugParams, host, dsoPort, adminPort, configFileLoc, null, Directories.getInstallationRoot(), mergeOutput,
-         null, new ArrayList());
+         null, new ArrayList(), NOT_DEF, null);
   }
 
-  public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
-                                   String configFileLoc, boolean mergeOutput, File javaHome)
-  throws FileNotFoundException {
-    this(debugParams, host, dsoPort, adminPort, configFileLoc, null, Directories.getInstallationRoot(), mergeOutput,
-         null, new ArrayList());
-    this.javaHome = javaHome;
-  }
-
+  // constructor 3: used by ControlSetup, Setup, and container tests
   public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
                                    String configFileLoc, File runningDirectory, File installationRoot,
-                                   boolean mergeOutput, String serverName, List additionalJvmArgs) {
+                                   boolean mergeOutput, List jvmArgs, String undefString) {
+    this(debugParams, host, dsoPort, adminPort, configFileLoc, runningDirectory, installationRoot, mergeOutput, null,
+         jvmArgs, undefString, null);
+  }
+
+  // constructor 4: used by TransparentTestBase for single failure case
+  public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput,
+                                   File javaHome) throws FileNotFoundException {
+    this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, mergeOutput, javaHome);
+  }
+
+  // constructor 5: used by active-passive tests
+  public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput,
+                                   String servername, List additionalJvmArgs, File javaHome)
+      throws FileNotFoundException {
+    this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, null, Directories.getInstallationRoot(),
+         mergeOutput, servername, additionalJvmArgs, NOT_DEF, javaHome);
+  }
+
+  // constructor 6: used by constructor 4, crash tests, and normal tests running in 1.4 jvm
+  public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
+                                   String configFileLoc, boolean mergeOutput, File javaHome)
+      throws FileNotFoundException {
+    this(debugParams, host, dsoPort, adminPort, configFileLoc, null, Directories.getInstallationRoot(), mergeOutput,
+         null, new ArrayList(), NOT_DEF, javaHome);
+  }
+
+  // only called by constructors in this class
+  public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
+                                   String configFileLoc, File runningDirectory, File installationRoot,
+                                   boolean mergeOutput, String serverName, List additionalJvmArgs, String undefString,
+                                   File javaHome) {
     super(host, dsoPort, adminPort);
+    this.javaHome = javaHome;
     this.serverName = serverName;
     jvmArgs = new ArrayList();
 
-    if (additionalJvmArgs != null && additionalJvmArgs.size() > 0) {
-      jvmArgs.addAll(additionalJvmArgs);
+    if (additionalJvmArgs != null) {
+      for (Iterator i = additionalJvmArgs.iterator(); i.hasNext();) {
+        String next = (String) i.next();
+        if (!next.equals(undefString)) {
+          this.jvmArgs.add(next);
+        }
+      }
     }
 
     this.configFileLoc = configFileLoc;
@@ -89,29 +111,31 @@ public class ExtraProcessServerControl extends ServerControlBase {
     jvmArgs.add("-D" + Directories.TC_INSTALL_ROOT_PROPERTY_NAME + "=" + installationRoot);
     jvmArgs.add("-D" + Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME + "=true");
     debugParams.addDebugParamsTo(jvmArgs);
+    jvmArgs.add("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + ".tc.management.test.mbeans.enabled=true");
+    addClasspath(jvmArgs);
+    addLibPath(jvmArgs);
+    addEnvVarsForWindows(jvmArgs);
   }
 
-  public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
-                                   String configFileLoc, File runningDirectory, File installationRoot,
-                                   boolean mergeOutput, List jvmArgs, String undefString) {
-    super(host, dsoPort, adminPort);
-    serverName = null;
+  private void addLibPath(List args) {
+    String libPath = System.getProperty("java.library.path");
+    if (libPath == null || libPath.equals("")) { throw new AssertionError("java.library.path is not set!"); }
+    args.add("-Djava.library.path=" + libPath);
+  }
 
-    this.jvmArgs = new ArrayList();
-    for (Iterator i = jvmArgs.iterator(); i.hasNext();) {
-      String next = (String) i.next();
-      if (!next.equals(undefString)) {
-        this.jvmArgs.add(next);
-      }
-    }
+  private void addClasspath(List args) {
+    String classpath = System.getProperty("java.class.path");
+    if (classpath == null || classpath.equals("")) { throw new AssertionError("java.class.path is not set!"); }
+    args.add("-Djava.class.path=" + classpath);
+  }
 
-    this.configFileLoc = configFileLoc;
-    this.mergeOutput = mergeOutput;
-    this.name = "DSO process @ " + getHost() + ":" + getDsoPort();
-    this.runningDirectory = runningDirectory;
-    this.jvmArgs.add("-D" + Directories.TC_INSTALL_ROOT_PROPERTY_NAME + "=" + installationRoot);
-    this.jvmArgs.add("-D" + Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME + "=true");
-    debugParams.addDebugParamsTo(jvmArgs);
+  private void addEnvVarsForWindows(List args) {
+    String tcBaseDir = System.getProperty("tc.base-dir");
+    if (tcBaseDir == null || tcBaseDir.equals("")) { throw new AssertionError("tc.base-dir is not set!"); }
+    args.add("-Dtc.base-dir=" + tcBaseDir);
+    String val = System.getProperty("tc.tests.info.property-files");
+    if (val == null || val.equals("")) { throw new AssertionError("tc.tests.info.property-files is not set!"); }
+    args.add("-Dtc.tests.info.property-files=" + val);
   }
 
   public void mergeSTDOUT() {

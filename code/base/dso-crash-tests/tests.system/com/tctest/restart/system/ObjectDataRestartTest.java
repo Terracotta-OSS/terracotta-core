@@ -39,5 +39,11 @@ public class ObjectDataRestartTest extends TransparentTestBase implements TestCo
     setupManager.setServerCrashWaitTimeInSec(30);
     setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.DISK);
     setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.PERMANENT_STORE);
+
+//     setupManager.setServerCount(3);
+//     setupManager.setServerCrashMode(ActivePassiveCrashMode.RANDOM_SERVER_CRASH);
+//     setupManager.setServerCrashWaitTimeInSec(20);
+//     setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.DISK);
+//     setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.PERMANENT_STORE);
   }
 }

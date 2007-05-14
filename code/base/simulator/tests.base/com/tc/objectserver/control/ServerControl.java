@@ -39,5 +39,7 @@ public interface ServerControl {
   public void waitUntilShutdown() throws Exception;
 
   public int getDsoPort();
+  
+  public int getAdminPort();
 
 }

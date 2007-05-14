@@ -7,7 +7,7 @@ package com.tc.test.activepassive;
 public class ActivePassiveTestSetupManager {
 
   private int                          serverCount;
-  private long                         serverCrashWaitTimeInSec = 0;
+  private long                         serverCrashWaitTimeInSec = 15;
   private int                          maxCrashCount            = Integer.MAX_VALUE;
   private ActivePassiveSharedDataMode  activePassiveMode;
   private ActivePassivePersistenceMode persistenceMode;

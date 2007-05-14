@@ -5,18 +5,21 @@
 package com.tc.test.activepassive;
 
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.PortChooser;
+import com.tctest.TestState;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
@@ -30,6 +33,7 @@ public class ActivePassiveServerManager {
   private static final String                    CONFIG_FILE_NAME = "active-passive-server-config.xml";
   private static final boolean                   DEBUG            = false;
   private static final int                       NULL_VAL         = -1;
+  private static final long                      SEED             = 237;
 
   private final File                             tempDir;
   private final PortChooser                      portChooser;
@@ -58,10 +62,13 @@ public class ActivePassiveServerManager {
   private ActivePassiveServerCrasher             serverCrasher;
   private int                                    maxCrashCount;
   private final TestState                        testState;
+  private final Random                           random;
+  private final File                             javaHome;
+  private int                                    pid              = -1;
 
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
-                                    String configModel, ActivePassiveTestSetupManager setupManger, long startTimeout)
-      throws Exception {
+                                    String configModel, ActivePassiveTestSetupManager setupManger, long startTimeout,
+                                    File javaHome) throws Exception {
     if (!isActivePassiveTest) { throw new AssertionError("A non-ActivePassiveTest is trying to use this class."); }
 
     this.setupManger = setupManger;
@@ -98,6 +105,8 @@ public class ActivePassiveServerManager {
 
     errors = new ArrayList();
     testState = new TestState();
+    this.javaHome = javaHome;
+    random = new Random(SEED);
   }
 
   private void resetActiveIndex() {
@@ -180,26 +189,24 @@ public class ActivePassiveServerManager {
     if (serverNetworkShare) {
       jvmArgs.add("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + ".l2.ha.network.enabled=true");
     }
-    return new ExtraProcessServerControl(HOST, dsoPort, jmxPort, configFileLocation, true, serverName, jvmArgs);
+    return new ExtraProcessServerControl(HOST, dsoPort, jmxPort, configFileLocation, true, serverName, jvmArgs,
+                                         javaHome);
   }
 
   public void startServers() throws Exception {
     if (activeIndex >= 0) { throw new AssertionError("Server(s) has/have been already started"); }
 
-    activeIndex = 0;
-
-    startActive();
-    startPassives();
-
-    if (serverNetworkShare) {
-      debugPrintln("***** startServers():  about to search for active  threadId=[" + Thread.currentThread().getName()
-                   + "]");
-      activeIndex = getActiveIndex();
-    } else {
-      activeIndex = 0;
+    for (int i = 0; i < servers.length; i++) {
+      servers[i].getServerControl().start(startTimeout);
     }
+    Thread.sleep(500 * servers.length);
 
-    if (serverCrashMode.equals(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH)) {
+    debugPrintln("***** startServers():  about to search for active  threadId=[" + Thread.currentThread().getName()
+                 + "]");
+    activeIndex = getActiveIndex();
+
+    if (serverCrashMode.equals(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH)
+        || serverCrashMode.equals(ActivePassiveCrashMode.RANDOM_SERVER_CRASH)) {
       startContinuousCrash();
     }
   }
@@ -231,6 +238,10 @@ public class ActivePassiveServerManager {
       System.out.println("Searching for active server... ");
       for (int i = 0; i < jmxPorts.length; i++) {
         if (i != lastCrashedIndex) {
+          if (!servers[i].getServerControl().isRunning()) { throw new AssertionError("Server["
+                                                                                     + servers[i].getDsoPort()
+                                                                                     + "] is not running as expected!"); }
+
           JMXConnector jmxConnector = getJMXConnector(jmxPorts[i]);
           MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
           TCServerInfoMBean mbean = (TCServerInfoMBean) MBeanServerInvocationHandler
@@ -268,6 +279,9 @@ public class ActivePassiveServerManager {
       System.out.println("Searching for appropriate passive server(s)... ");
       for (int i = 0; i < jmxPorts.length; i++) {
         if (i != activeIndex) {
+          if (!servers[i].getServerControl().isRunning()) { throw new AssertionError("Server["
+                                                                                     + servers[i].getDsoPort()
+                                                                                     + "] is not running as expected!"); }
           JMXConnector jmxConnector = null;
           try {
             jmxConnector = getJMXConnector(jmxPorts[i]);
@@ -276,7 +290,10 @@ public class ActivePassiveServerManager {
                 .newProxyInstance(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, true);
             if (serverNetworkShare && mbean.isPassiveStandby()) {
               return;
-            } else if (!serverNetworkShare && mbean.isStarted()) { return; }
+            } else if (!serverNetworkShare && mbean.isStarted()) {
+              return;
+            } else if (mbean.isActive()) { throw new AssertionError("Server[" + servers[i].getDsoPort()
+                                                                    + "] is in active mode when it should not be!"); }
           } catch (Exception e) {
             throw e;
           } finally {
@@ -290,7 +307,7 @@ public class ActivePassiveServerManager {
     }
   }
 
-  private JMXConnector getJMXConnector(int jmxPort) throws IOException {
+  public static JMXConnector getJMXConnector(int jmxPort) throws IOException {
     String url = "service:jmx:rmi:///jndi/rmi://" + HOST + ":" + jmxPort + "/jmxrmi";
     JMXServiceURL jmxServerUrl = new JMXServiceURL(url);
     JMXConnector jmxConnector = JMXConnectorFactory.newJMXConnector(jmxServerUrl, null);
@@ -308,7 +325,11 @@ public class ActivePassiveServerManager {
         ServerControl sc = servers[i].getServerControl();
 
         if (!sc.isRunning()) {
-          continue;
+          if (i == lastCrashedIndex) {
+            continue;
+          } else {
+            throw new AssertionError("Server[" + servers[i].getDsoPort() + "] is not running as expected!");
+          }
         }
 
         if (i == activeIndex) {
@@ -327,18 +348,36 @@ public class ActivePassiveServerManager {
     }
   }
 
-  private void startActive() throws Exception {
-    servers[activeIndex].getServerControl().start(startTimeout);
-    Thread.sleep(500);
-  }
-
-  private void startPassives() throws Exception {
-    for (int i = 0; i < servers.length; i++) {
-      if (i != activeIndex) {
-        servers[i].getServerControl().start(startTimeout);
+  // only have one of the processes do a dump when kill signal is being sent to entire process group
+  public void dumpAllServers(int currentPid, int dumpCount, long dumpInterval) throws Exception {
+    synchronized (testState) {
+      pid = currentPid;
+      for (int i = 0; i < serverCount; i++) {
+        if (!serverNetworkShare && i != activeIndex) {
+          debugPrintln("***** skipping dumping server=[" + dsoPorts[i] + "]");
+          continue;
+        }
+        if (servers[i].getServerControl().isRunning()) {
+          System.out.println("Dumping server=[" + dsoPorts[i] + "]");
+          JMXConnector jmxConnector = getJMXConnector(jmxPorts[i]);
+          MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+          L2DumperMBean mbean = (L2DumperMBean) MBeanServerInvocationHandler
+              .newProxyInstance(mbs, L2MBeanNames.DUMPER, L2DumperMBean.class, true);
+          mbean.doServerDump();
+          if (pid != 0) {
+            mbean.setThreadDumpCount(dumpCount);
+            mbean.setThreadDumpInterval(dumpInterval);
+            pid = mbean.doThreadDump();
+            System.out.println("Thread dumping server=[" + dsoPorts[i] + "] pid=[" + pid + "]");
+          }
+          jmxConnector.close();
+        }
       }
     }
-    Thread.sleep(500 * (servers.length - 1));
+  }
+
+  public int getPid() {
+    return pid;
   }
 
   public void crashActive() throws Exception {
@@ -347,14 +386,15 @@ public class ActivePassiveServerManager {
       return;
     }
 
-    debugPrintln("***** Crashing active server ");
-
     if (activeIndex < 0) { throw new AssertionError("Active index was not set."); }
+
+    System.out.println("Crashing active server: dsoPort=[" + servers[activeIndex].getDsoPort() + "]");
 
     debugPrintln("***** wait to find an appropriate passive server.");
     waitForPassive();
     debugPrintln("***** finished waiting to find an appropriate passive server.");
 
+    verifyActiveServerState();
     ServerControl server = servers[activeIndex].getServerControl();
     server.crash();
     debugPrintln("***** Sleeping after crashing active server ");
@@ -370,8 +410,23 @@ public class ActivePassiveServerManager {
     debugPrintln("***** activeIndex[" + activeIndex + "] ");
   }
 
+  private void verifyActiveServerState() throws Exception {
+    ServerControl server = servers[activeIndex].getServerControl();
+    if (!server.isRunning()) { throw new AssertionError("Server[" + servers[activeIndex].getDsoPort()
+                                                        + "] is not running as expected!"); }
+    JMXConnector jmxConnector = getJMXConnector(jmxPorts[activeIndex]);
+    MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+    TCServerInfoMBean mbean = (TCServerInfoMBean) MBeanServerInvocationHandler
+        .newProxyInstance(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, true);
+    if (!mbean.isActive()) {
+      jmxConnector.close();
+      throw new AssertionError("Server[" + servers[activeIndex].getDsoPort() + "] is not an active server as expected!");
+    }
+    jmxConnector.close();
+  }
+
   private void waitForServerCrash(ServerControl server) throws Exception {
-    long duration = 5000;
+    long duration = 10000;
     long startTime = System.currentTimeMillis();
     while (duration > (System.currentTimeMillis() - startTime)) {
       if (server.isRunning()) {
@@ -383,6 +438,45 @@ public class ActivePassiveServerManager {
     throw new Exception("Server crash did not complete.");
   }
 
+  private void crashPassive(int passiveToCrash) throws Exception {
+    if (!testState.isRunning()) {
+      debugPrintln("***** test state is not running ... skipping crash passive");
+      return;
+    }
+
+    System.out.println("Crashing passive server: dsoPort=[" + servers[passiveToCrash].getDsoPort() + "]");
+
+    ServerControl server = servers[passiveToCrash].getServerControl();
+    if (!server.isRunning()) { throw new AssertionError("Server[" + servers[passiveToCrash].getDsoPort()
+                                                        + "] is not running as expected!"); }
+    server.crash();
+    debugPrintln("***** Sleeping after crashing passive server ");
+    waitForServerCrash(server);
+    debugPrintln("***** Done sleeping after crashing passive server ");
+
+    lastCrashedIndex = passiveToCrash;
+    debugPrintln("***** lastCrashedIndex[" + lastCrashedIndex + "] ");
+  }
+
+  private void crashRandomServer() throws Exception {
+    if (!testState.isRunning()) {
+      debugPrintln("***** test state is not running ... skipping crash random server");
+      return;
+    }
+
+    if (activeIndex < 0) { throw new AssertionError("Active index was not set."); }
+
+    debugPrintln("***** Choosing random server... ");
+
+    int crashIndex = random.nextInt(serverCount);
+
+    if (crashIndex == activeIndex) {
+      crashActive();
+    } else {
+      crashPassive(crashIndex);
+    }
+  }
+
   public void restartLastCrashedServer() throws Exception {
     if (!testState.isRunning()) {
       debugPrintln("***** test state is not running ... skipping restart");
@@ -392,7 +486,18 @@ public class ActivePassiveServerManager {
     debugPrintln("*****  restarting crashed server");
 
     if (lastCrashedIndex >= 0) {
+      if (servers[lastCrashedIndex].getServerControl().isRunning()) { throw new AssertionError(
+                                                                                               "Server["
+                                                                                                   + servers[lastCrashedIndex]
+                                                                                                       .getDsoPort()
+                                                                                                   + "] is not down as expected!"); }
       servers[lastCrashedIndex].getServerControl().start(startTimeout);
+
+      if (!servers[lastCrashedIndex].getServerControl().isRunning()) { throw new AssertionError(
+                                                                                                "Server["
+                                                                                                    + servers[lastCrashedIndex]
+                                                                                                        .getDsoPort()
+                                                                                                    + "] is not running as expected!"); }
       resetLastCrashedIndex();
     } else {
       throw new AssertionError("No crashed servers to restart.");
@@ -423,6 +528,14 @@ public class ActivePassiveServerManager {
                    + "] jmxPort=[" + jmxPorts[i] + "]");
 
       configFactory.addServerToL1Config(serverNames[i], dsoPorts[i], jmxPorts[i]);
+    }
+  }
+
+  public void crashServer() throws Exception {
+    if (serverCrashMode.equals(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH)) {
+      crashActive();
+    } else if (serverCrashMode.equals(ActivePassiveCrashMode.RANDOM_SERVER_CRASH)) {
+      crashRandomServer();
     }
   }
 
@@ -480,27 +593,6 @@ public class ActivePassiveServerManager {
 
     public String getLogLocation() {
       return logLocation;
-    }
-  }
-
-  /*
-   * State inner class
-   */
-  public static class TestState {
-    public static final int RUNNING  = 0;
-    public static final int STOPPING = 1;
-    private int             state;
-
-    public TestState() {
-      state = RUNNING;
-    }
-
-    public synchronized void setTestState(int state) {
-      this.state = state;
-    }
-
-    public synchronized boolean isRunning() {
-      return state == RUNNING;
     }
   }
 

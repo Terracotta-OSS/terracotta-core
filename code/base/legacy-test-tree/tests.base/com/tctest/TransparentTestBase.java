@@ -10,6 +10,8 @@ import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
+import com.tc.management.beans.L2DumperMBean;
+import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.objectserver.control.ExtraProcessServerControl;
@@ -38,6 +40,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import javax.management.MBeanServerConnection;
+import javax.management.MBeanServerInvocationHandler;
+import javax.management.remote.JMXConnector;
+
 import junit.framework.AssertionFailedError;
 
 public abstract class TransparentTestBase extends BaseDSOTestCase implements TransparentTestIface, TestConfigurator {
@@ -58,13 +64,25 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   private ServerControl                           serverControl;
   private boolean                                 controlledCrashMode     = false;
   private ServerCrasher                           crasher;
+  private File                                    javaHome;
+  private int                                     pid                     = -1;
 
   // for active-passive tests
   private ActivePassiveServerManager              apServerManager;
   private ActivePassiveTestSetupManager           apSetupManager;
+  private TestState                               crashTestState;
 
   protected TestConfigObject getTestConfigObject() {
     return TestConfigObject.getInstance();
+  }
+
+  protected void setJavaHome() {
+    if (javaHome == null) {
+      String javaHome_local = getTestConfigObject().getL2StartupJavaHome();
+      if (javaHome_local == null) { throw new IllegalStateException(TestConfigObject.L2_STARTUP_JAVA_HOME
+                                                                    + " must be set to a valid JAVA_HOME"); }
+      javaHome = new File(javaHome_local);
+    }
   }
 
   protected void setUp() throws Exception {
@@ -72,6 +90,11 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
     RestartTestHelper helper = null;
     if ((isCrashy() && canRunCrash()) || useExternalProcess()) {
+      // javaHome is set here only to enforce that java home is defined in the test config
+      // javaHome is set again inside RestartTestEnvironment because how that class is used
+      // TODO: clean this up
+      setJavaHome();
+
       helper = new RestartTestHelper(mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_CRASH),
                                      new RestartTestEnvironment(getTempDirectory(), new PortChooser(),
                                                                 RestartTestEnvironment.PROD_MODE));
@@ -90,20 +113,22 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     this.doSetUp(this);
 
     if (isCrashy() && canRunCrash()) {
+      crashTestState = new TestState(false);
       crasher = new ServerCrasher(serverControl, helper.getServerCrasherConfig().getRestartInterval(), helper
-          .getServerCrasherConfig().isCrashy());
+          .getServerCrasherConfig().isCrashy(), crashTestState);
       crasher.startAutocrash();
     }
   }
 
   private final void setUpActivePassiveServers() throws Exception {
     controlledCrashMode = true;
+    setJavaHome();
     apSetupManager = new ActivePassiveTestSetupManager();
     setupActivePassiveTest(apSetupManager);
     apServerManager = new ActivePassiveServerManager(mode()
         .equals(TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE), getTempDirectory(), new PortChooser(),
                                                      ActivePassiveServerConfigCreator.DEV_MODE, apSetupManager,
-                                                     runnerConfig.startTimeout());
+                                                     runnerConfig.startTimeout(), javaHome);
     apServerManager.addServersToL1Config(configFactory);
   }
 
@@ -117,13 +142,9 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
   protected void setUpExternalProcess(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper,
                                       int serverPort, int adminPort, String configFile) throws Exception {
-    String javaHome = getTestConfigObject().getL2StartupJavaHome();
-    if (javaHome == null) { throw new IllegalStateException(TestConfigObject.L2_STARTUP_JAVA_HOME
-                                                            + " must be set to a valid JAVA_HOME"); }
-
-    serverControl = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile, true);
+    setJavaHome();
+    serverControl = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile, true, javaHome);
     setUp(factory, helper);
-
     configFactory().addServerToL1Config(null, serverPort, adminPort);
     configFactory().addServerToL2Config(null, serverPort, adminPort);
   }
@@ -250,9 +271,17 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
       if (this.runner.executionTimedOut() || this.runner.startTimedOut()) {
         try {
-          this.runner.dumpServer();
+          System.err.println("##### About to shutdown server crasher");
+          synchronized (crashTestState) {
+            crashTestState.setTestState(TestState.STOPPING);
+          }
+          System.err.println("##### About to dump server");
+          dumpServers();
         } finally {
-          ThreadDump.dumpThreadsMany(3, 1000L);
+          if (pid != 0) {
+            System.out.println("Thread dumping test process");
+            ThreadDump.dumpThreadsMany(getThreadDumpCount(), getThreadDumpInterval());
+          }
         }
       }
 
@@ -267,13 +296,58 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     }
   }
 
+  private void dumpServers() throws Exception {
+    if (serverControl != null && serverControl.isRunning()) {
+      System.out.println("Dumping server=[" + serverControl.getDsoPort() + "]");
+
+      JMXConnector jmxConnector = ActivePassiveServerManager.getJMXConnector(serverControl.getAdminPort());
+      MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+      L2DumperMBean mbean = (L2DumperMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DUMPER,
+                                                                                          L2DumperMBean.class, true);
+      while (true) {
+        try {
+          mbean.doServerDump();
+          break;
+        } catch (Exception e) {
+          System.out.println("Could not find L2DumperMBean... sleep for 1 sec.");
+          Thread.sleep(1000);
+        }
+      }
+
+      if (pid != 0) {
+        mbean.setThreadDumpCount(getThreadDumpCount());
+        mbean.setThreadDumpInterval(getThreadDumpInterval());
+        pid = mbean.doThreadDump();
+        System.out.println("Thread dumping server=[" + serverControl.getDsoPort() + "] pid=[" + pid + "]");
+      }
+      jmxConnector.close();
+    }
+    if (apServerManager != null) {
+      apServerManager.dumpAllServers(pid, getThreadDumpCount(), getThreadDumpInterval());
+      pid = apServerManager.getPid();
+    }
+    if (runner != null) {
+      runner.dumpServer();
+    } else {
+      System.err.println("Runner is null !!");
+    }
+  }
+
   protected void tearDown() throws Exception {
     if (controlledCrashMode) {
       if (isActivePassive() && canRunActivePassive()) {
         apServerManager.stopAllServers();
-        apServerManager = null;
       } else if (isCrashy() && canRunCrash()) {
-        crasher.stop();
+        synchronized (crashTestState) {
+          crashTestState.setTestState(TestState.STOPPING);
+          if (serverControl.isRunning()) {
+            serverControl.shutdown();
+          }
+        }
+      }
+    } else if (useExternalProcess()) {
+      if (serverControl.isRunning()) {
+        serverControl.shutdown();
       }
     }
     super.tearDown();
@@ -281,11 +355,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
   protected void doDumpServerDetails() {
     try {
-      if (this.runner != null) {
-        this.runner.dumpServer();
-      } else {
-        System.err.println("Runner is null !!");
-      }
+      dumpServers();
     } catch (Exception ex) {
       ex.printStackTrace();
     }
@@ -352,4 +422,9 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
     return out;
   }
+
+  /*
+   * State inner class
+   */
+
 }

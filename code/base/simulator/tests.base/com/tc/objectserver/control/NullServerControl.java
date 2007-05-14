@@ -48,4 +48,8 @@ public class NullServerControl implements ServerControl {
     return 0;
   }
 
+  public int getAdminPort() {
+    return 0;
+  }
+
 }

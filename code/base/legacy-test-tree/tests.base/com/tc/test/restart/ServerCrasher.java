@@ -4,61 +4,63 @@
  */
 package com.tc.test.restart;
 
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
-
 import com.tc.exception.TCRuntimeException;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tctest.TestState;
 
 public class ServerCrasher implements Runnable {
-  private final ServerControl       server;
-  private final Thread              myThread  = new Thread(this, "ServerCrasher");
-  private final long                crashInterval;
-  private final boolean             crash;
-  private final SynchronizedBoolean isRunning = new SynchronizedBoolean(false);
+  private final ServerControl server;
+  private final Thread        myThread = new Thread(this, "ServerCrasher");
+  private final long          crashInterval;
+  private final TestState     testState;
 
-  public ServerCrasher(final ServerControl server, final long crashInterval, final boolean crash) {
+  public ServerCrasher(final ServerControl server, final long crashInterval, final boolean crash, TestState testState) {
     super();
     this.server = server;
     this.crashInterval = crashInterval;
-    this.crash = crash;
+    this.testState = testState;
   }
 
   public void startAutocrash() throws Exception {
-    isRunning.set(true);
+    testState.setTestState(TestState.RUNNING);
     myThread.start();
   }
 
   public void run() {
+    // initial server start
     try {
-      while (isRunning.get()) {
-        System.err.println("Starting server...");
-        synchronized (isRunning) {
-          if (isRunning.get()) server.start(30 * 1000);
-        }
-        ThreadUtil.reallySleep(crashInterval);
-        synchronized (isRunning) {
-          if (isRunning.get()) {
-            if (crash) {
-              System.err.println("Crashing server...");
-              server.crash();
-            } else {
-              System.err.println("Shutting server down...");
-              server.shutdown();
-            }
-            if (server.isRunning()) throw new AssertionError("Server is still running even after shutdown or crash.");
-          }
+      synchronized (testState) {
+        if (testState.isRunning()) {
+          System.err.println("Starting server...");
+          server.start(30 * 1000);
         }
       }
     } catch (Exception e) {
       throw new TCRuntimeException(e);
     }
-  }
 
-  public void stop() throws Exception {
-    synchronized (isRunning) {
-      isRunning.set(false);
-      server.shutdown();
+    while (true) {
+      ThreadUtil.reallySleep(crashInterval);
+      synchronized (testState) {
+        if (testState.isRunning()) {
+          try {
+            System.err.println("Crashing server...");
+            server.crash();
+
+            if (server.isRunning()) throw new AssertionError("Server is still running even after shutdown or crash.");
+
+            System.err.println("Starting server...");
+            server.start(30 * 1000);
+
+          } catch (Exception e) {
+            throw new TCRuntimeException(e);
+          }
+        } else {
+          System.err.println("Shutting down server crasher.");
+          break;
+        }
+      }
     }
   }
 }

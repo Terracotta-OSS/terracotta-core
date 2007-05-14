@@ -27,7 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public final class Container implements Runnable {
-  private static final boolean             DEBUG = true;
+  private static final boolean             DEBUG = false;
 
   private final ContainerConfig            config;
   private final ContainerState             containerState;

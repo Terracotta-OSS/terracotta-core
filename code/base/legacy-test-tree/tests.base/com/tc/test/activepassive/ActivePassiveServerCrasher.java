@@ -4,7 +4,7 @@
  */
 package com.tc.test.activepassive;
 
-import com.tc.test.activepassive.ActivePassiveServerManager.TestState;
+import com.tctest.TestState;
 
 public class ActivePassiveServerCrasher implements Runnable {
   private static boolean                   DEBUG      = false;
@@ -34,9 +34,9 @@ public class ActivePassiveServerCrasher implements Runnable {
       synchronized (testState) {
         if (testState.isRunning() && (maxCrashCount - crashCount) > 0 && serverManger.getErrors().isEmpty()) {
           try {
-            debugPrintln("***** ActivePassiveServerCrasher:  about to crash active  threadID=["
+            debugPrintln("***** ActivePassiveServerCrasher:  about to crash server  threadID=["
                          + Thread.currentThread().getName() + "]");
-            serverManger.crashActive();
+            serverManger.crashServer();
 
             debugPrintln("***** ActivePassiveServerCrasher:  about to restart crashed server threadID=["
                          + Thread.currentThread().getName() + "]");
@@ -44,7 +44,7 @@ public class ActivePassiveServerCrasher implements Runnable {
 
             crashCount++;
           } catch (Exception e) {
-            debugPrintln("***** ActivePassiveServerCrasher:  error occured while crashing/restarting active  threadID=["
+            debugPrintln("***** ActivePassiveServerCrasher:  error occured while crashing/restarting server  threadID=["
                          + Thread.currentThread().getName() + "]");
 
             e.printStackTrace();

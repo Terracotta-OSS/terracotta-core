@@ -554,4 +554,12 @@ public class TCTestCase extends TestCase {
   public int getTimeoutValueInSeconds() {
     return TestConfigObject.getInstance().getJunitTimeoutInSeconds();
   }
+
+  protected int getThreadDumpCount() {
+    return numThreadDumps;
+  }
+
+  protected long getThreadDumpInterval() {
+    return dumpInterval;
+  }
 }

@@ -117,7 +117,14 @@ public class DistributedTestRunner implements ResultsListener {
 
     initializedClients();
 
-    L2TVSConfigurationSetupManager manager = configFactory.createL2TVSConfigurationSetupManager(null);
+    L2TVSConfigurationSetupManager manager;
+    if (DEBUG) {
+      this.configFactory.addServerToL2Config("testing", 8510, 8520);
+      this.configFactory.activateConfigurationChange();
+      manager = this.configFactory.createL2TVSConfigurationSetupManager("testing");
+    } else {
+      manager = this.configFactory.createL2TVSConfigurationSetupManager(null);
+    }
 
     if (this.startServer) {
       server = new TCServerImpl(manager, new TCThreadGroup(new ThrowableHandler(TCLogging
@@ -386,6 +393,7 @@ public class DistributedTestRunner implements ResultsListener {
 
   public void dumpServer() {
     if (server != null && startServer) {
+      System.out.println("Dumping intra-process server");
       server.dump();
     }
   }

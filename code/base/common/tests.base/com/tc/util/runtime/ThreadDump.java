@@ -28,15 +28,17 @@ public class ThreadDump {
     dumpThreadsMany(1, 0L);
   }
 
-  public static void dumpThreadsMany(int iterations, long delay) {
+  public static int dumpThreadsMany(int iterations, long delay) {
+    int pid = -1;
     for (int i = 0; i < iterations; i++) {
       if (Os.isWindows()) {
         doWindowsDump();
       } else {
-        doUnixDump();
+        pid = doUnixDump();
       }
       ThreadUtil.reallySleep(delay);
     }
+    return pid;
   }
 
   public static void dumpProcessGroup() {
@@ -44,7 +46,7 @@ public class ThreadDump {
     doSignal(new String[] { "-3" }, 0);
   }
 
-  private static void doUnixDump() {
+  private static int doUnixDump() {
     int pid;
     try {
       pid = GetPid.getPID();
@@ -56,6 +58,7 @@ public class ThreadDump {
     }
 
     doSignal(new String[] { "-3" }, pid);
+    return pid;
   }
 
   private static void doWindowsDump() {

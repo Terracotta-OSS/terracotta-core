@@ -184,8 +184,7 @@ public class RestartTestEnvironment {
       if (javaHomeString != null) {
         javaHome = new File(javaHomeString);
       }
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       // ignore, leaving javaHome as null
     }
     this.server = new ExtraProcessServerControl(new DebugParams(), "localhost", serverPort, adminPort, this.configFile
@@ -312,6 +311,11 @@ public class RestartTestEnvironment {
     public int getDsoPort() {
       assertServerNotNull();
       return server.getDsoPort();
+    }
+
+    public int getAdminPort() {
+      assertServerNotNull();
+      return server.getAdminPort();
     }
   }
 }
