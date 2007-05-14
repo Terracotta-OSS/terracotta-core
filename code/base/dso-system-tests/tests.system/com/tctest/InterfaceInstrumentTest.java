@@ -10,7 +10,7 @@ public class InterfaceInstrumentTest extends TransparentTestBase {
   private static final int NODE_COUNT = 2;
 
   public InterfaceInstrumentTest() {
-    this.disableAllUntil("2008-05-20");
+    // this.disableAllUntil("2008-05-20");
   }
 
   public void setUp() throws Exception {

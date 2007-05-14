@@ -39,7 +39,7 @@ public class InterfaceInstrumentTestApp extends AbstractErrorCatchingTransparent
     String concreteClass = MyConcrete.class.getName();
     String interfaceName = MyInterface.class.getName();
     
-    config.addIncludePattern(interfaceName);
+    config.addIncludePattern(interfaceName + "+");
     
     // THIS IS INTENTIONALLY COMMENTED OUT TO MAKE SURE
     // THE TEST STILL PASSES. SEE CDV-144

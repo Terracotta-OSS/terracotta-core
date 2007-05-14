@@ -39,9 +39,7 @@ public class SubtypeInstrumentTestApp extends AbstractErrorCatchingTransparentAp
     String baseClass = BaseClass.class.getName();
     String subClass = SubClass.class.getName();
     
-    
-    
-    config.addIncludePattern(baseClass);
+    config.addIncludePattern(baseClass + "+");
     
     // THIS IS INTENTIONALLY COMMENTED OUT TO MAKE SURE
     // THE TEST STILL PASSES. SEE CDV-144
