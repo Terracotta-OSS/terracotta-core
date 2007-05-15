@@ -43,8 +43,7 @@
              package-->
         <include>
           <class-expression>demo.sharededitor.models.*</class-expression>
-          <honor-transient>true</honor-transient>
-	  </include>
+        </include>
         <!--Although the class 'demo.sharededitor.models.ObjectManager' is already declared as
              instrumented by the preceding declaration - we want certain parts of it to only
              be available locally (see the <transient-fields/> section) - this is why we have a
@@ -94,19 +93,7 @@
            section tells DSO to assume a lock on those objects for the duration of the call-->
       <locks>
         <autolock>
-          <method-expression>* demo..*.*(..)</method-expression>
-        </autolock>
-        <autolock>
-          <method-expression>* demo.sharededitor.models.ObjectManager.notifyListeners(..)</method-expression>
-          <lock-level>read</lock-level>
-        </autolock>
-        <autolock>
-          <method-expression>* demo.sharededitor.models.ObjectManager.isGrabbed(..)</method-expression>
-          <lock-level>read</lock-level>
-        </autolock>
-        <autolock>
-          <method-expression>* demo.sharededitor.models.ObjectManager.list(..)</method-expression>
-          <lock-level>read</lock-level>
+          <method-expression>* *..*.*(..)</method-expression>
         </autolock>
       </locks>
       <!--We declare the field 'demo.sharededitor.controls.Dispatcher.objmgr' a root, making it 
