@@ -84,7 +84,6 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
     proxy.start();
 
     ExtraL1ProcessControl client = spawnNewClient(dsoProxyPort);
-    barrier.barrier();
     int exitCode = client.waitFor();
     proxy.status();
     proxy.stop();
