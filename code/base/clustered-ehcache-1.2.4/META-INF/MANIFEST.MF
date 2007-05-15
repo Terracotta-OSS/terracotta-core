@@ -11,3 +11,4 @@ Bundle-SymbolicName: org.terracotta.modules.clustered_ehcache_1.2.4
 Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: 1.0.0
 Import-Package: org.terracotta.modules.configuration
+Require-Bundle: org.terracotta.modules.clustered_commons_collections_3.1
