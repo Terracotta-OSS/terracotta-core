@@ -4,7 +4,6 @@
  */
 package com.tc.simulator.control;
 
-import com.tc.util.TCTimeoutException;
 
 public class MockControl implements Control {
 
@@ -17,9 +16,9 @@ public class MockControl implements Control {
   public boolean waitForAllCompleteResult;
   public boolean throwTimeoutExceptionInWaitForAllComplete;
 
-  public void waitForStart(long timeout) throws TCTimeoutException {
+  public void waitForStart() {
     waitForStartCalled = true;
-    if (throwTimeoutExceptionInWaitForStart) { throw new TCTimeoutException(timeout); }
+//    if (throwTimeoutExceptionInWaitForStart) { throw new TCTimeoutException(timeout); }
   }
 
   public void notifyComplete() {

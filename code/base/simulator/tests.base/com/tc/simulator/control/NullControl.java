@@ -6,7 +6,7 @@ package com.tc.simulator.control;
 
 public class NullControl implements Control {
 
-  public void waitForStart(long timeout) {
+  public void waitForStart() {
     return;
   }
 
@@ -22,7 +22,7 @@ public class NullControl implements Control {
     return;
   }
 
-  public boolean waitForMutationComplete(long timeout) throws InterruptedException {
+  public boolean waitForMutationComplete(long timeout) {
     return true;
   }
 
@@ -30,7 +30,7 @@ public class NullControl implements Control {
     return;
   }
 
-  public boolean waitForValidationStart(long timeout) throws InterruptedException {
+  public boolean waitForValidationStart(long timeout) {
     return true;
   }
 

@@ -38,7 +38,7 @@ class ApplicationRunner implements Runnable {
         notifyError(new ApplicationRunnerConfigException("Start timeout must be greater than zero."));
         return;
       }
-      this.control.waitForStart(config.getStartTimeout());
+      this.control.waitForStart();
       long start = System.currentTimeMillis();
       this.application.run();
       long delta = System.currentTimeMillis() - start;
