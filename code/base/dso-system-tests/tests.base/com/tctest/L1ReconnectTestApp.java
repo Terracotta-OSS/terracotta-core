@@ -7,6 +7,8 @@ package com.tctest;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
+import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
+
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -25,10 +27,9 @@ import java.net.InetAddress;
 import java.util.List;
 
 /**
- * Test for l1-reconnect feature: CDV-97
- * An extra L1 is created and connected to L2 through a proxy (TCPProxy)
- * We will use this proxy to simulate network disconnect to make sure
- * the L1 is still operating correctly upon reconnecting within a specified time
+ * Test for l1-reconnect feature: CDV-97 An extra L1 is created and connected to L2 through a proxy (TCPProxy) We will
+ * use this proxy to simulate network disconnect to make sure the L1 is still operating correctly upon reconnecting
+ * within a specified time
  * 
  * NOT YET FINISHED
  * 
@@ -44,10 +45,12 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
 
   // roots
   private int[]                   sum         = new int[1];
+  private CyclicBarrier           barrier     = null;
 
   public L1ReconnectTestApp(String appId, ApplicationConfig config, ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
     this.config = config;
+    barrier = new CyclicBarrier(2);
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
@@ -57,6 +60,10 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     config.addIncludePattern(testClass + "$*");
     spec.addRoot("sum", "sum");
+    spec.addRoot("barrier", "barrier");
+    
+    config.addIncludePattern(CyclicBarrier.class.getName());
+    config.addWriteAutolock("* " + CyclicBarrier.class.getName() + ".*(..)");
   }
 
   public void run() {
@@ -71,16 +78,17 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
     PortChooser pc = new PortChooser();
     int dsoPort = Integer.parseInt(config.getAttribute(PORT_NUMBER));
     int dsoProxyPort = pc.chooseRandomPort();
-    
-    //new TCPProxy(int listenPort, InetAddress destHost, int destPort, long delay, boolean logData, File logDir
-    TCPProxy proxy = new TCPProxy(dsoProxyPort, InetAddress.getLocalHost(), dsoPort, 0L, false, new File(".") );
+
+    // new TCPProxy(int listenPort, InetAddress destHost, int destPort, long delay, boolean logData, File logDir
+    TCPProxy proxy = new TCPProxy(dsoProxyPort, InetAddress.getLocalHost(), dsoPort, 0L, false, new File("."));
     proxy.start();
-    
+
     ExtraL1ProcessControl client = spawnNewClient(dsoProxyPort);
-    int exitCode = client.waitFor();    
-    
+    barrier.barrier();
+    int exitCode = client.waitFor();
+    proxy.status();
     proxy.stop();
-    
+
     if (exitCode != 0) {
       Assert.failure("L1Client threw exception!");
     }
@@ -93,14 +101,15 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
 
   public static class L1Client {
     // roots
-    private int[] sum = new int[1];
+    private int[]         sum     = new int[1];
+    //private CyclicBarrier barrier = new CyclicBarrier(2);
 
     // takes roughly 100 seconds to finish
     public void calculateSum() throws Exception {
       for (int i = 0; i < 100; i++) {
         synchronized (sum) {
           sum[0] += i;
-          Thread.sleep(10);
+          Thread.sleep(100);
         }
       }
     }
@@ -122,29 +131,30 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
     File workingDir = new File(configFile.getParentFile(), "l1client");
     FileUtils.forceMkdir(workingDir);
 
-    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, 0 /* not used */, L1Client.class, 
-                                                             proxyConfigFile.getAbsolutePath(), new String[0], workingDir);
+    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, 0 /* not used */, L1Client.class,
+                                                             proxyConfigFile.getAbsolutePath(), new String[0],
+                                                             workingDir);
     client.start(20000);
     client.mergeSTDERR();
     client.mergeSTDOUT();
     System.err.println("\n### Started New Client");
     return client;
   }
-  
+
   private File createNewConfigFile(File configFile, int dsoProxyPort) throws Exception {
     List lines = IOUtils.readLines(new FileInputStream(configFile));
     for (int i = 0; i < lines.size(); i++) {
-      String line = (String)lines.get(i);
+      String line = (String) lines.get(i);
       if (line.indexOf("dso-port") > 0) {
         String newLine = line.replaceAll("\\d+", dsoProxyPort + "");
         lines.set(i, newLine);
         break;
       }
     }
-    
+
     File newConfigFile = new File(configFile.getParent(), "tc-config-proxy.xml");
     IOUtils.writeLines(lines, "\n", new FileOutputStream(newConfigFile));
-    
+
     return newConfigFile;
   }
 
