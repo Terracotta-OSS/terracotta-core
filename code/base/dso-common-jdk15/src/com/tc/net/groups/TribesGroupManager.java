@@ -16,7 +16,6 @@ import org.apache.catalina.tribes.membership.StaticMember;
 import org.apache.catalina.tribes.transport.DataSender;
 import org.apache.catalina.tribes.transport.ReceiverBase;
 import org.apache.catalina.tribes.transport.ReplicationTransmitter;
-import org.apache.catalina.tribes.util.UUIDGenerator;
 
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
@@ -121,7 +120,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       TcpPingInterceptor tcp = new TcpPingInterceptor();
       tcp.setUseThread(true);
       tcp.setInterval(1000);
-      
+
       OrderInterceptor oi = new OrderInterceptor();
       oi.setExpire(60000);
 
@@ -255,7 +254,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     if (!nodes.containsKey(from)) {
       String warn = "Message from non-existing member " + sender + " . Adding this node to nodes = " + nodes;
       logger.warn(warn);
-      //XXX:: Sometimes messages arrive before memberAdded event. So we are faking it.
+      // XXX:: Sometimes messages arrive before memberAdded event. So we are faking it.
       memberAdded(sender);
     }
     gmsg.setMessageOrginator(from);
@@ -267,7 +266,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   private static StaticMember makeMember(final Node node) {
     try {
       StaticMember rv = new StaticMember(node.getHost(), node.getPort(), 0);
-      rv.setUniqueId(UUIDGenerator.randomUUID(true));
+      // rv.setUniqueId(UUIDGenerator.randomUUID(true));
       return rv;
     } catch (IOException e) {
       logger.error("Error creating group member", e);
@@ -311,6 +310,9 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     } else {
       logger.warn("Member Added Event called for : " + newNode + " while it is still present in the list of nodes : "
                   + old + " : " + nodes);
+      if (!old.equals(member)) {
+        logger.error("Old Member : " + old + " NOT Equal to  New one " + member);
+      }
     }
   }
 
@@ -440,7 +442,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       return responses;
     }
 
-    public GroupMessage getResponse(NodeID nodeID) {
+    public synchronized GroupMessage getResponse(NodeID nodeID) {
       Assert.assertTrue(waitFor.isEmpty());
       for (Iterator<GroupMessage> i = responses.iterator(); i.hasNext();) {
         GroupMessage msg = i.next();
@@ -449,17 +451,21 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       return null;
     }
 
-    public synchronized void sendTo(GroupChannel group, GroupMessage msg, Member[] m) {
+    public void sendTo(GroupChannel group, GroupMessage msg, Member[] m) {
       try {
         if (m.length > 0) {
-          for (int i = 0; i < m.length; i++) {
-            waitFor.add(makeNodeIDFrom(m[i]));
-          }
+          setUpWaitFor(m);
           group.send(m, msg, SEND_OPTIONS_NO_ACK);
         }
       } catch (ChannelException e) {
         logger.error("Error sending msg : " + msg, e);
         reconsileWaitFor(e);
+      }
+    }
+
+    private synchronized void setUpWaitFor(Member[] m) {
+      for (int i = 0; i < m.length; i++) {
+        waitFor.add(makeNodeIDFrom(m[i]));
       }
     }
 
@@ -489,12 +495,12 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       }
     }
 
-    public synchronized void sendAll(GroupChannel group, GroupMessage msg) {
+    public void sendAll(GroupChannel group, GroupMessage msg) {
       Member m[] = group.getMembers();
       sendTo(group, msg, m);
     }
 
-    private void reconsileWaitFor(ChannelException e) {
+    private synchronized void reconsileWaitFor(ChannelException e) {
       FaultyMember fm[] = e.getFaultyMembers();
       for (int i = 0; i < fm.length; i++) {
         logger.warn("Removing faulty Member " + fm[i] + " from list");
