@@ -15,7 +15,6 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.GroupMessageListener;
-import com.tc.net.groups.GroupResponse;
 import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.tx.ServerTransaction;
@@ -25,7 +24,6 @@ import com.tc.util.Assert;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -72,19 +70,6 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     });
     objectsSyncSink.clear();
     sendOKResponse(fromNode, osr);
-  }
-
-  public void goActive() {
-    try {
-      GroupResponse gr = groupManager.sendAllAndWaitForResponse(ObjectSyncResetMessageFactory
-          .createObjectSyncResetRequestMessage());
-      for (Iterator i = gr.getResponses().iterator(); i.hasNext();) {
-        ObjectSyncResetMessage msg = (ObjectSyncResetMessage) i.next();
-        validateResponse(msg.messageFrom(), msg);
-      }
-    } catch (GroupException e) {
-      logger.error("Error sending reset request : ", e);
-    }
   }
 
   private void validateResponse(NodeID nodeID, ObjectSyncResetMessage msg) {

@@ -8,7 +8,24 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 
 public class SequenceGenerator {
 
-  ConcurrentReaderHashMap map = new ConcurrentReaderHashMap();
+  public interface SequenceGeneratorListener {
+    
+    public void sequenceCreatedFor(Object key);
+    
+    public void sequenceDestroyedFor(Object key);
+    
+  }
+
+  private final ConcurrentReaderHashMap map = new ConcurrentReaderHashMap();
+  private final SequenceGeneratorListener listener;
+
+  public SequenceGenerator() {
+    this(null);
+  }
+
+  public SequenceGenerator(SequenceGeneratorListener listener) {
+    this.listener = listener;
+  }
 
   public long getNextSequence(Object key) {
     Sequence seq = (Sequence) map.get(key);
@@ -16,15 +33,18 @@ public class SequenceGenerator {
     synchronized (map) {
       if (!map.containsKey(key)) {
         map.put(key, (seq = new SimpleSequence()));
+        if (listener != null) listener.sequenceCreatedFor(key);
       } else {
         seq = (Sequence) map.get(key);
       }
     }
     return seq.next();
   }
-  
+
   public void clearSequenceFor(Object key) {
-    map.remove(key);
+    if(map.remove(key) != null && listener != null) {
+      listener.sequenceDestroyedFor(key);
+    }
   }
 
 }

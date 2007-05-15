@@ -47,10 +47,12 @@ import com.tc.objectserver.persistence.api.PersistentMapStore;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.util.sequence.SequenceGenerator;
+import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorListener;
 
 import java.io.IOException;
 
-public class L2HACoordinator implements L2Coordinator, StateChangeListener, GroupEventsListener {
+public class L2HACoordinator implements L2Coordinator, StateChangeListener, GroupEventsListener,
+    SequenceGeneratorListener {
 
   private static final TCLogger         logger = TCLogging.getLogger(L2HACoordinator.class);
 
@@ -102,7 +104,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.stateManager.registerForStateChangeEvents(this);
 
     this.l2ObjectStateManager = new L2ObjectStateManagerImpl(objectManager, transactionManager);
-    this.sequenceGenerator = new SequenceGenerator();
+    this.sequenceGenerator = new SequenceGenerator(this);
 
     final Sink objectsSyncRequestSink = stageManager
         .createStage(ServerConfigurationContext.OBJECTS_SYNC_REQUEST_STAGE,
@@ -178,7 +180,6 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
       l2ObjectStateManager.goActive();
       rClusterStateMgr.goActiveAndSyncState();
       rObjectManager.sync();
-      rTxnManager.goActive();
       try {
         server.startActiveMode();
       } catch (IOException e) {
@@ -196,7 +197,6 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
       try {
         stateManager.publishActiveState(nodeID);
         rClusterStateMgr.publishClusterState(nodeID);
-        rTxnManager.publishResetRequest(nodeID);
         rObjectManager.query(nodeID);
       } catch (GroupException ge) {
         logger.error("Error publishing states to the newly joined node : " + nodeID + " Zapping it : ", ge);
@@ -223,5 +223,19 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
       stateManager.startElectionIfNecessary(nodeID);
     }
     this.sequenceGenerator.clearSequenceFor(nodeID);
+  }
+
+  public void sequenceCreatedFor(Object key) {
+    NodeID nodeID = (NodeID) key;
+    try {
+      rTxnManager.publishResetRequest(nodeID);
+    } catch (GroupException ge) {
+      logger.error("Error publishing reset counter request node : " + nodeID + " Zapping it : ", ge);
+      groupManager.zapNode(nodeID);
+    }
+  }
+
+  public void sequenceDestroyedFor(Object key) {
+    // NOP
   }
 }

@@ -17,8 +17,6 @@ public interface ReplicatedTransactionManager {
 
   public void addObjectSyncTransaction(ServerTransaction txn);
 
-  public void goActive();
-
   public void publishResetRequest(NodeID nodeID) throws GroupException;
 
 }
