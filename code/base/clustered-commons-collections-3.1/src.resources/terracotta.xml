@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version = "1.0" encoding="UTF-8"?>
 <!--
 
   All content copyright (c) 2007 Terracotta, Inc.,
@@ -7,57 +7,85 @@
 
 -->
 <xml-fragment>
+  <instrumented-classes>
+    <include>
+      <class-expression>org.apache.commons.collections.FastHashMap*</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+    <include>
+      <class-expression>org.apache.commons.collections.SequencedHashMap*</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+    <include>
+      <class-expression>org.apache.commons.collections.LRUMap*</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+  </instrumented-classes>
 
-        <instrumented-classes>
-            <include>
-                <class-expression>org.apache.commons.collections.FastHashMap*</class-expression>
-                <honor-transient>true</honor-transient>
-            </include>
-        </instrumented-classes>
+  <locks>
+    <!-- FastHashMap -->
+    <autolock>
+      <method-expression>* org.apache.commons.collections.FastHashMap*.*(..)</method-expression>
+      <lock-level>write</lock-level>
+    </autolock>
+    <autolock>
+      <method-expression>* org.apache.commons.collections.FastHashMap.clone(..)</method-expression>
+      <lock-level>read</lock-level>
+    </autolock>
+    <autolock>
+      <method-expression>* org.apache.commons.collections.FastHashMap*.contains*(..)</method-expression>
+      <lock-level>read</lock-level>
+    </autolock>
+    <autolock>
+      <method-expression>* org.apache.commons.collections.FastHashMap.equals(..)</method-expression>
+      <lock-level>read</lock-level>
+    </autolock>
+    <autolock>
+      <method-expression>* org.apache.commons.collections.FastHashMap.get(..)</method-expression>
+      <lock-level>read</lock-level>
+    </autolock>
+    <autolock>
+      <method-expression>* org.apache.commons.collections.FastHashMap*.hashCode(..)</method-expression>
+      <lock-level>read</lock-level>
+    </autolock>
+    <autolock>
+      <method-expression>* org.apache.commons.collections.FastHashMap*.isEmpty(..)</method-expression>
+      <lock-level>read</lock-level>
+    </autolock>
+    <autolock>
+      <method-expression>* org.apache.commons.collections.FastHashMap*.size(..)</method-expression>
+      <lock-level>read</lock-level>
+    </autolock>
+    <named-lock>
+      <lock-name>org.apache.commons.collections.FastHashMap.fast</lock-name>
+      <method-expression>* org.apache.commons.collections.FastHashMap*.getFast(..)</method-expression>
+      <lock-level>write</lock-level>
+    </named-lock>
+    <named-lock>
+      <lock-name>org.apache.commons.collections.FastHashMap.fast</lock-name>
+      <method-expression>* org.apache.commons.collections.FastHashMap*.setFast(..)</method-expression>
+      <lock-level>write</lock-level>
+    </named-lock>
 
-        <locks>
-            <autolock>
-                <method-expression>* org.apache.commons.collections.FastHashMap*.*(..)</method-expression>
-                <lock-level>write</lock-level>
-            </autolock>
-            <autolock>
-                <method-expression>* org.apache.commons.collections.FastHashMap.clone(..)</method-expression>
-                <lock-level>read</lock-level>
-            </autolock>
-            <autolock>
-                <method-expression>* org.apache.commons.collections.FastHashMap*.contains*(..)</method-expression>
-                <lock-level>read</lock-level>
-            </autolock>
-            <autolock>
-                <method-expression>* org.apache.commons.collections.FastHashMap.equals(..)</method-expression>
-                <lock-level>read</lock-level>
-            </autolock>
-            <autolock>
-                <method-expression>* org.apache.commons.collections.FastHashMap.get(..)</method-expression>
-                <lock-level>read</lock-level>
-            </autolock>
-            <autolock>
-                <method-expression>* org.apache.commons.collections.FastHashMap*.hashCode(..)</method-expression>
-                <lock-level>read</lock-level>
-            </autolock>
-            <autolock>
-                <method-expression>* org.apache.commons.collections.FastHashMap*.isEmpty(..)</method-expression>
-                <lock-level>read</lock-level>
-            </autolock>
-            <autolock>
-                <method-expression>* org.apache.commons.collections.FastHashMap*.size(..)</method-expression>
-                <lock-level>read</lock-level>
-            </autolock>
-            <named-lock>
-                <lock-name>org.apache.commons.collections.FastHashMap.fast</lock-name>
-                <method-expression>* org.apache.commons.collections.FastHashMap*.getFast(..)</method-expression>
-                <lock-level>write</lock-level>
-            </named-lock>
-            <named-lock>
-                <lock-name>org.apache.commons.collections.FastHashMap.fast</lock-name>
-                <method-expression>* org.apache.commons.collections.FastHashMap*.setFast(..)</method-expression>
-                <lock-level>write</lock-level>
-            </named-lock>
-        </locks>
-
+    <!-- SequencedHashMap -->
+    <autolock>
+      <method-expression>* org.apache.commons.collections.SequencedHashMap*.*(..)</method-expression>
+      <lock-level>write</lock-level>
+    </autolock>
+    <named-lock>
+      <lock-name>org.apache.commons.collections.SequencedHashMap.put</lock-name>
+      <method-expression>* org.apache.commons.collections.SequencedHashMap*.put(..)</method-expression>
+      <lock-level>write</lock-level>
+    </named-lock>
+    <named-lock>
+      <lock-name>org.apache.commons.collections.SequencedHashMap.remove</lock-name>
+      <method-expression>* org.apache.commons.collections.SequencedHashMap*.remove(..)</method-expression>
+      <lock-level>write</lock-level>
+    </named-lock>
+    <named-lock>
+      <lock-name>org.apache.commons.collections.SequencedHashMap.clear</lock-name>
+      <method-expression>* org.apache.commons.collections.SequencedHashMap*.clear(..)</method-expression>
+      <lock-level>write</lock-level>
+    </named-lock>
+  </locks>
 </xml-fragment>
