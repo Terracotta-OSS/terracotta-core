@@ -153,7 +153,7 @@ public final class Container implements Runnable {
     boolean rv = false;
     try {
       println("Waiting for all containers to start...");
-      this.control.waitForStart(this.config.getContainerStartTimeout());
+      this.control.waitForStart();
       rv = true;
     } catch (TCTimeoutException e) {
       rv = false;

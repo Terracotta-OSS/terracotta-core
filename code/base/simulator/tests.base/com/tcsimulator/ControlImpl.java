@@ -19,7 +19,8 @@ import com.tc.simulator.listener.MutationCompletionListener;
 import com.tc.util.TCTimeoutException;
 
 public class ControlImpl implements Control, MutationCompletionListener {
-  private static final boolean DEBUG = false;
+  private static final boolean DEBUG            = false;
+  private static final long    BARRIER_TIME_OUT = Long.MAX_VALUE;
 
   private final int            mutatorCount;
   private final int            completeParties;
@@ -106,10 +107,10 @@ public class ControlImpl implements Control, MutationCompletionListener {
            + crashActiveServerAfterMutate + "]";
   }
 
-  public void waitForStart(long timeout) throws InterruptedException, TCBrokenBarrierException, TCTimeoutException {
+  public void waitForStart() throws InterruptedException, TCBrokenBarrierException, TCTimeoutException {
     try {
       try {
-        this.startBarrier.attemptBarrier(timeout);
+        this.startBarrier.attemptBarrier(BARRIER_TIME_OUT);
       } catch (InterruptedException e1) {
         throw e1;
       }
@@ -143,7 +144,7 @@ public class ControlImpl implements Control, MutationCompletionListener {
       }
     }
     try {
-      boolean rv = mutationCompleteCount.attempt(timeout);
+      boolean rv = mutationCompleteCount.attempt(BARRIER_TIME_OUT);
       return rv;
     } catch (InterruptedException e) {
       throw e;
@@ -160,7 +161,7 @@ public class ControlImpl implements Control, MutationCompletionListener {
       }
     }
     try {
-      boolean rv = validationStartCount.attempt(timeout);
+      boolean rv = validationStartCount.attempt(BARRIER_TIME_OUT);
       return rv;
     } catch (InterruptedException e) {
       throw e;
@@ -210,7 +211,7 @@ public class ControlImpl implements Control, MutationCompletionListener {
       }
     }
     try {
-      boolean rv = this.countdown.attempt(timeout);
+      boolean rv = this.countdown.attempt(BARRIER_TIME_OUT);
       return rv;
     } catch (InterruptedException e) {
       throw e;

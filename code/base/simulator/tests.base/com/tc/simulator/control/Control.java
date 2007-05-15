@@ -7,7 +7,7 @@ package com.tc.simulator.control;
 import com.tc.util.TCTimeoutException;
 
 public interface Control {
-  void waitForStart(long timeout) throws TCTimeoutException, TCBrokenBarrierException, InterruptedException;
+  void waitForStart() throws TCTimeoutException, TCBrokenBarrierException, InterruptedException;
 
   void notifyComplete();
 
