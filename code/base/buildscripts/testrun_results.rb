@@ -33,8 +33,7 @@ class TestRunResults
         
         # create symlink to latest testrun
         unless ENV['OS'] =~ /windows/i
-          `rm testrun-latest` if File.exist?("testrun-latest")
-          `ln -s -f #{root_dir.to_s} testrun-latest`          
+          `rm testrun-latest && ln -s -f #{root_dir.to_s} testrun-latest`          
         end
         
         TestRunResults.new(root_dir)
