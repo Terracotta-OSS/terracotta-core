@@ -37,6 +37,8 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 		super(appId, cfg, listenerProvider);
 		barrier = new CyclicBarrier(getParticipantCount());
 		clusteredCacheManager = CacheManager.getInstance();
+		//clusteredCacheManager = new CacheManager();
+		//clusteredCacheManager = CacheManager.create();
 	}
 
 	/**
