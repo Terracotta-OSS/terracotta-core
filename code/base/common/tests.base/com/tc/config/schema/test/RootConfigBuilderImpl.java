@@ -17,6 +17,12 @@ public class RootConfigBuilderImpl extends BaseConfigBuilder implements RootConf
     setFieldName(clazz.getName() + "." + field);
   }
 
+  public RootConfigBuilderImpl(Class clazz, String fieldName, String rootName) {
+    this();
+    setFieldName(clazz.getName() + "." + fieldName);
+    setRootName(rootName);
+  }
+
   public RootConfigBuilderImpl() {
     super(4, ALL_PROPERTIES);
   }
