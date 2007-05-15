@@ -21,13 +21,13 @@ public final class CommitTransactionMessageToTransactionBatchReader implements T
   // Used by active server
   public TransactionBatchReader newTransactionBatchReader(CommitTransactionMessage ctm) throws IOException {
     return new TransactionBatchReaderImpl(gtxm, ctm.getBatchData(), ctm.getChannelID(), ctm
-        .getAcknowledgedTransactionIDs(), ctm.getSerializer(), false);
+        .getAcknowledgedTransactionIDs(), ctm.getSerializer());
   }
 
   // Used by passive server
   public TransactionBatchReader newTransactionBatchReader(RelayedCommitTransactionMessage ctm) throws IOException {
-    return new TransactionBatchReaderImpl(ctm, ctm.getBatchData(), ctm.getChannelID(), ctm.getAcknowledgedTransactionIDs(), ctm
-        .getSerializer(), true);
+    return new TransactionBatchReaderImpl(ctm, ctm.getBatchData(), ctm.getChannelID(), ctm
+        .getAcknowledgedTransactionIDs(), ctm.getSerializer());
   }
 
 }

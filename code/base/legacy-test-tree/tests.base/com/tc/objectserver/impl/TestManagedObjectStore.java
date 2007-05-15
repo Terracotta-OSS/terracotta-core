@@ -10,7 +10,7 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.SyncObjectIdSet;
+import com.tc.util.ObjectIDSet2;
 
 import java.util.Collection;
 import java.util.Map;
@@ -18,11 +18,11 @@ import java.util.Set;
 
 public class TestManagedObjectStore implements ManagedObjectStore {
 
-  public boolean         addNewWasCalled = false;
-  public boolean         containsKey;
-  public SyncObjectIdSet keySet;
-  public ManagedObject   managedObject;
-  private int            count;
+  public boolean       addNewWasCalled = false;
+  public boolean       containsKey;
+  public ObjectIDSet2  keySet;
+  public ManagedObject managedObject;
+  private int          count;
 
   public boolean containsObject(ObjectID id) {
     return containsKey;
@@ -33,7 +33,7 @@ public class TestManagedObjectStore implements ManagedObjectStore {
     count++;
   }
 
-  public SyncObjectIdSet getAllObjectIDs() {
+  public ObjectIDSet2 getAllObjectIDs() {
     return keySet;
   }
 

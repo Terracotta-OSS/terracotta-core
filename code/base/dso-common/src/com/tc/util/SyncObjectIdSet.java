@@ -11,5 +11,5 @@ public interface SyncObjectIdSet extends Set {
 
   public void stopPopulating(ObjectIDSet2 fullSet);
 
-  public SyncObjectIdSet snapshot();
+  public ObjectIDSet2 snapshot();
 }

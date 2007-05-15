@@ -92,13 +92,11 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
     return rv;
   }
 
-  public SyncObjectIdSet snapshot() {
-    SyncObjectIdSetImpl rv = new SyncObjectIdSetImpl();
+  public ObjectIDSet2 snapshot() {
     synchronized (lock) {
       waitWhileBlocked();
-      rv.addAll(set);
+      return new ObjectIDSet2(set);
     }
-    return rv;
   }
 
   private void waitWhileBlocked() {

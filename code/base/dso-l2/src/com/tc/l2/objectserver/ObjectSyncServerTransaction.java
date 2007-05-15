@@ -102,10 +102,6 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
     return TxnType.NORMAL;
   }
 
-  public boolean isPassive() {
-    return true;
-  }
-
   // XXX:: this is server generated txn, hence GID is not assigned.
   public GlobalTransactionID getGlobalTransactionID() {
     return GlobalTransactionID.NULL_ID;

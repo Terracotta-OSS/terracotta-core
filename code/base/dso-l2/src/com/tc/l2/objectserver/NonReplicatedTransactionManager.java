@@ -5,6 +5,7 @@
 package com.tc.l2.objectserver;
 
 import com.tc.exception.ImplementMe;
+import com.tc.l2.context.StateChangedEvent;
 import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.objectserver.tx.ServerTransaction;
@@ -27,6 +28,14 @@ public class NonReplicatedTransactionManager implements ReplicatedTransactionMan
   }
 
   public void publishResetRequest(NodeID nodeID) {
+    throw new ImplementMe();
+  }
+
+  public void l2StateChanged(StateChangedEvent sce) {
+    throw new ImplementMe();
+  }
+
+  public void init(Set knownObjectIDs) {
     throw new ImplementMe();
   }
 

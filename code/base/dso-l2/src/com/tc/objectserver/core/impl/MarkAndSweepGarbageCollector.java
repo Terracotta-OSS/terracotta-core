@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.core.impl;
 
@@ -21,7 +22,6 @@ import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet2;
-import com.tc.util.SyncObjectIdSet;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.NullLifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
@@ -113,13 +113,13 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     gcStats.setStartTime(startMillis);
 
     Set rootIDs = null;
-    SyncObjectIdSet managedIDs = null;
+    ObjectIDSet2 managedIDs = null;
 
     this.referenceCollector = new NewReferenceCollector();
-    
+
     rootIDs = objectManager.getRootIDs();
     managedIDs = objectManager.getAllObjectIDs();
-    
+
     gcStats.setBeginObjectCount(managedIDs.size());
 
     if (gcState.isStopRequested()) { return; }
@@ -159,12 +159,12 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     gcLogger.log_sweep(toDelete);
 
     gcLogger.log_notifyGCComplete();
-    
+
     this.referenceCollector = NULL_CHANGE_COLLECTOR;
-    
+
     // Delete Garbage
     objectManager.notifyGCComplete(toDelete);
-    
+
     gcStats.setActualGarbageCount(toDelete.size());
     long endMillis = System.currentTimeMillis();
     gcStats.setElapsedTime(endMillis - startMillis);

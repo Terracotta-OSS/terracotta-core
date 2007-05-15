@@ -12,6 +12,7 @@ import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
+import com.tc.util.ObjectIDSet2;
 import com.tc.util.SyncObjectIdSet;
 
 import java.util.Collection;
@@ -90,7 +91,7 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     this.extantObjectIDs.removeAll(ids);
   }
 
-  public SyncObjectIdSet getAllObjectIDs() {
+  public ObjectIDSet2 getAllObjectIDs() {
     assertNotInShutdown();
     return this.extantObjectIDs.snapshot();
   }

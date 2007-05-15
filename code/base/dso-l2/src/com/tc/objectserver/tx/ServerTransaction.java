@@ -53,10 +53,4 @@ public interface ServerTransaction extends GlobalTransaction {
 
   public DmiDescriptor[] getDmiDescriptors();
 
-  /*
-   * This method returns true if the transaction arrives in the passive server. I see that this method name/signature
-   * will change and become more sane/complex in future.
-   */
-  public boolean isPassive();
-
 }

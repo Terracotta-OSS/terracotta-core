@@ -3,20 +3,17 @@
  */
 package com.tc.l2.objectserver;
 
+import com.tc.l2.state.StateChangeListener;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.NodeID;
-import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.objectserver.tx.ServerTransaction;
 
-import java.util.Collection;
 import java.util.Set;
 
-public interface ReplicatedTransactionManager {
 
-  public void addCommitTransactionMessage(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs);
-
-  public void addObjectSyncTransaction(ServerTransaction txn);
+public interface ReplicatedTransactionManager extends StateChangeListener, PassiveTransactionManager {
 
   public void publishResetRequest(NodeID nodeID) throws GroupException;
+
+  public void init(Set knownObjectIDs);
 
 }

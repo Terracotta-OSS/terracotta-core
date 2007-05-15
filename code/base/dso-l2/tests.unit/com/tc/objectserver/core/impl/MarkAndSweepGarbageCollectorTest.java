@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.core.impl;
 
@@ -18,8 +19,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.SyncObjectIdSet;
-import com.tc.util.SyncObjectIdSetImpl;
+import com.tc.util.ObjectIDSet2;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -56,7 +56,7 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
 
   /**
    * Constructor for MarkAndSweepGarbageCollectorTest.
-   *
+   * 
    * @param arg0
    */
   public MarkAndSweepGarbageCollectorTest(String arg0) {
@@ -299,10 +299,8 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase implements Object
     return roots;
   }
 
-  public SyncObjectIdSet getAllObjectIDs() {
-    SyncObjectIdSet rv = new SyncObjectIdSetImpl();
-    rv.addAll(managed.keySet());
-    return rv;
+  public ObjectIDSet2 getAllObjectIDs() {
+    return new ObjectIDSet2(managed.keySet());
   }
 
   public void addFaultedObject(ObjectID oid, ManagedObject mo, boolean removeOnRelease) {

@@ -45,30 +45,18 @@ public class ServerTransactionImpl implements ServerTransaction {
   private final Collection             objectIDs;
   private final Set                    newObjectIDs;
   private final TxnBatchID             batchID;
-  private final boolean                passive;
   private final GlobalTransactionID    globalTxnID;
 
-  // for tests
   public ServerTransactionImpl(GlobalTransactionIDGenerator gtxm, TxnBatchID batchID, TransactionID txID,
                                SequenceID sequenceID, LockID[] lockIDs, ChannelID channelID, List dnas,
                                ObjectStringSerializer serializer, Map newRoots, TxnType transactionType,
                                Collection notifies, DmiDescriptor[] dmis) {
-
-    this(gtxm, batchID, txID, sequenceID, lockIDs, channelID, dnas, serializer, newRoots, transactionType, notifies,
-         dmis, false);
-  }
-
-  public ServerTransactionImpl(GlobalTransactionIDGenerator gtxm, TxnBatchID batchID, TransactionID txID,
-                               SequenceID sequenceID, LockID[] lockIDs, ChannelID channelID, List dnas,
-                               ObjectStringSerializer serializer, Map newRoots, TxnType transactionType,
-                               Collection notifies, DmiDescriptor[] dmis, boolean passive) {
     this.batchID = batchID;
     this.txID = txID;
     this.seqID = sequenceID;
     this.lockIDs = lockIDs;
     this.newRoots = newRoots;
     this.channelID = channelID;
-    this.passive = passive;
     this.serverTxID = new ServerTransactionID(channelID, txID);
     // NOTE::XXX:: GlobalTransactionID is assigned in the process transaction stage. The transaction could be
     // re-ordered before apply. This is not a problem because for an transaction to be re-ordered, it should not
@@ -153,10 +141,6 @@ public class ServerTransactionImpl implements ServerTransaction {
 
   public TxnBatchID getBatchID() {
     return batchID;
-  }
-
-  public boolean isPassive() {
-    return passive;
   }
 
   public GlobalTransactionID getGlobalTransactionID() {

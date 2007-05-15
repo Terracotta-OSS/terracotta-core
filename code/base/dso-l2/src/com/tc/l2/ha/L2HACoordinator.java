@@ -121,15 +121,15 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     final Sink ackProcessingStage = stageManager
         .createStage(ServerConfigurationContext.SERVER_TRANSACTION_ACK_PROCESSING_STAGE,
                      new ServerTransactionAckHandler(), 1, Integer.MAX_VALUE).getSink();
-    this.rObjectManager = new ReplicatedObjectManagerImpl(groupManager, stateManager, l2ObjectStateManager,
-                                                          objectManager, objectsSyncRequestSink);
-
     this.rClusterStateMgr = new ReplicatedClusterStateManagerImpl(groupManager, stateManager, clusterState, server
         .getConnectionIdFactory(), stageManager.getStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE).getSink());
 
     OrderedSink orderedObjectsSyncSink = new OrderedSink(TCLogging.getLogger(L2HACoordinator.class), objectsSyncSink);
     this.rTxnManager = new ReplicatedTransactionManagerImpl(groupManager, orderedObjectsSyncSink, transactionManager,
                                                             txnObjectManager);
+    
+    this.rObjectManager = new ReplicatedObjectManagerImpl(groupManager, stateManager, l2ObjectStateManager,rTxnManager,
+                                                          objectManager, objectsSyncRequestSink);
 
     this.groupManager.routeMessages(ObjectSyncMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(RelayedCommitTransactionMessage.class, orderedObjectsSyncSink);
@@ -176,6 +176,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
   public void l2StateChanged(StateChangedEvent sce) {
     clusterState.setCurrentState(sce.getCurrentState());
+    rTxnManager.l2StateChanged(sce);
     if (sce.movedToActive()) {
       l2ObjectStateManager.goActive();
       rClusterStateMgr.goActiveAndSyncState();

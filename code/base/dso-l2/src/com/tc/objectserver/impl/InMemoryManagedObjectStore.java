@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.impl;
 
@@ -11,8 +12,7 @@ import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
-import com.tc.util.SyncObjectIdSet;
-import com.tc.util.SyncObjectIdSetImpl;
+import com.tc.util.ObjectIDSet2;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -74,11 +74,9 @@ public class InMemoryManagedObjectStore implements ManagedObjectStore {
     removeAllObjectsByID(tx, objectIds);
   }
 
-  public synchronized SyncObjectIdSet getAllObjectIDs() {
+  public synchronized ObjectIDSet2 getAllObjectIDs() {
     assertNotInShutdown();
-    SyncObjectIdSet rv = new SyncObjectIdSetImpl();
-    rv.addAll(managed.keySet());
-    return rv;
+    return new ObjectIDSet2(managed.keySet());
   }
 
   public synchronized int getObjectCount() {

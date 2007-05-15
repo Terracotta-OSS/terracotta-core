@@ -51,7 +51,8 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     sendSink.add(msg);
   }
 
-  // TODO::recycle msg after use
+  // TODO::Recycle msg after use. NOTE:: If you are implementing recycling, checkout ReplicatedTransactionManager's PASSIVE-UNINITIALIZED
+  // pruned changes code. Messgaes may have to live longer than Txn acks.
   private Set processCommitTransactionMessage(RelayedCommitTransactionMessage commitMessage) {
     try {
       final TransactionBatchReader reader = batchReaderFactory.newTransactionBatchReader(commitMessage);

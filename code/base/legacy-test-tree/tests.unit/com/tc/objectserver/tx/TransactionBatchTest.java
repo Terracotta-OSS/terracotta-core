@@ -146,7 +146,7 @@ public class TransactionBatchTest extends TestCase {
     writer.wait4AllTxns2Serialize();
 
     TransactionBatchReaderImpl reader = new TransactionBatchReaderImpl(gidGenerator, writer.getData(), channel,
-                                                                       new HashSet(), serializer, false);
+                                                                       new HashSet(), serializer);
     assertEquals(2, reader.getNumTxns());
     assertEquals(batchID, reader.getBatchID());
 

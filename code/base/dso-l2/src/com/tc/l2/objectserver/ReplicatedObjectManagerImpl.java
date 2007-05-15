@@ -26,19 +26,22 @@ import java.util.Set;
 public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, GroupMessageListener,
     L2ObjectStateListener {
 
-  private static final TCLogger      logger = TCLogging.getLogger(ReplicatedObjectManagerImpl.class);
+  private static final TCLogger              logger = TCLogging.getLogger(ReplicatedObjectManagerImpl.class);
 
-  private final ObjectManager        objectManager;
-  private final GroupManager         groupManager;
-  private final StateManager         stateManager;
-  private final L2ObjectStateManager l2ObjectStateManager;
-  private final Sink                 objectsSyncRequestSink;
+  private final ObjectManager                objectManager;
+  private final GroupManager                 groupManager;
+  private final StateManager                 stateManager;
+  private final L2ObjectStateManager         l2ObjectStateManager;
+  private final ReplicatedTransactionManager txnManager;
+  private final Sink                         objectsSyncRequestSink;
 
   public ReplicatedObjectManagerImpl(GroupManager groupManager, StateManager stateManager,
-                                     L2ObjectStateManager l2ObjectStateManager, ObjectManager objectManager,
+                                     L2ObjectStateManager l2ObjectStateManager,
+                                     ReplicatedTransactionManager txnManager, ObjectManager objectManager,
                                      Sink objectsSyncRequestSink) {
     this.groupManager = groupManager;
     this.stateManager = stateManager;
+    this.txnManager = txnManager;
     this.objectManager = objectManager;
     this.objectsSyncRequestSink = objectsSyncRequestSink;
     this.l2ObjectStateManager = l2ObjectStateManager;
@@ -125,9 +128,14 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     }
   }
 
+  /**
+   * ACTIVE queries PASSIVES for the list of known object ids and this response is the one that opens up the
+   * transactions from ACTIVE to PASSIVE. So the replicated transaction manager is initialized here.
+   */
   private void handleObjectListRequest(NodeID nodeID, ObjectListSyncMessage clusterMsg) throws GroupException {
     Assert.assertFalse(stateManager.isActiveCoordinator());
     Set knownIDs = objectManager.getAllObjectIDs();
+    txnManager.init(knownIDs);
     logger.info("Send response to Active's query : known id lists = " + knownIDs.size());
     groupManager.sendTo(nodeID, ObjectListSyncMessageFactory.createObjectListSyncResponseMessage(clusterMsg, knownIDs));
   }
