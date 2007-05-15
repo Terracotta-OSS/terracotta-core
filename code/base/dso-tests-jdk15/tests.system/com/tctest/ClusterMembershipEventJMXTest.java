@@ -4,7 +4,8 @@
  */
 package com.tctest;
 
-import org.apache.commons.io.CopyUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.tools.ant.filters.StringInputStream;
 
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
@@ -70,7 +71,7 @@ public class ClusterMembershipEventJMXTest extends TransparentTestBase {
     try {
       TerracottaConfigBuilder builder = createConfig(port, adminPort);
       FileOutputStream out = new FileOutputStream(configFile);
-      CopyUtils.copy(builder.toString(), out);
+      IOUtils.copy(new StringInputStream(builder.toString()), out);
       out.close();
     } catch (Exception e) {
       throw Assert.failure("Can't create config file", e);
