@@ -594,6 +594,7 @@ modules:
 module-groups:
   container:
     - dso-container-tests
+    - clustered-wicket-1.3
   spring:
     - dso-spring
     - dso-spring-aj
@@ -624,8 +625,7 @@ module-groups:
     - management
     - dso-memory-datastore
   framework:
-    - clustered-rife-1.6.0
-    - clustered-wicket-1.3  
+    - clustered-rife-1.6.0      
     - clustered-lucene-2.0.0
     - clustered-cglib-2.1.3
     - clustered-apache-struts-1.1
