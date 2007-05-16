@@ -17,6 +17,7 @@ import com.tctest.TestState;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -33,7 +34,6 @@ public class ActivePassiveServerManager {
   private static final String                    CONFIG_FILE_NAME = "active-passive-server-config.xml";
   private static final boolean                   DEBUG            = false;
   private static final int                       NULL_VAL         = -1;
-  private static final long                      SEED             = 237;
 
   private final File                             tempDir;
   private final PortChooser                      portChooser;
@@ -62,7 +62,8 @@ public class ActivePassiveServerManager {
   private ActivePassiveServerCrasher             serverCrasher;
   private int                                    maxCrashCount;
   private final TestState                        testState;
-  private final Random                           random;
+  private Random                                 random;
+  private long                                   seed;
   private final File                             javaHome;
   private int                                    pid              = -1;
 
@@ -106,7 +107,15 @@ public class ActivePassiveServerManager {
     errors = new ArrayList();
     testState = new TestState();
     this.javaHome = javaHome;
-    random = new Random(SEED);
+
+    if (serverCrashMode.equals(ActivePassiveCrashMode.RANDOM_SERVER_CRASH)) {
+      SecureRandom srandom = SecureRandom.getInstance("SHA1PRNG");
+      int numBytes = 1;
+      byte[] byteArray = srandom.generateSeed(numBytes);
+      seed = new Byte(byteArray[0]).longValue();
+      random = new Random(seed);
+      System.out.println("***** Random number generator seed=[" + seed + "]");
+    }
   }
 
   private void resetActiveIndex() {
@@ -465,6 +474,7 @@ public class ActivePassiveServerManager {
     }
 
     if (activeIndex < 0) { throw new AssertionError("Active index was not set."); }
+    if (random == null) { throw new AssertionError("Random number generator was not set."); }
 
     debugPrintln("***** Choosing random server... ");
 
