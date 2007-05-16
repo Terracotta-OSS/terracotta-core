@@ -139,8 +139,8 @@ public class ControlImpl implements Control, MutationCompletionListener {
       }
     }
     try {
-      checkExecutionTimeout(executionTimeout);
-      boolean rv = mutationCompleteCount.attempt(executionTimeout);
+      checkExecutionTimeout(timeout);
+      boolean rv = mutationCompleteCount.attempt(timeout);
       return rv;
     } catch (InterruptedException e) {
       throw e;
@@ -157,8 +157,8 @@ public class ControlImpl implements Control, MutationCompletionListener {
       }
     }
     try {
-      checkExecutionTimeout(executionTimeout);
-      boolean rv = validationStartCount.attempt(executionTimeout);
+      checkExecutionTimeout(timeout);
+      boolean rv = validationStartCount.attempt(timeout);
       return rv;
     } catch (InterruptedException e) {
       throw e;
@@ -208,8 +208,8 @@ public class ControlImpl implements Control, MutationCompletionListener {
       }
     }
     try {
-      checkExecutionTimeout(executionTimeout);
-      boolean rv = this.countdown.attempt(executionTimeout);
+      checkExecutionTimeout(timeout);
+      boolean rv = this.countdown.attempt(timeout);
       return rv;
     } catch (InterruptedException e) {
       throw e;

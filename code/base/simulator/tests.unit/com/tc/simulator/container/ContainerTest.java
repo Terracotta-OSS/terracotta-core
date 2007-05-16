@@ -86,8 +86,7 @@ public class ContainerTest extends TestCase {
   public void testExecutionTimeout() throws Exception {
     this.config.applicationExecutionTimeout = 500;
     this.applicationBuilder.waitInterval = 2000;
-    this.container = new Container(this.config, this.containerStateFactory, this.globalIdGenerator, this.control,
-                                   this.resultsListener, this.applicationBuilder);
+
     this.container.run();
 
     assertTrue(resultsListener.notifyExecutionTimeoutCalled);
