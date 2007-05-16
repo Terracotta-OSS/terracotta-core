@@ -6,7 +6,6 @@ package com.tc.l2.objectserver;
 
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.dmi.DmiDescriptor;
-import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.lockmanager.api.LockID;
@@ -17,9 +16,7 @@ import com.tc.object.tx.TxnType;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.util.SequenceID;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,14 +28,13 @@ public class PrunedServerTransaction implements ServerTransaction {
   private final Collection        oids;
 
   public PrunedServerTransaction(List prunedChanges, ServerTransaction st) {
+    this(prunedChanges, st, st.getObjectIDs());
+  }
+
+  public PrunedServerTransaction(List prunedChanges, ServerTransaction st, Collection oids) {
     this.prunedChanges = prunedChanges;
     this.orgTxn = st;
-    List ids = new ArrayList(prunedChanges.size());
-    for (Iterator i = prunedChanges.iterator(); i.hasNext();) {
-      DNA dna = (DNA) i.next();
-      ids.add(dna.getObjectID());
-    }
-    this.oids = ids;
+    this.oids = oids;
   }
 
   public Collection addNotifiesTo(List list) {
@@ -58,7 +54,8 @@ public class PrunedServerTransaction implements ServerTransaction {
   }
 
   public DmiDescriptor[] getDmiDescriptors() {
-    return orgTxn.getDmiDescriptors();
+    throw new AssertionError(
+                             "This should have never been called as PrunedServerTransaction as only valid in uninitialized passives");
   }
 
   public LockID[] getLockIDs() {
@@ -78,7 +75,8 @@ public class PrunedServerTransaction implements ServerTransaction {
   }
 
   public ObjectStringSerializer getSerializer() {
-    return orgTxn.getSerializer();
+    throw new AssertionError(
+                             "This should have never been called as PrunedServerTransaction as only valid in uninitialized passives");
   }
 
   public ServerTransactionID getServerTransactionID() {
@@ -94,7 +92,8 @@ public class PrunedServerTransaction implements ServerTransaction {
   }
 
   public SequenceID getClientSequenceID() {
-    return orgTxn.getClientSequenceID();
+    throw new AssertionError(
+                             "This should have never been called as PrunedServerTransaction as only valid in uninitialized passives");
   }
 
   public GlobalTransactionID getGlobalTransactionID() {

@@ -15,7 +15,7 @@ import java.util.Set;
 
 public class NonReplicatedTransactionManager implements ReplicatedTransactionManager {
 
-  public void addCommitTransactionMessage(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
+  public void addCommitedTransactions(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
     throw new ImplementMe();
   }
 

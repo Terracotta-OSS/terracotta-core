@@ -30,6 +30,8 @@ public interface StateManager {
 
   public void moveNodeToPassiveStandby(NodeID nodeID);
   
+  public void moveToPassiveStandbyState();
+  
   public void publishActiveState(NodeID nodeID) throws GroupException;
 
 }

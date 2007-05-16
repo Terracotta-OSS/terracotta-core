@@ -11,7 +11,7 @@ public class ObjectSyncMessageFactory {
   public static ObjectSyncMessage createObjectSyncMessageFrom(ManagedObjectSyncContext mosc) {
     ObjectSyncMessage msg = new ObjectSyncMessage(ObjectSyncMessage.MANAGED_OBJECT_SYNC_TYPE);
     msg.initialize(mosc.getLookupIDs(), mosc.getDNACount(), mosc.getSerializedDNAs(), mosc.getObjectSerializer(), mosc
-        .getRootsMap(), mosc.getSequenceID());
+        .getRootsMap(), mosc.getSequenceID(), mosc.hasMore());
     return msg;
   }
 

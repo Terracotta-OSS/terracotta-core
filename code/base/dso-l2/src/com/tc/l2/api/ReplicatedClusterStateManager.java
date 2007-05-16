@@ -17,4 +17,6 @@ public interface ReplicatedClusterStateManager {
 
   public void publishClusterState(NodeID nodeID) throws GroupException;
 
+  public void fireNodeLeftEvent(NodeID nodeID);
+
 }

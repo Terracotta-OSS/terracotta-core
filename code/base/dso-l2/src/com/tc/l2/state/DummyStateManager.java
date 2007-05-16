@@ -37,4 +37,8 @@ public class DummyStateManager implements StateManager {
     // Nop
   }
 
+  public void moveToPassiveStandbyState() {
+    throw new UnsupportedOperationException();
+  }
+
 }

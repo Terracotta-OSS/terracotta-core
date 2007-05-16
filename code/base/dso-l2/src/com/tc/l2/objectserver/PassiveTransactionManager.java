@@ -11,7 +11,7 @@ import java.util.Set;
 
 public interface PassiveTransactionManager {
 
-  public void addCommitTransactionMessage(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs);
+  public void addCommitedTransactions(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs);
 
   public void addObjectSyncTransaction(ServerTransaction txn);
 

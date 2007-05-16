@@ -36,6 +36,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
   private ObjectStringSerializer serializer;
   private Map                    rootsMap;
   private long                   sequenceID;
+  private boolean                hasMore;
 
   public ObjectSyncMessage() {
     // Make serialization happy
@@ -54,6 +55,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     serializer = readObjectStringSerializer(in);
     this.dnas = readByteBuffers(in);
     this.sequenceID = in.readLong();
+    this.hasMore = in.readBoolean();
   }
 
   protected void basicWriteExternal(int msgType, ObjectOutput out) throws IOException {
@@ -66,6 +68,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     recycle(dnas);
     dnas = null;
     out.writeLong(this.sequenceID);
+    out.writeBoolean(hasMore);
   }
 
   private void writeRootsMap(ObjectOutput out) throws IOException {
@@ -112,13 +115,14 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
   }
 
   public void initialize(Set dnaOids, int count, TCByteBuffer[] serializedDNAs,
-                         ObjectStringSerializer objectSerializer, Map roots, long sID) {
+                         ObjectStringSerializer objectSerializer, Map roots, long sID, boolean more) {
     this.oids = dnaOids;
     this.dnaCount = count;
     this.dnas = serializedDNAs;
     this.serializer = objectSerializer;
     this.rootsMap = roots;
     this.sequenceID = sID;
+    this.hasMore = more;
   }
 
   public int getDnaCount() {
@@ -135,6 +139,10 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
 
   public Map getRootsMap() {
     return rootsMap;
+  }
+  
+  public boolean isLastMessage() {
+    return !hasMore;
   }
 
   /**

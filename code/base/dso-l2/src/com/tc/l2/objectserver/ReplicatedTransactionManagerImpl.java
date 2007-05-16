@@ -21,15 +21,23 @@ import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.impl.VersionizedDNAWrapper;
+import com.tc.object.gtx.GlobalTransactionID;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet2;
 
+import gnu.trove.TLinkable;
+import gnu.trove.TLinkedList;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -46,7 +54,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
   private final GroupManager                           groupManager;
   private final OrderedSink                            objectsSyncSink;
 
-  private volatile PassiveTransactionManager           delegate;
+  private PassiveTransactionManager                    delegate;
 
   private final PassiveUninitializedTransactionManager passiveUninitTxnMgr = new PassiveUninitializedTransactionManager();
   private final PassiveStandbyTransactionManager       passiveStdByTxnMgr  = new PassiveStandbyTransactionManager();
@@ -63,7 +71,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     this.delegate = passiveUninitTxnMgr;
   }
 
-  public void init(Set knownObjectIDs) {
+  public synchronized void init(Set knownObjectIDs) {
     if (delegate == passiveUninitTxnMgr) {
       passiveUninitTxnMgr.addKnownObjectIDs(knownObjectIDs);
     } else {
@@ -71,11 +79,12 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     }
   }
 
-  public void addCommitTransactionMessage(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
-    delegate.addCommitTransactionMessage(channelID, txnIDs, txns, completedTxnIDs);
+  public synchronized void addCommitedTransactions(ChannelID channelID, Set txnIDs, Collection txns,
+                                                   Collection completedTxnIDs) {
+    delegate.addCommitedTransactions(channelID, txnIDs, txns, completedTxnIDs);
   }
 
-  public void addObjectSyncTransaction(ServerTransaction txn) {
+  public synchronized void addObjectSyncTransaction(ServerTransaction txn) {
     delegate.addObjectSyncTransaction(txn);
   }
 
@@ -114,7 +123,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     validateResponse(nodeID, osr);
   }
 
-  public void l2StateChanged(StateChangedEvent sce) {
+  public synchronized void l2StateChanged(StateChangedEvent sce) {
     if (sce.getCurrentState().equals(StateManager.ACTIVE_COORDINATOR)) {
       passiveUninitTxnMgr.clear(); // Release Memory
       this.delegate = activeTxnMgr;
@@ -124,14 +133,14 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     }
   }
 
-  public void addIncommingTransactions(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
+  private void addIncommingTransactions(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
     transactionManager.incomingTransactions(channelID, txnIDs, txns, false);
     txnObjectManager.addTransactions(txns, completedTxnIDs);
   }
 
   private final class NullPassiveTransactionManager implements PassiveTransactionManager {
 
-    public void addCommitTransactionMessage(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
+    public void addCommitedTransactions(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
       // There could still be some messages in the queue that arrives after the node becomes ACTIVE
       logger.warn("NullPassiveTransactionManager :: Ignoring commit Txn Messages from " + channelID);
     }
@@ -143,7 +152,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   private final class PassiveStandbyTransactionManager implements PassiveTransactionManager {
 
-    public void addCommitTransactionMessage(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
+    public void addCommitedTransactions(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
       addIncommingTransactions(channelID, txnIDs, txns, completedTxnIDs);
     }
 
@@ -161,10 +170,11 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   private final class PassiveUninitializedTransactionManager implements PassiveTransactionManager {
 
-    ObjectIDSet2 existingOIDs = new ObjectIDSet2();
+    ObjectIDSet2          existingOIDs = new ObjectIDSet2();
+    PendingChangesAccount pca          = new PendingChangesAccount();
 
-    public void addCommitTransactionMessage(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
-      clearCompleted(completedTxnIDs);
+    public void addCommitedTransactions(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
+      pca.clearCompleted(completedTxnIDs);
       Assert.assertEquals(txnIDs.size(), txns.size());
       LinkedHashMap prunedTransactionsMap = pruneTransactions(txns);
       Collection prunedTxns = prunedTransactionsMap.values();
@@ -179,39 +189,34 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
         ServerTransaction st = (ServerTransaction) i.next();
         List changes = st.getChanges();
         List prunedChanges = new ArrayList(changes.size());
-        for (Iterator j = changes.iterator(); i.hasNext();) {
+        List oids = new ArrayList(changes.size());
+        for (Iterator j = changes.iterator(); j.hasNext();) {
           DNA dna = (DNA) j.next();
           ObjectID id = dna.getObjectID();
           if (!dna.isDelta()) {
             // New Object
             existingOIDs.add(id);
             prunedChanges.add(dna);
+            oids.add(id);
           } else if (existingOIDs.contains(id)) {
             // Already present
             prunedChanges.add(dna);
+            oids.add(id);
           } else {
             // Not present
-            addToPending(st, dna);
+            pca.addToPending(st, dna);
           }
         }
         if (prunedChanges.size() == changes.size()) {
           // The whole transaction could pass thru
           m.put(st.getServerTransactionID(), st);
-        } else {
+        } else if (!prunedChanges.isEmpty()) {
           // We have pruned changes
-          m.put(st.getServerTransactionID(), new PrunedServerTransaction(prunedChanges, st));
+          m.put(st.getServerTransactionID(), new PrunedServerTransaction(prunedChanges, st, oids));
         }
       }
 
       return m;
-    }
-
-    private void addToPending(ServerTransaction st, DNA dna) {
-      // TODO::
-    }
-
-    private void clearCompleted(Collection completedTxnIDs) {
-      // TODO
     }
 
     public void clear() {
@@ -235,8 +240,154 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     }
 
     private ServerTransaction createCompoundTransactionFrom(ServerTransaction txn) {
-      // TODO::
-      return txn;
+      List changes = txn.getChanges();
+      // XXX::NOTE:: Normally even though getChanges() returns a list, you will only find one change for each OID (Look
+      // at ClientTransactionImpl) but here we break that. But hopefully no one is depending on THAT in the system.
+      List compoundChanges = new ArrayList(changes.size() * 2);
+      for (Iterator i = changes.iterator(); i.hasNext();) {
+        DNA dna = (DNA) i.next();
+        ObjectID oid = dna.getObjectID();
+        existingOIDs.add(oid);
+        compoundChanges.add(dna);
+        List moreChanges = pca.getAnyPendingChangesForAndClear(oid);
+        long lastVersion = -1;
+        for (Iterator j = moreChanges.iterator(); j.hasNext();) {
+          PendingRecord pr = (PendingRecord) j.next();
+          long version = pr.getGlobalTransactionID().toLong();
+          // XXX:: This should be true since we maintain the order in the List.
+          Assert.assertTrue(lastVersion < version);
+          compoundChanges.add(new VersionizedDNAWrapper(pr.getChange(),version));
+          lastVersion = version;
+        }
+      }
+      if (compoundChanges.size() == changes.size()) {
+        return txn;
+      } else {
+        // This name is little misleading
+        return new PrunedServerTransaction(compoundChanges, txn);
+      }
+    }
+  }
+
+  private static final class PendingChangesAccount {
+
+    HashMap oid2Changes   = new HashMap();
+    HashMap txnID2Changes = new HashMap();
+
+    public void addToPending(ServerTransaction st, DNA dna) {
+      PendingRecord pr = new PendingRecord(dna, st.getServerTransactionID(), st.getGlobalTransactionID());
+      ObjectID oid = dna.getObjectID();
+      TLinkedList pendingChangesForOid = getOrCreatePendingChangesListFor(oid);
+      pendingChangesForOid.addLast(pr);
+      IdentityHashMap pendingChangesForTxn = getOrCreatePendingChangesSetFor(st.getServerTransactionID());
+      pendingChangesForTxn.put(pr, pr);
+    }
+
+    public void clearCompleted(Collection completedTxnIDs) {
+      for (Iterator i = completedTxnIDs.iterator(); i.hasNext();) {
+        ServerTransactionID stxnID = (ServerTransactionID) i.next();
+        IdentityHashMap pendingChangesForTxn = removePendingChangesFor(stxnID);
+        if (pendingChangesForTxn != null) {
+          for (Iterator j = pendingChangesForTxn.keySet().iterator(); j.hasNext();) {
+            PendingRecord pr = (PendingRecord) j.next();
+            TLinkedList pendingChangesForOid = getPendingChangesListFor(pr.getChange().getObjectID());
+            pendingChangesForOid.remove(pr);
+          }
+        }
+      }
+    }
+
+    public List getAnyPendingChangesForAndClear(ObjectID oid) {
+      List pendingChangesForOid = removePendingChangesFor(oid);
+      if (pendingChangesForOid != null) {
+        for (Iterator i = pendingChangesForOid.iterator(); i.hasNext();) {
+          PendingRecord pr = (PendingRecord) i.next();
+          IdentityHashMap pendingChangesForTxn = getPendingChangesSetFor(pr.getServerTransactionID());
+          pendingChangesForTxn.remove(pr);
+        }
+        return pendingChangesForOid;
+      } else {
+        return Collections.EMPTY_LIST;
+      }
+    }
+
+    private IdentityHashMap getPendingChangesSetFor(ServerTransactionID txnID) {
+      return (IdentityHashMap) txnID2Changes.get(txnID);
+    }
+
+    private TLinkedList getPendingChangesListFor(ObjectID objectID) {
+      return (TLinkedList) oid2Changes.get(objectID);
+    }
+
+    private TLinkedList removePendingChangesFor(ObjectID oid) {
+      return (TLinkedList) oid2Changes.remove(oid);
+    }
+
+    private IdentityHashMap removePendingChangesFor(ServerTransactionID stxnID) {
+      return (IdentityHashMap) txnID2Changes.remove(stxnID);
+    }
+
+    private IdentityHashMap getOrCreatePendingChangesSetFor(ServerTransactionID serverTransactionID) {
+      IdentityHashMap m = (IdentityHashMap) txnID2Changes.get(serverTransactionID);
+      if (m == null) {
+        m = new IdentityHashMap();
+        txnID2Changes.put(serverTransactionID, m);
+      }
+      return m;
+    }
+
+    private TLinkedList getOrCreatePendingChangesListFor(ObjectID oid) {
+      TLinkedList l = (TLinkedList) oid2Changes.get(oid);
+      if (l == null) {
+        l = new TLinkedList();
+        oid2Changes.put(oid, l);
+      }
+      return l;
+    }
+
+  }
+
+  private static final class PendingRecord implements TLinkable {
+
+    private TLinkable                 prev;
+    private TLinkable                 next;
+
+    private final DNA                 dna;
+    private final ServerTransactionID sid;
+    private final GlobalTransactionID gid;
+
+    public PendingRecord(DNA dna, ServerTransactionID sid, GlobalTransactionID gid) {
+      this.dna = dna;
+      this.sid = sid;
+      this.gid = gid;
+    }
+
+    public DNA getChange() {
+      return this.dna;
+    }
+
+    public ServerTransactionID getServerTransactionID() {
+      return this.sid;
+    }
+
+    public GlobalTransactionID getGlobalTransactionID() {
+      return this.gid;
+    }
+
+    public TLinkable getNext() {
+      return next;
+    }
+
+    public TLinkable getPrevious() {
+      return prev;
+    }
+
+    public void setNext(TLinkable n) {
+      this.next = n;
+    }
+
+    public void setPrevious(TLinkable p) {
+      this.prev = p;
     }
 
   }

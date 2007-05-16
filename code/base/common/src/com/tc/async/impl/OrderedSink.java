@@ -38,7 +38,7 @@ public class OrderedSink implements Sink {
                                      else return 1;
                                    }
                                  });
-  private AddPredicate predicate;
+  private AddPredicate   predicate;
 
   public OrderedSink(TCLogger logger, Sink sink) {
     this.logger = logger;
@@ -47,7 +47,7 @@ public class OrderedSink implements Sink {
   }
 
   public synchronized void add(EventContext context) {
-    if(!predicate.accept(context)) {
+    if (!predicate.accept(context)) {
       logger.warn("Predicate forced to ignore message " + context);
       return;
     }
@@ -63,7 +63,8 @@ public class OrderedSink implements Sink {
     } else {
       pending.add(oc);
       if (pending.size() % 10 == 0) {
-        logger.warn(pending.size() + " messages in pending queue. Message with ID " + current + " is missing still");
+        logger.warn(pending.size() + " messages in pending queue. Message with ID " + (current + 1)
+            + " is missing still");
       }
     }
   }

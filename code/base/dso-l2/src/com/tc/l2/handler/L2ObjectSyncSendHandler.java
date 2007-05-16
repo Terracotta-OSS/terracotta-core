@@ -15,7 +15,6 @@ import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.l2.msg.ObjectSyncMessageFactory;
 import com.tc.l2.msg.ServerTxnAckMessage;
 import com.tc.l2.objectserver.L2ObjectStateManager;
-import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.GroupException;
@@ -28,7 +27,6 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
 
   private final L2ObjectStateManager objectStateManager;
   private GroupManager               groupManager;
-  private StateManager               stateManager;
 
   private Sink                       syncRequestSink;
 
@@ -42,8 +40,6 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
       if (sendObjects(mosc)) {
         if (mosc.hasMore()) {
           syncRequestSink.add(new SyncObjectsRequest(mosc.getNodeID()));
-        } else {
-          stateManager.moveNodeToPassiveStandby(mosc.getNodeID());
         }
       }
     } else if(context instanceof ServerTxnAckMessage) {
@@ -59,7 +55,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
       this.groupManager.sendTo(ackMsg.getDestinationID(), ackMsg);
     } catch (GroupException e) {
       logger.error("ERROR sending ACKS: Caught exception while sending message to ACTIVE", e);
-      // ZAP or Not to ZAP is the question ?
+      // To ZAP or Not to ZAP is the question !
     }
   }
 
@@ -83,7 +79,6 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;
     L2Coordinator l2Coordinator = oscc.getL2Coordinator();
     this.groupManager = l2Coordinator.getGroupManager();
-    this.stateManager = l2Coordinator.getStateManager();
     this.syncRequestSink = oscc.getStage(ServerConfigurationContext.OBJECTS_SYNC_REQUEST_STAGE).getSink();
   }
 

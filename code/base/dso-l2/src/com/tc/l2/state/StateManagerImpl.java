@@ -110,7 +110,7 @@ public class StateManagerImpl implements StateManager, GroupMessageListener {
     }
   }
 
-  private synchronized void moveToPassiveStandbyState() {
+  public synchronized void moveToPassiveStandbyState() {
     if (state == ACTIVE_COORDINATOR) {
       // TODO:: Support this later
       throw new AssertionError("Cant move to " + PASSIVE_STANDBY + " from " + ACTIVE_COORDINATOR + " at least for now");

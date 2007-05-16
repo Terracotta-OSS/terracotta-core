@@ -156,4 +156,9 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       logger.error("Error handling message : " + msg, e);
     }
   }
+
+  public void fireNodeLeftEvent(NodeID nodeID) {
+    // this is needed to clean up some data structures internally
+    channelLifeCycleSink.add(new ChannelStateEventContext(ChannelStateEventContext.REMOVE, nodeID.toChannelID()));
+  }
 }

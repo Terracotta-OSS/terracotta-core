@@ -14,6 +14,7 @@ import com.tc.l2.msg.ServerTxnAckMessage;
 import com.tc.l2.msg.ServerTxnAckMessageFactory;
 import com.tc.l2.objectserver.ReplicatedTransactionManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
+import com.tc.l2.state.StateManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.TransactionBatchReader;
@@ -31,11 +32,16 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
 
   private Sink                          sendSink;
   private ReplicatedTransactionManager  rTxnManager;
+  private StateManager stateManager;
 
   public void handleEvent(EventContext context) {
     if (context instanceof ObjectSyncMessage) {
       ObjectSyncMessage syncMsg = (ObjectSyncMessage) context;
       doSyncObjectsResponse(syncMsg);
+      if(syncMsg.isLastMessage()) {
+        // Now this node can move to Passive StandBy
+        stateManager.moveToPassiveStandbyState();
+      }
     } else if (context instanceof RelayedCommitTransactionMessage) {
       RelayedCommitTransactionMessage commitMessage = (RelayedCommitTransactionMessage) context;
       Set serverTxnIDs = processCommitTransactionMessage(commitMessage);
@@ -51,8 +57,8 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     sendSink.add(msg);
   }
 
-  // TODO::Recycle msg after use. NOTE:: If you are implementing recycling, checkout ReplicatedTransactionManager's PASSIVE-UNINITIALIZED
-  // pruned changes code. Messgaes may have to live longer than Txn acks.
+  // TODO::Recycle msg after use. NOTE:: If you are implementing recycling, checkout ReplicatedTransactionManager's
+  // PASSIVE-UNINITIALIZED pruned changes code. Messgaes may have to live longer than Txn acks.
   private Set processCommitTransactionMessage(RelayedCommitTransactionMessage commitMessage) {
     try {
       final TransactionBatchReader reader = batchReaderFactory.newTransactionBatchReader(commitMessage);
@@ -62,7 +68,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
       while ((txn = reader.getNextTransaction()) != null) {
         txns.put(txn.getServerTransactionID(), txn);
       }
-      rTxnManager.addCommitTransactionMessage(reader.getChannelID(), txns.keySet(), txns.values(), reader
+      rTxnManager.addCommitedTransactions(reader.getChannelID(), txns.keySet(), txns.values(), reader
           .addAcknowledgedTransactionIDsTo(new HashSet()));
       return txns.keySet();
     } catch (IOException e) {
@@ -80,6 +86,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;
     this.batchReaderFactory = oscc.getTransactionBatchReaderFactory();
     this.rTxnManager = oscc.getL2Coordinator().getReplicatedTransactionManager();
+    this.stateManager = oscc.getL2Coordinator().getStateManager();
     this.sendSink = oscc.getStage(ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE).getSink();
   }
 
