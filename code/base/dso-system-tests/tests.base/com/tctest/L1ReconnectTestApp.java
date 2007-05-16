@@ -7,8 +7,6 @@ package com.tctest;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
-
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -45,12 +43,10 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
 
   // roots
   private int[]                   sum         = new int[1];
-  private CyclicBarrier           barrier     = null;
 
   public L1ReconnectTestApp(String appId, ApplicationConfig config, ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
     this.config = config;
-    barrier = new CyclicBarrier(2);
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
@@ -60,10 +56,6 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     config.addIncludePattern(testClass + "$*");
     spec.addRoot("sum", "sum");
-    spec.addRoot("barrier", "barrier");
-    
-    config.addIncludePattern(CyclicBarrier.class.getName());
-    config.addWriteAutolock("* " + CyclicBarrier.class.getName() + ".*(..)");
   }
 
   public void run() {
@@ -84,6 +76,12 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
     proxy.start();
 
     ExtraL1ProcessControl client = spawnNewClient(dsoProxyPort);
+    // this L1 client will take approximately 100s to finish
+    
+    // here we want to simulate network glitches by 
+    // turn off the proxy and turn it back on    
+    
+    
     int exitCode = client.waitFor();
     proxy.status();
     proxy.stop();
@@ -101,14 +99,13 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
   public static class L1Client {
     // roots
     private int[]         sum     = new int[1];
-    //private CyclicBarrier barrier = new CyclicBarrier(2);
 
     // takes roughly 100 seconds to finish
     public void calculateSum() throws Exception {
       for (int i = 0; i < 100; i++) {
         synchronized (sum) {
           sum[0] += i;
-          Thread.sleep(100);
+          Thread.sleep(1000);
         }
       }
     }

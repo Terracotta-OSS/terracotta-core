@@ -6,8 +6,6 @@ package com.tctest;
 
 import org.apache.commons.io.IOUtils;
 
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
-
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.builder.LockConfigBuilder;
 import com.tc.config.schema.builder.RootConfigBuilder;
@@ -95,7 +93,6 @@ public class L1ReconnectTest extends TransparentTestBase {
     // locks
     LockConfigBuilder[] locks = new LockConfigBuilder[] {
         new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK, L1ReconnectTestApp.L1Client.class, LockConfigBuilder.LEVEL_WRITE),
-        new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK, CyclicBarrier.class, LockConfigBuilder.LEVEL_WRITE),
         new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK, testAppClass, LockConfigBuilder.LEVEL_WRITE) };
 
     cb.getApplication().getDSO().setLocks(locks);
@@ -103,7 +100,6 @@ public class L1ReconnectTest extends TransparentTestBase {
     // include classes
     InstrumentedClassConfigBuilder[] instrClasses = new InstrumentedClassConfigBuilder[] {
         new InstrumentedClassConfigBuilderImpl(AbstractTransparentApp.class),
-        new InstrumentedClassConfigBuilderImpl(CyclicBarrier.class),
         new InstrumentedClassConfigBuilderImpl(L1ReconnectTestApp.L1Client.class),
         new InstrumentedClassConfigBuilderImpl(testAppClass) };
 
@@ -111,8 +107,6 @@ public class L1ReconnectTest extends TransparentTestBase {
 
     // roots
     RootConfigBuilder[] roots = new RootConfigBuilder[] {
-        new RootConfigBuilderImpl(testAppClass, "barrier", "barrier"),
-        new RootConfigBuilderImpl(L1ReconnectTestApp.L1Client.class, "barrier", "barrier"),
         new RootConfigBuilderImpl(testAppClass, "sum", "sum"),
         new RootConfigBuilderImpl(L1ReconnectTestApp.L1Client.class, "sum", "sum") };
     cb.getApplication().getDSO().setRoots(roots);
