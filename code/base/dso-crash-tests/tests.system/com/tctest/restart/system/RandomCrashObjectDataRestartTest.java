@@ -12,7 +12,7 @@ import com.tctest.TestConfigurator;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
-public class ObjectDataRestartTest extends TransparentTestBase implements TestConfigurator {
+public class RandomCrashObjectDataRestartTest extends TransparentTestBase implements TestConfigurator {
 
   private int clientCount = 2;
 
@@ -25,18 +25,14 @@ public class ObjectDataRestartTest extends TransparentTestBase implements TestCo
     t.initializeTestRunner();
   }
 
-  protected boolean canRunCrash() {
-    return true;
-  }
-
   protected boolean canRunActivePassive() {
     return true;
   }
 
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
-    setupManager.setServerCount(2);
-    setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
-    setupManager.setServerCrashWaitTimeInSec(30);
+    setupManager.setServerCount(3);
+    setupManager.setServerCrashMode(ActivePassiveCrashMode.RANDOM_SERVER_CRASH);
+    setupManager.setServerCrashWaitTimeInSec(20);
     setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
     setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.TEMPORARY_SWAP_ONLY);
   }
