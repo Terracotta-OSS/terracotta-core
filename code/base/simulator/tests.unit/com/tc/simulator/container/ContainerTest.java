@@ -83,17 +83,11 @@ public class ContainerTest extends TestCase {
     assertContainerConfigException(ContainerConfigException.INVALID_APPLICATION_INSTANCE_COUNT);
   }
 
-  public void testContainerStartTimeout() throws Exception {
-    this.control.throwTimeoutExceptionInWaitForStart = true;
-    this.container.run();
-    assertResult(false);
-    assertTrue(resultsListener.notifyStartTimeoutCalled);
-  }
-
   public void testExecutionTimeout() throws Exception {
     this.config.applicationExecutionTimeout = 500;
     this.applicationBuilder.waitInterval = 2000;
-
+    this.container = new Container(this.config, this.containerStateFactory, this.globalIdGenerator, this.control,
+                                   this.resultsListener, this.applicationBuilder);
     this.container.run();
 
     assertTrue(resultsListener.notifyExecutionTimeoutCalled);

@@ -43,14 +43,6 @@ public class ExecutionInstanceTest extends TestCase {
     assertTrue(control.notifyCompleteCalled);
   }
 
-  public void testStartTimeout() throws Exception {
-    this.control.throwTimeoutExceptionInWaitForStart = true;
-    this.executionInstance.run();
-    assertEquals(Boolean.FALSE, this.resultsListener.result);
-    assertTrue(this.resultsListener.notifyStartTimeoutCalled);
-    assertTrue(control.notifyCompleteCalled);
-  }
-
   public void testBasicRun() throws Exception {
     this.executionInstance.run();
     assertTrue(this.control.waitForStartCalled);

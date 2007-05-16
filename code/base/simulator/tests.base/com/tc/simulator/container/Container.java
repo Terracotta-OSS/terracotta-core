@@ -18,7 +18,6 @@ import com.tc.simulator.listener.OutputListener;
 import com.tc.simulator.listener.ResultsListener;
 import com.tc.simulator.listener.StatsListenerFactory;
 import com.tc.util.Assert;
-import com.tc.util.TCTimeoutException;
 import com.tcsimulator.ControlImpl;
 import com.tcsimulator.listener.ApplicationListenerProvider;
 
@@ -151,15 +150,9 @@ public final class Container implements Runnable {
 
   private boolean waitForStart() throws TCBrokenBarrierException, InterruptedException {
     boolean rv = false;
-    try {
-      println("Waiting for all containers to start...");
-      this.control.waitForStart();
-      rv = true;
-    } catch (TCTimeoutException e) {
-      rv = false;
-      this.resultsListener.notifyStartTimeout();
-      notifyFailure();
-    }
+    println("Waiting for all containers to start...");
+    this.control.waitForStart();
+    rv = true;
     println("Done waiting for all containers to start.");
     return rv;
   }

@@ -110,9 +110,7 @@ public class ActivePassiveServerManager {
 
     if (serverCrashMode.equals(ActivePassiveCrashMode.RANDOM_SERVER_CRASH)) {
       SecureRandom srandom = SecureRandom.getInstance("SHA1PRNG");
-      int numBytes = 1;
-      byte[] byteArray = srandom.generateSeed(numBytes);
-      seed = new Byte(byteArray[0]).longValue();
+      seed = srandom.nextLong();
       random = new Random(seed);
       System.out.println("***** Random number generator seed=[" + seed + "]");
     }

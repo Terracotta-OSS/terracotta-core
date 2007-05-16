@@ -9,7 +9,6 @@ import com.tc.simulator.control.Control;
 import com.tc.simulator.listener.ResultsListener;
 import com.tc.simulator.listener.StatsListener;
 import com.tc.simulator.listener.StatsListenerFactory;
-import com.tc.util.TCTimeoutException;
 
 import java.util.Properties;
 
@@ -44,9 +43,6 @@ class ApplicationRunner implements Runnable {
       long delta = System.currentTimeMillis() - start;
       statsListener.sample(delta, "");
       this.resultsListener.notifyResult(Boolean.TRUE);
-    } catch (TCTimeoutException e) {
-      this.resultsListener.notifyStartTimeout();
-      this.resultsListener.notifyResult(Boolean.FALSE);
     } catch (Throwable t) {
       this.resultsListener.notifyError(new ErrorContext("Caught Throwable from Application.run()", t));
       this.resultsListener.notifyResult(Boolean.FALSE);

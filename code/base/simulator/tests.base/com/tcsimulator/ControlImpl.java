@@ -7,7 +7,6 @@ package com.tcsimulator;
 import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
 import EDU.oswego.cs.dl.util.concurrent.CountDown;
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
-import EDU.oswego.cs.dl.util.concurrent.TimeoutException;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -16,11 +15,9 @@ import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.control.Control;
 import com.tc.simulator.control.TCBrokenBarrierException;
 import com.tc.simulator.listener.MutationCompletionListener;
-import com.tc.util.TCTimeoutException;
 
 public class ControlImpl implements Control, MutationCompletionListener {
-  private static final boolean DEBUG            = false;
-  private static final long    BARRIER_TIME_OUT = Long.MAX_VALUE;
+  private static final boolean DEBUG = false;
 
   private final int            mutatorCount;
   private final int            completeParties;
@@ -107,15 +104,13 @@ public class ControlImpl implements Control, MutationCompletionListener {
            + crashActiveServerAfterMutate + "]";
   }
 
-  public void waitForStart() throws InterruptedException, TCBrokenBarrierException, TCTimeoutException {
+  public void waitForStart() throws InterruptedException, TCBrokenBarrierException{
     try {
       try {
-        this.startBarrier.attemptBarrier(BARRIER_TIME_OUT);
+        this.startBarrier.barrier();
       } catch (InterruptedException e1) {
         throw e1;
       }
-    } catch (TimeoutException e) {
-      throw new TCTimeoutException(e);
     } catch (BrokenBarrierException e) {
       throw new TCBrokenBarrierException(e);
     }
@@ -144,7 +139,8 @@ public class ControlImpl implements Control, MutationCompletionListener {
       }
     }
     try {
-      boolean rv = mutationCompleteCount.attempt(BARRIER_TIME_OUT);
+      checkExecutionTimeout(executionTimeout);
+      boolean rv = mutationCompleteCount.attempt(executionTimeout);
       return rv;
     } catch (InterruptedException e) {
       throw e;
@@ -161,7 +157,8 @@ public class ControlImpl implements Control, MutationCompletionListener {
       }
     }
     try {
-      boolean rv = validationStartCount.attempt(BARRIER_TIME_OUT);
+      checkExecutionTimeout(executionTimeout);
+      boolean rv = validationStartCount.attempt(executionTimeout);
       return rv;
     } catch (InterruptedException e) {
       throw e;
@@ -211,7 +208,8 @@ public class ControlImpl implements Control, MutationCompletionListener {
       }
     }
     try {
-      boolean rv = this.countdown.attempt(BARRIER_TIME_OUT);
+      checkExecutionTimeout(executionTimeout);
+      boolean rv = this.countdown.attempt(executionTimeout);
       return rv;
     } catch (InterruptedException e) {
       throw e;

@@ -4,21 +4,15 @@
  */
 package com.tc.simulator.control;
 
-
 public class MockControl implements Control {
-
   public boolean waitForStartCalled;
-  public boolean throwTimeoutExceptionInWaitForStart;
-
   public boolean notifyCompleteCalled;
-
   public boolean waitForAllCompleteCalled;
   public boolean waitForAllCompleteResult;
   public boolean throwTimeoutExceptionInWaitForAllComplete;
 
   public void waitForStart() {
     waitForStartCalled = true;
-//    if (throwTimeoutExceptionInWaitForStart) { throw new TCTimeoutException(timeout); }
   }
 
   public void notifyComplete() {
