@@ -5,13 +5,13 @@
 #
 
 class BaseCodeTerracottaBuilder <  TerracottaBuilder
-  # - set the execute permission of all the script files in the kit
+  # - copy the top level notices file for the enterprise kit
   protected
   def postscript(ant, build_environment, product_directory, *args)
     ent_top = FilePath.new(@basedir, '..', '..', '..').canonicalize
     notices_dir = FilePath.new(ent_top, 'kits', 'source', 'docs', 'distribute', 'notices').canonicalize
     ant.copy(:todir => product_directory.to_s, :overwrite => true) {
-      ant.fileset(:dir => notices_dir.to_s, :includes => '*.txt')
+      ant.fileset(:dir => notices_dir.to_s, :includes => '*.txt, *.pdf')
     }
   end
 end
