@@ -29,6 +29,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.L2Management;
 import com.tc.management.beans.L2State;
+import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.remote.connect.ClientConnectEventHandler;
 import com.tc.management.remote.protocol.terracotta.ClientTunnelingEventHandler;
@@ -177,10 +178,10 @@ import javax.management.NotCompliantMBeanException;
 
 /**
  * Startup and shutdown point. Builds and starts the server
- *
+ * 
  * @author steve
  */
-public class DistributedObjectServer extends SEDA {
+public class DistributedObjectServer extends SEDA implements TCDumper {
   private final ConnectionPolicy               connectionPolicy;
 
   private static final TCLogger                logger        = CustomerLogging.getDSOGenericLogger();
@@ -799,7 +800,7 @@ public class DistributedObjectServer extends SEDA {
   }
 
   private void startJMXServer() throws Exception {
-    l2Management = new L2Management(tcServerInfoMBean, configSetupManager);
+    l2Management = new L2Management(tcServerInfoMBean, configSetupManager, this);
 
     /*
      * Some tests use this if they run with jdk1.4 and start multiple in-process DistributedObjectServers. When we no

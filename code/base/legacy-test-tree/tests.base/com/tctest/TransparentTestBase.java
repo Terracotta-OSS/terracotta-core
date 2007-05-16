@@ -314,11 +314,11 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
         }
       }
 
-      if (pid != 0) {
+      if (pid > 0) {
         mbean.setThreadDumpCount(getThreadDumpCount());
         mbean.setThreadDumpInterval(getThreadDumpInterval());
-        pid = mbean.doThreadDump();
         System.out.println("Thread dumping server=[" + serverControl.getDsoPort() + "] pid=[" + pid + "]");
+        pid = mbean.doThreadDump();
       }
       jmxConnector.close();
     }

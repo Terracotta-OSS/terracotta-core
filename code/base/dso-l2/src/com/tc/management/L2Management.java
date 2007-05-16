@@ -8,10 +8,13 @@ import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogging;
+import com.tc.management.beans.L2Dumper;
 import com.tc.management.beans.L2MBeanNames;
+import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitor;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.PortChooser;
 
 import java.io.File;
@@ -41,13 +44,16 @@ public class L2Management extends TerracottaManagement {
   private JMXConnectorServer                   jmxConnectorServer;
   private final L2TVSConfigurationSetupManager configurationSetupManager;
   private final TCServerInfoMBean              tcServerInfo;
+  private final TCDumper                       tcDumper;
   private final ObjectManagementMonitor        objectManagementBean;
   private static final Map                     rmiRegistryMap = new HashMap();
 
-  public L2Management(TCServerInfoMBean tcServerInfo, L2TVSConfigurationSetupManager configurationSetupManager)
-      throws MBeanRegistrationException, NotCompliantMBeanException, InstanceAlreadyExistsException {
+  public L2Management(TCServerInfoMBean tcServerInfo, L2TVSConfigurationSetupManager configurationSetupManager,
+                      TCDumper tcDumper) throws MBeanRegistrationException, NotCompliantMBeanException,
+      InstanceAlreadyExistsException {
     this.tcServerInfo = tcServerInfo;
     this.configurationSetupManager = configurationSetupManager;
+    this.tcDumper = tcDumper;
 
     try {
       objectManagementBean = new ObjectManagementMonitor();
@@ -71,8 +77,7 @@ public class L2Management extends TerracottaManagement {
   }
 
   /**
-   * Keep track of RMI Registries by jmxPort. In 1.5 and forward you can create multiple RMI
-   * Registries in a single VM.
+   * Keep track of RMI Registries by jmxPort. In 1.5 and forward you can create multiple RMI Registries in a single VM.
    */
   private static Registry getRMIRegistry(int jmxPort) throws RemoteException {
     Integer key = new Integer(jmxPort);
@@ -82,7 +87,7 @@ public class L2Management extends TerracottaManagement {
     }
     return registry;
   }
-  
+
   public synchronized void start() throws Exception {
     int jmxPort = configurationSetupManager.commonl2Config().jmxPort().getInt();
     if (jmxPort == 0) {
@@ -140,11 +145,21 @@ public class L2Management extends TerracottaManagement {
     mBeanServer.registerMBean(tcServerInfo, L2MBeanNames.TC_SERVER_INFO);
     mBeanServer.registerMBean(TCLogging.getJMXAppender().getMBean(), L2MBeanNames.LOGGER);
     mBeanServer.registerMBean(objectManagementBean, L2MBeanNames.OBJECT_MANAGEMENT);
+
+    if (TCPropertiesImpl.getProperties().getBoolean("tc.management.test.mbeans.enabled")) {
+      System.out.println("******* registering dumper mbean");
+      mBeanServer.registerMBean(new L2Dumper(tcDumper), L2MBeanNames.DUMPER);
+    }
   }
 
   private void unregisterMBeans() throws InstanceNotFoundException, MBeanRegistrationException {
     mBeanServer.unregisterMBean(L2MBeanNames.TC_SERVER_INFO);
     mBeanServer.unregisterMBean(L2MBeanNames.LOGGER);
     mBeanServer.unregisterMBean(L2MBeanNames.OBJECT_MANAGEMENT);
+
+    if (TCPropertiesImpl.getProperties().getBoolean("tc.management.test.mbeans.enabled")) {
+      System.out.println("******* un-registering dumper mbean");
+      mBeanServer.unregisterMBean(L2MBeanNames.DUMPER);
+    }
   }
 }

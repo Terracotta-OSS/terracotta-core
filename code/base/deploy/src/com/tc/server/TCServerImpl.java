@@ -29,16 +29,13 @@ import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.management.beans.L2Dumper;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.L2State;
-import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfo;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.DSO;
 import com.tc.stats.DSOMBean;
 import com.tc.util.Assert;
@@ -50,7 +47,7 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 
-public class TCServerImpl extends SEDA implements TCServer, TCDumper {
+public class TCServerImpl extends SEDA implements TCServer {
 
   private static final TCLogger                logger        = TCLogging.getLogger(TCServer.class);
   private static final TCLogger                consoleLogger = CustomerLogging.getConsoleLogger();
@@ -334,11 +331,6 @@ public class TCServerImpl extends SEDA implements TCServer, TCDumper {
     DSOMBean dso = new DSO(mgmtContext, mBeanServer);
     mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
     mBeanServer.registerMBean(mgmtContext.getDSOAppEventsMBean(), L2MBeanNames.DSO_APP_EVENTS);
-
-    if (TCPropertiesImpl.getProperties().getBoolean("tc.management.test.mbeans.enabled")) {
-      logger.info("Registering test related mbean.");
-      mBeanServer.registerMBean(new L2Dumper(this), L2MBeanNames.DUMPER);
-    }
   }
 
   // TODO: check that this is not needed then remove

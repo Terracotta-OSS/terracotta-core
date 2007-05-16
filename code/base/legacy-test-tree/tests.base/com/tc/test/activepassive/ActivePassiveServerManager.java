@@ -367,8 +367,8 @@ public class ActivePassiveServerManager {
           if (pid != 0) {
             mbean.setThreadDumpCount(dumpCount);
             mbean.setThreadDumpInterval(dumpInterval);
-            pid = mbean.doThreadDump();
             System.out.println("Thread dumping server=[" + dsoPorts[i] + "] pid=[" + pid + "]");
+            pid = mbean.doThreadDump();
           }
           jmxConnector.close();
         }
