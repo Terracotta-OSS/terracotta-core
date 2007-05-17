@@ -29,6 +29,8 @@ final class ConcreteReadOnlyAppServerInstallation {
       ZipBuilder.unzip(in, serverInstallDir);
       in.close();
       System.out.println("Unzip to: " + serverInstallDir);
+    } else {
+      System.out.println("Cached version of appserver found: " + serverInstallDir);
     }
     return serverInstallDir;
   }
