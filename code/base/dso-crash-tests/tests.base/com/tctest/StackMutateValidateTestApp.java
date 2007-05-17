@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-public class MutateValidateStackTestApp extends AbstractMutateValidateTransparentApp {
+public class StackMutateValidateTestApp extends AbstractMutateValidateTransparentApp {
   private static final boolean MUTATE   = true;
   private static final boolean VALIDATE = false;
 
@@ -27,7 +27,7 @@ public class MutateValidateStackTestApp extends AbstractMutateValidateTransparen
   // ROOT
   private Map                  allMaps  = new HashMap();
 
-  public MutateValidateStackTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public StackMutateValidateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     this.myAppId = appId;
     myMapOfStacks = new HashMap();
@@ -147,7 +147,7 @@ public class MutateValidateStackTestApp extends AbstractMutateValidateTransparen
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    String testClass = MutateValidateStackTestApp.class.getName();
+    String testClass = StackMutateValidateTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);

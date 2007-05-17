@@ -11,7 +11,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
-import com.tctest.restart.system.ObjectDataRestartTestApp;
+import com.tctest.restart.system.ObjectDataTestApp;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.security.SecureRandom;
@@ -52,7 +52,7 @@ public class ClientMemoryReaperTestApp extends AbstractErrorCatchingTransparentA
 
     boolean isSynchronousWrite = false;
     if (optionalAttributes.size() > 0) {
-      isSynchronousWrite = Boolean.valueOf((String) optionalAttributes.get(ObjectDataRestartTestApp.SYNCHRONOUS_WRITE))
+      isSynchronousWrite = Boolean.valueOf((String) optionalAttributes.get(ObjectDataTestApp.SYNCHRONOUS_WRITE))
           .booleanValue();
     }
 

@@ -30,7 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class ObjectDataRestartTestApp extends AbstractTransparentApp {
+public class ObjectDataTestApp extends AbstractTransparentApp {
   public static final String SYNCHRONOUS_WRITE = "synch-write";
 
   private int                threadCount       = 10;
@@ -44,7 +44,7 @@ public class ObjectDataRestartTestApp extends AbstractTransparentApp {
   private OutputListener     out;
   private SynchronizedInt    nodes             = new SynchronizedInt(0);
 
-  public ObjectDataRestartTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public ObjectDataTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     this.out = listenerProvider.getOutputListener();
   }
@@ -128,13 +128,13 @@ public class ObjectDataRestartTestApp extends AbstractTransparentApp {
 
     boolean isSynchronousWrite = false;
     if (optionalAttributes.size() > 0) {
-      isSynchronousWrite = Boolean.valueOf((String) optionalAttributes.get(ObjectDataRestartTestApp.SYNCHRONOUS_WRITE))
+      isSynchronousWrite = Boolean.valueOf((String) optionalAttributes.get(ObjectDataTestApp.SYNCHRONOUS_WRITE))
           .booleanValue();
     }
 
     visitor.visit(config, Barriers.class);
 
-    String testClassName = ObjectDataRestartTestApp.class.getName();
+    String testClassName = ObjectDataTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
 
     String idProviderClassname = IDProvider.class.getName();

@@ -6,9 +6,9 @@ package com.tctest.restart.system;
 
 import com.tctest.TransparentTestIface;
 
-public class SynchronousCommitClientTerminatingTest extends ClientTerminatingTest {
+public class ClientTerminatingSynchronousCommitTest extends ClientTerminatingTest {
 
-  public SynchronousCommitClientTerminatingTest() {
+  public ClientTerminatingSynchronousCommitTest() {
     super();
     super.setSynchronousWrite();
   }

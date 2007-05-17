@@ -355,30 +355,27 @@ public class ActivePassiveServerManager {
     }
   }
 
-  // only have one of the processes do a dump when kill signal is being sent to entire process group
   public void dumpAllServers(int currentPid, int dumpCount, long dumpInterval) throws Exception {
-    synchronized (testState) {
-      pid = currentPid;
-      for (int i = 0; i < serverCount; i++) {
-        if (!serverNetworkShare && i != activeIndex) {
-          debugPrintln("***** skipping dumping server=[" + dsoPorts[i] + "]");
-          continue;
+    pid = currentPid;
+    for (int i = 0; i < serverCount; i++) {
+      if (!serverNetworkShare && i != activeIndex) {
+        debugPrintln("***** skipping dumping server=[" + dsoPorts[i] + "]");
+        continue;
+      }
+      if (servers[i].getServerControl().isRunning()) {
+        System.out.println("Dumping server=[" + dsoPorts[i] + "]");
+        JMXConnector jmxConnector = getJMXConnector(jmxPorts[i]);
+        MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+        L2DumperMBean mbean = (L2DumperMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DUMPER,
+                                                                                            L2DumperMBean.class, true);
+        mbean.doServerDump();
+        if (pid != 0) {
+          mbean.setThreadDumpCount(dumpCount);
+          mbean.setThreadDumpInterval(dumpInterval);
+          System.out.println("Thread dumping server=[" + dsoPorts[i] + "] pid=[" + pid + "]");
+          pid = mbean.doThreadDump();
         }
-        if (servers[i].getServerControl().isRunning()) {
-          System.out.println("Dumping server=[" + dsoPorts[i] + "]");
-          JMXConnector jmxConnector = getJMXConnector(jmxPorts[i]);
-          MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-          L2DumperMBean mbean = (L2DumperMBean) MBeanServerInvocationHandler
-              .newProxyInstance(mbs, L2MBeanNames.DUMPER, L2DumperMBean.class, true);
-          mbean.doServerDump();
-          if (pid != 0) {
-            mbean.setThreadDumpCount(dumpCount);
-            mbean.setThreadDumpInterval(dumpInterval);
-            System.out.println("Thread dumping server=[" + dsoPorts[i] + "] pid=[" + pid + "]");
-            pid = mbean.doThreadDump();
-          }
-          jmxConnector.close();
-        }
+        jmxConnector.close();
       }
     }
   }

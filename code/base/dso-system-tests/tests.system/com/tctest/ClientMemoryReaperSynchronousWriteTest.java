@@ -7,7 +7,7 @@ package com.tctest;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SynchronousWriteClientMemoryReaperTest extends TransparentTestBase implements TestConfigurator {
+public class ClientMemoryReaperSynchronousWriteTest extends TransparentTestBase implements TestConfigurator {
 
   private static final int NODE_COUNT    = 2;
   private static final int THREADS_COUNT = 2;

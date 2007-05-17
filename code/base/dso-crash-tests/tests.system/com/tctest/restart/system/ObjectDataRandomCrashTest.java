@@ -12,12 +12,12 @@ import com.tctest.TestConfigurator;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
-public class RandomCrashObjectDataRestartTest extends TransparentTestBase implements TestConfigurator {
+public class ObjectDataRandomCrashTest extends TransparentTestBase implements TestConfigurator {
 
   private int clientCount = 2;
 
   protected Class getApplicationClass() {
-    return ObjectDataRestartTestApp.class;
+    return ObjectDataTestApp.class;
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {

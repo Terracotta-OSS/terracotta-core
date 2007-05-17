@@ -7,7 +7,7 @@ package com.tctest;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SynchronousWriteLinkedHashMapTest extends TransparentTestBase {
+public class LinkedHashMapSynchronousWriteTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 3;
 

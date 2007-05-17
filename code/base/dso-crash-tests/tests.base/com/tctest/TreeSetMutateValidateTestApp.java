@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class MutateValidateTreeSetTestApp extends AbstractMutateValidateTransparentApp {
+public class TreeSetMutateValidateTestApp extends AbstractMutateValidateTransparentApp {
 
   private static final boolean MUTATE   = true;
   private static final boolean VALIDATE = false;
@@ -28,7 +28,7 @@ public class MutateValidateTreeSetTestApp extends AbstractMutateValidateTranspar
   // ROOT
   private Map                  allMaps  = new HashMap();
 
-  public MutateValidateTreeSetTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public TreeSetMutateValidateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     this.myAppId = appId;
     myMapOfTreeSets = new HashMap();
@@ -167,7 +167,7 @@ public class MutateValidateTreeSetTestApp extends AbstractMutateValidateTranspar
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    String testClass = MutateValidateTreeSetTestApp.class.getName();
+    String testClass = TreeSetMutateValidateTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);

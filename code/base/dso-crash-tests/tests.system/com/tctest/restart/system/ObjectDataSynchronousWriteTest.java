@@ -1,5 +1,5 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
 package com.tctest.restart.system;
@@ -12,12 +12,21 @@ import com.tctest.TestConfigurator;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
-public class ObjectDataRestartTest extends TransparentTestBase implements TestConfigurator {
+import java.util.HashMap;
+import java.util.Map;
+
+public class ObjectDataSynchronousWriteTest extends TransparentTestBase implements TestConfigurator {
 
   private int clientCount = 2;
 
   protected Class getApplicationClass() {
-    return ObjectDataRestartTestApp.class;
+    return ObjectDataTestApp.class;
+  }
+
+  protected Map getOptionalAttributes() {
+    Map attributes = new HashMap();
+    attributes.put(ObjectDataTestApp.SYNCHRONOUS_WRITE, "true");
+    return attributes;
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
@@ -37,7 +46,8 @@ public class ObjectDataRestartTest extends TransparentTestBase implements TestCo
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
     setupManager.setServerCrashWaitTimeInSec(30);
-    setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
-    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.TEMPORARY_SWAP_ONLY);
+    setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.DISK);
+    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.PERMANENT_STORE);
   }
+
 }

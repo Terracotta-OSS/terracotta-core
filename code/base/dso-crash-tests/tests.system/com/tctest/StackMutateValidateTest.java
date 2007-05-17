@@ -9,7 +9,7 @@ import com.tc.test.activepassive.ActivePassiveSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tctest.runner.TransparentAppConfig;
 
-public class MutateValidateStackTest extends TransparentTestBase {
+public class StackMutateValidateTest extends TransparentTestBase {
 
   public static final int      MUTATOR_NODE_COUNT      = 2;
   public static final int      VALIDATOR_NODE_COUNT    = 1;
@@ -24,7 +24,7 @@ public class MutateValidateStackTest extends TransparentTestBase {
   }
 
   protected Class getApplicationClass() {
-    return MutateValidateStackTestApp.class;
+    return StackMutateValidateTestApp.class;
   }
 
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {

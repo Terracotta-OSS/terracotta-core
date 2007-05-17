@@ -19,16 +19,16 @@ import junit.framework.TestCase;
 /**
  * This is a test of the test app, not the system test.
  */
-public class ObjectDataRestartTestAppTest extends TestCase {
+public class ObjectDataTestAppTest extends TestCase {
 
   private TransparentAppConfig cfg;
 
   public void setUp() throws Exception {
-    cfg = new TransparentAppConfig(ObjectDataRestartTestApp.class.getName(), null, 1, 1, null);
+    cfg = new TransparentAppConfig(ObjectDataTestApp.class.getName(), null, 1, 1, null);
   }
 
   public void testBasics() {
-    ObjectDataRestartTestApp app = new ObjectDataRestartTestApp("test", cfg, new ListenerProvider() {
+    ObjectDataTestApp app = new ObjectDataTestApp("test", cfg, new ListenerProvider() {
 
       public OutputListener getOutputListener() {
         return null;

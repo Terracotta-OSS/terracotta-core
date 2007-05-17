@@ -314,7 +314,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
         }
       }
 
-      if (pid > 0) {
+      if (pid != 0) {
         mbean.setThreadDumpCount(getThreadDumpCount());
         mbean.setThreadDumpInterval(getThreadDumpInterval());
         System.out.println("Thread dumping server=[" + serverControl.getDsoPort() + "] pid=[" + pid + "]");
