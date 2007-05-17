@@ -33,12 +33,7 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   private static final int TIMEOUT_DEFAULT     = 30 * 60;
 
   public AbstractDeploymentTest() {
-    String appserver = TestConfigObject.getInstance().appserverFactoryName();
-    // XXX: Only non-session container tests work in glassfish and jetty at the moment
-    if (isSessionTest()
-        && (NewAppServerFactory.GLASSFISH.equals(appserver) || NewAppServerFactory.JETTY.equals(appserver))) {
-      disableAllUntil(new Date(Long.MAX_VALUE));
-    }
+    // nop
   }
 
   protected boolean isSessionTest() {
@@ -159,7 +154,15 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   }
 
   public boolean shouldDisable() {
-    return shouldDisableForJavaVersion() || shouldDisableForVariants();
+    return shouldDisableForJavaVersion() || shouldDisableForVariants() || shouldDisableForCertainAppServers();
+  }
+
+  private boolean shouldDisableForCertainAppServers() {
+    String appserver = TestConfigObject.getInstance().appserverFactoryName();
+    // XXX: Only non-session container tests work in glassfish and jetty at the moment
+    if (isSessionTest()
+        && (NewAppServerFactory.GLASSFISH.equals(appserver) || NewAppServerFactory.JETTY.equals(appserver))) { return true; }
+    return false;
   }
 
   private boolean shouldDisableForVariants() {
