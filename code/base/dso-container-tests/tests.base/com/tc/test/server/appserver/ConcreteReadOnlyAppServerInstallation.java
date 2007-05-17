@@ -35,14 +35,9 @@ final class ConcreteReadOnlyAppServerInstallation {
     return serverInstallDir;
   }
 
-  // return platform the test running on
-  private static String resolvePlatform() {
-    return Os.platform();
-  }
-
   private static URL appendPath(URL host, String serverType, String majorVersion, String minorVersion) throws Exception {
     String baseUrl = host.toExternalForm();
-    String appendedPath = serverType + "/" + resolvePlatform() + "/" + serverType.toLowerCase() + "-"
+    String appendedPath = serverType + "/" + Os.platform() + "/" + serverType.toLowerCase() + "-"
                           + majorVersion.toLowerCase() + "." + minorVersion.toLowerCase() + ".zip";
     return new URL(baseUrl + "/" + appendedPath);
   }
