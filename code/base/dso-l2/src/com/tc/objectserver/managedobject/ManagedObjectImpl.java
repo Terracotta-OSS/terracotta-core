@@ -143,21 +143,24 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
                     boolean ignoreIfOlderDNA) {
     boolean isNew = isNew();
     String typeName = dna.getTypeName();
-    if (dna.isDelta() && isNew) {
-      // Assertion Error
-      throw new AssertionError("Newly created Object is applied with a delta DNA ! ManagedObjectImpl = "
-                               + this.toString() + " DNA = " + dna + " TransactionID = " + txnID);
-    }
     long dna_version = dna.getVersion();
     if (dna_version <= this.version) {
       if (ignoreIfOlderDNA) {
-        logger.info("Ignoring apply of an old DNA for " + typeName + " id = " + id + " current version = " + this.version
-                    + " dna_version = " + dna_version);
+        logger.info("Ignoring apply of an old DNA for " + typeName + " id = " + id + " current version = "
+                    + this.version + " dna_version = " + dna_version);
         return;
       } else {
         throw new AssertionError("Recd a DNA with version less than or equal to the current version : " + this.version
                                  + " dna_version : " + dna_version);
       }
+    }
+    if (dna.isDelta() && isNew) {
+      throw new AssertionError("Newly created Object is applied with a delta DNA ! ManagedObjectImpl = "
+                               + this.toString() + " DNA = " + dna + " TransactionID = " + txnID);
+    } else if (!dna.isDelta() && !isNew) {
+      // New DNA applied on old object - a No No for logical objects.
+      throw new AssertionError("Old Object is applied with a non-delta DNA ! ManagedObjectImpl = " + this.toString()
+                               + " DNA = " + dna + " TransactionID = " + txnID);
     }
     if (isNew) {
       instanceMonitor.instanceCreated(typeName);
