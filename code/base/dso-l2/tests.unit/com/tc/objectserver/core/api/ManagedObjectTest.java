@@ -79,6 +79,7 @@ public class ManagedObjectTest extends TCTestCase {
     try {
       dna = new TestDNA(cursor);
       dna.version = 5;
+      dna.isDelta = true;
       mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, false);
       failed = true;
     } catch (AssertionError ae) {
@@ -89,6 +90,7 @@ public class ManagedObjectTest extends TCTestCase {
     // Apply with higher
     dna = new TestDNA(cursor);
     dna.version = 15;
+    dna.isDelta = true;
     mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, false);
     
     long version = mo.getVersion();
@@ -96,18 +98,21 @@ public class ManagedObjectTest extends TCTestCase {
     // Apply in passive, ignore as true.
     dna = new TestDNA(cursor);
     dna.version = 5;
+    dna.isDelta = true;
     mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, true);
     
     assertTrue(version == mo.getVersion());
     
     dna = new TestDNA(cursor);
     dna.version = 15;
+    dna.isDelta = true;
     mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, true);
     
     assertTrue(version == mo.getVersion());
     
     dna = new TestDNA(cursor);
     dna.version = 17;
+    dna.isDelta = true;
     mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, true);
     
     assertTrue(version < mo.getVersion());

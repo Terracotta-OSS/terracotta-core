@@ -153,36 +153,44 @@ public class SleepycatSerializationTest extends TCTestCase {
       byte type = loaded.getManagedObjectState().getType();
       switch (type) {
         case ManagedObjectState.PHYSICAL_TYPE:
-          loaded.apply(newPhysicalDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
+          loaded
+              .apply(newPhysicalDNA(true), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
           break;
         case ManagedObjectState.MAP_TYPE:
         case ManagedObjectState.PARTIAL_MAP_TYPE:
-          loaded.apply(newLogicalMapDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
+          loaded.apply(newLogicalMapDNA(true), new TransactionID(++transactionSequence), new BackReferences(), imo,
+                       false);
           break;
         case ManagedObjectState.LIST_TYPE:
-          loaded.apply(newLogicalListDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
+          loaded.apply(newLogicalListDNA(true), new TransactionID(++transactionSequence), new BackReferences(), imo,
+                       false);
           break;
         case ManagedObjectState.SET_TYPE:
-          loaded.apply(newLogicalSetDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
+          loaded.apply(newLogicalSetDNA(true), new TransactionID(++transactionSequence), new BackReferences(), imo,
+                       false);
           break;
         case ManagedObjectState.ARRAY_TYPE:
-          loaded.apply(newLogicalArrayDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
+          loaded.apply(newLogicalArrayDNA(true), new TransactionID(++transactionSequence), new BackReferences(), imo,
+                       false);
           break;
         case ManagedObjectState.LINKED_HASHMAP_TYPE:
-          loaded.apply(newLogicalLinkedHashMapDNA(), new TransactionID(++transactionSequence), new BackReferences(),
-                       imo, false);
+          loaded.apply(newLogicalLinkedHashMapDNA(true), new TransactionID(++transactionSequence),
+                       new BackReferences(), imo, false);
           break;
         case ManagedObjectState.DATE_TYPE:
-          loaded.apply(newLogicalDateDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
+          loaded.apply(newLogicalDateDNA(true), new TransactionID(++transactionSequence), new BackReferences(), imo,
+                       false);
           break;
         case ManagedObjectState.LITERAL_TYPE:
-          loaded.apply(newLiteralDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
+          loaded.apply(newLiteralDNA(true), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
           break;
         case ManagedObjectState.TREE_MAP_TYPE:
-          loaded.apply(newLogicalTreeMapDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
+          loaded.apply(newLogicalTreeMapDNA(true), new TransactionID(++transactionSequence), new BackReferences(), imo,
+                       false);
           break;
         case ManagedObjectState.TREE_SET_TYPE:
-          loaded.apply(newLogicalTreeSetDNA(), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
+          loaded.apply(newLogicalTreeSetDNA(true), new TransactionID(++transactionSequence), new BackReferences(), imo,
+                       false);
           break;
       }
 
@@ -215,24 +223,25 @@ public class SleepycatSerializationTest extends TCTestCase {
   }
 
   private ManagedObject newLogicalTreeMapObject(ObjectID oid) {
-    return newLogicalObject(oid, newLogicalTreeMapDNA());
+    return newLogicalObject(oid, newLogicalTreeMapDNA(false));
   }
 
-  private TestDNA newLogicalTreeMapDNA() {
+  private TestDNA newLogicalTreeMapDNA(boolean delta) {
     TestDNACursor cursor = new TestDNACursor();
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new Short((short) 10), "good bad and ugly" });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new Boolean(true), "mapped" });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new Boolean(true), "Remapped" });
     TestDNA dna = new TestDNA(cursor, TreeMap.class.getName());
     dna.version = version++;
+    dna.isDelta = delta;
     return dna;
   }
 
   private ManagedObject newLogicalTreeSetObject(ObjectID oid) {
-    return newLogicalObject(oid, newLogicalTreeSetDNA());
+    return newLogicalObject(oid, newLogicalTreeSetDNA(false));
   }
 
-  private TestDNA newLogicalTreeSetDNA() {
+  private TestDNA newLogicalTreeSetDNA(boolean delta) {
     TestDNACursor cursor = new TestDNACursor();
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new Integer(10343) });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { "Hello" });
@@ -240,14 +249,15 @@ public class SleepycatSerializationTest extends TCTestCase {
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { newLong() });
     TestDNA dna = new TestDNA(cursor, TreeSet.class.getName());
     dna.version = version++;
+    dna.isDelta = delta;
     return dna;
   }
 
   private ManagedObject newLogicalSetObject(ObjectID oid) {
-    return newLogicalObject(oid, newLogicalSetDNA());
+    return newLogicalObject(oid, newLogicalSetDNA(false));
   }
 
-  private TestDNA newLogicalSetDNA() {
+  private TestDNA newLogicalSetDNA(boolean delta) {
     TestDNACursor cursor = new TestDNACursor();
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new Integer(10343) });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { "Hello" });
@@ -255,14 +265,15 @@ public class SleepycatSerializationTest extends TCTestCase {
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { newLong() });
     TestDNA dna = new TestDNA(cursor, HashSet.class.getName());
     dna.version = version++;
+    dna.isDelta = delta;
     return dna;
   }
 
   private ManagedObject newLogicalListObject(ObjectID oid) {
-    return newLogicalObject(oid, newLogicalListDNA());
+    return newLogicalObject(oid, newLogicalListDNA(false));
   }
 
-  private TestDNA newLogicalListDNA() {
+  private TestDNA newLogicalListDNA(boolean delta) {
     TestDNACursor cursor = new TestDNACursor();
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new Integer(10343) });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { "Hello" });
@@ -270,14 +281,15 @@ public class SleepycatSerializationTest extends TCTestCase {
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { newLong() });
     TestDNA dna = new TestDNA(cursor, ArrayList.class.getName());
     dna.version = version++;
+    dna.isDelta = delta;
     return dna;
   }
 
   private ManagedObject newLogicalLinkedHashMapObject(ObjectID oid) {
-    return newLogicalObject(oid, newLogicalLinkedHashMapDNA());
+    return newLogicalObject(oid, newLogicalLinkedHashMapDNA(false));
   }
 
-  private TestDNA newLogicalLinkedHashMapDNA() {
+  private TestDNA newLogicalLinkedHashMapDNA(boolean delta) {
     TestDNACursor cursor = new TestDNACursor();
     cursor.addPhysicalAction("java.util.LinkedHashMap.accessOrder", Boolean.TRUE);
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new Integer(10), "King Kong" });
@@ -286,32 +298,35 @@ public class SleepycatSerializationTest extends TCTestCase {
     cursor.addLogicalAction(SerializationUtil.GET, new Object[] { new Integer(20) });
     TestDNA dna = new TestDNA(cursor, LinkedHashMap.class.getName());
     dna.version = version++;
+    dna.isDelta = delta;
     return dna;
   }
 
   private ManagedObject newLogicalLiteralObject(ObjectID oid) {
-    return newLogicalObject(oid, newLiteralDNA());
+    return newLogicalObject(oid, newLiteralDNA(false));
   }
 
-  private TestDNA newLiteralDNA() {
+  private TestDNA newLiteralDNA(boolean delta) {
     TestDNACursor cursor = new TestDNACursor();
     Short s = new Short((short) 0x0045);
     cursor.addLiteralAction("literal", s);
     TestDNA dna = new TestDNA(cursor, Short.class.getName());
     dna.version = version++;
+    dna.isDelta = delta;
     return dna;
   }
 
   private ManagedObject newLogicalArrayObject(ObjectID oid) {
-    return newLogicalObject(oid, newLogicalArrayDNA());
+    return newLogicalObject(oid, newLogicalArrayDNA(false));
   }
 
-  private TestDNA newLogicalArrayDNA() {
+  private TestDNA newLogicalArrayDNA(boolean delta) {
     TestDNACursor cursor = new TestDNACursor();
     Object[] array = new Object[] { newLong(), newLong(), newLong() };
     cursor.addArrayAction(array);
     TestDNA dna = new TestDNA(cursor, array.getClass().getName());
     dna.version = version++;
+    dna.isDelta = delta;
     return dna;
   }
 
@@ -322,7 +337,7 @@ public class SleepycatSerializationTest extends TCTestCase {
   }
 
   private ManagedObject newLogicalDateObject(ObjectID objectID) {
-    return newLogicalObject(objectID, newLogicalDateDNA());
+    return newLogicalObject(objectID, newLogicalDateDNA(false));
   }
 
   private ManagedObject newLogicalObject(ObjectID objectID, TestDNA dna) {
@@ -334,7 +349,7 @@ public class SleepycatSerializationTest extends TCTestCase {
   }
 
   private ManagedObject newLogicalMapObject(ObjectID oid) {
-    return newLogicalObject(oid, newLogicalMapDNA());
+    return newLogicalObject(oid, newLogicalMapDNA(false));
   }
 
   private void addRoot(PersistenceTransaction ptx, String rootName, ObjectID objectID) {
@@ -349,37 +364,40 @@ public class SleepycatSerializationTest extends TCTestCase {
 
   private ManagedObject newPhysicalObject(ObjectID objectID) {
     ManagedObjectImpl rv = new ManagedObjectImpl(objectID);
-    TestDNA dna = newPhysicalDNA();
+    TestDNA dna = newPhysicalDNA(false);
     assertTrue(rv.isNew());
     rv.apply(dna, new TransactionID(++transactionSequence), new BackReferences(), imo, false);
     assertFalse(rv.isNew());
     return rv;
   }
 
-  private TestDNA newPhysicalDNA() {
+  private TestDNA newPhysicalDNA(boolean delta) {
     TestDNACursor cursor = new TestDNACursor();
     cursor.addPhysicalAction("stringField", "Foo");
     cursor.addPhysicalAction("referenceField", newObjectID());
     TestDNA dna = new TestDNA(cursor);
     dna.version = version++;
+    dna.isDelta = delta;
     return dna;
   }
 
-  private TestDNA newLogicalMapDNA() {
+  private TestDNA newLogicalMapDNA(boolean delta) {
     TestDNACursor cursor = new TestDNACursor();
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new Integer(10), "King Kong" });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new Integer(20), "Mad Max" });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new Integer(25), "Mummy Returns" });
     TestDNA dna = new TestDNA(cursor, HashMap.class.getName());
     dna.version = version++;
+    dna.isDelta = delta;
     return dna;
   }
 
-  private TestDNA newLogicalDateDNA() {
+  private TestDNA newLogicalDateDNA(boolean delta) {
     TestDNACursor cursor = new TestDNACursor();
     cursor.addLogicalAction(SerializationUtil.SET_TIME, new Object[] { new Long(100233434L) });
     TestDNA dna = new TestDNA(cursor, Date.class.getName());
     dna.version = version++;
+    dna.isDelta = delta;
     return dna;
   }
 
