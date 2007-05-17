@@ -260,12 +260,15 @@ public class StateManagerImpl implements StateManager, GroupMessageListener {
   }
 
   public void startElectionIfNecessary(NodeID disconnectedNode) {
+    Assert.assertFalse(disconnectedNode.equals(getLocalNodeID()));
     boolean elect = false;
     synchronized (this) {
-      if (state != PASSIVE_UNINTIALIZED && state != ACTIVE_COORDINATOR
-          && (activeNode.isNull() || activeNode.equals(disconnectedNode))) {
-        elect = true;
+      if (activeNode.equals(disconnectedNode)) {
+        // ACTIVE Node is gone
         activeNode = NodeID.NULL_ID;
+      }
+      if (state != PASSIVE_UNINTIALIZED && state != ACTIVE_COORDINATOR && activeNode.isNull()) {
+        elect = true;
       }
     }
     if (elect) {
