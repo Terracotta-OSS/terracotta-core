@@ -61,6 +61,10 @@ final class ConcreteReadOnlyAppServerInstallation {
     long modified = conn.getLastModified();
     DateFormat df = new SimpleDateFormat(FORMAT, Locale.US);
     String modifiedTimestamp = df.format(new Date(modified));
+    // temporarily modify timestamp
+    // TODO: remove below line
+    writeTimestamp(modifiedTimestamp, timestampFile);
+    
     if (!timestampFile.exists()) {
       writeTimestamp(modifiedTimestamp, timestampFile);
       return false;
