@@ -272,6 +272,26 @@ public class BootJarTool {
       throw new RuntimeException(e);
     }
   }
+  
+  private final void scanJarForMissingReferencedClasses(File bootJarFile) {
+    try {
+      final BootJar bootJar = BootJar.getBootJarForReading(bootJarFile);
+      final Set bootJarClassNames = bootJar.getAllUninstrumentedClasses();
+      for(Iterator i=bootJarClassNames.iterator(); i.hasNext();) {
+        final String className = (String)i.next();
+        if (className.startsWith("com.tc.")) {
+          //System.err.println("-- " + className);
+          //ClassReader cr  = new ClassReader(className);
+          //ClassVisitor cv = new BootJarClassDependencyVisitor(bootJarClassNames);
+          //cr.accept(cv, 0);
+        }
+      }
+    } catch (BootJarException e) {
+      throw new RuntimeException(e);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   public final void generateJar() {
     instrumentationLogger = new InstrumentationLoggerImpl(config.getInstrumentationLoggingOptions());
@@ -415,7 +435,7 @@ public class BootJarTool {
     }
 
   }
-
+  
   private final void addManagementClasses() {
     loadTerracottaClass(SessionMonitorMBean.class.getName());
     loadTerracottaClass(SessionMonitorMBean.class.getName() + "$SessionsComptroller");
@@ -1990,6 +2010,7 @@ public class BootJarTool {
       boolean makeItAnyway = commandLine.hasOption("w");
       if (makeItAnyway || !targetFile.exists() || (targetFile.exists() && !bjTool.isBootJarComplete(targetFile))) {
         bjTool.generateJar();
+        bjTool.scanJarForMissingReferencedClasses(targetFile);
       }
     } else if (mode.equals(SCAN_MODE)) {
       bjTool.scanJar(targetFile);

@@ -1625,29 +1625,44 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     return rv;
   }
 
-  public void verifyBootJarContents() throws IncompleteBootJarException, UnverifiedBootJarException {
-    logger.info("Verifying boot jar contents...");
+  private void scanForMissingClassesDeclaredInConfig() throws BootJarException, IOException {
     int missingCount = 0;
     int preInstrumentedCount = 0;
-    int bootJarPopulation = 0;
-    try {
-      BootJar bootJar = BootJar.getDefaultBootJarForReading();
-      Set bjClasses = bootJar.getAllPreInstrumentedClasses();
-      bootJarPopulation = bjClasses.size();
-      TransparencyClassSpec[] allSpecs = getAllSpecs();
-      for (int i = 0; i < allSpecs.length; i++) {
-        TransparencyClassSpec classSpec = allSpecs[i];
-        String message = "";
-        if (classSpec.isPreInstrumented()) {
-          message = "* " + classSpec.getClassName() + "... ";
-          preInstrumentedCount++;
-          if (!(bjClasses.contains(classSpec.getClassName()) || classSpec.isHonorJDKSubVersionSpecific())) {
-            message += "missing";
-            missingCount++;
-            logger.info(message);
-          }
+    BootJar bootJar = BootJar.getDefaultBootJarForReading();
+    Set bjClasses = bootJar.getAllPreInstrumentedClasses();
+    int bootJarPopulation = bjClasses.size();
+    TransparencyClassSpec[] allSpecs = getAllSpecs();
+    for (int i = 0; i < allSpecs.length; i++) {
+      TransparencyClassSpec classSpec = allSpecs[i];
+      String message = "";
+      if (classSpec.isPreInstrumented()) {
+        message = "* " + classSpec.getClassName() + "... ";
+        preInstrumentedCount++;
+        if (!(bjClasses.contains(classSpec.getClassName()) || classSpec.isHonorJDKSubVersionSpecific())) {
+          message += "missing";
+          missingCount++;
+          logger.info(message);
         }
       }
+    }
+    if (missingCount > 0) {
+      logger.info("Number of classes in the DSO boot jar:" + bootJarPopulation);
+      logger.info("Number of classes expected to be in the DSO boot jar:" + preInstrumentedCount);
+      logger.info("Number of classes found missing from the DSO boot jar:" + missingCount);
+      throw new IncompleteBootJarException("Incomplete DSO boot jar; " + missingCount
+                                           + " pre-instrumented class(es) found missing.");
+    }
+  }
+  
+  /**
+   * This method will:
+   * - check the contents of the boot-jar against tc-config.xml
+   * - check that all that all the necessary referenced classes are also present in the boot jar 
+   */
+  public void verifyBootJarContents() throws IncompleteBootJarException, UnverifiedBootJarException {
+    logger.info("Verifying boot jar contents...");
+    try {
+      scanForMissingClassesDeclaredInConfig();
     } catch (BootJarException bjex) {
       throw new UnverifiedBootJarException(
                                            "BootJarException occurred while attempting to verify the contents of the boot jar.",
@@ -1656,14 +1671,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
       throw new UnverifiedBootJarException(
                                            "IOException occurred while attempting to verify the contents of the boot jar.",
                                            ioex);
-    }
-
-    if (missingCount > 0) {
-      logger.info("Number of classes in the DSO boot jar:" + bootJarPopulation);
-      logger.info("Number of classes expected to be in the DSO boot jar:" + preInstrumentedCount);
-      logger.info("Number of classes found missing from the DSO boot jar:" + missingCount);
-      throw new IncompleteBootJarException("Incomplete DSO boot jar; " + missingCount
-                                           + " pre-instrumented class(es) found missing.");
     }
   }
 

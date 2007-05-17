@@ -181,7 +181,11 @@ public class BootJar {
     return rv;
   }
 
-  public synchronized Set getAllPreInstrumentedClasses() throws IOException {
+  private static final int QUERY_ALL = 0;
+  private static final int QUERY_PREINSTRUMENTED = 1;
+  private static final int QUERY_UNINSTRUMENTED = 2;
+  
+  private synchronized Set getBootJarClasses(int query) throws IOException {
     assertOpen();
     Set rv = new HashSet();
     for (Enumeration e = jarFileInput.entries(); e.hasMoreElements();) {
@@ -192,12 +196,35 @@ public class BootJar {
       // boot jar, which caused an assertion error. So, now only try reading specs from actual class files present in
       // the jar
       if (entryName.toLowerCase().endsWith(".class")) {
-        if (isPreInstrumentedEntry(entry)) {
-          rv.add(fileNameToClassName(entry.getName()));
+        switch(query) {
+          case QUERY_ALL:
+            rv.add(fileNameToClassName(entry.getName()));
+            break;
+          case QUERY_PREINSTRUMENTED:
+            if (isPreInstrumentedEntry(entry)) {
+              rv.add(fileNameToClassName(entry.getName()));
+            }
+            break;
+          case QUERY_UNINSTRUMENTED:
+            if (!isPreInstrumentedEntry(entry)) {
+              rv.add(fileNameToClassName(entry.getName()));
+            }
+            break;
+          default:
+            Assert.failure("Query arg for getBootJarClasses() must be one of the following: QUERY_ALL, QUERY_PREINSTRUMENTED, QUERY_UNINSTRUMENTED");
+            break;
         }
       }
     }
     return rv;
+  }
+  
+  public synchronized Set getAllUninstrumentedClasses() throws IOException {
+    return getBootJarClasses(QUERY_UNINSTRUMENTED);
+  }
+
+  public synchronized Set getAllPreInstrumentedClasses() throws IOException {
+    return getBootJarClasses(QUERY_PREINSTRUMENTED);
   }
 
   private void assertOpen() {
