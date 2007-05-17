@@ -3,6 +3,9 @@
  */
 package com.tcspring;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.tc.aspectwerkz.joinpoint.StaticJoinPoint;
 
 import javax.servlet.http.HttpSession;
@@ -15,6 +18,8 @@ import javax.servlet.http.HttpSessionBindingListener;
  * @author Eugene Kuleshov
  */
 public class SessionProtocol {
+
+  private final transient Log logger              = LogFactory.getLog(getClass());
 
   private static final String TC_SESSION_SCOPE_CONVERSATION_ID = "_TC_SESSION_SCOPE_CONVERSATION_ID";
 
@@ -68,13 +73,16 @@ public class SessionProtocol {
     ScopedBeanDestructionCallBack callback = (ScopedBeanDestructionCallBack) cflowCallback.get();
     if(callback!=null) {
       if(oldAttribute==null) {
-        session.setAttribute(name, new DestructionCallbackBindingListener(callback));
+        DestructionCallbackBindingListener listener = new DestructionCallbackBindingListener(callback, "" + System.identityHashCode(callback));
+        logger.info("registering destruction callback for " + name + "  callback:" + callback + "  listener:" + listener);
+        session.setAttribute(name, listener);
         return null;
-        
-      } else if(oldAttribute instanceof DestructionCallbackBindingListener) {
+      }
+      
+      if(oldAttribute instanceof DestructionCallbackBindingListener) {
+        logger.info("reinitializing destruction callback for " + name + "  callback:" + callback + "  oldattr:" + oldAttribute.getClass().getName());
         ((DestructionCallbackBindingListener) oldAttribute).setScopedBeanDestructionCallBack(callback);
         return null;
-        
       }
     }
     
@@ -89,12 +97,15 @@ public class SessionProtocol {
   private static class DestructionCallbackBindingListener implements HttpSessionBindingListener {
 
     private transient ScopedBeanDestructionCallBack destructionCallback;
+    private String name;
 
-    public DestructionCallbackBindingListener(ScopedBeanDestructionCallBack destructionCallback) {
+    public DestructionCallbackBindingListener(ScopedBeanDestructionCallBack destructionCallback, String name) {
       this.destructionCallback = destructionCallback;
+      this.name = name;
     }
 
     public void setScopedBeanDestructionCallBack(ScopedBeanDestructionCallBack destructionCallback) {
+      LogFactory.getLog(getClass()).info("destructionCallback: " + destructionCallback);
       this.destructionCallback = destructionCallback;
     }
 
@@ -106,7 +117,16 @@ public class SessionProtocol {
     }
 
     public void valueUnbound(HttpSessionBindingEvent event) {
-      this.destructionCallback.run();
+      if(this.destructionCallback==null) {
+        // TODO destructionCallback can be nulled out by the memory manager. we need to find way to recreate it
+        LogFactory.getLog(getClass()).info("destructionCallback is NULL " + this);
+      } else {
+        this.destructionCallback.run();
+      }
+    }
+    
+    public String toString() {
+      return name;
     }
   }
   

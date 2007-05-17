@@ -8,6 +8,7 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpState;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.ObjectFactory;
@@ -58,7 +59,10 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
   
   public CustomScopedBeanTest() {
     // this.disableAllUntil("2007-05-14");
-    this.disableVariant(TestConfigObject.SPRING_VARIANT, "128");
+    disableTestUntil("testDestructionCallbacks", "2007-08-01");
+    disableTestUntil("testTransientFields", "2007-08-01");
+    
+    disableVariant(TestConfigObject.SPRING_VARIANT, "128");
   }
   
   protected void setUp() throws Exception {
@@ -131,7 +135,7 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
     assertFalse("Failed to destruct scoped bean", beanN2C2.isInClusteredSingletonCache(conversationId22));
   }
 
-  public void testTransparentFields() throws Exception {
+  public void testTransientFields() throws Exception {
     assertEquals("Failed to initialize transient field", "transient-val", beanN1C1.getTransientField());
     assertEquals("Failed to initialize transient field", "transient-val", beanN1C2.getTransientField());
     assertEquals("Failed to initialize transient field", "transient-val", beanN2C1.getTransientField());
@@ -286,7 +290,7 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
     }
     
     public void invokeDestructionCallback() {
-      System.err.println("#### ConversationScopeTestFacade.invokeDestructionCallback() " + getBeanName());
+      LogFactory.getLog(getClass()).info("#### invokeDestructionCallback() " + getBeanName() + " " + scope.getConversationId());
       HttpSessionBindingListener listener = (HttpSessionBindingListener) scope.getDestructionCallback(getBeanName());
       listener.valueUnbound(null); // cause unbound
     }
@@ -294,7 +298,7 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
     public boolean isInClusteredSingletonCache(String conversationId) {
       ComplexBeanId beanId = new ComplexBeanId(conversationId, getBeanName());
       boolean res = ((DistributableBeanFactory) factory).getBeanContainer(beanId) != null;
-      System.err.println("#### ConversationScopeTestFacade.isInClusteredSingletonCache() " + beanId + " " + res);
+      LogFactory.getLog(getClass()).info("#### isInClusteredSingletonCache() " + beanId + " " + res);
       return res;
     }
 
