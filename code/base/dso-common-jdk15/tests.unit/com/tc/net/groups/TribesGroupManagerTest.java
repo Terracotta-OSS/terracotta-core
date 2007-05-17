@@ -176,7 +176,7 @@ public class TribesGroupManagerTest extends TCTestCase {
   private void checkMessagesOrdering(final TribesGroupManager mgr1, final TribesGroupManager mgr2)
       throws GroupException {
 
-    final Integer upbound = new Integer(100);
+    final Integer upbound = new Integer(50);
     final MyListener myl1 = new MyListener();
     final MyListener myl2 = new MyListener();
     mgr1.registerForMessages(TestMessage.class, myl1);
