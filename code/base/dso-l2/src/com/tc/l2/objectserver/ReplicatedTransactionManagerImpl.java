@@ -244,27 +244,38 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       // XXX::NOTE:: Normally even though getChanges() returns a list, you will only find one change for each OID (Look
       // at ClientTransactionImpl) but here we break that. But hopefully no one is depending on THAT in the system.
       List compoundChanges = new ArrayList(changes.size() * 2);
+      boolean modified = false;
       for (Iterator i = changes.iterator(); i.hasNext();) {
         DNA dna = (DNA) i.next();
         ObjectID oid = dna.getObjectID();
-        existingOIDs.add(oid);
-        compoundChanges.add(dna);
+        if (existingOIDs.add(oid)) {
+          compoundChanges.add(dna);
+        } else {
+          // XXX::Note:: This is a possible condition in the 3'rd PASSIVE which is initializing when the ACTIVE crashes.
+          // The new ACTIVE might resend the same Object, but we dont want to pass it thru since technically if we
+          // didint miss any client transaction, we will have the same state. Also if the object sync transaction from
+          // the new passive arrives before the transaction containing a change to this object, then we might apply full
+          // DNA on old object.
+          logger.warn("Ignoring ObjectSyncTransaction for " + oid + " dna = " + dna + " since its already present");
+          modified = true;
+        }
         List moreChanges = pca.getAnyPendingChangesForAndClear(oid);
-        long lastVersion = -1;
+        long lastVersion = Long.MIN_VALUE;
         for (Iterator j = moreChanges.iterator(); j.hasNext();) {
           PendingRecord pr = (PendingRecord) j.next();
           long version = pr.getGlobalTransactionID().toLong();
           // XXX:: This should be true since we maintain the order in the List.
           Assert.assertTrue(lastVersion < version);
-          compoundChanges.add(new VersionizedDNAWrapper(pr.getChange(),version));
+          compoundChanges.add(new VersionizedDNAWrapper(pr.getChange(), version));
           lastVersion = version;
+          modified = true;
         }
       }
-      if (compoundChanges.size() == changes.size()) {
-        return txn;
-      } else {
+      if (modified) {
         // This name is little misleading
         return new PrunedServerTransaction(compoundChanges, txn);
+      } else {
+        return txn;
       }
     }
   }
