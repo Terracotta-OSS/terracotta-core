@@ -17,7 +17,9 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * This class manages the installation of the read-only portion of a running appserver. A timestamp is used to cache the
@@ -26,7 +28,10 @@ import java.util.Date;
  */
 final class ConcreteReadOnlyAppServerInstallation {
 
-  private static final DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG);
+  // private static final DateFormat df = new SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG);
+  // "11/04/07 6:38:56 PDT PM"
+  private static final String FORMAT = "dd/MM/yy H:mm:ss zzz a";
+  
 
   static File create(URL host, File serverDir, String serverType, String majorVersion, String minorVersion)
       throws Exception {
@@ -52,24 +57,28 @@ final class ConcreteReadOnlyAppServerInstallation {
     URLConnection conn = appendPath(host, serverType, majorVersion, minorVersion).openConnection();
     System.out.println("**Connection=" + host);
     System.out.println("**Connection=" + conn);
+
     long modified = conn.getLastModified();
+    DateFormat df = new SimpleDateFormat(FORMAT, Locale.US);
+    String modifiedTimestamp = df.format(new Date(modified));
     if (!timestampFile.exists()) {
-      writeTimestamp(modified, timestampFile);
+      writeTimestamp(modifiedTimestamp, timestampFile);
       return false;
     }
+    
     LineNumberReader in = new LineNumberReader(new FileReader(timestampFile));
     String serverStamp = in.readLine();
     in.close();
-    if (df.parse(serverStamp).getTime() != df.parse(df.format(new Date(modified))).getTime()) {
-      writeTimestamp(modified, timestampFile);
+    if (df.parse(serverStamp).getTime() != df.parse(modifiedTimestamp).getTime()) {
+      writeTimestamp(modifiedTimestamp, timestampFile);
       return false;
     }
     return true;
   }
 
-  private static void writeTimestamp(long timestamp, File timestampFile) throws IOException {
+  private static void writeTimestamp(String modifiedTimestamp, File timestampFile) throws IOException {
     PrintWriter out = new PrintWriter(new FileWriter(timestampFile));
-    out.println(df.format(new Date(timestamp)));
+    out.println(modifiedTimestamp);
     out.close();
   }
 
