@@ -4,6 +4,8 @@
  */
 package com.tc.test.server.util;
 
+import com.tc.text.Banner;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -31,7 +33,7 @@ public class WebClient {
     http.setRequestProperty("Cookie", getCookiesAsString());
     http.connect();
     if (http.getResponseCode() != HttpURLConnection.HTTP_OK) {
-      throw new IOException("Response code is not OK: " + http.getResponseMessage());
+      Banner.warnBanner("Response code is not OK: " + http.getResponseMessage() + "\nRequest: " + url);      
     }
     extractCookies(http);
     BufferedReader in = new BufferedReader(new InputStreamReader(http.getInputStream()));
