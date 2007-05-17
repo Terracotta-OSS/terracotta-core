@@ -18,6 +18,8 @@ import org.apache.wicket.protocol.http.WicketServlet;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebLink;
 import com.meterware.httpunit.WebResponse;
+import com.tc.test.TestConfigObject;
+import com.tc.test.server.appserver.NewAppServerFactory;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
@@ -36,6 +38,11 @@ public class ContainerWicketTest extends AbstractTwoServerDeploymentTest {
   
   public ContainerWicketTest() {
     // disableAllUntil("2007-05-21");
+  }
+  
+  public boolean shouldDisable() {
+	return super.shouldDisable() || 
+	       TestConfigObject.getInstance().appserverFactoryName().equals(NewAppServerFactory.JBOSS);
   }
 
   public void testWicketInitialization() throws Exception {
