@@ -24,11 +24,11 @@ final class ConcreteReadOnlyAppServerInstallation {
     if (!serverInstallDir.exists()) {
       serverInstallDir.mkdir();
       URL appUrl = appendPath(host, serverType, majorVersion, minorVersion);      
-      System.out.println("Downloading: " + appUrl);
-      System.out.println("Unzip to: " + serverInstallDir);
+      System.out.println("Downloading: " + appUrl);      
       BufferedInputStream in = new BufferedInputStream(appUrl.openStream());
       ZipBuilder.unzip(in, serverInstallDir);
       in.close();
+      System.out.println("Unzip to: " + serverInstallDir);
     }
     return serverInstallDir;
   }
