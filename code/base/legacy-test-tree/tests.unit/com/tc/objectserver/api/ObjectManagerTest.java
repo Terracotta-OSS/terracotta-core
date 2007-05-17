@@ -298,7 +298,12 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     for (Iterator i = ids.iterator(); i.hasNext();) {
       ObjectID id = (ObjectID) i.next();
       mo = (ManagedObject) results.objects.get(id);
-      mo.apply(new TestArrayDNA(id), new TransactionID(count++), new BackReferences(), imo, false);
+      if (newIDs.contains(id)) {
+        mo.apply(new TestArrayDNA(id), new TransactionID(count++), new BackReferences(), imo, false);
+      } else {
+        mo.apply(new TestArrayDNA(id, true), new TransactionID(count++), new BackReferences(), imo, false);
+
+      }
     }
     ic = imo.getInstanceCounts();
     assertEquals(1, ic.size());
@@ -374,7 +379,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     ManagedObject dateManagedObject = (ManagedObject) lookedUpObjects.get(dateID);
 
     ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
-    dateManagedObject.apply(new TestDateDNA("java.util.Date", dateID), new TransactionID(1), new BackReferences(), imo, false);
+    dateManagedObject.apply(new TestDateDNA("java.util.Date", dateID), new TransactionID(1), new BackReferences(), imo,
+                            false);
 
     objectManager.releaseAll(NULL_TRANSACTION, lookedUpObjects.values());
 
@@ -450,7 +456,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
     map.apply(new TestMapDNA(mapID), new TransactionID(1), new BackReferences(), imo, false);
     set.apply(new TestListSetDNA("java.util.HashSet", setID), new TransactionID(1), new BackReferences(), imo, false);
-    list.apply(new TestListSetDNA("java.util.LinkedList", listID), new TransactionID(1), new BackReferences(), imo, false);
+    list.apply(new TestListSetDNA("java.util.LinkedList", listID), new TransactionID(1), new BackReferences(), imo,
+               false);
 
     objectManager.releaseAll(NULL_TRANSACTION, lookedUpObjects.values());
 
@@ -720,6 +727,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     fieldValueSlot.set(0, newReferenceID);
     dna = new TestDNA(cursor);
     dna.version = 10;
+    dna.isDelta = true;
     lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(2), new BackReferences(), imo, false);
     // lookedUpViaLookupObjectsForCreateIfNecessary.commit();
     tx = ptp.newTransaction();
@@ -1164,14 +1172,21 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
   private static class TestArrayDNA implements DNA {
 
-    private static int _version;
-    
+    private static int     _version;
+
     private final ObjectID id;
-    private int version;
+    private int            version;
+
+    private boolean        delta;
 
     public TestArrayDNA(ObjectID id) {
+      this(id, false);
+    }
+
+    public TestArrayDNA(ObjectID id, boolean delta) {
       this.id = id;
-      this.version  = getNextVersion();
+      this.delta = delta;
+      this.version = getNextVersion();
     }
 
     private static int getNextVersion() {
@@ -1249,7 +1264,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     }
 
     public boolean isDelta() {
-      return false;
+      return delta;
     }
   }
 

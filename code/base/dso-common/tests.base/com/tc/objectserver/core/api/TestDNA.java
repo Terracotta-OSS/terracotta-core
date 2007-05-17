@@ -19,7 +19,7 @@ public class TestDNA implements DNA {
   public long      version;
   public String    typeName       = "SomeClassName";
   public ObjectID  parentObjectID = ObjectID.NULL_ID;
-  private boolean  isDelta;
+  public boolean  isDelta;
   public String    loaderDesc     = "system.loader";
 
   public TestDNA(DNACursor cursor) {
