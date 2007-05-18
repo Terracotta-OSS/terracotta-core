@@ -16,9 +16,11 @@ import com.tc.l2.handler.L2ObjectSyncHandler;
 import com.tc.l2.handler.L2ObjectSyncRequestHandler;
 import com.tc.l2.handler.L2ObjectSyncSendHandler;
 import com.tc.l2.handler.L2StateChangeHandler;
+import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.handler.ServerTransactionAckHandler;
 import com.tc.l2.handler.TransactionRelayHandler;
 import com.tc.l2.handler.GroupEventsDispatchHandler.GroupEventsDispatcher;
+import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.ObjectSyncCompleteMessage;
 import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.l2.msg.RelayedCommitTransactionMessage;
@@ -123,10 +125,14 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     final Sink ackProcessingStage = stageManager
         .createStage(ServerConfigurationContext.SERVER_TRANSACTION_ACK_PROCESSING_STAGE,
                      new ServerTransactionAckHandler(), 1, Integer.MAX_VALUE).getSink();
+    final Sink stateMessageStage = stageManager
+        .createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE,
+                     new L2StateMessageHandler(), 1, Integer.MAX_VALUE).getSink();
+    
     this.rClusterStateMgr = new ReplicatedClusterStateManagerImpl(groupManager, stateManager, clusterState, server
         .getConnectionIdFactory(), stageManager.getStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE).getSink());
 
-    OrderedSink orderedObjectsSyncSink = new OrderedSink(TCLogging.getLogger(L2HACoordinator.class), objectsSyncSink);
+    OrderedSink orderedObjectsSyncSink = new OrderedSink(logger, objectsSyncSink);
     this.rTxnManager = new ReplicatedTransactionManagerImpl(groupManager, orderedObjectsSyncSink, transactionManager,
                                                             txnObjectManager);
     
@@ -137,6 +143,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.groupManager.routeMessages(ObjectSyncCompleteMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(RelayedCommitTransactionMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(ServerTxnAckMessage.class, ackProcessingStage);
+    this.groupManager.routeMessages(L2StateMessage.class, stateMessageStage);
 
     final Sink groupEventsSink = stageManager.createStage(ServerConfigurationContext.GROUP_EVENTS_DISPATCH_STAGE,
                                                           new GroupEventsDispatchHandler(this), 1, Integer.MAX_VALUE)

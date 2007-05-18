@@ -15,14 +15,13 @@ import com.tc.logging.TCLogging;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
-import com.tc.net.groups.GroupMessageListener;
 import com.tc.net.groups.NodeID;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
 import java.util.Iterator;
 
-public class StateManagerImpl implements StateManager, GroupMessageListener {
+public class StateManagerImpl implements StateManager {
 
   private static final TCLogger      logger             = TCLogging.getLogger(StateManagerImpl.class);
 
@@ -43,7 +42,6 @@ public class StateManagerImpl implements StateManager, GroupMessageListener {
     this.groupManager = groupManager;
     this.stateChangeSink = stateChangeSink;
     this.electionMgr = new ElectionManagerImpl(groupManager);
-    this.groupManager.registerForMessages(L2StateMessage.class, this);
   }
 
   /*
@@ -153,17 +151,7 @@ public class StateManagerImpl implements StateManager, GroupMessageListener {
     }
   }
 
-  /**
-   * Message Listener Interface, TODO::move to a stage
-   */
-  public void messageReceived(NodeID fromNode, GroupMessage msg) {
-    if (!(msg instanceof L2StateMessage)) { throw new AssertionError("StateManagerImpl : Received wrong message type :"
-                                                                     + msg); }
-    L2StateMessage clusterMsg = (L2StateMessage) msg;
-    handleClusterStateMessage(clusterMsg);
-  }
-
-  private void handleClusterStateMessage(L2StateMessage clusterMsg) {
+  public void handleClusterStateMessage(L2StateMessage clusterMsg) {
     try {
       switch (clusterMsg.getType()) {
         case L2StateMessage.START_ELECTION:
@@ -247,7 +235,9 @@ public class StateManagerImpl implements StateManager, GroupMessageListener {
       info("Forcing Abort Election for " + msg + " with " + abortMsg);
       groupManager.sendTo(msg.messageFrom(), abortMsg);
     } else if (!electionMgr.handleStartElectionRequest(msg)) {
-      startElectionIfNecessary(NodeID.NULL_ID);
+      // TODO::FIXME:: Commenting so that stage thread is not held up doind election.
+      // startElectionIfNecessary(NodeID.NULL_ID);
+      logger.warn("Not starting election as it was commented out");
     }
   }
 

@@ -5,6 +5,7 @@
 package com.tc.l2.state;
 
 import com.tc.l2.context.StateChangedEvent;
+import com.tc.l2.msg.L2StateMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.NodeID;
 import com.tc.util.State;
@@ -33,5 +34,7 @@ public interface StateManager {
   public void moveToPassiveStandbyState();
   
   public void publishActiveState(NodeID nodeID) throws GroupException;
+  
+  public void handleClusterStateMessage(L2StateMessage clusterMsg);
 
 }
