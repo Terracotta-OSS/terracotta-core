@@ -9,6 +9,7 @@
     <version>2.3-SNAPSHOT</version>
   </parent>
   <artifactId>deploy</artifactId>
+  <name>deploy</name>
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>

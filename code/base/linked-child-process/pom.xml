@@ -9,5 +9,6 @@
     <version>2.3-SNAPSHOT</version>
   </parent>
   <artifactId>linked-child-process</artifactId>
+  <name>linked-child-process</name>
 
 </project>

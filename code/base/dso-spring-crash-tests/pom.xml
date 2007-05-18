@@ -9,6 +9,7 @@
     <version>2.3-SNAPSHOT</version>
   </parent>
   <artifactId>dso-spring-crash-tests</artifactId>
+  <name>dso-spring-crash-tests</name>
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>

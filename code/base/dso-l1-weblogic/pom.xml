@@ -9,6 +9,7 @@
     <version>2.3-SNAPSHOT</version>
   </parent>
   <artifactId>dso-l1-weblogic</artifactId>
+  <name>dso-l1-weblogic</name>
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>

@@ -7,6 +7,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>clustered-iBatis-2.2.0</artifactId>
+  <name>clustered-iBatis-2.2.0</name>
   <dependencies>
     <dependency>
       <groupId>hsqldb</groupId>
@@ -60,4 +61,3 @@
     </dependency>
   </dependencies>
 </project>
-

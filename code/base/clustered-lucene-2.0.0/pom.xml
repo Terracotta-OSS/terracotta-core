@@ -7,6 +7,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>clustered-lucene-2.0.0</artifactId>
+  <name>clustered-lucene-2.0.0</name>
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>

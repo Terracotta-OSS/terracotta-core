@@ -9,6 +9,7 @@
     <version>2.3-SNAPSHOT</version>
   </parent>
   <artifactId>clustered-jetty-6.1</artifactId>
+  <name>clustered-jetty-6.1</name>
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>

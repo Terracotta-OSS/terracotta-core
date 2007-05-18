@@ -9,6 +9,7 @@
     <version>2.3-SNAPSHOT</version>
   </parent>
   <artifactId>dso-performance-tests</artifactId>
+  <name>dso-performance-tests</name>
   <dependencies>
     <dependency>
       <groupId>commons-codec</groupId>

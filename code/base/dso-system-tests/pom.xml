@@ -9,6 +9,7 @@
     <version>2.3-SNAPSHOT</version>
   </parent>
   <artifactId>dso-system-tests</artifactId>
+  <name>dso-system-tests</name>
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>

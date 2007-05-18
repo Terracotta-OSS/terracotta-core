@@ -9,6 +9,7 @@
     <version>2.3-SNAPSHOT</version>
   </parent>
   <artifactId>dso-memory-datastore</artifactId>
+  <name>dso-memory-datastore</name>
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>

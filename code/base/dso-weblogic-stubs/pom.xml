@@ -9,6 +9,7 @@
     <version>2.3-SNAPSHOT</version>
   </parent>
   <artifactId>dso-weblogic-stubs</artifactId>
+  <name>dso-weblogic-stubs</name>
   <dependencies>
     <dependency>
       <groupId>javax.servlet</groupId>

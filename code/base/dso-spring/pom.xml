@@ -7,6 +7,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>dso-spring</artifactId>
+  <name>dso-spring</name>
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>

@@ -9,6 +9,8 @@
     <version>2.3-SNAPSHOT</version>
   </parent>
   <artifactId>dso-common-jdk15</artifactId>
+  <name>dso-common-jdk15</name>
+
   <build>
     <plugins>
       <plugin>
@@ -33,6 +35,23 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+
+<!-- TODO: remove, temporary until jars in the repo -->
+      <dependency>
+        <groupId>org.apache.tomcat</groupId>
+        <artifactId>tribes</artifactId>
+        <version>6.0.11-20070517</version>
+        <scope>system</scope>
+        <systemPath>${basedir}/../dependencies/lib/catalina-tribes-6.0.11-20070517.jar</systemPath>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.tomcat</groupId>
+        <artifactId>juli</artifactId>
+        <version>6.0.09</version>
+        <scope>system</scope>
+        <systemPath>${basedir}/../dependencies/lib/tomcat-juli-6.0.9.jar</systemPath>
+      </dependency>
+<!--
     <dependency>
       <groupId>org.apache.tomcat</groupId>
       <artifactId>tribes</artifactId>
@@ -41,5 +60,6 @@
       <groupId>org.apache.tomcat</groupId>
       <artifactId>juli</artifactId>
     </dependency>
+-->
   </dependencies>
 </project>

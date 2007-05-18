@@ -9,6 +9,7 @@
     <version>2.3-SNAPSHOT</version>
   </parent>
   <artifactId>dso-crash-tests</artifactId>
+  <name>dso-crash-tests</name>
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>

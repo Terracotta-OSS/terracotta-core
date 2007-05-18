@@ -7,6 +7,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>dso-l1-tomcat50</artifactId>
+  <name>dso-l1-tomcat50</name>
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>

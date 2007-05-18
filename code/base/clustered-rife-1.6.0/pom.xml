@@ -7,6 +7,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>clustered-rife-1.6.0</artifactId>
+  <name>clustered-rife-1.6.0</name>
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>

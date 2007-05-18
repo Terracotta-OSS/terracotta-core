@@ -7,6 +7,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>examples</artifactId>
+  <name>examples</name>
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>

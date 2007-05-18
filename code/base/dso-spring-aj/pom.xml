@@ -7,6 +7,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>dso-spring-aj</artifactId>
+  <name>dso-spring-aj</name>
 
   <build>
     <plugins>

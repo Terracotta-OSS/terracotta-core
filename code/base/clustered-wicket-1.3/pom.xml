@@ -7,6 +7,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>clustered-wicket-1.3.0</artifactId>
+  <name>clustered-wicket-1.3.0</name>
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>
