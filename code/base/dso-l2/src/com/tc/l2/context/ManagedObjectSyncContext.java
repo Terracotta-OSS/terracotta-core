@@ -76,10 +76,6 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
     return nodeID;
   }
 
-  public void close() {
-    // TODO::change state
-  }
-
   public ObjectStringSerializer getObjectSerializer() {
     Assert.assertNotNull(serializer);
     return serializer;

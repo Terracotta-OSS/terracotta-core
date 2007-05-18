@@ -60,12 +60,12 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
   }
 
   private boolean sendObjects(ManagedObjectSyncContext mosc) {
-    objectStateManager.close(mosc);
     ObjectSyncMessage msg = ObjectSyncMessageFactory.createObjectSyncMessageFrom(mosc);
     try {
       this.groupManager.sendTo(mosc.getNodeID(), msg);
       logger.info("Sent " + mosc.getDNACount() + " objects to " + mosc.getNodeID() + " roots = "
                   + mosc.getRootsMap().size());
+      objectStateManager.close(mosc);
       return true;
     } catch (GroupException e) {
       logger.error("Removing " + mosc.getNodeID() + " from group because of Exception :", e);

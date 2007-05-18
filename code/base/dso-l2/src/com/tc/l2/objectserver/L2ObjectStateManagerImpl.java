@@ -11,24 +11,18 @@ import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.NodeID;
-import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.tx.ServerTransactionListener;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.concurrent.CopyOnWriteArrayMap;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
 
@@ -61,6 +55,13 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     }
   }
 
+  private void fireObjectSyncCompleteEvent(NodeID nodeID) {
+    for (Iterator i = listeners.iterator(); i.hasNext();) {
+      L2ObjectStateListener l = (L2ObjectStateListener) i.next();
+      l.objectSyncCompleteFor(nodeID);
+    }
+  }
+
   public int getL2Count() {
     return nodes.size();
   }
@@ -83,7 +84,12 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       }
       l2State = new L2ObjectStateImpl(nodeID, oids);
       nodes.put(nodeID, l2State);
-      txnMonitor.callBackWhenAllCurrentTxnsApplied(l2State);
+      final L2ObjectStateImpl _l2State = l2State;
+      txnMonitor.callBackWhenAllCurrentTxnsApplied(new UnappliedTransactionsInTheSystemMonitor.Callback() {
+        public void doAction() {
+          _l2State.moveToReadyToSyncState();
+        }
+      });
     }
   }
 
@@ -110,10 +116,11 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     return nodes.values();
   }
 
-  private static final State START         = new State("START");
-  private static final State READY_TO_SYNC = new State("READY_TO_SYNC");
-  private static final State SYNC_STARTED  = new State("SYNC_STARTED");
-  private static final State IN_SYNC       = new State("IN_SYNC");
+  private static final State START                  = new State("START");
+  private static final State READY_TO_SYNC          = new State("READY_TO_SYNC");
+  private static final State SYNC_STARTED           = new State("SYNC_STARTED");
+  private static final State IN_SYNC_PENDING_NOTIFY = new State("IN_SYNC_PENDING_NOTIFY");
+  private static final State IN_SYNC                = new State("IN_SYNC");
 
   private final class L2ObjectStateImpl implements L2ObjectState {
 
@@ -134,11 +141,15 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
 
     private void close(ManagedObjectSyncContext mosc) {
       Assert.assertTrue(mosc == syncingContext);
-      mosc.close();
-      if (missingOids.isEmpty()) {
-        state = IN_SYNC;
-      }
       syncingContext = null;
+      if (missingOids.isEmpty()) {
+        state = IN_SYNC_PENDING_NOTIFY;
+        txnMonitor.callBackWhenAllCurrentTxnsApplied(new UnappliedTransactionsInTheSystemMonitor.Callback() {
+          public void doAction() {
+            moveToInSyncState();
+          }
+        });
+      }
     }
 
     private ManagedObjectSyncContext getSomeObjectsToSyncContext(int count, Sink sink) {
@@ -211,81 +222,10 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       int missingObjects = computeDiff();
       fireMissingObjectsStateEvent(this.nodeID, missingObjects);
     }
-  }
 
-  /**
-   * TODO::This adds some computational overhead. If found as a performance problem, this functionality could be
-   * provided by the ServerTransactionManager itself
-   */
-  private static class UnappliedTransactionsInTheSystemMonitor implements ServerTransactionListener {
-
-    private final Set unappliedTxns    = new HashSet();
-    private final Map pendingCallbacks = new HashMap();
-
-    public synchronized void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
-      unappliedTxns.addAll(serverTxnIDs);
-    }
-
-    public void callBackWhenAllCurrentTxnsApplied(L2ObjectStateImpl state) {
-      boolean callBack = false;
-      synchronized (this) {
-        if (unappliedTxns.isEmpty()) {
-          callBack = true;
-        } else {
-          Set copy = new HashSet(unappliedTxns);
-          logger.info(state + " : Pending Txn Applys to wait :" + copy);
-          pendingCallbacks.put(state, copy);
-        }
-      }
-      if (callBack) {
-        /**
-         * XXX:: callbacks are called outside sync scope so that objectmanager.getAllObjectIDs() call which can take a
-         * long time during startup in persisitent mode doesnt hold up incomming transactions.
-         */
-        state.moveToReadyToSyncState();
-      }
-    }
-
-    public void transactionApplied(ServerTransactionID stxID) {
-      List callBacks = null;
-      synchronized (this) {
-        unappliedTxns.remove(stxID);
-        if (pendingCallbacks.isEmpty()) return;
-        for (Iterator i = pendingCallbacks.entrySet().iterator(); i.hasNext();) {
-          Entry e = (Entry) i.next();
-          Set pendingTxns = (Set) e.getValue();
-          pendingTxns.remove(stxID);
-          if (pendingTxns.isEmpty()) {
-            L2ObjectStateImpl callback = (L2ObjectStateImpl) e.getKey();
-            if (callBacks == null) {
-              callBacks = new ArrayList(3);
-            }
-            callBacks.add(callback);
-            i.remove();
-          }
-        }
-      }
-      if (callBacks != null) {
-        /**
-         * @see comments above.
-         */
-        for (Iterator i = callBacks.iterator(); i.hasNext();) {
-          L2ObjectStateImpl callback = (L2ObjectStateImpl) i.next();
-          callback.moveToReadyToSyncState();
-        }
-      }
-    }
-
-    public void transactionCompleted(ServerTransactionID stxID) {
-      // NOP
-    }
-
-    public void addResentServerTransactionIDs(Collection stxIDs) {
-      // NOP
-    }
-
-    public void clearAllTransactionsFor(ChannelID killedClient) {
-      // NOP
+    private void moveToInSyncState() {
+      state = IN_SYNC;
+      fireObjectSyncCompleteEvent(this.nodeID);
     }
   }
 }

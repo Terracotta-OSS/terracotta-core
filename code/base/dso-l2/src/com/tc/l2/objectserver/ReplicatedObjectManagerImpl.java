@@ -8,6 +8,8 @@ import com.tc.async.api.Sink;
 import com.tc.l2.context.SyncObjectsRequest;
 import com.tc.l2.msg.ObjectListSyncMessage;
 import com.tc.l2.msg.ObjectListSyncMessageFactory;
+import com.tc.l2.msg.ObjectSyncCompleteMessage;
+import com.tc.l2.msg.ObjectSyncCompleteMessageFactory;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -19,6 +21,7 @@ import com.tc.net.groups.GroupResponse;
 import com.tc.net.groups.NodeID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.util.Assert;
+import com.tc.util.sequence.SequenceGenerator;
 
 import java.util.Iterator;
 import java.util.Set;
@@ -34,17 +37,19 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private final L2ObjectStateManager         l2ObjectStateManager;
   private final ReplicatedTransactionManager txnManager;
   private final Sink                         objectsSyncRequestSink;
+  private final SequenceGenerator            sequenceGenerator;
 
   public ReplicatedObjectManagerImpl(GroupManager groupManager, StateManager stateManager,
                                      L2ObjectStateManager l2ObjectStateManager,
                                      ReplicatedTransactionManager txnManager, ObjectManager objectManager,
-                                     Sink objectsSyncRequestSink) {
+                                     Sink objectsSyncRequestSink, SequenceGenerator sequenceGenerator) {
     this.groupManager = groupManager;
     this.stateManager = stateManager;
     this.txnManager = txnManager;
     this.objectManager = objectManager;
     this.objectsSyncRequestSink = objectsSyncRequestSink;
     this.l2ObjectStateManager = l2ObjectStateManager;
+    this.sequenceGenerator = sequenceGenerator;
     l2ObjectStateManager.registerForL2ObjectStateChangeEvents(this);
     this.groupManager.registerForMessages(ObjectListSyncMessage.class, this);
   }
@@ -125,6 +130,17 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       stateManager.moveNodeToPassiveStandby(nodeID);
     } else {
       objectsSyncRequestSink.add(new SyncObjectsRequest(nodeID));
+    }
+  }
+
+  public void objectSyncCompleteFor(NodeID nodeID) {
+    try {
+    ObjectSyncCompleteMessage msg = ObjectSyncCompleteMessageFactory
+        .createObjectSyncCompleteMessageFor(nodeID, sequenceGenerator.getNextSequence(nodeID));
+      groupManager.sendTo(nodeID, msg);
+    } catch (Exception e) {
+      logger.error("Error Sending Object Sync complete message  to : " + nodeID, e);
+      groupManager.zapNode(nodeID);
     }
   }
 

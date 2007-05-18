@@ -195,9 +195,14 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
           ObjectID id = dna.getObjectID();
           if (!dna.isDelta()) {
             // New Object
-            existingOIDs.add(id);
-            prunedChanges.add(dna);
-            oids.add(id);
+            if (existingOIDs.add(id)) {
+              prunedChanges.add(dna);
+              oids.add(id);
+            } else {
+              // XXX::Note:: We already know about this object, ACTIVE has sent it in Object Sync Transaction
+              logger.warn("Ignoring New Object " + id + "in transaction " + st + " dna = " + dna
+                          + " since its already present");
+            }
           } else if (existingOIDs.contains(id)) {
             // Already present
             prunedChanges.add(dna);
@@ -235,8 +240,13 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
     public void addObjectSyncTransaction(ServerTransaction txn) {
       Map txns = new LinkedHashMap(1);
-      txns.put(txn.getServerTransactionID(), createCompoundTransactionFrom(txn));
-      addIncommingTransactions(ChannelID.L2_SERVER_ID, txns.keySet(), txns.values(), Collections.EMPTY_LIST);
+      ServerTransaction newTxn = createCompoundTransactionFrom(txn);
+      if (newTxn != null) {
+        txns.put(txn.getServerTransactionID(), newTxn);
+        addIncommingTransactions(ChannelID.L2_SERVER_ID, txns.keySet(), txns.values(), Collections.EMPTY_LIST);
+      } else {
+        logger.warn("Not add Txn " + txn + " to queue since all changes are ignored");
+      }
     }
 
     private ServerTransaction createCompoundTransactionFrom(ServerTransaction txn) {
@@ -255,7 +265,8 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
           // The new ACTIVE might resend the same Object, but we dont want to pass it thru since technically if we
           // didint miss any client transaction, we will have the same state. Also if the object sync transaction from
           // the new passive arrives before the transaction containing a change to this object, then we might apply full
-          // DNA on old object.
+          // DNA on old object. Coming to think of it, it might happen even in 1 PASSIVE case, since the ACTIVE computes
+          // the diff only after sending a few txns, which migh contain some new objects.
           logger.warn("Ignoring ObjectSyncTransaction for " + oid + " dna = " + dna + " since its already present");
           modified = true;
         }
@@ -273,7 +284,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       }
       if (modified) {
         // This name is little misleading
-        return new PrunedServerTransaction(compoundChanges, txn);
+        return (compoundChanges.isEmpty() ? null : new PrunedServerTransaction(compoundChanges, txn));
       } else {
         return txn;
       }

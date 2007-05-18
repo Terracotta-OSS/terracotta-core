@@ -9,4 +9,6 @@ public interface L2ObjectStateListener {
 
   public void missingObjectsFor(NodeID nodeID, int missingObjects);
 
+  public void objectSyncCompleteFor(NodeID nodeID);
+
 }

@@ -8,15 +8,23 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 
 public class SequenceGenerator {
 
-  public interface SequenceGeneratorListener {
-    
-    public void sequenceCreatedFor(Object key);
-    
-    public void sequenceDestroyedFor(Object key);
-    
+  public static class SequenceGeneratorException extends Exception {
+
+    public SequenceGeneratorException(Exception e) {
+      super(e);
+    }
+
   }
 
-  private final ConcurrentReaderHashMap map = new ConcurrentReaderHashMap();
+  public interface SequenceGeneratorListener {
+
+    public void sequenceCreatedFor(Object key) throws SequenceGeneratorException;
+
+    public void sequenceDestroyedFor(Object key);
+
+  }
+
+  private final ConcurrentReaderHashMap   map = new ConcurrentReaderHashMap();
   private final SequenceGeneratorListener listener;
 
   public SequenceGenerator() {
@@ -27,13 +35,13 @@ public class SequenceGenerator {
     this.listener = listener;
   }
 
-  public long getNextSequence(Object key) {
+  public long getNextSequence(Object key) throws SequenceGeneratorException {
     Sequence seq = (Sequence) map.get(key);
     if (seq != null) return seq.next();
     synchronized (map) {
       if (!map.containsKey(key)) {
-        map.put(key, (seq = new SimpleSequence()));
         if (listener != null) listener.sequenceCreatedFor(key);
+        map.put(key, (seq = new SimpleSequence()));
       } else {
         seq = (Sequence) map.get(key);
       }
@@ -42,7 +50,7 @@ public class SequenceGenerator {
   }
 
   public void clearSequenceFor(Object key) {
-    if(map.remove(key) != null && listener != null) {
+    if (map.remove(key) != null && listener != null) {
       listener.sequenceDestroyedFor(key);
     }
   }

@@ -19,6 +19,7 @@ import com.tc.l2.handler.L2StateChangeHandler;
 import com.tc.l2.handler.ServerTransactionAckHandler;
 import com.tc.l2.handler.TransactionRelayHandler;
 import com.tc.l2.handler.GroupEventsDispatchHandler.GroupEventsDispatcher;
+import com.tc.l2.msg.ObjectSyncCompleteMessage;
 import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.l2.msg.RelayedCommitTransactionMessage;
 import com.tc.l2.msg.ServerTxnAckMessage;
@@ -47,6 +48,7 @@ import com.tc.objectserver.persistence.api.PersistentMapStore;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.util.sequence.SequenceGenerator;
+import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorListener;
 
 import java.io.IOException;
@@ -129,9 +131,10 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
                                                             txnObjectManager);
     
     this.rObjectManager = new ReplicatedObjectManagerImpl(groupManager, stateManager, l2ObjectStateManager,rTxnManager,
-                                                          objectManager, objectsSyncRequestSink);
+                                                          objectManager, objectsSyncRequestSink, sequenceGenerator);
 
     this.groupManager.routeMessages(ObjectSyncMessage.class, orderedObjectsSyncSink);
+    this.groupManager.routeMessages(ObjectSyncCompleteMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(RelayedCommitTransactionMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(ServerTxnAckMessage.class, ackProcessingStage);
 
@@ -227,13 +230,14 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.sequenceGenerator.clearSequenceFor(nodeID);
   }
 
-  public void sequenceCreatedFor(Object key) {
+  public void sequenceCreatedFor(Object key) throws SequenceGeneratorException {
     NodeID nodeID = (NodeID) key;
     try {
       rTxnManager.publishResetRequest(nodeID);
     } catch (GroupException ge) {
       logger.error("Error publishing reset counter request node : " + nodeID + " Zapping it : ", ge);
       groupManager.zapNode(nodeID);
+      throw new SequenceGeneratorException(ge);
     }
   }
 

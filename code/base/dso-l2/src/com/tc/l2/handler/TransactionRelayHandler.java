@@ -14,7 +14,6 @@ import com.tc.l2.objectserver.L2ObjectState;
 import com.tc.l2.objectserver.L2ObjectStateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -54,12 +53,12 @@ public class TransactionRelayHandler extends AbstractEventHandler {
 
   private void sendCommitTransactionMessage(NodeID nodeID, IncomingTransactionContext ict) {
     addWaitForNotification(nodeID, ict);
-    RelayedCommitTransactionMessage msg = RelayedCommitTransactionMessageFactory
-        .createRelayedCommitTransactionMessage(ict.getCommitTransactionMessage(), ict.getTxns(), sequenceGenerator
-            .getNextSequence(nodeID));
     try {
+      RelayedCommitTransactionMessage msg = RelayedCommitTransactionMessageFactory
+          .createRelayedCommitTransactionMessage(ict.getCommitTransactionMessage(), ict.getTxns(), sequenceGenerator
+              .getNextSequence(nodeID));
       this.groupManager.sendTo(nodeID, msg);
-    } catch (GroupException e) {
+    } catch (Exception e) {
       logger.error("Removing " + nodeID + " from group because of Exception :", e);
       groupManager.zapNode(nodeID);
       transactionManager.shutdownClient(nodeID.toChannelID());
