@@ -6,6 +6,7 @@ package com.tctest;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
+import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
@@ -43,7 +44,8 @@ public class AutoSynchTestApp extends AbstractErrorCatchingTransparentApp {
 
     String baseClass = BaseClass.class.getName();
     config.addIncludePattern(baseClass);
-    config.addAutoSynchronize("* " + baseClass + "*.*(..)");
+    config.addAutoSynchronize("* " + baseClass + ".add(..)", ConfigLockLevel.WRITE);
+    config.addAutoSynchronize("* " + baseClass + ".getSize(..)", ConfigLockLevel.READ);
   }
 
   protected void runTest() throws Throwable {
@@ -63,7 +65,9 @@ public class AutoSynchTestApp extends AbstractErrorCatchingTransparentApp {
 
     public void add(Object o) {
       // intentionally not using synchronize
+      //ManagerUtil.monitorEnter(list, Manager.LOCK_TYPE_WRITE);
       list.add(o);
+      //ManagerUtil.monitorExit(list);
     }
 
     public int getSize() {
