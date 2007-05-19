@@ -73,6 +73,8 @@ public class StateManagerImpl implements StateManager {
     NodeID winner = electionMgr.runElection(myNodeID, isNew);
     if (winner == myNodeID) {
       moveToActiveState();
+    } else {
+      electionMgr.reset(null);
     }
   }
 
