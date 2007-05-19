@@ -5,7 +5,7 @@
 #
 
 require 'tmpdir'
-require 'open-uri'
+require 'socket'
 
 module BundledVendors
     def bundled_vendors(name, directory, spec)
@@ -37,9 +37,8 @@ module BundledVendors
       
     def is_online?
       begin
-        open("http://download.terracotta.org/") do |f|
-          # do nothing
-        end
+        socket = TCPSocket.new("download.terracotta.org", 80)
+        socket.close
         return true
       rescue
         return false
