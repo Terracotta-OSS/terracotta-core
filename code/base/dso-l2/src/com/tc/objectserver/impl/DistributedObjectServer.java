@@ -406,15 +406,17 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
     TCProperties objManagerProperties = l2Properties.getPropertiesFor("objectmanager");
 
-    objectManager = new ObjectManagerImpl(new ObjectManagerConfig(gcInterval * 1000, gcEnabled, verboseGC, persistent,
-                                                                  objManagerProperties.getInt("deleteBatchSize")),
-                                          getThreadGroup(), clientStateManager, objectStore, swapCache,
-                                          persistenceTransactionProvider, faultManagedObjectStage.getSink(),
-                                          flushManagedObjectStage.getSink(), l2Management
-                                              .findObjectManagementMonitorMBean());
+    ObjectManagerConfig objectManagerConfig = new ObjectManagerConfig(gcInterval * 1000, gcEnabled, verboseGC,
+                                                                      persistent, objManagerProperties
+                                                                          .getInt("deleteBatchSize"));
+    objectManager = new ObjectManagerImpl(objectManagerConfig, getThreadGroup(), clientStateManager, objectStore,
+                                          swapCache, persistenceTransactionProvider, faultManagedObjectStage.getSink(),
+                                          flushManagedObjectStage.getSink());
     objectManager.setStatsListener(objMgrStats);
     objectManager.setGarbageCollector(new MarkAndSweepGarbageCollector(objectManager, clientStateManager, verboseGC));
     managedObjectChangeListenerProvider.setListener(objectManager);
+    l2Management.findObjectManagementMonitorMBean()
+        .registerGCController(new GCComptrollerImpl(objectManagerConfig, objectManager.getGarbageCollector()));
 
     TCProperties cacheManagerProperties = l2Properties.getPropertiesFor("cachemanager");
     if (cacheManagerProperties.getBoolean("enabled")) {

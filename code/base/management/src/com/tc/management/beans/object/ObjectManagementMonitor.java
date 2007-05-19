@@ -9,80 +9,111 @@ import com.tc.management.AbstractTerracottaMBean;
 
 import javax.management.NotCompliantMBeanException;
 
-public class ObjectManagementMonitor extends AbstractTerracottaMBean implements ObjectManagementMonitorMBean {
+public class ObjectManagementMonitor extends AbstractTerracottaMBean implements
+		ObjectManagementMonitorMBean {
 
-  private static final TCLogger  logger = TCLogging.getLogger(ObjectManagementMonitor.class);
+	private static final TCLogger logger = TCLogging
+			.getLogger(ObjectManagementMonitor.class);
 
-  private volatile GCComptroller gcController;
-  private final GCRunner         gcRunner;
+	private volatile GCComptroller gcController;
 
-  public ObjectManagementMonitor() throws NotCompliantMBeanException {
-    super(ObjectManagementMonitorMBean.class, false);
+	private final GCRunner gcRunner;
 
-    gcRunner = new GCRunner() {
-      private boolean isRunning = false;
+	public ObjectManagementMonitor() throws NotCompliantMBeanException {
+		super(ObjectManagementMonitorMBean.class, false);
 
-      public void run() {
-        setRunningState();
-        gcController.startGC();
-        setStopState();
-      }
+		gcRunner = new GCRunner() {
+			private boolean isRunning = false;
 
-      private synchronized void setRunningState() {
-        if (isRunning) { throw new UnsupportedOperationException("Cannot run GC because GC is already running."); }
-        isRunning = true;
-        logger.info("Running GC.");
-      }
+			public void run() {
+				setRunningState();
+				gcController.startGC();
+				setStopState();
+			}
 
-      private synchronized void setStopState() {
-        if (!isRunning) { throw new UnsupportedOperationException("Cannot stop GC because GC is not running."); }
-        isRunning = false;
-        logger.info("GC finished.");
-      }
+			private synchronized void setRunningState() {
+				if (isRunning) {
+					throw new UnsupportedOperationException(
+							"Cannot run GC because GC is already running.");
+				}
+				isRunning = true;
+				logger.info("Running GC.");
+			}
 
-      public synchronized boolean isGCRunning() {
-        return isRunning;
-      }
-    };
-  }
+			private synchronized void setStopState() {
+				if (!isRunning) {
+					throw new UnsupportedOperationException(
+							"Cannot stop GC because GC is not running.");
+				}
+				isRunning = false;
+				logger.info("GC finished.");
+			}
 
-  public boolean isGCRunning() {
-    return gcRunner.isGCRunning();
-  }
+			public synchronized boolean isGCRunning() {
+				return isRunning;
+			}
+		};
+	}
 
-  public synchronized void runGC() {
-    if (!isEnabled()) { throw new UnsupportedOperationException("Cannot run GC because mBean is not enabled."); }
-    if (gcController == null) { throw new RuntimeException("Failure: see log for more information"); }
-    if (gcController.gcEnabledInConfig()) { throw new UnsupportedOperationException(
-        "Cannot run GC externally because GC is enabled through config."); }
-    if (isGCRunning()) { throw new UnsupportedOperationException("Cannot run GC because GC is already running."); }
+	public boolean isGCRunning() {
+		return gcRunner.isGCRunning();
+	}
 
-    Thread gcRunnerThread = new Thread(gcRunner);
-    gcRunnerThread.setName("GCRunnerThread");
-    gcRunnerThread.start();
-  }
+	public synchronized void runGC() {
+		if (!isEnabled()) {
+			throw new UnsupportedOperationException(
+					"Cannot run GC because mBean is not enabled.");
+		}
+		if (gcController == null) {
+			throw new RuntimeException("Failure: see log for more information");
+		}
+		if (gcController.gcEnabledInConfig()) {
+			throw new UnsupportedOperationException(
+					"Cannot run GC externally because GC is enabled through config.");
+		}
+		// XXX::Note:: There is potencially a rare here, one could check to see
+		// if it is disabled and before GC is started it could be disabled. In
+		// which case it will not be run, just logged in the log file.
+		if (gcController.isGCDisabled()) {
+			throw new UnsupportedOperationException(
+					"Cannot run GC externally because GC is disabled either because this server "
+							+ "is in PASSIVE state or because another PASSIVE server is currently "
+							+ "synching state with this ACTIVE server.");
+		}
+		if (isGCRunning()) {
+			throw new UnsupportedOperationException(
+					"Cannot run GC because GC is already running.");
+		}
 
-  public synchronized void reset() {
-    // nothing to reset
-  }
+		Thread gcRunnerThread = new Thread(gcRunner);
+		gcRunnerThread.setName("GCRunnerThread");
+		gcRunnerThread.start();
+	}
 
-  public void registerGCController(GCComptroller controller) {
-    if (isEnabled()) {
-      if (gcController != null) {
-        logger.warn("Not registering new gc-controller because one was already registered.");
-        return;
-      }
-      gcController = controller;
-    }
-  }
+	public synchronized void reset() {
+		// nothing to reset
+	}
 
-  public static interface GCComptroller {
-    void startGC();
+	public void registerGCController(GCComptroller controller) {
+		if (isEnabled()) {
+			if (gcController != null) {
+				logger
+						.warn("Registering new gc-controller while one already registered. Old : "
+								+ gcController);
+			}
+			gcController = controller;
+		}
+	}
 
-    boolean gcEnabledInConfig();
-  }
+	public static interface GCComptroller {
+		void startGC();
 
-  static interface GCRunner extends Runnable {
-    boolean isGCRunning();
-  }
+		boolean gcEnabledInConfig();
+
+		boolean isGCDisabled();
+	}
+
+	static interface GCRunner extends Runnable {
+		boolean isGCRunning();
+	}
 }

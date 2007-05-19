@@ -11,7 +11,6 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.management.beans.object.MockObjectManagementMonitor;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.ObjectID;
@@ -85,8 +84,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.management.NotCompliantMBeanException;
-
 /**
  * @author steve
  */
@@ -148,13 +145,8 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   private void initObjectManager(ThreadGroup threadGroup, EvictionPolicy cache, ManagedObjectStore store) {
     TestSink faultSink = new TestSink();
     TestSink flushSink = new TestSink();
-    try {
-      this.objectManager = new ObjectManagerImpl(config, threadGroup, clientStateManager, store, cache,
-                                                 persistenceTransactionProvider, faultSink, flushSink,
-                                                 new MockObjectManagementMonitor());
-    } catch (NotCompliantMBeanException e) {
-      throw new RuntimeException(e);
-    }
+    this.objectManager = new ObjectManagerImpl(config, threadGroup, clientStateManager, store, cache,
+                                               persistenceTransactionProvider, faultSink, flushSink);
     new TestMOFaulter(this.objectManager, store, faultSink).start();
     new TestMOFlusher(this.objectManager, flushSink).start();
   }
@@ -642,7 +634,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     config.paranoid = paranoid;
     objectManager = new ObjectManagerImpl(config, createThreadGroup(), clientStateManager, store,
                                           new LRUEvictionPolicy(100), persistenceTransactionProvider, faultSink,
-                                          flushSink, new MockObjectManagementMonitor());
+                                          flushSink);
     new TestMOFaulter(this.objectManager, store, faultSink).start();
     new TestMOFlusher(this.objectManager, flushSink).start();
 

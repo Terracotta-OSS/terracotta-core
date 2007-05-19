@@ -13,7 +13,6 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitor;
-import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.PortChooser;
 
@@ -136,7 +135,7 @@ public class L2Management extends TerracottaManagement {
     return mBeanServer;
   }
 
-  public ObjectManagementMonitorMBean findObjectManagementMonitorMBean() {
+  public ObjectManagementMonitor findObjectManagementMonitorMBean() {
     return objectManagementBean;
   }
 
