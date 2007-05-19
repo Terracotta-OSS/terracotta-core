@@ -23,7 +23,9 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ExtraProcessServerControl extends ServerControlBase {
-  private static final String NOT_DEF = "";
+  private static final String NOT_DEF    = "";
+  private static final String ERR_STREAM = "ERR";
+  private static final String OUT_STREAM = "OUT";
 
   private final String        name;
   private final boolean       mergeOutput;
@@ -38,6 +40,9 @@ public class ExtraProcessServerControl extends ServerControlBase {
   private FileOutputStream    fileOut;
   private StreamCopier        outCopier;
   private StreamCopier        errCopier;
+
+  private final String        errStreamIdentifier;
+  private final String        outStreamIdentifier;
 
   // constructor 1: used by container tests
   public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput)
@@ -91,6 +96,8 @@ public class ExtraProcessServerControl extends ServerControlBase {
                                    boolean mergeOutput, String serverName, List additionalJvmArgs, String undefString,
                                    File javaHome) {
     super(host, dsoPort, adminPort);
+    errStreamIdentifier = getStreamIdentifier(dsoPort, ERR_STREAM);
+    outStreamIdentifier = getStreamIdentifier(dsoPort, OUT_STREAM);
     this.javaHome = javaHome;
     this.serverName = serverName;
     jvmArgs = new ArrayList();
@@ -117,6 +124,15 @@ public class ExtraProcessServerControl extends ServerControlBase {
     addEnvVarsForWindows(jvmArgs);
   }
 
+  private String getStreamIdentifier(int dsoPort, String streamType) {
+    String portString = "" + dsoPort;
+    int numSpaces = 5 - portString.length();
+    for (int i = 0; i < numSpaces; i++) {
+      portString = " " + portString;
+    }
+    return "[" + portString + "][" + streamType + "]     ";
+  }
+
   private void addLibPath(List args) {
     String libPath = System.getProperty("java.library.path");
     if (libPath == null || libPath.equals("")) { throw new AssertionError("java.library.path is not set!"); }
@@ -139,11 +155,11 @@ public class ExtraProcessServerControl extends ServerControlBase {
   }
 
   public void mergeSTDOUT() {
-    this.process.mergeSTDOUT();
+    this.process.mergeSTDOUT(outStreamIdentifier);
   }
 
   public void mergeSTDERR() {
-    this.process.mergeSTDERR();
+    this.process.mergeSTDERR(errStreamIdentifier);
   }
 
   protected String getMainClassName() {

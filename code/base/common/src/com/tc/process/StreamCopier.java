@@ -16,14 +16,20 @@ public class StreamCopier extends Thread {
 
   protected final InputStream  in;
   protected final OutputStream out;
+  private final String         identifier;
 
   public StreamCopier(InputStream stream, OutputStream out) {
+    this(stream, out, null);
+  }
+
+  public StreamCopier(InputStream stream, OutputStream out, String identifier) {
     if ((stream == null) || (out == null)) { throw new AssertionError("null streams not allowed"); }
 
     this.in = stream;
     this.out = out;
     setName("Stream Copier");
     setDaemon(true);
+    this.identifier = identifier;
   }
 
   public void run() {
@@ -32,6 +38,9 @@ public class StreamCopier extends Thread {
     try {
       int read;
       while ((read = in.read(buf)) >= 0) {
+        if (identifier != null) {
+          out.write(identifier.getBytes());
+        }
         out.write(buf, 0, read);
       }
     } catch (IOException ioe) {

@@ -228,15 +228,23 @@ public class LinkedJavaProcess {
   }
 
   public void mergeSTDOUT() {
-    mergeStream(STDOUT(), System.out);
+    mergeSTDOUT(null);
+  }
+
+  public void mergeSTDOUT(String identifier) {
+    mergeStream(STDOUT(), System.out, identifier);
   }
 
   public void mergeSTDERR() {
-    mergeStream(STDERR(), System.err);
+    mergeSTDERR(null);
+  }
+  
+  public void mergeSTDERR(String identifier) {
+    mergeStream(STDERR(), System.err, identifier);
   }
 
-  private void mergeStream(InputStream in, OutputStream out) {
-    StreamCopier copier = new StreamCopier(in, out);
+  private void mergeStream(InputStream in, OutputStream out, String identifier) {
+    StreamCopier copier = new StreamCopier(in, out, identifier);
     copiers.add(copier);
     copier.start();
   }
