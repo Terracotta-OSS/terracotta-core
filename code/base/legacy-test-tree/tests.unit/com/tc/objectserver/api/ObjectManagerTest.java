@@ -1853,11 +1853,22 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     public void addListener(ObjectManagerEventListener listener) {
       // do nothing
-
     }
 
     public GCStats[] getGarbageCollectorStats() {
       return null;
+    }
+
+    public boolean disableGC() {
+      return false;
+    }
+
+    public void enableGC() {
+      // do nothing
+    }
+
+    public boolean isDisabled() {
+      return false;
     }
 
   }

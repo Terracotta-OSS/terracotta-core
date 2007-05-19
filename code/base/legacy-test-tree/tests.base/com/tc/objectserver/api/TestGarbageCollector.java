@@ -276,4 +276,17 @@ public class TestGarbageCollector implements GarbageCollector {
   public GCStats[] getGarbageCollectorStats() {
     return null;
   }
+
+  public boolean disableGC() {
+    return false;
+  }
+
+  public void enableGC() {
+    throw new ImplementMe();
+    
+  }
+
+  public boolean isDisabled() {
+    return false;
+  }
 }

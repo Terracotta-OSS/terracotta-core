@@ -88,6 +88,8 @@ public interface ObjectManager extends ManagedObjectProvider, PrettyPrintable {
   public void createRoot(String name, ObjectID id);
 
   public ObjectID lookupRootID(String name);
+  
+  public GarbageCollector getGarbageCollector();
 
   public void setGarbageCollector(GarbageCollector gc);
 

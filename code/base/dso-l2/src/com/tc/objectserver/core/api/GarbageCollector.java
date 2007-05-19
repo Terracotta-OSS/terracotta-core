@@ -15,6 +15,12 @@ import java.util.Set;
 
 public interface GarbageCollector extends PrettyPrintable {
 
+  public void enableGC();
+  
+  public boolean disableGC();
+  
+  public boolean isDisabled();
+  
   public boolean isPausingOrPaused();
 
   public boolean isPaused();

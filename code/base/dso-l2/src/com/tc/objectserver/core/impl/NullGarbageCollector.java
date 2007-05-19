@@ -86,4 +86,15 @@ public class NullGarbageCollector implements GarbageCollector {
     return null;
   }
 
+  public boolean disableGC() {
+    return true;
+  }
+
+  public void enableGC() {
+    // do nothing null
+  }
+
+  public boolean isDisabled() {
+    return true;
+  }
 }

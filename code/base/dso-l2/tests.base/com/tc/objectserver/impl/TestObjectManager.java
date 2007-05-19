@@ -198,4 +198,8 @@ public class TestObjectManager implements ObjectManager {
     throw new ImplementMe();
   }
 
+  public GarbageCollector getGarbageCollector() {
+    throw new ImplementMe();
+  }
+
 }

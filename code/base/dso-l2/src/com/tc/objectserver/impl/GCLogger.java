@@ -60,6 +60,10 @@ public class GCLogger {
     if (verboseGC()) logGC("GC: notifying gc complete...");
   }
 
+  public void log_GCDisabled() {
+    if (verboseGC()) logGC("GC: Not running gc since its disabled...");
+  }
+
   public void log_GCComplete(long startMillis, long pauseStartMillis, List rescueTimes, long endMillis, long iteration) {
     if (verboseGC()) {
       long pausedMillis = endMillis - pauseStartMillis;
