@@ -39,10 +39,11 @@ public class MockTransactionManager implements ClientTransactionManager {
     return rv;
   }
 
-  public void begin(String lock, int type) {
+  public boolean begin(String lock, int type) {
     // System.err.println(this + ".begin(" + lock + ")");
 
     begins.add(new Begin(lock, type));
+    return true;
   }
 
   public void clearCommitCount() {

@@ -149,10 +149,10 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     return isLocked;
   }
 
-  public void begin(String lockName, int lockLevel) {
+  public boolean begin(String lockName, int lockLevel) {
     logBegin0(lockName, lockLevel);
 
-    if (isTransactionLoggingDisabled() || objectManager.isCreationInProgress()) { return; }
+    if (isTransactionLoggingDisabled() || objectManager.isCreationInProgress()) { return false; }
 
     final TxnType txnType = getTxnTypeFromLockLevel(lockLevel);
     ClientTransaction currentTransaction = getTransactionOrNull();
@@ -168,6 +168,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
 
     lockManager.lock(lockID, lockLevel);
+    return true;
   }
 
   private TxnType getTxnTypeFromLockLevel(int lockLevel) {

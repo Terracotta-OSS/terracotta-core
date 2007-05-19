@@ -25,7 +25,7 @@ public interface ClientTransactionManager {
    * begin a thread local transaction Probably change this from class Object to something more specific but it is still
    * early and I'm not sure what I want here
    */
-  public void begin(String lock, int lockLevel);
+  public boolean begin(String lock, int lockLevel);
 
   public boolean tryBegin(String lock, int lockLevel);
 

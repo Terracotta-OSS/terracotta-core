@@ -305,8 +305,8 @@ public class ManagerImpl implements Manager {
   }
 
   private void begin(String lockID, int type, Object instance, TCObject tcobj) {
-    this.txManager.begin(lockID, type);
-    if (runtimeLogger.lockDebug()) {
+    boolean locked = this.txManager.begin(lockID, type);
+    if (locked && runtimeLogger.lockDebug()) {
       runtimeLogger.lockAcquired(lockID, type, instance, tcobj);
     }
   }
