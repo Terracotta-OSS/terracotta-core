@@ -20,4 +20,8 @@ public class NonReplicatedObjectManager implements ReplicatedObjectManager {
     // Nop
   }
 
+  public void clear(NodeID nodeID) {
+    // Nop
+  }
+
 }
