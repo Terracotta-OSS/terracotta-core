@@ -90,7 +90,11 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     groupManager.sendTo(nodeID, ObjectListSyncMessageFactory.createObjectListSyncRequestMessage());
   }
 
-  // TODO::Verify that message order is maintained.
+  public void clear(NodeID nodeID) {
+    l2ObjectStateManager.removeL2(nodeID);
+    gcMonitor.clear(nodeID);
+  }
+
   public void messageReceived(NodeID fromNode, GroupMessage msg) {
     if (msg instanceof ObjectListSyncMessage) {
       ObjectListSyncMessage clusterMsg = (ObjectListSyncMessage) msg;
@@ -238,15 +242,26 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       }
     }
 
-    public synchronized void syncCompleteFor(NodeID nodeID) {
+    public synchronized void clear(NodeID nodeID) {
       Object val = syncingPassives.remove(nodeID);
-      Assert.assertTrue(val == ADDED);
-      Assert.assertTrue(disabled);
-      if (syncingPassives.isEmpty()) {
+      if(val != null) {
+        enableGCIfNecessary();
+      }
+    }
+
+    private void enableGCIfNecessary() {
+      if (syncingPassives.isEmpty() && disabled) {
         logger.info("Reenabling GC as all passive are synced up");
         objectManager.getGarbageCollector().enableGC();
         disabled = false;
       }
+    }
+
+    public synchronized void syncCompleteFor(NodeID nodeID) {
+      Object val = syncingPassives.remove(nodeID);
+      Assert.assertTrue(val == ADDED);
+      Assert.assertTrue(disabled);
+      enableGCIfNecessary();
     }
 
     public synchronized void disableAndAdd2L2StateManager(Map nodeID2ObjectIDs) {
@@ -267,5 +282,4 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       add2L2StateManager(nodeID2ObjectIDs);
     }
   }
-
 }

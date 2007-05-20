@@ -229,7 +229,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   public void nodeLeft(NodeID nodeID) {
     warn(nodeID + " left the cluster");
     if (stateManager.isActiveCoordinator()) {
-      l2ObjectStateManager.removeL2(nodeID);
+      rObjectManager.clear(nodeID);
       rClusterStateMgr.fireNodeLeftEvent(nodeID);
     } else {
       stateManager.startElectionIfNecessary(nodeID);

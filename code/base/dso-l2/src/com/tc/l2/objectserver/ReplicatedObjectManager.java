@@ -18,5 +18,7 @@ public interface ReplicatedObjectManager {
   public boolean relayTransactions();
 
   public void query(NodeID nodeID) throws GroupException;
+  
+  public void clear(NodeID nodeID);
 
 }
