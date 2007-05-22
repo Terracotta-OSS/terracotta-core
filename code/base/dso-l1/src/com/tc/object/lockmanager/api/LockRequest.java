@@ -10,24 +10,18 @@ public class LockRequest {
   private ThreadID threadID;
   private int      lockLevel;
   private int      hashCode;
-  private boolean  noBlock;
   private boolean  initialized;
   
-  public LockRequest(LockID lockID, ThreadID threadID, int lockLevel, boolean noBlock) {
-    initialize(lockID, threadID, lockLevel, noBlock);
-  }
-
   public LockRequest(LockID lockID, ThreadID threadID, int lockLevel) {
-    initialize(lockID, threadID, lockLevel, false);
+    initialize(lockID, threadID, lockLevel);
   }
-
-  private void initialize(LockID theLockID, ThreadID theThreadID, int theLockLevel, boolean noBlock) {
+  
+  public void initialize(LockID theLockID, ThreadID theThreadID, int theLockLevel) {
     if (initialized) throw new AssertionError("Attempt to intialize more than once.");
     this.lockID = theLockID;
     this.threadID = theThreadID;
     this.lockLevel = theLockLevel;
-    this.noBlock = noBlock;
-    hashCode = new HashCodeBuilder(5503, 6737).append(theLockID).append(theThreadID).append(theLockLevel).append(noBlock).toHashCode();
+    hashCode = new HashCodeBuilder(5503, 6737).append(theLockID).append(theThreadID).append(theLockLevel).toHashCode();
     initialized = true;
   }
 
@@ -43,22 +37,18 @@ public class LockRequest {
     return lockLevel;
   }
   
-  public boolean noBlock() {
-    return this.noBlock;
-  }
-
   public boolean equals(Object o) {
     if (o == this) return true;
     if (!(o instanceof LockRequest)) return false;
     LockRequest cmp = (LockRequest) o;
-    return lockID.equals(cmp.lockID) && threadID.equals(cmp.threadID) && lockLevel == cmp.lockLevel && noBlock == cmp.noBlock;
+    return lockID.equals(cmp.lockID) && threadID.equals(cmp.threadID) && lockLevel == cmp.lockLevel;
   }
 
   public int hashCode() {
     if (!initialized) throw new AssertionError("Attempt to call hashCode() before initializing");
     return hashCode;
   }
-
+  
   public String toString() {
     return getClass().getName() + "[" + lockID + ", " + threadID + ", lockLevel=" + lockLevel + "]";
   }

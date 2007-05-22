@@ -93,19 +93,20 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     return lockManager.waitLength(lockID);
   }
 
-  private int localHeldCount(String lockName, int lockLevel) {
+  public int localHeldCount(String lockName, int lockLevel) {
     final LockID lockID = lockManager.lockIDFor(lockName);
     return lockManager.localHeldCount(lockID, lockLevel);
   }
 
   public boolean isHeldByCurrentThread(String lockName, int lockLevel) {
     if (isTransactionLoggingDisabled()) { return true; }
-    return localHeldCount(lockName, lockLevel) > 0;
+    final LockID lockID = lockManager.lockIDFor(lockName);
+    return lockManager.localHeldCount(lockID, lockLevel) > 0;
   }
 
-  public boolean isLocked(String lockName) {
+  public boolean isLocked(String lockName, int lockLevel) {
     final LockID lockID = lockManager.lockIDFor(lockName);
-    return lockManager.isLocked(lockID);
+    return lockManager.isLocked(lockID, lockLevel);
   }
 
   public void lock(String lockName, int lockLevel) {
@@ -120,8 +121,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
       getThreadTransactionContext().removeLock(lockID);
     }
   }
-
-  public boolean tryBegin(String lockName, int lockLevel) {
+  
+  public boolean tryBegin(String lockName, WaitInvocation timeout, int lockLevel) {
     logTryBegin0(lockName, lockLevel);
 
     if (isTransactionLoggingDisabled() || objectManager.isCreationInProgress()) { return true; }
@@ -135,7 +136,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     }
 
     final LockID lockID = lockManager.lockIDFor(lockName);
-    boolean isLocked = lockManager.tryLock(lockID, lockLevel);
+    boolean isLocked = lockManager.tryLock(lockID, timeout, lockLevel);
     if (!isLocked) { return isLocked; }
 
     pushTxContext(lockID, txnType);
@@ -148,7 +149,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
     return isLocked;
   }
-
+  
   public boolean begin(String lockName, int lockLevel) {
     logBegin0(lockName, lockLevel);
 

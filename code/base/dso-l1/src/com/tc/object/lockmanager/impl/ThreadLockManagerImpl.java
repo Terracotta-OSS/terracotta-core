@@ -38,16 +38,16 @@ public class ThreadLockManagerImpl implements ThreadLockManager {
     return lockManager.localHeldCount(lockID, lockLevel, getThreadID());
   }
 
-  public boolean isLocked(LockID lockID) {
-    return lockManager.isLocked(lockID, getThreadID());
+  public boolean isLocked(LockID lockID, int lockLevel) {
+    return lockManager.isLocked(lockID, getThreadID(), lockLevel);
   }
 
   public void lock(LockID lockID, int lockLevel) {
     lockManager.lock(lockID, getThreadID(), lockLevel);
   }
 
-  public boolean tryLock(LockID lockID, int lockLevel) {
-    return lockManager.tryLock(lockID, getThreadID(), lockLevel);
+  public boolean tryLock(LockID lockID, WaitInvocation timeout, int lockLevel) {
+    return lockManager.tryLock(lockID, getThreadID(), timeout, lockLevel);
   }
 
   public void wait(LockID lockID, WaitInvocation call, Object object, WaitListener waitListener) throws InterruptedException {

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
 
@@ -16,51 +17,52 @@ import java.util.Map;
  * This class will change the class name in methodInsn.
  */
 public abstract class ChangeClassNameHierarchyAdapter extends ClassAdapter implements Opcodes {
-  public final static char DOT_DELIMITER    = '.';
-  public final static char SLASH_DELIMITER  = '/';
-  final static String CLASS_DELIMITER  = ";";
-  final static String CLASS_START_CHAR = "L";
-  final static String CLASS_START_DESC_CHAR = "(L";
-  final static String CLASS_RETURN_DESC_CHAR = ")L";
-  final static String CLASS_ARRAY_DESC_CHAR = "[L";
-  
-  ChangeContext addNewContextIfNotExist(String fullClassNameSlashes, String convertedFullClassNameSlashes, Map instrumentedContext) {
-    ChangeContext changeContext = (ChangeContext)instrumentedContext.get(fullClassNameSlashes);
+  public final static char DOT_DELIMITER          = '.';
+  public final static char SLASH_DELIMITER        = '/';
+  public final static char INNER_CLASS_DELIMITER  = '$';
+  final static String      CLASS_DELIMITER        = ";";
+  final static String      CLASS_START_CHAR       = "L";
+  final static String      CLASS_START_DESC_CHAR  = "(L";
+  final static String      CLASS_RETURN_DESC_CHAR = ")L";
+  final static String      CLASS_ARRAY_DESC_CHAR  = "[L";
+
+  ChangeContext addNewContextIfNotExist(String fullClassNameSlashes, String convertedFullClassNameSlashes,
+                                        Map instrumentedContext) {
+    ChangeContext changeContext = (ChangeContext) instrumentedContext.get(fullClassNameSlashes);
     if (changeContext == null) {
       changeContext = new ChangeContext(fullClassNameSlashes, convertedFullClassNameSlashes);
       instrumentedContext.put(fullClassNameSlashes, changeContext);
-    } else if (!convertedFullClassNameSlashes.equals(fullClassNameSlashes) &&
-               !convertedFullClassNameSlashes.equals(changeContext.convertedClassNameSlashes)) {
+    } else if (!convertedFullClassNameSlashes.equals(fullClassNameSlashes)
+               && !convertedFullClassNameSlashes.equals(changeContext.convertedClassNameSlashes)) {
       changeContext.convertedClassNameSlashes = convertedFullClassNameSlashes;
     }
     return changeContext;
   }
-  
+
   ChangeContext addNewContext(String fullClassNameSlashes, String convertedFullClassNameSlashes, Map instrumentedContext) {
     ChangeContext changeContext = new ChangeContext(fullClassNameSlashes, convertedFullClassNameSlashes);
     instrumentedContext.put(fullClassNameSlashes, changeContext);
 
     return changeContext;
   }
-  
+
   ModifiedMethodInfo getModifiedMethodInfo(ChangeContext changeContext, String methodName, String desc) {
     if (changeContext == null) { return null; }
-    
-    ModifiedMethodInfo methodInfo = (ModifiedMethodInfo)changeContext.modifiedMethodInfo.get(methodName+desc);
+
+    ModifiedMethodInfo methodInfo = (ModifiedMethodInfo) changeContext.modifiedMethodInfo.get(methodName + desc);
     if (methodInfo != null && methodName.equals(methodInfo.methodName) && desc.equals(methodInfo.originalMethodDesc)) { return methodInfo; }
     return null;
   }
-  
-  String getConvertedMethodDesc(Map instrumentedContext, String fullClassNameSlashes, String methodName, String methodDesc) {
-    ChangeContext context = (ChangeContext)instrumentedContext.get(fullClassNameSlashes);
+
+  String getConvertedMethodDesc(Map instrumentedContext, String fullClassNameSlashes, String methodName,
+                                String methodDesc) {
+    ChangeContext context = (ChangeContext) instrumentedContext.get(fullClassNameSlashes);
     while (context != null) {
       ModifiedMethodInfo methodInfo = getModifiedMethodInfo(context, methodName, methodDesc);
-      if (methodInfo != null) {
-        return methodInfo.convertedMethodDesc;
-      }
+      if (methodInfo != null) { return methodInfo.convertedMethodDesc; }
       String superClassName = context.originalSuperClassNameSlashes;
       if (superClassName != null) {
-        context = (ChangeContext)instrumentedContext.get(superClassName);
+        context = (ChangeContext) instrumentedContext.get(superClassName);
       } else {
         context = null;
       }
@@ -70,8 +72,8 @@ public abstract class ChangeClassNameHierarchyAdapter extends ClassAdapter imple
 
   static class ChangeContext {
     final String originalClassNameSlashes;
-    String convertedClassNameSlashes;
-    String originalSuperClassNameSlashes;
+    String       convertedClassNameSlashes;
+    String       originalSuperClassNameSlashes;
 
     final Map    modifiedMethodInfo = new HashMap();
     final Map    modifiedFieldInfo  = new HashMap();
@@ -80,16 +82,17 @@ public abstract class ChangeClassNameHierarchyAdapter extends ClassAdapter imple
       this.originalClassNameSlashes = originalClassNameSlashes;
       this.convertedClassNameSlashes = convertedClassNameSlashes;
     }
-    
+
     public void setOriginalSuperClass(String superClassNameSlashes) {
       this.originalSuperClassNameSlashes = superClassNameSlashes;
     }
 
     void addModifiedMethodInfo(String name, String originalDesc, String convertedDesc, String signature,
                                String convertedSignature) {
-      ModifiedMethodInfo methodInfo = (ModifiedMethodInfo)modifiedMethodInfo.get(name+originalDesc);
+      ModifiedMethodInfo methodInfo = (ModifiedMethodInfo) modifiedMethodInfo.get(name + originalDesc);
       if (methodInfo == null) {
-        modifiedMethodInfo.put(name+originalDesc, new ModifiedMethodInfo(name, originalDesc, convertedDesc, signature, convertedSignature));
+        modifiedMethodInfo.put(name + originalDesc, new ModifiedMethodInfo(name, originalDesc, convertedDesc,
+                                                                           signature, convertedSignature));
       } else {
         if (!convertedDesc.equals(methodInfo.convertedMethodDesc)) {
           methodInfo.convertedMethodDesc = convertedDesc;
@@ -105,7 +108,8 @@ public abstract class ChangeClassNameHierarchyAdapter extends ClassAdapter imple
 
     void addModifiedFieldInfo(String name, String originalDesc, String convertedDesc, String signature,
                               String convertedSignature) {
-      modifiedFieldInfo.put(name+originalDesc, new ModifiedFieldInfo(name, originalDesc, convertedDesc, signature, convertedSignature));
+      modifiedFieldInfo.put(name + originalDesc, new ModifiedFieldInfo(name, originalDesc, convertedDesc, signature,
+                                                                       convertedSignature));
     }
 
     public String toString() {
@@ -126,9 +130,9 @@ public abstract class ChangeClassNameHierarchyAdapter extends ClassAdapter imple
   static class ModifiedFieldInfo {
     final String fieldName;
     final String originalFieldDesc;
-    String convertedFieldDesc;
-    String originalSignature;
-    String convertedSignature;
+    String       convertedFieldDesc;
+    String       originalSignature;
+    String       convertedSignature;
 
     ModifiedFieldInfo(String name, String originalDesc, String convertedDesc, String signature,
                       String convertedSignature) {
@@ -152,18 +156,19 @@ public abstract class ChangeClassNameHierarchyAdapter extends ClassAdapter imple
                   .equals(fieldInfo.convertedSignature)));
       return match;
     }
-    
+
     public String toString() {
-      return super.toString() + ", name: " +fieldName + ", desc: " + originalFieldDesc + ", convertedDesc: " + convertedFieldDesc;
+      return super.toString() + ", name: " + fieldName + ", desc: " + originalFieldDesc + ", convertedDesc: "
+             + convertedFieldDesc;
     }
   }
 
   static class ModifiedMethodInfo {
     final String methodName;
     final String originalMethodDesc;
-    String convertedMethodDesc;
-    String originalSignature;
-    String convertedSignature;
+    String       convertedMethodDesc;
+    String       originalSignature;
+    String       convertedSignature;
 
     ModifiedMethodInfo(String name, String originalDesc, String convertedDesc, String signature,
                        String convertedSignature) {
@@ -188,23 +193,25 @@ public abstract class ChangeClassNameHierarchyAdapter extends ClassAdapter imple
                   .equals(methodInfo.convertedSignature)));
       return match;
     }
-    
+
     public String toString() {
-      return super.toString() + ", name: " + methodName + ", desc: " + originalMethodDesc + ", convertedDesc: " + convertedMethodDesc;
+      return super.toString() + ", name: " + methodName + ", desc: " + originalMethodDesc + ", convertedDesc: "
+             + convertedMethodDesc;
     }
   }
 
   public ChangeClassNameHierarchyAdapter(ClassVisitor cv) {
     super(cv);
   }
-  
-  public MethodVisitor invokeSuperVisitMethod(int access, String name, String desc, String signature, String[] exceptions,
-                                              Map instrumentedContext, String fullClassSlashes) {
-    ChangeContext context = (ChangeContext)instrumentedContext.get(fullClassSlashes);
+
+  public MethodVisitor invokeSuperVisitMethod(int access, String name, String desc, String signature,
+                                              String[] exceptions, Map instrumentedContext, String fullClassSlashes) {
+    ChangeContext context = (ChangeContext) instrumentedContext.get(fullClassSlashes);
     String origSuperClassName = context.originalSuperClassNameSlashes;
-    // -- need this when superClassNameAdapter and RootAdapter are merged context = (ChangeContext)instrumentedContext.get(origSuperClassName);
+    // -- need this when superClassNameAdapter and RootAdapter are merged context =
+    // (ChangeContext)instrumentedContext.get(origSuperClassName);
     String convertedSuperClassName = context.convertedClassNameSlashes;
-    
+
     Type returnType = Type.getReturnType(desc);
     MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions);
     mv.visitCode();

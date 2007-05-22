@@ -31,7 +31,7 @@ public interface ClientLockManager {
    */
   public void lock(LockID id, ThreadID threadID, int type);
 
-  public boolean tryLock(LockID id, ThreadID threadID, int type);
+  public boolean tryLock(LockID id, ThreadID threadID, WaitInvocation timeout, int type);
 
   /**
    * releases the lock so that others can have at it
@@ -68,7 +68,7 @@ public interface ClientLockManager {
    * Recalls a greedy Lock that was awarded earlier
    */
   public void recall(LockID lockID, ThreadID threadID, int level);
-
+  
   /**
    * Adds all lock waits to the given collection and returns that collection.
    *
@@ -85,6 +85,8 @@ public interface ClientLockManager {
    * Causes all pending lock requests to be added to the collection.
    */
   public Collection addAllPendingLockRequestsTo(Collection c);
+  
+  public Collection addAllPendingTryLockRequestsTo(Collection c);
 
   public void runGC();
 
@@ -94,7 +96,7 @@ public interface ClientLockManager {
 
   public int localHeldCount(LockID lockID, int lockLevel, ThreadID threadID);
 
-  public boolean isLocked(LockID lockID, ThreadID threadID);
+  public boolean isLocked(LockID lockID, ThreadID threadID, int lockLevel);
 
   public void queryLockCommit(ThreadID threadID, GlobalLockInfo globalLockInfo);
 }

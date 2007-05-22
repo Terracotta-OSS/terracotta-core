@@ -96,9 +96,11 @@ public interface Manager {
 
   public void optimisticRollback();
 
-  public boolean isLocked(Object obj);
+  public boolean isLocked(Object obj, int lockLevel);
 
-  public boolean tryMonitorEnter(Object obj, int type);
+  public boolean tryMonitorEnter(Object obj, long timeoutInNanos, int type);
+  
+  public int localHeldCount(Object obj, int lockLevel);
 
   public boolean isHeldByCurrentThread(Object obj, int lockLevel);
 

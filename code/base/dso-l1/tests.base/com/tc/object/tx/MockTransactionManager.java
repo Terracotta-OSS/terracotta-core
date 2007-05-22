@@ -112,7 +112,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     return null;
   }
 
-  public boolean isLocked(String lockName) {
+  public boolean isLocked(String lockName, int lockLevel) {
     throw new ImplementMe();
   }
 
@@ -163,7 +163,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
-  public boolean tryBegin(String lock, int lockLevel) {
+  public boolean tryBegin(String lock, WaitInvocation timeout, int lockLevel) {
     throw new ImplementMe();
   }
 
@@ -176,6 +176,10 @@ public class MockTransactionManager implements ClientTransactionManager {
   }
 
   public void addDmiDescriptor(DmiDescriptor d) {
+    throw new ImplementMe();
+  }
+
+  public int localHeldCount(String lockName, int lockLevel) {
     throw new ImplementMe();
   }
 }

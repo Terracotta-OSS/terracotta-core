@@ -27,7 +27,7 @@ public interface LockManager {
 
   public boolean requestLock(LockID lockID, ChannelID channelID, ThreadID source, int level, Sink awardLockSink);
 
-  public boolean tryRequestLock(LockID lockID, ChannelID channelID, ThreadID threadID, int level, Sink awardLockSink);
+  public boolean tryRequestLock(LockID lockID, ChannelID channelID, ThreadID threadID, int level, WaitInvocation timeout, Sink awardLockSink);
 
   public void unlock(LockID id, ChannelID receiverID, ThreadID threadID);
 
@@ -46,7 +46,7 @@ public interface LockManager {
   public void stop() throws InterruptedException;
 
   public void recallCommit(LockID lid, ChannelID cid, Collection lockContexts, Collection waitContexts,
-                           Collection pendingLockContexts, Sink lockResponseSink);
+                           Collection pendingLockContexts, Collection pendingTryLockContexts, Sink lockResponseSink);
 
   public void dump();
 

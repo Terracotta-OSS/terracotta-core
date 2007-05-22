@@ -15,6 +15,8 @@ import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockRequest;
 import com.tc.object.lockmanager.api.RemoteLockManager;
 import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.lockmanager.api.TryLockContext;
+import com.tc.object.lockmanager.api.TryLockRequest;
 import com.tc.object.lockmanager.api.WaitContext;
 import com.tc.object.lockmanager.api.WaitLockRequest;
 import com.tc.object.session.SessionProvider;
@@ -65,7 +67,7 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
     serverLockManager.wait(lockID, channelID, threadID, call, sink);
   }
 
-  public void recallCommit(LockID lockID, Collection lockContext, Collection waitContext, Collection pendingRequests) {
+  public void recallCommit(LockID lockID, Collection lockContext, Collection waitContext, Collection pendingRequests, Collection pendingTryLockRequests) {
     Collection serverLC = new ArrayList();
     for (Iterator i = lockContext.iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
@@ -87,8 +89,16 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
       LockContext ctxt = new LockContext(request.lockID(), channelID, request.threadID(), request.lockLevel());
       serverPC.add(ctxt);
     }
+    
+    Collection serverPTC = new ArrayList();
+    for (Iterator i = pendingTryLockRequests.iterator(); i.hasNext();) {
+      TryLockRequest request = (TryLockRequest) i.next();
+      LockContext ctxt = new TryLockContext(request.lockID(), channelID, request.threadID(), request
+          .lockLevel(), request.getWaitInvocation());
+      serverPTC.add(ctxt);
+    }
 
-    serverLockManager.recallCommit(lockID, channelID, serverLC, serverWC, serverPC, sink);
+    serverLockManager.recallCommit(lockID, channelID, serverLC, serverWC, serverPC, serverPTC, sink);
   }
 
   public void flush(LockID lockID) {
@@ -172,11 +182,15 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
   }
 
   public void tryRequestLock(LockID lockID, ThreadID threadID, int lockType) {
-    serverLockManager.tryRequestLock(lockID, channelID, threadID, lockType, sink);
+    serverLockManager.tryRequestLock(lockID, channelID, threadID, lockType, new WaitInvocation(0), sink);
   }
 
   public void interrruptWait(LockID lockID, ThreadID threadID) {
     serverLockManager.interrupt(lockID, channelID, threadID);
 
+  }
+
+  public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int lockType) {
+    serverLockManager.tryRequestLock(lockID, channelID, threadID, lockType, timeout, sink);
   }
 }

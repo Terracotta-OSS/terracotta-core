@@ -179,7 +179,7 @@ public class ClientLockManagerTest extends TestCase {
         this.awardBarrier = awardBarrier;
       }
 
-      public void tryRequestLock(LockID lockID, ThreadID threadID, int lockType) {
+      public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int lockType) {
         try {
           requestBarrier.barrier();
           awardBarrier.barrier();
@@ -236,7 +236,7 @@ public class ClientLockManagerTest extends TestCase {
     });
     t1.start();
 
-    lockManager.tryLock(lockID1, txID, LockLevel.WRITE);
+    lockManager.tryLock(lockID1, txID, new WaitInvocation(0), LockLevel.WRITE);
 
   }
 

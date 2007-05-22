@@ -38,7 +38,7 @@ public class RequestLockUnLockHandler extends AbstractEventHandler {
     if (lrm.isObtainLockRequest()) {
       lockManager.requestLock(lid, cid, tid, lrm.getLockLevel(), lockResponseSink);
     } else if (lrm.isTryObtainLockRequest()) {
-      lockManager.tryRequestLock(lid, cid, tid, lrm.getLockLevel(), lockResponseSink);
+      lockManager.tryRequestLock(lid, cid, tid, lrm.getLockLevel(), lrm.getWaitInvocation(), lockResponseSink);
     } else if (lrm.isReleaseLockRequest()) {
       if (lrm.isWaitRelease()) {
         lockManager.wait(lid, cid, tid, lrm.getWaitInvocation(), lockResponseSink);
@@ -47,7 +47,7 @@ public class RequestLockUnLockHandler extends AbstractEventHandler {
       }
     } else if (lrm.isRecallCommitLockRequest()) {
       lockManager.recallCommit(lid, cid, lrm.getLockContexts(), lrm.getWaitContexts(), lrm.getPendingLockContexts(),
-                               lockResponseSink);
+                               lrm.getPendingTryLockContexts(), lockResponseSink);
     } else if (lrm.isQueryLockRequest()) {
       lockManager.queryLock(lid, cid, tid, lockResponseSink);
     } else if (lrm.isInterruptWaitRequest()) {

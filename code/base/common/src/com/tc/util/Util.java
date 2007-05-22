@@ -79,10 +79,22 @@ public class Util {
       }
     }
   }
-
-  public static void selfInterruptIfNeeded(boolean interruptFlag) {
-    if (interruptFlag) {
+  
+  public static void selfInterruptIfNeeded(boolean isInterrupted) {
+    if (isInterrupted) {
       Thread.currentThread().interrupt();
     }
+  }
+  
+  public static long getMillis(long timeInNanos) {
+    return timeInNanos/1000000;
+  }
+  
+  public static int getNanos(long timeInNanos, long mills) {
+    return (int)(timeInNanos - mills*1000000);
+  }
+  
+  public static long getTimeInNanos(long mills, int nanos) {
+    return mills*1000000+nanos;
   }
 }

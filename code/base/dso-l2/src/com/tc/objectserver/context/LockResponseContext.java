@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.context;
 
@@ -20,11 +21,11 @@ import java.util.Iterator;
 
 public class LockResponseContext implements EventContext {
 
-  public static final int      LOCK_AWARD        = 1;
-  public static final int      LOCK_RECALL       = 2;
-  public static final int      LOCK_WAIT_TIMEOUT = 3;
-  public static final int      LOCK_INFO         = 4;
-  public static final int      LOCK_NOT_AWARDED  = 5;
+  public static final int      LOCK_AWARD             = 1;
+  public static final int      LOCK_RECALL            = 2;
+  public static final int      LOCK_WAIT_TIMEOUT      = 3;
+  public static final int      LOCK_INFO              = 4;
+  public static final int      LOCK_NOT_AWARDED       = 5;
 
   private final LockID         lockID;
   private final ThreadID       threadID;
@@ -78,7 +79,7 @@ public class LockResponseContext implements EventContext {
   public int getLockLevel() {
     return level;
   }
-
+  
   public GlobalLockInfo getGlobalLockInfo() {
     return globalLockInfo;
   }
@@ -102,7 +103,7 @@ public class LockResponseContext implements EventContext {
   public boolean isLockNotAwarded() {
     return (this.responseType == LOCK_NOT_AWARDED);
   }
-
+  
   public String toString() {
     return "LockResponseContext(" + lockID + "," + channelID + "," + threadID + ", " + LockLevel.toString(level)
            + " , " + toString(responseType) + ")";

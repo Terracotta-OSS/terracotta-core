@@ -43,6 +43,7 @@ import com.tc.util.sequence.BatchSequenceReceiver;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -317,10 +318,6 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       return;
     }
 
-    public boolean isLocked(LockID lockID) {
-      return false;
-    }
-
     public int queueLength(LockID lockID, ThreadID threadID) {
       throw new ImplementMe();
     }
@@ -329,7 +326,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public boolean isLocked(LockID lockID, ThreadID threadID) {
+    public boolean isLocked(LockID lockID, ThreadID threadID, int lockLevel) {
       throw new ImplementMe();
     }
 
@@ -346,13 +343,16 @@ public class ClientHandshakeManagerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public boolean tryLock(LockID id, ThreadID threadID, int type) {
+    public boolean tryLock(LockID id, ThreadID threadID, WaitInvocation timeout, int type) {
       throw new ImplementMe();
+    }
+
+    public Collection addAllPendingTryLockRequestsTo(Collection c) {
+      return Collections.EMPTY_LIST;
     }
 
     public void cannotAwardLock(SessionID sessionID, LockID id, ThreadID threadID, int type) {
       throw new ImplementMe();
-
     }
   }
 

@@ -61,6 +61,7 @@ public class TransparencyClassSpec {
   private byte                        instrumentationAction      = NOT_SET;
 
   private String                      postCreateMethod           = null;
+  private String                      preCreateMethod            = null;
   private String                      logicalExtendingClassName  = null;
   private ClassAdapterFactory         customClassAdapter         = null;
 
@@ -487,12 +488,16 @@ public class TransparencyClassSpec {
     this.honorJDKSubVersionSpecific = honorJDKSubVersionSpecific;
   }
 
-  public boolean isPostCreateMethodSet() {
-    return postCreateMethod != null;
+  public String getPreCreateMethod() {
+    return preCreateMethod;
   }
 
   public String getPostCreateMethod() {
     return postCreateMethod;
+  }
+  
+  public void setPreCreateMethod(String preCreateMethod) {
+    this.preCreateMethod = preCreateMethod;
   }
 
   public void setPostCreateMethod(String postCreateMethod) {

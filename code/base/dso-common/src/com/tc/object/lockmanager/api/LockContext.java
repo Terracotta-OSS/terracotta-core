@@ -25,31 +25,25 @@ public class LockContext implements TCSerializable {
   private int       lockLevel;
   private ChannelID channelID;
   private ThreadID  threadID;
-  private boolean   noBlock;
   private int       hashCode;
 
   public LockContext() {
     return;
   }
 
-  public LockContext(LockID lockID, ChannelID channelID, ThreadID threadID, int lockLevel, boolean noBlock) {
+  public LockContext(LockID lockID, ChannelID channelID, ThreadID threadID, int lockLevel) {
     this.lockID = lockID;
     this.channelID = channelID;
     this.threadID = threadID;
     Assert.assertFalse(LockLevel.isSynchronous(lockLevel));
     this.lockLevel = lockLevel;
-    this.noBlock = noBlock;
     this.hashCode = new HashCodeBuilder(5503, 6737).append(lockID).append(channelID).append(threadID).append(lockLevel)
-        .append(noBlock).toHashCode();
-  }
-
-  public LockContext(LockID lockID, ChannelID channelID, ThreadID threadID, int lockLevel) {
-    this(lockID, channelID, threadID, lockLevel, false);
+        .toHashCode();
   }
 
   public String toString() {
     return "LockContext [ " + lockID + ", " + LockLevel.toString(lockLevel) + ", " + channelID + ", " + threadID + ", "
-           + noBlock + ", " + hashCode + "] ";
+           + hashCode + "] ";
   }
 
   public ChannelID getChannelID() {
@@ -68,16 +62,12 @@ public class LockContext implements TCSerializable {
     return threadID;
   }
 
-  public boolean noBlock() {
-    return noBlock;
-  }
-
   public boolean equals(Object o) {
     if (o == this) return true;
     if (!(o instanceof LockContext)) return false;
     LockContext cmp = (LockContext) o;
     return lockID.equals(cmp.lockID) && threadID.equals(cmp.threadID) && lockLevel == cmp.lockLevel
-           && channelID.equals(cmp.channelID) && noBlock == cmp.noBlock;
+           && channelID.equals(cmp.channelID);
   }
 
   public int hashCode() {
@@ -89,7 +79,6 @@ public class LockContext implements TCSerializable {
     output.writeLong(channelID.toLong());
     output.writeLong(threadID.toLong());
     output.writeInt(lockLevel);
-    output.writeBoolean(noBlock);
   }
 
   public Object deserializeFrom(TCByteBufferInputStream input) throws IOException {
@@ -97,7 +86,6 @@ public class LockContext implements TCSerializable {
     channelID = new ChannelID(input.readLong());
     threadID = new ThreadID(input.readLong());
     lockLevel = input.readInt();
-    noBlock = input.readBoolean();
     return this;
   }
 

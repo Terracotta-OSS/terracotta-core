@@ -120,11 +120,15 @@ public class TestLockManager implements LockManager {
     throw new ImplementMe();
   }
 
-  public boolean tryRequestLock(LockID lockID, ChannelID channelID, ThreadID threadID, int level, Sink awardLockSink) {
+  public void interrupt(LockID lockID, ChannelID channelID, ThreadID threadID) {
     throw new ImplementMe();
   }
 
-  public void interrupt(LockID lockID, ChannelID channelID, ThreadID threadID) {
+  public boolean tryRequestLock(LockID lockID, ChannelID channelID, ThreadID threadID, int level, WaitInvocation timeout, Sink awardLockSink) {
+    throw new ImplementMe();
+  }
+
+  public void recallCommit(LockID lid, ChannelID cid, Collection lockContexts, Collection waitContexts, Collection pendingLockContexts, Collection pendingTryLockContexts, Sink lockResponseSink) {
     throw new ImplementMe();
   }
 }

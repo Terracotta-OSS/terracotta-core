@@ -21,6 +21,8 @@ import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockRequest;
+import com.tc.object.lockmanager.api.TryLockContext;
+import com.tc.object.lockmanager.api.TryLockRequest;
 import com.tc.object.lockmanager.api.WaitContext;
 import com.tc.object.lockmanager.api.WaitLockRequest;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -113,8 +115,16 @@ public class ClientHandshakeManager implements ChannelEventListener {
     logger.debug("Getting pending lock requests...");
     for (Iterator i = lockManager.addAllPendingLockRequestsTo(new HashSet()).iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
-      LockContext ctxt = new LockContext(request.lockID(), cidp.getChannelID(), request.threadID(), request.lockLevel(), request.noBlock());
+      LockContext ctxt = new LockContext(request.lockID(), cidp.getChannelID(), request.threadID(), request.lockLevel());
       handshakeMessage.addPendingLockContext(ctxt);
+    }
+    
+    logger.debug("Getting pending tryLock requests...");
+    for (Iterator i = lockManager.addAllPendingTryLockRequestsTo(new HashSet()).iterator(); i.hasNext();) {
+      TryLockRequest request = (TryLockRequest) i.next();
+      LockContext ctxt = new TryLockContext(request.lockID(), cidp.getChannelID(), request.threadID(), request.lockLevel(),
+                                  request.getWaitInvocation());
+      handshakeMessage.addPendingTryLockContext(ctxt);
     }
 
     logger.debug("Checking to see if is object ids sequence is needed ...");

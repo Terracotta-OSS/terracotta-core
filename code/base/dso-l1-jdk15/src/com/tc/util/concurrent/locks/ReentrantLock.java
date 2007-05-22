@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -26,14 +27,15 @@ public class ReentrantLock implements Lock, java.io.Serializable {
   private boolean  isFair;
 
   /** Current owner thread */
-  transient Thread owner          = null;
-  transient int    numOfHolds     = 0;
-  transient List   waitingQueue   = new ArrayList();
-  transient int    state          = 0;
-  transient int    numQueued      = 0;
-  transient Stack  lockInUnShared = new Stack();
+  transient Thread owner            = null;
+  transient int    numOfHolds       = 0;
+  transient List   waitingQueue     = new ArrayList();
+  transient int    state            = 0;
+  transient int    numQueued        = 0;
+  transient Stack  lockInUnShared   = new Stack();
+  transient List   tryLockWaitQueue = new LinkedList();
 
-  transient Object lock           = new Object();
+  transient Object lock             = new Object();
 
   public ReentrantLock() {
     this.isFair = false;
@@ -55,6 +57,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
     this.numQueued = 0;
     this.lock = new Object();
     this.lockInUnShared = new Stack();
+    this.tryLockWaitQueue = new LinkedList();
   }
 
   public void lock() {
@@ -102,7 +105,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
     synchronized (lock) {
       canLock = canProceedToLock();
       if (ManagerUtil.isManaged(this) && canLock) {
-        canLock = ManagerUtil.tryMonitorEnter(this, LockLevel.WRITE);
+        canLock = ManagerUtil.tryMonitorEnter(this, 0, LockLevel.WRITE);
         if (canLock) {
           UnsafeUtil.monitorEnter(this);
         }
@@ -117,37 +120,72 @@ public class ReentrantLock implements Lock, java.io.Serializable {
       return canLock;
     }
   }
+  
+  private void addCurrentThreadToQueue() {
+    waitingQueue.add(Thread.currentThread());
+    numQueued++;
+  }
+  
+  private void removeCurrentThreadFromQueue() {
+    waitingQueue.remove(Thread.currentThread());
+    numQueued--;
+  }
 
   public boolean tryLock(long timeout, TimeUnit unit) throws InterruptedException {
-    if (!tryLock()) {
-      Thread currentThread = Thread.currentThread();
+    Thread currentThread = Thread.currentThread();
 
-      long timeoutInNanos = TimeUnit.NANOSECONDS.convert(50, TimeUnit.MILLISECONDS);
-      long totalTimeoutInNanos = unit.toNanos(timeout);
+    long totalTimeoutInNanos = unit.toNanos(timeout);
 
-      if (timeoutInNanos > totalTimeoutInNanos) {
-        timeoutInNanos = totalTimeoutInNanos;
+    while (totalTimeoutInNanos > 0 && !tryLock()) {
+      synchronized (lock) {
+        addCurrentThreadToQueue();
+
+        if (owner != null && owner != currentThread && lockInUnShared.contains(Boolean.TRUE)) {
+          try {
+            totalTimeoutInNanos = waitForLocalLock(lock, totalTimeoutInNanos);
+          } finally {
+            removeCurrentThreadFromQueue();
+          }
+          continue;
+        }
       }
 
-      synchronized (lock) {
-        boolean locked = false;
-
-        while (!locked && totalTimeoutInNanos > 0) {
-          waitingQueue.add(currentThread);
-          numQueued++;
-
-          TimeUnit.NANOSECONDS.timedWait(lock, timeoutInNanos);
-          totalTimeoutInNanos -= timeoutInNanos;
-
-          waitingQueue.remove(currentThread);
-          numQueued--;
-
-          locked = tryLock();
+      try {
+        boolean isLocked = ManagerUtil.tryMonitorEnter(this, totalTimeoutInNanos, LockLevel.WRITE);
+        if (isLocked) {
+          UnsafeUtil.monitorEnter(this);
+          synchronized (lock) {
+            innerSetLockState();
+          }
+          return true;
+        } else {
+          synchronized(lock) {
+            if (ManagerUtil.isManaged(this)) {
+              return false;
+            } else {
+              totalTimeoutInNanos = waitForLocalLock(lock, totalTimeoutInNanos);
+              continue;
+            }
+          }
         }
-        return locked;
+      } finally {
+        synchronized (lock) {
+          removeCurrentThreadFromQueue();
+        }
       }
     }
-    return true;
+
+    return (totalTimeoutInNanos > 0);
+  }
+
+  private long waitForLocalLock(Object waitObject, long totalTimeoutInNanos) throws InterruptedException {
+    long startTime = System.nanoTime();
+    synchronized (waitObject) {
+      TimeUnit.NANOSECONDS.timedWait(waitObject, totalTimeoutInNanos);
+    }
+    long endTime = System.nanoTime();
+    totalTimeoutInNanos -= (endTime - startTime);
+    return totalTimeoutInNanos;
   }
 
   public void unlock() {
@@ -164,6 +202,12 @@ public class ReentrantLock implements Lock, java.io.Serializable {
       UnsafeUtil.monitorExit(this);
       if (!needDSOUnlock) {
         lock.notifyAll();
+
+        /*
+         * int tryLockWaitObjectIndex = tryLockWaitQueue.size() - 1; if (tryLockWaitObjectIndex >= 0) { Object
+         * tryLockWaitObject = this.tryLockWaitQueue.remove(tryLockWaitObjectIndex); synchronized (tryLockWaitObject) {
+         * tryLockWaitObject.notify(); } }
+         */
       }
     }
     if (needDSOUnlock) {
@@ -191,7 +235,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
 
   public boolean isLocked() {
     if (ManagerUtil.isManaged(this)) {
-      return isHeldByCurrentThread() || ManagerUtil.isLocked(this);
+      return isHeldByCurrentThread() || ManagerUtil.isLocked(this, LockLevel.WRITE);
     } else {
       return getState() > 0;
     }
@@ -290,8 +334,8 @@ public class ReentrantLock implements Lock, java.io.Serializable {
   }
 
   private void innerSetLockState() {
-    if (!ManagerUtil.isManaged(ReentrantLock.this)
-        || !ManagerUtil.isHeldByCurrentThread(ReentrantLock.this, LockLevel.WRITE)) {
+    if (!ManagerUtil.isManaged(this)
+        || !ManagerUtil.isHeldByCurrentThread(this, LockLevel.WRITE)) {
       this.lockInUnShared.push(Boolean.TRUE);
     } else {
       this.lockInUnShared.push(Boolean.FALSE);

@@ -47,7 +47,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, ClassInfo classInfo,
                                                     InstrumentationLogger lgr, ClassLoader caller,
-                                                    final boolean forcePortable);
+                                                    final boolean forcePortable, boolean honorTransient);
 
   ClassAdapter createClassAdapterFor(ClassWriter writer, ClassInfo classInfo, InstrumentationLogger lgr,
                                      ClassLoader caller);
@@ -123,6 +123,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   void addTransient(String className, String fieldName);
 
   String getOnLoadScriptIfDefined(ClassInfo classInfo);
+  
+  String getPreCreateMethodIfDefined(String className);
 
   String getPostCreateMethodIfDefined(String className);
 

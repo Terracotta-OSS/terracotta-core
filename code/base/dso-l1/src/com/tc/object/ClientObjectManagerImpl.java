@@ -329,9 +329,18 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     Assert.assertNotNull(pojo);
     TCObject obj = basicLookup(pojo);
     if (obj == null || obj.isNew()) {
+      executePreCreateMethod(pojo);
       obj = create(pojo, context);
     }
     return obj;
+  }
+
+  private void executePreCreateMethod(Object pojo) {
+    String onLookupMethodName = clientConfiguration.getPreCreateMethodIfDefined(pojo.getClass().getName());
+    if (onLookupMethodName != null) {
+      executeMethod(pojo, onLookupMethodName, "preCreate method (" + onLookupMethodName + ") failed on object of "
+                                              + pojo.getClass());
+    }
   }
 
   /**
@@ -341,21 +350,29 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
    * shared. The rehash method is an instrumented method. This should be executed only once.
    */
   private void executePostCreateMethod(Object pojo) {
-    // This method used to use beanshell, but I changed it to reflection to hopefully avoid a deadlock -- CDV-130
-
     String onLookupMethodName = clientConfiguration.getPostCreateMethodIfDefined(pojo.getClass().getName());
     if (onLookupMethodName != null) {
-      try {
-        Method m = pojo.getClass().getDeclaredMethod(onLookupMethodName, new Class[] {});
-        m.setAccessible(true);
-        m.invoke(pojo, new Object[] {});
-      } catch (Throwable t) {
-        if (t instanceof InvocationTargetException) {
-          t = t.getCause();
-        }
-        logger.warn("postCreate method (" + onLookupMethodName + ") failed on object of " + pojo.getClass(), t);
-        throw new RuntimeException(t);
+      executeMethod(pojo, onLookupMethodName, "postCreate method (" + onLookupMethodName + ") failed on object of "
+                                              + pojo.getClass());
+    }
+  }
+
+  private void executeMethod(Object pojo, String onLookupMethodName, String loggingMessage) {
+    // This method used to use beanshell, but I changed it to reflection to hopefully avoid a deadlock -- CDV-130
+
+    try {
+      Method m = pojo.getClass().getDeclaredMethod(onLookupMethodName, new Class[] {});
+      m.setAccessible(true);
+      m.invoke(pojo, new Object[] {});
+    } catch (Throwable t) {
+      if (t instanceof InvocationTargetException) {
+        t = t.getCause();
       }
+      logger.warn(loggingMessage, t);
+      if (!(t instanceof RuntimeException)) {
+        t = new RuntimeException(t);
+      }
+      throw (RuntimeException) t;
     }
   }
 

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
@@ -12,9 +13,11 @@ import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
 import com.tc.object.lockmanager.api.LockContext;
+import com.tc.object.lockmanager.api.TryLockContext;
 import com.tc.object.lockmanager.api.WaitContext;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 
 import java.io.IOException;
@@ -32,11 +35,13 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private static final byte PENDING_LOCK_CONTEXT     = 5;
   private static final byte RESENT_TRANSACTION_IDS   = 6;
   private static final byte REQUEST_OBJECT_IDS       = 7;
+  private static final byte PENDING_TRY_LOCK_CONTEXT = 8;
 
   private final Set         objectIDs                = new HashSet();
   private final Set         lockContexts             = new HashSet();
   private final Set         waitContexts             = new HashSet();
   private final Set         pendingLockContexts      = new HashSet();
+  private final Set         pendingTryLockContexts   = new HashSet();
   private final Set         sequenceIDs              = new HashSet();
   private final Set         txnIDs                   = new HashSet();
   private boolean           requestObjectIDs;
@@ -75,9 +80,22 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     }
   }
 
+  public void addPendingTryLockContext(LockContext ctxt) {
+    Assert.eval(ctxt instanceof TryLockContext);
+    synchronized (pendingTryLockContexts) {
+      pendingTryLockContexts.add(ctxt);
+    }
+  }
+
   public Collection getPendingLockContexts() {
     synchronized (pendingLockContexts) {
       return new HashSet(pendingLockContexts);
+    }
+  }
+
+  public Collection getPendingTryLockContexts() {
+    synchronized (pendingTryLockContexts) {
+      return new HashSet(pendingTryLockContexts);
     }
   }
 
@@ -112,6 +130,9 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     for (Iterator i = pendingLockContexts.iterator(); i.hasNext();) {
       putNVPair(PENDING_LOCK_CONTEXT, (TCSerializable) i.next());
     }
+    for (Iterator i = pendingTryLockContexts.iterator(); i.hasNext();) {
+      putNVPair(PENDING_TRY_LOCK_CONTEXT, (TCSerializable) i.next());
+    }
     for (Iterator i = sequenceIDs.iterator(); i.hasNext();) {
       putNVPair(TRANSACTION_SEQUENCE_IDS, ((SequenceID) i.next()).toLong());
     }
@@ -134,6 +155,9 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
         return true;
       case PENDING_LOCK_CONTEXT:
         pendingLockContexts.add(getObject(new LockContext()));
+        return true;
+      case PENDING_TRY_LOCK_CONTEXT:
+        pendingTryLockContexts.add(getObject(new TryLockContext()));
         return true;
       case TRANSACTION_SEQUENCE_IDS:
         sequenceIDs.add(new SequenceID(getLongValue()));

@@ -30,6 +30,7 @@ public class LockResponseMessage extends DSOMessageBase {
   public static final int   LOCK_INFO         = 4;
   public static final int   LOCK_NOT_AWARDED  = 5;
 
+
   private int               type;
   private ThreadID          threadID;
   private LockID            lockID;
@@ -54,7 +55,7 @@ public class LockResponseMessage extends DSOMessageBase {
       putNVPair(GLOBAL_LOCK_INFO, globalLockInfo);
     }
   }
-
+  
   protected String describePayload() {
     StringBuffer rv = new StringBuffer();
     rv.append("Type : ");
@@ -125,7 +126,7 @@ public class LockResponseMessage extends DSOMessageBase {
   public boolean isLockNotAwarded() {
     return (this.type == LOCK_NOT_AWARDED);
   }
-
+  
   public LockID getLockID() {
     return this.lockID;
   }
@@ -141,10 +142,10 @@ public class LockResponseMessage extends DSOMessageBase {
   public GlobalLockInfo getGlobalLockInfo() {
     return globalLockInfo;
   }
-
+  
   public void initializeLockAward(LockID lid, ThreadID sid, int level) {
     this.type = LOCK_AWARD;
-    initialize(lid, sid, level);
+    initialize(lid, sid, level, null);
   }
 
   public void initializeLockNotAwarded(LockID lid, ThreadID sid, int level) {
@@ -166,7 +167,7 @@ public class LockResponseMessage extends DSOMessageBase {
     this.type = LOCK_INFO;
     initialize(lid, sid, level, info);
   }
-
+  
   private void initialize(LockID lid, ThreadID sid, int level) {
     initialize(lid, sid, level, null);
   }

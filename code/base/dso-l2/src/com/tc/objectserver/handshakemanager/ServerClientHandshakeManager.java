@@ -10,6 +10,7 @@ import com.tc.logging.TCLogger;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.lockmanager.api.LockContext;
+import com.tc.object.lockmanager.api.TryLockContext;
 import com.tc.object.lockmanager.api.WaitContext;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.net.DSOChannelManager;
@@ -134,13 +135,14 @@ public class ServerClientHandshakeManager {
 
       for (Iterator i = handshake.getPendingLockContexts().iterator(); i.hasNext();) {
         LockContext ctxt = (LockContext) i.next();
-        if (ctxt.noBlock()) {
-          lockManager.tryRequestLock(ctxt.getLockID(), ctxt.getChannelID(), ctxt.getThreadID(), ctxt.getLockLevel(),
-                                     lockResponseSink);
-        } else {
-          lockManager.requestLock(ctxt.getLockID(), ctxt.getChannelID(), ctxt.getThreadID(), ctxt.getLockLevel(),
-                                  lockResponseSink);
-        }
+        lockManager.requestLock(ctxt.getLockID(), ctxt.getChannelID(), ctxt.getThreadID(), ctxt.getLockLevel(),
+                                lockResponseSink);
+      }
+
+      for (Iterator i = handshake.getPendingTryLockContexts().iterator(); i.hasNext();) {
+        TryLockContext ctxt = (TryLockContext) i.next();
+        lockManager.tryRequestLock(ctxt.getLockID(), ctxt.getChannelID(), ctxt.getThreadID(), ctxt.getLockLevel(), ctxt
+            .getWaitInvocation(), lockResponseSink);
       }
 
       if (handshake.isObjectIDsRequested()) {

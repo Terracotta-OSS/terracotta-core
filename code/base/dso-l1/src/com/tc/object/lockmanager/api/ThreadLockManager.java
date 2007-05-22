@@ -11,7 +11,7 @@ public interface ThreadLockManager {
 
   public void lock(LockID lockID, int lockLevel);
   
-  public boolean tryLock(LockID lockID, int lockLevel);
+  public boolean tryLock(LockID lockID, WaitInvocation timeout, int lockLevel);
 
   public void wait(LockID lockID, WaitInvocation call, Object object, WaitListener waitListener) throws InterruptedException;
 
@@ -19,7 +19,7 @@ public interface ThreadLockManager {
 
   public void unlock(LockID lockID);
 
-  public boolean isLocked(LockID lockID);
+  public boolean isLocked(LockID lockID, int lockLevel);
   
   public int localHeldCount(LockID lockID, int lockLevel);
   

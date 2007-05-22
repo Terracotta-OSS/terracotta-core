@@ -139,7 +139,7 @@ public final class NullManager implements Manager {
     // do nothing
   }
 
-  public final boolean isLocked(Object obj) {
+  public boolean isLocked(Object obj, int lockLevel) {
     return false;
   }
 
@@ -156,14 +156,14 @@ public final class NullManager implements Manager {
   }
 
   public final boolean isHeldByCurrentThread(Object obj, int lockLevel) {
-    throw new UnsupportedOperationException();
+    return false;
   }
 
   public final void logicalInvokeWithTransaction(Object object, Object lockObject, String methodName, Object[] params) {
     throw new UnsupportedOperationException();
   }
 
-  public final boolean tryMonitorEnter(Object obj, int type) {
+  public boolean tryMonitorEnter(Object obj, long timeoutInNanos, int type) {
     throw new UnsupportedOperationException();
   }
 
@@ -218,6 +218,10 @@ public final class NullManager implements Manager {
   }
 
   public DmiManager getDmiManager() {
+    throw new UnsupportedOperationException();
+  }
+
+  public int localHeldCount(Object obj, int lockLevel) {
     throw new UnsupportedOperationException();
   }
 

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.lockmanager.impl;
 
@@ -11,6 +12,8 @@ import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.lockmanager.api.LockRequest;
 import com.tc.object.lockmanager.api.RemoteLockManager;
 import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.lockmanager.api.TryLockContext;
+import com.tc.object.lockmanager.api.TryLockRequest;
 import com.tc.object.lockmanager.api.WaitContext;
 import com.tc.object.lockmanager.api.WaitLockRequest;
 import com.tc.object.msg.LockRequestMessage;
@@ -28,7 +31,7 @@ import java.util.Iterator;
  */
 public class RemoteLockManagerImpl implements RemoteLockManager {
 
-  private LockRequestMessageFactory lockRequestMessageFactory;
+  private LockRequestMessageFactory            lockRequestMessageFactory;
   private final ClientGlobalTransactionManager gtxManager;
 
   public RemoteLockManagerImpl(LockRequestMessageFactory lrmf, ClientGlobalTransactionManager gtxManager) {
@@ -42,11 +45,11 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     req.initializeObtainLock(lockID, threadID, lockType);
     req.send();
   }
-  
-  public void tryRequestLock(LockID lockID, ThreadID threadID, int lockType) {
+
+  public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int lockType) {
     Assert.assertTrue(LockLevel.isDiscrete(lockType));
     LockRequestMessage req = createRequest();
-    req.initializeTryObtainLock(lockID, threadID, lockType);
+    req.initializeTryObtainLock(lockID, threadID, timeout, lockType);
     req.send();
   }
 
@@ -61,13 +64,13 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     req.initializeLockReleaseWait(lockID, threadID, call);
     req.send();
   }
-  
+
   public void queryLock(LockID lockID, ThreadID threadID) {
     LockRequestMessage req = createRequest();
     req.initializeQueryLock(lockID, threadID);
     req.send();
   }
-  
+
   public void interrruptWait(LockID lockID, ThreadID threadID) {
     LockRequestMessage req = createRequest();
     req.initializeInterruptWait(lockID, threadID);
@@ -79,28 +82,34 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     return lockRequestMessageFactory.newLockRequestMessage();
   }
 
-  public void recallCommit(LockID lockID, Collection lockContext, Collection waitContext, Collection pendingRequests) {
+  public void recallCommit(LockID lockID, Collection lockContext, Collection waitContext, Collection pendingRequests,
+                           Collection pendingTryLockRequests) {
     LockRequestMessage req = createRequest();
     req.initializeLockRecallCommit(lockID);
     for (Iterator i = lockContext.iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
-      LockContext ctxt = new LockContext(request.lockID(), req.getChannelID(), request.threadID(), request
-          .lockLevel());
+      LockContext ctxt = new LockContext(request.lockID(), req.getChannelID(), request.threadID(), request.lockLevel());
       req.addLockContext(ctxt);
     }
 
     for (Iterator i = waitContext.iterator(); i.hasNext();) {
       WaitLockRequest request = (WaitLockRequest) i.next();
-      WaitContext ctxt = new WaitContext(request.lockID(), req.getChannelID(), request.threadID(), request
-          .lockLevel(), request.getWaitInvocation());
+      WaitContext ctxt = new WaitContext(request.lockID(), req.getChannelID(), request.threadID(), request.lockLevel(),
+                                         request.getWaitInvocation());
       req.addWaitContext(ctxt);
     }
-    
+
     for (Iterator i = pendingRequests.iterator(); i.hasNext();) {
       LockRequest request = (LockRequest) i.next();
-      LockContext ctxt = new LockContext(request.lockID(), req.getChannelID(), request.threadID(), request
-          .lockLevel());
+      LockContext ctxt = new LockContext(request.lockID(), req.getChannelID(), request.threadID(), request.lockLevel());
       req.addPendingLockContext(ctxt);
+    }
+
+    for (Iterator i = pendingTryLockRequests.iterator(); i.hasNext();) {
+      TryLockRequest request = (TryLockRequest) i.next();
+      LockContext ctxt = new TryLockContext(request.lockID(), req.getChannelID(), request.threadID(), request
+          .lockLevel(), request.getWaitInvocation());
+      req.addPendingTryLockContext(ctxt);
     }
 
     req.send();

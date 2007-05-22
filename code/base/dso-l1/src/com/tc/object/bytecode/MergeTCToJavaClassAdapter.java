@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
 
@@ -31,8 +32,8 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
   private String                   superName;
   private TransparencyClassAdapter dsoAdapter;
 
-  public MergeTCToJavaClassAdapter(ClassVisitor cv, TransparencyClassAdapter dsoAdapter, String jFullClassDots, String tcFullClassDots,
-                                   ClassNode tcClassNode, Map instrumentedContext) {
+  public MergeTCToJavaClassAdapter(ClassVisitor cv, TransparencyClassAdapter dsoAdapter, String jFullClassDots,
+                                   String tcFullClassDots, ClassNode tcClassNode, Map instrumentedContext) {
     super(cv);
     this.tcClassNode = tcClassNode;
     this.jFullClassSlashes = jFullClassDots.replace(DOT_DELIMITER, SLASH_DELIMITER);
@@ -60,7 +61,7 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
     }
     interfaces = new String[jInterfaces.size()];
     jInterfaces.toArray(interfaces);
-    //super.visit(version, access, name, signature, superName, interfaces);
+    // super.visit(version, access, name, signature, superName, interfaces);
     dsoAdapter.visit(version, access, name, signature, superName, interfaces);
   }
 
@@ -83,7 +84,7 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
         }
       }
     }
-    
+
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
     if (LogicalClassSerializationAdapter.WRITE_OBJECT_SIGNATURE.equals(methodDesc)
         || LogicalClassSerializationAdapter.READ_OBJECT_SIGNATURE.equals(methodDesc)) { //
@@ -93,6 +94,13 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
   }
 
   public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+    // hack for now
+    if (("java/util/LinkedHashMap".equals(jFullClassSlashes) && "accessOrder".equals(name))
+        || ("java/util/concurrent/locks/ReentrantReadWriteLock".equals(jFullClassSlashes) && ("sync".equals(name) || "readerLock".equals(name) || "writerLock"
+            .equals(name)))) {
+      access = ~Modifier.FINAL & access;
+    }
+
     List tcFields = tcClassNode.fields;
     for (Iterator i = tcFields.iterator(); i.hasNext();) {
       FieldNode fieldNode = (FieldNode) i.next();
@@ -102,10 +110,6 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
       }
     }
 
-    // hack for now
-    if ("java/util/LinkedHashMap".equals(jFullClassSlashes) && "accessOrder".equals(name)) {
-      access = ~Modifier.FINAL & access;
-    }
     return super.visitField(access, name, desc, signature, value);
   }
 
@@ -120,7 +124,7 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
     List tcMethods = tcClassNode.methods;
     for (Iterator i = tcMethods.iterator(); i.hasNext();) {
       MethodNode mNode = (MethodNode) i.next();
-      if (isInitMethod(mNode.name)) {
+      if (isInitMethod(mNode.name) && (visitedMethods.contains(mNode.name + mNode.desc))) {
         continue;
       }
       mNode.accept(new TCSuperClassAdapter(cv));
@@ -162,7 +166,7 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       desc = replaceClassName(desc);
       signature = replaceClassName(signature);
-      //return new TCSuperMethodAdapter(super.visitMethod(access, name, desc, signature, exceptions));
+      // return new TCSuperMethodAdapter(super.visitMethod(access, name, desc, signature, exceptions));
       return new TCSuperMethodAdapter(dsoAdapter.basicVisitMethod(access, name, desc, signature, exceptions));
     }
 

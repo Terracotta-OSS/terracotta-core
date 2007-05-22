@@ -95,12 +95,8 @@ public class TestLockManager implements ClientLockManager {
     return;
   }
 
-  public boolean isLocked(LockID lockID) {
+  public boolean isLocked(LockID lockID, ThreadID threadID, int lockLevel) {
     return lockIDForCalls.contains(lockID.asString());
-  }
-
-  public int queueLength(LockID lockID, ThreadID threadID) {
-    throw new ImplementMe();
   }
 
   public int localHeldCount(LockID lockID, int lockLevel, ThreadID threadID) {
@@ -123,12 +119,20 @@ public class TestLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
-  public boolean tryLock(LockID id, ThreadID threadID, int type) {
+  public boolean tryLock(LockID id, ThreadID threadID, WaitInvocation timeout, int type) {
+    throw new ImplementMe();
+  }
+
+  public Collection addAllPendingTryLockRequestsTo(Collection c) {
+    throw new ImplementMe();
+  }
+
+  public int queueLength(LockID lockID, ThreadID threadID) {
     throw new ImplementMe();
   }
 
   public void cannotAwardLock(SessionID sessionID, LockID id, ThreadID threadID, int type) {
     throw new ImplementMe();
-
   }
+
 }

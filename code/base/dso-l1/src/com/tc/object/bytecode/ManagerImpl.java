@@ -310,13 +310,16 @@ public class ManagerImpl implements Manager {
       runtimeLogger.lockAcquired(lockID, type, instance, tcobj);
     }
   }
-
-  private boolean tryBegin(String lockID, int type, Object instance, TCObject tcobj) {
-    boolean locked = this.txManager.tryBegin(lockID, type);
+  
+  private boolean tryBegin(String lockID, int type, Object instance, WaitInvocation timeout, TCObject tcobj) {
+    boolean locked = this.txManager.tryBegin(lockID, timeout, type);
     if (locked && runtimeLogger.lockDebug()) {
       runtimeLogger.lockAcquired(lockID, type, instance, tcobj);
     }
     return locked;
+  }
+  private boolean tryBegin(String lockID, int type, Object instance, TCObject tcobj) {
+    return tryBegin(lockID, type, instance, new WaitInvocation(0), tcobj);
   }
 
   public void commitVolatile(TCObject tcObject, String fieldName) {
@@ -470,37 +473,59 @@ public class ManagerImpl implements Manager {
     }
   }
 
-  public boolean isLocked(Object obj) {
+  public boolean isLocked(Object obj, int lockLevel) {
     if (obj == null) { throw new NullPointerException("isLocked called on a null object"); }
 
     TCObject tco = lookupExistingOrNull(obj);
 
     if (tco != null) {
-      return this.txManager.isLocked(generateAutolockName(tco));
+      return this.txManager.isLocked(generateAutolockName(tco), lockLevel);
     } else {
-      return this.txManager.isLocked(generateLiteralLockName(obj));
+      return this.txManager.isLocked(generateLiteralLockName(obj), lockLevel);
     }
   }
 
-  public boolean tryMonitorEnter(Object obj, int type) {
+  public boolean tryMonitorEnter(Object obj, long timeoutInNanos, int type) {
     if (obj == null) { throw new NullPointerException("monitorEnter called on a null object"); }
 
     TCObject tco = lookupExistingOrNull(obj);
 
     try {
+      WaitInvocation timeout = null;
+      if (timeoutInNanos <= 0) {
+        timeout = new WaitInvocation(0);
+      } else {
+        long mills = Util.getMillis(timeoutInNanos);
+        int nanos = Util.getNanos(timeoutInNanos, mills);
+        timeout = new WaitInvocation(mills, nanos);
+      }
+
       if (tco != null) {
         if (tco.autoLockingDisabled()) { return false; }
 
-        return tryBegin(generateAutolockName(tco), type, obj, tco);
-      } else if (isLiteralAutolock(obj)) { return tryBegin(generateLiteralLockName(obj), type, obj, null); }
+        return tryBegin(generateAutolockName(tco), type, obj, timeout, tco);
+      } else if (isLiteralAutolock(obj)) { return tryBegin(generateLiteralLockName(obj), type, obj, timeout, null); }
     } catch (Throwable t) {
       Util.printLogAndRethrowError(t, logger);
     }
     return false;
   }
-
+  
   public boolean tryBeginLock(String lockID, int type) {
     return tryBegin(lockID, type, null, null);
+  }
+  
+  public int localHeldCount(Object obj, int lockLevel) {
+    if (obj == null) { throw new NullPointerException("isHeldByCurrentThread called on a null object"); }
+
+    TCObject tco = lookupExistingOrNull(obj);
+
+    if (tco != null) {
+      return this.txManager.localHeldCount(generateAutolockName(tco), lockLevel);
+    } else {
+      return this.txManager.localHeldCount(generateLiteralLockName(obj), lockLevel);
+    }
+
   }
 
   public boolean isHeldByCurrentThread(Object obj, int lockLevel) {

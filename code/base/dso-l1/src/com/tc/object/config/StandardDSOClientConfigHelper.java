@@ -287,7 +287,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     addPermanentExcludePattern("java.util.concurrent.locks.AbstractQueuedLongSynchronizer*");
     addPermanentExcludePattern("java.util.concurrent.locks.AbstractQueuedSynchronizer*");
     addPermanentExcludePattern("java.util.concurrent.locks.LockSupport*");
-    addPermanentExcludePattern("java.util.concurrent.locks.ReentrantReadWriteLock*");
   }
 
   public Portability getPortability() {
@@ -944,9 +943,42 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
   private void addJDK15InstrumentedSpec() {
     if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() > 4) {
-      TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock$ConditionObject");
+      TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock");
+      spec.addTransient("sync");
+      spec.setPreCreateMethod("validateInUnLockState");
       spec.setCallConstructorOnLoad(true);
       spec.setHonorTransient(true);
+      
+      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock$ConditionObject");
+      spec.setCallConstructorOnLoad(true);
+      spec.setHonorTransient(true);
+
+      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$DsoLock");
+      spec.setHonorTransient(true);
+      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$ReadLockTC");
+      //spec.setHonorTransient(true);
+      spec.setCallMethodOnLoad("init");
+      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$WriteLockTC");
+      //spec.setHonorTransient(true);
+      spec.setCallMethodOnLoad("init");
+      
+      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$ReadLock");
+      //spec.setHonorTransient(true);
+      spec.addTransient("sync");
+      spec.setCallMethodOnLoad("init");
+      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$WriteLock");
+      //spec.setHonorTransient(true);
+      spec.addTransient("sync");
+      spec.setCallMethodOnLoad("init");
+
+      spec = getOrCreateSpec("com.tcclient.util.concurrent.locks.ConditionObject");
+      spec.disableWaitNotifyCodeSpec("signal()V");
+      spec.disableWaitNotifyCodeSpec("signalAll()V");
+      spec.setHonorTransient(true);
+      spec.setCallConstructorOnLoad(true);
+
+      spec = getOrCreateSpec("com.tcclient.util.concurrent.locks.ConditionObject$SyncCondition");
+      spec.setCallConstructorOnLoad(true);
     }
   }
 
@@ -1415,6 +1447,15 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     if (spec != null && spec.isCallConstructorSet()) { return spec.isCallConstructorOnLoad(); }
     return getInstrumentationDescriptorFor(classInfo).isCallConstructorOnLoad();
   }
+  
+  public String getPreCreateMethodIfDefined(String className) {
+    TransparencyClassSpec spec = getSpec(className);
+    if (spec != null) {
+      return spec.getPreCreateMethod();
+    } else {
+      return null;
+    }
+  }
 
   public String getPostCreateMethodIfDefined(String className) {
     TransparencyClassSpec spec = getSpec(className);
@@ -1456,10 +1497,11 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
   public TransparencyClassAdapter createDsoClassAdapterFor(ClassVisitor writer, ClassInfo classInfo,
                                                            InstrumentationLogger lgr, ClassLoader caller,
-                                                           final boolean forcePortable) {
+                                                           final boolean forcePortable, boolean honorTransient) {
     String className = classInfo.getName();
     ManagerHelper mgrHelper = mgrHelperFactory.createHelper();
     TransparencyClassSpec spec = getOrCreateSpec(className);
+    spec.setHonorTransient(honorTransient);
 
     if (forcePortable) {
       if (spec.getInstrumentationAction() == TransparencyClassSpec.NOT_SET) {

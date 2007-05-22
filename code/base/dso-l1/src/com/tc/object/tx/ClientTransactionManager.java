@@ -27,7 +27,7 @@ public interface ClientTransactionManager {
    */
   public boolean begin(String lock, int lockLevel);
 
-  public boolean tryBegin(String lock, int lockLevel);
+  public boolean tryBegin(String lock, WaitInvocation timeout, int lockLevel);
 
   /**
    * commit a thread local current transaction
@@ -69,11 +69,13 @@ public interface ClientTransactionManager {
 
   public ChannelIDProvider getChannelIDProvider();
 
-  public boolean isLocked(String lockName);
+  public boolean isLocked(String lockName, int lockLevel);
 
   public void lock(String lockName, int lockLevel);
 
   public void unlock(String lockName);
+  
+  public int localHeldCount(String lockName, int lockLevel);
 
   public boolean isHeldByCurrentThread(String lockName, int lockLevel);
 

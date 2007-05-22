@@ -7,6 +7,7 @@ package com.tc.object.lockmanager.impl;
 import org.apache.commons.collections.map.ListOrderedMap;
 
 import com.tc.logging.TCLogger;
+import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.lockmanager.api.LockFlushCallback;
 import com.tc.object.lockmanager.api.LockID;
@@ -159,6 +160,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     return waitLength;
   }
 
+  // This methods return the number of times a lock is being locked by threadID.
   public int localHeldCount(LockID lockID, int lockLevel, ThreadID threadID) {
     ClientLock lock;
     synchronized (this) {
@@ -174,7 +176,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
 
   // TODO:
   // Needs to take care of the greedy lock case.
-  public boolean isLocked(LockID lockID, ThreadID threadID) {
+  public boolean isLocked(LockID lockID, ThreadID threadID, int lockLevel) {
     ClientLock lock;
     synchronized (this) {
       waitUntilRunning();
@@ -184,7 +186,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
       return lock.isHeld();
     } else {
       GlobalLockInfo lockInfo = getLockInfo(lockID, threadID);
-      return lockInfo.isLocked();
+      return lockInfo.isLocked(lockLevel);
     }
   }
 
@@ -220,8 +222,8 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     }
     lock.lock(threadID, type);
   }
-
-  public boolean tryLock(LockID lockID, ThreadID threadID, int type) {
+  
+  public boolean tryLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int type) {
     Assert.assertNotNull("threadID", threadID);
     final ClientLock lock;
 
@@ -230,7 +232,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
       lock = getOrCreateLock(lockID);
       lock.incUseCount();
     }
-    boolean isLocked = lock.tryLock(threadID, type);
+    boolean isLocked = lock.tryLock(threadID, timeout, type);
     if (!isLocked) {
       synchronized (this) {
         lock.decUseCount();
@@ -369,7 +371,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
                                                  + " :: " + LockLevel.toString(level)); }
     lock.awardLock(threadID, level);
   }
-
+  
   /*
    * XXX:: @read comment for awardLock();
    */
@@ -380,7 +382,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
       return;
     }
     final ClientLock lock = (ClientLock) locksByID.get(lockID);
-    if (lock == null) { throw new AssertionError("awardLock(): Lock not found" + lockID.toString() + " :: " + threadID
+    if (lock == null) { throw new AssertionError("Client id: " + ManagerUtil.getClientID() + ", cannotAwardLock(): Lock not found" + lockID.toString() + " :: " + threadID
                                                  + " :: " + LockLevel.toString(level)); }
     lock.cannotAwardLock(threadID, level);
   }
@@ -427,6 +429,15 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     for (Iterator i = locksByID.values().iterator(); i.hasNext();) {
       ClientLock lock = (ClientLock) i.next();
       lock.addAllPendingLockRequestsTo(c);
+    }
+    return c;
+  }
+  
+  public synchronized Collection addAllPendingTryLockRequestsTo(Collection c) {
+    assertStarting();
+    for (Iterator i = locksByID.values().iterator(); i.hasNext();) {
+      ClientLock lock = (ClientLock) i.next();
+      lock.addAllPendingTryLockRequestsTo(c);
     }
     return c;
   }

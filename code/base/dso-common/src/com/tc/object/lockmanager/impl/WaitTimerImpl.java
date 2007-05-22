@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.lockmanager.impl;
 
@@ -17,7 +18,7 @@ import java.util.TimerTask;
 
 /**
  * Manages timed lock waits
- *
+ * 
  * @author teck
  */
 public class WaitTimerImpl implements WaitTimer {
@@ -25,6 +26,7 @@ public class WaitTimerImpl implements WaitTimer {
 
   private final Timer           timer    = new TCTimerImpl("DSO Lock Object.wait() timer", true);
   private boolean               shutdown = false;
+  //public WaitInvocation         originalCall;
 
   public WaitTimerImpl() {
     super();
@@ -35,6 +37,7 @@ public class WaitTimerImpl implements WaitTimer {
   }
 
   public TimerTask scheduleTimer(WaitTimerCallback callback, WaitInvocation call, Object callbackObject) {
+    //this.originalCall = call;
     final Signature signature = call.getSignature();
 
     if (signature == WaitInvocation.NO_ARGS) {
@@ -63,8 +66,8 @@ public class WaitTimerImpl implements WaitTimer {
   private static class TaskImpl extends TimerTask {
 
     private final WaitTimerCallback callback;
-    private final Object callbackObject;
-    private final WaitInvocation call;
+    private final Object            callbackObject;
+    private final WaitInvocation    call;
 
     TaskImpl(WaitTimerCallback callback, WaitInvocation call, Object callbackObject) {
       this.callback = callback;
@@ -76,7 +79,7 @@ public class WaitTimerImpl implements WaitTimer {
       try {
         callback.waitTimeout(callbackObject);
       } catch (Exception e) {
-        logger.error("Error processing wait timeout for " + callbackObject, e );
+        logger.error("Error processing wait timeout for " + callbackObject, e);
       }
     }
 
@@ -91,6 +94,5 @@ public class WaitTimerImpl implements WaitTimer {
     shutdown = true;
     this.timer.cancel();
   }
-
 
 }

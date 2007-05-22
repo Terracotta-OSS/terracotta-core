@@ -127,7 +127,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
     return;
   }
 
-  public void recallCommit(LockID lockID, Collection lockContext, Collection waitContext, Collection pendingRequests) {
+  public void recallCommit(LockID lockID, Collection lockContext, Collection waitContext, Collection pendingRequests, Collection pendingTryLockRequests) {
     return;
   }
 
@@ -187,11 +187,11 @@ public class TestRemoteLockManager implements RemoteLockManager {
     throw new ImplementMe();
   }
 
-  public void tryRequestLock(LockID lockID, ThreadID threadID, int lockType) {
-    //
-  }
-
   public void interrruptWait(LockID lockID, ThreadID threadID) {
     throw new ImplementMe();
+  }
+
+  public void tryRequestLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int lockType) {
+    //
   }
 }

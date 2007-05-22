@@ -26,12 +26,13 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ReentrantLockTestApp extends AbstractTransparentApp {
-  private static final int    NUM_OF_PUTS        = 100;
-  private static final int    NUM_OF_LOOPS       = 2;
+  private static final int    NUM_OF_PUTS        = 500;
+  private static final int    NUM_OF_LOOPS       = 5;
 
   private final DataRoot      root               = new DataRoot();
   private final List          queue              = new LinkedList();
   private final CyclicBarrier barrier2           = new CyclicBarrier(2);
+  private final CyclicBarrier barrier3           = new CyclicBarrier(3);
   private final CyclicBarrier barrier;
 
   private final Random        random;
@@ -51,40 +52,45 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     numOfGetters = getParticipantCount() - numOfPutters;
   }
 
+  // TODO: We need to add a test case for a situation where an unshared ReentrantLock become
+  // shared.
   public void run() {
     try {
       barrier.await();
-      
+
       sharedUnSharedTesting();
       multipleReentrantLocksTesting();
       singleNodeTryBeginLockTesting();
       variousLockUnLockPatternTesting();
 
-      for (int i = 0; i < NUM_OF_LOOPS; i++) {
-        basicConditionVariableTesting(root.getUnfairLock(), root.getUnfairCondition());
-        basicConditionVariableWaitTesting(root.getUnfairLock(), root.getUnfairCondition());
-      }
+      System.err.println("Testing unfair lock ...");
 
+      basicConditionVariableTesting(root.getUnfairLock(), root.getUnfairCondition());
+      basicConditionVariableWaitTesting(root.getUnfairLock(), root.getUnfairCondition());
       basicUnsharedLockTesting(unsharedUnfairLock);
-      for (int i = 0; i < NUM_OF_LOOPS; i++) {
+      for (int i=0; i<NUM_OF_LOOPS; i++) {
         basicLockTesting(root.getUnfairLock());
-        tryLockTimeoutTesting(root.getUnfairLock());
       }
       lockSyncLockTesting(root.getUnfairLock());
+
+      tryLockTimeoutSingleNodeTesting(root.getUnfairLock());
+      tryLockTimeoutMultiNodesTesting(root.getUnfairLock());
       tryLockTesting(root.getUnfairLock());
 
       threadInterruptedLockTesting(root.getUnfairLock());
 
-      for (int i = 0; i < NUM_OF_LOOPS; i++) {
-        basicConditionVariableTesting(root.getFairLock(), root.getFairCondition());
-        basicConditionVariableWaitTesting(root.getFairLock(), root.getFairCondition());
-      }
+      System.err.println("Testing fair lock ...");
+
+      basicConditionVariableTesting(root.getFairLock(), root.getFairCondition());
+      basicConditionVariableWaitTesting(root.getFairLock(), root.getFairCondition());
       basicUnsharedLockTesting(unsharedFairLock);
-      for (int i = 0; i < NUM_OF_LOOPS; i++) {
+      for (int i=0; i<NUM_OF_LOOPS; i++) {
         basicLockTesting(root.getFairLock());
-        tryLockTimeoutTesting(root.getFairLock());
       }
       lockSyncLockTesting(root.getFairLock());
+
+      tryLockTimeoutSingleNodeTesting(root.getFairLock());
+      tryLockTimeoutMultiNodesTesting(root.getFairLock());
       tryLockTesting(root.getFairLock());
 
       threadInterruptedLockTesting(root.getFairLock());
@@ -95,27 +101,8 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     }
   }
 
-  private void clear() throws Exception {
-    synchronized (root) {
-      if (root.getIndex() != 0) {
-        root.setIndex(0);
-      }
-    }
-
-    barrier.await();
-  }
-
   private void sharedUnSharedTesting() throws Exception {
-
-    clear();
-
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
-
-    barrier.await();
+    int index = barrier.await();
 
     if (index == 0) {
       ReentrantLock lock = new ReentrantLock();
@@ -161,7 +148,40 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
+    
+    if (index == 0) {
+      final ReentrantLock lock = new ReentrantLock();
+      final CyclicBarrier localBarrier = new CyclicBarrier(2);
+      Thread thread = new Thread(new Runnable() {
+        public void run() {
+          try {
+            boolean isLocked = lock.tryLock(8000, TimeUnit.MILLISECONDS);
+            Assert.assertTrue(isLocked);
+            lock.unlock();
+            localBarrier.await();
+          } catch (Exception ie) {
+            throw new AssertionError(ie);
+          }
+        }
+      });
+      lock.lock();
+      thread.start();
+      synchronized (root) {
+        root.setLazyLock(lock);
+      }
+      lock.unlock();
+      
+      localBarrier.await();
+      
+    }
 
+    barrier.await();
+
+    if (index == 0) {
+      Assert.assertFalse(root.getLazyLock().isLocked());
+    }
+    
+    barrier.await();
   }
 
   /**
@@ -170,21 +190,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
    * lock2.unlock(), lock1.unlock() will both work correctly.
    */
   private void multipleReentrantLocksTesting() throws Exception {
-    clear();
-
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      if (index == 0) {
-        root.setIndex(1);
-      } else if (index == 1) {
-        root.setIndex(2);
-      } else if (index == 2) {
-        root.setIndex(3);
-      }
-    }
-
-    barrier.await();
+    int index = barrier.await();
 
     if (index == 0) {
       root.getUnfairLock().lock();
@@ -268,21 +274,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
   }
 
   private void singleNodeTryBeginLockTesting() throws Exception {
-    clear();
-
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      if (index == 0) {
-        root.setIndex(1);
-      } else if (index == 1) {
-        root.setIndex(2);
-      } else if (index == 2) {
-        root.setIndex(3);
-      }
-    }
-
-    barrier.await();
+    int index = barrier.await();
 
     if (index == 0) {
       String lockId = "testLock";
@@ -303,21 +295,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
    * unlock() method can be invoked within a synchronized block.
    */
   private void variousLockUnLockPatternTesting() throws Exception {
-    clear();
-
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      if (index == 0) {
-        root.setIndex(1);
-      } else if (index == 1) {
-        root.setIndex(2);
-      } else if (index == 2) {
-        root.setIndex(3);
-      }
-    }
-
-    barrier.await();
+    int index = barrier.await();
 
     if (index == 0) {
       root.getUnfairLock().lock();
@@ -386,15 +364,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
   }
 
   private void basicConditionVariableWaitTesting(ReentrantLock lock, Condition condition) throws Exception {
-    clear();
-
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
-
-    barrier.await();
+    int index = barrier.await();
 
     if (index == 0) {
       Thread thread = new Thread(new TestRunnable1(lock, condition));
@@ -404,7 +374,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     barrier.await();
 
     if (index == 0) {
-      Thread.sleep(2000); // Sleep so that the TestRunnable1 thread can pick up.
+      Thread.sleep(1000); // Sleep so that the TestRunnable1 thread can pick up.
       Assert.assertEquals(1, lock.getWaitQueueLength(condition));
     }
 
@@ -433,15 +403,8 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
    * method of an reentrant lock.
    */
   private void basicConditionVariableTesting(ReentrantLock lock, Condition condition) throws Exception {
-    clear();
-
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
-
-    barrier.await();
+    int index = barrier.await();
+    
     final long id = new Long(getApplicationId()).longValue();
 
     if (index == 2) {
@@ -525,17 +488,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
    * This test case makes sure that an unshared reentrant lock is functioning as normal.
    */
   private void basicUnsharedLockTesting(ReentrantLock unsharedLock) throws Exception {
-    clear();
-
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      if (index == 0) {
-        root.setIndex(1);
-      }
-    }
-
-    barrier.await();
+    int index = barrier.await();
 
     if (index == 0) {
       unsharedLock.lock();
@@ -600,15 +553,8 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
    */
 
   private void threadInterruptedLockTesting(ReentrantLock lock) throws Exception {
-    clear();
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      if (index == 0) {
-        root.setIndex(1);
-      }
-    }
-    barrier.await();
+    int index = barrier.await();
+    
     if (index == 0) {
       lock.lock();
     }
@@ -629,17 +575,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
    * This test case makes sure that data modifications within lock() and unlock() are reflected in the other client.
    */
   private void lockSyncLockTesting(ReentrantLock lock) throws Exception {
-    clear();
-
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      if (index == 0) {
-        root.setIndex(1);
-      }
-    }
-
-    barrier.await();
+    int index = barrier.await();
 
     if (index == 0) {
       lock.lock();
@@ -658,15 +594,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
   }
 
   private void tryLockTesting(final ReentrantLock lock) throws Exception {
-    clear();
-
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
-    }
-
-    barrier.await();
+    int index = barrier.await();
 
     if (index == 1) {
       final CyclicBarrier localBarrier = new CyclicBarrier(3);
@@ -790,16 +718,197 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
 
   }
 
-  private void tryLockTimeoutTesting(final ReentrantLock lock) throws Exception {
-    clear();
+  private void tryLockTimeoutMultiNodesTesting(final ReentrantLock lock) throws Exception {
+    int index = barrier.await();
 
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      root.setIndex(index + 1);
+    if (index == 0) {
+      final CyclicBarrier localBarrier = new CyclicBarrier(3);
+      Thread t1 = new Thread(new Runnable() {
+        public void run() {
+          try {
+            barrier3.await();
+            lock.lock();
+            Thread.sleep(2000);
+            lock.unlock();
+          } catch (Exception e) {
+            throw new AssertionError(e);
+          }
+          
+          try {
+            localBarrier.await();
+          } catch (Exception e) {
+            throw new AssertionError(e);
+          }
+        }
+      });
+      Thread t2 = new Thread(new Runnable() {
+        public void run() {
+          try {
+            barrier3.await();
+            boolean isLocked = lock.tryLock(70, TimeUnit.SECONDS);
+            Assert.assertTrue(isLocked);
+            lock.unlock();
+          } catch (Exception e) {
+            throw new AssertionError(e);
+          }
+          
+          try {
+            localBarrier.await();
+          } catch (Exception e) {
+            throw new AssertionError(e);
+          }
+        }
+      });
+      t1.start();
+      t2.start();
+      localBarrier.await();
+      barrier.await();
+      
+    } else if (index == 1) {
+      lock.lock();
+      try {
+        barrier3.await();
+        Thread.sleep(1000);
+      } finally {
+        lock.unlock();
+      }
+      lock.lock();
+      try {
+        Thread.sleep(1000);
+      } finally {
+        lock.unlock();
+      }
+      barrier.await();
+    } else {
+      barrier.await();
+    }
+    
+    if (index == 0) {
+      final CyclicBarrier localBarrier = new CyclicBarrier(3);
+      Thread t1 = new Thread(new Runnable() {
+        public void run() {
+          lock.lock();
+          try {
+            barrier2.await();
+            Thread.sleep(1000);
+          } catch (Exception e) {
+            throw new AssertionError(e);
+          } finally {
+            lock.unlock();
+          }
+          try {
+            localBarrier.await();
+          } catch (Exception e) {
+            throw new AssertionError(e);
+          }
+        }
+      });
+      Thread t2 = new Thread(new Runnable() {
+        public void run() {
+          try {
+            boolean isLocked = lock.tryLock(9000, TimeUnit.MILLISECONDS);
+            //boolean isLocked = lock.tryLock(9000, TimeUnit.SECONDS);
+            Assert.assertTrue(isLocked);
+            lock.unlock();
+          } catch (InterruptedException e) {
+            throw new AssertionError(e);
+          }
+          try {
+            localBarrier.await();
+          } catch (Exception e) {
+            throw new AssertionError(e);
+          }
+        }
+      });
+      t1.start();
+      t2.start();
+      localBarrier.await();
+
+      barrier.await();
+    } else if (index == 1) {
+      barrier2.await();
+      boolean isLocked = lock.tryLock(4001, TimeUnit.MILLISECONDS);
+      Assert.assertTrue(isLocked);
+      lock.unlock();
+
+      barrier.await();
+    } else {
+      barrier.await();
     }
 
-    barrier.await();
+    if (index == 0) {
+      lock.lock();
+      try {
+        Thread.sleep(1000);
+      } finally {
+        lock.unlock();
+      }
+      barrier.await();
+    } else if (index == 1) {
+      boolean isLocked = lock.tryLock(4000, TimeUnit.MILLISECONDS);
+      Assert.assertTrue(isLocked);
+      lock.unlock();
+
+      barrier.await();
+    } else {
+      barrier.await();
+    }
+
+    if (index == 0) {
+      final CyclicBarrier localBarrier = new CyclicBarrier(3);
+      Thread t1 = new Thread(new Runnable() {
+        public void run() {
+          lock.lock();
+          try {
+            Thread.sleep(1000);
+          } catch (InterruptedException e) {
+            throw new AssertionError(e);
+          } finally {
+            lock.unlock();
+          }
+          try {
+            localBarrier.await();
+          } catch (Exception e) {
+            throw new AssertionError(e);
+          }
+        }
+      });
+      Thread t2 = new Thread(new Runnable() {
+        public void run() {
+          try {
+            boolean isLocked = lock.tryLock(9001, TimeUnit.MILLISECONDS);
+            //boolean isLocked = lock.tryLock(60, TimeUnit.SECONDS);
+            Assert.assertTrue(isLocked);
+            lock.unlock();
+          } catch (InterruptedException e) {
+            throw new AssertionError(e);
+          }
+          try {
+            localBarrier.await();
+          } catch (Exception e) {
+            throw new AssertionError(e);
+          }
+        }
+      });
+      t1.start();
+      t2.start();
+      localBarrier.await();
+
+      barrier.await();
+    } else if (index == 1) {
+      boolean isLocked = lock.tryLock(4001, TimeUnit.MILLISECONDS);
+      Assert.assertTrue(isLocked);
+      lock.unlock();
+
+      barrier.await();
+    } else {
+      barrier.await();
+    }
+
+  }
+
+  private void tryLockTimeoutSingleNodeTesting(final ReentrantLock lock) throws Exception {
+    int index = barrier.await();
 
     if (index == 1) {
       final CyclicBarrier localBarrier = new CyclicBarrier(3);
@@ -823,7 +932,8 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       Thread t2 = new Thread(new Runnable() {
         public void run() {
           try {
-            boolean isLocked = lock.tryLock(4000, TimeUnit.MILLISECONDS);
+            boolean isLocked = lock.tryLock(4002, TimeUnit.MILLISECONDS);
+            //boolean isLocked = lock.tryLock(60, TimeUnit.SECONDS);
             Assert.assertTrue(isLocked);
             lock.unlock();
           } catch (InterruptedException e) {
@@ -868,7 +978,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       Thread t2 = new Thread(new Runnable() {
         public void run() {
           try {
-            boolean isLocked = nonSharedLock.tryLock(4, TimeUnit.SECONDS);
+            boolean isLocked = nonSharedLock.tryLock(5, TimeUnit.SECONDS);
             Assert.assertTrue(isLocked);
             nonSharedLock.unlock();
           } catch (InterruptedException e) {
@@ -913,7 +1023,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       Thread t2 = new Thread(new Runnable() {
         public void run() {
           try {
-            boolean isLocked = nonSharedLock.tryLock(TimeUnit.MICROSECONDS.convert(4, TimeUnit.SECONDS),
+            boolean isLocked = nonSharedLock.tryLock(TimeUnit.MICROSECONDS.convert(6, TimeUnit.SECONDS),
                                                      TimeUnit.MICROSECONDS);
             Assert.assertTrue(isLocked);
             nonSharedLock.unlock();
@@ -981,24 +1091,13 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
-
   }
 
   /**
    * This test case provides basic testing to the API of an reentrant lock when an reentrant lock is shared.
    */
   private void basicLockTesting(ReentrantLock lock) throws Exception {
-    clear();
-
-    int index = -1;
-    synchronized (root) {
-      index = root.getIndex();
-      if (index == 0) {
-        root.setIndex(1);
-      }
-    }
-
-    barrier.await();
+    int index = barrier.await();
 
     if (index == 0) {
       lock.lock();
@@ -1066,12 +1165,8 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
 
     barrier.await();
 
-    if (index == 0) {
-      Assert.assertEquals(0, lock.getQueueLength());
-      Assert.assertFalse(lock.isLocked());
-    } else {
-      Assert.assertTrue(lock.isLocked()); // due to greedy lock.
-    }
+    Assert.assertEquals(0, lock.getQueueLength());
+    Assert.assertFalse(lock.isLocked());
 
     barrier.await();
   }
@@ -1088,6 +1183,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     spec.addRoot("root", "root");
     spec.addRoot("barrier", "barrier");
     spec.addRoot("barrier2", "barrier2");
+    spec.addRoot("barrier3", "barrier3");
     spec.addRoot("queue", "queue");
     spec.addRoot("testLockObject", "testLockObject");
   }
@@ -1206,18 +1302,9 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     private Condition     fairCondition   = fairLock.newCondition();
     private ReentrantLock lazyLock;
     private int           data;
-    private int           index;
 
     public DataRoot() {
-      this.index = 0;
-    }
-
-    public int getIndex() {
-      return index;
-    }
-
-    public void setIndex(int index) {
-      this.index = index;
+      super();
     }
 
     public ReentrantLock getFairLock() {
@@ -1269,7 +1356,6 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     }
 
     public void clear() {
-      this.index = 0;
       this.data = 0;
     }
   }

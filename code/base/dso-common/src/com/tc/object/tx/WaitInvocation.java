@@ -47,6 +47,10 @@ public final class WaitInvocation {
     return getSignature() != NO_ARGS;
   }
   
+  public boolean needsToWait() {
+    return millis > 0 || nanos > 0;
+  }
+  
   public long getMillis() {
     return millis;
   }

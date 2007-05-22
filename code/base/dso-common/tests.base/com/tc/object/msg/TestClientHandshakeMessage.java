@@ -16,6 +16,7 @@ import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -141,5 +142,14 @@ public class TestClientHandshakeMessage implements ClientHandshakeMessage {
 
   public boolean isObjectIDsRequested() {
     return requestedObjectIDs;
+  }
+
+  public void addPendingTryLockContext(LockContext ctxt) {
+    throw new ImplementMe();
+    
+  }
+
+  public Collection getPendingTryLockContexts() {
+    return Collections.EMPTY_LIST;
   }
 }

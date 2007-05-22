@@ -212,12 +212,16 @@ public class ManagerUtil {
     getManager().monitorExit(obj);
   }
 
-  public static boolean isLocked(Object obj) {
-    return getManager().isLocked(obj);
+  public static boolean isLocked(Object obj, int lockLevel) {
+    return getManager().isLocked(obj, lockLevel);
   }
 
-  public static boolean tryMonitorEnter(Object obj, int type) {
-    return getManager().tryMonitorEnter(obj, type);
+  public static boolean tryMonitorEnter(Object obj, long timeoutInNanos, int type) {
+    return getManager().tryMonitorEnter(obj, timeoutInNanos, type);
+  }
+  
+  public static int localHeldCount(Object obj, int lockLevel) {
+    return getManager().localHeldCount(obj, lockLevel);
   }
 
   public static boolean isHeldByCurrentThread(Object obj, int lockLevel) {

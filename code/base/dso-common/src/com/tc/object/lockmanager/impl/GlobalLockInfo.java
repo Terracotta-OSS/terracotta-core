@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.lockmanager.impl;
 
@@ -14,8 +15,8 @@ import java.util.Collection;
 import java.util.Iterator;
 
 /**
- * This class is used to hold the gloabl information of an lock object and passed back to the client
- * when a client queries about the information of a lock. 
+ * This class is used to hold the gloabl information of an lock object and passed back to the client when a client
+ * queries about the information of a lock.
  */
 public class GlobalLockInfo implements TCSerializable {
   private LockID     lockID;
@@ -30,7 +31,8 @@ public class GlobalLockInfo implements TCSerializable {
     super();
   }
 
-  public GlobalLockInfo(LockID lockID, int level, int lockRequestQueueLength, int lockUpgradeQueueLength, Collection greedyHolders, Collection holders, Collection waiters) {
+  public GlobalLockInfo(LockID lockID, int level, int lockRequestQueueLength, int lockUpgradeQueueLength,
+                        Collection greedyHolders, Collection holders, Collection waiters) {
     this.lockID = lockID;
     this.level = level;
     this.lockRequestQueueLength = lockRequestQueueLength;
@@ -39,7 +41,7 @@ public class GlobalLockInfo implements TCSerializable {
     this.holdersInfo = holders;
     this.waitersInfo = waiters;
   }
-  
+
   public int getLockRequestQueueLength() {
     return lockRequestQueueLength;
   }
@@ -48,9 +50,10 @@ public class GlobalLockInfo implements TCSerializable {
     return lockUpgradeQueueLength;
   }
 
-  public boolean isLocked() {
-    return (holdersInfo != null && holdersInfo.size() > 0) ||
-           (greedyHoldersInfo != null && greedyHoldersInfo.size() > 0);
+  public boolean isLocked(int level) {
+    return (this.level == level)
+           && ((holdersInfo != null && holdersInfo.size() > 0) || (greedyHoldersInfo != null && greedyHoldersInfo
+               .size() > 0));
   }
 
   public Collection getGreedyHoldersInfo() {
@@ -76,12 +79,12 @@ public class GlobalLockInfo implements TCSerializable {
       holderInfo.serializeTo(serialOutput);
     }
     serialOutput.writeInt(greedyHoldersInfo.size());
-    for (Iterator i=greedyHoldersInfo.iterator(); i.hasNext(); ) {
+    for (Iterator i = greedyHoldersInfo.iterator(); i.hasNext();) {
       GlobalLockStateInfo holderInfo = (GlobalLockStateInfo) i.next();
       holderInfo.serializeTo(serialOutput);
     }
     serialOutput.writeInt(waitersInfo.size());
-    for (Iterator i=waitersInfo.iterator(); i.hasNext(); ) {
+    for (Iterator i = waitersInfo.iterator(); i.hasNext();) {
       GlobalLockStateInfo holderInfo = (GlobalLockStateInfo) i.next();
       holderInfo.serializeTo(serialOutput);
     }

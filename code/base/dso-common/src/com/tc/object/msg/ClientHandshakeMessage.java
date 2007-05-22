@@ -29,8 +29,12 @@ public interface ClientHandshakeMessage {
   public Collection getWaitContexts();
 
   public void addPendingLockContext(LockContext ctxt);
+  
+  public void addPendingTryLockContext(LockContext ctxt);
 
   public Collection getPendingLockContexts();
+  
+  public Collection getPendingTryLockContexts();
 
   public ChannelID getChannelID();
 

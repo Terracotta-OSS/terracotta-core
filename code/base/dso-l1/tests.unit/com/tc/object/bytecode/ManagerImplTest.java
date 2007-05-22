@@ -99,7 +99,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public boolean isLocked(String lockName) {
+    public boolean isLocked(String lockName, int lockLevel) {
       throw new ImplementMe();
     }
 
@@ -148,7 +148,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public boolean tryBegin(String lock, int lockLevel) {
+    public boolean tryBegin(String lock, WaitInvocation timeout, int lockLevel) {
       throw new ImplementMe();
     }
 
@@ -161,6 +161,10 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     public void addDmiDescriptor(DmiDescriptor d) {
+      throw new ImplementMe();
+    }
+
+    public int localHeldCount(String lockName, int lockLevel) {
       throw new ImplementMe();
     }
   }
