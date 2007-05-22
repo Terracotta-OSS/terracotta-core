@@ -10,6 +10,8 @@ import com.tc.object.NotInBootJar;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -90,7 +92,7 @@ public class BootJar {
     JarFile jarFile = new JarFile(bootJar, false);
     Manifest manifest = jarFile.getManifest();
     BootJarMetaData metaData = new BootJarMetaData(manifest);
-
+    
     // verify VM signature
     BootJarSignature signatureFromJar = new BootJarSignature(metaData.getVMSignature());
 
@@ -103,7 +105,6 @@ public class BootJar {
                                                + signatureFromJar
                                                + "'; Please regenerate the DSO boot jar to match this VM, or switch to a VM compatible with this boot jar");
     }
-
     return new BootJar(bootJar, false, metaData, jarFile);
   }
 
@@ -184,6 +185,19 @@ public class BootJar {
   private static final int QUERY_ALL = 0;
   private static final int QUERY_PREINSTRUMENTED = 1;
   private static final int QUERY_UNINSTRUMENTED = 2;
+  
+  public synchronized byte[] getBytesForClass(final String name) throws IOException {
+    JarEntry entry      = jarFileInput.getJarEntry(BootJar.classNameToFileName(name));
+    final int bufsize   = 4098;
+    final byte[] buffer = new byte[bufsize];
+    final BufferedInputStream is = new BufferedInputStream(jarFileInput.getInputStream(entry));
+    ByteArrayOutputStream     os = new ByteArrayOutputStream();
+    for(int k=0; (k=is.read(buffer)) != -1;) {
+      os.write(buffer, 0, k);
+    }
+    is.close();
+    return os.toByteArray();
+  }
   
   private synchronized Set getBootJarClassNames(int query) throws IOException {
     assertOpen();

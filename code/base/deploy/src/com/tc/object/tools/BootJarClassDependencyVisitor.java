@@ -11,7 +11,6 @@ import com.tc.asm.FieldVisitor;
 import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
-//import com.tc.exception.ImplementMe;
 
 import java.util.Map;
 import java.util.Set;
@@ -30,7 +29,7 @@ public class BootJarClassDependencyVisitor implements ClassVisitor {
     if (name.startsWith("com/tc/") || name.startsWith("com/tcclient/")) {
       boolean exists = bootJarClassNames.contains(BootJarClassDependencyVisitor.classSlashNameToDotName(name));
       if (!exists) {
-        this.offendingClasses.put(name, desc + "; from class " + this.currentClassName);
+        this.offendingClasses.put(classSlashNameToDotName(name), desc + " from " + this.currentClassName);
       }
       return exists;
     } else {

@@ -283,34 +283,19 @@ public class BootJarTool {
       Map offendingClasses = new HashMap();
       for (Iterator i = bootJarClassNames.iterator(); i.hasNext();) {
         final String className = (String)i.next();
-        byte[] bytes = new byte[0];
-        try {
-          bytes = getBytesForClass(className, systemLoader);
-        } catch (ClassNotFoundException e) {
-          try {
-            bytes = getBytesForClass(className, tcLoader);
-          } catch (ClassNotFoundException e1) {
-            //offendingClasses.put(className, e.getMessage());
-            continue;
-          }
-        }
+        final byte[] bytes     = bootJar.getBytesForClass(className);
         ClassReader cr = new ClassReader(bytes);
         ClassVisitor cv = new BootJarClassDependencyVisitor(bootJarClassNames, offendingClasses);
         cr.accept(cv, 0);
       }
-      
-      if (!offendingClasses.isEmpty()) {
-        System.err.println("\nThe following classes was declared in the <additional-boot-jar-classes/> section "
-                           + "of your tc-config file but is not a part of your boot JAR file:");
-        for (Iterator i = offendingClasses.entrySet().iterator(); i.hasNext();) {
-          Map.Entry entry = (Map.Entry)i.next();
-          
-          System.err.println("- " + entry.getKey() + " (" + entry.getValue() + ")");
-        }
-        //System.err.println("\nUse the make-boot-jar tool to re-create and include these classes in your boot JAR.");
-        System.exit(1);
+
+      StringBuffer message = new StringBuffer("\nThe following Terracotta classes needs to be included in the boot jar:\n");
+      for (Iterator i = offendingClasses.entrySet().iterator(); i.hasNext();) {
+        Map.Entry entry = (Map.Entry)i.next();
+        message.append("- " + entry.getKey() + "\n");
       }
       
+      Assert.assertTrue(message.toString().replaceAll("\n$", ""), offendingClasses.isEmpty());
     } catch (BootJarException e) {
       throw new RuntimeException(e);
     } catch (IOException e) {
