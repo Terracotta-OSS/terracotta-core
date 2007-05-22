@@ -30,7 +30,7 @@ public class TransactionStoreImpl implements TransactionStore {
 
   private static final TCLogger      logger                 = TCLogging.getLogger(TransactionStoreImpl.class);
 
-  private final Map                  serverTransactionIDMap = Collections.synchronizedMap(new HashMap());
+  private final Map                  serverTransactionIDMap = new HashMap();
   private final SortedMap            ids                    = Collections
                                                                 .synchronizedSortedMap(new TreeMap(
                                                                                                    GlobalTransactionID.COMPARATOR));
@@ -56,6 +56,8 @@ public class TransactionStoreImpl implements TransactionStore {
     }
   }
 
+  // TODO:: Move call to persistor outside synch block, but that might open up some raceconditions that need to be
+  // handled
   public synchronized void commitTransactionDescriptor(PersistenceTransaction transaction, ServerTransactionID stxID) {
     GlobalTransactionDescriptor gtx = getTransactionDescriptor(stxID);
     Assert.assertNotNull(gtx);
@@ -68,19 +70,18 @@ public class TransactionStoreImpl implements TransactionStore {
     }
   }
 
-  public GlobalTransactionDescriptor getTransactionDescriptor(ServerTransactionID serverTransactionID) {
+  public synchronized GlobalTransactionDescriptor getTransactionDescriptor(ServerTransactionID serverTransactionID) {
     return (GlobalTransactionDescriptor) this.serverTransactionIDMap.get(serverTransactionID);
   }
 
-  public GlobalTransactionDescriptor getOrCreateTransactionDescriptor(ServerTransactionID serverTransactionID) {
-    synchronized (serverTransactionIDMap) {
-      GlobalTransactionDescriptor rv = (GlobalTransactionDescriptor) serverTransactionIDMap.get(serverTransactionID);
-      if (rv == null) {
-        rv = new GlobalTransactionDescriptor(serverTransactionID, getNextGlobalTransactionID());
-        basicAdd(rv);
-      }
-      return rv;
+  public synchronized GlobalTransactionDescriptor getOrCreateTransactionDescriptor(
+                                                                                   ServerTransactionID serverTransactionID) {
+    GlobalTransactionDescriptor rv = (GlobalTransactionDescriptor) serverTransactionIDMap.get(serverTransactionID);
+    if (rv == null) {
+      rv = new GlobalTransactionDescriptor(serverTransactionID, getNextGlobalTransactionID());
+      basicAdd(rv);
     }
+    return rv;
   }
 
   private GlobalTransactionID getNextGlobalTransactionID() {
@@ -119,6 +120,8 @@ public class TransactionStoreImpl implements TransactionStore {
     }
   }
 
+  // TODO:: Move call to persistor outside synch block, but that might open up some raceconditions that need to be
+  // handled
   public synchronized void removeAllByServerTransactionID(PersistenceTransaction tx, Collection stxIDs) {
     Collection toDelete = new HashSet();
     for (Iterator i = stxIDs.iterator(); i.hasNext();) {
@@ -141,7 +144,7 @@ public class TransactionStoreImpl implements TransactionStore {
 
   public void shutdownClient(PersistenceTransaction tx, ChannelID client) {
     Collection stxIDs = new HashSet();
-    synchronized (serverTransactionIDMap) {
+    synchronized (this) {
       for (Iterator iter = serverTransactionIDMap.keySet().iterator(); iter.hasNext();) {
         ServerTransactionID stxID = (ServerTransactionID) iter.next();
         if (stxID.getChannelID().equals(client)) {
@@ -155,7 +158,7 @@ public class TransactionStoreImpl implements TransactionStore {
 
   public void shutdownAllClientsExcept(PersistenceTransaction tx, Set cids) {
     Collection stxIDs = new HashSet();
-    synchronized (serverTransactionIDMap) {
+    synchronized (this) {
       for (Iterator iter = serverTransactionIDMap.keySet().iterator(); iter.hasNext();) {
         ServerTransactionID stxID = (ServerTransactionID) iter.next();
         if (!cids.contains(stxID.getChannelID())) {
@@ -168,7 +171,8 @@ public class TransactionStoreImpl implements TransactionStore {
   }
 
   // Used in Passive server
-  public void createGlobalTransactionDesc(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID) {
+  public synchronized void createGlobalTransactionDesc(ServerTransactionID stxnID,
+                                                       GlobalTransactionID globalTransactionID) {
     GlobalTransactionDescriptor rv = new GlobalTransactionDescriptor(stxnID, globalTransactionID);
     basicAdd(rv, true);
   }
