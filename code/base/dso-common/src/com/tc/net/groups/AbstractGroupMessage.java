@@ -8,11 +8,14 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Iterator;
+import java.util.Set;
 
 public abstract class AbstractGroupMessage implements GroupMessage {
 
@@ -120,5 +123,20 @@ public abstract class AbstractGroupMessage implements GroupMessage {
     }
     return buffers;
   }
-
+  
+  protected void writeObjectIDS(ObjectOutput out, Set oids) throws IOException {
+    out.writeInt(oids.size());
+    for (Iterator i = oids.iterator(); i.hasNext();) {
+      ObjectID oid = (ObjectID) i.next();
+      out.writeLong(oid.toLong());
+    }
+  }
+  
+  protected Set readObjectIDS(ObjectInput in, Set oids) throws IOException {
+    int size = in.readInt();
+    for (int i = 0; i < size; i++) {
+      oids.add(new ObjectID(in.readLong()));
+    }
+    return oids;
+  }
 }

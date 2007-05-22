@@ -1065,7 +1065,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     long start = System.currentTimeMillis();
 
-    objectManager.gc();
+    objectManager.getGarbageCollector().gc();
 
     assertEquals(1, objectManager.getGarbageCollectorStats().length);
     assertEquals(1, listener.gcEvents.size());
@@ -1080,7 +1080,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     assertEquals(0, stats1.getActualGarbageCount());
 
     listener.gcEvents.clear();
-    objectManager.gc();
+    objectManager.getGarbageCollector().gc();
     assertEquals(2, objectManager.getGarbageCollectorStats().length);
     assertEquals(1, listener.gcEvents.size());
     assertEquals(firstIterationNumber + 1, objectManager.getGarbageCollectorStats()[0].getIteration());
@@ -1090,7 +1090,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     removed.add(mo3.getID());
     clientStateManager.removeReferences(cid1, removed);
     mo2.setReferences(new ObjectID[] {});
-    objectManager.gc();
+    objectManager.getGarbageCollector().gc();
     assertEquals(3, objectManager.getGarbageCollectorStats().length);
     assertEquals(1, listener.gcEvents.size());
     GCStats stats3 = (GCStats) listener.gcEvents.get(0);
@@ -1124,7 +1124,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     gc.allow_blockUntilReadyToGC_ToProceed();
 
-    objectManager.gc();
+    objectManager.getGarbageCollector().gc();
     assertTrue(gc.isCollected());
 
     gc.reset();
@@ -1767,9 +1767,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   private static class Listener implements ObjectManagerEventListener {
     final List gcEvents = new ArrayList();
 
-    public void garbageCollectionComplete(GCStats stats) {
+    public void garbageCollectionComplete(GCStats stats, Set deleted) {
       gcEvents.add(stats);
     }
+
   }
 
   private class ExplodingGarbageCollector implements GarbageCollector {
@@ -1800,6 +1801,11 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     public void notifyGCComplete() {
       return;
     }
+    
+    public void notifyGCDeleteStarted() {
+      return;
+    }
+
 
     public void blockUntilReadyToGC() {
       return;
@@ -1887,7 +1893,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
   private class GCCaller implements Runnable {
 
     public void run() {
-      objectManager.gc();
+      objectManager.getGarbageCollector().gc();
     }
   }
 

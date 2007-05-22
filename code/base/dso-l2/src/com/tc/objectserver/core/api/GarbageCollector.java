@@ -30,13 +30,18 @@ public interface GarbageCollector extends PrettyPrintable {
    */
   public void notifyReadyToGC();
 
-  /*
+  /**
    * Request to pause when the system state stabalizes
    */
   public void requestGCPause();
 
   /**
-   * Called by the GC thread. Notifies the garbage collector that TC is complete.
+   * Called by the GC thread. Notifies the garbage collector has started deleting Garbage
+   */
+  public void notifyGCDeleteStarted();
+
+  /**
+   * Called by the GC thread. Notifies the garbage collector that GC is complete.
    */
   public void notifyGCComplete();
 

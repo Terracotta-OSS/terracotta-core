@@ -3,6 +3,8 @@
  */
 package com.tc.objectserver.api;
 
+import java.util.Set;
+
 
 /**
  * Interface for those interested in listening to Object Manager events. I'm thinking this event interface should really
@@ -15,7 +17,8 @@ public interface ObjectManagerEventListener {
    * Called after each GC run is complete
    * 
    * @param stats statistics about this collection
+   * @param deleted List of deleted ObjectIDs
    */
-  public void garbageCollectionComplete(GCStats stats);
+  public void garbageCollectionComplete(GCStats stats, Set deleted);
 
 }

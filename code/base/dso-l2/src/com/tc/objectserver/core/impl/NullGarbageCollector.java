@@ -46,6 +46,10 @@ public class NullGarbageCollector implements GarbageCollector {
     return;
   }
 
+  public void notifyGCDeleteStarted() {
+    return;
+  }
+
   public void notifyGCComplete() {
     return;
   }

@@ -69,6 +69,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   private static final State           GC_SLEEP              = new State("GC_SLEEP");
   private static final State           GC_PAUSING            = new State("GC_PAUSING");
   private static final State           GC_PAUSED             = new State("GC_PAUSED");
+  private static final State           GC_DELETE             = new State("GC_DELETE");
 
   private State                        state                 = GC_SLEEP;
   private LifeCycleState               lifeCycleState;
@@ -110,7 +111,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   }
 
   public void gc() {
-    if(!requestGCStart()) {
+    if (!requestGCStart()) {
       gcLogger.log_GCDisabled();
       return;
     }
@@ -161,7 +162,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     gcLogger.log_rescue(2, gcResults);
 
     gcStats.setCandidateGarbageCount(gcResults.size());
-    Set toDelete = rescue(new ObjectIDSet2(gcResults), rescueTimes);
+    Set toDelete = Collections.unmodifiableSet(rescue(new ObjectIDSet2(gcResults), rescueTimes));
 
     if (gcState.isStopRequested()) { return; }
     gcLogger.log_sweep(toDelete);
@@ -179,7 +180,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     gcLogger.log_GCComplete(startMillis, pauseStartMillis, rescueTimes, endMillis, gcIteration);
 
     gcLogger.push(gcStats);
-    fireGCCompleteEvent(gcStats);
+    fireGCCompleteEvent(gcStats, toDelete);
     gcIteration++;
   }
 
@@ -231,9 +232,9 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
       }
     }
   }
-  
+
   private synchronized boolean requestGCStart() {
-    if(state == GC_SLEEP) {
+    if (state == GC_SLEEP) {
       state = GC_RUNNING;
       return true;
     }
@@ -242,7 +243,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   }
 
   public synchronized void enableGC() {
-    if(GC_DISABLED == state) {
+    if (GC_DISABLED == state) {
       state = GC_SLEEP;
     } else {
       logger.warn("GC is already enabled : " + state);
@@ -278,6 +279,10 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     if (state == GC_PAUSING) {
       state = GC_PAUSED;
     }
+  }
+
+  public synchronized void notifyGCDeleteStarted() {
+    state = GC_DELETE;
   }
 
   public synchronized void notifyGCComplete() {
@@ -352,11 +357,11 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     this.gcState = st;
   }
 
-  private void fireGCCompleteEvent(GCStats gcStats) {
+  private void fireGCCompleteEvent(GCStats gcStats, Set deleted) {
     for (Iterator iter = eventListeners.iterator(); iter.hasNext();) {
       try {
         ObjectManagerEventListener listener = (ObjectManagerEventListener) iter.next();
-        listener.garbageCollectionComplete(gcStats);
+        listener.garbageCollectionComplete(gcStats, deleted);
       } catch (Exception e) {
         if (logger.isDebugEnabled()) {
           logger.debug(e);

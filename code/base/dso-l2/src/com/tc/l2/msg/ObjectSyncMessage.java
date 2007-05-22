@@ -48,7 +48,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
 
   protected void basicReadExternal(int msgType, ObjectInput in) throws IOException {
     Assert.assertEquals(MANAGED_OBJECT_SYNC_TYPE, msgType);
-    readObjectIDS(in);
+    oids = readObjectIDS(in, new HashSet(500));
     dnaCount = in.readInt();
     readRootsMap(in);
     serializer = readObjectStringSerializer(in);
@@ -58,7 +58,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
 
   protected void basicWriteExternal(int msgType, ObjectOutput out) throws IOException {
     Assert.assertEquals(MANAGED_OBJECT_SYNC_TYPE, msgType);
-    writeObjectIDS(out);
+    writeObjectIDS(out, oids);
     out.writeInt(dnaCount);
     writeRootsMap(out);
     writeObjectStringSerializer(out, serializer);
@@ -92,22 +92,6 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
   private void recycle(TCByteBuffer[] buffers) {
     for (int i = 0; i < buffers.length; i++) {
       buffers[i].recycle();
-    }
-  }
-
-  private void writeObjectIDS(ObjectOutput out) throws IOException {
-    out.writeInt(oids.size());
-    for (Iterator i = oids.iterator(); i.hasNext();) {
-      ObjectID oid = (ObjectID) i.next();
-      out.writeLong(oid.toLong());
-    }
-  }
-
-  private void readObjectIDS(ObjectInput in) throws IOException {
-    int size = in.readInt();
-    oids = new HashSet(size);
-    for (int i = 0; i < size; i++) {
-      oids.add(new ObjectID(in.readLong()));
     }
   }
 

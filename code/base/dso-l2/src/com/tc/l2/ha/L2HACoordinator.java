@@ -10,6 +10,7 @@ import com.tc.async.impl.OrderedSink;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.context.StateChangedEvent;
+import com.tc.l2.handler.GCResultHandler;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
 import com.tc.l2.handler.L2ObjectSyncDehydrateHandler;
 import com.tc.l2.handler.L2ObjectSyncHandler;
@@ -20,6 +21,7 @@ import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.handler.ServerTransactionAckHandler;
 import com.tc.l2.handler.TransactionRelayHandler;
 import com.tc.l2.handler.GroupEventsDispatchHandler.GroupEventsDispatcher;
+import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.ObjectSyncCompleteMessage;
 import com.tc.l2.msg.ObjectSyncMessage;
@@ -128,6 +130,9 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     final Sink stateMessageStage = stageManager
         .createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE,
                      new L2StateMessageHandler(), 1, Integer.MAX_VALUE).getSink();
+    final Sink gcResultStage = stageManager
+        .createStage(ServerConfigurationContext.GC_RESULT_PROCESSING_STAGE,
+                     new GCResultHandler(), 1, Integer.MAX_VALUE).getSink();
     
     this.rClusterStateMgr = new ReplicatedClusterStateManagerImpl(groupManager, stateManager, clusterState, server
         .getConnectionIdFactory(), stageManager.getStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE).getSink());
@@ -144,6 +149,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.groupManager.routeMessages(RelayedCommitTransactionMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(ServerTxnAckMessage.class, ackProcessingStage);
     this.groupManager.routeMessages(L2StateMessage.class, stateMessageStage);
+    this.groupManager.routeMessages(GCResultMessage.class, gcResultStage);
 
     final Sink groupEventsSink = stageManager.createStage(ServerConfigurationContext.GROUP_EVENTS_DISPATCH_STAGE,
                                                           new GroupEventsDispatchHandler(this), 1, Integer.MAX_VALUE)

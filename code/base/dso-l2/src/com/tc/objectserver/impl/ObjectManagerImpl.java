@@ -615,7 +615,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public void notifyGCComplete(Set toDelete) {
     synchronized (this) {
-      collector.notifyGCComplete();
+      collector.notifyGCDeleteStarted();
       removeAllObjectsByID(toDelete);
       // Process pending, since we disabled process pending while GC pause was initiate.
       processPendingLookups();
@@ -637,6 +637,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         removeFromStore(split);
       }
     }
+    collector.notifyGCComplete();
   }
 
   private void removeFromStore(Set toDelete) {
@@ -699,9 +700,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return this.collector;
   }
 
-  public void setGarbageCollector(GarbageCollector collector) {
+  public void setGarbageCollector(final GarbageCollector newCollector) {
     syncAssertNotInShutdown();
-    this.collector = collector;
+    if(this.collector != null) {
+      this.collector.stop();
+    }
+    this.collector = newCollector;
 
     if (!config.doGC() || config.gcThreadSleepTime() < 0) return;
 
@@ -726,7 +730,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
               stopLock.wait(gcSleepTime);
             }
             if (isStopRequested()) { return; }
-            gc();
+            newCollector.gc();
           } catch (InterruptedException ie) {
             throw new TCRuntimeException(ie);
           }
@@ -735,11 +739,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     };
     st.setDaemon(true);
-    collector.setState(st);
-  }
-
-  public void gc() {
-    collector.gc();
+    newCollector.setState(st);
   }
 
   private Map processObjectsRequest(Collection objects) {

@@ -6,6 +6,8 @@ package com.tc.l2.objectserver;
 
 import com.tc.async.api.Sink;
 import com.tc.l2.context.SyncObjectsRequest;
+import com.tc.l2.msg.GCResultMessage;
+import com.tc.l2.msg.GCResultMessageFactory;
 import com.tc.l2.msg.ObjectListSyncMessage;
 import com.tc.l2.msg.ObjectListSyncMessageFactory;
 import com.tc.l2.msg.ObjectSyncCompleteMessage;
@@ -106,6 +108,17 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     }
   }
 
+  public void handleGCResult(GCResultMessage gcMsg) {
+    Set gcedOids = gcMsg.getGCedObjectIDs();
+    if (stateManager.isActiveCoordinator()) {
+      logger.warn("Received GC Result from " + gcMsg.messageFrom() + " While this node is ACTIVE. Ignoring result : "
+                  + gcedOids.size());
+      return;
+    }
+    objectManager.notifyGCComplete(gcedOids);
+    logger.info("Removed " + gcedOids.size() + "objects from passive ObjectManager from last GC from Active");
+  }
+
   private void handleClusterObjectMessage(NodeID nodeID, ObjectListSyncMessage clusterMsg) {
     try {
       switch (clusterMsg.getType()) {
@@ -186,8 +199,9 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     boolean disabled        = false;
     Map     syncingPassives = new HashMap();
 
-    public void garbageCollectionComplete(GCStats stats) {
+    public void garbageCollectionComplete(GCStats stats, Set deleted) {
       Map toAdd = null;
+      notifyGCResultToPassives(deleted);
       synchronized (this) {
         if (syncingPassives.isEmpty()) return;
         toAdd = new LinkedHashMap();
@@ -205,6 +219,16 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
         }
       }
       add2L2StateManager(toAdd);
+    }
+
+    private void notifyGCResultToPassives(Set deleted) {
+      if (deleted.isEmpty()) return;
+      GCResultMessage msg = GCResultMessageFactory.createGCResultMessage(deleted);
+      try {
+        groupManager.sendAll(msg);
+      } catch (GroupException e) {
+        logger.error("Error sending gc results : ", e);
+      }
     }
 
     private void add2L2StateManager(Map toAdd) {
@@ -244,7 +268,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
     public synchronized void clear(NodeID nodeID) {
       Object val = syncingPassives.remove(nodeID);
-      if(val != null) {
+      if (val != null) {
         enableGCIfNecessary();
       }
     }
@@ -281,5 +305,6 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       }
       add2L2StateManager(nodeID2ObjectIDs);
     }
+
   }
 }

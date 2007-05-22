@@ -6,14 +6,12 @@ package com.tc.l2.msg;
 
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
-import com.tc.object.ObjectID;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet2;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Iterator;
 import java.util.Set;
 
 public class ObjectListSyncMessage extends AbstractGroupMessage {
@@ -43,11 +41,7 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
         // Nothing to read
         break;
       case RESPONSE:
-        oids = new ObjectIDSet2();
-        int size = in.readInt();
-        for (int i = 0; i < size; i++) {
-          oids.add(new ObjectID(in.readLong()));
-        }
+        oids = readObjectIDS(in, new ObjectIDSet2());
         break;
       default:
         throw new AssertionError("Unknown Message Type : " + msgType);
@@ -61,11 +55,7 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
         break;
       case RESPONSE:
         Assert.assertNotNull(oids);
-        out.writeInt(oids.size());
-        for (Iterator i = oids.iterator(); i.hasNext();) {
-          ObjectID oid = (ObjectID) i.next();
-          out.writeLong(oid.toLong());
-        }
+        writeObjectIDS(out, oids);
         break;
       default:
         throw new AssertionError("Unknown Message Type : " + msgType);

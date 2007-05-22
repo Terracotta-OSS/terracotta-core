@@ -189,6 +189,10 @@ public class TestGarbageCollector implements GarbageCollector {
     return blockUntilReadyToGCCalls.peek() != null;
   }
 
+  public void notifyGCDeleteStarted() {
+    return;
+  }
+
   public void notifyGCComplete() {
     try {
       isPausingOrPaused = false;

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.stats;
 
@@ -41,7 +42,7 @@ import javax.management.ObjectName;
 
 /**
  * This is the top-level MBean for the DSO subsystem, off which to hang JSR-77 Stats and Config MBeans.
- *
+ * 
  * @see DSOMBean
  * @see DSOStatsImpl
  */
@@ -64,8 +65,9 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   public DSO(final ServerManagementContext context, final MBeanServer mbeanServer) throws NotCompliantMBeanException {
     super(DSOMBean.class);
     try {
-      //TraceImplementation.init(TraceTags.LEVEL_TRACE);
-    } catch(Exception e) {/**/}
+      // TraceImplementation.init(TraceTags.LEVEL_TRACE);
+    } catch (Exception e) {/**/
+    }
     this.mbeanServer = mbeanServer;
     this.dsoStats = new DSOStatsImpl(context);
     this.lockMgr = context.getLockManager();
@@ -85,7 +87,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   public void reset() {
-    // TODO:  implement this?
+    // TODO: implement this?
   }
 
   public DSOStats getStats() {
@@ -103,7 +105,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   public CountStatistic getCacheMissRate() {
     return getStats().getCacheMissRate();
   }
-
 
   public CountStatistic getTransactionRate() {
     return getStats().getTransactionRate();
@@ -270,9 +271,10 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   private class ObjectManagerListener implements ObjectManagerEventListener {
-    public void garbageCollectionComplete(GCStats stats) {
+    public void garbageCollectionComplete(GCStats stats, Set deleted) {
       sendNotification(GC_COMPLETED, stats);
     }
+
   }
 
   private class ChannelManagerListener implements DSOChannelManagerEventListener {
