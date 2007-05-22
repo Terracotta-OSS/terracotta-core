@@ -133,7 +133,7 @@ public class BootJar {
   public static String classNameToFileName(String className) {
     return className.replace('.', '/') + ".class";
   }
-
+  
   public static String fileNameToClassName(String filename) {
     if (!filename.endsWith(".class")) throw new AssertionError("Invalid class file name: " + filename);
     return filename.substring(0, filename.lastIndexOf('.')).replace('/', '.');
@@ -185,13 +185,13 @@ public class BootJar {
   private static final int QUERY_PREINSTRUMENTED = 1;
   private static final int QUERY_UNINSTRUMENTED = 2;
   
-  private synchronized Set getBootJarClasses(int query) throws IOException {
+  private synchronized Set getBootJarClassNames(int query) throws IOException {
     assertOpen();
     Set rv = new HashSet();
     for (Enumeration e = jarFileInput.entries(); e.hasMoreElements();) {
-      JarEntry entry = (JarEntry) e.nextElement();
+      JarEntry entry = (JarEntry)e.nextElement();
       String entryName = entry.getName();
-
+      
       // This condition used to only exclude "META-INF/MANIFEST.MF". Jar signing puts additional META-INF files into the
       // boot jar, which caused an assertion error. So, now only try reading specs from actual class files present in
       // the jar
@@ -219,12 +219,17 @@ public class BootJar {
     return rv;
   }
   
+  
+  public synchronized Set getAllClasses() throws IOException {
+    return getBootJarClassNames(QUERY_ALL);
+  }
+  
   public synchronized Set getAllUninstrumentedClasses() throws IOException {
-    return getBootJarClasses(QUERY_UNINSTRUMENTED);
+    return getBootJarClassNames(QUERY_UNINSTRUMENTED);
   }
 
   public synchronized Set getAllPreInstrumentedClasses() throws IOException {
-    return getBootJarClasses(QUERY_PREINSTRUMENTED);
+    return getBootJarClassNames(QUERY_PREINSTRUMENTED);
   }
 
   private void assertOpen() {

@@ -255,7 +255,7 @@ public class BootJarTool {
     try {
       final Set missing = new HashSet();
       final Map internalSpecs = getTCSpecs();
-      
+
       final Map userSpecs = massageSpecs(getUserDefinedSpecs(internalSpecs), false);
       final BootJar bootJar = BootJar.getBootJarForReading(bootJarFile);
       Set bootJarClassNames = bootJar.getAllPreInstrumentedClasses();
@@ -272,20 +272,45 @@ public class BootJarTool {
       throw new RuntimeException(e);
     }
   }
-  
-  private final void scanJarForMissingReferencedClasses(File bootJarFile) {
+
+  /**
+   * verify that all of the reference TC classes are in the bootjar
+   */
+  private final void verifyJar(File bootJarFile) {
     try {
       final BootJar bootJar = BootJar.getBootJarForReading(bootJarFile);
-      final Set bootJarClassNames = bootJar.getAllUninstrumentedClasses();
-      for(Iterator i=bootJarClassNames.iterator(); i.hasNext();) {
+      final Set bootJarClassNames = bootJar.getAllClasses();
+      Map offendingClasses = new HashMap();
+      for (Iterator i = bootJarClassNames.iterator(); i.hasNext();) {
         final String className = (String)i.next();
-        if (className.startsWith("com.tc.")) {
-          //System.err.println("-- " + className);
-          //ClassReader cr  = new ClassReader(className);
-          //ClassVisitor cv = new BootJarClassDependencyVisitor(bootJarClassNames);
-          //cr.accept(cv, 0);
+        byte[] bytes = new byte[0];
+        try {
+          bytes = getBytesForClass(className, systemLoader);
+        } catch (ClassNotFoundException e) {
+          try {
+            bytes = getBytesForClass(className, tcLoader);
+          } catch (ClassNotFoundException e1) {
+            //offendingClasses.put(className, e.getMessage());
+            continue;
+          }
         }
+        ClassReader cr = new ClassReader(bytes);
+        ClassVisitor cv = new BootJarClassDependencyVisitor(bootJarClassNames, offendingClasses);
+        cr.accept(cv, 0);
       }
+      
+      if (!offendingClasses.isEmpty()) {
+        System.err.println("\nThe following classes was declared in the <additional-boot-jar-classes/> section "
+                           + "of your tc-config file but is not a part of your boot JAR file:");
+        for (Iterator i = offendingClasses.entrySet().iterator(); i.hasNext();) {
+          Map.Entry entry = (Map.Entry)i.next();
+          
+          System.err.println("- " + entry.getKey() + " (" + entry.getValue() + ")");
+        }
+        //System.err.println("\nUse the make-boot-jar tool to re-create and include these classes in your boot JAR.");
+        System.exit(1);
+      }
+      
     } catch (BootJarException e) {
       throw new RuntimeException(e);
     } catch (IOException e) {
@@ -306,7 +331,6 @@ public class BootJarTool {
     }
 
     try {
-
       bootJar = bootJarHandler.getBootJar();
 
       addInstrumentedHashMap();
@@ -435,7 +459,7 @@ public class BootJarTool {
     }
 
   }
-  
+
   private final void addManagementClasses() {
     loadTerracottaClass(SessionMonitorMBean.class.getName());
     loadTerracottaClass(SessionMonitorMBean.class.getName() + "$SessionsComptroller");
@@ -967,7 +991,25 @@ public class BootJarTool {
     loadTerracottaClass("com.tc.jrexx.set.StateProSet$Iterator");
     loadTerracottaClass("com.tc.jrexx.set.StateProSet$Wrapper_State");
     loadTerracottaClass("com.tc.jrexx.set.XML");
-  }
+
+    // DEV-116
+    loadTerracottaClass("com.tc.aspectwerkz.definition.DocumentParser$1");
+    loadTerracottaClass("com.tc.aspectwerkz.DeploymentModel$1");
+    loadTerracottaClass("com.tc.aspectwerkz.expression.ast.ExpressionParser$1");
+    loadTerracottaClass("com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo$1");
+    loadTerracottaClass("com.tc.aspectwerkz.transform.inlining.weaver.AddMixinMethodsVisitor$1");
+    loadTerracottaClass("com.tc.aspectwerkz.transform.inlining.weaver.ConstructorCallVisitor$1");
+    loadTerracottaClass("com.tc.aspectwerkz.transform.inlining.weaver.HandlerVisitor$1");
+    loadTerracottaClass("com.tc.aspectwerkz.transform.inlining.weaver.SerialVersionUidVisitor$1");
+    loadTerracottaClass("com.tc.backport175.bytecode.AnnotationDefaults$1");
+    loadTerracottaClass("com.tc.backport175.bytecode.AnnotationReader$1");
+    loadTerracottaClass("com.tc.exception.ImplementMe");
+    loadTerracottaClass("com.tc.exception.TCClassNotFoundException");
+    loadTerracottaClass("com.tc.jrexx.set.SAutomaton$1");
+    loadTerracottaClass("com.tc.util.Assert");
+    loadTerracottaClass("com.tc.util.StringUtil");
+    loadTerracottaClass("com.tc.util.TCAssertionError");
+}
 
   private final void addTreeMap() {
     String className = "java.util.TreeMap";
@@ -1174,7 +1216,6 @@ public class BootJarTool {
 
   public final byte[] getBytesForClass(String className, ClassLoader loader) throws ClassNotFoundException {
     String resource = BootJar.classNameToFileName(className);
-
     InputStream is = loader.getResourceAsStream(resource);
     if (is == null) { throw new ClassNotFoundException("No resource found for class: " + className); }
     final int size = 4096;
@@ -1420,7 +1461,7 @@ public class BootJarTool {
     bytes = doDSOTransform(spec.getClassName(), bytes);
     bootJar.loadClassIntoJar("java.util.concurrent.CyclicBarrier", bytes, true);
   }
-  
+
   private final void addLinkedHashMapWrapper() {
     TransparencyClassSpec spec = config.getOrCreateSpec("com.tcclient.util.LinkedHashMap");
     spec.markPreInstrumented();
@@ -2010,7 +2051,10 @@ public class BootJarTool {
       boolean makeItAnyway = commandLine.hasOption("w");
       if (makeItAnyway || !targetFile.exists() || (targetFile.exists() && !bjTool.isBootJarComplete(targetFile))) {
         bjTool.generateJar();
-        bjTool.scanJarForMissingReferencedClasses(targetFile);
+      }
+
+      if (targetFile.exists()) {
+        bjTool.verifyJar(targetFile);
       }
     } else if (mode.equals(SCAN_MODE)) {
       bjTool.scanJar(targetFile);
