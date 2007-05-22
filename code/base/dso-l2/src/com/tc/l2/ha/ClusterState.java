@@ -4,12 +4,14 @@
  */
 package com.tc.l2.ha;
 
+import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.objectserver.gtx.GlobalTransactionIDSequenceProvider;
 import com.tc.objectserver.persistence.api.PersistentMapStore;
+import com.tc.text.Banner;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.sequence.ObjectIDSequence;
@@ -19,31 +21,52 @@ import java.util.Set;
 
 public class ClusterState {
 
-  private static final TCLogger                          logger               = TCLogging.getLogger(ClusterState.class);
+  private static final TCLogger                     logger               = TCLogging.getLogger(ClusterState.class);
 
-  private static final String                            L2_STATE_KEY         = "CLUSTER_STATE::L2_STATE_KEY";
-  private static final String                            CLUSTER_ID_KEY       = "CLUSTER_STATE::CLUSTER_ID_KEY";
+  private static final String                       L2_STATE_KEY         = "CLUSTER_STATE::L2_STATE_KEY";
+  private static final String                       CLUSTER_ID_KEY       = "CLUSTER_STATE::CLUSTER_ID_KEY";
 
-  private final PersistentMapStore                       clusterStateStore;
-  private final ObjectIDSequence                         oidSequence;
-  private final ConnectionIDFactory                      connectionIdFactory;
+  private final PersistentMapStore                  clusterStateStore;
+  private final ObjectIDSequence                    oidSequence;
+  private final ConnectionIDFactory                 connectionIdFactory;
   private final GlobalTransactionIDSequenceProvider gidSequenceProvider;
 
-  private final Set                                      connections          = new HashSet();
-  private long                                           nextAvailObjectID    = -1;
-  private long                                           nextAvailChannelID   = -1;
-  private long                                           nextAvailGlobalTxnID = -1;
-  private State                                          currentState;
-  private String                                         clusterID;
+  private final Set                                 connections          = new HashSet();
+  private long                                      nextAvailObjectID    = -1;
+  private long                                      nextAvailChannelID   = -1;
+  private long                                      nextAvailGlobalTxnID = -1;
+  private State                                     currentState;
+  private String                                    clusterID;
 
   public ClusterState(PersistentMapStore clusterStateStore, ObjectIDSequence oidSequence,
-                      ConnectionIDFactory connectionIdFactory,
-                      GlobalTransactionIDSequenceProvider gidSequenceProvider) {
+                      ConnectionIDFactory connectionIdFactory, GlobalTransactionIDSequenceProvider gidSequenceProvider) {
     this.clusterStateStore = clusterStateStore;
     this.oidSequence = oidSequence;
     this.connectionIdFactory = connectionIdFactory;
     this.gidSequenceProvider = gidSequenceProvider;
     this.clusterID = clusterStateStore.get(CLUSTER_ID_KEY);
+    validateStartupState(clusterStateStore.get(L2_STATE_KEY));
+  }
+
+  private void validateStartupState(String stateStr) {
+    if (stateStr != null) {
+      State stateB4Crash = new State(stateStr);
+      if (!StateManager.ACTIVE_COORDINATOR.equals(stateB4Crash)) {
+        /*
+         * The server is running in persisitent mode and this instance of the server was not the ACTIVE server before
+         * the crash. Force user to clean up the DB so that this server can resync state from the ACTIVE.
+         */
+        throw new AssertionError(Banner
+            .makeBanner("This server is running with persistence turned on and was stopped in " + stateStr
+                        + " state. Only the " + StateManager.ACTIVE_COORDINATOR.getName() + " server is allowed "
+                        + " to be restarted without cleaning up the data directory with persistence turned on.\n\n"
+                        + "Please clean up the data directory and make sure that the "
+                        + StateManager.ACTIVE_COORDINATOR.getName()
+                        + " is up and running before starting this server. It is important that the "
+                        + StateManager.ACTIVE_COORDINATOR.getName()
+                        + " is up and running before starting this server else you might end up losing data", "ERROR"));
+      }
+    }
   }
 
   public void setNextAvailableObjectID(long nextAvailOID) {

@@ -25,7 +25,7 @@ import java.util.Set;
 public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelManagerEventListener {
 
   private final ClientStatePersistor clientStateStore;
-  private final MutableSequence   connectionIDSequence;
+  private final MutableSequence      connectionIDSequence;
   private String                     uid;
   private List                       listeners = new CopyOnWriteArrayList();
 
