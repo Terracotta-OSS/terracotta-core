@@ -238,7 +238,7 @@ public final class GlassfishV1AppServer extends AbstractAppServer {
         .getParentFile());
     if (result.getExitCode() != 0) { throw new RuntimeException("error executing startserv script: " + result); }
 
-    String output = result.getStdout();
+    String output = result.getStdout().trim();
 
     if (!output.startsWith("STARTOFCOMMAND|") || !output.endsWith("|ENDOFCOMMAND|")) { throw new RuntimeException(
                                                                                                                   "cannot parse output: "
