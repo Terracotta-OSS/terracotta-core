@@ -40,6 +40,8 @@ public class LinkedJavaProcessTest extends TCTestCase {
 
     String delimiter = System.getProperty("line.separator", "\n");
 
+    debugPrintln("*****  delimiter=[" + delimiter.getBytes() + "]");
+    
     String[] output = input.split(delimiter);
     StringBuffer out = new StringBuffer();
     for (int i = 0; i < output.length; ++i) {
@@ -48,6 +50,8 @@ public class LinkedJavaProcessTest extends TCTestCase {
       }
     }
 
+    debugPrintln("*****  outString=[" + out.toString() + "]");
+    
     return out.toString();
   }
 
