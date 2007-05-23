@@ -38,19 +38,19 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     GlobalTransactionID gtxID2 = gtxm.getOrCreateGlobalTransactionID(stxID2);
     assertNotSame(gtxID1, gtxID2);
     
-    assertTrue(gtxm.needsApply(stxID1));
-    assertTrue(gtxm.needsApply(stxID2));
+    assertTrue(gtxm.initiateApply(stxID1));
+    assertTrue(gtxm.initiateApply(stxID2));
 
-    assertTrue(gtxm.needsApply(stxID1));
-    assertTrue(gtxm.needsApply(stxID2));
+    // the apply has been initiated so
+    assertFalse(gtxm.initiateApply(stxID1));
+    assertFalse(gtxm.initiateApply(stxID2));
 
     // now commit them
     gtxm.commit(null, stxID1);
     gtxm.commit(null, stxID2);
 
-    // the apply has already been started, so no-one else should have to do it.
-    assertFalse(gtxm.needsApply(stxID1));
-    assertFalse(gtxm.needsApply(stxID2));
+    assertFalse(gtxm.initiateApply(stxID1));
+    assertFalse(gtxm.initiateApply(stxID2));
 
     // now try to commit again
     try {
@@ -71,7 +71,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     GlobalTransactionID gid1 = gtxm.getOrCreateGlobalTransactionID(stxid);
     assertNextGlobalTXWasCalled(stxid);
 
-    assertTrue(gtxm.needsApply(stxid));
+    assertTrue(gtxm.initiateApply(stxid));
     assertGlobalTxWasLoaded(stxid);
 
     assertNextGlobalTxNotCalled();
@@ -80,24 +80,23 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     transactionStore.restart();
     GlobalTransactionID gid2 = gtxm.getOrCreateGlobalTransactionID(stxid);
     assertFalse(gid1.equals(gid2));
+    assertNextGlobalTXWasCalled(stxid);
     
     // the transaction is still not applied
-    assertTrue(gtxm.needsApply(stxid));
+    assertTrue(gtxm.initiateApply(stxid));
     assertGlobalTxWasLoaded(stxid);
 
+    // no longer needs to be applied
+    assertFalse(gtxm.initiateApply(stxid));
+    assertGlobalTxWasLoaded(stxid);
+    
     GlobalTransactionID gid3  = gtxm.getOrCreateGlobalTransactionID(stxid);
     assertTrue(gid2.equals(gid3));
     
     gtxm.commit(null, stxid);
     assertGlobalTxWasLoaded(stxid);
-    assertNextGlobalTXWasCalled(stxid);
     
     assertNotNull(transactionStore.commitContextQueue.poll(1));
-
-    // no longer needs to be applied
-    assertFalse(gtxm.needsApply(stxid));
-    assertGlobalTxWasLoaded(stxid);
-    assertNextGlobalTxNotCalled();
 
     // make sure no calls to store were made
     assertTrue(transactionStore.commitContextQueue.isEmpty());
@@ -106,7 +105,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     transactionStore.restart();
 
     // make sure that it isn't in progress
-    assertFalse(gtxm.needsApply(stxid));
+    assertFalse(gtxm.initiateApply(stxid));
     assertGlobalTxWasLoaded(stxid);
     assertNextGlobalTxNotCalled();
 
@@ -124,14 +123,14 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     GlobalTransactionID gid4  = gtxm.getOrCreateGlobalTransactionID(stxid2);
     assertNextGlobalTXWasCalled(stxid2);
     assertNotSame(gid3, gid4);
-    assertTrue(gtxm.needsApply(stxid2));
+    assertTrue(gtxm.initiateApply(stxid2));
     assertGlobalTxWasLoaded(stxid2);
 
     //apply does create
     gtxm.getOrCreateGlobalTransactionID(stxid2);
     gtxm.commit(null, stxid2);
 
-    assertFalse(gtxm.needsApply(stxid2));
+    assertFalse(gtxm.initiateApply(stxid2));
 
     Collection finished = new ArrayList(2);
     finished.add(stxid);

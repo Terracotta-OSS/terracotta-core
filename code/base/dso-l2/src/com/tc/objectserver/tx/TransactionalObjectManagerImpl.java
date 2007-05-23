@@ -106,11 +106,11 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       ServerTransaction txn = sequencer.getNextTxnToProcess();
       if (txn == null) break;
       ServerTransactionID stxID = txn.getServerTransactionID();
-      if (gtxm.needsApply(stxID)) {
+      if (gtxm.initiateApply(stxID)) {
         lookupObjectsForApplyAndAddToSink(txn, true);
       } else {
         // These txns are already applied, hence just sending it to the next stage.
-        txnStageCoordinator.addToApplyStage(new ApplyTransactionContext(txn, Collections.EMPTY_MAP));
+        txnStageCoordinator.addToApplyStage(new ApplyTransactionContext(txn));
       }
     }
   }

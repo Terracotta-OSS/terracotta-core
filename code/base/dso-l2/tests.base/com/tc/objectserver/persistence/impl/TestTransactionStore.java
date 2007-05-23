@@ -102,7 +102,7 @@ public class TestTransactionStore implements TransactionStore {
     throw new ImplementMe();
   }
 
-  public void createGlobalTransactionDesc(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID) {
+  public void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID) {
     GlobalTransactionDescriptor rv = new GlobalTransactionDescriptor(stxnID, globalTransactionID);
     basicPut(volatileMap, rv);
   }

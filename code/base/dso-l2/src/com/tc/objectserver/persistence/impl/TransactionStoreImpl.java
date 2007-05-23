@@ -96,9 +96,6 @@ public class TransactionStoreImpl implements TransactionStore {
     ServerTransactionID sid = gtx.getServerTransactionID();
     GlobalTransactionID gid = gtx.getGlobalTransactionID();
     GlobalTransactionDescriptor prevDesc = (GlobalTransactionDescriptor) this.serverTransactionIDMap.put(sid, gtx);
-    if (!gid.isNull()) {
-      ids.put(gid, gtx);
-    }
     if (prevDesc != null) {
       if (allowRemapping) {
         // This can happen in the 3'rd Passive when the active crashes and the 2'nd passive takes over. Some
@@ -106,11 +103,16 @@ public class TransactionStoreImpl implements TransactionStore {
         // becomes active, it might assign a new GID to the same transaction previsously known to the 3'rd with a
         // different GID. It needs to reconsile. It is ok to just remove it from ids since even if it was commited, when
         // completeTxns arrive, it will be removed from the DB. If the 3'rd passive crashes before that, when it come
-        // back up the DB is wiped out. ids.remove(prevDesc.getGlobalTransactionID());
-        logger.warn("Remapping new desc " + gtx + " for the same SID. old = " + prevDesc);
+        // back up the DB is wiped out.
+        ids.remove(prevDesc.getGlobalTransactionID());
+        gtx.saveStateFrom(prevDesc);
+        logger.warn("Remapped new desc " + gtx + " for the same SID. old = " + prevDesc);
       } else {
         throw new AssertionError("Adding new mapping for old txn IDs : " + gtx + " Prev desc = " + prevDesc);
       }
+    }
+    if (!gid.isNull()) {
+      ids.put(gid, gtx);
     }
   }
 
@@ -171,8 +173,8 @@ public class TransactionStoreImpl implements TransactionStore {
   }
 
   // Used in Passive server
-  public synchronized void createGlobalTransactionDesc(ServerTransactionID stxnID,
-                                                       GlobalTransactionID globalTransactionID) {
+  public synchronized void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID,
+                                                               GlobalTransactionID globalTransactionID) {
     GlobalTransactionDescriptor rv = new GlobalTransactionDescriptor(stxnID, globalTransactionID);
     basicAdd(rv, true);
   }

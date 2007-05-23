@@ -41,9 +41,9 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
     tx.commit();
   }
 
-  public boolean needsApply(ServerTransactionID stxID) {
+  public boolean initiateApply(ServerTransactionID stxID) {
     GlobalTransactionDescriptor gtx = this.transactionStore.getTransactionDescriptor(stxID);
-    return !gtx.isApplied();
+    return gtx.initiateApply();
   }
 
   public void completeTransactions(PersistenceTransaction tx, Collection collection) {
@@ -68,13 +68,8 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
     return gdesc.getGlobalTransactionID();
   }
 
-  public void applyComplete(ServerTransactionID stxnID) {
-    GlobalTransactionDescriptor desc = transactionStore.getTransactionDescriptor(stxnID);
-    desc.applyComplete();
-  }
-
-  public void createGlobalTransactionDesc(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID) {
-    transactionStore.createGlobalTransactionDesc(stxnID, globalTransactionID);
+  public void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID) {
+    transactionStore.createGlobalTransactionDescIfNeeded(stxnID, globalTransactionID);
   }
 
 }

@@ -13,7 +13,7 @@ import com.tc.util.State;
 public class GlobalTransactionDescriptor {
 
   private static final State        INIT            = new State("INIT");
-  private static final State        APPLY_COMPLETE  = new State("APPLY_COMPLETE");
+  private static final State        APPLY_INITIATED = new State("APPLY_INITIATED");
   private static final State        COMMIT_COMPLETE = new State("COMMIT_COMPLETE");
 
   private final ServerTransactionID stxn;
@@ -29,9 +29,9 @@ public class GlobalTransactionDescriptor {
     this.completed = serverTransactionID.isServerGeneratedTransaction();
   }
 
-  public void applyComplete() {
-    if (this.state != INIT) { throw new AssertionError("Not in valid state : " + state); }
-    this.state = APPLY_COMPLETE;
+  public void saveStateFrom(GlobalTransactionDescriptor old) {
+    this.state = old.state;
+    this.completed = old.completed;
   }
 
   public boolean commitComplete() {
@@ -40,8 +40,12 @@ public class GlobalTransactionDescriptor {
     return this.completed;
   }
 
-  public boolean isApplied() {
-    return this.state != INIT;
+  public boolean initiateApply() {
+    boolean toInitiate = (this.state == INIT);
+    if (toInitiate) {
+      this.state = APPLY_INITIATED;
+    }
+    return toInitiate;
   }
 
   public boolean isCommitted() {
@@ -49,7 +53,7 @@ public class GlobalTransactionDescriptor {
   }
 
   public String toString() {
-    return "GlobalTransactionDescriptor[" + stxn + "," + gid + "]";
+    return "GlobalTransactionDescriptor[" + stxn + "," + gid + "," + state + "," + completed + "]";
   }
 
   public ChannelID getChannelID() {

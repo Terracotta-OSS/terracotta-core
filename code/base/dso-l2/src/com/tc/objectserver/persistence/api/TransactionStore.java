@@ -30,7 +30,7 @@ public interface TransactionStore {
 
   public void shutdownAllClientsExcept(PersistenceTransaction tx, Set cids);
   
-  public void createGlobalTransactionDesc(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID);
+  public void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID);
 
   public void commitAllTransactionDescriptor(PersistenceTransaction persistenceTransaction, Collection stxIDs);
   

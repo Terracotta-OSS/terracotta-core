@@ -54,7 +54,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     final ServerTransactionID stxnID = txn.getServerTransactionID();
     final BackReferences includeIDs = new BackReferences();
 
-    if (gtxm.needsApply(stxnID)) {
+    if (atc.needsApply()) {
       transactionManager.apply(txn, atc.getObjects(), includeIDs, instanceMonitor);
       txnObjectMgr.applyTransactionComplete(stxnID);
     } else {
@@ -63,7 +63,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     }
 
     // XXX:: There could be a race, after a passive moves to active there could be some transactions still in the
-    // system. Wait/clear it
+    // system. Wait/clear it :: TODO:: Wrap txn in passive to ignore notifications.
     if (stateManager.isActiveCoordinator()) {
       for (Iterator i = txn.addNotifiesTo(new LinkedList()).iterator(); i.hasNext();) {
         Notify notify = (Notify) i.next();

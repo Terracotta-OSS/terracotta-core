@@ -214,7 +214,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         objectManager.createRoot(rootName, newID);
       }
     }
-    gtxm.applyComplete(stxnID);
     if (active) {
       channelStats.notifyTransaction(channelID);
     }
@@ -266,7 +265,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         ci.relayTransactionComplete(txnID);
       }
       if (!active) {
-        gtxm.createGlobalTransactionDesc(stxnID, txn.getGlobalTransactionID());
+        gtxm.createGlobalTransactionDescIfNeeded(stxnID, txn.getGlobalTransactionID());
       }
     }
     fireIncomingTransactionsEvent(cid, txnIDs);

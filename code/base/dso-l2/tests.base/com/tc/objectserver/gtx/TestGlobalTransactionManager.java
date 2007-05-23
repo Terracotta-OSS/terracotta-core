@@ -9,7 +9,6 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
-import com.tc.util.Assert;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.Collection;
@@ -21,10 +20,9 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
 
   public final NoExceptionLinkedQueue completeTransactionsContexts = new NoExceptionLinkedQueue();
   private long                        idSequence                   = 0;
-  private Set                         appliedSIDs                  = new HashSet();
   private Set                         commitedSIDs                 = new HashSet();
 
-  public boolean needsApply(ServerTransactionID stxID) {
+  public boolean initiateApply(ServerTransactionID stxID) {
     return !commitedSIDs.contains(stxID);
   }
 
@@ -61,12 +59,7 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
     return new GlobalTransactionID(idSequence++);
   }
 
-  public void applyComplete(ServerTransactionID stxnID) {
-    boolean added = appliedSIDs.add(stxnID);
-    Assert.assertTrue(added);
-  }
-
-  public void createGlobalTransactionDesc(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID) {
+  public void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID) {
     throw new ImplementMe();
   }
 

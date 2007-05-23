@@ -16,13 +16,10 @@ import java.util.Set;
 public interface ServerGlobalTransactionManager extends GlobalTransactionIDGenerator {
 
   /**
-   * Returns true if the specified transaction hasn't been applied yet. This method is partially redundant with
-   * startApply. It should be removed once the dispatching logic is factored out of ProcessTransactionHandler and
-   * ApplyTransactionHandler
+   * Changes state to APPLY_INITIATED and returns true if the specified transaction hasn't been initiated apply. If not
+   * returns false.
    */
-  public boolean needsApply(ServerTransactionID stxID);
-
-  public void applyComplete(ServerTransactionID stxnID);
+  public boolean initiateApply(ServerTransactionID stxID);
 
   /**
    * Commits the state of the transaciton.
@@ -42,9 +39,9 @@ public interface ServerGlobalTransactionManager extends GlobalTransactionIDGener
   public void completeTransactions(PersistenceTransaction tx, Collection collection);
 
   public void shutdownClient(ChannelID channelID);
-  
+
   public void shutdownAllClientsExcept(Set cids);
 
-  public void createGlobalTransactionDesc(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID);
+  public void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID);
 
 }
