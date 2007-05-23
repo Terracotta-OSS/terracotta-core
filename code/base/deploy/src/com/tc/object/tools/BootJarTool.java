@@ -1755,7 +1755,7 @@ public class BootJarTool {
   private void mergeReadWriteLockInnerClass(String tcInnerClassNameDots, String jInnerClassNameDots, String tcClassNameDots, String jClassNameDots, String srcInnerClassName, String targetInnerClassName, Map instrumentedContext) {
     String tcInnerClassNameSlashes = tcInnerClassNameDots.replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER,
                                               ChangeClassNameHierarchyAdapter.SLASH_DELIMITER);
-    byte[] tcData = changeClassNameAndGetBytes(tcInnerClassNameSlashes, tcClassNameDots, jClassNameDots, srcInnerClassName, targetInnerClassName, instrumentedContext);
+    byte[] tcData = getSystemBytes(tcInnerClassNameDots);
     ClassReader tcCR = new ClassReader(tcData);
     ClassNode tcCN = new ClassNode();
     tcCR.accept(tcCN, ClassReader.SKIP_DEBUG);
@@ -1773,6 +1773,9 @@ public class BootJarTool {
                                                                               instrumentedContext));
     jCR.accept(cv, 0);
     jData = cw.toByteArray();
+    
+    jData = changeClassNameAndGetBytes(jData, tcInnerClassNameSlashes, tcClassNameDots, jClassNameDots, srcInnerClassName, targetInnerClassName, instrumentedContext);
+    
     jData = doDSOTransform(jInnerClassNameDots, jData);
     bootJar.loadClassIntoJar(jInnerClassNameDots, jData, true);
   }
@@ -1875,7 +1878,7 @@ public class BootJarTool {
       }
     }
   }
-
+  
   private void changeClassName(String fullClassNameDots, String classNameDotsToBeChanged, String classNameDotsReplaced,
                                Map instrumentedContext, boolean honorTransient) {
     byte[] data = changeClassNameAndGetBytes(fullClassNameDots, classNameDotsToBeChanged, classNameDotsReplaced,
@@ -1903,13 +1906,19 @@ public class BootJarTool {
   private final byte[] changeClassNameAndGetBytes(String fullClassNameDots, String classNameDotsToBeChanged,
                                                   String classNameDotsReplaced, String srcInnerClassName, String targetInnerClassName,
                                                   Map instrumentedContext) {
-    ClassReader cr = new ClassReader(getSystemBytes(fullClassNameDots));
+    return changeClassNameAndGetBytes(getSystemBytes(fullClassNameDots), fullClassNameDots, classNameDotsToBeChanged, classNameDotsReplaced, srcInnerClassName, targetInnerClassName, instrumentedContext);
+  }
+  
+  private final byte[] changeClassNameAndGetBytes(byte[] data, String fullClassNameDots, String classNameDotsToBeChanged,
+                                                  String classNameDotsReplaced, String srcInnerClassName, String targetInnerClassName,
+                                                  Map instrumentedContext) {
+    ClassReader cr = new ClassReader(data);
     ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
     ClassVisitor cv = new ChangeClassNameRootAdapter(cw, fullClassNameDots, classNameDotsToBeChanged,
                                                      classNameDotsReplaced, srcInnerClassName, targetInnerClassName, instrumentedContext, null);
     cr.accept(cv, 0);
 
-    byte[] data = cw.toByteArray();
+    data = cw.toByteArray();
 
     AsmClassInfo.getClassInfo(data, systemLoader);
 

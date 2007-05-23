@@ -125,6 +125,10 @@ public class TypePattern extends Pattern {
       if (matchInterfaces(classInfo.getInterfaces(), classInfo)) {
         return true;
       }
+      
+      if (classInfo.getSuperclass() == classInfo) {
+        return false;
+      }
 
       // no parse; getClass the next superclass
       return matchSuperClasses(classInfo.getSuperclass());
