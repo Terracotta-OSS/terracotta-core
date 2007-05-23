@@ -58,17 +58,20 @@ public class BootJarClassDependencyVisitor implements ClassVisitor {
   }
 
   public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+    if (visible) {
+      check(desc, "reference to class annotation");
+    }
     return null;
   }
 
   public void visitAttribute(Attribute attr) {
-    //throw new ImplementMe();
   }
 
   public void visitEnd() {
   }
 
   public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+    check(desc, "reference to a declared class field");
     return null;
   }
 
@@ -77,6 +80,11 @@ public class BootJarClassDependencyVisitor implements ClassVisitor {
   }
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+    if (exceptions != null) {
+      for (int i=0; i<exceptions.length; i++) {
+        check(exceptions[i], "reference to a declared exception");
+      }
+    }
     MethodVisitor mv = new BootJarClassDependencyMethodVisitor();
     return mv;
   }
@@ -91,7 +99,9 @@ public class BootJarClassDependencyVisitor implements ClassVisitor {
   private class BootJarClassDependencyMethodVisitor implements MethodVisitor, Opcodes {
 
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-      //throw new ImplementMe();
+      if (visible) {
+        check(desc, "reference to method annotation");
+      }
       return null;
     }
 
@@ -100,18 +110,15 @@ public class BootJarClassDependencyVisitor implements ClassVisitor {
     }
 
     public void visitAttribute(Attribute attr) {
-      //throw new ImplementMe();
     }
 
     public void visitCode() {
     }
 
     public void visitEnd() {
-      //throw new ImplementMe();
     }
 
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-      // check referenced classes in field-(gets|puts)
       check(owner, "reference in field get or put");
     }
 
@@ -134,14 +141,12 @@ public class BootJarClassDependencyVisitor implements ClassVisitor {
     }
 
     public void visitLdcInsn(Object cst) {
-      //throw new ImplementMe();
     }
 
     public void visitLineNumber(int line, Label start) {
     }
 
     public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
-      // check referenced classes for local variable declarations  
       check(desc, "reference in local variable declaration");
     }
 
@@ -152,17 +157,17 @@ public class BootJarClassDependencyVisitor implements ClassVisitor {
     }
 
     public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-      // check referenced classes in virtual, interface, constructor, or static, calls
       check(owner, "reference in either virtual, interface, constructor, or static invocation");
     }
 
     public void visitMultiANewArrayInsn(String desc, int dims) {
-      // check referenced classes in multi-array type declarations  
       check(desc, "reference in mutli-array type declaration");
     }
 
     public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
-      //throw new ImplementMe();
+      if (visible) {
+        check(desc, "reference to method annotation");
+      }
       return null;
     }
 
@@ -170,20 +175,16 @@ public class BootJarClassDependencyVisitor implements ClassVisitor {
     }
 
     public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
-      // check referenced class in catch-blocks
       if (type != null) {
         check(type, "reference in try-catch block");
       }
     }
 
     public void visitTypeInsn(int opcode, String desc) {
-      // check referenced classes in type-casts, class instantiation,  
-      // instance type-check, or type-array declarations
       check(desc, "reference in type-cast, class instantiation, type-check, or type-array declaration");
     }
 
     public void visitVarInsn(int opcode, int var) {
-      //throw new ImplementMe();
     }
   }
 }

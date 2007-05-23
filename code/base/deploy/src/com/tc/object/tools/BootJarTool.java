@@ -295,7 +295,7 @@ public class BootJarTool {
       StringBuffer message = new StringBuffer("\nThe following Terracotta classes needs to be included in the boot jar:\n");
       for (Iterator i = offendingClasses.entrySet().iterator(); i.hasNext();) {
         Map.Entry entry = (Map.Entry)i.next();
-        message.append("- " + entry.getKey() + "\n");
+        message.append("- " + entry.getKey() + " [" + entry.getValue() + "]\n");
       }
       
       Assert.assertTrue(message.toString().replaceAll("\n$", ""), offendingClasses.isEmpty());
@@ -976,13 +976,13 @@ public class BootJarTool {
 
     loadTerracottaClass("com.tc.jrexx.set.SAutomatonData");
     loadTerracottaClass("com.tc.jrexx.set.SAutomatonData$State");
-    loadTerracottaClass("com.tc.jrexx.set.SAutomatonData$State$Transition");
+      loadTerracottaClass("com.tc.jrexx.set.SAutomatonData$State$Transition");
     loadTerracottaClass("com.tc.jrexx.set.StateProSet");
     loadTerracottaClass("com.tc.jrexx.set.StateProSet$Iterator");
     loadTerracottaClass("com.tc.jrexx.set.StateProSet$Wrapper_State");
     loadTerracottaClass("com.tc.jrexx.set.XML");
 
-    // DEV-116
+    // DEV-116; Some of these probably should'nt be in the boot jar
     loadTerracottaClass("com.tc.aspectwerkz.definition.DocumentParser$1");
     loadTerracottaClass("com.tc.aspectwerkz.DeploymentModel$1");
     loadTerracottaClass("com.tc.aspectwerkz.expression.ast.ExpressionParser$1");
@@ -999,7 +999,8 @@ public class BootJarTool {
     loadTerracottaClass("com.tc.util.Assert");
     loadTerracottaClass("com.tc.util.StringUtil");
     loadTerracottaClass("com.tc.util.TCAssertionError");
-}
+    loadTerracottaClass("com.tc.object.dna.api.DNAException");
+  }
 
   private final void addTreeMap() {
     String className = "java.util.TreeMap";
