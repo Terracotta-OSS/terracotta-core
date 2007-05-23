@@ -201,7 +201,7 @@ public class ActivePassiveServerManager {
       jvmArgs.add("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + ".l2.ha.network.enabled=true");
     }
     return new ExtraProcessServerControl(HOST, dsoPort, jmxPort, configFileLocation, true, serverName, jvmArgs,
-                                         javaHome);
+                                         javaHome, true);
   }
 
   public void startServers() throws Exception {

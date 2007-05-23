@@ -40,9 +40,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   private FileOutputStream    fileOut;
   private StreamCopier        outCopier;
   private StreamCopier        errCopier;
-
-  private final String        errStreamIdentifier;
-  private final String        outStreamIdentifier;
+  private final boolean       useIdentifier;
 
   // constructor 1: used by container tests
   public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput)
@@ -57,7 +55,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     // Tests don't run in an environment where such a thing even exists. If the server needs an
     // "installation directory", the tests should be creating one themselves.
     this(debugParams, host, dsoPort, adminPort, configFileLoc, null, Directories.getInstallationRoot(), mergeOutput,
-         null, new ArrayList(), NOT_DEF, null);
+         null, new ArrayList(), NOT_DEF, null, false);
   }
 
   // constructor 3: used by ControlSetup, Setup, and container tests
@@ -65,7 +63,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
                                    String configFileLoc, File runningDirectory, File installationRoot,
                                    boolean mergeOutput, List jvmArgs, String undefString) {
     this(debugParams, host, dsoPort, adminPort, configFileLoc, runningDirectory, installationRoot, mergeOutput, null,
-         jvmArgs, undefString, null);
+         jvmArgs, undefString, null, false);
   }
 
   // constructor 4: used by TransparentTestBase for single failure case
@@ -76,10 +74,10 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
   // constructor 5: used by active-passive tests
   public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput,
-                                   String servername, List additionalJvmArgs, File javaHome)
+                                   String servername, List additionalJvmArgs, File javaHome, boolean useIdentifier)
       throws FileNotFoundException {
     this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, null, Directories.getInstallationRoot(),
-         mergeOutput, servername, additionalJvmArgs, NOT_DEF, javaHome);
+         mergeOutput, servername, additionalJvmArgs, NOT_DEF, javaHome, useIdentifier);
   }
 
   // constructor 6: used by constructor 4, crash tests, and normal tests running in 1.4 jvm
@@ -87,17 +85,16 @@ public class ExtraProcessServerControl extends ServerControlBase {
                                    String configFileLoc, boolean mergeOutput, File javaHome)
       throws FileNotFoundException {
     this(debugParams, host, dsoPort, adminPort, configFileLoc, null, Directories.getInstallationRoot(), mergeOutput,
-         null, new ArrayList(), NOT_DEF, javaHome);
+         null, new ArrayList(), NOT_DEF, javaHome, false);
   }
 
   // only called by constructors in this class
   public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
                                    String configFileLoc, File runningDirectory, File installationRoot,
                                    boolean mergeOutput, String serverName, List additionalJvmArgs, String undefString,
-                                   File javaHome) {
+                                   File javaHome, boolean useIdentifier) {
     super(host, dsoPort, adminPort);
-    errStreamIdentifier = getStreamIdentifier(dsoPort, ERR_STREAM);
-    outStreamIdentifier = getStreamIdentifier(dsoPort, OUT_STREAM);
+    this.useIdentifier = useIdentifier;
     this.javaHome = javaHome;
     this.serverName = serverName;
     jvmArgs = new ArrayList();
@@ -155,11 +152,19 @@ public class ExtraProcessServerControl extends ServerControlBase {
   }
 
   public void mergeSTDOUT() {
-    this.process.mergeSTDOUT(outStreamIdentifier);
+    if (useIdentifier) {
+      process.mergeSTDOUT(getStreamIdentifier(getDsoPort(), OUT_STREAM));
+    } else {
+      process.mergeSTDOUT();
+    }
   }
 
   public void mergeSTDERR() {
-    this.process.mergeSTDERR(errStreamIdentifier);
+    if (useIdentifier) {
+      process.mergeSTDERR(getStreamIdentifier(getDsoPort(), ERR_STREAM));
+    } else {
+      process.mergeSTDERR();
+    }
   }
 
   protected String getMainClassName() {

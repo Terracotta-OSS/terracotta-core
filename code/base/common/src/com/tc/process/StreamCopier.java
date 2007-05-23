@@ -4,8 +4,10 @@
  */
 package com.tc.process;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 
 /**
@@ -14,8 +16,9 @@ import java.io.OutputStream;
  */
 public class StreamCopier extends Thread {
 
-  protected final InputStream  in;
   protected final OutputStream out;
+  private final BufferedReader reader;
+
   private final String         identifier;
 
   public StreamCopier(InputStream stream, OutputStream out) {
@@ -25,23 +28,25 @@ public class StreamCopier extends Thread {
   public StreamCopier(InputStream stream, OutputStream out, String identifier) {
     if ((stream == null) || (out == null)) { throw new AssertionError("null streams not allowed"); }
 
-    this.in = stream;
+    reader = new BufferedReader(new InputStreamReader(stream));
     this.out = out;
+
+    this.identifier = identifier;
+
     setName("Stream Copier");
     setDaemon(true);
-    this.identifier = identifier;
   }
 
   public void run() {
-    byte[] buf = new byte[4096];
-
+    String line;
     try {
-      int read;
-      while ((read = in.read(buf)) >= 0) {
+      while ((line = reader.readLine()) != null) {
         if (identifier != null) {
-          out.write(identifier.getBytes());
+          line = identifier + line;
         }
-        out.write(buf, 0, read);
+        line += "\n";
+        out.write(line.getBytes());
+        out.flush();
       }
     } catch (IOException ioe) {
       ioe.printStackTrace();
