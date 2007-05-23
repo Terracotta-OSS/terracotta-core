@@ -12,6 +12,7 @@ import java.io.File;
  * Unit test for {@link LinkedJavaProcess}.
  */
 public class LinkedJavaProcessTest extends TCTestCase {
+  private static final boolean DEBUG = false;
 
   public void testRunsRightCommand() throws Exception {
     LinkedJavaProcess process = new LinkedJavaProcess(LinkedJavaProcessTestMain1.class.getName());
@@ -34,7 +35,9 @@ public class LinkedJavaProcessTest extends TCTestCase {
     assertEquals("Hi there!", ignoreStandardWarnings(outCollector.toString()).trim());
   }
 
-  public static String ignoreStandardWarnings(String input) {
+  private static String ignoreStandardWarnings(String input) {
+    debugPrintln("*****  inputString=[" + input + "]");
+
     String delimiter = System.getProperty("line.separator", "\n");
 
     String[] output = input.split(delimiter);
@@ -145,7 +148,7 @@ public class LinkedJavaProcessTest extends TCTestCase {
 
     System.out.println(stdout.toString());
     System.out.println(stderr.toString());
-    
+
     process.destroy();
     // wait for child process heartbeat to time out and kill themselves
     Thread.sleep(HeartBeatServer.PULSE_INTERVAL * 2);
@@ -169,4 +172,9 @@ public class LinkedJavaProcessTest extends TCTestCase {
     assertEquals(child2NewSize, child2OrigSize); // Make sure child 1 is dead
   }
 
+  private static void debugPrintln(String s) {
+    if (DEBUG) {
+      System.err.println(s);
+    }
+  }
 }
