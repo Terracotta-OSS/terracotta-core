@@ -40,18 +40,22 @@ public class LinkedJavaProcessTest extends TCTestCase {
 
     String delimiter = System.getProperty("line.separator", "\n");
 
-    debugPrintln("*****  delimiter=[" + delimiter.getBytes() + "]");
-    
+    debugPrintln("*****  delimiter=[" + delimiter + "]");
+
     String[] output = input.split(delimiter);
+
     StringBuffer out = new StringBuffer();
     for (int i = 0; i < output.length; ++i) {
+      debugPrintln("*****  piece=[" + output[i] + "]");
+
       if (output[i].startsWith("DATA: ")) {
         out.append(output[i].substring("DATA: ".length()) + delimiter);
+        debugPrintln("***** appending [" + output[i].substring("DATA: ".length()) + delimiter + "] to output string");
       }
     }
 
     debugPrintln("*****  outString=[" + out.toString() + "]");
-    
+
     return out.toString();
   }
 
