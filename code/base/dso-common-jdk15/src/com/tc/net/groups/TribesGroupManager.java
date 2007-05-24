@@ -24,14 +24,13 @@ import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
+import com.tc.util.concurrent.CopyOnWriteArrayMap;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -41,6 +40,7 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@SuppressWarnings("unchecked")
 public class TribesGroupManager implements GroupManager, ChannelListener, MembershipListener {
   private static final String                             L2_NHA              = "l2.nha";
   private static final String                             SEND_TIMEOUT_PROP   = "send.timeout.millis";
@@ -60,8 +60,14 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   private NodeID                                          thisNodeID;
 
   private final CopyOnWriteArrayList<GroupEventsListener> groupListeners      = new CopyOnWriteArrayList<GroupEventsListener>();
-  private final Map<NodeID, Member>                       nodes               = Collections
-                                                                                  .synchronizedMap(new HashMap<NodeID, Member>());
+  // private final Map<NodeID, Member> nodes = new CopyOnWriteArrayMap<NodeID, Member>();
+  private final CopyOnWriteArrayMap                       nodes               = new CopyOnWriteArrayMap(
+                                                                                                        new CopyOnWriteArrayMap.TypedArrayFactory() {
+                                                                                                          public Object[] createTypedArray(
+                                                                                                                                           int size) {
+                                                                                                            return new Member[size];
+                                                                                                          }
+                                                                                                        });
   private final Map<String, GroupMessageListener>         messageListeners    = new ConcurrentHashMap<String, GroupMessageListener>();
   private final Map<MessageID, GroupResponse>             pendingRequests     = new Hashtable<MessageID, GroupResponse>();
 
@@ -305,7 +311,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     }
     NodeID newNode = makeNodeIDFrom(member);
     Member old;
-    if ((old = nodes.put(newNode, member)) == null) {
+    if ((old = (Member) nodes.put(newNode, member)) == null) {
       fireNodeEvent(newNode, true);
     } else {
       logger.warn("Member Added Event called for : " + newNode + " while it is still present in the list of nodes : "
@@ -362,15 +368,19 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     if (debug) {
       logger.info(this.thisNodeID + " : Sending to ALL : " + msg.getMessageID());
     }
-    // TODO :: Validate the options flag
     try {
-      Member m[] = group.getMembers();
+      Member m[] = getCurrentMembers();
       if (m.length > 0) {
         group.send(m, msg, SEND_OPTIONS_NO_ACK);
       }
     } catch (ChannelException e) {
       throw new GroupException(e);
     }
+  }
+
+  private Member[] getCurrentMembers() {
+    // return group.getMembers();
+    return (Member[]) nodes.valuesToArray();
   }
 
   public GroupResponse sendAllAndWaitForResponse(GroupMessage msg) throws GroupException {
@@ -381,7 +391,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     MessageID msgID = msg.getMessageID();
     GroupResponse old = pendingRequests.put(msgID, groupResponse);
     Assert.assertNull(old);
-    groupResponse.sendAll(group, msg);
+    groupResponse.sendTo(group, msg, getCurrentMembers());
     groupResponse.waitForAllResponses();
     pendingRequests.remove(msgID);
     return groupResponse;
@@ -393,7 +403,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
                   + node.getName() + ", node.uid=" + Conversion.bytesToHex(node.getUID()));
     }
     try {
-      Member member = nodes.get(node);
+      Member member = (Member) nodes.get(node);
       if (member != null) {
         group.send(new Member[] { member }, msg, SEND_OPTIONS_NO_ACK);
       } else {
@@ -412,7 +422,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     GroupResponseImpl groupResponse = new GroupResponseImpl();
     MessageID msgID = msg.getMessageID();
     Member to[] = new Member[1];
-    to[0] = nodes.get(nodeID);
+    to[0] = (Member) nodes.get(nodeID);
     if (to[0] != null) {
       GroupResponse old = pendingRequests.put(msgID, groupResponse);
       Assert.assertNull(old);
@@ -486,18 +496,17 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     }
 
     public synchronized void waitForAllResponses() throws GroupException {
+      int count = 0;
       while (!waitFor.isEmpty()) {
         try {
-          this.wait();
+          this.wait(5000);
+          if (++count > 1) {
+            logger.warn("Still waiting for response from " + waitFor + ". Count = " + count);
+          }
         } catch (InterruptedException e) {
           throw new GroupException(e);
         }
       }
-    }
-
-    public void sendAll(GroupChannel group, GroupMessage msg) {
-      Member m[] = group.getMembers();
-      sendTo(group, msg, m);
     }
 
     private synchronized void reconsileWaitFor(ChannelException e) {

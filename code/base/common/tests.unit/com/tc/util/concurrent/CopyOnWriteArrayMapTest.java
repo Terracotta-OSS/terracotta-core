@@ -5,8 +5,14 @@
 package com.tc.util.concurrent;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
 
 import junit.framework.TestCase;
 
@@ -92,6 +98,53 @@ public class CopyOnWriteArrayMapTest extends TestCase {
       assertArrayEquals(al.toArray(), cam.values().toArray());
     }
 
+  }
+  
+  public void testBasicEntrySetKeySet() throws Exception {
+    CopyOnWriteArrayMap cam = new CopyOnWriteArrayMap();
+    cam.put(new Integer(10), "String value 10");
+    cam.put(new Integer(20), "String value 20");
+    cam.put(new Integer(30), "String value 30");
+    cam.put(new Integer(40), "String value 40");
+   
+    System.err.println(" Printing cam : " + cam);
+    
+    Map newMap = new HashMap(cam);
+    assertEquals(cam, newMap);
+    for (Iterator i = cam.entrySet().iterator(); i.hasNext();) {
+      Entry e = (Entry) i.next();
+      System.err.println("Trying to remap : should throw an exception : " + e);
+      try {
+      e.setValue("Hey Jude");
+      } catch(UnsupportedOperationException ue) {
+        System.err.println("Caught exception as expected ;)");
+      }
+      System.err.println("Trying to trying to remove using the iterator : should throw an exception ");
+      try {
+        i.remove();
+      } catch(UnsupportedOperationException ue) {
+        System.err.println("Caught exception as expected ;)");
+      }
+    }
+  }
+  
+  public void testTypedArrayFactory() throws Exception {
+    CopyOnWriteArrayMap cam = new CopyOnWriteArrayMap(new CopyOnWriteArrayMap.TypedArrayFactory() {
+      public Object[] createTypedArray(int size) {
+        return new String[size];
+      }
+    });
+    cam.put(new Long(99), "hey");
+    cam.put(new Long(999), "you");
+    cam.put(new Long(9999), "jude");
+    
+    String values[] = (String[]) cam.valuesToArray();
+    assertEquals(3, values.length);
+    Set s = new HashSet(Arrays.asList(values));
+    assertTrue(s.remove("hey"));
+    assertTrue(s.remove("you"));
+    assertTrue(s.remove("jude"));
+    assertTrue(s.isEmpty());
   }
 
   private void assertArrayEquals(Object[] a1, Object[] a2) {
