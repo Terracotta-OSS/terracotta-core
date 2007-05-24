@@ -28,6 +28,8 @@ public interface EmbeddedOSGiRuntime {
 
   public static final String MODULES_URL_PROPERTY_NAME = "tc.tests.configuration.modules.url";
 
+  void installBundles() throws BundleException;
+  
   void installBundle(final String bundleName, final String bundleVersion) throws BundleException;
 
   void startBundle(final String bundleName, final String bundleVersion) throws BundleException;

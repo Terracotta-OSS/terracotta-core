@@ -13,8 +13,12 @@ import org.osgi.framework.ServiceReference;
 
 import com.tc.net.util.URLUtil;
 
+import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Dictionary;
@@ -58,6 +62,30 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     framework.launch(0);
   }
 
+  public void installBundles() throws BundleException {
+    for(int i=0; i<bundleRepositories.length; i++) {
+      final URL bundleLocation = bundleRepositories[i];
+      if (bundleLocation.getProtocol().equalsIgnoreCase("file")) {
+        try {
+          File bundleDir = new File(new URI(bundleLocation.toExternalForm()));
+          File[] bundleFiles = bundleDir.listFiles(new FileFilter() { 
+            public boolean accept(File file) {
+              return file.isFile() && file.getName().endsWith(".jar");
+            }
+          });
+
+          for(int j=0; j<bundleFiles.length; j++) {
+            final String bundleName = bundleFiles[j].getName().replaceFirst("-[0-9]+\\.[0-9]+\\.[0-9]+\\.jar", "");
+            final String bundleVersion = bundleFiles[j].getName().replaceFirst(".*-.*-", "").replaceFirst("\\.jar", "");
+            installBundle(bundleName, bundleVersion);
+          }
+        } catch (URISyntaxException use) {
+          throw new BundleException("Invalid file URL [" + bundleLocation + "]", use);
+        }
+      }
+    }
+  }
+
   public void installBundle(final String bundleName, final String bundleVersion) throws BundleException {
     final URL bundleLocation = getBundleURL(bundleName, bundleVersion);
     if (bundleLocation != null) {
@@ -65,7 +93,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
         framework.installBundle(bundleLocation.toString(), bundleLocation.openStream());
         info(Message.BUNDLE_INSTALLED, new Object[] { getSymbolicName(bundleName, bundleVersion) });
       } catch (IOException ioe) {
-        throw new BundleException("Unable to open URL[" + bundleLocation + "]", ioe);
+        throw new BundleException("Unable to open URL [" + bundleLocation + "]", ioe);
       }
     } else {
       throw new BundleException("Unable to find bundle '" + bundleName + "', version '" + bundleVersion

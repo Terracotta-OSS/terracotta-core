@@ -93,7 +93,8 @@ public class ModulesLoader {
   private static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
                                   final ClassProvider classProvider, final Module[] modules, boolean forBootJar) throws BundleException {
     // The "modules-common" bundle contains a convenience superclass that some bundles extend
-    osgiRuntime.installBundle("modules-common-1.0", "1.0.0");
+    osgiRuntime.installBundles();
+    
     for (int pos = 0; pos < modules.length; ++pos) {
       String bundle = modules[pos].getName() + "-" + modules[pos].getVersion();
       logger.info("Installing OSGI bundle " + bundle);

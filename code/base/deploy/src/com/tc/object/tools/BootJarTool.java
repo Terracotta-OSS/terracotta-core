@@ -976,7 +976,7 @@ public class BootJarTool {
 
     loadTerracottaClass("com.tc.jrexx.set.SAutomatonData");
     loadTerracottaClass("com.tc.jrexx.set.SAutomatonData$State");
-      loadTerracottaClass("com.tc.jrexx.set.SAutomatonData$State$Transition");
+    loadTerracottaClass("com.tc.jrexx.set.SAutomatonData$State$Transition");
     loadTerracottaClass("com.tc.jrexx.set.StateProSet");
     loadTerracottaClass("com.tc.jrexx.set.StateProSet$Iterator");
     loadTerracottaClass("com.tc.jrexx.set.StateProSet$Wrapper_State");
@@ -2147,10 +2147,7 @@ public class BootJarTool {
       if (makeItAnyway || !targetFile.exists() || (targetFile.exists() && !bjTool.isBootJarComplete(targetFile))) {
         bjTool.generateJar();
       }
-
-      if (targetFile.exists()) {
-        bjTool.verifyJar(targetFile);
-      }
+      bjTool.verifyJar(targetFile);
     } else if (mode.equals(SCAN_MODE)) {
       bjTool.scanJar(targetFile);
     } else {
