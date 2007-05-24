@@ -5,25 +5,21 @@
 package com.tc.util.concurrent.locks;
 
 import com.tc.exception.TCNotSupportedMethodException;
-import com.tc.exception.TCRuntimeException;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.util.Stack;
 import com.tc.util.UnsafeUtil;
+import com.tcclient.util.concurrent.locks.ConditionObject;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
 
-public class ReentrantLock implements Lock, java.io.Serializable {
+public class ReentrantLock implements TCLock, java.io.Serializable {
   private boolean  isFair;
 
   /** Current owner thread */
@@ -202,12 +198,6 @@ public class ReentrantLock implements Lock, java.io.Serializable {
       UnsafeUtil.monitorExit(this);
       if (!needDSOUnlock) {
         lock.notifyAll();
-
-        /*
-         * int tryLockWaitObjectIndex = tryLockWaitQueue.size() - 1; if (tryLockWaitObjectIndex >= 0) { Object
-         * tryLockWaitObject = this.tryLockWaitQueue.remove(tryLockWaitObjectIndex); synchronized (tryLockWaitObject) {
-         * tryLockWaitObject.notify(); } }
-         */
       }
     }
     if (needDSOUnlock) {
@@ -216,7 +206,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
   }
 
   public Condition newCondition() {
-    return new ConditionObject(new SyncCondition(), this);
+    return new ConditionObject(this);
   }
 
   public int getHoldCount() {
@@ -365,330 +355,14 @@ public class ReentrantLock implements Lock, java.io.Serializable {
     s.writeBoolean(isFair);
   }
 
-  private static class SyncCondition implements java.io.Serializable {
-    private final static byte SIGNALLED     = 0;
-    private final static byte NOT_SIGNALLED = 1;
+  public Object getTCLockingObject() {
+    return this;
+  }
 
-    private int               version;
-    private byte              signalled;
-
-    public SyncCondition() {
-      super();
-      this.version = 0;
-      this.signalled = NOT_SIGNALLED;
-    }
-
-    public boolean isSignalled() {
-      return signalled == SIGNALLED;
-    }
-
-    public void setSignalled() {
-      signalled = SIGNALLED;
-    }
-
-    public void incrementVersionIfSignalled() {
-      if (isSignalled()) {
-        this.version++;
-        resetSignalled();
-      }
-    }
-
-    public int getVersion() {
-      return this.version;
-    }
-
-    public boolean hasNotSignalledOnVersion(int targetVersion) {
-      return !isSignalled() && (this.version == targetVersion);
-    }
-
-    private void resetSignalled() {
-      this.signalled = NOT_SIGNALLED;
+  public int localHeldCount() {
+    synchronized(lock) {
+      return getHoldCount();
     }
   }
 
-  private static class ConditionObject implements Condition, java.io.Serializable {
-    private transient List      waitingThreads;
-    private transient int       numOfWaitingThreards;
-    private transient Map       waitOnUnshared;
-
-    private final ReentrantLock originalLock;
-    private final SyncCondition realCondition;
-
-    private static long getSystemNanos() {
-      return System.nanoTime();
-    }
-
-    public ConditionObject(SyncCondition realCondition, ReentrantLock originalLock) {
-      this.originalLock = originalLock;
-      this.realCondition = realCondition;
-      this.waitingThreads = new ArrayList();
-      this.numOfWaitingThreards = 0;
-      this.waitOnUnshared = new HashMap();
-    }
-
-    public ConditionObject() {
-      this.originalLock = null;
-      this.realCondition = null;
-      this.waitingThreads = new ArrayList();
-      this.numOfWaitingThreards = 0;
-      this.waitOnUnshared = new HashMap();
-    }
-
-    private void fullRelease() {
-      if (originalLock.getHoldCount() > 0) {
-        while (originalLock.getHoldCount() > 0) {
-          originalLock.unlock();
-        }
-      } else {
-        // The else part is needed only when the await of the Condition object is executed
-        // in an applicator as ManagerUtil.monitorEnter() is short circuited in applicator.
-        while (Thread.holdsLock(originalLock)) {
-          UnsafeUtil.monitorExit(originalLock);
-        }
-      }
-    }
-
-    private void reacquireLock(int numOfHolds) {
-      if (originalLock.getHoldCount() >= numOfHolds) { return; }
-      while (originalLock.getHoldCount() < numOfHolds) {
-        originalLock.lock();
-      }
-    }
-
-    private void checkCauseAndThrowInterruptedExceptionIfNecessary(TCRuntimeException e) throws InterruptedException {
-      if (e.getCause() instanceof InterruptedException) {
-        throw (InterruptedException) e.getCause();
-      } else {
-        throw e;
-      }
-    }
-
-    private void addWaitOnUnshared() {
-      waitOnUnshared.put(Thread.currentThread(), ManagerUtil.isManaged(realCondition) ? Boolean.FALSE : Boolean.TRUE);
-    }
-
-    private boolean isLockRealConditionInUnshared() {
-      if (!ManagerUtil.isManaged(realCondition) || !ManagerUtil.isHeldByCurrentThread(realCondition, LockLevel.WRITE)) { return true; }
-      return false;
-    }
-
-    public void await() throws InterruptedException {
-      Thread currentThread = Thread.currentThread();
-
-      if (!originalLock.isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
-      if (Thread.interrupted()) { throw new InterruptedException(); }
-
-      int numOfHolds = originalLock.getHoldCount();
-
-      realCondition.incrementVersionIfSignalled();
-      int version = realCondition.getVersion();
-      fullRelease();
-      try {
-        ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
-        UnsafeUtil.monitorEnter(realCondition);
-        boolean isLockInUnshared = isLockRealConditionInUnshared();
-        try {
-          if (realCondition.hasNotSignalledOnVersion(version)) {
-            waitingThreads.add(currentThread);
-            numOfWaitingThreards++;
-
-            addWaitOnUnshared();
-            try {
-              ManagerUtil.objectWait0(realCondition);
-            } finally {
-              waitOnUnshared.remove(currentThread);
-              waitingThreads.remove(currentThread);
-              numOfWaitingThreards--;
-            }
-          }
-        } finally {
-          UnsafeUtil.monitorExit(realCondition);
-          if (!isLockInUnshared) {
-            ManagerUtil.monitorExit(realCondition);
-          }
-        }
-      } catch (TCRuntimeException e) {
-        checkCauseAndThrowInterruptedExceptionIfNecessary(e);
-      } finally {
-        reacquireLock(numOfHolds);
-      }
-    }
-
-    public void awaitUninterruptibly() {
-      Thread currentThread = Thread.currentThread();
-
-      if (!originalLock.isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
-
-      int numOfHolds = originalLock.getHoldCount();
-      boolean isInterrupted = false;
-      realCondition.incrementVersionIfSignalled();
-      int version = realCondition.getVersion();
-      fullRelease();
-      try {
-        ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
-        UnsafeUtil.monitorEnter(realCondition);
-        boolean isLockInUnshared = isLockRealConditionInUnshared();
-        try {
-          if (realCondition.hasNotSignalledOnVersion(version)) {
-            while (true) {
-              waitingThreads.add(currentThread);
-              numOfWaitingThreards++;
-
-              addWaitOnUnshared();
-              try {
-                ManagerUtil.objectWait0(realCondition);
-                break;
-              } catch (InterruptedException e) {
-                isInterrupted = true;
-              } finally {
-                waitOnUnshared.remove(currentThread);
-                waitingThreads.remove(currentThread);
-                numOfWaitingThreards--;
-              }
-            }
-          }
-        } finally {
-          UnsafeUtil.monitorExit(realCondition);
-          if (!isLockInUnshared) {
-            ManagerUtil.monitorExit(realCondition);
-          }
-        }
-      } finally {
-        reacquireLock(numOfHolds);
-      }
-
-      if (isInterrupted) {
-        currentThread.interrupt();
-      }
-    }
-
-    public long awaitNanos(long nanosTimeout) throws InterruptedException {
-      Thread currentThread = Thread.currentThread();
-
-      if (!originalLock.isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
-      if (Thread.interrupted()) { throw new InterruptedException(); }
-
-      int numOfHolds = originalLock.getHoldCount();
-      realCondition.incrementVersionIfSignalled();
-      int version = realCondition.getVersion();
-      fullRelease();
-      try {
-        ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
-        UnsafeUtil.monitorEnter(realCondition);
-        boolean isLockInUnshared = isLockRealConditionInUnshared();
-        try {
-          if (realCondition.hasNotSignalledOnVersion(version)) {
-            waitingThreads.add(currentThread);
-            numOfWaitingThreards++;
-
-            addWaitOnUnshared();
-            try {
-              long startTime = getSystemNanos();
-              TimeUnit.NANOSECONDS.timedWait(realCondition, nanosTimeout);
-              long remainingTime = nanosTimeout - (getSystemNanos() - startTime);
-              return remainingTime;
-            } finally {
-              waitOnUnshared.remove(currentThread);
-              waitingThreads.remove(currentThread);
-              numOfWaitingThreards--;
-            }
-          } else {
-            return nanosTimeout;
-          }
-        } finally {
-          UnsafeUtil.monitorExit(realCondition);
-          if (!isLockInUnshared) {
-            ManagerUtil.monitorExit(realCondition);
-          }
-        }
-      } catch (TCRuntimeException e) {
-        checkCauseAndThrowInterruptedExceptionIfNecessary(e);
-        return 0;
-      } finally {
-        reacquireLock(numOfHolds);
-      }
-    }
-
-    public boolean await(long time, TimeUnit unit) throws InterruptedException {
-      if (unit == null) { throw new NullPointerException(); }
-      return awaitNanos(unit.toNanos(time)) > 0;
-    }
-
-    public boolean awaitUntil(Date deadline) throws InterruptedException {
-      if (deadline == null) { throw new NullPointerException(); }
-
-      long abstime = deadline.getTime();
-      if (System.currentTimeMillis() > abstime) { return true; }
-      return !await(abstime - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-    }
-
-    private boolean hasWaitOnUnshared() {
-      return waitOnUnshared.values().contains(Boolean.TRUE);
-    }
-
-    public void signal() {
-      if (!originalLock.isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
-
-      ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
-      UnsafeUtil.monitorEnter(realCondition);
-      boolean isLockInUnshared = isLockRealConditionInUnshared();
-      try {
-        ManagerUtil.objectNotify(realCondition);
-        if (hasWaitOnUnshared()) {
-          realCondition.notify();
-        }
-        realCondition.setSignalled();
-      } finally {
-        UnsafeUtil.monitorExit(realCondition);
-        if (!isLockInUnshared) {
-          ManagerUtil.monitorExit(realCondition);
-        }
-      }
-    }
-
-    public void signalAll() {
-      if (!originalLock.isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
-      ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
-      UnsafeUtil.monitorEnter(realCondition);
-      boolean isLockInUnshared = isLockRealConditionInUnshared();
-      try {
-        ManagerUtil.objectNotifyAll(realCondition);
-        if (hasWaitOnUnshared()) {
-          realCondition.notifyAll();
-        }
-        realCondition.setSignalled();
-      } finally {
-        UnsafeUtil.monitorExit(realCondition);
-        if (!isLockInUnshared) {
-          ManagerUtil.monitorExit(realCondition);
-        }
-      }
-    }
-
-    int getWaitQueueLength(ReentrantLock lock) {
-      if (originalLock != lock) throw new IllegalArgumentException("not owner");
-      if (!ManagerUtil.isManaged(originalLock)) {
-        return numOfWaitingThreards;
-      } else {
-        return ManagerUtil.waitLength(realCondition);
-      }
-    }
-
-    Collection getWaitingThreads(ReentrantLock lock) {
-      if (originalLock != lock) throw new IllegalArgumentException("not owner");
-      return waitingThreads;
-    }
-
-    private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
-      s.defaultReadObject();
-      this.waitingThreads = new ArrayList();
-      this.numOfWaitingThreards = 0;
-      this.waitOnUnshared = new HashMap();
-    }
-
-    private void writeObject(java.io.ObjectOutputStream s) throws java.io.IOException {
-      s.defaultWriteObject();
-    }
-
-  }
 }

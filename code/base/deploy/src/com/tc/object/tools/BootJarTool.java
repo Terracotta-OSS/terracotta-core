@@ -1962,28 +1962,6 @@ public class BootJarTool {
     // we do not remove this spec.
     config.removeSpec("com.tc.util.concurrent.locks.ReentrantLock");
 
-    bytes = getSystemBytes("com.tc.util.concurrent.locks.ReentrantLock$ConditionObject");
-    spec = config.getOrCreateSpec("com.tc.util.concurrent.locks.ReentrantLock$ConditionObject");
-    spec.disableWaitNotifyCodeSpec("signal()V");
-    spec.disableWaitNotifyCodeSpec("signalAll()V");
-    spec.setHonorTransient(true);
-    spec.markPreInstrumented();
-    bytes = changePackageAndGetBytes("com.tc.util.concurrent.locks.ReentrantLock$ConditionObject", bytes,
-                                     "ReentrantLock", "com.tc.util.concurrent.locks", "java.util.concurrent.locks");
-    bootJar.loadClassIntoJar("java.util.concurrent.locks.ReentrantLock$ConditionObject", bytes, spec
-        .isPreInstrumented());
-
-    config.removeSpec("com.tc.util.concurrent.locks.ReentrantLock$ConditionObject");
-
-    bytes = getSystemBytes("com.tc.util.concurrent.locks.ReentrantLock$SyncCondition");
-    spec = config.getOrCreateSpec("com.tc.util.concurrent.locks.ReentrantLock$SyncCondition");
-    spec.markPreInstrumented();
-    bytes = changePackageAndGetBytes("com.tc.util.concurrent.locks.ReentrantLock$SyncCondition", bytes,
-                                     "ReentrantLock", "com.tc.util.concurrent.locks", "java.util.concurrent.locks");
-    bootJar.loadClassIntoJar("java.util.concurrent.locks.ReentrantLock$SyncCondition", bytes, spec.isPreInstrumented());
-
-    config.removeSpec("com.tc.util.concurrent.locks.ReentrantLock$SyncCondition");
-
   }
 
   private final void addInstrumentedWeakHashMap() {

@@ -949,10 +949,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
       spec.setCallConstructorOnLoad(true);
       spec.setHonorTransient(true);
       
-      spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantLock$ConditionObject");
-      spec.setCallConstructorOnLoad(true);
-      spec.setHonorTransient(true);
-
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$DsoLock");
       spec.setHonorTransient(true);
       spec = getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock$ReadLockTC");
