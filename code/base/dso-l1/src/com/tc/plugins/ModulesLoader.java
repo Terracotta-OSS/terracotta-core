@@ -93,16 +93,15 @@ public class ModulesLoader {
   private static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
                                   final ClassProvider classProvider, final Module[] modules, boolean forBootJar) throws BundleException {
     // install all available bundles
-    osgiRuntime.installBundles();
+    osgiRuntime.installBundle("modules-common-1.0", "1.0.0");
+    //osgiRuntime.installBundles();
     
-    /*
     for (int pos = 0; pos < modules.length; ++pos) {
       String bundle = modules[pos].getName() + "-" + modules[pos].getVersion();
       logger.info("Installing OSGI bundle " + bundle);
       osgiRuntime.installBundle(modules[pos].getName(), modules[pos].getVersion());
       logger.info("Installation of OSGI bundle " + bundle + " successful");
     }
-    */
     
     if (configHelper instanceof StandardDSOClientConfigHelper) {
       final Dictionary serviceProps = new Hashtable();
