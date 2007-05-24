@@ -11,6 +11,8 @@ import org.osgi.framework.Constants;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.util.URLUtil;
 
 import java.io.File;
@@ -28,6 +30,8 @@ import java.util.Dictionary;
  * for more details.
  */
 final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
+
+  private static final TCLogger logger = TCLogging.getLogger(KnopflerfishOSGi.class);
 
   private static String       KF_BUNDLESTORAGE_PROP         = "org.knopflerfish.framework.bundlestorage";
   private static String       KF_BUNDLESTORAGE_PROP_DEFAULT = "memory";

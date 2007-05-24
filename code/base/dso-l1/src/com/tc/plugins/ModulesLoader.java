@@ -92,15 +92,18 @@ public class ModulesLoader {
 
   private static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
                                   final ClassProvider classProvider, final Module[] modules, boolean forBootJar) throws BundleException {
-    // The "modules-common" bundle contains a convenience superclass that some bundles extend
+    // install all available bundles
     osgiRuntime.installBundles();
     
+    /*
     for (int pos = 0; pos < modules.length; ++pos) {
       String bundle = modules[pos].getName() + "-" + modules[pos].getVersion();
       logger.info("Installing OSGI bundle " + bundle);
       osgiRuntime.installBundle(modules[pos].getName(), modules[pos].getVersion());
       logger.info("Installation of OSGI bundle " + bundle + " successful");
     }
+    */
+    
     if (configHelper instanceof StandardDSOClientConfigHelper) {
       final Dictionary serviceProps = new Hashtable();
       serviceProps.put(Constants.SERVICE_VENDOR, "Terracotta, Inc.");
@@ -108,6 +111,7 @@ public class ModulesLoader {
                                                       + " the Terracotta bytecode instrumentation");
       osgiRuntime.registerService(configHelper, serviceProps);
     }
+    
     for (int pos = 0; pos < modules.length; ++pos) {
       String name = modules[pos].getName();
       String version = modules[pos].getVersion();
