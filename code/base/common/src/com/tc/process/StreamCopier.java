@@ -44,7 +44,7 @@ public class StreamCopier extends Thread {
         if (identifier != null) {
           line = identifier + line;
         }
-        line += "\n";
+        line += System.getProperty("line.separator", "\n");
         out.write(line.getBytes());
         out.flush();
       }
