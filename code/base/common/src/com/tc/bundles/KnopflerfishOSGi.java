@@ -72,18 +72,34 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
       if (bundleLocation.getProtocol().equalsIgnoreCase("file")) {
         try {
           final File bundleDir = new File(new URI(bundleLocation.toExternalForm()));
-          if (bundleDir.isDirectory()) {
-            File[] bundleFiles = bundleDir.listFiles(new FileFilter() { 
-              public boolean accept(File file) {
-                return file.isFile() && file.getName().matches(".+-.+-[0-9]+\\.[0-9]+\\.[0-9]+\\.jar");
-              }
-            });
-  
-            for(int j=0; j<bundleFiles.length; j++) {
-              final String bundleName = bundleFiles[j].getName().replaceFirst("-[0-9]+\\.[0-9]+\\.[0-9]+\\.jar", "");
-              final String bundleVersion = bundleFiles[j].getName().replaceFirst(".+-.+-", "").replaceFirst("\\.jar", "");
-              installBundle(bundleName, bundleVersion);
+          if (!bundleDir.exists()) {
+            // TODO: We need a better way to handle this. If we throw an exception 
+            // here, and we're running a test, then it breaks the test;
+            // but if we're in production and 'bundleDir' does not exists, then
+            // the client wont be notified of the anomaly; maybe print a warning message???
+            logger.warn("The bundle repository: '" + bundleDir.toString() + "' does not exist.");
+            continue;
+          }
+          
+          if (!bundleDir.isDirectory()) {
+            throw new BundleException("Invalid bundle repository specified in the URL [" + bundleDir + "]");
+          }
+          
+          final String MODULE_VERSION_REGEX      = "[0-9]+\\.[0-9]+\\.[0-9]+";
+          final String MODULE_FILENAME_REGEX     = ".+-.+-";
+          final String MODULE_FILENAME_EXT_REGEX = "\\.jar";
+          final File[] bundleFiles = bundleDir.listFiles(new FileFilter() { 
+            public boolean accept(File file) {
+              return file.isFile() && file.getName().matches(MODULE_FILENAME_REGEX 
+                  + MODULE_VERSION_REGEX 
+                  + MODULE_FILENAME_EXT_REGEX);
             }
+          });
+
+          for(int j=0; j<bundleFiles.length; j++) {
+            final String bundleName = bundleFiles[j].getName().replaceFirst("-" + MODULE_VERSION_REGEX + MODULE_FILENAME_EXT_REGEX, "");
+            final String bundleVersion = bundleFiles[j].getName().replaceFirst(MODULE_FILENAME_REGEX, "").replaceFirst(MODULE_FILENAME_EXT_REGEX, "");
+            installBundle(bundleName, bundleVersion);
           }
         } catch (URISyntaxException use) {
           throw new BundleException("Invalid file URL [" + bundleLocation + "]", use);
@@ -97,6 +113,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     if (bundleLocation != null) {
       try {
         framework.installBundle(bundleLocation.toString(), bundleLocation.openStream());
+        System.out.println("x> " + bundleName);
         info(Message.BUNDLE_INSTALLED, new Object[] { getSymbolicName(bundleName, bundleVersion) });
       } catch (IOException ioe) {
         throw new BundleException("Unable to open URL [" + bundleLocation + "]", ioe);
