@@ -45,8 +45,18 @@ public class ClassUtils {
     // a jdk1.4 friendly (but still fast) check for enums
     Class superClass = c.getSuperclass();
     if (superClass == null) return false;
-    if (((c.getModifiers() & 0x00004000) != 0) && "java.lang.Enum".equals(superClass.getName())) { return true; }
+    if (((c.getModifiers() & 0x00004000) != 0) && isSubclassOfEnum(superClass)) { return true; }
     return false;
+  }
+  
+  private static boolean isSubclassOfEnum(Class c) {
+    String name = c.getName();
+    while (!"java.lang.Enum".equals(name)) {
+      c = c.getSuperclass();
+      if (c == null) { return false; }
+      name = c.getName();
+    }
+    return true;
   }
 
   public static boolean isPortableReflectionClass(Class c) {

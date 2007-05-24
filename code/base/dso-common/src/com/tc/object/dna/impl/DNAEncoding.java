@@ -179,7 +179,7 @@ public class DNAEncoding {
     switch (type) {
       case LiteralValues.ENUM:
         output.writeByte(TYPE_ID_ENUM);
-        Class enumClass = value.getClass();
+        Class enumClass = getEnumDeclaringClass(value);
         writeString(enumClass.getName(), output);
         writeString(classProvider.getLoaderDescriptionFor(enumClass), output);
 
@@ -719,6 +719,29 @@ public class DNAEncoding {
     }
     return rv;
   }
+  
+  /**
+   * The reason that we use reflection here is because Enum is a jdk 1.5 construct and this project is jdk 1.4
+   * compliance.
+   */
+  private Class getEnumDeclaringClass(Object enum) {
+    try {
+      Method m = enum.getClass().getMethod("getDeclaringClass", new Class[0]);
+      Object enumDeclaringClass = m.invoke(enum, new Object[0]);
+      return (Class)enumDeclaringClass;
+    } catch (SecurityException e) {
+      throw new TCRuntimeException(e);
+    } catch (NoSuchMethodException e) {
+      throw new TCRuntimeException(e);
+    } catch (IllegalArgumentException e) {
+      throw new TCRuntimeException(e);
+    } catch (IllegalAccessException e) {
+      throw new TCRuntimeException(e);
+    } catch (InvocationTargetException e) {
+      throw new TCRuntimeException(e);
+    }
+  }
+
 
   /**
    * The reason that we use reflection here is because Enum is a jdk 1.5 construct and this project is jdk 1.4
