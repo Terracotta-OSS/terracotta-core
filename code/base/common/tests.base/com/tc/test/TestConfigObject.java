@@ -76,7 +76,7 @@ public class TestConfigObject {
 
   public static final String      APP_SERVER_REPOSITORY_URL_BASE    = STATIC_PROPERTIES_PREFIX + "appserver.repository";
 
-  public static final String      APP_SERVER_HOME                   = DYNAMIC_PROPERTIES_PREFIX + "appserver.home";
+  public static final String      APP_SERVER_HOME                   = STATIC_PROPERTIES_PREFIX + "appserver.home";
 
   private static final String     APP_SERVER_FACTORY_NAME           = STATIC_PROPERTIES_PREFIX
                                                                         + "appserver.factory.name";
@@ -349,7 +349,7 @@ public class TestConfigObject {
     return out;
   }
 
-  public String appserverURLBase() {
+  public String appserverURLBase() {    
     return this.properties.getProperty(APP_SERVER_REPOSITORY_URL_BASE);
   }
 
