@@ -71,17 +71,19 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
       final URL bundleLocation = bundleRepositories[i];
       if (bundleLocation.getProtocol().equalsIgnoreCase("file")) {
         try {
-          File bundleDir = new File(new URI(bundleLocation.toExternalForm()));
-          File[] bundleFiles = bundleDir.listFiles(new FileFilter() { 
-            public boolean accept(File file) {
-              return file.isFile() && file.getName().endsWith(".jar");
+          final File bundleDir = new File(new URI(bundleLocation.toExternalForm()));
+          if (bundleDir.isDirectory()) {
+            File[] bundleFiles = bundleDir.listFiles(new FileFilter() { 
+              public boolean accept(File file) {
+                return file.isFile() && file.getName().matches(".+-.+-[0-9]+\\.[0-9]+\\.[0-9]+\\.jar");
+              }
+            });
+  
+            for(int j=0; j<bundleFiles.length; j++) {
+              final String bundleName = bundleFiles[j].getName().replaceFirst("-[0-9]+\\.[0-9]+\\.[0-9]+\\.jar", "");
+              final String bundleVersion = bundleFiles[j].getName().replaceFirst(".+-.+-", "").replaceFirst("\\.jar", "");
+              installBundle(bundleName, bundleVersion);
             }
-          });
-
-          for(int j=0; j<bundleFiles.length; j++) {
-            final String bundleName = bundleFiles[j].getName().replaceFirst("-[0-9]+\\.[0-9]+\\.[0-9]+\\.jar", "");
-            final String bundleVersion = bundleFiles[j].getName().replaceFirst(".*-.*-", "").replaceFirst("\\.jar", "");
-            installBundle(bundleName, bundleVersion);
           }
         } catch (URISyntaxException use) {
           throw new BundleException("Invalid file URL [" + bundleLocation + "]", use);
