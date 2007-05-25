@@ -14,6 +14,7 @@ import com.tc.object.tx.ReadOnlyException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.DebugUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.HashMap;
@@ -585,6 +586,11 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       }
     }
     barrier.await();
+    
+    DebugUtil.DEBUG = true;
+    if (DebugUtil.DEBUG) {
+      System.err.println("Client id: " + ManagerUtil.getClientID() + ", index: " + index);
+    }
 
     if (index == 0) {
       writeLock.lock();
@@ -600,8 +606,11 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       barrier2.await();
       Assert.assertFalse(isLocked);
     }
+    
     barrier.await();
-
+    
+    DebugUtil.DEBUG = false;
+    
     if (index == 0) {
       writeLock.lock();
       try {

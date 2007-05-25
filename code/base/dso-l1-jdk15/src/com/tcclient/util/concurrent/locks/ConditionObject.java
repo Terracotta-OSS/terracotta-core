@@ -7,6 +7,7 @@ package com.tcclient.util.concurrent.locks;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.util.DebugUtil;
 import com.tc.util.UnsafeUtil;
 import com.tc.util.concurrent.locks.TCLock;
 
@@ -88,12 +89,19 @@ public class ConditionObject implements Condition, java.io.Serializable {
 
     realCondition.incrementVersionIfSignalled();
     int version = realCondition.getVersion();
+    if (DebugUtil.DEBUG) {
+      System.err.println("Client id: " + ManagerUtil.getClientID() + ", await for version: " + version + ", realCondition: " + realCondition);
+    }
     fullRelease();
     try {
       ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
       UnsafeUtil.monitorEnter(realCondition);
       boolean isLockInUnshared = isLockRealConditionInUnshared();
       try {
+        if (DebugUtil.DEBUG) {
+          System.err.println("Client id: " + ManagerUtil.getClientID() + ", await for version: " + version + ", hasNotSignalledOnVersion: " + realCondition.hasNotSignalledOnVersion(version));
+        }
+
         if (realCondition.hasNotSignalledOnVersion(version)) {
           waitingThreads.add(currentThread);
           numOfWaitingThreards++;
@@ -254,6 +262,10 @@ public class ConditionObject implements Condition, java.io.Serializable {
 
   public void signalAll() {
     if (!((TCLock)originalLock).isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
+
+    if (DebugUtil.DEBUG) {
+      System.err.println("Client id: " + ManagerUtil.getClientID() + " signalAll, realCondition: " + realCondition + ", version: " + realCondition.getVersion());
+    }
 
     ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
     UnsafeUtil.monitorEnter(realCondition);
