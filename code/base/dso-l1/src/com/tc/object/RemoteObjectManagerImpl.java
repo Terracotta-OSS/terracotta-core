@@ -14,11 +14,11 @@ import com.tc.object.msg.RequestRootMessage;
 import com.tc.object.msg.RequestRootMessageFactory;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.State;
 import com.tc.util.Util;
 
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -44,7 +44,6 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
   private final LinkedHashMap                      rootRequests              = new LinkedHashMap();
   private final Map                                dnaRequests               = new THashMap();
-  private final Set                                removeObjects             = new THashSet(100, 0.8f);
   private final Map                                outstandingObjectRequests = new THashMap();
   private final Map                                outstandingRootRequests   = new THashMap();
   private long                                     objectRequestIDCounter    = 0;
@@ -53,9 +52,13 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   private final RequestRootMessageFactory          rrmFactory;
   private final RequestManagedObjectMessageFactory rmomFactory;
   private final DNALRU                             lruDNA                    = new DNALRU();
-  private final static int                         MAX_LRU                   = 60;
+  private final static int                         MAX_LRU                   = TCPropertiesImpl
+                                                                                 .getProperties()
+                                                                                 .getInt(
+                                                                                         "l1.objectmanager.remote.maxDNALRUSize");
   private final int                                defaultDepth;
   private State                                    state                     = RUNNING;
+  private Set                                      removeObjects             = new HashSet(256);
   private final SessionManager                     sessionManager;
   private final TCLogger                           logger;
   private static final int                         REMOVE_OBJECTS_THRESHOLD  = 10000;
@@ -145,7 +148,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
   public synchronized DNA retrieve(ObjectID id, int depth) {
     boolean isInterrupted = false;
-    
+
     ObjectRequestContext ctxt = new ObjectRequestContextImpl(this.cip.getChannelID(),
                                                              new ObjectRequestID(objectRequestIDCounter++), id, depth);
     while (!dnaRequests.containsKey(id) || dnaRequests.get(id) == null) {
@@ -170,9 +173,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   }
 
   private void sendRequest(ObjectRequestContext ctxt) {
-    Set tr = new HashSet(removeObjects);
-    RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt, tr);
-    removeObjects.clear();
+    RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt, removeObjects);
+    removeObjects = new HashSet(256);
     ObjectID id = null;
     for (Iterator i = ctxt.getObjectIDs().iterator(); i.hasNext();) {
       id = (ObjectID) i.next();
@@ -275,13 +277,12 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   public synchronized void removed(ObjectID id) {
     dnaRequests.remove(id);
     removeObjects.add(id);
-    if (removeObjects.size() > REMOVE_OBJECTS_THRESHOLD) {
+    if (removeObjects.size() >= REMOVE_OBJECTS_THRESHOLD) {
       ObjectRequestContext ctxt = new ObjectRequestContextImpl(this.cip.getChannelID(),
                                                                new ObjectRequestID(objectRequestIDCounter++),
                                                                Collections.EMPTY_SET, -1);
-      Set tr = new HashSet(removeObjects);
-      RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt, tr);
-      removeObjects.clear();
+      RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt, removeObjects);
+      removeObjects = new HashSet(256);
       rmom.send();
     }
   }

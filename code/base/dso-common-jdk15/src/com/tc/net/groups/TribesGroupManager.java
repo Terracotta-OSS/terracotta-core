@@ -40,11 +40,10 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@SuppressWarnings("unchecked")
 public class TribesGroupManager implements GroupManager, ChannelListener, MembershipListener {
   private static final String                             L2_NHA              = "l2.nha";
   private static final String                             SEND_TIMEOUT_PROP   = "send.timeout.millis";
-  private static final String                             USE_MCAST           = "use.mcast";
+  private static final String                             USE_MCAST           = "mcast.enabled";
   private static final int                                SEND_OPTIONS_NO_ACK = 0x00;
 
   private static final TCLogger                           logger              = TCLogging
