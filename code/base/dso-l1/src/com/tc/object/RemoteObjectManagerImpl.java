@@ -15,6 +15,7 @@ import com.tc.object.msg.RequestRootMessageFactory;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.Util;
 
@@ -23,6 +24,7 @@ import gnu.trove.THashMap;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -335,7 +337,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   }
 
   private class DNALRU {
+    //TODO:: These two data structure can be merged to one with into a LinkedHashMap with some marker object to identify buckets 
     private LinkedHashMap dnas = new LinkedHashMap();
+    private HashMap oids2BatchID = new HashMap();
 
     public synchronized int size() {
       return dnas.size();
@@ -343,30 +347,29 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
     public synchronized void clear() {
       dnas.clear();
+      oids2BatchID.clear();
     }
 
     public synchronized void add(long batchID, Collection objs) {
       Long key = new Long(batchID);
       Map m = (Map) dnas.get(key);
       if (m == null) {
-        // XXX:: We are creating a Map with initial size equals objs.size() but there could be more to come !
-        // Revisit !!
-        m = new THashMap(objs.size(), 0.8f);
+        m = new THashMap(objs.size() * 2, 0.8f);
         dnas.put(key, m);
       }
       for (Iterator i = objs.iterator(); i.hasNext();) {
         DNA dna = (DNA) i.next();
         m.put(dna.getObjectID(), dna);
+        oids2BatchID.put(dna.getObjectID(), key);
       }
     }
 
     public synchronized void remove(ObjectID id) {
-      for (Iterator i = dnas.values().iterator(); i.hasNext();) {
-        Map m = (Map) i.next();
-        if (m.remove(id) != null) {
-          // found !!!
-          break;
-        }
+      Long batchID = (Long) oids2BatchID.get(id);
+      if(batchID != null) {
+        Map m = (Map)  dnas.get(batchID);
+        Object dna  = m.remove(id);
+        Assert.assertNotNull(dna);
       }
     }
 
@@ -383,10 +386,10 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
               removed(id);
             }
           }
+          oids2BatchID.remove(id);
         }
         dnaMapIterator.remove();
       }
     }
   }
-
 }
