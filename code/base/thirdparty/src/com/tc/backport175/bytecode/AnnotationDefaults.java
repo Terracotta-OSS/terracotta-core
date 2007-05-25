@@ -60,11 +60,11 @@ class AnnotationDefaults {
         return defaults;
     }
 
-    private static final class AnnotationDefaultsClassVisitor extends EmptyVisitor {
+    static final class AnnotationDefaultsClassVisitor extends EmptyVisitor {
       private final AnnotationElement.Annotation  defaults;
       private final ClassLoader loader;
 
-      private AnnotationDefaultsClassVisitor(AnnotationElement.Annotation defaults, ClassLoader loader) {
+      AnnotationDefaultsClassVisitor(AnnotationElement.Annotation defaults, ClassLoader loader) {
         this.defaults = defaults;
         this.loader = loader;
       }
@@ -74,12 +74,12 @@ class AnnotationDefaults {
       }
     }
 
-    private static final class AnnotationDefaultsMethodVisitor extends EmptyVisitor {
+    static final class AnnotationDefaultsMethodVisitor extends EmptyVisitor {
       private final String name;
       private final Annotation defaults;
       private final ClassLoader loader;
       
-      private AnnotationDefaultsMethodVisitor(String name, Annotation defaults, ClassLoader loader) {
+      AnnotationDefaultsMethodVisitor(String name, Annotation defaults, ClassLoader loader) {
         this.name = name;
         this.defaults = defaults;
         this.loader = loader;
@@ -100,7 +100,7 @@ class AnnotationDefaults {
 
         private String m_methodName;
 
-        public DefaultAnnotationBuilderVisitor(final AnnotationElement.NestedAnnotationElement annotation, String methodName, ClassLoader loader) {
+        DefaultAnnotationBuilderVisitor(final AnnotationElement.NestedAnnotationElement annotation, String methodName, ClassLoader loader) {
             super(annotation, loader, null);
             m_methodName = methodName;
         }

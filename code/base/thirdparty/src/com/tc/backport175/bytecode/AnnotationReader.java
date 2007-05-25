@@ -958,10 +958,8 @@ public class AnnotationReader {
 
     /**
      * Retrieves the Java 5 RuntimeVisibleAnnotations annotations from the class bytecode.
-     *
-     * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
      */
-    private class AnnotationRetrievingVisitor extends EmptyVisitor {
+    class AnnotationRetrievingVisitor extends EmptyVisitor {
 
         public AnnotationVisitor visitAnnotation(final String desc, final boolean visible) {
             String annotationClassName = toJavaName(desc);
@@ -1007,11 +1005,11 @@ public class AnnotationReader {
 //            return new TraceAnnotationVisitor();
     }
 
-    private static final class AnnotationRetrievingConstructorVisitor extends EmptyVisitor {
+    static final class AnnotationRetrievingConstructorVisitor extends EmptyVisitor {
       private final MemberKey key;
       private final AnnotationReader reader;
 
-      private AnnotationRetrievingConstructorVisitor(MemberKey key, AnnotationReader reader) {
+      AnnotationRetrievingConstructorVisitor(MemberKey key, AnnotationReader reader) {
         this.key = key;
         this.reader = reader;
       }
@@ -1030,11 +1028,11 @@ public class AnnotationReader {
       }
     }
     
-    private static final class AnnotationRetrievingMethodVisitor extends EmptyVisitor {
+    static final class AnnotationRetrievingMethodVisitor extends EmptyVisitor {
       private final MemberKey key;
       private final AnnotationReader reader;
 
-      private AnnotationRetrievingMethodVisitor(MemberKey key, AnnotationReader reader) {
+      AnnotationRetrievingMethodVisitor(MemberKey key, AnnotationReader reader) {
         this.key = key;
         this.reader = reader;
       }
@@ -1053,11 +1051,11 @@ public class AnnotationReader {
       }
     }
     
-    private static final class AnnotationRetrievingFieldVisitor extends EmptyVisitor {
+    static final class AnnotationRetrievingFieldVisitor extends EmptyVisitor {
       private final MemberKey    key;
       private final AnnotationReader reader;
 
-      private AnnotationRetrievingFieldVisitor(MemberKey key, AnnotationReader reader) {
+      AnnotationRetrievingFieldVisitor(MemberKey key, AnnotationReader reader) {
         this.key = key;
         this.reader = reader;
       }

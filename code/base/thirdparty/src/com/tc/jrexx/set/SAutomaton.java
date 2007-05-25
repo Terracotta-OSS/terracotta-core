@@ -84,7 +84,7 @@ import java.io.*;
  */
 public class SAutomaton {
 
-  private final class SAutomatonChangeListener implements Automaton.IChangedListener {
+  final class SAutomatonChangeListener implements Automaton.IChangedListener {
 
     public void stateAdded(Automaton.State state) {
       StatePro wrapper = (StatePro)SAutomaton.this.state2wrapper.get(state);
