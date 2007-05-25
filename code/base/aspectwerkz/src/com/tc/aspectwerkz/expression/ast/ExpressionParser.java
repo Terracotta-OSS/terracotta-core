@@ -3391,7 +3391,7 @@ public class ExpressionParser/*@bgen(jjtree)*/ implements ExpressionParserTreeCo
     throw generateParseException();
   }
 
-  static private final class LookaheadSuccess extends java.lang.Error {
+  static final class LookaheadSuccess extends java.lang.Error {
   }
 
   static final private LookaheadSuccess jj_ls = new LookaheadSuccess();

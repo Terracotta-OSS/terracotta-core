@@ -509,7 +509,7 @@ public class ConstructorCallVisitor extends ClassAdapter implements Transformati
     }
   }
 
-  private static class NewInvocationStruct {
+  static class NewInvocationStruct {
     public String className;
     public String ctorDesc;
     public ConstructorInfo constructorInfo = null;

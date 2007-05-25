@@ -35,14 +35,14 @@ import java.lang.reflect.Modifier;
  * Advises catch clauses by inserting a call to the join point as the first thing in the catch block.
  *
  * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
+ * 
+ * TODO in ASM 2.x and later try/catch blocks are visited before method code, so this adapter is not needed
  */
 public class HandlerVisitor extends ClassAdapter implements TransformationConstants {
 
   /**
    * A visitor that looks for all catch clause and keep track of them
    * providing that they match
-   *
-   * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
    */
   public static class LookaheadCatchLabelsClassAdapter extends ClassAdapter {
 
@@ -133,14 +133,12 @@ public class HandlerVisitor extends ClassAdapter implements TransformationConsta
   /**
    * Visit the method, and keep track of all labels so that when visittryCatch is reached
    * we can remember the index
-   *
-   * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
    */
-  private static final class LookaheadCatchLabelsMethodAdapter extends MethodAdapter {
+  static final class LookaheadCatchLabelsMethodAdapter extends MethodAdapter {
     private final MemberInfo info;
     private final LookaheadCatchLabelsClassAdapter classAdapter;
 
-    private LookaheadCatchLabelsMethodAdapter(MethodVisitor mv, MemberInfo info, LookaheadCatchLabelsClassAdapter classAdapter) {
+    LookaheadCatchLabelsMethodAdapter(MethodVisitor mv, MemberInfo info, LookaheadCatchLabelsClassAdapter classAdapter) {
       super(mv);
       this.info = info;
       this.classAdapter = classAdapter;
@@ -341,16 +339,14 @@ public class HandlerVisitor extends ClassAdapter implements TransformationConsta
   /**
    * A struct to represent a catch clause.
    * The index is class wide, and the exception class info is kept.
-   *
-   * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
    */
-  private static class CatchLabelStruct {
+  static class CatchLabelStruct {
     int labelIndexInWholeClass = -1;
     ClassInfo exception = null;
     ClassInfo caller = null;
     MemberInfo callerMember = null;
 
-    private CatchLabelStruct(int indexInClass, ClassInfo exception, ClassInfo caller, MemberInfo callerMember) {
+    CatchLabelStruct(int indexInClass, ClassInfo exception, ClassInfo caller, MemberInfo callerMember) {
       labelIndexInWholeClass = indexInClass;
       this.exception = exception;
       this.caller = caller;

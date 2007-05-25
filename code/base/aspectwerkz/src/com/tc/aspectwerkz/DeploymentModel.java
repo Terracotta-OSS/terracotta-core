@@ -29,7 +29,7 @@ public class DeploymentModel {
 
   protected final String m_name;
 
-  private DeploymentModel(String name) {
+  DeploymentModel(String name) {
     m_name = name;
   }
 
@@ -75,11 +75,11 @@ public class DeploymentModel {
       return PER_TARGET;
       // below support for more advanced schemes.
     } else if (deploymentModelAsString.toLowerCase().startsWith(PER_THIS.m_name.toLowerCase())) {
-      return new PointcutControlledDeploymentModel(PER_THIS,
+      return new PointcutControlledDeploymentModel(PER_THIS.m_name,
               getDeploymentExpression(deploymentModelAsString, THIS_POINTCUT)
       );
     } else if (deploymentModelAsString.toLowerCase().startsWith(PER_TARGET.m_name.toLowerCase())) {
-      return new PointcutControlledDeploymentModel(PER_TARGET,
+      return new PointcutControlledDeploymentModel(PER_TARGET.m_name,
               getDeploymentExpression(deploymentModelAsString, TARGET_POINTCUT)
       );
     } else {
@@ -118,8 +118,8 @@ public class DeploymentModel {
 
     private String m_expression;
 
-    private PointcutControlledDeploymentModel(DeploymentModel deploymentModel, String expression) {
-      super(deploymentModel.m_name);
+    PointcutControlledDeploymentModel(String name, String expression) {
+      super(name);
       m_expression = expression;
     }
 

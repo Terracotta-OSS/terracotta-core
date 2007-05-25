@@ -104,7 +104,7 @@ public class SerialVersionUidVisitor extends ClassAdapter implements Opcodes {
     }
   }
 
-  private SerialVersionUidVisitor(final ClassVisitor cv) {
+  SerialVersionUidVisitor(final ClassVisitor cv) {
     super(cv);
   }
 
@@ -358,7 +358,7 @@ public class SerialVersionUidVisitor extends ClassAdapter implements Opcodes {
   /**
    * An Item represent a field / method / constructor needed in the computation
    */
-  private static abstract class Item implements Comparable {
+  static abstract class Item implements Comparable {
     private String m_name;
     private int m_access;
     private String m_desc;
@@ -395,7 +395,7 @@ public class SerialVersionUidVisitor extends ClassAdapter implements Opcodes {
   /**
    * A field item
    */
-  private static class FieldItem extends Item {
+  static class FieldItem extends Item {
     FieldItem(String name, int access, String desc) {
       super(name, access, desc);
     }
@@ -409,7 +409,7 @@ public class SerialVersionUidVisitor extends ClassAdapter implements Opcodes {
   /**
    * A method / constructor item
    */
-  private static class MethodItem extends Item {
+  static class MethodItem extends Item {
     MethodItem(String name, int access, String desc) {
       super(name, access, desc);
     }
@@ -422,8 +422,6 @@ public class SerialVersionUidVisitor extends ClassAdapter implements Opcodes {
 
   /**
    * Add the serial version uid to the class if not already present
-   *
-   * @author <a href="mailto:alex AT gnilux DOT com">Alexandre Vasseur</a>
    */
   public static class Add extends ClassAdapter {
 

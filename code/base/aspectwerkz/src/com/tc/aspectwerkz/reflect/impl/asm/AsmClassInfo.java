@@ -784,10 +784,8 @@ public class AsmClassInfo implements ClassInfo {
 
   /**
    * ASM bytecode visitor that gathers info about the class.
-   *
-   * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
    */
-  private class ClassInfoClassAdapter extends AsmNullAdapter.NullClassAdapter {
+  class ClassInfoClassAdapter extends AsmNullAdapter.NullClassAdapter {
 
     public void visit(final int version,
                       final int access,

@@ -427,7 +427,7 @@ public class AddMixinMethodsVisitor extends ClassAdapter implements Transformati
     }
   }
 
-  private static class MixinFieldInfo {
+  static class MixinFieldInfo {
     private String fieldName;
     private ClassInfo mixinClassInfo;
     private boolean isStatic;

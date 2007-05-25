@@ -275,9 +275,8 @@ public class DocumentParser {
       Node childNode = childNodes.item(i);
       if (childNode.getNodeName().equals("pointcut")) {
         Element pointcutElement = (Element) childNode;
-        PointcutInfo pointcutInfo = new PointcutInfo();
-        pointcutInfo.name = pointcutElement.getAttribute("name");
-        pointcutInfo.expression = pointcutElement.getAttribute("expression").trim();
+        PointcutInfo pointcutInfo = new PointcutInfo(pointcutElement.getAttribute("name"), //
+                                                     pointcutElement.getAttribute("expression").trim());
         // pointcut CDATA is expression unless already specified as an attribute
         if (pointcutInfo.expression == null || pointcutInfo.expression.trim().length() == 0) {
           pointcutInfo.expression = getText(pointcutElement).trim().replace('\n', ' ');
@@ -918,6 +917,11 @@ public class DocumentParser {
   private static class PointcutInfo {
     public String name;
     public String expression;
+    
+    public PointcutInfo(String name, String expression) {
+      this.name = name;
+      this.expression = expression;
+    }
   }
 
   /**
