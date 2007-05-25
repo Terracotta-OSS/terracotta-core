@@ -16,6 +16,7 @@ import com.terracottatech.config.Modules;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Dictionary;
@@ -57,7 +58,7 @@ public interface EmbeddedOSGiRuntime {
 
     private static final TCLogger logger = TCLogging.getLogger(EmbeddedOSGiRuntime.Factory.class);
 
-    public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules) throws Exception {
+    public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules) throws BundleException, Exception {
       final List prependLocations = new ArrayList();
       // There are two repositories that we [optionally] prepend: a system property (used by tests) and the installation
       // root (which is not set when running tests)
@@ -69,25 +70,31 @@ public interface EmbeddedOSGiRuntime {
       } catch (FileNotFoundException fnfe) {
         // Ignore, tc.install-dir is not set so we must be in a test environment
       }
-      if (System.getProperty(MODULES_URL_PROPERTY_NAME) != null) {
-        prependLocations.add(new URL(System.getProperty(MODULES_URL_PROPERTY_NAME)));
+      try {
+        if (System.getProperty(MODULES_URL_PROPERTY_NAME) != null) {
+          prependLocations.add(new URL(System.getProperty(MODULES_URL_PROPERTY_NAME)));
+        }
+        final URL[] prependURLs = new URL[prependLocations.size()];
+        prependLocations.toArray(prependURLs);
+  
+        final URL[] bundleRepositories = new URL[modules.sizeOfRepositoryArray() + prependURLs.length];
+        for (int pos = 0; pos < prependURLs.length; pos++) {
+          bundleRepositories[pos] = prependURLs[pos];
+        }
+        
+        for (int pos = prependURLs.length; pos < bundleRepositories.length; pos++) {
+          bundleRepositories[pos] = new URL(modules.getRepositoryArray(pos - prependURLs.length));
+        }
+  
+        logger.info("OSGi Bundle Repositories:");
+        for (int i = 0; i < bundleRepositories.length; i++) {
+          logger.info("\t" + bundleRepositories[i]);
+        }
+        
+        return new KnopflerfishOSGi(bundleRepositories);
+      } catch (MalformedURLException muex) {
+        throw new BundleException(muex.getMessage());
       }
-      final URL[] prependURLs = new URL[prependLocations.size()];
-      prependLocations.toArray(prependURLs);
-
-      final URL[] bundleRepositories = new URL[modules.sizeOfRepositoryArray() + prependURLs.length];
-      for (int pos = 0; pos < prependURLs.length; pos++) {
-        bundleRepositories[pos] = prependURLs[pos];
-      }
-      for (int pos = prependURLs.length; pos < bundleRepositories.length; pos++) {
-        bundleRepositories[pos] = new URL(modules.getRepositoryArray(pos - prependURLs.length));
-      }
-
-      logger.info("OSGi Bundle Repositories:");
-      for (int i = 0; i < bundleRepositories.length; i++) {
-        logger.info("\t" + bundleRepositories[i]);
-      }
-      return new KnopflerfishOSGi(bundleRepositories);
     }
   }
 
