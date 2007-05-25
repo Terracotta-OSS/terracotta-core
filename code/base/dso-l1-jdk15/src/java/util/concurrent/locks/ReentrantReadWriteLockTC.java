@@ -239,7 +239,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     }
   }
 
-  protected Collection getQueuedReaderThreads() {
+  protected Collection<Thread> getQueuedReaderThreads() {
     if (ManagerUtil.isManaged(this)) {
       throw new TCNotSupportedMethodException();
     } else {
@@ -247,7 +247,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     }
   }
   
-  protected Collection getQueuedThreads() {
+  protected Collection<Thread> getQueuedThreads() {
     if (ManagerUtil.isManaged(this)) {
       throw new TCNotSupportedMethodException();
     } else {
@@ -255,7 +255,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     }
   }
 
-  protected Collection getQueuedWriterThreads() {
+  protected Collection<Thread> getQueuedWriterThreads() {
     if (ManagerUtil.isManaged(this)) {
       throw new TCNotSupportedMethodException();
     } else {
@@ -272,7 +272,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     }
   }
 
-  protected Collection getWaitingThreads(Condition condition) {
+  protected Collection<Thread> getWaitingThreads(Condition condition) {
     if (ManagerUtil.isManaged(this)) {
       throw new TCNotSupportedMethodException();
     } else {

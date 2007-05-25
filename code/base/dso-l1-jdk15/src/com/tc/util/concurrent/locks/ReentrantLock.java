@@ -25,7 +25,7 @@ public class ReentrantLock implements TCLock, java.io.Serializable {
   /** Current owner thread */
   transient Thread owner            = null;
   transient int    numOfHolds       = 0;
-  transient List   waitingQueue     = new ArrayList();
+  transient List<Thread> waitingQueue = new ArrayList<Thread>();
   transient int    state            = 0;
   transient int    numQueued        = 0;
   transient Stack  lockInUnShared   = new Stack();
@@ -48,7 +48,7 @@ public class ReentrantLock implements TCLock, java.io.Serializable {
   private void initialize() {
     this.owner = null;
     this.numOfHolds = 0;
-    this.waitingQueue = new ArrayList();
+    this.waitingQueue = new ArrayList<Thread>();
     this.state = 0;
     this.numQueued = 0;
     this.lock = new Object();
@@ -271,11 +271,11 @@ public class ReentrantLock implements TCLock, java.io.Serializable {
     }
   }
 
-  protected Collection getQueuedThreads() {
+  protected Collection<Thread> getQueuedThreads() {
     if (ManagerUtil.isManaged(this)) {
       throw new TCNotSupportedMethodException();
     } else {
-      List waitingThreads = null;
+      List<Thread> waitingThreads = null;
       synchronized (lock) {
         waitingThreads = waitingQueue;
       }
@@ -296,7 +296,7 @@ public class ReentrantLock implements TCLock, java.io.Serializable {
     return ((ConditionObject) condition).getWaitQueueLength(this);
   }
 
-  protected Collection getWaitingThreads(Condition condition) {
+  protected Collection<Thread> getWaitingThreads(Condition condition) {
     if (ManagerUtil.isManaged(this)) throw new TCNotSupportedMethodException();
 
     if (condition == null) throw new NullPointerException();
