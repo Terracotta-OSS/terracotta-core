@@ -985,10 +985,10 @@ public class BootJarTool {
     // DEV-116; Some of these probably should'nt be in the boot jar
     loadTerracottaClass("com.tc.exception.ImplementMe");
     loadTerracottaClass("com.tc.exception.TCClassNotFoundException");
+    loadTerracottaClass("com.tc.object.dna.api.DNAException");
     loadTerracottaClass("com.tc.util.Assert");
     loadTerracottaClass("com.tc.util.StringUtil");
     loadTerracottaClass("com.tc.util.TCAssertionError");
-    loadTerracottaClass("com.tc.object.dna.api.DNAException");
   }
 
   private final void addTreeMap() {
