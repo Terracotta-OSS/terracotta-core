@@ -113,7 +113,6 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     if (bundleLocation != null) {
       try {
         framework.installBundle(bundleLocation.toString(), bundleLocation.openStream());
-        System.out.println("x> " + bundleName);
         info(Message.BUNDLE_INSTALLED, new Object[] { getSymbolicName(bundleName, bundleVersion) });
       } catch (IOException ioe) {
         throw new BundleException("Unable to open URL [" + bundleLocation + "]", ioe);
