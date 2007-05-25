@@ -59,9 +59,18 @@ public class TransactionRelayHandler extends AbstractEventHandler {
               .getNextSequence(nodeID));
       this.groupManager.sendTo(nodeID, msg);
     } catch (Exception e) {
+      reconsileWaitForNotification(nodeID, ict);
       logger.error("Removing " + nodeID + " from group because of Exception :", e);
       groupManager.zapNode(nodeID);
-      transactionManager.shutdownClient(nodeID.toChannelID());
+    }
+  }
+
+  private void reconsileWaitForNotification(NodeID nodeID, IncomingTransactionContext ict) {
+    ChannelID waitee = nodeID.toChannelID();
+    // TODO::avoid this loop and thus N lookups in transactionManager
+    for (Iterator i = ict.getServerTransactionIDs().iterator(); i.hasNext();) {
+      ServerTransactionID stxnID = (ServerTransactionID) i.next();
+      transactionManager.acknowledgement(ict.getChannelID(), stxnID.getClientTransactionID(), waitee);
     }
   }
 
