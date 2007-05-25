@@ -119,7 +119,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
       }
     } else {
       throw new BundleException("Unable to find bundle '" + bundleName + "', version '" + bundleVersion
-          + "' in any repository");
+          + "' from the default repository or any of the repositories listed in your config");
     }
   }
 
@@ -129,7 +129,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     info(Message.BUNDLE_STARTED, new Object[] { getSymbolicName(bundleName, bundleVersion) });
   }
 
-  public Bundle getBundle(String bundleName, String bundleVersion) {
+  public Bundle getBundle(String bundleName, String bundleVersion) throws BundleException {
     return framework.bundles.getBundle(getBundleID(bundleName, bundleVersion));
   }
 
@@ -167,22 +167,27 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     info(Message.SHUTDOWN, new Object[0]);
   }
 
-  private URL getBundleURL(final String bundleName, final String bundleVersion) {
+  private URL getBundleURL(final String bundleName, final String bundleVersion) throws BundleException {
     final String path = MessageFormat.format(BUNDLE_PATH, new String[] { bundleName, bundleVersion });
     try {
-      return URLUtil.resolve(bundleRepositories, path);
+      final URL url = URLUtil.resolve(bundleRepositories, path);
+      if (url == null) {
+        throw new BundleException("Unable to locate the bundle '" + bundleName + "' for version '" + bundleVersion + 
+            "', please check that module name and version number you specified is correct.");
+      }
+      return url;
     } catch (MalformedURLException murle) {
-      throw new RuntimeException("Unable to resolve bundle '" + path
+      throw new BundleException("Unable to resolve bundle '" + path
           + "', please check that your repositories are correctly configured", murle);
     }
   }
 
-  private long getBundleID(final String bundleName, final String bundleVersion) {
+  private long getBundleID(final String bundleName, final String bundleVersion) throws BundleException {
     final URL bundleURL = getBundleURL(bundleName, bundleVersion);
     return framework.getBundleId(bundleURL.toString());
   }
 
-  private String getSymbolicName(final String bundleName, final String bundleVersion) {
+  private String getSymbolicName(final String bundleName, final String bundleVersion) throws BundleException {
     final Bundle bundle = framework.getSystemBundleContext().getBundle(getBundleID(bundleName, bundleVersion));
     return bundle.getSymbolicName();
   }
