@@ -983,19 +983,8 @@ public class BootJarTool {
     loadTerracottaClass("com.tc.jrexx.set.XML");
 
     // DEV-116; Some of these probably should'nt be in the boot jar
-    loadTerracottaClass("com.tc.aspectwerkz.definition.DocumentParser$1");
-    loadTerracottaClass("com.tc.aspectwerkz.DeploymentModel$1");
-    loadTerracottaClass("com.tc.aspectwerkz.expression.ast.ExpressionParser$1");
-    loadTerracottaClass("com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo$1");
-    loadTerracottaClass("com.tc.aspectwerkz.transform.inlining.weaver.AddMixinMethodsVisitor$1");
-    loadTerracottaClass("com.tc.aspectwerkz.transform.inlining.weaver.ConstructorCallVisitor$1");
-    loadTerracottaClass("com.tc.aspectwerkz.transform.inlining.weaver.HandlerVisitor$1");
-    loadTerracottaClass("com.tc.aspectwerkz.transform.inlining.weaver.SerialVersionUidVisitor$1");
-    loadTerracottaClass("com.tc.backport175.bytecode.AnnotationDefaults$1");
-    loadTerracottaClass("com.tc.backport175.bytecode.AnnotationReader$1");
     loadTerracottaClass("com.tc.exception.ImplementMe");
     loadTerracottaClass("com.tc.exception.TCClassNotFoundException");
-    loadTerracottaClass("com.tc.jrexx.set.SAutomaton$1");
     loadTerracottaClass("com.tc.util.Assert");
     loadTerracottaClass("com.tc.util.StringUtil");
     loadTerracottaClass("com.tc.util.TCAssertionError");
