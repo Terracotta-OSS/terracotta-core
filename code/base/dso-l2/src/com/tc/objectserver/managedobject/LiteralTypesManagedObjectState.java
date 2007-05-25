@@ -12,6 +12,7 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.impl.ClassInstance;
 import com.tc.object.dna.impl.ClassLoaderInstance;
+import com.tc.object.dna.impl.EnumInstance;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.object.loaders.Namespace;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
@@ -121,7 +122,11 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
       return "java.lang.Class";
     } else if (references instanceof ClassLoaderInstance) {
       return "java.lang.ClassLoader";
-    } else if (references instanceof UTF8ByteDataHolder) { return "java.lang.String"; }
+    } else if (references instanceof UTF8ByteDataHolder) {
+      return "java.lang.String";
+    } else if (references instanceof EnumInstance) {
+      return "java.lang.Enum";
+    }
 
     return references.getClass().getName();
   }
