@@ -260,8 +260,8 @@ public class BootJarTool {
       final Map internalSpecs = getTCSpecs();
 
       final Map userSpecs = massageSpecs(getUserDefinedSpecs(internalSpecs), false);
-      final BootJar bootJar = BootJar.getBootJarForReading(bootJarFile);
-      Set bootJarClassNames = bootJar.getAllPreInstrumentedClasses();
+      final BootJar bootJarLocal = BootJar.getBootJarForReading(bootJarFile);
+      Set bootJarClassNames = bootJarLocal.getAllPreInstrumentedClasses();
       for (Iterator i = userSpecs.keySet().iterator(); i.hasNext();) {
         String userClassName = (String) i.next();
         if (!bootJarClassNames.contains(userClassName)) {
@@ -281,12 +281,12 @@ public class BootJarTool {
    */
   private final void verifyJar(File bootJarFile) {
     try {
-      final BootJar bootJar = BootJar.getBootJarForReading(bootJarFile);
-      final Set bootJarClassNames = bootJar.getAllClasses();
+      final BootJar bootJarLocal = BootJar.getBootJarForReading(bootJarFile);
+      final Set bootJarClassNames = bootJarLocal.getAllClasses();
       Map offendingClasses = new HashMap();
       for (Iterator i = bootJarClassNames.iterator(); i.hasNext();) {
         final String className = (String)i.next();
-        final byte[] bytes     = bootJar.getBytesForClass(className);
+        final byte[] bytes     = bootJarLocal.getBytesForClass(className);
         ClassReader cr = new ClassReader(bytes);
         ClassVisitor cv = new BootJarClassDependencyVisitor(bootJarClassNames, offendingClasses);
         cr.accept(cv, 0);
