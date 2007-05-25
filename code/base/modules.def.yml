@@ -593,7 +593,8 @@ modules:
 
 module-groups:
   container:
-    - dso-container-tests    
+    - dso-container-tests
+    - clustered-rife-1.6.0
   spring:
     - dso-spring
     - dso-spring-aj
