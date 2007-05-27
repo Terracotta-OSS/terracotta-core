@@ -50,8 +50,8 @@ public class TestTVSConfigurationSetupManagerFactoryTest extends TCTestCase {
 
     // A complex value (locks)
     ((SettableConfigItem) factory.dsoApplicationConfig().locks()).setValue(createLocks(new Lock[] {
-        new AutoLock("Foo.foo(..)", LockLevel.CONCURRENT),
-        new com.tc.object.config.schema.NamedLock("bar", "Baz.baz(..)", LockLevel.READ) }));
+        new AutoLock("* Foo.foo(..)", LockLevel.CONCURRENT),
+        new com.tc.object.config.schema.NamedLock("bar", "* Baz.baz(..)", LockLevel.READ) }));
 
     // A sub-config object
     ((SettableConfigItem) factory.l1DSOConfig().instrumentationLoggingOptions().logDistributedMethods()).setValue(true);
@@ -69,8 +69,8 @@ public class TestTVSConfigurationSetupManagerFactoryTest extends TCTestCase {
     assertEquals(142, this.l2Manager.dsoL2Config().garbageCollectionInterval().getInt());
     assertEquals(new File("whatever"), this.l1Manager.commonL1Config().logsPath().getFile());
     assertEquals(new File("marph"), this.l2Manager.commonl2Config().dataPath().getFile());
-    assertEqualsUnordered(new Lock[] { new AutoLock("Foo.foo(..)", LockLevel.CONCURRENT),
-        new com.tc.object.config.schema.NamedLock("bar", "Baz.baz(..)", LockLevel.READ) }, this.l2Manager
+    assertEqualsUnordered(new Lock[] { new AutoLock("* Foo.foo(..)", LockLevel.CONCURRENT),
+        new com.tc.object.config.schema.NamedLock("bar", "* Baz.baz(..)", LockLevel.READ) }, this.l2Manager
         .dsoApplicationConfigFor(TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME).locks().getObject());
     assertTrue(this.l1Manager.dsoL1Config().instrumentationLoggingOptions().logDistributedMethods().getBoolean());
   }
