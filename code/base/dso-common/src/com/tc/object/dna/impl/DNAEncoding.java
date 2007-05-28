@@ -724,10 +724,10 @@ public class DNAEncoding {
    * The reason that we use reflection here is because Enum is a jdk 1.5 construct and this project is jdk 1.4
    * compliance.
    */
-  private Class getEnumDeclaringClass(Object enum) {
+  private Class getEnumDeclaringClass(Object enumObj) {
     try {
-      Method m = enum.getClass().getMethod("getDeclaringClass", new Class[0]);
-      Object enumDeclaringClass = m.invoke(enum, new Object[0]);
+      Method m = enumObj.getClass().getMethod("getDeclaringClass", new Class[0]);
+      Object enumDeclaringClass = m.invoke(enumObj, new Object[0]);
       return (Class)enumDeclaringClass;
     } catch (SecurityException e) {
       throw new TCRuntimeException(e);
