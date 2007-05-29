@@ -4,26 +4,22 @@
  */
 package com.tc.process;
 
+import org.apache.log4j.Logger;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class HeartBeatClient extends Thread {
-  private Socket                  socket;
-  private boolean                 isAppServer       = false;
-  private static final DateFormat dateFormat        = new SimpleDateFormat("HH:mm:ss.SSS");
-  private static final int        HEARTBEAT_TIMEOUT = HeartBeatServer.PULSE_INTERVAL + 5000;
-  private String                  clientName;
-
-  private static void log(String msg) {
-    System.out.println("Heartbeat: [" + dateFormat.format(new Date()) + "] " + msg);
-  }
+  private Socket              socket;
+  private boolean             isAppServer       = false;
+  private static final int    HEARTBEAT_TIMEOUT = HeartBeatServer.PULSE_INTERVAL + 5000;
+  private String              clientName;
+  private static final Logger logger            = Logger.getLogger(HeartBeatClient.class);
 
   public HeartBeatClient(int listenPort, String clientName, boolean isAppServer) {
+    logger.setAdditivity(false);
     this.isAppServer = isAppServer;
     this.clientName = clientName;
     try {
@@ -38,29 +34,29 @@ public class HeartBeatClient extends Thread {
     try {
       BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
       PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-      
+
       // introduce myself to the server
       // sending clientName
       out.println(clientName + ":" + socket.getLocalPort());
-      
+
       while (true) {
         // will time out if it didn't get any pulse from server
         String signal = in.readLine();
         if (signal == null) {
           throw new Exception("Null signal");
         } else if (HeartBeatServer.PULSE.equals(signal)) {
-          log("Received pulse from heartbeat server, port " + socket.getLocalPort());
+          logger.info("Received pulse from heartbeat server, port " + socket.getLocalPort());
         } else if (HeartBeatServer.KILL.equals(signal)) {
-          log("Received KILL from heartbeat server. Killing self.");
+          logger.info("Received KILL from heartbeat server. Killing self.");
           System.exit(1);
         } else if (HeartBeatServer.IS_APP_SERVER_ALIVE.equals(signal)) {
-          log("Received IS_APP_SERVER_ALIVE from heartbeat server. ");
+          logger.info("Received IS_APP_SERVER_ALIVE from heartbeat server. ");
           if (isAppServer) {
             out.println(HeartBeatServer.IM_ALIVE);
-            log("  responded: IM_ALIVE");
+            logger.info("  responded: IM_ALIVE");
           } else {
             out.println("NOT_AN_APP_SERVER");
-            log("  responded: NOT_AN_APP_SERVER");
+            logger.info("  responded: NOT_AN_APP_SERVER");
           }
         } else {
           throw new Exception("Unknown signal");
@@ -68,7 +64,7 @@ public class HeartBeatClient extends Thread {
       }
 
     } catch (Throwable e) {
-      log("Caught exception in heartbeat client. Killing self. " + e.getMessage());
+      logger.info("Caught exception in heartbeat client. Killing self. " + e.getMessage());
     } finally {
       try {
         socket.close();

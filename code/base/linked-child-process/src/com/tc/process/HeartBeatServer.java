@@ -4,31 +4,34 @@
  */
 package com.tc.process;
 
+import org.apache.log4j.Logger;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
 public class HeartBeatServer {
-  public static final String      PULSE               = "PULSE";
-  public static final String      KILL                = "KILL";
-  public static final String      IS_APP_SERVER_ALIVE = "IS_APP_SERVER_ALIVE";
-  public static final String      IM_ALIVE            = "IM_ALIVE";
-  public static final int         PULSE_INTERVAL      = 30 * 1000;
-  private static final DateFormat dateFormat          = new SimpleDateFormat("HH:mm:ss.SSS");
+  public static final String  PULSE               = "PULSE";
+  public static final String  KILL                = "KILL";
+  public static final String  IS_APP_SERVER_ALIVE = "IS_APP_SERVER_ALIVE";
+  public static final String  IM_ALIVE            = "IM_ALIVE";
+  public static final int     PULSE_INTERVAL      = 30 * 1000;
+  private static final Logger logger              = Logger.getLogger(HeartBeatServer.class);
 
-  private ListenThread            listenThread;
+  private ListenThread        listenThread;
   // @GuardBy(this)
-  private final List              heartBeatThreads    = new ArrayList();
+  private final List          heartBeatThreads    = new ArrayList();
 
+  public HeartBeatServer() {
+    logger.setAdditivity(false);
+  }
+  
   public void start() {
     if (listenThread == null) {
       listenThread = new ListenThread(this);
@@ -66,7 +69,7 @@ public class HeartBeatServer {
   }
 
   public synchronized void removeDeadClient(HeartBeatThread thread) {
-    log("Dead client detected... removing " + thread.getName());
+    logger.info("Dead client detected... removing " + thread.getName());
     heartBeatThreads.remove(thread);
   }
 
@@ -106,7 +109,7 @@ public class HeartBeatServer {
           listeningPort = serverSocket.getLocalPort();
           this.notifyAll();
         }
-        log("Heartbeat server is online...");
+        logger.info("Heartbeat server is online...");
         Socket clientSocket;
         while ((clientSocket = serverSocket.accept()) != null) {
           HeartBeatThread hb = new HeartBeatThread(server, clientSocket);
@@ -116,7 +119,7 @@ public class HeartBeatServer {
         }
       } catch (Exception e) {
         if (isShutdown) {
-          log("Heartbeat server is shutdown");
+          logger.info("Heartbeat server is shutdown");
         } else {
           throw new RuntimeException(e);
         }
@@ -161,17 +164,17 @@ public class HeartBeatServer {
       try {
         // read clientName
         clientName = in.readLine();
-        log("got new client: " + clientName);
-        
+        logger.info("got new client: " + clientName);
+
         while (true) {
-          log("send pulse to client: " + clientName);
+          logger.info("send pulse to client: " + clientName);
           out.println(PULSE);
           reallySleep(PULSE_INTERVAL);
         }
       } catch (Exception e) {
         if (!killed) {
           // only removed itself if client isn't being sent a kill signal
-          log("Dead client detected: " + clientName + ". Exception message: " + e.getMessage());
+          logger.info("Dead client detected: " + clientName + ". Exception message: " + e.getMessage());
           server.removeDeadClient(this);
         }
       }
@@ -201,10 +204,6 @@ public class HeartBeatServer {
       return alive;
     }
 
-  }
-
-  private static void log(String msg) {
-    System.out.println("Heartbeat: [" + dateFormat.format(new Date()) + "] " + msg);
   }
 
   public static void reallySleep(long millis) {

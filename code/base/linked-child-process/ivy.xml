@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ivy-module version="1.0">
+  <info organisation="ibiblio" module="common"/>
+  <dependencies>
+	<dependency name="log4j" rev="1.2.9"/>
+  </dependencies>
+</ivy-module>
