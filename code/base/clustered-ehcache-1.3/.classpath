@@ -10,9 +10,9 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/legacy-test-tree"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/simulator"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1"/>
-	<classpathentry kind="lib" path="/dependencies/lib/ehcache-1.3-beta2.jar"/>
 	<classpathentry kind="src" path="/thirdparty"/>
 	<classpathentry kind="src" path="/modules-common-1.0"/>
 	<classpathentry kind="lib" path="/dependencies/lib/jsr107cache-1.0.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/ehcache-1.3.0-beta3.jar"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>
