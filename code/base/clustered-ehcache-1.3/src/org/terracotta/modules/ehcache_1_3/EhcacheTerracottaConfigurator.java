@@ -9,7 +9,8 @@ import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 
-public class EhcacheTerracottaConfigurator extends TerracottaConfiguratorModule implements IConstants {
+public class EhcacheTerracottaConfigurator extends TerracottaConfiguratorModule
+		implements IConstants {
 
 	public void start(final BundleContext context) throws Exception {
 		final ServiceReference configHelperRef = context
@@ -33,19 +34,10 @@ public class EhcacheTerracottaConfigurator extends TerracottaConfiguratorModule 
 
 	private void addEhcacheInstrumentation(
 			final StandardDSOClientConfigHelper configHelper) {
-	    ClassAdapterFactory factory = new EhcacheLruMemoryStoreAdapter();
-	    TransparencyClassSpec spec = configHelper.getOrCreateSpec(LRUMEMORYSTORE_CLASS_NAME_DOTS);
-	    spec.setCallConstructorOnLoad(true);
-	    spec.setCustomClassAdapter(factory);
+		ClassAdapterFactory factory = new EhcacheLruMemoryStoreAdapter();
+		TransparencyClassSpec spec = configHelper
+				.getOrCreateSpec(LRUMEMORYSTORE_CLASS_NAME_DOTS);
+		spec.setCallConstructorOnLoad(true);
+		spec.setCustomClassAdapter(factory);
 	}
-
-	/*
-	private void addEhcacheInstrumentation(
-			final StandardDSOClientConfigHelper configHelper) {
-	    ClassAdapterFactory factory = new EhcacheLruMemoryStoreAdapter();
-	    TransparencyClassSpec spec = configHelper.getOrCreateSpec("net.sf.ehcache.store.LruMemoryStore$SpoolingLinkedHashMap");
-	    spec.setCallConstructorOnLoad(true);
-	    spec.setCustomClassAdapter(factory);
-	}
-	*/
 }
