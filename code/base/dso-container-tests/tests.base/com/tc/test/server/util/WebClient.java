@@ -32,8 +32,8 @@ public class WebClient {
     HttpURLConnection http = (HttpURLConnection) url.openConnection();
     http.setRequestProperty("Cookie", getCookiesAsString());
     http.connect();
-    if (http.getResponseCode() != HttpURLConnection.HTTP_OK) {
-      Banner.warnBanner("Response code is not OK: " + http.getResponseMessage() + "\nRequest: " + url);      
+    if (http.getResponseCode() != HttpURLConnection.HTTP_OK) {      
+      throw new IOException("Response code is not OK: " + http.getResponseMessage() + "\nRequest: " + url);
     }
     extractCookies(http);
     BufferedReader in = new BufferedReader(new InputStreamReader(http.getInputStream()));
