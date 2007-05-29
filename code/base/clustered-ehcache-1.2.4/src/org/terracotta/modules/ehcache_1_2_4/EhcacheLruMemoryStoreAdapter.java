@@ -2,7 +2,6 @@ package org.terracotta.modules.ehcache_1_2_4;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
-import com.tc.asm.Label;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;

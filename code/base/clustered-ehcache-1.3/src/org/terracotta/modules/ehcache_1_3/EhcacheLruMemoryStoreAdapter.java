@@ -2,27 +2,13 @@ package org.terracotta.modules.ehcache_1_3;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
-import com.tc.asm.Label;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.ClassAdapterFactory;
 
 public class EhcacheLruMemoryStoreAdapter extends ClassAdapter implements
-		ClassAdapterFactory, Opcodes {
-
-	private static final String TC_LINKEDHASHMAP_CLASS_NAME_DOTS = "com.tcclient.util.LinkedHashMap";
-
-	private static final String TC_LINKEDHASHMAP_CLASS_NAME = "com/tcclient/util/LinkedHashMap";
-
-	private static final String LINKEDHASHMAP_CLASS_NAME_DOTS = "java.util.LinkedHashMap";
-
-	private static final String LINKEDHASHMAP_CLASS_NAME = "java/util/LinkedHashMap";
-
-	private static final String LRUMEMORYSTORE_CLASS_NAME = "net/sf/ehcache/store/LruMemoryStore";
-
-	private static final String SPOOLINGLINKEDHASHMAP_CLASS_NAME = "net/sf/ehcache/store/LruMemoryStore$SpoolingLinkedHashMap";
-
+		ClassAdapterFactory, Opcodes, IConstants {
 	private String className;
 
 	public EhcacheLruMemoryStoreAdapter() {
@@ -39,10 +25,6 @@ public class EhcacheLruMemoryStoreAdapter extends ClassAdapter implements
 
 	public void visit(int version, int access, String name, String signature,
 			String superName, String[] interfaces) {
-		if (name.equals(SPOOLINGLINKEDHASHMAP_CLASS_NAME)
-				&& superName.equals(LINKEDHASHMAP_CLASS_NAME)) {
-			superName = TC_LINKEDHASHMAP_CLASS_NAME;
-		}
 		this.className = name;
 		super.visit(version, access, name, signature, superName, interfaces);
 	}
@@ -55,28 +37,51 @@ public class EhcacheLruMemoryStoreAdapter extends ClassAdapter implements
 			String signature, String[] exceptions) {
 		MethodVisitor mv = super.visitMethod(access, name, desc, signature,
 				exceptions);
-
-		if (this.className.equals(SPOOLINGLINKEDHASHMAP_CLASS_NAME)
-				&& name.equals("<init>")
-				&& desc.equals("(Lnet/sf/ehcache/store/LruMemoryStore;)V")) {
-			mv = new SpoolingLinkedHashMapConstructorAdapter(mv);
+		if (this.className.equals(LRUMEMORYSTORE_CLASS_NAME_SLASH)
+				&& name.equals("loadMapInstance")
+				&& desc.equals("()Ljava/util/Map;")) {
+			mv = new LruMemoryStoreLoadMapInstanceMethodAdapter(mv);
 		}
 		return mv;
 	}
 
-	private static class SpoolingLinkedHashMapConstructorAdapter extends
+	private static class LruMemoryStoreLoadMapInstanceMethodAdapter extends
 			MethodAdapter implements Opcodes {
 
-		public SpoolingLinkedHashMapConstructorAdapter(MethodVisitor mv) {
+		public LruMemoryStoreLoadMapInstanceMethodAdapter(MethodVisitor mv) {
 			super(mv);
 		}
 
-		public void visitMethodInsn(final int opcode, String owner,
-				final String name, final String desc) {
+		public void visitLdcInsn(Object cst) {
+			if (cst instanceof java.lang.String) {
+				if (cst.toString().equals(LINKEDHASHMAP_CLASS_NAME_DOTS)) {
+					cst = LRUMAP_CLASS_NAME_DOTS;
+				} else if (cst.toString().equals(
+						" Cache: Using SpoolingLinkedHashMap implementation")) {
+					cst = " Cache: Using SpoolingLRUMap implementation";
+				} else if (cst.toString().equals(
+						" Cache: Cannot find " + LINKEDHASHMAP_CLASS_NAME_DOTS)) {
+					cst = " Cache: Cannot find " + LRUMAP_CLASS_NAME_DOTS;
+				}
+			}
+			super.visitLdcInsn(cst);
+		}
+
+		public void visitTypeInsn(int opcode, String desc) {
+			if ((opcode == NEW)
+					&& (desc.equals(SPOOLINGLINKEDHASHMAP_CLASS_NAME_SLASH))) {
+				desc = SPOOLINGLRUMAP_CLASS_NAME_SLASH;
+			}
+			super.visitTypeInsn(opcode, desc);
+		}
+
+		public void visitMethodInsn(int opcode, String owner, String name,
+				String desc) {
 			if ((opcode == INVOKESPECIAL)
-					&& owner.equals(LINKEDHASHMAP_CLASS_NAME)
-					&& name.equals("<init>") && desc.equals("(IFZ)V")) {
-				owner = TC_LINKEDHASHMAP_CLASS_NAME;
+					&& owner.equals(SPOOLINGLINKEDHASHMAP_CLASS_NAME_SLASH)
+					&& (name.equals("<init>") && desc
+							.equals("(Lnet/sf/ehcache/store/LruMemoryStore;)V"))) {
+				owner = SPOOLINGLRUMAP_CLASS_NAME_SLASH;
 			}
 			super.visitMethodInsn(opcode, owner, name, desc);
 		}
