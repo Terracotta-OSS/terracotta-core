@@ -176,7 +176,8 @@ class BuildModule
         @groups = Array.new
 
         assert("Root ('#{@root.to_s}') must be an absolute path") { @root.absolute? }
-        assert("Root ('#{@root.to_s}') must exist, and be a directory") { FileTest.directory?(@root.to_s) }
+# XXX: remove assert
+#        assert("Root ('#{@root.to_s}') must exist, and be a directory") { FileTest.directory?(@root.to_s) }
 
         @subtrees = [ ]
         # Run through all the factories and add a new subtree for each one.

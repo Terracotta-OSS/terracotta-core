@@ -164,15 +164,16 @@ class TerracottaBuilder
         # This is so that, even if the series of scripts leading from, say, CruiseControl to this
         # code doesn't correctly carry back the exit code (as it inexplicably seems not to on
         # Windows), the parent can tell if it passed or not.
-        write_failure_file_if_necessary_at_end
+#        write_failure_file_if_necessary_at_end
 
         # Support for making build archives.
         # archive only if "force-archive=true", or when the run fails
-        if (@script_results.failed? || @config_source["force-archive"] =~ /true/)
-            archive_build_if_necessary
-        end
+#        if (@script_results.failed? || @config_source["force-archive"] =~ /true/)
+#            archive_build_if_necessary
+#        end
 
-        ExitCodeHelper.exit(@script_results.result_code)
+# XXX: No! Bad monkey!
+#        ExitCodeHelper.exit(@script_results.result_code)
     end
 
     # Resets the dependency-tracking mechanism.

@@ -20,6 +20,9 @@ class Build < Mojo
   # @parameter type="org.terracotta.tcbuild.configuration.ModulesDefConfiguration"
   def modulesDef;;end
 
+  # @parameter type="java.util.Map"
+  def appserver;;end
+
   def execute
 
     info "Building: #{$project.name}"
@@ -36,8 +39,19 @@ class Build < Mojo
     info "buildControl:"
     $tc.build_control.each{ |k,v| info "\t#{k}=#{v}"}
 
+    info "appserver:"
+    $appserver.each{ |k,v| info "\t#{k}=#{v}"}
+
 # TODO: seperate these actions into phases
     require 'build-tc'
+
+    puts "new BaseCodeTCBuilder"
+
+    builder = BaseCodeTerracottaBuilder.new( ['show_modules'] )
+
+    puts "run BaseCodeTCBuilder"
+
+    builder.run
 
 #    sr = StaticResources.new( '/Users/eredmond/svn/terracotta/code/base/' )
 #    info "demos dir: #{sr.demos_directory}"

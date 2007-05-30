@@ -39,16 +39,13 @@ require 'buildscripts/environment'
 require 'buildscripts/jars'
 require 'buildscripts/jvms'
 require 'buildscripts/modules'
-require 'buildscripts/modules_build'
 require 'buildscripts/modules_compile'
 require 'buildscripts/modules_copy'
 require 'buildscripts/modules_eclipse'
 require 'buildscripts/modules_paths'
 require 'buildscripts/modules_run'
 require 'buildscripts/modules_test'
-puts "loading requires"
 require 'buildscripts/paths'
-puts "loaded requires"
 require 'buildscripts/resources'
 require 'buildscripts/script_results'
 require 'buildscripts/static_resources'
@@ -64,6 +61,19 @@ require 'buildscripts/utils'
 # system like CruiseControl -- it makes it clear that the property will control tcbuild,
 # rather than controlling CruiseControl itself or configuring how the tests respond.
 BUILD_CONTROL_PREFIX = "tc.build-control."
+
+class BuildModuleSetBuilder
+    # Creates a BuildModuleSet and a set of module groups based off the YAML files
+    # specified in the constructor, and returns them. Returns a hash with values under
+    # :module_set (the BuildModuleSet object) and :module_groups (a hash, whose keys
+    # are names of module groups and whose values are arrays of the names of the
+    # modules in that group).
+    def build_modules
+
+
+        { :module_set => module_set, :module_groups => module_groups }
+    end
+end
 
 class BaseCodeTerracottaBuilder < TerracottaBuilder
   # Creates a new instance. 'arguments' should just be the list of arguments passed on the
@@ -90,24 +100,37 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     Registry[:build_environment] = @build_environment
     Registry[:static_resources] = @static_resources
 
-
-    # Load up our modules; allow definition of new modules by setting a configuration
-    # property that points to additional module files to load. I believe that right now
-    # this isn't used, but it was used in the past to (e.g.) let the Spring folks
-    # define additional modules without making everybody else compile them (because
-    # they did not, in fact, compile, IIRC).
-    module_files = [ FilePath.new(basedir, 'modules.def.yml') ]
-    additional_files = config_source.as_array('additional_module_files') || []
-    additional_files << @static_resources.enterprise_modules_file
-    additional_files.each { |file| module_files << FilePath.new(file.to_s) } unless additional_files.nil?
-
     # Our BuildResults object.
-    @build_results = BuildResults.new(FilePath.new(basedir, 'build'))
+    @build_results = BuildResults.new( $project.build.directory )
 
-    # Go get our module set and module groups from the modules.def.yml and associated files.
-    built_data = BuildModuleSetBuilder.new(basedir, *module_files).build_modules
-    @module_set = built_data[:module_set]
-    @module_groups = built_data[:module_groups]
+    # removed the BuildModuleSetBuilder class, replaced with module_set and module_groups builder - eredmond
+    module_set = BuildModuleSet.new(@root_dir)
+    $modulesDef.options.each { |option|
+      options = {}
+      option.each { |k, v| options[k.to_sym] = v }
+      options[:name] = option['module']
+      options[:dependencies] = [] #data['dependencies'] || []
+      module_set.add( options )
+    }
+    @module_set = module_set
+
+    module_groups = { }
+    $modulesDef.moduleGroups.each { |moduleGroup|
+      group_name = moduleGroup.name.to_sym
+      arr = [ ]
+      moduleGroup.modules.each do |module_name|
+          mod = module_set[module_name]
+          mod.groups << group_name
+          arr << module_set[module_name]
+      end
+      module_groups[group_name] = arr
+    }
+
+    module_groups[:all] = [ ]
+    module_set.each do |build_module|
+        module_groups[:all] << build_module
+    end
+    @module_groups = module_groups
 
     # Load the XMLBeans task, so we can use it to process config files when needed by that target.
     ant.taskdef(:name => 'xmlbean', :classname => 'org.apache.xmlbeans.impl.tool.XMLBean')
@@ -889,11 +912,7 @@ END
     def find_jvms
       return @jvm_set if @jvm_set
 
-      puts "JVM Set"
-
       @jvm_set = JVMSet.new
-
-      puts "Load YAML"
 
       root = File.expand_path( $jdk.home )
       min_version = $jdk.min_version
@@ -907,16 +926,10 @@ END
       puts "new JVM"
 
       jvm = JVM.new(root, { :minimum_version => min_version, :maximum_version => max_version })
-
-      puts "validate JVM"
-
       jvm.validate(name)
-
-      puts "check version JVM"
-
       jvm.check_version(name)
 
-      puts "Loaded YAML"
+      puts "Loaded JVM"
 
       if jvm
         @jvm_set.set(name, jvm)
@@ -933,16 +946,32 @@ END
       @jvm_set.add_config_jvm('tests-jdk')
       @jvm_set.add_config_jvm('jdk')
 
-# TODO: move to a configurable base
-      appserver_compatibility = YAML::load_file("#{@basedir}/appservers.yml")
-      Registry[:appserver_compatibility] = appserver_compatibility
-      factory, major, minor = %w(factory.name major-version minor-version).map { |key|
-        puts "tc.tests.configuration.appserver.#{key}"
-        config_source["tc.tests.configuration.appserver.#{key}"]
+      appserver_compatibility = Hash.new
+      $tc.appservers.each { |appserver|
+        appserver_compatibility[ appserver.name ] = { 'min_version' => appserver.min_version, 'max_version' => appserver.max_version }
       }
+
+      puts "appserver_compatibility"
+
+      Registry[:appserver_compatibility] = appserver_compatibility
+
+      factory = $appserver[ 'factory' ]
+      major = $appserver[ 'major-version' ]
+      minor = $appserver[ 'minor-version' ]
+
+      puts "factory"
+
+      @internal_config_source["tc.tests.configuration.appserver.factory.name"] = factory
+      @internal_config_source["tc.tests.configuration.appserver.major-version"] = major
+      @internal_config_source["tc.tests.configuration.appserver.minor-version"] = minor
+
+      puts "after factory"
+
       Registry[:appserver_generic] = "#{factory}-#{major}"
       Registry[:appserver] = "#{Registry[:appserver_generic]}.#{minor}"
       Registry[:jvm_set] = @jvm_set
+
+      puts "found JVMs"
     end
 
     # Writes out the given set of keys, and corresponding values, from the given hash to the given
@@ -1055,11 +1084,3 @@ END
 
   # Terracotta software package making extension for BaseTerracottaBuilder
   require 'buildscripts/extensions/distribution'
-
-  puts "new BaseCodeTCBuilder"
-
-  builder = BaseCodeTerracottaBuilder.new( ['compile'] )
-
-  puts "run BaseCodeTCBuilder"
-
-  builder.run
