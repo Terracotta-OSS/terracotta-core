@@ -94,13 +94,6 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
   }
 
   public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-    // hack for now
-    if (("java/util/LinkedHashMap".equals(jFullClassSlashes) && "accessOrder".equals(name))
-        || ("java/util/concurrent/locks/ReentrantReadWriteLock".equals(jFullClassSlashes) && ("sync".equals(name) || "readerLock".equals(name) || "writerLock"
-            .equals(name)))) {
-      access = ~Modifier.FINAL & access;
-    }
-
     List tcFields = tcClassNode.fields;
     for (Iterator i = tcFields.iterator(); i.hasNext();) {
       FieldNode fieldNode = (FieldNode) i.next();
@@ -108,6 +101,13 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
         i.remove();
         break;
       }
+    }
+
+    // hack for now
+    if (("java/util/LinkedHashMap".equals(jFullClassSlashes) && "accessOrder".equals(name))
+        || ("java/util/concurrent/locks/ReentrantReadWriteLock".equals(jFullClassSlashes) && ("sync".equals(name) || "readerLock".equals(name) || "writerLock"
+            .equals(name)))) {
+      access = ~Modifier.FINAL & access;
     }
 
     return super.visitField(access, name, desc, signature, value);
