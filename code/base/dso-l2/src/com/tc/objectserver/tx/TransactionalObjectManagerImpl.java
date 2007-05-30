@@ -144,7 +144,8 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     // TODO:: make cache and stats right
     LookupContext lookupContext = null;
     if (!newRequests.isEmpty()) {
-      lookupContext = new LookupContext(newRequests, (newTxn ? txn.getNewObjectIDs() : Collections.EMPTY_SET));
+      lookupContext = new LookupContext(newRequests, (newTxn ? txn.getNewObjectIDs() : Collections.EMPTY_SET), txn
+          .getServerTransactionID());
       if (objectManager.lookupObjectsFor(txn.getChannelID(), lookupContext)) {
         addLookedupObjects(lookupContext);
       } else {
@@ -408,15 +409,17 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
   private class LookupContext implements ObjectManagerResultsContext {
 
-    private boolean   pending    = false;
-    private boolean   resultsSet = false;
-    private Map       lookedUpObjects;
-    private final Set oids;
-    private final Set newOids;
+    private boolean                   pending    = false;
+    private boolean                   resultsSet = false;
+    private Map                       lookedUpObjects;
+    private final Set                 oids;
+    private final Set                 newOids;
+    private final ServerTransactionID transactionID;
 
-    public LookupContext(Set oids, Set newOids) {
+    public LookupContext(Set oids, Set newOids, ServerTransactionID transactionID) {
       this.oids = oids;
       this.newOids = newOids;
+      this.transactionID = transactionID;
     }
 
     public synchronized void makePending() {
@@ -439,8 +442,8 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
 
     public String toString() {
-      return "LookupContext [ " + oids + "] = { pending = " + pending + ", lookedupObjects = "
-             + lookedUpObjects.keySet() + "}";
+      return "LookupContext [ txnID = " + transactionID + ", oids = " + oids + "] = { pending = " + pending
+             + ", lookedupObjects = " + lookedUpObjects.keySet() + "}";
     }
 
     public Set getLookupIDs() {

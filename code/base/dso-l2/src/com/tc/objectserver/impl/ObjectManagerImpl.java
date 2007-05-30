@@ -43,6 +43,7 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
 import com.tc.util.ObjectIDSet2;
+import com.tc.util.TCAssertionError;
 import com.tc.util.concurrent.StoppableThread;
 
 import gnu.trove.THashSet;
@@ -463,7 +464,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       for (Iterator i = context.getNewObjectIDs().iterator(); i.hasNext();) {
         ObjectID oid = (ObjectID) i.next();
         ManagedObject mo = new ManagedObjectImpl(oid);
-        createObject(mo);
+        try {
+          createObject(mo);
+        } catch (TCAssertionError tca) {
+          // XXX::REmove:: ADDED for debugging
+          logger.error("Error creating New Objects for : " + oid + " new mo = " + mo + " old mo = " + getReference(oid)
+                       + " context = " + context);
+          throw tca;
+        }
       }
       context.newObjectsCreationComplete();
     }
@@ -702,7 +710,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public void setGarbageCollector(final GarbageCollector newCollector) {
     syncAssertNotInShutdown();
-    if(this.collector != null) {
+    if (this.collector != null) {
       this.collector.stop();
     }
     this.collector = newCollector;
@@ -882,6 +890,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       responseContext.setResults(results);
     }
 
+    public String toString() {
+      return "ObjectManagerLookupContext : [ pending = " + pending + ", newObjectsCreated = " + newObjectsCreated
+             + ", responseContext = " + responseContext + "] ";
+    }
   }
 
   private static class Pending {
