@@ -26,6 +26,8 @@ bundled_components:
         - dso-l1
         - dso-l1-jdk15 
         - dso-l2 
+        - dso-spring:
+            exclude-runtime-libraries: true
         - linked-child-process
         - management
         - thirdparty
@@ -37,6 +39,12 @@ bundled_components:
       install_directory: eclipse/update
   - eclipse-web-site: 
       install_directory: eclipse
+bundled_modules:
+  - core:
+      install_directory: eclipse/org.terracotta.dso/modules
+      manifest:
+        - clustered-apache-struts-1.1
+        - clustered-commons-collections-3.1      
 packaging:
   - tar
 postscripts:
