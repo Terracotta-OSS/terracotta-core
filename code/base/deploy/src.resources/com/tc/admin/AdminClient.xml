@@ -307,7 +307,7 @@
 	<container tag="ClassesPanel">
 		<children>
 			<tabbedpane selected-index="0">
-				<tab title="Tablular">
+				<tab title="Tabular">
 					<scrollpane>
 						<table class="com.tc.admin.dso.ClassesTable" name="ClassTable"/>
 					</scrollpane>

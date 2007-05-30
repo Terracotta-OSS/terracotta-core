@@ -77,16 +77,52 @@ public abstract class DSOObject {
         type  = null;
       }
 
-      result = new DSOField(m_cc, fieldName, false, type, value, this);
+      result = new DSOField(m_cc, fieldName, false, convertTypeName(type), value, this);
     }
     else {
       type   = value.getClass().getName();
-      result = new DSOField(m_cc, fieldName, true, type, value, this);
+      result = new DSOField(m_cc, fieldName, true, convertTypeName(type), value, this);
     }
 
     return result;
   }
 
+  private static final char C_ARRAY = '[';
+  
+  public static int getArrayCount(char[] typeSignature) throws IllegalArgumentException { 
+    try {
+      int count = 0;
+      while (typeSignature[count] == C_ARRAY) {
+        ++count;
+      }
+      return count;
+    } catch (ArrayIndexOutOfBoundsException e) { // signature is syntactically incorrect if last character is C_ARRAY
+      throw new IllegalArgumentException();
+    }
+  }
+  
+  private static String convertTypeName(String typeName) {
+    if(typeName != null && typeName.length() > 0) {
+      if(typeName.charAt(0) == C_ARRAY) {
+        try {
+          int arrayCount = getArrayCount(typeName.toCharArray());
+          typeName = typeName.substring(arrayCount);
+          if(typeName.charAt(0) == 'L') {
+            int pos = 1;
+            while(typeName.charAt(pos) != ';') pos++;
+            typeName = typeName.substring(1, pos);
+          }
+          StringBuffer sb = new StringBuffer(typeName);
+          for(int i = 0; i < arrayCount; i++) {
+            sb.append("[]");
+          }
+          typeName = sb.toString();
+        } catch(IllegalArgumentException iae) {/**/}
+      }
+    }
+    return typeName;
+  }
+  
   public void addPropertyChangeListener(PropertyChangeListener listener) {
     m_changeHelper.addPropertyChangeListener(listener);
   }

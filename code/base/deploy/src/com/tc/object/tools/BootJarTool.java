@@ -292,13 +292,14 @@ public class BootJarTool {
         cr.accept(cv, 0);
       }
 
-      StringBuffer message = new StringBuffer("\nThe following Terracotta classes needs to be included in the boot jar:\n");
+      String nl = System.getProperty("line.separator");
+      StringBuffer message = new StringBuffer(nl+nl+"The following Terracotta classes needs to be included in the boot jar:"+nl+nl);
       for (Iterator i = offendingClasses.entrySet().iterator(); i.hasNext();) {
         Map.Entry entry = (Map.Entry)i.next();
-        message.append("- " + entry.getKey() + " [" + entry.getValue() + "]\n");
+        message.append("  - " + entry.getKey() + " [" + entry.getValue() + "]"+nl);
       }
       
-      Assert.assertTrue(message.toString().replaceAll("\n$", ""), offendingClasses.isEmpty());
+      Assert.assertTrue(message/*.toString().replaceAll(nl+"$", "")*/, offendingClasses.isEmpty());
     } catch (BootJarException e) {
       throw new RuntimeException(e);
     } catch (IOException e) {

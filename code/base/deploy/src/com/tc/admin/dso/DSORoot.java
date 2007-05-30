@@ -3,26 +3,32 @@
  */
 package com.tc.admin.dso;
 
+import com.tc.admin.AdminClient;
+import com.tc.admin.ConnectionContext;
+import com.tc.object.LiteralValues;
+import com.tc.object.dna.impl.EnumInstance;
+import com.tc.objectserver.mgmt.ManagedObjectFacade;
+
 import java.beans.PropertyChangeEvent;
 
 import javax.management.ObjectName;
 
-import com.tc.admin.AdminClient;
-import com.tc.admin.ConnectionContext;
-import com.tc.objectserver.mgmt.ManagedObjectFacade;
-
 public class DSORoot extends DSOObject {
-  private ObjectName          m_bean;
-  private String              m_name;
-  private ManagedObjectFacade m_facade;
-  private DSOObject[]         m_fields;
-  private String              m_label;
+  private ObjectName                 m_bean;
+  private String                     m_name;
+  private ManagedObjectFacade        m_facade;
+  private DSOObject[]                m_fields;
+  private String                     m_label;
+  private boolean                    m_isLiteral;
+  
+  private final static LiteralValues m_literals = new LiteralValues();
 
   public DSORoot(ConnectionContext cc, ObjectName bean) {
     super(cc);
 
-    m_bean   = bean;
+    m_bean = bean;
     m_facade = safeLookupFacade();
+    m_isLiteral = isLiteral();
     
     updateLabel();
   }
@@ -36,6 +42,20 @@ public class DSORoot extends DSOObject {
 
     if(isCollection()) {
       m_label += " [" + getFacadeSize() + "/" + getTrueObjectSize() + "]";
+    } else if(m_isLiteral) {
+      String[] fieldNames = getFieldNames();
+
+      if(fieldNames != null && fieldNames.length == 1) {
+        Object value = getFieldValue(fieldNames[0]);
+
+        if(value instanceof EnumInstance) {
+          EnumInstance enumInstance = (EnumInstance)value;
+          String enumType = enumInstance.getClassInstance().getName().asString();
+          m_label = getName() + " (" + enumType + ")" + "=" + enumInstance;
+        } else {
+          m_label += "="+value;
+        }
+      }
     }
   }
   
@@ -59,6 +79,11 @@ public class DSORoot extends DSOObject {
     return (ManagedObjectFacade)m_cc.invoke(m_bean, op, args, types);
   }
 
+  public boolean isLiteral() {
+    String className = getClassName();
+    return className != null ? m_literals.isLiteral(className) || className.equals("java.util.Date") : false;
+  }
+  
   public String getName() {
     if(m_name == null) {
       try {
@@ -77,7 +102,7 @@ public class DSORoot extends DSOObject {
   }
 
   public boolean isCollection() {
-    return isMap() || isList() || isSet();
+    return !m_isLiteral && (isMap() || isList() || isSet());
   }
   
   public boolean isArray() {
@@ -97,16 +122,28 @@ public class DSORoot extends DSOObject {
   }
 
   public int getFieldCount() {
-    String[] names = getFieldNames();
-    return names != null ? names.length : 0;
+    if(m_isLiteral) {
+      return 0;
+    } else {
+      String[] names = getFieldNames();
+      return names != null ? names.length : 0;
+    }
   }
 
   public int getFacadeSize() {
-    return m_facade != null ? m_facade.getFacadeSize() : 0;
+    if(m_isLiteral) {
+      return 0;
+    } else {
+      return m_facade != null ? m_facade.getFacadeSize() : 0;
+    }
   }
 
   public int getTrueObjectSize() {
-    return m_facade != null ? m_facade.getTrueObjectSize() : 0;
+    if(m_isLiteral) {
+      return 0;
+    } else {
+      return m_facade != null ? m_facade.getTrueObjectSize() : 0;
+    }
   }
 
   public String[] getFieldNames() {

@@ -49,7 +49,17 @@ public class ServerConnectionManager implements NotificationListener {
   private static final Object     m_connectTestLock = new Object();
   
   static {
-    Logger.getLogger("javax.management.remote.rmi").setLevel(Level.OFF);
+    String levelName = System.getProperty("ServerConnectionManager.logLevel");
+    Level level = Level.OFF;
+
+    if(levelName != null) {
+      try {
+        level = Level.parse(levelName);
+      } catch(IllegalArgumentException ie) {
+        level = Level.ALL;
+      }
+    }
+    Logger.getLogger("javax.management.remote.rmi").setLevel(level);
   }
 
   public ServerConnectionManager(String host, int port, boolean autoConnect, ConnectionListener listener) {
@@ -193,6 +203,7 @@ public class ServerConnectionManager implements NotificationListener {
     if (m_connectEnv == null) {
       m_connectEnv = new HashMap();
       m_connectEnv.put("jmx.remote.x.client.connection.check.period", new Long(0));
+      m_connectEnv.put("jmx.remote.default.class.loader", getClass().getClassLoader());
     }
     return m_connectEnv;
   }

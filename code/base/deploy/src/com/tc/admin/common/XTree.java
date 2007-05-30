@@ -14,6 +14,7 @@ import javax.swing.InputMap;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
@@ -118,18 +119,18 @@ public class XTree extends org.dijon.Tree {
   }
 
   public void expandAll() {
-    XRootNode root = (XRootNode)((XTreeModel)getModel()).getRoot();
-    XTreeNode node = (XTreeNode)root.getFirstLeaf();
-    XTreeNode parent;
+    DefaultMutableTreeNode root = (DefaultMutableTreeNode)getModel().getRoot();
+    DefaultMutableTreeNode node = root.getFirstLeaf();
+    DefaultMutableTreeNode parent;
 
     while(node != null) {
-      parent = (XTreeNode)node.getParent();
+      parent = (DefaultMutableTreeNode)node.getParent();
       
       if(parent != null) {
         expandPath(new TreePath(parent.getPath()));
       }
 
-      node = (XTreeNode)node.getNextLeaf();
+      node = node.getNextLeaf();
     }
 
     revalidate();
