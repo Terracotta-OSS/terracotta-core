@@ -427,7 +427,7 @@ public class StateManagerTest extends TCTestCase {
   private static class MyStateManagerConfig implements StateManagerConfig {
     public int electionTime;
 
-    public int getEletionTime() {
+    public int getElectionTimeInSecs() {
       return electionTime;
     }
   }

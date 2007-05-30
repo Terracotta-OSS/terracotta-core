@@ -14,7 +14,7 @@ public class StateManagerConfigImpl implements StateManagerConfig {
     this.haConfig = haConfig;
   }
 
-  public int getEletionTime() {
+  public int getElectionTimeInSecs() {
     int electionTime = -1;
 
     if (haConfig.isNetworkedActivePassive()) {

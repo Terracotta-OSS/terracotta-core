@@ -594,7 +594,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
                                                                                                            true),
                                                                                            reconnectTimeout, persistent);
 
-    boolean networkedHA = configSetupManager.haConfig().isNetworked();
+    boolean networkedHA = configSetupManager.haConfig().isNetworkedActivePassive();
     if (networkedHA) {
       logger.info("L2 Networked HA Enabled ");
       l2Coordinator = new L2HACoordinator(consoleLogger, this, stageManager, persistor.getClusterStateStore(),

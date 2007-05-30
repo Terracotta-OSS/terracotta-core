@@ -31,10 +31,6 @@ public class NewHaConfigObject extends BaseNewConfigObject implements NewHaConfi
     return electionTime;
   }
 
-  public boolean isNetworked() {
-    return haMode.getString().equals(HaMode.NETWORKED_ACTIVE_PASSIVE.toString());
-  }
-
   public boolean isNetworkedActivePassive() {
     return haMode.getString().equals(HaMode.NETWORKED_ACTIVE_PASSIVE.toString());
   }

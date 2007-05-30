@@ -37,11 +37,11 @@ public class ElectionManagerImpl implements ElectionManager {
   private Enrollment            myVote               = null;
   private Enrollment            winner;
 
-  private final int             electionTime;
+  private final long             electionTime;
 
   public ElectionManagerImpl(GroupManager groupManager, StateManagerConfig stateManagerConfig) {
     this.groupManager = groupManager;
-    electionTime = stateManagerConfig.getEletionTime();
+    electionTime = stateManagerConfig.getElectionTimeInSecs() * 1000;
   }
 
   public synchronized boolean handleStartElectionRequest(L2StateMessage msg) {

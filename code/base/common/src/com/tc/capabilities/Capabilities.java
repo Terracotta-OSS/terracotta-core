@@ -13,9 +13,6 @@ public interface Capabilities {
 
   boolean hasHA();
 
-  boolean hasHAOverNetwork();
-
   String describe();
 
-  void setConfig(CapabilitiesConfig config);
 }

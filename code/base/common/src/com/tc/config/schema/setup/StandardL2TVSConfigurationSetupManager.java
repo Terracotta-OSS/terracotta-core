@@ -9,7 +9,6 @@ import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.capabilities.AbstractCapabilitiesFactory;
 import com.tc.capabilities.Capabilities;
-import com.tc.capabilities.StandardCapabilitiesConfig;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.NewCommonL2ConfigObject;
@@ -243,9 +242,6 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
       if (servers != null && servers.length > 1) {
         Capabilities capabilities = AbstractCapabilitiesFactory.getCapabilitiesManager();
-        StandardCapabilitiesConfig capabilitiesConfig = new StandardCapabilitiesConfig();
-        capabilitiesConfig.setNetworkEnabledHA(haConfig.isNetworked());
-        capabilities.setConfig(capabilitiesConfig);
 
         if (!capabilities.hasHA() && capabilities.canClusterPOJOs()) { throw new ConfigurationSetupException(
             "Attempting to run multiple servers without license " + "authorization of DSO High Availability."); }
@@ -256,7 +252,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
           L2ConfigData data = configDataFor(name);
 
           Assert.assertNotNull(data);
-          if (!capabilities.hasHAOverNetwork()
+          if (!haConfig.isNetworkedActivePassive()
               && !(data.dsoL2Config().persistenceMode().getObject().equals(PersistenceMode.PERMANENT_STORE))) {
             badServers.add(name);
           }

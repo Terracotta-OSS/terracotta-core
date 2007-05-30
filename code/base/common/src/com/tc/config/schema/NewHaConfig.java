@@ -12,7 +12,5 @@ public interface NewHaConfig extends NewConfig {
 
   IntConfigItem electionTime();
 
-  boolean isNetworked();
-
   boolean isNetworkedActivePassive();
 }

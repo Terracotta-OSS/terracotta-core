@@ -4,8 +4,6 @@ import java.util.Date;
 
 public class StandardCapabilitiesImpl implements Capabilities {
 
-  private boolean networkEnabledHA;
-
   public int maxL2Connections() {
     return Integer.MAX_VALUE;
   }
@@ -30,11 +28,4 @@ public class StandardCapabilitiesImpl implements Capabilities {
     return "Unlimited capabilities";
   }
 
-  public boolean hasHAOverNetwork() {
-    return networkEnabledHA;
-  }
-
-  public void setConfig(CapabilitiesConfig config) {
-    networkEnabledHA = ((StandardCapabilitiesConfig) config).getNetworkEnabledHA();
-  }
 }

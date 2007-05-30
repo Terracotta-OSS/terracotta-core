@@ -5,5 +5,9 @@
 package com.tc.l2.state;
 
 public interface StateManagerConfig {
-  int getEletionTime();
+  
+  /**
+   * @return election time in seconds
+   */
+  public int getElectionTimeInSecs();
 }
