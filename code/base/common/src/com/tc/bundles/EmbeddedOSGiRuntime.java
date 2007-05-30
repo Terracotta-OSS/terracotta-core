@@ -33,7 +33,7 @@ public interface EmbeddedOSGiRuntime {
   
   void installBundle(final String bundleName, final String bundleVersion) throws BundleException;
 
-  void startBundle(final String bundleName, final String bundleVersion) throws BundleException;
+  void startBundle(final String bundleName, final String bundleVersion, final EmbeddedOSGiRuntimeCallback callback) throws BundleException;
 
   Bundle getBundle(final String bundleName, final String bundleVersion) throws BundleException;
 

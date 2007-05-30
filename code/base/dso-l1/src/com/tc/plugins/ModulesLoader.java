@@ -12,6 +12,7 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
 import com.tc.bundles.EmbeddedOSGiRuntime;
+import com.tc.bundles.EmbeddedOSGiRuntimeCallback;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -93,7 +94,7 @@ public class ModulesLoader {
   }
 
   private static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
-                                  final ClassProvider classProvider, final Module[] modules, boolean forBootJar) throws BundleException {
+                                  final ClassProvider classProvider, final Module[] modules, final boolean forBootJar) throws BundleException {
     // install all available bundles
     osgiRuntime.installBundles();
     
@@ -105,19 +106,23 @@ public class ModulesLoader {
       osgiRuntime.registerService(configHelper, serviceProps);
     }
     
+    // now start only the bundles that are listed in the modules section of the config
+    EmbeddedOSGiRuntimeCallback callback = new EmbeddedOSGiRuntimeCallback() {
+      public void callback(final Object payload) throws BundleException {
+        Bundle bundle = (Bundle)payload;
+        if (bundle != null) {
+          if (!forBootJar) {
+            registerClassLoader(classProvider, bundle);
+          }
+          loadConfiguration(configHelper, bundle);
+        }
+      }
+    };
+
     for (int pos = 0; pos < modules.length; ++pos) {
       String name = modules[pos].getName();
       String version = modules[pos].getVersion();
-
-      osgiRuntime.startBundle(name, version);
-
-      Bundle bundle = osgiRuntime.getBundle(name, version);
-      if (bundle != null) {
-        if (!forBootJar) {
-          registerClassLoader(classProvider, bundle);
-        }
-        loadConfiguration(configHelper, bundle);
-      }
+      osgiRuntime.startBundle(name, version, callback);
     }
   }
 
@@ -201,5 +206,4 @@ public class ModulesLoader {
     }
     return null;
   }
-
 }

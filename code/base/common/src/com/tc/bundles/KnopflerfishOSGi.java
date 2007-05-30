@@ -123,10 +123,37 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     }
   }
 
-  public void startBundle(final String bundleName, final String bundleVersion) throws BundleException {
-    final long bundleID = getBundleID(bundleName, bundleVersion);
-    framework.startBundle(bundleID);
-    info(Message.BUNDLE_STARTED, new Object[] { getSymbolicName(bundleName, bundleVersion) });
+  private Bundle findBundleBySymbolicName(final String symbolicName) {
+    final Bundle[] bundles = framework.getSystemBundleContext().getBundles();
+    for(int i=0; i<bundles.length; i++) {
+      if (bundles[i].getSymbolicName().equals(symbolicName)) {
+        return bundles[i];
+      }
+    }
+    return null;
+  }
+  
+  private void startBundle(final long bundleId, final EmbeddedOSGiRuntimeCallback callback) throws BundleException {
+    final Bundle bundle   = framework.bundles.getBundle(bundleId);
+    final String requires = (String)bundle.getHeaders().get("Require-Bundle");
+    
+    if (requires != null) {
+      final String[] bundles = requires.split(",");
+      for (int i=0; i<bundles.length; i++) {
+        final Bundle reqdBundle = findBundleBySymbolicName(bundles[i]);
+        if (reqdBundle == null) {
+          throw new BundleException("Required bundle '" + bundles[i] + "' is not installed.");
+        }
+        startBundle(reqdBundle.getBundleId(), callback);
+      }
+    }
+    framework.startBundle(bundle.getBundleId());
+    info(Message.BUNDLE_STARTED, new Object[] { bundle.getSymbolicName() });
+    callback.callback(bundle);
+  }
+  
+  public void startBundle(final String bundleName, final String bundleVersion, final EmbeddedOSGiRuntimeCallback callback) throws BundleException {
+    startBundle(getBundleID(bundleName, bundleVersion), callback);
   }
 
   public Bundle getBundle(String bundleName, String bundleVersion) throws BundleException {
@@ -150,7 +177,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
   public void ungetService(ServiceReference service) {
     framework.getSystemBundleContext().ungetService(service);
   }
-
+  
   public void stopBundle(final String bundleName, final String bundleVersion) throws BundleException {
     final long bundleID = getBundleID(bundleName, bundleVersion);
     framework.stopBundle(bundleID);
