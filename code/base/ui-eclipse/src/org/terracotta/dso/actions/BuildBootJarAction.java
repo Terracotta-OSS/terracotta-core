@@ -22,6 +22,7 @@ import org.eclipse.debug.core.model.IStreamMonitor;
 import org.eclipse.debug.core.model.IStreamsProxy;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
+import org.eclipse.jdt.launching.IRuntimeClasspathEntry;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jface.action.Action;
@@ -127,9 +128,12 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
 
     String portablePath = m_jreContainerPath;
     if (portablePath == null) {
-      IPath jrePath = JavaRuntime.computeJREEntry(m_javaProject).getPath();
-      if (jrePath != null) {
-        portablePath = jrePath.makeAbsolute().toPortableString();
+      IRuntimeClasspathEntry jreEntry = JavaRuntime.computeJREEntry(m_javaProject);
+      if(jreEntry != null) {
+        IPath jrePath = jreEntry.getPath();
+        if (jrePath != null) {
+          portablePath = jrePath.makeAbsolute().toPortableString();
+        }
       }
     }
 
@@ -143,6 +147,11 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
     if (configFile == null) { throw new RuntimeException("No config file"); }
 
     if (!configFile.exists()) { throw new FileNotFoundException(toOSString(configPath)); }
+
+    String origVMArgs = wc.getAttribute(ATTR_VM_ARGUMENTS, "") + " ";
+    String installPath = plugin.getLocation().makeAbsolute().toOSString();
+    String vmargs = "-Dtc.install-root=\"" + installPath + "\"";
+    wc.setAttribute(ATTR_VM_ARGUMENTS, vmargs + origVMArgs);
 
     wc.setAttribute(ATTR_MAIN_TYPE_NAME, MAIN_TYPE);
     wc.setAttribute(ATTR_PROGRAM_ARGUMENTS, args);
