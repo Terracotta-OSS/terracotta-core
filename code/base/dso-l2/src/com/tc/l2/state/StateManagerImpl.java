@@ -175,9 +175,8 @@ public class StateManagerImpl implements StateManager {
           throw new AssertionError("This message shouldn't have been routed here : " + clusterMsg);
       }
     } catch (GroupException ge) {
-      logger.error("Caught Exception while handling Message : " + clusterMsg, ge);
-      throw new AssertionError(ge);
-
+      logger.error("Zapping Node : Caught Exception while handling Message : " + clusterMsg, ge);
+      groupManager.zapNode(clusterMsg.messageFrom());
     }
   }
 
@@ -205,10 +204,16 @@ public class StateManagerImpl implements StateManager {
       GroupMessage resultAgreed = L2StateMessageFactory.createResultAgreedMessage(msg, msg.getEnrollment());
       logger.info("Agreed with Election Result from " + msg.messageFrom() + " : " + resultAgreed);
       groupManager.sendTo(msg.messageFrom(), resultAgreed);
-    } else if (state == ACTIVE_COORDINATOR || !activeNode.isNull()) {
+    } else if (state == ACTIVE_COORDINATOR || !activeNode.isNull()
+               || (msg.getEnrollment().isANewCandidate() && state != START_STATE)) {
+      // Condition 1 :
+      // Obviously an issue.
+      // Condition 2 :
       // This shouldn't happen normally, but is possible when there is some weird network error where A sees B,
       // B sees A/C and C sees B and A is active and C is trying to run election
       // Force other node to rerun election so that we can abort
+      // Condition 3 :
+      // We dont want new L2s to win an election when there are old L2s in PASSIVE states.
       GroupMessage resultConflict = L2StateMessageFactory.createResultConflictMessage(msg, EnrollmentFactory
           .createTrumpEnrollment(getLocalNodeID()));
       warn("WARNING :: Active Node = " + activeNode + " , " + state

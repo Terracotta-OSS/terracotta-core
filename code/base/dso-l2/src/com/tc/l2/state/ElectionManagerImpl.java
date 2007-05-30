@@ -34,7 +34,7 @@ public class ElectionManagerImpl implements ElectionManager {
 
   private final GroupManager    groupManager;
   private final Map             votes                = new HashMap();
-  
+
   private State                 state                = INIT;
 
   // XXX::NOTE:: These variables are not reset until next election
@@ -47,10 +47,9 @@ public class ElectionManagerImpl implements ElectionManager {
 
   public synchronized boolean handleStartElectionRequest(L2StateMessage msg) {
     Assert.assertEquals(L2StateMessage.START_ELECTION, msg.getType());
-    if (state == ELECTION_IN_PROGRESS) {
-      // Another node is also joining in the election process
-      // Cast its vote and notify my vote
-      Assert.assertNotNull(myVote);
+    if (state == ELECTION_IN_PROGRESS && (myVote.isANewCandidate() || !msg.getEnrollment().isANewCandidate())) {
+      // Another node is also joining in the election process, Cast its vote and notify my vote
+      // Note : WE dont want to do this for new candidates when we are not new.
       Enrollment vote = msg.getEnrollment();
       Enrollment old = (Enrollment) votes.put(vote.getNodeID(), vote);
       boolean sendResponse = msg.inResponseTo().isNull();
@@ -59,7 +58,8 @@ public class ElectionManagerImpl implements ElectionManager {
         sendResponse = true;
       }
       if (sendResponse) {
-        // This is either not a response to this node initiating election or a duplicate vote. Either case notify this nodes vote
+        // This is either not a response to this node initiating election or a duplicate vote. Either case notify this
+        // nodes vote
         GroupMessage response = createElectionStartedMessage(msg, myVote);
         logger.info("Casted vote from " + msg + " My Response : " + response);
         try {

@@ -94,7 +94,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   public void dump() {
-    StringBuffer buf = new StringBuffer("ServerTransactionManager");
+    StringBuffer buf = new StringBuffer("ServerTransactionManager\n");
     buf.append("transactionAccounts: " + transactionAccounts);
     buf.append("\n/ServerTransactionManager");
     System.err.println(buf.toString());
