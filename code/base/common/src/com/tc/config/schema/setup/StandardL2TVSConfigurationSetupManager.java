@@ -9,9 +9,12 @@ import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.capabilities.AbstractCapabilitiesFactory;
 import com.tc.capabilities.Capabilities;
+import com.tc.capabilities.StandardCapabilitiesConfig;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.NewCommonL2ConfigObject;
+import com.tc.config.schema.NewHaConfig;
+import com.tc.config.schema.NewHaConfigObject;
 import com.tc.config.schema.NewSystemConfig;
 import com.tc.config.schema.NewSystemConfigObject;
 import com.tc.config.schema.defaults.DefaultValueProvider;
@@ -26,6 +29,7 @@ import com.tc.object.config.schema.PersistenceMode;
 import com.tc.util.Assert;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.Client;
+import com.terracottatech.config.Ha;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.System;
@@ -54,6 +58,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   private NewSystemConfig            systemConfig;
   private final Map                  l2ConfigData;
+  private final NewHaConfig          haConfig;
 
   private final String               thisL2Identifier;
   private L2ConfigData               myConfigData;
@@ -73,6 +78,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
     this.systemConfig = null;
     this.l2ConfigData = new HashMap();
+    this.haConfig = getHaConfig();
 
     this.thisL2Identifier = thisL2Identifier;
     this.myConfigData = null;
@@ -81,6 +87,17 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
     selectL2((Servers) serversBeanRepository().bean(), "the set of L2s known to us");
     validateRestrictions();
+  }
+
+  private NewHaConfig getHaConfig() {
+    ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), Ha.class,
+        new ChildBeanFetcher() {
+          public XmlObject getChild(XmlObject parent) {
+            return ((Servers) parent).getHa();
+          }
+        });
+
+    return new NewHaConfigObject(createContext(beanRepository, configurationCreator.directoryConfigurationLoadedFrom()));
   }
 
   private class L2ConfigData {
@@ -226,6 +243,9 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
       if (servers != null && servers.length > 1) {
         Capabilities capabilities = AbstractCapabilitiesFactory.getCapabilitiesManager();
+        StandardCapabilitiesConfig capabilitiesConfig = new StandardCapabilitiesConfig();
+        capabilitiesConfig.setNetworkEnabledHA(haConfig.isNetworked());
+        capabilities.setConfig(capabilitiesConfig);
 
         if (!capabilities.hasHA() && capabilities.canClusterPOJOs()) { throw new ConfigurationSetupException(
             "Attempting to run multiple servers without license " + "authorization of DSO High Availability."); }
@@ -289,6 +309,10 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   public NewL2DSOConfig dsoL2Config() {
     return this.myConfigData.dsoL2Config();
+  }
+
+  public NewHaConfig haConfig() {
+    return haConfig;
   }
 
   public String[] allCurrentlyKnownServers() {

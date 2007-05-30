@@ -364,7 +364,9 @@ public class StateManagerTest extends TCTestCase {
     gm.registerForMessages(TestMessage.class, l);
     gm.registerForGroupEvents(gel);
     sinks[localIndex] = new ChangeSink(localIndex);
-    StateManager mgr = new StateManagerImpl(logger, gm, sinks[localIndex]);
+    MyStateManagerConfig config = new MyStateManagerConfig();
+    config.electionTime = 5;
+    StateManager mgr = new StateManagerImpl(logger, gm, sinks[localIndex], config);
     messageStage[localIndex] = new L2StateMessageStage(mgr);
     gm.routeMessages(L2StateMessage.class, messageStage[localIndex].getSink());
     messageStage[localIndex].start();
@@ -419,6 +421,14 @@ public class StateManagerTest extends TCTestCase {
 
     public void run() {
       mgr.startElection();
+    }
+  }
+
+  private static class MyStateManagerConfig implements StateManagerConfig {
+    public int electionTime;
+
+    public int getEletionTime() {
+      return electionTime;
     }
   }
 

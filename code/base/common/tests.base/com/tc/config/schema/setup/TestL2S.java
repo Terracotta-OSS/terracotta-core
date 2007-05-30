@@ -1,9 +1,11 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
 import com.tc.exception.ImplementMe;
+import com.terracottatech.config.Ha;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 
@@ -53,6 +55,28 @@ public class TestL2S extends TestXmlObject implements Servers {
 
   public void removeServer(int arg0) {
     throw new ImplementMe();
+  }
+
+  public Ha addNewHa() {
+    throw new ImplementMe();
+  }
+
+  public Ha getHa() {
+    throw new ImplementMe();
+  }
+
+  public boolean isSetHa() {
+    throw new ImplementMe();
+  }
+
+  public void setHa(Ha arg0) {
+    throw new ImplementMe();
+
+  }
+
+  public void unsetHa() {
+    throw new ImplementMe();
+
   }
 
 }

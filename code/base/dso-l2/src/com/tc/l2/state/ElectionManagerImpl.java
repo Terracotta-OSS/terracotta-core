@@ -13,7 +13,6 @@ import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
 import com.tc.net.groups.GroupResponse;
 import com.tc.net.groups.NodeID;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
@@ -29,9 +28,6 @@ public class ElectionManagerImpl implements ElectionManager {
   private static final State    ELECTION_COMPLETE    = new State("Election-Complete");
   private static final State    ELECTION_IN_PROGRESS = new State("Election-In-Progress");
 
-  private static final long     ELECTION_TIME        = TCPropertiesImpl.getProperties()
-                                                         .getLong("l2.ha.electionmanager.electionTimePeriod");
-
   private final GroupManager    groupManager;
   private final Map             votes                = new HashMap();
 
@@ -41,8 +37,11 @@ public class ElectionManagerImpl implements ElectionManager {
   private Enrollment            myVote               = null;
   private Enrollment            winner;
 
-  public ElectionManagerImpl(GroupManager groupManager) {
+  private final int             electionTime;
+
+  public ElectionManagerImpl(GroupManager groupManager, StateManagerConfig stateManagerConfig) {
     this.groupManager = groupManager;
+    electionTime = stateManagerConfig.getEletionTime();
   }
 
   public synchronized boolean handleStartElectionRequest(L2StateMessage msg) {
@@ -236,7 +235,7 @@ public class ElectionManagerImpl implements ElectionManager {
 
   private synchronized void waitTillElectionComplete() {
     long start = System.currentTimeMillis();
-    long diff = ELECTION_TIME;
+    long diff = electionTime;
     while (state == ELECTION_IN_PROGRESS && diff > 0) {
       try {
         wait(diff);

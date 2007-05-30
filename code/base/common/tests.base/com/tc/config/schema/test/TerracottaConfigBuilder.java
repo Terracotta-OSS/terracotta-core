@@ -39,9 +39,9 @@ public class TerracottaConfigBuilder extends BaseConfigBuilder {
     return (L1ConfigBuilder) getRawProperty("clients");
   }
 
-  public void setServers(String value) {
-    setProperty("servers", value);
-  }
+//  public void setServers(String value) {
+//    setProperty("servers", value);
+//  }
 
   public void setServers(L2SConfigBuilder value) {
     setProperty("servers", value);

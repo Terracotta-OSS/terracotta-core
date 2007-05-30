@@ -27,6 +27,7 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
   private final BooleanConfigItem garbageCollectionVerbose;
   private final IntConfigItem     garbageCollectionInterval;
   private final IntConfigItem     listenPort;
+  private final IntConfigItem     l2GroupPort;
   private final IntConfigItem     clientReconnectWindow;
   private final StringConfigItem  host;
 
@@ -49,13 +50,18 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
     this.garbageCollectionInterval = this.context.intItem("dso/garbage-collection/interval");
     this.clientReconnectWindow = this.context.intItem("dso/client-reconnect-window");
     this.listenPort = this.context.intItem("dso-port");
+    this.l2GroupPort = this.context.intItem("l2-group-port");
     this.host = this.context.stringItem("@host");
   }
 
   public IntConfigItem listenPort() {
     return this.listenPort;
   }
-  
+
+  public IntConfigItem l2GroupPort() {
+    return this.l2GroupPort;
+  }
+
   public StringConfigItem host() {
     return host;
   }

@@ -10,6 +10,7 @@ import com.tc.config.schema.MockIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.L2ConfigBuilder;
+import com.tc.config.schema.test.L2SConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -118,16 +119,20 @@ public class RestartTestEnvironment {
     }
     builder.getSystem().setConfigurationModel(configurationModel);
 
-    if (this.adminPort > 0) builder.getServers().getL2s()[0].setJMXPort(this.adminPort);
-    if (this.serverPort > 0) builder.getServers().getL2s()[0].setDSOPort(this.serverPort);
-
     String persistenceMode = L2ConfigBuilder.PERSISTENCE_MODE_TEMPORARY_SWAP_ONLY;
     if (isPersistent && isParanoid) {
       persistenceMode = L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE;
     } else if (isPersistent) persistenceMode = L2ConfigBuilder.PERSISTENCE_MODE_TEMPORARY_SWAP_ONLY;
 
-    builder.getServers().getL2s()[0].setPersistenceMode(persistenceMode);
-    builder.getServers().getL2s()[0].setData(tempDirectory.getAbsolutePath());
+    L2ConfigBuilder l2 = new L2ConfigBuilder();
+    l2.setDSOPort(serverPort);
+    l2.setJMXPort(adminPort);
+    l2.setData(tempDirectory.getAbsolutePath());
+    l2.setPersistenceMode(persistenceMode);
+    L2ConfigBuilder[] l2s = new L2ConfigBuilder[] { l2 };
+    L2SConfigBuilder servers = new L2SConfigBuilder();
+    servers.setL2s(l2s);
+    builder.setServers(servers);
 
     String configAsString = builder.toString();
 

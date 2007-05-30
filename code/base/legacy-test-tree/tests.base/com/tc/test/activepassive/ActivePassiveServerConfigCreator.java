@@ -7,6 +7,7 @@ package com.tc.test.activepassive;
 import org.apache.commons.io.FileUtils;
 
 import com.tc.config.schema.test.ApplicationConfigBuilder;
+import com.tc.config.schema.test.HaConfigBuilder;
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.L2SConfigBuilder;
 import com.tc.config.schema.test.SystemConfigBuilder;
@@ -27,6 +28,7 @@ public class ActivePassiveServerConfigCreator {
   private final int          serverCount;
   private final int[]        dsoPorts;
   private final int[]        jmxPorts;
+  private final int[]        l2GroupPorts;
   private final String[]     serverNames;
   private final String       serverPersistence;
   private final boolean      serverDiskless;
@@ -34,12 +36,13 @@ public class ActivePassiveServerConfigCreator {
   private final File         configFile;
   private final File         tempDir;
 
-  public ActivePassiveServerConfigCreator(int serverCount, int[] dsoPorts, int[] jmxPorts, String[] serverNames,
-                                          String serverPersistence, boolean serverDiskless, String configModel,
-                                          File configFile, File tempDir) {
+  public ActivePassiveServerConfigCreator(int serverCount, int[] dsoPorts, int[] jmxPorts, int[] l2GroupPorts,
+                                          String[] serverNames, String serverPersistence, boolean serverDiskless,
+                                          String configModel, File configFile, File tempDir) {
     this.serverCount = serverCount;
     this.dsoPorts = dsoPorts;
     this.jmxPorts = jmxPorts;
+    this.l2GroupPorts = l2GroupPorts;
     this.serverNames = serverNames;
     this.serverPersistence = serverPersistence;
     this.serverDiskless = serverDiskless;
@@ -88,11 +91,20 @@ public class ActivePassiveServerConfigCreator {
       l2.setName(serverNames[i]);
       l2.setDSOPort(dsoPorts[i]);
       l2.setJMXPort(jmxPorts[i]);
+      l2.setL2GroupPort(l2GroupPorts[i]);
       l2.setPersistenceMode(serverPersistence);
       l2s[i] = l2;
     }
+    HaConfigBuilder ha = new HaConfigBuilder();
+    if (this.serverDiskless) {
+      ha.setMode(HaConfigBuilder.HA_MODE_NETWORKED_ACTIVE_PASSIVE);
+    } else {
+      ha.setMode(HaConfigBuilder.HA_MODE_ACTIVE_PASSIVE);
+    }
+
     L2SConfigBuilder l2sConfigbuilder = new L2SConfigBuilder();
     l2sConfigbuilder.setL2s(l2s);
+    l2sConfigbuilder.setHa(ha);
 
     ApplicationConfigBuilder app = ApplicationConfigBuilder.newMinimalInstance();
 

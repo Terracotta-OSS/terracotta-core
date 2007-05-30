@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.defaults;
 
@@ -19,7 +20,7 @@ import java.util.regex.Pattern;
 public class FromSchemaDefaultValueProvider implements DefaultValueProvider {
 
   public FromSchemaDefaultValueProvider() {
-    // Nothing here.
+  // Nothing here.
   }
 
   // This makes sure we don't try to interpret XPaths that have anything other than normal element delimiters in them.
@@ -86,8 +87,8 @@ public class FromSchemaDefaultValueProvider implements DefaultValueProvider {
     if (!isInterpretableXPath(xpath)) {
       // formatting
       throw new XmlException(
-                             "Right now, our default-finding code doesn't support anything other than a path consisting "
-                                 + "of only simple elements. '" + xpath + "' is not such a path.");
+          "Right now, our default-finding code doesn't support anything other than a path consisting "
+              + "of only simple elements. '" + xpath + "' is not such a path.");
     }
 
     String[] components = xpath.split("/");
@@ -112,7 +113,7 @@ public class FromSchemaDefaultValueProvider implements DefaultValueProvider {
       if (component.startsWith("@")) {
         // formatting
         throw new XmlException("Component '" + component + "' of XPath '" + xpath
-                               + "' specifies an attribute in an invalid position.");
+            + "' specifies an attribute in an invalid position.");
       }
 
       if ((i == components.length - 2) && (components[i + 1].startsWith("@"))) {
@@ -121,7 +122,7 @@ public class FromSchemaDefaultValueProvider implements DefaultValueProvider {
         if (currentParticle.getType() == null || currentParticle.getType().getAttributeModel() == null) {
           // formatting
           throw new XmlException("The element purportedly containing attribute '" + attributeName + "' in XPath '"
-                                 + xpath + "' seems to have no attributes at all.");
+              + xpath + "' seems to have no attributes at all.");
         }
 
         SchemaLocalAttribute[] attributes = currentParticle.getType().getAttributeModel().getAttributes();
@@ -131,7 +132,7 @@ public class FromSchemaDefaultValueProvider implements DefaultValueProvider {
         }
 
         throw new XmlException("Attribute '" + attributeName + "' of element '" + component + "' in XPath '" + xpath
-                               + "' was not found.");
+            + "' was not found.");
       }
 
       if (particleType == SchemaParticle.ELEMENT) {
@@ -144,8 +145,7 @@ public class FromSchemaDefaultValueProvider implements DefaultValueProvider {
           }
         } else {
           throw new XmlException("Component '" + component + "' of XPath '" + xpath
-                                 + "' not found; we have one element only, '"
-                                 + currentParticle.getName().getLocalPart() + "'.");
+              + "' not found; we have one element only, '" + currentParticle.getName().getLocalPart() + "'.");
         }
       }
 
@@ -155,7 +155,7 @@ public class FromSchemaDefaultValueProvider implements DefaultValueProvider {
       if (children == null) {
         // formatting
         throw new XmlException("Component '" + component + "' of XPath '" + xpath + "' seems to have "
-                               + "no children. Stop.");
+            + "no children. Stop.");
       }
 
       ElementReturn elementReturn = findNextElement(xpath, component, children, i == components.length - 1);
@@ -165,7 +165,7 @@ public class FromSchemaDefaultValueProvider implements DefaultValueProvider {
       if (next == null) {
         // formatting
         throw new XmlException("Component '" + component + "' of XPath '" + xpath
-                               + "' was not found. Please check the path " + "and try again.");
+            + "' was not found. Please check the path " + "and try again.");
       }
 
       currentParticle = next;
@@ -176,7 +176,7 @@ public class FromSchemaDefaultValueProvider implements DefaultValueProvider {
     if (currentParticle.getParticleType() != SchemaParticle.ELEMENT) {
       // formatting
       throw new XmlException("XPath '" + xpath
-                             + "' points to a complex type or other item, not a single element. Stop.");
+          + "' points to a complex type or other item, not a single element. Stop.");
     }
 
     if (currentParticle.isDefault() && (!anyAreOptional)) {
@@ -208,6 +208,7 @@ public class FromSchemaDefaultValueProvider implements DefaultValueProvider {
 
   private ElementReturn findNextElement(String xpath, String component, SchemaParticle[] children, boolean lastOne)
       throws XmlException {
+
     SchemaParticle next = null;
     StringBuffer actualChildren = new StringBuffer();
     boolean optional = false;
@@ -220,7 +221,7 @@ public class FromSchemaDefaultValueProvider implements DefaultValueProvider {
         if (next != null) {
           // formatting
           throw new XmlException("Component '" + component + "' of XPath '" + xpath + "' has multiple children named '"
-                                 + component + "'. We don't support this. Stop.");
+              + component + "'. We don't support this. Stop.");
         } else {
           next = children[childIndex];
         }
@@ -235,7 +236,7 @@ public class FromSchemaDefaultValueProvider implements DefaultValueProvider {
     if (next == null) {
       // formatting
       throw new XmlException("Component '" + component + "' of path '" + xpath + "' was not found. Instead, we found: "
-                             + actualChildren);
+          + actualChildren);
     }
 
     optional = optional || next.getMinOccurs().intValue() == 0;
@@ -248,8 +249,8 @@ public class FromSchemaDefaultValueProvider implements DefaultValueProvider {
         && particleType != SchemaParticle.SEQUENCE) {
       // formatting
       throw new XmlException("Component '" + component + "' of XPath '" + xpath + "' is a schema particle of type "
-                             + particleType + ", not " + SchemaParticle.ALL + " ('all'), " + SchemaParticle.CHOICE
-                             + " ('choice'), or " + SchemaParticle.SEQUENCE + " ('sequence'). Stop.");
+          + particleType + ", not " + SchemaParticle.ALL + " ('all'), " + SchemaParticle.CHOICE + " ('choice'), or "
+          + SchemaParticle.SEQUENCE + " ('sequence'). Stop.");
     }
   }
 

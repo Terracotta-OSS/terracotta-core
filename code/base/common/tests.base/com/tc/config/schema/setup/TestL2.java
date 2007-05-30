@@ -7,6 +7,7 @@ package com.tc.config.schema.setup;
 import com.tc.exception.ImplementMe;
 import com.terracottatech.config.Authentication;
 import com.terracottatech.config.DsoServerData;
+import com.terracottatech.config.Ha;
 import com.terracottatech.config.Host;
 import com.terracottatech.config.NonBlankToken;
 import com.terracottatech.config.Path;
@@ -257,6 +258,55 @@ public class TestL2 extends TestXmlObject implements Server {
 
   public void unsetHost() {
     throw new ImplementMe();
+  }
+
+  public Ha addNewHa() {
+    throw new ImplementMe();
+  }
+
+  public Ha getHa() {
+    throw new ImplementMe();
+  }
+
+  public int getL2GroupPort() {
+    throw new ImplementMe();
+  }
+
+  public boolean isSetHa() {
+    throw new ImplementMe();
+  }
+
+  public boolean isSetL2GroupPort() {
+    throw new ImplementMe();
+  }
+
+  public void setHa(Ha arg0) {
+    throw new ImplementMe();
+
+  }
+
+  public void setL2GroupPort(int arg0) {
+    throw new ImplementMe();
+
+  }
+
+  public void unsetHa() {
+    throw new ImplementMe();
+
+  }
+
+  public void unsetL2GroupPort() {
+    throw new ImplementMe();
+
+  }
+
+  public Port xgetL2GroupPort() {
+    throw new ImplementMe();
+  }
+
+  public void xsetL2GroupPort(Port arg0) {
+    throw new ImplementMe();
+
   }
 
 }

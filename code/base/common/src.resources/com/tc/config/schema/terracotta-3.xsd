@@ -252,7 +252,6 @@
       <xs:element name="new-object-debug" type="xs:boolean" minOccurs="0" default="false" />
     </xs:all>
   </xs:complexType>
-
   <xs:complexType name="additional-boot-jar-classes">
     <xs:sequence>
       <xs:element name="include" type="qualified-class-name" maxOccurs="unbounded" />
@@ -421,6 +420,19 @@
 		</xs:all>
 	</xs:complexType>
 
+  <xs:complexType name="ha">
+    <xs:all>
+      <xs:element name="mode" type="ha-mode" minOccurs="0" default="active-passive" />
+      <xs:element name="networked-active-passive" type="networked-active-passive" minOccurs="0" />
+    </xs:all>
+  </xs:complexType>
+  
+  <xs:complexType name="networked-active-passive">
+    <xs:all>
+      <xs:element name="election-time" type="positive-int" minOccurs="0" default="5" />
+    </xs:all>
+  </xs:complexType>
+    
   <xs:complexType name="server">
     <xs:annotation>
       <xs:documentation xmlns="http://www.w3.org/1999/xhtml">
@@ -536,6 +548,19 @@
             Solaris).
 
             Default: 9520
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="l2-group-port" type="port" minOccurs="0" default="9530">
+        <xs:annotation>
+          <xs:documentation>
+            Port for server to server communication which must
+            be indicated when HA mode is networked-active-passive.
+            This can be any port you like, but note that ports 
+            below 1024 typically require 'root' privileges to 
+            use on Unix-style systems (Linux, Solaris).
+            
+            Default: 9530
           </xs:documentation>
         </xs:annotation>
       </xs:element>
@@ -686,36 +711,39 @@
   </xs:complexType>
 
   <xs:complexType name="servers">
-    <xs:annotation>
-      <xs:documentation>
-        This section defines the servers present in your
-        Terracotta system. You can omit this section
-        entirely, in which case it behaves as if there's a
-        single server with all values set at their default.
-        You can include exactly one server entry here (the
-        common case), or, if you're going to run multiple
-        servers for failover, you can include multiple
-        servers here.
+  	<xs:annotation>
+  		<xs:documentation>
+  			This section defines the servers present in your
+  			Terracotta system. You can omit this section entirely, in
+  			which case it behaves as if there's a single server with
+  			all values set at their default. You can include exactly
+  			one server entry here (the common case), or, if you're
+  			going to run multiple servers for failover, you can
+  			include multiple servers here.
 
-        If you include more than one server here, note that
-        each server will need to know which configuration it
-        should use as it starts up. If you name your servers
-        according to the host that they run on (and no host
-        contains more than one server), then they will find
-        the hostname themselves and work automatically.
+  			If you include more than one server here, note that each
+  			server will need to know which configuration it should use
+  			as it starts up. If you name your servers according to the
+  			host that they run on (and no host contains more than one
+  			server), then they will find the hostname themselves and
+  			work automatically.
 
-        If you name your servers in any other fashion (and,
-        again, only if there is more than one 'server'
-        element present here), then you will need to pass
-        the command-line option "-n <![CDATA[ <name>]]>"
-        to the start-tc-server script, passing it the name
-        of a server configuration from this file.
-      </xs:documentation>
-    </xs:annotation>
-    <xs:sequence>
-      <xs:element name="server" type="server"
-        maxOccurs="unbounded" />
-    </xs:sequence>
+  			If you name your servers in any other fashion (and, again,
+  			only if there is more than one 'server' element present
+  			here), then you will need to pass the command-line option
+  			"-n
+  			<![CDATA[ <name>]]>
+  			" to the start-tc-server script, passing it the name of a
+  			server configuration from this file.
+  		</xs:documentation>
+  	</xs:annotation>
+  	<xs:sequence maxOccurs="1">
+                <xs:sequence>
+  			<xs:element name="server" type="server"
+  				maxOccurs="unbounded" />
+  		</xs:sequence>
+  		<xs:element name="ha" type="ha" maxOccurs="1" minOccurs="0"></xs:element>
+  	</xs:sequence>
   </xs:complexType>
 
   <xs:simpleType name="configuration-model">
@@ -824,6 +852,13 @@
     </xs:all>
   </xs:complexType>
 
+  <xs:simpleType name="ha-mode">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="networked-active-passive" />
+      <xs:enumeration value="active-passive" />
+    </xs:restriction>
+  </xs:simpleType>
+  
   <xs:simpleType name="non-blank-token">
     <xs:restriction base="xs:token">
       <xs:minLength value="1" />
@@ -911,7 +946,7 @@
       <xs:maxLength value="255" />
     </xs:restriction>
   </xs:simpleType>
-
+  
   <xs:simpleType name="qualified-class-name">
     <xs:restriction base="xs:token">
       <xs:pattern

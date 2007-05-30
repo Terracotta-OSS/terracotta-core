@@ -7,6 +7,7 @@ package com.tc.l2.ha;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.OrderedSink;
+import com.tc.config.schema.NewHaConfig;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.context.StateChangedEvent;
@@ -35,6 +36,7 @@ import com.tc.l2.objectserver.ReplicatedTransactionManager;
 import com.tc.l2.objectserver.ReplicatedTransactionManagerImpl;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
+import com.tc.l2.state.StateManagerConfigImpl;
 import com.tc.l2.state.StateManagerImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -75,12 +77,16 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   private ClusterState                  clusterState;
   private SequenceGenerator             sequenceGenerator;
 
+  private NewHaConfig                   haConfig;
+
   public L2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server, StageManager stageManager,
                          PersistentMapStore clusterStateStore, ObjectManager objectManager,
                          ServerTransactionManager transactionManager, TransactionalObjectManager txnObjectManager,
-                         GlobalTransactionIDSequenceProvider gidSequenceProvider) {
+                         GlobalTransactionIDSequenceProvider gidSequenceProvider, NewHaConfig haConfig) {
     this.consoleLogger = consoleLogger;
     this.server = server;
+    this.haConfig = haConfig;
+
     init(stageManager, clusterStateStore, objectManager, transactionManager, txnObjectManager, gidSequenceProvider);
   }
 
@@ -106,7 +112,9 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     final Sink stateChangeSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE,
                                                           new L2StateChangeHandler(), 1, Integer.MAX_VALUE).getSink();
     this.groupManager = GroupManagerFactory.createGroupManager();
-    this.stateManager = new StateManagerImpl(consoleLogger, groupManager, stateChangeSink);
+
+    this.stateManager = new StateManagerImpl(consoleLogger, groupManager, stateChangeSink,
+                                             new StateManagerConfigImpl(haConfig));
     this.stateManager.registerForStateChangeEvents(this);
 
     this.l2ObjectStateManager = new L2ObjectStateManagerImpl(objectManager, transactionManager);
@@ -191,7 +199,6 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   }
 
   public void l2StateChanged(StateChangedEvent sce) {
-    logger.info("Recd. " + sce + "!!!!");
     clusterState.setCurrentState(sce.getCurrentState());
     rTxnManager.l2StateChanged(sce);
     if (sce.movedToActive()) {
@@ -203,6 +210,9 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
       } catch (IOException e) {
         throw new AssertionError(e);
       }
+    } else {
+      // TODO:// handle
+      logger.info("Recd. " + sce + " ! Ignoring for now !!!!");
     }
   }
 

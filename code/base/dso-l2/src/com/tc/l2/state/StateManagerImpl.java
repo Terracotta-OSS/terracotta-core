@@ -37,11 +37,15 @@ public class StateManagerImpl implements StateManager {
   private volatile State             state              = START_STATE;
   private boolean                    electionInProgress = false;
 
-  public StateManagerImpl(TCLogger consoleLogger, GroupManager groupManager, Sink stateChangeSink) {
+  private final StateManagerConfig   stateManagerConfig;
+
+  public StateManagerImpl(TCLogger consoleLogger, GroupManager groupManager, Sink stateChangeSink,
+                          StateManagerConfig stateManagerConfig) {
     this.consoleLogger = consoleLogger;
     this.groupManager = groupManager;
     this.stateChangeSink = stateChangeSink;
-    this.electionMgr = new ElectionManagerImpl(groupManager);
+    this.stateManagerConfig = stateManagerConfig;
+    this.electionMgr = new ElectionManagerImpl(groupManager, stateManagerConfig);
   }
 
   /*

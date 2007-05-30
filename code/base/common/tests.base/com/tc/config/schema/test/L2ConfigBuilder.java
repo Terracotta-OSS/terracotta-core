@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.test;
 
@@ -43,6 +44,10 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     setProperty("jmx-port", data);
   }
 
+  public void setL2GroupPort(int data) {
+    setProperty("l2-group-port", data);
+  }
+
   public static final String PERSISTENCE_MODE_TEMPORARY_SWAP_ONLY = "temporary-swap-only";
   public static final String PERSISTENCE_MODE_PERMANENT_STORE     = "permanent-store";
 
@@ -74,7 +79,8 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     setProperty("interval", data);
   }
 
-  private static final String[] L2              = new String[] { "data", "logs", "dso-port", "jmx-port" };
+  private static final String[] L2              = new String[] { "data", "logs", "dso-port", "jmx-port",
+      "l2-group-port"                          };
 
   private static final String[] DSO_PERSISTENCE = new String[] { "mode" };
   private static final String[] DSO_GC          = new String[] { "enabled", "verbose", "interval" };
@@ -88,7 +94,7 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     out += indent() + "<server" + (this.name != null ? " name=\"" + this.name + "\"" : "") + ">\n";
 
     out += elements(L2) + openElement("dso", DSO) + elementGroup("persistence", DSO_PERSISTENCE)
-           + elementGroup("garbage-collection", DSO_GC) + closeElement("dso", DSO);
+        + elementGroup("garbage-collection", DSO_GC) + closeElement("dso", DSO);
 
     out += closeElement("server");
 

@@ -1,13 +1,10 @@
 package com.tc.capabilities;
 
-import com.tc.properties.TCPropertiesImpl;
-
 import java.util.Date;
 
 public class StandardCapabilitiesImpl implements Capabilities {
 
-  private static final boolean NETWORK_ENABLED_HA = TCPropertiesImpl.getProperties()
-                                                      .getBoolean("l2.ha.network.enabled");
+  private boolean networkEnabledHA;
 
   public int maxL2Connections() {
     return Integer.MAX_VALUE;
@@ -34,6 +31,10 @@ public class StandardCapabilitiesImpl implements Capabilities {
   }
 
   public boolean hasHAOverNetwork() {
-    return NETWORK_ENABLED_HA;
+    return networkEnabledHA;
+  }
+
+  public void setConfig(CapabilitiesConfig config) {
+    networkEnabledHA = ((StandardCapabilitiesConfig) config).getNetworkEnabledHA();
   }
 }

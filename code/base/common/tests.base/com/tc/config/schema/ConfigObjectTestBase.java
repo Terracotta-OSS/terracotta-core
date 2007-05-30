@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema;
 
@@ -43,9 +44,10 @@ public abstract class ConfigObjectTestBase extends TCTestCase {
     this.repository = new StandardBeanRepository(repositoryBeanClass);
 
     DefaultValueProvider provider = new FromSchemaDefaultValueProvider();
-    this.context = new StandardConfigContext(this.repository, provider, new MockIllegalConfigurationChangeHandler(), null);
+    this.context = new StandardConfigContext(this.repository, provider, new MockIllegalConfigurationChangeHandler(),
+        null);
 
-    this.builder = new TerracottaConfigBuilder();
+    this.builder = TerracottaConfigBuilder.newMinimalInstance();
 
     this.listener1 = new MockConfigItemListener();
     this.listener2 = new MockConfigItemListener();
@@ -75,8 +77,8 @@ public abstract class ConfigObjectTestBase extends TCTestCase {
   }
 
   public void setConfig() throws Exception {
-    TcConfigDocument bean = (TcConfigDocument) new TerracottaDomainConfigurationDocumentBeanFactory()
-        .createBean(new ByteArrayInputStream(this.builder.toString().getBytes()), "for test").bean();
+    TcConfigDocument bean = (TcConfigDocument) new TerracottaDomainConfigurationDocumentBeanFactory().createBean(
+        new ByteArrayInputStream(this.builder.toString().getBytes()), "for test").bean();
     this.repository.setBean(getBeanFromTcConfig(bean.getTcConfig()), "from test config builder");
   }
 

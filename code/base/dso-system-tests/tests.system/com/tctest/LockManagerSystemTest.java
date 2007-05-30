@@ -8,6 +8,7 @@ import org.apache.xmlbeans.XmlObject;
 
 import com.tc.cluster.Cluster;
 import com.tc.config.schema.NewCommonL2Config;
+import com.tc.config.schema.NewHaConfig;
 import com.tc.config.schema.NewSystemConfig;
 import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.tc.config.schema.dynamic.ConfigItem;
@@ -93,12 +94,6 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     new StartupHelper(group, new StartAction(l2Manager)).startUp();
 
     factory.addServerToL1Config(null, server.getListenPort(), -1);
-
-    // TODO: remove this and "fix" the config stuff
-    System.err.println("******  server.getListenPort=[" + server.getListenPort() + "]");
-
-    // makeClientUsePort(server.getListenPort());
-    // L1TVSConfigurationSetupManager manager = super.createL1ConfigManager();
 
     L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
     DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelper(manager);
@@ -415,6 +410,10 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       return realConfig.systemConfig();
     }
 
+    public NewHaConfig haConfig() {
+      return realConfig.haConfig();
+    }
+
     private static class L2ConfigOverride implements NewL2DSOConfig {
 
       private final NewL2DSOConfig config;
@@ -445,6 +444,10 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
       public BooleanConfigItem garbageCollectionVerbose() {
         return config.garbageCollectionVerbose();
+      }
+
+      public IntConfigItem l2GroupPort() {
+        return config.l2GroupPort();
       }
 
       public IntConfigItem listenPort() {
