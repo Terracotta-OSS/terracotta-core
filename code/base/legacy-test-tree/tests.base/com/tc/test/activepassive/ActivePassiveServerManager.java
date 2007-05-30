@@ -159,51 +159,52 @@ public class ActivePassiveServerManager {
     }
 
     for (int i = startIndex; i < dsoPorts.length; i++) {
-      dsoPorts[i] = getUnusedPort("dso");
-      jmxPorts[i] = getUnusedPort("jmx");
-      l2GroupPorts[i] = getUnusedPort("l2group");
+      setPorts(i);
       serverNames[i] = SERVER_NAME + i;
       servers[i] = new ServerInfo(HOST, serverNames[i], dsoPorts[i], jmxPorts[i], l2GroupPorts[i],
                                   getServerControl(dsoPorts[i], jmxPorts[i], serverNames[i]));
     }
   }
 
-  private int getUnusedPort(String type) {
-    if (type == null
-        || (!type.equalsIgnoreCase("dso") && !type.equalsIgnoreCase("jmx") && !type.equalsIgnoreCase("l2group"))) { throw new AssertionError(
-                                                                                                                                             "Unrecognizable type=["
-                                                                                                                                                 + type
-                                                                                                                                                 + "]"); }
-    int port = -1;
-    while (port < 0) {
+  private void setPorts(int index) {
+    while (true) {
       int newPort = portChooser.chooseRandomPort();
-      boolean used = false;
-      for (int i = 0; i < dsoPorts.length; i++) {
-        if (dsoPorts[i] == newPort) {
-          used = true;
-        }
-      }
-      if (used) {
-        continue;
-      }
-      for (int i = 0; i < jmxPorts.length; i++) {
-        if (jmxPorts[i] == newPort) {
-          used = true;
-        }
-      }
-      if (used) {
-        continue;
-      }
-      for (int i = 0; i < l2GroupPorts.length; i++) {
-        if (l2GroupPorts[i] == newPort) {
-          used = true;
-        }
-      }
-      if (!used) {
-        port = newPort;
+      if (isUnusedPort(newPort)) {
+        jmxPorts[index] = newPort;
+        break;
       }
     }
-    return port;
+    while (true) {
+      int newPort = portChooser.chooseRandomPort();
+      if (newPort == PortChooser.MAX) {
+        continue;
+      }
+      if (isUnusedPort(newPort) && isUnusedPort(newPort + 1)) {
+        dsoPorts[index] = newPort;
+        l2GroupPorts[index] = newPort + 1;
+        break;
+      }
+    }
+  }
+
+  private boolean isUnusedPort(int port) {
+    boolean unused = true;
+    for (int i = 0; i < dsoPorts.length; i++) {
+      if (dsoPorts[i] == port) {
+        unused = false;
+      }
+    }
+    for (int i = 0; i < jmxPorts.length; i++) {
+      if (jmxPorts[i] == port) {
+        unused = false;
+      }
+    }
+    for (int i = 0; i < l2GroupPorts.length; i++) {
+      if (l2GroupPorts[i] == port) {
+        unused = false;
+      }
+    }
+    return unused;
   }
 
   private ServerControl getServerControl(int dsoPort, int jmxPort, String serverName) throws FileNotFoundException {

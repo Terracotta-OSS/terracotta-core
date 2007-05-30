@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -14,6 +15,8 @@ import java.util.Random;
 import java.util.Set;
 
 public final class PortChooser {
+  public static final int     MAX          = 65535;
+
   private static final Object VM_WIDE_LOCK = (PortChooser.class.getName() + "LOCK").intern();
   private static final Set    chosen       = new HashSet();
   private static final Random random       = new Random();
@@ -58,7 +61,7 @@ public final class PortChooser {
 
   private static int getNonEphemeralPort() {
     while (true) {
-      int p = random.nextInt(65535 - 1024) + 1024;
+      int p = random.nextInt(MAX - 1024) + 1024;
       if (p < exclude.getLower() || p > exclude.getUpper()) { return p; }
     }
   }
