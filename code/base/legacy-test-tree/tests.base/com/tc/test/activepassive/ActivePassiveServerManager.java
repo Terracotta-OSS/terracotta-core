@@ -10,7 +10,6 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ServerControl;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.PortChooser;
 import com.tctest.TestState;
 
@@ -209,9 +208,6 @@ public class ActivePassiveServerManager {
 
   private ServerControl getServerControl(int dsoPort, int jmxPort, String serverName) throws FileNotFoundException {
     List jvmArgs = new ArrayList();
-    if (serverNetworkShare) {
-      jvmArgs.add("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + ".l2.ha.network.enabled=true");
-    }
     return new ExtraProcessServerControl(HOST, dsoPort, jmxPort, configFileLocation, true, serverName, jvmArgs,
                                          javaHome, true);
   }
