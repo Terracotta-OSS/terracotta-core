@@ -8,5 +8,6 @@ import com.tc.object.tx.WaitInvocation;
 public class TryLockRequest extends WaitLockRequest {
   public TryLockRequest(LockID lockID, ThreadID threadID, int lockType, WaitInvocation call ) {
     super(lockID, threadID, lockType, call);
+    call.mark();
   }
 }

@@ -74,7 +74,7 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
     lock(threadID, type, timeout, true);
     return isHeldBy(threadID, type);
   }
-  
+
   public void lock(ThreadID threadID, int type) {
     lock(threadID, type, null, false);
   }
@@ -147,7 +147,7 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
         }
       } else {
         // If the lock already granted to another thread greedily within the same JVM and if
-        // it is a tryLock request with a timeout, schedule a local timer. 
+        // it is a tryLock request with a timeout, schedule a local timer.
         if (noBlock && timeout.needsToWait()) {
           scheduleWaitForTryLock(requesterID, type, timeout);
         }
@@ -401,7 +401,8 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
       if (waitLock == null && !threadID.equals(ThreadID.VM_ID)) {
         // Not waiting for this lock
         throw new LockNotPendingError("Attempt to reject a lock request that isn't pending: lockID: " + lockID
-                                      + ", level: " + level + ", requesterID: " + threadID + ", waitLocksByRequesterID: " + waitLocksByRequesterID);
+                                      + ", level: " + level + ", requesterID: " + threadID
+                                      + ", waitLocksByRequesterID: " + waitLocksByRequesterID);
       }
       LockRequest lockRequest = (LockRequest) pendingLockRequests.remove(threadID);
       if (lockRequest == null) {
@@ -422,14 +423,6 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
       rejectedLockRequesterIDs.add(threadID);
     }
   }
-
-//  public void handleTryLockGreedily(Collection tryLockTimeoutPendingRequests) {
-//    if (!greediness.isGreedy()) {
-//      logger.warn("Lock " + lockID + " is not in greedy state, ignoring handleTryLockGreedily request.");
-//      return;
-//    }
-//    initiateGreedyPendingTryLock(tryLockTimeoutPendingRequests);
-//  }
 
   /**
    * XXX:: This method is called from a stage-thread and should never block.
@@ -470,7 +463,7 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
       waitLock.notifyAll();
     }
   }
-  
+
   /*
    * @returns the wait object for lock request
    */
@@ -479,7 +472,6 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
     // Add Lock Request
     LockRequest lockRequest = null;
     if (noBlock) {
-      timeout.mark();
       lockRequest = new TryLockRequest(lockID, threadID, lockLevel, timeout);
     } else {
       lockRequest = new LockRequest(lockID, threadID, lockLevel);
@@ -513,10 +505,10 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
     }
     return isInterrupted;
   }
-  
+
   private void scheduleTryLockTimerIfNeeded(TryLockRequest request) {
     if (waitTimers.containsKey(request)) { return; }
-    
+
     ThreadID threadID = request.threadID();
     int lockLevel = request.lockLevel();
     WaitInvocation timeout = request.getWaitInvocation();
@@ -578,7 +570,7 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
       if (canAwardGreedilyNow(lr.threadID(), lr.lockLevel())) {
         awardLock(lr.threadID(), lr.lockLevel());
       } else if (isTryLockRequest(lr)) {
-        scheduleTryLockTimerIfNeeded((TryLockRequest)lr);
+        scheduleTryLockTimerIfNeeded((TryLockRequest) lr);
       }
     }
   }
@@ -663,7 +655,7 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
     if (greediness.isRecallInProgress()) {
       greediness.recallComplete();
       cancelTimers();
-      // Attach the pending lock requests and tryLock requests to the recall commit message. 
+      // Attach the pending lock requests and tryLock requests to the recall commit message.
       remoteLockManager.recallCommit(lockID, addHoldersToAsLockRequests(new ArrayList()),
                                      addAllWaitersTo(new ArrayList()), addAllPendingLockRequestsTo(new ArrayList()),
                                      addAllPendingTryLockRequestsTo(new ArrayList()));
@@ -905,9 +897,14 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
       LockID timeoutLockID = wlr.lockID();
       if (!lockID.equals(timeoutLockID)) { throw new AssertionError("waitTimeout: LockIDs are not the same : " + lockID
                                                                     + " : " + timeoutLockID); }
-      int timeoutLockLevel = wlr.lockLevel();
-      ThreadID timeoutThreadID = wlr.threadID();
-      cannotAwardLock(timeoutThreadID, timeoutLockLevel);
+      // We need to check if the tryLock is still waiting locally to accommodate the race condition that the
+      // timer thread just timeouts and before the timer thread invokes this method, the application thread does
+      // an unlock and recallCommit, which will move the tryLock request to the server.
+      if (isTryLockWaiting(wlr)) {
+        int timeoutLockLevel = wlr.lockLevel();
+        ThreadID timeoutThreadID = wlr.threadID();
+        cannotAwardLock(timeoutThreadID, timeoutLockLevel);
+      }
     } else if (isOnlyWaitLockRequest(callbackObject)) {
       WaitLockRequest wlr = (WaitLockRequest) callbackObject;
       LockID timedoutLockID = wlr.lockID();
@@ -960,6 +957,10 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
       }
       return false;
     }
+  }
+
+  private boolean isTryLockWaiting(TryLockRequest request) {
+    return waitTimers.containsKey(request);
   }
 
   private boolean isWaiting(ThreadID threadID) {

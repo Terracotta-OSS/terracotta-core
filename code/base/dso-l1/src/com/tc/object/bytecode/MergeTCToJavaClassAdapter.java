@@ -97,7 +97,7 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
     List tcFields = tcClassNode.fields;
     for (Iterator i = tcFields.iterator(); i.hasNext();) {
       FieldNode fieldNode = (FieldNode) i.next();
-      if (access == fieldNode.access && name.equals(fieldNode.name) && desc.equals(fieldNode.desc)) {
+      if (name.equals(fieldNode.name) && desc.equals(fieldNode.desc)) {
         i.remove();
         break;
       }
