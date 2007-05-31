@@ -933,7 +933,8 @@ public class AnnotationReader {
         try {
             bytes = getBytecodeFor(className, loader);
         } catch (Exception e) {
-          e.printStackTrace();
+          // e.printStackTrace();
+          System.err.println("[WARN] " + e.getMessage());
           return;
 //            throw new ReaderException(
 //                    "could not retrieve the bytecode for class [" + className + "]", e
