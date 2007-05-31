@@ -17,6 +17,7 @@ import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -85,7 +86,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     basicTryReadLockTest(index, readWriteLock);
     basicTryReadWriteLockTest(index, readWriteLock);
     basicTryWriteReadLockTest(index, readWriteLock);
-    basicTryReadLockTimeoutTest(index, readWriteLock);
     basicTryWriteLockTimeoutTest(index, readWriteLock);
     tryReadLockMultiNodeTest(index, readWriteLock);
     tryWriteLockMultiNodeTest(index, readWriteLock);
@@ -106,6 +106,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void unsharedToSharedTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    printTimeStamp(index, "unsharedToSharedTest");
+    
     if (index == 1) {
       ReadLock readLock = lock.readLock();
       readLock.lock();
@@ -140,6 +142,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void tryReadWriteLockSingleNodeTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    printTimeStamp(index, "tryReadWriteLockSingleNodeTest");
+
     final ReadLock readLock = lock.readLock();
     final WriteLock writeLock = lock.writeLock();
 
@@ -231,6 +235,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void tryWriteLockMultiNodeTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    printTimeStamp(index, "tryWriteLockMultiNodeTest");
+
     final ReadLock readLock = lock.readLock();
     final WriteLock writeLock = lock.writeLock();
 
@@ -500,6 +506,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void tryReadLockMultiNodeTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    printTimeStamp(index, "tryReadLockMultiNodeTest");
+
     final ReadLock readLock = lock.readLock();
     final WriteLock writeLock = lock.writeLock();
 
@@ -652,6 +660,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
 
   private void basicConditionVariableWaitTesting(int index, ReentrantReadWriteLock lock, Condition condition)
       throws Exception {
+    printTimeStamp(index, "basicConditionVariableWaitTesting");
+
     WriteLock writeLock = lock.writeLock();
 
     if (index == 0) {
@@ -689,6 +699,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
 
   private void singleNodeConditionVariableTesting(int index, final WriteLock lock, final Condition condition)
       throws Exception {
+    printTimeStamp(index, "singleNodeConditionVariableTesting");
+
     if (index == 0) {
       final CyclicBarrier localBarrier = new CyclicBarrier(3);
       final List queue = new LinkedList();
@@ -724,6 +736,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void basicConditionVariableTesting(int index, WriteLock lock, Condition condition) throws Exception {
+    printTimeStamp(index, "basicConditionVariableTesting");
+
     final long id = new Long(getApplicationId()).longValue();
 
     if (index == 0) {
@@ -804,6 +818,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void basicAPITest(int index, ReentrantReadWriteLock lock) throws Exception {
+    printTimeStamp(index, "basicAPITest");
+
     WriteLock writeLock = lock.writeLock();
     ReadLock readLock = lock.readLock();
     if (index == 0) {
@@ -859,6 +875,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void reentrantReadLockWithWriteTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    printTimeStamp(index, "reentrantReadLockWithWriteTest");
+
     final WriteLock writeLock = lock.writeLock();
     final ReadLock readLock = lock.readLock();
     if (index == 0) {
@@ -888,6 +906,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void lockDownGradeTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    printTimeStamp(index, "lockDownGradeTest");
+
     final WriteLock writeLock = lock.writeLock();
     final ReadLock readLock = lock.readLock();
     if (index == 0) {
@@ -900,6 +920,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void basicTryWriteLockTimeoutTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    printTimeStamp(index, "basicTryWriteLockTimeoutTest");
+
     final WriteLock writeLock = lock.writeLock();
     if (index == 0) {
       boolean isLocked = writeLock.tryLock(1000, TimeUnit.SECONDS);
@@ -921,18 +943,9 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     barrier.await();
   }
 
-  private void basicTryReadLockTimeoutTest(int index, ReentrantReadWriteLock lock) throws Exception {
-    final ReadLock readLock = lock.readLock();
-    readLock.lock();
-    try {
-      barrier2.await();
-    } finally {
-      readLock.unlock();
-    }
-    barrier.await();
-  }
-
   private void modifyDataUsingReadLockTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    printTimeStamp(index, "modifyDataUsingReadLockTest");
+
     ReadLock readLock = lock.readLock();
 
     if (index == 0) {
@@ -951,6 +964,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void modifyDataTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    printTimeStamp(index, "modifyDataTest");
+
     ReadLock readLock = lock.readLock();
     WriteLock writeLock = lock.writeLock();
 
@@ -977,6 +992,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void basicTryWriteReadLockTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    printTimeStamp(index, "basicTryWriteReadLockTest");
+
     final ReadLock readLock = lock.readLock();
     final WriteLock writeLock = lock.writeLock();
 
@@ -1000,6 +1017,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void basicTryReadWriteLockTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    printTimeStamp(index, "basicTryReadWriteLockTest");
+
     final ReadLock readLock = lock.readLock();
     final WriteLock writeLock = lock.writeLock();
 
@@ -1023,6 +1042,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void basicTryReadLockTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    printTimeStamp(index, "basicTryReadLockTest");
+    
     final ReadLock readLock = lock.readLock();
     boolean isLocked = readLock.tryLock();
     try {
@@ -1035,6 +1056,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void basicSingleNodeReadThenWriteLockingTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    printTimeStamp(index, "basicSingleNodeReadThenWriteLockingTest");
+    
     final ReadLock readLock = lock.readLock();
     final WriteLock writeLock = lock.writeLock();
 
@@ -1135,6 +1158,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void basicMultiNodesReadThenWriteLockingTest(int index, ReentrantReadWriteLock lock) throws Exception {
+    printTimeStamp(index, "basicMultiNodesReadThenWriteLockingTest");
+
     ReadLock readLock = lock.readLock();
     WriteLock writeLock = lock.writeLock();
 
@@ -1171,6 +1196,14 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     if (!isCrashTest) {
       Assert.assertTrue(isLocked);
     }
+  }
+  
+  private void printTimeStamp(int index, String methodName) throws Exception {
+    if (index == 0) {
+      System.err.println("Runnint method " + methodName + " -- time: " + (new Date()));
+    }
+    
+    barrier.await();
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
