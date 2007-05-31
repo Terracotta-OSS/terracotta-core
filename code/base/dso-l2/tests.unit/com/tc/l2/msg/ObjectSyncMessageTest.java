@@ -76,7 +76,6 @@ public class ObjectSyncMessageTest extends TestCase {
       assertEquals(tcByteBufferArray[i].hasArray(), dnas1[i].hasArray());
       assertEquals(tcByteBufferArray[i].hasRemaining(), dnas1[i].hasRemaining());
       assertEquals(tcByteBufferArray[i].isDirect(), dnas1[i].isDirect());
-      assertEquals(tcByteBufferArray[i].isNioBuffer(), dnas1[i].isNioBuffer());
       assertEquals(tcByteBufferArray[i].isReadOnly(), dnas1[i].isReadOnly());
       byte[] byteArray = tcByteBufferArray[i].array();
       byte[] byteArray1 = dnas1[i].array();

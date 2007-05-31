@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -118,24 +119,26 @@ public class StringUtil {
    * @return a String representation of the array, never returns null
    */
   public static final String toString(Object[] objs, String separator, String prefix, String postfix) {
+    final String sep = getNonNull(separator);
+    final String pre = getNonNull(prefix);
+    final String post = getNonNull(postfix);
     StringBuffer rv = new StringBuffer();
     if (objs != null) {
       for (int pos = 0; pos < objs.length; ++pos) {
-        if (rv.length() > 0 && separator != null) {
-          rv.append(separator);
+        if (rv.length() > 0) {
+          rv.append(sep);
         }
-        if (prefix != null) {
-          rv.append(prefix);
-        }
+        rv.append(pre);
         rv.append(objs[pos] != null ? objs[pos].toString() : "null");
-        if (postfix != null) {
-          rv.append(postfix);
-        }
+        rv.append(post);
       }
     } else {
       rv.append(NULL_STRING);
     }
     return rv.toString();
+  }
+  public static final String toString(Object[] objs) {
+    return toString(objs, ", ", null, null);
   }
 
   public static final String toString(int[] objs, String separator, String prefix, String postfix) {
@@ -246,5 +249,13 @@ public class StringUtil {
       }
     }
     return result.toString();
+  }
+
+  public static final String getNonNull(String s, String nullToken) {
+    return (s == null) ? nullToken : s;
+  }
+
+  public static final String getNonNull(String s) {
+    return getNonNull(s, "");
   }
 }

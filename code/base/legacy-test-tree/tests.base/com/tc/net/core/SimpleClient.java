@@ -65,7 +65,7 @@ public class SimpleClient {
 
   public static void main(String args[]) throws Throwable {
     try {
-      TCConnectionManager connMgr = new TCConnectionManagerFactory().getInstance();
+      TCConnectionManager connMgr = new TCConnectionManagerJDK14();
       SimpleClient client = new SimpleClient(connMgr, new TCSocketAddress(args[0], Integer.parseInt(args[1])), Integer
           .parseInt(args[3]), Integer.parseInt(args[2]), Integer.parseInt(args[4]));
       client.run();

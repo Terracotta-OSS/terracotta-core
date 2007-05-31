@@ -1,12 +1,13 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
-import com.tc.config.schema.dynamic.FixedValueConfigItem;
 import com.tc.exception.TCRuntimeException;
+import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -28,8 +29,8 @@ import com.tc.object.session.NullSessionManager;
  */
 public class Ping implements TCMessageSink {
 
-  private String hostname;
-  private int    port;
+  private String      hostname;
+  private int         port;
   private LinkedQueue queue = new LinkedQueue();
 
   Ping(String args[]) {
@@ -64,12 +65,13 @@ public class Ping implements TCMessageSink {
 
   public void ping() throws Exception {
     CommunicationsManager comms = new CommunicationsManagerImpl(new NullMessageMonitor(),
-                                                                new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy());
+                                                                new PlainNetworkStackHarnessFactory(),
+                                                                new NullConnectionPolicy());
 
     ClientMessageChannel channel = null;
     try {
       channel = comms.createClientChannel(new NullSessionManager(), 0, this.hostname, this.port, 3000,
-                                          new FixedValueConfigItem(new ConnectionInfo[0]));
+                                          new ConnectionAddressProvider(new ConnectionInfo[0]));
       channel.open();
       channel.routeMessageType(TCMessageType.PING_MESSAGE, this);
       for (int i = 0; i < 400; i++) {
@@ -80,15 +82,14 @@ public class Ping implements TCMessageSink {
         TCMessage pong = getMessage(5000);
         long end = System.currentTimeMillis();
 
-        if(pong != null) {
+        if (pong != null) {
           System.out.println("RTT millis: " + (end - start));
-        }
-        else {
-          System.err.println("Ping Request Timeout : "  + (end - start) + " ms");
+        } else {
+          System.err.println("Ping Request Timeout : " + (end - start) + " ms");
         }
       }
     } finally {
-      if(channel != null) {
+      if (channel != null) {
         channel.unrouteMessageType(TCMessageType.PING_MESSAGE);
       }
       comms.shutdown();

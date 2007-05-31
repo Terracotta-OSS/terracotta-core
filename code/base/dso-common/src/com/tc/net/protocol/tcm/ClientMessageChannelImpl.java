@@ -6,7 +6,6 @@ package com.tc.net.protocol.tcm;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.MaxConnectionsExceededException;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.util.TCTimeoutException;
@@ -20,16 +19,14 @@ import java.net.UnknownHostException;
 
 public class ClientMessageChannelImpl extends AbstractMessageChannel implements ClientMessageChannel {
   private static final TCLogger       logger = TCLogging.getLogger(ClientMessageChannel.class);
-  private final ConnectionInfo        connInfo;
   private final TCMessageFactory      msgFactory;
   private int                         connectAttemptCount;
   private int                         connectCount;
   private ChannelID                   channelID;
   private final ChannelIDProviderImpl cidProvider;
 
-  protected ClientMessageChannelImpl(ConnectionInfo connInfo, TCMessageFactory msgFactory, TCMessageRouter router) {
+  protected ClientMessageChannelImpl(TCMessageFactory msgFactory, TCMessageRouter router) {
     super(router, logger, msgFactory);
-    this.connInfo = connInfo;
     this.msgFactory = msgFactory;
     this.cidProvider = new ChannelIDProviderImpl();
   }
@@ -49,14 +46,6 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   public void addClassMapping(TCMessageType type, Class msgClass) {
     msgFactory.addClassMapping(type, msgClass);
-  }
-
-  public String getHostname() {
-    return this.connInfo.getHostname();
-  }
-
-  public int getPort() {
-    return this.connInfo.getPort();
   }
 
   public ChannelID getChannelID() {

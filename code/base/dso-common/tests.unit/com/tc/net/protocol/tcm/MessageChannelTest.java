@@ -6,10 +6,10 @@ package com.tc.net.protocol.tcm;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
-import com.tc.config.schema.dynamic.FixedValueConfigItem;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
@@ -364,7 +364,7 @@ public class MessageChannelTest extends TCTestCase {
   private ClientMessageChannel createClientMessageChannel(int maxReconnectTries) {
     ClientMessageChannel ch = clientComms
         .createClientChannel(new NullSessionManager(), maxReconnectTries, TCSocketAddress.LOOPBACK_IP, lsnr
-            .getBindPort(), WAIT, new FixedValueConfigItem(new ConnectionInfo[] { new ConnectionInfo("localhost", lsnr
+            .getBindPort(), WAIT, new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo("localhost", lsnr
             .getBindPort()) }));
     ch.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     return ch;

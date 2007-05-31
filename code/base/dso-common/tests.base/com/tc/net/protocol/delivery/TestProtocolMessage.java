@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.delivery;
 
@@ -18,6 +19,8 @@ public class TestProtocolMessage implements OOOProtocolMessage {
   public long             ack;
   public boolean          isAckRequest = false;
   public boolean          isSend       = false;
+  public boolean          isAck        = false;
+  private boolean         isGoodbye    = false;
 
   public TestProtocolMessage(TCNetworkMessage msg, long sent, long ack) {
     this.msg = msg;
@@ -43,6 +46,10 @@ public class TestProtocolMessage implements OOOProtocolMessage {
 
   public boolean isSend() {
     return isSend;
+  }
+
+  public boolean isAck() {
+    return isAck;
   }
 
   /*********************************************************************************************************************
@@ -100,4 +107,13 @@ public class TestProtocolMessage implements OOOProtocolMessage {
   public void recycle() {
     throw new ImplementMe();
   }
+
+  public boolean isGoodbye() {
+    return isGoodbye;
+  }
+
+  public void reallyDoRecycleOnWrite() {
+    //
+  }
+
 }

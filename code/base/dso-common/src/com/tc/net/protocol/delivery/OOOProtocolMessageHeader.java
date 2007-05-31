@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.delivery;
 
@@ -15,6 +16,7 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
   private static final short TYPE_ACK_REQUEST = 1;
   private static final short TYPE_ACK         = 2;
   private static final short TYPE_SEND        = 3;
+  private static final short TYPE_GOODBYE     = 4;
 
   private static final short VERSION          = 1;
 
@@ -31,7 +33,7 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
   private static final int   SEQUENCE_OFFSET  = TYPE_OFFSET + TYPE_LENGTH;
   private static final int   SEQUENCE_LENGTH  = 8;
 
-  static final int   HEADER_LENGTH;
+  static final int           HEADER_LENGTH;
 
   static {
     int tmp = MAGIC_NUM_LENGTH + VERSION_LENGTH + TYPE_LENGTH + SEQUENCE_LENGTH;
@@ -70,9 +72,7 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
 
   public void validate() throws TCProtocolException {
     int magic = getMagicNumber();
-    if (magic != MAGIC_NUM) {
-      throw new TCProtocolException("Bad magic number: " + magic + " != " + MAGIC_NUM);
-    }
+    if (magic != MAGIC_NUM) { throw new TCProtocolException("Bad magic number: " + magic + " != " + MAGIC_NUM); }
 
     short version = getVersion();
     if (getVersion() != VERSION) { throw new TCProtocolException("Reported version " + version
@@ -90,7 +90,7 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
 
   public String toString() {
     StringBuffer buf = new StringBuffer();
-    
+
     buf.append("valid: ");
     try {
       validate();
@@ -128,7 +128,7 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
   }
 
   private boolean isValidType(short type) {
-    return type == TYPE_SEND || type == TYPE_ACK_REQUEST || type == TYPE_ACK;
+    return type == TYPE_SEND || type == TYPE_ACK_REQUEST || type == TYPE_ACK || type == TYPE_GOODBYE;
   }
 
   long getSequence() {
@@ -147,7 +147,12 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
     return getType() == TYPE_SEND;
   }
 
+  boolean isGoodbye() {
+    return getType() == TYPE_GOODBYE;
+  }
+
   static class ProtocolMessageHeaderFactory {
+
     /**
      * Use to create new headers for sending ack request messages.
      */
@@ -174,6 +179,10 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
      */
     OOOProtocolMessageHeader createNewHeader(TCByteBuffer buffer) {
       return new OOOProtocolMessageHeader(buffer.duplicate().limit(OOOProtocolMessageHeader.HEADER_LENGTH));
+    }
+
+    public OOOProtocolMessageHeader createNewGoodbye() {
+      return new OOOProtocolMessageHeader(VERSION, TYPE_GOODBYE, 0);
     }
   }
 }

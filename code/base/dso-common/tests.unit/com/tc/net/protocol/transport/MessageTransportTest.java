@@ -9,10 +9,10 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
 import com.tc.exception.ImplementMe;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.MockConnectionManager;
 import com.tc.net.core.MockTCConnection;
-import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
@@ -139,11 +139,7 @@ public class MessageTransportTest extends TCTestCase {
     assertTrue(clientEventMonitor.waitForConnect(1000));
     assertTrue(extraMonitor.waitForConnect(1000));
 
-    TCConnectionEvent event = new TCConnectionEvent() {
-      public TCConnection getSource() {
-        return clientConnection;
-      }
-    };
+    TCConnectionEvent event = new TCConnectionEvent(clientConnection);
 
     clientTransport.closeEvent(event);
     assertTrue(clientEventMonitor.waitForDisconnect(1000));
@@ -166,11 +162,7 @@ public class MessageTransportTest extends TCTestCase {
     TransportEventMonitor extraMonitor = new TransportEventMonitor();
     serverTransport.addTransportListener(extraMonitor);
 
-    TCConnectionEvent event = new TCConnectionEvent() {
-      public TCConnection getSource() {
-        return serverConnection;
-      }
-    };
+    TCConnectionEvent event = new TCConnectionEvent(serverConnection);
 
     serverTransport.closeEvent(event);
     assertTrue(serverEventMonitor.waitForDisconnect(1000));
@@ -234,9 +226,14 @@ public class MessageTransportTest extends TCTestCase {
   }
 
   private void createClientTransport(int maxReconnectTries) throws Exception {
-    this.clientTransport = new ClientMessageTransport(maxReconnectTries,
-                                                      new ConnectionInfo(TCSocketAddress.LOOPBACK_IP, 0), 0,
-                                                      connManager, createHandshakeErrorHandler(),
+    final ConnectionInfo connInfo = new ConnectionInfo(TCSocketAddress.LOOPBACK_IP, 0);
+    final ClientConnectionEstablisher cce = new ClientConnectionEstablisher(
+                                                                            connManager,
+                                                                            new ConnectionAddressProvider(
+                                                                                                          new ConnectionInfo[] { connInfo }),
+                                                                            maxReconnectTries, 0);
+
+    this.clientTransport = new ClientMessageTransport(cce, createHandshakeErrorHandler(),
                                                       this.transportHandshakeMessageFactory,
                                                       new WireProtocolAdaptorFactoryImpl());
     this.clientResponder = new ClientHandshakeMessageResponder(this.clientResponderSentQueue,

@@ -100,7 +100,6 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
       assertEquals(tcbb[i].hasArray(), tcbb1[i].hasArray());
       assertEquals(tcbb[i].hasRemaining(), tcbb1[i].hasRemaining());
       assertEquals(tcbb[i].isDirect(), tcbb1[i].isDirect());
-      assertEquals(tcbb[i].isNioBuffer(), tcbb1[i].isNioBuffer());
       assertEquals(tcbb[i].isReadOnly(), tcbb1[i].isReadOnly());
       byte[] byteArray = tcbb[i].array();
       byte[] byteArray1 = tcbb1[i].array();

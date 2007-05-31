@@ -5,8 +5,8 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.async.api.Sink;
-import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.session.SessionProvider;
@@ -37,7 +37,7 @@ public interface CommunicationsManager {
    */
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, int timeout,
-                                                  ConfigItem connectionInfoSource);
+                                                  ConnectionAddressProvider addressProvider);
 
   public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
                                         boolean transportDisconnectRemovesChannel,

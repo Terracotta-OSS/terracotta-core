@@ -22,8 +22,13 @@ import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
 import com.tc.management.remote.protocol.terracotta.L1JmxReady;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.net.MaxConnectionsExceededException;
+import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
+import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
+import com.tc.net.protocol.delivery.OOOEventHandler;
+import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
+import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.HydrateHandler;
@@ -151,6 +156,7 @@ public class DistributedObjectClient extends SEDA {
   }
 
   public void start() {
+    l1Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l1");
     int maxSize = 50000;
     int faultCount = config.getFaultCount();
 
@@ -158,26 +164,45 @@ public class DistributedObjectClient extends SEDA {
     final SessionManager sessionManager = new SessionManagerImpl(sessionSequence);
     final SessionProvider sessionProvider = (SessionProvider) sessionManager;
 
-    communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(),
-                                                          new PlainNetworkStackHarnessFactory(),
+    StageManager stageManager = getStageManager();
+
+    // stageManager.turnTracingOn();
+
+    // //////////////////////////////////
+    // create NetworkStackHarnessFactory
+    final boolean useOOOLayer = l1Properties.getBoolean("reconnect.enabled");
+    final NetworkStackHarnessFactory networkStackHarnessFactory;
+    if (useOOOLayer) {
+      final Stage oooStage = stageManager.createStage("OOONetStage", new OOOEventHandler(), 1, maxSize);
+      networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
+                                                                     new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
+                                                                     oooStage.getSink());
+    } else {
+      networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
+    }
+    // //////////////////////////////////
+
+    communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
                                                           new NullConnectionPolicy());
 
     logger.debug("Created CommunicationsManager.");
 
     ConfigItem connectionInfoItem = this.connectionComponents.createConnectionInfoConfigItem();
     ConnectionInfo[] connectionInfo = (ConnectionInfo[]) connectionInfoItem.getObject();
+    ConnectionAddressProvider addrProvider = new ConnectionAddressProvider(connectionInfo);
 
     String serverHost = connectionInfo[0].getHostname();
     int serverPort = connectionInfo[0].getPort();
 
     channel = new DSOClientMessageChannelImpl(communicationsManager.createClientChannel(sessionProvider, -1,
                                                                                         serverHost, serverPort, 10000,
-                                                                                        connectionInfoItem));
+                                                                                        addrProvider));
+    ChannelIDLoggerProvider cidLoggerProvider = new ChannelIDLoggerProvider(channel.getChannelIDProvider());
+    stageManager.setLoggerProvider(cidLoggerProvider);
+
     this.runtimeLogger = new RuntimeLoggerImpl(config);
 
     logger.debug("Created channel.");
-
-    ChannelIDLoggerProvider cidLoggerProvider = new ChannelIDLoggerProvider(channel.getChannelIDProvider());
 
     ClientTransactionFactory txFactory = new ClientTransactionFactoryImpl(runtimeLogger, channel.getChannelIDProvider());
 
@@ -214,7 +239,6 @@ public class DistributedObjectClient extends SEDA {
                                                 runtimeLogger, channel.getChannelIDProvider(), classProvider,
                                                 classFactory, objectFactory, config.getPortability(), channel);
 
-    l1Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l1");
     TCProperties cacheManagerProperties = l1Properties.getPropertiesFor("cachemanager");
     if (cacheManagerProperties.getBoolean("enabled")) {
       this.cacheManager = new CacheManager(objectManager, new CacheConfigImpl(cacheManagerProperties));
@@ -233,11 +257,6 @@ public class DistributedObjectClient extends SEDA {
     txManager = new ClientTransactionManagerImpl(channel.getChannelIDProvider(), objectManager,
                                                  new ThreadLockManagerImpl(lockManager), txFactory, rtxManager,
                                                  runtimeLogger, l1Management.findClientTxMonitorMBean());
-
-    StageManager stageManager = getStageManager();
-
-    // stageManager.turnTracingOn();
-    stageManager.setLoggerProvider(cidLoggerProvider);
 
     Stage lockResponse = stageManager.createStage(ClientConfigurationContext.LOCK_RESPONSE_STAGE,
                                                   new LockResponseHandler(sessionManager), 1, maxSize);

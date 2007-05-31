@@ -9,10 +9,10 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
 import com.tc.exception.ImplementMe;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.MockConnectionManager;
 import com.tc.net.core.MockTCConnection;
-import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -57,8 +57,13 @@ public class ClientMessageTransportTest extends TCTestCase {
       }
 
     };
-    transport = new ClientMessageTransport(maxRetries, new ConnectionInfo("", 0), 5000, this.connectionManager,
-                                           handshakeErrorHandler, this.transportMessageFactory,
+    final ConnectionInfo connectionInfo = new ConnectionInfo("", 0);
+    ClientConnectionEstablisher cce = new ClientConnectionEstablisher(
+                                                                      connectionManager,
+                                                                      new ConnectionAddressProvider(
+                                                                                                    new ConnectionInfo[] { connectionInfo }),
+                                                                      maxRetries, 5000);
+    transport = new ClientMessageTransport(cce, handshakeErrorHandler, this.transportMessageFactory,
                                            new WireProtocolAdaptorFactoryImpl());
   }
 
@@ -76,11 +81,7 @@ public class ClientMessageTransportTest extends TCTestCase {
     }
 
     connection.fail = true;
-    transport.closeEvent(new TCConnectionEvent() {
-      public TCConnection getSource() {
-        return connection;
-      }
-    });
+    transport.closeEvent(new TCConnectionEvent(connection));
 
     // FIXME 2005-12-14 -- We should restore this test.
     // assertNull(connection.connectCalls.poll(3000));
@@ -120,8 +121,13 @@ public class ClientMessageTransportTest extends TCTestCase {
     listener.start(Collections.EMPTY_SET);
     int port = listener.getBindPort();
 
-    transport = new ClientMessageTransport(0, new ConnectionInfo(TCSocketAddress.LOOPBACK_IP, port), 1000, commsMgr
-        .getConnectionManager(), this.handshakeErrorHandler, this.transportMessageFactory,
+    final ConnectionInfo connInfo = new ConnectionInfo(TCSocketAddress.LOOPBACK_IP, port);
+    ClientConnectionEstablisher cce = new ClientConnectionEstablisher(
+                                                                      commsMgr.getConnectionManager(),
+                                                                      new ConnectionAddressProvider(
+                                                                                                    new ConnectionInfo[] { connInfo }),
+                                                                      0, 1000);
+    transport = new ClientMessageTransport(cce, this.handshakeErrorHandler, this.transportMessageFactory,
                                            new WireProtocolAdaptorFactoryImpl());
     transport.open();
     assertTrue(transport.isConnected());

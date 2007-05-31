@@ -28,51 +28,44 @@ public class SendStateMachineTest extends TestCase {
     //SEND
     MessageMonitor monitor = new NullMessageMonitor();
     sendQueue.put(new PingMessage(monitor));
-    ssm.execute(null);
+    ssm.execute(null);                              // msg 0
     assertTrue(delivery.created);
     assertTrue(delivery.msg.getSent() == 0);
     delivery.clear();
 
     //Call send an extra time with nothing on the send queue
-    ssm.execute(tpm);
+    ssm.execute(tpm);                               // drop
     assertTrue(delivery.created == false);
     tpm.isSend = false;
 
-    sendQueue.put(new PingMessage(monitor));
-    sendQueue.put(new PingMessage(monitor));
+    sendQueue.put(new PingMessage(monitor));        // msg 1
+    sendQueue.put(new PingMessage(monitor));        // msg 2
     tpm.ack = 0;
 
     //ACK
-    ssm.execute(tpm);
-    ssm.execute(tpm);
+    ssm.execute(tpm);                               // ack 0
     assertTrue(delivery.created);
-    assertTrue(delivery.msg.getSent() == 1);
-
-    //RESEND
-    delivery.clear();
-    tpm.ack = 0;
-    ssm.execute(tpm);
-    assertTrue(delivery.created);
-    assertTrue(delivery.msg.getSent() == 1);
-
-    tpm.ack = 1;
-    ssm.execute(tpm);
-
-    delivery.clear();
-
-    //SEND
-    ssm.execute(tpm);
-    assertTrue(delivery.created);
-    assertTrue(delivery.msg.getSent() == 2);
-
+    assertTrue(delivery.msg.getSent() == 2);        // msg 2 is the last send
+    
     ssm.pause();
     assertTrue(ssm.isPaused());
-
+    
+    // HAND SHAKE for RESEND
     delivery.clear();
-    //test ack request
     ssm.resume();
     assertFalse(ssm.isPaused());
+    
+    tpm.ack = 0;
+    ssm.execute(tpm);                               // ack=0 to cause resend
+
+    assertTrue(delivery.msg.getSent() == 2);
+    // resend desn't go through message create
     assertTrue(!delivery.created);
     assertTrue(delivery.sentAckRequest);
+    
+    tpm.ack = 2;
+    ssm.execute(tpm);                               // ack 2
+    assertTrue(delivery.msg.getSent() == 2);       
+    
   }
 }

@@ -114,6 +114,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     this.runningDirectory = runningDirectory;
     jvmArgs.add("-D" + Directories.TC_INSTALL_ROOT_PROPERTY_NAME + "=" + installationRoot);
     jvmArgs.add("-D" + Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME + "=true");
+    jvmArgs.add("-Djava.net.preferIPv4Stack=true");
     debugParams.addDebugParamsTo(jvmArgs);
     jvmArgs.add("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + ".tc.management.test.mbeans.enabled=true");
     addClasspath(jvmArgs);

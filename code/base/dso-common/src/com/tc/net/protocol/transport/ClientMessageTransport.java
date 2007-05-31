@@ -1,22 +1,17 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
-import com.tc.config.schema.dynamic.FixedValueConfigItem;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCInternalError;
 import com.tc.exception.TCRuntimeException;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.MaxConnectionsExceededException;
-import com.tc.net.core.ConfigBasedConnectionAddressProvider;
-import com.tc.net.core.ConnectionAddressProvider;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
-import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -33,13 +28,11 @@ import java.util.List;
  * Client implementation of the transport network layer.
  */
 public class ClientMessageTransport extends MessageTransportBase {
-  private static final TCLogger             logger          = TCLogging.getLogger(ClientMessageTransport.class);
-  private static final long                 SYN_ACK_TIMEOUT = 120000; // 2 minutes timeout
-  private final int                         maxReconnectTries;
+  // 2 minutes timeout
+  private static final long                 SYN_ACK_TIMEOUT = 120000;
   private final ClientConnectionEstablisher connectionEstablisher;
   private boolean                           wasOpened       = false;
   private TCFuture                          waitForSynAckResult;
-  private final ConnectionAddressProvider   connAddressProvider;
   private final WireProtocolAdaptorFactory  wireProtocolAdaptorFactory;
   private final SynchronizedBoolean         isOpening       = new SynchronizedBoolean(false);
 
@@ -49,37 +42,14 @@ public class ClientMessageTransport extends MessageTransportBase {
    * 
    * @param commsManager CommmunicationsManager
    */
-
-  public ClientMessageTransport(int maxReconnectTries, ConnectionInfo connInfo, int timeout,
-                                TCConnectionManager connManager, TransportHandshakeErrorHandler handshakeErrorHandler,
-                                TransportHandshakeMessageFactory messageFactory,
-                                WireProtocolAdaptorFactory wireProtocolAdaptorFactory) {
-    // FIXME 2005-12-08 andrew -- This (usage of a ConfigBasedConnectionAddressProvider with a fixed value here) seems
-    // like a big hack. However, because it's not clear to me exactly what the semantics of the object passed in here
-    // should be, this is the safest thing for me to do right now.
-    this(maxReconnectTries,
-         new ConfigBasedConnectionAddressProvider(new FixedValueConfigItem(new ConnectionInfo[] { connInfo })),
-         timeout, connManager, handshakeErrorHandler, messageFactory, wireProtocolAdaptorFactory);
-  }
-
-  /**
-   * Constructor for when you want a transport that isn't connected yet (e.g., in a client). This constructor will
-   * create an unopened MessageTransport.
-   * 
-   * @param commsManager CommmunicationsManager
-   */
-  public ClientMessageTransport(int maxReconnectTries, ConnectionAddressProvider connInfoProvider, int timeout,
-                                TCConnectionManager connManager, TransportHandshakeErrorHandler handshakeErrorHandler,
+  public ClientMessageTransport(ClientConnectionEstablisher clientConnectionEstablisher,
+                                TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory,
                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory) {
 
-    super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, false, logger);
-    this.maxReconnectTries = maxReconnectTries;
-    this.connAddressProvider = connInfoProvider;
+    super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, false,  TCLogging.getLogger(ClientMessageTransport.class));
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
-
-    this.connectionEstablisher = new ClientConnectionEstablisher(this, connManager, connAddressProvider, logger,
-                                                                 maxReconnectTries, timeout);
+    this.connectionEstablisher = clientConnectionEstablisher;
   }
 
   /**
@@ -99,7 +69,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     synchronized (isOpen) {
       Assert.eval("can't open an already open transport", !isOpen.get());
       try {
-        connectionEstablisher.open();
+        wireNewConnection(connectionEstablisher.open(this));
         HandshakeResult result = handShake();
         if (result.isMaxConnectionsExceeded()) {
           // Hack to make the connection clear
@@ -137,31 +107,15 @@ public class ClientMessageTransport extends MessageTransportBase {
     return wasOpened;
   }
 
-  public boolean isOpen() {
+  public boolean isNotOpen() {
     return !isOpening.get() && !isOpen.get();
   }
 
   // TODO :: come back
   public void closeEvent(TCConnectionEvent event) {
-
-    if (isOpen()) return;
-
-    TCConnection src = event.getSource();
-    Assert.assertSame(getConnection(), src);
-
-    if (!(maxReconnectTries == 0)) {
-      if (logger.isDebugEnabled()) {
-        logger.debug("Caught connection close event: " + event);
-      }
-      status.reset();
-      fireTransportDisconnectedEvent(); // This will make the connection establisher to try and reconnect.
-    } else {
-      super.closeEvent(event);
-
-      synchronized (status) {
-        if (!status.isEnd()) status.end();
-      }
-    }
+    if (isNotOpen()) return;
+    status.reset();
+    super.closeEvent(event);
   }
 
   protected void receiveTransportMessageImpl(WireProtocolMessage message) {
@@ -253,8 +207,9 @@ public class ClientMessageTransport extends MessageTransportBase {
     }
   }
 
-  void reconnect() throws Exception {
+  void reconnect(TCConnection connection) throws Exception {
     Assert.eval(!isConnected());
+    wireNewConnection(connection);
     try {
       HandshakeResult result = handShake();
       sendAck();
@@ -282,13 +237,10 @@ public class ClientMessageTransport extends MessageTransportBase {
 
   void endIfDisconnected() {
     synchronized (this.status) {
-      if (!this.isConnected()) {
-        if (!this.status.isEnd()) {
-          this.status.end();
-        }
+      if (!this.isConnected() && !this.status.isEnd()) {
+        this.status.end();
       }
     }
-
   }
 
   private static final class HandshakeResult {
@@ -309,4 +261,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     }
   }
 
+  public ClientConnectionEstablisher getConnectionEstablisher() {
+    return connectionEstablisher;
+  }
 }

@@ -42,6 +42,7 @@ import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.lockmanager.api.DeadlockChain;
 import com.tc.objectserver.lockmanager.api.DeadlockResults;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.NullTCServerInfo;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
@@ -69,6 +70,14 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
      * create multiple RMI Registries in a single VM. Remove this when we no longer support 1.4.
      */
     System.setProperty("org.terracotta.server.disableJmxConnector", "true");
+    /*
+     * disable OOO temporary because:
+     * It keeps starting and stopping different client/server within the same process 
+     * and cleaning up the environement etc. Since the shutdown methods are poorly supported 
+     * as of now Sometimes the clients are still trying to reconnect to non-exisitent servers 
+     * and with OOO it seems to happen more.
+     */
+    TCPropertiesImpl.setProperty("l1.reconnect.enabled", "false");
   }
 
   private class StartAction implements StartupAction {

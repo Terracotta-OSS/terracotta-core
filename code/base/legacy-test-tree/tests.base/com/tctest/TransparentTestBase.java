@@ -22,6 +22,7 @@ import com.tc.test.TestConfigObject;
 import com.tc.test.activepassive.ActivePassiveServerConfigCreator;
 import com.tc.test.activepassive.ActivePassiveServerManager;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
+import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
 import com.tc.test.restart.RestartTestEnvironment;
 import com.tc.test.restart.RestartTestHelper;
 import com.tc.test.restart.ServerCrasher;
@@ -63,6 +64,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   private String                                  mode;
   private ServerControl                           serverControl;
   private boolean                                 controlledCrashMode     = false;
+  private boolean                                 proxyConnectMode        = false;
   private ServerCrasher                           crasher;
   private File                                    javaHome;
   private int                                     pid                     = -1;
@@ -107,6 +109,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       serverControl = helper.getServerControl();
     } else if (isActivePassive() && canRunActivePassive()) {
       setUpActivePassiveServers();
+    } else if (isProxyConnect() && canRunProxyConnect()) {
+      setupProxyConnect();
     } else {
       ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(0);
     }
@@ -135,6 +139,38 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
   protected void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     throw new AssertionError("The sub-class (test) should override this method.");
+  }
+  
+  private final void setupProxyConnect() throws Exception {
+    
+    setJavaHome();
+    RestartTestHelper helper = new RestartTestHelper(false,
+                                                     new RestartTestEnvironment(getTempDirectory(), new PortChooser(),
+                                                                                RestartTestEnvironment.PROD_MODE));
+    int dsoPort = helper.getServerPort();
+    PortChooser pc = new PortChooser();
+    int dsoProxyPort = pc.chooseRandomPort();
+    
+    ProxyConnectManagerImpl mgr = ProxyConnectManagerImpl.getManager();
+    mgr.setDsoPort(dsoPort);
+    mgr.setProxyPort(dsoProxyPort);
+    mgr.setupProxy();
+    setupProxyConnectTest(mgr);
+
+    configFactory().addServerToL1Config(null, dsoProxyPort, -1);
+    configFactory().addServerToL2Config(null, dsoPort, helper.getAdminPort());
+
+    serverControl = helper.getServerControl();
+    mgr.startProxyTest();
+    proxyConnectMode = true;
+  }
+
+  protected void setupProxyConnectTest(ProxyConnectManagerImpl mgr) {
+    /*
+     * subclass can overwrite to change the test parameters.
+     */
+    mgr.setProxyWaitTime(20 * 1000);
+    mgr.setProxyDownTime(100);
   }
 
   protected boolean useExternalProcess() {
@@ -186,6 +222,10 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
   private boolean isActivePassive() {
     return TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE.equals(mode());
+  }
+  
+  private boolean isProxyConnect() {
+    return TestConfigObject.TRANSPARENT_TESTS_MODE_PROXY_CONNECT.equals(mode());
   }
 
   public DSOClientConfigHelper getConfigHelper() {
@@ -245,6 +285,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected boolean canRun() {
     return (mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_NORMAL) && canRunNormal())
            || (mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_CRASH) && canRunCrash())
+           || (mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_PROXY_CONNECT) && canRunProxyConnect())
            || (mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE) && canRunActivePassive());
   }
 
@@ -259,6 +300,10 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected boolean canRunActivePassive() {
     return false;
   }
+  
+  protected boolean canRunProxyConnect() {
+    return false;
+  }
 
   public void test() throws Exception {
     if (canRun()) {
@@ -267,6 +312,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       } else if (controlledCrashMode) {
         apServerManager.startServers();
       } else if (useExternalProcess()) {
+        serverControl.start(30 * 1000);
+      } else if (proxyConnectMode) {
         serverControl.start(30 * 1000);
       }
       this.runner.run();

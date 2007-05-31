@@ -23,8 +23,8 @@ public class TCConnectionManagerTest extends TestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    this.clientConnMgr = new TCConnectionManagerFactory().getInstance();
-    this.serverConnMgr = new TCConnectionManagerFactory().getInstance();
+    this.clientConnMgr = new TCConnectionManagerJDK14();
+    this.serverConnMgr = new TCConnectionManagerJDK14();
     this.lsnr = this.serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
       public TCProtocolAdaptor getInstance() {
         return new NullProtocolAdaptor();

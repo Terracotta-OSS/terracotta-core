@@ -29,7 +29,7 @@ public class MessageLatencyTest extends TestCase {
   private final RecordTimeSink clientsink = new RecordTimeSink(false);
 
   protected void setUp() throws Exception {
-    connMgr = new TCConnectionManagerFactory().getInstance();
+    connMgr = new TCConnectionManagerJDK14();
     server = new SimpleServer(serversink);
     server.start();
   }

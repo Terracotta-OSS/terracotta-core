@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.delivery;
 
@@ -35,8 +36,10 @@ class GuaranteedDeliveryProtocol implements DeliveryProtocol {
   public void receive(OOOProtocolMessage protocolMessage) {
     if (protocolMessage.isSend() || protocolMessage.isAckRequest()) {
       receive.addEvent(new OOOProtocolEvent(protocolMessage));
-    } else {
+    } else if (protocolMessage.isAck()) {
       send.addEvent(new OOOProtocolEvent(protocolMessage));
+    } else {
+      throw new AssertionError();
     }
   }
 
@@ -53,5 +56,10 @@ class GuaranteedDeliveryProtocol implements DeliveryProtocol {
   public void resume() {
     send.resume();
     receive.resume();
+  }
+
+  public void reset() {
+    send.reset();
+    receive.reset();
   }
 }

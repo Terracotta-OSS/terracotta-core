@@ -7,8 +7,11 @@ package com.tc.net.core;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.exception.TCInternalError;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.NIOWorkarounds;
 import com.tc.net.core.event.TCListenerEvent;
+import com.tc.net.core.event.TCListenerEventListener;
 import com.tc.util.Assert;
 import com.tc.util.Util;
 import com.tc.util.runtime.Os;
@@ -36,7 +39,9 @@ import java.util.Set;
  * 
  * @author teck
  */
-class TCCommJDK14 extends AbstractTCComm {
+class TCCommJDK14 implements TCComm, TCListenerEventListener {
+
+  protected static final TCLogger logger = TCLogging.getLogger(TCComm.class);
 
   TCCommJDK14() {
     // nada
@@ -419,7 +424,7 @@ class TCCommJDK14 extends AbstractTCComm {
           logger.info(errMsg);
         }
 
-        conn.fireErrorEvent(errMsg);
+        conn.fireErrorEvent(new Exception(errMsg), null);
       }
     } catch (IOException ioe) {
       if (logger.isInfoEnabled()) {
@@ -500,6 +505,37 @@ class TCCommJDK14 extends AbstractTCComm {
     }
   }
 
+  public final boolean isStarted() {
+    return started;
+  }
+
+  public final boolean isStopped() {
+    return !started;
+  }
+
+  public final synchronized void start() {
+    if (!started) {
+      started = true;
+      if (logger.isDebugEnabled()) {
+        logger.debug("Start requested");
+      }
+
+      startImpl();
+    }
+  }
+
+  private volatile boolean started = false;
+
+  public final synchronized void stop() {
+    if (started) {
+      started = false;
+      if (logger.isDebugEnabled()) {
+        logger.debug("Stop requested");
+      }
+      stopImpl();
+    }
+  }
+
   private Selector     selector;
   private TCCommThread commThread    = null;
   private LinkedQueue  selectorTasks = new LinkedQueue();
@@ -541,26 +577,7 @@ class TCCommJDK14 extends AbstractTCComm {
       StringBuffer buf = new StringBuffer();
 
       buf.append("Interest modify request: ").append(channel.toString()).append("\n");
-      buf.append("Ops: ");
-
-      if ((interestOps & SelectionKey.OP_ACCEPT) != 0) {
-        buf.append(" ACCEPT");
-      }
-
-      if ((interestOps & SelectionKey.OP_CONNECT) != 0) {
-        buf.append(" CONNECT");
-      }
-
-      if ((interestOps & SelectionKey.OP_READ) != 0) {
-        buf.append(" READ");
-      }
-
-      if ((interestOps & SelectionKey.OP_WRITE) != 0) {
-        buf.append(" WRITE");
-      }
-
-      buf.append("\n");
-
+      buf.append("Ops: ").append(Constants.interestOpsToString(interestOps)).append("\n");
       buf.append("Set: ").append(set).append(", Remove: ").append(remove).append(", Add: ").append(add).append("\n");
       buf.append("Attachment: ");
 

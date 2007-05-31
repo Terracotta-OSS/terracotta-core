@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.core;
 
@@ -17,7 +18,7 @@ import junit.framework.TestCase;
 
 /**
  * TODO: Document me
- *
+ * 
  * @author teck
  */
 public class ConnectionCreateTest extends TestCase {
@@ -27,8 +28,8 @@ public class ConnectionCreateTest extends TestCase {
     final TCConnectionManager clientConnMgr;
     final TCConnectionManager serverConnMgr;
     final TCSocketAddress addr;
-    clientConnMgr = new TCConnectionManagerFactory().getInstance();
-    serverConnMgr = new TCConnectionManagerFactory().getInstance();
+    clientConnMgr = new TCConnectionManagerJDK14();
+    serverConnMgr = new TCConnectionManagerJDK14();
 
     TCListener lsnr = serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
       public TCProtocolAdaptor getInstance() {

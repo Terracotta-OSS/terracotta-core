@@ -10,6 +10,7 @@ import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.util.ArrayList;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -20,11 +21,15 @@ public class MultiNodeLoadTest extends AbstractAppServerTestCase {
   private static final int  SESSIONS_PER_NODE = 10;
 
   private static final long TEST_DURATION     = 4 * 60 * 1000;
-  
-//  private static final long TEST_DURATION     = 10 * 1000;
+
+// private static final long TEST_DURATION = 10 * 1000;
 
   public MultiNodeLoadTest() {
     // this.disableAllUntil("2006-10-24");
+
+    ArrayList args = new ArrayList();
+    args.add("-XX:+HeapDumpOnOutOfMemoryError");
+    addDsoServerJvmArgs(args);
   }
 
   public void testFourNodeLoad() throws Throwable {

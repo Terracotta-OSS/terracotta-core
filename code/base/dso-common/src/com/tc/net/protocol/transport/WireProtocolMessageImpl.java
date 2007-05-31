@@ -26,7 +26,7 @@ public class WireProtocolMessageImpl extends AbstractTCNetworkMessage implements
    * @param msgPayload the network message to wrap
    * @return a new wire protocol message instance that contains the given message as it's payload.
    */
-  static WireProtocolMessage wrapMessage(TCNetworkMessage msgPayload, TCConnection source) {
+  public static WireProtocolMessage wrapMessage(TCNetworkMessage msgPayload, TCConnection source) {
     WireProtocolHeader header = new WireProtocolHeader();
     header.setProtocol(WireProtocolHeader.getProtocolForMessageClass(msgPayload));
 

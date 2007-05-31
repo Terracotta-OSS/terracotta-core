@@ -159,6 +159,13 @@ public class TCPropertiesImpl implements TCProperties {
     return val;
   }
 
+  /*
+   * Used only in test
+   */
+  public static void setProperty(String key, String value) {
+    INSTANCE.props.setProperty(key, value);
+  }
+  
   public String toString() {
     return "TCProperties=" + props.toString();
   }

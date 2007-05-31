@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.delivery;
 
@@ -46,6 +47,7 @@ public class GuaranteedDeliveryProtocolTest extends TestCase {
     delivery.clear();
     TestProtocolMessage ackMessage = new TestProtocolMessage();
     ackMessage.ack = 0;
+    ackMessage.isAck = true;
     gdp.receive(ackMessage);
     assertTrue(workSink.size() == 1);
     runWorkSink(workSink);

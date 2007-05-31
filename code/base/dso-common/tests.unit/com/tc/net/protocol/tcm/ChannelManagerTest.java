@@ -5,8 +5,8 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.config.schema.dynamic.FixedValueConfigItem;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
@@ -118,7 +118,7 @@ public class ChannelManagerTest extends TestCase {
       ClientMessageChannel channel;
       channel = clientComms
           .createClientChannel(sessionManager, 0, TCSocketAddress.LOOPBACK_IP, lsnr.getBindPort(), 3000,
-                               new FixedValueConfigItem(new ConnectionInfo[] { new ConnectionInfo("localhost", lsnr
+                               new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo("localhost", lsnr
                                    .getBindPort()) }));
       channel.open();
       assertTrue(channel.isConnected());

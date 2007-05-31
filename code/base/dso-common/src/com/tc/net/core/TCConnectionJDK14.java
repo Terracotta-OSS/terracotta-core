@@ -4,15 +4,24 @@
  */
 package com.tc.net.core;
 
+import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
+import EDU.oswego.cs.dl.util.concurrent.Latch;
+import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
+import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
+
 import com.tc.bytes.TCByteBuffer;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.NIOWorkarounds;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.event.TCConnectionEventCaller;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.SetOnceFlag;
+import com.tc.util.concurrent.SetOnceRef;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
@@ -25,36 +34,59 @@ import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 import java.nio.channels.SocketChannel;
+import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * JDK14 (nio) implementation of TCConnection
- *
+ * 
  * @author teck
  */
-final class TCConnectionJDK14 extends AbstractTCConnection implements TCJDK14ChannelReader, TCJDK14ChannelWriter {
-  private static final long      WARN_THRESHOLD = 0x400000L;        // 4MB
-  private final SetOnceFlag      closed         = new SetOnceFlag();
-  private final LinkedList       writeContexts  = new LinkedList();
-  private final TCCommJDK14      comm;
-  private volatile SocketChannel channel;
+final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJDK14ChannelWriter {
+
+  private static final long              NO_CONNECT_TIME     = -1L;
+  private static final TCLogger          logger              = TCLogging.getLogger(TCConnection.class);
+  private static final long              WARN_THRESHOLD      = 0x400000L;                                       // 4MB
+
+  private final LinkedList               writeContexts       = new LinkedList();
+  private final TCCommJDK14              comm;
+  private final TCConnectionManagerJDK14 parent;
+  private final TCConnectionEventCaller  eventCaller         = new TCConnectionEventCaller(logger);
+  private final SynchronizedLong         lastActivityTime    = new SynchronizedLong(System.currentTimeMillis());
+  private final SynchronizedLong         connectTime         = new SynchronizedLong(NO_CONNECT_TIME);
+  private final List                     eventListeners      = new CopyOnWriteArrayList();
+  private final TCProtocolAdaptor        protocolAdaptor;
+  private final SynchronizedBoolean      isSocketEndpoint    = new SynchronizedBoolean(false);
+  private final SetOnceFlag              closed              = new SetOnceFlag();
+  private final SynchronizedBoolean      connected           = new SynchronizedBoolean(false);
+  private final SetOnceRef               localSocketAddress  = new SetOnceRef();
+  private final SetOnceRef               remoteSocketAddress = new SetOnceRef();
+  private volatile SocketChannel         channel;
 
   // for creating unconnected client connections
   TCConnectionJDK14(TCConnectionEventListener listener, TCCommJDK14 comm, TCProtocolAdaptor adaptor,
-                    AbstractTCConnectionManager parent) {
-    this(listener, comm, adaptor, null, parent);
+                    TCConnectionManagerJDK14 managerJDK14) {
+    this(listener, comm, adaptor, null, managerJDK14);
   }
 
   TCConnectionJDK14(TCConnectionEventListener listener, TCCommJDK14 comm, TCProtocolAdaptor adaptor, SocketChannel ch,
-                    AbstractTCConnectionManager parent) {
-    super(listener, adaptor, parent);
+                    TCConnectionManagerJDK14 parent) {
+    Assert.assertNotNull(parent);
+    Assert.assertNotNull(adaptor);
+
+    this.parent = parent;
+    this.protocolAdaptor = adaptor;
+
+    if (listener != null) addListener(listener);
 
     Assert.assertNotNull(comm);
     this.comm = comm;
     this.channel = ch;
   }
 
-  protected void closeImpl(Runnable callback) {
+  private void closeImpl(Runnable callback) {
+    Assert.assertTrue(closed.isSet());
     try {
       if (channel != null) {
         comm.cleanupChannel(channel, callback);
@@ -63,10 +95,6 @@ final class TCConnectionJDK14 extends AbstractTCConnection implements TCJDK14Cha
       }
     } finally {
       synchronized (writeContexts) {
-        // this will blow up if it is set more than once. Super class should not allow this closeImpl() to
-        // be called more than once
-        closed.set();
-
         writeContexts.clear();
       }
     }
@@ -75,10 +103,11 @@ final class TCConnectionJDK14 extends AbstractTCConnection implements TCJDK14Cha
   protected void finishConnect() {
     Assert.assertNotNull("channel", channel);
     recordSocketAddress(channel.socket());
-    super.finishConnect();
+    setConnected(true);
+    eventCaller.fireConnectEvent(eventListeners, this);
   }
 
-  protected void connectImpl(TCSocketAddress addr, int timeout) throws IOException, TCTimeoutException {
+  private void connectImpl(TCSocketAddress addr, int timeout) throws IOException, TCTimeoutException {
     SocketChannel newSocket = null;
     InetSocketAddress inetAddr = new InetSocketAddress(addr.getAddress(), addr.getPort());
     for (int i = 1; i <= 3; i++) {
@@ -118,27 +147,27 @@ final class TCConnectionJDK14 extends AbstractTCConnection implements TCJDK14Cha
     return rv;
   }
 
-  protected Socket detachImpl() throws IOException {
+  private Socket detachImpl() throws IOException {
     comm.unregister(channel);
     channel.configureBlocking(true);
     return channel.socket();
   }
 
-  protected boolean asynchConnectImpl(TCSocketAddress address) throws IOException {
+  private boolean asynchConnectImpl(TCSocketAddress address) throws IOException {
     SocketChannel newSocket = createChannel();
     newSocket.configureBlocking(false);
 
     InetSocketAddress inetAddr = new InetSocketAddress(address.getAddress(), address.getPort());
-    final boolean connected = newSocket.connect(inetAddr);
-    setConnected(connected);
+    final boolean rv = newSocket.connect(inetAddr);
+    setConnected(rv);
 
     channel = newSocket;
 
-    if (!connected) {
+    if (!rv) {
       comm.requestConnectInterest(this, newSocket);
     }
 
-    return connected;
+    return rv;
   }
 
   public void doRead(ScatteringByteChannel sbc) {
@@ -179,7 +208,7 @@ final class TCConnectionJDK14 extends AbstractTCConnection implements TCJDK14Cha
         logger.info("error reading from channel " + channel.toString() + ": " + ioe.getMessage());
       }
 
-      fireErrorEvent(ioe, null);
+      eventCaller.fireErrorEvent(eventListeners, this, ioe, null);
       return;
     }
 
@@ -190,7 +219,7 @@ final class TCConnectionJDK14 extends AbstractTCConnection implements TCJDK14Cha
 
       if (debug) logger.debug("EOF read on connection " + channel.toString());
 
-      fireEndOfFileEvent();
+      eventCaller.fireEndOfFileEvent(eventListeners, this);
       return;
     }
 
@@ -242,7 +271,7 @@ final class TCConnectionJDK14 extends AbstractTCConnection implements TCJDK14Cha
           break;
         }
 
-        fireErrorEvent(ioe, context.message);
+        eventCaller.fireErrorEvent(eventListeners, this, ioe, context.message);
       }
 
       if (debug) logger.debug("Wrote " + bytesWritten + " bytes on connection " + channel.toString());
@@ -281,17 +310,17 @@ final class TCConnectionJDK14 extends AbstractTCConnection implements TCJDK14Cha
   static private ByteBuffer[] extractNioBuffers(TCByteBuffer[] src) {
     ByteBuffer[] rv = new ByteBuffer[src.length];
     for (int i = 0, n = src.length; i < n; i++) {
-      rv[i] = (ByteBuffer) src[i].getNioBuffer();
+      rv[i] = src[i].getNioBuffer();
     }
 
     return rv;
   }
 
   static private ByteBuffer extractNioBuffer(TCByteBuffer buffer) {
-    return (ByteBuffer) buffer.getNioBuffer();
+    return buffer.getNioBuffer();
   }
 
-  protected void putMessageImpl(TCNetworkMessage message) {
+  private void putMessageImpl(TCNetworkMessage message) {
     // ??? Does the message queue and the WriteContext belong in the base connection class?
     final boolean debug = logger.isDebugEnabled();
 
@@ -336,6 +365,192 @@ final class TCConnectionJDK14 extends AbstractTCConnection implements TCJDK14Cha
 
       comm.requestWriteInterest(this, channel);
     }
+  }
+
+  public final void asynchClose() {
+    if (closed.attemptSet()) {
+      closeImpl(createCloseCallback(null));
+    }
+  }
+
+  public final boolean close(final long timeout) {
+    if (timeout <= 0) { throw new IllegalArgumentException("timeout cannot be less than or equal to zero"); }
+
+    if (closed.attemptSet()) {
+      final Latch latch = new Latch();
+      closeImpl(createCloseCallback(latch));
+      try {
+        return latch.attempt(timeout);
+      } catch (InterruptedException e) {
+        logger.warn("close interrupted");
+        return isConnected();
+      }
+    }
+
+    return isClosed();
+  }
+
+  private final Runnable createCloseCallback(final Latch latch) {
+    final boolean fireClose = isConnected();
+
+    return new Runnable() {
+      public void run() {
+        setConnected(false);
+        parent.connectionClosed(TCConnectionJDK14.this);
+
+        if (fireClose) {
+          eventCaller.fireCloseEvent(eventListeners, TCConnectionJDK14.this);
+        }
+
+        if (latch != null) latch.release();
+      }
+    };
+  }
+
+  public final boolean isClosed() {
+    return closed.isSet();
+  }
+
+  public final boolean isConnected() {
+    return connected.get();
+  }
+
+  public final String toString() {
+    StringBuffer buf = new StringBuffer();
+
+    buf.append(getClass().getName()).append('@').append(hashCode()).append(":");
+
+    buf.append(" connected: ").append(isConnected());
+    buf.append(", closed: ").append(isClosed());
+
+    if (isSocketEndpoint.get()) {
+      buf.append(" local=");
+      if (localSocketAddress.isSet()) {
+        buf.append(((TCSocketAddress) localSocketAddress.get()).getStringForm());
+      } else {
+        buf.append("[unknown]");
+      }
+
+      buf.append(" remote=");
+      if (remoteSocketAddress.isSet()) {
+        buf.append(((TCSocketAddress) remoteSocketAddress.get()).getStringForm());
+      } else {
+        buf.append("[unknown");
+      }
+    }
+
+    buf.append(" connect=[");
+    final long connect = getConnectTime();
+
+    if (connect != NO_CONNECT_TIME) {
+      buf.append(new Date(connect));
+    } else {
+      buf.append("no connect time");
+    }
+    buf.append(']');
+
+    buf.append(" idle=").append(getIdleTime()).append("ms");
+
+    return buf.toString();
+  }
+
+  public final void addListener(TCConnectionEventListener listener) {
+    if (listener == null) { return; }
+    eventListeners.add(listener); // don't need sync
+  }
+
+  public final void removeListener(TCConnectionEventListener listener) {
+    if (listener == null) { return; }
+    eventListeners.remove(listener); // don't need sync
+  }
+
+  public final long getConnectTime() {
+    return connectTime.get();
+  }
+
+  public final long getIdleTime() {
+    return System.currentTimeMillis() - lastActivityTime.get();
+  }
+
+  public final synchronized void connect(TCSocketAddress addr, int timeout) throws IOException, TCTimeoutException {
+    if (closed.isSet() || connected.get()) { throw new IllegalStateException("Connection closed or already connected"); }
+    connectImpl(addr, timeout);
+    finishConnect();
+  }
+
+  public final synchronized boolean asynchConnect(TCSocketAddress addr) throws IOException {
+    if (closed.isSet() || connected.get()) { throw new IllegalStateException("Connection closed or already connected"); }
+
+    boolean rv = asynchConnectImpl(addr);
+
+    if (rv) {
+      finishConnect();
+    }
+
+    return rv;
+  }
+
+  public final void putMessage(TCNetworkMessage message) {
+    lastActivityTime.set(System.currentTimeMillis());
+
+    // if (!isConnected() || isClosed()) {
+    // logger.warn("Ignoring message sent to non-connected connection");
+    // return;
+    // }
+
+    putMessageImpl(message);
+  }
+
+  public final TCSocketAddress getLocalAddress() {
+    return (TCSocketAddress) localSocketAddress.get();
+  }
+
+  public final TCSocketAddress getRemoteAddress() {
+    return (TCSocketAddress) remoteSocketAddress.get();
+  }
+
+  private final void setConnected(boolean connected) {
+    if (connected) {
+      this.connectTime.set(System.currentTimeMillis());
+    }
+    this.connected.set(connected);
+  }
+
+  private final void recordSocketAddress(Socket socket) {
+    if (socket != null) {
+      isSocketEndpoint.set(true);
+      localSocketAddress.set(new TCSocketAddress(socket.getLocalAddress(), socket.getLocalPort()));
+      remoteSocketAddress.set(new TCSocketAddress(socket.getInetAddress(), socket.getPort()));
+    }
+  }
+
+  private final void addNetworkData(TCByteBuffer[] data, int length) {
+    lastActivityTime.set(System.currentTimeMillis());
+
+    try {
+      protocolAdaptor.addReadData(this, data, length);
+    } catch (Exception e) {
+      eventCaller.fireErrorEvent(eventListeners, this, e, null);
+      return;
+    }
+  }
+
+  protected final TCByteBuffer[] getReadBuffers() {
+    // TODO: Hook in some form of read throttle. To throttle how much data is read from the network,
+    // only return a subset of the buffers that the protocolAdaptor advises to be used.
+
+    // TODO: should also support a way to de-register read interest temporarily
+
+    return protocolAdaptor.getReadBuffers();
+  }
+
+  protected final void fireErrorEvent(Exception e, TCNetworkMessage context) {
+    eventCaller.fireErrorEvent(eventListeners, this, e, context);
+  }
+
+  public final Socket detach() throws IOException {
+    this.parent.removeConnection(this);
+    return detachImpl();
   }
 
   private static class WriteContext {

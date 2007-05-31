@@ -28,6 +28,10 @@ public class ObjectDataRandomCrashTest extends TransparentTestBase implements Te
   protected boolean canRunActivePassive() {
     return true;
   }
+  
+  protected boolean canRunProxyConnect() {
+    return true;
+  }
 
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(3);

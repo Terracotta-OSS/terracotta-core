@@ -3,12 +3,12 @@
  */
 package com.tc.memorydatastore.client;
 
-import com.tc.config.schema.dynamic.FixedValueConfigItem;
 import com.tc.exception.TCRuntimeException;
 import com.tc.memorydatastore.message.MemoryDataStoreRequestMessage;
 import com.tc.memorydatastore.message.MemoryDataStoreResponseMessage;
 import com.tc.memorydatastore.server.MemoryDataStoreServer;
 import com.tc.net.MaxConnectionsExceededException;
+import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -58,7 +58,7 @@ public class MemoryDataStoreClient implements MemoryDataMap {
   private void setupClient(String serverHost, int serverPort) {
 
     this.channel = communicationsManager.createClientChannel(new NullSessionManager(), -1, serverHost, serverPort,
-        10000, new FixedValueConfigItem(new ConnectionInfo[] { new ConnectionInfo(serverHost, serverPort) }));
+        10000, new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(serverHost, serverPort) }));
 
     channel.addClassMapping(TCMessageType.MEMORY_DATA_STORE_RESPONSE_MESSAGE, MemoryDataStoreResponseMessage.class);
     channel.addClassMapping(TCMessageType.MEMORY_DATA_STORE_REQUEST_MESSAGE, MemoryDataStoreRequestMessage.class);
@@ -100,10 +100,10 @@ public class MemoryDataStoreClient implements MemoryDataMap {
   }
 
   public void put(byte[] key, byte[] value) {
-    ThreadID threadID = getThreadID();
+    ThreadID thId = getThreadID();
     MemoryDataStoreRequestMessage request = (MemoryDataStoreRequestMessage) channel
         .createMessage(TCMessageType.MEMORY_DATA_STORE_REQUEST_MESSAGE);
-    request.initializePut(threadID, this.storeName, key, value);
+    request.initializePut(thId, this.storeName, key, value);
     request.send();
     // MemoryDataStoreResponseMessage responseMessage =
     // waitForResponse(threadID, request);
@@ -111,38 +111,38 @@ public class MemoryDataStoreClient implements MemoryDataMap {
   }
 
   public byte[] get(byte[] key) {
-    ThreadID threadID = getThreadID();
+    ThreadID thId = getThreadID();
     MemoryDataStoreRequestMessage request = (MemoryDataStoreRequestMessage) channel
         .createMessage(TCMessageType.MEMORY_DATA_STORE_REQUEST_MESSAGE);
-    request.initializeGet(threadID, this.storeName, key, false);
+    request.initializeGet(thId, this.storeName, key, false);
 
-    Object waitObject = getWaitObject(threadID, request);
+    Object waitObject = getWaitObject(thId, request);
 
     request.send();
-    MemoryDataStoreResponseMessage responseMessage = waitForResponse(threadID, waitObject);
+    MemoryDataStoreResponseMessage responseMessage = waitForResponse(thId, waitObject);
     Assert.assertTrue(responseMessage.isRequestCompletedFlag());
     return responseMessage.getValue();
   }
 
   public Collection getAll(byte[] key) {
-    ThreadID threadID = getThreadID();
+    ThreadID thId = getThreadID();
     MemoryDataStoreRequestMessage request = (MemoryDataStoreRequestMessage) channel
         .createMessage(TCMessageType.MEMORY_DATA_STORE_REQUEST_MESSAGE);
-    request.initializeGet(threadID, this.storeName, key, true);
+    request.initializeGet(thId, this.storeName, key, true);
 
-    Object waitObject = getWaitObject(threadID, request);
+    Object waitObject = getWaitObject(thId, request);
 
     request.send();
-    MemoryDataStoreResponseMessage responseMessage = waitForResponse(threadID, waitObject);
+    MemoryDataStoreResponseMessage responseMessage = waitForResponse(thId, waitObject);
     Assert.assertTrue(responseMessage.isRequestCompletedFlag());
     return responseMessage.getValues();
   }
 
   public void remove(byte[] key) {
-    ThreadID threadID = getThreadID();
+    ThreadID thId = getThreadID();
     MemoryDataStoreRequestMessage request = (MemoryDataStoreRequestMessage) channel
         .createMessage(TCMessageType.MEMORY_DATA_STORE_REQUEST_MESSAGE);
-    request.initializeRemove(threadID, this.storeName, key, false);
+    request.initializeRemove(thId, this.storeName, key, false);
     request.send();
     // MemoryDataStoreResponseMessage responseMessage =
     // waitForResponse(threadID, request);
@@ -151,10 +151,10 @@ public class MemoryDataStoreClient implements MemoryDataMap {
   }
 
   public void removeAll(byte[] key) {
-    ThreadID threadID = getThreadID();
+    ThreadID thId = getThreadID();
     MemoryDataStoreRequestMessage request = (MemoryDataStoreRequestMessage) channel
         .createMessage(TCMessageType.MEMORY_DATA_STORE_REQUEST_MESSAGE);
-    request.initializeRemove(threadID, this.storeName, key, true);
+    request.initializeRemove(thId, this.storeName, key, true);
     request.send();
     // MemoryDataStoreResponseMessage responseMessage =
     // waitForResponse(threadID, request);
@@ -162,12 +162,12 @@ public class MemoryDataStoreClient implements MemoryDataMap {
     // return responseMessage.getNumOfRemove();
   }
 
-  void notifyResponse(ThreadID threadID, MemoryDataStoreResponseMessage response) {
+  void notifyResponse(ThreadID thId, MemoryDataStoreResponseMessage response) {
     Object waitObject = null;
     synchronized (this) {
-      waitObject = this.waitObjectMap.get(threadID);
-      Object pendingRequest = this.pendingRequests.remove(threadID);
-      this.pendingResponses.put(threadID, response);
+      waitObject = this.waitObjectMap.get(thId);
+      Object pendingRequest = this.pendingRequests.remove(thId);
+      this.pendingResponses.put(thId, response);
       Assert.assertNotNull(waitObject);
       Assert.assertNotNull(pendingRequest);
     }
@@ -176,9 +176,9 @@ public class MemoryDataStoreClient implements MemoryDataMap {
     }
   }
 
-  private MemoryDataStoreResponseMessage waitForResponse(ThreadID threadID, Object waitObject) {
+  private MemoryDataStoreResponseMessage waitForResponse(ThreadID thId, Object waitObject) {
     synchronized (waitObject) {
-      while (hasPendingRequest(threadID)) {
+      while (hasPendingRequest(thId)) {
         try {
           waitObject.wait();
         } catch (InterruptedException e) {
@@ -188,20 +188,20 @@ public class MemoryDataStoreClient implements MemoryDataMap {
     }
     synchronized (this) {
       MemoryDataStoreResponseMessage responseMessage = (MemoryDataStoreResponseMessage) this.pendingResponses
-          .remove(threadID);
+          .remove(thId);
       Assert.assertNotNull(responseMessage);
       return responseMessage;
     }
   }
 
-  private boolean hasPendingRequest(ThreadID threadID) {
-    return this.pendingRequests.get(threadID) != null;
+  private boolean hasPendingRequest(ThreadID thId) {
+    return this.pendingRequests.get(thId) != null;
   }
 
-  private synchronized Object getWaitObject(ThreadID threadID, TCMessage message) {
+  private synchronized Object getWaitObject(ThreadID thId, TCMessage message) {
     Object waitObject = new Object();
-    this.waitObjectMap.put(threadID, waitObject);
-    this.pendingRequests.put(threadID, message);
+    this.waitObjectMap.put(thId, waitObject);
+    this.pendingRequests.put(thId, message);
     return waitObject;
   }
 }

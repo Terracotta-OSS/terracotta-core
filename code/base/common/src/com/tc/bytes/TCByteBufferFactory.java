@@ -1,13 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.bytes;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.util.runtime.IOFlavor;
 
 import java.util.LinkedList;
 
@@ -20,59 +19,31 @@ import java.util.LinkedList;
  */
 public class TCByteBufferFactory {
   // 10485760 == 10MB
-  private static final int                   WARN_THRESHOLD     = 10485760;
+  private static final int            WARN_THRESHOLD     = 10485760;
 
-  private static final boolean               disablePooling     = false;
+  private static final boolean        disablePooling     = false;
 
-  private static final TCByteBufferFactoryIF factory;
+  private static final LinkedList     directFreePool     = new LinkedList();
 
-  private static final LinkedList            directFreePool     = new LinkedList();
-
-  private static final LinkedList            nonDirectFreePool  = new LinkedList();
+  private static final LinkedList     nonDirectFreePool  = new LinkedList();
 
   // 4096 bytes * 2048 * 4 = 32 MB total
-  private static final int                   DEFAULT_FIXED_SIZE = 4096;
-  private static final int                   MAX_POOL_SIZE      = 2048 * 4;
+  private static final int            DEFAULT_FIXED_SIZE = 4096;
+  private static final int            MAX_POOL_SIZE      = 2048 * 4;
 
   // XXX: make me configurable (one time only, fixed sized buffers need to stay the same size!)
-  private static final int                   fixedBufferSize    = DEFAULT_FIXED_SIZE;
+  private static final int            fixedBufferSize    = DEFAULT_FIXED_SIZE;
 
-  private static final boolean               useNIO;
+  private static final TCByteBuffer[] EMPTY_BB_ARRAY     = new TCByteBuffer[0];
 
-  private static final TCByteBuffer[]        EMPTY_BB_ARRAY     = new TCByteBuffer[] {};
+  private static final TCLogger       logger             = TCLogging.getLogger(TCByteBufferFactory.class);
+  private static final TCLogger       lossyLogger        = new LossyTCLogger(logger);
 
-  private static final TCLogger              logger             = TCLogging.getLogger(TCByteBufferFactory.class);
-  private static final TCLogger              lossyLogger        = new LossyTCLogger(logger);
-
-  private static final TCByteBuffer ZERO_BYTE_BUFFER;
-
-  static {
-    Class factoryClass = null;
-    useNIO = IOFlavor.isNioAvailable();
-
-    try {
-      if (useNIO) {
-        factoryClass = Class.forName("com.tc.bytes.TCByteBufferFactoryJDK14");
-      } else {
-        factoryClass = Class.forName("com.tc.bytes.TCByteBufferFactoryJDK13");
-      }
-    } catch (ClassNotFoundException cfe) {
-      throw new TCRuntimeException("internal error", cfe);
-    }
-
-    try {
-      factory = (TCByteBufferFactoryIF) factoryClass.newInstance();
-    } catch (InstantiationException ie) {
-      throw new TCRuntimeException("internal error", ie);
-    } catch (IllegalAccessException iae) {
-      throw new TCRuntimeException("internal error", iae);
-    }
-    ZERO_BYTE_BUFFER = factory.wrap(new byte[0]);
-  }
+  private static final TCByteBuffer   ZERO_BYTE_BUFFER   = TCByteBuffer.wrap(new byte[0]);
 
   private static TCByteBuffer createNewInstance(boolean direct, int capacity, int index, int totalCount) {
     try {
-      TCByteBuffer rv = factory.getInstance(capacity, direct);
+      TCByteBuffer rv = new TCByteBuffer(capacity, direct);
       // Assert.assertEquals(0, rv.position());
       // Assert.assertEquals(capacity, rv.capacity());
       // Assert.assertEquals(capacity, rv.limit());
@@ -80,7 +51,7 @@ public class TCByteBufferFactory {
     } catch (OutOfMemoryError oome) {
       // try to log some useful context. Most OOMEs don't have stack traces unfortunately
       logger.error("OOME trying to allocate " + (direct ? "direct" : "non-direct") + " buffer of size " + capacity
-                   + " (index " + index + " of count " + totalCount + ")");
+          + " (index " + index + " of count " + totalCount + ")");
       throw oome;
     }
   }
@@ -101,7 +72,7 @@ public class TCByteBufferFactory {
       logger.warn("Asking for a large amount of memory: " + size + " bytes");
     }
     if (size < 0) { throw new IllegalArgumentException("Requested length cannot be less than zero"); }
-    if(size == 0) { return ZERO_BYTE_BUFFER; }
+    if (size == 0) { return ZERO_BYTE_BUFFER; }
 
     if (disablePooling || size > fixedBufferSize) {
       return createNewInstance(direct, size);
@@ -174,15 +145,23 @@ public class TCByteBufferFactory {
 
   private static TCByteBuffer getFromPool(boolean direct) {
     if (disablePooling) return null;
+    TCByteBuffer buf = null;
     if (direct) {
       synchronized (directFreePool) {
-        return directFreePool.size() > 0 ? (TCByteBuffer) directFreePool.removeFirst() : null;
+        if (directFreePool.size() > 0) {
+          buf = (TCByteBuffer) directFreePool.removeFirst();
+          buf.checkedOut();
+        }
       }
     } else {
       synchronized (nonDirectFreePool) {
-        return nonDirectFreePool.size() > 0 ? (TCByteBuffer) nonDirectFreePool.removeFirst() : null;
+        if(nonDirectFreePool.size() > 0 ) {
+          buf = (TCByteBuffer) nonDirectFreePool.removeFirst();
+          buf.checkedOut();
+        }
       }
     }
+    return buf;
   }
 
   public static void returnBuffers(TCByteBuffer buffers[]) {
@@ -200,18 +179,19 @@ public class TCByteBufferFactory {
     if (buf.capacity() == fixedBufferSize) {
       if (buf.isDirect()) {
         synchronized (directFreePool) {
+          buf.commit();
           if (directFreePool.size() < MAX_POOL_SIZE) {
-//            buf.clear();
+            // buf.clear();
             directFreePool.addLast(buf);
           }
         }
       } else {
         synchronized (nonDirectFreePool) {
+          buf.commit();
           if (nonDirectFreePool.size() < MAX_POOL_SIZE) {
-//            buf.clear();
+            // buf.clear();
             nonDirectFreePool.addLast(buf);
-          }
-          else {
+          } else {
             lossyLogger.info("MAX POOL Size of " + nonDirectFreePool.size() + " reached !");
           }
         }
@@ -220,7 +200,7 @@ public class TCByteBufferFactory {
   }
 
   public static TCByteBuffer wrap(byte[] buf) {
-    return factory.wrap(buf);
+    return TCByteBuffer.wrap(buf);
   }
 
   public static TCByteBuffer copyAndWrap(byte[] buf) {

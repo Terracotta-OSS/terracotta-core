@@ -14,4 +14,6 @@ interface OOOProtocolMessageFactory {
   public OOOProtocolMessage createNewSendMessage(long sequence, TCNetworkMessage payload);
   
   public OOOProtocolMessage createNewMessage(OOOProtocolMessageHeader header, TCByteBuffer[] data);
+  
+  public OOOProtocolMessage createNewGoodbyeMessage();
 }

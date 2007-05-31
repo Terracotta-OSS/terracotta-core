@@ -39,6 +39,7 @@ public class TCPProxy {
   private final Set                 connections = new HashSet();
   private final File                logDir;
   private final boolean             logData;
+  private boolean                   reuseAddress = false;
 
   public TCPProxy(int listenPort, InetAddress destHost, int destPort, long delay, boolean logData, File logDir) {
     this(listenPort, new InetSocketAddress[] { new InetSocketAddress(destHost, destPort) }, delay, logData, logDir);
@@ -57,6 +58,10 @@ public class TCPProxy {
     this.logDir = logDir;
     setDelay(delay);
   }
+   
+  public void setReuseAddress(boolean reuse) {
+    reuseAddress = reuse;
+  }
 
   public synchronized void start() throws IOException {
     stop();
@@ -64,7 +69,19 @@ public class TCPProxy {
     log("Starting listener on port " + listenPort + ", proxying to " + StringUtil.toString(endpoints, ", ", "[", "]")
         + " with " + getDelay() + "ms delay");
 
-    serverSocket = new ServerSocket(listenPort);
+    if(!reuseAddress) {
+      serverSocket = new ServerSocket(listenPort);
+    } else {
+      serverSocket = new ServerSocket();
+      serverSocket.setReuseAddress(true);   
+      try {
+        serverSocket.bind(new InetSocketAddress((InetAddress)null, listenPort), 50);
+      } catch(IOException e) {
+        serverSocket.close();
+        throw e;
+      }
+    }
+
 
     stop = false;
 

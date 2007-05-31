@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.core;
 
@@ -23,7 +24,7 @@ public class SimpleServerTest extends TCTestCase {
   private final SynchronizedRef error     = new SynchronizedRef(null);
 
   protected void setUp() throws Exception {
-    connMgr = new TCConnectionManagerFactory().getInstance();
+    connMgr = new TCConnectionManagerJDK14();
     server = new SimpleServer(new EchoSink(true, new EchoSink.ErrorListener() {
       public void error(Throwable t) {
         setError(t);
