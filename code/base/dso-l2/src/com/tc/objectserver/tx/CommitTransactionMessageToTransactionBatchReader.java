@@ -13,6 +13,8 @@ import java.io.IOException;
 public final class CommitTransactionMessageToTransactionBatchReader implements TransactionBatchReaderFactory {
 
   private final GlobalTransactionIDGenerator gtxm;
+  private final ServerTransactionFactory     activeTxnFactory  = new ActiveServerTransactionFactory();
+  private final ServerTransactionFactory     passiveTxnFactory = new PassiveServerTransactionFactory();
 
   public CommitTransactionMessageToTransactionBatchReader(GlobalTransactionIDGenerator gtxm) {
     this.gtxm = gtxm;
@@ -21,13 +23,12 @@ public final class CommitTransactionMessageToTransactionBatchReader implements T
   // Used by active server
   public TransactionBatchReader newTransactionBatchReader(CommitTransactionMessage ctm) throws IOException {
     return new TransactionBatchReaderImpl(gtxm, ctm.getBatchData(), ctm.getChannelID(), ctm
-        .getAcknowledgedTransactionIDs(), ctm.getSerializer());
+        .getAcknowledgedTransactionIDs(), ctm.getSerializer(), activeTxnFactory);
   }
 
   // Used by passive server
   public TransactionBatchReader newTransactionBatchReader(RelayedCommitTransactionMessage ctm) throws IOException {
     return new TransactionBatchReaderImpl(ctm, ctm.getBatchData(), ctm.getChannelID(), ctm
-        .getAcknowledgedTransactionIDs(), ctm.getSerializer());
+        .getAcknowledgedTransactionIDs(), ctm.getSerializer(), passiveTxnFactory);
   }
-
 }

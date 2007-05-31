@@ -113,10 +113,6 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     return oids;
   }
 
-  public ObjectStringSerializer getSerializer() {
-    return serializer;
-  }
-
   public Map getRootsMap() {
     return rootsMap;
   }

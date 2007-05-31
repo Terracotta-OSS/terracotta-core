@@ -49,8 +49,10 @@ public interface ServerTransaction extends GlobalTransaction {
   
   public Set getNewObjectIDs();
 
-  public Collection addNotifiesTo(List list);
+  public Collection getNotifies();
 
   public DmiDescriptor[] getDmiDescriptors();
+  
+  public boolean needsBroadcast();
 
 }

@@ -39,11 +39,13 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
   private final Collection                   acknowledgedTransactionIDs;
   private ObjectStringSerializer             serializer;
   private final GlobalTransactionIDGenerator gtxm;
+  private final ServerTransactionFactory     txnFactory;
 
   public TransactionBatchReaderImpl(GlobalTransactionIDGenerator gtxm, TCByteBuffer[] data, ChannelID source,
-                                    Collection acknowledgedTransactionIDs, ObjectStringSerializer serializer)
-      throws IOException {
+                                    Collection acknowledgedTransactionIDs, ObjectStringSerializer serializer,
+                                    ServerTransactionFactory txnFactory) throws IOException {
     this.gtxm = gtxm;
+    this.txnFactory = txnFactory;
     this.in = new TCByteBufferInputStream(data);
     this.source = source;
     this.batchID = new TxnBatchID(in.readLong());
@@ -112,8 +114,8 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     }
 
     numTxns--;
-    return new ServerTransactionImpl(gtxm, getBatchID(), txnID, sequenceID, locks, source, dnas, serializer, newRoots,
-                                     txnType, notifies, dmis);
+    return txnFactory.createServerTransaction(gtxm, getBatchID(), txnID, sequenceID, locks, source, dnas, serializer,
+                                              newRoots, txnType, notifies, dmis);
   }
 
   public TxnBatchID getBatchID() {

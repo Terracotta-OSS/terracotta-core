@@ -146,7 +146,8 @@ public class TransactionBatchTest extends TestCase {
     writer.wait4AllTxns2Serialize();
 
     TransactionBatchReaderImpl reader = new TransactionBatchReaderImpl(gidGenerator, writer.getData(), channel,
-                                                                       new HashSet(), serializer);
+                                                                       new HashSet(), serializer,
+                                                                       new ActiveServerTransactionFactory());
     assertEquals(2, reader.getNumTxns());
     assertEquals(batchID, reader.getBatchID());
 
@@ -167,7 +168,7 @@ public class TransactionBatchTest extends TestCase {
           assertTrue(txn.getObjectIDs().containsAll(Arrays.asList(new ObjectID[] { new ObjectID(1), new ObjectID(2) })));
           assertEquals(TxnType.NORMAL, txn.getTransactionType());
           assertTrue(Arrays.equals(new LockID[] { new LockID("1"), new LockID("2") }, txn.getLockIDs()));
-          assertEquals(tx1Notifies, txn.addNotifiesTo(new LinkedList()));
+          assertEquals(tx1Notifies, txn.getNotifies());
           break;
         case 2:
           assertEquals(0, txn.getChanges().size());

@@ -121,9 +121,8 @@ public class ServerTransactionImpl implements ServerTransaction {
     return this.newObjectIDs;
   }
 
-  public Collection addNotifiesTo(List list) {
-    list.addAll(notifies);
-    return list;
+  public Collection getNotifies() {
+    return notifies;
   }
 
   public DmiDescriptor[] getDmiDescriptors() {
@@ -145,5 +144,9 @@ public class ServerTransactionImpl implements ServerTransaction {
 
   public GlobalTransactionID getGlobalTransactionID() {
     return this.globalTxnID;
+  }
+
+  public boolean needsBroadcast() {
+    return true;
   }
 }

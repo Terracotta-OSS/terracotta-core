@@ -18,24 +18,22 @@ import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class ObjectSyncServerTransaction implements ServerTransaction {
 
-  private final TransactionID          txnID;
-  private final Set                    oids;
-  private final List                   changes;
-  private final ObjectStringSerializer serializer;
-  private ServerTransactionID          serverTxnID;
-  private final Map                    rootsMap;
+  private final TransactionID txnID;
+  private final Set           oids;
+  private final List          changes;
+  private ServerTransactionID serverTxnID;
+  private final Map           rootsMap;
 
-  public ObjectSyncServerTransaction(TransactionID txnID, Set oids, int dnaCount, ObjectStringSerializer serializer,
-                                     List changes, Map rootsMap) {
+  public ObjectSyncServerTransaction(TransactionID txnID, Set oids, int dnaCount, List changes, Map rootsMap) {
     this.txnID = txnID;
     this.oids = oids;
-    this.serializer = serializer;
     this.changes = changes;
     this.rootsMap = rootsMap;
     this.serverTxnID = new ServerTransactionID(ChannelID.L2_SERVER_ID, txnID);
@@ -43,8 +41,8 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
     Assert.assertEquals(dnaCount, changes.size());
   }
 
-  public Collection addNotifiesTo(List list) {
-    throw new UnsupportedOperationException();
+  public Collection getNotifies() {
+    return Collections.EMPTY_LIST;
   }
 
   public TxnBatchID getBatchID() {
@@ -87,7 +85,7 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
   }
 
   public ObjectStringSerializer getSerializer() {
-    return serializer;
+    throw new UnsupportedOperationException();
   }
 
   public ServerTransactionID getServerTransactionID() {
@@ -105,6 +103,10 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
   // XXX:: this is server generated txn, hence GID is not assigned.
   public GlobalTransactionID getGlobalTransactionID() {
     return GlobalTransactionID.NULL_ID;
+  }
+
+  public boolean needsBroadcast() {
+    return false;
   }
 
 }

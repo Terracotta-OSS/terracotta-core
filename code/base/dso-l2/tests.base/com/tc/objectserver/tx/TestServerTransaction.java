@@ -76,8 +76,8 @@ public final class TestServerTransaction implements ServerTransaction {
     throw new ImplementMe();
   }
 
-  public Collection addNotifiesTo(List list) {
-    return list;
+  public Collection getNotifies() {
+    return Collections.EMPTY_LIST;
   }
 
   public ServerTransactionID getServerTransactionID() {
@@ -103,6 +103,10 @@ public final class TestServerTransaction implements ServerTransaction {
   public GlobalTransactionID getGlobalTransactionID() {
     if (gtid != null) { return gtid; }
     throw new ImplementMe();
+  }
+
+  public boolean needsBroadcast() {
+    return true;
   }
 
 }

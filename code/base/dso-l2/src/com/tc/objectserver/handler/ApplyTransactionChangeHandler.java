@@ -8,7 +8,6 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
-import com.tc.l2.state.StateManager;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
@@ -24,7 +23,6 @@ import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 
 import java.util.Iterator;
-import java.util.LinkedList;
 
 /**
  * Applies all the changes in a transaction then releases the objects and passes the changes off to be broadcast to the
@@ -39,7 +37,6 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   private final ObjectInstanceMonitor          instanceMonitor;
   private final ServerGlobalTransactionManager gtxm;
   private TransactionalObjectManager           txnObjectMgr;
-  private StateManager                         stateManager;
 
   public ApplyTransactionChangeHandler(ObjectInstanceMonitor instanceMonitor, ServerGlobalTransactionManager gtxm) {
     this.instanceMonitor = instanceMonitor;
@@ -62,14 +59,13 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
       getLogger().warn("Not applying previously applied transaction: " + stxnID);
     }
 
-    // XXX:: There could be a race, after a passive moves to active there could be some transactions still in the
-    // system. Wait/clear it :: TODO:: Wrap txn in passive to ignore notifications.
-    if (stateManager.isActiveCoordinator()) {
-      for (Iterator i = txn.addNotifiesTo(new LinkedList()).iterator(); i.hasNext();) {
-        Notify notify = (Notify) i.next();
-        lockManager.notify(notify.getLockID(), txn.getChannelID(), notify.getThreadID(), notify.getIsAll(),
-                           notifiedWaiters);
-      }
+    for (Iterator i = txn.getNotifies().iterator(); i.hasNext();) {
+      Notify notify = (Notify) i.next();
+      lockManager.notify(notify.getLockID(), txn.getChannelID(), notify.getThreadID(), notify.getIsAll(),
+                         notifiedWaiters);
+    }
+    
+    if (txn.needsBroadcast()) {
       broadcastChangesSink.add(new BroadcastChangeContext(txn, gtxm.getLowGlobalTransactionIDWatermark(),
                                                           notifiedWaiters, includeIDs));
     }
@@ -82,6 +78,5 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
     this.broadcastChangesSink = scc.getStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE).getSink();
     this.txnObjectMgr = scc.getTransactionalObjectManager();
     this.lockManager = scc.getLockManager();
-    this.stateManager = scc.getL2Coordinator().getStateManager();
   }
 }

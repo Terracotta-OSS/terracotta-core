@@ -37,8 +37,8 @@ public class PrunedServerTransaction implements ServerTransaction {
     this.oids = oids;
   }
 
-  public Collection addNotifiesTo(List list) {
-    throw new AssertionError("Cant add notifies to pruned transaction");
+  public Collection getNotifies() {
+    return orgTxn.getNotifies();
   }
 
   public TxnBatchID getBatchID() {
@@ -54,8 +54,7 @@ public class PrunedServerTransaction implements ServerTransaction {
   }
 
   public DmiDescriptor[] getDmiDescriptors() {
-    throw new AssertionError(
-                             "This should have never been called as PrunedServerTransaction as only valid in uninitialized passives");
+    return orgTxn.getDmiDescriptors();
   }
 
   public LockID[] getLockIDs() {
@@ -75,8 +74,7 @@ public class PrunedServerTransaction implements ServerTransaction {
   }
 
   public ObjectStringSerializer getSerializer() {
-    throw new AssertionError(
-                             "This should have never been called as PrunedServerTransaction as only valid in uninitialized passives");
+    return orgTxn.getSerializer();
   }
 
   public ServerTransactionID getServerTransactionID() {
@@ -92,12 +90,15 @@ public class PrunedServerTransaction implements ServerTransaction {
   }
 
   public SequenceID getClientSequenceID() {
-    throw new AssertionError(
-                             "This should have never been called as PrunedServerTransaction as only valid in uninitialized passives");
+    return orgTxn.getClientSequenceID();
   }
 
   public GlobalTransactionID getGlobalTransactionID() {
     return orgTxn.getGlobalTransactionID();
+  }
+
+  public boolean needsBroadcast() {
+    return orgTxn.needsBroadcast();
   }
 
 }

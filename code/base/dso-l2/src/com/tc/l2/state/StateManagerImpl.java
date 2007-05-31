@@ -37,14 +37,11 @@ public class StateManagerImpl implements StateManager {
   private volatile State             state              = START_STATE;
   private boolean                    electionInProgress = false;
 
-  private final StateManagerConfig   stateManagerConfig;
-
   public StateManagerImpl(TCLogger consoleLogger, GroupManager groupManager, Sink stateChangeSink,
                           StateManagerConfig stateManagerConfig) {
     this.consoleLogger = consoleLogger;
     this.groupManager = groupManager;
     this.stateChangeSink = stateChangeSink;
-    this.stateManagerConfig = stateManagerConfig;
     this.electionMgr = new ElectionManagerImpl(groupManager, stateManagerConfig);
   }
 
@@ -141,7 +138,7 @@ public class StateManagerImpl implements StateManager {
     }
   }
 
-  public synchronized boolean isActiveCoordinator() {
+  public boolean isActiveCoordinator() {
     return (state == ACTIVE_COORDINATOR);
   }
 
@@ -253,7 +250,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   // notify new node
-  public synchronized void publishActiveState(NodeID nodeID) throws GroupException {
+  public void publishActiveState(NodeID nodeID) throws GroupException {
     Assert.assertTrue(isActiveCoordinator());
     GroupMessage msg = L2StateMessageFactory.createElectionWonMessage(EnrollmentFactory
         .createTrumpEnrollment(getLocalNodeID()));
