@@ -113,6 +113,8 @@ public class TribesGroupManagerTest extends TCTestCase {
     r2 = z2.incoming.poll(500);
     assertNull(r2);
 
+    gm1.stop();
+    gm2.stop();
   }
 
   public void testSendingReceivingMessagesMcast() throws Exception {
