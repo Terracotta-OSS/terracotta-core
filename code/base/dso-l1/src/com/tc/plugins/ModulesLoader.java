@@ -32,22 +32,43 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
 public class ModulesLoader {
+  private static final Comparator SERVICE_COMPARATOR = new Comparator() {
 
-  private static final TCLogger logger = TCLogging.getLogger(ModulesLoader.class);
+                                                       public int compare(Object arg0, Object arg1) {
+                                                         ServiceReference s1 = (ServiceReference) arg0;
+                                                         ServiceReference s2 = (ServiceReference) arg1;
 
-  private static final Object   lock   = new Object();
+                                                         Integer r1 = (Integer) s1
+                                                             .getProperty(Constants.SERVICE_RANKING);
+                                                         Integer r2 = (Integer) s2
+                                                             .getProperty(Constants.SERVICE_RANKING);
+
+                                                         if (r1 == null) r1 = ModuleSpec.NORMAL_RANK;
+                                                         if (r2 == null) r2 = ModuleSpec.NORMAL_RANK;
+
+                                                         return r2.compareTo(r1);
+                                                       }
+
+                                                     };
+
+  private static final TCLogger   logger             = TCLogging.getLogger(ModulesLoader.class);
+
+  private static final Object     lock               = new Object();
 
   private ModulesLoader() {
     // cannot be instantiated
   }
 
-  public static void initModules(final DSOClientConfigHelper configHelper, final ClassProvider classProvider, final boolean forBootJar) {
+  public static void initModules(final DSOClientConfigHelper configHelper, final ClassProvider classProvider,
+                                 final boolean forBootJar) {
     EmbeddedOSGiRuntime osgiRuntime = null;
     synchronized (lock) {
       final Modules modules = configHelper.getModulesForInitialization();
@@ -94,10 +115,11 @@ public class ModulesLoader {
   }
 
   private static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
-                                  final ClassProvider classProvider, final Module[] modules, final boolean forBootJar) throws BundleException {
+                                  final ClassProvider classProvider, final Module[] modules, final boolean forBootJar)
+      throws BundleException {
     // install all available bundles
     osgiRuntime.installBundles();
-    
+
     if (configHelper instanceof StandardDSOClientConfigHelper) {
       final Dictionary serviceProps = new Hashtable();
       serviceProps.put(Constants.SERVICE_VENDOR, "Terracotta, Inc.");
@@ -105,11 +127,11 @@ public class ModulesLoader {
                                                       + " the Terracotta bytecode instrumentation");
       osgiRuntime.registerService(configHelper, serviceProps);
     }
-    
+
     // now start only the bundles that are listed in the modules section of the config
     EmbeddedOSGiRuntimeCallbackHandler callback = new EmbeddedOSGiRuntimeCallbackHandler() {
       public void callback(final Object payload) throws BundleException {
-        Bundle bundle = (Bundle)payload;
+        Bundle bundle = (Bundle) payload;
         if (bundle != null) {
           if (!forBootJar) {
             registerClassLoader(classProvider, bundle);
@@ -126,7 +148,8 @@ public class ModulesLoader {
     }
   }
 
-  private static void registerClassLoader(final ClassProvider classProvider, final Bundle bundle) throws BundleException {
+  private static void registerClassLoader(final ClassProvider classProvider, final Bundle bundle)
+      throws BundleException {
     NamedClassLoader ncl = getClassLoader(bundle);
 
     String loaderName = Namespace.createLoaderName(Namespace.MODULES_NAMESPACE, ncl.toString());
@@ -149,6 +172,8 @@ public class ModulesLoader {
                                                       final DSOClientConfigHelper configHelper)
       throws InvalidSyntaxException {
     ServiceReference[] serviceReferences = osgiRuntime.getAllServiceReferences(ModuleSpec.class.getName(), null);
+    Arrays.sort(serviceReferences, SERVICE_COMPARATOR);
+    
     if (serviceReferences == null) { return; }
     ModuleSpec[] modulesSpecs = new ModuleSpec[serviceReferences.length];
     for (int i = 0; i < serviceReferences.length; i++) {

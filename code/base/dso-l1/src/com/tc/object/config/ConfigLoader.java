@@ -189,14 +189,14 @@ public class ConfigLoader {
       config.addDSOSpringConfig(springConfigHelper);
     }
   }
-
-  private ConfigLockLevel getLockLevel(LockLevel.Enum lockLevel) {
+  
+  private ConfigLockLevel getLockLevel(LockLevel.Enum lockLevel, boolean autoSynchronized) {
     if (lockLevel == null || LockLevel.WRITE.equals(lockLevel)) {
-      return ConfigLockLevel.WRITE;
+      return autoSynchronized? ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE : ConfigLockLevel.WRITE;
     } else if (LockLevel.CONCURRENT.equals(lockLevel)) {
       return ConfigLockLevel.CONCURRENT;
     } else if (LockLevel.READ.equals(lockLevel)) {
-      return ConfigLockLevel.READ;
+      return autoSynchronized? ConfigLockLevel.AUTO_SYNCHRONIZED_READ : ConfigLockLevel.READ;
     } else if (LockLevel.SYNCHRONOUS_WRITE.equals(lockLevel)) { return ConfigLockLevel.SYNCHRONOUS_WRITE; }
     throw Assert.failure("Unknown lock level " + lockLevel);
   }
@@ -206,14 +206,14 @@ public class ConfigLoader {
 
     Autolock[] autolocks = lockList.getAutolockArray();
     for (int i = 0; autolocks != null && i < autolocks.length; i++) {
-      config.addAutolock(autolocks[i].getMethodExpression(), getLockLevel(autolocks[i].getLockLevel()));
+      config.addAutolock(autolocks[i].getMethodExpression(), getLockLevel(autolocks[i].getLockLevel(), autolocks[i].getAutoSynchronized()));
     }
 
     NamedLock[] namedLocks = lockList.getNamedLockArray();
     for (int i = 0; namedLocks != null && i < namedLocks.length; i++) {
       NamedLock namedLock = namedLocks[i];
       LockDefinition lockDefinition = new LockDefinition(namedLock.getLockName(),
-                                                         getLockLevel(namedLock.getLockLevel()));
+                                                         getLockLevel(namedLock.getLockLevel(), false));
       lockDefinition.commit();
       config.addLock(namedLock.getMethodExpression(), lockDefinition);
     }

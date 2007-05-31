@@ -15,6 +15,7 @@ import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.Portability;
+import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.LockDefinition;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.lockmanager.api.LockLevel;
@@ -215,6 +216,11 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
           instrumentationLogger.autolockInserted(this.spec.getClassNameDots(), name, desc, ld);
         }
       }
+      
+      if (isAutoSynchronized(ld) && !"<init>".equals(name)) {
+        access |= ACC_SYNCHRONIZED;
+      }
+      
       boolean isLockMethod = isAutolock && Modifier.isSynchronized(access) && !Modifier.isStatic(access);
       physicalClassLogger.logVisitMethodCheckIsLockMethod();
 
@@ -265,6 +271,13 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       handleInstrumentationException(e);
       throw e;
     }
+  }
+  
+  private boolean isAutoSynchronized(LockDefinition ld) {
+    if (ld == null) { return false; }
+    
+    ConfigLockLevel lockLevel = ld.getLockLevel();
+    return ConfigLockLevel.AUTO_SYNCHRONIZED_READ.equals(lockLevel) || ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE.equals(lockLevel);
   }
 
   // protected void basicVisitEnd() {

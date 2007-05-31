@@ -9,10 +9,6 @@ public class AutoSynchTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 2;
 
-  public AutoSynchTest() {
-    this.disableAllUntil("2007-06-15");
-  }
-
   public void setUp() throws Exception {
     super.setUp();
     getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);

@@ -10,8 +10,6 @@ import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 import org.terracotta.modules.hibernate_3_1_2.object.config.HibernateChangeApplicatorSpec;
 import org.terracotta.modules.hibernate_3_1_2.object.config.HibernateModuleSpec;
 
-import com.tc.object.config.ConfigLockLevel;
-import com.tc.object.config.LockDefinition;
 import com.tc.object.config.ModuleSpec;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -21,35 +19,17 @@ import java.util.Hashtable;
 
 public final class HibernateTerracottaConfigurator extends TerracottaConfiguratorModule {
   protected final void addInstrumentation(final BundleContext context, final StandardDSOClientConfigHelper configHelper) {
+    /* AutoSynchronized lock for AbstractPersistentCollection, PersistentSet, PersistentBag, PersistentList, and PersistentMap are defined in the terracotta.xml */
     TransparencyClassSpec spec = configHelper.getOrCreateSpec("org.hibernate.collection.AbstractPersistentCollection");
     spec.addTransient("session");
     
-    /**
-     * These name locks will be removed when the auto synchronous feature is implemented.
-     */
-    LockDefinition lockDefinition = new LockDefinition("abstractPersistentCollectionLock", ConfigLockLevel.WRITE);
-    lockDefinition.commit();
-    configHelper.addLock("* org.hibernate.collection.AbstractPersistentCollection.*(..)", lockDefinition);
-
     configHelper.addIncludePattern("org.hibernate.collection.PersistentSet", false, false, false);
-    lockDefinition = new LockDefinition("persistentSetLock", ConfigLockLevel.WRITE);
-    lockDefinition.commit();
-    configHelper.addLock("* org.hibernate.collection.PersistentSet.*(..)", lockDefinition);
     
     configHelper.addIncludePattern("org.hibernate.collection.PersistentBag", false, false, false);
-    lockDefinition = new LockDefinition("persistentBagLock", ConfigLockLevel.WRITE);
-    lockDefinition.commit();
-    configHelper.addLock("* org.hibernate.collection.PersistentBag.*(..)", lockDefinition);
     
     configHelper.addIncludePattern("org.hibernate.collection.PersistentList", false, false, false);
-    lockDefinition = new LockDefinition("persistentListLock", ConfigLockLevel.WRITE);
-    lockDefinition.commit();
-    configHelper.addLock("* org.hibernate.collection.PersistentList.*(..)", lockDefinition);
     
     configHelper.addIncludePattern("org.hibernate.collection.PersistentMap", false, false, false);
-    lockDefinition = new LockDefinition("persistentMapLock", ConfigLockLevel.WRITE);
-    lockDefinition.commit();
-    configHelper.addLock("* org.hibernate.collection.PersistentMap.*(..)", lockDefinition);
     
     /**
      * Session
@@ -104,6 +84,7 @@ public final class HibernateTerracottaConfigurator extends TerracottaConfigurato
     final Dictionary serviceProps = new Hashtable();
     serviceProps.put(Constants.SERVICE_VENDOR, "Terracotta, Inc.");
     serviceProps.put(Constants.SERVICE_DESCRIPTION, "Hibernate Plugin Spec");
+    serviceProps.put(Constants.SERVICE_RANKING, ModuleSpec.HIGN_RANK);
     context.registerService(ModuleSpec.class.getName(), new HibernateModuleSpec(new HibernateChangeApplicatorSpec(getClass().getClassLoader())), serviceProps);
   }
 

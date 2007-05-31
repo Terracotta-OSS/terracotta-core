@@ -148,6 +148,7 @@
       <xs:element name="method-expression" type="method-expression" />
       <xs:element name="lock-level" type="lock-level" minOccurs="0" />
     </xs:all>
+    <xs:attribute name="auto-synchronized" type="xs:boolean" default="false"/>
   </xs:complexType>
 
   <xs:complexType name="locks">

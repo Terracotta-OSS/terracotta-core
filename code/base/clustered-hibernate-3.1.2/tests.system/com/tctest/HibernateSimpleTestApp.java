@@ -318,7 +318,7 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
     new CyclicBarrierSpec().visit(visitor, config);
 
     config.addNewModule("clustered-hibernate-3.1.2", "1.0.0");
-    config.addNewModule("clustered-cglib-2.1.3", "1.0.0");
+    //config.addNewModule("clustered-cglib-2.1.3", "1.0.0");
     //config.addNewModule("clustered-ehcache-1.2.4", "1.0.0");
   }
 

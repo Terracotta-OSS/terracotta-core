@@ -1,0 +1,35 @@
+<?xml version = "1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2007 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved
+
+-->
+<xml-fragment>
+  <instrumented-classes>
+  </instrumented-classes>
+
+  <locks>
+    <autolock auto-synchronized="true">
+      <method-expression>* org.hibernate.collection.AbstractPersistentCollection.*(..)</method-expression>
+      <lock-level>write</lock-level>
+    </autolock>
+    <autolock auto-synchronized="true">
+      <method-expression>* org.hibernate.collection.PersistentSet.*(..)</method-expression>
+      <lock-level>write</lock-level>
+    </autolock>
+    <autolock auto-synchronized="true">
+      <method-expression>* org.hibernate.collection.PersistentBag.*(..)</method-expression>
+      <lock-level>write</lock-level>
+    </autolock>
+    <autolock auto-synchronized="true">
+      <method-expression>* org.hibernate.collection.PersistentList.*(..)</method-expression>
+      <lock-level>write</lock-level>
+    </autolock>
+    <autolock auto-synchronized="true">
+      <method-expression>* org.hibernate.collection.PersistentMap.*(..)</method-expression>
+      <lock-level>write</lock-level>
+    </autolock>
+  </locks>
+</xml-fragment>

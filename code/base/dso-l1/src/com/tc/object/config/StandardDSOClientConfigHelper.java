@@ -1273,7 +1273,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   public synchronized LockDefinition[] lockDefinitionsFor(MemberInfo memberInfo) {
     boolean isAutoLocksExcluded = matchesAutoLockExcludes(memberInfo);
     List lockDefs = new ArrayList();
-    // for (int i = 0; i < this.locks.length; i++) {
     for (int i = locks.length - 1; i >= 0; i--) {
       if (matches(this.locks[i], memberInfo)) {
         LockDefinition definition = this.locks[i].getLockDefinition();
@@ -1323,7 +1322,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   public void addSynchronousWriteAutolock(String methodPattern) {
     addAutolock(methodPattern, ConfigLockLevel.SYNCHRONOUS_WRITE);
   }
-
+  
   public void addReadAutolock(String methodPattern) {
     addAutolock(methodPattern, ConfigLockLevel.READ);
   }
@@ -1334,12 +1333,12 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     addLock(methodPattern, lockDefinition);
   }
   
-  public void addAutoSynchronize(String methodPattern, ConfigLockLevel type) {
-    addAutolock(methodPattern, type);
+  public void addReadAutoSynchronize(String methodPattern) {
+    addAutolock(methodPattern, ConfigLockLevel.AUTO_SYNCHRONIZED_READ);
   }
   
   public void addWriteAutoSynchronize(String methodPattern) {
-    addAutolock(methodPattern, ConfigLockLevel.WRITE);
+    addAutolock(methodPattern, ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE);
   }
 
   public synchronized void addLock(String methodPattern, LockDefinition lockDefinition) {

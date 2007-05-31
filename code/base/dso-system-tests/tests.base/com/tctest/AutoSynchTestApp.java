@@ -6,10 +6,10 @@ package com.tctest;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
-import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
+import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -24,8 +24,9 @@ import java.util.List;
  * @author hhuynh
  */
 public class AutoSynchTestApp extends AbstractErrorCatchingTransparentApp {
-  private final CyclicBarrier barrier;
-  private BaseClass           root = new BaseClass();
+  private final CyclicBarrier   barrier;
+  private AutoSynchronizedClass autoSynchronizedRoot = new AutoSynchronizedClass();
+  private NonSynchronizedClass nonSynchronizedRoot = new NonSynchronizedClass();
 
   public AutoSynchTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -39,35 +40,59 @@ public class AutoSynchTestApp extends AbstractErrorCatchingTransparentApp {
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
     spec.addRoot("barrier", "barrier");
-    spec.addRoot("root", "root");
+    spec.addRoot("autoSynchronizedRoot", "autoSynchronizedRoot");
+    spec.addRoot("nonSynchronizedRoot", "nonSynchronizedRoot");
     new CyclicBarrierSpec().visit(visitor, config);
 
-    String baseClass = BaseClass.class.getName();
+    String baseClass = AutoSynchronizedClass.class.getName();
     config.addIncludePattern(baseClass);
-    config.addAutoSynchronize("* " + baseClass + ".add(..)", ConfigLockLevel.WRITE);
-    config.addAutoSynchronize("* " + baseClass + ".getSize(..)", ConfigLockLevel.READ);
+    methodExpression = "* " + baseClass + "*.add(..)";
+    config.addWriteAutoSynchronize(methodExpression);
+    methodExpression = "* " + baseClass + "*.getSize(..)";
+    config.addReadAutoSynchronize(methodExpression);
+
+    baseClass = NonSynchronizedClass.class.getName();
+    config.addIncludePattern(baseClass);
   }
 
   protected void runTest() throws Throwable {
-    try {
-      root.add("one");
-      root.add("two");
-    } catch (Throwable t) {
-      t.printStackTrace();
-    }
+    autoSynchronizedRoot.add("one");
+    autoSynchronizedRoot.add("two");
 
     barrier.barrier();
-    Assert.assertEquals(4, root.getSize());
+    Assert.assertEquals(4, autoSynchronizedRoot.getSize());
+    
+    barrier.barrier();
+    
+    try {
+      nonSynchronizedRoot.add("one");
+      throw new AssertionError("Expect to throw an UnlockedSharedObjectException.");
+    } catch (UnlockedSharedObjectException e) {
+      // Expected
+    }
   }
 
-  static class BaseClass {
+  static class AutoSynchronizedClass {
     protected List list = new ArrayList();
 
     public void add(Object o) {
       // intentionally not using synchronize
-      //ManagerUtil.monitorEnter(list, Manager.LOCK_TYPE_WRITE);
       list.add(o);
-      //ManagerUtil.monitorExit(list);
+    }
+
+    public int getSize() {
+      // intentionally not using synchronize
+      return list.size();
+    }
+
+  }
+
+  static class NonSynchronizedClass {
+    protected List list = new ArrayList();
+
+    public void add(Object o) {
+      // intentionally not using synchronize
+      list.add(o);
     }
 
     public int getSize() {

@@ -1,11 +1,5 @@
 package com.tctest;
 
-
-
-/*
- * Unit test for measuring the overhead of the instrumented Field class. For correctness
- * tests for instrumented Field class, refer to the ReflectionFieldTest.
- */
 public class HibernateSimpleTest extends TransparentTestBase {
   private final static int NODE_COUNT = 2;
   private final static int LOOP_COUNT = 1;
