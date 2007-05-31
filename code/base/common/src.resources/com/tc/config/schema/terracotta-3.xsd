@@ -108,15 +108,17 @@
   </xs:simpleType>
   <xs:simpleType name="method-expression">
     <xs:restriction base="xs:token">
-      <xs:pattern value="(@[A-Za-z_0-9$\*\.]+ )*([A-Za-z_0-9$\*\.\+]+ )[@A-Za-z_0-9$\*\.\[\]\+]+(\([A-Za-z_0-9$,\*\. \[\]]*\))"/>
+      <xs:pattern value="(@[A-Za-z_0-9$\*\.]+ )*([A-Za-z_0-9$\*\.\[\] \+]+ )[A-Za-z_0-9$\*\.\+]+(\([A-Za-z_0-9$,\*\. \[\]]*\))"/>
     </xs:restriction>
   </xs:simpleType>
 
+  <!-- 
   <xs:simpleType name="method-name-expression">
     <xs:restriction base="xs:token">
       <xs:pattern value="[A-Za-z_0-9$\. \[\]]+(\([A-Za-z_0-9$,\. \[\]]*\))" />
     </xs:restriction>
   </xs:simpleType>
+  -->
 
   <xs:simpleType name="web-application-name-expression">
     <xs:restriction base="xs:token">
@@ -201,7 +203,7 @@
       <xs:element name="method-expression" maxOccurs="unbounded">
         <xs:complexType>
           <xs:simpleContent>
-            <xs:extension base="method-name-expression">
+            <xs:extension base="method-expression">
               <xs:attribute name="run-on-all-nodes" type="xs:boolean" use="optional" default="true"/>
             </xs:extension>
           </xs:simpleContent>
