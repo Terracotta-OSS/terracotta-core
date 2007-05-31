@@ -12,7 +12,7 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
 import com.tc.bundles.EmbeddedOSGiRuntime;
-import com.tc.bundles.EmbeddedOSGiRuntimeCallback;
+import com.tc.bundles.EmbeddedOSGiRuntimeCallbackHandler;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -107,7 +107,7 @@ public class ModulesLoader {
     }
     
     // now start only the bundles that are listed in the modules section of the config
-    EmbeddedOSGiRuntimeCallback callback = new EmbeddedOSGiRuntimeCallback() {
+    EmbeddedOSGiRuntimeCallbackHandler callback = new EmbeddedOSGiRuntimeCallbackHandler() {
       public void callback(final Object payload) throws BundleException {
         Bundle bundle = (Bundle)payload;
         if (bundle != null) {

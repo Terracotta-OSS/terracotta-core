@@ -133,27 +133,28 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     return null;
   }
   
-  private void startBundle(final long bundleId, final EmbeddedOSGiRuntimeCallback callback) throws BundleException {
+  private void startBundle(final long bundleId, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException {
     final Bundle bundle   = framework.bundles.getBundle(bundleId);
     final String requires = (String)bundle.getHeaders().get("Require-Bundle");
     
     if (requires != null) {
       final String[] bundles = requires.split(",");
       for (int i=0; i<bundles.length; i++) {
-        final Bundle reqdBundle = findBundleBySymbolicName(bundles[i]);
+        final String[] spec = bundles[i].split(";");
+        final Bundle reqdBundle = findBundleBySymbolicName(spec[0]);
         if (reqdBundle == null) {
           throw new BundleException("Required bundle '" + bundles[i] + "' is not installed.");
         }
-        startBundle(reqdBundle.getBundleId(), callback);
+        startBundle(reqdBundle.getBundleId(), handler);
       }
     }
     framework.startBundle(bundle.getBundleId());
     info(Message.BUNDLE_STARTED, new Object[] { bundle.getSymbolicName() });
-    callback.callback(bundle);
+    handler.callback(bundle);
   }
   
-  public void startBundle(final String bundleName, final String bundleVersion, final EmbeddedOSGiRuntimeCallback callback) throws BundleException {
-    startBundle(getBundleID(bundleName, bundleVersion), callback);
+  public void startBundle(final String bundleName, final String bundleVersion, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException {
+    startBundle(getBundleID(bundleName, bundleVersion), handler);
   }
 
   public Bundle getBundle(String bundleName, String bundleVersion) throws BundleException {
