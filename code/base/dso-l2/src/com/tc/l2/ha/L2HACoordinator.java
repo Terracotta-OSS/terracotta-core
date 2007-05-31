@@ -119,6 +119,8 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
     this.l2ObjectStateManager = new L2ObjectStateManagerImpl(objectManager, transactionManager);
     this.sequenceGenerator = new SequenceGenerator(this);
+    
+    this.groupManager.setZapNodeRequestProcessor(new L2HAZapNodeRequestProcessor(consoleLogger, stateManager));
 
     final Sink objectsSyncRequestSink = stageManager
         .createStage(ServerConfigurationContext.OBJECTS_SYNC_REQUEST_STAGE,
@@ -225,7 +227,10 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
         rObjectManager.query(nodeID);
       } catch (GroupException ge) {
         logger.error("Error publishing states to the newly joined node : " + nodeID + " Zapping it : ", ge);
-        groupManager.zapNode(nodeID);
+        groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR, "Error publishing states to "
+                                                                                      + nodeID
+                                                                                      + L2HAZapNodeRequestProcessor
+                                                                                          .getErrorString(ge));
       }
     }
   }
@@ -257,7 +262,9 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
       rTxnManager.publishResetRequest(nodeID);
     } catch (GroupException ge) {
       logger.error("Error publishing reset counter request node : " + nodeID + " Zapping it : ", ge);
-      groupManager.zapNode(nodeID);
+      groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
+                           "Error publishing reset counter for " + nodeID
+                               + L2HAZapNodeRequestProcessor.getErrorString(ge));
       throw new SequenceGeneratorException(ge);
     }
   }

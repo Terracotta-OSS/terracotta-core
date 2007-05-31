@@ -11,6 +11,7 @@ import com.tc.async.api.Sink;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.l2.context.SyncObjectsRequest;
+import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.l2.msg.ObjectSyncMessageFactory;
 import com.tc.l2.msg.ServerTxnAckMessage;
@@ -42,7 +43,7 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
           syncRequestSink.add(new SyncObjectsRequest(mosc.getNodeID()));
         }
       }
-    } else if(context instanceof ServerTxnAckMessage) {
+    } else if (context instanceof ServerTxnAckMessage) {
       ServerTxnAckMessage txnMsg = (ServerTxnAckMessage) context;
       sendAcks(txnMsg);
     } else {
@@ -69,7 +70,8 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
       return true;
     } catch (GroupException e) {
       logger.error("Removing " + mosc.getNodeID() + " from group because of Exception :", e);
-      groupManager.zapNode(mosc.getNodeID());
+      groupManager.zapNode(mosc.getNodeID(), L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
+                           "Error sending objects." + L2HAZapNodeRequestProcessor.getErrorString(e));
       return false;
     }
   }

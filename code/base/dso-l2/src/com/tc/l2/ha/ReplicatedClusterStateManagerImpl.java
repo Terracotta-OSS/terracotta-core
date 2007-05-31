@@ -75,7 +75,9 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     if (msg == null || msg.getType() != ClusterStateMessage.OPERATION_SUCCESS) {
       logger.error("Recd wrong response from : " + nodeID + " : msg = " + msg
                    + " while publishing Next Available ObjectID: Killing the node");
-      groupManager.zapNode(nodeID);
+      groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.PROGRAM_ERROR,
+                           "Recd wrong response from : " + nodeID + " while publishing Next available ObjectID"
+                               + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
     }
   }
 

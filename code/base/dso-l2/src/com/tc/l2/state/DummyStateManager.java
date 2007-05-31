@@ -46,4 +46,8 @@ public class DummyStateManager implements StateManager {
     throw new UnsupportedOperationException();
   }
 
+  public NodeID getActiveNodeID() {
+    return NodeID.NULL_ID;
+  }
+
 }

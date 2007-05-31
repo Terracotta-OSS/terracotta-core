@@ -8,6 +8,7 @@ import com.tc.async.api.AddPredicate;
 import com.tc.async.api.EventContext;
 import com.tc.async.impl.OrderedSink;
 import com.tc.l2.context.StateChangedEvent;
+import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ObjectSyncResetMessage;
 import com.tc.l2.msg.ObjectSyncResetMessageFactory;
 import com.tc.l2.state.StateManager;
@@ -103,9 +104,12 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   private void validateResponse(NodeID nodeID, ObjectSyncResetMessage msg) {
     if (msg == null || msg.getType() != ObjectSyncResetMessage.OPERATION_SUCCESS) {
-      logger.error("Recd wrong response from : " + nodeID + " : msg = " + msg
-                   + " while requesting reset: Killing the node");
-      groupManager.zapNode(nodeID);
+      String error = "Recd wrong response from : " + nodeID + " : msg = " + msg
+                     + " while requesting reset: Killing the node";
+      logger.error(error);
+      groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.PROGRAM_ERROR, error
+                                                                              + L2HAZapNodeRequestProcessor
+                                                                                  .getErrorString(new Throwable()));
     }
   }
 

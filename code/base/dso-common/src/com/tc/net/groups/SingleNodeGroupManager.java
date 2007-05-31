@@ -35,12 +35,11 @@ public class SingleNodeGroupManager implements GroupManager {
     this.thisNode = new NodeID("CurrentNode", CURRENT_NODE_ID);
     return this.thisNode;
   }
-  
+
   public NodeID getLocalNodeID() throws GroupException {
     if (thisNode == null) { throw new GroupException("Not Joined yet !"); }
     return this.thisNode;
   }
-
 
   public void registerForMessages(Class msgClass, GroupMessageListener listener) {
     // NOP : Since this doesnt talk to the network, this should never get any message
@@ -72,8 +71,11 @@ public class SingleNodeGroupManager implements GroupManager {
     // NOP : No network, no one joins or leaves
   }
 
-  public void zapNode(NodeID nodeID) {
+  public void zapNode(NodeID nodeID, int type, String reason) {
     // what node ?
   }
 
+  public void setZapNodeRequestProcessor(ZapNodeRequestProcessor processor) {
+    // NOP
+  }
 }

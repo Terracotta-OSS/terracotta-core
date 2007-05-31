@@ -26,6 +26,8 @@ public interface GroupManager {
 
   public void registerForGroupEvents(GroupEventsListener listener);
 
-  public void zapNode(NodeID nodeID);
+  public void zapNode(NodeID nodeID, int type, String reason);
+  
+  public void setZapNodeRequestProcessor(ZapNodeRequestProcessor processor);
 
 }

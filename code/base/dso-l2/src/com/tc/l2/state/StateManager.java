@@ -36,5 +36,7 @@ public interface StateManager {
   public void publishActiveState(NodeID nodeID) throws GroupException;
   
   public void handleClusterStateMessage(L2StateMessage clusterMsg);
+  
+  public NodeID getActiveNodeID();
 
 }

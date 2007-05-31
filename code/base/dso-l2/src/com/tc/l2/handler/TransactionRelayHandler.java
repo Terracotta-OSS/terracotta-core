@@ -8,6 +8,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.l2.context.IncomingTransactionContext;
+import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.RelayedCommitTransactionMessage;
 import com.tc.l2.msg.RelayedCommitTransactionMessageFactory;
 import com.tc.l2.objectserver.L2ObjectState;
@@ -61,7 +62,8 @@ public class TransactionRelayHandler extends AbstractEventHandler {
     } catch (Exception e) {
       reconsileWaitForNotification(nodeID, ict);
       logger.error("Removing " + nodeID + " from group because of Exception :", e);
-      groupManager.zapNode(nodeID);
+      groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
+                           "Error relaying commit transaction message" + L2HAZapNodeRequestProcessor.getErrorString(e));
     }
   }
 

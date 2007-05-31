@@ -41,40 +41,44 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TribesGroupManager implements GroupManager, ChannelListener, MembershipListener {
-  private static final String                             L2_NHA              = "l2.nha";
-  private static final String                             SEND_TIMEOUT_PROP   = "send.timeout.millis";
-  private static final String                             USE_MCAST           = "mcast.enabled";
-  private static final int                                SEND_OPTIONS_NO_ACK = 0x00;
 
-  private static final TCLogger                           logger              = TCLogging
-                                                                                  .getLogger(TribesGroupManager.class);
+  private static final String                             L2_NHA                  = "l2.nha";
+  private static final String                             SEND_TIMEOUT_PROP       = "send.timeout.millis";
+  private static final String                             USE_MCAST               = "mcast.enabled";
+  private static final int                                SEND_OPTIONS_NO_ACK     = 0x00;
 
-  private static final boolean                            useMcast            = TCPropertiesImpl.getProperties()
-                                                                                  .getPropertiesFor(L2_NHA)
-                                                                                  .getBoolean(USE_MCAST);
+  private static final TCLogger                           logger                  = TCLogging
+                                                                                      .getLogger(TribesGroupManager.class);
+
+  private static final boolean                            useMcast                = TCPropertiesImpl.getProperties()
+                                                                                      .getPropertiesFor(L2_NHA)
+                                                                                      .getBoolean(USE_MCAST);
 
   private final GroupChannel                              group;
   private TcpFailureDetector                              failuredetector;
   private Member                                          thisMember;
   private NodeID                                          thisNodeID;
 
-  private final CopyOnWriteArrayList<GroupEventsListener> groupListeners      = new CopyOnWriteArrayList<GroupEventsListener>();
+  private final CopyOnWriteArrayList<GroupEventsListener> groupListeners          = new CopyOnWriteArrayList<GroupEventsListener>();
   // private final Map<NodeID, Member> nodes = new CopyOnWriteArrayMap<NodeID, Member>();
-  private final CopyOnWriteArrayMap                       nodes               = new CopyOnWriteArrayMap(
-                                                                                                        new CopyOnWriteArrayMap.TypedArrayFactory() {
-                                                                                                          public Object[] createTypedArray(
-                                                                                                                                           int size) {
-                                                                                                            return new Member[size];
-                                                                                                          }
-                                                                                                        });
-  private final Map<String, GroupMessageListener>         messageListeners    = new ConcurrentHashMap<String, GroupMessageListener>();
-  private final Map<MessageID, GroupResponse>             pendingRequests     = new Hashtable<MessageID, GroupResponse>();
+  private final CopyOnWriteArrayMap                       nodes                   = new CopyOnWriteArrayMap(
+                                                                                                            new CopyOnWriteArrayMap.TypedArrayFactory() {
+                                                                                                              public Object[] createTypedArray(
+                                                                                                                                               int size) {
+                                                                                                                return new Member[size];
+                                                                                                              }
+                                                                                                            });
+  private final Map<String, GroupMessageListener>         messageListeners        = new ConcurrentHashMap<String, GroupMessageListener>();
+  private final Map<MessageID, GroupResponse>             pendingRequests         = new Hashtable<MessageID, GroupResponse>();
 
-  private boolean                                         stopped             = false;
-  private boolean                                         debug               = false;
+  private boolean                                         stopped                 = false;
+  private boolean                                         debug                   = false;
+  private ZapNodeRequestProcessor                         zapNodeRequestProcessor = new DefaultZapNodeRequestProcessor(
+                                                                                                                       logger);
 
   public TribesGroupManager() {
     group = new GroupChannel();
+    registerForMessages(GroupZapNodeMessage.class, new ZapNodeRequestRouter());
   }
 
   public NodeID join(final Node thisNode, final Node[] allNodes) throws GroupException {
@@ -436,9 +440,26 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     return groupResponse.getResponse(nodeID);
   }
 
-  public void zapNode(NodeID nodeID) {
-    logger.warn("TODO::Zapping node : " + nodeID);
-    // TODO:: Implement this
+  public void setZapNodeRequestProcessor(ZapNodeRequestProcessor processor) {
+    this.zapNodeRequestProcessor = processor;
+  }
+
+  public void zapNode(NodeID nodeID, int type, String reason) {
+    Member m = (Member) nodes.get(nodeID);
+    if (m != null && zapNodeRequestProcessor.acceptOutgoingZapNodeRequest(nodeID, type, reason)) {
+      logger.warn("Zapping node : " + nodeID + " type = " + type + " reason = " + reason);
+      GroupMessage msg = GroupZapNodeMessageFactory.createGroupZapNodeMessage(type, reason);
+      try {
+        sendTo(nodeID, msg);
+      } catch (GroupException e) {
+        logger.error("Error sending ZapNode Request to " + nodeID + " msg = " + msg);
+      }
+      logger.warn("Removing member " + m + " from group");
+      memberDisappeared(m);
+    } else {
+      logger.warn("Ignoring Zap node request since either Member " + m + " is null or " + zapNodeRequestProcessor
+                  + " asked us to : " + nodeID + " type = " + type + " reason = " + reason);
+    }
   }
 
   private static class GroupResponseImpl implements GroupResponse {
@@ -516,6 +537,15 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       }
       logger.info("Current waiting members = " + waitFor);
     }
+  }
+
+  private final class ZapNodeRequestRouter implements GroupMessageListener {
+
+    public void messageReceived(NodeID fromNode, GroupMessage msg) {
+      GroupZapNodeMessage zapMsg = (GroupZapNodeMessage) msg;
+      zapNodeRequestProcessor.incomingZapNodeRequest(msg.messageFrom(), zapMsg.getZapNodeType(), zapMsg.getReason());
+    }
+
   }
 
 }

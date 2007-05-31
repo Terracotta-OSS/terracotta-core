@@ -79,6 +79,42 @@ public class TribesGroupManagerTest extends TCTestCase {
     gm2.stop();
   }
 
+  public void testZapNode() throws Exception {
+    PortChooser pc = new PortChooser();
+    final int p1 = pc.chooseRandomPort();
+    final int p2 = pc.chooseRandomPort();
+    final Node[] allNodes = new Node[] { new Node("localhost", p1), new Node("localhost", p2) };
+
+    TribesGroupManager gm1 = new TribesGroupManager();
+    MyListener l1 = new MyListener();
+    gm1.registerForMessages(TestMessage.class, l1);
+    MyZapNodeRequestProcessor z1 = new MyZapNodeRequestProcessor();
+    gm1.setZapNodeRequestProcessor(z1);
+    NodeID n1 = gm1.joinStatic(allNodes[0], allNodes);
+
+    TribesGroupManager gm2 = new TribesGroupManager();
+    MyListener l2 = new MyListener();
+    gm2.registerForMessages(TestMessage.class, l2);
+    MyZapNodeRequestProcessor z2 = new MyZapNodeRequestProcessor();
+    gm2.setZapNodeRequestProcessor(z2);
+    NodeID n2 = gm2.joinStatic(allNodes[1], allNodes);
+
+    checkSendingReceivingMessages(gm1, l1, gm2, l2);
+
+    System.err.println("ZAPPING NODE : " + n2);
+    gm1.zapNode(n2, 01, "test : Zap the other node " + n2 + " from " + n1);
+
+    Object r1 = z1.outgoing.take();
+    Object r2 = z2.incoming.take();
+    assertEquals(r1, r2);
+
+    r1 = z1.outgoing.poll(500);
+    assertNull(r1);
+    r2 = z2.incoming.poll(500);
+    assertNull(r2);
+
+  }
+
   public void testSendingReceivingMessagesMcast() throws Exception {
     TribesGroupManager gm1 = new TribesGroupManager();
     MyListener l1 = new MyListener();
@@ -142,7 +178,7 @@ public class TribesGroupManagerTest extends TCTestCase {
     final int p1 = pc.chooseRandomPort();
     final int p2 = pc.chooseRandomPort();
     final Node[] allNodes = new Node[] { new Node("localhost", p1), new Node("localhost", p2) };
-    
+
     System.err.println("Testing message Ordering - Static");
 
     TribesGroupManager gm1 = new TribesGroupManager();
@@ -157,7 +193,7 @@ public class TribesGroupManagerTest extends TCTestCase {
     gm1.stop();
     gm2.stop();
   }
-  
+
   public void testMessagesOrderingMcast() throws Exception {
     System.err.println("Testing message Ordering - Mcast");
     TribesGroupManager gm1 = new TribesGroupManager();
@@ -166,7 +202,7 @@ public class TribesGroupManagerTest extends TCTestCase {
     NodeID n2 = gm2.joinMcast();
 
     assertNotEquals(n1, n2);
-    
+
     checkMessagesOrdering(gm1, gm2);
 
     gm1.stop();
@@ -359,5 +395,21 @@ public class TribesGroupManagerTest extends TCTestCase {
     public String toString() {
       return "TestMessage [ " + msg + "]";
     }
+  }
+
+  private static final class MyZapNodeRequestProcessor implements ZapNodeRequestProcessor {
+
+    public NoExceptionLinkedQueue outgoing = new NoExceptionLinkedQueue();
+    public NoExceptionLinkedQueue incoming = new NoExceptionLinkedQueue();
+
+    public boolean acceptOutgoingZapNodeRequest(NodeID nodeID, int type, String reason) {
+      outgoing.put(reason);
+      return true;
+    }
+
+    public void incomingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason) {
+      incoming.put(reason);
+    }
+
   }
 }

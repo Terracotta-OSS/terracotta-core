@@ -12,7 +12,6 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.groups.GroupManager;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -24,15 +23,13 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class L2ObjectSyncDehydrateHandler extends AbstractEventHandler {
-  
-  private static final TCLogger              logger = TCLogging.getLogger(L2ObjectSyncDehydrateHandler.class);
+
+  private static final TCLogger   logger = TCLogging.getLogger(L2ObjectSyncDehydrateHandler.class);
 
   private final SequenceGenerator sequenceGenerator;
 
   private Sink                    sendSink;
   private ObjectManager           objectManager;
-
-  private GroupManager groupManager;
 
   public L2ObjectSyncDehydrateHandler(SequenceGenerator sequenceGenerator) {
     this.sequenceGenerator = sequenceGenerator;
@@ -47,7 +44,6 @@ public class L2ObjectSyncDehydrateHandler extends AbstractEventHandler {
       mosc.setSequenceID(sequenceGenerator.getNextSequence(mosc.getNodeID()));
     } catch (SequenceGeneratorException e) {
       logger.error("Error generating a sequence number ", e);
-      groupManager.zapNode(mosc.getNodeID());
       releaseAllObjects(moObjects);
       return;
     }
@@ -73,7 +69,6 @@ public class L2ObjectSyncDehydrateHandler extends AbstractEventHandler {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;
     this.objectManager = oscc.getObjectManager();
-    this.groupManager = oscc.getL2Coordinator().getGroupManager();
     this.sendSink = oscc.getStage(ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE).getSink();
   }
 }

@@ -6,6 +6,7 @@ package com.tc.l2.objectserver;
 
 import com.tc.async.api.Sink;
 import com.tc.l2.context.SyncObjectsRequest;
+import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.GCResultMessageFactory;
 import com.tc.l2.msg.ObjectListSyncMessage;
@@ -26,6 +27,7 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerEventListener;
 import com.tc.util.Assert;
 import com.tc.util.sequence.SequenceGenerator;
+import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -142,10 +144,11 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     Assert.assertTrue(stateManager.isActiveCoordinator());
     Set oids = clusterMsg.getObjectIDs();
     if (!oids.isEmpty()) {
-      logger.error("Nodes joining the cluster after startup shouldnt have any Objects. " + nodeID + " contains "
-                   + oids.size() + " Objects !!!");
-      logger.error("Forcing node to Quit !!");
-      groupManager.zapNode(nodeID);
+      String error = "Nodes joining the cluster after startup shouldnt have any Objects. " + nodeID + " contains "
+                     + oids.size() + " Objects !!!";
+      logger.error(error + " Forcing node to Quit !!");
+      groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB,
+                           error + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
     } else {
       gcMonitor.add2L2StateManagerWhenGCDisabled(nodeID, oids);
     }
@@ -170,9 +173,13 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       ObjectSyncCompleteMessage msg = ObjectSyncCompleteMessageFactory
           .createObjectSyncCompleteMessageFor(nodeID, sequenceGenerator.getNextSequence(nodeID));
       groupManager.sendTo(nodeID, msg);
-    } catch (Exception e) {
+    } catch (GroupException e) {
       logger.error("Error Sending Object Sync complete message  to : " + nodeID, e);
-      groupManager.zapNode(nodeID);
+      groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
+                           "Error sending Object Sync complete message "
+                               + L2HAZapNodeRequestProcessor.getErrorString(e));
+    } catch (SequenceGeneratorException e) {
+      logger.error("Error Sending Object Sync complete message  to : " + nodeID, e);
     }
   }
 
