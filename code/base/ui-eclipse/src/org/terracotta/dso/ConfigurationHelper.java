@@ -51,12 +51,12 @@ import com.terracottatech.config.Include;
 import com.terracottatech.config.InstrumentedClasses;
 import com.terracottatech.config.LockLevel;
 import com.terracottatech.config.Locks;
-import com.terracottatech.config.MethodNameExpression;
 import com.terracottatech.config.NamedLock;
 import com.terracottatech.config.Root;
 import com.terracottatech.config.Roots;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.TransientFields;
+import com.terracottatech.config.DistributedMethods.MethodExpression;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.InputStream;
@@ -1350,10 +1350,11 @@ public class ConfigurationHelper {
     }
 
     DistributedMethods methods = ensureDistributedMethods();
-    MethodNameExpression expr = methods.addNewMethodExpression();
+    // MethodNameExpression expr = 
+    MethodExpression methodExpression = methods.addNewMethodExpression();
 
     try {
-      expr.setStringValue(PatternHelper.getJavadocSignature(method));
+      methodExpression.setStringValue(PatternHelper.getJavadocSignature(method));
     } catch (JavaModelException jme) {
       openError("Error ensuring method '" + method.getElementName() + "' distributed", jme);
       return;
