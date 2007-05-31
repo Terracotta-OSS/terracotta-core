@@ -4,6 +4,8 @@
 package com.tc.object.config;
 
 import org.apache.xmlbeans.XmlException;
+import org.apache.xmlbeans.XmlOptions;
+import org.apache.xmlbeans.impl.values.XmlValueOutOfRangeException;
 
 import com.tc.config.Loader;
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -17,57 +19,25 @@ import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
 
 public class ConfigLoaderTest extends TestCase {
 
-  public void testEmptyConfig() throws Exception {
-    test("empty-tc-config.xml");
-    test("tc-config-dso.xml");
-    test("tc-config-chatter.xml");
-    test("tc-config-coordination.xml");
-    test("tc-config-inventory.xml");
-    
-    test("tc-config-jtable.xml");
-    test("tc-config-l2.xml");
-    test("tc-config-scoordination.xml");
-    test("tc-config-sevents.xml");
-    test("tc-config-sharededitor.xml");
-    test("tc-config-sharedqueue.xml");
-    test("tc-config-sjmx.xml");
-    test("tc-config-swebflow.xml");    
-    
-    test("anothersingleton-tc-config.xml");
-    test("aop-tc-config.xml");
-    test("app-ctx-matching-tc-config.xml");
-    test("appctxdef-tc-config.xml");
-    test("customscoped-tc-config.xml");
-    test("empty-tc-config.xml");
-    test("event-tc-config.xml");
-    test("hibernate-tc-config.xml");
-    test("init2-tc-config.xml");
-    test("interceptor-via-postprocessor-tc-config.xml");
-    test("lifecycle-tc-config.xml");
-    test("multibeandef-tc-config.xml");
-    test("multicontext-tc-config.xml");
-    test("multifile-context-tc-config.xml");
-    test("parent-child-tc-config.xml");
-    test("proxiedbean-tc-config.xml");
-    test("redeployment-tc-config.xml");
-    test("referenceandreplication-tc-config.xml");
-    test("scopedbeans-tc-config.xml");
-    test("sellitem-tc-config.xml");
-    test("sessionscoped-tc-config.xml");
-    test("sharedlock-tc-config.xml");
-    test("singleton-parent-child-tc-config.xml");
-    test("thread-coordination-tc-config.xml");
-    test("webflow-tc-config.xml");
+  private final String configName;
+
+  public ConfigLoaderTest(String configName) {
+    super("test");
+    this.configName = configName;
   }
 
+  public void test() throws XmlException, IOException, ConfigurationSetupException {
+    ArrayList errors = new ArrayList();
 
-  private void test(String name) throws XmlException, IOException, ConfigurationSetupException {
-    TcConfigDocument tcConfigDocument = new Loader().parse(getClass().getResourceAsStream(name));
+    TcConfigDocument tcConfigDocument = new Loader().parse(getClass().getResourceAsStream(configName), //
+                                                           new XmlOptions().setLoadLineNumbers().setValidateOnSet());
     TcConfig tcConfig = tcConfigDocument.getTcConfig();
     Application application = tcConfig.getApplication();
     
@@ -83,10 +53,68 @@ public class ConfigLoaderTest extends TestCase {
                             });
     
       ConfigLoader loader = new ConfigLoader(config, logger);
-      loader.loadDsoConfig(application.getDso());
-      loader.loadSpringConfig(application.getSpring());
+      try {
+        loader.loadDsoConfig(application.getDso());
+        loader.loadSpringConfig(application.getSpring());
+      } catch (XmlValueOutOfRangeException e) {
+        fail(e.getMessage());
+      }
+      
+      assertTrue("Parsing errors: " + errors.toString(), errors.isEmpty());
     }
   }
 
+  public String getName() {
+    return super.getName() + " : " + configName;
+  }
+
+  
+  public static TestSuite suite() {
+    TestSuite suite = new TestSuite(ConfigLoaderTest.class.getName());
+
+    suite.addTest(new ConfigLoaderTest("empty-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("tc-config-dso.xml"));
+    suite.addTest(new ConfigLoaderTest("tc-config-chatter.xml"));
+    suite.addTest(new ConfigLoaderTest("tc-config-coordination.xml"));
+    suite.addTest(new ConfigLoaderTest("tc-config-inventory.xml"));
+    
+    suite.addTest(new ConfigLoaderTest("tc-config-jtable.xml"));
+    suite.addTest(new ConfigLoaderTest("tc-config-l2.xml"));
+    suite.addTest(new ConfigLoaderTest("tc-config-scoordination.xml"));
+    suite.addTest(new ConfigLoaderTest("tc-config-sevents.xml"));
+    suite.addTest(new ConfigLoaderTest("tc-config-sharededitor.xml"));
+    suite.addTest(new ConfigLoaderTest("tc-config-sharedqueue.xml"));
+    suite.addTest(new ConfigLoaderTest("tc-config-sjmx.xml"));
+    suite.addTest(new ConfigLoaderTest("tc-config-swebflow.xml"));    
+    
+    suite.addTest(new ConfigLoaderTest("anothersingleton-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("aop-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("app-ctx-matching-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("appctxdef-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("customscoped-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("empty-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("event-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("hibernate-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("init2-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("interceptor-via-postprocessor-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("lifecycle-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("multibeandef-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("multicontext-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("multifile-context-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("parent-child-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("proxiedbean-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("redeployment-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("referenceandreplication-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("scopedbeans-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("sellitem-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("sessionscoped-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("sharedlock-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("singleton-parent-child-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("thread-coordination-tc-config.xml"));
+    suite.addTest(new ConfigLoaderTest("webflow-tc-config.xml"));
+
+    return suite;
+  }
+  
 }
 

@@ -13,7 +13,7 @@
      
  For more information, please see the product documentation.
 -->
-<tc:tc-config xmlns:tc="http://www.terracotta.org/config">
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.terracotta.org/config C:\dev\terr\tc-trunk\code\base\common\src.resources\com\tc\config\schema\terracotta-3.xsd">
   <servers>
     <server host="%i">
       <data>%(user.home)/terracotta/server-data</data>
@@ -27,7 +27,6 @@
   
   <application>
     <dso>
-
       <!-- Start by including all classes for instrumentation.
            It's more efficient to instrument only those classes that
            hold shared roots or are part of a shared root graph.
@@ -35,6 +34,12 @@
       <instrumented-classes>
         <include>
           <class-expression>*..*</class-expression>
+        </include>
+        <include>
+          <class-expression>@org.Clusterable *..*</class-expression>
+        </include>
+        <include>
+          <class-expression>*..Clusterable+</class-expression>
         </include>
       </instrumented-classes>
 
@@ -47,8 +52,20 @@
           <lock-level>write</lock-level>
           <method-expression>* *..*.*(..)</method-expression>
         </autolock>
+        <autolock>
+          <method-expression>* java.lang.String[] tc.qa.SynchDictionary.allKeys()</method-expression>
+          <lock-level>read</lock-level>
+        </autolock>
+        <autolock>
+          <method-expression>String[] * org.apache.wicket.IClusterable+.*(..)</method-expression>
+        </autolock>
+        <autolock>
+          <method-expression>@*..Clusterable * org.apache.wicket.IClusterable+.*(..)</method-expression>
+        </autolock>
       </locks>
+      <distributed-methods>
+        <method-expression>@*..DMI * *..*(..)</method-expression>
+      </distributed-methods>
     </dso>
   </application>
-  
 </tc:tc-config>
