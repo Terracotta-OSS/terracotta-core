@@ -68,25 +68,25 @@ final class RequiredBundleSpec {
     final boolean inclusiveFloor = spec.startsWith("[");
     final boolean inclusiveCeiling = spec.endsWith("]");
 
-    System.out.println("---------------------------------------------------------------------");
-    System.out.println("  +spec: " + spec);
-    System.out.println("  +floor, ceiling rule: " + inclusiveFloor + ", " + inclusiveCeiling);
+    //System.out.println("---------------------------------------------------------------------");
+    //System.out.println("  +spec: " + spec);
+    //System.out.println("  +floor, ceiling rule: " + inclusiveFloor + ", " + inclusiveCeiling);
 
     spec = spec.replaceAll("\\[|\\]|\\(|\\)", "");
     final String[] range = spec.replaceAll(" ", "").split(",");
-    System.out.println("  +range: " + range.length);
+    //System.out.println("  +range: " + range.length);
 
     final VersionSpec floor = new VersionSpec(range[0]);
     final VersionSpec ceiling = new VersionSpec(range[1]);
 
-    System.out.println("  +floor, ceiling" + floor + ", " + ceiling);
+    //System.out.println("  +floor, ceiling" + floor + ", " + ceiling);
 
     final boolean lowerBound = inclusiveFloor ? (floor.compareTo(target) >= 0) : (floor.compareTo(target) > 0);
     final boolean upperBound = inclusiveCeiling ? (target.compareTo(ceiling) <= 0) : (target.compareTo(ceiling) < 0);
 
-    System.out.println("  +target: " + target);
-    System.out.println("  +lobound, hibound: " + lowerBound + ", " + upperBound);
-    System.out.println("---------------------------------------------------------------------");
+    //System.out.println("  +target: " + target);
+    //System.out.println("  +lobound, hibound: " + lowerBound + ", " + upperBound);
+    //System.out.println("---------------------------------------------------------------------");
 
     // it's compatible if version falls within the (lower|upper)-bound versions
     // according to the (in|ex)clusivity flags
