@@ -341,7 +341,7 @@
 
   <xs:complexType name="dso-application">
     <xs:all>
-      <xs:element name="instrumented-classes" type="instrumented-classes" />
+      <xs:element name="instrumented-classes" type="instrumented-classes" minOccurs="0" />
       <xs:element name="transient-fields" type="transient-fields" minOccurs="0" />
 
       <xs:element name="locks" type="locks" minOccurs="0" />
