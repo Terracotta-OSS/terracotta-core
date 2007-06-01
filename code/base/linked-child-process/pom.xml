@@ -11,4 +11,10 @@
   <artifactId>linked-child-process</artifactId>
   <name>linked-child-process</name>
 
+  <dependencies>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+    </dependency>
+  </dependencies>
 </project>

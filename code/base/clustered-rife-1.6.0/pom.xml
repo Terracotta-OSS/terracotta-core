@@ -37,6 +37,7 @@
     <dependency>
       <groupId>com.uwyn.rife</groupId>
       <artifactId>rife</artifactId>
+      <version></version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>

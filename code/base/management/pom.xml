@@ -17,9 +17,13 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>common</artifactId>
+      <artifactId>common-test</artifactId>
       <version>${tcVersion}</version>
-      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
