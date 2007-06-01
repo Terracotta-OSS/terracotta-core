@@ -72,6 +72,7 @@ public class TransactionPersistorTest extends TCTestCase {
     final ServerTransactionID sid = new ServerTransactionID(new ChannelID(9), new TransactionID(10));
     final GlobalTransactionDescriptor gtd = new GlobalTransactionDescriptor(sid, new GlobalTransactionID(909));
     final CyclicBarrier cb = new CyclicBarrier(2);
+    final Exception ex[] = new Exception[2];
 
     Thread t1 = new Thread() {
       public void run() {
@@ -88,6 +89,7 @@ public class TransactionPersistorTest extends TCTestCase {
           assertEquals(0, gdts.size());
         } catch (Exception e) {
           e.printStackTrace();
+          ex[0] = e;
         }
       }
     };
@@ -105,6 +107,7 @@ public class TransactionPersistorTest extends TCTestCase {
           System.err.println("T2 : Delete commit done");
         } catch (Exception e) {
           e.printStackTrace();
+          ex[1] = e;
         }
       }
     };
@@ -114,6 +117,8 @@ public class TransactionPersistorTest extends TCTestCase {
     
     t1.join();
     t2.join();
+    if(ex[0] != null) throw ex[0];
+    if(ex[1] != null) throw ex[1];
   }
 
   protected void tearDown() throws Exception {
