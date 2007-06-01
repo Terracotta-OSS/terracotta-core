@@ -13,6 +13,10 @@ final class RequiredBundleSpec {
   private final String        symbolicName;
   private Map                 attributes;
 
+  public static final String[] parseList(final String requires) {
+    return (requires == null) ? new String[0] : requires.split(", ");
+  }
+
   public RequiredBundleSpec(String spec) {
     attributes = new HashMap();
     final String[] data = spec.split(";");
@@ -21,10 +25,6 @@ final class RequiredBundleSpec {
       final String[] pairs = data[i].replaceAll(" ", "").split(":=");
       attributes.put(pairs[0], pairs[1]);
     }
-  }
-
-  public static final String[] parseList(final String requires) {
-    return (requires == null) ? new String[0] : requires.split(",\\n");
   }
 
   public final String getSymbolicName() {
