@@ -277,11 +277,9 @@ class JVM
         message = "The Java home for #{descrip}, at '#{@java_home}', has no " +
                   "'%s' executable at '#{@java_path}'. Please correct this " +
                   "problem and try again."
-        puts "testing file #{java.to_s}"
         unless FileTest.file?(java)
             raise message % 'java'
         end
-        puts "testing file #{javac.to_s}"
         unless FileTest.file?(javac)
             raise message % 'javac'
         end

@@ -135,43 +135,6 @@ class OptionallyPrefixingConfigSource
     end
 end
 
-# A configuration source that simply reads values from a file on startup, then
-# regurgitates them on demand. The file's lines must be in the format accepted by
-# ConfigSource.parse_line, which is basically 'name=value' format (with blank
-# lines and lines beginning with a '#' ignored).
-#class SingleFileConfigSource
-#    include ConfigSource
-#
-#    def initialize(filename)
-#        @filename = filename
-#        @properties = { }
-#
-#        if FileTest.file?(filename)
-#            File.open(filename) do |file|
-#                lineno = 0
-#                file.each do |line|
-#                    lineno += 1
-#                    data = ConfigSource.parse_config_line(line)
-#                    raise ConfigError, "'%s', line %d: Line is in an invalid format." % [ filename, lineno ] if data.nil?
-#                    @properties.merge!(data)
-#                end
-#            end
-#        end
-#    end
-#
-#    def [](key)
-#        @properties[key]
-#    end
-#
-#    def keys
-#      @properties.keys
-#    end
-#
-#    def to_s
-#      "file at '#{@filename}'"
-#    end
-#end
-
 # A ConfigSource that returns values that are passed on the command line.
 class CommandLineConfigSource
     include ConfigSource
@@ -228,12 +191,9 @@ class EnvironmentConfigSource
     include ConfigSource
 
     def initialize(ant)
-        puts "init ECS"
         @ant = ant
-        puts "add prop ECS"
 # TODO: replace...?
 #        @ant.property(:environment => 'env')
-        puts "set env"
     end
 
     def [](key)
@@ -278,33 +238,3 @@ class CompositeConfigSource
         @sources.join(", ")
     end
 end
-
-# A config source that takes its data from a pair of files with the same base
-# name, one ending in '.local' and one ending in '.global'. The one ending in
-# '.local' gets priority.
-#
-# This is how we implement our 'build-config.local overrides build-config.global'
-# mechanism.
-#class StandardFileConfigSource < CompositeConfigSource
-#    include_class('java.lang.System') { |p, name| "Java" + name }
-#
-#    def get_os()
-#      os = JavaSystem.getProperty("os.name").downcase
-#      out = "win32" if os.starts_with?("windows")
-#      out = "linux" if os.starts_with?("linux")
-#      out = "macos" if os.starts_with?("mac")
-#      out = "solaris" if os.starts_with?("sunos")
-#      out
-#    end
-#
-#    def initialize(filename_base)
-#        super([ SingleFileConfigSource.new("%s.local" % filename_base),
-#                SingleFileConfigSource.new("%s.global.%s" % [filename_base, get_os]),
-#                SingleFileConfigSource.new("%s.global" % filename_base) ])
-#        @filename_base = filename_base
-#    end
-#
-#    def to_s
-#        "files at '%s.local', '%s.global.%s', '%s.global'" % [ @filename_base, @filename_base, get_os, @filename_base ]
-#    end
-#end

@@ -81,17 +81,11 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   def initialize(arguments)
     super(:help, arguments)
 
-    puts "finding jvms"
-
     # Figure out which JVMs we're using.
     find_jvms
 
-    puts "finding new path #{@basedir}"
-
     # Some more objects we need.
     root_dir = FilePath.new(@basedir, "..", "..", "..").canonicalize.to_s
-
-    puts root_dir.to_s
 
     @build_environment = BuildEnvironment.new(platform, config_source, root_dir)
     @static_resources = StaticResources.new(basedir)
@@ -174,26 +168,28 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   # Download and install dependencies as specified by the various ivy*.xml
   # files in the individual modules.
   def resolve_dependencies
-    depends :init
+    raise "do not use the tcbuild plugin to resolve dependencies... use Maven's dep mechanism"
 
-    if (ant_home = ENV['ANT_HOME'])
-      if @no_ivy
-        loud_message("Ivy support disabled.  Skipping dependency resolution.")
-      else
-        puts "--------------------------------------------------------------------------------"
-        puts "Resolving dependencies."
-        build_file = FilePath.new(@static_resources.build_config_directory,
-                                    'resolve-dependencies', 'build.xml')
-        ant_command = FilePath.new(ant_home, 'bin', 'ant').batch_extension.to_s
-        args = ['-buildfile', "#{build_file.to_s}"]
-        @ant.exec(:executable => ant_command) do
-          @ant.arg(:value => '-buildfile')
-          @ant.arg(:file => build_file.to_s)
-        end
-      end
-    else
-      loud_message("ANT_HOME not set. Skipping dependency resolution.")
-    end
+#    depends :init
+#
+#    if (ant_home = ENV['ANT_HOME'])
+#      if @no_ivy
+#        loud_message("Ivy support disabled.  Skipping dependency resolution.")
+#      else
+#        puts "--------------------------------------------------------------------------------"
+#        puts "Resolving dependencies."
+#        build_file = FilePath.new(@static_resources.build_config_directory,
+#                                    'resolve-dependencies', 'build.xml')
+#        ant_command = FilePath.new(ant_home, 'bin', 'ant').batch_extension.to_s
+#        args = ['-buildfile', "#{build_file.to_s}"]
+#        @ant.exec(:executable => ant_command) do
+#          @ant.arg(:value => '-buildfile')
+#          @ant.arg(:file => build_file.to_s)
+#        end
+#      end
+#    else
+#      loud_message("ANT_HOME not set. Skipping dependency resolution.")
+#    end
   end
 
   # Show which modules have been defined. Useful for debugging the buildsystem.
@@ -217,12 +213,14 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
   # Um. Duh.
   def clean
+    raise "do not use the tcbuild plugin to clean... use Maven clean"
+
     # DO NOT make 'clean' depend on 'init'. 'init' writes out certain files to the build/ directory;
     # if you make 'clean' depend on 'init', then if you do something like 'tcbuild clean compile',
     # 'clean' will invoke 'init', then blow away those files, and then 'compile' won't invoke 'init'
     # (even though it depends on it) since it's already been run. All the files written out by 'init'
     # will then be missing.
-    @build_results.clean(ant)
+#    @build_results.clean(ant)
   end
 
   def clean_cache
@@ -233,32 +231,36 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   # Can be useful for slimming down your 'build' directory when it's gotten out of control, but you
   # don't want to wait for a full recompile.
   def clean_tests
-    depends :init
+    raise "do not use the tcbuild plugin to clean tests... use Maven clean"
 
-    TestRunResults.clean_all(@build_results, ant)
+#    depends :init
+#
+#    TestRunResults.clean_all(@build_results, ant)
   end
 
   # Yeah. That little thing.
   def compile
-    depends :init, :resolve_dependencies
+    raise "do not use the tcbuild plugin to compile... use Maven compilation"
 
-    if @no_compile
-      loud_message("--no-compile option found.  Skipping compilation.")
-    else
-      compile_only = config_source['compile_only']
-      unless compile_only.nil?
-        loud_message("compile_only option found. Only specified modules will be compiled.")
-        module_names = compile_only.split(/,/)
-        module_names.each do |name|
-          build_module = @module_set[name]
-          build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
-        end
-      else
-        @module_set.each do |build_module|
-          build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
-        end
-      end
-    end
+#    depends :init, :resolve_dependencies
+#
+#    if @no_compile
+#      loud_message("--no-compile option found.  Skipping compilation.")
+#    else
+#      compile_only = config_source['compile_only']
+#      unless compile_only.nil?
+#        loud_message("compile_only option found. Only specified modules will be compiled.")
+#        module_names = compile_only.split(/,/)
+#        module_names.each do |name|
+#          build_module = @module_set[name]
+#          build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
+#        end
+#      else
+#        @module_set.each do |build_module|
+#          build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
+#        end
+#      end
+#    end
   end
 
   # only compile the specified module
@@ -914,33 +916,33 @@ END
 
       @jvm_set = JVMSet.new
 
-      root = File.expand_path( $jdk.home )
-      min_version = $jdk.min_version
-      max_version = $jdk.max_version
-      name = $jdk.name
+      $tc.jdks.each do |jdk|
 
-      unless min_version && max_version && root
-        raise "Invalid 'jdk' configuration: #{name}"
-      end
+        root = File.expand_path( jdk.home )
+        min_version = jdk.min_version
+        max_version = jdk.max_version
+        name = jdk.name
 
-      puts "new JVM"
-
-      jvm = JVM.new(root, { :minimum_version => min_version, :maximum_version => max_version })
-      jvm.validate(name)
-      jvm.check_version(name)
-
-      puts "Loaded JVM"
-
-      if jvm
-        @jvm_set.set(name, jvm)
-        $jdk.aliases.each do |jvm_alias|
-            @jvm_set.alias(jvm_alias, name)
+        unless min_version && max_version && root
+          raise "Invalid 'jdk' configuration: #{name}"
         end
-      else
-        msg = "You must specify a valid #{name} JRE using one of the " +
-                "following configuration properties: " +
-        search_names.join(', ')
-        raise(msg)
+
+        jvm = JVM.new(root, { :minimum_version => min_version, :maximum_version => max_version })
+        jvm.validate(name)
+        jvm.check_version(name)
+
+        if jvm
+          @jvm_set.set(name, jvm)
+          jdk.aliases.each do |jvm_alias|
+            @jvm_set.alias(jvm_alias, name)
+          end
+        else
+          msg = "You must specify a valid #{name} JRE using one of the " +
+                  "following configuration properties: " +
+          search_names.join(', ')
+          raise(msg)
+        end
+
       end
 
       @jvm_set.add_config_jvm('tests-jdk')
@@ -951,27 +953,19 @@ END
         appserver_compatibility[ appserver.name ] = { 'min_version' => appserver.min_version, 'max_version' => appserver.max_version }
       }
 
-      puts "appserver_compatibility"
-
       Registry[:appserver_compatibility] = appserver_compatibility
 
       factory = $appserver[ 'factory' ]
       major = $appserver[ 'major-version' ]
       minor = $appserver[ 'minor-version' ]
 
-      puts "factory"
-
       @internal_config_source["tc.tests.configuration.appserver.factory.name"] = factory
       @internal_config_source["tc.tests.configuration.appserver.major-version"] = major
       @internal_config_source["tc.tests.configuration.appserver.minor-version"] = minor
 
-      puts "after factory"
-
       Registry[:appserver_generic] = "#{factory}-#{major}"
       Registry[:appserver] = "#{Registry[:appserver_generic]}.#{minor}"
       Registry[:jvm_set] = @jvm_set
-
-      puts "found JVMs"
     end
 
     # Writes out the given set of keys, and corresponding values, from the given hash to the given

@@ -45,7 +45,6 @@ class TerracottaAnt < Builder::AntBuilder
     # we have to use #instance_eval -- the simpler Ruby methods for doing this are removed by
     # AntBuilder.
     def get_ant_property(key, default_value=:no_default_specified)
-       puts "ant prop=#{key}"
         begin
             key = key.gsub(/[^A-Za-z0-9_]/, '_')
             puts :warn, "Attempting to include Ant property '%s'." % key unless key =~ /^[A-Za-z0-9_]+$/
@@ -67,7 +66,6 @@ class TerracottaAnt < Builder::AntBuilder
     #
     # We have to use instance_eval here, too, because
     def set_ant_property(key, value)
-       puts "set ant prop=#{key}"
         instance_eval("@%s = '%s'" % [ key.to_s, value.to_s ])
     end
 end
@@ -94,7 +92,6 @@ class TerracottaBuilder
     # list of arguments passed on the command line; these will be parsed for targets, arguments to
     # targets, and configuration properties.
     def initialize(default_target, arguments)
-        puts "INITIALIZE TCBuilder"
 
         option_parser = OptionParser.new
         option_parser.on('--no-ivy') do @no_ivy = true end
@@ -107,30 +104,20 @@ class TerracottaBuilder
         puts
         @default_target = default_target
         @ant = TerracottaAnt.new
-        puts default_target.to_s
         @platform = CrossPlatform.create_implementation(:ant => @ant)
-        puts "registering platform"
         Registry[:platform] = @platform
-        puts "registered platform"
 
         # The CommandLineConfigSource actually parses its arguments, and returns only the ones
         # that aren't configuration property settings (e.g., of the form 'a=b').
-        puts "parsing args"
         arguments = option_parser.parse(arguments)
-        puts "parsed args"
         @arguments, command_line_source = CommandLineConfigSource.from_args(arguments)
-        puts "internal config src"
         @internal_config_source = InternalConfigSource.new
 
-        puts "creating config src"
         @config_source = create_config_source(command_line_source, @internal_config_source)
-        puts "created config src"
         Registry[:config_source] = @config_source
         Registry[:command_line_config] = command_line_source
 
-        puts "new script results"
         @script_results = ScriptResults.new
-        puts "created new script results"
 
         reset
     end
@@ -145,8 +132,6 @@ class TerracottaBuilder
         write_failure_file_if_necessary_at_beginning
 
         begin
-            puts "Actual Run"
-
             do_run(actual_targets)
         rescue => e
             # This makes sure that any kind of arbitrary exception from the rest of the
@@ -164,13 +149,13 @@ class TerracottaBuilder
         # This is so that, even if the series of scripts leading from, say, CruiseControl to this
         # code doesn't correctly carry back the exit code (as it inexplicably seems not to on
         # Windows), the parent can tell if it passed or not.
-#        write_failure_file_if_necessary_at_end
+        write_failure_file_if_necessary_at_end
 
         # Support for making build archives.
         # archive only if "force-archive=true", or when the run fails
-#        if (@script_results.failed? || @config_source["force-archive"] =~ /true/)
-#            archive_build_if_necessary
-#        end
+        if (@script_results.failed? || @config_source["force-archive"] =~ /true/)
+            archive_build_if_necessary
+        end
 
 # XXX: No! Bad monkey!
 #        ExitCodeHelper.exit(@script_results.result_code)

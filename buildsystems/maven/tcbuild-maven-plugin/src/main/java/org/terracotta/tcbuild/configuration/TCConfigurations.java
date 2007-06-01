@@ -5,6 +5,7 @@ import java.util.Map;
 public class TCConfigurations
 {
     private AppserverConfiguration[] appservers;
+    private JdkConfiguration[] jdks;
     private Map buildControl;
 
     public AppserverConfiguration[] getAppservers()
@@ -25,5 +26,15 @@ public class TCConfigurations
     public void setBuildControl( Map buildControl )
     {
         this.buildControl = buildControl;
+    }
+
+    public JdkConfiguration[] getJdks()
+    {
+        return jdks;
+    }
+
+    public void setJdks( JdkConfiguration[] jdks )
+    {
+        this.jdks = jdks;
     }
 }
