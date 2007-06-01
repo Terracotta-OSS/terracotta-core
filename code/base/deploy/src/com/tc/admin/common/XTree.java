@@ -40,11 +40,15 @@ public class XTree extends org.dijon.Tree {
       public void testPopup(MouseEvent e) {
         if(e.isPopupTrigger()) {
           TreePath   path = getPathForLocation(e.getX(), e.getY());
-          XTreeNode  node = path != null ? (XTreeNode)path.getLastPathComponent() : null;
-          JPopupMenu menu = node != null ? node.getPopupMenu() : XTree.this.getPopupMenu();
-
-          if(menu != null) {
-            menu.show(XTree.this, e.getX(), e.getY());
+          Object     comp = path != null ? path.getLastPathComponent() : null;
+          
+          if(comp instanceof XTreeNode) {
+	          XTreeNode  node =  (XTreeNode)comp;
+	          JPopupMenu menu = node != null ? node.getPopupMenu() : XTree.this.getPopupMenu();
+	
+	          if(menu != null) {
+	            menu.show(XTree.this, e.getX(), e.getY());
+	          }
           }
         }
       }
