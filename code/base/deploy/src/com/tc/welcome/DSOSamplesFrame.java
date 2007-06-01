@@ -34,6 +34,7 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -292,17 +293,15 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
   private void runCoordinationSample() {
     setTextPaneCursor(Cursor.WAIT_CURSOR);
     try {
-      String bootPath = getBootPath();
-      File dir = new File(getProductDirectory(), "coordination");
-      File lib = new File(dir, "lib");
-      File oswego = new File(lib, "concurrent-1.3.4.jar");
-      String classpath = "classes" + System.getProperty("path.separator") + oswego.getAbsolutePath();
+      String bootPath   = getBootPath();
+      File dir          = new File(getProductDirectory(), "coordination");
+      String classpath  = getLibClassPath(dir, "classes");
       String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.config=tc-config.xml",
           "-Djava.awt.Window.locationByPlatform=true", "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
           "-Xbootclasspath/p:" + bootPath, "-cp", classpath, "demo.coordination.Main" };
 
-      final Process p = exec(cmdarray, null, dir);
-      XTextPane textPane = new XTextPane();
+      final Process p         = exec(cmdarray, null, dir);
+      XTextPane textPane      = new XTextPane();
       StreamReader errDrainer = createStreamReader(p.getErrorStream(), textPane);
       StreamReader outDrainer = createStreamReader(p.getInputStream(), textPane);
 
@@ -330,21 +329,37 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     }
   }
 
+  private String getLibClassPath(final File dir, final String defaultPath) {
+    final String pathSep = System.getProperty("path.separator");
+    final String fileSep = System.getProperty("file.separator");
+    final String LIB_DIR = "lib";
+    final File libdir    = new File(dir, LIB_DIR);
+    String classpath     = defaultPath; 
+    if (libdir.exists()) {
+      final String[] jars = libdir.list(new FilenameFilter() {
+          public boolean accept(File directory, String name) {
+            return name.endsWith(".jar");
+          }
+        });
+      for (int i=0; i<jars.length; i++) {
+        classpath += (pathSep + LIB_DIR + fileSep + jars[i]);
+      }
+    }
+    return classpath;
+  }
+  
   private void runSharedQueueSample() {
     setTextPaneCursor(Cursor.WAIT_CURSOR);
     try {
-      String bootPath = getBootPath();
-      File dir = new File(getProductDirectory(), "sharedqueue");
-      String pathSep = System.getProperty("path.separator");
-      String fileSep = System.getProperty("file.separator");
-      String classpath = "classes" + pathSep + "lib" + fileSep + "javax.servlet.jar" + pathSep + "lib" + fileSep
-                         + "org.mortbay.jetty-4.2.20.jar";
+      String bootPath   = getBootPath();
+      File dir          = new File(getProductDirectory(), "sharedqueue");
+      String classpath  = getLibClassPath(dir, "classes");
       String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.config=tc-config.xml",
           "-Djava.awt.Window.locationByPlatform=true", "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
           "-Xbootclasspath/p:" + bootPath, "-cp", classpath, "demo.sharedqueue.Main" };
 
-      final Process p = exec(cmdarray, null, dir);
-      XTextPane textPane = new XTextPane();
+      final Process p         = exec(cmdarray, null, dir);
+      XTextPane textPane      = new XTextPane();
       StreamReader errDrainer = createStreamReader(p.getErrorStream(), textPane);
       StreamReader outDrainer = createStreamReader(p.getInputStream(), textPane);
 
