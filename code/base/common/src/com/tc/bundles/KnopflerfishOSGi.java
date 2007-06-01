@@ -123,11 +123,14 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     }
   }
 
-  private Bundle findBundleBySymbolicName(final String symbolicName) {
+  private Bundle findBundleBySymbolicName(final RequiredBundleSpec spec) {
     final Bundle[] bundles = framework.getSystemBundleContext().getBundles();
     for(int i=0; i<bundles.length; i++) {
-      if (bundles[i].getSymbolicName().equals(symbolicName)) {
-        return bundles[i];
+      Bundle bundle = bundles[i];
+      final String symbolicName = (String)bundle.getHeaders().get("Bundle-SymbolicName");
+      final String version      = (String)bundle.getHeaders().get("Bundle-Version");
+      if (spec.isCompatible(symbolicName, version)) {
+        return bundle;
       }
     }
     return null;
@@ -137,17 +140,17 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     final Bundle bundle   = framework.bundles.getBundle(bundleId);
     final String requires = (String)bundle.getHeaders().get("Require-Bundle");
     
-    if (requires != null) {
-      final String[] bundles = requires.split(",");
-      for (int i=0; i<bundles.length; i++) {
-        final String[] spec = bundles[i].split(";");
-        final Bundle reqdBundle = findBundleBySymbolicName(spec[0]);
-        if (reqdBundle == null) {
-          throw new BundleException("Required bundle '" + bundles[i] + "' is not installed.");
-        }
-        startBundle(reqdBundle.getBundleId(), handler);
+    final String[] bundles = RequiredBundleSpec.parseList(requires);
+    for (int i=0; i<bundles.length; i++) {
+      final RequiredBundleSpec spec = new RequiredBundleSpec(bundles[i]);
+      final Bundle reqdBundle = findBundleBySymbolicName(spec);
+      if (reqdBundle == null) {
+        throw new BundleException("No compatible bundle installed for the required bundle: "
+            + spec.getSymbolicName() + ", bundle-version: " + spec.getBundleVersion());
       }
+      startBundle(reqdBundle.getBundleId(), handler);
     }
+
     framework.startBundle(bundle.getBundleId());
     info(Message.BUNDLE_STARTED, new Object[] { bundle.getSymbolicName() });
     handler.callback(bundle);
