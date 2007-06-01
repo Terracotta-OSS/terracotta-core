@@ -45,6 +45,7 @@ import com.tc.util.runtime.Os;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -90,13 +91,16 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
@@ -1489,6 +1493,12 @@ public class SessionIntegratorFrame extends Frame {
   }
 
   private void startL2() {
+    if(System.getProperty("tc.servers") != null) {
+      m_l2OutView.append("Using external Terracotta servers: "+System.getProperty("tc.servers"));
+      startWebServers();
+      return;
+    }
+    
     trace("startL2");
 
     if (m_l2Monitor != null) {
@@ -1670,6 +1680,13 @@ public class SessionIntegratorFrame extends Frame {
   }
 
   private void stopL2(boolean restart) {
+    if(System.getProperty("tc.servers") != null) {
+      if (m_webServer1Status.isReady() || m_webServer2Status.isReady()) {
+        stopWebServers();
+      }
+      return;
+    }
+
     if (m_l2Monitor != null) {
       m_l2Monitor.cancel();
       while (true) {
@@ -1840,7 +1857,7 @@ public class SessionIntegratorFrame extends Frame {
     public void handleNotification(Notification notification, Object handback) {
       final Object event = notification.getSource();
 
-      if (!m_handlingAppEvent && event instanceof NonPortableObjectEvent) {
+      if (event instanceof NonPortableObjectEvent) {
         m_handlingAppEvent = true;
 
         SwingUtilities.invokeLater(new Runnable() {
@@ -1854,6 +1871,20 @@ public class SessionIntegratorFrame extends Frame {
   }
 
   private void handleNonPortableReason(NonPortableObjectEvent event) {
+    ContainerResource res = (ContainerResource)SessionIntegrator.getContext().topRes.getComponent("NonPortableObjectPanel");
+    NonPortableObjectPanel panel = new NonPortableObjectPanel(res, this);
+    Dialog dialog = new Dialog(this, this.getTitle(), true);
+    Container cp = (Container)dialog.getContentPane();
+    cp.setLayout(new BorderLayout());
+    cp.add(panel);
+    panel.setEvent(event);
+    dialog.pack();
+    dialog.center(this);
+    dialog.setVisible(true);
+    m_handlingAppEvent = false;
+    return;
+    
+    /*
     NonPortableReason reason = event.getReason();
 
     switch (reason.getReason()) {
@@ -1882,8 +1913,9 @@ public class SessionIntegratorFrame extends Frame {
         break;
       }
     }
-
+    
     m_handlingAppEvent = false;
+   */
   }
 
   private void handleClassNotAdaptable(NonPortableObjectEvent event) {
@@ -1916,7 +1948,8 @@ public class SessionIntegratorFrame extends Frame {
         m_startButton.doClick();
       }
     } else {
-      showPlainMessage(msg);
+      TreeModel treeModel = event.getContext().getTreeModel();
+      showPlainMessage(new JScrollPane(new JTree(treeModel)));
     }
   }
 
@@ -2104,7 +2137,8 @@ public class SessionIntegratorFrame extends Frame {
                  + "because it is not instrumented for use with DSO.";
     int type = JOptionPane.OK_CANCEL_OPTION;
     InstrumentTypePanel panel = getInstrumentPanel(msg, className, bootTypes, superTypes);
-    int answer = showConfirmDialog(panel, type);
+    JScrollPane scrollPane = new JScrollPane(new JTree(event.getContext().getTreeModel()));
+    int answer = showConfirmDialog(scrollPane, type);
 
     if (answer == JOptionPane.OK_OPTION) {
       m_instrumentedClassesPanel.ensureAdaptable(panel.getPattern());

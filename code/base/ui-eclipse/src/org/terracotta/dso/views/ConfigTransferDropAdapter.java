@@ -22,6 +22,9 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.terracotta.dso.TcPlugin;
 
+import java.util.Iterator;
+import java.util.List;
+
 class ConfigTransferDropAdapter extends SelectionTransferDropAdapter {
   private static final int OPERATION = DND.DROP_LINK;
   private ConfigViewPart fPart;
@@ -36,9 +39,9 @@ class ConfigTransferDropAdapter extends SelectionTransferDropAdapter {
     event.detail= DND.DROP_NONE;
     initializeSelection();
     
-    IJavaElement inputElement = getInputElement(getSelection());
-    if (inputElement != null) {
-      switch(inputElement.getElementType()) {
+    IJavaElement[] inputElements = getInputElements(getSelection());
+    if (inputElements != null && inputElements.length > 0) {
+      switch(inputElements[0].getElementType()) {
         case IJavaElement.FIELD:
           if(target instanceof RootsWrapper ||
              target instanceof RootWrapper ||
@@ -94,9 +97,9 @@ class ConfigTransferDropAdapter extends SelectionTransferDropAdapter {
   }
 
   public void drop(Object target, DropTargetEvent event) {
-    IJavaElement input   = getInputElement(getSelection());
-    IProject     project = input.getJavaProject().getProject();
-    TcPlugin     plugin  = TcPlugin.getDefault();
+    List list = SelectionUtil.toList(getSelection());
+    IProject project = fPart.m_javaProject.getProject();
+    TcPlugin plugin = TcPlugin.getDefault();
     
     if(plugin.getConfiguration(project) == TcPlugin.BAD_CONFIG) {
       Shell  shell = Display.getDefault().getActiveShell();
@@ -112,111 +115,134 @@ class ConfigTransferDropAdapter extends SelectionTransferDropAdapter {
       return;
     }
 
-    switch(input.getElementType()) {
+    IJavaElement element = (IJavaElement)list.get(0);
+    switch(element.getElementType()) {
       case IJavaElement.FIELD:
         if(target instanceof RootsWrapper ||
            target instanceof RootWrapper) {
-          fPart.addRoot((IField)input);
+          fPart.addRoots((IField[])list.toArray(new IField[0]));
         } else if(target instanceof TransientFieldsWrapper ||
                   target instanceof TransientFieldWrapper) {
-          fPart.addTransientField((IField)input);
+          fPart.addTransientFields((IField[])list.toArray(new IField[0]));
         }
         break;
       case IJavaElement.PACKAGE_DECLARATION:
       case IJavaElement.PACKAGE_FRAGMENT:
         if(target instanceof AutolocksWrapper ||
            target instanceof AutolockWrapper) {
-          fPart.addAutolock(input);
+          fPart.addAutolocks((IJavaElement[])list.toArray(new IJavaElement[0]));
         } else if(target instanceof NamedLocksWrapper ||
                   target instanceof NamedLockWrapper) {
-          fPart.addNamedLock(input);
+          fPart.addNamedLocks((IJavaElement[])list.toArray(new IJavaElement[0]));
         } else if(target instanceof IncludesWrapper ||
                   target instanceof IncludeWrapper) {
-          fPart.addInclude(input);
+          fPart.addIncludes((IJavaElement[])list.toArray(new IJavaElement[0]));
         } else if(target instanceof ExcludesWrapper ||
                   target instanceof ExcludeWrapper) {
-          fPart.addExclude(input);
+          fPart.addExcludes((IJavaElement[])list.toArray(new IJavaElement[0]));
         }
         break;
       case IJavaElement.METHOD:
         if(target instanceof DistributedMethodsWrapper ||
            target instanceof DistributedMethodWrapper) {
-          fPart.addDistributedMethod((IMethod)input);
+          fPart.addDistributedMethods((IMethod[])list.toArray(new IMethod[0]));
         } else if(target instanceof AutolocksWrapper ||
                   target instanceof AutolockWrapper) {
-          fPart.addAutolock(input);
+          fPart.addAutolocks((IMethod[])list.toArray(new IMethod[0]));
         } else if(target instanceof NamedLocksWrapper ||
                   target instanceof NamedLockWrapper) {
-          fPart.addNamedLock(input);
+          fPart.addNamedLocks((IMethod[])list.toArray(new IMethod[0]));
         }
         break;
       case IJavaElement.CLASS_FILE:
         try {
           if(target instanceof AdditionalBootJarClassesWrapper) {
-            fPart.addAdditionalBootJarClass(((IClassFile)input).getType());
+            IType[] types = new IType[list.size()];
+            for(int i = 0; i < list.size(); i++) {
+              types[i] = ((IClassFile)list.get(i)).getType();
+            }
+            fPart.addAdditionalBootJarClasses(types);
           } else if(target instanceof AutolocksWrapper ||
                     target instanceof AutolockWrapper) {
-            fPart.addAutolock(input);
+            fPart.addAutolocks((IJavaElement[])list.toArray(new IJavaElement[0]));
           } else if(target instanceof NamedLocksWrapper ||
                     target instanceof NamedLockWrapper) {
-            fPart.addNamedLock(input);
+            fPart.addNamedLocks((IJavaElement[])list.toArray(new IJavaElement[0]));
           } else if(target instanceof IncludesWrapper ||
                     target instanceof IncludeWrapper) {
-            fPart.addInclude(input);
+            fPart.addIncludes((IJavaElement[])list.toArray(new IJavaElement[0]));
           } else if(target instanceof ExcludesWrapper ||
                     target instanceof ExcludeWrapper) {
-            fPart.addExclude(input);
+            fPart.addExcludes((IJavaElement[])list.toArray(new IJavaElement[0]));
           }
         } catch(JavaModelException jme) {/**/}
         break;
       case IJavaElement.COMPILATION_UNIT:
         if(target instanceof AdditionalBootJarClassesWrapper) {
-          fPart.addAdditionalBootJarClass(((ICompilationUnit)input).findPrimaryType());
+          IType[] types = new IType[list.size()];
+          for(int i = 0; i < list.size(); i++) {
+            types[i] = ((ICompilationUnit)list.get(i)).findPrimaryType();
+          }
+          fPart.addAdditionalBootJarClasses(types);
         } else if(target instanceof AutolocksWrapper ||
                   target instanceof AutolockWrapper) {
-          fPart.addAutolock(input);
+          fPart.addAutolocks((IJavaElement[])list.toArray(new IJavaElement[0]));
         } else if(target instanceof NamedLocksWrapper ||
                   target instanceof NamedLockWrapper) {
-          fPart.addNamedLock(input);
+          fPart.addNamedLocks((IJavaElement[])list.toArray(new IJavaElement[0]));
         } else if(target instanceof IncludesWrapper ||
                   target instanceof IncludeWrapper) {
-          fPart.addInclude(input);
+          fPart.addIncludes((IJavaElement[])list.toArray(new IJavaElement[0]));
         } else if(target instanceof ExcludesWrapper ||
                   target instanceof ExcludeWrapper) {
-          fPart.addExclude(input);
+          fPart.addExcludes((IJavaElement[])list.toArray(new IJavaElement[0]));
         }
         break;
       case IJavaElement.TYPE:
         if(target instanceof AdditionalBootJarClassesWrapper) {
-          fPart.addAdditionalBootJarClass((IType)input);
+          fPart.addAdditionalBootJarClasses((IType[])list.toArray(new IType[0]));
         } else if(target instanceof AutolocksWrapper ||
                   target instanceof AutolockWrapper) {
-          fPart.addAutolock(input);
+          fPart.addAutolocks((IType[])list.toArray(new IType[0]));
         } else if(target instanceof NamedLocksWrapper ||
                   target instanceof NamedLockWrapper) {
-          fPart.addNamedLock(input);
+          fPart.addNamedLocks((IType[])list.toArray(new IType[0]));
         } else if(target instanceof IncludesWrapper ||
                   target instanceof IncludeWrapper) {
-          fPart.addInclude(input);
+          fPart.addIncludes((IType[])list.toArray(new IType[0]));
         } else if(target instanceof ExcludesWrapper ||
                   target instanceof ExcludeWrapper) {
-          fPart.addExclude(input);
+          fPart.addExcludes((IType[])list.toArray(new IType[0]));
         }
         break;
     }
   }
   
-  private static IJavaElement getInputElement(ISelection selection) {
-    Object single = SelectionUtil.getSingleElement(selection);
-    if (single == null)
+  private static IJavaElement[] getInputElements(ISelection selection) {
+    List list = SelectionUtil.toList(selection);
+    if (list == null)
       return null;
-    return getCandidate(single);
+    return getCandidates(list);
   }
+
+  public static IJavaElement[] getCandidates(List input) {
+    Iterator iter = input.iterator();
+    int type = -1;
     
-  public static IJavaElement getCandidate(Object input) {
-    if(!(input instanceof IJavaElement)) {
-      return null;
+    while(iter.hasNext()) {
+      Object element = iter.next();
+      if(!(element instanceof IJavaElement)) {
+        return null;
+      }
+      IJavaElement javaElement = (IJavaElement)element;
+      int elementType = javaElement.getElementType();
+      if(type == -1) {
+        type = elementType;
+      } else if(type != elementType) {
+        return null;
+      }
     }
-    return (IJavaElement)input;
+    
+    return (IJavaElement[])input.toArray(new IJavaElement[0]);
   }
 }

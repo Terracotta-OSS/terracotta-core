@@ -9,7 +9,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.xmlbeans.XmlError;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
-import org.eclipse.core.commands.common.EventManager;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
@@ -50,6 +49,7 @@ import org.eclipse.jdt.internal.core.BinaryMember;
 import org.eclipse.jdt.internal.core.SourceMethod;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.ui.JavaElementImageDescriptor;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -59,6 +59,7 @@ import org.eclipse.jface.text.FindReplaceDocumentAdapter;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.wizard.WizardDialog;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Display;
@@ -96,6 +97,7 @@ import org.terracotta.dso.wizards.ProjectWizard;
 
 import com.tc.admin.common.InputStreamDrainer;
 import com.tc.config.Loader;
+import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.TcConfigDocument;
@@ -142,8 +144,11 @@ import java.util.List;
  * @see com.terracottatech.config.TerracottaDomainConfigurationDocument.TerracottaDomainConfiguration
  */
 
-public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaLaunchConfigurationConstants,
-    TcPluginStatusConstants {
+public class TcPlugin extends AbstractUIPlugin
+  implements QualifiedNames,
+             IJavaLaunchConfigurationConstants,
+             TcPluginStatusConstants
+{
   private static TcPlugin           m_plugin;
   private Loader                    m_configLoader;
   private CompilationUnitVisitor    m_compilationUnitVisitor;
@@ -153,6 +158,8 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
   private DecoratorUpdateAction     m_decoratorUpdateAction;
   private ArrayList<IProjectAction> m_projectActionList;
   private BootClassHelper           m_bootClassHelper;
+  private ConfigurationEventManager m_configurationEventManager;
+
 
   public static final String        PLUGIN_ID               = "org.terracotta.dso";
 
@@ -161,6 +168,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
   public TcPlugin() {
     super();
+    m_configurationEventManager = new ConfigurationEventManager();
   }
 
   public static String getPluginId() {
@@ -483,8 +491,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
         for (int i = 0; i < serverArr.length; i++) {
           String name = serverArr[i].getName();
-
-          if (name != null && name.length() > 0) { return name; }
+          if (name != null && name.length() > 0) { return ParameterSubstituter.substitute(name); }
         }
       }
     }
@@ -635,6 +642,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       boolean refreshed = false;
 
       if (!configFile.isSynchronized(IResource.DEPTH_ZERO)) {
+        ignoreNextConfigChange();
         configFile.refreshLocal(IResource.DEPTH_ZERO, null);
         refreshed = true;
       }
@@ -671,8 +679,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
       if (config != null) {
         getConfigurationHelper(project).validateAll();
-        JavaSetupParticipant.inspectAll();
-        updateDecorators();
         fireConfigurationChange(project);
         writeSerializedConfigFile(project, lineLengths, config);
       }
@@ -715,8 +721,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
       if (config != null) {
         getConfigurationHelper(project).validateAll();
-        JavaSetupParticipant.inspectAll();
-        updateDecorators();
         fireConfigurationChange(project);
         writeSerializedConfigFile(project, lineLengths, config);
       }
@@ -841,8 +845,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     if (config == null) {
       config = BAD_CONFIG;
       setSessionProperty(project, CONFIGURATION, config);
-      JavaSetupParticipant.inspectAll();
-      updateDecorators();
       fireConfigurationChange(project);
     }
   }
@@ -885,8 +887,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       if (config == null) {
         config = BAD_CONFIG;
         setSessionProperty(project, CONFIGURATION, config);
-        JavaSetupParticipant.inspectAll();
-        updateDecorators();
         fireConfigurationChange(project);
       }
     }
@@ -1002,12 +1002,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
   }
 
   public void setConfigurationFileDirty(IProject project, Boolean dirty) {
-    if (dirty.booleanValue()) {
-      clearSerializedConfigFile(project);
-      setSessionProperty(project, CONFIGURATION_LINE_LENGTHS, null);
-      setSessionProperty(project, CONFIGURATION, null);
-    }
-
     setSessionProperty(project, IS_DIRTY, dirty);
   }
 
@@ -1019,6 +1013,11 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     return false;
   }
 
+  public void ignoreNextConfigChange() {
+    ResourceDeltaVisitor rdv = getResourceDeltaVisitor();
+    rdv.fIgnoreNextConfigChange = true;
+  }
+  
   public void saveConfiguration(IProject project) {
     IFile configFile;
     TcConfig config;
@@ -1026,6 +1025,8 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     XmlOptions opts;
     InputStream stream;
 
+    ignoreNextConfigChange();
+    
     opts = getXmlOptions();
     configFile = getConfigurationFile(project);
     config = getConfiguration(project);
@@ -1040,8 +1041,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         stream = null;
 
         getConfigurationHelper(project).validateAll();
-        JavaSetupParticipant.inspectAll();
-        updateDecorators();
         fireConfigurationChange(project);
       }
     } catch (Exception e) {
@@ -1076,11 +1075,6 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         outWriter = new FileWriter(configFile.getLocation().toOSString());
 
         CopyUtils.copy(inStream, outWriter);
-
-        getConfigurationHelper(project).validateAll();
-        JavaSetupParticipant.inspectAll();
-        updateDecorators();
-        fireConfigurationChange(project);
       }
     } catch (Exception e) {
       openError("Error saving '" + configFile.getName() + "'", e);
@@ -1431,7 +1425,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
   public void openError(final String msg) {
     Display.getDefault().asyncExec(new Runnable() {
       public void run() {
-        MessageDialog.openError(null, "Terracotta Plugin", msg);
+        ErrorDialog.showError(msg);
       }
     });
   }
@@ -1469,40 +1463,182 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
   }
 
   public void fireConfigurationChange(IProject project) {
-    m_configurationListeners.fireConfigurationChange(project);
+    m_configurationEventManager.fireConfigurationChange(project);
+    JavaSetupParticipant.inspectAll();
+    updateDecorators();
   }
 
-  class ConfigurationManager extends EventManager {
-    void addConfigurationListener(IConfigurationListener listener) {
-      addListenerObject(listener);
-    }
-
-    void removeConfigurationListener(IConfigurationListener listener) {
-      removeListenerObject(listener);
-    }
-
-    void fireConfigurationChange(IProject project) {
-      Object[] listeners = getListeners();
-
-      if (listeners != null) {
-        for (int i = 0; i < listeners.length; i++) {
-          ((IConfigurationListener) listeners[i]).configurationChanged(project);
-        }
-      }
-    }
+  public void fireServerChanged(IProject project, int index) {
+    m_configurationEventManager.fireServerChanged(project, index);
   }
 
-  private ConfigurationManager m_configurationListeners = new ConfigurationManager();
+  public void fireServersChanged(IProject project) {
+    m_configurationEventManager.fireServersChanged(project);
+  }
+
+  public void fireRootChanged(IProject project, int index) {
+    m_configurationEventManager.fireRootChanged(project, index);
+    JavaSetupParticipant.inspectAll();
+    updateDecorator(RootDecorator.DECORATOR_ID);
+  }
+
+  public void fireRootsChanged(IProject project) {
+    m_configurationEventManager.fireRootsChanged(project);
+    JavaSetupParticipant.inspectAll();
+    updateDecorator(RootDecorator.DECORATOR_ID);
+  }
+
+  public void fireNamedLockChanged(IProject project, int index) {
+    m_configurationEventManager.fireNamedLockChanged(project, index);
+    JavaSetupParticipant.inspectAll();
+    updateDecorator(NameLockedDecorator.DECORATOR_ID);
+  }
+
+  public void fireNamedLocksChanged(IProject project) {
+    m_configurationEventManager.fireNamedLocksChanged(project);
+    JavaSetupParticipant.inspectAll();
+    updateDecorator(NameLockedDecorator.DECORATOR_ID);
+  }
+
+  public void fireAutolockChanged(IProject project, int index) {
+    m_configurationEventManager.fireAutolockChanged(project, index);
+    JavaSetupParticipant.inspectAll();
+    updateDecorator(AutolockedDecorator.DECORATOR_ID);
+  }
+
+  public void fireAutolocksChanged(IProject project) {
+    m_configurationEventManager.fireAutolocksChanged(project);
+    JavaSetupParticipant.inspectAll();
+    updateDecorator(AutolockedDecorator.DECORATOR_ID);
+  }
+
+  public void fireIncludeRuleChanged(IProject project, int index) {
+    m_configurationEventManager.fireIncludeRuleChanged(project, index);
+    JavaSetupParticipant.inspectAll();
+    updateDecorators(
+        new String[] {
+          AdaptedModuleDecorator.DECORATOR_ID,
+          AdaptedTypeDecorator.DECORATOR_ID,
+          AdaptedPackageFragmentDecorator.DECORATOR_ID });
+  }
+
+  public void fireIncludeRulesChanged(IProject project) {
+    m_configurationEventManager.fireIncludeRulesChanged(project);
+    JavaSetupParticipant.inspectAll();
+    updateDecorators(
+        new String[] {
+          AdaptedModuleDecorator.DECORATOR_ID,
+          AdaptedTypeDecorator.DECORATOR_ID,
+          AdaptedPackageFragmentDecorator.DECORATOR_ID });
+  }
+
+  public void fireExcludeRuleChanged(IProject project, int index) {
+    m_configurationEventManager.fireExcludeRuleChanged(project, index);
+    JavaSetupParticipant.inspectAll();
+    updateDecorators(
+        new String[] {
+          ExcludedTypeDecorator.DECORATOR_ID,
+          ExcludedModuleDecorator.DECORATOR_ID });
+  }
+
+  public void fireExcludeRulesChanged(IProject project) {
+    m_configurationEventManager.fireExcludeRulesChanged(project);
+    JavaSetupParticipant.inspectAll();
+    updateDecorators(
+        new String[] {
+          ExcludedTypeDecorator.DECORATOR_ID,
+          ExcludedModuleDecorator.DECORATOR_ID });
+  }
+
+  public void fireInstrumentationRulesChanged(IProject project) {
+    m_configurationEventManager.fireInstrumentationRulesChanged(project);
+    JavaSetupParticipant.inspectAll();
+    updateDecorators(
+        new String[] {
+          AdaptedModuleDecorator.DECORATOR_ID,
+          AdaptedTypeDecorator.DECORATOR_ID,
+          AdaptedPackageFragmentDecorator.DECORATOR_ID,
+          ExcludedTypeDecorator.DECORATOR_ID,
+          ExcludedModuleDecorator.DECORATOR_ID });
+  }
+
+  public void fireTransientFieldsChanged(IProject project) {
+    m_configurationEventManager.fireTransientFieldsChanged(project);
+    JavaSetupParticipant.inspectAll();
+    updateDecorator(TransientDecorator.DECORATOR_ID);
+  }
+
+  public void fireTransientFieldChanged(IProject project, int index) {
+    m_configurationEventManager.fireTransientFieldChanged(project, index);
+    JavaSetupParticipant.inspectAll();
+    updateDecorator(TransientDecorator.DECORATOR_ID);
+  }
+
+  public void fireBootClassesChanged(IProject project) {
+    m_configurationEventManager.fireBootClassesChanged(project);
+    JavaSetupParticipant.inspectAll();
+  }
+
+  public void fireBootClassChanged(IProject project, int index) {
+    m_configurationEventManager.fireBootClassChanged(project, index);
+    JavaSetupParticipant.inspectAll();
+  }
+
+  public void fireDistributedMethodsChanged(IProject project) {
+    m_configurationEventManager.fireDistributedMethodsChanged(project);
+    updateDecorator(DistributedMethodDecorator.DECORATOR_ID);
+    JavaSetupParticipant.inspectAll();
+  }
+
+  public void fireDistributedMethodChanged(IProject project, int index) {
+    m_configurationEventManager.fireDistributedMethodChanged(project, index);
+    updateDecorator(DistributedMethodDecorator.DECORATOR_ID);
+    JavaSetupParticipant.inspectAll();
+  }
+
+  public void fireClientChanged(IProject project) {
+    m_configurationEventManager.fireClientChanged(project);
+  }
+
+  public void fireModuleRepoChanged(IProject project, int index) {
+    m_configurationEventManager.fireModuleRepoChanged(project, index);
+  }
+
+  public void fireModuleReposChanged(IProject project) {
+    m_configurationEventManager.fireModuleReposChanged(project);
+  }
+
+  public void fireModuleChanged(IProject project, int index) {
+    m_configurationEventManager.fireModuleChanged(project, index);
+  }
+
+  public void fireModulesChanged(IProject project) {
+    m_configurationEventManager.fireModulesChanged(project);
+  }
 
   public void addConfigurationListener(IConfigurationListener listener) {
-    m_configurationListeners.addConfigurationListener(listener);
+    m_configurationEventManager.addConfigurationListener(listener);
   }
 
   public void removeConfigurationListener(IConfigurationListener listener) {
-    m_configurationListeners.removeConfigurationListener(listener);
+    m_configurationEventManager.removeConfigurationListener(listener);
   }
 
   public static Image createImage(String path) {
     return new JavaElementImageDescriptor(getImageDescriptor(path), 0, new Point(16, 16)).createImage(false);
   }
 }
+
+class ErrorDialog extends MessageDialog {
+  ErrorDialog(String msg) {
+    super(null, "Terracotta Plugin", null, msg, MessageDialog.ERROR,
+          new String[] { IDialogConstants.OK_LABEL }, 0);
+  }
+  
+  static void showError(String msg) {
+    ErrorDialog dialog = new ErrorDialog(msg);
+    dialog.setShellStyle(dialog.getShellStyle() | SWT.RESIZE);
+    dialog.open();
+  }
+}
+

@@ -5,6 +5,7 @@ package org.terracotta.dso.views;
 
 public class IncludesWrapper {
   InstrumentedClassesWrapper m_instrumentedClasses;
+  IncludeWrapper[] children;
   
   IncludesWrapper(InstrumentedClassesWrapper instrumentedClasses) {
     m_instrumentedClasses = instrumentedClasses;
@@ -12,13 +13,21 @@ public class IncludesWrapper {
   
   IncludeWrapper[] createIncludeWrappers() {
     int count = m_instrumentedClasses.sizeOfIncludeArray();
-    IncludeWrapper[] result = new IncludeWrapper[count];
+    children = new IncludeWrapper[count];
     
     for(int i = 0; i < count; i++) {
-      result[i] = new IncludeWrapper(m_instrumentedClasses, i);
+      children[i] = new IncludeWrapper(m_instrumentedClasses, i);
     }
     
-    return result;
+    return children;
+  }
+  
+  IncludeWrapper[] getChildren() {
+    return children;
+  }
+  
+  IncludeWrapper getChildAt(int index) {
+    return children != null ? children[index] : null;
   }
   
   int sizeOfIncludeArray() {

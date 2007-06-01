@@ -4,7 +4,9 @@
  */
 package com.tc.object.dna.impl;
 
-public class EnumInstance {
+import java.io.Serializable;
+
+public class EnumInstance implements Serializable {
   private final ClassInstance      classInstance;
   private final UTF8ByteDataHolder enumName;
 
@@ -22,6 +24,6 @@ public class EnumInstance {
   }
 
   public String toString() {
-    return "Enum(" + classInstance + ", name: " + enumName.asString() + ")";
+    return enumName.asString();
   }
 }

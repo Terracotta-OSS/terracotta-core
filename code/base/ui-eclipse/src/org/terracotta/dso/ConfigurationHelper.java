@@ -133,19 +133,14 @@ public class ConfigurationHelper {
         XmlObject[] objects = classes.selectPath("*");
 
         if (objects != null && objects.length > 0) {
-          XmlObject object;
-          String expr;
-
           for (int i = objects.length - 1; i >= 0; i--) {
-            object = objects[i];
+            XmlObject object = objects[i];
 
             if (object instanceof Include) {
-              expr = ((Include) object).getClassExpression();
-
+              String expr = ((Include) object).getClassExpression();
               if (m_patternHelper.matchesPackageDeclaration(expr, packageDecl)) { return true; }
             } else if (object instanceof ClassExpression) {
-              expr = ((ClassExpression) object).getStringValue();
-
+              String expr = ((ClassExpression) object).getStringValue();
               if (m_patternHelper.matchesPackageDeclaration(expr, packageDecl)) { return false; }
             }
           }
@@ -166,19 +161,14 @@ public class ConfigurationHelper {
         XmlObject[] objects = classes.selectPath("*");
 
         if (objects != null && objects.length > 0) {
-          XmlObject object;
-          String expr;
-
           for (int i = objects.length - 1; i >= 0; i--) {
-            object = objects[i];
+            XmlObject object = objects[i];
 
             if (object instanceof Include) {
-              expr = ((Include) object).getClassExpression();
-
+              String expr = ((Include) object).getClassExpression();
               if (m_patternHelper.matchesPackageFragment(expr, fragment)) { return true; }
             } else if (object instanceof ClassExpression) {
-              expr = ((ClassExpression) object).getStringValue();
-
+              String expr = ((ClassExpression) object).getStringValue();
               if (m_patternHelper.matchesPackageFragment(expr, fragment)) { return false; }
             }
           }
@@ -215,19 +205,14 @@ public class ConfigurationHelper {
         XmlObject[] objects = classes.selectPath("*");
 
         if (objects != null && objects.length > 0) {
-          XmlObject object;
-          String expr;
-
           for (int i = objects.length - 1; i >= 0; i--) {
-            object = objects[i];
+            XmlObject object = objects[i];
 
             if (object instanceof Include) {
-              expr = ((Include) object).getClassExpression();
-
+              String expr = ((Include) object).getClassExpression();
               if (m_patternHelper.matchesClass(expr, classExpr)) { return true; }
             } else if (object instanceof ClassExpression) {
-              expr = ((ClassExpression) object).getStringValue();
-
+              String expr = ((ClassExpression) object).getStringValue();
               if (m_patternHelper.matchesClass(expr, classExpr)) { return false; }
             }
           }
@@ -238,39 +223,125 @@ public class ConfigurationHelper {
     return m_plugin.isBootClass(classExpr);
   }
 
+  public Include includeRuleFor(String classExpr) {
+    TcConfig config = getConfig();
+
+    if (config != null) {
+      InstrumentedClasses classes = getInstrumentedClasses();
+
+      if (classes != null) {
+        XmlObject[] objects = classes.selectPath("*");
+
+        if (objects != null && objects.length > 0) {
+          for (int i = objects.length - 1; i >= 0; i--) {
+            XmlObject object = objects[i];
+
+            if (object instanceof Include) {
+              String expr = ((Include) object).getClassExpression();
+              if (expr != null && expr.equals(classExpr)) { return (Include) object; }
+            }
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  public Include ensureIncludeRuleFor(String classExpr) {
+    Include include = includeRuleFor(classExpr);
+
+    if (include == null) {
+      include = addIncludeRule(classExpr);
+      m_plugin.fireExcludeRulesChanged(m_project);
+    }
+
+    return include;
+  }
+
+  public boolean declaresRoot(IType type) {
+    return declaresRoot(type.getFullyQualifiedName());
+  }
+
+  public boolean declaresRoot(String typeName) {
+    if (typeName == null) return false;
+
+    Roots roots = getRoots();
+    if (roots != null) {
+      for (int i = 0; i < roots.sizeOfRootArray(); i++) {
+        String rootFieldName = roots.getRootArray(i).getFieldName();
+        
+        if (rootFieldName != null && rootFieldName.length() > 0) {
+          int dotIndex = rootFieldName.lastIndexOf('.');
+
+          if (dotIndex != -1) {
+            String rootTypeName = rootFieldName.substring(0, dotIndex);
+            if (typeName.equals(rootTypeName)) { return true; }
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
   public void ensureAdaptable(IJavaElement element) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureAdaptable(element, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureAdaptable(IJavaElement element, MultiChangeSignaller signaller) {
     if (element instanceof ICompilationUnit) {
-      ensureAdaptable((ICompilationUnit) element);
+      ensureAdaptable((ICompilationUnit) element, signaller);
     } else if (element instanceof IClassFile) {
-      ensureAdaptable((IClassFile) element);
+      ensureAdaptable((IClassFile) element, signaller);
     } else if (element instanceof IType) {
-      ensureAdaptable((IType) element);
+      ensureAdaptable((IType) element, signaller);
     } else if (element instanceof IPackageDeclaration) {
-      ensureAdaptable((IPackageDeclaration) element);
+      ensureAdaptable((IPackageDeclaration) element, signaller);
     } else if (element instanceof IPackageFragment) {
-      ensureAdaptable((IPackageFragment) element);
+      ensureAdaptable((IPackageFragment) element, signaller);
     } else if (element instanceof IJavaProject) {
-      ensureAdaptable((IJavaProject) element);
+      ensureAdaptable((IJavaProject) element, signaller);
     }
   }
 
-  public void ensureAdaptable(final ICompilationUnit module) {
-    ensureAdaptable(module.findPrimaryType());
+  public void ensureAdaptable(ICompilationUnit module) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureAdaptable(module, signaller);
+    signaller.signal(m_project);
   }
 
-  public void ensureAdaptable(final IClassFile classFile) {
+  public void ensureAdaptable(ICompilationUnit module, MultiChangeSignaller signaller) {
+    ensureAdaptable(module.findPrimaryType(), signaller);
+  }
+
+  public void ensureAdaptable(IClassFile classFile) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureAdaptable(classFile, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureAdaptable(IClassFile classFile, MultiChangeSignaller signaller) {
     try {
-      ensureAdaptable(classFile.getType());
+      ensureAdaptable(classFile.getType(), signaller);
     } catch (JavaModelException jme) {
       openError("Error ensuring '" + classFile.getElementName() + "' instrumented", jme);
     }
   }
 
   public void ensureAdaptable(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureAdaptable(type, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureAdaptable(IType type, MultiChangeSignaller signaller) {
     while (type != null) {
       if (!isInterface(type)) {
         if (!isAdaptable(type)) {
-          internalEnsureAdaptable(type);
+          internalEnsureAdaptable(type, signaller);
         }
       } else {
         break;
@@ -295,7 +366,7 @@ public class ConfigurationHelper {
               break;
             } else if (!isInterface(superType)) {
               if (!isAdaptable(superType)) {
-                internalEnsureAdaptable(superType);
+                internalEnsureAdaptable(superType, signaller);
               } else {
                 break;
               }
@@ -309,160 +380,203 @@ public class ConfigurationHelper {
 
       type = type.getDeclaringType();
     }
-
-    ConfigurationEditor editor = getConfigurationEditor();
-    if (false && editor != null) {
-      editor.updateInstrumentedClassesPanel();
-    } else {
-      persistConfiguration();
-    }
   }
 
-  private void internalEnsureAdaptable(IType type) {
-    internalEnsureAdaptable(PatternHelper.getFullyQualifiedName(type));
+  public void internalEnsureAdaptable(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureAdaptable(type, signaller);
+    signaller.signal(m_project);
+  }
 
-    int filter = IJavaSearchScope.SYSTEM_LIBRARIES;
-    IJavaElement[] elements = new IJavaElement[] { m_javaProject };
-    IJavaSearchScope scope = SearchEngine.createJavaSearchScope(elements, filter);
+  public void internalEnsureAdaptable(IType type, MultiChangeSignaller signaller) {
+    internalEnsureAdaptable(PatternHelper.getFullyQualifiedName(type), signaller);
 
-    if (scope.encloses(type)) {
-      internalEnsureBootJarClass(type);
+    if (!isBootJarClass(type)) {
+      int filter = IJavaSearchScope.SYSTEM_LIBRARIES;
+      IJavaElement[] elements = new IJavaElement[] { m_javaProject };
+      IJavaSearchScope scope = SearchEngine.createJavaSearchScope(elements, filter);
+
+      if (scope.encloses(type)) {
+        internalEnsureBootJarClass(type, signaller);
+      }
     }
   }
 
   public void ensureAdaptable(IPackageDeclaration packageDecl) {
-    if (packageDecl != null && !isAdaptable(packageDecl)) {
-      internalEnsureAdaptable(packageDecl);
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureAdaptable(packageDecl, signaller);
+    signaller.signal(m_project);
+  }
 
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+  public void ensureAdaptable(IPackageDeclaration packageDecl, MultiChangeSignaller signaller) {
+    if (packageDecl != null && !isAdaptable(packageDecl)) {
+      internalEnsureAdaptable(packageDecl, signaller);
     }
   }
 
-  private void internalEnsureAdaptable(IPackageDeclaration packageDecl) {
-    internalEnsureAdaptable(PatternHelper.getWithinPattern(packageDecl));
+  public void internalEnsureAdaptable(IPackageDeclaration packageDecl) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureAdaptable(packageDecl, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureAdaptable(IPackageDeclaration packageDecl, MultiChangeSignaller signaller) {
+    internalEnsureAdaptable(PatternHelper.getWithinPattern(packageDecl), signaller);
   }
 
   public void ensureAdaptable(IPackageFragment fragment) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureAdaptable(fragment, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureAdaptable(IPackageFragment fragment, MultiChangeSignaller signaller) {
     if (fragment != null && !isAdaptable(fragment)) {
-      internalEnsureAdaptable(fragment);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureAdaptable(fragment, signaller);
     }
   }
 
-  private void internalEnsureAdaptable(IPackageFragment fragment) {
-    internalEnsureAdaptable(PatternHelper.getWithinPattern(fragment));
+  public void internalEnsureAdaptable(IPackageFragment fragment) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureAdaptable(fragment, signaller);
+    signaller.signal(m_project);
   }
 
-  public void ensureAdaptable(final IJavaProject javaProject) {
+  public void internalEnsureAdaptable(IPackageFragment fragment, MultiChangeSignaller signaller) {
+    internalEnsureAdaptable(PatternHelper.getWithinPattern(fragment), signaller);
+  }
+
+  public void ensureAdaptable(IJavaProject javaProject) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureAdaptable(javaProject, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureAdaptable(IJavaProject javaProject, MultiChangeSignaller signaller) {
     if (javaProject != null && !isAdaptable(javaProject)) {
-      internalEnsureAdaptable(javaProject);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureAdaptable(javaProject, signaller);
     }
   }
 
-  private void internalEnsureAdaptable(final IJavaProject javaProject) {
+  public void internalEnsureAdaptable(IJavaProject javaProject, MultiChangeSignaller signaller) {
     IPackageFragment[] fragments = getSourceFragments(javaProject);
 
     for (int i = 0; i < fragments.length; i++) {
       if (!isAdaptable(fragments[i])) {
-        internalEnsureAdaptable(fragments[i]);
+        internalEnsureAdaptable(fragments[i], signaller);
       }
     }
   }
 
-  public void ensureAdaptable(final String classExpr) {
+  public void ensureAdaptable(String classExpr) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureAdaptable(classExpr, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureAdaptable(String classExpr, MultiChangeSignaller signaller) {
     if (!isAdaptable(classExpr)) {
-      internalEnsureAdaptable(classExpr);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureAdaptable(classExpr, signaller);
     }
   }
 
-  private void internalEnsureAdaptable(final String classExpr) {
+  public Include addIncludeRule(String classExpr) {
     InstrumentedClasses classes = ensureInstrumentedClasses();
     Include include = classes.addNewInclude();
-
     include.setClassExpression(classExpr);
+    return include;
+  }
+
+  public void internalEnsureAdaptable(String classExpr) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureAdaptable(classExpr, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureAdaptable(String classExpr, MultiChangeSignaller signaller) {
+    addIncludeRule(classExpr);
+    signaller.includeRulesChanged = true;
   }
 
   public void ensureNotAdaptable(IJavaElement element) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotAdaptable(element, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotAdaptable(IJavaElement element, MultiChangeSignaller signaller) {
     if (element instanceof ICompilationUnit) {
-      ensureNotAdaptable((ICompilationUnit) element);
+      ensureNotAdaptable((ICompilationUnit) element, signaller);
     } else if (element instanceof IType) {
-      ensureNotAdaptable((IType) element);
+      ensureNotAdaptable((IType) element, signaller);
     } else if (element instanceof IPackageDeclaration) {
-      ensureNotAdaptable((IPackageDeclaration) element);
+      ensureNotAdaptable((IPackageDeclaration) element, signaller);
     } else if (element instanceof IPackageFragment) {
-      ensureNotAdaptable((IPackageFragment) element);
+      ensureNotAdaptable((IPackageFragment) element, signaller);
     } else if (element instanceof IJavaProject) {
-      ensureNotAdaptable((IJavaProject) element);
+      ensureNotAdaptable((IJavaProject) element, signaller);
     }
   }
 
-  public void ensureNotAdaptable(final ICompilationUnit module) {
+  public void ensureNotAdaptable(ICompilationUnit module) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotAdaptable(module, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotAdaptable(ICompilationUnit module, MultiChangeSignaller signaller) {
     if (module != null) {
-      internalEnsureNotAdaptable(module);
+      internalEnsureNotAdaptable(module, signaller);
     }
   }
 
-  private void internalEnsureNotAdaptable(final ICompilationUnit module) {
+  public void internalEnsureNotAdaptable(ICompilationUnit module) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotAdaptable(module, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotAdaptable(ICompilationUnit module, MultiChangeSignaller signaller) {
     IType primaryType = module.findPrimaryType();
 
     if (primaryType != null) {
-      internalEnsureNotAdaptable(primaryType);
+      internalEnsureNotAdaptable(primaryType, signaller);
     }
   }
 
-  public void ensureNotAdaptable(final IType type) {
+  public void ensureNotAdaptable(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotAdaptable(type, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotAdaptable(IType type, MultiChangeSignaller signaller) {
     if (isAdaptable(type)) {
-      baseEnsureNotAdaptable(type);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      baseEnsureNotAdaptable(type, signaller);
     }
   }
 
-  public void baseEnsureNotAdaptable(final IType type) {
-    internalEnsureNotAdaptable(type);
+  public void baseEnsureNotAdaptable(IType type, MultiChangeSignaller signaller) {
+    internalEnsureNotAdaptable(type, signaller);
   }
 
-  private void internalEnsureNotAdaptable(final IType type) {
-    internalEnsureNotLocked(type);
-    internalEnsureNotBootJarClass(type);
-    internalEnsureNotAdaptable(PatternHelper.getFullyQualifiedName(type));
+  public void internalEnsureNotAdaptable(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotAdaptable(type, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotAdaptable(IType type, MultiChangeSignaller signaller) {
+    internalEnsureNotLocked(type, signaller);
+    internalEnsureNotBootJarClass(type, signaller);
+    internalEnsureNotAdaptable(PatternHelper.getFullyQualifiedName(type), signaller);
 
     try {
       IField[] fields = type.getFields();
 
       if (fields != null) {
         for (int i = 0; i < fields.length; i++) {
-          internalEnsureNotRoot(fields[i]);
+          internalEnsureNotRoot(fields[i], signaller);
         }
       }
 
@@ -470,8 +584,8 @@ public class ConfigurationHelper {
 
       if (childTypes != null) {
         for (int i = 0; i < childTypes.length; i++) {
-          internalEnsureNotAdaptable(childTypes[i]);
-          internalEnsureNotBootJarClass(childTypes[i]);
+          internalEnsureNotAdaptable(childTypes[i], signaller);
+          internalEnsureNotBootJarClass(childTypes[i], signaller);
         }
       }
 
@@ -479,103 +593,112 @@ public class ConfigurationHelper {
 
       if (methods != null) {
         for (int i = 0; i < methods.length; i++) {
-          internalEnsureNotLocked(methods[i]);
-          internalEnsureLocalMethod(methods[i]);
+          internalEnsureNotLocked(methods[i], signaller);
+          internalEnsureLocalMethod(methods[i], signaller);
         }
       }
     } catch (JavaModelException jme) {/**/
     }
+
+    testRemoveInstrumentedClasses();
   }
 
-  public void ensureNotAdaptable(final IPackageDeclaration packageDecl) {
+  public void ensureNotAdaptable(IPackageDeclaration packageDecl) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotAdaptable(packageDecl, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotAdaptable(IPackageDeclaration packageDecl, MultiChangeSignaller signaller) {
     if (isAdaptable(packageDecl)) {
-      internalEnsureNotAdaptable(packageDecl);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNotAdaptable(packageDecl, signaller);
     }
   }
 
-  private void internalEnsureNotAdaptable(final IPackageDeclaration packageDecl) {
-    internalEnsureNotLocked(packageDecl);
-    internalEnsureNotAdaptable(PatternHelper.getWithinPattern(packageDecl));
+  public void internalEnsureNotAdaptable(IPackageDeclaration packageDecl) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotAdaptable(packageDecl, signaller);
+    signaller.signal(m_project);
   }
 
-  public void ensureNotAdaptable(final IPackageFragment fragment) {
+  public void internalEnsureNotAdaptable(IPackageDeclaration packageDecl, MultiChangeSignaller signaller) {
+    internalEnsureNotLocked(packageDecl, signaller);
+    internalEnsureNotAdaptable(PatternHelper.getWithinPattern(packageDecl), signaller);
+  }
+
+  public void ensureNotAdaptable(IPackageFragment fragment) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotAdaptable(fragment, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotAdaptable(IPackageFragment fragment, MultiChangeSignaller signaller) {
     if (isAdaptable(fragment)) {
-      internalEnsureNotAdaptable(fragment);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNotAdaptable(fragment, signaller);
     }
   }
 
-  private void internalEnsureNotAdaptable(final IPackageFragment fragment) {
-    internalEnsureNotLocked(fragment);
+  public void internalEnsureNotAdaptable(IPackageFragment fragment) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotAdaptable(fragment, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotAdaptable(IPackageFragment fragment, MultiChangeSignaller signaller) {
+    internalEnsureNotLocked(fragment, signaller);
 
     try {
       ICompilationUnit[] cus = fragment.getCompilationUnits();
 
       if (cus != null) {
         for (int i = 0; i < cus.length; i++) {
-          internalEnsureNotAdaptable(cus[i]);
+          internalEnsureNotAdaptable(cus[i], signaller);
         }
       }
     } catch (JavaModelException jme) {
-      internalEnsureNotAdaptable(PatternHelper.getWithinPattern(fragment));
+      internalEnsureNotAdaptable(PatternHelper.getWithinPattern(fragment), signaller);
     }
   }
 
-  public void ensureNotAdaptable(final IJavaProject javaProject) {
+  public void ensureNotAdaptable(IJavaProject javaProject) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotAdaptable(javaProject, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotAdaptable(IJavaProject javaProject, MultiChangeSignaller signaller) {
     if (javaProject != null) {
       IPackageFragment[] fragments = getSourceFragments(javaProject);
-
       for (int i = 0; i < fragments.length; i++) {
-        internalEnsureNotAdaptable(fragments[i]);
-      }
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
+        internalEnsureNotAdaptable(fragments[i], signaller);
       }
     }
   }
 
-  public void ensureNotAdaptable(final String classExpr) {
+  public void ensureNotAdaptable(String classExpr) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotAdaptable(classExpr, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotAdaptable(String classExpr, MultiChangeSignaller signaller) {
     if (isAdaptable(classExpr)) {
-      internalEnsureNotAdaptable(classExpr);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNotAdaptable(classExpr, signaller);
     }
   }
 
-  private void internalEnsureNotAdaptable(final String classExpr) {
+  public void internalEnsureNotAdaptable(String classExpr, MultiChangeSignaller signaller) {
     InstrumentedClasses classes = getInstrumentedClasses();
 
     if (classes != null) {
       int size = classes.sizeOfIncludeArray();
-      String expr;
 
       for (int i = size - 1; i >= 0; i--) {
-        expr = classes.getIncludeArray(i).getClassExpression();
+        String expr = classes.getIncludeArray(i).getClassExpression();
 
         if (m_patternHelper.matchesClass(expr, classExpr)) {
           classes.removeInclude(i);
+          signaller.includeRulesChanged = true;
         }
       }
     }
@@ -613,19 +736,14 @@ public class ConfigurationHelper {
         XmlObject[] objects = classes.selectPath("*");
 
         if (objects != null && objects.length > 0) {
-          XmlObject object;
-          String expr;
-
           for (int i = objects.length - 1; i >= 0; i--) {
-            object = objects[i];
+            XmlObject object = objects[i];
 
             if (object instanceof Include) {
-              expr = ((Include) object).getClassExpression();
-
+              String expr = ((Include) object).getClassExpression();
               if (m_patternHelper.matchesPackageFragment(expr, fragment)) { return false; }
             } else if (object instanceof ClassExpression) {
-              expr = ((ClassExpression) object).getStringValue();
-
+              String expr = ((ClassExpression) object).getStringValue();
               if (m_patternHelper.matchesPackageFragment(expr, fragment)) { return true; }
             }
           }
@@ -636,7 +754,7 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isExcluded(final IJavaProject javaProject) {
+  public boolean isExcluded(IJavaProject javaProject) {
     if (javaProject != null) {
       IPackageFragment[] fragments = getSourceFragments(javaProject);
 
@@ -662,19 +780,14 @@ public class ConfigurationHelper {
         XmlObject[] objects = classes.selectPath("*");
 
         if (objects != null && objects.length > 0) {
-          XmlObject object;
-          String expr;
-
           for (int i = objects.length - 1; i >= 0; i--) {
-            object = objects[i];
+            XmlObject object = objects[i];
 
             if (object instanceof Include) {
-              expr = ((Include) object).getClassExpression();
-
+              String expr = ((Include) object).getClassExpression();
               if (m_patternHelper.matchesClass(expr, classExpr)) { return false; }
             } else if (object instanceof ClassExpression) {
-              expr = ((ClassExpression) object).getStringValue();
-
+              String expr = ((ClassExpression) object).getStringValue();
               if (m_patternHelper.matchesClass(expr, classExpr)) { return true; }
             }
           }
@@ -685,206 +798,262 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public void ensureExcluded(final IJavaElement element) {
+  public void ensureExcluded(IJavaElement element) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureExcluded(element, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureExcluded(IJavaElement element, MultiChangeSignaller signaller) {
     if (element instanceof ICompilationUnit) {
-      ensureExcluded((ICompilationUnit) element);
+      ensureExcluded((ICompilationUnit) element, signaller);
     } else if (element instanceof IType) {
-      ensureExcluded((IType) element);
+      ensureExcluded((IType) element, signaller);
     } else if (element instanceof IPackageDeclaration) {
-      ensureExcluded(element.getElementName());
+      ensureExcluded(element.getElementName(), signaller);
     } else if (element instanceof IPackageFragment) {
-      ensureExcluded((IPackageFragment) element);
+      ensureExcluded((IPackageFragment) element, signaller);
     } else if (element instanceof IJavaProject) {
-      ensureExcluded((IJavaProject) element);
+      ensureExcluded((IJavaProject) element, signaller);
     }
   }
 
-  public void ensureExcluded(final ICompilationUnit module) {
+  public void ensureExcluded(ICompilationUnit module) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureExcluded(module, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureExcluded(ICompilationUnit module, MultiChangeSignaller signaller) {
     if (module != null) {
-      internalEnsureExcluded(module);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureExcluded(module, signaller);
     }
   }
 
-  private void internalEnsureExcluded(final ICompilationUnit module) {
-    internalEnsureExcluded(module.findPrimaryType());
+  public void internalEnsureExcluded(ICompilationUnit module) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureExcluded(module, signaller);
+    signaller.signal(m_project);
   }
 
-  public void ensureExcluded(final IType type) {
+  public void internalEnsureExcluded(ICompilationUnit module, MultiChangeSignaller signaller) {
+    internalEnsureExcluded(module.findPrimaryType(), signaller);
+  }
+
+  public void ensureExcluded(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureExcluded(type, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureExcluded(IType type, MultiChangeSignaller signaller) {
     if (type != null && !isExcluded(type)) {
-      internalEnsureExcluded(type);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureExcluded(type, signaller);
     }
   }
 
-  private void internalEnsureExcluded(final IType type) {
-    internalEnsureExcluded(PatternHelper.getFullyQualifiedName(type));
+  public void internalEnsureExcluded(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureExcluded(type, signaller);
+    signaller.signal(m_project);
   }
 
-  public void ensureExcluded(final IPackageFragment fragment) {
+  public void internalEnsureExcluded(IType type, MultiChangeSignaller signaller) {
+    internalEnsureExcluded(PatternHelper.getFullyQualifiedName(type), signaller);
+  }
+
+  public void ensureExcluded(IPackageFragment fragment) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureExcluded(fragment, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureExcluded(IPackageFragment fragment, MultiChangeSignaller signaller) {
     if (fragment != null && !isExcluded(fragment)) {
-      internalEnsureExcluded(fragment);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureExcluded(fragment, signaller);
     }
   }
 
-  private void internalEnsureExcluded(final IPackageFragment fragment) {
-    internalEnsureExcluded(PatternHelper.getWithinPattern(fragment));
+  public void internalEnsureExcluded(IPackageFragment fragment) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureExcluded(fragment, signaller);
+    signaller.signal(m_project);
   }
 
-  public void ensureExcluded(final IJavaProject javaProject) {
+  public void internalEnsureExcluded(IPackageFragment fragment, MultiChangeSignaller signaller) {
+    internalEnsureExcluded(PatternHelper.getWithinPattern(fragment), signaller);
+  }
+
+  public void ensureExcluded(IJavaProject javaProject) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureExcluded(javaProject, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureExcluded(IJavaProject javaProject, MultiChangeSignaller signaller) {
     if (javaProject != null) {
       IPackageFragment[] fragments = getSourceFragments(javaProject);
-
       for (int i = 0; i < fragments.length; i++) {
-        internalEnsureExcluded(fragments[i]);
+        internalEnsureExcluded(fragments[i], signaller);
       }
-
-      persistConfiguration();
     }
   }
 
-  public void ensureExcluded(final String className) {
+  public void ensureExcluded(String className) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureExcluded(className, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureExcluded(String className, MultiChangeSignaller signaller) {
     if (className != null && !isExcluded(className)) {
-      internalEnsureExcluded(className);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureExcluded(className, signaller);
     }
   }
 
-  private void internalEnsureExcluded(final String className) {
+  public void internalEnsureExcluded(String className, MultiChangeSignaller signaller) {
     ensureInstrumentedClasses().addExclude(className);
+    signaller.excludeRulesChanged = true;
   }
 
   public void ensureNotExcluded(IJavaElement element) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotExcluded(element, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotExcluded(IJavaElement element, MultiChangeSignaller signaller) {
     if (element instanceof ICompilationUnit) {
-      ensureNotExcluded((ICompilationUnit) element);
+      ensureNotExcluded((ICompilationUnit) element, signaller);
     } else if (element instanceof IType) {
-      ensureNotExcluded((IType) element);
+      ensureNotExcluded((IType) element, signaller);
     } else if (element instanceof IPackageFragment) {
-      ensureNotExcluded((IPackageFragment) element);
+      ensureNotExcluded((IPackageFragment) element, signaller);
     } else if (element instanceof IJavaProject) {
-      ensureNotExcluded((IJavaProject) element);
+      ensureNotExcluded((IJavaProject) element, signaller);
     }
   }
 
-  public void ensureNotExcluded(final ICompilationUnit module) {
+  public void ensureNotExcluded(ICompilationUnit module) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotExcluded(module, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotExcluded(ICompilationUnit module, MultiChangeSignaller signaller) {
     if (module != null) {
-      internalEnsureNotExcluded(module);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNotExcluded(module, signaller);
     }
   }
 
-  private void internalEnsureNotExcluded(final ICompilationUnit module) {
-    internalEnsureNotExcluded(module.findPrimaryType());
+  public void internalEnsureNotExcluded(ICompilationUnit module) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotExcluded(module, signaller);
+    signaller.signal(m_project);
   }
 
-  public void ensureNotExcluded(final IType type) {
+  public void internalEnsureNotExcluded(ICompilationUnit module, MultiChangeSignaller signaller) {
+    internalEnsureNotExcluded(module.findPrimaryType(), signaller);
+  }
+
+  public void ensureNotExcluded(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotExcluded(type, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotExcluded(IType type, MultiChangeSignaller signaller) {
     if (type != null && isExcluded(type)) {
-      baseEnsureNotExcluded(PatternHelper.getFullyQualifiedName(type));
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      baseEnsureNotExcluded(PatternHelper.getFullyQualifiedName(type), signaller);
     }
   }
 
-  public void baseEnsureNotExcluded(final IType type) {
-    internalEnsureNotExcluded(type);
+  public void baseEnsureNotExcluded(IType type, MultiChangeSignaller signaller) {
+    internalEnsureNotExcluded(type, signaller);
   }
 
-  private void internalEnsureNotExcluded(final IType type) {
-    internalEnsureNotExcluded(PatternHelper.getFullyQualifiedName(type));
+  public void internalEnsureNotExcluded(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotExcluded(type, signaller);
+    signaller.signal(m_project);
   }
 
-  public void ensureNotExcluded(final IPackageFragment fragment) {
+  public void internalEnsureNotExcluded(IType type, MultiChangeSignaller signaller) {
+    internalEnsureNotExcluded(PatternHelper.getFullyQualifiedName(type), signaller);
+  }
+
+  public void ensureNotExcluded(IPackageFragment fragment) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotExcluded(fragment, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotExcluded(IPackageFragment fragment, MultiChangeSignaller signaller) {
     if (fragment != null) {
-      ensureNotExcluded(PatternHelper.getWithinPattern(fragment));
+      ensureNotExcluded(PatternHelper.getWithinPattern(fragment), signaller);
     }
   }
 
-  private void internalEnsureNotExcluded(final IPackageFragment fragment) {
-    internalEnsureNotExcluded(PatternHelper.getWithinPattern(fragment));
+  public void internalEnsureNotExcluded(IPackageFragment fragment) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotExcluded(fragment, signaller);
+    signaller.signal(m_project);
   }
 
-  public void ensureNotExcluded(final IJavaProject javaProject) {
+  public void internalEnsureNotExcluded(IPackageFragment fragment, MultiChangeSignaller signaller) {
+    internalEnsureNotExcluded(PatternHelper.getWithinPattern(fragment), signaller);
+  }
+
+  public void ensureNotExcluded(IJavaProject javaProject) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotExcluded(javaProject, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotExcluded(IJavaProject javaProject, MultiChangeSignaller signaller) {
     if (javaProject != null) {
       IPackageFragment[] fragments = getSourceFragments(javaProject);
-
       for (int i = 0; i < fragments.length; i++) {
-        internalEnsureNotExcluded(fragments[i]);
+        internalEnsureNotExcluded(fragments[i], signaller);
       }
 
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
-      }
     }
   }
 
-  public void ensureNotExcluded(final String classExpr) {
+  public void ensureNotExcluded(String classExpr) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotExcluded(classExpr, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotExcluded(String classExpr, MultiChangeSignaller signaller) {
     if (isExcluded(classExpr)) {
-      baseEnsureNotExcluded(classExpr);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateInstrumentedClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      baseEnsureNotExcluded(classExpr, signaller);
     }
   }
 
-  public void baseEnsureNotExcluded(final String classExpr) {
-    internalEnsureNotExcluded(classExpr);
+  public void baseEnsureNotExcluded(String classExpr, MultiChangeSignaller signaller) {
+    internalEnsureNotExcluded(classExpr, signaller);
   }
 
-  private void internalEnsureNotExcluded(final String classExpr) {
+  public void internalEnsureNotExcluded(String classExpr) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotExcluded(classExpr, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotExcluded(String classExpr, MultiChangeSignaller signaller) {
     InstrumentedClasses classes = getInstrumentedClasses();
 
     if (classes != null) {
       int size = classes.sizeOfExcludeArray();
-      String expr;
 
       for (int i = size - 1; i >= 0; i--) {
-        expr = classes.getExcludeArray(i);
+        String expr = classes.getExcludeArray(i);
 
         if (m_patternHelper.matchesClass(expr, classExpr)) {
           classes.removeExclude(i);
+          signaller.excludeRulesChanged = true;
         }
       }
     }
@@ -925,41 +1094,24 @@ public class ConfigurationHelper {
   }
 
   public void ensureRoot(IField field) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureRoot(field, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureRoot(IField field, MultiChangeSignaller signaller) {
     if (!isRoot(field)) {
-      IType declaringType = field.getDeclaringType();
-      boolean updateInstrumented = false;
-      boolean updateTransients = false;
-
-      if (declaringType != null && !isInterface(declaringType) && !isAdaptable(declaringType)) {
-        internalEnsureAdaptable(declaringType);
-        updateInstrumented = true;
-      }
-
       IType fieldType = getFieldType(field);
+
       if (fieldType != null && !isInterface(fieldType) && !isAdaptable(fieldType)) {
-        internalEnsureAdaptable(fieldType);
-        updateInstrumented = true;
+        internalEnsureAdaptable(fieldType, signaller);
       }
 
       if (isTransient(field)) {
-        ensureNotTransient(field);
-        updateTransients = true;
+        ensureNotTransient(field, signaller);
       }
 
-      internalEnsureRoot(getFullName(field));
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        if (updateInstrumented) {
-          editor.updateInstrumentedClassesPanel();
-        }
-        if (updateTransients) {
-          editor.updateTransientsPanel();
-        }
-        editor.updateRootsPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureRoot(getFullName(field), signaller);
     }
   }
 
@@ -1008,82 +1160,88 @@ public class ConfigurationHelper {
     return null;
   }
 
-  public void ensureRoot(final String fieldName) {
+  public void ensureRoot(String fieldName) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureRoot(fieldName, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureRoot(String fieldName, MultiChangeSignaller signaller) {
     if (!isRoot(fieldName)) {
       IType fieldType = getFieldType(fieldName);
-      boolean updateInstrumented = false;
-      boolean updateTransients = false;
 
       if (fieldType != null && !isAdaptable(fieldType)) {
-        ensureAdaptable(fieldType);
-        updateInstrumented = true;
+        ensureAdaptable(fieldType, signaller);
       }
 
       if (isTransient(fieldName)) {
-        ensureNotTransient(fieldName);
-        updateTransients = true;
+        ensureNotTransient(fieldName, signaller);
       }
 
-      internalEnsureRoot(fieldName);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        if (updateInstrumented) {
-          editor.updateInstrumentedClassesPanel();
-        }
-        if (updateTransients) {
-          editor.updateTransientsPanel();
-        }
-        editor.updateRootsPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureRoot(fieldName, signaller);
     }
   }
 
-  private void internalEnsureRoot(final String fieldName) {
+  public void internalEnsureRoot(String fieldName) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureRoot(fieldName, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureRoot(String fieldName, MultiChangeSignaller signaller) {
     ensureRoots().addNewRoot().setFieldName(fieldName);
+    signaller.rootsChanged = true;
   }
 
-  public void ensureNotRoot(final IField field) {
+  public void ensureNotRoot(IField field) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotRoot(field, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotRoot(IField field, MultiChangeSignaller signaller) {
     if (field != null && isRoot(field)) {
-      baseEnsureNotRoot(field);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateRootsPanel();
-      } else {
-        persistConfiguration();
-      }
+      baseEnsureNotRoot(field, signaller);
     }
   }
 
-  public void baseEnsureNotRoot(final IField field) {
-    internalEnsureNotRoot(field);
+  public void baseEnsureNotRoot(IField field, MultiChangeSignaller signaller) {
+    internalEnsureNotRoot(field, signaller);
   }
 
-  private void internalEnsureNotRoot(final IField field) {
-    internalEnsureNotRoot(getFullName(field));
+  public void internalEnsureNotRoot(IField field) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotRoot(field, signaller);
+    signaller.signal(m_project);
   }
 
-  public void ensureNotRoot(final String fieldName) {
+  public void internalEnsureNotRoot(IField field, MultiChangeSignaller signaller) {
+    internalEnsureNotRoot(getFullName(field), signaller);
+  }
+
+  public void ensureNotRoot(String fieldName) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotRoot(fieldName, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotRoot(String fieldName, MultiChangeSignaller signaller) {
     if (isRoot(fieldName)) {
-      baseEnsureNotRoot(fieldName);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateRootsPanel();
-      } else {
-        persistConfiguration();
-      }
+      baseEnsureNotRoot(fieldName, signaller);
     }
   }
 
-  public void baseEnsureNotRoot(final String fieldName) {
-    internalEnsureNotRoot(fieldName);
+  public void baseEnsureNotRoot(String fieldName, MultiChangeSignaller signaller) {
+    internalEnsureNotRoot(fieldName, signaller);
   }
 
-  private void internalEnsureNotRoot(final String fieldName) {
+  public void internalEnsureNotRoot(String fieldName) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotRoot(fieldName, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotRoot(String fieldName, MultiChangeSignaller signaller) {
     Roots roots = getRoots();
 
     if (roots != null) {
@@ -1092,6 +1250,7 @@ public class ConfigurationHelper {
       for (int i = size - 1; i >= 0; i--) {
         if (fieldName.equals(roots.getRootArray(i).getFieldName())) {
           roots.removeRoot(i);
+          signaller.rootsChanged = true;
         }
       }
 
@@ -1099,28 +1258,19 @@ public class ConfigurationHelper {
     }
   }
 
-  public void renameRoot(final String fieldName, final String newFieldName) {
+  public void renameRoot(String fieldName, String newFieldName) {
     if (isRoot(fieldName)) {
       internalRenameRoot(fieldName, newFieldName);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateRootsPanel();
-      } else {
-        persistConfiguration();
-      }
+      m_plugin.fireRootsChanged(m_project);
     }
   }
 
-  private void internalRenameRoot(final String fieldName, final String newFieldName) {
+  public void internalRenameRoot(String fieldName, String newFieldName) {
     Roots roots = getRoots();
 
     if (roots != null) {
-      Root root;
-      int size = roots.sizeOfRootArray();
-
-      for (int i = 0; i < size; i++) {
-        root = roots.getRootArray(i);
+      for (int i = 0; i < roots.sizeOfRootArray(); i++) {
+        Root root = roots.getRootArray(i);
 
         if (fieldName.equals(root.getFieldName())) {
           root.setFieldName(newFieldName);
@@ -1145,9 +1295,7 @@ public class ConfigurationHelper {
       TransientFields transients = getTransientFields();
 
       if (transients != null) {
-        int size = transients.sizeOfFieldNameArray();
-
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < transients.sizeOfFieldNameArray(); i++) {
           if (fieldName.equals(transients.getFieldNameArray(i))) { return true; }
         }
       }
@@ -1156,98 +1304,100 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public void ensureTransient(final IField field) {
+  public void ensureTransient(IField field) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureTransient(field, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureTransient(IField field, MultiChangeSignaller signaller) {
     if (field != null && !isTransient(field)) {
       if (isRoot(field)) {
-        internalEnsureNotRoot(field);
-
-        ConfigurationEditor editor = getConfigurationEditor();
-        if (false && editor != null) {
-          editor.updateRootsPanel();
-        }
+        internalEnsureNotRoot(field, signaller);
       }
 
       IType declaringType = field.getDeclaringType();
       if (!isAdaptable(declaringType)) {
-        internalEnsureAdaptable(declaringType);
-        ConfigurationEditor editor = getConfigurationEditor();
-        if (false && editor != null) {
-          editor.updateInstrumentedClassesPanel();
-        }
+        internalEnsureAdaptable(declaringType, signaller);
       }
 
-      ensureTransient(getFullName(field));
+      internalEnsureTransient(getFullName(field), signaller);
     }
   }
 
-  public void ensureTransient(final String fieldName) {
-    if (!isTransient(fieldName)) {
-      boolean updateInstrumented = false;
-      boolean updateRoots = false;
+  public void ensureTransient(String fieldName) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureTransient(fieldName, signaller);
+    signaller.signal(m_project);
+  }
 
+  public void ensureTransient(String fieldName, MultiChangeSignaller signaller) {
+    if (!isTransient(fieldName)) {
       IField field = getField(fieldName);
       if (field != null) {
         IType fieldType = field.getDeclaringType();
         if (!isAdaptable(fieldType)) {
-          ensureAdaptable(fieldType);
-          updateInstrumented = true;
+          ensureAdaptable(fieldType, signaller);
         }
       }
 
       if (isRoot(fieldName)) {
-        ensureNotRoot(fieldName);
-        updateRoots = true;
+        ensureNotRoot(fieldName, signaller);
       }
 
-      internalEnsureTransient(fieldName);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        if (updateInstrumented) {
-          editor.updateInstrumentedClassesPanel();
-        }
-        if (updateRoots) {
-          editor.updateRootsPanel();
-        }
-        editor.updateTransientsPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureTransient(fieldName, signaller);
     }
   }
 
-  private void internalEnsureTransient(final String fieldName) {
+  public void internalEnsureTransient(String fieldName) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureTransient(fieldName, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureTransient(String fieldName, MultiChangeSignaller signaller) {
     ensureTransientFields().addFieldName(fieldName);
+    signaller.transientFieldsChanged = true;
   }
 
-  public void ensureNotTransient(final IField field) {
+  public void ensureNotTransient(IField field) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotTransient(field, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotTransient(IField field, MultiChangeSignaller signaller) {
     if (field != null) {
-      ensureNotTransient(getFullName(field));
+      ensureNotTransient(getFullName(field), signaller);
     }
   }
 
-  public void ensureNotTransient(final String fieldName) {
+  public void ensureNotTransient(String fieldName) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotTransient(fieldName, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotTransient(String fieldName, MultiChangeSignaller signaller) {
     if (isTransient(fieldName)) {
-      internalEnsureNotTransient(fieldName);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateTransientsPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNotTransient(fieldName, signaller);
     }
   }
 
-  private void internalEnsureNotTransient(final String fieldName) {
+  public void internalEnsureNotTransient(String fieldName) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotTransient(fieldName, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotTransient(String fieldName, MultiChangeSignaller signaller) {
     TransientFields transients = getTransientFields();
 
     if (transients != null) {
-      int size = transients.sizeOfFieldNameArray();
-
-      for (int i = size - 1; i >= 0; i--) {
+      for (int i = transients.sizeOfFieldNameArray() - 1; i >= 0; i--) {
         if (fieldName.equals(transients.getFieldNameArray(i))) {
           transients.removeFieldName(i);
+          signaller.transientFieldsChanged = true;
         }
       }
 
@@ -1286,15 +1436,15 @@ public class ConfigurationHelper {
     }
   }
 
-  public boolean matches(final String expression, final MemberInfo methodInfo) {
+  public boolean matches(String expression, MemberInfo methodInfo) {
     return m_patternHelper.matchesMember(expression, methodInfo);
   }
 
-  public boolean matches(final String expression, final IMethod method) {
+  public boolean matches(String expression, IMethod method) {
     return m_patternHelper.matchesMethod(expression, method);
   }
 
-  public boolean isDistributedMethod(final MethodDeclaration methodDecl) {
+  public boolean isDistributedMethod(MethodDeclaration methodDecl) {
     IMethodBinding binding = methodDecl.resolveBinding();
 
     if (binding != null && !binding.getDeclaringClass().isInterface()) { return isDistributedMethod(PatternHelper
@@ -1303,24 +1453,20 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isDistributedMethod(final IMethod method) {
+  public boolean isDistributedMethod(IMethod method) {
     MethodInfo methodInfo = m_patternHelper.getMethodInfo(method);
     return methodInfo != null && isDistributedMethod(methodInfo);
   }
 
-  public boolean isDistributedMethod(final MethodInfo methodInfo) {
+  public boolean isDistributedMethod(MethodInfo methodInfo) {
     TcConfig config = getConfig();
 
     if (config != null) {
       DistributedMethods methods = getDistributedMethods();
 
       if (methods != null) {
-        int size = methods.sizeOfMethodExpressionArray();
-        String expr;
-
-        for (int i = 0; i < size; i++) {
-          expr = methods.getMethodExpressionArray(i).getStringValue();
-
+        for (int i = 0; i < methods.sizeOfMethodExpressionArray(); i++) {
+          String expr = methods.getMethodExpressionArray(i).getStringValue();
           if (m_patternHelper.matchesMember(expr, methodInfo)) { return true; }
         }
       }
@@ -1329,24 +1475,29 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public void ensureDistributedMethod(final IMethod method) {
-    if (!isDistributedMethod(method)) {
-      internalEnsureDistributedMethod(method);
+  public void ensureDistributedMethod(IMethod method) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureDistributedMethod(method, signaller);
+    signaller.signal(m_project);
+  }
 
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateDistributedMethodsPanel();
-      } else {
-        persistConfiguration();
-      }
+  public void ensureDistributedMethod(IMethod method, MultiChangeSignaller signaller) {
+    if (!isDistributedMethod(method)) {
+      internalEnsureDistributedMethod(method, signaller);
     }
   }
 
-  private void internalEnsureDistributedMethod(final IMethod method) {
+  public void internalEnsureDistributedMethod(IMethod method) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureDistributedMethod(method, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureDistributedMethod(IMethod method, MultiChangeSignaller signaller) {
     IType declaringType = method.getDeclaringType();
 
     if (!isAdaptable(declaringType)) {
-      internalEnsureAdaptable(declaringType);
+      internalEnsureAdaptable(declaringType, signaller);
     }
 
     DistributedMethods methods = ensureDistributedMethods();
@@ -1359,33 +1510,38 @@ public class ConfigurationHelper {
       openError("Error ensuring method '" + method.getElementName() + "' distributed", jme);
       return;
     }
+
+    signaller.distributedMethodsChanged = true;
   }
 
-  public void ensureLocalMethod(final IMethod method) {
-    if (isDistributedMethod(method)) {
-      internalEnsureLocalMethod(method);
+  public void ensureLocalMethod(IMethod method) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureLocalMethod(method, signaller);
+    signaller.signal(m_project);
+  }
 
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateDistributedMethodsPanel();
-      } else {
-        persistConfiguration();
-      }
+  public void ensureLocalMethod(IMethod method, MultiChangeSignaller signaller) {
+    if (isDistributedMethod(method)) {
+      internalEnsureLocalMethod(method, signaller);
     }
   }
 
-  private void internalEnsureLocalMethod(final IMethod method) {
+  public void internalEnsureLocalMethod(IMethod method) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureLocalMethod(method, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureLocalMethod(IMethod method, MultiChangeSignaller signaller) {
     DistributedMethods methods = getDistributedMethods();
 
     if (methods != null) {
-      int size = methods.sizeOfMethodExpressionArray();
-      String expr;
-
-      for (int i = size - 1; i >= 0; i--) {
-        expr = methods.getMethodExpressionArray(i).getStringValue();
+      for (int i = methods.sizeOfMethodExpressionArray() - 1; i >= 0; i--) {
+        String expr = methods.getMethodExpressionArray(i).getStringValue();
 
         if (m_patternHelper.matchesMethod(expr, method)) {
           methods.removeMethodExpression(i);
+          signaller.distributedMethodsChanged = true;
         }
       }
 
@@ -1393,7 +1549,7 @@ public class ConfigurationHelper {
     }
   }
 
-  public boolean isLocked(final IMethod method) {
+  public boolean isLocked(IMethod method) {
     try {
       if (!method.getDeclaringType().isInterface()) { return isAutolocked(method) || isNameLocked(method); }
     } catch (JavaModelException jme) {/**/
@@ -1402,7 +1558,7 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isLocked(final MethodDeclaration methodDecl) {
+  public boolean isLocked(MethodDeclaration methodDecl) {
     IMethodBinding binding = methodDecl.resolveBinding();
 
     if (binding != null && !binding.getDeclaringClass().isInterface()) { return isLocked(PatternHelper
@@ -1411,7 +1567,7 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isAutolocked(final IJavaElement element) {
+  public boolean isAutolocked(IJavaElement element) {
     if (element instanceof IMethod) {
       return isAutolocked((IMethod) element);
     } else if (element instanceof IType) {
@@ -1425,7 +1581,7 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isAutolocked(final IMethod method) {
+  public boolean isAutolocked(IMethod method) {
     try {
       if (!method.getDeclaringType().isInterface()) {
         MethodInfo methodInfo = m_patternHelper.getMethodInfo(method);
@@ -1437,20 +1593,16 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isAutolocked(final MethodInfo methodInfo) {
+  public boolean isAutolocked(MethodInfo methodInfo) {
     TcConfig config = getConfig();
 
     if (config != null) {
       Locks locks = getLocks();
 
       if (locks != null) {
-        int size = locks.sizeOfAutolockArray();
-        Autolock autolock;
-        String expr;
-
-        for (int i = 0; i < size; i++) {
-          autolock = locks.getAutolockArray(i);
-          expr = autolock.getMethodExpression();
+        for (int i = 0; i < locks.sizeOfAutolockArray(); i++) {
+          Autolock autolock = locks.getAutolockArray(i);
+          String expr = autolock.getMethodExpression();
 
           if (m_patternHelper.matchesMember(expr, methodInfo)) { return true; }
         }
@@ -1460,7 +1612,7 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isAutolocked(final MethodDeclaration methodDecl) {
+  public boolean isAutolocked(MethodDeclaration methodDecl) {
     IMethodBinding binding = methodDecl.resolveBinding();
 
     if (binding != null && !binding.getDeclaringClass().isInterface()) { return isAutolocked(PatternHelper
@@ -1469,7 +1621,7 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isAutolocked(final IType type) {
+  public boolean isAutolocked(IType type) {
     try {
       if (type.isInterface()) { return false; }
     } catch (JavaModelException jme) {/**/
@@ -1481,16 +1633,11 @@ public class ConfigurationHelper {
       Locks locks = getLocks();
 
       if (locks != null) {
-        int size = locks.sizeOfAutolockArray();
-        Autolock autolock;
-        String expr;
-        String typeExpr;
+        String typeExpr = PatternHelper.getExecutionPattern(type);
 
-        typeExpr = PatternHelper.getExecutionPattern(type);
-
-        for (int i = 0; i < size; i++) {
-          autolock = locks.getAutolockArray(i);
-          expr = autolock.getMethodExpression();
+        for (int i = 0; i < locks.sizeOfAutolockArray(); i++) {
+          Autolock autolock = locks.getAutolockArray(i);
+          String expr = autolock.getMethodExpression();
 
           if (typeExpr.equals(expr)) { return true; }
         }
@@ -1500,23 +1647,18 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isAutolocked(final IPackageDeclaration packageDecl) {
+  public boolean isAutolocked(IPackageDeclaration packageDecl) {
     TcConfig config = getConfig();
 
     if (config != null) {
       Locks locks = getLocks();
 
       if (locks != null) {
-        int size = locks.sizeOfAutolockArray();
-        Autolock autolock;
-        String expr;
-        String fragExpr;
+        String fragExpr = PatternHelper.getExecutionPattern(packageDecl);
 
-        fragExpr = PatternHelper.getExecutionPattern(packageDecl);
-
-        for (int i = 0; i < size; i++) {
-          autolock = locks.getAutolockArray(i);
-          expr = autolock.getMethodExpression();
+        for (int i = 0; i < locks.sizeOfAutolockArray(); i++) {
+          Autolock autolock = locks.getAutolockArray(i);
+          String expr = autolock.getMethodExpression();
 
           if (fragExpr.equals(expr)) { return true; }
         }
@@ -1526,23 +1668,18 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isAutolocked(final IPackageFragment fragment) {
+  public boolean isAutolocked(IPackageFragment fragment) {
     TcConfig config = getConfig();
 
     if (config != null) {
       Locks locks = getLocks();
 
       if (locks != null) {
-        int size = locks.sizeOfAutolockArray();
-        Autolock autolock;
-        String expr;
-        String fragExpr;
+        String fragExpr = PatternHelper.getExecutionPattern(fragment);
 
-        fragExpr = PatternHelper.getExecutionPattern(fragment);
-
-        for (int i = 0; i < size; i++) {
-          autolock = locks.getAutolockArray(i);
-          expr = autolock.getMethodExpression();
+        for (int i = 0; i < locks.sizeOfAutolockArray(); i++) {
+          Autolock autolock = locks.getAutolockArray(i);
+          String expr = autolock.getMethodExpression();
 
           if (fragExpr.equals(expr)) { return true; }
         }
@@ -1552,7 +1689,7 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isAutolocked(final IJavaProject javaProject) {
+  public boolean isAutolocked(IJavaProject javaProject) {
     if (javaProject != null) {
       IPackageFragment[] fragments = getSourceFragments(javaProject);
 
@@ -1569,7 +1706,7 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isNameLocked(final IJavaElement element) {
+  public boolean isNameLocked(IJavaElement element) {
     if (element instanceof IMethod) {
       return isNameLocked((IMethod) element);
     } else if (element instanceof IType) {
@@ -1583,7 +1720,7 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isNameLocked(final IMethod method) {
+  public boolean isNameLocked(IMethod method) {
     try {
       if (!method.getDeclaringType().isInterface()) {
         MethodInfo methodInfo = m_patternHelper.getMethodInfo(method);
@@ -1595,20 +1732,16 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isNameLocked(final MethodInfo methodInfo) {
+  public boolean isNameLocked(MethodInfo methodInfo) {
     TcConfig config = getConfig();
 
     if (config != null) {
       Locks locks = getLocks();
 
       if (locks != null) {
-        int size = locks.sizeOfNamedLockArray();
-        NamedLock namedLock;
-        String expr;
-
-        for (int i = 0; i < size; i++) {
-          namedLock = locks.getNamedLockArray(i);
-          expr = namedLock.getMethodExpression();
+        for (int i = 0; i < locks.sizeOfNamedLockArray(); i++) {
+          NamedLock namedLock = locks.getNamedLockArray(i);
+          String expr = namedLock.getMethodExpression();
 
           if (m_patternHelper.matchesMember(expr, methodInfo)) { return true; }
         }
@@ -1618,7 +1751,7 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isNameLocked(final MethodDeclaration methodDecl) {
+  public boolean isNameLocked(MethodDeclaration methodDecl) {
     IMethodBinding binding = methodDecl.resolveBinding();
 
     if (binding != null && !binding.getDeclaringClass().isInterface()) { return isNameLocked(PatternHelper
@@ -1627,7 +1760,7 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isNameLocked(final IType type) {
+  public boolean isNameLocked(IType type) {
     try {
       if (type.isInterface()) { return false; }
     } catch (JavaModelException jme) {/**/
@@ -1639,16 +1772,11 @@ public class ConfigurationHelper {
       Locks locks = getLocks();
 
       if (locks != null) {
-        int size = locks.sizeOfNamedLockArray();
-        NamedLock namedLock;
-        String expr;
-        String typeExpr;
+        String typeExpr = PatternHelper.getExecutionPattern(type);
 
-        typeExpr = PatternHelper.getExecutionPattern(type);
-
-        for (int i = 0; i < size; i++) {
-          namedLock = locks.getNamedLockArray(i);
-          expr = namedLock.getMethodExpression();
+        for (int i = 0; i < locks.sizeOfNamedLockArray(); i++) {
+          NamedLock namedLock = locks.getNamedLockArray(i);
+          String expr = namedLock.getMethodExpression();
 
           if (typeExpr.equals(expr)) { return true; }
         }
@@ -1658,23 +1786,18 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isNameLocked(final IPackageDeclaration packageDecl) {
+  public boolean isNameLocked(IPackageDeclaration packageDecl) {
     TcConfig config = getConfig();
 
     if (config != null) {
       Locks locks = getLocks();
 
       if (locks != null) {
-        int size = locks.sizeOfNamedLockArray();
-        NamedLock namedLock;
-        String expr;
-        String fragExpr;
+        String fragExpr = PatternHelper.getExecutionPattern(packageDecl);
 
-        fragExpr = PatternHelper.getExecutionPattern(packageDecl);
-
-        for (int i = 0; i < size; i++) {
-          namedLock = locks.getNamedLockArray(i);
-          expr = namedLock.getMethodExpression();
+        for (int i = 0; i < locks.sizeOfNamedLockArray(); i++) {
+          NamedLock namedLock = locks.getNamedLockArray(i);
+          String expr = namedLock.getMethodExpression();
 
           if (fragExpr.equals(expr)) { return true; }
         }
@@ -1684,23 +1807,18 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isNameLocked(final IPackageFragment fragment) {
+  public boolean isNameLocked(IPackageFragment fragment) {
     TcConfig config = getConfig();
 
     if (config != null) {
       Locks locks = getLocks();
 
       if (locks != null) {
-        int size = locks.sizeOfNamedLockArray();
-        NamedLock namedLock;
-        String expr;
-        String fragExpr;
+        String fragExpr = PatternHelper.getExecutionPattern(fragment);
 
-        fragExpr = PatternHelper.getExecutionPattern(fragment);
-
-        for (int i = 0; i < size; i++) {
-          namedLock = locks.getNamedLockArray(i);
-          expr = namedLock.getMethodExpression();
+        for (int i = 0; i < locks.sizeOfNamedLockArray(); i++) {
+          NamedLock namedLock = locks.getNamedLockArray(i);
+          String expr = namedLock.getMethodExpression();
 
           if (fragExpr.equals(expr)) { return true; }
         }
@@ -1710,7 +1828,7 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public boolean isNameLocked(final IJavaProject javaProject) {
+  public boolean isNameLocked(IJavaProject javaProject) {
     if (javaProject != null) {
       IPackageFragment[] fragments = getSourceFragments(javaProject);
 
@@ -1726,42 +1844,54 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public void ensureNameLocked(final IJavaElement element) {
-    ensureNameLocked(element, "LockName", LockLevel.WRITE);
+  public void ensureNameLocked(IJavaElement element) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNameLocked(element, "LockName", LockLevel.WRITE, signaller);
+    signaller.signal(m_project);
   }
 
-  public void ensureNameLocked(final IJavaElement element, final String name, final LockLevel.Enum level) {
+  public void ensureNameLocked(IJavaElement element, MultiChangeSignaller signaller) {
+    ensureNameLocked(element, "LockName", LockLevel.WRITE, signaller);
+  }
+
+  public void ensureNameLocked(IJavaElement element, String name, LockLevel.Enum level) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNameLocked(element, name, level, signaller);
+    signaller.signal(m_project);
+  }
+  
+  public void ensureNameLocked(IJavaElement element, String name, LockLevel.Enum level, MultiChangeSignaller signaller) {
     if (element instanceof IMethod) {
-      ensureNameLocked((IMethod) element, name, level);
+      ensureNameLocked((IMethod) element, name, level, signaller);
     } else if (element instanceof IType) {
-      ensureNameLocked((IType) element, name, level);
+      ensureNameLocked((IType) element, name, level, signaller);
     } else if (element instanceof IPackageDeclaration) {
-      ensureNameLocked((IPackageDeclaration) element, name, level);
+      ensureNameLocked((IPackageDeclaration) element, name, level, signaller);
     } else if (element instanceof IPackageFragment) {
-      ensureNameLocked((IPackageFragment) element, name, level);
+      ensureNameLocked((IPackageFragment) element, name, level, signaller);
     } else if (element instanceof IJavaProject) {
-      ensureNameLocked((IJavaProject) element, name, level);
+      ensureNameLocked((IJavaProject) element, name, level, signaller);
     }
   }
 
-  public void ensureNameLocked(final IMethod method, final String name, final LockLevel.Enum level) {
+  public void ensureNameLocked(IMethod method, String name, LockLevel.Enum level) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNameLocked(method, name, level, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNameLocked(IMethod method, String name, LockLevel.Enum level, MultiChangeSignaller signaller) {
     if (!isNameLocked(method)) {
-      internalEnsureNameLocked(method, name, level);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNameLocked(method, name, level, signaller);
     }
   }
 
-  private void internalEnsureNameLocked(final IMethod method, final String name, final LockLevel.Enum level) {
+  public void internalEnsureNameLocked(IMethod method, String name, LockLevel.Enum level, MultiChangeSignaller signaller) {
     IType declaringType = method.getDeclaringType();
 
     if (!isAdaptable(declaringType)) {
       internalEnsureAdaptable(declaringType);
+      signaller.includeRulesChanged = true;
     }
 
     Locks locks = ensureLocks();
@@ -1775,24 +1905,30 @@ public class ConfigurationHelper {
       openError("Error ensuring method '" + method.getElementName() + "' name-locked", jme);
       return;
     }
+    signaller.namedLocksChanged = true;
   }
 
-  public void ensureNameLocked(final IType type, final String name, final LockLevel.Enum level) {
-    if (!isNameLocked(type)) {
-      internalEnsureNameLocked(type, name, level);
+  public void ensureNameLocked(IType type, String name, LockLevel.Enum level) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNameLocked(type, name, level, signaller);
+    signaller.signal(m_project);
+  }
 
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+  public void ensureNameLocked(IType type, String name, LockLevel.Enum level, MultiChangeSignaller signaller) {
+    if (!isNameLocked(type)) {
+      internalEnsureNameLocked(type, name, level, signaller);
     }
   }
 
-  private void internalEnsureNameLocked(final IType type, final String name, final LockLevel.Enum level) {
+  public void internalEnsureNameLocked(IType type, String name, LockLevel.Enum level) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNameLocked(type, name, level, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNameLocked(IType type, String name, LockLevel.Enum level, MultiChangeSignaller signaller) {
     if (!isAdaptable(type)) {
-      internalEnsureAdaptable(type);
+      internalEnsureAdaptable(type, signaller);
     }
 
     Locks locks = ensureLocks();
@@ -1802,25 +1938,32 @@ public class ConfigurationHelper {
     lock.setMethodExpression(expr);
     lock.setLockLevel(level);
     lock.setLockName(name);
+    signaller.namedLocksChanged = true;
   }
 
-  public void ensureNameLocked(final IPackageDeclaration packageDecl, final String name, final LockLevel.Enum level) {
-    if (!isNameLocked(packageDecl)) {
-      internalEnsureNameLocked(packageDecl, name, level);
+  public void ensureNameLocked(IPackageDeclaration packageDecl, String name, LockLevel.Enum level) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNameLocked(packageDecl, name, level, signaller);
+    signaller.signal(m_project);
+  }
 
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+  public void ensureNameLocked(IPackageDeclaration packageDecl, String name, LockLevel.Enum level,
+                               MultiChangeSignaller signaller) {
+    if (!isNameLocked(packageDecl)) {
+      internalEnsureNameLocked(packageDecl, name, level, signaller);
     }
   }
 
-  private void internalEnsureNameLocked(final IPackageDeclaration packageDecl, final String name,
-                                        final LockLevel.Enum level) {
+  public void internalEnsureNameLocked(IPackageDeclaration packageDecl, String name, LockLevel.Enum level) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNameLocked(packageDecl, name, level, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNameLocked(IPackageDeclaration packageDecl, String name, LockLevel.Enum level,
+                                       MultiChangeSignaller signaller) {
     if (!isAdaptable(packageDecl)) {
-      internalEnsureAdaptable(packageDecl);
+      internalEnsureAdaptable(packageDecl, signaller);
     }
 
     Locks locks = ensureLocks();
@@ -1830,24 +1973,33 @@ public class ConfigurationHelper {
     lock.setMethodExpression(expr);
     lock.setLockName(name);
     lock.setLockLevel(level);
+
+    signaller.namedLocksChanged = true;
   }
 
-  public void ensureNameLocked(final IPackageFragment fragment, final String name, final LockLevel.Enum level) {
-    if (!isNameLocked(fragment)) {
-      internalEnsureNameLocked(fragment, name, level);
+  public void ensureNameLocked(IPackageFragment fragment, String name, LockLevel.Enum level) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNameLocked(fragment, name, level, signaller);
+    signaller.signal(m_project);
+  }
 
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+  public void ensureNameLocked(IPackageFragment fragment, String name, LockLevel.Enum level,
+                               MultiChangeSignaller signaller) {
+    if (!isNameLocked(fragment)) {
+      internalEnsureNameLocked(fragment, name, level, signaller);
     }
   }
 
-  private void internalEnsureNameLocked(final IPackageFragment fragment, final String name, final LockLevel.Enum level) {
+  public void internalEnsureNameLocked(IPackageFragment fragment, String name, LockLevel.Enum level) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNameLocked(fragment, name, level, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNameLocked(IPackageFragment fragment, String name, LockLevel.Enum level,
+                                       MultiChangeSignaller signaller) {
     if (!isAdaptable(fragment)) {
-      internalEnsureAdaptable(fragment);
+      internalEnsureAdaptable(fragment, signaller);
     }
 
     Locks locks = ensureLocks();
@@ -1857,63 +2009,83 @@ public class ConfigurationHelper {
     lock.setMethodExpression(expr);
     lock.setLockName(name);
     lock.setLockLevel(level);
+
+    signaller.namedLocksChanged = true;
   }
 
-  public void ensureNameLocked(final IJavaProject javaProject, final String name, final LockLevel.Enum level) {
-    if (javaProject != null && !isNameLocked(javaProject)) {
-      internalEnsureNameLocked(javaProject, name, level);
+  public void ensureNameLocked(IJavaProject javaProject, String name, LockLevel.Enum level) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNameLocked(javaProject, name, level, signaller);
+    signaller.signal(m_project);
+  }
 
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+  public void ensureNameLocked(IJavaProject javaProject, String name, LockLevel.Enum level,
+                               MultiChangeSignaller signaller) {
+    if (javaProject != null && !isNameLocked(javaProject)) {
+      internalEnsureNameLocked(javaProject, name, level, signaller);
     }
   }
 
-  private void internalEnsureNameLocked(final IJavaProject javaProject, final String name, final LockLevel.Enum level) {
+  public void internalEnsureNameLocked(IJavaProject javaProject, String name, LockLevel.Enum level) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNameLocked(javaProject, name, level, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNameLocked(IJavaProject javaProject, String name, LockLevel.Enum level,
+                                       MultiChangeSignaller signaller) {
     IPackageFragment[] fragments = getSourceFragments(javaProject);
 
     for (int i = 0; i < fragments.length; i++) {
       if (!isNameLocked(fragments[i])) {
-        internalEnsureNameLocked(fragments[i], name, level);
+        internalEnsureNameLocked(fragments[i], name, level, signaller);
       }
     }
   }
 
-  public void ensureAutolocked(final IJavaElement element) {
+  public void ensureAutolocked(IJavaElement element) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureAutolocked(element, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureAutolocked(IJavaElement element, MultiChangeSignaller signaller) {
     if (element instanceof IMethod) {
-      ensureAutolocked((IMethod) element);
+      ensureAutolocked((IMethod) element, signaller);
     } else if (element instanceof IType) {
-      ensureAutolocked((IType) element);
+      ensureAutolocked((IType) element, signaller);
     } else if (element instanceof IPackageDeclaration) {
-      ensureAutolocked((IPackageDeclaration) element);
+      ensureAutolocked((IPackageDeclaration) element, signaller);
     } else if (element instanceof IPackageFragment) {
-      ensureAutolocked((IPackageFragment) element);
+      ensureAutolocked((IPackageFragment) element, signaller);
     } else if (element instanceof IJavaProject) {
-      ensureAutolocked((IJavaProject) element);
+      ensureAutolocked((IJavaProject) element, signaller);
     }
   }
 
-  public void ensureAutolocked(final IMethod method) {
+  public void ensureAutolocked(IMethod method) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureAutolocked(method, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureAutolocked(IMethod method, MultiChangeSignaller signaller) {
     if (!isAutolocked(method)) {
-      internalEnsureAutolocked(method);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureAutolocked(method, signaller);
     }
   }
 
-  private void internalEnsureAutolocked(final IMethod method) {
+  public void internalEnsureAutolocked(IMethod method) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureAutolocked(method, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureAutolocked(IMethod method, MultiChangeSignaller signaller) {
     IType declaringType = method.getDeclaringType();
 
     if (!isAdaptable(declaringType)) {
-      internalEnsureAdaptable(declaringType);
+      internalEnsureAdaptable(declaringType, signaller);
     }
 
     Locks locks = ensureLocks();
@@ -1926,24 +2098,30 @@ public class ConfigurationHelper {
       openError("Error ensuring method '" + method.getElementName() + "' auto-locked", jme);
       return;
     }
+    signaller.autolocksChanged = true;
   }
 
-  public void ensureAutolocked(final IType type) {
-    if (!isAutolocked(type)) {
-      internalEnsureAutolocked(type);
+  public void ensureAutolocked(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureAutolocked(type, signaller);
+    signaller.signal(m_project);
+  }
 
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+  public void ensureAutolocked(IType type, MultiChangeSignaller signaller) {
+    if (!isAutolocked(type)) {
+      internalEnsureAutolocked(type, signaller);
     }
   }
 
-  private void internalEnsureAutolocked(final IType type) {
+  public void internalEnsureAutolocked(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureAutolocked(type, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureAutolocked(IType type, MultiChangeSignaller signaller) {
     if (!isAdaptable(type)) {
-      internalEnsureAdaptable(type);
+      internalEnsureAdaptable(type, signaller);
     }
 
     Locks locks = ensureLocks();
@@ -1952,24 +2130,31 @@ public class ConfigurationHelper {
 
     lock.setMethodExpression(expr);
     lock.setLockLevel(LockLevel.WRITE);
+
+    signaller.autolocksChanged = true;
   }
 
-  public void ensureAutolocked(final IPackageDeclaration packageDecl) {
-    if (!isAutolocked(packageDecl)) {
-      internalEnsureAutolocked(packageDecl);
+  public void ensureAutolocked(IPackageDeclaration packageDecl) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureAutolocked(packageDecl, signaller);
+    signaller.signal(m_project);
+  }
 
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+  public void ensureAutolocked(IPackageDeclaration packageDecl, MultiChangeSignaller signaller) {
+    if (!isAutolocked(packageDecl)) {
+      internalEnsureAutolocked(packageDecl, signaller);
     }
   }
 
-  private void internalEnsureAutolocked(final IPackageDeclaration packageDecl) {
+  public void internalEnsureAutolocked(IPackageDeclaration packageDecl) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureAutolocked(packageDecl, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureAutolocked(IPackageDeclaration packageDecl, MultiChangeSignaller signaller) {
     if (!isAdaptable(packageDecl)) {
-      internalEnsureAdaptable(packageDecl);
+      internalEnsureAdaptable(packageDecl, signaller);
     }
 
     Locks locks = ensureLocks();
@@ -1978,24 +2163,31 @@ public class ConfigurationHelper {
 
     lock.setMethodExpression(expr);
     lock.setLockLevel(LockLevel.WRITE);
+
+    signaller.autolocksChanged = true;
   }
 
-  public void ensureAutolocked(final IPackageFragment fragment) {
-    if (!isAutolocked(fragment)) {
-      internalEnsureAutolocked(fragment);
+  public void ensureAutolocked(IPackageFragment fragment) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureAutolocked(fragment, signaller);
+    signaller.signal(m_project);
+  }
 
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+  public void ensureAutolocked(IPackageFragment fragment, MultiChangeSignaller signaller) {
+    if (!isAutolocked(fragment)) {
+      internalEnsureAutolocked(fragment, signaller);
     }
   }
 
-  private void internalEnsureAutolocked(final IPackageFragment fragment) {
+  public void internalEnsureAutolocked(IPackageFragment fragment) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureAutolocked(fragment, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureAutolocked(IPackageFragment fragment, MultiChangeSignaller signaller) {
     if (!isAdaptable(fragment)) {
-      internalEnsureAdaptable(fragment);
+      internalEnsureAdaptable(fragment, signaller);
     }
 
     Locks locks = ensureLocks();
@@ -2004,78 +2196,100 @@ public class ConfigurationHelper {
 
     lock.setMethodExpression(expr);
     lock.setLockLevel(LockLevel.WRITE);
+
+    signaller.autolocksChanged = true;
   }
 
-  public void ensureAutolocked(final IJavaProject javaProject) {
-    if (javaProject != null && !isAutolocked(javaProject)) {
-      internalEnsureAutolocked(javaProject);
+  public void ensureAutolocked(IJavaProject javaProject) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureAutolocked(javaProject, signaller);
+    signaller.signal(m_project);
+  }
 
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+  public void ensureAutolocked(IJavaProject javaProject, MultiChangeSignaller signaller) {
+    if (javaProject != null && !isAutolocked(javaProject)) {
+      internalEnsureAutolocked(javaProject, signaller);
     }
   }
 
-  private void internalEnsureAutolocked(final IJavaProject javaProject) {
+  public void internalEnsureAutolocked(IJavaProject javaProject) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureAutolocked(javaProject, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureAutolocked(IJavaProject javaProject, MultiChangeSignaller signaller) {
     if (javaProject != null) {
       IPackageFragment[] fragments = getSourceFragments(javaProject);
 
       for (int i = 0; i < fragments.length; i++) {
         if (!isAutolocked(fragments[i])) {
-          internalEnsureAutolocked(fragments[i]);
+          internalEnsureAutolocked(fragments[i], signaller);
         }
       }
     }
   }
 
-  public void ensureNotNameLocked(final IJavaElement element) {
+  public void ensureNotNameLocked(IJavaElement element) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotNameLocked(element, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotNameLocked(IJavaElement element, MultiChangeSignaller signaller) {
     if (element instanceof IMethod) {
-      ensureNotNameLocked((IMethod) element);
+      ensureNotNameLocked((IMethod) element, signaller);
     } else if (element instanceof IType) {
-      ensureNotNameLocked((IType) element);
+      ensureNotNameLocked((IType) element, signaller);
     } else if (element instanceof IPackageFragment) {
-      ensureNotNameLocked((IPackageFragment) element);
+      ensureNotNameLocked((IPackageFragment) element, signaller);
     } else if (element instanceof IJavaProject) {
-      ensureNotNameLocked((IJavaProject) element);
+      ensureNotNameLocked((IJavaProject) element, signaller);
     }
   }
 
-  public void ensureNotNameLocked(final IMethod method) {
+  public void ensureNotNameLocked(IMethod method) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotNameLocked(method, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotNameLocked(IMethod method, MultiChangeSignaller signaller) {
     MethodInfo methodInfo = m_patternHelper.getMethodInfo(method);
 
     if (methodInfo != null) {
-      ensureNotNameLocked(methodInfo);
+      ensureNotNameLocked(methodInfo, signaller);
     }
   }
 
-  public void ensureNotNameLocked(final MethodInfo methodInfo) {
+  public void ensureNotNameLocked(MethodInfo methodInfo) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotNameLocked(methodInfo, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotNameLocked(MethodInfo methodInfo, MultiChangeSignaller signaller) {
     if (isNameLocked(methodInfo)) {
-      internalEnsureNotNameLocked(methodInfo);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNotNameLocked(methodInfo, signaller);
     }
   }
 
-  private void internalEnsureNotNameLocked(final MethodInfo methodInfo) {
+  public void internalEnsureNotNameLocked(MethodInfo methodInfo) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotNameLocked(methodInfo, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotNameLocked(MethodInfo methodInfo, MultiChangeSignaller signaller) {
     Locks locks = getLocks();
 
     if (locks != null) {
-      int size = locks.sizeOfNamedLockArray();
-      String expr;
-
-      for (int i = size - 1; i >= 0; i--) {
-        expr = locks.getNamedLockArray(i).getMethodExpression();
+      for (int i = locks.sizeOfNamedLockArray() - 1; i >= 0; i--) {
+        String expr = locks.getNamedLockArray(i).getMethodExpression();
 
         if (m_patternHelper.matchesMember(expr, methodInfo)) {
           locks.removeNamedLock(i);
+          signaller.namedLocksChanged = true;
         }
       }
 
@@ -2083,34 +2297,36 @@ public class ConfigurationHelper {
     }
   }
 
-  public void ensureNotNameLocked(final IType type) {
-    if (isNameLocked(type)) {
-      internalEnsureNotNameLocked(type);
+  public void ensureNotNameLocked(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotNameLocked(type, signaller);
+    signaller.signal(m_project);
+  }
 
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+  public void ensureNotNameLocked(IType type, MultiChangeSignaller signaller) {
+    if (isNameLocked(type)) {
+      internalEnsureNotNameLocked(type, signaller);
     }
   }
 
-  private void internalEnsureNotNameLocked(final IType type) {
+  public void internalEnsureNotNameLocked(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotNameLocked(type, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotNameLocked(IType type, MultiChangeSignaller signaller) {
     Locks locks = getLocks();
 
     if (locks != null) {
-      int size = locks.sizeOfNamedLockArray();
-      String expr;
-      String typeExpr;
+      String typeExpr = PatternHelper.getExecutionPattern(type);
 
-      typeExpr = PatternHelper.getExecutionPattern(type);
-
-      for (int i = size - 1; i >= 0; i--) {
-        expr = locks.getNamedLockArray(i).getMethodExpression();
+      for (int i = locks.sizeOfNamedLockArray() - 1; i >= 0; i--) {
+        String expr = locks.getNamedLockArray(i).getMethodExpression();
 
         if (typeExpr.equals(expr)) {
           locks.removeNamedLock(i);
+          signaller.namedLocksChanged = true;
         }
       }
 
@@ -2118,34 +2334,36 @@ public class ConfigurationHelper {
     }
   }
 
-  public void ensureNotNameLocked(final IPackageDeclaration packageDecl) {
+  public void ensureNotNameLocked(IPackageDeclaration packageDecl) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotNameLocked(packageDecl, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotNameLocked(IPackageDeclaration packageDecl, MultiChangeSignaller signaller) {
     if (isNameLocked(packageDecl)) {
-      internalEnsureNotNameLocked(packageDecl);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNotNameLocked(packageDecl, signaller);
     }
   }
 
-  private void internalEnsureNotNameLocked(final IPackageDeclaration packageDecl) {
+  public void internalEnsureNotNameLocked(IPackageDeclaration packageDecl) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotNameLocked(packageDecl, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotNameLocked(IPackageDeclaration packageDecl, MultiChangeSignaller signaller) {
     Locks locks = getLocks();
 
     if (locks != null) {
-      int size = locks.sizeOfNamedLockArray();
-      String expr;
-      String fragExpr;
+      String fragExpr = PatternHelper.getExecutionPattern(packageDecl);
 
-      fragExpr = PatternHelper.getExecutionPattern(packageDecl);
-
-      for (int i = size - 1; i >= 0; i--) {
-        expr = locks.getNamedLockArray(i).getMethodExpression();
+      for (int i = locks.sizeOfNamedLockArray() - 1; i >= 0; i--) {
+        String expr = locks.getNamedLockArray(i).getMethodExpression();
 
         if (fragExpr.equals(expr)) {
           locks.removeNamedLock(i);
+          signaller.namedLocksChanged = true;
         }
       }
 
@@ -2153,34 +2371,36 @@ public class ConfigurationHelper {
     }
   }
 
-  public void ensureNotNameLocked(final IPackageFragment fragment) {
+  public void ensureNotNameLocked(IPackageFragment fragment) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotNameLocked(fragment, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotNameLocked(IPackageFragment fragment, MultiChangeSignaller signaller) {
     if (isNameLocked(fragment)) {
-      internalEnsureNotNameLocked(fragment);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNotNameLocked(fragment, signaller);
     }
   }
 
-  private void internalEnsureNotNameLocked(final IPackageFragment fragment) {
+  public void internalEnsureNotNameLocked(IPackageFragment fragment) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotNameLocked(fragment, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotNameLocked(IPackageFragment fragment, MultiChangeSignaller signaller) {
     Locks locks = getLocks();
 
     if (locks != null) {
-      int size = locks.sizeOfNamedLockArray();
-      String expr;
-      String fragExpr;
+      String fragExpr = PatternHelper.getExecutionPattern(fragment);
 
-      fragExpr = PatternHelper.getExecutionPattern(fragment);
-
-      for (int i = size - 1; i >= 0; i--) {
-        expr = locks.getNamedLockArray(i).getMethodExpression();
+      for (int i = locks.sizeOfNamedLockArray() - 1; i >= 0; i--) {
+        String expr = locks.getNamedLockArray(i).getMethodExpression();
 
         if (fragExpr.equals(expr)) {
           locks.removeNamedLock(i);
+          signaller.namedLocksChanged = true;
         }
       }
 
@@ -2188,74 +2408,94 @@ public class ConfigurationHelper {
     }
   }
 
-  public void ensureNotNameLocked(final IJavaProject javaProject) {
-    if (javaProject != null && isNameLocked(javaProject)) {
-      internalEnsureNotNameLocked(javaProject);
+  public void ensureNotNameLocked(IJavaProject javaProject) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotNameLocked(javaProject, signaller);
+    signaller.signal(m_project);
+  }
 
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+  public void ensureNotNameLocked(IJavaProject javaProject, MultiChangeSignaller signaller) {
+    if (javaProject != null && isNameLocked(javaProject)) {
+      internalEnsureNotNameLocked(javaProject, signaller);
     }
   }
 
-  private void internalEnsureNotNameLocked(final IJavaProject javaProject) {
+  public void internalEnsureNotNameLocked(IJavaProject javaProject) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotNameLocked(javaProject, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotNameLocked(IJavaProject javaProject, MultiChangeSignaller signaller) {
     IPackageFragment[] fragments = getSourceFragments(javaProject);
 
     for (int i = 0; i < fragments.length; i++) {
       if (isNameLocked(fragments[i])) {
-        internalEnsureNotNameLocked(fragments[i]);
+        internalEnsureNotNameLocked(fragments[i], signaller);
       }
     }
   }
 
-  public void ensureNotAutolocked(final IJavaElement element) {
+  public void ensureNotAutolocked(IJavaElement element) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotAutolocked(element, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotAutolocked(IJavaElement element, MultiChangeSignaller signaller) {
     if (element instanceof IMethod) {
-      ensureNotAutolocked((IMethod) element);
+      ensureNotAutolocked((IMethod) element, signaller);
     } else if (element instanceof IType) {
-      ensureNotAutolocked((IType) element);
+      ensureNotAutolocked((IType) element, signaller);
     } else if (element instanceof IPackageFragment) {
-      ensureNotAutolocked((IPackageFragment) element);
+      ensureNotAutolocked((IPackageFragment) element, signaller);
     } else if (element instanceof IJavaProject) {
-      ensureNotAutolocked((IJavaProject) element);
+      ensureNotAutolocked((IJavaProject) element, signaller);
     }
   }
 
-  public void ensureNotAutolocked(final IMethod method) {
+  public void ensureNotAutolocked(IMethod method) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotAutolocked(method, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotAutolocked(IMethod method, MultiChangeSignaller signaller) {
     MethodInfo methodInfo = m_patternHelper.getMethodInfo(method);
 
     if (methodInfo != null) {
-      ensureNotAutolocked(methodInfo);
+      ensureNotAutolocked(methodInfo, signaller);
     }
   }
 
-  public void ensureNotAutolocked(final MethodInfo methodInfo) {
+  public void ensureNotAutolocked(MethodInfo methodInfo) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotAutolocked(methodInfo, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotAutolocked(MethodInfo methodInfo, MultiChangeSignaller signaller) {
     if (isAutolocked(methodInfo)) {
-      internalEnsureNotAutolocked(methodInfo);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNotAutolocked(methodInfo, signaller);
     }
   }
 
-  private void internalEnsureNotAutolocked(final MethodInfo methodInfo) {
+  public void internalEnsureNotAutolocked(MethodInfo methodInfo) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotAutolocked(methodInfo, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotAutolocked(MethodInfo methodInfo, MultiChangeSignaller signaller) {
     Locks locks = getLocks();
 
     if (locks != null) {
-      int size = locks.sizeOfAutolockArray();
-      String expr;
-
-      for (int i = size - 1; i >= 0; i--) {
-        expr = locks.getAutolockArray(i).getMethodExpression();
+      for (int i = locks.sizeOfAutolockArray() - 1; i >= 0; i--) {
+        String expr = locks.getAutolockArray(i).getMethodExpression();
 
         if (m_patternHelper.matchesMember(expr, methodInfo)) {
           locks.removeAutolock(i);
+          signaller.autolocksChanged = true;
         }
       }
 
@@ -2263,34 +2503,36 @@ public class ConfigurationHelper {
     }
   }
 
-  public void ensureNotAutolocked(final IType type) {
-    if (isAutolocked(type)) {
-      internalEnsureNotAutolocked(type);
+  public void ensureNotAutolocked(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotAutolocked(type, signaller);
+    signaller.signal(m_project);
+  }
 
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+  public void ensureNotAutolocked(IType type, MultiChangeSignaller signaller) {
+    if (isAutolocked(type)) {
+      internalEnsureNotAutolocked(type, signaller);
     }
   }
 
-  private void internalEnsureNotAutolocked(final IType type) {
+  public void internalEnsureNotAutolocked(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotAutolocked(type, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotAutolocked(IType type, MultiChangeSignaller signaller) {
     Locks locks = getLocks();
 
     if (locks != null) {
-      int size = locks.sizeOfAutolockArray();
-      String expr;
-      String typeExpr;
+      String typeExpr = PatternHelper.getExecutionPattern(type);
 
-      typeExpr = PatternHelper.getExecutionPattern(type);
-
-      for (int i = size - 1; i >= 0; i--) {
-        expr = locks.getAutolockArray(i).getMethodExpression();
+      for (int i = locks.sizeOfAutolockArray() - 1; i >= 0; i--) {
+        String expr = locks.getAutolockArray(i).getMethodExpression();
 
         if (typeExpr.equals(expr)) {
           locks.removeAutolock(i);
+          signaller.autolocksChanged = true;
         }
       }
 
@@ -2298,34 +2540,36 @@ public class ConfigurationHelper {
     }
   }
 
-  public void ensureNotAutolocked(final IPackageDeclaration packageDecl) {
+  public void ensureNotAutolocked(IPackageDeclaration packageDecl) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotAutolocked(packageDecl, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotAutolocked(IPackageDeclaration packageDecl, MultiChangeSignaller signaller) {
     if (isAutolocked(packageDecl)) {
-      internalEnsureNotAutolocked(packageDecl);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNotAutolocked(packageDecl, signaller);
     }
   }
 
-  private void internalEnsureNotAutolocked(final IPackageDeclaration packageDecl) {
+  public void internalEnsureNotAutolocked(IPackageDeclaration packageDecl) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotAutolocked(packageDecl, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotAutolocked(IPackageDeclaration packageDecl, MultiChangeSignaller signaller) {
     Locks locks = getLocks();
 
     if (locks != null) {
-      int size = locks.sizeOfAutolockArray();
-      String expr;
-      String fragExpr;
+      String fragExpr = PatternHelper.getExecutionPattern(packageDecl);
 
-      fragExpr = PatternHelper.getExecutionPattern(packageDecl);
-
-      for (int i = size - 1; i >= 0; i--) {
-        expr = locks.getAutolockArray(i).getMethodExpression();
+      for (int i = locks.sizeOfAutolockArray() - 1; i >= 0; i--) {
+        String expr = locks.getAutolockArray(i).getMethodExpression();
 
         if (fragExpr.equals(expr)) {
           locks.removeAutolock(i);
+          signaller.autolocksChanged = true;
         }
       }
 
@@ -2333,34 +2577,36 @@ public class ConfigurationHelper {
     }
   }
 
-  public void ensureNotAutolocked(final IPackageFragment fragment) {
+  public void ensureNotAutolocked(IPackageFragment fragment) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotAutolocked(fragment, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotAutolocked(IPackageFragment fragment, MultiChangeSignaller signaller) {
     if (isAutolocked(fragment)) {
-      internalEnsureNotAutolocked(fragment);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNotAutolocked(fragment, signaller);
     }
   }
 
-  private void internalEnsureNotAutolocked(final IPackageFragment fragment) {
+  public void internalEnsureNotAutolocked(IPackageFragment fragment) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotAutolocked(fragment, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotAutolocked(IPackageFragment fragment, MultiChangeSignaller signaller) {
     Locks locks = getLocks();
 
     if (locks != null) {
-      int size = locks.sizeOfAutolockArray();
-      String expr;
-      String fragExpr;
+      String fragExpr = PatternHelper.getExecutionPattern(fragment);
 
-      fragExpr = PatternHelper.getExecutionPattern(fragment);
-
-      for (int i = size - 1; i >= 0; i--) {
-        expr = locks.getAutolockArray(i).getMethodExpression();
+      for (int i = locks.sizeOfAutolockArray() - 1; i >= 0; i--) {
+        String expr = locks.getAutolockArray(i).getMethodExpression();
 
         if (fragExpr.equals(expr)) {
           locks.removeAutolock(i);
+          signaller.autolocksChanged = true;
         }
       }
 
@@ -2368,168 +2614,189 @@ public class ConfigurationHelper {
     }
   }
 
-  public void ensureNotAutolocked(final IJavaProject javaProject) {
-    if (javaProject != null && isAutolocked(javaProject)) {
-      internalEnsureNotAutolocked(javaProject);
+  public void ensureNotAutolocked(IJavaProject javaProject) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotAutolocked(javaProject, signaller);
+    signaller.signal(m_project);
+  }
 
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+  public void ensureNotAutolocked(IJavaProject javaProject, MultiChangeSignaller signaller) {
+    if (javaProject != null && isAutolocked(javaProject)) {
+      internalEnsureNotAutolocked(javaProject, signaller);
     }
   }
 
-  private void internalEnsureNotAutolocked(final IJavaProject javaProject) {
+  public void internalEnsureNotAutolocked(IJavaProject javaProject) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotAutolocked(javaProject, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotAutolocked(IJavaProject javaProject, MultiChangeSignaller signaller) {
     IPackageFragment[] fragments = getSourceFragments(javaProject);
 
     for (int i = 0; i < fragments.length; i++) {
       if (isAutolocked(fragments[i])) {
-        internalEnsureNotAutolocked(fragments[i]);
+        internalEnsureNotAutolocked(fragments[i], signaller);
       }
     }
   }
 
-  public void ensureNotLocked(final IMethod method) {
+  public void ensureNotLocked(IMethod method) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotLocked(method, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotLocked(IMethod method, MultiChangeSignaller signaller) {
     MethodInfo methodInfo = m_patternHelper.getMethodInfo(method);
 
     if (methodInfo != null) {
-      ensureNotLocked(methodInfo);
+      ensureNotLocked(methodInfo, signaller);
     }
   }
 
-  public void ensureNotLocked(final MethodInfo methodInfo) {
+  public void ensureNotLocked(MethodInfo methodInfo) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotLocked(methodInfo, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotLocked(MethodInfo methodInfo, MultiChangeSignaller signaller) {
     if (methodInfo != null) {
-      boolean persist = false;
-
       if (isAutolocked(methodInfo)) {
-        internalEnsureNotAutolocked(methodInfo);
-        persist = true;
+        internalEnsureNotAutolocked(methodInfo, signaller);
       }
-
       if (isNameLocked(methodInfo)) {
-        internalEnsureNotNameLocked(methodInfo);
-        persist = true;
-      }
-
-      if (persist) {
-        ConfigurationEditor editor = getConfigurationEditor();
-        if (false && editor != null) {
-          editor.updateLocksPanel();
-        } else {
-          persistConfiguration();
-        }
+        internalEnsureNotNameLocked(methodInfo, signaller);
       }
     }
   }
 
-  private void internalEnsureNotLocked(final IMethod method) {
+  public void internalEnsureNotLocked(IMethod method) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotLocked(method, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotLocked(IMethod method, MultiChangeSignaller signaller) {
     MethodInfo methodInfo = m_patternHelper.getMethodInfo(method);
 
     if (method != null) {
-      internalEnsureNotLocked(methodInfo);
+      internalEnsureNotLocked(methodInfo, signaller);
     }
   }
 
-  private void internalEnsureNotLocked(final MethodInfo methodInfo) {
+  public void internalEnsureNotLocked(MethodInfo methodInfo) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotLocked(methodInfo, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotLocked(MethodInfo methodInfo, MultiChangeSignaller signaller) {
     if (isAutolocked(methodInfo)) {
-      internalEnsureNotAutolocked(methodInfo);
+      internalEnsureNotAutolocked(methodInfo, signaller);
     }
     if (isNameLocked(methodInfo)) {
-      internalEnsureNotNameLocked(methodInfo);
+      internalEnsureNotNameLocked(methodInfo, signaller);
     }
   }
 
-  public void ensureNotLocked(final IType type) {
-    boolean persist = false;
+  public void ensureNotLocked(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotLocked(type, signaller);
+    signaller.signal(m_project);
+  }
 
+  public void ensureNotLocked(IType type, MultiChangeSignaller signaller) {
     if (isAutolocked(type)) {
-      internalEnsureNotAutolocked(type);
-      persist = true;
+      internalEnsureNotAutolocked(type, signaller);
+    }
+    if (isNameLocked(type)) {
+      internalEnsureNotNameLocked(type, signaller);
+    }
+  }
+
+  public void internalEnsureNotLocked(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotLocked(type, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotLocked(IType type, MultiChangeSignaller signaller) {
+    if (isAutolocked(type)) {
+      internalEnsureNotAutolocked(type, signaller);
     }
 
     if (isNameLocked(type)) {
-      internalEnsureNotNameLocked(type);
-      persist = true;
-    }
-
-    if (persist) {
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNotNameLocked(type, signaller);
     }
   }
 
-  private void internalEnsureNotLocked(final IType type) {
-    if (isAutolocked(type)) {
-      internalEnsureNotAutolocked(type);
-    }
-
-    if (isNameLocked(type)) {
-      internalEnsureNotNameLocked(type);
-    }
+  public void ensureNotLocked(IPackageFragment fragment) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotLocked(fragment, signaller);
+    signaller.signal(m_project);
   }
 
-  public void ensureNotLocked(final IPackageFragment fragment) {
-    boolean persist = false;
-
+  public void ensureNotLocked(IPackageFragment fragment, MultiChangeSignaller signaller) {
     if (isAutolocked(fragment)) {
-      internalEnsureNotAutolocked(fragment);
-      persist = true;
+      internalEnsureNotAutolocked(fragment, signaller);
     }
-
     if (isNameLocked(fragment)) {
-      internalEnsureNotNameLocked(fragment);
-      persist = true;
-    }
-
-    if (persist) {
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNotNameLocked(fragment, signaller);
     }
   }
 
-  private void internalEnsureNotLocked(final IPackageDeclaration packageDecl) {
+  public void internalEnsureNotLocked(IPackageDeclaration packageDecl) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotLocked(packageDecl, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotLocked(IPackageDeclaration packageDecl, MultiChangeSignaller signaller) {
     if (isAutolocked(packageDecl)) {
-      internalEnsureNotAutolocked(packageDecl);
+      internalEnsureNotAutolocked(packageDecl, signaller);
     }
 
     if (isNameLocked(packageDecl)) {
-      internalEnsureNotNameLocked(packageDecl);
+      internalEnsureNotNameLocked(packageDecl, signaller);
     }
   }
 
-  private void internalEnsureNotLocked(final IPackageFragment fragment) {
+  public void internalEnsureNotLocked(IPackageFragment fragment) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotLocked(fragment, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotLocked(IPackageFragment fragment, MultiChangeSignaller signaller) {
     if (isAutolocked(fragment)) {
-      internalEnsureNotAutolocked(fragment);
+      internalEnsureNotAutolocked(fragment, signaller);
     }
 
     if (isNameLocked(fragment)) {
-      internalEnsureNotNameLocked(fragment);
+      internalEnsureNotNameLocked(fragment, signaller);
     }
   }
 
-  public void ensureNotLocked(final IJavaProject javaProject) {
+  public void ensureNotLocked(IJavaProject javaProject) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotLocked(javaProject, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotLocked(IJavaProject javaProject, MultiChangeSignaller signaller) {
     if (javaProject != null) {
       IPackageFragment[] fragments = getSourceFragments(javaProject);
 
       for (int i = 0; i < fragments.length; i++) {
-        internalEnsureNotLocked(fragments[i]);
-      }
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateLocksPanel();
-      } else {
-        persistConfiguration();
+        if (isAutolocked(fragments[i])) {
+          internalEnsureNotAutolocked(fragments[i], signaller);
+        }
+        if (isNameLocked(fragments[i])) {
+          internalEnsureNotNameLocked(fragments[i], signaller);
+        }
       }
     }
   }
@@ -2556,86 +2823,122 @@ public class ConfigurationHelper {
     return false;
   }
 
-  public void ensureBootJarClass(final ICompilationUnit module) {
-    ensureBootJarClass(module.findPrimaryType());
+  public void ensureBootJarClass(ICompilationUnit module) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureBootJarClass(module, signaller);
+    signaller.signal(m_project);
   }
 
-  public void ensureBootJarClass(final IType type) {
-    ensureBootJarClass(PatternHelper.getFullyQualifiedName(type));
+  public void ensureBootJarClass(ICompilationUnit module, MultiChangeSignaller signaller) {
+    ensureBootJarClass(module.findPrimaryType(), signaller);
   }
 
-  private void internalEnsureBootJarClass(final IType type) {
-    internalEnsureBootJarClass(PatternHelper.getFullyQualifiedName(type));
+  public void ensureBootJarClass(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureBootJarClass(type, signaller);
+    signaller.signal(m_project);
   }
 
-  public void ensureBootJarClass(final String className) {
+  public void ensureBootJarClass(IType type, MultiChangeSignaller signaller) {
+    ensureBootJarClass(PatternHelper.getFullyQualifiedName(type), signaller);
+  }
+
+  public void internalEnsureBootJarClass(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureBootJarClass(type, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureBootJarClass(IType type, MultiChangeSignaller signaller) {
+    internalEnsureBootJarClass(PatternHelper.getFullyQualifiedName(type), signaller);
+  }
+
+  public void ensureBootJarClass(String className) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureBootJarClass(className, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureBootJarClass(String className, MultiChangeSignaller signaller) {
     if (!isBootJarClass(className)) {
-      internalEnsureBootJarClass(className);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateBootClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureBootJarClass(className, signaller);
     }
   }
 
-  private void internalEnsureBootJarClass(final String className) {
-    if (!isAdaptable(className)) {
-      internalEnsureAdaptable(className);
-    }
+  public void internalEnsureBootJarClass(String className) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureBootJarClass(className, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureBootJarClass(String className, MultiChangeSignaller signaller) {
     ensureAdditionalBootJarClasses().addInclude(className);
+    signaller.bootClassesChanged = true;
   }
 
-  public void ensureNotBootJarClass(final ICompilationUnit module) {
+  public void ensureNotBootJarClass(ICompilationUnit module) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotBootJarClass(module, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotBootJarClass(ICompilationUnit module, MultiChangeSignaller signaller) {
     if (module != null) {
-      internalEnsureNotBootJarClass(module);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateBootClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNotBootJarClass(module, signaller);
     }
   }
 
-  private void internalEnsureNotBootJarClass(final ICompilationUnit module) {
-    internalEnsureNotBootJarClass(module.findPrimaryType());
+  public void internalEnsureNotBootJarClass(ICompilationUnit module) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotBootJarClass(module, signaller);
+    signaller.signal(m_project);
   }
 
-  public void ensureNotBootJarClass(final IType type) {
+  public void internalEnsureNotBootJarClass(ICompilationUnit module, MultiChangeSignaller signaller) {
+    internalEnsureNotBootJarClass(module.findPrimaryType(), signaller);
+  }
+
+  public void ensureNotBootJarClass(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotBootJarClass(type, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotBootJarClass(IType type, MultiChangeSignaller signaller) {
     if (type != null && isBootJarClass(type)) {
-      internalEnsureNotBootJarClass(type);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateBootClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNotBootJarClass(type, signaller);
     }
   }
 
-  private void internalEnsureNotBootJarClass(final IType type) {
-    internalEnsureNotBootJarClass(PatternHelper.getFullyQualifiedName(type));
+  public void internalEnsureNotBootJarClass(IType type) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotBootJarClass(type, signaller);
+    signaller.signal(m_project);
   }
 
-  public void ensureNotBootJarClass(final String className) {
+  public void internalEnsureNotBootJarClass(IType type, MultiChangeSignaller signaller) {
+    internalEnsureNotBootJarClass(PatternHelper.getFullyQualifiedName(type), signaller);
+  }
+
+  public void ensureNotBootJarClass(String className) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    ensureNotBootJarClass(className, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void ensureNotBootJarClass(String className, MultiChangeSignaller signaller) {
     if (isBootJarClass(className)) {
-      internalEnsureNotBootJarClass(className);
-
-      ConfigurationEditor editor = getConfigurationEditor();
-      if (false && editor != null) {
-        editor.updateBootClassesPanel();
-      } else {
-        persistConfiguration();
-      }
+      internalEnsureNotBootJarClass(className, signaller);
     }
   }
 
-  private void internalEnsureNotBootJarClass(final String className) {
+  public void internalEnsureNotBootJarClass(String className) {
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+    internalEnsureNotBootJarClass(className, signaller);
+    signaller.signal(m_project);
+  }
+
+  public void internalEnsureNotBootJarClass(String className, MultiChangeSignaller signaller) {
     AdditionalBootJarClasses classes = getAdditionalBootJarClasses();
 
     if (classes != null) {
@@ -2644,6 +2947,7 @@ public class ConfigurationHelper {
       for (int i = includes.length - 1; i >= 0; i--) {
         if (m_patternHelper.matchesClass(includes[i], className)) {
           classes.removeInclude(i);
+          signaller.includeRulesChanged = true;
         }
       }
 
@@ -2651,9 +2955,6 @@ public class ConfigurationHelper {
     }
   }
 
-  /**
-   * Are there any bootjar classes specified in the configuration?
-   */
   public boolean hasBootJarClasses() {
     AdditionalBootJarClasses classes = getAdditionalBootJarClasses();
     return classes != null && classes.sizeOfIncludeArray() > 0;
@@ -2674,10 +2975,8 @@ public class ConfigurationHelper {
   private static String LOCK_PROBLEM_MARKER = "org.terracotta.dso.LockMethodProblemMarker";
 
   private static String getRawString(XmlString xmlString) {
-    if (xmlString == null) return "";
     String s = xmlString.toString();
     s = s.substring(s.indexOf('>') + 1);
-    if (s.length() == 0) return "";
     s = s.substring(0, s.indexOf('<'));
     return s;
   }
@@ -2729,15 +3028,15 @@ public class ConfigurationHelper {
     }
   }
 
-  private static final String[]          PRIMITIVE_NAMES = new String[] {
+  private static String[]          PRIMITIVE_NAMES = new String[] {
     "java.lang.String",
     "java.lang.Integer",
     "java.lang.Boolean",
     "java.lang.Double",
     "java.lang.Character",
-    "java.lang.Byte"                                    };
+    "java.lang.Byte"                              };
 
-  private static final ArrayList<String> PRIMITIVES      = new ArrayList<String>(Arrays.asList(PRIMITIVE_NAMES));
+  private static ArrayList<String> PRIMITIVES      = new ArrayList<String>(Arrays.asList(PRIMITIVE_NAMES));
 
   private static boolean isPrimitive(IType type) {
     try {
@@ -2756,17 +3055,10 @@ public class ConfigurationHelper {
       IField field = getField(root.getFieldName());
       IType fieldType = getFieldType(field);
 
-      if (fieldType != null && !isInterface(fieldType) && !isPrimitive(fieldType) && !isAdaptable(fieldType)) {
+      if (fieldType != null && !isInterface(fieldType) && !isPrimitive(fieldType) && !isAdaptable(fieldType)
+          && !isBootJarClass(fieldType)) {
         String fullName = PatternHelper.getFullyQualifiedName(fieldType);
         msg = "Root type '" + fullName + "' not instrumented";
-      } else {
-        IType declaringType = field.getDeclaringType();
-
-        if (declaringType != null && !isInterface(declaringType) && !isPrimitive(declaringType)
-            && !isAdaptable(declaringType)) {
-          String fullName = PatternHelper.getFullyQualifiedName(declaringType);
-          msg = "Declaring type '" + fullName + "' not instrumented";
-        }
       }
     }
 
@@ -2783,11 +3075,8 @@ public class ConfigurationHelper {
     TransientFields transientFields = getTransientFields();
 
     if (transientFields != null) {
-      int size = transientFields.sizeOfFieldNameArray();
-      String field;
-
-      for (int i = 0; i < size; i++) {
-        field = getRawString(transientFields.xgetFieldNameArray(i));
+      for (int i = 0; i < transientFields.sizeOfFieldNameArray(); i++) {
+        String field = getRawString(transientFields.xgetFieldNameArray(i));
         validateTransientField(field);
       }
     }
@@ -2800,7 +3089,7 @@ public class ConfigurationHelper {
       IField field = getField(fieldName);
       IType declaringType = field.getDeclaringType();
 
-      if (declaringType != null && !isAdaptable(declaringType)) {
+      if (declaringType != null && !isAdaptable(declaringType) && !isBootJarClass(declaringType)) {
         String fullName = PatternHelper.getFullyQualifiedName(declaringType);
         msg = "Declaring type '" + fullName + "' not instrumented";
       }
@@ -2825,24 +3114,17 @@ public class ConfigurationHelper {
   }
 
   private void validateIncludes(InstrumentedClasses instrumentedClasses) {
-    int size = instrumentedClasses.sizeOfIncludeArray();
-    Include include;
-    String expr;
-
-    for (int i = 0; i < size; i++) {
-      include = instrumentedClasses.getIncludeArray(i);
-      expr = getRawString(include.xgetClassExpression());
+    for (int i = 0; i < instrumentedClasses.sizeOfIncludeArray(); i++) {
+      Include include = instrumentedClasses.getIncludeArray(i);
+      String expr = getRawString(include.xgetClassExpression());
 
       validateInstrumentedTypeExpression(expr);
     }
   }
 
   private void validateExcludes(InstrumentedClasses instrumentedClasses) {
-    int size = instrumentedClasses.sizeOfExcludeArray();
-    String exclude;
-
-    for (int i = 0; i < size; i++) {
-      exclude = getRawString(instrumentedClasses.xgetExcludeArray(i));
+    for (int i = 0; i < instrumentedClasses.sizeOfExcludeArray(); i++) {
+      String exclude = getRawString(instrumentedClasses.xgetExcludeArray(i));
       validateInstrumentedTypeExpression(exclude);
     }
   }
@@ -2863,26 +3145,22 @@ public class ConfigurationHelper {
 
       try {
         IPackageFragment[] fragments = m_javaProject.getPackageFragments();
-        IPackageFragment fragment;
 
         for (int i = 0; i < fragments.length; i++) {
-          fragment = fragments[i];
+          IPackageFragment fragment = fragments[i];
 
           if (fragment.getKind() == IPackageFragmentRoot.K_SOURCE && fragment.getElementName().startsWith(prefix)) {
             ICompilationUnit[] cus = fragment.getCompilationUnits();
-            ICompilationUnit cu;
-            String cuType;
 
             for (int j = 0; j < cus.length; j++) {
-              cu = cus[j];
-              cuType = PatternHelper.getFullyQualifiedName(cu.findPrimaryType());
+              ICompilationUnit cu = cus[j];
+              String cuType = PatternHelper.getFullyQualifiedName(cu.findPrimaryType());
 
               if (cuType.startsWith(prefix)) {
                 IType[] types = cus[j].getAllTypes();
-                IType type;
 
                 for (int k = 0; k < types.length; k++) {
-                  type = types[k];
+                  IType type = types[k];
 
                   if (!type.isInterface()) {
                     if (matchesType(expr, type)) { return; }
@@ -2894,18 +3172,15 @@ public class ConfigurationHelper {
         }
 
         for (int i = 0; i < fragments.length; i++) {
-          fragment = fragments[i];
+          IPackageFragment fragment = fragments[i];
 
           if (fragment.getKind() == IPackageFragmentRoot.K_BINARY && fragment.getElementName().startsWith(prefix)) {
             IClassFile[] classFiles = fragment.getClassFiles();
-            IType type;
-            String typeName;
-            int flags;
 
             for (int j = 0; j < classFiles.length; j++) {
-              type = classFiles[j].getType();
-              typeName = PatternHelper.getFullyQualifiedName(type);
-              flags = type.getFlags();
+              IType type = classFiles[j].getType();
+              String typeName = PatternHelper.getFullyQualifiedName(type);
+              int flags = type.getFlags();
 
               if (typeName.startsWith(prefix)) {
                 if (!type.isInterface() && !type.isAnonymous() && !type.isMember() && !type.isEnum()
@@ -2935,10 +3210,9 @@ public class ConfigurationHelper {
     String[] elems = StringUtils.split(typeExpr, '.');
     char[] codes = new char[] { '*', '?', '.', '$' };
     ArrayList<String> list = new ArrayList<String>();
-    String elem;
 
     for (int i = 0; i < elems.length; i++) {
-      elem = elems[i];
+      String elem = elems[i];
 
       if (elem.length() > 0 && StringUtils.containsNone(elems[i], codes)) {
         list.add(elem);
@@ -2952,12 +3226,11 @@ public class ConfigurationHelper {
     String name = PatternHelper.getFullyQualifiedName(type);
     int nameLen = name.length();
     int exprLen = typeExpr.length();
-    char ec;
 
     if (typeExpr.equals(name)) { return true; }
 
     for (int z = 0; z < exprLen; z++) {
-      ec = typeExpr.charAt(z);
+      char ec = typeExpr.charAt(z);
 
       if (z == nameLen || name.charAt(z) != ec) {
         if (ec == '.' || ec == '*' || ec == '?') { return m_patternHelper.matchesType(typeExpr, type); }
@@ -2984,11 +3257,8 @@ public class ConfigurationHelper {
     DistributedMethods distributedMethods = getDistributedMethods();
 
     if (distributedMethods != null) {
-      int size = distributedMethods.sizeOfMethodExpressionArray();
-      String methodExpr;
-
-      for (int i = 0; i < size; i++) {
-        methodExpr = distributedMethods.getMethodExpressionArray(i).getStringValue();
+      for (int i = 0; i < distributedMethods.sizeOfMethodExpressionArray(); i++) {
+        String methodExpr = distributedMethods.getMethodExpressionArray(i).getStringValue();
         validateDistributedMethodExpression(methodExpr);
       }
     }
@@ -3062,26 +3332,22 @@ public class ConfigurationHelper {
         }
 
         IPackageFragment[] fragments = m_javaProject.getPackageFragments();
-        IPackageFragment fragment;
 
         for (int i = 0; i < fragments.length; i++) {
-          fragment = fragments[i];
+          IPackageFragment fragment = fragments[i];
 
           if (fragment.getKind() == IPackageFragmentRoot.K_SOURCE && fragment.getElementName().startsWith(prefix)) {
             ICompilationUnit[] cus = fragment.getCompilationUnits();
-            ICompilationUnit cu;
-            String cuType;
 
             for (int j = 0; j < cus.length; j++) {
-              cu = cus[j];
-              cuType = PatternHelper.getFullyQualifiedName(cu.findPrimaryType());
+              ICompilationUnit cu = cus[j];
+              String cuType = PatternHelper.getFullyQualifiedName(cu.findPrimaryType());
 
               if (cuType.startsWith(prefix)) {
                 IType[] types = cus[j].getAllTypes();
-                IType type;
 
                 for (int k = 0; k < types.length; k++) {
-                  type = types[k];
+                  IType type = types[k];
 
                   if (!type.isInterface() && !type.isAnonymous()) {
                     if (matchesMethod(methodExpr, type)) { return null; }
@@ -3093,18 +3359,15 @@ public class ConfigurationHelper {
         }
 
         for (int i = 0; i < fragments.length; i++) {
-          fragment = fragments[i];
+          IPackageFragment fragment = fragments[i];
 
           if (fragment.getKind() == IPackageFragmentRoot.K_BINARY && fragment.getElementName().startsWith(prefix)) {
             IClassFile[] classFiles = fragment.getClassFiles();
-            IType type;
-            String typeName;
-            int flags;
 
             for (int j = 0; j < classFiles.length; j++) {
-              type = classFiles[j].getType();
-              typeName = PatternHelper.getFullyQualifiedName(type);
-              flags = type.getFlags();
+              IType type = classFiles[j].getType();
+              String typeName = PatternHelper.getFullyQualifiedName(type);
+              int flags = type.getFlags();
 
               if (typeName.startsWith(prefix)) {
                 if (!type.isInterface() && !type.isAnonymous() && !type.isMember() && !type.isEnum()
@@ -3134,10 +3397,9 @@ public class ConfigurationHelper {
     String[] elems = StringUtils.split(exprBody, '.');
     char[] codes = new char[] { '*', '?', '(', ')', '$' };
     ArrayList<String> list = new ArrayList<String>();
-    String elem;
 
     for (int i = 0; i < elems.length; i++) {
-      elem = elems[i];
+      String elem = elems[i];
 
       if (elem.length() > 0 && StringUtils.containsNone(elems[i], codes)) {
         list.add(elem);
@@ -3155,19 +3417,17 @@ public class ConfigurationHelper {
     int exprBodyLen = exprBody.length();
     String name = PatternHelper.getFullyQualifiedName(type);
     int nameLen = name.length();
-    char ebc;
 
     for (int z = 0; z < exprBodyLen; z++) {
-      ebc = exprBody.charAt(z);
+      char ebc = exprBody.charAt(z);
 
       if (z == nameLen || ebc != name.charAt(z)) {
         if (ebc == '.' || ebc == '*' || ebc == '?' || ebc == '(') {
           try {
             IMethod[] methods = type.getMethods();
-            IMethod method;
 
             for (int m = 0; m < methods.length; m++) {
-              method = methods[m];
+              IMethod method = methods[m];
 
               if (m_patternHelper.matchesMethod(methodExpr, method)) { return true; }
             }
@@ -3192,11 +3452,8 @@ public class ConfigurationHelper {
     AdditionalBootJarClasses classes = getAdditionalBootJarClasses();
 
     if (classes != null) {
-      int size = classes.sizeOfIncludeArray();
-      String include;
-
-      for (int i = 0; i < size; i++) {
-        include = getRawString(classes.xgetIncludeArray(i));
+      for (int i = 0; i < classes.sizeOfIncludeArray(); i++) {
+        String include = getRawString(classes.xgetIncludeArray(i));
         validateBootJarClass(include);
       }
     }
@@ -3429,6 +3686,16 @@ public class ConfigurationHelper {
     return classes;
   }
 
+  private void testRemoveInstrumentedClasses() {
+    InstrumentedClasses ic = getInstrumentedClasses();
+    if (ic != null) {
+      if (ic.sizeOfExcludeArray() == 0 && ic.sizeOfIncludeArray() == 0) {
+        getDsoApplication().unsetInstrumentedClasses();
+        testRemoveDsoApplication();
+      }
+    }
+  }
+
   private AdditionalBootJarClasses getAdditionalBootJarClasses() {
     return ensureDsoApplication().getAdditionalBootJarClasses();
   }
@@ -3476,7 +3743,7 @@ public class ConfigurationHelper {
 
   }
 
-  private static boolean isSourceFragment(final IPackageFragment fragment) {
+  private static boolean isSourceFragment(IPackageFragment fragment) {
     try {
       return fragment.getKind() == IPackageFragmentRoot.K_SOURCE && hasCompilationUnits(fragment);
     } catch (JavaModelException jme) {
@@ -3510,10 +3777,9 @@ public class ConfigurationHelper {
 
       if (container != null) {
         IResource[] members = container.members();
-        IResource member;
 
         for (int i = 0; i < members.length; i++) {
-          member = members[i];
+          IResource member = members[i];
 
           if (member.getType() == IResource.FILE && member.getFileExtension().equals("java")) { return true; }
         }
@@ -3530,16 +3796,6 @@ public class ConfigurationHelper {
 
   public ConfigurationEditor getConfigurationEditor() {
     return m_plugin.getConfigurationEditor(m_project);
-  }
-
-  public void persistConfiguration() {
-    ConfigurationEditor editor = getConfigurationEditor();
-
-    if (false && editor != null) {
-      editor._setDirty();
-    } else {
-      m_plugin.saveConfiguration(m_project);
-    }
   }
 
   private void clearConfigProblemMarkersOfType(String markerType) {

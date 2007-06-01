@@ -59,24 +59,19 @@ public class PackageNavigator extends MessageDialog {
   protected void configureShell(Shell shell) {
     super.configureShell(shell);
     shell.setSize(400, 300);
-    SWTUtil.placeDialogInCenter(m_parentShell, shell);
+    if(m_parentShell != null) {
+      SWTUtil.placeDialogInCenter(m_parentShell, shell);
+    }
   }
 
   protected Control createDialogArea(Composite parent) {
-    GridLayout gridLayout = new GridLayout();
-    gridLayout.marginWidth = 0;
-    gridLayout.marginHeight = 0;
-    parent.setLayout(gridLayout);
+    parent.setLayout(new GridLayout());
     return super.createDialogArea(parent);
   }
 
   protected Control createButtonBar(Composite parent) {
     Composite comp = (Composite) super.createButtonBar(parent);
-    GridLayout gridLayout = new GridLayout();
-    gridLayout.numColumns = 2;
-    gridLayout.marginWidth = 5;
-    gridLayout.marginHeight = 5;
-    comp.setLayout(gridLayout);
+    comp.setLayout(new GridLayout(2, false));
     getButton(getDefaultButtonIndex()).setEnabled(false);
     return comp;
   }

@@ -16,6 +16,7 @@ import com.tc.object.appevent.NonPortableEventContext;
 import com.tc.object.appevent.NonPortableEventContextFactory;
 import com.tc.object.appevent.NonPortableFieldSetContext;
 import com.tc.object.appevent.NonPortableObjectEvent;
+import com.tc.object.appevent.NonPortableRootContext;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.TransparentAccess;
@@ -301,8 +302,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
 
   public TCObject lookupOrCreate(Object pojo) {
     if (pojo == null) return TCObjectFactory.NULL_TC_OBJECT;
-    return lookupOrCreateIfNecesary(pojo, this.nonPortableContextFactory.createNonPortableEventContext(pojo.getClass()
-        .getName()));
+    return lookupOrCreateIfNecesary(pojo, this.nonPortableContextFactory.createNonPortableEventContext(pojo));
   }
 
   private TCObject lookupOrCreate(Object pojo, NonPortableEventContext context) {
@@ -312,8 +312,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
 
   public TCObject lookupOrShare(Object pojo) {
     if (pojo == null) return TCObjectFactory.NULL_TC_OBJECT;
-    return lookupOrShareIfNecesary(pojo, this.nonPortableContextFactory.createNonPortableEventContext(pojo.getClass()
-        .getName()));
+    return lookupOrShareIfNecesary(pojo, this.nonPortableContextFactory.createNonPortableEventContext(pojo));
   }
 
   private TCObject lookupOrShareIfNecesary(Object pojo, NonPortableEventContext context) {
@@ -610,7 +609,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
         String fullyQualifiedFieldname = reference.getFullyQualifiedReferenceName();
         reason.setUltimateNonPortableFieldName(fullyQualifiedFieldname);
       }
-      throwNonPortableException(reference.getValue(), reason, context,
+      dumpObjectHierarchy(context.getPojo(), context);
+      if(System.getProperty("project.name") != null) {
+        storeObjectHierarchy(context.getPojo(), context);
+      }
+      throwNonPortableException(context.getPojo(), reason, context,
                                 "Attempt to share an instance of a non-portable class referenced by a portable class.");
     }
   }
@@ -618,34 +621,77 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   private void checkPortabilityOfRoot(Object root, String rootName, Class rootType) throws TCNonPortableObjectError {
     NonPortableReason reason = checkPortabilityOf(root);
     if (reason != null) {
-      NonPortableFieldSetContext context = this.nonPortableContextFactory.createNonPortableFieldSetContext(rootType
-          .getName(), rootName, true);
-      dumpObjectHierarchy(root);
+      NonPortableRootContext context = this.nonPortableContextFactory.createNonPortableRootContext(rootName, root);
+      dumpObjectHierarchy(root, context);
+      if(System.getProperty("project.name") != null) {
+        storeObjectHierarchy(root, context);
+      }
       throwNonPortableException(root, reason, context,
                                 "Attempt to share an instance of a non-portable class by assigning it to a root.");
     }
   }
 
-  public void checkPortabilityOfField(Object value, String fieldName, Class targetClass)
-      throws TCNonPortableObjectError {
-    NonPortableReason reason = checkPortabilityOf(value);
+  public void checkPortabilityOfField(Object fieldValue, String fieldName, Object pojo) throws TCNonPortableObjectError {
+    NonPortableReason reason = checkPortabilityOf(fieldValue);
     if (reason != null) {
-      NonPortableFieldSetContext context = this.nonPortableContextFactory.createNonPortableFieldSetContext(targetClass
-          .getName(), fieldName, false);
-      dumpObjectHierarchy(value);
-      throwNonPortableException(value, reason, context,
+      NonPortableFieldSetContext context = this.nonPortableContextFactory.createNonPortableFieldSetContext(pojo,
+                                                                                                           fieldName,
+                                                                                                           fieldValue);
+      dumpObjectHierarchy(fieldValue, context);
+      if(System.getProperty("project.name") != null) {
+        storeObjectHierarchy(pojo, context);
+      }
+      throwNonPortableException(pojo, reason, context,
                                 "Attempt to set the field of a shared object to an instance of a non-portable class.");
     }
   }
 
-  public void checkPortabilityOfLogicalAction(Object param, String methodName, Class logicalType)
+  private Object cloneLogical(Object pojo, String methodName, Object[] params) {
+    try {
+      Class c = pojo.getClass();
+      Object o = c.newInstance();
+      if(o instanceof Map) {
+        ((Map)o).putAll((Map)pojo);
+      } else if(o instanceof Collection) {
+        ((Collection)o).addAll((Collection)pojo);
+      }
+      Method[] methods = c.getMethods();
+      methodName = methodName.substring(0, methodName.indexOf('('));
+      for(int i = 0; i < methods.length; i++) {
+        Method m = methods[i];
+        Class[] paramTypes = m.getParameterTypes();
+        if(m.getName().equals(methodName) && params.length == paramTypes.length) {
+          for(int j = 0; j < paramTypes.length; j++) {
+            if(!paramTypes[j].isAssignableFrom(params[j].getClass())) {
+              m = null;
+              break;
+            }
+          }
+          if(m != null) {
+            m.invoke(o, params);
+            break;
+          }
+        }
+      }
+      pojo = o;
+    } catch(Exception e) {
+      logger.error("Unable to clone logical object", e);
+    }
+    return pojo;
+  }
+  
+  public void checkPortabilityOfLogicalAction(Object[] params, int index, String methodName, Object pojo)
       throws TCNonPortableObjectError {
+    Object param = params[index];
     NonPortableReason reason = checkPortabilityOf(param);
     if (reason != null) {
-      dumpObjectHierarchy(param);
       NonPortableEventContext context = this.nonPortableContextFactory
-          .createNonPortableLogicalInvokeContext(logicalType.getName(), methodName);
-      throwNonPortableException(param, reason, context,
+          .createNonPortableLogicalInvokeContext(pojo, methodName, params, index);
+      dumpObjectHierarchy(params[index], context);
+      if(System.getProperty("project.name") != null) {
+        storeObjectHierarchy(cloneLogical(pojo, methodName, params), context);
+      }
+      throwNonPortableException(pojo, reason, context,
                                 "Attempt to share an instance of a non-portable class by"
                                     + " passing it as an argument to a method of a logically-managed class.");
     }
@@ -759,8 +805,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
       if (isLiteralPojo(rootPojo)) {
         root = basicCreateIfNecessary(rootPojo);
       } else {
-        root = lookupOrCreate(rootPojo, this.nonPortableContextFactory.createNonPortableFieldSetContext(rootPojo
-            .getClass().getName(), rootName, true));
+        root = lookupOrCreate(rootPojo, this.nonPortableContextFactory.createNonPortableRootContext(rootName, rootPojo));
       }
       rootID = root.getObjectID();
       txManager.createRoot(rootName, rootID);
@@ -833,30 +878,36 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
   }
 
   private void addToManagedFromRoot(Object root, NonPortableEventContext context) {
-    try {
-      traverser.traverse(root, traverseTest, context);
-    } catch (TCNonPortableObjectError e) {
-      dumpObjectHierarchy(root);
-      throw e;
-    }
+    traverser.traverse(root, traverseTest, context);
   }
 
-  private void dumpObjectHierarchy(Object root) {
+  private void dumpObjectHierarchy(Object root, NonPortableEventContext context) {
     // the catch is not in the called method so that when/if there is an OOME, the logging might have a chance of
     // actually working (as opposed to just throwing another OOME)
     try {
-      dumpObjectHierarchy0(root);
+      dumpObjectHierarchy0(root, context);
     } catch (Throwable t) {
       logger.error("error walking non-portable object instance of type " + root.getClass().getName(), t);
     }
   }
 
-  private void dumpObjectHierarchy0(Object root) {
+  private void dumpObjectHierarchy0(Object root, NonPortableEventContext context) {
     if (runtimeLogger.nonPortableDump()) {
       NonPortableWalkVisitor visitor = new NonPortableWalkVisitor(CustomerLogging.getDSORuntimeLogger(), this,
                                                                   this.clientConfiguration, root);
       ObjectGraphWalker walker = new ObjectGraphWalker(root, visitor, visitor);
       walker.walk();
+    }
+  }
+
+  private void storeObjectHierarchy(Object root, NonPortableEventContext context) {
+    try {
+      WalkVisitor wv = new WalkVisitor(this, this.clientConfiguration, root, context);
+      ObjectGraphWalker walker = new ObjectGraphWalker(root, wv, wv);
+      walker.walk();
+      context.setTreeModel(wv.getTreeModel());
+    } catch (Throwable t) {
+      t.printStackTrace();
     }
   }
 

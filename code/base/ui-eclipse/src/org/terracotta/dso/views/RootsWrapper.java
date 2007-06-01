@@ -9,9 +9,29 @@ import com.terracottatech.config.Roots;
 
 public class RootsWrapper {
   private DsoApplication fApp;
+  private RootWrapper[] children;
   
   RootsWrapper(DsoApplication app) {
     fApp = app;
+  }
+  
+  RootWrapper[] createRootWrappers() {
+    int count = sizeOfRootArray();
+
+    children = new RootWrapper[count];
+    for(int i = 0; i < count; i++) {
+      children[i] = new RootWrapper(this, i);
+    }
+    
+    return children;
+  }
+  
+  RootWrapper[] getChildren() {
+    return children;
+  }
+  
+  RootWrapper getChildAt(int index) {
+    return children != null ? children[index] : null;
   }
   
   int sizeOfRootArray() {

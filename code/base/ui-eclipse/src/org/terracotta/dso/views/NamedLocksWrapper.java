@@ -6,20 +6,29 @@ package org.terracotta.dso.views;
 
 public class NamedLocksWrapper {
   private LocksWrapper m_locks;
+  private NamedLockWrapper[] children;
   
   NamedLocksWrapper(LocksWrapper locks) {
     m_locks = locks;
   }
   
-  LockWrapper[] createNamedLockWrappers() {
+  NamedLockWrapper[] createNamedLockWrappers() {
     int count = m_locks.sizeOfNamedLockArray();
-    LockWrapper[] result = new LockWrapper[count];
+    children = new NamedLockWrapper[count];
     
     for(int i = 0; i < count; i++) {
-      result[i] = new NamedLockWrapper(m_locks, i);
+      children[i] = new NamedLockWrapper(m_locks, i);
     }
     
-    return result;
+    return children;
+  }
+
+  NamedLockWrapper[] getChildren() {
+    return children;
+  }
+  
+  NamedLockWrapper getChildAt(int index) {
+    return children != null ? children[index] : null;
   }
   
   int sizeOfNamedLockArray() {

@@ -5,7 +5,6 @@ package org.terracotta.dso.actions;
 
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.widgets.Menu;
 
@@ -23,55 +22,42 @@ public class TypeHandler extends BaseMenuCreator {
   private AdaptableAction    m_adaptableAction;
   private ExcludedTypeAction m_excludedAction;
   private BootJarTypeAction  m_bootJarAction;
-  
+
   public TypeHandler() {
     super();
-    
+
     m_adaptableAction = new AdaptableAction();
-    m_excludedAction  = new ExcludedTypeAction();
-    m_bootJarAction   = new BootJarTypeAction();
+    m_excludedAction = new ExcludedTypeAction();
+    m_bootJarAction = new BootJarTypeAction();
   }
-  
-  private static boolean isKnownConcrete(IType type) {
-    try {
-      return !type.isInterface();
-    } catch(JavaModelException jme) {
-      return false;
-    }
-  }
-  
+
   protected IJavaElement getJavaElement(ISelection selection) {
-    IJavaElement elem  = null;
-    String       label = "Types";
-    
-    if((elem = ActionUtil.findSelectedType(selection)) != null) {
-      if(isKnownConcrete((IType)elem)) {
-        label = "Type " + elem.getElementName();
-      } else {
-        elem = null;
-      }
-    }      
-    else if((elem = ActionUtil.findSelectedPackageFragment(selection)) != null) {
+    IJavaElement elem = null;
+    String label = "Types";
+
+    if ((elem = ActionUtil.findSelectedType(selection)) != null) {
+      label = "Type " + elem.getElementName();
+    } else if ((elem = ActionUtil.findSelectedPackageFragment(selection)) != null) {
       label = "Package " + elem.getElementName();
     }
-    
+
     m_delegateAction.setText(label);
 
     return elem;
   }
-  
+
   protected void fillMenu(Menu menu) {
-    if(m_element != null) {
+    if (m_element != null) {
       m_adaptableAction.setJavaElement(m_element);
       addMenuAction(menu, m_adaptableAction);
-      
+
       m_excludedAction.setJavaElement(m_element);
       addMenuAction(menu, m_excludedAction);
 
-      if(m_element instanceof IType) {
-        m_bootJarAction.setType((IType)m_element);
+      if (m_element instanceof IType) {
+        m_bootJarAction.setType((IType) m_element);
         addMenuAction(menu, m_bootJarAction);
       }
     }
-  }  
+  }
 }

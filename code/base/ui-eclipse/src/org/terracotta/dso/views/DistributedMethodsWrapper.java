@@ -8,9 +8,29 @@ import com.terracottatech.config.DsoApplication;
 
 public class DistributedMethodsWrapper {
   private DsoApplication fApp;
+  private DistributedMethodWrapper[] children;
   
   DistributedMethodsWrapper(DsoApplication dsoApp) {
     fApp = dsoApp;
+  }
+  
+  DistributedMethodWrapper[] createDistributedMethodWrappers() {
+    int count = sizeOfMethodExpressionArray();
+
+    children = new DistributedMethodWrapper[count];
+    for(int i = 0; i < count; i++) {
+      children[i] = new DistributedMethodWrapper(this, i);
+    }
+    
+    return children;
+  }
+
+  DistributedMethodWrapper[] getChildren() {
+    return children;
+  }
+  
+  DistributedMethodWrapper getChildAt(int index) {
+    return children != null ? children[index] : null;
   }
   
   int sizeOfMethodExpressionArray() {

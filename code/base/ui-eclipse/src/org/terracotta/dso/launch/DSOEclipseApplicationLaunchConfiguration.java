@@ -4,11 +4,9 @@
  */
 package org.terracotta.dso.launch;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -17,8 +15,8 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.IVMInstallType;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.pde.core.plugin.IPluginModelBase;
 import org.eclipse.pde.internal.core.PDECore;
@@ -26,173 +24,50 @@ import org.eclipse.pde.internal.core.PluginModelManager;
 import org.eclipse.pde.internal.core.WorkspaceModelManager;
 import org.eclipse.pde.ui.launcher.EclipseApplicationLaunchConfiguration;
 import org.eclipse.pde.ui.launcher.IPDELauncherConstants;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.PlatformUI;
-import org.terracotta.dso.BootJarHelper;
-import org.terracotta.dso.ClasspathProvider;
-import org.terracotta.dso.ConfigurationHelper;
-import org.terracotta.dso.ServerTracker;
 import org.terracotta.dso.TcPlugin;
-import org.terracotta.dso.actions.BuildBootJarAction;
+
+import java.util.ArrayList;
+
+/**
+ * Launcher for DSO Eclipse applications. 
+ */
 
 public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplicationLaunchConfiguration implements
-    IJavaLaunchConfigurationConstants {
+    IDSOLaunchDelegate {
+
+  private LaunchHelper fLaunchHelper = new LaunchHelper(this);
+
   public void launch(ILaunchConfiguration config, String mode, ILaunch launch, IProgressMonitor monitor)
       throws CoreException {
-    try {
-      Display.getDefault().syncExec(new Runnable() {
-        public void run() {
-          IWorkbench workbench = PlatformUI.getWorkbench();
-          if(workbench != null) {
-            workbench.saveAllEditors(false);
-          }
-        }
-      });
-
-      ILaunchConfigurationWorkingCopy wc = config.getWorkingCopy();
-      final IJavaProject javaProject = getJavaProject(wc);
-      final IProject project = javaProject.getProject();
-
-      final TcPlugin plugin = TcPlugin.getDefault();
-      String vmArgs = wc.getAttribute(ATTR_VM_ARGUMENTS, "");
-      IPath libDirPath = plugin.getLibDirPath();
-      IFile configFile = plugin.getConfigurationFile(project);
-
-      if (!plugin.continueWithConfigProblems(project)) { return; }
-
-      final ServerTracker tracker = ServerTracker.getDefault();
-      if (!tracker.anyRunning(javaProject)) {
-        tracker.startServer(javaProject, plugin.getAnyServerName(project));
-      }
-
-      IPath configPath = configFile.getLocation();
-      String configProp = " -Dtc.config=\"" + toOSString(configPath) + "\"";
-      
-      String portablePath = null;
-      IPath jrePath = JavaRuntime.computeJREEntry(javaProject).getPath();
-      if(jrePath != null) {
-        portablePath = jrePath.toPortableString();
-      }
-
-      String jreContainerPath = wc.getAttribute(ATTR_JRE_CONTAINER_PATH, portablePath);
-      String bootJarName = BootJarHelper.getHelper().getBootJarName(jreContainerPath);
-
-      if (bootJarName == null || bootJarName.length() == 0) {
-        IVMInstall vmInstall = getVMInstall(wc);
-        String vmName;
-
-        if (vmInstall != null) {
-          vmName = vmInstall.getName();
-        } else {
-          vmName = jreContainerPath.substring(jreContainerPath.lastIndexOf('/') + 1);
-        }
-
-        throw new RuntimeException("Can't determine BootJar name for runtime '" + vmName + "'");
-      }
-
-      IFile localBootJar = project.getFile(bootJarName);
-      IPath bootPath;
-
-      testEnsureBootJar(plugin, javaProject, localBootJar, jreContainerPath);
-
-      if (localBootJar.exists()) {
-        bootPath = localBootJar.getLocation();
-      } else {
-        bootPath = BootJarHelper.getHelper().getBootJarPath(bootJarName);
-      }
-
-      String bootProp = " -Xbootclasspath/p:\"" + toOSString(bootPath) + "\"";
-
-      if (!configPath.toFile().exists()) {
-        String path = configPath.toOSString();
-        plugin.openError("Project config file '" + path + "' not found", new RuntimeException("tc.config not found: "
-                                                                                              + path));
-      }
-
-      if (!bootPath.toFile().exists()) {
-        String path = bootPath.toOSString();
-        plugin.openError("System bootjar '" + path + "' not found", new RuntimeException("bootjar not found: " + path));
-      }
-
-      String cpProp;
-      if (libDirPath.append("tc.jar").toFile().exists()) {
-        cpProp = " -Dtc.install-root=\"" + toOSString(plugin.getLocation()) + "\"";
-      } else {
-        cpProp = " -Dtc.classpath=\"" + ClasspathProvider.makeDevClasspath() + "\"";
-      }
-
-      wc.setAttribute(ATTR_VM_ARGUMENTS, cpProp + configProp + bootProp + " " + vmArgs);
-
+    ILaunchConfigurationWorkingCopy wc = fLaunchHelper.setup(config, mode, launch, monitor);
+    if(wc != null) {
       super.launch(wc, mode, launch, monitor);
-    } catch (Throwable t) {
-      String msg = "Unable to launch '" + config.getName() + "'\n\n" + t.getLocalizedMessage();
-      Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, t);
-      throw new CoreException(status);
-    }
-  }
-
-  private static String toOSString(IPath path) {
-    return path.makeAbsolute().toOSString();
-  }
-
-  private void testEnsureBootJar(final TcPlugin     plugin,
-                                 final IJavaProject javaProject,
-                                 final IFile        bootJar,
-                                 final String       jreContainerPath)
-  {
-    IProject            project                 = javaProject.getProject();
-    ConfigurationHelper configHelper            = plugin.getConfigurationHelper(project);
-    IFile               configFile              = plugin.getConfigurationFile(project);
-    boolean             stdBootJarExists        = false;
-    boolean             configHasBootJarClasses = configHelper.hasBootJarClasses();
-    
-    try {
-      stdBootJarExists = BootJarHelper.getHelper().getBootJarFile().exists();
-    } catch (CoreException ce) {/**/
-    }
-
-    if (!stdBootJarExists || (configFile != null && configHasBootJarClasses)) {
-      long bootStamp = bootJar.getLocalTimeStamp();
-      long confStamp = configFile.getLocalTimeStamp();
-
-      if (!bootJar.exists() || (configHasBootJarClasses && bootStamp < confStamp)) {
-        Display.getDefault().syncExec(new Runnable() {
-          public void run() {
-            BuildBootJarAction bbja = new BuildBootJarAction(javaProject);
-            bbja.setJREContainerPath(jreContainerPath);
-            bbja.run(null);
-          }
-        });
-      }
     }
   }
 
   public IJavaProject getJavaProject(ILaunchConfiguration configuration) throws CoreException {
     String projectName = getJavaProjectName(configuration);
-    
+
     if (projectName != null) {
       projectName = projectName.trim();
-      
+
       if (projectName.length() > 0) {
-        IProject     project     = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
+        IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
         IJavaProject javaProject = JavaCore.create(project);
-        
-        if (javaProject != null && javaProject.exists()) {
-          return javaProject;
-        }
+
+        if (javaProject != null && javaProject.exists()) { return javaProject; }
       }
     }
-    
+
     return null;
   }
 
   public String getJavaProjectName(ILaunchConfiguration configuration) throws CoreException {
-    String appNameRoot = configuration.getAttribute(IPDELauncherConstants.APPLICATION, (String)null);
-    if(appNameRoot != null) {
+    String appNameRoot = configuration.getAttribute(IPDELauncherConstants.APPLICATION, (String) null);
+    if (appNameRoot != null) {
       appNameRoot = appNameRoot.substring(0, appNameRoot.lastIndexOf('.'));
     } else {
-      String msg = "No application specified for launch configuration '"+configuration.getName()+"'";
+      String msg = "No application specified for launch configuration '" + configuration.getName() + "'";
       Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, null);
       throw new CoreException(status);
     }
@@ -203,16 +78,44 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
         continue;
       }
       IPluginModelBase base = manager.findModel(projs[i]);
-      if(appNameRoot.equals(base.getPluginBase().getId())) {
-        return projs[i].getName();
-      }
+      if (appNameRoot.equals(base.getPluginBase().getId())) { return projs[i].getName(); }
     }
-    String msg = "Unable to determine project for pluginId '"+appNameRoot+"'";
+    String msg = "Unable to determine project for pluginId '" + appNameRoot + "'";
     Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, null);
     throw new CoreException(status);
   }
 
   public IVMInstall getVMInstall(ILaunchConfiguration configuration) throws CoreException {
-    return JavaRuntime.computeVMInstall(configuration);
+    String vm = configuration.getAttribute(IPDELauncherConstants.VMINSTALL, (String) null);
+    IVMInstall launcher = getVMInstall(vm);
+    if (launcher == null) {
+      String msg = "Cannot locate VMInstall for '"+vm+"'";
+      Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, null);
+      throw new CoreException(status);
+    }
+    return launcher;
+  }
+  
+  public static IVMInstall getVMInstall(String name) {
+    if (name != null) {
+      IVMInstall[] installs = getAllVMInstances();
+      for (int i = 0; i < installs.length; i++) {
+        if (installs[i].getName().equals(name))
+          return installs[i];
+      }
+    }
+    return JavaRuntime.getDefaultVMInstall();
+  }
+
+  public static IVMInstall[] getAllVMInstances() {
+    ArrayList res = new ArrayList();
+    IVMInstallType[] types = JavaRuntime.getVMInstallTypes();
+    for (int i = 0; i < types.length; i++) {
+      IVMInstall[] installs = types[i].getVMInstalls();
+      for (int k = 0; k < installs.length; k++) {
+        res.add(installs[k]);
+      }
+    }
+    return (IVMInstall[]) res.toArray(new IVMInstall[res.size()]);
   }
 }

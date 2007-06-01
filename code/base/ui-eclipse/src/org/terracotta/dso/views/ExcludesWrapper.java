@@ -6,6 +6,7 @@ package org.terracotta.dso.views;
 
 public class ExcludesWrapper {
   InstrumentedClassesWrapper m_instrumentedClasses;
+  ExcludeWrapper[] children;
   
   ExcludesWrapper(InstrumentedClassesWrapper instrumentedClasses) {
     m_instrumentedClasses = instrumentedClasses;
@@ -13,15 +14,23 @@ public class ExcludesWrapper {
   
   ExcludeWrapper[] createExcludeWrappers() {
     int count = m_instrumentedClasses.sizeOfExcludeArray();
-    ExcludeWrapper[] result = new ExcludeWrapper[count];
+    children = new ExcludeWrapper[count];
     
     for(int i = 0; i < count; i++) {
-      result[i] = new ExcludeWrapper(m_instrumentedClasses, i);
+      children[i] = new ExcludeWrapper(m_instrumentedClasses, i);
     }
     
-    return result;
+    return children;
+  }
+
+  ExcludeWrapper[] getChildren() {
+    return children;
   }
   
+  ExcludeWrapper getChildAt(int index) {
+    return children != null ? children[index] : null;
+  }
+
   int sizeOfExcludeArray() {
     return m_instrumentedClasses.sizeOfExcludeArray();
   }

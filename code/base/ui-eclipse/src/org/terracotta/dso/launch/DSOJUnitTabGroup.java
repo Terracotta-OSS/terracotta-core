@@ -25,6 +25,7 @@ public class DSOJUnitTabGroup extends AbstractLaunchConfigurationTabGroup {
       new JavaJRETab(),
       new SourceLookupTab(),
       new EnvironmentTab(),
+      new ConfigurationTab(),
       new CommonTab()
     };
     setTabs(tabs);

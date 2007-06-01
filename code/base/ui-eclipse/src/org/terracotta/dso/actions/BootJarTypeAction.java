@@ -4,10 +4,8 @@
 package org.terracotta.dso.actions;
 
 import org.eclipse.jdt.core.IType;
-
 import org.terracotta.dso.ConfigurationHelper;
 import org.terracotta.dso.TcPlugin;
-import org.terracotta.dso.editors.ConfigurationEditor;
 
 /**
  * This is currently not used.
@@ -45,13 +43,6 @@ public class BootJarTypeAction extends BaseAction {
     }
     else {
       helper.ensureNotBootJarClass(m_type);
-    }
-
-    TcPlugin            plugin = TcPlugin.getDefault();
-    ConfigurationEditor editor = plugin.getConfigurationEditor(getProject());
-
-    if(editor != null) {
-      editor.modelChanged();
     }
 
     inspectCompilationUnit();

@@ -4,10 +4,7 @@
 package org.terracotta.dso.actions;
 
 import org.eclipse.jdt.core.IJavaElement;
-
 import org.terracotta.dso.ConfigurationHelper;
-import org.terracotta.dso.TcPlugin;
-import org.terracotta.dso.editors.ConfigurationEditor;
 
 /**
  * Mark the currently selected IMethod as being autolocked.
@@ -37,12 +34,6 @@ public class AutolockAction extends BaseAction {
       helper.ensureNotAutolocked(m_element);
     }
 
-    TcPlugin            plugin = TcPlugin.getDefault();
-    ConfigurationEditor editor = plugin.getConfigurationEditor(getProject());
-
-    if(editor != null) {
-      editor.modelChanged();
-    }
     inspectCompilationUnit();
   }
 }

@@ -24,6 +24,7 @@ public class DSOEclipseApplicationLaunchConfigurationTabGroup extends AbstractPD
         new ConfigurationTab(),
         new TracingTab(), 
         new EnvironmentTab(),
+        new org.terracotta.dso.launch.ConfigurationTab(),
         new CommonTab()};
     setTabs(tabs);
   }

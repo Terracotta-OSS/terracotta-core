@@ -8,20 +8,14 @@ import org.apache.xmlbeans.XmlOptions;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
-import org.eclipse.core.resources.IResourceDelta;
-import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.help.IContext;
-import org.eclipse.help.IContextProvider;
-import org.eclipse.help.IHelpResource;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -38,7 +32,6 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.SaveAsDialog;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.ide.IGotoMarker;
@@ -47,46 +40,35 @@ import org.eclipse.ui.part.MultiPageEditorPart;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.IElementStateListener;
 import org.terracotta.dso.ConfigurationHelper;
-import org.terracotta.dso.JavaSetupParticipant;
+import org.terracotta.dso.IConfigurationListener;
 import org.terracotta.dso.Messages;
 import org.terracotta.dso.TcPlugin;
-import org.terracotta.dso.decorator.AdaptedModuleDecorator;
-import org.terracotta.dso.decorator.AdaptedPackageFragmentDecorator;
-import org.terracotta.dso.decorator.AdaptedTypeDecorator;
-import org.terracotta.dso.decorator.AutolockedDecorator;
-import org.terracotta.dso.decorator.DistributedMethodDecorator;
-import org.terracotta.dso.decorator.ExcludedModuleDecorator;
-import org.terracotta.dso.decorator.ExcludedTypeDecorator;
-import org.terracotta.dso.decorator.NameLockedDecorator;
-import org.terracotta.dso.decorator.RootDecorator;
-import org.terracotta.dso.decorator.TransientDecorator;
 import org.terracotta.dso.editors.xml.XMLEditor;
-import org.terracotta.dso.editors.xmlbeans.XmlConfigContext;
+import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureChangeEvent;
+import org.terracotta.dso.editors.xmlbeans.XmlObjectStructureListener;
 
-import com.terracottatech.config.Application;
-import com.terracottatech.config.ConfigurationModel;
-import com.terracottatech.config.System;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.IOException;
 import java.text.MessageFormat;
 
-public class ConfigurationEditor extends MultiPageEditorPart implements IResourceChangeListener, IGotoMarker {
-
+public class ConfigurationEditor extends MultiPageEditorPart
+  implements IResourceChangeListener,
+             IGotoMarker,
+             XmlObjectStructureListener
+  {
   private static final int         XML_EDITOR_PAGE_INDEX      = 0;
   private static final int         DSO_APPLICATION_PAGE_INDEX = 1;
   private static final int         SERVERS_PAGE_INDEX         = 2;
   private static final int         CLIENT_PAGE_INDEX          = 3;
 
   private IProject                 m_project;
-  private Application              m_application;
-  private ConfigurationEditorPanel m_dsoAppPanel;
-  private ConfigurationEditorPanel m_serversPanel;
-  private ConfigurationEditorPanel m_clientsPanel;
+  private DsoApplicationPanel      m_dsoAppPanel;
+  private ServersPanel             m_serversPanel;
+  private ClientsPanel             m_clientsPanel;
   private XMLEditor                m_xmlEditor;
   private int                      m_xmlEditorPageIndex;
-  private ResourceDeltaVisitor     m_resourceDeltaVisitor;
   private boolean                  m_haveActiveConfig;
   private DocumentListener         m_docListener;
   private ElementStateListener     m_elementStateListener;
@@ -95,6 +77,7 @@ public class ConfigurationEditor extends MultiPageEditorPart implements IResourc
   private boolean                  m_isXmlEditorVisible       = true;
   private int                      m_currentPage              = -1;
   private Display                  m_display;
+  private IConfigurationListener   m_configAdapter;
   
   public ConfigurationEditor() {
     super();
@@ -104,8 +87,64 @@ public class ConfigurationEditor extends MultiPageEditorPart implements IResourc
     m_textInputListener = new TextInputListener();
     m_parseTimer = new ParseTimer();
     m_display = Display.getDefault();
+    m_configAdapter = new ConfigAdapter();
+    
+    TcPlugin.getDefault().addConfigurationListener(m_configAdapter);
   }
 
+  class ConfigAdapter implements IConfigurationListener {
+    public void configurationChanged(IProject project) {
+      if(TcPlugin.getDefault().hasTerracottaNature(project)) {
+        if(m_project != null && m_project.equals(project)) {
+          syncXmlDocument();
+          internalSetDirty(Boolean.TRUE);
+          initPanels();
+        }
+      }
+    }
+    
+    private void handleChange(IProject project) {
+      if(TcPlugin.getDefault().hasTerracottaNature(project)) {
+        if(m_project != null && m_project.equals(project)) {
+          syncXmlDocument();
+          internalSetDirty(Boolean.TRUE);
+        }
+      }
+    }
+    
+    public void serverChanged(IProject project, int index) {handleChange(project);}
+    public void serversChanged(IProject project) {handleChange(project);}
+      
+    public void rootChanged(IProject project, int index) {handleChange(project);}
+    public void rootsChanged(IProject project) {handleChange(project);}
+
+    public void distributedMethodsChanged(IProject project) {handleChange(project);}
+    public void distributedMethodChanged(IProject project, int index) {handleChange(project);}
+
+    public void bootClassesChanged(IProject project) {handleChange(project);}
+    public void bootClassChanged(IProject project, int index) {handleChange(project);}
+
+    public void transientFieldsChanged(IProject project) {handleChange(project);}
+    public void transientFieldChanged(IProject project, int index) {handleChange(project);}
+
+    public void autolockChanged(IProject project, int index) {handleChange(project);}
+    public void autolocksChanged(IProject project) {handleChange(project);}
+    public void namedLockChanged(IProject project, int index) {handleChange(project);}
+    public void namedLocksChanged(IProject project) {handleChange(project);}
+      
+    public void includeRuleChanged(IProject project, int index) {handleChange(project);}
+    public void includeRulesChanged(IProject project) {handleChange(project);}
+    public void excludeRuleChanged(IProject project, int index) {handleChange(project);}
+    public void excludeRulesChanged(IProject project) {handleChange(project);}
+    public void instrumentationRulesChanged(IProject project) {handleChange(project);}
+
+    public void clientChanged(IProject project) {handleChange(project);}
+    public void moduleReposChanged(IProject project) {handleChange(project);}
+    public void moduleRepoChanged(IProject project, int index) {handleChange(project);}
+    public void moduleChanged(IProject project, int index) {handleChange(project);}
+    public void modulesChanged(IProject project) {handleChange(project);}
+  }
+  
   private void setTimer(boolean start) {
     if (start) m_display.timerExec(2000, m_parseTimer);
     else m_display.timerExec(-1, m_parseTimer);
@@ -120,10 +159,11 @@ public class ConfigurationEditor extends MultiPageEditorPart implements IResourc
   void createDsoApplicationPage(int pageIndex) {
     addPage(pageIndex, m_dsoAppPanel = new DsoApplicationPanel(getContainer(), SWT.NONE));
     setPageText(pageIndex, "DSO config");
+    m_dsoAppPanel.addXmlObjectStructureListener(this);
   }
 
   public DsoApplicationPanel getDsoApplicationPanel() {
-    return (DsoApplicationPanel) m_dsoAppPanel;
+    return m_dsoAppPanel;
   }
 
   public void showDsoApplicationPanel() {
@@ -131,23 +171,25 @@ public class ConfigurationEditor extends MultiPageEditorPart implements IResourc
   }
 
   void createServersPage(int pageIndex) {
-    ScrolledComposite scroll = new ScrolledComposite(getContainer(), SWT.V_SCROLL);
+    ScrolledComposite scroll = new ScrolledComposite(getContainer(), SWT.V_SCROLL | SWT.H_SCROLL);
     scroll.setContent(m_serversPanel = new ServersPanel(scroll, SWT.NONE));
     scroll.setExpandHorizontal(true);
     scroll.setExpandVertical(true);
-    scroll.setMinHeight(370);
+    scroll.setMinSize(m_serversPanel.computeSize(SWT.DEFAULT, SWT.DEFAULT));
     addPage(pageIndex, scroll);
     setPageText(pageIndex, "Servers config");
+    m_serversPanel.addXmlObjectStructureListener(this);
   }
 
   void createClientPage(int pageIndex) {
-    ScrolledComposite scroll = new ScrolledComposite(getContainer(), SWT.V_SCROLL);
+    ScrolledComposite scroll = new ScrolledComposite(getContainer(), SWT.V_SCROLL | SWT.H_SCROLL);
     scroll.setContent(m_clientsPanel = new ClientsPanel(scroll, SWT.NONE));
     scroll.setExpandHorizontal(true);
     scroll.setExpandVertical(true);
-    scroll.setMinHeight(460);
+    scroll.setMinSize(m_clientsPanel.computeSize(SWT.DEFAULT, SWT.DEFAULT));
     addPage(pageIndex, scroll);
     setPageText(pageIndex, "Clients config");
+    m_clientsPanel.addXmlObjectStructureListener(this);
   }
 
   void createXMLEditorPage(int pageIndex) {
@@ -189,15 +231,23 @@ public class ConfigurationEditor extends MultiPageEditorPart implements IResourc
     initPanels();
   }
 
+  public void structureChanged(XmlObjectStructureChangeEvent e) {
+    // This means that either the servers, clients, or dsoApplication elements were
+    // removed.
+  }
+
   public void dispose() {
-    m_dsoAppPanel.detach();
-    m_serversPanel.detach();
-    m_clientsPanel.detach();
+    m_serversPanel.removeXmlObjectStructureListener(this);
+    m_clientsPanel.removeXmlObjectStructureListener(this);
+    m_dsoAppPanel.removeXmlObjectStructureListener(this);
     ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
+    TcPlugin.getDefault().removeConfigurationListener(m_configAdapter);
     super.dispose();
   }
 
   public void doSave(IProgressMonitor monitor) {
+    if (haveActiveConfig()) setTimer(false);
+    TcPlugin.getDefault().ignoreNextConfigChange();
     m_xmlEditor.doSave(monitor);
     clearDirty();
   }
@@ -335,6 +385,10 @@ public class ConfigurationEditor extends MultiPageEditorPart implements IResourc
     getSite().getShell().getDisplay().syncExec(runner);
   }
 
+  private void asyncExec(Runnable runner) {
+    getSite().getShell().getDisplay().asyncExec(runner);
+  }
+
   public void init(IEditorSite site, IEditorInput editorInput) throws PartInitException {
     if (!(editorInput instanceof IFileEditorInput)) { throw new PartInitException(
         "Invalid Input: Must be IFileEditorInput"); }
@@ -374,165 +428,31 @@ public class ConfigurationEditor extends MultiPageEditorPart implements IResourc
 
   protected void pageChange(int newPageIndex) {
     super.pageChange(newPageIndex);
-    if (m_currentPage == XML_EDITOR_PAGE_INDEX) {
-      m_isXmlEditorVisible = false;
-      updateXmlConfig();
-      switch (newPageIndex) {
-        case DSO_APPLICATION_PAGE_INDEX:
-          m_dsoAppPanel.refreshContent();
-          break;
-        case SERVERS_PAGE_INDEX:
-          m_serversPanel.refreshContent();
-          break;
-        case CLIENT_PAGE_INDEX:
-          m_clientsPanel.refreshContent();
-          break;
-
-        default:
-          break;
-      }
-    } else {
-      m_isXmlEditorVisible = true;
-      clearDirty();
-    }
     m_currentPage = newPageIndex;
-  }
-
-  private ResourceDeltaVisitor getResourceDeltaVisitor() {
-    if (m_resourceDeltaVisitor == null) {
-      m_resourceDeltaVisitor = new ResourceDeltaVisitor();
-    }
-    return m_resourceDeltaVisitor;
-  }
-
-  class ResourceDeltaVisitor implements IResourceDeltaVisitor {
-    public boolean visit(IResourceDelta delta) {
-      if (PlatformUI.getWorkbench().isClosing()) { return false; }
-
-      if (delta.getKind() == IResourceDelta.CHANGED) {
-        TcPlugin plugin = TcPlugin.getDefault();
-        IResource res = delta.getResource();
-
-        if (res instanceof IFile) {
-          IProject project = res.getProject();
-          int flags = delta.getFlags();
-
-          if (project != null && (flags & IResourceDelta.CONTENT) != 0) {
-            if ((flags & IResourceDelta.MARKERS) != 0) { return false; }
-            IFile configFile = plugin.getConfigurationFile(project);
-
-            if (configFile != null && configFile.equals(res)) {
-              // plugin.reloadConfiguration(m_project);
-              // initPanels();
-              // clearDirty();
-
-              return false;
-            }
-          }
-        }
-      }
-
-      return true;
-    }
-  }
-
-  /**
-   * Ensures that the config has both a System and Application element. The System element sets the config-mode to
-   * DEVELOPMENT.
-   */
-  private void ensureRequiredConfigElements() {
-    if (m_project != null && m_project.isOpen()) {
-      TcPlugin plugin = TcPlugin.getDefault();
-      TcConfig config = plugin.getConfiguration(m_project);
-
-      if (config != null) {
-        System system = config.getSystem();
-
-        if (system == null) {
-          system = config.addNewSystem();
-          system.setConfigurationModel(ConfigurationModel.DEVELOPMENT);
-        }
-
-        m_application = config.getApplication();
-
-        if (m_application == null) {
-          m_application = config.addNewApplication();
-          m_application.addNewDso().addNewInstrumentedClasses();
-        }
-      }
-    }
+    m_isXmlEditorVisible = (m_currentPage == XML_EDITOR_PAGE_INDEX);
   }
 
   public void initPanels() {
     if (m_project != null && m_project.isOpen()) {
-      ensureRequiredConfigElements();
-      m_dsoAppPanel.init(m_project);
-      m_serversPanel.init(m_project);
-      m_clientsPanel.init(m_project);
+      m_dsoAppPanel.setup(m_project);
+      m_serversPanel.setup(m_project);
+      m_clientsPanel.setup(m_project);
       enablePanels();
     } else {
       disablePanels();
     }
   }
 
-  private void updateXmlConfig() {
-    internalSetDirty(Boolean.FALSE);
-    syncXmlModel();
-    XmlConfigContext.getInstance(m_project).refreshXmlConfig();
-  }
-
-  public void updateInstrumentedClassesPanel() {
-    updateXmlConfig();
-    m_dsoAppPanel.refreshContent();
-    TcPlugin.getDefault().updateDecorators(
-        new String[] {
-          AdaptedModuleDecorator.DECORATOR_ID,
-          AdaptedTypeDecorator.DECORATOR_ID,
-          AdaptedPackageFragmentDecorator.DECORATOR_ID,
-          ExcludedTypeDecorator.DECORATOR_ID,
-          ExcludedModuleDecorator.DECORATOR_ID });
-  }
-
-  public void updateTransientsPanel() {
-    updateXmlConfig();
-    m_dsoAppPanel.refreshContent();
-    TcPlugin.getDefault().updateDecorator(TransientDecorator.DECORATOR_ID);
-  }
-
-  public void updateRootsPanel() {
-    updateXmlConfig();
-    m_dsoAppPanel.refreshContent();
-    TcPlugin.getDefault().updateDecorator(RootDecorator.DECORATOR_ID);
-  }
-
-  public void updateDistributedMethodsPanel() {
-    updateXmlConfig();
-    m_dsoAppPanel.refreshContent();
-    TcPlugin.getDefault().updateDecorator(DistributedMethodDecorator.DECORATOR_ID);
-  }
-
-  public void updateLocksPanel() {
-    updateXmlConfig();
-    m_dsoAppPanel.refreshContent();
-    TcPlugin.getDefault().updateDecorators(
-        new String[] { NameLockedDecorator.DECORATOR_ID, AutolockedDecorator.DECORATOR_ID });
-  }
-
-  public void updateBootClassesPanel() {
-    updateXmlConfig();
-    m_dsoAppPanel.refreshContent();
-  }
-
   private void disablePanels() {
-    m_dsoAppPanel.setActive(false);
-    m_serversPanel.setActive(false);
-    m_clientsPanel.setActive(false);
+    m_dsoAppPanel.setEnabled(false);
+    m_serversPanel.setEnabled(false);
+    m_clientsPanel.setEnabled(false);
   }
 
   private void enablePanels() {
-    m_dsoAppPanel.setActive(true);
-    m_serversPanel.setActive(true);
-    m_clientsPanel.setActive(true);
+    m_dsoAppPanel.setEnabled(true);
+    m_serversPanel.setEnabled(true);
+    m_clientsPanel.setEnabled(true);
   }
 
   public void closeEditor() {
@@ -548,30 +468,25 @@ public class ConfigurationEditor extends MultiPageEditorPart implements IResourc
         }
         break;
       }
-      case IResourceChangeEvent.POST_CHANGE: {
-        try {
-          event.getDelta().accept(getResourceDeltaVisitor());
-        } catch (CoreException ce) {
-          ce.printStackTrace();
-        }
-        break;
-      }
     }
   }
 
   public void syncXmlDocument() {
-    TcPlugin plugin = TcPlugin.getDefault();
-    IDocument doc = m_xmlEditor.getDocument();
-    XmlOptions opts = plugin.getXmlOptions();
-    TcConfig config = plugin.getConfiguration(m_project);
-    if (config != null) {
-      TcConfigDocument configDoc = TcConfigDocument.Factory.newInstance();
-      configDoc.setTcConfig(config);
-      doc.removeDocumentListener(m_docListener);
-      doc.set(configDoc.xmlText(opts));
-      doc.addDocumentListener(m_docListener);
-    }
-    plugin.fireConfigurationChange(m_project);
+    asyncExec(new Runnable() {
+      public void run() {
+        TcPlugin plugin = TcPlugin.getDefault();
+        IDocument doc = m_xmlEditor.getDocument();
+        XmlOptions opts = plugin.getXmlOptions();
+        TcConfig config = plugin.getConfiguration(m_project);
+        if (config != null) {
+          TcConfigDocument configDoc = TcConfigDocument.Factory.newInstance();
+          configDoc.setTcConfig(config);
+          doc.removeDocumentListener(m_docListener);
+          doc.set(configDoc.xmlText(opts));
+          doc.addDocumentListener(m_docListener);
+        }
+      }
+    });
   }
 
   public synchronized void syncXmlModel() {
@@ -583,27 +498,6 @@ public class ConfigurationEditor extends MultiPageEditorPart implements IResourc
     } catch (IOException ioe) {
       disablePanels();
     }
-  }
-
-  /**
-   * This gets invokes by our sub-components when they've modified the model.
-   */
-  public synchronized void setDirty() {
-    syncXmlDocument();
-    doSave(null);
-  }
-
-  public synchronized void _setDirty() {
-    // XXX: This really needs to be removed. The doc should only be saved when the user explicitly saves and the XML
-    // text editor should only be refreshed when it comes into view. On top of that there is no reason why a GUI would
-    // need a setDirty() method in the first place. The entire config is written to disk, then reloaded from disk in
-    // it's entirety after every xml element update...
-    syncXmlDocument();
-    JavaSetupParticipant.inspectAll();
-    TcPlugin plugin = TcPlugin.getDefault();
-    plugin.updateDecorators();
-    plugin.fireConfigurationChange(m_project);
-    plugin.saveConfigurationQuietly(m_project);
   }
 
   private void clearDirty() {
@@ -655,9 +549,7 @@ public class ConfigurationEditor extends MultiPageEditorPart implements IResourc
     }
 
     public void elementDeleted(Object element) {/**/}
-
     public void elementMoved(Object originalElement, Object movedElement) {/**/}
-
     public void elementDirtyStateChanged(Object element, boolean isDirty) {/**/}
   }
 
@@ -677,65 +569,5 @@ public class ConfigurationEditor extends MultiPageEditorPart implements IResourc
     ConfigurationHelper configHelper = plugin.getConfigurationHelper(m_project);
 
     configHelper.applyProblemToText(doc, text, msg, markerType);
-  }
-
-  /**
-   * Help support
-   */
-
-  private HelpContextProvider m_helpContextProvider;
-  private HelpContext         m_helpContext;
-
-  private HelpContextProvider getHelpContextProvider() {
-    if (m_helpContextProvider == null) {
-      m_helpContextProvider = new HelpContextProvider();
-    }
-    return m_helpContextProvider;
-  }
-
-  private HelpContext getHelpContext() {
-    if (m_helpContext == null) {
-      m_helpContext = new HelpContext();
-    }
-    return m_helpContext;
-  }
-
-  public Object getAdapter(Class key) {
-    if (key.equals(IContextProvider.class)) { return getHelpContextProvider(); }
-    return super.getAdapter(key);
-  }
-
-  class HelpContext implements IContext, IHelpResource {
-    private IHelpResource[] m_helpResources = new IHelpResource[] { this };
-
-    public IHelpResource[] getRelatedTopics() {
-      return m_helpResources;
-    }
-
-    public String getText() {
-      return "Terracotta Configuration Editor";
-    }
-
-    public String getHref() {
-      return "/org.terracotta.dso/html/tasks/config/Overview.html";
-    }
-
-    public String getLabel() {
-      return getText();
-    }
-  }
-
-  class HelpContextProvider implements IContextProvider {
-    public int getContextChangeMask() {
-      return NONE;
-    }
-
-    public IContext getContext(Object target) {
-      return getHelpContext();
-    }
-
-    public String getSearchExpression(Object target) {
-      return "Terracotta";
-    }
   }
 }

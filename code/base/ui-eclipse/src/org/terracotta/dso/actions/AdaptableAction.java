@@ -7,10 +7,8 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
-
 import org.terracotta.dso.ConfigurationHelper;
 import org.terracotta.dso.TcPlugin;
-import org.terracotta.dso.editors.ConfigurationEditor;
 
 /**
  * Mark the currently selected IType as instrumented.
@@ -55,13 +53,6 @@ public class AdaptableAction extends BaseAction {
     }
     else {
       helper.ensureNotAdaptable(m_element);
-    }
-
-    TcPlugin            plugin = TcPlugin.getDefault();
-    ConfigurationEditor editor = plugin.getConfigurationEditor(getProject());
-
-    if(editor != null) {
-      editor.modelChanged();
     }
 
     inspectCompilationUnit();

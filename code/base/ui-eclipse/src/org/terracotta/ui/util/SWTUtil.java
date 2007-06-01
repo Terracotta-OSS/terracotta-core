@@ -8,16 +8,19 @@ import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.LayoutConstants;
 import org.eclipse.jface.util.Geometry;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.custom.TableEditor;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
@@ -60,32 +63,35 @@ public final class SWTUtil {
     }
   }
 
-  public static Composite getAncestorOfClass(Class clazz, Composite comp) {
+  public static Control getAncestorOfClass(Class clazz, Control comp) {
     if (comp.getClass().equals(clazz)) return comp;
-    Composite current = comp;
-    while ((current = comp.getParent()) != null) {
-      if (current.getClass().equals(clazz)) return current;
+    while ((comp = comp.getParent()) != null) {
+      if (clazz.isAssignableFrom(comp.getClass())) return comp;
     }
     return null;
   }
 
-  public static int textColumnsToPixels(Text text, int columns) {
-    GC gc = new GC(text);
+  public static int textColumnsToPixels(Control control, int columns) {
+    GC gc = new GC(control);
     FontMetrics fm = gc.getFontMetrics();
     int width = columns * fm.getAverageCharWidth();
     int height = fm.getHeight();
     gc.dispose();
-    return text.computeSize(width, height).x;
+    return control.computeSize(width, height).x;
   }
 
-  public static int textRowsToPixels(Text text, int rows) {
-    GC gc = new GC(text);
+  public static int textRowsToPixels(Control control, int rows) {
+    GC gc = new GC(control);
     FontMetrics fm = gc.getFontMetrics();
     int height = rows * fm.getHeight();
     gc.dispose();
-    return text.computeSize(0, height).y;
+    return control.computeSize(0, height).y;
   }
 
+  public static int tableRowsToPixels(Table table, int rows) {
+    return table.getHeaderHeight()+(rows*table.getItemHeight());
+  }
+  
   public static void applyDefaultButtonSize(Button button) {
     Point preferredSize = button.computeSize(SWT.DEFAULT, SWT.DEFAULT, false);
     Point hint = Geometry.max(LayoutConstants.getMinButtonSize(), preferredSize);
@@ -102,10 +108,19 @@ public final class SWTUtil {
   }
 
   public static void makeTableColumnsResizeEqualWidth(final Composite tablePanel, final Table table) {
-    tablePanel.addControlListener(new ControlAdapter() {
+    final Control control = table;
+    control.addControlListener(new ControlAdapter() {
       public void controlResized(ControlEvent e) {
-        Rectangle area = tablePanel.getClientArea();
-        Point preferredSize = table.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        Rectangle area = control.getBounds();
+        int widthHint = SWT.DEFAULT;
+        int heightHint = SWT.DEFAULT;
+        Object layoutData = table.getLayoutData();
+        if(false && layoutData instanceof GridData) {
+          GridData gridData = (GridData)layoutData;
+          widthHint = gridData.widthHint;
+          heightHint = gridData.heightHint;
+        }
+        Point preferredSize = table.computeSize(widthHint, heightHint);
         int width = area.width - 2 * table.getBorderWidth();
         if (preferredSize.y > area.height + table.getHeaderHeight()) {
           Point vBarSize = table.getVerticalBar().getSize();
@@ -226,7 +241,7 @@ public final class SWTUtil {
           final TableItem item = table.getItem(index);
           final Rectangle rect = item.getBounds(column);
           if (rect.contains(pt)) {
-            final Combo combo = new Combo(table, SWT.READ_ONLY);
+            final CCombo combo = new CCombo(table, SWT.READ_ONLY);
             for (int i = 0; i < values.length; i++) {
               combo.add(values[i]);
             }
@@ -274,6 +289,16 @@ public final class SWTUtil {
             combo.addListener(SWT.MouseExit, new Listener() {
               public void handleEvent(Event e) {
                 isMouseOverCombo[0] = false;
+              }
+            });
+            combo.addSelectionListener(new SelectionAdapter () {
+              public void widgetSelected(SelectionEvent e) {
+                Event updateEvent = new Event();
+                item.setText(column, combo.getText());
+                updateEvent.item = item;
+                updateEvent.index = column;
+                table.notifyListeners(SWT.SetData, updateEvent);
+                combo.dispose();
               }
             });
             editor.setEditor(combo, item, column);

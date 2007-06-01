@@ -8,6 +8,7 @@
 	<dependency name="org.eclipse.core.jobs" rev="3.2.0.v20060603" org="tc-eclipse"/>
 	<dependency name="org.eclipse.core.resources" rev="3.2.0.v20060603" org="tc-eclipse"/>
 	<dependency name="org.eclipse.core.runtime" rev="3.2.0.v20060603" org="tc-eclipse"/>
+	<dependency name="org.eclipse.core.variables" rev="3.1.100.v20060605" org="tc-eclipse"/>
 	<dependency name="org.eclipse.debug.core" rev="3.2.0.v20060605" org="tc-eclipse"/>	
 	<dependency name="org.eclipse.debug.ui" rev="3.2.0.v20060605" org="tc-eclipse"/>
 	<dependency name="org.eclipse.equinox.common" rev="3.2.0.v20060603" org="tc-eclipse"/>

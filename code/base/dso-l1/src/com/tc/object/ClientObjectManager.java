@@ -27,10 +27,10 @@ public interface ClientObjectManager {
 
   public boolean isPortableInstance(Object instance);
 
-  public void checkPortabilityOfField(Object value, String fieldName, Class targetClass)
+  public void checkPortabilityOfField(Object value, String fieldName, Object pojo)
       throws TCNonPortableObjectError;
 
-  public void checkPortabilityOfLogicalAction(Object param, String methodName, Class logicalType)
+  public void checkPortabilityOfLogicalAction(Object[] params, int paramIndex, String methodName, Object pojo)
       throws TCNonPortableObjectError;
 
   public void replaceRootIDIfNecessary(String rootName, ObjectID newRootID);

@@ -510,7 +510,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
         tx.fieldChanged(source, classname, fieldname, newValue, index);
       } else {
         if (newValue != null) {
-          objectManager.checkPortabilityOfField(newValue, fieldname, pojo.getClass());
+          objectManager.checkPortabilityOfField(newValue, fieldname, pojo);
         }
 
         TCObject tco = objectManager.lookupOrCreate(newValue);
@@ -540,7 +540,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
           Object element = objArray[i];
           if (!literalValues.isLiteralInstance(element)) {
-            if (element != null) objectManager.checkPortabilityOfField(element, String.valueOf(i), pojo.getClass());
+            if (element != null) objectManager.checkPortabilityOfField(element, String.valueOf(i), pojo);
 
             TCObject tco = objectManager.lookupOrCreate(element);
             objArray[i] = tco.getObjectID();
@@ -577,7 +577,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
         boolean isLiteral = literalValues.isLiteralInstance(p);
         if (!isLiteral) {
           if (p != null) {
-            objectManager.checkPortabilityOfLogicalAction(p, methodName, pojo.getClass());
+            objectManager.checkPortabilityOfLogicalAction(parameters, i, methodName, pojo);
           }
 
           TCObject tco = objectManager.lookupOrCreate(p);

@@ -4,10 +4,7 @@
 package org.terracotta.dso.actions;
 
 import org.eclipse.jdt.core.IMethod;
-
 import org.terracotta.dso.ConfigurationHelper;
-import org.terracotta.dso.TcPlugin;
-import org.terracotta.dso.editors.ConfigurationEditor;
 
 /**
  * Marks the currently selected IMethod as being a distribute method.
@@ -38,13 +35,6 @@ public class DistributedMethodAction extends BaseAction {
     }
     else {
       helper.ensureLocalMethod(m_method);
-    }
-
-    TcPlugin            plugin = TcPlugin.getDefault();
-    ConfigurationEditor editor = plugin.getConfigurationEditor(getProject());
-
-    if(editor != null) {
-      editor.modelChanged();
     }
 
     inspectCompilationUnit();

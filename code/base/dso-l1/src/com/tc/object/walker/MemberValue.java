@@ -87,7 +87,7 @@ public class MemberValue {
   }
 
   public int getId() {
-    if (id < 0) throw new AssertionError("id: " + id);
+    //if (id < 0) throw new AssertionError("id: " + id);
     return id;
   }
 

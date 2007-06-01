@@ -16,6 +16,8 @@ import org.eclipse.swt.widgets.Menu;
 import org.terracotta.dso.ConfigurationHelper;
 import org.terracotta.dso.ProjectNature;
 import org.terracotta.dso.TcPlugin;
+
+import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 
@@ -103,7 +105,8 @@ public class ManageServerHandler extends BaseMenuCreator
 
         if(serverArray != null) {
           for(int i = 0; i < serverArray.length; i++) {
-            addMenuAction(menu, new ManageServerAction(m_javaProject, serverArray[i].getName()));
+            String name = ParameterSubstituter.substitute(serverArray[i].getName());
+            addMenuAction(menu, new ManageServerAction(m_javaProject, name));
           }
         }
         else {

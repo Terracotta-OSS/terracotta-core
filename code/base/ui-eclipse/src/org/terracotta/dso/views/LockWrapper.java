@@ -19,6 +19,10 @@ public abstract class LockWrapper {
     return m_parent;
   }
 
+  int getIndex() {
+    return m_index;
+  }
+  
   abstract String getMethodExpression();
   abstract void setMethodExpression(String methodExpr);
   abstract void remove();

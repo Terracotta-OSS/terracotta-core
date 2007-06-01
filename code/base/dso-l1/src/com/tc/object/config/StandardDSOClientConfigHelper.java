@@ -677,7 +677,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     spec.addDateMethodLogSpec(SerializationUtil.SET_TIME_SIGNATURE, MethodSpec.TIMESTAMP_SET_TIME_METHOD_WRAPPER_LOG);
     spec.addAlwaysLogSpec(SerializationUtil.SET_NANOS_SIGNATURE);
 
-    addPermanentExcludePattern("java.util.WeakHashMap");
+    addPermanentExcludePattern("java.util.WeakHashMap+");
     addPermanentExcludePattern("java.lang.ref.*");
 
     spec = getOrCreateSpec("java.lang.reflect.AccessibleObject");

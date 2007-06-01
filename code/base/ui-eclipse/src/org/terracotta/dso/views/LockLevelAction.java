@@ -21,6 +21,7 @@ public class LockLevelAction extends Action implements IMenuCreator {
   Action fRead;
   Action fWrite;
   Action fConcurrent;
+  Action fSynchronousWrite;
   
   LockLevelAction(ConfigViewPart part) {
     super("Lock level", AS_DROP_DOWN_MENU);
@@ -48,6 +49,13 @@ public class LockLevelAction extends Action implements IMenuCreator {
         }
       }
     };
+    fSynchronousWrite = new Action("Synchronous-write", AS_RADIO_BUTTON) {
+      public void run() {
+        if(isChecked()) {
+          LockLevelAction.this.run();
+        }
+      }
+    };
   }
   
   public void run() {
@@ -59,8 +67,10 @@ public class LockLevelAction extends Action implements IMenuCreator {
       return LockLevel.READ;
     } else if(fWrite.isChecked()) {
       return LockLevel.WRITE;
-    } else {
+    } else if(fConcurrent.isChecked()){
       return LockLevel.CONCURRENT;
+    } else {
+      return LockLevel.SYNCHRONOUS_WRITE;
     }
   }
   
@@ -74,6 +84,7 @@ public class LockLevelAction extends Action implements IMenuCreator {
       fRead.setChecked(level.enumValue() == LockLevel.READ);
       fWrite.setChecked(level.enumValue() == LockLevel.WRITE);
       fConcurrent.setChecked(level.enumValue() == LockLevel.CONCURRENT);
+      fSynchronousWrite.setChecked(level.enumValue() == LockLevel.SYNCHRONOUS_WRITE);
     }
   }
 
@@ -107,7 +118,10 @@ public class LockLevelAction extends Action implements IMenuCreator {
 
     item = new ActionContributionItem(fConcurrent);
     item.fill(menu, -1);
-  }
+
+    item = new ActionContributionItem(fSynchronousWrite);
+    item.fill(menu, -1);
+}
   
   public Menu getMenu(Control parent) {
     Menu menu = new Menu(parent);

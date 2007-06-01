@@ -124,7 +124,7 @@ public class JavaSetupParticipant implements IDocumentSetupParticipant {
       file = (IFile)iter.next();
       
       if(file.exists()) {
-        new Inspector(file);
+        (new Inspector(file)).run();
       }
       else {
         iter.remove();

@@ -16,6 +16,7 @@ public class ObjectGraphWalker {
   private final Visitor     visitor;
   private final MemberValue root;
   private int               currentDepth = 0;
+  private int               maxDepth = -1;
   private final WalkTest    walkTest;
 
   public ObjectGraphWalker(Object root, WalkTest walkTest, Visitor visitor) {
@@ -28,6 +29,10 @@ public class ObjectGraphWalker {
     this.walkTest = walkTest;
   }
 
+  public void setMaxDepth(int maxDepth) {
+    this.maxDepth = maxDepth;
+  }
+  
   public void walk() {
     visitor.visitRootObject(root);
     currentDepth++;
@@ -72,7 +77,7 @@ public class ObjectGraphWalker {
 
       Object o = value.getValueObject();
 
-      boolean shouldTraverse = walkTest.shouldTraverse(value);
+      boolean shouldTraverse = (maxDepth <= 0 || currentDepth < maxDepth) && walkTest.shouldTraverse(value);
 
       if (o != null && shouldTraverse) {
         visited.visit(value);

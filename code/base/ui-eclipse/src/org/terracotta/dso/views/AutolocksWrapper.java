@@ -7,6 +7,7 @@ package org.terracotta.dso.views;
 
 public class AutolocksWrapper {
   private LocksWrapper m_locks;
+  private AutolockWrapper[] children;
   
   AutolocksWrapper(LocksWrapper locks) {
     m_locks = locks;
@@ -14,13 +15,21 @@ public class AutolocksWrapper {
   
   AutolockWrapper[] createAutolockWrappers() {
     int count = m_locks.sizeOfAutolockArray();
-    AutolockWrapper[] result = new AutolockWrapper[count];
-    
+
+    children = new AutolockWrapper[count];
     for(int i = 0; i < count; i++) {
-      result[i] = new AutolockWrapper(m_locks, i);
+      children[i] = new AutolockWrapper(m_locks, i);
     }
     
-    return result;
+    return children;
+  }
+  
+  AutolockWrapper[] getChildren() {
+    return children;
+  }
+  
+  AutolockWrapper getChildAt(int index) {
+    return children != null ? children[index] : null;
   }
   
   int sizeOfAutolockArray() {

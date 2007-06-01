@@ -5,10 +5,8 @@ package org.terracotta.dso.actions;
 
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
-
 import org.terracotta.dso.ConfigurationHelper;
 import org.terracotta.dso.TcPlugin;
-import org.terracotta.dso.editors.ConfigurationEditor;
 
 /**
  * Marks the currently selected IType as being excluded from instrumentation.
@@ -47,13 +45,6 @@ public class ExcludedTypeAction extends BaseAction {
     }
     else {
       helper.ensureNotExcluded(m_element);
-    }
-
-    TcPlugin            plugin = TcPlugin.getDefault();
-    ConfigurationEditor editor = plugin.getConfigurationEditor(getProject());
-
-    if(editor != null) {
-      editor.modelChanged();
     }
 
     inspectCompilationUnit();

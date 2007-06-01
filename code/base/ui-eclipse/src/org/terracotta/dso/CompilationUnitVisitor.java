@@ -184,6 +184,8 @@ public class CompilationUnitVisitor extends ASTVisitor {
         
       m_ast = (CompilationUnit)parser.createAST(monitor);
       m_ast.accept(CompilationUnitVisitor.this);
+      
+      m_configHelper.validateAll();
     }
   }
   
@@ -191,6 +193,16 @@ public class CompilationUnitVisitor extends ASTVisitor {
     return true;
   }
 
+  private static IType typeFromTypeBinding(ITypeBinding typeBinding) {
+    if(typeBinding != null) {
+      Object o = typeBinding.getJavaElement();
+      if(o instanceof IType) {
+        return (IType)o;
+      }
+    }
+    return null;
+  }
+  
   public boolean visit(TypeDeclaration node) {
     if(node.isInterface()) {
       return false;
@@ -199,7 +211,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
       ITypeBinding binding = node.resolveBinding();
     
       if(binding != null) {
-        IType type = (IType)binding.getJavaElement();
+        IType type = typeFromTypeBinding(binding);
         
         if(type != null) {
           String fullName = PatternHelper.getFullyQualifiedName(type);
@@ -216,7 +228,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
           binding  = superType.resolveBinding();
           
           if(binding != null && !binding.isPrimitive() && !binding.isTypeVariable()) {
-            type = (IType)binding.getJavaElement();
+            type = typeFromTypeBinding(binding);
             
             if(type != null) {
               String fullName = PatternHelper.getFullyQualifiedName(type);
@@ -241,8 +253,8 @@ public class CompilationUnitVisitor extends ASTVisitor {
     Type         typeNode = node.getType();
     ITypeBinding binding  = typeNode.resolveBinding();
     
-    if(binding != null && !binding.isPrimitive() && !binding.isTypeVariable()) {
-      IType type = (IType)binding.getJavaElement();
+    if (binding != null && !binding.isPrimitive() && (binding.isClass() || binding.isInterface())) {
+      IType type = typeFromTypeBinding(binding);
       
       if(type != null) {
         String fullName = PatternHelper.getFullyQualifiedName(type);
@@ -344,14 +356,10 @@ public class CompilationUnitVisitor extends ASTVisitor {
   
         if(m_configHelper.isRoot(fieldName)) {
           addMarker("rootMarker", "DSO Root Field", node.getName());
-          
-          if(!m_configHelper.isAdaptable(parentClass)) {
-            addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node.getName());
-          }
         } else if(m_configHelper.isTransient(fieldName)) {
           addMarker("transientFieldMarker", "DSO Transient Field", node.getName());
           
-          if(!m_configHelper.isAdaptable(parentClass)) {
+          if(!m_configHelper.isAdaptable(parentClass) && !m_configHelper.declaresRoot(parentClass)) {
             addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node.getName());
           }
         }
@@ -386,14 +394,10 @@ public class CompilationUnitVisitor extends ASTVisitor {
   
         if(m_configHelper.isRoot(fieldName)) {
           addMarker("rootMarker", "DSO Root Field", node.getName());
-          
-          if(!m_configHelper.isAdaptable(parentClass)) {
-            addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node);
-          }
         } else if(m_configHelper.isTransient(fieldName)) {
           addMarker("transientFieldMarker", "DSO Transient Field", node.getName());
           
-          if(!m_configHelper.isAdaptable(parentClass)) {
+          if(!m_configHelper.isAdaptable(parentClass) && !m_configHelper.declaresRoot(parentClass)) {
             addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node);
           }
         }
@@ -520,7 +524,9 @@ public class CompilationUnitVisitor extends ASTVisitor {
       IMethod method = (IMethod)binding.getJavaElement();
       
       if(method != null) {
-        return m_configHelper.isAdaptable(method.getDeclaringType());
+        IType type = method.getDeclaringType();
+        return m_configHelper.isAdaptable(type) ||
+               m_configHelper.declaresRoot(type);
       }
     }
     

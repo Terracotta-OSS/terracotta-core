@@ -29,6 +29,7 @@ public class InstrumentedClassesWrapper {
     if(ic != null) {
       ic.removeInclude(i);
     }
+    testRemove();
   }
   
   int sizeOfExcludeArray() {
@@ -45,6 +46,16 @@ public class InstrumentedClassesWrapper {
     InstrumentedClasses ic = fApp.getInstrumentedClasses();
     if(ic != null) {
       ic.removeExclude(i);
+    }
+    testRemove();
+  }
+  
+  private void testRemove() {
+    InstrumentedClasses ic = fApp.getInstrumentedClasses();
+    if(ic != null) {
+      if(ic.sizeOfExcludeArray() == 0 && ic.sizeOfIncludeArray() == 0) {
+        fApp.unsetInstrumentedClasses();
+      }
     }
   }
 }

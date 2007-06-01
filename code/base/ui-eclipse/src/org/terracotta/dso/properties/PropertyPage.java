@@ -54,7 +54,7 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
     topComp.setLayout(gridLayout);
     topComp.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-    Group domainConfig = new Group(topComp, SWT.SHADOW_ETCHED_IN);
+    Group domainConfig = new Group(topComp, SWT.NONE);
     domainConfig.setText(DOMAIN_CONFIG);
     gridLayout = new GridLayout();
     gridLayout.numColumns = 2;
@@ -80,11 +80,9 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
         dialog.open();
       }
     });
-    Group serverOptions = new Group(topComp, SWT.SHADOW_ETCHED_IN);
+    Group serverOptions = new Group(topComp, SWT.NONE);
     serverOptions.setText(SERVER_OPTIONS);
-    gridLayout = new GridLayout();
-    gridLayout.numColumns = 2;
-    serverOptions.setLayout(gridLayout);
+    serverOptions.setLayout(new GridLayout(2, false));
     GridData gridData = new GridData();
     gridData.horizontalAlignment = GridData.FILL;
     gridData.heightHint = 60;
@@ -96,8 +94,9 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
 
     m_resetOptionsButton = new Button(serverOptions, SWT.PUSH);
     m_resetOptionsButton.setText(RESET);
-    m_resetOptionsButton.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
     SWTUtil.applyDefaultButtonSize(m_resetOptionsButton);
+    gd = (GridData)m_resetOptionsButton.getLayoutData();
+    gd.verticalAlignment = gd.horizontalAlignment = SWT.BEGINNING;
     m_resetOptionsButton.addSelectionListener(new SelectionAdapter() {
       public void widgetSelected(SelectionEvent e) {
         m_serverOptionsField.setText(DEFAULT_SERVER_OPTIONS);

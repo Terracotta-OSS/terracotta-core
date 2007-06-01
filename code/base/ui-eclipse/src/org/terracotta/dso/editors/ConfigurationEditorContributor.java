@@ -33,12 +33,12 @@ public class ConfigurationEditorContributor
   }
 
   protected IAction getAction(ITextEditor editor, String actionID) {
-	return (editor == null ? null : editor.getAction(actionID));
+    return (editor == null ? null : editor.getAction(actionID));
   }
 
   public void setActivePage(IEditorPart part) {
     if(activeEditorPart == part) {
-	  return;
+      return;
     }
 
     activeEditorPart = part;

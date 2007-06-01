@@ -161,11 +161,11 @@ public class TestClientObjectManager implements ClientObjectManager {
     return;
   }
 
-  public void checkPortabilityOfField(Object value, String fieldName, Class target) throws TCNonPortableObjectError {
+  public void checkPortabilityOfField(Object value, String fieldName, Object pojo) throws TCNonPortableObjectError {
     return;
   }
 
-  public void checkPortabilityOfLogicalAction(Object p, String methodName, Class pojo)
+  public void checkPortabilityOfLogicalAction(Object[] params, int index, String methodName, Object pojo)
       throws TCNonPortableObjectError {
     return;
   }

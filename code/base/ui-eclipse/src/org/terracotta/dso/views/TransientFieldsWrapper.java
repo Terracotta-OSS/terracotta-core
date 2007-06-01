@@ -8,9 +8,29 @@ import com.terracottatech.config.TransientFields;
 
 public class TransientFieldsWrapper {
   private DsoApplication fApp;
+  private TransientFieldWrapper[] children;
   
   TransientFieldsWrapper(DsoApplication dsoApp) {
     fApp = dsoApp;
+  }
+
+  TransientFieldWrapper[] createTransientFieldWrappers() {
+    int count = sizeOfFieldNameArray();
+    children = new TransientFieldWrapper[count];
+    
+    for(int i = 0; i < count; i++) {
+      children[i] = new TransientFieldWrapper(this, i);
+    }
+    
+    return children;
+  }
+
+  TransientFieldWrapper[] getChildren() {
+    return children;
+  }
+  
+  TransientFieldWrapper getChildAt(int index) {
+    return children != null ? children[index] : null;
   }
   
   int sizeOfFieldNameArray() {

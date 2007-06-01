@@ -28,7 +28,7 @@ public class ConfigurationTabGroup
       new JavaJRETab(),
       new JavaClasspathTab(),
       new EnvironmentTab(),
-      //new ConfigurationTab(),
+      new ConfigurationTab(),
       new CommonTab()
     });
   }

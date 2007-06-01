@@ -336,7 +336,7 @@ public class BootJarView extends ViewPart
         if(selection != null) {
           IJavaProject javaProject = ActionUtil.locateSelectedJavaProject(selection);
           
-          if(!javaProject.equals(lastJavaProject)) {
+          if(javaProject != null && !javaProject.equals(lastJavaProject)) {
             bootJarFile = getBootJarFile();
             reset();
           }

@@ -13,6 +13,16 @@ import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 public class ConfigContentProvider implements ITreeContentProvider {
   ConfigViewPart fPart;
+  RootsWrapper rootsWrapper;
+  LocksWrapper locksWrapper;
+  AutolocksWrapper autolocksWrapper;
+  NamedLocksWrapper namedLocksWrapper;
+  TransientFieldsWrapper transientFieldsWrapper;
+  InstrumentedClassesWrapper instrumentedClassesWrapper;
+  IncludesWrapper includesWrapper;
+  ExcludesWrapper excludesWrapper;
+  DistributedMethodsWrapper distributedMethodsWrapper;
+  AdditionalBootJarClassesWrapper additionalBootJarClassesWrapper;
   
   ConfigContentProvider(ConfigViewPart fPart) {
     this.fPart = fPart;
@@ -20,19 +30,23 @@ public class ConfigContentProvider implements ITreeContentProvider {
   
   public Object[] getChildren(Object parentElement) {
     if(parentElement instanceof RootsWrapper) {
-      return createRootWrappers((RootsWrapper)parentElement);
+      return ((RootsWrapper)parentElement).createRootWrappers();
     } else if(parentElement instanceof TransientFieldsWrapper) {
-      return createTransientFieldWrappers((TransientFieldsWrapper)parentElement);
+      return ((TransientFieldsWrapper)parentElement).createTransientFieldWrappers();
     } else if(parentElement instanceof AdditionalBootJarClassesWrapper) {
-      return createBootClassWrappers((AdditionalBootJarClassesWrapper)parentElement);
+      return ((AdditionalBootJarClassesWrapper)parentElement).createBootClassWrappers();
     } else if(parentElement instanceof DistributedMethodsWrapper) {
-      return createDistributedMethodWrappers((DistributedMethodsWrapper)parentElement);
+      return ((DistributedMethodsWrapper)parentElement).createDistributedMethodWrappers();
     } else if(parentElement instanceof LocksWrapper) {
       LocksWrapper locks = (LocksWrapper)parentElement;
-      return new Object[] {new AutolocksWrapper(locks), new NamedLocksWrapper(locks)};
+      return new Object[] {
+        autolocksWrapper = new AutolocksWrapper(locks), 
+        namedLocksWrapper = new NamedLocksWrapper(locks)};
     } else if(parentElement instanceof InstrumentedClassesWrapper) {
       InstrumentedClassesWrapper ic = ((InstrumentedClassesWrapper)parentElement);
-      return new Object[] {new IncludesWrapper(ic), new ExcludesWrapper(ic)};
+      return new Object[] {
+        includesWrapper = new IncludesWrapper(ic),
+        excludesWrapper = new ExcludesWrapper(ic)};
     } else if(parentElement instanceof AutolocksWrapper) {
       return ((AutolocksWrapper)parentElement).createAutolockWrappers();
     } else if(parentElement instanceof NamedLocksWrapper) {
@@ -46,50 +60,6 @@ public class ConfigContentProvider implements ITreeContentProvider {
     return null;
   }
 
-  static DistributedMethodWrapper[] createDistributedMethodWrappers(DistributedMethodsWrapper distributedMethods) {
-    int count = distributedMethods.sizeOfMethodExpressionArray();
-    DistributedMethodWrapper[] result = new DistributedMethodWrapper[count];
-    
-    for(int i = 0; i < count; i++) {
-      result[i] = new DistributedMethodWrapper(distributedMethods, i);
-    }
-    
-    return result;
-  }
-
-  static RootWrapper[] createRootWrappers(RootsWrapper rootsWrapper) {
-    int count = rootsWrapper.sizeOfRootArray();
-    RootWrapper[] result = new RootWrapper[count];
-    
-    for(int i = 0; i < count; i++) {
-      result[i] = new RootWrapper(rootsWrapper, i);
-    }
-    
-    return result;
-  }
-
-  static TransientFieldWrapper[] createTransientFieldWrappers(TransientFieldsWrapper transientFields) {
-    int count = transientFields.sizeOfFieldNameArray();
-    TransientFieldWrapper[] result = new TransientFieldWrapper[count];
-    
-    for(int i = 0; i < count; i++) {
-      result[i] = new TransientFieldWrapper(transientFields, i);
-    }
-    
-    return result;
-  }
-
-  static BootClassWrapper[] createBootClassWrappers(AdditionalBootJarClassesWrapper abjc) {
-    int count = abjc.sizeOfIncludeArray();
-    BootClassWrapper[] result = new BootClassWrapper[count];
-    
-    for(int i = 0; i < count; i++) {
-      result[i] = new BootClassWrapper(abjc, i);
-    }
-    
-    return result;
-  }
-  
   public Object getParent(Object element) {
     return null;
   }
@@ -122,12 +92,12 @@ public class ConfigContentProvider implements ITreeContentProvider {
         if(dsoApp == null) dsoApp = app.addNewDso();
         
         return new Object[] {
-            new RootsWrapper(dsoApp),
-            new LocksWrapper(dsoApp),
-            new TransientFieldsWrapper(dsoApp),
-            new InstrumentedClassesWrapper(dsoApp),
-            new DistributedMethodsWrapper(dsoApp),
-            new AdditionalBootJarClassesWrapper(dsoApp)
+            rootsWrapper = new RootsWrapper(dsoApp),
+            locksWrapper = new LocksWrapper(dsoApp),
+            transientFieldsWrapper = new TransientFieldsWrapper(dsoApp),
+            instrumentedClassesWrapper = new InstrumentedClassesWrapper(dsoApp),
+            distributedMethodsWrapper = new DistributedMethodsWrapper(dsoApp),
+            additionalBootJarClassesWrapper = new AdditionalBootJarClassesWrapper(dsoApp)
           };
       }
     }

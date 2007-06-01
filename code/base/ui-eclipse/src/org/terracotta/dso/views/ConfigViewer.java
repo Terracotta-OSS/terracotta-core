@@ -70,6 +70,131 @@ class ConfigViewer extends TreeViewer {
     viewSite.registerContextMenu(menuMgr, selectionProvider);
   }
 
+  void refreshRoots() {
+    refresh(fContentProvider.rootsWrapper);
+    expandToLevel(fContentProvider.rootsWrapper, ALL_LEVELS);
+  }
+
+  void refreshRoot(int index) {
+    if(fContentProvider.rootsWrapper != null) {
+      RootWrapper wrapper = fContentProvider.rootsWrapper.getChildAt(index);
+      if(wrapper != null) {
+        refresh(wrapper);
+      }
+    }
+  }
+
+  void refreshDistributedMethods() {
+    refresh(fContentProvider.distributedMethodsWrapper);
+    expandToLevel(fContentProvider.distributedMethodsWrapper, ALL_LEVELS);
+  }
+
+  void refreshDistributedMethod(int index) {
+    if(fContentProvider.distributedMethodsWrapper != null) {
+      DistributedMethodWrapper wrapper = fContentProvider.distributedMethodsWrapper.getChildAt(index);
+      if(wrapper != null) {
+        refresh(wrapper);
+      }
+    }
+  }
+
+  void refreshBootClasses() {
+    refresh(fContentProvider.additionalBootJarClassesWrapper);
+    expandToLevel(fContentProvider.additionalBootJarClassesWrapper, ALL_LEVELS);
+  }
+
+  void refreshBootClass(int index) {
+    if(fContentProvider.additionalBootJarClassesWrapper != null) {
+      BootClassWrapper wrapper = fContentProvider.additionalBootJarClassesWrapper.getChildAt(index);
+      if(wrapper != null) {
+        refresh(wrapper);
+      }
+    }
+  }
+
+  void refreshTransientFields() {
+    refresh(fContentProvider.transientFieldsWrapper);
+    expandToLevel(fContentProvider.transientFieldsWrapper, ALL_LEVELS);
+  }
+
+  void refreshTransientField(int index) {
+    if(fContentProvider.transientFieldsWrapper != null) {
+      TransientFieldWrapper wrapper = fContentProvider.transientFieldsWrapper.getChildAt(index);
+      if(wrapper != null) {
+        refresh(wrapper);
+      }
+    }
+  }
+
+  void refreshNamedLock(int index) {
+    if(fContentProvider.namedLocksWrapper != null) {
+      NamedLockWrapper wrapper = fContentProvider.namedLocksWrapper.getChildAt(index);
+      if(wrapper != null) {
+        refresh(wrapper);
+      }
+    }
+  }
+  
+  void refreshNamedLocks() {
+    if(fContentProvider.namedLocksWrapper != null) {
+      refresh(fContentProvider.namedLocksWrapper);
+      expandToLevel(fContentProvider.namedLocksWrapper, ALL_LEVELS);
+    }
+  }
+
+  void refreshAutolock(int index) {
+    if(fContentProvider.autolocksWrapper != null) {
+      AutolockWrapper wrapper = fContentProvider.autolocksWrapper.getChildAt(index);
+      if(wrapper != null) {
+        refresh(wrapper);
+      }
+    }
+  }
+
+  void refreshAutolocks() {
+    if(fContentProvider.autolocksWrapper != null) {
+      refresh(fContentProvider.locksWrapper);
+      expandToLevel(fContentProvider.locksWrapper, ALL_LEVELS);
+    }
+  }
+
+  void refreshIncludeRule(int index) {
+    if(fContentProvider.includesWrapper != null) {
+      IncludeWrapper wrapper = fContentProvider.includesWrapper.getChildAt(index);
+      if(wrapper != null) {
+        refresh(wrapper);
+      }
+    }
+  }
+
+  void refreshIncludeRules() {
+    if(fContentProvider.includesWrapper != null) {
+      refresh(fContentProvider.includesWrapper);
+      expandToLevel(fContentProvider.includesWrapper, ALL_LEVELS);
+    }
+  }
+
+  void refreshExcludeRule(int index) {
+    if(fContentProvider.excludesWrapper != null) {
+      ExcludeWrapper wrapper = fContentProvider.excludesWrapper.getChildAt(index);
+      if(wrapper != null) {
+        refresh(wrapper);
+      }
+    }
+  }
+  
+  void refreshExcludeRules() {
+    if(fContentProvider.excludesWrapper != null) {
+      refresh(fContentProvider.excludesWrapper);
+      expandToLevel(fContentProvider.excludesWrapper, ALL_LEVELS);
+    }
+  }
+
+  void refreshInstrumentationRules() {
+    refresh(fContentProvider.instrumentedClassesWrapper);
+    expandToLevel(fContentProvider.instrumentedClassesWrapper, ALL_LEVELS);
+  }
+
   void clearViewer() {
     setInput(TreeRoot.EMPTY_ROOT);
   }

@@ -8,9 +8,29 @@ import com.terracottatech.config.DsoApplication;
 
 public class AdditionalBootJarClassesWrapper {
   private DsoApplication fApp;
+  private BootClassWrapper[] children;
   
   AdditionalBootJarClassesWrapper(DsoApplication dsoApp) {
     fApp = dsoApp;
+  }
+  
+  BootClassWrapper[] createBootClassWrappers() {
+    int count = sizeOfIncludeArray();
+
+    children = new BootClassWrapper[count];
+    for(int i = 0; i < count; i++) {
+      children[i] = new BootClassWrapper(this, i);
+    }
+    
+    return children;
+  }
+  
+  BootClassWrapper[] getChildren() {
+    return children;
+  }
+  
+  BootClassWrapper getChildAt(int index) {
+    return children != null ? children[index] : null;
   }
   
   int sizeOfIncludeArray() {

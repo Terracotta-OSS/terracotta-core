@@ -29,6 +29,8 @@ public class ResourceDeltaVisitor implements IResourceDeltaVisitor {
   private static final boolean debug =
     Boolean.getBoolean("ResourceDeltaVisitor.debug");
   
+  boolean fIgnoreNextConfigChange;
+  
   public boolean visit(IResourceDelta delta) {
     final TcPlugin  plugin  = TcPlugin.getDefault();
     int             kind    = delta.getKind();
@@ -56,17 +58,19 @@ public class ResourceDeltaVisitor implements IResourceDeltaVisitor {
               if((flags & IResourceDelta.MARKERS) != 0) {
                 return false;
               }
-              if(plugin.getConfigurationFile(project).equals(res) &&
-                 plugin.getConfigurationEditor(project) == null)
-              {
-                try {
-                  new Job("Reloading DSO Configuration") {
-                    public IStatus run(IProgressMonitor monitor) {
-                      plugin.reloadConfiguration(project);
-                      return Status.OK_STATUS;
-                    }
-                  }.schedule();
-                } catch(Exception e) {/**/}
+              if(plugin.getConfigurationFile(project).equals(res)) {
+                if(fIgnoreNextConfigChange) {
+                  fIgnoreNextConfigChange = false;
+                } else {
+                  try {
+                    new Job("Reloading DSO Configuration") {
+                      public IStatus run(IProgressMonitor monitor) {
+                        plugin.reloadConfiguration(project);
+                        return Status.OK_STATUS;
+                      }
+                    }.schedule();
+                  } catch(Exception e) {/**/}
+                }
                 return false;
               }
             }

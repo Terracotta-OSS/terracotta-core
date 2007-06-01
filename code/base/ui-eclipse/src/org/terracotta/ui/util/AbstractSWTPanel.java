@@ -13,12 +13,4 @@ public abstract class AbstractSWTPanel extends Composite implements SWTComponent
   public AbstractSWTPanel(Composite parent, int style) {
     super(parent, style);
   }
-
-  public synchronized boolean isActive() {
-    return m_isActive;
-  }
-
-  public synchronized void setActive(boolean activate) {
-    m_isActive = activate;
-  }
 }

@@ -20,6 +20,7 @@ if test "$2" != "nodso"; then
 
   JAVA_OPTS="${TC_JAVA_OPTS} ${JAVA_OPTS}"
   JAVA_OPTS="${JAVA_OPTS} -Dwebserver.log.name=${PORT}"
+  JAVA_OPTS="${JAVA_OPTS} -Dproject.name=Configurator"
   JAVA_OPTS="${JAVA_OPTS} -Dcom.sun.management.jmxremote"
   export JAVA_OPTS
 fi

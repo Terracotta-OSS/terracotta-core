@@ -191,12 +191,12 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void checkPortabilityOfField(Object value, String fieldName, Class targetClass)
+    public void checkPortabilityOfField(Object value, String fieldName, Object pojo)
         throws TCNonPortableObjectError {
       throw new ImplementMe();
     }
 
-    public void checkPortabilityOfLogicalAction(Object param, String methodName, Class logicalType)
+    public void checkPortabilityOfLogicalAction(Object[] params, int index, String methodName, Object pojo)
         throws TCNonPortableObjectError {
       throw new ImplementMe();
     }

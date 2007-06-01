@@ -15,6 +15,10 @@ public class IncludeWrapper {
     m_index = index;
   }
   
+  int getIndex() {
+    return m_index;
+  }
+  
   void remove() {
     m_parent.removeInclude(m_index);
   }

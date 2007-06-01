@@ -59,12 +59,12 @@ import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.views.navigator.LocalSelectionTransfer;
+import org.terracotta.dso.ConfigurationAdapter;
 import org.terracotta.dso.ConfigurationHelper;
-import org.terracotta.dso.IConfigurationListener;
 import org.terracotta.dso.JdtUtils;
+import org.terracotta.dso.MultiChangeSignaller;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.actions.ActionUtil;
-import org.terracotta.dso.editors.ConfigurationEditor;
 
 import com.terracottatech.config.QualifiedClassName;
 import com.terracottatech.config.QualifiedFieldName;
@@ -74,7 +74,6 @@ public class ConfigViewPart extends ViewPart
   implements ISelectionChangedListener,
              IPartListener,
              IMenuListener,
-             IConfigurationListener,
              IDoubleClickListener,
              IResourceChangeListener,
              IResourceDeltaVisitor
@@ -89,13 +88,14 @@ public class ConfigViewPart extends ViewPart
   LockActionGroup fLockActionGroup;
   private ConfigSelectionProvider fSelectionProviderMediator;
   IJavaProject m_javaProject;
+  private ConfigAdapter m_configAdapter;
 
   private static String REFRESH = ActionFactory.REFRESH.getId();
   private static String DELETE = ActionFactory.DELETE.getId();
   
   public ConfigViewPart() {
     super();
-    fPlugin.addConfigurationListener(this);
+    fPlugin.addConfigurationListener(m_configAdapter = new ConfigAdapter());
   }
 
   public void createPartControl(Composite parent) {
@@ -252,9 +252,9 @@ public class ConfigViewPart extends ViewPart
     if(!sel.isEmpty()) {
       if(sel instanceof StructuredSelection) {
         IProject project = m_javaProject.getProject();
-        ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
         StructuredSelection ss = (StructuredSelection)sel;
         Object[] objects = ss.toArray();
+        MultiChangeSignaller signaller = new MultiChangeSignaller();
         
         for(int i = objects.length-1; i >= 0; i--) {
           Object obj = objects[i];
@@ -262,44 +262,80 @@ public class ConfigViewPart extends ViewPart
           if(obj instanceof RootWrapper) {
             RootWrapper wrapper = (RootWrapper)obj;
             wrapper.remove();
+            signaller.rootsChanged = true;
           } else if(obj instanceof LockWrapper) {
             LockWrapper wrapper = (LockWrapper)obj;
             wrapper.remove();
+            if(wrapper instanceof NamedLockWrapper) {
+              signaller.namedLocksChanged = true;
+            } else {
+              signaller.autolocksChanged = true;              
+            }
           } else if(obj instanceof BootClassWrapper) {
             BootClassWrapper wrapper = (BootClassWrapper)obj;
             wrapper.remove();
+            signaller.bootClassesChanged = true;
           } else if(obj instanceof TransientFieldWrapper) {
             TransientFieldWrapper wrapper = (TransientFieldWrapper)obj;
             wrapper.remove();
+            signaller.transientFieldsChanged = true;
           } else if(obj instanceof DistributedMethodWrapper) {
             DistributedMethodWrapper wrapper = (DistributedMethodWrapper)obj;
             wrapper.remove();
+            signaller.distributedMethodsChanged = true;
           } else if(obj instanceof IncludeWrapper) {
             IncludeWrapper wrapper = (IncludeWrapper)obj;
             wrapper.remove();
+            signaller.includeRulesChanged = true;
           } else if(obj instanceof ExcludeWrapper) {
             ExcludeWrapper wrapper = (ExcludeWrapper)obj;
             wrapper.remove();
+            signaller.excludeRulesChanged = true;
           }
         }
-        configHelper.persistConfiguration();
+        if(fPlugin.getConfigurationEditor(project) == null) {
+          fPlugin.removeConfigurationListener(m_configAdapter);
+          fPlugin.saveConfiguration(project);
+          fPlugin.addConfigurationListener(m_configAdapter);
+        }
+        signaller.signal(project);
       }
     }
   }
   
   void addRoot(IField field) {
+    addRoots(new IField[] {field});
+  }
+  
+  void addRoots(IField[] fields) {
     if(m_javaProject != null) {
       IProject project = m_javaProject.getProject();
       ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
-      configHelper.ensureRoot(field);
+      MultiChangeSignaller signaller = new MultiChangeSignaller();
+      
+      for(int i = 0; i < fields.length; i++) {
+        configHelper.ensureRoot(fields[i], signaller);
+      }
+      signaller.signal(project);
     }
   }
-  
+
   void addInclude(IJavaElement element) {
     if(m_javaProject != null) {
       IProject project = m_javaProject.getProject();
       ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
       configHelper.ensureAdaptable(element);
+    }
+  }
+
+  void addIncludes(IJavaElement[] elements) {
+    if(m_javaProject != null) {
+      IProject project = m_javaProject.getProject();
+      ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
+      
+      for(int i = 0; i < elements.length; i++) {
+        configHelper.ensureAdaptable(elements[i]);
+      }
     }
   }
 
@@ -312,15 +348,12 @@ public class ConfigViewPart extends ViewPart
       wrapper.setClassExpression(classExpression);
 
       IProject project = m_javaProject.getProject();
-      ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
-      ConfigurationEditor editor = configHelper.getConfigurationEditor();
-
-      fPlugin.removeConfigurationListener(this);
-      if(editor != null) {
-        editor.updateInstrumentedClassesPanel();
+      fPlugin.removeConfigurationListener(m_configAdapter);
+      fPlugin.fireIncludeRuleChanged(project, wrapper.getIndex());
+      if(fPlugin.getConfigurationEditor(project) == null) {
+        fPlugin.saveConfiguration(project);
       }
-      configHelper.persistConfiguration();
-      fPlugin.addConfigurationListener(this);
+      fPlugin.addConfigurationListener(m_configAdapter);
       
       fConfigViewer.update(element, null);
     }
@@ -335,15 +368,12 @@ public class ConfigViewPart extends ViewPart
       wrapper.setHonorTransient(honor);
 
       IProject project = m_javaProject.getProject();
-      ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
-      ConfigurationEditor editor = configHelper.getConfigurationEditor();
-
-      fPlugin.removeConfigurationListener(this);
-      if(editor != null) {
-        editor.updateInstrumentedClassesPanel();
+      fPlugin.removeConfigurationListener(m_configAdapter);
+      fPlugin.fireIncludeRuleChanged(project, wrapper.getIndex());
+      if(fPlugin.getConfigurationEditor(project) == null) {
+        fPlugin.saveConfiguration(project);
       }
-      configHelper.persistConfiguration();
-      fPlugin.addConfigurationListener(this);
+      fPlugin.addConfigurationListener(m_configAdapter);
     }
   }
 
@@ -363,15 +393,12 @@ public class ConfigViewPart extends ViewPart
       }
       
       IProject project = m_javaProject.getProject();
-      ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
-      ConfigurationEditor editor = configHelper.getConfigurationEditor();
-
-      fPlugin.removeConfigurationListener(this);
-      if(editor != null) {
-        editor.updateInstrumentedClassesPanel();
+      fPlugin.removeConfigurationListener(m_configAdapter);
+      fPlugin.fireIncludeRuleChanged(project, wrapper.getIndex());
+      if(fPlugin.getConfigurationEditor(project) == null) {
+        fPlugin.saveConfiguration(project);
       }
-      configHelper.persistConfiguration();
-      fPlugin.addConfigurationListener(this);
+      fPlugin.addConfigurationListener(m_configAdapter);
     }
   }
 
@@ -380,6 +407,17 @@ public class ConfigViewPart extends ViewPart
       IProject project = m_javaProject.getProject();
       ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
       configHelper.ensureExcluded(element);
+    }
+  }
+
+  void addExcludes(IJavaElement[] elements) {
+    if(m_javaProject != null) {
+      IProject project = m_javaProject.getProject();
+      ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
+      
+      for(int i = 0; i < elements.length; i++) {
+        configHelper.ensureExcluded(elements[i]);
+      }
     }
   }
 
@@ -392,15 +430,16 @@ public class ConfigViewPart extends ViewPart
       wrapper.setMethodExpression(classExpression);
 
       IProject project = m_javaProject.getProject();
-      ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
-      ConfigurationEditor editor = configHelper.getConfigurationEditor();
-
-      fPlugin.removeConfigurationListener(this);
-      if(editor != null) {
-        editor.updateLocksPanel();
+      fPlugin.removeConfigurationListener(m_configAdapter);
+      if(wrapper instanceof NamedLockWrapper) {
+        fPlugin.fireNamedLockChanged(project, wrapper.getIndex());
+      } else {
+        fPlugin.fireAutolockChanged(project, wrapper.getIndex());        
       }
-      configHelper.persistConfiguration();
-      fPlugin.addConfigurationListener(this);
+      if(fPlugin.getConfigurationEditor(project) == null) {
+        fPlugin.saveConfiguration(project);
+      }
+      fPlugin.addConfigurationListener(m_configAdapter);
       
       fConfigViewer.update(element, null);
     }
@@ -416,55 +455,101 @@ public class ConfigViewPart extends ViewPart
       wrapper.setLevel(action.getLevel());
       
       IProject project = m_javaProject.getProject();
-      ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
-      ConfigurationEditor editor = configHelper.getConfigurationEditor();
-
-      fPlugin.removeConfigurationListener(this);
-      if(editor != null) {
-        editor.updateLocksPanel();
+      fPlugin.removeConfigurationListener(m_configAdapter);
+      if(wrapper instanceof NamedLockWrapper) {
+        fPlugin.fireNamedLockChanged(project, wrapper.getIndex());
+      } else {
+        fPlugin.fireAutolockChanged(project, wrapper.getIndex());        
       }
-      configHelper.persistConfiguration();
-      fPlugin.addConfigurationListener(this);
+      if(fPlugin.getConfigurationEditor(project) == null) {
+        fPlugin.saveConfiguration(project);
+      }
+      fPlugin.addConfigurationListener(m_configAdapter);
     }
   }
 
   void addTransientField(IField field) {
+    addTransientFields(new IField[] {field});
+  }
+
+  void addTransientFields(IField[] fields) {
     if(m_javaProject != null) {
       IProject project = m_javaProject.getProject();
       ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
-      configHelper.ensureTransient(field);
+      MultiChangeSignaller signaller = new MultiChangeSignaller();
+      
+      for(int i = 0; i < fields.length; i++) {
+        configHelper.ensureTransient(fields[i], signaller);
+      }
+      signaller.signal(project);
     }
   }
 
   void addDistributedMethod(IMethod method) {
+    addDistributedMethods(new IMethod[] {method});
+  }
+
+  void addDistributedMethods(IMethod[] methods) {
     if(m_javaProject != null) {
       IProject project = m_javaProject.getProject();
       ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
-      configHelper.ensureDistributedMethod(method);
+      MultiChangeSignaller signaller = new MultiChangeSignaller();
+      
+      for(int i = 0; i < methods.length; i++) {
+        configHelper.ensureDistributedMethod(methods[i], signaller);
+      }
+      signaller.signal(project);
     }
   }
 
   void addAdditionalBootJarClass(IType type) {
+    addAdditionalBootJarClasses(new IType[] {type});
+  }
+
+  void addAdditionalBootJarClasses(IType[] types) {
     if(m_javaProject != null) {
       IProject project = m_javaProject.getProject();
       ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
-      configHelper.ensureBootJarClass(type);
+      MultiChangeSignaller signaller = new MultiChangeSignaller();
+      
+      for(int i = 0; i < types.length; i++) {
+        configHelper.ensureBootJarClass(types[i], signaller);
+      }
+      signaller.signal(project);
     }
   }
 
   void addAutolock(IJavaElement element) {
+    addAutolocks(new IJavaElement[] {element});
+  }
+
+  void addAutolocks(IJavaElement[] elements) {
     if(m_javaProject != null) {
       IProject project = m_javaProject.getProject();
       ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
-      configHelper.ensureAutolocked(element);
+      MultiChangeSignaller signaller = new MultiChangeSignaller();
+      
+      for(int i = 0; i < elements.length; i++) {
+        configHelper.ensureAutolocked(elements[i], signaller);
+      }
+      signaller.signal(project);
     }
   }
 
   void addNamedLock(IJavaElement element) {
+    addNamedLocks(new IJavaElement[] {element});
+  }
+
+  void addNamedLocks(IJavaElement[] elements) {
     if(m_javaProject != null) {
       IProject project = m_javaProject.getProject();
       ConfigurationHelper configHelper = fPlugin.getConfigurationHelper(project);
-      configHelper.ensureNameLocked(element);
+      MultiChangeSignaller signaller = new MultiChangeSignaller();
+      
+      for(int i = 0; i < elements.length; i++) {
+        configHelper.ensureNameLocked(elements[i], signaller);
+      }
+      signaller.signal(project);
     }
   }
 
@@ -532,7 +617,7 @@ public class ConfigViewPart extends ViewPart
     if(fLockActionGroup != null) {
       fLockActionGroup.dispose();
     }
-    fPlugin.removeConfigurationListener(this);
+    fPlugin.removeConfigurationListener(m_configAdapter);
     getViewSite().getPage().removePartListener(this);
     super.dispose();
   }
@@ -616,15 +701,84 @@ public class ConfigViewPart extends ViewPart
       }
     }
   }
-  
-  public void configurationChanged(IProject project) {
-    if(TcPlugin.getDefault().hasTerracottaNature(project)) {
-      if(m_javaProject != null && m_javaProject.getProject().equals(project)) {
-        m_javaProject = JavaCore.create(project);
-        setConfig(fPlugin.getConfiguration(project));
+  class ConfigAdapter extends ConfigurationAdapter {
+    public void configurationChanged(IProject project) {
+      if(TcPlugin.getDefault().hasTerracottaNature(project)) {
+        if(m_javaProject != null && m_javaProject.getProject().equals(project)) {
+          m_javaProject = JavaCore.create(project);
+          setConfig(fPlugin.getConfiguration(project));
+        }
+      } else {
+        setConfig(null);
       }
-    } else {
-      setConfig(null);
+    }
+
+    public void rootChanged(IProject project, int index) {
+      fConfigViewer.refreshRoot(index);
+    }
+    
+    public void rootsChanged(IProject project) {
+      fConfigViewer.refreshRoots();
+    }
+    
+    public void distributedMethodsChanged(IProject project) {
+      fConfigViewer.refreshDistributedMethods();
+    }
+
+    public void distributedMethodChanged(IProject project, int index) {
+      fConfigViewer.refreshDistributedMethod(index);
+    }
+
+    public void bootClassesChanged(IProject project) {
+      fConfigViewer.refreshBootClasses();
+    }
+
+    public void bootClassChanged(IProject project, int index) {
+      fConfigViewer.refreshBootClass(index);
+    }
+
+    public void transientFieldsChanged(IProject project) {
+      fConfigViewer.refreshTransientFields();
+    }
+
+    public void transientFieldChanged(IProject project, int index) {
+      fConfigViewer.refreshTransientField(index);
+    }
+
+    public void namedLockChanged(IProject project, int index) {
+      fConfigViewer.refreshNamedLock(index);
+    }
+
+    public void namedLocksChanged(IProject project) {
+      fConfigViewer.refreshNamedLocks();
+    }
+
+    public void autolockChanged(IProject project, int index) {
+      fConfigViewer.refreshAutolock(index);
+    }
+
+    public void autolocksChanged(IProject project) {
+      fConfigViewer.refreshAutolocks();
+    }
+
+    public void includeRuleChanged(IProject project, int index) {
+      fConfigViewer.refreshIncludeRule(index);
+    }
+    
+    public void includeRulesChanged(IProject project) {
+      fConfigViewer.refreshInstrumentationRules();
+    }
+
+    public void excludeRuleChanged(IProject project, int index) {
+      fConfigViewer.refreshExcludeRule(index);
+    }
+    
+    public void excludeRulesChanged(IProject project) {
+      fConfigViewer.refreshInstrumentationRules();
+    }
+
+    public void instrumentationRulesChanged(IProject project) {
+      fConfigViewer.refreshInstrumentationRules();
     }
   }
 

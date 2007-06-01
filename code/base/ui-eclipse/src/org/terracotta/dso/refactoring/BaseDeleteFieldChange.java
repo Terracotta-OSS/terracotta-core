@@ -10,6 +10,7 @@ import org.eclipse.jdt.core.IField;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
+import org.terracotta.dso.MultiChangeSignaller;
 import org.terracotta.dso.TcPlugin;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
@@ -41,8 +42,10 @@ public class BaseDeleteFieldChange extends Change {
     TcPlugin plugin  = TcPlugin.getDefault();
     IProject project = fField.getJavaProject().getProject();
     TcConfig config  = (TcConfig)plugin.getConfiguration(project).copy();
-    
-    plugin.getConfigurationHelper(project).baseEnsureNotRoot(fField);
+    MultiChangeSignaller signaller = new MultiChangeSignaller();
+
+    plugin.getConfigurationHelper(project).baseEnsureNotRoot(fField, signaller);
+    signaller.signal(project);
     
     // create the undo change
     return new ConfigUndoneChange(project, config);

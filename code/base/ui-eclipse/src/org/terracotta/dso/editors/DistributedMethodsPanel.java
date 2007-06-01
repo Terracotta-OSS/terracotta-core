@@ -1,15 +1,13 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
- * notice. All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
 package org.terracotta.dso.editors;
 
-import org.apache.xmlbeans.XmlObject;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -20,184 +18,145 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
+import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.editors.chooser.ExpressionChooser;
 import org.terracotta.dso.editors.chooser.MethodBehavior;
 import org.terracotta.dso.editors.chooser.NavigatorBehavior;
-import org.terracotta.dso.editors.xmlbeans.XmlConfigContext;
-import org.terracotta.dso.editors.xmlbeans.XmlConfigEvent;
-import org.terracotta.dso.editors.xmlbeans.XmlConfigUndoContext;
 import org.terracotta.ui.util.SWTUtil;
 
 import com.tc.util.event.UpdateEvent;
 import com.tc.util.event.UpdateEventListener;
 import com.terracottatech.config.DistributedMethods;
+import com.terracottatech.config.DsoApplication;
+import com.terracottatech.config.DistributedMethods.MethodExpression;
 
 public class DistributedMethodsPanel extends ConfigurationEditorPanel {
+  private IProject               m_project;
+  private DsoApplication         m_dsoApp;
+  private DistributedMethods     m_distributedMethods;
 
-  private final Layout m_layout;
-  private State        m_state;
+  private Layout                 m_layout;
+
+  private AddHandler             m_addHandler;
+  private RemoveHandler          m_removeHandler;
+  private TableSelectionListener m_tableSelectionListener;
+  private TableDataListener      m_tableDataListener;
 
   public DistributedMethodsPanel(Composite parent, int style) {
     super(parent, style);
-    this.m_layout = new Layout(this);
+    m_layout = new Layout(this);
+    m_addHandler = new AddHandler();
+    m_removeHandler = new RemoveHandler();
+    m_tableSelectionListener = new TableSelectionListener();
+    m_tableDataListener = new TableDataListener();
   }
 
-  // ================================================================================
-  // INTERFACE
-  // ================================================================================
-
-  public synchronized void clearState() {
-    setActive(false);
-    m_layout.reset();
-    m_state.xmlContext.detachComponentModel(this);
-    m_state = null;
+  public boolean hasAnySet() {
+    return m_distributedMethods != null && m_distributedMethods.sizeOfMethodExpressionArray() > 0;
   }
 
-  public synchronized void init(Object data) {
-    if (m_isActive && m_state.project == (IProject) data) return;
-    setActive(false);
-    m_state = new State((IProject) data);
-    createContextListeners();
-    initTableItems();
-    setActive(true);
+  private DistributedMethods ensureDistributedMethods() {
+    if (m_distributedMethods == null) {
+      ensureXmlObject();
+    }
+    return m_distributedMethods;
   }
 
-  public synchronized void refreshContent() {
-    m_layout.reset();
-    initTableItems();
-  }
-  
-  public void detach() {
-    m_state.xmlContext.detachComponentModel(this);
-  }
-  
-  // ================================================================================
-  // INIT LISTENERS
-  // ================================================================================
+  public void ensureXmlObject() {
+    super.ensureXmlObject();
 
-  private void createContextListeners() {
-    m_state.xmlContext.detachComponentModel(this); // clear existing
-    m_layout.m_table.addSelectionListener(new SelectionAdapter() {
-      public void widgetSelected(SelectionEvent e) {
-        if (!m_isActive) return;
-        m_layout.m_removeButton.setEnabled(true);
-      }
-    });
-    m_layout.m_table.addListener(SWT.SetData, new Listener() {
-      public void handleEvent(Event e) {
-        if (!m_isActive) return;
-        TableItem item = (TableItem) e.item;
-        DistributedMethods.MethodExpression expr = (DistributedMethods.MethodExpression) item.getData();
-        XmlConfigEvent event = new XmlConfigEvent(item.getText(e.index), null, expr, XmlConfigEvent.DISTRIBUTED_METHOD);
-        event.index = m_layout.m_table.getSelectionIndex();
-        m_state.xmlContext.notifyListeners(event);
-      }
-    });
-    m_state.xmlContext.addListener(new UpdateEventListener() {
-      public void handleUpdate(UpdateEvent e) {
-        if (!m_isActive) return;
-        XmlConfigEvent event = castEvent(e);
-        if (event.data == null) return;
-        XmlObject method = event.element;
-        TableItem[] items = m_layout.m_table.getItems();
-        for (int i = 0; i < items.length; i++) {
-          if (items[i].getData() == method) {
-            items[i].setText((String) event.data);
-          }
-        }
-      }
-    }, XmlConfigEvent.DISTRIBUTED_METHOD, this);
-    // - remove method
-    m_layout.m_removeButton.addSelectionListener(new SelectionAdapter() {
-      public void widgetSelected(SelectionEvent e) {
-        if (!m_isActive) return;
-        setActive(false);
-        m_layout.m_table.forceFocus();
-        int selected = m_layout.m_table.getSelectionIndex();
-        XmlConfigEvent event = new XmlConfigEvent(XmlConfigEvent.DELETE_DISTRIBUTED_METHOD);
-        event.index = selected;
-        setActive(true);
-        m_state.xmlContext.notifyListeners(event);
-      }
-    });
-    m_state.xmlContext.addListener(new UpdateEventListener() {
-      public void handleUpdate(UpdateEvent e) {
-        if (!m_isActive) return;
-        m_layout.m_table.remove(((XmlConfigEvent) e).index);
-        m_layout.m_removeButton.setEnabled(false);
-      }
-    }, XmlConfigEvent.REMOVE_DISTRIBUTED_METHOD, this);
-    // - add method
-    m_layout.m_addButton.addSelectionListener(new SelectionAdapter() {
-      public void widgetSelected(SelectionEvent e) {
-        if (!m_isActive) return;
-        setActive(false);
-        m_layout.m_table.forceFocus();
-        NavigatorBehavior behavior = new MethodBehavior();
-        ExpressionChooser chooser = new ExpressionChooser(getShell(), behavior.getTitle(), MethodBehavior.ADD_MSG,
-            m_state.project, behavior);
-        chooser.addValueListener(new UpdateEventListener() {
-          public void handleUpdate(UpdateEvent updateEvent) {
-            String[] items = (String[]) updateEvent.data;
-            for (int i = 0; i < items.length; i++) {
-              XmlConfigEvent event = new XmlConfigEvent(XmlConfigEvent.CREATE_DISTRIBUTED_METHOD);
-              event.data = items[i];
-              m_state.xmlContext.notifyListeners(event);
-            }
-          }
-        });
-        setActive(true);
-        chooser.open();
-      }
-    });
-    m_state.xmlContext.addListener(new UpdateEventListener() {
-      public void handleUpdate(UpdateEvent e) {
-        if (!m_isActive) return;
-        XmlConfigEvent event = castEvent(e);
-        String value = ((DistributedMethods.MethodExpression) event.element).getStringValue();
-        createTableItem((DistributedMethods.MethodExpression) event.element, value);
-      }
-    }, XmlConfigEvent.NEW_DISTRIBUTED_METHOD, this);
-  }
-
-  // ================================================================================
-  // HELPERS
-  // ================================================================================
-
-  private void initTableItems() {
-    DistributedMethods distributedMethods = m_state.xmlContext.getParentElementProvider().hasDistributedMethods();
-    if (distributedMethods == null) return;
-    DistributedMethods.MethodExpression[] methods = distributedMethods.getMethodExpressionArray();
-    for (int i = 0; i < methods.length; i++) {
-      createTableItem(methods[i], methods[i].getStringValue());
+    if (m_distributedMethods == null) {
+      removeListeners();
+      m_distributedMethods = m_dsoApp.addNewDistributedMethods();
+      updateChildren();
+      addListeners();
     }
   }
 
-  private void createTableItem(DistributedMethods.MethodExpression method, String element) {
+  private void testRemoveDistributedMethods() {
+    if (!hasAnySet() && m_dsoApp.getDistributedMethods() != null) {
+      m_dsoApp.unsetDistributedMethods();
+      m_distributedMethods = null;
+      fireXmlObjectStructureChanged(m_dsoApp);
+    }
+    fireDistributedMethodsChanged();
+  }
+
+  private void addListeners() {
+    m_layout.m_addButton.addSelectionListener(m_addHandler);
+    m_layout.m_removeButton.addSelectionListener(m_removeHandler);
+    m_layout.m_table.addSelectionListener(m_tableSelectionListener);
+    m_layout.m_table.addListener(SWT.SetData, m_tableDataListener);
+  }
+
+  private void removeListeners() {
+    m_layout.m_addButton.removeSelectionListener(m_addHandler);
+    m_layout.m_removeButton.removeSelectionListener(m_removeHandler);
+    m_layout.m_table.removeSelectionListener(m_tableSelectionListener);
+    m_layout.m_table.removeListener(SWT.SetData, m_tableDataListener);
+  }
+
+  public void updateChildren() {
+    initTableItems();
+  }
+
+  public void updateModel() {
+    removeListeners();
+    updateChildren();
+    addListeners();
+  }
+
+  public void setup(IProject project, DsoApplication dsoApp) {
+    setEnabled(true);
+    removeListeners();
+
+    m_project = project;
+    m_dsoApp = dsoApp;
+    m_distributedMethods = m_dsoApp != null ? m_dsoApp.getDistributedMethods() : null;
+
+    updateChildren();
+    addListeners();
+  }
+
+  public void tearDown() {
+    removeListeners();
+
+    m_dsoApp = null;
+    m_distributedMethods = null;
+
+    setEnabled(false);
+  }
+
+  private void initTableItems() {
+    m_layout.m_table.removeAll();
+    if (m_distributedMethods == null) return;
+    MethodExpression[] methods = m_distributedMethods.getMethodExpressionArray();
+    for (int i = 0; i < methods.length; i++) {
+      createTableItem(methods[i]);
+    }
+    if (methods.length > 0) {
+      m_layout.m_table.setSelection(0);
+    }
+  }
+
+  private void createTableItem(MethodExpression method) {
     TableItem item = new TableItem(m_layout.m_table, SWT.NONE);
-    item.setText(element);
+    item.setText(method.getStringValue());
     item.setData(method);
   }
 
-  // ================================================================================
-  // STATE
-  // ================================================================================
-
-  private class State {
-    final IProject             project;
-    final XmlConfigContext     xmlContext;
-    final XmlConfigUndoContext xmlUndoContext;
-
-    private State(IProject project) {
-      this.project = project;
-      this.xmlContext = XmlConfigContext.getInstance(project);
-      this.xmlUndoContext = XmlConfigUndoContext.getInstance(project);
-    }
+  public boolean isDistributed(IMethod method) {
+    return TcPlugin.getDefault().getConfigurationHelper(m_project).isDistributedMethod(method);
   }
 
-  // ================================================================================
-  // LAYOUT
-  // ================================================================================
+  private void internalAddDistributed(String expr) {
+    if (expr != null && expr.length() > 0) {
+      DistributedMethods dms = ensureDistributedMethods();
+      MethodExpression me = dms.addNewMethodExpression();
+      me.setStringValue(expr);
+      createTableItem(me);
+    }
+  }
 
   private class Layout {
 
@@ -216,18 +175,13 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel {
 
     private Layout(Composite parent) {
       Composite comp = new Composite(parent, SWT.NONE);
-      GridLayout gridLayout = new GridLayout();
-      gridLayout.numColumns = 2;
-      gridLayout.marginWidth = 10;
-      gridLayout.marginHeight = 10;
-      gridLayout.makeColumnsEqualWidth = false;
+      GridLayout gridLayout = new GridLayout(2, false);
+      gridLayout.marginWidth = gridLayout.marginHeight = 10;
       comp.setLayout(gridLayout);
 
       Composite sidePanel = new Composite(comp, SWT.NONE);
       gridLayout = new GridLayout();
-      gridLayout.numColumns = 1;
-      gridLayout.marginWidth = 0;
-      gridLayout.marginHeight = 0;
+      gridLayout.marginWidth = gridLayout.marginHeight = 0;
       sidePanel.setLayout(gridLayout);
       sidePanel.setLayoutData(new GridData(GridData.FILL_BOTH));
 
@@ -235,13 +189,14 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel {
       label.setText(DISTRIBUTED_METHODS);
       label.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
 
-      Composite tablePanel = new Composite(sidePanel, SWT.BORDER);
-      tablePanel.setLayout(new FillLayout());
-      tablePanel.setLayoutData(new GridData(GridData.FILL_BOTH));
-      m_table = new Table(tablePanel, SWT.SINGLE | SWT.FULL_SELECTION | SWT.V_SCROLL);
-      m_table.setHeaderVisible(false);
+      m_table = new Table(sidePanel, SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION | SWT.V_SCROLL);
+      m_table.setHeaderVisible(true);
       m_table.setLinesVisible(true);
+      SWTUtil.makeTableColumnsResizeWeightedWidth(sidePanel, m_table, new int[] { 3, 1 });
       SWTUtil.makeTableColumnsEditable(m_table, new int[] { 0 });
+      GridData gridData = new GridData(GridData.FILL_BOTH);
+      gridData.heightHint = SWTUtil.tableRowsToPixels(m_table, 3);
+      m_table.setLayoutData(gridData);
 
       TableColumn column = new TableColumn(m_table, SWT.NONE);
       column.setText(DISTRIBUTED_METHODS);
@@ -249,9 +204,7 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel {
 
       Composite buttonPanel = new Composite(comp, SWT.NONE);
       gridLayout = new GridLayout();
-      gridLayout.numColumns = 1;
-      gridLayout.marginWidth = 0;
-      gridLayout.marginHeight = 0;
+      gridLayout.marginWidth = gridLayout.marginHeight = 0;
       buttonPanel.setLayout(gridLayout);
       buttonPanel.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
 
@@ -267,6 +220,53 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel {
       m_removeButton.setEnabled(false);
       m_removeButton.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
       SWTUtil.applyDefaultButtonSize(m_removeButton);
+    }
+  }
+
+  class AddHandler extends SelectionAdapter {
+    public void widgetSelected(SelectionEvent e) {
+      m_layout.m_table.forceFocus();
+      NavigatorBehavior behavior = new MethodBehavior();
+      ExpressionChooser chooser = new ExpressionChooser(getShell(), behavior.getTitle(), MethodBehavior.ADD_MSG,
+          m_project, behavior);
+      chooser.addValueListener(new UpdateEventListener() {
+        public void handleUpdate(UpdateEvent updateEvent) {
+          String[] items = (String[]) updateEvent.data;
+          for (int i = 0; i < items.length; i++) {
+            internalAddDistributed(items[i]);
+          }
+          fireDistributedMethodsChanged();
+        }
+      });
+      chooser.open();
+    }
+  }
+
+  class RemoveHandler extends SelectionAdapter {
+    public void widgetSelected(SelectionEvent e) {
+      m_layout.m_table.forceFocus();
+      int[] selection = m_layout.m_table.getSelectionIndices();
+
+      for (int i = selection.length - 1; i >= 0; i--) {
+        ensureDistributedMethods().removeMethodExpression(selection[i]);
+      }
+      m_layout.m_table.remove(selection);
+      testRemoveDistributedMethods();
+    }
+  }
+
+  class TableSelectionListener extends SelectionAdapter {
+    public void widgetSelected(SelectionEvent e) {
+      m_layout.m_removeButton.setEnabled(true);
+    }
+  }
+
+  class TableDataListener implements Listener {
+    public void handleEvent(Event e) {
+      TableItem item = (TableItem) e.item;
+      MethodExpression expr = (MethodExpression) item.getData();
+      expr.setStringValue(item.getText(e.index));
+      fireDistributedMethodsChanged();
     }
   }
 }

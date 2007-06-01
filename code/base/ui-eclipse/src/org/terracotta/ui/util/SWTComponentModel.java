@@ -4,25 +4,6 @@
  */
 package org.terracotta.ui.util;
 
-
-
 public interface SWTComponentModel {
-
-  /**
-   * Initializes data for this model - creates a state object which stores data and references as member fields - no
-   * accessor methods).
-   */
-  void init(Object data);
-
-  /**
-   * Clears state information. This will set both <tt>isInit()</tt> and <tt>isActive()</tt> to <tt>false</tt>
-   */
-  void clearState();
-
-  /**
-   * Deactivates registered action listeners
-   */
-  void setActive(boolean activate);
-
-  boolean isActive();
+  // why do I exists?
 }

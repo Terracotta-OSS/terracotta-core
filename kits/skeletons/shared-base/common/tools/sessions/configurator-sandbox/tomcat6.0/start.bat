@@ -40,6 +40,7 @@ if "%EXITFLAG%"=="TRUE" goto end
 set JAVA_OPTS=%JAVA_OPTS% %TC_JAVA_OPTS%
 set JAVA_OPTS=%JAVA_OPTS% -Dwebserver.log.name=%1
 set JAVA_OPTS=%JAVA_OPTS% -Dcom.sun.management.jmxremote
+set OPTS=%OPTS% -Dproject.name=Configurator
 set JAVA_OPTS=%JAVA_OPTS% -Dtc.node-name=tomcat-%1
 
 :runCatalina
