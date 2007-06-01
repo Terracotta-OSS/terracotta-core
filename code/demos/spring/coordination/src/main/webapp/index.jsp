@@ -100,7 +100,7 @@
    <p/>
 
    You can stop the Tomcat server nodes individually by issuing the appropriate <code>stop-tomcat</code>
-   command from the <code>spring/samples/webflow</code> directory. For example, <code>./stop-tomcat1.sh</code>
+   command from the <code>samples/spring/coordination</code> directory. For example, <code>./stop-tomcat1.sh</code>
    (or <code>stop-tomcat1.bat</code> in Windows) will stop the Tomcat server instance from node 1.
    <p/>
 
@@ -110,7 +110,7 @@
 
 	The source code (CounterService.java) for the bean shows this typical synchronization
    pattern and can	be found in:
-	<code>spring/samples/coordination/src/main/java/demo/coordination</code>
+	<code>samples/spring/coordination/src/main/java/demo/coordination</code>
    <p/>
 </body>
 </html>
