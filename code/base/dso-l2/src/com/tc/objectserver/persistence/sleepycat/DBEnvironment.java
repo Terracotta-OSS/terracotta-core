@@ -86,13 +86,10 @@ public class DBEnvironment {
   public DBEnvironment(boolean paranoid, File envHome, Properties jeProperties) throws IOException {
     this(new HashMap(), new LinkedList(), paranoid, envHome);
     this.ecfg = new EnvironmentConfig(jeProperties);
-    this.ecfg.setCachePercent(25);
     this.ecfg.setTransactional(true);
     this.ecfg.setAllowCreate(true);
     this.ecfg.setReadOnly(false);
     this.ecfg.setTxnWriteNoSync(!paranoid);
-    // Lock timeout in microseconds - 3 minutes
-    this.ecfg.setLockTimeout(180000000L);
     this.dbcfg = new DatabaseConfig();
     this.dbcfg.setAllowCreate(true);
     this.dbcfg.setTransactional(true);
