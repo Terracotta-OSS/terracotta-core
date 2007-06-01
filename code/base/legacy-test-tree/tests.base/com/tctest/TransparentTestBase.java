@@ -18,6 +18,7 @@ import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.ApplicationConfigBuilder;
 import com.tc.simulator.app.ErrorContext;
+import com.tc.test.ProcessInfo;
 import com.tc.test.TestConfigObject;
 import com.tc.test.activepassive.ActivePassiveServerConfigCreator;
 import com.tc.test.activepassive.ActivePassiveServerManager;
@@ -385,6 +386,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected void tearDown() throws Exception {
     if (controlledCrashMode) {
       if (isActivePassive() && canRunActivePassive()) {
+        System.out.println("Currently running java processes: " + ProcessInfo.ps_grep_java());
         apServerManager.stopAllServers();
       } else if (isCrashy() && canRunCrash()) {
         synchronized (crashTestState) {
@@ -399,6 +401,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
         serverControl.shutdown();
       }
     }
+    
     super.tearDown();
   }
 
