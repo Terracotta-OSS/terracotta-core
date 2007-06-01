@@ -19,8 +19,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Dictionary;
@@ -31,29 +29,29 @@ import java.util.Dictionary;
  */
 final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
 
-  private static final TCLogger logger = TCLogging.getLogger(KnopflerfishOSGi.class);
+  private static final TCLogger logger                        = TCLogging.getLogger(KnopflerfishOSGi.class);
 
-  private static String       KF_BUNDLESTORAGE_PROP         = "org.knopflerfish.framework.bundlestorage";
-  private static String       KF_BUNDLESTORAGE_PROP_DEFAULT = "memory";
+  private static String         KF_BUNDLESTORAGE_PROP         = "org.knopflerfish.framework.bundlestorage";
+  private static String         KF_BUNDLESTORAGE_PROP_DEFAULT = "memory";
 
   // {0} := bundle name, {1} := bundle version (not necessarily numeric)
-  private static final String BUNDLE_PATH                   = "{0}-{1}.jar";
+  private static final String   BUNDLE_PATH                   = "{0}-{1}.jar";
 
-  private final URL[]         bundleRepositories;
-  private final Framework     framework;
+  private final URL[]           bundleRepositories;
+  private final Framework       framework;
 
   static {
     System.setProperty(Constants.FRAMEWORK_BOOTDELEGATION, "*");
     System.setProperty(KF_BUNDLESTORAGE_PROP, KF_BUNDLESTORAGE_PROP_DEFAULT);
-/*
-    try {
-      framework = new Framework(null);
-      framework.launch(0);
-    }
-    catch (Exception e) {
-      throw new RuntimeException("Error initializing OSGi framework", e);
-    }
-*/
+    /*
+     try {
+     framework = new Framework(null);
+     framework.launch(0);
+     }
+     catch (Exception e) {
+     throw new RuntimeException("Error initializing OSGi framework", e);
+     }
+     */
   }
 
   /**
@@ -67,42 +65,38 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
   }
 
   public void installBundles() throws BundleException {
-    for(int i=0; i<bundleRepositories.length; i++) {
+    for (int i = 0; i < bundleRepositories.length; i++) {
       final URL bundleLocation = bundleRepositories[i];
       if (bundleLocation.getProtocol().equalsIgnoreCase("file")) {
-        try {
-          final File bundleDir = new File(new URI(bundleLocation.toExternalForm()));
-          if (!bundleDir.exists()) {
-            // TODO: We need a better way to handle this. If we throw an exception 
-            // here, and we're running a test, then it breaks the test;
-            // but if we're in production and 'bundleDir' does not exists, then
-            // the client wont be notified of the anomaly; maybe print a warning message???
-            logger.warn("The bundle repository: '" + bundleDir.toString() + "' does not exist.");
-            continue;
-          }
-          
-          if (!bundleDir.isDirectory()) {
-            throw new BundleException("Invalid bundle repository specified in the URL [" + bundleDir + "]");
-          }
-          
-          final String MODULE_VERSION_REGEX      = "[0-9]+\\.[0-9]+\\.[0-9]+";
-          final String MODULE_FILENAME_REGEX     = ".+-.+-";
-          final String MODULE_FILENAME_EXT_REGEX = "\\.jar";
-          final File[] bundleFiles = bundleDir.listFiles(new FileFilter() { 
-            public boolean accept(File file) {
-              return file.isFile() && file.getName().matches(MODULE_FILENAME_REGEX 
-                  + MODULE_VERSION_REGEX 
-                  + MODULE_FILENAME_EXT_REGEX);
-            }
-          });
+        final File bundleDir = new File(bundleLocation.getFile());
+        if (!bundleDir.exists()) {
+          // TODO: We need a better way to handle this. If we throw an exception 
+          // here, and we're running a test, then it breaks the test;
+          // but if we're in production and 'bundleDir' does not exists, then
+          // the client wont be notified of the anomaly; maybe print a warning message???
+          logger.warn("The bundle repository: '" + bundleDir.toString() + "' does not exist.");
+          continue;
+        }
 
-          for(int j=0; j<bundleFiles.length; j++) {
-            final String bundleName = bundleFiles[j].getName().replaceFirst("-" + MODULE_VERSION_REGEX + MODULE_FILENAME_EXT_REGEX, "");
-            final String bundleVersion = bundleFiles[j].getName().replaceFirst(MODULE_FILENAME_REGEX, "").replaceFirst(MODULE_FILENAME_EXT_REGEX, "");
-            installBundle(bundleName, bundleVersion);
+        if (!bundleDir.isDirectory()) { throw new BundleException("Invalid bundle repository specified in the URL ["
+            + bundleDir + "]"); }
+
+        final String MODULE_VERSION_REGEX = "[0-9]+\\.[0-9]+\\.[0-9]+";
+        final String MODULE_FILENAME_REGEX = ".+-.+-";
+        final String MODULE_FILENAME_EXT_REGEX = "\\.jar";
+        final File[] bundleFiles = bundleDir.listFiles(new FileFilter() {
+          public boolean accept(File file) {
+            return file.isFile()
+                && file.getName().matches(MODULE_FILENAME_REGEX + MODULE_VERSION_REGEX + MODULE_FILENAME_EXT_REGEX);
           }
-        } catch (URISyntaxException use) {
-          throw new BundleException("Invalid file URL [" + bundleLocation + "]", use);
+        });
+
+        for (int j = 0; j < bundleFiles.length; j++) {
+          final String bundleName = bundleFiles[j].getName().replaceFirst(
+              "-" + MODULE_VERSION_REGEX + MODULE_FILENAME_EXT_REGEX, "");
+          final String bundleVersion = bundleFiles[j].getName().replaceFirst(MODULE_FILENAME_REGEX, "").replaceFirst(
+              MODULE_FILENAME_EXT_REGEX, "");
+          installBundle(bundleName, bundleVersion);
         }
       }
     }
@@ -125,33 +119,30 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
 
   private Bundle findBundleBySymbolicName(final RequiredBundleSpec spec) {
     final Bundle[] bundles = framework.getSystemBundleContext().getBundles();
-    for(int i=0; i<bundles.length; i++) {
+    for (int i = 0; i < bundles.length; i++) {
       Bundle bundle = bundles[i];
-      final String symbolicName = (String)bundle.getHeaders().get("Bundle-SymbolicName");
-      final String version      = (String)bundle.getHeaders().get("Bundle-Version");
-      if (spec.isCompatible(symbolicName, version)) {
-        return bundle;
-      }
+      final String symbolicName = (String) bundle.getHeaders().get("Bundle-SymbolicName");
+      final String version = (String) bundle.getHeaders().get("Bundle-Version");
+      if (spec.isCompatible(symbolicName, version)) { return bundle; }
     }
     return null;
   }
-  
-  private void startBundle(final long bundleId, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException {
-    final Bundle bundle   = framework.bundles.getBundle(bundleId);
-    final String requires = (String)bundle.getHeaders().get("Require-Bundle");
-    
+
+  private void startBundle(final long bundleId, final EmbeddedOSGiRuntimeCallbackHandler handler)
+      throws BundleException {
+    final Bundle bundle = framework.bundles.getBundle(bundleId);
+    final String requires = (String) bundle.getHeaders().get("Require-Bundle");
+
     final String[] bundles = RequiredBundleSpec.parseList(requires);
-    for (int i=0; i<bundles.length; i++) {
+    for (int i = 0; i < bundles.length; i++) {
       System.out.println(">> " + bundles[i]);
     }
-    
-    for (int i=0; i<bundles.length; i++) {
+
+    for (int i = 0; i < bundles.length; i++) {
       final RequiredBundleSpec spec = new RequiredBundleSpec(bundles[i]);
       final Bundle reqdBundle = findBundleBySymbolicName(spec);
-      if (reqdBundle == null) {
-        throw new BundleException("No compatible bundle installed for the required bundle: "
-            + spec.getSymbolicName() + ", bundle-version: " + spec.getBundleVersion());
-      }
+      if (reqdBundle == null) { throw new BundleException("No compatible bundle installed for the required bundle: "
+          + spec.getSymbolicName() + ", bundle-version: " + spec.getBundleVersion()); }
       startBundle(reqdBundle.getBundleId(), handler);
     }
 
@@ -159,8 +150,9 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     info(Message.BUNDLE_STARTED, new Object[] { bundle.getSymbolicName() });
     handler.callback(bundle);
   }
-  
-  public void startBundle(final String bundleName, final String bundleVersion, final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException {
+
+  public void startBundle(final String bundleName, final String bundleVersion,
+                          final EmbeddedOSGiRuntimeCallbackHandler handler) throws BundleException {
     startBundle(getBundleID(bundleName, bundleVersion), handler);
   }
 
@@ -177,15 +169,15 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
       throws InvalidSyntaxException {
     return framework.getSystemBundleContext().getAllServiceReferences(clazz, filter);
   }
-  
+
   public Object getService(ServiceReference service) {
     return framework.getSystemBundleContext().getService(service);
   }
-  
+
   public void ungetService(ServiceReference service) {
     framework.getSystemBundleContext().ungetService(service);
   }
-  
+
   public void stopBundle(final String bundleName, final String bundleVersion) throws BundleException {
     final long bundleID = getBundleID(bundleName, bundleVersion);
     framework.stopBundle(bundleID);
@@ -206,10 +198,8 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     final String path = MessageFormat.format(BUNDLE_PATH, new String[] { bundleName, bundleVersion });
     try {
       final URL url = URLUtil.resolve(bundleRepositories, path);
-      if (url == null) {
-        throw new BundleException("Unable to locate the bundle '" + bundleName + "' for version '" + bundleVersion + 
-            "', please check that module name and version number you specified is correct.");
-      }
+      if (url == null) { throw new BundleException("Unable to locate the bundle '" + bundleName + "' for version '"
+          + bundleVersion + "', please check that module name and version number you specified is correct."); }
       return url;
     } catch (MalformedURLException murle) {
       throw new BundleException("Unable to resolve bundle '" + path
