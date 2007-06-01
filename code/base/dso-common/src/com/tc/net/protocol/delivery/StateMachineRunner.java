@@ -24,11 +24,7 @@ public class StateMachineRunner implements EventContext {
     stateMachine.setRunner(this);
   }
 
-  public LinkedList getEventList() {
-    return (events);
-  }
-
-  public int getEventsCount() {
+  public synchronized int getEventsCount() {
     return (events.size());
   }
 
@@ -50,6 +46,10 @@ public class StateMachineRunner implements EventContext {
   public void run() {
     OOOProtocolEvent pe = null;
     synchronized (this) {
+      // NOTE: in some cases, our message q gets out of synch with this event q.
+      // in this case check if empty.
+      // this should simplified.
+      if (events.isEmpty()) return;
       pe = (OOOProtocolEvent) events.removeFirst();
     }
     pe.execute(stateMachine);
@@ -71,10 +71,8 @@ public class StateMachineRunner implements EventContext {
     }
   }
 
-  public void reset() {
-    synchronized (this) {
-      events.clear();
-      stateMachine.reset();
-    }
+  public synchronized void reset() {
+    events.clear();
+    stateMachine.reset();
   }
 }
