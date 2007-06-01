@@ -3,21 +3,43 @@
  */
 package com.tc.bundles;
 
+import org.osgi.framework.BundleException;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 final class RequiredBundleSpec {
-  private static final String PROP_KEY_RESOLUTION     = "resolution";
-  private static final String PROP_KEY_BUNDLE_VERSION = "bundle-version";
+  private static final String PROP_KEY_RESOLUTION         = "resolution";
+  private static final String PROP_KEY_BUNDLE_VERSION     = "bundle-version";
+  private static final String REQUIRE_BUNDLE_EXPR_MATCHER = "([A-Za-z0-9._\\-]+(;resolution:=\"optional\")?(;bundle-version:=(\"[A-Za-z0-9.]+\"|\"\\[[A-Za-z0-9.]+,[A-Za-z0-9.]+\\]\"))?)";
 
   private final String        symbolicName;
   private Map                 attributes;
 
-  public static final String[] parseList(final String requires) {
-    return (requires == null) ? new String[0] : requires.split(", ");
+  public static final String[] parseList(final String source) throws BundleException {
+    ArrayList list = new ArrayList();
+    if (source != null) {
+      final String spec     = source.replaceAll(" ", "");
+      final String regex    = REQUIRE_BUNDLE_EXPR_MATCHER;
+      final Pattern pattern = Pattern.compile(regex);
+      final Matcher matcher = pattern.matcher(spec);
+      StringBuffer check    = new StringBuffer();
+      while (matcher.find()) {
+         final String group = matcher.group();
+         check.append("," + group);
+         list.add(group);
+      }
+      if (!spec.equals(check.toString().replaceFirst(",", ""))) {
+        throw new BundleException("Syntax error specifying required-bundles list: '" + source + "'"); 
+      }
+    }
+    return (String[])list.toArray(new String[0]);
   }
 
-  public RequiredBundleSpec(String spec) {
+  public RequiredBundleSpec(final String spec) {
     attributes = new HashMap();
     final String[] data = spec.split(";");
     this.symbolicName = data[0];
@@ -68,25 +90,12 @@ final class RequiredBundleSpec {
     final boolean inclusiveFloor = spec.startsWith("[");
     final boolean inclusiveCeiling = spec.endsWith("]");
 
-    //System.out.println("---------------------------------------------------------------------");
-    //System.out.println("  +spec: " + spec);
-    //System.out.println("  +floor, ceiling rule: " + inclusiveFloor + ", " + inclusiveCeiling);
-
-    spec = spec.replaceAll("\\[|\\]|\\(|\\)", "");
-    final String[] range = spec.replaceAll(" ", "").split(",");
-    //System.out.println("  +range: " + range.length);
-
-    final VersionSpec floor = new VersionSpec(range[0]);
+    spec                      = spec.replaceAll("\\[|\\]|\\(|\\)", "");
+    final String[] range      = spec.replaceAll(" ", "").split(",");
+    final VersionSpec floor   = new VersionSpec(range[0]);
     final VersionSpec ceiling = new VersionSpec(range[1]);
-
-    //System.out.println("  +floor, ceiling" + floor + ", " + ceiling);
-
-    final boolean lowerBound = inclusiveFloor ? (floor.compareTo(target) >= 0) : (floor.compareTo(target) > 0);
-    final boolean upperBound = inclusiveCeiling ? (target.compareTo(ceiling) <= 0) : (target.compareTo(ceiling) < 0);
-
-    //System.out.println("  +target: " + target);
-    //System.out.println("  +lobound, hibound: " + lowerBound + ", " + upperBound);
-    //System.out.println("---------------------------------------------------------------------");
+    final boolean lowerBound  = inclusiveFloor ? (floor.compareTo(target) >= 0) : (floor.compareTo(target) > 0);
+    final boolean upperBound  = inclusiveCeiling ? (target.compareTo(ceiling) <= 0) : (target.compareTo(ceiling) < 0);
 
     // it's compatible if version falls within the (lower|upper)-bound versions
     // according to the (in|ex)clusivity flags
