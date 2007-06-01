@@ -131,9 +131,9 @@ final class RequiredBundleSpec {
     }
 
     public final String toString() {
-      StringBuffer buffer = new StringBuffer(spec[0]);
-      for (int i = 1; i < spec.length; i++) {
-        buffer.append(".").append(spec[i]);
+      StringBuffer buffer = new StringBuffer(this.spec[0]);
+      for (int i = 1; i < this.spec.length; i++) {
+        buffer.append(".").append(this.spec[i]);
       }
       return buffer.toString();
     }
