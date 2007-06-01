@@ -172,7 +172,9 @@ public class ModulesLoader {
                                                       final DSOClientConfigHelper configHelper)
       throws InvalidSyntaxException {
     ServiceReference[] serviceReferences = osgiRuntime.getAllServiceReferences(ModuleSpec.class.getName(), null);
-    Arrays.sort(serviceReferences, SERVICE_COMPARATOR);
+    if (serviceReferences != null && serviceReferences.length > 0) {
+      Arrays.sort(serviceReferences, SERVICE_COMPARATOR);
+    }
     
     if (serviceReferences == null) { return; }
     ModuleSpec[] modulesSpecs = new ModuleSpec[serviceReferences.length];
