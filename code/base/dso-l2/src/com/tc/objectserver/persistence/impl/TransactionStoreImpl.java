@@ -16,11 +16,13 @@ import com.tc.objectserver.persistence.api.TransactionStore;
 import com.tc.util.Assert;
 import com.tc.util.sequence.Sequence;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -34,6 +36,7 @@ public class TransactionStoreImpl implements TransactionStore {
   private final SortedMap            ids                    = Collections
                                                                 .synchronizedSortedMap(new TreeMap(
                                                                                                    GlobalTransactionID.COMPARATOR));
+  private final Set                  ongoingCommits         = new HashSet();
   private final TransactionPersistor persistor;
   private final Sequence             globalIDSequence;
 
@@ -48,26 +51,46 @@ public class TransactionStoreImpl implements TransactionStore {
     }
   }
 
-  public synchronized void commitAllTransactionDescriptor(PersistenceTransaction persistenceTransaction,
-                                                          Collection stxIDs) {
-    for (Iterator i = stxIDs.iterator(); i.hasNext();) {
-      ServerTransactionID stxnID = (ServerTransactionID) i.next();
-      commitTransactionDescriptor(persistenceTransaction, stxnID);
+  public void commitAllTransactionDescriptor(PersistenceTransaction transaction, Collection stxIDs) {
+    List toSave = new ArrayList(stxIDs.size());
+    synchronized (this) {
+      for (Iterator i = stxIDs.iterator(); i.hasNext();) {
+        ServerTransactionID stxnID = (ServerTransactionID) i.next();
+        GlobalTransactionDescriptor gtx = (GlobalTransactionDescriptor) this.serverTransactionIDMap.get(stxnID);
+        if (gtx.commitComplete()) {
+          // reconsile when txn complete arrives before commit. Can happen in Passive server
+          this.serverTransactionIDMap.remove(gtx.getServerTransactionID());
+          ids.remove(gtx.getGlobalTransactionID());
+        } else {
+          toSave.add(gtx);
+          ongoingCommits.add(stxnID);
+        }
+      }
+    }
+    for (Iterator i = toSave.iterator(); i.hasNext();) {
+      GlobalTransactionDescriptor gtx = (GlobalTransactionDescriptor) i.next();
+      persistor.saveGlobalTransactionDescriptor(transaction, gtx);
+    }
+    synchronized (this) {
+      if (ongoingCommits.size() == toSave.size()) {
+        // No one else is currently saving stuff
+        ongoingCommits.clear();
+      } else {
+        for (Iterator i = toSave.iterator(); i.hasNext();) {
+          GlobalTransactionDescriptor gtx = (GlobalTransactionDescriptor) i.next();
+          boolean removed = ongoingCommits.remove(gtx.getServerTransactionID());
+          Assert.assertTrue(removed);
+        }
+      }
+      notifyAll();
     }
   }
 
-  // TODO:: Move call to persistor outside synch block, but that might open up some raceconditions that need to be
-  // handled
-  public synchronized void commitTransactionDescriptor(PersistenceTransaction transaction, ServerTransactionID stxID) {
-    GlobalTransactionDescriptor gtx = getTransactionDescriptor(stxID);
-    Assert.assertNotNull(gtx);
-    if (gtx.commitComplete()) {
-      // reconsile when txn complete arrives before commit. Can happen in Passive server
-      this.serverTransactionIDMap.remove(gtx.getServerTransactionID());
-      ids.remove(gtx.getGlobalTransactionID());
-    } else {
-      persistor.saveGlobalTransactionDescriptor(transaction, gtx);
-    }
+  // used only in tests
+  public void commitTransactionDescriptor(PersistenceTransaction transaction, ServerTransactionID stxID) {
+    ArrayList stxIDs = new ArrayList(1);
+    stxIDs.add(stxID);
+    commitAllTransactionDescriptor(transaction, stxIDs);
   }
 
   public synchronized GlobalTransactionDescriptor getTransactionDescriptor(ServerTransactionID serverTransactionID) {
@@ -122,20 +145,29 @@ public class TransactionStoreImpl implements TransactionStore {
     }
   }
 
-  // TODO:: Move call to persistor outside synch block, but that might open up some raceconditions that need to be
-  // handled
-  public synchronized void removeAllByServerTransactionID(PersistenceTransaction tx, Collection stxIDs) {
+  public void removeAllByServerTransactionID(PersistenceTransaction tx, Collection stxIDs) {
     Collection toDelete = new HashSet();
-    for (Iterator i = stxIDs.iterator(); i.hasNext();) {
-      ServerTransactionID stxID = (ServerTransactionID) i.next();
-      GlobalTransactionDescriptor desc = (GlobalTransactionDescriptor) this.serverTransactionIDMap.remove(stxID);
-      if (desc != null) {
-        if (desc.complete()) {
-          ids.remove(desc.getGlobalTransactionID());
-          toDelete.add(stxID);
-        } else {
-          // reconsile, commit will remove this
-          this.serverTransactionIDMap.put(stxID, desc);
+    synchronized (this) {
+      for (Iterator i = stxIDs.iterator(); i.hasNext();) {
+        ServerTransactionID stxID = (ServerTransactionID) i.next();
+        GlobalTransactionDescriptor desc = (GlobalTransactionDescriptor) this.serverTransactionIDMap.remove(stxID);
+        if (desc != null) {
+          if (desc.complete()) {
+            ids.remove(desc.getGlobalTransactionID());
+            toDelete.add(stxID);
+            while(ongoingCommits.contains(stxID)) {
+              // We want to wait till the save is done. Dont want to race
+              try {
+                logger.warn("Waiting for commit to complete for " + stxID + " before removing");
+                wait();
+              } catch (InterruptedException e) {
+                throw new AssertionError(e);
+              }
+            }
+          } else {
+            // reconsile, commit will remove this
+            this.serverTransactionIDMap.put(stxID, desc);
+          }
         }
       }
     }
