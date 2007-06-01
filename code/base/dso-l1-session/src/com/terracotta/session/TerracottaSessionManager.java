@@ -256,7 +256,7 @@ public class TerracottaSessionManager {
 
   private void expire(SessionId id, SessionData sd) {
     try {
-      sd.invalidate();
+      if (!sd.isInvalidated()) sd.invalidate();
     } catch (Throwable t) {
       logger.error("unhandled exception during invalidate() for session " + id.getKey());
     }

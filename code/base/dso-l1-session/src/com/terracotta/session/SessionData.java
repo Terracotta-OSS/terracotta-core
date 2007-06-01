@@ -274,4 +274,8 @@ public class SessionData implements Session, SessionSupport {
     return timestamp;
   }
 
+  public synchronized boolean isInvalidated() {
+    return invalidated;
+  }
+
 }
