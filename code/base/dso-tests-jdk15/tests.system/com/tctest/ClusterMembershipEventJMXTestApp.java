@@ -85,10 +85,10 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
       while (eventsCount.size() < 4) {
         eventsCount.wait(3 * 60 * 1000);
       }
-      Assert.assertEquals(1, ((Integer)eventsCount.get("com.tc.cluster.event.nodeDisconnected")).intValue());
-      Assert.assertEquals(1, ((Integer)eventsCount.get("com.tc.cluster.event.nodeConnected")).intValue());
-      Assert.assertEquals(1, ((Integer)eventsCount.get("com.tc.cluster.event.thisNodeDisconnected")).intValue());
-      Assert.assertEquals(1, ((Integer)eventsCount.get("com.tc.cluster.event.thisNodeConnected")).intValue());
+      Assert.assertTrue(((Integer)eventsCount.get("com.tc.cluster.event.nodeDisconnected")).intValue() >= 1);
+      Assert.assertTrue(((Integer)eventsCount.get("com.tc.cluster.event.nodeConnected")).intValue() >= 1);
+      Assert.assertTrue(((Integer)eventsCount.get("com.tc.cluster.event.thisNodeDisconnected")).intValue() >= 1);
+      Assert.assertTrue(((Integer)eventsCount.get("com.tc.cluster.event.thisNodeConnected")).intValue() >= 1);
     }
   }
 
