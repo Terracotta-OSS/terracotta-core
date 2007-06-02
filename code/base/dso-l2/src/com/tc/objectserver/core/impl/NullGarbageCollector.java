@@ -101,4 +101,8 @@ public class NullGarbageCollector implements GarbageCollector {
   public boolean isDisabled() {
     return true;
   }
+
+  public boolean isStarted() {
+    return false;
+  }
 }

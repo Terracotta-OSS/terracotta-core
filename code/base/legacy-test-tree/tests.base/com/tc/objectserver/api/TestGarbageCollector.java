@@ -258,8 +258,7 @@ public class TestGarbageCollector implements GarbageCollector {
   }
 
   public void start() {
-    throw new ImplementMe();
-
+    // Nop
   }
 
   public void stop() {
@@ -291,6 +290,10 @@ public class TestGarbageCollector implements GarbageCollector {
   }
 
   public boolean isDisabled() {
+    return false;
+  }
+
+  public boolean isStarted() {
     return false;
   }
 }

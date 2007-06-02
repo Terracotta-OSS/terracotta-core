@@ -1039,6 +1039,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
     GarbageCollector gc = new MarkAndSweepGarbageCollector(objectManager, clientStateManager, true);
     objectManager.setGarbageCollector(gc);
+    objectManager.start();
 
     Listener listener = new Listener();
     this.objectManager.addListener(listener);
@@ -1116,6 +1117,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     this.config.myGCThreadSleepTime = -1;
     TestGarbageCollector gc = new TestGarbageCollector(objectManager);
     objectManager.setGarbageCollector(gc);
+    objectManager.start();
     final ObjectID id = new ObjectID(0);
     ManagedObject mo = new TestManagedObject(id, new ObjectID[3]);
     objectManager.createObject(mo);
@@ -1866,6 +1868,10 @@ public class ObjectManagerTest extends BaseDSOTestCase {
     }
 
     public boolean isDisabled() {
+      return false;
+    }
+
+    public boolean isStarted() {
       return false;
     }
 

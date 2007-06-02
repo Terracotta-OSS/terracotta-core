@@ -20,6 +20,10 @@ public class GCComptrollerImpl implements GCComptroller {
     return config.doGC();
   }
 
+  public boolean isGCStarted() {
+    return collector.isStarted();
+  }
+
   public boolean isGCDisabled() {
     return collector.isDisabled();
   }

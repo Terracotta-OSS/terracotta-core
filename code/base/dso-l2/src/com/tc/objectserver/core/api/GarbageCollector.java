@@ -64,6 +64,8 @@ public interface GarbageCollector extends PrettyPrintable {
   public void start();
 
   public void stop();
+  
+  public boolean isStarted();
 
   public void setState(StoppableThread st);
 

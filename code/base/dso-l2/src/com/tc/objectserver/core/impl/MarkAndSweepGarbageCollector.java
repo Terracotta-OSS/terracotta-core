@@ -78,6 +78,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   private final ObjectManager          objectManager;
   private final ClientStateManager     stateManager;
   private LifeCycleState               gcState               = new NullLifeCycleState();
+  private volatile boolean             started               = false;
 
   public MarkAndSweepGarbageCollector(ObjectManager objectManager, ClientStateManager stateManager, boolean verboseGC) {
     this.gcLogger = new GCLogger(logger, verboseGC);
@@ -234,7 +235,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   }
 
   private synchronized boolean requestGCStart() {
-    if (state == GC_SLEEP) {
+    if (started && state == GC_SLEEP) {
       state = GC_RUNNING;
       return true;
     }
@@ -342,15 +343,21 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   }
 
   public void start() {
+    this.started = true;
     gcState.start();
   }
 
   public void stop() {
+    this.started = false;
     int count = 0;
     while (!this.gcState.stopAndWait(5000) && (count < 6)) {
       count++;
       logger.warn("GC Thread did not stop");
     }
+  }
+  
+  public boolean isStarted() {
+    return this.started;
   }
 
   public void setState(StoppableThread st) {
