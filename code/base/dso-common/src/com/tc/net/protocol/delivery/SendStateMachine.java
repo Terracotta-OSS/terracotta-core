@@ -133,6 +133,12 @@ public class SendStateMachine extends AbstractStateMachine {
 
       long ackedSeq = protocolMessage.getAckSequence();
       Assert.eval(ackedSeq >= acked.get());
+      
+      // drop all insane acks, it may occur at connection reestablish
+      if (ackedSeq > (acked.get()+outstandingCnt.get())) {
+        System.err.println("Wrong ack "+ ackedSeq + " expected <= " + (acked.get()+outstandingCnt.get()));
+        return;
+      }
 
       while (ackedSeq > acked.get()) {
         acked.increment();
