@@ -4,6 +4,7 @@
  */
 package com.tc.l2.state;
 
+import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.net.groups.NodeID;
 
 import java.io.ByteArrayInputStream;
@@ -18,7 +19,8 @@ import junit.framework.TestCase;
 public class EnrollmentTest extends TestCase {
 
   public void testSerialization() throws Exception {
-    Enrollment e = EnrollmentFactory.createEnrollment(new NodeID("30001", new byte[] { 54, -125, 34, -4 }), true);
+    Enrollment e = EnrollmentFactory.createEnrollment(new NodeID("30001", new byte[] { 54, -125, 34, -4 }), true,
+                                                      WeightGeneratorFactory.createDefaultFactory());
     ByteArrayOutputStream bo = new ByteArrayOutputStream();
     ObjectOutput oo = new ObjectOutputStream(bo);
     oo.writeObject(e);

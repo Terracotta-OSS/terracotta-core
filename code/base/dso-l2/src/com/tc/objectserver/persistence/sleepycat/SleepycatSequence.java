@@ -69,6 +69,33 @@ class SleepycatSequence extends SleepycatPersistorBase implements MutableSequenc
     return uuid.toString();
   }
 
+  /**
+   * NOTE: This current() implementation is a little different from the rest in that it returns the value that will be
+   * returned when you call next()
+   */
+  public synchronized long current() {
+    PersistenceTransaction tx = ptxp.newTransaction();
+    try {
+      DatabaseEntry value = new DatabaseEntry();
+      long currentValue = startValue;
+      OperationStatus status = this.sequenceDB.get(pt2nt(tx), key, value, LockMode.DEFAULT);
+
+      if (OperationStatus.SUCCESS.equals(status)) {
+        currentValue = Conversion.bytes2Long(value.getData());
+      } else if (!OperationStatus.NOTFOUND.equals(status)) {
+        // Formatting
+        throw new DBException("Unable to retrieve current value: " + status);
+      }
+      tx.commit();
+      return currentValue;
+    } catch (Exception t) {
+      abortOnError(tx);
+      t.printStackTrace();
+      throw (t instanceof DBException ? (DBException) t : new DBException(t));
+    }
+
+  }
+
   public synchronized long next() {
     return nextBatch(1);
   }

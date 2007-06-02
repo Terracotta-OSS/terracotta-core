@@ -7,4 +7,5 @@ public interface Sequence {
 
   public long next();
 
+  public long current();
 }

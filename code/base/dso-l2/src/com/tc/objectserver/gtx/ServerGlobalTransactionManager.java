@@ -9,6 +9,7 @@ import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionIDGenerator;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
+import com.tc.util.sequence.Sequence;
 
 import java.util.Collection;
 import java.util.Set;
@@ -43,5 +44,9 @@ public interface ServerGlobalTransactionManager extends GlobalTransactionIDGener
   public void shutdownAllClientsExcept(Set cids);
 
   public void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID);
+
+  public GlobalTransactionIDSequenceProvider getGlobalTransactionIDSequenceProvider();
+
+  public Sequence getGlobalTransactionIDSequence();
 
 }

@@ -48,7 +48,7 @@ import com.tc.net.groups.Node;
 import com.tc.net.groups.NodeID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.gtx.GlobalTransactionIDSequenceProvider;
+import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.persistence.api.PersistentMapStore;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -82,20 +82,19 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   public L2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server, StageManager stageManager,
                          PersistentMapStore clusterStateStore, ObjectManager objectManager,
                          ServerTransactionManager transactionManager, TransactionalObjectManager txnObjectManager,
-                         GlobalTransactionIDSequenceProvider gidSequenceProvider, NewHaConfig haConfig) {
+                         ServerGlobalTransactionManager gtxm, NewHaConfig haConfig) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.haConfig = haConfig;
 
-    init(stageManager, clusterStateStore, objectManager, transactionManager, txnObjectManager, gidSequenceProvider);
+    init(stageManager, clusterStateStore, objectManager, transactionManager, txnObjectManager, gtxm);
   }
 
   private void init(StageManager stageManager, PersistentMapStore clusterStateStore, ObjectManager objectManager,
                     ServerTransactionManager transactionManager, TransactionalObjectManager txnObjectManager,
-                    GlobalTransactionIDSequenceProvider gidSequenceProvider) {
+                    ServerGlobalTransactionManager gtxm) {
     try {
-      basicInit(stageManager, clusterStateStore, objectManager, transactionManager, txnObjectManager,
-                gidSequenceProvider);
+      basicInit(stageManager, clusterStateStore, objectManager, transactionManager, txnObjectManager, gtxm);
     } catch (GroupException e) {
       logger.error(e);
       throw new AssertionError(e);
@@ -104,22 +103,24 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
   private void basicInit(StageManager stageManager, PersistentMapStore clusterStateStore, ObjectManager objectManager,
                          ServerTransactionManager transactionManager, TransactionalObjectManager txnObjectManager,
-                         GlobalTransactionIDSequenceProvider gidSequenceProvider) throws GroupException {
+                         ServerGlobalTransactionManager gtxm) throws GroupException {
 
     this.clusterState = new ClusterState(clusterStateStore, server.getManagedObjectStore(), server
-        .getConnectionIdFactory(), gidSequenceProvider);
+        .getConnectionIdFactory(), gtxm.getGlobalTransactionIDSequenceProvider());
 
     final Sink stateChangeSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE,
                                                           new L2StateChangeHandler(), 1, Integer.MAX_VALUE).getSink();
     this.groupManager = GroupManagerFactory.createGroupManager();
 
+    WeightGeneratorFactory weightFactory = createWeightGeneratorFactory(gtxm);
+
     this.stateManager = new StateManagerImpl(consoleLogger, groupManager, stateChangeSink,
-                                             new StateManagerConfigImpl(haConfig));
+                                             new StateManagerConfigImpl(haConfig), weightFactory);
     this.stateManager.registerForStateChangeEvents(this);
 
     this.l2ObjectStateManager = new L2ObjectStateManagerImpl(objectManager, transactionManager);
     this.sequenceGenerator = new SequenceGenerator(this);
-    
+
     this.groupManager.setZapNodeRequestProcessor(new L2HAZapNodeRequestProcessor(consoleLogger, stateManager));
 
     final Sink objectsSyncRequestSink = stageManager
@@ -166,6 +167,22 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
         .getSink();
     GroupEventsDispatcher dispatcher = new GroupEventsDispatcher(groupEventsSink);
     groupManager.registerForGroupEvents(dispatcher);
+  }
+
+  private WeightGeneratorFactory createWeightGeneratorFactory(ServerGlobalTransactionManager gtxm) {
+    WeightGeneratorFactory wgf = new WeightGeneratorFactory();
+    // TODO::FIXME :: this is probably not the right thing to do since a runnign active might have current gid < curreng
+    // gid in a just turned active because of how things are wired.
+    //
+    // final Sequence gidSequence = gtxm.getGlobalTransactionIDSequence();
+    // wgf.add(new WeightGenerator() {
+    // public long getWeight() {
+    // return gidSequence.current();
+    // }
+    // });
+    wgf.add(WeightGeneratorFactory.RANDOM_WEIGHT_GENERATOR);
+    wgf.add(WeightGeneratorFactory.RANDOM_WEIGHT_GENERATOR);
+    return wgf;
   }
 
   public void start(final Node thisNode, final Node[] allNodes) {

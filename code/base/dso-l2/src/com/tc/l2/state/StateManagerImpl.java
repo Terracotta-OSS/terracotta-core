@@ -9,6 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 import com.tc.async.api.Sink;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
+import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.L2StateMessageFactory;
 import com.tc.logging.TCLogger;
@@ -24,25 +25,27 @@ import java.util.Iterator;
 
 public class StateManagerImpl implements StateManager {
 
-  private static final TCLogger      logger             = TCLogging.getLogger(StateManagerImpl.class);
+  private static final TCLogger        logger             = TCLogging.getLogger(StateManagerImpl.class);
 
-  private final TCLogger             consoleLogger;
-  private final GroupManager         groupManager;
-  private final ElectionManager      electionMgr;
-  private final Sink                 stateChangeSink;
+  private final TCLogger               consoleLogger;
+  private final GroupManager           groupManager;
+  private final ElectionManager        electionMgr;
+  private final Sink                   stateChangeSink;
+  private final WeightGeneratorFactory weightsFactory;
 
-  private final CopyOnWriteArrayList listeners          = new CopyOnWriteArrayList();
-  private final Object               electionLock       = new Object();
+  private final CopyOnWriteArrayList   listeners          = new CopyOnWriteArrayList();
+  private final Object                 electionLock       = new Object();
 
-  private NodeID                     activeNode         = NodeID.NULL_ID;
-  private volatile State             state              = START_STATE;
-  private boolean                    electionInProgress = false;
+  private NodeID                       activeNode         = NodeID.NULL_ID;
+  private volatile State               state              = START_STATE;
+  private boolean                      electionInProgress = false;
 
   public StateManagerImpl(TCLogger consoleLogger, GroupManager groupManager, Sink stateChangeSink,
-                          StateManagerConfig stateManagerConfig) {
+                          StateManagerConfig stateManagerConfig, WeightGeneratorFactory weightFactory) {
     this.consoleLogger = consoleLogger;
     this.groupManager = groupManager;
     this.stateChangeSink = stateChangeSink;
+    this.weightsFactory = weightFactory;
     this.electionMgr = new ElectionManagerImpl(groupManager, stateManagerConfig);
   }
 
@@ -72,7 +75,7 @@ public class StateManagerImpl implements StateManager {
 
   private void runElection(boolean isNew) {
     NodeID myNodeID = getLocalNodeID();
-    NodeID winner = electionMgr.runElection(myNodeID, isNew);
+    NodeID winner = electionMgr.runElection(myNodeID, isNew, weightsFactory);
     if (winner == myNodeID) {
       moveToActiveState();
     } else {
@@ -142,7 +145,7 @@ public class StateManagerImpl implements StateManager {
   public synchronized NodeID getActiveNodeID() {
     return activeNode;
   }
-  
+
   public boolean isActiveCoordinator() {
     return (state == ACTIVE_COORDINATOR);
   }
@@ -151,7 +154,7 @@ public class StateManagerImpl implements StateManager {
     Assert.assertTrue(isActiveCoordinator());
     logger.info("Requesting node " + nodeID + " to move to " + PASSIVE_STANDBY);
     GroupMessage msg = L2StateMessageFactory.createMoveToPassiveStandbyMessage(EnrollmentFactory
-        .createTrumpEnrollment(getLocalNodeID()));
+        .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
     try {
       this.groupManager.sendTo(nodeID, msg);
     } catch (GroupException e) {
@@ -222,7 +225,7 @@ public class StateManagerImpl implements StateManager {
       // Condition 3 :
       // We dont want new L2s to win an election when there are old L2s in PASSIVE states.
       GroupMessage resultConflict = L2StateMessageFactory.createResultConflictMessage(msg, EnrollmentFactory
-          .createTrumpEnrollment(getLocalNodeID()));
+          .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
       warn("WARNING :: Active Node = " + activeNode + " , " + state
            + " received ELECTION_RESULT message from another node : " + msg + " : Forcing re-election "
            + resultConflict);
@@ -245,7 +248,7 @@ public class StateManagerImpl implements StateManager {
     if (state == ACTIVE_COORDINATOR) {
       // This is either a new L2 joining a cluster or a renegade L2. Force it to abort
       GroupMessage abortMsg = L2StateMessageFactory.createAbortElectionMessage(msg, EnrollmentFactory
-          .createTrumpEnrollment(getLocalNodeID()));
+          .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
       info("Forcing Abort Election for " + msg + " with " + abortMsg);
       groupManager.sendTo(msg.messageFrom(), abortMsg);
     } else if (!electionMgr.handleStartElectionRequest(msg)) {
@@ -259,7 +262,7 @@ public class StateManagerImpl implements StateManager {
   public void publishActiveState(NodeID nodeID) throws GroupException {
     Assert.assertTrue(isActiveCoordinator());
     GroupMessage msg = L2StateMessageFactory.createElectionWonMessage(EnrollmentFactory
-        .createTrumpEnrollment(getLocalNodeID()));
+        .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
     groupManager.sendTo(nodeID, msg);
   }
 

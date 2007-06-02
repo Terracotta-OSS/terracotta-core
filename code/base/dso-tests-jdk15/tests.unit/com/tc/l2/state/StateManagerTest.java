@@ -6,6 +6,7 @@ package com.tc.l2.state;
 
 import com.tc.test.TCTestCase;
 import com.tc.l2.context.StateChangedEvent;
+import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.StateManagerImpl;
 import com.tc.util.PortChooser;
@@ -366,7 +367,7 @@ public class StateManagerTest extends TCTestCase {
     sinks[localIndex] = new ChangeSink(localIndex);
     MyStateManagerConfig config = new MyStateManagerConfig();
     config.electionTime = 5;
-    StateManager mgr = new StateManagerImpl(logger, gm, sinks[localIndex], config);
+    StateManager mgr = new StateManagerImpl(logger, gm, sinks[localIndex], config, WeightGeneratorFactory.createDefaultFactory());
     messageStage[localIndex] = new L2StateMessageStage(mgr);
     gm.routeMessages(L2StateMessage.class, messageStage[localIndex].getSink());
     messageStage[localIndex].start();

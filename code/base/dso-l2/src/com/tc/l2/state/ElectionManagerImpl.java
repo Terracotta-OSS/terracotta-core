@@ -4,6 +4,7 @@
  */
 package com.tc.l2.state;
 
+import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.L2StateMessageFactory;
 import com.tc.logging.TCLogger;
@@ -37,7 +38,7 @@ public class ElectionManagerImpl implements ElectionManager {
   private Enrollment            myVote               = null;
   private Enrollment            winner;
 
-  private final long             electionTime;
+  private final long            electionTime;
 
   public ElectionManagerImpl(GroupManager groupManager, StateManagerConfig stateManagerConfig) {
     this.groupManager = groupManager;
@@ -142,7 +143,7 @@ public class ElectionManagerImpl implements ElectionManager {
     this.myVote = null;
   }
 
-  public NodeID runElection(NodeID myNodeId, boolean isNew) {
+  public NodeID runElection(NodeID myNodeId, boolean isNew, WeightGeneratorFactory weightsFactory) {
     NodeID winnerID = NodeID.NULL_ID;
     int count = 0;
     while (winnerID.isNull()) {
@@ -150,7 +151,7 @@ public class ElectionManagerImpl implements ElectionManager {
         logger.info("Requesting Re-election !!! count = " + count);
       }
       try {
-        winnerID = doElection(myNodeId, isNew);
+        winnerID = doElection(myNodeId, isNew, weightsFactory);
       } catch (GroupException e1) {
         logger.error("Error during election : ", e1);
         reset(null);
@@ -169,10 +170,11 @@ public class ElectionManagerImpl implements ElectionManager {
     logger.info("Election Started : " + e);
   }
 
-  private NodeID doElection(NodeID myNodeId, boolean isNew) throws GroupException {
+  private NodeID doElection(NodeID myNodeId, boolean isNew, WeightGeneratorFactory weightsFactory)
+      throws GroupException {
 
     // Step 1: publish to cluster NodeID, weight and election start
-    Enrollment e = EnrollmentFactory.createEnrollment(myNodeId, isNew);
+    Enrollment e = EnrollmentFactory.createEnrollment(myNodeId, isNew, weightsFactory);
     electionStarted(e);
 
     GroupMessage msg = createElectionStartedMessage(e);

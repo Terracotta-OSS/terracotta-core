@@ -10,6 +10,7 @@ import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
+import com.tc.util.sequence.Sequence;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -65,5 +66,13 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
 
   public void shutdownAllClientsExcept(Set cids) {
     return;
+  }
+
+  public Sequence getGlobalTransactionIDSequence() {
+    throw new ImplementMe();
+  }
+
+  public GlobalTransactionIDSequenceProvider getGlobalTransactionIDSequenceProvider() {
+    throw new ImplementMe();
   }
 }

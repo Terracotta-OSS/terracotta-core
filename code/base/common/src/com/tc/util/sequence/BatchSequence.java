@@ -33,6 +33,10 @@ public final class BatchSequence implements BatchSequenceReceiver, Sequence {
     return current.next();
   }
 
+  public synchronized long current() {
+    return current.current();
+  }
+
   private void requestMoreIDsIfNecessary() {
 
     // This should only happen the first time

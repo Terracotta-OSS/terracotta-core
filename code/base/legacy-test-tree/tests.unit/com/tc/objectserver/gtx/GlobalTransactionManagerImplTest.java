@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.gtx;
 
@@ -7,10 +8,13 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
+import com.tc.objectserver.persistence.impl.TestMutableSequence;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.TestTransactionStore;
 import com.tc.util.SequenceValidator;
+import com.tc.util.sequence.SimpleSequence;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,7 +31,9 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     super.setUp();
     transactionStore = new TestTransactionStore();
     ptxp = new TestPersistenceTransactionProvider();
-    gtxm = new ServerGlobalTransactionManagerImpl(new SequenceValidator(0), transactionStore, ptxp);
+    GlobalTransactionIDSequenceProvider gsp = new GlobalTransactionIDBatchRequestHandler(new TestMutableSequence());
+    gtxm = new ServerGlobalTransactionManagerImpl(new SequenceValidator(0), transactionStore, ptxp, gsp,
+                                                  new SimpleSequence());
   }
 
   public void testStartAndCommitApply() throws Exception {
@@ -37,7 +43,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     GlobalTransactionID gtxID1 = gtxm.getOrCreateGlobalTransactionID(stxID1);
     GlobalTransactionID gtxID2 = gtxm.getOrCreateGlobalTransactionID(stxID2);
     assertNotSame(gtxID1, gtxID2);
-    
+
     assertTrue(gtxm.initiateApply(stxID1));
     assertTrue(gtxm.initiateApply(stxID2));
 
@@ -81,7 +87,7 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     GlobalTransactionID gid2 = gtxm.getOrCreateGlobalTransactionID(stxid);
     assertFalse(gid1.equals(gid2));
     assertNextGlobalTXWasCalled(stxid);
-    
+
     // the transaction is still not applied
     assertTrue(gtxm.initiateApply(stxid));
     assertGlobalTxWasLoaded(stxid);
@@ -89,13 +95,13 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     // no longer needs to be applied
     assertFalse(gtxm.initiateApply(stxid));
     assertGlobalTxWasLoaded(stxid);
-    
-    GlobalTransactionID gid3  = gtxm.getOrCreateGlobalTransactionID(stxid);
+
+    GlobalTransactionID gid3 = gtxm.getOrCreateGlobalTransactionID(stxid);
     assertTrue(gid2.equals(gid3));
-    
+
     gtxm.commit(null, stxid);
     assertGlobalTxWasLoaded(stxid);
-    
+
     assertNotNull(transactionStore.commitContextQueue.poll(1));
 
     // make sure no calls to store were made
@@ -120,13 +126,13 @@ public class GlobalTransactionManagerImplTest extends TestCase {
 
     // APPLY A NEW TRANSACTION
     ServerTransactionID stxid2 = new ServerTransactionID(channel1, new TransactionID(2));
-    GlobalTransactionID gid4  = gtxm.getOrCreateGlobalTransactionID(stxid2);
+    GlobalTransactionID gid4 = gtxm.getOrCreateGlobalTransactionID(stxid2);
     assertNextGlobalTXWasCalled(stxid2);
     assertNotSame(gid3, gid4);
     assertTrue(gtxm.initiateApply(stxid2));
     assertGlobalTxWasLoaded(stxid2);
 
-    //apply does create
+    // apply does create
     gtxm.getOrCreateGlobalTransactionID(stxid2);
     gtxm.commit(null, stxid2);
 
@@ -137,9 +143,9 @@ public class GlobalTransactionManagerImplTest extends TestCase {
     finished.add(stxid2);
 
     PersistenceTransaction txn = ptxp.newTransaction();
-    gtxm.completeTransactions(txn,finished);
+    gtxm.completeTransactions(txn, finished);
     txn.commit();
-    
+
   }
 
   private void assertNextGlobalTXWasCalled(ServerTransactionID stxid) {

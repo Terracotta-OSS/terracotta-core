@@ -11,21 +11,28 @@ import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.TransactionStore;
 import com.tc.util.SequenceValidator;
+import com.tc.util.sequence.Sequence;
 
 import java.util.Collection;
 import java.util.Set;
 
 public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransactionManager {
 
-  private final TransactionStore               transactionStore;
-  private final PersistenceTransactionProvider persistenceTransactionProvider;
-  private final SequenceValidator              sequenceValidator;
+  private final TransactionStore                    transactionStore;
+  private final PersistenceTransactionProvider      persistenceTransactionProvider;
+  private final SequenceValidator                   sequenceValidator;
+  private final GlobalTransactionIDSequenceProvider gidSequenceProvider;
+  private final Sequence                            globalTransactionIDSequence;
 
   public ServerGlobalTransactionManagerImpl(SequenceValidator sequenceValidator, TransactionStore transactionStore,
-                                            PersistenceTransactionProvider ptxp) {
+                                            PersistenceTransactionProvider ptxp,
+                                            GlobalTransactionIDSequenceProvider gidSequenceProvider,
+                                            Sequence globalTransactionIDSequence) {
     this.sequenceValidator = sequenceValidator;
     this.transactionStore = transactionStore;
     this.persistenceTransactionProvider = ptxp;
+    this.gidSequenceProvider = gidSequenceProvider;
+    this.globalTransactionIDSequence = globalTransactionIDSequence;
   }
 
   public void shutdownClient(ChannelID channelID) {
@@ -70,6 +77,14 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
 
   public void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID) {
     transactionStore.createGlobalTransactionDescIfNeeded(stxnID, globalTransactionID);
+  }
+
+  public GlobalTransactionIDSequenceProvider getGlobalTransactionIDSequenceProvider() {
+    return gidSequenceProvider;
+  }
+  
+  public Sequence getGlobalTransactionIDSequence() {
+    return globalTransactionIDSequence;
   }
 
 }

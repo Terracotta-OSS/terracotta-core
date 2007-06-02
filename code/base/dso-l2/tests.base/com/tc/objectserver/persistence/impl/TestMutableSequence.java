@@ -11,10 +11,14 @@ import com.tc.util.sequence.MutableSequence;
 
 public final class TestMutableSequence implements MutableSequence {
 
-  public long                         sequence       = 1;
+  public long                         sequence       = 0;
   public final NoExceptionLinkedQueue nextBatchQueue = new NoExceptionLinkedQueue();
 
   public long next() {
+    return ++sequence;
+  }
+  
+  public long current() {
     return sequence;
   }
 

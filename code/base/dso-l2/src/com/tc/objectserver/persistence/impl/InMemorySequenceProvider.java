@@ -11,25 +11,29 @@ import com.tc.util.sequence.MutableSequence;
 public class InMemorySequenceProvider implements MutableSequence {
 
   private final String uid = UUID.getUUID().toString();
-  private long         id  = 0;
+  private long         nextID  = 0;
 
   public synchronized String getUID() {
     return uid;
   }
 
   public synchronized long next() {
-    return id++;
+    return nextID++;
+  }
+
+  public synchronized long current() {
+    return nextID - 1;
   }
 
   public synchronized long nextBatch(int batchSize) {
-    long lid = id;
-    id += batchSize;
+    long lid = nextID;
+    nextID += batchSize;
     return lid;
   }
 
   public synchronized void setNext(long next) {
-    Assert.assertTrue(id <= next);
-    id = next;
+    Assert.assertTrue(nextID <= next);
+    nextID = next;
   }
 
 }

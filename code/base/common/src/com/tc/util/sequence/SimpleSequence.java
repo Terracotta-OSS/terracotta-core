@@ -10,4 +10,8 @@ public class SimpleSequence implements Sequence {
     return ++sequence;
   }
 
+  public synchronized long current() {
+    return sequence;
+  }
+
 }

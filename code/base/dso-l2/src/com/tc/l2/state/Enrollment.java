@@ -19,14 +19,14 @@ public class Enrollment implements Externalizable {
 
   private static final TCLogger logger = TCLogging.getLogger(Enrollment.class);
   private NodeID                nodeID;
-  private int[]                 weights;
+  private long[]                weights;
   private boolean               isNew;
 
   public Enrollment() {
     // To make serialization happy
   }
 
-  public Enrollment(NodeID nodeID, boolean isNew, int[] weights) {
+  public Enrollment(NodeID nodeID, boolean isNew, long[] weights) {
     this.nodeID = nodeID;
     this.isNew = isNew;
     Assert.assertNotNull(weights);
@@ -63,7 +63,7 @@ public class Enrollment implements Externalizable {
         }
       }
 
-      // XXX:: Both are the same weight. This should happen once we fix the weights to
+      // XXX:: Both are the same weight. This shouldn't happen once we fix the weights to
       // be unique (based on hardware,ip,process id etc.) But now it is possible and we
       // handle it. If two nodes dont agree because of this there will be a re-election
       logger.warn("Two Enrollments with same weights : " + this + " == " + other);
@@ -74,9 +74,9 @@ public class Enrollment implements Externalizable {
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     this.nodeID = (NodeID) in.readObject();
     this.isNew = in.readBoolean();
-    this.weights = new int[in.readInt()];
+    this.weights = new long[in.readInt()];
     for (int i = 0; i < weights.length; i++) {
-      weights[i] = in.readInt();
+      weights[i] = in.readLong();
     }
   }
 
@@ -85,7 +85,7 @@ public class Enrollment implements Externalizable {
     out.writeBoolean(this.isNew);
     out.writeInt(weights.length);
     for (int i = 0; i < weights.length; i++) {
-      out.writeInt(weights[i]);
+      out.writeLong(weights[i]);
     }
   }
 
