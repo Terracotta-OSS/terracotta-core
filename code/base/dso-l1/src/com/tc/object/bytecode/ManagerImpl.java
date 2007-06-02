@@ -566,7 +566,10 @@ public class ManagerImpl implements Manager {
   }
 
   public boolean isCreationInProgress() {
-    return this.objectManager.isCreationInProgress() || this.txManager.isTransactionLoggingDisabled();
+    // I think the condition this.txManager.isTransactionLoggingDisabled() is not necessary and is causing the
+    // problem in DEV-602. 
+    //return this.objectManager.isCreationInProgress() || this.txManager.isTransactionLoggingDisabled();
+    return this.objectManager.isCreationInProgress();
   }
 
   public TCObject shareObjectIfNecessary(Object pojo) {
