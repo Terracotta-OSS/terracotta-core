@@ -73,16 +73,16 @@ public class ObjectManagementMonitor extends AbstractTerracottaMBean implements
 		}
 		if (!gcController.isGCStarted()) {
 			throw new UnsupportedOperationException(
-					"Cannot run GC externally because GC is disabled either since this server "
-							+ "is in PASSIVE state");
+					"Cannot run GC externally because this server "
+							+ "is in PASSIVE state and GC is disabled.");
 		}
 		// XXX::Note:: There is potencially a rare here, one could check to see
 		// if it is disabled and before GC is started it could be disabled. In
 		// which case it will not be run, just logged in the log file.
 		if (gcController.isGCDisabled()) {
 			throw new UnsupportedOperationException(
-					"Cannot run GC externally because GC is disabled in this server since another "
-							+ "PASSIVE server is currently synching state with this ACTIVE server.");
+					"Cannot run GC externally because PASSIVE server(s) are currently synching state "
+							+ "with this ACTIVE server and GC is disabled.");
 		}
 		if (isGCRunning()) {
 			throw new UnsupportedOperationException(
