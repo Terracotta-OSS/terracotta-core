@@ -123,7 +123,7 @@ public class DBEnvironment {
     FileUtils.forceMkdir(this.envHome);
   }
 
-  public synchronized DatabaseOpenResult open() throws DatabaseException {
+  public synchronized DatabaseOpenResult open() throws TCDatabaseException {
     assertInit();
     status = STATUS_OPENING;
     try {
@@ -156,7 +156,7 @@ public class DBEnvironment {
     } catch (DatabaseException e) {
       this.status = STATUS_ERROR;
       forceClose();
-      throw e;
+      throw new TCDatabaseException(e);
     } catch (Error e) {
       this.status = STATUS_ERROR;
       forceClose();
@@ -175,25 +175,30 @@ public class DBEnvironment {
     clogger.info("DB Environment: " + message);
   }
 
-  public synchronized void close() throws DatabaseException {
+  public synchronized void close() throws TCDatabaseException {
     assertOpen();
     status = STATUS_CLOSING;
     cinfo("Closing...");
-    for (Iterator i = createdDatabases.iterator(); i.hasNext();) {
-      Database db = (Database) i.next();
-      cinfo("Closing database: " + db.getDatabaseName() + "...");
-      db.close();
-    }
-    cinfo("Closing class catalog...");
-    this.catalog.close();
-    setClean();
-    if (this.controlDB != null) {
-      cinfo("Closing control database...");
-      this.controlDB.close();
-    }
-    if (this.env != null) {
-      cinfo("Closing environment...");
-      this.env.close();
+
+    try {
+      for (Iterator i = createdDatabases.iterator(); i.hasNext();) {
+        Database db = (Database) i.next();
+        cinfo("Closing database: " + db.getDatabaseName() + "...");
+        db.close();
+      }
+      cinfo("Closing class catalog...");
+      this.catalog.close();
+      setClean();
+      if (this.controlDB != null) {
+        cinfo("Closing control database...");
+        this.controlDB.close();
+      }
+      if (this.env != null) {
+        cinfo("Closing environment...");
+        this.env.close();
+      }
+    } catch (DatabaseException de) {
+      throw new TCDatabaseException(de);
     }
     this.controlDB = null;
     this.env = null;
@@ -236,76 +241,76 @@ public class DBEnvironment {
     return envHome;
   }
 
-  public synchronized Environment getEnvironment() throws DatabaseException {
+  public synchronized Environment getEnvironment() throws TCDatabaseException {
     assertOpen();
     return env;
   }
 
-  public synchronized Database getObjectDatabase() throws DatabaseException {
+  public synchronized Database getObjectDatabase() throws TCDatabaseException {
     assertOpen();
     return (Database) databasesByName.get(OBJECT_DB_NAME);
   }
 
-  public synchronized ClassCatalogWrapper getClassCatalogWrapper() throws DatabaseException {
+  public synchronized ClassCatalogWrapper getClassCatalogWrapper() throws TCDatabaseException {
     assertOpen();
     return catalog;
   }
 
-  public synchronized Database getRootDatabase() throws DatabaseException {
+  public synchronized Database getRootDatabase() throws TCDatabaseException {
     assertOpen();
     return (Database) databasesByName.get(ROOT_DB_NAME);
   }
 
-  public synchronized Database getObjectIDDB() throws DatabaseException {
+  public synchronized Database getObjectIDDB() throws TCDatabaseException {
     assertOpen();
     return (Database) databasesByName.get(OBJECTID_SEQUENCE_NAME);
   }
 
-  public Database getClientStateDatabase() throws DatabaseException {
+  public Database getClientStateDatabase() throws TCDatabaseException {
     assertOpen();
     return (Database) databasesByName.get(CLIENT_STATE_DB_NAME);
   }
 
-  public Database getClientIDDatabase() throws DatabaseException {
+  public Database getClientIDDatabase() throws TCDatabaseException {
     assertOpen();
     return (Database) databasesByName.get(CLIENTID_SEQUENCE_NAME);
   }
 
-  public Database getTransactionDatabase() throws DatabaseException {
+  public Database getTransactionDatabase() throws TCDatabaseException {
     assertOpen();
     return (Database) databasesByName.get(TRANSACTION_DB_NAME);
   }
 
-  public Database getTransactionSequenceDatabase() throws DatabaseException {
+  public Database getTransactionSequenceDatabase() throws TCDatabaseException {
     assertOpen();
     return (Database) databasesByName.get(TRANSACTION_SEQUENCE_DB_NAME);
   }
 
-  public Database getClassDatabase() throws DatabaseException {
+  public Database getClassDatabase() throws TCDatabaseException {
     assertOpen();
     return (Database) databasesByName.get(CLASS_DB_NAME);
   }
 
-  public Database getMapsDatabase() throws DatabaseException {
+  public Database getMapsDatabase() throws TCDatabaseException {
     assertOpen();
     return (Database) databasesByName.get(MAP_DB_NAME);
   }
 
-  public Database getStringIndexDatabase() throws DatabaseException {
+  public Database getStringIndexDatabase() throws TCDatabaseException {
     assertOpen();
     return (Database) databasesByName.get(STRING_INDEX_DB_NAME);
   }
 
-  public Database getClusterStateStoreDatabase() throws DatabaseException {
+  public Database getClusterStateStoreDatabase() throws TCDatabaseException {
     assertOpen();
     return (Database) databasesByName.get(CLUSTER_STATE_STORE);
   }
 
-  private void assertNotError() throws DatabaseException {
+  private void assertNotError() throws TCDatabaseException {
     if (STATUS_ERROR == status) throw new TCDatabaseException("Attempt to operate on an environment in an error state.");
   }
 
-  private void assertInit() throws DatabaseException {
+  private void assertInit() throws TCDatabaseException {
     if (STATUS_INIT != status) throw new DatabaseOpenException("Database environment isn't in INIT state.");
   }
 
@@ -313,7 +318,7 @@ public class DBEnvironment {
     if (STATUS_OPENING != status) throw new AssertionError("Database environment should be opening but isn't");
   }
 
-  private void assertOpen() throws DatabaseException {
+  private void assertOpen() throws TCDatabaseException {
     assertNotError();
     if (STATUS_OPEN != status) throw new DatabaseNotOpenException("Database environment should be open but isn't.");
   }
@@ -322,48 +327,79 @@ public class DBEnvironment {
     if (STATUS_CLOSING != status) throw new AssertionError("Database environment should be closing but isn't");
   }
 
-  private boolean isClean() throws DatabaseException {
+  private boolean isClean() throws TCDatabaseException {
     assertOpening();
     DatabaseEntry value = new DatabaseEntry(new byte[] { 0 });
     Transaction tx = newTransaction();
-    OperationStatus stat = controlDB.get(tx, CLEAN_FLAG_KEY, value, LockMode.DEFAULT);
-    tx.commit();
+    OperationStatus stat;
+    try {
+      stat = controlDB.get(tx, CLEAN_FLAG_KEY, value, LockMode.DEFAULT);
+      tx.commit();
+    } catch (DatabaseException e) {
+      throw new TCDatabaseException(e);
+    }
     return OperationStatus.NOTFOUND.equals(stat)
            || (OperationStatus.SUCCESS.equals(stat) && value.getData()[0] == IS_CLEAN);
   }
 
-  private void setDirty() throws DatabaseException {
+  private void setDirty() throws TCDatabaseException {
     assertOpening();
     DatabaseEntry value = new DatabaseEntry(new byte[] { IS_DIRTY });
     Transaction tx = newTransaction();
-    OperationStatus stat = controlDB.put(tx, CLEAN_FLAG_KEY, value);
+    OperationStatus stat;
+    try {
+      stat = controlDB.put(tx, CLEAN_FLAG_KEY, value);
+    } catch (DatabaseException e) {
+      throw new TCDatabaseException(e);
+    }
     if (!OperationStatus.SUCCESS.equals(stat)) throw new TCDatabaseException("Unexpected operation status "
                                                                              + "trying to unset clean flag: " + stat);
-    tx.commitSync();
+    try {
+      tx.commitSync();
+    } catch (DatabaseException e) {
+      throw new TCDatabaseException(e);
+    }
   }
 
-  private Transaction newTransaction() throws DatabaseException {
-    Transaction tx = env.beginTransaction(null, null);
-    return tx;
+  private Transaction newTransaction() throws TCDatabaseException {
+    try {
+      Transaction tx = env.beginTransaction(null, null);
+      return tx;
+    } catch (DatabaseException de) {
+      throw new TCDatabaseException(de);
+    }
   }
 
-  private void setClean() throws DatabaseException {
+  private void setClean() throws TCDatabaseException {
     assertClosing();
     DatabaseEntry value = new DatabaseEntry(new byte[] { IS_CLEAN });
     Transaction tx = newTransaction();
-    OperationStatus stat = controlDB.put(tx, CLEAN_FLAG_KEY, value);
+    OperationStatus stat;
+    try {
+      stat = controlDB.put(tx, CLEAN_FLAG_KEY, value);
+    } catch (DatabaseException e) {
+      throw new TCDatabaseException(e);
+    }
     if (!OperationStatus.SUCCESS.equals(stat)) throw new TCDatabaseException("Unexpected operation status "
                                                                              + "trying to set clean flag: " + stat);
-    tx.commitSync();
+    try {
+      tx.commitSync();
+    } catch (DatabaseException e) {
+      throw new TCDatabaseException(e);
+    }
   }
 
-  private void newDatabase(Environment e, String name) throws DatabaseException {
-    Database db = e.openDatabase(null, name, dbcfg);
-    createdDatabases.add(db);
-    databasesByName.put(name, db);
+  private void newDatabase(Environment e, String name) throws TCDatabaseException {
+    try {
+      Database db = e.openDatabase(null, name, dbcfg);
+      createdDatabases.add(db);
+      databasesByName.put(name, db);
+    } catch (DatabaseException de) {
+      throw new TCDatabaseException(de);
+    }
   }
 
-  private Environment openEnvironment() throws DatabaseException {
+  private Environment openEnvironment() throws TCDatabaseException {
     int count = 0;
     while (true) {
       try {
@@ -374,7 +410,7 @@ public class DBEnvironment {
                       + SLEEP_TIME_ON_STARTUP_ERROR + " ms");
           ThreadUtil.reallySleep(SLEEP_TIME_ON_STARTUP_ERROR);
         } else {
-          throw dbe;
+          throw new TCDatabaseException(dbe);
         }
       }
     }

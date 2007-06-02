@@ -3,7 +3,6 @@
  */
 package com.tc.objectserver.persistence.sleepycat;
 
-
 public class DatabaseOpenException extends TCDatabaseException {
   public DatabaseOpenException(String message) {
     super(message);

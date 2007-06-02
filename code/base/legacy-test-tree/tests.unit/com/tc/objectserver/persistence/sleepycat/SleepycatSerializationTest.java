@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.persistence.sleepycat;
 
-import com.sleepycat.je.DatabaseException;
 import com.tc.io.serializer.api.StringIndex;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -415,7 +414,7 @@ public class SleepycatSerializationTest extends TCTestCase {
     return file;
   }
 
-  private void initDB(File dbHome, SerializationAdapterFactory saf) throws IOException, DatabaseException {
+  private void initDB(File dbHome, SerializationAdapterFactory saf) throws IOException, TCDatabaseException {
     if (env != null) env.close();
     env = new DBEnvironment(true, dbHome);
     persistor = new SleepycatPersistor(logger, env, saf);

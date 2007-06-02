@@ -3,7 +3,6 @@
  */
 package com.tc.objectserver.persistence.sleepycat;
 
-import com.sleepycat.je.DatabaseException;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -41,7 +40,7 @@ public class SleepycatTCDBDiff {
   private final ManagedObjectStateFactory mosf1;
   private final ManagedObjectStateFactory mosf2;
 
-  public SleepycatTCDBDiff(File d1, File d2, boolean moDiff) throws DatabaseException, IOException {
+  public SleepycatTCDBDiff(File d1, File d2, boolean moDiff) throws TCDatabaseException, IOException {
     this.d1 = d1;
     this.d2 = d2;
     this.moDiff = moDiff;

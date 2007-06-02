@@ -44,7 +44,7 @@ public class SleepycatPersistor implements Persistor {
   private SleepycatCollectionsPersistor        sleepycatCollectionsPersistor;
 
   public SleepycatPersistor(TCLogger logger, DBEnvironment env, SerializationAdapterFactory serializationAdapterFactory)
-      throws DatabaseException {
+      throws TCDatabaseException {
     DatabaseOpenResult result = env.open();
     if (!result.isClean()) {
       //
@@ -136,7 +136,7 @@ public class SleepycatPersistor implements Persistor {
   public void close() {
     try {
       env.close();
-    } catch (DatabaseException e) {
+    } catch (TCDatabaseException e) {
       throw new DBException(e);
     }
   }

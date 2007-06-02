@@ -41,7 +41,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private final Database                       objectDB;
   private final SerializationAdapterFactory    saf;
   private final CursorConfig                   objectDBCursorConfig;
-  private final MutableSequence             objectIDSequence;
+  private final MutableSequence                objectIDSequence;
   private final Database                       rootDB;
   private final CursorConfig                   rootDBCursorConfig;
   private long                                 saveCount;
@@ -171,7 +171,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
       DatabaseEntry value = new DatabaseEntry();
       cursor = rootDB.openCursor(pt2nt(tx), rootDBCursorConfig);
       while (OperationStatus.SUCCESS.equals(cursor.getNext(key, value, LockMode.DEFAULT))) {
-        rv.put(getStringData(key),getObjectIDData(value));
+        rv.put(getStringData(key), getObjectIDData(value));
       }
       cursor.close();
       tx.commit();
@@ -205,12 +205,16 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   }
 
   private void loadCollection(PersistenceTransaction tx, ManagedObject mo) throws IOException, ClassNotFoundException,
-      DatabaseException {
+      TCDatabaseException {
     ManagedObjectState state = mo.getManagedObjectState();
     if (state.getType() == ManagedObjectState.MAP_TYPE || state.getType() == ManagedObjectState.PARTIAL_MAP_TYPE) {
       MapManagedObjectState mapState = (MapManagedObjectState) state;
       Assert.assertNull(mapState.getMap());
-      mapState.setMap(collectionsPersistor.loadMap(tx, mo.getID()));
+      try {
+        mapState.setMap(collectionsPersistor.loadMap(tx, mo.getID()));
+      } catch (DatabaseException e) {
+        throw new TCDatabaseException(e);
+      }
     }
   }
 
@@ -232,32 +236,40 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   }
 
   private OperationStatus basicSaveObject(PersistenceTransaction tx, ManagedObject managedObject)
-      throws DatabaseException, IOException {
+      throws TCDatabaseException, IOException {
     if (!managedObject.isDirty()) return OperationStatus.SUCCESS;
     OperationStatus status;
     DatabaseEntry key = new DatabaseEntry();
     DatabaseEntry value = new DatabaseEntry();
     setObjectIDData(key, managedObject.getID());
     setManagedObjectData(value, managedObject);
-    status = this.objectDB.put(pt2nt(tx), key, value);
-    if (OperationStatus.SUCCESS.equals(status)) {
-      basicSaveCollection(tx, managedObject);
-      managedObject.setIsDirty(false);
-      saveCount++;
-      if (saveCount == 1 || saveCount % (100 * 1000) == 0) {
-        logger.debug("saveCount: " + saveCount);
+    try {
+      status = this.objectDB.put(pt2nt(tx), key, value);
+      if (OperationStatus.SUCCESS.equals(status)) {
+        basicSaveCollection(tx, managedObject);
+        managedObject.setIsDirty(false);
+        saveCount++;
+        if (saveCount == 1 || saveCount % (100 * 1000) == 0) {
+          logger.debug("saveCount: " + saveCount);
+        }
       }
+    } catch (DatabaseException de) {
+      throw new TCDatabaseException(de);
     }
     return status;
   }
 
   private void basicSaveCollection(PersistenceTransaction tx, ManagedObject managedObject) throws IOException,
-      DatabaseException {
+      TCDatabaseException {
     ManagedObjectState state = managedObject.getManagedObjectState();
     if (state.getType() == ManagedObjectState.MAP_TYPE || state.getType() == ManagedObjectState.PARTIAL_MAP_TYPE) {
       MapManagedObjectState mapState = (MapManagedObjectState) state;
       SleepycatPersistableMap map = (SleepycatPersistableMap) mapState.getMap();
-      collectionsPersistor.saveMap(tx, map);
+      try {
+        collectionsPersistor.saveMap(tx, map);
+      } catch (DatabaseException e) {
+        throw new TCDatabaseException(e);
+      }
     }
   }
 
@@ -399,17 +411,19 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
         tmp = null;
       }
     }
+
     private void safeCommit(PersistenceTransaction tx) {
       if (tx == null) return;
       try {
         tx.commit();
       } catch (Throwable t) {
         logger.error("Error Committing Transaction", t);
-      }      
+      }
     }
+
     private void safeClose(Cursor c) {
-      if (c == null)return;
-      
+      if (c == null) return;
+
       try {
         c.close();
       } catch (Throwable e) {

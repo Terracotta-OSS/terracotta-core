@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.persistence.sleepycat;
 
@@ -29,7 +30,7 @@ final class SleepycatPersistenceTransactionProvider implements PersistenceTransa
     return NULL_TRANSACTION;
   }
 
-  Transaction newNativeTransaction() throws DatabaseException {
+  private Transaction newNativeTransaction() throws DatabaseException {
     return this.env.beginTransaction(null, null);
   }
 }

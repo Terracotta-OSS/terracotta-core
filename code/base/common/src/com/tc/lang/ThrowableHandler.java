@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.lang;
 
@@ -18,7 +19,7 @@ import java.net.BindException;
 // place first, then come up with fancy ways of dealing with them. --Orion 03/20/2006
 public class ThrowableHandler {
 
-  private final TCLogger logger;
+  private final TCLogger            logger;
   private final ExceptionHelperImpl helper;
 
   public ThrowableHandler(TCLogger logger) {
@@ -35,13 +36,14 @@ public class ThrowableHandler {
       handleStartupException((ConfigurationSetupException) proximateCause);
     } else if (ultimateCause instanceof BindException) {
       logger.error(ultimateCause);
-      handleStartupException((Exception)ultimateCause, ".  Please make sure the server isn't already running or choose a different port.");
+      handleStartupException((Exception) ultimateCause,
+          ".  Please make sure the server isn't already running or choose a different port.");
     } else if (ultimateCause instanceof DatabaseException) {
-      handleStartupException((Exception)proximateCause);
+      handleStartupException((Exception) proximateCause);
     } else if (ultimateCause instanceof LocationNotCreatedException) {
-      handleStartupException((Exception)ultimateCause);
+      handleStartupException((Exception) ultimateCause);
     } else if (ultimateCause instanceof FileNotCreatedException) {
-      handleStartupException((Exception)ultimateCause);
+      handleStartupException((Exception) ultimateCause);
     } else {
       handleDefaultException(thread, proximateCause);
     }
@@ -65,7 +67,7 @@ public class ThrowableHandler {
   private void handleStartupException(Exception e) {
     handleStartupException(e, "");
   }
-  
+
   private void handleStartupException(Exception e, String extraMessage) {
     System.err.println("");
     System.err.println("");
