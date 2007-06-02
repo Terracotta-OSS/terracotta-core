@@ -717,12 +717,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     reason.accept(reasonFormatter);
     reasonFormatter.flush();
 
-    TCNonPortableObjectError ex = new TCNonPortableObjectError(formattedReason.getBuffer().toString());
-    // This is printed here so that even if the user catches any knid of exception and ignores it for some reason, there
-    // is a log of this exception.
-    ex.printStackTrace();
-    logger.error(ex);
-    throw ex;
+    throw new TCNonPortableObjectError(formattedReason.getBuffer().toString());
   }
 
   private NonPortableReason checkPortabilityOf(Object obj) {
