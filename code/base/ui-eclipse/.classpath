@@ -19,6 +19,7 @@
 	<classpathentry kind="lib" path="/dependencies/lib/org.eclipse.core.jobs-3.2.0.v20060603.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/org.eclipse.core.resources-3.2.0.v20060603.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/org.eclipse.core.runtime-3.2.0.v20060603.jar"/>
+	<classpathentry kind="lib" path="/dependencies/lib/org.eclipse.core.variables-3.1.100.v20060605.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/org.eclipse.debug.core-3.2.0.v20060605.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/org.eclipse.debug.ui-3.2.0.v20060605.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/org.eclipse.equinox.common-3.2.0.v20060603.jar"/>
