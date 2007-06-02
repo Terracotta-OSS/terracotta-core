@@ -37,6 +37,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 import org.terracotta.dso.BootJarHelper;
+import org.terracotta.dso.ClasspathProvider;
 import org.terracotta.dso.ProjectNature;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.dialogs.ExceptionDialog;
@@ -149,13 +150,19 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
     if (!configFile.exists()) { throw new FileNotFoundException(toOSString(configPath)); }
 
     String origVMArgs = wc.getAttribute(ATTR_VM_ARGUMENTS, "") + " ";
-    String installPath = plugin.getLocation().makeAbsolute().toOSString();
-    String vmargs = "-Dtc.install-root=\"" + installPath + "\"";
-    wc.setAttribute(ATTR_VM_ARGUMENTS, vmargs + origVMArgs);
+    String vmargs;
+    IPath jarPath = TcPlugin.getDefault().getLibDirPath().append("tc.jar");
+    if (jarPath.toFile().exists()) {
+      String installPath = plugin.getLocation().makeAbsolute().toOSString();
+      vmargs = "-Dtc.install-root=\"" + installPath + "\"";
+    } else {
+      vmargs = "-Dtc.classpath=\"" + ClasspathProvider.makeDevClasspath() + "\"";
+    }
 
+    wc.setAttribute(ATTR_VM_ARGUMENTS, vmargs + origVMArgs);
+    wc.setAttribute(ATTR_CLASSPATH_PROVIDER, CLASSPATH_PROVIDER);
     wc.setAttribute(ATTR_MAIN_TYPE_NAME, MAIN_TYPE);
     wc.setAttribute(ATTR_PROGRAM_ARGUMENTS, args);
-    wc.setAttribute(ATTR_CLASSPATH_PROVIDER, CLASSPATH_PROVIDER);
     wc.setAttribute(ATTR_JRE_CONTAINER_PATH, portablePath);
 
     String runMode = ILaunchManager.RUN_MODE;
