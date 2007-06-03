@@ -59,7 +59,7 @@ public class ExceptionDialog extends MessageDialog {
       comp.setLayout(gridLayout);
       comp.setLayoutData(new GridData(GridData.FILL_BOTH));
 
-      this.m_area = new Text(comp, SWT.BORDER | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL | SWT.READ_ONLY);
+      this.m_area = new Text(comp, SWT.BORDER | SWT.MULTI | SWT.V_SCROLL | SWT.WRAP | SWT.READ_ONLY);
       m_area.setText(stackTrace);
       GridData gridData =new GridData(GridData.FILL_BOTH);
       gridData.widthHint = SWTUtil.textColumnsToPixels(m_area, 120);

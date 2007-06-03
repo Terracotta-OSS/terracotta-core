@@ -15,7 +15,7 @@ esac
 # For Cygwin, ensure paths are in UNIX format before anything is touched
 if $cygwin; then
   [ -n "$JAVA_HOME" ] && JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
-  [ -n "$TC_INSTALL_DIR" ] && JAVA_HOME=`cygpath --unix "$TC_INSTALL_DIR"`
+  [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath --unix "$TC_INSTALL_DIR"`
 fi
 
 if test \! -d "${JAVA_HOME}"; then
@@ -46,9 +46,9 @@ fi
 
 # For Cygwin, convert paths back to Windows
 if $cygwin; then
-  [ -n "$DSO_BOOT_JAR" ] && JAVA_HOME=`cygpath --windows "$DSO_BOOT_JAR"`
+  [ -n "$DSO_BOOT_JAR" ] && DSO_BOOT_JAR=`cygpath --windows "$DSO_BOOT_JAR"`
   [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath --windows "$TC_INSTALL_DIR"`
-  [ -n "$TC_CONFIG_PATH" ] && TC_INSTALL_DIR=`cygpath --windows "$TC_CONFIG_PATH"`
+  [ -n "$TC_CONFIG_PATH" ] && TC_CONFIG_PATH=`cygpath --windows "$TC_CONFIG_PATH"`
 fi
 
 TC_JAVA_OPTS="-Xbootclasspath/p:${DSO_BOOT_JAR} \
