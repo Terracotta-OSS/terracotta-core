@@ -437,7 +437,7 @@ public class TestConfigObject {
 
   public static final String    TRANSPARENT_TESTS_MODE_NORMAL         = "normal";
   public static final String    TRANSPARENT_TESTS_MODE_CRASH          = "crash";
-  public static final String    TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE = "active-passive";
+  public static final String    TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE = "disk-based-active-passive";
   public static final String    TRANSPARENT_TESTS_MODE_PROXY_CONNECT  = "proxy-connect";
 
   private static final String[] ALL_TRANSPARENT_TESTS_MODES           = { TRANSPARENT_TESTS_MODE_NORMAL,
