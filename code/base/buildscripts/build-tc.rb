@@ -453,8 +453,12 @@ END
       home = TerracottaHome.new(@static_resources, homedir).prepare(ant)
 
       unless jvmargs.detect { |arg| arg =~ /^\s*\-Xbootclasspath.*$/i }
-        boot_jar = BootJar.new(@build_results, jvm, home.dir, @module_set, @ant, @platform, home.config_file).ensure_created
-        jvmargs << '-Xbootclasspath/p:%s' % boot_jar.path.to_s
+        begin
+          boot_jar = BootJar.new(@build_results, jvm, home.dir, @module_set, @ant, @platform, home.config_file).ensure_created
+          jvmargs << '-Xbootclasspath/p:%s' % boot_jar.path.to_s
+        rescue
+          fail("Failed to create bootjar for: " + classname.to_s + ". Check log for exception.")
+        end
       end
 
       unless jvmargs.detect { |arg| arg =~ /^\s*\-Dtc.config=.*$/i }
