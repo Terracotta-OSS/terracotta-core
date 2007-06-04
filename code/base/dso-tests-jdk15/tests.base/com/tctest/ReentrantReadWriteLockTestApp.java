@@ -235,7 +235,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private void tryWriteLockMultiNodeTest(int index, ReentrantReadWriteLock lock) throws Exception {
-    printTimeStamp(index, "tryWriteLockMultiNodeTest");
+    printTimeStamp(index, "tryWriteLockMultiNodeTest first test");
 
     final ReadLock readLock = lock.readLock();
     final WriteLock writeLock = lock.writeLock();
@@ -295,6 +295,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
+    printTimeStamp(index, "tryWriteLockMultiNodeTest second test");
 
     if (index == 0) {
       final CyclicBarrier localBarrier = new CyclicBarrier(4);
@@ -353,6 +354,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       if (isLocked) writeLock.unlock();
     }
     barrier.await();
+    printTimeStamp(index, "tryWriteLockMultiNodeTest third test");
 
     if (index == 0) {
       final CyclicBarrier localBarrier = new CyclicBarrier(3);
@@ -400,6 +402,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
+    printTimeStamp(index, "tryWriteLockMultiNodeTest fourth test");
 
     if (index == 0) {
       final CyclicBarrier localBarrier = new CyclicBarrier(2);
@@ -434,6 +437,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
+    printTimeStamp(index, "tryWriteLockMultiNodeTest fifth test");
 
     if (index == 0) {
       final CyclicBarrier localBarrier = new CyclicBarrier(2);
@@ -468,6 +472,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
+    printTimeStamp(index, "tryWriteLockMultiNodeTest sixth test");
 
     if (index == 0) {
       final CyclicBarrier localBarrier = new CyclicBarrier(2);
@@ -502,6 +507,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
+    printTimeStamp(index, "tryWriteLockMultiNodeTest finish");
 
   }
 
@@ -1200,7 +1206,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   
   private void printTimeStamp(int index, String methodName) throws Exception {
     if (index == 0) {
-      System.err.println("Runnint method " + methodName + " -- time: " + (new Date()));
+      System.err.println("Running method " + methodName + " -- time: " + (new Date()));
     }
     
     barrier.await();
