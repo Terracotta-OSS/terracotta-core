@@ -15,6 +15,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.ui.JavaPluginImages;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTreeViewer;
@@ -132,6 +133,23 @@ public class NonPortableObjectDialog extends MessageDialog {
     fConfigHelper = new ConfigHelper();
   }
 
+  protected IDialogSettings getDialogBoundsSettings() {
+    return getDialogSettings();
+  }
+  
+  protected IDialogSettings getDialogSettings() {
+    IDialogSettings settings = TcPlugin.getDefault().getDialogSettings();
+    IDialogSettings section = settings.getSection(getDialogSettingsSectionName());
+    if (section == null) {
+      section = settings.addNewSection(getDialogSettingsSectionName());
+    } 
+    return section;
+  }
+
+  protected String getDialogSettingsSectionName() {
+    return TcPlugin.PLUGIN_ID + ".NON_PORTABLE_DIALOG_SECTION"; //$NON-NLS-1$
+  } 
+
   private IJavaProject getJavaProject(NonPortableObjectEvent event) {
     IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
     String name = event.getContext().getProjectName();
@@ -197,12 +215,12 @@ public class NonPortableObjectDialog extends MessageDialog {
     fIssueDescription = new Text(fDetailsPanel, SWT.MULTI | SWT.WRAP | SWT.V_SCROLL | SWT.BORDER | SWT.READ_ONLY);
     gridData = new GridData(GridData.FILL_BOTH);
     gridData.widthHint = SWTUtil.textColumnsToPixels(fIssueDescription, 80);
-    gridData.heightHint = SWTUtil.textRowsToPixels(fIssueDescription, 6);
+    gridData.heightHint = SWTUtil.textRowsToPixels(fIssueDescription, 8);
     fIssueDescription.setLayoutData(gridData);
 
     fResolutionsPanel = new Group(composite, SWT.SHADOW_NONE);
     fResolutionsPanel.setText(NonPortableMessages.getString("RESOLUTIONS")); //$NON-NLS-1$
-    fResolutionsPanel.setLayout(new GridLayout(2, true));
+    fResolutionsPanel.setLayout(new GridLayout(2, false));
     gridData = new GridData(GridData.FILL_BOTH);
     gridData.horizontalSpan = 2;
     fResolutionsPanel.setLayoutData(gridData);
