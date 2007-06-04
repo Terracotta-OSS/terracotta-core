@@ -163,7 +163,7 @@ public class RuntimeLoggingPanel extends ConfigurationEditorPanel
       Group runtimeLoggingGroup = new Group(parent, SWT.SHADOW_NONE);
       runtimeLoggingGroup.setText(RUNTIME_LOGGING);
       GridLayout gridLayout = new GridLayout();
-      gridLayout.numColumns = 1;
+      gridLayout.verticalSpacing = 3;
       runtimeLoggingGroup.setLayout(gridLayout);
       GridData gridData = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_BEGINNING);
       runtimeLoggingGroup.setLayoutData(gridData);

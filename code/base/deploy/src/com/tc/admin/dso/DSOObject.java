@@ -16,11 +16,11 @@ public abstract class DSOObject {
   protected DSOObject             m_parent;
   protected PropertyChangeSupport m_changeHelper;
   protected int                   m_batchSize;
-  
+
   public DSOObject(ConnectionContext cc) {
-    m_cc           = cc;
+    m_cc = cc;
     m_changeHelper = new PropertyChangeSupport(this);
-    m_batchSize    = ConnectionContext.DSO_SMALL_BATCH_SIZE;
+    m_batchSize = ConnectionContext.DSO_SMALL_BATCH_SIZE;
   }
 
   public DSOObject(ConnectionContext cc, DSOObject parent) {
@@ -29,8 +29,9 @@ public abstract class DSOObject {
   }
 
   public abstract Object getFacade();
+
   public abstract void accept(DSOObjectVisitor visitor);
-  
+
   public DSOObject getParent() {
     return m_parent;
   }
@@ -38,49 +39,39 @@ public abstract class DSOObject {
   public void setBatchSize(int batchSize) {
     m_batchSize = batchSize;
   }
-  
+
   public abstract String getName();
 
   public DSORoot getRoot() {
     DSOObject obj = this;
 
-    while(obj != null) {
-      if(obj.getParent() == null) {
-        return (DSORoot)obj;
-      }
+    while (obj != null) {
+      if (obj.getParent() == null) { return (DSORoot) obj; }
       obj = obj.getParent();
     }
 
     return null;
   }
 
-  protected DSOObject createField(String fieldName, Object value)
-    throws Exception
-  {
+  protected DSOObject createField(String fieldName, Object value, String type) throws Exception {
     DSOObject result = null;
-    String    type   = null;
 
-    if(value instanceof MapEntryFacade) {
-      MapEntryFacade mef = (MapEntryFacade)value;
-
+    if (value instanceof MapEntryFacade) {
+      MapEntryFacade mef = (MapEntryFacade) value;
       result = new DSOMapEntryField(m_cc, fieldName, mef, this);
-    }
-    else if(value instanceof ObjectID) {
-      ObjectID id = (ObjectID)value;
+    } else if (value instanceof ObjectID) {
+      ObjectID id = (ObjectID) value;
 
-      if(!id.isNull()) {
+      if (!id.isNull()) {
         value = DSOHelper.getHelper().lookupFacade(m_cc, id, m_batchSize);
-        type  = ((ManagedObjectFacade)value).getClassName();
-      }
-      else {
+        type = ((ManagedObjectFacade) value).getClassName();
+      } else {
         value = null;
-        type  = null;
+        type = null;
       }
 
       result = new DSOField(m_cc, fieldName, false, convertTypeName(type), value, this);
-    }
-    else {
-      type   = value.getClass().getName();
+    } else {
       result = new DSOField(m_cc, fieldName, true, convertTypeName(type), value, this);
     }
 
@@ -88,8 +79,8 @@ public abstract class DSOObject {
   }
 
   private static final char C_ARRAY = '[';
-  
-  public static int getArrayCount(char[] typeSignature) throws IllegalArgumentException { 
+
+  public static int getArrayCount(char[] typeSignature) throws IllegalArgumentException {
     try {
       int count = 0;
       while (typeSignature[count] == C_ARRAY) {
@@ -100,29 +91,31 @@ public abstract class DSOObject {
       throw new IllegalArgumentException();
     }
   }
-  
+
   private static String convertTypeName(String typeName) {
-    if(typeName != null && typeName.length() > 0) {
-      if(typeName.charAt(0) == C_ARRAY) {
+    if (typeName != null && typeName.length() > 0) {
+      if (typeName.charAt(0) == C_ARRAY) {
         try {
           int arrayCount = getArrayCount(typeName.toCharArray());
           typeName = typeName.substring(arrayCount);
-          if(typeName.charAt(0) == 'L') {
+          if (typeName.charAt(0) == 'L') {
             int pos = 1;
-            while(typeName.charAt(pos) != ';') pos++;
+            while (typeName.charAt(pos) != ';')
+              pos++;
             typeName = typeName.substring(1, pos);
           }
           StringBuffer sb = new StringBuffer(typeName);
-          for(int i = 0; i < arrayCount; i++) {
+          for (int i = 0; i < arrayCount; i++) {
             sb.append("[]");
           }
           typeName = sb.toString();
-        } catch(IllegalArgumentException iae) {/**/}
+        } catch (IllegalArgumentException iae) {/**/
+        }
       }
     }
     return typeName;
   }
-  
+
   public void addPropertyChangeListener(PropertyChangeListener listener) {
     m_changeHelper.addPropertyChangeListener(listener);
   }

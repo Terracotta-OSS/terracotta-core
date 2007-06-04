@@ -195,7 +195,7 @@ public class DSORoot extends DSOObject {
 
   private DSOObject newField(String field) {
      try {
-       return createField(field, getFieldValue(field));
+       return createField(field, getFieldValue(field), getFieldType(field));
      }
      catch(Exception e) {
        AdminClient.getContext().log(e);

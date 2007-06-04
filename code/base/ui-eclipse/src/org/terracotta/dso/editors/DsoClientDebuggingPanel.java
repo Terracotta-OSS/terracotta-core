@@ -113,10 +113,8 @@ public class DsoClientDebuggingPanel extends ConfigurationEditorPanel
       parent.setLayout(new GridLayout());
       
       Composite comp = new Composite(parent, SWT.NONE);
-      GridLayout gridLayout = new GridLayout();
-      gridLayout.numColumns = 3;
-      gridLayout.marginWidth = 0;
-      gridLayout.marginHeight = 0;
+      GridLayout gridLayout = new GridLayout(3, false);
+      gridLayout.marginWidth = gridLayout.marginHeight = 0;
       comp.setLayout(gridLayout);
       comp.setLayoutData(new GridData(GridData.FILL_BOTH));
       

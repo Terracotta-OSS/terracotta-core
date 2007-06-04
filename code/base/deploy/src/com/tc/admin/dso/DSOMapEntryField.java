@@ -56,7 +56,7 @@ public class DSOMapEntryField extends DSOObject {
 
   private DSOObject getElement(String field, Object value) {
     try {
-      return createField(field, value);
+      return createField(field, value, null);
     }
     catch(Throwable t) {
       t.printStackTrace();

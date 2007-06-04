@@ -33,7 +33,7 @@ public class DSOField extends DSOObject {
   public DSOField(ConnectionContext cc, String name, boolean isPrimitive, String type, Object value, DSOObject parent) {
     super(cc, parent);
 
-    if(type != null && type.equals("java.util.Date")) {
+    if(type != null && (type.equals("java.util.Date") || type.equals("java.sql.Timestamp"))) {
       isPrimitive = true;
       ManagedObjectFacade mof = (ManagedObjectFacade)value;
       value = mof.getFieldValue("date");
@@ -177,7 +177,7 @@ public class DSOField extends DSOObject {
       String field = getFieldName(index);
 
       try {
-        result = createField(field, mof.getFieldValue(field));
+        result = createField(field, mof.getFieldValue(field), mof.getFieldType(field));
       } catch (Throwable t) {
         //t.printStackTrace();
       }

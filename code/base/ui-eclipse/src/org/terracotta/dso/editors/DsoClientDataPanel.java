@@ -133,11 +133,7 @@ public class DsoClientDataPanel extends ConfigurationEditorPanel
 
     private void createFaultCountPane(Composite parent) {
       Composite faultCountPane = new Composite(parent, SWT.NONE);
-      GridLayout gridLayout = new GridLayout();
-      gridLayout.numColumns = 2;
-      gridLayout.marginWidth = 5;
-      gridLayout.marginHeight = 5;
-      faultCountPane.setLayout(gridLayout);
+      faultCountPane.setLayout(new GridLayout(2, false));
       faultCountPane.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_BEGINNING));
       Label faultCountLabel = new Label(faultCountPane, SWT.NONE);
       faultCountLabel.setText(FAULT_COUNT);

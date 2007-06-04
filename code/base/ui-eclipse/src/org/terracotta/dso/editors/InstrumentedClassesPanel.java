@@ -547,7 +547,7 @@ public class InstrumentedClassesPanel extends ConfigurationEditorPanel {
       m_honorTransientCheck.setEnabled(false);
       initBooleanField(m_honorTransientCheck, Include.class, "honor-transient");
 
-      new Label(m_detailGroup, SWT.NONE); // filler
+      //new Label(m_detailGroup, SWT.NONE); // filler
 
       m_onLoadGroup = new Group(m_detailGroup, SWT.SHADOW_NONE);
       m_onLoadGroup.setText(ON_LOAD);

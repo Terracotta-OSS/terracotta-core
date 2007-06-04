@@ -145,7 +145,7 @@ public class RuntimeOutputOptionsPanel extends ConfigurationEditorPanel
       Group runtimeOutputOptionsGroup = new Group(parent, SWT.SHADOW_NONE);
       runtimeOutputOptionsGroup.setText(RUNTIME_OUTPUT_OPTIONS);
       GridLayout gridLayout = new GridLayout();
-      gridLayout.numColumns = 1;
+      gridLayout.verticalSpacing = 3;
       runtimeOutputOptionsGroup.setLayout(gridLayout);
       runtimeOutputOptionsGroup
           .setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_BEGINNING));

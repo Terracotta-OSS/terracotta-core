@@ -169,7 +169,7 @@ public class InstrumentationLoggingPanel extends ConfigurationEditorPanel
       Group instrumentationLoggingGroup = new Group(parent, SWT.SHADOW_NONE);
       instrumentationLoggingGroup.setText(INSTRUMENTATION_LOGGING);
       GridLayout gridLayout = new GridLayout();
-      gridLayout.numColumns = 1;
+      gridLayout.verticalSpacing = 3;
       instrumentationLoggingGroup.setLayout(gridLayout);
       GridData gridData = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_BEGINNING);
       instrumentationLoggingGroup.setLayoutData(gridData);
