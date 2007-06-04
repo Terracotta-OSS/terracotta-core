@@ -106,6 +106,20 @@ public class TCPProxy {
     } finally {
       serverSocket = null;
     }
+    
+    /*
+     * Observed on windows-xp.
+     * The ServerSocket is still hanging around after "close()",
+     * until someone makes a new connection.
+     * To make sure the old ServerSocket and accept thread go away for good,
+     * fake a connection to the old socket.
+     */
+    try {
+      Socket sk = new Socket("localhost",listenPort);
+      sk.close();
+    } catch (Exception x) {
+      // that's fine for fake connection.
+    } 
 
     try {
       if (acceptThread != null) {
