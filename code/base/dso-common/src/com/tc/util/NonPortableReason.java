@@ -296,6 +296,7 @@ public class NonPortableReason implements Serializable {
 
   public void accept(NonPortableReasonFormatter formatter) {
     formatter.formatReasonText(getDetailedReason());
+    //formatter.formatReasonText("Actions to take:");
     for (Iterator i = details.iterator(); i.hasNext();) {
       formatter.formatDetail((NonPortableDetail) i.next());
     }

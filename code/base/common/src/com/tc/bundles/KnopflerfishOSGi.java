@@ -135,10 +135,6 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
 
     final String[] bundles = RequiredBundleSpec.parseList(requires);
     for (int i = 0; i < bundles.length; i++) {
-      System.out.println(">> " + bundles[i]);
-    }
-
-    for (int i = 0; i < bundles.length; i++) {
       final RequiredBundleSpec spec = new RequiredBundleSpec(bundles[i]);
       final Bundle reqdBundle = findBundleBySymbolicName(spec);
       if (reqdBundle == null) { throw new BundleException("No compatible bundle installed for the required bundle: "
