@@ -2,3 +2,4 @@
 JavaUtilArraysTest
 LogicalIteratorTest
 ObjectDataTest
+ReentrantReadWriteLockCrashTest
