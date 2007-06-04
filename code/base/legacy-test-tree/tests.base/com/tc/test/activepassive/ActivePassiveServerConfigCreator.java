@@ -99,7 +99,7 @@ public class ActivePassiveServerConfigCreator {
     if (this.serverDiskless) {
       ha.setMode(HaConfigBuilder.HA_MODE_NETWORKED_ACTIVE_PASSIVE);
     } else {
-      ha.setMode(HaConfigBuilder.HA_MODE_ACTIVE_PASSIVE);
+      ha.setMode(HaConfigBuilder.HA_MODE_DISK_BASED_ACTIVE_PASSIVE);
     }
 
     L2SConfigBuilder l2sConfigbuilder = new L2SConfigBuilder();

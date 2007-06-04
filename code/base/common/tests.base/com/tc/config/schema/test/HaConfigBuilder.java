@@ -6,7 +6,7 @@ package com.tc.config.schema.test;
 
 public class HaConfigBuilder extends BaseConfigBuilder {
   public static final String    HA_MODE_NETWORKED_ACTIVE_PASSIVE       = "networked-active-passive";
-  public static final String    HA_MODE_ACTIVE_PASSIVE                 = "active-passive";
+  public static final String    HA_MODE_DISK_BASED_ACTIVE_PASSIVE      = "disk-based-active-passive";
 
   private static final String   MODE                                   = "mode";
   private static final String   NETWORKED_ACTIVE_PASSIVE_ELECTION_TIME = "election-time";
