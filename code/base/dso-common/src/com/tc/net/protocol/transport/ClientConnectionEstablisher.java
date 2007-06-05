@@ -113,7 +113,7 @@ public class ClientConnectionEstablisher {
 
   private void reconnect(ClientMessageTransport cmt) throws MaxConnectionsExceededException {
     try {
-      boolean connected = false;
+      boolean connected = cmt.isConnected();
       for (int i = 0; ((maxReconnectTries < 0) || (i < maxReconnectTries)) && !connected; i++) {
         ConnectionAddressIterator addresses = connAddressProvider.getIterator();
         while (addresses.hasNext() && !connected) {
@@ -146,8 +146,8 @@ public class ClientConnectionEstablisher {
   private void restoreConnection(ClientMessageTransport cmt, TCSocketAddress sa, long timeoutMillis,
                                  RestoreConnectionCallback callback) {
     final long deadline = System.currentTimeMillis() + timeoutMillis;
-    boolean connected = false;
-    for (int i = 0; true; i++) {
+    boolean connected = cmt.isConnected();
+    for (int i = 0; !connected; i++) {
       try {
         TCConnection connection = connect(sa, cmt);
         cmt.reconnect(connection);
