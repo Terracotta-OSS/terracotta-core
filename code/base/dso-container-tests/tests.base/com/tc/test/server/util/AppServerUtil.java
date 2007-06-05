@@ -41,4 +41,8 @@ public class AppServerUtil {
 
     throw new RuntimeException("Port " + port + " cannot be reached, timeout = " + waitTime);
   }
+  
+  public static String getFullName(String serverName, String majorVersion, String minorVersion) {
+    return serverName.toLowerCase() + "-" + majorVersion.toLowerCase() + "." + minorVersion.toLowerCase();
+  }
 }
