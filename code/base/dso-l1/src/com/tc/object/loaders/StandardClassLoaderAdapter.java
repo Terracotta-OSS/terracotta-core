@@ -23,7 +23,7 @@ public class StandardClassLoaderAdapter extends ClassAdapter implements Opcodes 
   }
 
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-    interfaces = ByteCodeUtil.addInterfaces(interfaces, new String[] { NamedClassLoader.CLASS });
+    interfaces = ByteCodeUtil.addInterfaces(interfaces, new String[] { ByteCodeUtil.NAMEDCLASSLOADER_CLASS });
     super.visit(version, access, name, signature, superName, interfaces);
   }
 

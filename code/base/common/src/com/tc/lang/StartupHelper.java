@@ -4,6 +4,8 @@
  */
 package com.tc.lang;
 
+import com.tc.util.runtime.Vm;
+
 import java.lang.reflect.Field;
 
 /**
@@ -52,7 +54,7 @@ public class StartupHelper {
 
   private static void setThreadGroup(Thread thread, ThreadGroup group) {
     try {
-      Field groupField = thread.getClass().getDeclaredField("group");
+      Field groupField = thread.getClass().getDeclaredField(Vm.isIBM() ? "threadGroup" : "group");
       groupField.setAccessible(true);
       groupField.set(thread, group);
     } catch (Exception e) {

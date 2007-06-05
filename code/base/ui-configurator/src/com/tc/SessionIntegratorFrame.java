@@ -75,6 +75,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -2847,7 +2848,9 @@ public class SessionIntegratorFrame extends Frame {
     String[] env = getSelectedServerEnvironment();
     File wd = new File(SANDBOX_ROOT);
 
-    return Runtime.getRuntime().exec(append(cmd, buildScriptArgs(args)), env, wd);
+    final String[] fullCmd = append(cmd, buildScriptArgs(args));
+    trace("Invoking script " + Arrays.asList(fullCmd) + " with working dir " + wd.getAbsolutePath());
+    return Runtime.getRuntime().exec(fullCmd, env, wd);
   }
 
   private void stopSystem() {
@@ -3007,6 +3010,7 @@ public class SessionIntegratorFrame extends Frame {
   private static void trace(String msg) {
     if (m_debug) {
       System.out.println(msg);
+      System.out.flush();
     }
   }
 

@@ -20,7 +20,7 @@ public class ClassSpec {
   public ClassSpec(String className, String loaderDesc, long strIdx) {
     this.className = className;
     this.loaderDesc = loaderDesc;
-    this.classIdentifier = "com.tc.state." + strIdx + "." + className;
+    this.classIdentifier = "com.tc.state.idx" + strIdx + "." + className;
   }
 
   public void setGeneratedClassID(int classID) {

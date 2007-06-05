@@ -255,6 +255,14 @@ public class ManagerUtil {
     return ArrayManager.get(array, index);
   }
 
+  // This method is part of java.lang.reflect.Array and does the same as the set() method in the
+  // Sun JDK, the IBM version of the set method just adds a series of argument checks and then
+  // delegates to the native setImpl version.
+  public static void setImpl(Object array, int index, Object value) throws IllegalArgumentException,
+  ArrayIndexOutOfBoundsException {
+    set(array, index, value);
+  }
+
   public static void set(Object array, int index, Object value) throws IllegalArgumentException,
       ArrayIndexOutOfBoundsException {
     if (array == null) throw new NullPointerException();

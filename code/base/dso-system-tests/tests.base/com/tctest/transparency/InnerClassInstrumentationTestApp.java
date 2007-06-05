@@ -47,9 +47,9 @@ public class InnerClassInstrumentationTestApp extends AbstractTransparentApp {
     config.addIncludePattern(InnerInnerStaticExtendsNonInstrumentedClass.InnerInnerClass.class.getName());
     
     config.addIncludePattern(AnonymousInstrumentedInnerInnerClass.class.getName());
-    config.addIncludePattern(testClassName+"$1");
+    config.addIncludePattern(new AnonymousInstrumentedInnerInnerClass().getInnerInnerClassName());
     config.addIncludePattern(AnonymousNonInstrumentedInnerInnerClass.class.getName());
-    config.addIncludePattern(testClassName+"$2");
+    config.addIncludePattern(new AnonymousNonInstrumentedInnerInnerClass().getInnerInnerClassName());
     config.addRoot(testClassName, "root", "root", true);
     config.addAutolock("* " + testClassName + ".*(..)", ConfigLockLevel.WRITE);
   }
@@ -182,12 +182,18 @@ public class InnerClassInstrumentationTestApp extends AbstractTransparentApp {
   }
   
   private static final class AnonymousInstrumentedInnerInnerClass extends MyInstrumentedInnerClass {
+    public String getInnerInnerClassName() {
+      return innerInner.getClass().getName();
+    }
     public final MyInstrumentedInnerClass innerInner = new MyInstrumentedInnerClass() {
       //
     };
   }
   
   private static final class AnonymousNonInstrumentedInnerInnerClass extends MyInstrumentedInnerClass {
+    public String getInnerInnerClassName() {
+      return innerInner.getClass().getName();
+    }
     public final MyNonInstrumentedInnerClass innerInner = new MyNonInstrumentedInnerClass() {
       //
     };

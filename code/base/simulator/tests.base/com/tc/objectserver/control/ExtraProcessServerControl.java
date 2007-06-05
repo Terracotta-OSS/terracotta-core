@@ -110,7 +110,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
     this.configFileLoc = configFileLoc;
     this.mergeOutput = mergeOutput;
-    this.name = "DSO process @ " + getHost() + ":" + getDsoPort();
+    this.name = "DSO process @ " + getHost() + ":" + getDsoPort() + ", jmx-port:" + adminPort;
     this.runningDirectory = runningDirectory;
     jvmArgs.add("-D" + Directories.TC_INSTALL_ROOT_PROPERTY_NAME + "=" + installationRoot);
     jvmArgs.add("-D" + Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME + "=true");

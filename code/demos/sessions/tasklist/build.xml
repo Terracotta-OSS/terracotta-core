@@ -80,6 +80,8 @@
 		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/tomcat5.0/9082/webapps"   verbose="true"/>
 		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/tomcat5.5/9081/webapps"   verbose="true"/>
 		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/tomcat5.5/9082/webapps"   verbose="true"/>
+		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/was6.1/9081/webapps"      verbose="true"/>
+		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/was6.1/9082/webapps"      verbose="true"/>
 		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/tomcat6.0/9081/webapps"   verbose="true"/>
 		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/tomcat6.0/9082/webapps"   verbose="true"/>
 		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/wls8.1/9081/applications" verbose="true"/>

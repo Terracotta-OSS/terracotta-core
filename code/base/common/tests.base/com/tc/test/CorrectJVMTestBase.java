@@ -1,7 +1,10 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test;
+
+import com.tc.util.runtime.Vm;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,6 +18,10 @@ public class CorrectJVMTestBase extends TCTestCase {
   private static final Pattern VERSION_PATTERN = Pattern.compile("(\\d+\\.\\d+\\.\\d+(_\\d+)?)(-\\S+)?");
 
   public void testVersion() throws Exception {
+    if (Vm.isIBM()) {
+      // IBM has a non-uniform version string that makes no sense to test in an automated way
+      return;
+    }
     String actualVersion = System.getProperty("java.runtime.version");
     String expectedVersion = TestConfigObject.getInstance().jvmVersion();
 

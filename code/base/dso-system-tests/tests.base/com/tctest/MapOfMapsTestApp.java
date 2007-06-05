@@ -15,6 +15,7 @@ import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.StringUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.text.DateFormat;
@@ -182,7 +183,7 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
 
   private Map getPopulatedMap(Map m) {
     for (int i = 0; i < 10; i++) {
-      m.put("Hello - " + i, new String("Hehehehehehehehehehehehehehehehehheheheheheheheheheheheheheheheheh-" + i));
+      m.put(StringUtil.reduce("Hello - " + i), StringUtil.reduce("Hehehehehehehehehehehehehehehehehheheheheheheheheheheheheheheheheh-" + i));
     }
     return m;
   }

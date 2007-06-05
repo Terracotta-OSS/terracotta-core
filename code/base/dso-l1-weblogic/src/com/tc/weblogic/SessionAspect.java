@@ -144,6 +144,32 @@ public class SessionAspect {
     }
 
   }
+  
+  private static class DSOParameterMBean implements ParameterMBean {
+    public  String getParamName() {
+      return SessionFilter.APP_SERVER_PARAM_NAME;
+    }
+
+    public  void setParamName(String s) {
+      throw new AssertionError();
+    }
+
+    public  String getParamValue() {
+      return SessionFilter.BEA_WEBLOGIC;
+    }
+
+    public  void setParamValue(String s) {
+      throw new AssertionError();
+    }
+
+    public  String getDescription() {
+      return "Session Filter parameters for BEA Weblogic";
+    }
+
+    public  void setDescription(String s) {
+      throw new AssertionError();
+    }
+  }
 
   private static class DSOFilterMBean implements FilterMBean {
 
@@ -160,7 +186,7 @@ public class SessionAspect {
     }
 
     public ParameterMBean[] getInitParams() {
-      return new ParameterMBean[] {};
+      return new ParameterMBean[] {new DSOParameterMBean()};
     }
 
     public UIMBean getUIData() {

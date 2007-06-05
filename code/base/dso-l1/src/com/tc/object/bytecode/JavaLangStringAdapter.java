@@ -68,7 +68,7 @@ public class JavaLangStringAdapter extends ClassAdapter implements Opcodes {
     mv.visitMaxs(0, 0);
     mv.visitEnd();
 
-    // Called from AbstractStringBuilder.insert|repace()
+    // Called from (Abstract)StringBuilder.insert|repace()
     mv = super.visitMethod(ACC_SYNTHETIC, "getCharsFast", "([CI)V", null, null);
     mv.visitCode();
     mv.visitVarInsn(ALOAD, 0);

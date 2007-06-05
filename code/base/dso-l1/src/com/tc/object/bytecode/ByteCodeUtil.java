@@ -7,7 +7,6 @@ package com.tc.object.bytecode;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
-import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.util.Assert;
 
@@ -20,30 +19,34 @@ import java.util.List;
 import java.util.Set;
 
 public class ByteCodeUtil implements Opcodes {
-  private static final String        AUTOLOCK_PREFIX                   = "@";
-  private static final String        NAMED_LOCK_PREFIX                 = "^";
-  private static final String        LITERAL_LOCK_PREFIX               = "#";
+  private static final String AUTOLOCK_PREFIX                   = "@";
+  private static final String NAMED_LOCK_PREFIX                 = "^";
+  private static final String LITERAL_LOCK_PREFIX               = "#";
 
-  public static final String         TC_FIELD_PREFIX                   = "$__tc_";
-  public static final String         TC_METHOD_PREFIX                  = "__tc_";
-  public static final String         METHOD_RENAME_PREFIX              = TC_METHOD_PREFIX + "wrapped_";
-  public static final String         DMI_METHOD_RENAME_PREFIX          = TC_METHOD_PREFIX + "dmi_";
+  public static final String  TC_FIELD_PREFIX                   = "$__tc_";
+  public static final String  TC_METHOD_PREFIX                  = "__tc_";
+  public static final String  METHOD_RENAME_PREFIX              = TC_METHOD_PREFIX + "wrapped_";
+  public static final String  DMI_METHOD_RENAME_PREFIX          = TC_METHOD_PREFIX + "dmi_";
 
-  public static final String         VALUES_GETTER                     = TC_METHOD_PREFIX + "getallfields";
-  public static final String         VALUES_GETTER_DESCRIPTION         = "(Ljava/util/Map;)V";
-  public static final String         VALUES_SETTER                     = TC_METHOD_PREFIX + "setfield";
-  public static final String         VALUES_SETTER_DESCRIPTION         = "(Ljava/lang/String;Ljava/lang/Object;)V";
-  public static final String         MANAGED_VALUES_GETTER             = TC_METHOD_PREFIX + "getmanagedfield";
-  public static final String         MANAGED_VALUES_GETTER_DESCRIPTION = "(Ljava/lang/String;)Ljava/lang/Object;";
-  public static final String         MANAGED_VALUES_SETTER             = TC_METHOD_PREFIX + "setmanagedfield";
+  public static final String  VALUES_GETTER                     = TC_METHOD_PREFIX + "getallfields";
+  public static final String  VALUES_GETTER_DESCRIPTION         = "(Ljava/util/Map;)V";
+  public static final String  VALUES_SETTER                     = TC_METHOD_PREFIX + "setfield";
+  public static final String  VALUES_SETTER_DESCRIPTION         = "(Ljava/lang/String;Ljava/lang/Object;)V";
+  public static final String  MANAGED_VALUES_GETTER             = TC_METHOD_PREFIX + "getmanagedfield";
+  public static final String  MANAGED_VALUES_GETTER_DESCRIPTION = "(Ljava/lang/String;)Ljava/lang/Object;";
+  public static final String  MANAGED_VALUES_SETTER             = TC_METHOD_PREFIX + "setmanagedfield";
 
-  public static final String         MANAGEABLE_CLASS                  = "com/tc/object/bytecode/Manageable";
-  public static final String         MANAGEABLE_TYPE                   = "L" + MANAGEABLE_CLASS + ";";
+  public static final String  MANAGEABLE_CLASS                  = "com/tc/object/bytecode/Manageable";
+  public static final String  MANAGEABLE_TYPE                   = "L" + MANAGEABLE_CLASS + ";";
 
-  public static final String         TRANSPARENT_ACCESS_CLASS          = "com/tc/object/bytecode/TransparentAccess";
-  public static final String         TRANSPARENT_ACCESS_TYPE           = "L" + TRANSPARENT_ACCESS_CLASS + ";";
+  public static final String  TRANSPARENT_ACCESS_CLASS          = "com/tc/object/bytecode/TransparentAccess";
+  public static final String  TRANSPARENT_ACCESS_TYPE           = "L" + TRANSPARENT_ACCESS_CLASS + ";";
 
-  private static final LiteralValues LITERAL_VALUES                    = new LiteralValues();
+  public static final String  NAMEDCLASSLOADER_CLASS            = "com/tc/object/loaders/NamedClassLoader";
+  public static final String  NAMEDCLASSLOADER_TYPE             = "L" + NAMEDCLASSLOADER_CLASS + ";";
+
+  public static final String  WEBAPPCONFIG_CLASS                = "com/terracotta/session/WebAppConfig";
+  public static final String  WEBAPPCONFIG_TYPE                 = "L" + WEBAPPCONFIG_CLASS + ";";
 
   public static String[] addInterfaces(String[] existing, String[] toAdd) {
     if (existing == null) { return toAdd; }
@@ -313,9 +316,13 @@ public class ByteCodeUtil implements Opcodes {
     return NAMED_LOCK_PREFIX + obj;
   }
 
-  public static String generateLiteralLockName(Object obj) {
+  /**
+   * The first argument should be "(new LiteralValues()).valueFor(obj)", but I didn't want to slurp in a whole mess of
+   * classes into the boot jar by including LiteralValues. It's gross, but ManagerImpl just makes the call itself.
+   */
+  public static String generateLiteralLockName(int literalValuesValueFor, Object obj) {
     Assert.assertNotNull(obj);
-    return LITERAL_VALUES.valueFor(obj) + LITERAL_LOCK_PREFIX + obj;
+    return literalValuesValueFor + LITERAL_LOCK_PREFIX + obj;
   }
 
   private static String generateAutolockName(long objectId) {
@@ -384,4 +391,9 @@ public class ByteCodeUtil implements Opcodes {
     return TC_METHOD_PREFIX + "set" + fieldName;
   }
 
+  public static void systemOutPrintln(MethodVisitor mv, String msg) {
+    mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+    mv.visitLdcInsn(msg);
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
+  }
 }

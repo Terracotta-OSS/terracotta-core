@@ -43,6 +43,7 @@ public abstract class AbstractClassDumper {
 
         File outFile = new File(adaptedRoot, name);
         System.out.println("Writing resource: " + outFile);
+        System.out.flush();
         fos = new FileOutputStream(outFile);
         fos.write(b);
       } finally {

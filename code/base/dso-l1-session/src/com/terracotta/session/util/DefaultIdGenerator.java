@@ -19,23 +19,24 @@ public class DefaultIdGenerator implements SessionIdGenerator {
   private static final char  DLM        = '!';
   private final SecureRandom random;
   private final int          idLength;
-  private final String       serverId;
+  protected final String     serverId;
   private short              nextId     = Short.MIN_VALUE;
   private final int          lockType;
+  private final IdDeclarator idDeclarator;
 
-  public static SessionIdGenerator makeInstance(ConfigProperties cp, int lockType) {
+  public static SessionIdGenerator makeInstance(ConfigProperties cp, int lockType, IdDeclarator idDeclarator) {
     Assert.pre(cp != null);
     final int idLength = cp.getSessionIdLength();
     final String servetId = cp.getServerId();
-    return new DefaultIdGenerator(idLength, servetId, lockType);
+    return new DefaultIdGenerator(idLength, servetId, lockType, idDeclarator);
   }
-
+  
   // for non-synchronous-write tests
   public DefaultIdGenerator(final int idLength, final String serverId) {
-    this(idLength, serverId, Manager.LOCK_TYPE_WRITE);
+    this(idLength, serverId, Manager.LOCK_TYPE_WRITE, null);
   }
 
-  public DefaultIdGenerator(final int idLength, final String serverId, int lockType) {
+  public DefaultIdGenerator(final int idLength, final String serverId, int lockType, IdDeclarator idDeclarator) {
     random = new SecureRandom();
     // init
     random.nextInt();
@@ -43,30 +44,43 @@ public class DefaultIdGenerator implements SessionIdGenerator {
     this.lockType = lockType;
     this.idLength = Math.max(idLength, MIN_LENGTH);
     this.serverId = serverId;
+    this.idDeclarator = idDeclarator;
   }
 
   public SessionId generateNewId() {
     final String key = generateKey();
-    final String externalId = key + DLM + serverId;
+    final String externalId = makeExternalId(key);
     return new DefaultSessionId(key, null, externalId, lockType);
   }
 
   public SessionId makeInstanceFromBrowserId(String requestedSessionId) {
     Assert.pre(requestedSessionId != null);
-    final int dlmIndex = requestedSessionId.indexOf(DLM);
+    final int dlmIndex = getDLMIndex(requestedSessionId);
     // everything before dlmIndex is key, everything after is serverId
     if (dlmIndex > 0) {
       final String key = requestedSessionId.substring(0, dlmIndex);
-      final String externalId = key + DLM + serverId;
+      final String externalId = makeExternalId(key);
       return new DefaultSessionId(key, requestedSessionId, externalId, lockType);
     } else {
       // DLM is missing. someone is messing with our session ids!
       return null;
     }
   }
+  
+  protected int getDLMIndex(String requestedSessionId) {
+    return requestedSessionId.indexOf(DLM);
+  }
+  
+  protected String makeExternalId(String key) {
+    String externalId = key + DLM + serverId;
+    if (idDeclarator != null) {
+      externalId = idDeclarator.transform(externalId);
+    }
+    return externalId;
+  }
 
   public SessionId makeInstanceFromInternalKey(String key) {
-    final String externalId = key + DLM + serverId;
+    final String externalId = makeExternalId(key);
     return new DefaultSessionId(key, externalId, externalId, lockType);
   }
 

@@ -67,6 +67,11 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     this.classLoader = new IsolationClassLoader(config, testClientObjectManager, testTransactionManager);
     this.classLoader.init();
   }
+  
+  private void setTargetClientObjectManager(Class clazz) throws Exception {
+    Method m = clazz.getDeclaredMethod("setTestClientObjectManager", new Class[] {testClientObjectManager.getClass()});
+    m.invoke(null, new Object[]{testClientObjectManager});
+  }
 
   protected void tearDown() throws Exception {
     super.tearDown();
@@ -1319,6 +1324,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
 
   private Object invokeWithArgs(String methodName, Class[] ptypes, Object[] args) throws Exception {
     Class c = classLoader.loadClass(targetClassName);
+    setTargetClientObjectManager(c);
     Object instance = c.newInstance();
 
     if (instance instanceof Manageable) {
@@ -1553,6 +1559,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
 
     // this makes sure the class initializer is called
     Class c = Class.forName(targetClassName, true, this.classLoader);
+    setTargetClientObjectManager(c);
 
     // depending on the compiler (eclipse vs. javac, there might methods called that obtain locks)
     this.testTransactionManager.clearBegins();

@@ -49,6 +49,12 @@ public class TestClientObjectManager implements ClientObjectManager {
   public boolean isPortableClass(Class clazz) {
     return true;
   }
+  
+  public void sharedIfManaged(Object pojo) {
+    if (isManaged(pojo)) {
+      lookupOrCreate(pojo);
+    }
+  }
 
   public synchronized TCObject lookupOrCreate(Object obj) {
     // System.out.println(this + ".lookupOrCreate(" + obj + ")");
@@ -138,9 +144,9 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   public TCObject lookupExistingOrNull(Object pojo) {
-    if (isManaged) {
-      lookupOrCreate(pojo);
-    }
+//    if (isManaged) {
+//      lookupOrCreate(pojo);
+//    }
 
     return (TCObject) this.object2TCObject.get(pojo);
   }

@@ -4,6 +4,8 @@
  */
 package com.tctest;
 
+import com.tc.object.TestClientObjectManager;
+
 import java.io.ObjectStreamField;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,8 +31,14 @@ public class ClassAdapterTestTarget {
   private static final ObjectStreamField[] serialPersistentFields               = { new java.io.ObjectStreamField(
                                                                                                                   "foo",
                                                                                                                   char[].class) };
+  
+  private static TestClientObjectManager testClientObjectManager;
 
   List                                     myRoot                               = new ArrayList();
+  
+  public synchronized static void setTestClientObjectManager(TestClientObjectManager clientObjectManager) {
+    testClientObjectManager = clientObjectManager;
+  }
 
   public ClassAdapterTestTarget() {
     String s = System.getProperty(KEY);
@@ -40,6 +48,7 @@ public class ClassAdapterTestTarget {
 
       // This funny looking code is here to create mulitple exit paths from this constructor
       // It is also here to get some autolocking going on
+      testClientObjectManager.sharedIfManaged(s);
       synchronized (s) {
         if (CSTR_AUTOLOCK_THROW_EXCEPTION_INSIDE.equals(s)) { throw new RuntimeException(s); }
 
@@ -109,6 +118,7 @@ public class ClassAdapterTestTarget {
   }
 
   public void internalSynchronizedInstanceMethodThrowsException() throws LockTestThrowsExceptionException {
+    
     synchronized (this) {
       System.out.println("You called internalSynchronizedInstanceMethodThrowsException");
       throwException();
@@ -168,6 +178,7 @@ public class ClassAdapterTestTarget {
   public static void internalSynchronizedStaticMethod() {
     Object o = new Object();
     System.out.println("internalSynchronizedStaticMethod(): About to synchronized on " + o + "...");
+    testClientObjectManager.sharedIfManaged(o);
     synchronized (o) {
       System.out.println("You called internalSynchronizedStaticMethod()");
     }
@@ -175,6 +186,7 @@ public class ClassAdapterTestTarget {
 
   public static void internalSynchronizedStaticMethodThrowsException() throws LockTestThrowsExceptionException {
     Object o = new Object();
+    testClientObjectManager.sharedIfManaged(o);
     synchronized (o) {
       System.out.println("You called internalSynchronizedStaticMethodThrowsException()");
       throwException();
@@ -183,6 +195,7 @@ public class ClassAdapterTestTarget {
 
   public static void internalSynchronizedStaticMethodWithArguments(int i, String s) {
     Object o = new Object();
+    testClientObjectManager.sharedIfManaged(o);
     synchronized (o) {
       System.out.println("You called internalSynchronizedStaticMethodWithArguments(int, String)");
     }
@@ -191,6 +204,7 @@ public class ClassAdapterTestTarget {
   public static void internalSynchronizedStaticMethodWithArgumentsThrowsException(int i, String s)
       throws LockTestThrowsExceptionException {
     Object o = new Object();
+    testClientObjectManager.sharedIfManaged(o);
     synchronized (o) {
       System.out.println("You called internalSynchronizedStaticMethodWithArgumentsThrowsException(int, String)");
       throwException();
@@ -344,6 +358,7 @@ public class ClassAdapterTestTarget {
   public static String internalSynchronizedStaticMethodReturnsAValue() {
     String rv = "You called internalSynchronizedStaticMethodReturnsAValue()";
     Object o = new Object();
+    testClientObjectManager.sharedIfManaged(o);
     synchronized (o) {
       System.out.println(rv);
     }
@@ -354,6 +369,7 @@ public class ClassAdapterTestTarget {
       throws LockTestThrowsExceptionException {
     String rv = "You called internalSynchronizedStaticMethodReturnsAValueThrowsException()";
     Object o = new Object();
+    testClientObjectManager.sharedIfManaged(o);
     synchronized (o) {
       System.out.println(rv);
       throwException();
@@ -364,6 +380,7 @@ public class ClassAdapterTestTarget {
   public static String internalSynchronizedStaticMethodWithArgumentsReturnsAValue(int i, String s) {
     String rv = "You called internalSynchronizedStaticMethodWithArgumentsReturnsAValue(int, String)";
     Object o = new Object();
+    testClientObjectManager.sharedIfManaged(o);
     synchronized (o) {
       System.out.println(rv);
     }
@@ -374,6 +391,7 @@ public class ClassAdapterTestTarget {
       throws LockTestThrowsExceptionException {
     String rv = "You called internalSynchronizedStaticMethodWithArgumentsReturnsAValueThrowsException(int, String)";
     Object o = new Object();
+    testClientObjectManager.sharedIfManaged(o);
     synchronized (o) {
       System.out.println(rv);
       throwException();
@@ -384,6 +402,8 @@ public class ClassAdapterTestTarget {
   public int nestedInternalSynchronizedInstanceMethod() {
     Object obj1 = new Object();
     Object obj2 = new Object();
+    testClientObjectManager.sharedIfManaged(obj1);
+    testClientObjectManager.sharedIfManaged(obj2);
 
     synchronized (obj1) {
       System.out.println("Synchronized on obj1");

@@ -9,17 +9,24 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
 import com.tc.exception.TCRuntimeException;
+import com.tc.util.runtime.Vm;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class JavaLangReflectArrayAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
-  private final static Set nonNativeMethods = new HashSet(2);
-  private final static Set excludeMethods   = new HashSet(2);
+  private final static Set nonNativeMethods         = new HashSet(2);
+  private final static Set excludeMethods           = new HashSet(9);
+  private final static Set includedPrivateMethods   = new HashSet(1);
 
   static {
     nonNativeMethods.add("newInstance");
     nonNativeMethods.add("<init>");
+    // the IBM JDK just delegates to their own setImpl native version
+    if (Vm.isIBM()) {
+      nonNativeMethods.add("set");
+      includedPrivateMethods.add("setImpl");
+    }
 
     excludeMethods.add("getLength");
     excludeMethods.add("getByte");
@@ -61,7 +68,7 @@ public class JavaLangReflectArrayAdapter extends ClassAdapter implements Opcodes
       }
     }
 
-    if (isPrivate(access)) {
+    if (isPrivate(access) && !includedPrivateMethods.contains(name)) {
       return super.visitMethod(access, name, description, signature, exceptions);
     } else if (isNative(access) && !excludeMethods.contains(name)) {
       MethodVisitor mv = super.visitMethod(access ^ Opcodes.ACC_NATIVE, name, description, signature, exceptions);

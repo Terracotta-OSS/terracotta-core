@@ -357,6 +357,7 @@ class JVM
                 @actual_version = $1 if @actual_version =~ /java\s*version\s*\"([^\"]+)\"/
                 @actual_type = "jrockit" if @type.blank? && val =~ /jrockit/i
                 @actual_type = "hotspot" if @type.blank? && val =~ /hotspot/i
+                @actual_type = "j9"      if @type.blank? && val =~ /IBM J9 VM/
             end
         end
     end

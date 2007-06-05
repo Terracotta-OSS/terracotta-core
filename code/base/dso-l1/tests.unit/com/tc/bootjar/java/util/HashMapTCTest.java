@@ -17,6 +17,7 @@ import com.tc.object.loaders.IsolationClassLoader;
 import com.tc.object.tx.MockTransactionManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
+import com.tc.util.runtime.Vm;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
@@ -56,6 +57,13 @@ public class HashMapTCTest extends TCTestCase {
           return new HashMap();
         } else if("getPortability".equals(name)) {
           return new PortabilityImpl((DSOClientConfigHelper) proxy);
+        } else if (Vm.isIBM() && "isRoot".equals(name) &&
+            ("java.lang.reflect.Method".equals(args[0]) || "java.lang.reflect.Constructor".equals(args[0]))) {
+          // the implementation of java.lang.Class in the IBM JDK is different and caches
+          // fields of the Method and Constructor classes, which it retrieves afterwards by
+          // calling the Field.get method. This gets into the AccessibleObject changes for
+          // DSO, which checks if the returned value is a root
+          return Boolean.FALSE;
         }
         
         throw new ImplementMe();

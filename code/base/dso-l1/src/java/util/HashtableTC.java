@@ -17,7 +17,7 @@ import java.util.Map.Entry;
 /*
  * This class will be merged with java.lang.Hashtable in the bootjar. This hashtable can store ObjectIDs instead of
  * Objects to save memory and transparently fault Objects as needed. It can also clear references. For General rules
- *
+ * 
  * @see HashMapTC class
  */
 public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearable {
@@ -79,11 +79,11 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
   }
 
   /*
-   * XXX:: This method uses getEntry instead of a get and put to avoid changing the modCount in shared mode
+   * This method uses __tc_getEntry() instead of a get() and put() to avoid changing the modCount in shared mode
    */
   public synchronized Object get(Object key) {
     if (__tc_isManaged()) {
-      Map.Entry e = getEntry(key);
+      Map.Entry e = __tc_getEntry(key);
       if (e == null) return null;
       Object value = e.getValue();
       Object actualValue = unwrapValueIfNecessary(value);
@@ -112,7 +112,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     if (__tc_isManaged()) {
       if (key == null || value == null) { throw new NullPointerException(); }
       ManagerUtil.checkWriteAccess(this);
-      Entry e = getEntry(key);
+      Entry e = __tc_getEntry(key);
       if (e == null) {
         // New mapping
         ManagerUtil.logicalInvoke(this, "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", new Object[] {
@@ -254,11 +254,10 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
     return $__tc_MANAGED != null;
   }
 
-  protected Map.Entry getEntry(Object key) {
-    // This method is imstrumented during bootjar creation into the vanila (which gets tainted) java.util.Hashtable.
-    // This is needed
-    // so that we can easily get access to the Original Key on put without a traversal or proxy Keys.
-    throw new RuntimeException("This should never execute ! Check BootJarTool");
+  protected Map.Entry __tc_getEntry(Object key) {
+    // This method is instrumented during bootjar creation into the vanilla (which gets tainted) java.util.Hashtable.
+    // This is needed so that we can easily get access to the Original Key on put without a traversal or proxy Keys.
+    throw new RuntimeException("This should never execute! Check BootJarTool");
   }
 
   private static class ValuesWrapper {

@@ -10,14 +10,18 @@ import java.util.regex.Pattern;
 
 public class Vm {
 
-  public static final Pattern JVM_VERSION_PATTERN = Pattern
-                                                      .compile("^(\\p{Digit})\\.(\\p{Digit})\\.(\\p{Digit})(?:_(.+))?$");
+  public static final Pattern JVM_VERSION_PATTERN         = Pattern
+                                                              .compile("^(\\p{Digit})\\.(\\p{Digit})\\.(\\p{Digit})(?:_(.+))?$");
+  public static final Pattern IBM_SERVICE_RELEASE_PATTERN = Pattern
+                                                              .compile("^[^-]+-\\p{Digit}{8}\\p{Space}+\\(.*(SR\\p{Digit}+).*\\)$");
 
   public static final Version VERSION;
   static {
     try {
       VERSION = new Version(System.getProperties());
     } catch (UnknownJvmVersionException mve) {
+      throw new RuntimeException(mve);
+    } catch (UnknownRuntimeVersionException mve) {
       throw new RuntimeException(mve);
     }
   }
@@ -53,48 +57,71 @@ public class Vm {
   public static boolean isJDK16() {
     return VERSION.isJDK16();
   }
-  
+
   public static boolean isJDK15Compliant() {
     return VERSION.isJDK15() || VERSION.isJDK16();
+  }
+
+  public static boolean isIBM() {
+    return VERSION.isIBM();
   }
 
   public static boolean isJRockit() {
     return VERSION.isJRockit();
   }
 
-  public final static class UnknownJvmVersionException extends Exception {
-    private UnknownJvmVersionException(final String badVersion) {
-      super("Unable to parse JVM version '" + badVersion + "'");
-    }
-  }
-
   public final static class Version {
 
-    private final String  vendorVersion;
+    private final String  vmVersion;
     private final int     mega;
     private final int     major;
     private final int     minor;
     private final String  patch;
+    private final boolean isIBM;
     private final boolean isJRockit;
 
-    public Version(final Properties properties) throws UnknownJvmVersionException {
+    public Version(final Properties properties) throws UnknownJvmVersionException, UnknownRuntimeVersionException {
       this(properties.getProperty("java.version", "<error: java.version not specified in properties>"), properties
+          .getProperty("java.runtime.version", "<error: java.runtime.version not specified in properties>"), properties
           .getProperty("jrockit.version") != null
-          || properties.getProperty("java.vm.name", "").toLowerCase().indexOf("jrockit") >= 0);
+          || properties.getProperty("java.vm.name", "").toLowerCase().indexOf("jrockit") >= 0, properties.getProperty(
+          "java.vendor", "").toLowerCase().startsWith("ibm "));
     }
 
-    public Version(final String vendorVersion, final boolean isJRockit) throws UnknownJvmVersionException {
-      this.vendorVersion = vendorVersion;
+    public Version(final String vendorVersion, final String runtimeVersion, final boolean isJRockit, final boolean isIBM)
+        throws UnknownJvmVersionException, UnknownRuntimeVersionException {
+      this.isIBM = isIBM;
       this.isJRockit = isJRockit;
       final Matcher versionMatcher = JVM_VERSION_PATTERN.matcher(vendorVersion);
       if (versionMatcher.matches()) {
         mega = Integer.parseInt(versionMatcher.group(1));
         major = Integer.parseInt(versionMatcher.group(2));
         minor = Integer.parseInt(versionMatcher.group(3));
-        patch = versionMatcher.groupCount() == 4 ? versionMatcher.group(4) : null;
+        String version_patch = versionMatcher.groupCount() == 4 ? versionMatcher.group(4) : null;
+        if (isIBM) {
+          final Matcher serviceReleaseMatcher = IBM_SERVICE_RELEASE_PATTERN.matcher(runtimeVersion);
+          if (serviceReleaseMatcher.matches()) {
+            String serviceRelease = serviceReleaseMatcher.groupCount() == 1 ? serviceReleaseMatcher.group(1)
+                .toLowerCase() : null;
+            if (null == version_patch && null == serviceRelease) {
+              patch = null;
+            } else if (null == version_patch) {
+              patch = serviceRelease;
+            } else if (null == serviceRelease) {
+              patch = version_patch;
+            } else {
+              patch = version_patch + serviceRelease;
+            }
+          } else {
+            throw new UnknownRuntimeVersionException(vendorVersion, runtimeVersion);
+          }
+        } else {
+          patch = version_patch;
+        }
       } else {
         throw new UnknownJvmVersionException(vendorVersion);
       }
+      this.vmVersion = this.mega + "." + this.major + "." + this.minor + (null == patch ? "" : "_" + patch);
     }
 
     /**
@@ -128,6 +155,10 @@ public class Vm {
       return mega == 1 && major == 6;
     }
 
+    public boolean isIBM() {
+      return isIBM;
+    }
+
     public boolean isJRockit() {
       return isJRockit;
     }
@@ -136,15 +167,15 @@ public class Vm {
       if (!(o instanceof Version)) { return false; }
 
       final Version other = (Version) o;
-      return vendorVersion.equals(other.vendorVersion);
+      return vmVersion.equals(other.vmVersion);
     }
 
     public int hashCode() {
-      return vendorVersion.hashCode();
+      return vmVersion.hashCode();
     }
 
     public String toString() {
-      return vendorVersion;
+      return vmVersion;
     }
   }
 

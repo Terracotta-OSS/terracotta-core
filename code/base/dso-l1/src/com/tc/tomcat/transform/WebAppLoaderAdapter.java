@@ -8,19 +8,19 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterFactory;
-import com.tc.object.loaders.NamedClassLoader;
 
 public class WebAppLoaderAdapter extends ClassAdapter implements ClassAdapterFactory {
 
   public WebAppLoaderAdapter() {
     super(null);
   }
-  
+
   private WebAppLoaderAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
   }
-  
+
   public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
     return new WebAppLoaderAdapter(visitor, loader);
   }
@@ -42,7 +42,7 @@ public class WebAppLoaderAdapter extends ClassAdapter implements ClassAdapterFac
       if (ARETURN == opcode) {
         // name the web app loader
         mv.visitInsn(DUP);
-        mv.visitTypeInsn(CHECKCAST, NamedClassLoader.CLASS);
+        mv.visitTypeInsn(CHECKCAST, ByteCodeUtil.NAMEDCLASSLOADER_CLASS);
         mv.visitFieldInsn(GETSTATIC, "com/tc/object/loaders/Namespace", "TOMCAT_NAMESPACE", "Ljava/lang/String;");
         mv.visitLdcInsn("context:");
         mv.visitVarInsn(ALOAD, 0);
@@ -52,13 +52,13 @@ public class WebAppLoaderAdapter extends ClassAdapter implements ClassAdapterFac
         mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "concat", "(Ljava/lang/String;)Ljava/lang/String;");
         mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/loaders/Namespace", "createLoaderName",
                            "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-        mv.visitMethodInsn(INVOKEINTERFACE, NamedClassLoader.CLASS, "__tc_setClassLoaderName", "(Ljava/lang/String;)V");
+        mv.visitMethodInsn(INVOKEINTERFACE, ByteCodeUtil.NAMEDCLASSLOADER_CLASS, "__tc_setClassLoaderName", "(Ljava/lang/String;)V");
 
         // register the web app loader
         mv.visitInsn(DUP);
-        mv.visitTypeInsn(CHECKCAST, NamedClassLoader.CLASS);
+        mv.visitTypeInsn(CHECKCAST, ByteCodeUtil.NAMEDCLASSLOADER_CLASS);
         mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper",
-                           "registerGlobalLoader", "(" + NamedClassLoader.TYPE + ")V");
+                           "registerGlobalLoader", "(" + ByteCodeUtil.NAMEDCLASSLOADER_TYPE + ")V");
       }
       super.visitInsn(opcode);
     }

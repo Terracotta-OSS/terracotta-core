@@ -4,13 +4,13 @@ Dumping object graph of non-portable instance of type com.tctest.NonPortableInst
      Thread nullThread1 = null
      Thread nullThread2 = null
      com.tctest.NonPortableInstancesTest$Ref ref = (id 1)
-       Object ref = (HashMap, id 2)
+       Object ref = (LinkedHashMap, id 2)
          [entry 0]
            key = "ref"
            value = (com.tctest.NonPortableInstancesTest$Ref, id 3)
              Object ref = (com.tctest.NonPortableInstancesTest$Ref, id 4)
 !!             Object ref = (com.tctest.NonPortableInstancesTest$NotPortable, id 5)
-                 Map m = (HashMap, id 6)
+                 Map m = (LinkedHashMap, id 6)
                    [entry 0]
                      key = "ref"
                      value = (com.tctest.NonPortableInstancesTest$Ref, id 7)

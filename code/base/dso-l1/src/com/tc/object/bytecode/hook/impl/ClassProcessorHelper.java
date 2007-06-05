@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode.hook.impl;
 
@@ -19,6 +20,7 @@ import com.tc.text.Banner;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -62,6 +64,9 @@ public class ClassProcessorHelper {
   private static URLClassLoader              tcLoader;
   private static DSOContext                  gloalContext;
 
+  private static final boolean               TRACE;
+  private static final PrintStream           TRACE_STREAM;
+
   static {
     inStaticInitializer.set(new Object());
 
@@ -80,6 +85,20 @@ public class ClassProcessorHelper {
       NIOWorkarounds.solaris10Workaround();
 
       tcClassPath = buildTerracottaClassPath();
+
+      // See if we should trace or not -- if so grab System.[out|err] and keep a local reference to it. Applications
+      // like WebSphere like to intercept this later and we can get caught in a loop and get a stack overflow
+      final String traceOutput = System.getProperty("l1.classloader.trace.output", "none");
+      PrintStream ts = null;
+      if (traceOutput != null) {
+        if ("stdout".equals(traceOutput)) {
+          ts = System.out;
+        } else if ("stderr".equals(traceOutput)) {
+          ts = System.err;
+        }
+      }
+      TRACE_STREAM = ts;
+      TRACE = TRACE_STREAM != null;
     } catch (Throwable t) {
       Util.exit(t);
       throw new AssertionError(); // this has to be here to make the compiler happy
@@ -97,19 +116,14 @@ public class ClassProcessorHelper {
 
     try {
       URL u = tcLoader.findResource(name); // getResource() would cause an endless loop
-      // System.err.println("### ClassProcessorHelper.getTCResource() "+name+" "+u);
       return u;
     } catch (Exception e) {
-      // System.err.println("!!! ClassProcessorHelper.getTCResource() "+name+"; "+e.toString());
       return null;
     }
   }
 
   public static byte[] getTCClass(String name, ClassLoader cl) throws ClassNotFoundException {
     if (!isAWRuntimeDependency(name)) { return null; }
-
-    // System.err.println("### ClassProcessorHelper.getTCClass() "+name+" "+(cl==null ? "null" :
-    // cl.getClass().getName()));
 
     URL url = tcLoader.findResource(name.replace('.', '/') + ".class"); // getResource() would cause an endless loop
     if (url == null) return null;
@@ -132,17 +146,14 @@ public class ClassProcessorHelper {
       byte[] c = new byte[len];
       System.arraycopy(b, 0, c, 0, len);
       return c;
-
     } catch (Exception e) {
       throw new ClassNotFoundException("Unable to load " + url.toString() + "; " + e.toString(), e);
-
     } finally {
       try {
         is.close();
       } catch (Exception ex) {
         // ignore
       }
-
     }
   }
 
@@ -222,7 +233,6 @@ public class ClassProcessorHelper {
       String jar = entries[i].getAbsolutePath().replace(File.separatorChar, '/');
       rv[i] = new URL("file", "", jar);
     }
-
     return rv;
   }
 
@@ -313,6 +323,7 @@ public class ClassProcessorHelper {
 
   public static void registerGlobalLoader(NamedClassLoader loader) {
     if (!USE_GLOBAL_CONTEXT) { throw new IllegalStateException("Not global DSO mode"); }
+    if (TRACE) traceNamedLoader(loader);
     globalProvider.registerNamedLoader(loader);
   }
 
@@ -392,7 +403,7 @@ public class ClassProcessorHelper {
    * XXX::NOTE:: Donot optimize to return same input byte array if the class is instrumented (I cant imagine why we
    * would). ClassLoader checks the returned byte array to see if the class is instrumented or not to maintain the
    * offset.
-   *
+   * 
    * @see ClassLoaderPreProcessorImpl
    */
   public static byte[] defineClass0Pre(ClassLoader caller, String name, byte[] b, int off, int len, ProtectionDomain pd) {
@@ -401,6 +412,8 @@ public class ClassProcessorHelper {
 
     // needed for JRockit
     name = (name != null) ? name.replace('/', '.') : null;
+
+    if (TRACE) traceLookup(caller, name);
 
     if (isAWDependency(name)) { return b; }
     if (isDSODependency(name)) { return b; }
@@ -475,9 +488,23 @@ public class ClassProcessorHelper {
     // || className.startsWith("org.apache.commons.logging.") || className.startsWith("javax.xml.")
     // || className.startsWith("org.apache.xmlbeans.") || className.startsWith("org.apache.xerces.");
   }
-  
+
   public static int getSessionLockType(String appName) {
     return gloalContext.getSessionLockType(appName);
+  }
+
+  private static void traceNamedLoader(final NamedClassLoader ncl) {
+    trace("loader[" + ncl + "] of type[" + ncl.getClass().getName() + "] registered as["
+          + ncl.__tc_getClassLoaderName() + "]");
+  }
+
+  private static void traceLookup(final ClassLoader cl, final String clazz) {
+    trace("loader[" + cl + "] of type[" + cl.getClass().getName() + "] looking for class[" + clazz + "]");
+  }
+
+  private static void trace(final String msg) {
+    TRACE_STREAM.println("<TRACE> TC classloading: " + msg);
+    TRACE_STREAM.flush();
   }
 
   public static class JarFilter implements FileFilter {

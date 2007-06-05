@@ -3,12 +3,8 @@
  */
 package com.tc.runtime;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 import java.util.ArrayList;
@@ -17,25 +13,17 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-class TCMemoryManagerJdk15 implements JVMMemoryManager {
+class TCMemoryManagerJdk15PoolMonitor extends TCMemoryManagerJdk15Basic {
 
   private static final String          OLD_GEN_NAME     = "OLD GEN";
   // this pool is used when jdk is run with -client option
   private static final String          TENURED_GEN_NAME = "TENURED GEN";                                  
 
-  private static final TCLogger        logger           = TCLogging.getLogger(TCMemoryManagerJdk15.class);
-
-  private final MemoryMXBean           memoryBean;
-
   private final MemoryPoolMXBean       oldGenBean;
   private final GarbageCollectorMXBean oldGenCollectorBean;
 
-  public TCMemoryManagerJdk15() {
-    memoryBean = ManagementFactory.getMemoryMXBean();
-    java.lang.management.MemoryUsage heapUsage = memoryBean.getHeapMemoryUsage();
-    if (heapUsage.getMax() <= 0) {
-      logger.warn("Please specify Max memory using -Xmx flag for Memory manager to work properly");
-    }
+  public TCMemoryManagerJdk15PoolMonitor() {
+    super();
     oldGenBean = getOldGenMemoryPoolBean();
     oldGenCollectorBean = getOldGenCollectorBean();
   }
@@ -81,73 +69,8 @@ class TCMemoryManagerJdk15 implements JVMMemoryManager {
     return true;
   }
 
-  public MemoryUsage getMemoryUsage() {
-    java.lang.management.MemoryUsage heapUsage = memoryBean.getHeapMemoryUsage();
-    // TODO:: Supporting collectionCount in future. Get a cumulative collectionCount from every collector
-    return new Jdk15MemoryUsage(heapUsage, "VM 1.5 Heap Usage");
-  }
-
   public MemoryUsage getOldGenUsage() {
     java.lang.management.MemoryUsage oldGenUsage = oldGenBean.getUsage();
     return new Jdk15MemoryUsage(oldGenUsage, oldGenBean.getName(), oldGenCollectorBean.getCollectionCount());
-  }
-
-  private static final class Jdk15MemoryUsage implements MemoryUsage {
-
-    private final long   max;
-    private final long   free;
-    private final long   used;
-    private final int    usedPercentage;
-    private final String desc;
-    private final long   collectionCount;
-
-    public Jdk15MemoryUsage(java.lang.management.MemoryUsage stats, String desc, long collectionCount) {
-      long statsMax = stats.getMax();
-      if (statsMax <= 0) {
-        this.max = stats.getCommitted();
-      } else {
-        this.max = statsMax;
-      }
-      this.used = stats.getUsed();
-      this.free = this.max - this.used;
-      this.usedPercentage = (int) (this.used * 100 / this.max);
-      this.desc = desc;
-      this.collectionCount = collectionCount;
-    }
-
-    // CollectionCount is not supported
-    public Jdk15MemoryUsage(java.lang.management.MemoryUsage usage, String desc) {
-      this(usage, desc, -1);
-    }
-
-    public String getDescription() {
-      return desc;
-    }
-
-    public long getFreeMemory() {
-      return free;
-    }
-
-    public int getUsedPercentage() {
-      return usedPercentage;
-    }
-
-    public long getMaxMemory() {
-      return max;
-    }
-
-    public long getUsedMemory() {
-      return used;
-    }
-
-    public String toString() {
-      return "Jdk15MemoryUsage ( max = " + max + ", used = " + used + ", free = " + free + ", used % = "
-             + usedPercentage + ", collectionCount = " + collectionCount +" )";
-    }
-
-    public long getCollectionCount() {
-      return collectionCount;
-    }
-
   }
 }

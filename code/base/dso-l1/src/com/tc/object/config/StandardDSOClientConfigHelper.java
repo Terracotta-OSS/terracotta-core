@@ -386,9 +386,12 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   }
 
   private void doAutoconfig(boolean interrogateBootJar) {
+    TransparencyClassSpec spec = null;
+    LockDefinition ld = null;
+
     // Table model stuff
     addIncludePattern("javax.swing.event.TableModelEvent", true);
-    TransparencyClassSpec spec = getOrCreateSpec("javax.swing.event.TableModelEvent");
+    spec = getOrCreateSpec("javax.swing.event.TableModelEvent");
 
     addIncludePattern("javax.swing.table.AbstractTableModel", true);
     spec = getOrCreateSpec("javax.swing.table.AbstractTableModel");
@@ -397,7 +400,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
     spec = getOrCreateSpec("javax.swing.table.DefaultTableModel");
     spec.setCallConstructorOnLoad(true);
-    LockDefinition ld = new LockDefinition("tcdefaultTableLock", ConfigLockLevel.WRITE);
+    ld = new LockDefinition("tcdefaultTableLock", ConfigLockLevel.WRITE);
     ld.commit();
     addLock("* javax.swing.table.DefaultTableModel.set*(..)", ld);
     addLock("* javax.swing.table.DefaultTableModel.insert*(..)", ld);
@@ -523,6 +526,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     spec.setUseNonDefaultConstructor(true);
 
     spec = getOrCreateSpec("java.util.Hashtable", "com.tc.object.applicator.PartialHashMapApplicator");
+
     /*
      * spec.addSupportMethodCreator(new HashtableMethodCreator());
      * spec.addHashtablePutLogSpec(SerializationUtil.PUT_SIGNATURE);
@@ -679,10 +683,6 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
     addPermanentExcludePattern("java.util.WeakHashMap+");
     addPermanentExcludePattern("java.lang.ref.*");
-
-    spec = getOrCreateSpec("java.lang.reflect.AccessibleObject");
-    spec.addTransient("securityCheckCache");
-
     addReflectionPreInstrumentedSpec();
 
     addJDK15PreInstrumentedSpec();

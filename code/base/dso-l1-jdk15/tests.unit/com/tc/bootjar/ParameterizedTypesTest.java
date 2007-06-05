@@ -79,22 +79,34 @@ public class ParameterizedTypesTest extends TCTestCase {
   }
 
   private ClassNode getOriginalClass(String className) throws IOException {
-    // original rt.jar - jar:file:/C:/jdk1.5.0_08/jre/lib/rt.jar!/java/lang/Void.class
-    String voidClass = "/java/lang/Void.class";
-    URL resource = Void.class.getResource(voidClass);
-    assertNotNull("Unable to find original rt.jar", resource);
-    
-    String path = resource.toString();
-    String classPath = path.substring(0, path.indexOf(voidClass) + 1) + className;
-    
-    URL classUrl = new URL(classPath);
-    InputStream is = classUrl.openStream();
-    assertNotNull("Unable to find zip entry " + className, is);
-    
-    ClassReader cr = new ClassReader(is);
-    ClassNode cn = new ClassNode();
-    cr.accept(cn, 0);
-    return cn;
+    // We're working with several possible core classes now to search in the
+    // JVM jars since some JVMs have split their classes accross several jars.
+    // The original jar for the Sun VM is:
+    // jar:file:/C:/jdk1.5.0_08/jre/lib/rt.jar!/java/lang/Void.class
+    String[] core_jvm_classes = new String[] {"/java/lang/Void.class", "/java/lang/Object.class"};
+    for (int i = 0; i < core_jvm_classes.length; i++) {
+      URL resource = Void.class.getResource(core_jvm_classes[i]);
+      assertNotNull("Unable to find class " + core_jvm_classes[i] + " in an original JVM jar", resource);
+      
+      String path = resource.toString();
+      String classPath = path.substring(0, path.indexOf(core_jvm_classes[i]) + 1) + className;
+      
+      URL classUrl = new URL(classPath);
+      InputStream is = null;
+      try {
+        is = classUrl.openStream();
+      } catch (Exception e) {
+        continue;
+      }      
+      
+      if (is != null) {
+        ClassReader cr = new ClassReader(is);
+        ClassNode cn = new ClassNode();
+        cr.accept(cn, 0);
+        return cn;
+      }
+    }
+    fail("Unable to find zip entry " + className);
+    return null;
   }
-
 }

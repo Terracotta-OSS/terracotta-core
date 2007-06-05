@@ -11,7 +11,6 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterFactory;
-import com.tc.object.loaders.NamedClassLoader;
 
 /**
  * Adds NamedClassLoader interface to Geronimo loader, and register it with DSO
@@ -23,17 +22,17 @@ public class MultiParentClassLoaderAdapter extends ClassAdapter implements Opcod
   public MultiParentClassLoaderAdapter() {
     super(null);
   }
-  
+
   private MultiParentClassLoaderAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
   }
-  
+
   public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
     return new MultiParentClassLoaderAdapter(visitor, loader);
   }
 
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-    interfaces = ByteCodeUtil.addInterfaces(interfaces, new String[] { NamedClassLoader.CLASS });
+    interfaces = ByteCodeUtil.addInterfaces(interfaces, new String[] { ByteCodeUtil.NAMEDCLASSLOADER_CLASS });
     super.visit(version, access, name, signature, superName, interfaces);
   }
 
@@ -96,7 +95,7 @@ public class MultiParentClassLoaderAdapter extends ClassAdapter implements Opcod
       if (opcode == RETURN) {
         mv.visitVarInsn(ALOAD, 0);
         mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper",
-                           "registerGlobalLoader", "(" + NamedClassLoader.TYPE + ")V");
+                           "registerGlobalLoader", "(" + ByteCodeUtil.NAMEDCLASSLOADER_TYPE + ")V");
       }
       super.visitInsn(opcode);
     }

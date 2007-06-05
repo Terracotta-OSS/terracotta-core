@@ -11,23 +11,26 @@ import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.hook.impl.JavaLangArrayHelpers;
 
 public class AbstractStringBuilderAdapter extends ClassAdapter {
-
-  public AbstractStringBuilderAdapter(ClassVisitor cv) {
+  private String stringBuilderInternalName;
+  
+  public AbstractStringBuilderAdapter(ClassVisitor cv, String stringBuilderClassName) {
     super(cv);
+    
+    this.stringBuilderInternalName = stringBuilderClassName.replace('.', '/');
   }
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
     if ((DuplicateMethodAdapter.MANAGED_PREFIX + "append").equals(name)) {
-      if ("(I)Ljava/lang/AbstractStringBuilder;".equals(desc)) {
+      if (("(I)L" + stringBuilderInternalName + ";").equals(desc)) {
         return new AppendAdapter(mv, "I");
-      } else if ("(J)Ljava/lang/AbstractStringBuilder;".equals(desc)) { return new AppendAdapter(mv, "J"); }
+      } else if (("(J)L" + stringBuilderInternalName + ";").equals(desc)) { return new AppendAdapter(mv, "J"); }
     }
 
     return mv;
   }
 
-  private static class AppendAdapter extends MethodAdapter implements Opcodes {
+  private class AppendAdapter extends MethodAdapter implements Opcodes {
 
     private final int spaceNeededSlot;
     private final int countSlot;
@@ -55,7 +58,7 @@ public class AbstractStringBuilderAdapter extends ClassAdapter {
         }
 
         mv.visitVarInsn(ALOAD, 0);
-        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/AbstractStringBuilder", ByteCodeUtil.fieldGetterMethod("value"),
+        mv.visitMethodInsn(INVOKEVIRTUAL, stringBuilderInternalName, ByteCodeUtil.fieldGetterMethod("value"),
                            "()[C");
         mv.visitVarInsn(ILOAD, spaceNeededSlot);
         mv.visitVarInsn(ILOAD, countSlot);

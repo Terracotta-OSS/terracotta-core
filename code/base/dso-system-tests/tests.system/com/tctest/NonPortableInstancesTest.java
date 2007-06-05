@@ -26,8 +26,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,7 +51,7 @@ public class NonPortableInstancesTest extends TransparentTestBase {
     private final List        logicalObject  = new ArrayList();
     private Object            nonPortableRoot;
 
-    private final Map         map            = new HashMap();
+    private final Map         map            = new LinkedHashMap();
 
     private final LogAppender logEvents;
 
@@ -225,7 +225,7 @@ public class NonPortableInstancesTest extends TransparentTestBase {
   }
 
   private static Map makeGraphWithNonPortableNodes(Object nonPortable) {
-    Map m = new HashMap();
+    Map m = new LinkedHashMap();
     Ref ref = new Ref();
     Ref r2 = new Ref();
     r2.setRef(nonPortable);

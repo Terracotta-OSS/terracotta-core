@@ -8,8 +8,8 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterFactory;
-import com.tc.object.loaders.NamedClassLoader;
 
 /**
  * All this adapter does is assign names to the three shared loaders in tomcat (common, catalina, and shared). See
@@ -20,11 +20,11 @@ public class BootstrapAdapter extends ClassAdapter implements ClassAdapterFactor
   public BootstrapAdapter() {
     super(null);
   }
-  
+
   private BootstrapAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
   }
-  
+
   public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
     return new BootstrapAdapter(visitor, loader);
   }
@@ -48,15 +48,15 @@ public class BootstrapAdapter extends ClassAdapter implements ClassAdapterFactor
     private void nameAndRegisterLoader(String fieldName, String loaderName) {
       mv.visitVarInsn(ALOAD, 0);
       mv.visitFieldInsn(GETFIELD, "org/apache/catalina/startup/Bootstrap", fieldName, "Ljava/lang/ClassLoader;");
-      mv.visitTypeInsn(CHECKCAST, NamedClassLoader.CLASS);
+      mv.visitTypeInsn(CHECKCAST, ByteCodeUtil.NAMEDCLASSLOADER_CLASS);
       mv.visitInsn(DUP);
       mv.visitFieldInsn(GETSTATIC, "com/tc/object/loaders/Namespace", "TOMCAT_NAMESPACE", "Ljava/lang/String;");
       mv.visitLdcInsn(loaderName);
       mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/loaders/Namespace", "createLoaderName",
                          "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-      mv.visitMethodInsn(INVOKEINTERFACE, NamedClassLoader.CLASS, "__tc_setClassLoaderName", "(Ljava/lang/String;)V");
+      mv.visitMethodInsn(INVOKEINTERFACE, ByteCodeUtil.NAMEDCLASSLOADER_CLASS, "__tc_setClassLoaderName", "(Ljava/lang/String;)V");
       mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper", "registerGlobalLoader",
-                         "(" + NamedClassLoader.TYPE + ")V");
+                         "(" + ByteCodeUtil.NAMEDCLASSLOADER_TYPE + ")V");
     }
 
     public void visitInsn(int opcode) {

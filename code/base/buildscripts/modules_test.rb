@@ -359,7 +359,7 @@ class SubtreeTestRun
             begin
               boot_jar.ensure_created
             rescue
-              fail("Failed to create bootjar for: " + @test_patterns.join(", ") + " under module " + @subtree.build_module.name)
+              STDERR.puts("Failed to create bootjar for: " + @test_patterns.join(", ") + " under module " + @subtree.build_module.name)
             end
         end
 

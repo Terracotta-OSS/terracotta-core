@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter implements Opcodes {
+  private final List               jInnerClassNames = new ArrayList();
   private final ClassNode          tcClassNode;
   private final String             jFullClassSlashes;
   private final String             tcFullClassSlashes;
@@ -35,7 +36,15 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
   public MergeTCToJavaClassAdapter(ClassVisitor cv, TransparencyClassAdapter dsoAdapter, String jFullClassDots,
                                    String tcFullClassDots, ClassNode tcClassNode, Map instrumentedContext) {
     super(cv);
+    
+    List jInnerClasses = tcClassNode.innerClasses;
+    for (Iterator i = jInnerClasses.iterator(); i.hasNext();) {
+      InnerClassNode jInnerClass = (InnerClassNode) i.next();
+      jInnerClassNames.add(jInnerClass.name);
+    }    
+
     this.tcClassNode = tcClassNode;
+    
     this.jFullClassSlashes = jFullClassDots.replace(DOT_DELIMITER, SLASH_DELIMITER);
     this.tcFullClassSlashes = tcFullClassDots.replace(DOT_DELIMITER, SLASH_DELIMITER);
 
@@ -148,9 +157,15 @@ public class MergeTCToJavaClassAdapter extends ChangeClassNameHierarchyAdapter i
     List tcInnerClasses = tcClassNode.innerClasses;
     for (Iterator i = tcInnerClasses.iterator(); i.hasNext();) {
       InnerClassNode innerClass = (InnerClassNode) i.next();
-      innerClass.accept(new TCSuperClassAdapter(cv));
+      if (!tcInnerClassExistInJavaClass(innerClass)) {
+        innerClass.accept(new TCSuperClassAdapter(cv));
+      }
     }
   }
+  
+  private boolean tcInnerClassExistInJavaClass(InnerClassNode tcInnerClass) {
+    return jInnerClassNames.contains(tcInnerClass.name);
+  }  
 
   private class TCSuperClassAdapter extends ClassAdapter implements Opcodes {
     public TCSuperClassAdapter(ClassVisitor cv) {

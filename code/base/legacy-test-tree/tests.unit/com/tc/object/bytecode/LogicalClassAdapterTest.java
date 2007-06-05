@@ -13,6 +13,7 @@ import com.tc.object.bytecode.hook.impl.DSOContextImpl;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.tx.MockTransactionManager;
+import com.tc.util.runtime.Vm;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -201,12 +202,26 @@ public class LogicalClassAdapterTest extends ClassAdapterTestBase {
     assertEquals("world", call.parameters[1]);
 
     call = (MockTCObject.MethodCall) history.get(4);
-    assertEquals(SerializationUtil.ADD, call.method);
-    assertEquals("Hello", call.parameters[0]);
+    if (Vm.isIBM()) {
+      // the IBM JDK delegates all add() method calls internally to addAt()
+      assertEquals(SerializationUtil.ADD_AT, call.method);
+      assertEquals(new Integer(4), call.parameters[0]);
+      assertEquals("Hello", call.parameters[1]);
+    } else {
+      assertEquals(SerializationUtil.ADD, call.method);
+      assertEquals("Hello", call.parameters[0]);
+    }
 
     call = (MockTCObject.MethodCall) history.get(5);
-    assertEquals(SerializationUtil.ADD, call.method);
-    assertEquals("world", call.parameters[0]);
+    if (Vm.isIBM()) {
+      // the IBM JDK delegates all add() method calls internally to addAt()
+      assertEquals(SerializationUtil.ADD_AT, call.method);
+      assertEquals(new Integer(5), call.parameters[0]);
+      assertEquals("world", call.parameters[1]);
+    } else {
+      assertEquals(SerializationUtil.ADD, call.method);
+      assertEquals("world", call.parameters[0]);
+    }
 
     call = (MockTCObject.MethodCall) history.get(6);
     assertEquals(SerializationUtil.REMOVE_AT, call.method);

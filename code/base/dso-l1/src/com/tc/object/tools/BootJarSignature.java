@@ -4,8 +4,9 @@
  */
 package com.tc.object.tools;
 
+import com.tc.util.runtime.UnknownJvmVersionException;
+import com.tc.util.runtime.UnknownRuntimeVersionException;
 import com.tc.util.runtime.Vm;
-import com.tc.util.runtime.Vm.UnknownJvmVersionException;
 
 import java.util.Properties;
 
@@ -20,6 +21,7 @@ public class BootJarSignature {
   private static final String OS_SOLARIS_X86      = "solaris-x86";
 
   private static final String VM_VENDOR_SUN       = "hotspot";
+  private static final String VM_VENDOR_IBM       = "ibm";
   private static final String VM_VENDOR_BEA       = "jrockit";
 
   private final String        signature;
@@ -55,6 +57,7 @@ public class BootJarSignature {
 
     if (vendor.toLowerCase().startsWith("bea ")) { return VM_VENDOR_BEA; }
     if (vendor.toLowerCase().startsWith("apple ")) { return VM_VENDOR_SUN; }
+    if (vendor.toLowerCase().startsWith("ibm ")) { return VM_VENDOR_IBM; }
     if (vendor.toLowerCase().startsWith("sun ")) {
       final Vm.Version vmVersion;
       try {
@@ -62,6 +65,10 @@ public class BootJarSignature {
       } catch (UnknownJvmVersionException ujve) {
         UnsupportedVMException uvme = new UnsupportedVMException("Unable to extract the JVM version with properties: "
                                                                  + source, ujve);
+        throw uvme;
+      } catch (UnknownRuntimeVersionException urve) {
+        UnsupportedVMException uvme = new UnsupportedVMException("Unable to extract the JVM version with properties: "
+                                                                 + source, urve);
         throw uvme;
       }
       if (vmVersion.isJRockit()) {
@@ -80,6 +87,9 @@ public class BootJarSignature {
       return vmVersion.toString().replaceAll("\\.", "");
     } catch (final UnknownJvmVersionException ujve) {
       final UnsupportedVMException uvme = new UnsupportedVMException("Cannot determine VM version", ujve);
+      throw uvme;
+    } catch (final UnknownRuntimeVersionException urve) {
+      final UnsupportedVMException uvme = new UnsupportedVMException("Cannot determine VM version", urve);
       throw uvme;
     }
   }

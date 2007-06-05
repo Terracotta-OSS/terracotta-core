@@ -8,6 +8,7 @@ import org.apache.commons.httpclient.HttpClient;
 
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
 import com.tc.test.server.util.HttpUtil;
+import com.tc.util.runtime.Vm;
 
 import java.io.IOException;
 import java.net.URL;
@@ -20,7 +21,9 @@ import javax.servlet.http.HttpSession;
 public class InstrumentEverythingInContainerTest extends AbstractAppServerTestCase {
 
   public InstrumentEverythingInContainerTest() {
-    //disableAllUntil("2007-05-03");
+    if (Vm.isIBM()) {
+      disableAllUntil("2007-05-13");
+    }
   }
 
   protected boolean isSessionTest() {
