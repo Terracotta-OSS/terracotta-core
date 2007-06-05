@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class ClientMessageTransport extends MessageTransportBase {
   // 2 minutes timeout
-  private static final long                 SYN_ACK_TIMEOUT = 120000;
+  private static final long                 SYN_ACK_TIMEOUT = 20000;
   private final ClientConnectionEstablisher connectionEstablisher;
   private boolean                           wasOpened       = false;
   private TCFuture                          waitForSynAckResult;
