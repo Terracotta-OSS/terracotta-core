@@ -379,33 +379,29 @@ public class TestConfigObject {
     return this.properties.getProperty(SPRING_TESTS_TIMEOUT);
   }
 
-  private String shortPathNameTempDirectory() {
-    return this.properties.getProperty(SHORT_PATH_TEMP_DIR);
-  }
-
   public String executableSearchPath() {
     return this.properties.getProperty(EXECUTABLE_SEARCH_PATH);
   }
 
-  private File effectiveShortPathNameTempDirectory() {
-    if (shortPathNameTempDirectory() != null) {
-      return new File(shortPathNameTempDirectory());
-    } else {
-      return new File(tempDirectoryRoot(), "short-names");
+  private File tcTempDir() {
+    String root = System.getProperty("user.home");
+    if (Os.isWindows()) {
+      File temp = new File("c:/temp");
+      if (!temp.exists()) {
+        temp = new File(root.substring(0, 2) + "/temp");
+      }
+      return temp;
     }
+    return new File(root, ".tc");
   }
 
-  public String appserverServerInstallDir() {
-    // Glassfish gets mad (imqbrokersvc.exe crashes) if the install path is long on windows,
-    // maybe someday this hack won't be needed
-    if (Os.isWindows()) { return new File(effectiveShortPathNameTempDirectory(), "AS").getAbsolutePath(); }
-
-    File buildDir = new File(System.getProperty(TC_BASE_DIR), ".tc-build-cache");
-    return new File(buildDir, "app-server-install").getAbsolutePath();
+  public String appserverServerInstallDir() {        
+    File installDir = new File(tcTempDir(), "appservers");    
+    return installDir.getAbsolutePath();
   }
 
   public String appserverWorkingDir() {
-    return new File(effectiveShortPathNameTempDirectory(), APP_SERVER_WORKING).getAbsolutePath();
+    return new File(tcTempDir(), APP_SERVER_WORKING).getAbsolutePath();
   }
 
   public String normalBootJar() {
