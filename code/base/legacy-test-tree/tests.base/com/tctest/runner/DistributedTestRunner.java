@@ -77,6 +77,7 @@ public class DistributedTestRunner implements ResultsListener {
   private ApplicationBuilder[]                          applicationBuilders;
   private Container[]                                   containers;
   private Container[]                                   validatorContainers;
+  private boolean                                       proxyConnectSubMode = false;
 
   /**
    * @param applicationClass Class of the application to be executed. It should implement the static method required by
@@ -166,6 +167,17 @@ public class DistributedTestRunner implements ResultsListener {
       System.err.println(s);
     }
   }
+  /*
+   * too many parameters passed to constructor.
+   * use set/get instead.
+   */
+  public void setProxyConnectSubMode(boolean onoff) {
+    proxyConnectSubMode = onoff;
+  }
+  
+  public boolean getProxyConnectSubMode() {
+    return(proxyConnectSubMode);
+  }
 
   public void run() {
     try {
@@ -180,9 +192,11 @@ public class DistributedTestRunner implements ResultsListener {
       if (this.startServer) {
         this.server.start();
 
-        // ((SettableConfigItem) this.configFactory.l2DSOConfig().listenPort()).setValue(getServerPort());
-        this.configFactory.addServerToL1Config(null, getActiveServerPort(), -1);
-        this.configFactory.activateConfigurationChange();
+        if (!getProxyConnectSubMode()) {
+          // ((SettableConfigItem) this.configFactory.l2DSOConfig().listenPort()).setValue(getServerPort());
+          this.configFactory.addServerToL1Config(null, getActiveServerPort(), -1);
+          this.configFactory.activateConfigurationChange();
+        }
       }
 
       for (int i = 0; i < containers.length; i++) {
