@@ -67,6 +67,11 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   public void run() {
     try {
       int index = barrier.await();
+      if (index == 0) {
+        DebugUtil.DEBUG = true;
+      }
+      barrier.await();
+      
       unsharedToSharedTest(index, new ReentrantReadWriteLock());
 
       readWriteLockTest(index, nonFairReadWriteLockRoot, nonFairCondition);
@@ -76,6 +81,11 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       readWriteLockTest(index, fairReadWriteLockRoot, fairCondition);
       localLock = new ReentrantReadWriteLock(true);
       singleNodeConditionVariableTesting(index, localLock.writeLock(), localLock.writeLock().newCondition());
+
+      if (index == 0) {
+        DebugUtil.DEBUG = false;
+      }
+      barrier.await();
 
     } catch (Throwable t) {
       notifyError(t);
@@ -605,7 +615,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     }
     barrier.await();
 
-    DebugUtil.DEBUG = true;
     if (DebugUtil.DEBUG) {
       System.err.println("Client id: " + ManagerUtil.getClientID() + ", index: " + index);
     }
@@ -626,8 +635,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
-
-    DebugUtil.DEBUG = false;
 
     if (index == 0) {
       writeLock.lock();

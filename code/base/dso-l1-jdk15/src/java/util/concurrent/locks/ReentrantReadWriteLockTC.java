@@ -153,6 +153,9 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     }
 
     public void lock() {
+      if (DebugUtil.DEBUG) {
+        System.err.println("Client " + ManagerUtil.getClientID() + " in ReentrantReadWriteLock.lock() -- dsoLock: " + ((dsoLock == null)? "null" : "not null") + ", sync: " + sync);
+      }
       dsoLock.lock();
       super.lock();
     }
