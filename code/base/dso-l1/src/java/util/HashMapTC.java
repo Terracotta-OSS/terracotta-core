@@ -270,7 +270,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
   /**
    * Clearable interface - called by CacheManager thru TCObjectLogical
    */
-  public int clearReferences(int toClear) {
+  public int __tc_clearReferences(int toClear) {
     if (!__tc_isManaged()) { throw new AssertionError("clearReferences() called on Unmanaged Map"); }
     synchronized (__tc_managed().getResolveLock()) {
       int cleared = 0;

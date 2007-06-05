@@ -30,7 +30,7 @@ public class TCObjectLogical extends TCObjectImpl {
   protected int clearReferences(Object pojo, int toClear) {
     Assert.assertTrue(pojo instanceof Clearable);
     Clearable clearable = (Clearable) pojo;
-    return clearable.clearReferences(toClear);
+    return clearable.__tc_clearReferences(toClear);
   }
 
 }

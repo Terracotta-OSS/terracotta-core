@@ -223,7 +223,7 @@ public class HashtableTC extends Hashtable implements TCMap, Manageable, Clearab
   /**
    * Clearable interface - called by CacheManager thru TCObjectLogical
    */
-  public synchronized int clearReferences(int toClear) {
+  public synchronized int __tc_clearReferences(int toClear) {
     if (!__tc_isManaged()) { throw new AssertionError("clearReferences() called on Unmanaged Map"); }
     int cleared = 0;
     for (Iterator i = super.entrySet().iterator(); i.hasNext() && toClear > cleared;) {

@@ -2,6 +2,7 @@
 <classpath>
 	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.base.classes" path="tests.base"/>
 	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.system.classes" path="tests.system"/>
+	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.unit.classes" path="tests.unit"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/linked-child-process"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>

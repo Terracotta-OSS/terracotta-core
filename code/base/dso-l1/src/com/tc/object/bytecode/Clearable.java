@@ -5,6 +5,6 @@ package com.tc.object.bytecode;
 
 public interface Clearable {
 
-  public int clearReferences(int toClear);
+  public int __tc_clearReferences(int toClear);
 
 }
