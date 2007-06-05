@@ -74,6 +74,7 @@ public class DeleteDirectory extends CustomCodeAction {
    * @see com.zerog.ia.api.pub.CustomCodeAction#uninstall
    */
   public void uninstall(UninstallerProxy up) throws InstallException {
+    //
   }
 
   /**

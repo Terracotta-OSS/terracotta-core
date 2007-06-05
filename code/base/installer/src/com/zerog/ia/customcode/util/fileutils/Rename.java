@@ -91,8 +91,8 @@ public class Rename extends CustomCodeAction
 	 *	@see com.acme.fileutils.CopyFile
 	 *	@see com.zerog.ia.api.pub.CustomCodeAction#uninstall
 	 */
-	public void uninstall( UninstallerProxy up ) throws InstallException
-	{
+	public void uninstall( UninstallerProxy up ) throws InstallException {
+    //
 	}
 	
 	/**

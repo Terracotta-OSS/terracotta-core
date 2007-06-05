@@ -59,6 +59,7 @@ public class DateStamp extends CustomCodeAction {
    * For the purposes of the this action (DateStamp), this method is not used.
    */
   public void uninstall(UninstallerProxy up) throws InstallException {
+    //
   }
 
   

@@ -4,5 +4,5 @@
 package com.tctest.spring.bean;
 
 public class SingletonSubclass extends Singleton {
-
+  // 
 }
