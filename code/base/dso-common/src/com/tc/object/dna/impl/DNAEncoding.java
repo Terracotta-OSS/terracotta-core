@@ -26,6 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Currency;
 
 /**
  * Utility for encoding/decoding DNA
@@ -77,6 +78,7 @@ public class DNAEncoding {
   private static final byte          TYPE_ID_JAVA_LANG_CLASSLOADER_HOLDER = 21;
   private static final byte          TYPE_ID_ENUM                         = 22;
   private static final byte          TYPE_ID_ENUM_HOLDER                  = 23;
+  private static final byte          TYPE_ID_CURRENCY                     = 24;
 
   private static final byte          ARRAY_TYPE_PRIMITIVE                 = 1;
   private static final byte          ARRAY_TYPE_NON_PRIMITIVE             = 2;
@@ -177,6 +179,10 @@ public class DNAEncoding {
     final int type = literalValues.valueFor(value);
 
     switch (type) {
+      case LiteralValues.CURRENCY:
+        output.writeByte(TYPE_ID_CURRENCY);
+        writeString(((Currency)value).getCurrencyCode(), output);
+        break;
       case LiteralValues.ENUM:
         output.writeByte(TYPE_ID_ENUM);
         Class enumClass = getEnumDeclaringClass(value);
@@ -330,6 +336,8 @@ public class DNAEncoding {
     final byte type = input.readByte();
 
     switch (type) {
+      case TYPE_ID_CURRENCY:
+        return readCurrency(input, type);
       case TYPE_ID_ENUM:
         return readEnum(input, type);
       case TYPE_ID_ENUM_HOLDER:
@@ -763,6 +771,12 @@ public class DNAEncoding {
     } catch (InvocationTargetException e) {
       throw new TCRuntimeException(e);
     }
+  }
+  
+  private Object readCurrency(TCDataInput input, byte type) throws IOException {
+    byte[] data = readByteArray(input);
+    String currencyCode = new String(data, "UTF-8");
+    return Currency.getInstance(currencyCode);
   }
 
   private Object readEnum(TCDataInput input, byte type) throws IOException, ClassNotFoundException {

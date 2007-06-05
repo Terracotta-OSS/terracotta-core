@@ -13,6 +13,7 @@ import com.tc.util.ClassUtils;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.Currency;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,6 +46,7 @@ public class LiteralValues {
   public final static int    JAVA_LANG_CLASSLOADER_HOLDER = 19;
   public final static int    ENUM                         = 20;
   public final static int    ENUM_HOLDER                  = 21;
+  public final static int    CURRENCY                     = 22;
 
   private final Map          values;
 
@@ -83,6 +85,8 @@ public class LiteralValues {
     addMapping(tmp, ClassLoaderInstance.class.getName(), JAVA_LANG_CLASSLOADER_HOLDER);
     addMapping(tmp, ENUM_CLASS_DOTS, ENUM);
     addMapping(tmp, EnumInstance.class.getName(), ENUM_HOLDER);
+    
+    addMapping(tmp, Currency.class.getName(), CURRENCY);
 
     values = Collections.unmodifiableMap(tmp);
   }
