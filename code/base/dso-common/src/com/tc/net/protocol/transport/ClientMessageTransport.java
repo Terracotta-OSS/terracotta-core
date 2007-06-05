@@ -28,7 +28,7 @@ import java.util.List;
  * Client implementation of the transport network layer.
  */
 public class ClientMessageTransport extends MessageTransportBase {
-  // 2 minutes timeout
+  // it was 2 minutes timeout, reduce to 20 sec
   private static final long                 SYN_ACK_TIMEOUT = 20000;
   private final ClientConnectionEstablisher connectionEstablisher;
   private boolean                           wasOpened       = false;
