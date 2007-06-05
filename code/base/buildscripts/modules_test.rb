@@ -356,7 +356,11 @@ class SubtreeTestRun
                 @testrun_results.boot_jar_directory(@subtree),
                 module_set, @ant, @platform,
                 @subtree.boot_jar_config_file(@static_resources).to_s)
-            boot_jar.ensure_created
+            begin
+              boot_jar.ensure_created
+            rescue
+              fail("Failed to create bootjar for: " + @test_patterns.join(", ") + " under module " + @subtree.build_module.name)
+            end
         end
 
         # This is necessary to make Log4J behave correctly. Ah, Log4J is insane.

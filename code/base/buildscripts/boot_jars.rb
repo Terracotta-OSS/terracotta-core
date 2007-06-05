@@ -97,25 +97,30 @@ class BootJar
         PropertyNames::TC_BASE_DIR => @static_resources.root_dir.to_s,
         PropertyNames::MODULES_URL => @build_results.modules_home.to_url
       }
-      @ant.java(:classname   => 'com.tc.object.tools.BootJarTool',
-                :classpath   => classpath.to_s,
-                :jvm         => @jvm.java,
-                :fork        => true,
-                :failonerror => true,
-                :dir         => @build_results.tools_home.to_s) do
+      
+      begin  
+        @ant.java(:classname   => 'com.tc.object.tools.BootJarTool',
+                  :classpath   => classpath.to_s,
+                  :jvm         => @jvm.java,
+                  :fork        => true,
+                  :failonerror => true,
+                  :dir         => @build_results.tools_home.to_s) do
 
-        sysproperties.each do |name, value|
-          @ant.sysproperty(:key => name.xml_escape(true),
-                           :value => value.xml_escape(true))
+          sysproperties.each do |name, value|
+            @ant.sysproperty(:key => name.xml_escape(true),
+                             :value => value.xml_escape(true))
+          end
+
+          @ant.arg(:value => '-o')
+          @ant.arg(:value => @directory.ensure_directory)
+          @ant.arg(:value => '-f')
+          @ant.arg(:value => @config_file)
+          @ant.arg(:value => '-q')
         end
-
-        @ant.arg(:value => '-o')
-        @ant.arg(:value => @directory.ensure_directory)
-        @ant.arg(:value => '-f')
-        @ant.arg(:value => @config_file)
-        @ant.arg(:value => '-q')
+      rescue
+        raise("Bootjar creation failed")
       end
-
+    
       @created = true
     end
     self
