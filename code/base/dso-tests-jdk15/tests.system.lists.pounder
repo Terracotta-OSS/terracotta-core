@@ -2,3 +2,5 @@ ConcurrentHashMapGCTest
 #LinkedBlockingQueueGCTest
 ConcurrentHashMapLoadTest
 FutureTaskTest
+ReentrantReadWriteLockTest
+
