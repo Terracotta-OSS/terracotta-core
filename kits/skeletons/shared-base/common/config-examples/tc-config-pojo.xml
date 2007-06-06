@@ -15,7 +15,7 @@
 -->
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-3.xsd">
+  xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-4.xsd">
   <servers>
 
     <!-- Tell DSO where the Terracotta server can be found. -->

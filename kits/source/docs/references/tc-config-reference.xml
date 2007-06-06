@@ -17,7 +17,7 @@
 -->
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-3.xsd">
+  xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-4.xsd">
 
   <!-- The 'system' section contains configuration data that affects the
      entire Terracotta system as a whole; things like whether to activate

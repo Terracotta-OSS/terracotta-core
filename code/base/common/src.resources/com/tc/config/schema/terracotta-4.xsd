@@ -2,7 +2,7 @@
 
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
   targetNamespace="http://www.terracotta.org/config"
-  xmlns="http://www.terracotta.org/config" version="3">
+  xmlns="http://www.terracotta.org/config" version="4">
 
   <xs:element name="tc-config">
     <xs:complexType>
