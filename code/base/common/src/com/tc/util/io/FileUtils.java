@@ -49,7 +49,11 @@ public class FileUtils {
           queue.add(new CopyTask(_src, _dest));
         }
       } else if (item.getSrc().isFile()) {
-        doCopy(item.getSrc(), item.getDest());
+        try {
+          doCopy(item.getSrc(), item.getDest());
+        } catch (IOException e) {
+          System.err.println("Error copying: [" + item.getSrc() + "] to [" + item.getDest() + "]");
+        }
       } else {
         throw new IOException(item.getSrc() + " is neither a file or a directory");
       }
