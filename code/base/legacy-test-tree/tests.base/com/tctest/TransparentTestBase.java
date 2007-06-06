@@ -155,7 +155,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     if (helper != null) {
       dsoPort = helper.getServerPort();
       jmxPort = helper.getAdminPort();
-    } else if (isActivePassive()) {
+    } else if (isActivePassive() && canRunActivePassive()) {
       // not doing active-passive for proxy yet
       throw new AssertionError("Proxy-connect is yet not running with active-passive mode");
     } else {
