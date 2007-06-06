@@ -53,9 +53,9 @@
 
       <!-- Tell DSO which applications in your web container is using DSO -->
       <web-applications>
-        <web-application>/Cart</web-application>
-        <web-application>/DepartmentTaskList</web-application>
-        <web-application>/Townsend</web-application>
+        <web-application>Cart</web-application>
+        <web-application>DepartmentTaskList</web-application>
+        <web-application>Townsend</web-application>
       </web-applications>
 
       <!-- We declare the field 'service.ProductCatalog.catalog' a root, making it 
