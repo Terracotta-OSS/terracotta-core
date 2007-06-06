@@ -114,6 +114,9 @@ public class ClientConnectionEstablisher {
   private void reconnect(ClientMessageTransport cmt) throws MaxConnectionsExceededException {
     try {
       boolean connected = cmt.isConnected();
+      if (connected) {
+        cmt.logger.warn("Got reconnect request for ClientMessageTransport that is connected.  skipping");
+      }
       for (int i = 0; ((maxReconnectTries < 0) || (i < maxReconnectTries)) && !connected; i++) {
         ConnectionAddressIterator addresses = connAddressProvider.getIterator();
         while (addresses.hasNext() && !connected) {
@@ -147,6 +150,9 @@ public class ClientConnectionEstablisher {
                                  RestoreConnectionCallback callback) {
     final long deadline = System.currentTimeMillis() + timeoutMillis;
     boolean connected = cmt.isConnected();
+    if (connected) {
+      cmt.logger.warn("Got restoreConnection request for ClientMessageTransport that is connected.  skipping");
+    }
     for (int i = 0; !connected; i++) {
       try {
         TCConnection connection = connect(sa, cmt);
