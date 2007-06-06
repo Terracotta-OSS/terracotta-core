@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-Category: terracotta
 Bundle-Copyright: Terracotta, Inc. (c) 2003-2007
-Bundle-Description: Terracotta configuration for clustering Websphere 6.1
+Bundle-Description: Terracotta configuration for clustering Websphere 6.1.0.7
 Bundle-ManifestVersion: 2
-Bundle-Name: Terracotta Configuration for Websphere 6.1
+Bundle-Name: Terracotta Configuration for Websphere 6.1.0.7
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-SymbolicName: org.terracotta.modules.clustered-websphere-6.1
 Bundle-Vendor: Terracotta, Inc.
