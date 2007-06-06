@@ -383,7 +383,7 @@ public class TestConfigObject {
     return this.properties.getProperty(EXECUTABLE_SEARCH_PATH);
   }
 
-  private File tcTempDir() {
+  private File cacheDir() {
     String root = System.getProperty("user.home");
     if (Os.isWindows()) {
       File temp = new File("c:/temp");
@@ -396,12 +396,16 @@ public class TestConfigObject {
   }
 
   public String appserverServerInstallDir() {        
-    File installDir = new File(tcTempDir(), "appservers");    
+    File installDir = new File(cacheDir(), "appservers");    
     return installDir.getAbsolutePath();
   }
 
   public String appserverWorkingDir() {
-    return new File(tcTempDir(), APP_SERVER_WORKING).getAbsolutePath();
+    if (Os.isWindows()) {
+      return new File(cacheDir(), APP_SERVER_WORKING).getAbsolutePath();
+    } else {
+      return new File(this.tempDirectoryRoot(), APP_SERVER_WORKING).getAbsolutePath();
+    }
   }
 
   public String normalBootJar() {
