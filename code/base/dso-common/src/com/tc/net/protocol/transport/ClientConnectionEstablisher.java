@@ -207,13 +207,13 @@ public class ClientConnectionEstablisher {
 
   private void putReconnectRequest(ConnectionRequest request) {
     if (connectionEstablisher == null) {
-      connecting.set(true);
       // First time
       connectionEstablisher = new Thread(new AsyncReconnect(this), "ConnectionEstablisher");
       connectionEstablisher.setDaemon(true);
       connectionEstablisher.start();
 
     }
+    connecting.set(true);
     reconnectRequest.put(request);
   }
 
