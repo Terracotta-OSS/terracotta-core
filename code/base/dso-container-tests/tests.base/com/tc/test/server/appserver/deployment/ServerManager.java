@@ -12,11 +12,14 @@ import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.appserver.NewAppServerFactory;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
+import com.tc.text.Banner;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -72,20 +75,24 @@ public class ServerManager {
     return makeDir(config.appserverServerInstallDir());
   }
 
-  private synchronized File workingDir() throws IOException {
-    String osName = config.osName();
-    File dir = null;
-
-    if (osName != null && osName.startsWith("Windows")) {
-      // MNK-89: Lousy Windows file system!
-      dir = makeDir(config.appserverWorkingDir() + File.separator);
-      File guaranteedUniqueFile = File.createTempFile("servermanager-unique-", "-marker", dir);
-      dir = makeDir(guaranteedUniqueFile.getAbsolutePath() + "-dir" + File.separator);
-    } else {
-      dir = makeDir(tempDir.getAbsolutePath());
+  private synchronized File workingDir() {
+    File workDir = new File(config.appserverWorkingDir());
+    try {
+      if (workDir.exists()) {
+        if (workDir.isDirectory()) {
+          FileUtils.cleanDirectory(workDir);
+        } else {
+          throw new RuntimeException(workDir + " exists, but is not a directory");
+        }
+      }
+    } catch (IOException e) {
+      File prev = workDir;
+      workDir = new File(config.appserverWorkingDir() + "-"
+                         + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()));
+      Banner.warnBanner("Caught IOException setting up workDir as " + prev + ", using " + workDir + " instead");
     }
-    FileUtils.cleanDirectory(dir);
-    return dir;
+
+    return makeDir(workDir.getAbsolutePath());
   }
 
   private File makeDir(String dirPath) {
@@ -108,21 +115,23 @@ public class ServerManager {
         logger.error(stoppable, e);
       }
     }
-    File toDir = new File(tempDir, "working");
+    
+    File dest = new File(tempDir, "working");
+    logger.info("Copying files from " + workingDir + " to " + dest);
+    try {
+      com.tc.util.io.FileUtils.copyFile(workingDir, dest);
+    } catch (IOException ioe) {
+      Banner.warnBanner("IOException caught while copying workingDir files");
+      ioe.printStackTrace();
+    }
 
-    if (MONKEY_MODE) {
-      logger.warn("working dir under short-name: " + workingDir);
-      logger.warn("working dir under temp: " + toDir);
-
-      if (!workingDir.getPath().equals(toDir.getPath())) {
-        logger.warn("Moving " + workingDir + "->" + toDir);
-
-        if (!workingDir.renameTo(toDir)) {
-          logger.warn("could not rename: " + workingDir + "->" + toDir);
-        } else {
-          logger.warn("Moved " + workingDir + "->" + toDir);
-        }
-      }
+    logger.info("Deleting working directory files in " + workingDir);
+    try {
+      FileUtils.forceDelete(workingDir);
+    } catch (IOException ioe) {
+      Banner.warnBanner("IOException caught while deleting workingDir");
+      // print this out, but don't fail test by re-throwing it
+      ioe.printStackTrace();
     }
   }
 
