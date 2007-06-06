@@ -6,6 +6,7 @@ package com.tctest;
 
 import org.apache.commons.io.CopyUtils;
 
+import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
@@ -42,8 +43,9 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
                                                                                                   null,
                                                                                                   new FatalIllegalConfigurationChangeHandler());
 
+    ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(port);
+    ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(adminPort);
     factory.addServerToL1Config(null, port, adminPort);
-    factory.addServerToL2Config(null, port, adminPort);
     L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
     setUpControlledServer(factory, new StandardDSOClientConfigHelper(manager), port, adminPort, configFile
         .getAbsolutePath());

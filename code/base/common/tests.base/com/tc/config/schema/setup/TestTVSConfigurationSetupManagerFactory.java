@@ -22,11 +22,8 @@ import com.tc.object.config.schema.NewL1DSOConfig;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.util.Assert;
 import com.terracottatech.config.Application;
-import com.terracottatech.config.Ha;
-import com.terracottatech.config.NetworkedActivePassive;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
-import com.terracottatech.config.HaMode.Enum;
 
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -336,38 +333,6 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
 
     newL2.setData(BOGUS_FILENAME);
     newL2.setLogs(BOGUS_FILENAME);
-  }
-
-  public void addServerToL2Config(String name, int dsoPort, int jmxPort) {
-    addServerToL2Config(name, dsoPort, jmxPort, -1);
-  }
-
-  public void addServerToL2Config(String name, int dsoPort, int jmxPort, int l2GroupPort) {
-    cleanBeanSetServersIfNeeded(beanSet);
-
-    Server newL2 = this.beanSet.serversBean().addNewServer();
-
-    if (name != null && !name.equals("")) {
-      newL2.setName(name);
-    }
-
-    newL2.setHost(TestConfigBeanSet.DEFAULT_HOST);
-    newL2.setDsoPort(dsoPort);
-    newL2.setJmxPort(jmxPort);
-
-    if (l2GroupPort >= 0) {
-      newL2.setL2GroupPort(l2GroupPort);
-    }
-
-    // newL2.setData(BOGUS_FILENAME);
-    // newL2.setLogs(BOGUS_FILENAME);
-  }
-
-  public void addHaToL2Config(Enum haMode, int electionTime) {
-    Ha newHa = beanSet.serversBean().addNewHa();
-    newHa.setMode(haMode);
-    NetworkedActivePassive nap = newHa.addNewNetworkedActivePassive();
-    nap.setElectionTime(electionTime);
   }
 
   private Server findL2Bean(String name) {

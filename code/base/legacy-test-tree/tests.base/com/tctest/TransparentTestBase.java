@@ -91,6 +91,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     setUp(configFactory(), configHelper());
 
     RestartTestHelper helper = null;
+    PortChooser portChooser = new PortChooser();
     if ((isCrashy() && canRunCrash()) || useExternalProcess()) {
       // javaHome is set here only to enforce that java home is defined in the test config
       // javaHome is set again inside RestartTestEnvironment because how that class is used
@@ -98,27 +99,30 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       setJavaHome();
 
       helper = new RestartTestHelper(mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_CRASH),
-                                     new RestartTestEnvironment(getTempDirectory(), new PortChooser(),
+                                     new RestartTestEnvironment(getTempDirectory(), portChooser,
                                                                 RestartTestEnvironment.PROD_MODE));
-      // ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(helper.getServerPort());
-      // configFactory().activateConfigurationChange();
       int dsoPort = helper.getServerPort();
       int adminPort = helper.getAdminPort();
-      configFactory().addServerToL1Config(null, dsoPort, -1);
-      configFactory().addServerToL2Config(null, dsoPort, adminPort);
+      ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(dsoPort);
+      ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(adminPort);
+      configFactory().addServerToL1Config(null, dsoPort, adminPort);
       serverControl = helper.getServerControl();
     } else if (isActivePassive() && canRunActivePassive()) {
-      setUpActivePassiveServers();
+      setUpActivePassiveServers(portChooser);
     } else {
-      ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(0);
+      int dsoPort = portChooser.chooseRandomPort();
+      int adminPort = portChooser.chooseRandomPort();
+      ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(dsoPort);
+      ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(adminPort);
+      configFactory().addServerToL1Config(null, dsoPort, -1);
     }
-    
+
     if (canRunProxyConnect()) {
-      setupProxyConnect(helper);
+      setupProxyConnect(helper, portChooser);
     }
 
     this.doSetUp(this);
-    
+
     if (canRunProxyConnect()) {
       this.runner.setProxyConnectSubMode(true);
     }
@@ -131,13 +135,13 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     }
   }
 
-  private final void setUpActivePassiveServers() throws Exception {
+  private final void setUpActivePassiveServers(PortChooser portChooser) throws Exception {
     controlledCrashMode = true;
     setJavaHome();
     apSetupManager = new ActivePassiveTestSetupManager();
     setupActivePassiveTest(apSetupManager);
     apServerManager = new ActivePassiveServerManager(mode()
-        .equals(TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE), getTempDirectory(), new PortChooser(),
+        .equals(TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE), getTempDirectory(), portChooser,
                                                      ActivePassiveServerConfigCreator.DEV_MODE, apSetupManager,
                                                      runnerConfig.startTimeout(), javaHome);
     apServerManager.addServersToL1Config(configFactory);
@@ -146,12 +150,11 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     throw new AssertionError("The sub-class (test) should override this method.");
   }
-  
-  private final void setupProxyConnect(RestartTestHelper helper) throws Exception {
-    PortChooser pc = new PortChooser();
+
+  private final void setupProxyConnect(RestartTestHelper helper, PortChooser portChooser) throws Exception {
     int dsoPort = 0;
     int jmxPort = 0;
-    
+
     if (helper != null) {
       dsoPort = helper.getServerPort();
       jmxPort = helper.getAdminPort();
@@ -159,20 +162,20 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       // not doing active-passive for proxy yet
       throw new AssertionError("Proxy-connect is yet not running with active-passive mode");
     } else {
-      dsoPort = pc.chooseRandomPort();
-      ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(dsoPort);
-      jmxPort = pc.chooseRandomPort();
+      dsoPort = portChooser.chooseRandomPort();
+      jmxPort = portChooser.chooseRandomPort();
     }
-        
-    int dsoProxyPort = pc.chooseRandomPort();
+
+    int dsoProxyPort = portChooser.chooseRandomPort();
     ProxyConnectManagerImpl mgr = ProxyConnectManagerImpl.getManager();
     mgr.setDsoPort(dsoPort);
     mgr.setProxyPort(dsoProxyPort);
     mgr.setupProxy();
     setupProxyConnectTest(mgr);
 
+    ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(dsoPort);
+    ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(jmxPort);
     configFactory().addServerToL1Config(null, dsoProxyPort, -1);
-    configFactory().addServerToL2Config(null, dsoPort, jmxPort);
 
     mgr.startProxyTest();
   }
@@ -202,8 +205,11 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     setJavaHome();
     serverControl = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile, true, javaHome);
     setUp(factory, helper);
+
+    ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(serverPort);
+    ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(adminPort);
     configFactory().addServerToL1Config(null, serverPort, adminPort);
-    configFactory().addServerToL2Config(null, serverPort, adminPort);
+    // configFactory().addServerToL2Config(null, serverPort, adminPort);
   }
 
   private final void setUp(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper)
@@ -235,7 +241,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   private boolean isActivePassive() {
     return TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE.equals(mode());
   }
-  
+
   public DSOClientConfigHelper getConfigHelper() {
     return this.configHelper;
   }
@@ -307,7 +313,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected boolean canRunActivePassive() {
     return false;
   }
-  
+
   protected boolean canRunProxyConnect() {
     return false;
   }
@@ -405,7 +411,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
         serverControl.shutdown();
       }
     }
-    
+
     super.tearDown();
   }
 

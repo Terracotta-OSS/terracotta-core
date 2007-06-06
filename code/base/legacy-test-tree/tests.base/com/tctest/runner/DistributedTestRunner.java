@@ -28,7 +28,6 @@ import com.tc.simulator.container.ContainerStateFactory;
 import com.tc.simulator.control.Control;
 import com.tc.simulator.listener.ResultsListener;
 import com.tc.test.activepassive.ActivePassiveServerManager;
-import com.tc.util.concurrent.ThreadUtil;
 import com.tcsimulator.ControlImpl;
 import com.tcsimulator.container.ContainerStateFactoryObject;
 import com.tcsimulator.listener.QueuePrinter;
@@ -42,7 +41,7 @@ import java.util.Map;
  * Takes an application configuration and some parameters and runs a single-vm, multi-node (multi-classloader) test.
  */
 public class DistributedTestRunner implements ResultsListener {
-  private static final boolean                          DEBUG   = false;
+  private static final boolean                          DEBUG               = false;
 
   private final boolean                                 startServer;
 
@@ -56,8 +55,8 @@ public class DistributedTestRunner implements ResultsListener {
   private final ContainerStateFactory                   containerStateFactory;
   private final TestGlobalIdGenerator                   globalIdGenerator;
   private final TCServerImpl                            server;
-  private final List                                    errors  = new ArrayList();
-  private final List                                    results = new ArrayList();
+  private final List                                    errors              = new ArrayList();
+  private final List                                    results             = new ArrayList();
   private final DistributedTestRunnerConfig             config;
   private final TestTVSConfigurationSetupManagerFactory configFactory;
   private boolean                                       startTimedOut;
@@ -119,13 +118,7 @@ public class DistributedTestRunner implements ResultsListener {
     initializedClients();
 
     L2TVSConfigurationSetupManager manager;
-    if (DEBUG) {
-      this.configFactory.addServerToL2Config("testing", 8510, 8520);
-      this.configFactory.activateConfigurationChange();
-      manager = this.configFactory.createL2TVSConfigurationSetupManager("testing");
-    } else {
-      manager = this.configFactory.createL2TVSConfigurationSetupManager(null);
-    }
+    manager = this.configFactory.createL2TVSConfigurationSetupManager(null);
 
     if (this.startServer) {
       server = new TCServerImpl(manager, new TCThreadGroup(new ThrowableHandler(TCLogging
@@ -167,16 +160,16 @@ public class DistributedTestRunner implements ResultsListener {
       System.err.println(s);
     }
   }
+
   /*
-   * too many parameters passed to constructor.
-   * use set/get instead.
+   * too many parameters passed to constructor. use set/get instead.
    */
   public void setProxyConnectSubMode(boolean onoff) {
     proxyConnectSubMode = onoff;
   }
-  
+
   public boolean getProxyConnectSubMode() {
-    return(proxyConnectSubMode);
+    return (proxyConnectSubMode);
   }
 
   public void run() {
@@ -191,12 +184,6 @@ public class DistributedTestRunner implements ResultsListener {
       visitApplicationClassLoaderConfig();
       if (this.startServer) {
         this.server.start();
-
-        if (!getProxyConnectSubMode()) {
-          // ((SettableConfigItem) this.configFactory.l2DSOConfig().listenPort()).setValue(getServerPort());
-          this.configFactory.addServerToL1Config(null, getActiveServerPort(), -1);
-          this.configFactory.activateConfigurationChange();
-        }
       }
 
       for (int i = 0; i < containers.length; i++) {
@@ -257,14 +244,6 @@ public class DistributedTestRunner implements ResultsListener {
       }
       throw (Exception) l.get(l.size() - 1);
     }
-  }
-
-  private int getActiveServerPort() {
-    while (!server.isActive()) {
-      System.err.println("Waiting for Server to become Active ...");
-      ThreadUtil.reallySleep(500);
-    }
-    return this.server.getDSOListenPort();
   }
 
   public boolean success() {
