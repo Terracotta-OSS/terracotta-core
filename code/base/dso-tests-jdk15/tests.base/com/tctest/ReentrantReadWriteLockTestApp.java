@@ -667,6 +667,9 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       barrier2.await();
       boolean isLocked = readLock.tryLock(1, TimeUnit.SECONDS);
       assertTryLockResult(!isLocked);
+      if (DebugUtil.DEBUG) {
+        System.err.println("Client " + ManagerUtil.getClientID() + " in tryReadLockMultiNodeTest last test, isLocked: " + isLocked);
+      }
     }
     barrier.await();
   }
