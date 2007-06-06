@@ -6,7 +6,6 @@ package com.tc.test.server.appserver.deployment;
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.objectserver.control.ExtraProcessServerControl;
-import com.tc.test.TestConfigObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -55,8 +54,8 @@ public class DSOServer extends AbstractStoppable {
     L2ConfigBuilder l2 = builder.getServers().getL2s()[0];
     l2.setDSOPort(serverPort);
     l2.setJMXPort(adminPort);
-    l2.setData(TestConfigObject.getInstance().tempDirectoryRoot() + File.separator + "data");
-    l2.setLogs(TestConfigObject.getInstance().tempDirectoryRoot() + File.separator + "logs");
+    l2.setData(workingDir + File.separator + "data");
+    l2.setLogs(workingDir + File.separator + "logs");
     if(withPersistentStore) {
       l2.setPersistenceMode("permanent-store");  // XXX make this one configurable
     }
