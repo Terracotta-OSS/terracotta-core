@@ -92,7 +92,8 @@ public class L1ReconnectTest extends TransparentTestBase {
 
     // locks
     LockConfigBuilder[] locks = new LockConfigBuilder[] {
-        new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK, L1ReconnectTestApp.L1Client.class, LockConfigBuilder.LEVEL_WRITE),
+        new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK, L1ReconnectTestApp.L1Client.class,
+                                  LockConfigBuilder.LEVEL_WRITE),
         new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK, testAppClass, LockConfigBuilder.LEVEL_WRITE) };
 
     cb.getApplication().getDSO().setLocks(locks);
@@ -106,8 +107,7 @@ public class L1ReconnectTest extends TransparentTestBase {
     cb.getApplication().getDSO().setInstrumentedClasses(instrClasses);
 
     // roots
-    RootConfigBuilder[] roots = new RootConfigBuilder[] {
-        new RootConfigBuilderImpl(testAppClass, "sum", "sum"),
+    RootConfigBuilder[] roots = new RootConfigBuilder[] { new RootConfigBuilderImpl(testAppClass, "sum", "sum"),
         new RootConfigBuilderImpl(L1ReconnectTestApp.L1Client.class, "sum", "sum") };
     cb.getApplication().getDSO().setRoots(roots);
 

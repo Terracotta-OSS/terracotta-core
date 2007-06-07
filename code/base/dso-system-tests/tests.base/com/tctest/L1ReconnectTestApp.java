@@ -16,6 +16,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.File;
@@ -27,9 +28,7 @@ import java.util.List;
 /**
  * Test for l1-reconnect feature: CDV-97 An extra L1 is created and connected to L2 through a proxy (TCPProxy) We will
  * use this proxy to simulate network disconnect to make sure the L1 is still operating correctly upon reconnecting
- * within a specified time
- * 
- * NOT YET FINISHED
+ * within a specified time NOT YET FINISHED
  * 
  * @author hhuynh
  */
@@ -77,11 +76,25 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
 
     ExtraL1ProcessControl client = spawnNewClient(dsoProxyPort);
     // this L1 client will take approximately 100s to finish
-    
-    // here we want to simulate network glitches by 
-    // turn off the proxy and turn it back on    
-    
-    
+
+    boolean stopProxy = false;
+    while (!stopProxy) {
+      synchronized (sum) {
+        if (sum[0] > 10) stopProxy = true;
+      }
+    }
+    System.err.println("\n\n### stopping proxy...");
+    proxy.stop();
+    System.err.println("\n\n### stopping proxy...done");
+
+    ThreadUtil.reallySleep(1 * 1000);
+    System.err.println("\n\n### starting proxy...");
+    proxy.start();
+    System.err.println("\n\n### starting proxy...done");
+
+    // here we want to simulate network glitches by
+    // turn off the proxy and turn it back on
+
     int exitCode = client.waitFor();
     proxy.status();
     proxy.stop();
@@ -89,24 +102,25 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
     if (exitCode != 0) {
       Assert.failure("L1Client threw exception!");
     }
-    
+
     synchronized (sum) {
       System.out.println("SUM = " + sum[0]);
-      Assert.assertEquals(4950, sum[0]);
+      Assert.assertEquals(99, sum[0]);
     }
   }
 
   public static class L1Client {
     // roots
-    private int[]         sum     = new int[1];
+    private int[] sum = new int[1];
 
     // takes roughly 100 seconds to finish
     public void calculateSum() throws Exception {
       for (int i = 0; i < 100; i++) {
+        if (i > 0 && (i % 10) == 0) ThreadUtil.reallySleep(10 * 100);
         synchronized (sum) {
-          sum[0] += i;
-          Thread.sleep(1000);
+          sum[0] = i;
         }
+        System.err.println("\n\n### Transaction # " + i);
       }
     }
 
