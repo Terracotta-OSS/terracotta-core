@@ -98,10 +98,10 @@ class BuildResults
           ant.jar(:destfile => path.to_s) do
               ant.fileset(:dir => @build_dir.to_s,
                           :includes => "**/testrun*/**,**/tests_aggregation/*",
-                          :excludes => "**/*.jar,**/*.class,**/app-server-install/**,**/*.war,**/core")
+                          :excludes => "**/*.jar,**/*.class,**/app-server-install/**,**/*.war,**/core,**/*.rar,**/var,**/repository")
               ant.fileset(:dir => @build_dir.to_s,
                           :includes => "**/normal-boot-jars/*.jar")
-              ant.fileset(:dir => @build_dir.to_s, :includes => "modules/*")
+              #ant.fileset(:dir => @build_dir.to_s, :includes => "modules/*")
           end
 
           puts "Done archiving build."
