@@ -3,9 +3,20 @@
  */
 package com.tctest;
 
+import com.tc.util.runtime.Vm;
+
+import java.util.Date;
+
 public class GenericQueueTest extends TransparentTestBase {
   private static final int NODE_COUNT = 3;
 
+  public GenericQueueTest() {
+    if (Vm.isIBM()) {
+      // these currently don't have to work on the IBM JDK
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
+  }
+  
   protected void setUp() throws Exception {
     super.setUp();
     getTransparentAppConfig().setClientCount(NODE_COUNT);
