@@ -154,7 +154,6 @@ public class SessionEventsTest extends AbstractAppServerTestCase {
   private int port;
 
   public void testListener() throws Exception {
-    collectVmStats();
     startDsoServer();
 
     port = startAppServer(true).serverPort();

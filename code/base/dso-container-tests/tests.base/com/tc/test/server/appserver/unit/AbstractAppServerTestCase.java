@@ -13,7 +13,6 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.object.config.schema.Lock;
 import com.tc.object.config.schema.Root;
-import com.tc.process.HeartBeatService;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
@@ -30,8 +29,8 @@ import com.tc.test.server.dsoserver.StandardDsoServer;
 import com.tc.test.server.dsoserver.StandardDsoServerParameters;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
 import com.tc.test.server.tcconfig.TerracottaServerConfigGenerator;
+import com.tc.test.server.util.AppServerUtil;
 import com.tc.test.server.util.HttpUtil;
-import com.tc.test.server.util.VmStat;
 import com.tc.text.Banner;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
@@ -371,21 +370,6 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       params.appendJvmArgs("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + "." + ConfigProperties.REQUEST_BENCHES
                            + "=true");
 
-      /*
-      params.appendJvmArgs("-Dtc.classloader.writeToDisk=true");
-      params.appendJvmArgs("-verbose:gc");
-      if (!Vm.isIBM()) {
-        params.appendJvmArgs("-Xloggc:" + new File(this.workingDir, "node-" + nodeNumber + ".gc.log"));
-      }
-      params.appendJvmArgs("-XX:+PrintGCDetails");
-      if (false && nodeNumber == 0) {
-        int debugPort = 8000 + nodeNumber;
-        System.out.println("Waiting for debugger connection on port " + debugPort);
-        params.appendJvmArgs("-Xdebug");
-        params.appendJvmArgs("-Xrunjdwp:server=y,transport=dt_socket,address=" + debugPort + ",suspend=y");
-      }
-      */
-      
       params.addWar(warFile());
       AppServerResult r = (AppServerResult) appServer.start(params);
 
@@ -423,59 +407,20 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     return createUrl(port, servletClass, "");
   }
 
-  private boolean awaitShutdown(int timewait) throws Exception {
-    long start = System.currentTimeMillis();
-    boolean foundAlive = false;
-    do {
-      Thread.sleep(1000);
-      foundAlive = HeartBeatService.anyAppServerAlive();
-    } while (foundAlive && System.currentTimeMillis() - start < timewait);
-
-    return foundAlive;
-  }
-
   /**
    * If overridden <tt>super.tearDown()</tt> must be called to ensure that servers are all shutdown properly
    *
    * @throws Exception
    */
   protected void tearDown() throws Exception {
-    try {
       System.out.println("in tearDown...");
       for (Iterator iter = appservers.iterator(); iter.hasNext();) {
         Server server = (Server) iter.next();
         server.stop();
       }
-      awaitShutdown(10 * 1000);
       if (dsoServer != null && dsoServer.isRunning()) dsoServer.stop();
-      System.out.println("Send kill signal to app servers...");
-      HeartBeatService.sendKillSignalToChildren();
-    } finally {
-      VmStat.stop();
-      synchronized (workingDirLock) {
-        File dest = new File(tempDir, getName());
-        System.err.println("Copying files from " + workingDir + " to " + dest);
-        try {
-          com.tc.util.io.FileUtils.copyFile(workingDir, dest);
-        } catch (IOException ioe) {
-          Banner.warnBanner("IOException caught while copying workingDir files");
-          ioe.printStackTrace();
-        }
-
-        System.err.println("Deleting working directory files in " + workingDir);
-        try {
-          FileUtils.forceDelete(workingDir);
-        } catch (IOException ioe) {
-          Banner.warnBanner("IOException caught while deleting workingDir");
-          // print this out, but don't fail test by re-throwing it
-          ioe.printStackTrace();
-        }
-      }
-    }
-  }
-
-  protected final void collectVmStats() throws IOException {
-    VmStat.start(workingDir);
+      
+      AppServerUtil.shutdownAndArchive(workingDir, new File(tempDir, getName()));
   }
 
   private synchronized File warFile() throws Exception {

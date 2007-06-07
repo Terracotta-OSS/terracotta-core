@@ -6,6 +6,7 @@ package com.tc.test.server.appserver;
 
 import org.apache.commons.io.FileUtils;
 
+import com.tc.test.server.util.AppServerUtil;
 import com.tc.util.Assert;
 
 import java.io.File;
@@ -64,14 +65,14 @@ public abstract class AbstractAppServerInstallation implements AppServerStartupE
     this.serverInstall = ConcreteReadOnlyAppServerInstallation.create(host, serverDir, serverType(), majorVersion,
                                                                       minorVersion);
 
-    this.serverBaseDir = new File(serverInstall, serverType() + "-" + majorVersion + "." + minorVersion);
+    this.serverBaseDir = new File(serverInstall, AppServerUtil.getFullName(serverType(), majorVersion, minorVersion));
 
     this.workingDirectory = workingDir;
     (this.dataDirectory = new File(workingDirectory + File.separator + AppServerConstants.DATA_DIR)).mkdir();
     this.sandboxDirectory = workingDirectory;
     // description file for the working directory with filename indicating the server type. Can add more desciptive
     // information if needed.
-    new File(workingDir + File.separator + serverType() + "-" + majorVersion + "." + minorVersion).createNewFile();
+    new File(workingDir + File.separator + AppServerUtil.getFullName(serverType(), majorVersion, minorVersion)).createNewFile();
   }
 
   public final File dataDirectory() {

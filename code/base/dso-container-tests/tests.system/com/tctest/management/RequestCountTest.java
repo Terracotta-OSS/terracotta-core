@@ -39,7 +39,6 @@ public final class RequestCountTest extends AbstractAppServerTestCase {
   private static final String   CLIENT_NAME_PREFIX = "client-";
 
   public void testRequestCount() throws Throwable {
-    collectVmStats();
     assertTimeDirection();
     List jvmArgs = new ArrayList(1);
     jvmArgs.add("-Dcom.sun.management.jmxremote");

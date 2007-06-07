@@ -37,7 +37,6 @@ public class MultiNodeLoadTest extends AbstractAppServerTestCase {
   }
 
   protected void runFourNodeLoad(boolean sticky) throws Throwable {
-    collectVmStats();
     assertTimeDirection();
     startDsoServer();
     runNodes(4, sticky);

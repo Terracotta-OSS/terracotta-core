@@ -12,14 +12,13 @@ import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.appserver.NewAppServerFactory;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
+import com.tc.test.server.util.AppServerUtil;
 import com.tc.text.Banner;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -87,8 +86,7 @@ public class ServerManager {
       }
     } catch (IOException e) {
       File prev = workDir;
-      workDir = new File(config.appserverWorkingDir() + "-"
-                         + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()));
+      workDir = new File(config.appserverWorkingDir() + "-" + System.currentTimeMillis());
       Banner.warnBanner("Caught IOException setting up workDir as " + prev + ", using " + workDir + " instead");
     }
 
@@ -116,23 +114,7 @@ public class ServerManager {
       }
     }
     
-    File dest = new File(tempDir, "working");
-    logger.info("Copying files from " + workingDir + " to " + dest);
-    try {
-      com.tc.util.io.FileUtils.copyFile(workingDir, dest);
-    } catch (IOException ioe) {
-      Banner.warnBanner("IOException caught while copying workingDir files");
-      ioe.printStackTrace();
-    }
-
-    logger.info("Deleting working directory files in " + workingDir);
-    try {
-      FileUtils.forceDelete(workingDir);
-    } catch (IOException ioe) {
-      Banner.warnBanner("IOException caught while deleting workingDir");
-      // print this out, but don't fail test by re-throwing it
-      ioe.printStackTrace();
-    }
+    AppServerUtil.shutdownAndArchive(workingDir, new File(tempDir, "working"));
   }
 
   protected boolean cleanTempDir() {
