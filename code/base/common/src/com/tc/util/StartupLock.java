@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -14,6 +15,8 @@ import com.tc.util.startuplock.LocationNotCreatedException;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.channels.OverlappingFileLockException;
 
 /**
@@ -76,11 +79,29 @@ public class StartupLock {
     } catch (OverlappingFileLockException e) {
       // File is already locked in this thread or virtual machine
     } catch (IOException ioe) {
+      reportDataFileLockingError("Unable to acquire file lock on '" + tcFile.getFile().getAbsolutePath()
+          + "'.  Aborting Terracotta server startup.", null);
       throw new TCAssertionError(ioe);
     }
 
     Assert.eval(tcFile.exists());
     return lock != null;
+  }
+
+  private static void reportDataFileLockingError(String message, Exception e) {
+    StringBuffer errorMsg = new StringBuffer("\n");
+
+    if (message != null) {
+      errorMsg.append("ERROR: ").append(message).append("\n");
+    }
+
+    if (e != null) {
+      StringWriter sw = new StringWriter();
+      e.printStackTrace(new PrintWriter(sw));
+      errorMsg.append(sw.toString());
+    }
+
+    System.err.println(errorMsg.toString());
   }
 
   private void ensureFileExists(TCFile file) throws FileNotCreatedException {
@@ -89,7 +110,7 @@ public class StartupLock {
         file.createNewFile();
       } catch (IOException e) {
         throw new FileNotCreatedException("Could not create file for startup lock: " + file
-                                          + ". Please ensure that this file can be created.");
+            + ". Please ensure that this file can be created.");
       }
       Assert.eval(file.exists());
     }
@@ -101,7 +122,7 @@ public class StartupLock {
         location.forceMkdir();
       } catch (IOException e) {
         throw new LocationNotCreatedException("Could not create location for startup lock: " + location
-                                              + ". Please ensure that this directory can be created.");
+            + ". Please ensure that this directory can be created.");
       }
     }
   }
