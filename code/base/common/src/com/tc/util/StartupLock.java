@@ -89,10 +89,11 @@ public class StartupLock {
   }
 
   private void reportDataFileLockingError(String message, Exception e) {
-    StringBuffer errorMsg = new StringBuffer("\n");
+    String newLine = System.getProperty("line.separator");
+    StringBuffer errorMsg = new StringBuffer(newLine);
 
     if (message != null) {
-      errorMsg.append("ERROR: ").append(message).append("\n");
+      errorMsg.append("ERROR: ").append(message).append(newLine);
     }
 
     if (e != null) {

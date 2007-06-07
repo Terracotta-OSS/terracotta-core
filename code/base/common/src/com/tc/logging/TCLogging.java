@@ -31,7 +31,7 @@ import java.util.Properties;
 
 /**
  * Factory class for obtaining TCLogger instances.
- *
+ * 
  * @author teck
  */
 public class TCLogging {
@@ -64,7 +64,7 @@ public class TCLogging {
   private static final String       FILE_AND_JMX_PATTERN               = "%d [%t] %p %c - %m%n";
 
   private static TCLogger           console;
-  private static JMXAppender         jmxAppender;
+  private static JMXAppender        jmxAppender;
   private static Appender           consoleAppender;
   private static DelegatingAppender delegateFileAppender;
   private static DelegatingAppender delegateBufferingAppender;
@@ -136,10 +136,11 @@ public class TCLogging {
   }
 
   private static void reportLoggingError(String message, Exception e) {
-    StringBuffer errorMsg = new StringBuffer("\n");
+    String newLine = System.getProperty("line.separator");
+    StringBuffer errorMsg = new StringBuffer(newLine);
 
     if (message != null) {
-      errorMsg.append("WARN: ").append(message).append("\n");
+      errorMsg.append("WARN: ").append(message).append(newLine);
     }
 
     if (e != null) {
