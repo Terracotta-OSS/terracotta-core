@@ -250,7 +250,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   private void archiveSandboxLogs() {
     synchronized (workingDirLock) {
       if (installation != null) {
-        String src = installation.sandboxDirectory().getParentFile().getAbsolutePath();
+        String src = installation.sandboxDirectory().getAbsolutePath();
         String dest = new File(tempDir, "archive-logs-" + System.currentTimeMillis() + ".zip").getAbsolutePath();
 
         String msg = "\n";
