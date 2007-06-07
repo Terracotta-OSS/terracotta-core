@@ -88,7 +88,7 @@ public class StartupLock {
     return lock != null;
   }
 
-  private static void reportDataFileLockingError(String message, Exception e) {
+  private void reportDataFileLockingError(String message, Exception e) {
     StringBuffer errorMsg = new StringBuffer("\n");
 
     if (message != null) {
