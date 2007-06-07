@@ -106,6 +106,22 @@ public class TCClassFactoryImpl implements TCClassFactory {
         return new AccessibleObjectApplicator(encoding);
       } else if ("java.io.File".equals(name)) {
         return new FileApplicator(clazz, encoding);
+      } else if ("java.util.concurrent.atomic.AtomicInteger".equals(name)) {
+        try {
+          Class klass = Class.forName("com.tc.object.applicator.AtomicIntegerApplicator");
+          Constructor constructor = klass.getDeclaredConstructor(new Class[] {DNAEncoding.class});
+          return (ChangeApplicator)constructor.newInstance(new Object[] {encoding});
+        } catch (Exception e) {
+          throw new AssertionError(e);
+        }
+      } else if ("java.util.concurrent.atomic.AtomicLong".equals(name)) {
+        try {
+          Class klass = Class.forName("com.tc.object.applicator.AtomicLongApplicator");
+          Constructor constructor = klass.getDeclaredConstructor(new Class[] {DNAEncoding.class});
+          return (ChangeApplicator)constructor.newInstance(new Object[] {encoding});
+        } catch (Exception e) {
+          throw new AssertionError(e);
+        }
       } else {
         return new PhysicalApplicator(clazz, encoding);
       }

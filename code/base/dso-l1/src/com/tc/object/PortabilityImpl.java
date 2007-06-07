@@ -31,6 +31,8 @@ public class PortabilityImpl implements Portability {
     nonInstrumentedClass.add("java.util.AbstractCollection");
     nonInstrumentedClass.add("java.lang.Enum");
     nonInstrumentedClass.add("java.lang.reflect.AccessibleObject");
+    nonInstrumentedClass.add("java.util.concurrent.atomic.AtomicInteger");
+    nonInstrumentedClass.add("java.util.concurrent.atomic.AtomicLong");
     nonInstrumentedClass.add("java.util.concurrent.locks.AbstractQueuedSynchronizer");
     nonInstrumentedClass.add("java.util.concurrent.locks.AbstractQueuedSynchronizer$Node");
   }
@@ -175,5 +177,4 @@ public class PortabilityImpl implements Portability {
     if (obj == null) return true;
     return isPortableClass(obj.getClass());
   }
-
 }

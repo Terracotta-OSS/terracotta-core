@@ -49,6 +49,8 @@ import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.bytecode.AbstractStringBuilderAdapter;
 import com.tc.object.bytecode.AccessibleObjectAdapter;
+import com.tc.object.bytecode.AtomicIntegerAdapter;
+import com.tc.object.bytecode.AtomicLongAdapter;
 import com.tc.object.bytecode.BufferedWriterAdapter;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ChangeClassNameHierarchyAdapter;
@@ -427,6 +429,8 @@ public class BootJarTool {
       addInstrumentedJavaLangString();
       addInstrumentedProxy();
       addTreeMap();
+      addInstrumentedAtomicInteger();
+      addInstrumentedAtomicLong();
 
       Map internalSpecs = getTCSpecs();
       loadBootJarClasses(removeAlreadyLoaded(massageSpecs(internalSpecs, true)));
@@ -1284,6 +1288,50 @@ public class BootJarTool {
     ClassReader cr = new ClassReader(bytes);
     ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
     ClassVisitor cv = new AccessibleObjectAdapter(cw);
+    cr.accept(cv, 0);
+    bytes = cw.toByteArray();
+
+    // regular DSO instrumentation
+    TransparencyClassSpec spec = config.getOrCreateSpec(classname);
+    spec.markPreInstrumented();
+
+    bootJar.loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
+  }
+
+  private void addInstrumentedAtomicInteger() {
+    if (!Vm.isJDK15Compliant()) {
+      return;
+    }
+    
+    String classname = "java.util.concurrent.atomic.AtomicInteger";
+    byte[] bytes = getSystemBytes(classname);
+
+    // instrument the state changing methods in AtomicInteger
+    ClassReader cr = new ClassReader(bytes);
+    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    ClassVisitor cv = new AtomicIntegerAdapter(cw);
+    cr.accept(cv, 0);
+    bytes = cw.toByteArray();
+
+    // regular DSO instrumentation
+    TransparencyClassSpec spec = config.getOrCreateSpec(classname);
+    spec.markPreInstrumented();
+
+    bootJar.loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
+  }
+
+  private void addInstrumentedAtomicLong() {
+    if (!Vm.isJDK15Compliant()) {
+      return;
+    }
+    
+    String classname = "java.util.concurrent.atomic.AtomicLong";
+    byte[] bytes = getSystemBytes(classname);
+
+    // instrument the state changing methods in AtomicLong
+    ClassReader cr = new ClassReader(bytes);
+    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    ClassVisitor cv = new AtomicLongAdapter(cw);
     cr.accept(cv, 0);
     bytes = cw.toByteArray();
 

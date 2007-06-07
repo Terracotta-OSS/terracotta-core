@@ -7,7 +7,6 @@ package com.tc.object.bytecode;
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.Label;
-import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
@@ -30,29 +29,10 @@ public class AccessibleObjectAdapter extends ClassAdapter implements Opcodes {
     return mv;
   }
   
-  private static class AccessibleSetAccessibleMethodVisitor extends MethodAdapter {
+  private static class AccessibleSetAccessibleMethodVisitor extends MaxLocalVarStoreDetectingMethodAdapter {
 
-    private int max_var_store = 0;
-    
     private AccessibleSetAccessibleMethodVisitor(MethodVisitor mv) {
       super(mv);
-    }    
-    
-    public void visitVarInsn(int opcode, int var) {
-      // detect the maximum position at which local variables are already
-      // stored in the method, this will be used during the instrumentation
-      // to make sure that no current used local variables are overwritten
-      if (ISTORE == opcode ||
-          LSTORE == opcode ||
-          FSTORE == opcode ||
-          DSTORE == opcode ||
-          ASTORE == opcode) {
-        if (var > max_var_store) {
-          max_var_store = var;
-        }
-      }
-      
-      super.visitVarInsn(opcode, var);
     }
 
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {
@@ -61,8 +41,8 @@ public class AccessibleObjectAdapter extends ClassAdapter implements Opcodes {
           name.equals("override") &&
           desc.equals("Z")) {
         
-        int boolean_var_store = max_var_store + 1;
-        int tcobject_var_store = max_var_store + 2;
+        int boolean_var_store = getMaxLocalVarStore() + 1;
+        int tcobject_var_store = boolean_var_store + 1;
         
         // make a copy of the boolean that's currently on the stack,
         // ready to be assigned to the 'override' field
