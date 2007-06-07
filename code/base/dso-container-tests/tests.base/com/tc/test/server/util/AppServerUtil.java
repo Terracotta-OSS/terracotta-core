@@ -80,9 +80,9 @@ public class AppServerUtil {
       ioe.printStackTrace();
     }
 
-    System.err.println("Deleting working directory files in " + to);
+    System.err.println("Deleting working directory files in " + from);
     try {
-      FileUtils.forceDelete(to);
+      FileUtils.forceDelete(from);
     } catch (IOException ioe) {
       Banner.warnBanner("IOException caught while deleting workingDir");
       // print this out, but don't fail test by re-throwing it
