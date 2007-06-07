@@ -9,7 +9,6 @@ import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
-import com.tc.asm.commons.SerialVersionUIDAdder;
 import com.tc.aspectwerkz.expression.ExpressionContext;
 import com.tc.aspectwerkz.expression.ExpressionVisitor;
 import com.tc.aspectwerkz.reflect.ClassInfo;
@@ -41,6 +40,7 @@ import com.tc.object.bytecode.JavaLangReflectArrayAdapter;
 import com.tc.object.bytecode.JavaLangReflectFieldAdapter;
 import com.tc.object.bytecode.ManagerHelper;
 import com.tc.object.bytecode.ManagerHelperFactory;
+import com.tc.object.bytecode.SafeSerialVersionUIDAdder;
 import com.tc.object.bytecode.THashMapAdapter;
 import com.tc.object.bytecode.TransparencyClassAdapter;
 import com.tc.object.bytecode.TreeMapAdapter;
@@ -1542,7 +1542,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
         cv = factory.create(dsoAdapter, caller);
       }
 
-      return new SerialVersionUIDAdder(cv);
+      return new SafeSerialVersionUIDAdder(cv);
     }
   }
 

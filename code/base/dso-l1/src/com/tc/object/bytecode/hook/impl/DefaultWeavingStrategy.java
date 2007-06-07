@@ -7,7 +7,6 @@ import com.tc.asm.ClassReader;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
 import com.tc.asm.commons.EmptyVisitor;
-import com.tc.asm.commons.SerialVersionUIDAdder;
 import com.tc.aspectwerkz.definition.SystemDefinition;
 import com.tc.aspectwerkz.definition.deployer.StandardAspectModuleDeployer;
 import com.tc.aspectwerkz.exception.WrappedRuntimeException;
@@ -33,6 +32,7 @@ import com.tc.aspectwerkz.transform.inlining.weaver.MethodCallVisitor;
 import com.tc.aspectwerkz.transform.inlining.weaver.MethodExecutionVisitor;
 import com.tc.aspectwerkz.transform.inlining.weaver.StaticInitializationVisitor;
 import com.tc.exception.TCLogicalSubclassNotPortableException;
+import com.tc.object.bytecode.SafeSerialVersionUIDAdder;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.InstrumentationLoggerImpl;
@@ -281,7 +281,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         if (ClassInfoHelper.implementsInterface(classInfo, "java.io.Serializable")) {
           ClassReader readerPhase3 = new ClassReader(context.getCurrentBytecode());
           final ClassWriter writerPhase3 = new ClassWriter(readerPhase3, ClassWriter.COMPUTE_MAXS);
-          readerPhase3.accept(new SerialVersionUIDAdder(writerPhase3), 0);
+          readerPhase3.accept(new SafeSerialVersionUIDAdder(writerPhase3), 0);
           context.setCurrentBytecode(writerPhase3.toByteArray());
         }
       }
