@@ -30,7 +30,7 @@ public class SendStateMachine extends AbstractStateMachine {
   private final LinkedQueue                sendQueue;
   private final LinkedList                 outstandingMsgs    = new LinkedList();
   private final SynchronizedInt            outstandingCnt     = new SynchronizedInt(0);
-  private int                              sendWindow         = 16;                       // default by 16, can be
+  private int                              sendWindow         = 32;                       // default by 32, can be
 
   // changed by tc.properties
 

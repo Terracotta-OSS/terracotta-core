@@ -17,7 +17,7 @@ public class ReceiveStateMachine extends AbstractStateMachine {
 
   private final SynchronizedLong           received           = new SynchronizedLong(-1);
   private final OOOProtocolMessageDelivery delivery;
-  private int                              MaxDelayedAcks     = 8;                       // default by 8, can be set by
+  private int                              MaxDelayedAcks     = 16;                       // default by 16, can be set by
   // tc.properties, 0 to
   // disable.
   private final SynchronizedInt            delayedAcks        = new SynchronizedInt(0);
