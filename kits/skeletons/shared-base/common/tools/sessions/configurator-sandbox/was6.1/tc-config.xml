@@ -29,7 +29,7 @@
   <clients>
     <logs>logs/client-logs/%(webserver.log.name)</logs>
     <modules>
-      <module name="clustered-apache-struts-1.1" version="1.0.0"/>
+      <module name="clustered-apache-struts-1.1" version="1.1.0"/>
       <module name="clustered-websphere-6.1.0.7" version="1.0.0"/>
     </modules>
   </clients>
@@ -47,8 +47,16 @@
       <instrumented-classes>
         <!-- Include all classes for DSO instrumentation -->
         <include>
-          <class-expression>demo..*</class-expression>
+          <class-expression>*..*</class-expression>
         </include>
+        <!-- But exclude WebSphere internals to improve performance of webapp load -->
+        <exclude>com.ibm..*</exclude>
+        <exclude>org.eclipse..*</exclude>
+        <exclude>com.ddtek..*</exclude>
+        <exclude>tcl.lang..*</exclude>
+        <exclude>org.omg..*</exclude>
+        <exclude>sunlabs.brazil..*</exclude>
+        <exclude>com.sun.mail..*</exclude>
       </instrumented-classes>
 
       <!-- Tell DSO which applications in your web container is using DSO -->
