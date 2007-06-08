@@ -54,5 +54,6 @@ fi
 TC_JAVA_OPTS="-Xbootclasspath/p:${DSO_BOOT_JAR} \
  -Dtc.install-root=${TC_INSTALL_DIR} \
  -Dtc.config=${TC_CONFIG_PATH}"
-
+ 
+test "${TC_SERVER}" && TC_JAVA_OPTS="${TC_JAVA_OPTS} -Dtc.server=${TC_SERVER}"
 test -z "${__DSO_ENV_QUIET}" && echo "${TC_JAVA_OPTS}"

@@ -1494,8 +1494,8 @@ public class SessionIntegratorFrame extends Frame {
   }
 
   private void startL2() {
-    if(System.getProperty("tc.servers") != null) {
-      m_l2OutView.append("Using external Terracotta servers: "+System.getProperty("tc.servers"));
+    if(System.getProperty("tc.server") != null) {
+      m_l2OutView.append("Using external Terracotta servers: "+System.getProperty("tc.server"));
       startWebServers();
       return;
     }
@@ -1681,7 +1681,7 @@ public class SessionIntegratorFrame extends Frame {
   }
 
   private void stopL2(boolean restart) {
-    if(System.getProperty("tc.servers") != null) {
+    if(System.getProperty("tc.server") != null) {
       if (m_webServer1Status.isReady() || m_webServer2Status.isReady()) {
         stopWebServers();
       }

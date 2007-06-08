@@ -27,9 +27,9 @@ public class ConnectionInfoConfigItem extends DerivedConfigItem {
   protected Object createValueFrom(ConfigItem[] fromWhich) {
     ConnectionInfo[] out;
 
-    String serversProperty = System.getProperty("tc.servers");
+    String serversProperty = System.getProperty("tc.server");
     if (serversProperty != null && (serversProperty = serversProperty.trim()) != null && serversProperty.length() > 0) {
-      consoleLogger.info("tc.servers: " + serversProperty);
+      consoleLogger.info("tc.server: " + serversProperty);
       
       String[] serverDescs = StringUtils.split(serversProperty, ",");
       int count = serverDescs.length;
@@ -44,7 +44,7 @@ public class ConnectionInfoConfigItem extends DerivedConfigItem {
         try {
           dsoPort = Integer.parseInt(serverDesc[1]);
         } catch(NumberFormatException nfe) {
-          consoleLogger.fatal("Cannot parse port for tc.servers element '"+serverDescs[i]+"'");
+          consoleLogger.fatal("Cannot parse port for tc.server element '"+serverDescs[i]+"'");
           System.exit(-1);
         }
 

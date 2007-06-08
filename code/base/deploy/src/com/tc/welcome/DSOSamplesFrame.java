@@ -130,7 +130,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
         m_serversListField = new JTextField("server1:9510,server2:9510,server3:9510");
         m_serversListField.setToolTipText(m_bundleHelper.getString("servers.field.tip"));
         m_serversListField.setPreferredSize(m_serversListField.getPreferredSize());
-        String prop = System.getProperty("tc.servers");
+        String prop = System.getProperty("tc.server");
         m_serversListField.setText(prop);
         otherPanel.add(m_serversListField);
         m_panel.add(otherPanel);
@@ -149,9 +149,9 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
                                              JOptionPane.OK_CANCEL_OPTION);
       if (result == JOptionPane.OK_OPTION) {
         if(!m_useLocalToggle.isSelected()) {
-          System.setProperty("tc.servers", m_serversListField.getText());
+          System.setProperty("tc.server", m_serversListField.getText());
         } else {
-          System.getProperties().remove("tc.servers");
+          System.getProperties().remove("tc.server");
         }
       }
     }
@@ -257,7 +257,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
   private void internalRunServer() {
     String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.config=tc-config.xml",
         "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(), "-cp", getTCLib().getAbsolutePath(),
-        "com.tc.server.TCServerMain" };
+        "com.tc.servers.TCServerMain" };
 
     Process p = exec(cmdarray, null, getSamplesDir());
     StreamReader errDrainer = createStreamReader(p.getErrorStream());
@@ -273,7 +273,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
       String bootPath = getBootPath();
       String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.config=tc-config.xml",
           "-Djava.awt.Window.locationByPlatform=true", "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
-          "-Dtc.servers=" + System.getProperty("tc.servers", ""), "-Xbootclasspath/p:" + bootPath, "-cp", "classes",
+          "-Dtc.server=" + System.getProperty("tc.server", ""), "-Xbootclasspath/p:" + bootPath, "-cp", "classes",
           className };
 
       Process p = exec(cmdarray, null, new File(getProductDirectory(), dirName));

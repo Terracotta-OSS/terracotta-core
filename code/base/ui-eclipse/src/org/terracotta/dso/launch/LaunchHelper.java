@@ -88,7 +88,7 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
           }
         }
       } else {
-        vmArgs += "-Dtc.servers=" + serverProp;
+        vmArgs += "-Dtc.server=" + serverProp;
       }
       
       String configProp = " -Dtc.config=\"" + getConfigSpec(wc) + "\"";
