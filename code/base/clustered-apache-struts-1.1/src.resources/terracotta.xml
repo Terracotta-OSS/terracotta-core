@@ -1,0 +1,28 @@
+<?xml version = "1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2007 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved
+
+-->
+<xml-fragment>
+  <instrumented-classes>
+    <include>
+      <class-expression>org.apache.struts.action.ActionForm</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+    <include>
+      <class-expression>org.apache.struts.action.ActionMappings</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+    <include>
+      <class-expression>org.apache.struts.action.ActionServletWrapper</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+    <include>
+      <class-expression>org.apache.struts.action.DynaActionFormClass</class-expression>
+      <honor-transient>true</honor-transient>
+    </include>
+  </instrumented-classes>
+</xml-fragment>
