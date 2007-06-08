@@ -59,7 +59,7 @@ class BuildSubtree
                     ant.arg(:value => '-showWeaveInfo')
                 end
             else
-                puts "Compiling #{build_module.name}/#{name}..."
+                puts "Compiling #{build_module.name}/#{name}... with #{jdk.short_description}"
                 ant.javac(
                     :destdir => build_results.classes_directory(self).to_s,
                     :debug => true,
