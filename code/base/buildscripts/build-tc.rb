@@ -956,8 +956,8 @@ END
             'jvmargs'  => config_source['jvmargs'],
 
             'appointed-tests-jdk' => @jvm_set['tests-jdk'].short_description,
-            'jdk-1.4-compile' => @jvm_set['JAVA_HOME_14'].short_description,
-            'jdk-1.5-compile' => @jvm_set['JAVA_HOME_15'].short_description
+            'jdk-1.4-compile' => @jvm_set['J2SE-1.4'].short_description,
+            'jdk-1.5-compile' => @jvm_set['J2SE-1.5'].short_description
 
       }
 
