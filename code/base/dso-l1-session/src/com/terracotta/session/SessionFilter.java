@@ -90,20 +90,20 @@ public class SessionFilter implements Filter {
   }
 
   protected TerracottaSessionManager createDefaultManager(final HttpServletRequest req,
-                                                          final ServletContext servletContext) {
-    final TerracottaSessionManager rv = createManager(req, null, new BaseRequestResponseFactory(), servletContext);
+                                                          final ServletContext sc) {
+    final TerracottaSessionManager rv = createManager(req, null, new BaseRequestResponseFactory(), sc);
     return rv;
   }
 
   protected TerracottaSessionManager createWebAppConfigManager(final HttpServletRequest req, final WebAppConfig wac,
-                                                               final ServletContext servletContext) {
-    final TerracottaSessionManager rv = createManager(req, wac, pickFactory(), servletContext);
+                                                               final ServletContext sc) {
+    final TerracottaSessionManager rv = createManager(req, wac, pickFactory(), sc);
     return rv;
   }
 
   protected TerracottaSessionManager createManager(final HttpServletRequest req, final WebAppConfig wac,
                                                    final RequestResponseFactory factory,
-                                                   final ServletContext servletContext) {
+                                                   final ServletContext sc) {
     final ConfigProperties cp = new ConfigProperties(wac);
 
     String appName = DefaultContextMgr.computeAppName(req);
@@ -112,7 +112,7 @@ public class SessionFilter implements Filter {
 
     final SessionCookieWriter scw = DefaultCookieWriter.makeInstance(cp);
     final LifecycleEventMgr eventMgr = DefaultLifecycleEventMgr.makeInstance(cp);
-    final ContextMgr contextMgr = DefaultContextMgr.makeInstance(req, servletContext);
+    final ContextMgr contextMgr = DefaultContextMgr.makeInstance(req, sc);
     final TerracottaSessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr, factory, cp);
     return rv;
   }
