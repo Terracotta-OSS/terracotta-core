@@ -26,6 +26,7 @@ import java.util.Random;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -161,12 +162,15 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       final CyclicBarrier localBarrier = new CyclicBarrier(3);
       Thread t1 = new Thread(new Runnable() {
         public void run() {
+          boolean isLocked = false;
           try {
             localBarrier.await();
-            boolean isLocked = readLock.tryLock(2, TimeUnit.SECONDS);
+            isLocked = readLock.tryLock(2, TimeUnit.SECONDS);
             assertTryLockResult(!isLocked);
           } catch (Exception e) {
             throw new AssertionError(e);
+          } finally {
+            unLockIfLocked(readLock, isLocked);
           }
           try {
             localBarrier.await();
@@ -182,7 +186,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
             localBarrier.await();
             boolean isLocked = writeLock.tryLock(8, TimeUnit.SECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) writeLock.unlock();
+            unLockIfLocked(writeLock, isLocked);
           } catch (Exception e) {
             throw new AssertionError(e);
           }
@@ -213,7 +217,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
             localBarrier.await();
             boolean isLocked = readLock.tryLock(4, TimeUnit.SECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) readLock.unlock();
+            unLockIfLocked(readLock, isLocked);
           } catch (Exception e) {
             throw new AssertionError(e);
           }
@@ -226,7 +230,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
             localBarrier.await();
             boolean isLocked = writeLock.tryLock(8, TimeUnit.SECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) writeLock.unlock();
+            unLockIfLocked(writeLock, isLocked);
           } catch (Exception e) {
             throw new AssertionError(e);
           }
@@ -260,7 +264,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
             boolean isLocked = writeLock.tryLock(20, TimeUnit.SECONDS);
             assertTryLockResult(isLocked);
             Thread.sleep(2000);
-            if (isLocked) writeLock.unlock();
+            unLockIfLocked(writeLock, isLocked);
             localBarrier.await();
           } catch (Exception e) {
             throw new AssertionError(e);
@@ -275,7 +279,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
             boolean isLocked = writeLock.tryLock(21, TimeUnit.SECONDS);
             assertTryLockResult(isLocked);
             Thread.sleep(2000);
-            if (isLocked) writeLock.unlock();
+            unLockIfLocked(writeLock, isLocked);
             localBarrier.await();
           } catch (Exception e) {
             throw new AssertionError(e);
@@ -297,7 +301,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       barrier5.await();
       Thread.sleep(2000);
       assertTryLockResult(isLocked);
-      if (isLocked) writeLock.unlock();
+      unLockIfLocked(writeLock, isLocked);
       barrier4.await();
       writeLock.lock();
       Thread.sleep(2000);
@@ -315,7 +319,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
             localBarrier.await();
             boolean isLocked = writeLock.tryLock(8, TimeUnit.SECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) writeLock.unlock();
+            unLockIfLocked(writeLock, isLocked);
             localBarrier.await();
           } catch (Exception e) {
             throw new AssertionError(e);
@@ -328,7 +332,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
             localBarrier.await();
             boolean isLocked = writeLock.tryLock(9001, TimeUnit.MILLISECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) writeLock.unlock();
+            unLockIfLocked(writeLock, isLocked);
             localBarrier.await();
           } catch (Exception e) {
             throw new AssertionError(e);
@@ -341,7 +345,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
             localBarrier.await();
             boolean isLocked = writeLock.tryLock(10, TimeUnit.SECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) writeLock.unlock();
+            unLockIfLocked(writeLock, isLocked);
             localBarrier.await();
           } catch (Exception e) {
             throw new AssertionError(e);
@@ -361,7 +365,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       barrier4.await();
       boolean isLocked = writeLock.tryLock(11, TimeUnit.SECONDS);
       assertTryLockResult(isLocked);
-      if (isLocked) writeLock.unlock();
+      unLockIfLocked(writeLock, isLocked);
     }
     barrier.await();
     printTimeStamp(index, "tryWriteLockMultiNodeTest third test");
@@ -374,7 +378,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
             localBarrier.await();
             boolean isLocked = readLock.tryLock(4, TimeUnit.SECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) readLock.unlock();
+            unLockIfLocked(readLock, isLocked);
             localBarrier.await();
           } catch (Exception e) {
             throw new AssertionError(e);
@@ -388,7 +392,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
             localBarrier.await();
             boolean isLocked = readLock.tryLock(8002, TimeUnit.MILLISECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) readLock.unlock();
+            unLockIfLocked(readLock, isLocked);
             localBarrier.await();
           } catch (Exception e) {
             throw new AssertionError(e);
@@ -408,7 +412,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       barrier4.await();
       boolean isLocked = writeLock.tryLock(10002, TimeUnit.MILLISECONDS);
       assertTryLockResult(isLocked);
-      if (isLocked) writeLock.unlock();
+      unLockIfLocked(writeLock, isLocked);
     }
 
     barrier.await();
@@ -422,7 +426,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
             localBarrier.await();
             boolean isLocked = writeLock.tryLock(4001, TimeUnit.MILLISECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) writeLock.unlock();
+            unLockIfLocked(writeLock, isLocked);
             localBarrier.await();
           } catch (Exception e) {
             throw new AssertionError(e);
@@ -443,7 +447,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       barrier4.await();
       boolean isLocked = writeLock.tryLock(10003, TimeUnit.MILLISECONDS);
       assertTryLockResult(isLocked);
-      if (isLocked) writeLock.unlock();
+      unLockIfLocked(writeLock, isLocked);
     }
 
     barrier.await();
@@ -457,7 +461,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
             localBarrier.await();
             boolean isLocked = readLock.tryLock(4003, TimeUnit.MILLISECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) readLock.unlock();
+            unLockIfLocked(readLock, isLocked);
             localBarrier.await();
           } catch (Exception e) {
             throw new AssertionError(e);
@@ -478,7 +482,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       barrier4.await();
       boolean isLocked = writeLock.tryLock(10004, TimeUnit.MILLISECONDS);
       assertTryLockResult(isLocked);
-      if (isLocked) writeLock.unlock();
+      unLockIfLocked(writeLock, isLocked);
     }
 
     barrier.await();
@@ -492,7 +496,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
             localBarrier.await();
             boolean isLocked = readLock.tryLock(4004, TimeUnit.MILLISECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) readLock.unlock();
+            unLockIfLocked(readLock, isLocked);
             localBarrier.await();
           } catch (Exception e) {
             throw new AssertionError(e);
@@ -513,7 +517,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       barrier4.await();
       boolean isLocked = writeLock.tryLock(10005, TimeUnit.MILLISECONDS);
       assertTryLockResult(isLocked);
-      if (isLocked) writeLock.unlock();
+      unLockIfLocked(writeLock, isLocked);
     }
 
     barrier.await();
@@ -535,7 +539,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
             localBarrier.await();
             boolean isLocked = readLock.tryLock(4, TimeUnit.SECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) readLock.unlock();
+            unLockIfLocked(readLock, isLocked);
             localBarrier.await();
           } catch (Exception e) {
             throw new AssertionError(e);
@@ -589,7 +593,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       barrier2.await();
       boolean isLocked = readLock.tryLock(10, TimeUnit.SECONDS);
       assertTryLockResult(isLocked);
-      if (isLocked) readLock.unlock();
+      unLockIfLocked(readLock, isLocked);
     }
 
     barrier.await();
@@ -610,7 +614,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
         barrier2.await();
         assertTryLockResult(isLocked);
       } finally {
-        if (isLocked) readLock.unlock();
+        unLockIfLocked(readLock, isLocked);
       }
     }
     barrier.await();
@@ -632,6 +636,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       boolean isLocked = readLock.tryLock();
       barrier2.await();
       assertTryLockResult(!isLocked);
+      unLockIfLocked(readLock, isLocked);
     }
 
     barrier.await();
@@ -650,7 +655,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       try {
         assertTryLockResult(isLocked);
       } finally {
-        if (isLocked) readLock.unlock();
+        unLockIfLocked(readLock, isLocked);
       }
     }
     barrier.await();
@@ -667,6 +672,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       barrier2.await();
       boolean isLocked = readLock.tryLock(1, TimeUnit.SECONDS);
       assertTryLockResult(!isLocked);
+      unLockIfLocked(readLock, isLocked);
       if (DebugUtil.DEBUG) {
         System.err.println("Client " + ManagerUtil.getClientID() + " in tryReadLockMultiNodeTest last test, isLocked: " + isLocked);
       }
@@ -946,13 +952,14 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
         assertTryLockResult(isLocked);
         barrier3.await();
       } finally {
-        if (isLocked) writeLock.unlock();
+        unLockIfLocked(writeLock, isLocked);
       }
       barrier3.await();
     } else {
       barrier2.await();
       boolean isLocked = writeLock.tryLock(5, TimeUnit.SECONDS);
       assertTryLockResult(!isLocked);
+      unLockIfLocked(writeLock, isLocked);
       barrier3.await();
       barrier3.await();
     }
@@ -1020,12 +1027,13 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
         assertTryLockResult(isLocked);
       } finally {
         barrier3.await();
-        if (isLocked) writeLock.unlock();
+        unLockIfLocked(writeLock, isLocked);
       }
     } else {
       barrier2.await();
       boolean isLocked = readLock.tryLock();
       assertTryLockResult(!isLocked);
+      unLockIfLocked(readLock, isLocked);
       barrier3.await();
     }
 
@@ -1042,6 +1050,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       barrier2.await();
       boolean isLocked = writeLock.tryLock();
       assertTryLockResult(!isLocked);
+      unLockIfLocked(writeLock, isLocked);
       barrier3.await();
     } else {
       boolean isLocked = readLock.tryLock();
@@ -1050,7 +1059,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
         assertTryLockResult(isLocked);
       } finally {
         barrier3.await();
-        if (isLocked) readLock.unlock();
+        unLockIfLocked(readLock, isLocked);
       }
     }
 
@@ -1066,7 +1075,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       barrier2.await();
       assertTryLockResult(isLocked);
     } finally {
-      if (isLocked) readLock.unlock();
+      unLockIfLocked(readLock, isLocked);
     }
     barrier.await();
   }
@@ -1206,6 +1215,12 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
+  }
+  
+  private void unLockIfLocked(Lock lock, boolean isLocked) {
+    if (isLocked) {
+      lock.unlock();
+    }
   }
 
   private void assertTryLockResult(boolean isLocked) {
