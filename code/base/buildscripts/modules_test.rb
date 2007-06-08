@@ -566,6 +566,7 @@ class SubtreeTestRun
         # method, which puts the necessary <jvmarg>, <sysproperty>, and so forth elements
         # into the junit task.
         @ant.junit(
+        :maxmemory => "512m",
         :timeout => @timeout,
         :dir => @cwd.to_s,
         :tempdir => @testrun_results.ant_temp_dir(@subtree).to_s,
