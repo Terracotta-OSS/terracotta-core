@@ -27,7 +27,7 @@ public class DistributedEventsLoadTest extends SpringDeploymentTest {
   private Deployment           deployment;
 
   public DistributedEventsLoadTest() {
-//    disableAllUntil("2007-03-06");  // XXX timebombed
+    this.disableAllUntil("2010-01-01", new String[]{"solaris"});
   }
   
   protected void setUp() throws Exception {
