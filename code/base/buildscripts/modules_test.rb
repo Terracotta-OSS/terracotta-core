@@ -819,10 +819,12 @@ END
         File.open(target_file.to_s, "w") do |file|
             file << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             file << "<testsuite errors=\"0\" failures=\"1\" name=\"%s\" tests=\"0\" time=\"0.000\">\n" % class_name.xml_escape(true)
-            file << "<testcase classname=#{class_name.xml_escape} name='test' time='0.0'></testcase>\n"
-            file << ("  <failure message=\"" + NOT_RUN_MESSAGE + "\">\n") % class_name.xml_escape(true)
+            file << "<testcase classname=#{class_name.xml_escape} name='test' time='0.0'>\n"
+            file << ("  <failure type='junit.framework.AssertionFailedError' message=\"" + NOT_RUN_MESSAGE + "\">\n") % class_name.xml_escape(true)
             file << ("      " + NOT_RUN_MESSAGE + "\n") % class_name.xml_escape
             file << "   </failure>\n"
+            file << "</testcase>\n"
+            file << "<system-out/><system-err/>\n"
             file << "</testsuite>\n"
         end
     end
