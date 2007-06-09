@@ -15,6 +15,7 @@ import com.terracottatech.config.Locks;
 import com.terracottatech.config.NamedLock;
 
 import java.io.File;
+import java.util.Date;
 
 /**
  * Unit test for {@link TestTVSConfigurationSetupManagerFactory}. Because that class builds up a whole config system,
@@ -25,6 +26,10 @@ public class TestTVSConfigurationSetupManagerFactoryTest extends TCTestCase {
   private TestTVSConfigurationSetupManagerFactory factory;
   private L2TVSConfigurationSetupManager          l2Manager;
   private L1TVSConfigurationSetupManager          l1Manager;
+  
+  public TestTVSConfigurationSetupManagerFactoryTest() {
+    this.disableAllUntil(new Date(Long.MAX_VALUE));
+  }
 
   public void setUp() throws Exception {
     this.factory = new TestTVSConfigurationSetupManagerFactory(
