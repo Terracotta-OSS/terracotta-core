@@ -294,11 +294,11 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
   }
 
   public NewCommonL1Config l1CommonConfig() {
-    return (NewCommonL1Config) proxify(NewCommonL1Config.class, this.beanSet.clientBean(), this.sampleL1Common, null);
+    return (NewCommonL1Config) proxify(NewCommonL1Config.class, this.l1_beanSet.clientBean(), this.sampleL1Common, null);
   }
 
   public NewL1DSOConfig l1DSOConfig() {
-    return (NewL1DSOConfig) proxify(NewL1DSOConfig.class, this.beanSet.clientBean(), this.sampleL1DSO, "dso");
+    return (NewL1DSOConfig) proxify(NewL1DSOConfig.class, this.l1_beanSet.clientBean(), this.sampleL1DSO, "dso");
   }
 
   private void cleanBeanSetServersIfNeeded(TestConfigBeanSet beanSetArg) {
