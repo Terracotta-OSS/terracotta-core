@@ -791,10 +791,7 @@ END
     end
 
     # The message we write into the 'did-not-run' XML file.
-    NOT_RUN_MESSAGE = 'This test, \'%s\', DID NOT RUN. Some earlier test or problem ' +
-    'in the build must\'ve caused this problem. (This message comes ' +
-    'from an XML file written by the buildsystem *before* each test ' +
-    'is run.)'
+    NOT_RUN_MESSAGE = 'This test, \'%s\', DID NOT RUN. Some problem (i.e. classloader, bootjar, etc) prevents it from starting. Please check the log for error message. '
 
     # The set of cached Java system properties.
     $cachedJavaProperties = nil
@@ -822,17 +819,7 @@ END
         File.open(target_file.to_s, "w") do |file|
             file << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             file << "<testsuite errors=\"0\" failures=\"1\" name=\"%s\" tests=\"0\" time=\"0.000\">\n" % class_name.xml_escape(true)
-            file << "  <properties>\n"
-
-            properties = all_java_properties
-            properties.merge!(@ant.all_ant_properties)
-
-            properties.each do |key, value|
-                value ||= ""
-                file << "    <property name=\"%s\" value=\"%s\"></property>\n" % [ key.xml_escape(true), value.xml_escape(true) ]
-            end
-
-            file << "  </properties>\n"
+            file << "<testcase classname=#{class_name.xml_escape} name='test' time='0.0'></testcase>\n"
             file << ("  <failure message=\"" + NOT_RUN_MESSAGE + "\">\n") % class_name.xml_escape(true)
             file << ("      " + NOT_RUN_MESSAGE + "\n") % class_name.xml_escape
             file << "   </failure>\n"
