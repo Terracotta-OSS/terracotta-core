@@ -11,12 +11,14 @@ public class ServerManagerUtil {
 
   protected static Log logger = LogFactory.getLog(ServerManagerUtil.class);
 
-  public static ServerManager start(Class testClass, boolean withPersistentStore) throws Exception {
+  private static ServerManager start(Class testClass, boolean withPersistentStore) throws Exception {
     ServerManager existingServerManager = getExistingServerManager();
     if (existingServerManager != null) {
+      System.out.println("******** Using existing ServerManager");
       logger.debug("Using existing ServerManager");
       return existingServerManager;
     }
+    System.out.println("******** Creating server manager");
     logger.debug("Creating server manager");
     ServerManager serverManager = new ServerManager(testClass);
     serverManager.start(withPersistentStore);

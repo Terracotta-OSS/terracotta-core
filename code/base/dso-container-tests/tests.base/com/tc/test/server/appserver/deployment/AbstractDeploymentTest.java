@@ -56,7 +56,7 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   protected ServerManager getServerManager() {
     if (serverManager == null) {
       try {
-        serverManager = ServerManagerUtil.start(getClass(), isWithPersistentStore());
+        serverManager = ServerManagerUtil.startAndBind(getClass(), isWithPersistentStore());
       } catch (Exception e) {
         throw new RuntimeException("Unable to create server manager; " + e.toString(), e);
       }

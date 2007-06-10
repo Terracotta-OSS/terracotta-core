@@ -1,11 +1,13 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver.deployment;
 
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.objectserver.control.ExtraProcessServerControl;
+import com.tc.util.PortChooser;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -14,25 +16,27 @@ import java.io.PrintWriter;
 
 public class DSOServer extends AbstractStoppable {
 
-  private static final String SPRING_TEST_CONFIG = "spring-test-config.xml";
+  private static final String       SPRING_TEST_CONFIG       = "spring-test-config.xml";
 
   // XXX move this into the common place for all constants
-  private static final long DSO_SERVER_START_TIMEOUT = 240 * 1000L;
+  private static final long         DSO_SERVER_START_TIMEOUT = 240 * 1000L;
 
-  private ExtraProcessServerControl serverProc = null;
-  private final boolean withPersistentStore;
+  private ExtraProcessServerControl serverProc               = null;
+  private final boolean             withPersistentStore;
 
-  private static final int          serverPort = 9510;
-  private static final int          adminPort  = 9999;
-  
-  private final File workingDir;
+  private static int                serverPort;
+  private static int                adminPort;
 
+  private final File                workingDir;
 
   public DSOServer(boolean withPersistentStore, File workingDir) {
     this.withPersistentStore = withPersistentStore;
     this.workingDir = workingDir;
+    PortChooser pc = new PortChooser();
+    serverPort = pc.chooseRandomPort();
+    adminPort = pc.chooseRandomPort();
   }
-  
+
   protected void doStart() throws Exception {
     File configFile = writeConfig();
     serverProc = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile.getAbsolutePath(), true);
@@ -56,8 +60,8 @@ public class DSOServer extends AbstractStoppable {
     l2.setJMXPort(adminPort);
     l2.setData(workingDir + File.separator + "data");
     l2.setLogs(workingDir + File.separator + "logs");
-    if(withPersistentStore) {
-      l2.setPersistenceMode("permanent-store");  // XXX make this one configurable
+    if (withPersistentStore) {
+      l2.setPersistenceMode("permanent-store"); // XXX make this one configurable
     }
 
     String configAsString = builder.toString();
@@ -69,8 +73,8 @@ public class DSOServer extends AbstractStoppable {
     out.close();
     return configFile;
   }
-  
+
   public String toString() {
-    return "DSO server; serverport:"+serverPort+"; adminPort:"+adminPort;
+    return "DSO server; serverport:" + serverPort + "; adminPort:" + adminPort;
   }
 }
