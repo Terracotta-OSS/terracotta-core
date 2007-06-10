@@ -464,7 +464,10 @@ class SubtreeTestRun
         url = url + "/" + @config_source['tc.tests.configuration.appserver.factory.name'] + "/" + os_name + "/" + appserver + ".zip"
         appserver_path = File.join(cache_location, appserver) + ".zip"
         @ant.get(:src => url, :dest => appserver_path)
-        @ant.unzip(:src => appserver_path, :dest => cache_location, :overwrite => true)
+        # we don't use @ant.unzip because it doesn't preserve executable bit of .sh files
+        @ant.exec(:executable => "unzip", :dir => cache_location) do
+          @ant.arg(:value => appserver_path)
+        end        
         @ant.delete(:file => appserver_path)
       end
     end
