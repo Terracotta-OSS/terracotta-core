@@ -58,7 +58,6 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
   
   
   public CustomScopedBeanTest() {
-    this.disableAllUntil("2007-06-21");
     disableTestUntil("testDestructionCallbacks", "2007-08-01");
     disableTestUntil("testTransientFields", "2007-08-01");
     
