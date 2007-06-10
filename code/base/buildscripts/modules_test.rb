@@ -424,10 +424,49 @@ class SubtreeTestRun
             file << ps_grep_java
           end
         end
+        
+        download_appserver_if_needed()
 
         puts "Done."
 
         @setUp = true
+    end
+
+    def download_appserver_if_needed
+      if requires_container?
+        if @config_source['tc.tests.configuration.appserver.home']
+          if File.exist?(@config_source['tc.tests.configuration.appserver.home'])
+            puts "** Appserver home is specified #{@config_source['tc.tests.configuration.appserver.home']}"
+            return
+          else
+            fail("Appserver home specified [#{@config_source['tc.tests.configuration.appserver.home']}] but path not found!")
+          end
+        end
+        
+        url = @config_source['tc.tests.configuration.appserver.repository']
+        fail("Neither [tc.tests.configuration.appserver.home] OR [tc.tests.configuration.appserver.repository] was specified!") unless url
+        
+        appserver = @config_source['tc.tests.configuration.appserver.factory.name'] + "-" +
+                    @config_source['tc.tests.configuration.appserver.major-version'] + "." +
+                    @config_source['tc.tests.configuration.appserver.minor-version']
+
+        cache_location = @build_environment.os_type(:nice) =~ /windows/i ? 'c:/temp/appservers' : "#{ENV['HOME']}/.tc/appservers"
+        if File.exist?(File.join(cache_location, appserver))
+          puts "** Found cached version of #{appserver} at #{cache_location}"
+          return
+        else
+          FilePath.new(cache_location).ensure_directory
+        end
+        
+        os_name = @build_environment.os_type(:nice).downcase
+        os_name = "win32" if os_name =~ /windows/
+        
+        url = url + "/" + @config_source['tc.tests.configuration.appserver.factory.name'] + "/" + os_name + "/" + appserver + ".zip"
+        appserver_path = File.join(cache_location, appserver) + ".zip"
+        @ant.get(:src => url, :dest => appserver_path)
+        @ant.unzip(:src => appserver_path, :dest => cache_location, :overwrite => true)
+        @ant.delete(:file => appserver_path)
+      end
     end
 
     # The list of system properties that *must* be set directly on the spawned JVM, rather than
@@ -819,7 +858,7 @@ END
         File.open(target_file.to_s, "w") do |file|
             file << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             file << "<testsuite errors=\"0\" failures=\"1\" name=\"%s\" tests=\"0\" time=\"0.000\">\n" % class_name.xml_escape(true)
-            file << "<testcase classname=#{class_name.xml_escape} name='test' time='0.0'>\n"
+            file << "<testcase classname=\"#{class_name.xml_escape}\" name='test' time='0.0'>\n"
             file << ("  <failure type='junit.framework.AssertionFailedError' message=\"" + NOT_RUN_MESSAGE + "\">\n") % class_name.xml_escape(true)
             file << ("      " + NOT_RUN_MESSAGE + "\n") % class_name.xml_escape
             file << "   </failure>\n"
