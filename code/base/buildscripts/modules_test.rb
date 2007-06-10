@@ -367,6 +367,9 @@ class SubtreeTestRun
         if FileTest.exist?(@static_resources.log4j_properties_file.to_s)
             @ant.copy(:file => @static_resources.log4j_properties_file.to_s, :todir => @testrun_results.temp_dir(@subtree).to_s)
         end
+        
+        # download appserver and set appserver.home if needed        
+        download_appserver_if_needed()
 
         # This creates the file that TestConfigObject reads.
         @subtree.create_build_configuration_file(@static_resources, @testrun_results, @build_results, @build_environment, @config_source, boot_jar, @ant, tests_jvm, all_jvmargs, @timeout)
@@ -425,7 +428,7 @@ class SubtreeTestRun
           end
         end
         
-        download_appserver_if_needed()
+        
 
         puts "Done."
 
@@ -451,24 +454,24 @@ class SubtreeTestRun
                     @config_source['tc.tests.configuration.appserver.minor-version']
 
         cache_location = @build_environment.os_type(:nice) =~ /windows/i ? 'c:/temp/appservers' : "#{ENV['HOME']}/.tc/appservers"
-        if File.exist?(File.join(cache_location, appserver))
+        
+        appserver_home = File.join(cache_location, appserver)
+        if File.exist?(appserver_home)
           puts "** Found cached version of #{appserver} at #{cache_location}"
-          return
         else
           FilePath.new(cache_location).ensure_directory
+          os_name = @build_environment.os_type(:nice).downcase
+          os_name = "win32" if os_name =~ /windows/
+          url = url + "/" + @config_source['tc.tests.configuration.appserver.factory.name'] + "/" + os_name + "/" + appserver + ".zip"
+          appserver_zip_path = appserver_home + ".zip"
+          @ant.get(:src => url, :dest => appserver_zip_path)
+          # we don't use @ant.unzip because it doesn't preserve executable bit of .sh files
+          @ant.exec(:executable => "unzip", :dir => cache_location) do
+            @ant.arg(:value => appserver_zip_path)
+          end        
+          @ant.delete(:file => appserver_zip_path)
         end
-        
-        os_name = @build_environment.os_type(:nice).downcase
-        os_name = "win32" if os_name =~ /windows/
-        
-        url = url + "/" + @config_source['tc.tests.configuration.appserver.factory.name'] + "/" + os_name + "/" + appserver + ".zip"
-        appserver_path = File.join(cache_location, appserver) + ".zip"
-        @ant.get(:src => url, :dest => appserver_path)
-        # we don't use @ant.unzip because it doesn't preserve executable bit of .sh files
-        @ant.exec(:executable => "unzip", :dir => cache_location) do
-          @ant.arg(:value => appserver_path)
-        end        
-        @ant.delete(:file => appserver_path)
+        Registry[:internal_config_source]['tc.tests.configuration.appserver.home'] = appserver_home
       end
     end
 

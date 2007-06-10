@@ -110,7 +110,7 @@ class TerracottaBuilder
         arguments = option_parser.parse(arguments)
         @arguments, command_line_source = CommandLineConfigSource.from_args(arguments)
         @internal_config_source = InternalConfigSource.new
-
+        Registry[:internal_config_source] = @internal_config_source
         @config_source = create_config_source(command_line_source, @internal_config_source)
         Registry[:config_source] = @config_source
         Registry[:command_line_config] = command_line_source
