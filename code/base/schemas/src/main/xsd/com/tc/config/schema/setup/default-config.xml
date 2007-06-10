@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+  All content copyright (c) 2003-2006 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved
+
+-->
+
+<!-- This config file is used by the server when non is specified. -->
+
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config">
+    <system>
+        <configuration-model>development</configuration-model>
+    </system>
+
+    <servers>
+        <server host="%i">
+            <data>%(user.home)/terracotta/server-data</data>
+            <logs>%(user.home)/terracotta/server-logs</logs>
+        </server>
+    </servers>
+
+  <clients>
+      <logs>%(user.home)/terracotta/client-logs</logs>
+  </clients>
+</tc:tc-config>
