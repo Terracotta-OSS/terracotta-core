@@ -4,7 +4,7 @@
  */
 package com.tc.net.protocol.delivery;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
+import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
 import com.tc.async.api.Sink;
@@ -35,6 +35,7 @@ import java.net.UnknownHostException;
  */
 public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTransport implements
     OnceAndOnlyOnceProtocolNetworkLayer, OOOProtocolMessageDelivery {
+  public static final int                 MAX_SEND_QUEUE_SIZE  = 1000;
   private static final TCLogger           logger              = TCLogging
                                                                   .getLogger(OnceAndOnlyOnceProtocolNetworkLayerImpl.class);
   private final OOOProtocolMessageFactory messageFactory;
@@ -51,7 +52,8 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     super(logger);
     this.messageFactory = messageFactory;
     this.messageParser = messageParser;
-    this.delivery = new GuaranteedDeliveryProtocol(this, workSink, new LinkedQueue());
+    // Use BoundedLinkedQueue to prevent outgrow of queue and causing OOME, refer DEV-710
+    this.delivery = new GuaranteedDeliveryProtocol(this, workSink, new BoundedLinkedQueue(MAX_SEND_QUEUE_SIZE));
     this.delivery.start();
   }
 

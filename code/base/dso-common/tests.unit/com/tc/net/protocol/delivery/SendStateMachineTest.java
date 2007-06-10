@@ -3,6 +3,7 @@
  */
 package com.tc.net.protocol.delivery;
 
+import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -17,7 +18,7 @@ import junit.framework.TestCase;
 public class SendStateMachineTest extends TestCase {
   public void tests() throws Exception {
     TestProtocolMessageDelivery delivery = new TestProtocolMessageDelivery(new LinkedQueue());
-    LinkedQueue sendQueue = new LinkedQueue();
+    BoundedLinkedQueue sendQueue = new BoundedLinkedQueue();
     SendStateMachine ssm = new SendStateMachine(delivery, sendQueue);
     ssm.start();
     ssm.resume();

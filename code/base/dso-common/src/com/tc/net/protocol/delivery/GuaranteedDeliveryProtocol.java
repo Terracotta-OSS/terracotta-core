@@ -4,7 +4,7 @@
  */
 package com.tc.net.protocol.delivery;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
+import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 
 import com.tc.async.api.Sink;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -16,9 +16,9 @@ import com.tc.net.protocol.TCNetworkMessage;
 class GuaranteedDeliveryProtocol implements DeliveryProtocol {
   private final StateMachineRunner send;
   private final StateMachineRunner receive;
-  private final LinkedQueue        sendQueue;
+  private final BoundedLinkedQueue sendQueue;
 
-  public GuaranteedDeliveryProtocol(OOOProtocolMessageDelivery delivery, Sink workSink, LinkedQueue sendQueue) {
+  public GuaranteedDeliveryProtocol(OOOProtocolMessageDelivery delivery, Sink workSink, BoundedLinkedQueue sendQueue) {
     this.send = new StateMachineRunner(new SendStateMachine(delivery, sendQueue), workSink);
     this.receive = new StateMachineRunner(new ReceiveStateMachine(delivery), workSink);
     this.sendQueue = sendQueue;

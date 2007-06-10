@@ -4,7 +4,7 @@
  */
 package com.tc.net.protocol.delivery;
 
-import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
+import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 
@@ -27,14 +27,14 @@ public class SendStateMachine extends AbstractStateMachine {
   private final SynchronizedLong           sent               = new SynchronizedLong(-1);
   private final SynchronizedLong           acked              = new SynchronizedLong(-1);
   private final OOOProtocolMessageDelivery delivery;
-  private final LinkedQueue                sendQueue;
+  private final BoundedLinkedQueue         sendQueue;
   private final LinkedList                 outstandingMsgs    = new LinkedList();
   private final SynchronizedInt            outstandingCnt     = new SynchronizedInt(0);
   private int                              sendWindow         = 32;                       // default by 32, can be
 
   // changed by tc.properties
 
-  public SendStateMachine(OOOProtocolMessageDelivery delivery, LinkedQueue sendQueue) {
+  public SendStateMachine(OOOProtocolMessageDelivery delivery, BoundedLinkedQueue sendQueue) {
     super();
 
     // set sendWindow from tc.properties if exist. 0 to disable window send.
@@ -211,7 +211,7 @@ public class SendStateMachine extends AbstractStateMachine {
     }
   }
 
-  private Object dequeue(LinkedQueue q) {
+  private Object dequeue(BoundedLinkedQueue q) {
     try {
       return q.take();
     } catch (InterruptedException e) {
