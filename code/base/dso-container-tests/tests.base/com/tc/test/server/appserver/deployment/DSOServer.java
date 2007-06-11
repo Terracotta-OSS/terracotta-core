@@ -7,7 +7,6 @@ package com.tc.test.server.appserver.deployment;
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.objectserver.control.ExtraProcessServerControl;
-import com.tc.util.PortChooser;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,17 +23,14 @@ public class DSOServer extends AbstractStoppable {
   private ExtraProcessServerControl serverProc               = null;
   private final boolean             withPersistentStore;
 
-  private static int                serverPort;
-  private static int                adminPort;
+  private final static int          serverPort               = 9510;
+  private final static int          adminPort                = 9520;
 
   private final File                workingDir;
 
   public DSOServer(boolean withPersistentStore, File workingDir) {
     this.withPersistentStore = withPersistentStore;
     this.workingDir = workingDir;
-    PortChooser pc = new PortChooser();
-    serverPort = pc.chooseRandomPort();
-    adminPort = pc.chooseRandomPort();
   }
 
   protected void doStart() throws Exception {
