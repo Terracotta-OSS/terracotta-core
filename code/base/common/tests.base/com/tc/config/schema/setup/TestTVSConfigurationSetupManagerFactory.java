@@ -167,7 +167,7 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
 
     this.mode = mode;
     if (mode == MODE_CENTRALIZED_CONFIG) {
-      this.l1ConfigurationCreator = new TestConfigurationCreator(this.beanSet, true);
+      this.l1ConfigurationCreator = new TestConfigurationCreator(this.l1_beanSet, true);
     } else if (mode == MODE_DISTRIBUTED_CONFIG) {
       this.l1ConfigurationCreator = new TestConfigurationCreator(this.l1_beanSet, false);
     } else {
