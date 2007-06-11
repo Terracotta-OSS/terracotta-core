@@ -23,6 +23,7 @@ import com.tc.test.server.appserver.war.War;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URL;
 import java.util.Properties;
@@ -56,8 +57,12 @@ public final class GlassfishV1AppServerFactory extends NewAppServerFactory {
   public AppServerInstallation createInstallation(URL host, File serverDir, File workingDir) throws Exception {
     GlassfishV1AppServerInstallation install = new GlassfishV1AppServerInstallation(host, serverDir, workingDir, config
         .appserverMajorVersion(), config.appserverMinorVersion());
+    doSetup(install);
+    return install;
+  }
 
-    File installDir = install.serverBaseDir();
+  private void doSetup(GlassfishV1AppServerInstallation install) throws IOException, Exception {        
+    File installDir = install.serverInstallDirectory();
     File configDir = new File(installDir, "config");
     File domainsDir = new File(installDir, "domains");
 
@@ -86,8 +91,6 @@ public final class GlassfishV1AppServerFactory extends NewAppServerFactory {
     helper.parse(p, antScript);
 
     p.executeTarget(p.getDefaultTarget());
-
-    return install;
   }
 
   private void modifySetupXml(File antScript) throws Exception {
@@ -137,8 +140,10 @@ public final class GlassfishV1AppServerFactory extends NewAppServerFactory {
   }
 
   public AppServerInstallation createInstallation(File home, File workingDir) throws Exception {
-    return new GlassfishV1AppServerInstallation(home, workingDir, config.appserverMajorVersion(), config
+    GlassfishV1AppServerInstallation install = new GlassfishV1AppServerInstallation(home, workingDir, config.appserverMajorVersion(), config
         .appserverMinorVersion());
+    doSetup(install);
+    return install;
   }
 
   public War createWar(String appName) {

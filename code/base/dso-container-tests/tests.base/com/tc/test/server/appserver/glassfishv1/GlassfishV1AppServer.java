@@ -143,7 +143,7 @@ public final class GlassfishV1AppServer extends AbstractAppServer {
   }
 
   private File getAsadminScript() {
-    File glassfishInstall = serverBaseDirectory();
+    File glassfishInstall = this.serverInstallDirectory();
     File asAdminScript = new File(new File(glassfishInstall, "bin"), getPlatformScript("asadmin"));
     checkFile(asAdminScript);
     return asAdminScript;

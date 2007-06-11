@@ -11,8 +11,6 @@ import java.io.File;
  */
 interface AppServerStartupEnvironment extends AppServerInstallation {
 
-  File serverBaseDir();
-
   File workingDirectory();
 
   File serverInstallDirectory();

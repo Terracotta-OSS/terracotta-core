@@ -73,10 +73,6 @@ public abstract class AbstractAppServer implements AppServer {
     return installation.minorVersion();
   }
 
-  protected final File serverBaseDirectory() {
-    return installation.serverBaseDir();
-  }
-
   protected final File sandboxDirectory() {
     return installation.sandboxDirectory();
   }

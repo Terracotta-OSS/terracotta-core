@@ -25,7 +25,6 @@ public abstract class AbstractAppServerInstallation implements AppServerStartupE
   private final File    dataDirectory;
   private final File    sandboxDirectory;
   private final boolean isRepoInstall;
-  private final File    serverBaseDir;
 
   /**
    * Use existing installation (example: CATALINA_HOME)
@@ -39,7 +38,6 @@ public abstract class AbstractAppServerInstallation implements AppServerStartupE
     this.majorVersion = majorVersion;
     this.minorVersion = minorVersion;
     this.serverInstall = home;
-    this.serverBaseDir = null;
     this.isRepoInstall = false;
     this.workingDirectory = workingDir;
     (this.dataDirectory = new File(workingDirectory + File.separator + AppServerConstants.DATA_DIR)).mkdir();
@@ -64,15 +62,13 @@ public abstract class AbstractAppServerInstallation implements AppServerStartupE
     this.isRepoInstall = true;
     this.serverInstall = ConcreteReadOnlyAppServerInstallation.create(host, serverDir, serverType(), majorVersion,
                                                                       minorVersion);
-
-    this.serverBaseDir = new File(serverInstall, AppServerUtil.getFullName(serverType(), majorVersion, minorVersion));
-
     this.workingDirectory = workingDir;
     (this.dataDirectory = new File(workingDirectory + File.separator + AppServerConstants.DATA_DIR)).mkdir();
     this.sandboxDirectory = workingDirectory;
     // description file for the working directory with filename indicating the server type. Can add more desciptive
     // information if needed.
-    new File(workingDir + File.separator + AppServerUtil.getFullName(serverType(), majorVersion, minorVersion)).createNewFile();
+    new File(workingDir + File.separator + AppServerUtil.getFullName(serverType(), majorVersion, minorVersion))
+        .createNewFile();
   }
 
   public final File dataDirectory() {
@@ -108,9 +104,4 @@ public abstract class AbstractAppServerInstallation implements AppServerStartupE
   public boolean isRepoInstall() {
     return isRepoInstall;
   }
-
-  public File serverBaseDir() {
-    return serverBaseDir;
-  }
-
 }
