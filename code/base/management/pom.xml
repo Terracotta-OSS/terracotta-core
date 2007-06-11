@@ -5,26 +5,39 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.terracotta</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>parent14</artifactId>
     <version>2.3-SNAPSHOT</version>
+    <relativePath>../parent14</relativePath>
   </parent>
   <artifactId>management</artifactId>
   <name>management</name>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>common</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>common-test</artifactId>
-      <version>${tcVersion}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
+      <artifactId>common</artifactId>
     </dependency>
     <dependency>
       <groupId>javax.management</groupId>

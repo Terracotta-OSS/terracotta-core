@@ -5,11 +5,26 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.terracotta</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>parent14</artifactId>
     <version>2.3-SNAPSHOT</version>
+    <relativePath>../parent14</relativePath>
   </parent>
   <artifactId>dso-l1-session</artifactId>
   <name>dso-l1-session</name>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/*.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>

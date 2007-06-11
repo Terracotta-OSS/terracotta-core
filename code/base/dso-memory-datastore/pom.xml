@@ -5,11 +5,34 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.terracotta</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>parent14</artifactId>
     <version>2.3-SNAPSHOT</version>
+    <relativePath>../parent14</relativePath>
   </parent>
   <artifactId>dso-memory-datastore</artifactId>
   <name>dso-memory-datastore</name>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>-Xms64M -Xmx256M</argLine>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>

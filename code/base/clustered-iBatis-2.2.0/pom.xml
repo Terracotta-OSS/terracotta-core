@@ -1,13 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <parent>
-    <artifactId>parent</artifactId>
     <groupId>org.terracotta</groupId>
+    <artifactId>parent14</artifactId>
     <version>2.3-SNAPSHOT</version>
+    <relativePath>../parent14</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>clustered-iBatis-2.2.0</artifactId>
   <name>clustered-iBatis-2.2.0</name>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/IBatisSimpleDaoTest.java</exclude>
+            <exclude>**/IBatisSimpleTest.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
   <dependencies>
     <dependency>
       <groupId>hsqldb</groupId>

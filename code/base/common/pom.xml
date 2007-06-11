@@ -5,40 +5,25 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.terracotta</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>parent14</artifactId>
     <version>2.3-SNAPSHOT</version>
+    <relativePath>../parent14</relativePath>
   </parent>
   <artifactId>common</artifactId>
   <name>common</name>
 
   <build>
-<!--    <testSourceDirectory>src/test/java</testSourceDirectory> -->
     <plugins>
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>xmlbeans-maven-plugin</artifactId>
+        <artifactId>maven-jar-plugin</artifactId>
         <executions>
           <execution>
             <goals>
-              <goal>xmlbeans</goal>
+              <goal>test-jar</goal>
             </goals>
           </execution>
         </executions>
-        <configuration>
-          <schemaDirectory>src.resources/com/tc/config/schema</schemaDirectory>
-          <defaultXmlConfigDir>src.resources/com/tc/config/schema-config</defaultXmlConfigDir>
-        </configuration>
       </plugin>
-      <plugin>
-       <artifactId>maven-jar-plugin</artifactId>
-         <executions>
-           <execution>
-             <goals>
-               <goal>test-jar</goal>
-             </goals>
-           </execution>
-         </executions>
-       </plugin>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
@@ -47,6 +32,9 @@
             <exclude>**/ArchiveUtilTest.java</exclude>
             <!-- failing reasons unknown -->
             <exclude>**/LinkedJavaProcessTest.java</exclude>
+
+            <!-- temporary just plain takes too long -->
+            <exclude>**/TimeMovesForwardTest.java</exclude>
           </excludes>
         </configuration>
       </plugin>
@@ -54,29 +42,38 @@
   </build>
 
   <dependencies>
+<!--    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tcconfig</artifactId>
+      <version>1.0</version>
+      <classifier>V1</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tcconfig</artifactId>
+      <version>1.0</version>
+      <classifier>V2</classifier>
+    </dependency>
+-->
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tcconfigV1</artifactId>
       <version>V1</version>
-<!--      <scope>system</scope>
-      <systemPath>${basedir}/lib/tcconfigV1.jar</systemPath>
--->
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tcconfigV2</artifactId>
       <version>V2</version>
-<!--      <scope>system</scope>
-      <systemPath>${basedir}/lib/tcconfigV2.jar</systemPath>
--->
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId> 
+      <artifactId>schemas</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>tctest-xmlbeans</artifactId>
-      <version>generated</version>
-<!--      <scope>system</scope>
-      <systemPath>${basedir}/lib.tests.unit/tctest-xmlbeans-generated.jar</systemPath>
--->
+      <artifactId>schemas</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
