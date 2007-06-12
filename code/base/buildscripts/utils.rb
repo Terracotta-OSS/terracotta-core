@@ -4,6 +4,14 @@
 # All rights reserved
 #
 
+unless defined?(JavaSystem)
+  include_class('java.lang.System') { |p, name| "Java" + name }
+end
+
+unless defined?(JavaFile)
+  include_class('java.io.File') { |p, name| "Java" + name }
+end
+
 # A basic assertion facility for Ruby. Takes a block, and fails if
 # the block returns false.
 def assert(message="Assertion Failed")

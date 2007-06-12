@@ -17,8 +17,6 @@ end
 # out of our source environment, as opposed to a more general Ruby or JRuby
 # environment.
 class BuildEnvironment < Environment
-  include_class('java.lang.System') { |p, name| "Java" + name }
-
   # Creates a new instance, given a Platform object and a configuration source.
   def initialize(platform, config_source, root_dir)
       super(platform)

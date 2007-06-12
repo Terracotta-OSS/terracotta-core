@@ -281,8 +281,7 @@ end
 #
 # This is how we implement our 'build-config.local overrides build-config.global'
 # mechanism.
-class StandardFileConfigSource < CompositeConfigSource
-    include_class('java.lang.System') { |p, name| "Java" + name }
+class StandardFileConfigSource < CompositeConfigSource    
 
     def get_os()
       os = JavaSystem.getProperty("os.name").downcase

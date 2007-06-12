@@ -294,9 +294,9 @@ class BuildSubtree
 
     module DOM4J
       # Include some DOM4J classes in this module.
+      include_class("org.dom4j.io.SAXReader")
       %w(Document DocumentException Element Node).each do |dom4j_class|
         include_class("org.dom4j.#{dom4j_class}")
-        include_class("org.dom4j.io.SAXReader")
       end
     end
 

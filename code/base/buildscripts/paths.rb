@@ -19,6 +19,7 @@ our_directory = "." if our_directory.nil? || our_directory.strip.length == 0
 
 require "%s/cross_platform" % our_directory
 require "%s/additions" % our_directory
+require 'utils.rb'
 
 # This class represents a path on the filesystem. It provides operations that
 # let you do things with that path in a platform-independent manner. For example,
@@ -43,9 +44,6 @@ class FilePath
     # if native Ruby, from various Ruby properties.
     if CrossPlatform::is_jruby?
         require 'java'
-
-        include_class('java.io.File') { |p, name| "Java" + name }
-        include_class('java.lang.System') { |p, name| "Java" + name }
 
         # The native directory separator ('/' on Unix, '\' on Windows), if we're
         # running on JRuby.

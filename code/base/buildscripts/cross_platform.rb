@@ -24,10 +24,7 @@ module CrossPlatform
     # Are we running under JRuby, or not?
     def self.is_jruby?
         if $is_jruby.nil?
-            begin
-                require 'java'
-
-                include_class('java.lang.System')
+            begin                
                 $is_jruby = true
             rescue LoadError
                 $is_jruby = false
@@ -60,7 +57,7 @@ if CrossPlatform.is_jruby?
     class JRubyPlatform
         attr_reader :ant
 
-        include_class('java.lang.System') { |p, name| "Java" + name }
+        #include_class('java.lang.System') { |p, name| "Java" + name }
 
         # Create a new instance.  You must pass in a hash that contains a valid
         # AntBuilder instance under the :ant key. (However, generally speaking, you

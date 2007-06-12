@@ -268,8 +268,7 @@ end
 # them externally (i.e., in Eclipse), or have it print out how it would run tests. This therefore
 # encapsulates all test set-up, run, and tear-down logic into a single place so that you can do
 # whatever you want with it.
-class SubtreeTestRun
-    include_class('java.lang.System') { |p, name| "Java" + name }
+class SubtreeTestRun   
 
     # The default timeout for tests, in seconds. Currently, this is 15 minutes.
     DEFAULT_TEST_TIMEOUT_SECONDS = 15 * 60

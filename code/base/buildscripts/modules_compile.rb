@@ -32,9 +32,8 @@ class BuildSubtree
                 puts "AspectJ #{build_module.name}/#{name}..."
 
                 # Include the java.lang.System class to get access to Java
-                # system properties
-                include_class('java.lang.System')
-                javac_classpath = System.getProperty('java.class.path')
+                # system properties                
+                javac_classpath = JavaSystem.getProperty('java.class.path')
 
                 ant.java(
                   :jvm => jdk.java.to_s,

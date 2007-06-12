@@ -21,11 +21,9 @@ require 'buildscripts/autorequire'
 # be useful to avoid passing a bunch of parameters around.  To add a service to
 # the registry, just add an entry to the Hash, such as
 #   Registry[:my_service] = my_service_object
-Registry = Hash.new
-
-# Get all our shared Ruby code.
-#AutoRequire.all_in_directory(File.join("..", "..", "buildsystems", "lib", "ruby", "shared"))
-
+unless defined?(Registry)
+  Registry = Hash.new
+end
 
 # Get all our buildscripts code.
 AutoRequire.all_in_directory('buildscripts')
