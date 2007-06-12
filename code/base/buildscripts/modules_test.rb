@@ -341,6 +341,10 @@ class SubtreeTestRun
         # tests_jvm will raise an exception if there is a problem with the JVM configuration
         tests_jvm
 
+        if tests_jvm.actual_type =~ /ibm/i
+          @extra_jvmargs << "-Xdump:java:file=-"
+        end
+
         puts "------------------------------------------------------------------------"
         puts "PREPARING to run tests (%s) on subtree '%s/%s'..." % [ @test_patterns.join(", "), @subtree.build_module.name, @subtree.name ]
         puts ""
