@@ -9,15 +9,11 @@ import com.tc.process.StreamCollector;
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
 
-import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ThreadDumpTest extends TCTestCase {
-
-  private static final String IBM_COREFILE_NAME = "ThreadDumpTest-javacore.txt";
 
   // XXX: This test is known to fail under jrockit on the monkey. When we decide to deal with JRockit, we'll have to get
   // this thing working too. One alternative: If there is a magic jrockit specific way to get thread dumps, feel to try
@@ -36,15 +32,12 @@ public class ThreadDumpTest extends TCTestCase {
     args.add("-D" + TestConfigObject.PROPERTY_FILE_LIST_PROPERTY_NAME + "="
              + System.getProperty(TestConfigObject.PROPERTY_FILE_LIST_PROPERTY_NAME));
     if (Vm.isIBM()) {
-      args.add("-Xdump:java:file=" + IBM_COREFILE_NAME);
+      args.add("-Xdump:java:file=-");
     }
     process.setJavaArguments((String[]) args.toArray(new String[args.size()]));
 
     System.err.println("JAVA ARGS: " + args);
 
-    if (Vm.isIBM()) {
-      assertFalse("Java core file already exists", ibmCoreFileExists());
-    }
     process.start();
 
     StreamCollector err = new StreamCollector(process.STDERR());
@@ -64,36 +57,8 @@ public class ThreadDumpTest extends TCTestCase {
     System.out.println("**** STDOUT BEGIN ****\n" + stdout + "\n**** STDOUT END ****");
     System.out.println("**** STDERR BEGIN ****\n" + stderr + "\n**** STDERR END ****");
 
-    if (Vm.isIBM()) {
-      assertTrue(ibmCoreFileExists());
-    } else {
-      assertTrue(stderr.toLowerCase().indexOf("full thread dump") >= 0
-                 || stdout.toLowerCase().indexOf("full thread dump") >= 0);
-    }
-  }
-
-  private final boolean ibmCoreFileExists() {
-    File[] coreFiles = new File(System.getProperty("user.dir")).listFiles(new FilenameFilter() {
-      public boolean accept(final File dir, final String name) {
-        return name.equals(IBM_COREFILE_NAME);
-      }
-    });
-    return coreFiles.length == 1;
-  }
-
-  protected void tearDown() throws Exception {
-    if (Vm.isIBM()) {
-      // Try to remove the generated core file
-      try {
-        final File coreFile = new File(IBM_COREFILE_NAME);
-        if (coreFile.exists() && coreFile.isFile()) {
-          coreFile.deleteOnExit();
-        }
-      } catch (Exception ignore) {
-        // Whatever, just trying to be nice
-      }
-    }
-    super.tearDown();
+    assertTrue(stderr.toLowerCase().indexOf("full thread dump") >= 0
+               || stdout.toLowerCase().indexOf("full thread dump") >= 0);
   }
 
 }
