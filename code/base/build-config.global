@@ -2,18 +2,25 @@
 # the safe way to play around with config is to make a file call build-config.local and
 # put your settings in there
 
-tc.build-control.version=trunk
 tc.build-control.branch=trunk
 tc.build-control.jvmargs=-Xms64m,-Xmx128m,-Dtc.base-dir=code/base
 
 tc.tests.configuration.transparent-tests.mode=normal
 tc.tests.configuration.variants.selected.spring=20
 
-# for container tests
-tc.tests.configuration.appserver.factory.name=tomcat
-tc.tests.configuration.appserver.major-version=5
-tc.tests.configuration.appserver.minor-version=5.23
+# for container tests, you can also specify 'appserver=xxxx' on command line
+appserver=tomcat-5.5.23
+
+#appserver=jetty-6.1.3
+#appserver=websphere-6.1.0.7
+#appserver=glasshfish-v1.ur1-p01-b02
+#appserver=weblogic-8.1.sp6
+#appserver=jboss-4.0.5
+#appserver=wasce-1.0.1.2
+#appserver=tomcat-5.0.28
 
 # you only need one of these specified to run containter tests
+# if both specified, appserver.home takes precedent
+
 tc.tests.configuration.appserver.repository=http://kong.terracotta.lan/resources/appservers
-#tc.tests.configuration.appserver.home=C:\\tomcat-5.5.20
+#tc.tests.configuration.appserver.home=C:\\tomcat-5.5.23
