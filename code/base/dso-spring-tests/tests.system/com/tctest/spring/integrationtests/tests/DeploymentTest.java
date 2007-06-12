@@ -25,6 +25,7 @@ public class DeploymentTest extends SpringDeploymentTest {
     super.setUp();
     singletonWAR = makeSingletonWAR();
     fooServiceWAR = makeFooServiceWAR();
+    this.getServerManager().restartDSO(this.isWithPersistentStore());
   }
 
   protected void runTest() throws Throwable {

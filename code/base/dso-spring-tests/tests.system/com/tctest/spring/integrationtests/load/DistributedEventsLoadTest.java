@@ -35,6 +35,7 @@ public class DistributedEventsLoadTest extends SpringDeploymentTest {
     if (deployment == null) {
       deployment = makeWAR();
     }
+    this.getServerManager().restartDSO(this.isWithPersistentStore());
   }
 
   public void testTwoNodeDistributedEventsLoad() throws Throwable {

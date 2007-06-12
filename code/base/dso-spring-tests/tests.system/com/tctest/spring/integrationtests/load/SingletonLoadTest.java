@@ -28,6 +28,7 @@ public class SingletonLoadTest extends SpringDeploymentTest {
   protected void setUp() throws Exception {
     super.setUp();
     if (deployment == null) deployment = makeDeployment();
+    this.getServerManager().restartDSO(this.isWithPersistentStore());
   }
 
   public void testTwoNodeSingletonLoad() throws Exception {

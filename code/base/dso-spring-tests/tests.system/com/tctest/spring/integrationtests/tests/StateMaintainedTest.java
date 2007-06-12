@@ -29,6 +29,8 @@ public class StateMaintainedTest extends SpringDeploymentTest {
     
     server2 = makeWebApplicationServer(CONFIG_FILE_FOR_TEST);
     server2.addWarDeployment(deployment, APP_NAME);
+    
+    this.getServerManager().restartDSO(this.isWithPersistentStore());
   }
 
   public void testThatStatePreservedAcrossServerRestart() throws Exception {
