@@ -3,3 +3,4 @@ JavaUtilArraysTest
 LogicalIteratorTest
 ObjectDataTest
 ReentrantReadWriteLockCrashTest
+TreeMapTest
