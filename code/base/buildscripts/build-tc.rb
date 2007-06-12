@@ -75,6 +75,19 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     # Load the XMLBeans task, so we can use it to process config files when needed by that target.
     ant.taskdef(:name => 'xmlbean', :classname => 'org.apache.xmlbeans.impl.tool.XMLBean')
   end
+  
+  
+  def handle_appserver_overwite()
+    appserver = @config_source['appserver']
+    unless appserver.nil?
+      if appserver =~ /([^-]+)-([^\.]+)\.(.*)/
+        internal_config_source = Registry[:internal_config_source]
+        internal_config_source['tc.tests.configuration.appserver.factory.name'] = $1
+        internal_config_source['tc.tests.configuration.appserver.major-version'] = $2
+        internal_config_source['tc.tests.configuration.appserver.minor-version'] = $3
+      end
+    end
+  end
 
   def monkey?
     config_source['monkey-name']
@@ -108,6 +121,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
   # Used by every other target, basically.
   def init
+    handle_appserver_overwite()
     write_build_info_file if monkey?
   end
 

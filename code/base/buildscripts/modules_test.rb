@@ -440,9 +440,6 @@ class SubtreeTestRun
 
     def download_appserver_if_needed
       if requires_container?
-        
-        handle_appserver_overwite()
-        
         if @config_source['tc.tests.configuration.appserver.home']
           if File.exist?(@config_source['tc.tests.configuration.appserver.home'])
             puts "** Appserver home is specified #{@config_source['tc.tests.configuration.appserver.home']}"
@@ -481,19 +478,6 @@ class SubtreeTestRun
       end
     end
     
-    def handle_appserver_overwite()
-      appserver = @config_source['appserver']
-      unless appserver.nil?
-        if appserver =~ /([^-]+)-([^\.]+)\.(.*)/
-          internal_config_source = Registry[:internal_config_source]
-          internal_config_source['tc.tests.configuration.appserver.factory.name'] = $1
-          internal_config_source['tc.tests.configuration.appserver.major-version'] = $2
-          internal_config_source['tc.tests.configuration.appserver.minor-version'] = $3
-        end
-      end
-    end
-    
-
     # The list of system properties that *must* be set directly on the spawned JVM, rather than
     # being able to be set by TestConfigObject calling System.setProperty() from its static
     # initializer block. These are system properties that the JVM itself reads, or that DSO
