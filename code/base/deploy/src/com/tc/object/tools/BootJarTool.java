@@ -160,6 +160,9 @@ import java.util.Set;
  * Tool for creating the DSO boot jar
  */
 public class BootJarTool {
+  private static final String         EXCESS_CLASSES               = "excess";
+  private static final String         MISSING_CLASSES              = "missing";
+  
   private final static String         TARGET_FILE_OPTION           = "o";
   private final static boolean        WRITE_OUT_TEMP_FILE          = true;
 
@@ -225,28 +228,32 @@ public class BootJarTool {
       System.exit(1);
     }
 
-    final Set missing = scanJarForMissingClasses(bootJarFile);
-    if (!missing.isEmpty()) {
-      System.err.println("\nThe following classes was declared in the <additional-boot-jar-classes/> section "
+    final Map result  = compareBootJarContentsToUserSpec(bootJarFile);
+    final Set missing = (Set)result.get(MISSING_CLASSES);
+    final Set excess  = (Set)result.get(EXCESS_CLASSES);
+    
+    if (!missing.isEmpty() || !excess.isEmpty()) {
+      System.err.println("\nYour boot JAR file might be out of date.");
+      
+      if (!missing.isEmpty()) {
+        System.err.println("\nThe following classes was declared in the <additional-boot-jar-classes/> section "
                          + "of your tc-config file but is not a part of your boot JAR file:");
-      for (Iterator i = missing.iterator(); i.hasNext();) {
-        System.err.println("- " + i.next());
+        for (Iterator i = missing.iterator(); i.hasNext();) {
+          System.err.println("- " + i.next());
+        }
       }
-      System.err.println("\nUse the make-boot-jar tool to re-create and include these classes in your boot JAR.");
+      
+      if (!excess.isEmpty()) {
+        System.err.println("\nThe following user-classes were found in the boot JAR but was not declared in the "
+                         + "<additional-boot-jar-classes/> section of your tc-config file:");
+        for (Iterator i = missing.iterator(); i.hasNext();) {
+          System.err.println("- " + i.next());
+        }
+      }
+
+      System.err.println("\nUse the make-boot-jar tool to re-create your boot JAR.");
       System.exit(1);
     }
-    
-    final Set excess = scanJarForExcessClasses(bootJarFile);
-    if (!excess.isEmpty()) {
-      System.err.println("\nYour boot JAR file may be out of date. The following user-classes were found in the boot JAR"
-                         + "but was not declared in the <additional-boot-jar-classes/> section of your tc-config file:");
-      for (Iterator i = missing.iterator(); i.hasNext();) {
-        System.err.println("- " + i.next());
-      }
-      System.err.println("\nUse the make-boot-jar tool to re-create and exclude these classes in your boot JAR.");
-      System.exit(1);
-    }
-    
   }
 
   /**
@@ -259,56 +266,45 @@ public class BootJarTool {
    * @return <code>true</cide> if the boot jar is complete.
    */
   private final boolean isBootJarComplete(File bootJarFile) {
-    final Set missing = scanJarForMissingClasses(bootJarFile);
-    final Set excess  = scanJarForExcessClasses(bootJarFile);
+    final Map result  = compareBootJarContentsToUserSpec(bootJarFile);
+    final Set missing = (Set)result.get(MISSING_CLASSES);
+    final Set excess  = (Set)result.get(EXCESS_CLASSES);
     return missing.isEmpty() && excess.isEmpty();
   }
-  
+
   /**
-   * Checks if the bootjar contains all the class files defined in the <additional-boot-jar-classes/> section of the
-   * tc-config.
-   * 
-   * @return An instance of Set listing the missing class files.
+   * Scans the boot JAR file for:
+   * - User-defined classes that are in the boot JAR but is not defined in the
+   *   <additional-boot-jar-classes/> section of the config
+   * - Class names declared in the config but are not in the boot JAR
    */
-  private final Set scanJarForMissingClasses(File bootJarFile) {
+  private final Map compareBootJarContentsToUserSpec(File bootJarFile) {
     try {
+      Map result                 = new HashMap();
+      final Map internalSpecs    = getTCSpecs();
+      final Map userSpecs        = massageSpecs(getUserDefinedSpecs(internalSpecs), false);
+      final BootJar bootJarLocal = BootJar.getBootJarForReading(bootJarFile);
+      final Set preInstrumented  = bootJarLocal.getAllPreInstrumentedClasses();
       final Set missing = new HashSet();
-      final Map internalSpecs = getTCSpecs();
-
-      final Map userSpecs = massageSpecs(getUserDefinedSpecs(internalSpecs), false);
-      final BootJar bootJarLocal = BootJar.getBootJarForReading(bootJarFile);
-      Set bootJarClassNames = bootJarLocal.getAllPreInstrumentedClasses();
-      
-      for (Iterator i = userSpecs.keySet().iterator(); i.hasNext();) {
-        String userClassName = (String) i.next();
-        if (!bootJarClassNames.contains(userClassName)) {
-          missing.add(userClassName);
+      for (final Iterator i = userSpecs.keySet().iterator(); i.hasNext();) {
+        final String cn = (String) i.next();
+        if (!preInstrumented.contains(cn)) {
+          missing.add(cn);
         }
       }
-      return missing;
-    } catch (BootJarException e) {
-      throw new RuntimeException(e);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-  
-  private final Set scanJarForExcessClasses(File bootJarFile) {
-    try {
-      final Set excess = new HashSet();
-      final Map internalSpecs = getTCSpecs();
-
-      final Map userSpecs = massageSpecs(getUserDefinedSpecs(internalSpecs), false);
-      final BootJar bootJarLocal = BootJar.getBootJarForReading(bootJarFile);
-      Set bootJarClassNames = bootJarLocal.getAllForeignClasses();
-      
-      for (Iterator i = bootJarClassNames.iterator(); i.hasNext(); ) {
-        String foreignClassName = (String) i.next();
-        if (!userSpecs.keySet().contains(foreignClassName)) {
-          excess.add(foreignClassName);
+      result.put(MISSING_CLASSES, missing); 
+     
+      final Set foreign = bootJarLocal.getAllForeignClasses();
+      final Set excess  = new HashSet();
+      for (final Iterator i = foreign.iterator(); i.hasNext(); ) {
+        final String cn = (String) i.next();
+        if (!userSpecs.keySet().contains(cn)) {
+          excess.add(cn);
         }
       }
-      return excess;
+      result.put(EXCESS_CLASSES, excess);
+      
+      return result;
     } catch (BootJarException e) {
       throw new RuntimeException(e);
     } catch (IOException e) {
