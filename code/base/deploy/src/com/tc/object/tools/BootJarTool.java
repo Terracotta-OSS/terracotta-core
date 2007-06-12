@@ -214,8 +214,9 @@ public class BootJarTool {
   }
 
   /**
-   * Calls <code>scanJarForMissingClasses(File)</code> to determine if the given boot jar file is incomplete depending
-   * on the current user configuration, and halt program execution if the boot jar is incomplete.
+   * Scans the boot JAR file to determine if it is complete and contains only the user-classes 
+   * that are specified in the tc-config's <additional-boot-jar-classes/> section. Program execution 
+   * halts if it fails these checks.
    */
   private final void scanJar(File bootJarFile) {
     if (!bootJarFile.exists()) {
@@ -234,19 +235,35 @@ public class BootJarTool {
       System.err.println("\nUse the make-boot-jar tool to re-create and include these classes in your boot JAR.");
       System.exit(1);
     }
+    
+    final Set excess = scanJarForExcessClasses(bootJarFile);
+    if (!excess.isEmpty()) {
+      System.err.println("\nYour boot JAR file may be out of date. The following user-classes were found in the boot JAR"
+                         + "but was not declared in the <additional-boot-jar-classes/> section of your tc-config file:");
+      for (Iterator i = missing.iterator(); i.hasNext();) {
+        System.err.println("- " + i.next());
+      }
+      System.err.println("\nUse the make-boot-jar tool to re-create and exclude these classes in your boot JAR.");
+      System.exit(1);
+    }
+    
   }
 
   /**
-   * Calls <code>scanJarForMissingClasses(File)</code> to determine if the given boot jar file is complete depending
-   * on the current user configuration.
+   * Checks if the given bootJarFile is complete; meaning:
+   * - All the classes declared in the configurations <additional-boot-jar-classes/> section
+   *   is present in the boot jar.
+   * - And there are no user-classes present in the boot jar that is not declared in the
+   *   <additional-boot-jar-classes/> section 
    * 
    * @return <code>true</cide> if the boot jar is complete.
    */
   private final boolean isBootJarComplete(File bootJarFile) {
     final Set missing = scanJarForMissingClasses(bootJarFile);
-    return missing.isEmpty();
+    final Set excess  = scanJarForExcessClasses(bootJarFile);
+    return missing.isEmpty() && excess.isEmpty();
   }
-
+  
   /**
    * Checks if the bootjar contains all the class files defined in the <additional-boot-jar-classes/> section of the
    * tc-config.
@@ -261,6 +278,7 @@ public class BootJarTool {
       final Map userSpecs = massageSpecs(getUserDefinedSpecs(internalSpecs), false);
       final BootJar bootJarLocal = BootJar.getBootJarForReading(bootJarFile);
       Set bootJarClassNames = bootJarLocal.getAllPreInstrumentedClasses();
+      
       for (Iterator i = userSpecs.keySet().iterator(); i.hasNext();) {
         String userClassName = (String) i.next();
         if (!bootJarClassNames.contains(userClassName)) {
@@ -268,6 +286,29 @@ public class BootJarTool {
         }
       }
       return missing;
+    } catch (BootJarException e) {
+      throw new RuntimeException(e);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  
+  private final Set scanJarForExcessClasses(File bootJarFile) {
+    try {
+      final Set excess = new HashSet();
+      final Map internalSpecs = getTCSpecs();
+
+      final Map userSpecs = massageSpecs(getUserDefinedSpecs(internalSpecs), false);
+      final BootJar bootJarLocal = BootJar.getBootJarForReading(bootJarFile);
+      Set bootJarClassNames = bootJarLocal.getAllForeignClasses();
+      
+      for (Iterator i = bootJarClassNames.iterator(); i.hasNext(); ) {
+        String foreignClassName = (String) i.next();
+        if (!userSpecs.keySet().contains(foreignClassName)) {
+          excess.add(foreignClassName);
+        }
+      }
+      return excess;
     } catch (BootJarException e) {
       throw new RuntimeException(e);
     } catch (IOException e) {
@@ -439,7 +480,7 @@ public class BootJarTool {
       issueWarningsAndErrors();
 
       // user defined specs should ALWAYS be after internal specs
-      loadBootJarClasses(removeAlreadyLoaded(userSpecs));
+      loadBootJarClasses(removeAlreadyLoaded(userSpecs), true);
 
       adaptClassIfNotAlreadyIncluded(BufferedWriter.class.getName(), BufferedWriterAdapter.class);
       adaptClassIfNotAlreadyIncluded(DataOutputStream.class.getName(), DataOutputStreamAdapter.class);
@@ -1141,13 +1182,17 @@ public class BootJarTool {
     }
   }
 
-  private final void loadBootJarClasses(Map specs) {
+  private final void loadBootJarClasses(Map specs, boolean foreignClass) {
     for (Iterator iter = specs.values().iterator(); iter.hasNext();) {
       TransparencyClassSpec spec = (TransparencyClassSpec) iter.next();
       byte[] classBytes = doDSOTransform(spec.getClassName(), getSystemBytes(spec.getClassName()));
       announce("Adapting: " + spec.getClassName());
-      bootJar.loadClassIntoJar(spec.getClassName(), classBytes, spec.isPreInstrumented());
+      bootJar.loadClassIntoJar(spec.getClassName(), classBytes, spec.isPreInstrumented(), foreignClass);
     }
+  }
+  
+  private final void loadBootJarClasses(Map specs) {
+    loadBootJarClasses(specs, false);
   }
 
   private final Map getTCSpecs() {

@@ -41,6 +41,7 @@ public class BootJar {
   private static final State    STATE_CLOSED         = new State("CLOSED");
 
   public static final String    PREINSTRUMENTED_NAME = "Preinstrumented";
+  public static final String    FOREIGN_NAME         = "Foreign";
 
   private final File            file;
   private final Map             entries;
@@ -145,6 +146,10 @@ public class BootJar {
   }
 
   public void loadClassIntoJar(String className, byte[] data, boolean isPreinstrumented) {
+    loadClassIntoJar(className, data, isPreinstrumented, false);
+  }
+  
+  public void loadClassIntoJar(String className, byte[] data, boolean isPreinstrumented, boolean isForeign) {
     boolean added = classes.add(className);
 
     // disallow duplicate entries into the boot jar. Even w/o this assertion, the jar
@@ -158,14 +163,14 @@ public class BootJar {
 
     String cn = classNameToFileName(className);
     JarEntry jarEntry = new JarEntry(cn);
-    basicLoadClassIntoJar(jarEntry, data, isPreinstrumented);
+    basicLoadClassIntoJar(jarEntry, data, isPreinstrumented, isForeign);
   }
 
   private void assertWrite() {
     if (!openForWrite) throw new AssertionError("boot jar not open for writing");
   }
 
-  private synchronized void basicLoadClassIntoJar(JarEntry je, byte[] classBytes, boolean isPreinstrumented) {
+  private synchronized void basicLoadClassIntoJar(JarEntry je, byte[] classBytes, boolean isPreinstrumented, boolean isForeign) {
     assertWrite();
 
     Attributes attributes = manifest.getAttributes(je.getName());
@@ -173,7 +178,8 @@ public class BootJar {
       attributes = makeAttributesFor(je.getName());
     }
     attributes.put(new Attributes.Name(PREINSTRUMENTED_NAME), Boolean.toString(isPreinstrumented));
-    entries.put(new JarEntryWrapper(je, new Boolean(isPreinstrumented)), classBytes);
+    attributes.put(new Attributes.Name(FOREIGN_NAME), Boolean.toString(isForeign));
+    entries.put(new JarEntryWrapper(je, Boolean.valueOf(isPreinstrumented), Boolean.valueOf(isForeign)), classBytes);
   }
 
   private Attributes makeAttributesFor(String resource) {
@@ -182,9 +188,10 @@ public class BootJar {
     return rv;
   }
 
-  private static final int QUERY_ALL = 0;
+  private static final int QUERY_ALL             = 0;
   private static final int QUERY_PREINSTRUMENTED = 1;
-  private static final int QUERY_UNINSTRUMENTED = 2;
+  private static final int QUERY_UNINSTRUMENTED  = 2;
+  private static final int QUERY_FOREIGN         = 3;
   
   public synchronized byte[] getBytesForClass(final String name) throws IOException {
     JarEntry entry      = jarFileInput.getJarEntry(BootJar.classNameToFileName(name));
@@ -224,8 +231,12 @@ public class BootJar {
               rv.add(fileNameToClassName(entry.getName()));
             }
             break;
+          case QUERY_FOREIGN:
+            if (isForeign(entry)) {
+              rv.add(fileNameToClassName(entry.getName()));
+            }
           default:
-            Assert.failure("Query arg for getBootJarClasses() must be one of the following: QUERY_ALL, QUERY_PREINSTRUMENTED, QUERY_UNINSTRUMENTED");
+            Assert.failure("Query arg for getBootJarClasses() must be one of the following: QUERY_ALL, QUERY_PREINSTRUMENTED, QUERY_UNINSTRUMENTED, QUERY_FOREIGN");
             break;
         }
       }
@@ -246,18 +257,30 @@ public class BootJar {
     return getBootJarClassNames(QUERY_PREINSTRUMENTED);
   }
 
+  public synchronized Set getAllForeignClasses() throws IOException {
+    return getBootJarClassNames(QUERY_FOREIGN);
+  }
+
   private void assertOpen() {
     if (state != STATE_OPEN) { throw new AssertionError("boot jar not open: " + state); }
   }
 
-  private boolean isPreInstrumentedEntry(JarEntry entry) throws IOException {
+  private String getJarEntryAttributeValue(JarEntry entry, String attributeName) throws IOException {
     Attributes attributes = entry.getAttributes();
     if (attributes == null) throw new AssertionError("Invalid jar file: No attributes for jar entry: "
                                                      + entry.getName());
-    String value = attributes.getValue(PREINSTRUMENTED_NAME);
-    if (value == null) throw new AssertionError("Invalid jar file: No " + PREINSTRUMENTED_NAME
+    String value = attributes.getValue(attributeName);
+    if (value == null) throw new AssertionError("Invalid jar file: No " + attributeName
                                                 + " attribute for jar entry: " + entry.getName());
-    return Boolean.valueOf(value).booleanValue();
+    return value;
+    
+  }
+  private boolean isForeign(JarEntry entry) throws IOException {
+    return Boolean.valueOf(getJarEntryAttributeValue(entry, FOREIGN_NAME)).booleanValue();
+  }
+  
+  private boolean isPreInstrumentedEntry(JarEntry entry) throws IOException {
+    return Boolean.valueOf(getJarEntryAttributeValue(entry, PREINSTRUMENTED_NAME)).booleanValue();
   }
 
   private void writeEntries(JarOutputStream out) throws IOException {
@@ -393,18 +416,24 @@ public class BootJar {
   private static class JarEntryWrapper {
     private final JarEntry jarEntry;
     private final Boolean  isPreinstrumented;
+    private final Boolean  isForeign;
 
-    private JarEntryWrapper(JarEntry jarEntry, Boolean isPreinstrumented) {
+    private JarEntryWrapper(JarEntry jarEntry, Boolean isPreinstrumented, Boolean isForeign) {
       this.jarEntry = jarEntry;
       this.isPreinstrumented = isPreinstrumented;
+      this.isForeign = isForeign;
     }
 
     public JarEntry getJarEntry() {
       return jarEntry;
     }
 
-    public Boolean isPreistrumented() {
+    public Boolean isPreinstrumented() {
       return isPreinstrumented;
+    }
+    
+    public Boolean isForeign() {
+      return isForeign;
     }
   }
 
