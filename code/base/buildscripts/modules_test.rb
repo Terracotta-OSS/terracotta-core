@@ -439,13 +439,14 @@ class SubtreeTestRun
     end
 
     def download_appserver_if_needed
+      appserver_home = @config_source['tc.tests.configuration.appserver.home']
       if requires_container?
-        if @config_source['tc.tests.configuration.appserver.home']
-          if File.exist?(@config_source['tc.tests.configuration.appserver.home'])
-            puts "** Appserver home is specified #{@config_source['tc.tests.configuration.appserver.home']}"
+        if appserver_home
+          if File.exist?(appserver_home)
+            puts "** Appserver home is specified #{appserver_home}"
             return
           else
-            fail("Appserver home specified [#{@config_source['tc.tests.configuration.appserver.home']}] but path not found!")
+            fail("Appserver home specified [#{appserver_home}] but path not found!")
           end
         end
         
