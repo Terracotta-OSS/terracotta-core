@@ -46,32 +46,28 @@ public class AppServerUtil {
 
     throw new RuntimeException("Port " + port + " cannot be reached, timeout = " + waitTime);
   }
-  
+
   public static String getFullName(String serverName, String majorVersion, String minorVersion) {
     return serverName.toLowerCase() + "-" + majorVersion.toLowerCase() + "." + minorVersion.toLowerCase();
   }
-  
+
   public static boolean awaitShutdown(int timewait) {
     long start = System.currentTimeMillis();
     long timeout = timewait + start;
     boolean foundAlive = false;
     do {
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        // ignore
-      }
+      ThreadUtil.reallySleep(5000);
       foundAlive = HeartBeatService.anyAppServerAlive();
     } while (foundAlive && System.currentTimeMillis() < timeout);
 
     return foundAlive;
   }
-  
+
   public static void shutdownAndArchive(File from, File to) {
-    awaitShutdown(10 * 1000);
+    awaitShutdown(2 * 60 * 1000);
     System.out.println("Send kill signal to app servers...");
     HeartBeatService.sendKillSignalToChildren();
-    
+
     System.err.println("Copying files from " + from + " to " + to);
     try {
       com.tc.util.io.FileUtils.copyFile(from, to);
