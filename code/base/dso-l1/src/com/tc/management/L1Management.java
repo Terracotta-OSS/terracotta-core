@@ -22,6 +22,8 @@ import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.runtime.Vm;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,13 +40,13 @@ import javax.management.remote.JMXServiceURL;
 
 public final class L1Management extends TerracottaManagement {
 
-  private static final TCLogger       logger      = TCLogging.getLogger(L1Management.class);
-  private static boolean              forceCreate = false;
+  private static final TCLogger       logger = TCLogging.getLogger(L1Management.class);
 
   private final SetOnceFlag           started;
   private final TunnelingEventHandler tunnelingHandler;
   private final Object                mBeanServerLock;
   private MBeanServer                 mBeanServer;
+
   private final ClientTxMonitor       clientTxBean;
   private final SessionMonitor        internalSessionBean;
   private final SessionsProduct       publicSessionBean;
@@ -122,27 +124,25 @@ public final class L1Management extends TerracottaManagement {
     return internalSessionBean;
   }
 
-  public synchronized static void forceCreateMBeanServer() {
-    forceCreate = true;
-  }
-
   public TerracottaCluster getTerracottaCluster() {
     return clusterBean;
   }
 
   private void attemptToRegister() throws InstanceAlreadyExistsException, MBeanRegistrationException,
-      NotCompliantMBeanException {
+      NotCompliantMBeanException, SecurityException, IllegalArgumentException, NoSuchMethodException,
+      ClassNotFoundException, IllegalAccessException, InvocationTargetException {
     synchronized (mBeanServerLock) {
       if (mBeanServer == null) {
-        if (shouldCreateMBeanServer()) {
-          mBeanServer = MBeanServerFactory.createMBeanServer();
-        } else {
+        if (Vm.isJDK14()) {
           List mBeanServers = MBeanServerFactory.findMBeanServer(null);
-          if (!mBeanServers.isEmpty()) {
+          if (mBeanServer != null && !mBeanServers.isEmpty()) {
             mBeanServer = (MBeanServer) mBeanServers.get(0);
           } else {
-            throw new MBeanRegistrationException(new Exception("Waiting for default MBeanServer"));
+            mBeanServer = MBeanServerFactory.createMBeanServer();
           }
+        } else {
+          // CDV-260: Make sure to use java.lang.management.ManagementFactory.getPlatformMBeanServer() on JDK 1.5+
+          mBeanServer = getPlatformDefaultMBeanServer();
         }
         addJMXConnectors();
       }
@@ -183,11 +183,13 @@ public final class L1Management extends TerracottaManagement {
     }
   }
 
-  private synchronized static boolean shouldCreateMBeanServer() {
-    // We get called very early in the bootstrap process, and can outrun the creation of the default mbean server that
-    // the 1.5 JDK and jconsole uses. If it looks like the default server should start up then return false, otherwise
-    // (1.4 JDK or the com.sun.management.jmxremote property is not set) return true.
-    return forceCreate || Vm.isJDK14() || (Vm.getMajorVersion() > 4 && System.getProperty("com.sun.management.jmxremote") == null);
+  private MBeanServer getPlatformDefaultMBeanServer() throws SecurityException, NoSuchMethodException,
+      ClassNotFoundException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+    // 1.5+, this code is irritating since this class needs to compile against 1.4
+    Class managementFactoryClass = Class.forName("java.lang.management.ManagementFactory");
+    Method getPlatformMBeanServerMethod = managementFactoryClass.getDeclaredMethod("getPlatformMBeanServer",
+                                                                                   new Class[0]);
+    return (MBeanServer) getPlatformMBeanServerMethod.invoke(null, new Object[0]);
   }
 
 }

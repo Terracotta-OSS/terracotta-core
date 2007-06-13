@@ -12,7 +12,6 @@ import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
-import com.tc.management.L1Management;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.test.TCTestCase;
@@ -26,10 +25,6 @@ import java.io.IOException;
 public class BaseDSOTestCase extends TCTestCase {
 
   private Exception failTestException;
-
-  static {
-    L1Management.forceCreateMBeanServer();
-  }
 
   private class TestFailingIllegalConfigChangeHandler implements IllegalConfigurationChangeHandler {
     public void changeFailed(ConfigItem item, Object oldValue, Object newValue) {
