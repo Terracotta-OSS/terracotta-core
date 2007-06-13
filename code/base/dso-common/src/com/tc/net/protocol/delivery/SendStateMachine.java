@@ -15,6 +15,7 @@ import com.tc.util.TCAssertionError;
 
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.Random;
 
 /**
  * 
@@ -43,14 +44,16 @@ public class SendStateMachine extends AbstractStateMachine {
     
     this.delivery = delivery;
     this.sendQueue = sendQueue;
+    
+    setSessionId(newRandomSessionId());
   }
-
+  
   protected void basicResume() {
     switchToState(ACK_REQUEST_STATE);
   }
 
   protected State initialState() {
-    Assert.eval(MESSAGE_WAIT_STATE != null);
+     Assert.eval(MESSAGE_WAIT_STATE != null);
     return MESSAGE_WAIT_STATE;
   }
 
@@ -78,14 +81,8 @@ public class SendStateMachine extends AbstractStateMachine {
 
   private class AckRequestState extends AbstractState {
     public void enter() {
-      if (sent.get() == -1) {
-        // This is at system startup, don't need to do anything.
-        switchToState(MESSAGE_WAIT_STATE);
-      } else {
-        // peer may crash or lose connection, do handshaking
         sendAckRequest();
         switchToState(HANDSHAKE_STATE);
-      }
     }
   }
 
@@ -95,11 +92,17 @@ public class SendStateMachine extends AbstractStateMachine {
       // expecting an ack to do hand shake
       if (protocolMessage == null) return;
       if (protocolMessage.isSend()) return;
+      // accept only matched sessionId
+      if (!matchSessionId(protocolMessage)) {
+        //System.err.println("XXX sender received unmatched ack expect "+ getSessionId() + " but got "+protocolMessage.getSessionId() );
+        return;
+      }
       long ackedSeq = protocolMessage.getAckSequence();
       
       if (ackedSeq == -1) {
-        // this should be handled at a higher level - OOONetworkLayer
-        throw new AssertionError();
+        // System.out.println("XXX sender received ack -1");
+        switchToState(MESSAGE_WAIT_STATE);
+        return;
       }
       if (ackedSeq < acked.get()) {
         // this shall not, old ack
@@ -131,15 +134,15 @@ public class SendStateMachine extends AbstractStateMachine {
     public void execute(OOOProtocolMessage protocolMessage) {
       if (protocolMessage == null || protocolMessage.isSend()) return;
 
-      long ackedSeq = protocolMessage.getAckSequence();
-      Assert.eval(ackedSeq >= acked.get());
-      
-      // drop all insane acks, it may occur at connection reestablish
-      if (ackedSeq > (acked.get()+outstandingCnt.get())) {
-        System.err.println("Wrong ack "+ ackedSeq + " expected <= " + (acked.get()+outstandingCnt.get()));
+      // accept only matched sessionId
+      if (!matchSessionId(protocolMessage)) {
+        //System.err.println("XXX sender received unmatched ack expect "+ getSessionId() + " but got "+protocolMessage.getSessionId() );
         return;
       }
 
+      long ackedSeq = protocolMessage.getAckSequence();
+      Assert.eval(ackedSeq >= acked.get());
+      
       while (ackedSeq > acked.get()) {
         acked.increment();
         removeMessage();
@@ -164,7 +167,10 @@ public class SendStateMachine extends AbstractStateMachine {
   }
 
   private void sendAckRequest() {
-    delivery.sendAckRequest();
+    OOOProtocolMessage opm = delivery.createAckRequestMessage();
+    // attached sessionId to ackRequest
+    opm.setSessionId(getSessionId());
+    sendMessage(opm);
   }
 
   private void sendMessage(OOOProtocolMessage protocolMessage) {
@@ -175,6 +181,8 @@ public class SendStateMachine extends AbstractStateMachine {
     OOOProtocolMessage opm;
     try {
       opm = delivery.createProtocolMessage(count, (TCNetworkMessage) sendQueue.take());
+      // attached sessionId to each message from this sender
+      opm.setSessionId(getSessionId());
       Assert.eval(opm != null);
       outstandingCnt.increment();
       outstandingMsgs.add(opm);
@@ -199,6 +207,9 @@ public class SendStateMachine extends AbstractStateMachine {
   }
 
   public void reset() {
+    // have a new sessionId to drop all old messages
+    setSessionId(newRandomSessionId());
+
     sent.set(-1);
     acked.set(-1);
 
@@ -218,4 +229,12 @@ public class SendStateMachine extends AbstractStateMachine {
       throw new AssertionError(e);
     }
   }
+  
+  private short newRandomSessionId() {
+    // generate a random session id
+    Random r = new Random( ); 
+    r.setSeed(System.currentTimeMillis());
+    return((short) r.nextInt(0x0000fff0));
+  }
+  
 }

@@ -5,6 +5,7 @@ package com.tc.net.protocol.delivery;
 
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
+import com.tc.exception.ImplementMe;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.delivery.OOOProtocolMessage;
 import com.tc.net.protocol.delivery.OOOProtocolMessageDelivery;
@@ -27,10 +28,18 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
     this.receivedQueue = receivedQueue;
   }
   
+  public OOOProtocolMessage createAckRequestMessage() {
+    throw new ImplementMe();
+  }
+  
   public void sendAckRequest() {
     sentAckRequest = true;
   }
-
+  
+  public OOOProtocolMessage createAckMessage(long sequence) {
+    throw new ImplementMe();
+  }
+  
   public void sendAck(long count) {
     this.ackCount = count;
     this.sentAck = true;

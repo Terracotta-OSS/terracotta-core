@@ -27,8 +27,8 @@ public class ReceiveStateMachine extends AbstractStateMachine {
     String val = TCPropertiesImpl.getProperties().getProperty("l2.nha.ooo.maxDelayedAcks", true);
     if (val != null) MaxDelayedAcks = Integer.valueOf(val).intValue();
     this.delivery = delivery;
-  }
-
+   }
+  
   public void execute(OOOProtocolMessage msg) {
     getCurrentState().execute(msg);
   }
@@ -46,12 +46,31 @@ public class ReceiveStateMachine extends AbstractStateMachine {
 
     public void execute(OOOProtocolMessage protocolMessage) {
       if (protocolMessage.isAckRequest()) {
-        // acked with -1 for a fresh system, otherwise tell peer what I have got.
-        delivery.sendAck(received.get());
-        return;
+        if ((received.get() == -1)) {
+          // handshake to a fresh start
+          // set session id from ackRequest message
+          setSessionId(protocolMessage.getSessionId());
+          reset();
+          sendAck(-1);
+          return;
+        } else if (matchSessionId(protocolMessage)) {
+          // tell peer what I have got.
+          sendAck(received.get());
+          return;
+        } else {
+          //System.err.println("XXX receiver got unmatched ackRequest expect "+getSessionId()+" but got "+protocolMessage.getSessionId());
+          return;
+        }
       } else if (protocolMessage.isAck() && (protocolMessage.getAckSequence() == -1)) {
         // got ack=-1 then re-initialize
+        setSessionId(protocolMessage.getSessionId());
         reset();
+        return;
+      }
+      
+      // accept only matched sessionId
+      if (!matchSessionId(protocolMessage)) {
+        System.out.println("XXX receiver got unmatched ackRequest expect "+getSessionId()+" but got "+protocolMessage.getSessionId());
         return;
       }
 
@@ -81,14 +100,21 @@ public class ReceiveStateMachine extends AbstractStateMachine {
     if ((delayedAcks.get() < MaxDelayedAcks) && (getRunnerEventLength() > 0)) {
       delayedAcks.increment();
     } else {
-      delivery.sendAck(next);
+      sendAck(next);
       delayedAcks.set(0);
     }
   }
   
   private void resendAck() {
-    delivery.sendAck(received.get());
+    sendAck(received.get());
     delayedAcks.set(0);
+  }
+  
+  private void sendAck(long seq) {
+    OOOProtocolMessage opm = delivery.createAckMessage(seq);
+    // attached sessionId to ack message
+    opm.setSessionId(getSessionId());
+    delivery.sendMessage(opm);
   }
 
   public void reset() {

@@ -120,7 +120,10 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
 
   public void close() {
     Assert.assertNotNull(sendLayer);
-    sendLayer.send(messageFactory.createNewGoodbyeMessage());
+    // send goobye message with session-id on it
+    OOOProtocolMessage opm = messageFactory.createNewGoodbyeMessage();
+    opm.setSessionId(delivery.getSenderSessionId());
+    sendLayer.send(opm);
     sendLayer.close();
   }
 
@@ -166,12 +169,20 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
    * Protocol Message Delivery interface
    */
 
-  public void sendAckRequest() {
-    sendToSendLayer(this.messageFactory.createNewAckRequestMessage());
+  public OOOProtocolMessage createAckRequestMessage() {
+    return(this.messageFactory.createNewAckRequestMessage());
   }
-
+  
+  public void sendAckRequest() {
+    sendToSendLayer(createAckRequestMessage());
+  }
+  
+  public OOOProtocolMessage createAckMessage(long sequence) {
+    return(this.messageFactory.createNewAckMessage(sequence));
+  }
+  
   public void sendAck(long sequence) {
-    sendToSendLayer(this.messageFactory.createNewAckMessage(sequence));
+    sendToSendLayer(createAckMessage(sequence));
   }
 
   public void sendMessage(OOOProtocolMessage msg) {

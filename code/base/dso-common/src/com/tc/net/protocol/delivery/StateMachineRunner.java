@@ -27,6 +27,14 @@ public class StateMachineRunner implements EventContext {
   public synchronized int getEventsCount() {
     return (events.size());
   }
+  
+  public void setSessionId(short id) {
+    stateMachine.setSessionId(id);
+  }
+  
+  public short getSessionId() {
+    return(stateMachine.getSessionId());
+  }
 
   public synchronized void start() {
     stateMachine.start();

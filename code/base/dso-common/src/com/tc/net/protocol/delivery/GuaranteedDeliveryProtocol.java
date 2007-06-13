@@ -62,4 +62,12 @@ class GuaranteedDeliveryProtocol implements DeliveryProtocol {
     send.reset();
     receive.reset();
   }
+  
+  public short getSenderSessionId() {
+    return(send.getSessionId());
+  }
+  
+  public short getReceiverSessionId() {
+    return(receive.getSessionId());
+  }
 }

@@ -32,13 +32,16 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
 
   private static final int   SEQUENCE_OFFSET  = TYPE_OFFSET + TYPE_LENGTH;
   private static final int   SEQUENCE_LENGTH  = 8;
+  
+  private static final int   SESSION_OFFSET  = SEQUENCE_OFFSET + SEQUENCE_LENGTH;
+  private static final int   SESSION_LENGTH  = 2;
 
   static final int           HEADER_LENGTH;
 
   static {
-    int tmp = MAGIC_NUM_LENGTH + VERSION_LENGTH + TYPE_LENGTH + SEQUENCE_LENGTH;
+    int tmp = MAGIC_NUM_LENGTH + VERSION_LENGTH + TYPE_LENGTH + SEQUENCE_LENGTH + SESSION_LENGTH;
     // This padding is here to ensure that the header is a multiple of four bytes.
-    HEADER_LENGTH = tmp + (tmp % 4);
+    HEADER_LENGTH = (tmp + 3) / 4 * 4;
   }
 
   private OOOProtocolMessageHeader(short version, short type, long sequence) {
@@ -110,6 +113,7 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
     } else {
       buf.append("UNKNOWN");
     }
+    buf.append(" SESSION " + getSession());
     buf.append('\n');
 
     return buf.toString();
@@ -133,6 +137,14 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
 
   long getSequence() {
     return data.getLong(SEQUENCE_OFFSET);
+  }
+  
+  short getSession() {
+    return data.getShort(SESSION_OFFSET);
+  }
+  
+  void setSession(short id) {
+    data.putShort(SESSION_OFFSET, id);
   }
 
   boolean isAckRequest() {

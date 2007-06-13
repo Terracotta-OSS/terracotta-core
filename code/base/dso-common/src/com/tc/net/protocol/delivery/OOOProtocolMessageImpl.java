@@ -45,7 +45,17 @@ class OOOProtocolMessageImpl extends AbstractTCNetworkMessage implements OOOProt
   public long getSent() {
     return getOOOPHeader().getSequence();
   }
-
+  
+  public short getSessionId() {
+    OOOProtocolMessageHeader header = (OOOProtocolMessageHeader)getHeader();
+    return (header.getSession());
+  }
+  
+  public void setSessionId(short id) {
+    OOOProtocolMessageHeader header = (OOOProtocolMessageHeader)getHeader();
+    header.setSession(id);
+  }
+  
   public boolean isAckRequest() {
     return getOOOPHeader().isAckRequest();
   }

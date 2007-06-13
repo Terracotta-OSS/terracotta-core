@@ -14,8 +14,21 @@ public abstract class AbstractStateMachine {
   private boolean started = false;
   private boolean paused  = true;
   private StateMachineRunner runner;
+  private short sessionId = (short)0xffff;
 
   public abstract void execute(OOOProtocolMessage msg);
+  
+  public void setSessionId(short id) {
+    sessionId = id;
+  }
+  
+  public short getSessionId() {
+    return(sessionId);
+  }
+  
+  public boolean matchSessionId(OOOProtocolMessage opm) {
+    return(opm.getSessionId() == getSessionId());
+  }
 
   public final synchronized boolean isStarted() {
     return started;

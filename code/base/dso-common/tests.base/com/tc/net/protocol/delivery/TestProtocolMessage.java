@@ -51,6 +51,15 @@ public class TestProtocolMessage implements OOOProtocolMessage {
   public boolean isAck() {
     return isAck;
   }
+  
+  public short getSessionId() {
+    throw new ImplementMe();
+   }
+  
+  public void setSessionId(short id) {
+    throw new ImplementMe();
+   }
+
 
   /*********************************************************************************************************************
    * TCNetworkMessage stuff

@@ -24,5 +24,9 @@ public interface OOOProtocolMessage extends TCNetworkMessage {
   public boolean isGoodbye();
 
   public void reallyDoRecycleOnWrite();
+  
+  public short getSessionId();
+  
+  public void setSessionId(short id);
 
 }
