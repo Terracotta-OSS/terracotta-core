@@ -114,6 +114,16 @@ class OptionallyPrefixingConfigSource
         out
     end
 
+    def search(*keys)
+      prefixed_keys = keys.collect { |key| @prefix + key }
+      merged_keys = []
+      keys.each_index do |i|
+        merged_keys << keys[i] << prefixed_keys[i]
+      end
+
+      @source.search(*merged_keys)
+    end
+
     # Returns all keys present. This is the same list of keys that are present in
     # the underlying configuration source, but with the prefix removed (if present).
     # Therefore, the returned array will never, ever contain values that start with
@@ -264,6 +274,24 @@ class CompositeConfigSource
             out = source[key] if out.nil?
         end
         out
+    end
+
+    # Searches all config sources for each key in turn.  If a block is given, returns the first
+    # value for which the block returns true.  If no block is given, returns the first non-nil
+    # value.
+    def search(*keys)
+      @sources.each do |source|
+        keys.each do |key|
+          value = source[key]
+          found = block_given? ? yield(key, value) : value
+          if found
+            return value
+          else
+          end
+        end
+      end
+
+      nil
     end
 
     def keys
