@@ -27,6 +27,21 @@ public class GuaranteedDeliveryProtocolTest extends TestCase {
     GuaranteedDeliveryProtocol gdp = new GuaranteedDeliveryProtocol(delivery, workSink, sendQueue);
     gdp.start();
     gdp.resume();
+    
+    // hand shake state
+    // send AckRequest to receiver
+    TestProtocolMessage msg = new TestProtocolMessage();
+    msg.isAckRequest = true;
+    msg.setSessionId(gdp.getSenderSessionId());
+    gdp.receive(msg);
+    runWorkSink(workSink);
+    // reply ack=-1 from receiver
+    msg = new TestProtocolMessage(null, 0, -1);
+    msg.isAck = true;
+    msg.setSessionId(gdp.getSenderSessionId());
+    gdp.receive(msg);
+    runWorkSink(workSink);
+    
     TCNetworkMessage tcMessage = new PingMessage(new NullMessageMonitor());
     assertTrue(workSink.size() == 0);
     gdp.send(tcMessage);
@@ -35,6 +50,7 @@ public class GuaranteedDeliveryProtocolTest extends TestCase {
     assertTrue(delivery.created);
     assertTrue(delivery.tcMessage == tcMessage);
     TestProtocolMessage pm = (TestProtocolMessage) delivery.msg;
+    msg.setSessionId(gdp.getSenderSessionId());
     delivery.clear();
     pm.isSend = true;
     gdp.receive(pm);
@@ -47,6 +63,7 @@ public class GuaranteedDeliveryProtocolTest extends TestCase {
 
     delivery.clear();
     TestProtocolMessage ackMessage = new TestProtocolMessage();
+    msg.setSessionId(gdp.getSenderSessionId());
     ackMessage.ack = 0;
     ackMessage.isAck = true;
     gdp.receive(ackMessage);

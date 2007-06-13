@@ -5,7 +5,6 @@ package com.tc.net.protocol.delivery;
 
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
-import com.tc.exception.ImplementMe;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.delivery.OOOProtocolMessage;
 import com.tc.net.protocol.delivery.OOOProtocolMessageDelivery;
@@ -29,7 +28,8 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
   }
   
   public OOOProtocolMessage createAckRequestMessage() {
-    throw new ImplementMe();
+    sentAckRequest = true;
+    return(new TestProtocolMessage());
   }
   
   public void sendAckRequest() {
@@ -37,7 +37,12 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
   }
   
   public OOOProtocolMessage createAckMessage(long sequence) {
-    throw new ImplementMe();
+    this.ackCount = sequence;
+    this.sentAck = true;
+    
+    TestProtocolMessage opm = new TestProtocolMessage(null, 0, sequence);
+    opm.isAck = true;
+    return(opm);
   }
   
   public void sendAck(long count) {
