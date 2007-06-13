@@ -78,7 +78,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   
   
   def handle_appserver_overwite()
-    appserver = @config_source['appserver']
+    appserver = @config_source['tc.build-control.appserver']
     unless appserver.nil?
       if appserver =~ /([^-]+)-([^\.]+)\.(.*)/
         internal_config_source = Registry[:internal_config_source]
