@@ -98,6 +98,7 @@ import org.terracotta.dso.wizards.ProjectWizard;
 import com.tc.admin.common.InputStreamDrainer;
 import com.tc.config.Loader;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
+import com.tc.server.ServerConstants;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.TcConfigDocument;
@@ -458,7 +459,7 @@ public class TcPlugin extends AbstractUIPlugin
     ILaunchConfigurationWorkingCopy wc = type.newInstance(null, projectName + "." + serverName);
 
     wc.setAttribute(ATTR_PROJECT_NAME, project.getName());
-    wc.setAttribute(ATTR_MAIN_TYPE_NAME, "com.tc.server.TCServerMain");
+    wc.setAttribute(ATTR_MAIN_TYPE_NAME, ServerConstants.SERVER_MAIN_CLASS_NAME);
 
     IFile configFile = getConfigurationFile(project);
 

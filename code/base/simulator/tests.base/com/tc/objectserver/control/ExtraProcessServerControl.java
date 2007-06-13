@@ -12,7 +12,7 @@ import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
 import com.tc.process.LinkedJavaProcess;
 import com.tc.process.StreamCopier;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.server.TCServerMain;
+import com.tc.server.ServerConstants;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -169,7 +169,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   }
 
   protected String getMainClassName() {
-    return TCServerMain.class.getName();
+    return ServerConstants.SERVER_MAIN_CLASS_NAME;
   }
 
   /**

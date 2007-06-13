@@ -17,6 +17,7 @@ import com.tc.admin.common.StreamReader;
 import com.tc.admin.common.TextPaneUpdater;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XTextPane;
+import com.tc.server.ServerConstants;
 import com.tc.util.ResourceBundleHelper;
 
 import java.awt.BorderLayout;
@@ -257,7 +258,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
   private void internalRunServer() {
     String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.config=tc-config.xml",
         "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(), "-cp", getTCLib().getAbsolutePath(),
-        "com.tc.servers.TCServerMain" };
+        ServerConstants.SERVER_MAIN_CLASS_NAME };
 
     Process p = exec(cmdarray, null, getSamplesDir());
     StreamReader errDrainer = createStreamReader(p.getErrorStream());
