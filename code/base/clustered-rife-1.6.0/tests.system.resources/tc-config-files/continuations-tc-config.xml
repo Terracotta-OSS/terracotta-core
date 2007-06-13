@@ -31,11 +31,17 @@
 				<include>java.lang.AbstractStringBuilder</include>
 				<include>java.lang.StringBuffer</include>
 			</additional-boot-jar-classes>
+			
+		    <web-applications>
+		        <web-application>continuations-test</web-application>
+		    </web-applications>
+			
 			<instrumented-classes>
 				<include>
 					<class-expression>com.tctest.rife.*..*</class-expression>
 				</include>
 			</instrumented-classes>
+			
 			<roots>
 				<root>
 					<field-name>com.tctest.rife.elements.AllTypes.sInt1</field-name>

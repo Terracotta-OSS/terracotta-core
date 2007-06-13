@@ -37,7 +37,7 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 
 		// start counting on the first server, creating the first continuation
 		// in this conversation, counter is 0
-		WebResponse response1a = server1.ping("/continuations/counter", conversation);
+		WebResponse response1a = server1.ping("/continuations-test/counter", conversation);
 		String count1a = getCurrentCount(response1a);
 		assertEquals("0", count1a);
 		WebForm form1a = getCountForm(response1a);
@@ -53,7 +53,7 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 		// start counting on the second server, creating the first continuation
 		// in a new conversation on the second server, the counter there starts
 		// at 0
-		WebResponse response2a = server2.ping("/continuations/counter", conversation);
+		WebResponse response2a = server2.ping("/continuations-test/counter", conversation);
 		String count2a = getCurrentCount(response2a);
 		assertEquals("0", count2a);
 		WebForm form2a = getCountForm(response2a);
@@ -145,7 +145,7 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 	 * sent through the form.
 	 */
 	public void testStepBack() throws Exception {
-		final String url = "/continuations/stepback";
+		final String url = "/continuations-test/stepback";
 		
 		WebForm form;
 
@@ -198,7 +198,7 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 		String text = null;
 		String[] lines = null;
 
-		response = server1.ping("/continuations/alltypes");
+		response = server1.ping("/continuations-test/alltypes");
 
 		WebApplicationServer[] servers = new WebApplicationServer[] {server1, server2}; 
 		for (int i = 8; i < 40; i++) {
@@ -207,7 +207,7 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 			assertEquals(2, lines.length);
 			assertEquals(AllTypes.BEFORE + " while " + i, lines[0]);
 
-			response = servers[i%2].ping("/continuations/alltypes?" + ReservedParameters.CONTID + "=" + lines[1]);
+			response = servers[i%2].ping("/continuations-test/alltypes?" + ReservedParameters.CONTID + "=" + lines[1]);
 		}
 
 		text = response.getText();
@@ -215,21 +215,21 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 		assertEquals(2, lines.length);
 		assertEquals(AllTypes.BEFORE + " a", lines[0]);
 
-		response = server1.ping("/continuations/alltypes?" + ReservedParameters.CONTID + "=" + lines[1]);
+		response = server1.ping("/continuations-test/alltypes?" + ReservedParameters.CONTID + "=" + lines[1]);
 
 		text = response.getText();
 		lines = StringUtils.splitToArray(text, "\n");
 		assertEquals(2, lines.length);
 		assertEquals(AllTypes.BEFORE + " b", lines[0]);
 
-		response = server2.ping("/continuations/alltypes?" + ReservedParameters.CONTID + "=" + lines[1]);
+		response = server2.ping("/continuations-test/alltypes?" + ReservedParameters.CONTID + "=" + lines[1]);
 
 		text = response.getText();
 		lines = StringUtils.splitToArray(text, "\n");
 		assertEquals(2, lines.length);
 		assertEquals(AllTypes.BEFORE + " c", lines[0]);
 
-		response = server1.ping("/continuations/alltypes?" + ReservedParameters.CONTID + "=" + lines[1]);
+		response = server1.ping("/continuations-test/alltypes?" + ReservedParameters.CONTID + "=" + lines[1]);
 
 		assertEquals(
 				"40,1209000,11,16,7,8,\n"
@@ -267,14 +267,14 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 	public void testSimpleInterface() throws Exception {
 		WebResponse response;
 
-		response = server1.ping("/continuations/simpleinterface");
+		response = server1.ping("/continuations-test/simpleinterface");
 
 		String text = response.getText();
 		String[] lines = StringUtils.splitToArray(text, "\n");
 		assertEquals(2, lines.length);
 		assertEquals("before simple pause", lines[0]);
 
-		response = server2.ping("/continuations/simpleinterface?" + ReservedParameters.CONTID + "=" + lines[1]);
+		response = server2.ping("/continuations-test/simpleinterface?" + ReservedParameters.CONTID + "=" + lines[1]);
 
 		assertEquals("after simple pause", response.getText());
 	}
@@ -286,7 +286,7 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 	public void testCallAnswer() throws Exception {
 		WebResponse response;
 
-		response = server1.ping("/continuations/callanswer");
+		response = server1.ping("/continuations-test/callanswer");
 
 		String text = response.getText();
 		String[] lines = StringUtils.splitToArray(text, "\n");
@@ -297,14 +297,14 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 		assertEquals("the exit's answer", lines[4]);
 		assertEquals("after call", lines[5]);
 
-		response = server2.ping("/continuations/callanswer?" + ReservedParameters.CONTID + "=" + lines[1]);
+		response = server2.ping("/continuations-test/callanswer?" + ReservedParameters.CONTID + "=" + lines[1]);
 
 		assertEquals("after call", response.getText());
 	}
 
 	private static class ContinuationsTestSetup extends TwoServerTestSetup {
 		private ContinuationsTestSetup() {
-			super(ContinuationsTest.class, "/tc-config-files/continuations-tc-config.xml", "continuations");
+			super(ContinuationsTest.class, "/tc-config-files/continuations-tc-config.xml", "continuations-test");
 		}
 
 		@SuppressWarnings( { "serial", "unchecked" })
