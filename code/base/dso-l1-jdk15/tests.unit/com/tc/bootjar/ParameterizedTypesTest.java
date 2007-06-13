@@ -74,7 +74,7 @@ public class ParameterizedTypesTest extends TCTestCase {
     InputStream is = getClass().getResourceAsStream("/" + className);
     ClassReader cr = new ClassReader(is);
     ClassNode cn = new ClassNode();
-    cr.accept(cn, 0);
+    cr.accept(cn, ClassReader.SKIP_FRAMES);
     return cn;
   }
 
@@ -102,7 +102,7 @@ public class ParameterizedTypesTest extends TCTestCase {
       if (is != null) {
         ClassReader cr = new ClassReader(is);
         ClassNode cn = new ClassNode();
-        cr.accept(cn, 0);
+        cr.accept(cn, ClassReader.SKIP_FRAMES);
         return cn;
       }
     }

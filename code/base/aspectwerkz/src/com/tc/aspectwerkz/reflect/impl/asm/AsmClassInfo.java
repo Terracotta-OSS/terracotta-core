@@ -181,7 +181,7 @@ public class AsmClassInfo implements ClassInfo {
     try {
       ClassReader cr = new ClassReader(bytecode);
       ClassInfoClassAdapter visitor = new ClassInfoClassAdapter();
-      cr.accept(visitor, 0);
+      cr.accept(visitor, ClassReader.SKIP_FRAMES);
     } catch (Throwable t) {
       t.printStackTrace();
     }
@@ -203,7 +203,7 @@ public class AsmClassInfo implements ClassInfo {
     try {
       ClassReader cr = new ClassReader(resourceStream);
       ClassInfoClassAdapter visitor = new ClassInfoClassAdapter();
-      cr.accept(visitor, 0);
+      cr.accept(visitor, ClassReader.SKIP_FRAMES);
     } catch (Throwable t) {
       t.printStackTrace();
     }
@@ -727,7 +727,7 @@ public class AsmClassInfo implements ClassInfo {
         if (componentName.indexOf('[') > 0) {
           return getClassInfo(componentName, loader);
         }
-        
+
         System.out.println(
                 "AW::WARNING - could not load class ["
                         + componentName
@@ -735,7 +735,7 @@ public class AsmClassInfo implements ClassInfo {
                         + loader
                         + "]"
         );
-        
+
         componentInfo = new ClassInfo.NullClassInfo();
         return componentInfo;
       }

@@ -64,7 +64,7 @@ public class ClassLoaderPreProcessorImpl {
       ClassReader cr = new ClassReader(classLoaderBytecode);
       ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
       ClassVisitor cv = Vm.isIBM() ? (ClassVisitor) new IBMClassLoaderAdapter(cw) : new ClassLoaderVisitor(cw);
-      cr.accept(cv, 0);
+      cr.accept(cv, ClassReader.SKIP_FRAMES);
       return cw.toByteArray();
     } catch (Exception e) {
       System.err.println("failed to patch ClassLoader:");

@@ -97,7 +97,7 @@ public class SerialVersionUidVisitor extends ClassAdapter implements Opcodes {
       ClassReader cr = new ClassReader(klass.getName());
       ClassWriter cw = AsmHelper.newClassWriter(true);
       SerialVersionUidVisitor sv = new SerialVersionUidVisitor(cw);
-      cr.accept(sv, ClassReader.SKIP_DEBUG);
+      cr.accept(sv, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
       return sv.m_SVUID;
     } catch (IOException e) {
       throw new RuntimeException(e);

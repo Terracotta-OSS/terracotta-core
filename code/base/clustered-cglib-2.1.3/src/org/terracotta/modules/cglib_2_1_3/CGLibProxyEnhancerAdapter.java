@@ -67,7 +67,7 @@ public class CGLibProxyEnhancerAdapter extends ClassAdapter implements ClassAdap
       byte[] bytes = getBytesForClass(bundle, FilterTCMethods.class);
       ClassReader tcCR = new ClassReader(bytes);
       ClassNode tcCN = new ClassNode();
-      tcCR.accept(tcCN, ClassReader.SKIP_DEBUG);
+      tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
       List tcMethods = tcCN.methods;
       for (Iterator i = tcMethods.iterator(); i.hasNext();) {

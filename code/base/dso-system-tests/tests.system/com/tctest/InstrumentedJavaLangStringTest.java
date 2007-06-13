@@ -74,7 +74,7 @@ public class InstrumentedJavaLangStringTest extends TCTestCase {
   public void testStringIsInstrumented() throws IOException {
     ClassReader reader = new ClassReader(getStringBytes());
     StringVisitor visitor = new StringVisitor(new EmptyVisitor());
-    reader.accept(visitor, 0);
+    reader.accept(visitor, ClassReader.SKIP_FRAMES);
 
     assertEquals(visitor.verified.toString(), 2, visitor.verified.size());
     assertTrue(visitor.verified.contains("getBytes"));

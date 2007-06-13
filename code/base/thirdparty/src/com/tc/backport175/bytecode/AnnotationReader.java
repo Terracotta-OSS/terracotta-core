@@ -941,7 +941,8 @@ public class AnnotationReader {
 //            );
         }
         ClassReader classReader = new ClassReader(bytes);
-        classReader.accept(new AnnotationRetrievingVisitor(), ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
+    classReader.accept(new AnnotationRetrievingVisitor(), ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE
+                                                          | ClassReader.SKIP_FRAMES);
     }
 
     /**

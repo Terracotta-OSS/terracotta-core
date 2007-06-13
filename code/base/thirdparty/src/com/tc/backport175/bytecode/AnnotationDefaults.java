@@ -53,7 +53,7 @@ class AnnotationDefaults {
             }
             ClassReader cr = new ClassReader(bytes);
             cr.accept(new AnnotationDefaultsClassVisitor(newDefaults, loader), //
-                ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
+                ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
             defaults = newDefaults;
             s_annotationDefaults.put(key, newDefaults);
         }
