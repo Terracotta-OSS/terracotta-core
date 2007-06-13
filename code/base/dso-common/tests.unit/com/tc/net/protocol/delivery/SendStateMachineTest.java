@@ -23,7 +23,15 @@ public class SendStateMachineTest extends TestCase {
     ssm.start();
     ssm.resume();
 
+    // hand shake state
+    // compelete hand shake, receive ack=-1 from receiver
+    TestProtocolMessage msg = new TestProtocolMessage(null, 0, -1);
+    msg.isAck = true;
+    msg.setSessionId(ssm.getSessionId());
+    ssm.execute(msg);
+
     TestProtocolMessage tpm = new TestProtocolMessage(null, -1, -1);
+    tpm.setSessionId(ssm.getSessionId());
     tpm.isSend = true;
     
     //SEND
