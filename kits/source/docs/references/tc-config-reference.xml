@@ -299,6 +299,13 @@
        the DSO client only. -->
     <dso>
 
+      <!-- This section allows you to declare object fault count, which is 
+         the max number of reachable objects that are prefetched from DSO server 
+         to DSO client when an object is faulted from DSO server to DSO client. 
+         It has a default value of 500. 
+      -->
+      <fault-count>500</fault-count>
+
       <!-- This section controls output from the DSO client that can help you
          debug your program. -->
       <debugging>
