@@ -365,7 +365,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     }
 
     public synchronized void remove(ObjectID id) {
-      Long batchID = (Long) oids2BatchID.get(id);
+      Long batchID = (Long) oids2BatchID.remove(id);
       if(batchID != null) {
         Map m = (Map)  dnas.get(batchID);
         Object dna  = m.remove(id);
