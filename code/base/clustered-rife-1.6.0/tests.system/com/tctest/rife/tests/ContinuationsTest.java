@@ -312,8 +312,8 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 			builder
 				.addDirectoryOrJARContainingClass(com.uwyn.rife.Version.class) // rife jar
 				.addFilter("RIFE", "/*", RifeFilter.class, new HashMap() {{ put("rep.path", "rife-config-files/continuations/participants.xml"); }})
-				.addResourceFullpath("/web-resources", "counter.html", "/WEB-INF/classes/counter.html")
-				.addResourceFullpath("/web-resources", "stepback.html", "/WEB-INF/classes/stepback.html");
+				.addResourceFullpath("/web-resources", "counter.html", "WEB-INF/classes/counter.html")
+				.addResourceFullpath("/web-resources", "stepback.html", "WEB-INF/classes/stepback.html");
 		}
 	}
 }
