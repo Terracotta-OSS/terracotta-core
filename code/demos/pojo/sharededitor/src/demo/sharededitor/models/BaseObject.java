@@ -114,20 +114,18 @@ public abstract class BaseObject implements IFillStyleConsts {
 		Shape shape = getShape();
 		Rectangle bounds = shape.getBounds();
 		g.setColor(this.background);
-		
+
 		if (FILLSTYLE_SOLID == this.fillstyle) {
 			g.fill(shape);
 		}
-		
+
 		if ((FILLSTYLE_TEXTURED == this.fillstyle)
 				&& (this instanceof ITexturable) && isTextured()
 				&& (bounds.width > 0) && (bounds.height > 0)) {
-			Image image = getTexture();// .getScaledInstance(bounds.width,
-			// bounds.height, Image.SCALE_FAST);
 			BufferedImage texture = new BufferedImage(bounds.width,
 					bounds.height, BufferedImage.TYPE_INT_RGB);
 			Graphics tg = texture.getGraphics();
-			tg.drawImage(image, 0, 0, bounds.width, bounds.height, null);
+			tg.drawImage(getTexture(), 0, 0, bounds.width, bounds.height, null);
 			Paint paint = new TexturePaint(texture, bounds);
 			g.setPaint(paint);
 			g.fill(shape);
@@ -142,8 +140,6 @@ public abstract class BaseObject implements IFillStyleConsts {
 		}
 
 		Shape[] anchors = getAnchors();
-		Stroke stroke = new BasicStroke(1);
-		g.setStroke(stroke);
 		for (int i = 0; i < anchors.length; i++) {
 			g.fill(anchors[i]);
 		}
@@ -237,8 +233,10 @@ public abstract class BaseObject implements IFillStyleConsts {
 	}
 
 	public synchronized void selectAction(boolean flag) {
+		// nothing to do here
 	}
 
 	public synchronized void alternateSelectAction(boolean flag) {
+		// nothing to do here
 	}
 }

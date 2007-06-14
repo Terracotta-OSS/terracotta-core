@@ -52,6 +52,7 @@ public final class Renderer extends JComponent implements IListListener {
 
 		g2.setColor(Color.DARK_GRAY);
 		g2.drawRect(0, 0, getSize().width - 1, getSize().height - 1);
+		g2.dispose();
 
 		g.drawImage(drawingArea, 0, 0, null);
 	}

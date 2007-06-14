@@ -33,33 +33,25 @@ public class ObjectManager
 
 	public void addListener(IListListener listListener)
 	{
-	   synchronized(listeners) { 
-   		if (!listeners.contains(listListener))
-   		{
+   		if (!listeners.contains(listListener)) {
    			listeners.add(listListener);
    			listListener.changed(this, null);
    		}
-	   }
 	}
 
 	public void removeListener(IListListener listListener)
 	{
-	   synchronized(objList) { 
-   		if (listeners.contains(listListener))
-   			listeners.remove(listListener);
+		if (listeners.contains(listListener)) {
+			listeners.remove(listListener);
 		}
 	}
 
 	private void notifyListeners(Object obj)
 	{
-	   synchronized(objList) { 
-   		Iterator i = listeners.iterator();
-   		while (i.hasNext())
-   		{
-   			IListListener listListener = (IListListener)i.next();
-   			listListener.changed(this, obj);
-   		}
-	   }
+		for(Iterator i = listeners.iterator(); i.hasNext(); ) {
+			IListListener listListener = (IListListener)i.next();
+			listListener.changed(this, obj);
+		}
 	}
 
 	public synchronized void add(BaseObject obj)
