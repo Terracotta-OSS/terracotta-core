@@ -20,6 +20,11 @@ public interface ClientStateManager extends PrettyPrintable {
   public void stop();
 
   /**
+   * Initializes the internal datastructures for newly connected client
+   */
+  public void startupClient(ChannelID channelID);
+  
+  /**
    * Used to recover from client crashes this will acknowledge any waiter waiting for a downed client
    *
    * @param waitee
@@ -49,4 +54,5 @@ public interface ClientStateManager extends PrettyPrintable {
   public void removeReferencedFrom(ChannelID channelID, Set secondPass);
 
   public Set addReferences(ChannelID channelID, Set oids);
+
 }

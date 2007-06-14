@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.handler;
 
@@ -121,8 +122,7 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
     if (oids.isEmpty()) { return; }
     if (logger.isDebugEnabled()) {
       logger.debug("Creating Server initiated requests for : " + morc.getChannelID() + " org request Id length = "
-                   + morc.getLookupIDs().size() + "  Reachable object(s) to be looked up  length = "
-                   + oids.size());
+                   + morc.getLookupIDs().size() + "  Reachable object(s) to be looked up  length = " + oids.size());
     }
     if (oids.size() <= MAX_OBJECTS_TO_LOOKUP) {
       this.managedObjectRequestSink.add(new ManagedObjectRequestContext(morc.getChannelID(), morc.getRequestID(), oids,

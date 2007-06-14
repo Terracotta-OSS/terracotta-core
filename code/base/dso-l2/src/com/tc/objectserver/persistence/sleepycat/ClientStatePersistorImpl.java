@@ -33,7 +33,7 @@ class ClientStatePersistorImpl extends SleepycatPersistorBase implements ClientS
   private final DatabaseEntry                  value;
   private final PersistenceTransactionProvider ptp;
   private final TCLogger                       logger;
-  private final MutableSequence             connectionIDSequence;
+  private final MutableSequence                connectionIDSequence;
 
   ClientStatePersistorImpl(final TCLogger logger, final PersistenceTransactionProvider ptp,
                            final MutableSequence connectionIDSequence, final Database db) {

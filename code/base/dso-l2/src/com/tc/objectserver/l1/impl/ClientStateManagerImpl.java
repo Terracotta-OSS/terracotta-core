@@ -14,8 +14,10 @@ import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet2;
+import com.tc.util.State;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -50,7 +52,11 @@ public class ClientStateManagerImpl implements ClientStateManager {
   public synchronized List createPrunedChangesAndAddObjectIDTo(Collection changes, BackReferences includeIDs,
                                                                ChannelID id, Set objectIDs) {
     assertStarted();
-    ClientStateImpl clientState = getOrCreateClientState(id);
+    ClientStateImpl clientState = getClientState(id);
+    if (clientState == null) {
+      logger.warn(": createPrunedChangesAndAddObjectIDTo : Client state is NULL (probably due to disconnect) : " + id);
+      return Collections.EMPTY_LIST;
+    }
     LinkedList prunedChanges = new LinkedList();
 
     for (Iterator i = changes.iterator(); i.hasNext();) {
@@ -74,20 +80,33 @@ public class ClientStateManagerImpl implements ClientStateManager {
   public synchronized void addReference(ChannelID id, ObjectID objectID) {
     assertStarted();
     // logger.info("Adding Reference for " + id + " to " + objectID);
-    ClientStateImpl c = getOrCreateClientState(id);
-    c.addReference(objectID);
+    ClientStateImpl c = getClientState(id);
+    if (c != null) {
+      c.addReference(objectID);
+    } else {
+      logger.warn(": addReference : Client state is NULL (probably due to disconnect) : " + id);
+    }
   }
 
   public synchronized void removeReferences(ChannelID id, Set removed) {
     assertStarted();
     // logger.info("Removing Reference for " + id + " to " + removed);
-    ClientStateImpl c = getOrCreateClientState(id);
-    c.removeReferences(removed);
+    ClientStateImpl c = getClientState(id);
+    if (c != null) {
+      c.removeReferences(removed);
+    } else {
+      logger.warn(": removeReferences : Client state is NULL (probably due to disconnect) : " + id);
+    }
   }
 
-  public synchronized boolean hasReference(ChannelID clientID, ObjectID objectID) {
-    ClientStateImpl c = getOrCreateClientState(clientID);
-    return c.containsReference(objectID);
+  public synchronized boolean hasReference(ChannelID id, ObjectID objectID) {
+    ClientStateImpl c = getClientState(id);
+    if (c != null) {
+      return c.containsReference(objectID);
+    } else {
+      logger.warn(": hasReference : Client state is NULL (probably due to disconnect) : " + id);
+      return false;
+    }
   }
 
   public synchronized void addAllReferencedIdsTo(Set ids) {
@@ -98,8 +117,12 @@ public class ClientStateManagerImpl implements ClientStateManager {
     }
   }
 
-  public synchronized void removeReferencedFrom(ChannelID channelID, Set oids) {
-    ClientState cs = getOrCreateClientState(channelID);
+  public synchronized void removeReferencedFrom(ChannelID id, Set oids) {
+    ClientState cs = getClientState(id);
+    if(cs == null) {
+      logger.warn(": removeReferencedFrom : Client state is NULL (probably due to disconnect) : " + id);
+      return;
+    }
     Set refs = cs.getReferences();
     // XXX:: This is a work around for THashSet's poor implementation of removeAll
     if (oids.size() >= refs.size()) {
@@ -117,8 +140,12 @@ public class ClientStateManagerImpl implements ClientStateManager {
   /*
    * returns newly added references
    */
-  public synchronized Set addReferences(ChannelID channelID, Set oids) {
-    ClientState cs = getOrCreateClientState(channelID);
+  public synchronized Set addReferences(ChannelID id, Set oids) {
+    ClientState cs = getClientState(id);
+    if(cs == null) {
+      logger.warn(": addReferences : Client state is NULL (probably due to disconnect) : " + id);
+      return Collections.EMPTY_SET;
+    }
     Set refs = cs.getReferences();
     if (refs.isEmpty()) {
       refs.addAll(oids);
@@ -143,6 +170,12 @@ public class ClientStateManagerImpl implements ClientStateManager {
     clientStates.remove(waitee);
   }
 
+  public synchronized void startupClient(ChannelID clientID) {
+    if (!isStarted()) { return; }
+    Object old = clientStates.put(clientID, new ClientStateImpl(clientID));
+    if (old != null) { throw new AssertionError("Client connected before disconnecting : old Client state = " + old); }
+  }
+
   public synchronized void stop() {
     assertStarted();
     state = STOPPED;
@@ -157,13 +190,8 @@ public class ClientStateManagerImpl implements ClientStateManager {
     if (state != STARTED) throw new AssertionError("Not started.");
   }
 
-  private ClientStateImpl getOrCreateClientState(ChannelID clientID) {
-    ClientStateImpl clientState;
-    if ((clientState = (ClientStateImpl) clientStates.get(clientID)) == null) {
-      clientState = new ClientStateImpl(clientID);
-      clientStates.put(clientID, clientState);
-    }
-    return clientState;
+  private ClientStateImpl getClientState(ChannelID clientID) {
+    return (ClientStateImpl) clientStates.get(clientID);
   }
 
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
@@ -178,18 +206,6 @@ public class ClientStateManagerImpl implements ClientStateManager {
       out.indent().print(key + "=").visit(st).println();
     }
     return rv;
-  }
-
-  private static class State {
-    private final String name;
-
-    private State(String name) {
-      this.name = name;
-    }
-
-    public String toString() {
-      return getClass().getName() + "[" + this.name + "]";
-    }
   }
 
   private static class ClientStateImpl implements PrettyPrintable, ClientState {

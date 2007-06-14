@@ -89,6 +89,7 @@ public class ServerClientHandshakeManager {
     logger.info("Client connected " + channelID);
     synchronized (this) {
       logger.debug("Handling client handshake...");
+      clientStateManager.startupClient(channelID);
       if (state == STARTED) {
         if (handshake.getObjectIDs().size() > 0) {
           //

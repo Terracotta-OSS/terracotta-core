@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.l1.api;
 
@@ -50,7 +51,6 @@ public class TestClientStateManager implements ClientStateManager {
     return Collections.EMPTY_LIST;
   }
 
-
   public boolean hasReference(ChannelID clientID, ObjectID objectID) {
     // to be consistent with createPrunedChangesAndAddObjectIDTo, return false
     return false;
@@ -85,6 +85,10 @@ public class TestClientStateManager implements ClientStateManager {
       addReferenceCalls.add(new AddReferenceContext(channelID, oid));
     }
     return oids;
+  }
+
+  public void startupClient(ChannelID channelID) {
+    // NOP
   }
 
 }
