@@ -6,6 +6,7 @@ package demo.sharededitor.ui;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Shape;
 import java.awt.geom.Rectangle2D;
 
@@ -24,6 +25,7 @@ public final class Renderer
 	public Renderer()
 	{
 		objmgr = null;
+		this.setDoubleBuffered(true);
 	}
 
 	private ObjectManager objmgr;
@@ -37,12 +39,15 @@ public final class Renderer
 	public void paint(Graphics g)
 	{
 		super.paint(g);
-		Graphics2D g2 = (Graphics2D)g.create();
+		
+		Image image = createImage(getSize().width, getSize().height);
+		Graphics2D g2 = (Graphics2D)image.getGraphics();
 		g2.setBackground(Color.WHITE);
 		g2.clearRect(0, 0, getSize().width, getSize().height);
 
-		if (objmgr == null)
+		if (objmgr == null) {
 			return;
+		}
 
 		BaseObject[] objList = objmgr.list();
 		for(int i=0; i<objList.length; i++)
@@ -54,5 +59,7 @@ public final class Renderer
 		Shape border = new Rectangle2D.Double(0, 0, getWidth() - 1, getHeight() - 1);
 		g2.setColor(Color.DARK_GRAY);
 		g2.draw(border);
+		
+		g.drawImage(image, 0, 0, null);
 	}
 }

@@ -3,7 +3,7 @@
 */
 package demo.sharededitor.controls;
 
-import java.awt.BasicStroke;
+//import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.Stroke;
@@ -238,8 +238,10 @@ public final class Dispatcher extends MouseInputAdapter implements KeyListener
 		BaseObject current = objmgr.lastGrabbed();
 		if ((current != null)
 			&& (current instanceof ITexturable)
-			&& (BaseObject.FILLSTYLE_TEXTURED == fillstyle))
+			&& (BaseObject.FILLSTYLE_TEXTURED == fillstyle)) {
+			((ITexturable) current).clearTexture();
 			((ITexturable) current).setTexture(texture);
+		}
 	}
 
 	public synchronized void setFontName(String fontName)

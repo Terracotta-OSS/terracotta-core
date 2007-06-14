@@ -1,6 +1,6 @@
 /*
-@COPYRIGHT@
-*/
+ @COPYRIGHT@
+ */
 package demo.sharededitor;
 
 import demo.sharededitor.controls.Dispatcher;
@@ -15,34 +15,36 @@ import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
 public final class Main extends JFrame {
-  public Main()	{
-    super("Shared Editor");
+	private static final long serialVersionUID = 1L;
 
-    ObjectManager objmgr     = new ObjectManager();
-    Renderer      renderer   = new Renderer();
-    Dispatcher    dispatcher = new Dispatcher(objmgr, renderer);
-    Dashboard     controller = new Dashboard(dispatcher);
-    Container     content    = getContentPane();
-    JPanel        display    = new JPanel();
+	public Main() {
+		super("Shared Editor");
 
-    display.setLayout(new BorderLayout(5, 5));
-    display.add(renderer, BorderLayout.CENTER);
-    content.add(display, BorderLayout.CENTER);
-    content.add(controller, BorderLayout.EAST);
-    renderer.setPreferredSize(new Dimension(600, 50));
+		ObjectManager objmgr = new ObjectManager();
+		Renderer renderer = new Renderer();
+		Dispatcher dispatcher = new Dispatcher(objmgr, renderer);
+		Dashboard controller = new Dashboard(dispatcher);
+		Container content = getContentPane();
+		JPanel display = new JPanel();
 
-    setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);	   
-    setDefaultLookAndFeelDecorated(true);
+		display.setLayout(new BorderLayout(5, 5));
+		display.add(renderer, BorderLayout.CENTER);
+		content.add(display, BorderLayout.CENTER);
+		content.add(controller, BorderLayout.EAST);
+		renderer.setPreferredSize(new Dimension(600, 50));
 
-    pack();
-    setVisible(true);
-  }
+		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+		setDefaultLookAndFeelDecorated(true);
 
-  public static void main(String[] args) {
-     javax.swing.SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-           new Main();
-        }
-     });
-  }
+		pack();
+		setVisible(true);
+	}
+
+	public static void main(String[] args) {
+		javax.swing.SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				new Main();
+			}
+		});
+	}
 }

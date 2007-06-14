@@ -128,35 +128,32 @@ public abstract class BaseObject implements IFillStyleConsts
 		Shape shape = getShape();
 		Rectangle bounds = shape.getBounds();
 		g.setColor(this.background);
-		if (FILLSTYLE_SOLID == this.fillstyle) g.fill(shape);
-
+		if (FILLSTYLE_SOLID == this.fillstyle) { 
+			g.fill(shape);
+		}
 		if ((FILLSTYLE_TEXTURED == this.fillstyle)
 				&& (this instanceof ITexturable) && isTextured()
 				&& (bounds.width > 0) && (bounds.height > 0))
 		{
-			ImageIcon image = new ImageIcon(getTexture());
+			Image image           = getTexture();//.getScaledInstance(bounds.width, bounds.height, Image.SCALE_FAST);
 			BufferedImage texture = new BufferedImage(bounds.width, bounds.height,
 					BufferedImage.TYPE_INT_RGB);
 			Graphics tg = texture.getGraphics();
-			tg
-					.drawImage(image.getImage(), 0, 0, bounds.width, bounds.height,
-							null);
+			tg.drawImage(image, 0, 0, bounds.width, bounds.height, null);
 			Paint paint = new TexturePaint(texture, bounds);
 			g.setPaint(paint);
 			g.fill(shape);
 		}
-
 		g.setStroke(this.stroke);
 		g.setColor(this.foreground);
-
 		g.draw(shape);
 
 		Shape[] anchors = getAnchors();
+		Stroke stroke   = new BasicStroke(1);
+		g.setStroke(stroke);
 		for (int i = 0; showAnchors && i < anchors.length; i++)
 		{
 			g.fill(anchors[i]);
-			g.setStroke(new BasicStroke(1));
-			g.draw(anchors[i]);
 		}
 	}
 
@@ -208,20 +205,36 @@ public abstract class BaseObject implements IFillStyleConsts
 
 	private byte[] texture = null;
 
+	protected synchronized void clearTexture()
+	{
+		this.texture = null;
+	}
+	
 	protected synchronized void setTexture(Image image)
 	{
 		try
 		{
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			ObjectOutputStream oos = new ObjectOutputStream(bos);
-			oos.writeObject(new ImageIcon(image));
-			oos.flush();
-			oos.close();
-			texture = bos.toByteArray();
+			if (texture == null) {
+				ByteArrayOutputStream bos = new ByteArrayOutputStream();
+				ObjectOutputStream oos = new ObjectOutputStream(bos);
+				int width = image.getWidth(null);
+				if (width > 640) {
+					width = 640;
+				}
+	
+				int height = image.getHeight(null);
+				if (height > 480) {
+					height = 480;
+				}
+	
+				Image scaledImage = image.getScaledInstance(width, height, Image.SCALE_FAST);
+				oos.writeObject(new ImageIcon(scaledImage));
+				texture = bos.toByteArray();
+			}
 		}
 		catch (Exception ex)
 		{
-			throw new InternalError("Unable to convert ImageIcon to byte[]");
+			throw new InternalError("Unable to convert Image to byte[]");
 		}
 	}
 

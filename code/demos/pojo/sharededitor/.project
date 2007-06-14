@@ -13,6 +13,5 @@
 	</buildSpec>
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
-		<nature>org.terracotta.dso.ProjectNature</nature>
 	</natures>
 </projectDescription>

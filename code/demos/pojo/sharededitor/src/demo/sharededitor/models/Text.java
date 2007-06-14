@@ -58,6 +58,11 @@ public class Text extends BaseObject implements IFontable, ITexturable
 		// we purposely don't allow the resizing operation for Text objects 
 	}
 
+	public synchronized void clearTexture() {
+		super.clearTexture();
+		notifyListeners(this);
+	}
+	
 	public synchronized void setTexture(Image image)
 	{
 		super.setTexture(image);

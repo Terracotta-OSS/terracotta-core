@@ -5,7 +5,6 @@ package demo.sharededitor.models;
 
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
-import java.awt.geom.RectangularShape;
 import java.awt.Shape;
 
 final class Line extends BaseObject

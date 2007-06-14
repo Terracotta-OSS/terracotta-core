@@ -67,6 +67,11 @@ class Square
 		this.notifyListeners(this);
 	}
 	
+	public synchronized void clearTexture() {
+		super.clearTexture();
+		notifyListeners(this);
+	}
+
 	public synchronized void setTexture(Image image)
 	{
 		super.setTexture(image);
