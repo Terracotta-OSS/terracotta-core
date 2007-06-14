@@ -1,6 +1,6 @@
 /*
-@COPYRIGHT@
-*/
+ @COPYRIGHT@
+ */
 package demo.sharededitor.models;
 
 import java.awt.BasicStroke;
@@ -29,72 +29,62 @@ import demo.sharededitor.events.IListListener;
 import demo.sharededitor.ui.IFillStyleConsts;
 import demo.sharededitor.ui.ITexturable;
 
-public abstract class BaseObject implements IFillStyleConsts
-{
+public abstract class BaseObject implements IFillStyleConsts {
 	private List listeners;
 
-	public void addListener(IListListener listListener)
-	{
-	   if (listeners == null)
-		   listeners = Collections.synchronizedList(new ArrayList());
+	public void addListener(IListListener listListener) {
+		if (listeners == null) {
+			listeners = Collections.synchronizedList(new ArrayList());
+		}
 
-      synchronized(listeners) { 
-         if (!listeners.contains(listListener)) 
-            listeners.add(listListener); 
-      }
+		if (!listeners.contains(listListener))
+			listeners.add(listListener);
 	}
 
-	public void removeListener(IListListener listListener)
-	{
-	   if ((listeners != null) && (listeners.contains(listListener)))
-	   synchronized(listeners) {
-		   listeners.remove(listListener);
-      }
+	public void removeListener(IListListener listListener) {
+		if ((listeners != null) && (listeners.contains(listListener))) {
+			listeners.remove(listListener);
+		}
 	}
 
-	protected void notifyListeners(Object obj)
-	{
-		if (listeners == null) return;
+	protected void notifyListeners(Object obj) {
+		if (listeners == null)
+			return;
 
-      synchronized(listeners) { 
-   		Iterator i = listeners.iterator();
-   		while (i.hasNext())
-   		{
-   			IListListener listListener = (IListListener) i.next();
-   			listListener.changed(this, this);
-   		}
-	   }
+		for (Iterator i = listeners.iterator(); i.hasNext();) {
+			IListListener listListener = (IListListener) i.next();
+			listListener.changed(this, this);
+		}
 	}
 
-	private boolean isReady()
-	{
+	private boolean isReady() {
 		return (getShape() != null);
 	}
 
-	public boolean isAt(int x, int y)
-	{
-		if (!isReady()) return false;
+	public boolean isAt(int x, int y) {
+		if (!isReady()) {
+			return false;
+		}
 
 		Shape shape = getShape();
-		if (shape.contains(x, y)) return true;
+		if (shape.contains(x, y)) {
+			return true;
+		}
 
 		Shape[] anchors = getAnchors();
-		for (int i = 0; i < anchors.length; i++)
-		{
-			if (anchors[i].contains(x, y)) return true;
+		for (int i = 0; i < anchors.length; i++) {
+			if (anchors[i].contains(x, y))
+				return true;
 		}
 		return false;
 	}
 
 	private int grabbedAnchor;
 
-	public synchronized void setGrabbedAnchorAt(int x, int y)
-	{
+	public synchronized void setGrabbedAnchorAt(int x, int y) {
 		Shape[] anchors = getAnchors();
-		for (int i = 0; i < anchors.length; i++)
-		{
-			if (anchors[i].contains(x, y))
-			{
+		for (int i = 0; i < anchors.length; i++) {
+			if (anchors[i].contains(x, y)) {
 				grabbedAnchor = i;
 				return;
 			}
@@ -102,13 +92,11 @@ public abstract class BaseObject implements IFillStyleConsts
 		grabbedAnchor = -1;
 	}
 
-	protected int grabbedAnchor()
-	{
+	protected int grabbedAnchor() {
 		return grabbedAnchor;
 	}
 
-	public boolean isAnchorGrabbed()
-	{
+	public boolean isAnchorGrabbed() {
 		return (grabbedAnchor >= 0) && (grabbedAnchor < getAnchors().length);
 	}
 
@@ -116,104 +104,96 @@ public abstract class BaseObject implements IFillStyleConsts
 
 	public abstract void move(int dx, int dy);
 
-	protected Shape[] getAnchors()
-	{
+	protected Shape[] getAnchors() {
 		return new Shape[0];
 	}
 
 	protected abstract Shape getShape();
 
-	public void draw(Graphics2D g, boolean showAnchors)
-	{
+	public void draw(Graphics2D g, boolean showAnchors) {
 		Shape shape = getShape();
 		Rectangle bounds = shape.getBounds();
 		g.setColor(this.background);
-		if (FILLSTYLE_SOLID == this.fillstyle) { 
+		
+		if (FILLSTYLE_SOLID == this.fillstyle) {
 			g.fill(shape);
 		}
+		
 		if ((FILLSTYLE_TEXTURED == this.fillstyle)
 				&& (this instanceof ITexturable) && isTextured()
-				&& (bounds.width > 0) && (bounds.height > 0))
-		{
-			Image image           = getTexture();//.getScaledInstance(bounds.width, bounds.height, Image.SCALE_FAST);
-			BufferedImage texture = new BufferedImage(bounds.width, bounds.height,
-					BufferedImage.TYPE_INT_RGB);
+				&& (bounds.width > 0) && (bounds.height > 0)) {
+			Image image = getTexture();// .getScaledInstance(bounds.width,
+			// bounds.height, Image.SCALE_FAST);
+			BufferedImage texture = new BufferedImage(bounds.width,
+					bounds.height, BufferedImage.TYPE_INT_RGB);
 			Graphics tg = texture.getGraphics();
 			tg.drawImage(image, 0, 0, bounds.width, bounds.height, null);
 			Paint paint = new TexturePaint(texture, bounds);
 			g.setPaint(paint);
 			g.fill(shape);
 		}
+
 		g.setStroke(this.stroke);
 		g.setColor(this.foreground);
 		g.draw(shape);
 
+		if (!showAnchors) {
+			return;
+		}
+
 		Shape[] anchors = getAnchors();
-		Stroke stroke   = new BasicStroke(1);
+		Stroke stroke = new BasicStroke(1);
 		g.setStroke(stroke);
-		for (int i = 0; showAnchors && i < anchors.length; i++)
-		{
+		for (int i = 0; i < anchors.length; i++) {
 			g.fill(anchors[i]);
 		}
 	}
 
 	private int fillstyle;
 
-	public synchronized void setFillStyle(int fillstyle)
-	{
+	public synchronized void setFillStyle(int fillstyle) {
 		this.fillstyle = fillstyle;
 		notifyListeners(this);
 	}
 
 	private Color foreground;
 
-	public synchronized void setForeground(Color color)
-	{
+	public synchronized void setForeground(Color color) {
 		this.foreground = color;
 		notifyListeners(this);
 	}
 
 	private Color background;
 
-	public synchronized void setBackground(Color color)
-	{
+	public synchronized void setBackground(Color color) {
 		this.background = color;
 		notifyListeners(this);
 	}
 
 	private Stroke stroke = new BasicStroke();
 
-	public synchronized void setStroke(Stroke stroke)
-	{
+	public synchronized void setStroke(Stroke stroke) {
 		this.stroke = stroke;
 		notifyListeners(this);
 	}
 
-	public static final BaseObject createObject(String name)
-	{
-		try
-		{
-			Class klass = Class
-					.forName("demo.sharededitor.models." + name);
+	public static final BaseObject createObject(String name) {
+		try {
+			Class klass = Class.forName("demo.sharededitor.models." + name);
 			return (BaseObject) klass.newInstance();
-		}
-		catch (Exception ex)
-		{
+		} catch (Exception ex) {
 			throw new InternalError(ex.getMessage());
 		}
 	}
 
 	private byte[] texture = null;
 
-	protected synchronized void clearTexture()
-	{
+	protected void clearTexture() {
 		this.texture = null;
 	}
-	
-	protected synchronized void setTexture(Image image)
-	{
-		try
-		{
+
+	protected void setTexture(Image image) {
+		try {
 			if (texture == null) {
 				ByteArrayOutputStream bos = new ByteArrayOutputStream();
 				ObjectOutputStream oos = new ObjectOutputStream(bos);
@@ -221,51 +201,44 @@ public abstract class BaseObject implements IFillStyleConsts
 				if (width > 640) {
 					width = 640;
 				}
-	
+
 				int height = image.getHeight(null);
 				if (height > 480) {
 					height = 480;
 				}
-	
-				Image scaledImage = image.getScaledInstance(width, height, Image.SCALE_FAST);
+
+				Image scaledImage = image.getScaledInstance(width, height,
+						Image.SCALE_FAST);
 				oos.writeObject(new ImageIcon(scaledImage));
 				texture = bos.toByteArray();
 			}
-		}
-		catch (Exception ex)
-		{
+		} catch (Exception ex) {
 			throw new InternalError("Unable to convert Image to byte[]");
 		}
 	}
 
-	protected Image getTexture()
-	{
-		try
-		{
+	protected Image getTexture() {
+		try {
 			ByteArrayInputStream bis = new ByteArrayInputStream(texture);
-			ObjectInputStream ois    = new ObjectInputStream(bis);
-			ImageIcon image          = (ImageIcon) ois.readObject();
+			ObjectInputStream ois = new ObjectInputStream(bis);
+			ImageIcon image = (ImageIcon) ois.readObject();
 			return image.getImage();
-		}
-		catch (Exception ex)
-		{
+		} catch (Exception ex) {
 			throw new InternalError("Unable to convert byte[] to Image");
 		}
 	}
 
-	protected boolean isTextured()
-	{
+	protected boolean isTextured() {
 		return (texture != null);
 	}
-	
-	public boolean isTransient()
-	{
-	   return false;
+
+	public boolean isTransient() {
+		return false;
 	}
 
-	public synchronized void selectAction(boolean flag)
-	{ }
-	
-	public synchronized void alternateSelectAction(boolean flag)
-	{ }
+	public synchronized void selectAction(boolean flag) {
+	}
+
+	public synchronized void alternateSelectAction(boolean flag) {
+	}
 }
