@@ -33,12 +33,6 @@ public class ArrayMutateValidateTest extends TransparentTestBase {
     setupManager.setServerCrashMode(ActivePassiveCrashMode.CRASH_AFTER_MUTATE);
     setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
     setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.TEMPORARY_SWAP_ONLY);
-    
-//    setupManager.setServerCount(3);
-//    setupManager.setServerCrashMode(ActivePassiveCrashMode.RANDOM_SERVER_CRASH);
-//    setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
-//    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.TEMPORARY_SWAP_ONLY);
-//    setupManager.setServerCrashWaitTimeInSec(15);
   }
 
   protected boolean canRunActivePassive() {

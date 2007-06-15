@@ -4,20 +4,19 @@
  */
 package com.tctest;
 
-import com.tc.config.schema.SettableConfigItem;
+import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 
 public class CacheLoadPerformanceTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 1;
 
-  public void setUp() throws Exception {
-    super.setUp();
-
-    ((SettableConfigItem) configFactory().l2DSOConfig().garbageCollectionInterval()).setValue(1000000);
-
-    getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);
-
+  public void doSetUp(TransparentTestIface t) throws Exception {
+    t.getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);
     initializeTestRunner();
+  }
+
+  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+    configFactory.setGCIntervalInSec(1000000);
   }
 
   protected Class getApplicationClass() {

@@ -90,6 +90,9 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected void setUp() throws Exception {
     setUp(configFactory(), configHelper());
 
+    // config should be set up before tc-config for external L2s are written out
+    setupConfig(configFactory());
+
     RestartTestHelper helper = null;
     PortChooser portChooser = new PortChooser();
     if ((isCrashy() && canRunCrash()) || useExternalProcess()) {
@@ -100,7 +103,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
       helper = new RestartTestHelper(mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_CRASH),
                                      new RestartTestEnvironment(getTempDirectory(), portChooser,
-                                                                RestartTestEnvironment.PROD_MODE));
+                                                                RestartTestEnvironment.PROD_MODE, configFactory()));
       int dsoPort = helper.getServerPort();
       int adminPort = helper.getAdminPort();
       ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(dsoPort);
@@ -143,12 +146,16 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     apServerManager = new ActivePassiveServerManager(mode()
         .equals(TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE), getTempDirectory(), portChooser,
                                                      ActivePassiveServerConfigCreator.DEV_MODE, apSetupManager,
-                                                     runnerConfig.startTimeout(), javaHome);
+                                                     runnerConfig.startTimeout(), javaHome, configFactory());
     apServerManager.addServersToL1Config(configFactory);
   }
 
   protected void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     throw new AssertionError("The sub-class (test) should override this method.");
+  }
+
+  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+    // do nothing
   }
 
   private final void setupProxyConnect(RestartTestHelper helper, PortChooser portChooser) throws Exception {
@@ -209,7 +216,6 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(serverPort);
     ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(adminPort);
     configFactory().addServerToL1Config(null, serverPort, adminPort);
-    // configFactory().addServerToL2Config(null, serverPort, adminPort);
   }
 
   private final void setUp(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper)

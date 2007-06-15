@@ -1,9 +1,9 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
-import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.terracottatech.config.PersistenceMode;
 
@@ -15,12 +15,12 @@ public class TransparentLinkedListTest extends TransparentTestBase implements Te
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT).setApplicationInstancePerClientCount(EXECUTION_COUNT)
         .setIntensity(LOOP_ITERATION_COUNT);
-    TestTVSConfigurationSetupManagerFactory factory = (TestTVSConfigurationSetupManagerFactory) t.getConfigFactory();
-
-    ((SettableConfigItem) factory.l2DSOConfig().garbageCollectionEnabled()).setValue(true);
-    ((SettableConfigItem) factory.l2DSOConfig().persistenceMode()).setValue(PersistenceMode.TEMPORARY_SWAP_ONLY);
-
     t.initializeTestRunner();
+  }
+
+  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+    configFactory.setGCEnabled(true);
+    configFactory.setPersistenceMode(PersistenceMode.TEMPORARY_SWAP_ONLY);
   }
 
   protected Class getApplicationClass() {

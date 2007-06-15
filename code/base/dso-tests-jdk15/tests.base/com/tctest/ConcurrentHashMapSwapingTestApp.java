@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -45,7 +46,7 @@ public class ConcurrentHashMapSwapingTestApp extends AbstractTransparentApp {
           Assert.assertEquals((j == 0 && i < MAX_KEY_VALUE) ? i : MAX_KEY_VALUE, mapRoot.size());
           int beforeSize = mapRoot.size();
           int useVal = i % MAX_KEY_VALUE;
-          if(i % 100 == 0 ) System.err.println("Puting -- i: " + i + ", using key: " + useVal);
+          if (i % 100 == 0) System.err.println("Puting -- i: " + i + ", using key: " + useVal);
           Object key = new HashKey(useVal);
           while (System.identityHashCode(key) == key.hashCode()) {
             key = new HashKey(useVal);
@@ -54,7 +55,7 @@ public class ConcurrentHashMapSwapingTestApp extends AbstractTransparentApp {
           mapRoot.put(key, new HashValue(useVal));
           int afterSize = mapRoot.size();
           Assert.assertTrue(afterSize >= beforeSize);
-          if(i % 100 == 0 ) System.err.println("beforeSize: " + beforeSize + ", afterSize: " + afterSize);
+          if (i % 100 == 0) System.err.println("beforeSize: " + beforeSize + ", afterSize: " + afterSize);
         }
       }
 
@@ -65,10 +66,11 @@ public class ConcurrentHashMapSwapingTestApp extends AbstractTransparentApp {
 
     for (int i = 0; i < MAX_KEY_VALUE; i++) {
       int useVal = i % MAX_KEY_VALUE;
-      if(i % 100 == 0 ) System.err.println("Getting key: " + useVal);
+      if (i % 100 == 0) System.err.println("Getting key: " + useVal);
       Object key = new HashKey(useVal);
       if (key.hashCode() == System.identityHashCode(key)) {
-        String assertionMsg = "Getting key: " + useVal + ", hashCode: " + key.hashCode() + ", identityHashCode: " + System.identityHashCode(key);
+        String assertionMsg = "Getting key: " + useVal + ", hashCode: " + key.hashCode() + ", identityHashCode: "
+                              + System.identityHashCode(key);
         throw new AssertionError(assertionMsg);
       }
       Assert.assertEquals(new HashValue(useVal), mapRoot.get(key));

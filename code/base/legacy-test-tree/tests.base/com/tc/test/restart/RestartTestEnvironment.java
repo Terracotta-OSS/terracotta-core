@@ -9,6 +9,7 @@ import org.apache.commons.io.FileUtils;
 import com.tc.config.schema.MockIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.L2SConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
@@ -31,33 +32,40 @@ import java.util.Collection;
 
 public class RestartTestEnvironment {
 
-  public static final OperatingMode                   DEV_MODE          = new OperatingMode();
-  public static final OperatingMode                   PROD_MODE         = new OperatingMode();
+  public static final OperatingMode                     DEV_MODE          = new OperatingMode();
+  public static final OperatingMode                     PROD_MODE         = new OperatingMode();
 
-  private static TCLogger                             logger            = TCLogging
-                                                                            .getTestingLogger(RestartTestEnvironment.class);
-  private final PortChooser                           portChooser;
-  private StandardTVSConfigurationSetupManagerFactory config;
-  private File                                        configFile;
+  private static TCLogger                               logger            = TCLogging
+                                                                              .getTestingLogger(RestartTestEnvironment.class);
+  private final PortChooser                             portChooser;
+  private StandardTVSConfigurationSetupManagerFactory   config;
+  private File                                          configFile;
 
-  private File                                        dbhome;
-  private ServerControl                               server;
-  private final ServerControl                         serverWrapper     = new ServerWrapper();
-  private TestThreadGroup                             threadGroup;
+  private File                                          dbhome;
+  private ServerControl                                 server;
+  private final ServerControl                           serverWrapper     = new ServerWrapper();
+  private TestThreadGroup                               threadGroup;
 
-  private boolean                                     isPersistent      = true;
-  private boolean                                     isParanoid        = true;
-  private final File                                  tempDirectory;
-  private boolean                                     setUp;
-  private boolean                                     mergeServerOutput = true;
-  private int                                         serverPort;
-  private int                                         adminPort;
-  private final OperatingMode                         operatingMode;
+  private boolean                                       isPersistent      = true;
+  private boolean                                       isParanoid        = true;
+  private final File                                    tempDirectory;
+  private boolean                                       setUp;
+  private boolean                                       mergeServerOutput = true;
+  private int                                           serverPort;
+  private int                                           adminPort;
+  private final OperatingMode                           operatingMode;
+  private final TestTVSConfigurationSetupManagerFactory configFactory;
 
   public RestartTestEnvironment(File tempDirectory, PortChooser portChooser, OperatingMode operatingMode) {
+    this(tempDirectory, portChooser, operatingMode, null);
+  }
+
+  public RestartTestEnvironment(File tempDirectory, PortChooser portChooser, OperatingMode operatingMode,
+                                TestTVSConfigurationSetupManagerFactory configFactory) {
     this.tempDirectory = tempDirectory;
     this.portChooser = portChooser;
     this.operatingMode = operatingMode;
+    this.configFactory = configFactory;
     if (!tempDirectory.isDirectory()) {
       //
       throw new AssertionError("Temp directory is not a directory: " + tempDirectory);
@@ -66,7 +74,7 @@ public class RestartTestEnvironment {
   }
 
   public void setIsPersistent(boolean b) {
-    this.isPersistent = b;
+    isPersistent = b;
   }
 
   public void setIsParanoid(boolean b) {
@@ -122,13 +130,20 @@ public class RestartTestEnvironment {
     String persistenceMode = L2ConfigBuilder.PERSISTENCE_MODE_TEMPORARY_SWAP_ONLY;
     if (isPersistent && isParanoid) {
       persistenceMode = L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE;
-    } else if (isPersistent) persistenceMode = L2ConfigBuilder.PERSISTENCE_MODE_TEMPORARY_SWAP_ONLY;
+    } else if (isPersistent) {
+      persistenceMode = L2ConfigBuilder.PERSISTENCE_MODE_TEMPORARY_SWAP_ONLY;
+    }
 
     L2ConfigBuilder l2 = new L2ConfigBuilder();
     l2.setDSOPort(serverPort);
     l2.setJMXPort(adminPort);
     l2.setData(tempDirectory.getAbsolutePath());
     l2.setPersistenceMode(persistenceMode);
+    if (configFactory != null) {
+      l2.setGCEnabled(configFactory.getGCEnabled());
+      l2.setGCVerbose(configFactory.getGCVerbose());
+      l2.setGCInterval(configFactory.getGCIntervalInSec());
+    }
     L2ConfigBuilder[] l2s = new L2ConfigBuilder[] { l2 };
     L2SConfigBuilder servers = new L2SConfigBuilder();
     servers.setL2s(l2s);

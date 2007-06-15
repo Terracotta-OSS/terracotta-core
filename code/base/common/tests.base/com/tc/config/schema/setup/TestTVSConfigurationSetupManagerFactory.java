@@ -22,8 +22,10 @@ import com.tc.object.config.schema.NewL1DSOConfig;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.util.Assert;
 import com.terracottatech.config.Application;
+import com.terracottatech.config.PersistenceMode;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
+import com.terracottatech.config.PersistenceMode.Enum;
 
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -155,6 +157,13 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
   private final String                   defaultL2Identifier;
 
   private final int                      mode;
+
+  // TODO: fix the way settableObjects are used
+  // this is temporary
+  private Enum                           persistenceMode         = PersistenceMode.TEMPORARY_SWAP_ONLY;
+  private boolean                        gcEnabled               = true;
+  private boolean                        gcVerbose               = false;
+  private int                            gcIntervalInSec         = 3600;
 
   public TestTVSConfigurationSetupManagerFactory(int mode, String l2Identifier,
                                                  IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) {
@@ -333,6 +342,42 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
 
     newL2.setData(BOGUS_FILENAME);
     newL2.setLogs(BOGUS_FILENAME);
+  }
+
+  public void setGCEnabled(boolean val) {
+    gcEnabled = val;
+    ((SettableConfigItem) l2DSOConfig().garbageCollectionEnabled()).setValue(gcEnabled);
+  }
+
+  public void setGCVerbose(boolean val) {
+    gcVerbose = val;
+    ((SettableConfigItem) l2DSOConfig().garbageCollectionVerbose()).setValue(gcVerbose);
+  }
+
+  public void setGCIntervalInSec(int val) {
+    gcIntervalInSec = val;
+    ((SettableConfigItem) l2DSOConfig().garbageCollectionInterval()).setValue(gcIntervalInSec);
+  }
+
+  public void setPersistenceMode(Enum val) {
+    persistenceMode = val;
+    ((SettableConfigItem) l2DSOConfig().persistenceMode()).setValue(persistenceMode);
+  }
+  
+  public boolean getGCEnabled() {
+    return gcEnabled;
+  }
+
+  public boolean getGCVerbose() {
+    return gcVerbose;
+  }
+
+  public int getGCIntervalInSec() {
+    return gcIntervalInSec;
+  }
+
+  public Enum getPersistenceMode() {
+    return persistenceMode;
   }
 
   private Server findL2Bean(String name) {

@@ -9,17 +9,10 @@ import com.tc.test.activepassive.ActivePassivePersistenceMode;
 import com.tc.test.activepassive.ActivePassiveSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 
-public class ConcurrentLinkedListTest extends TransparentTestBase {
-
-  private static final int NODE_COUNT = 8;
-
-  public void doSetUp(TransparentTestIface t) throws Exception {
-    t.getTransparentAppConfig().setClientCount(NODE_COUNT);
-    t.initializeTestRunner();
-  }
+public class ConcurrentHashMapGCCrashTest extends GCTestBase implements TestConfigurator {
 
   protected Class getApplicationClass() {
-    return ConcurrentLinkedListTestApp.class;
+    return ConcurrentHashMapSwapingTestApp.class;
   }
 
   protected boolean canRunActivePassive() {
@@ -29,7 +22,7 @@ public class ConcurrentLinkedListTest extends TransparentTestBase {
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
-    setupManager.setServerCrashWaitTimeInSec(30);
+    setupManager.setServerCrashWaitTimeInSec(40);
     setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
     setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.TEMPORARY_SWAP_ONLY);
   }

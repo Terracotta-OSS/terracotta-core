@@ -4,7 +4,6 @@
  */
 package com.tctest;
 
-import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.test.activepassive.ActivePassiveCrashMode;
 import com.tc.test.activepassive.ActivePassivePersistenceMode;
@@ -23,14 +22,13 @@ public class ConcentratedClassTest extends TransparentTestBase {
 
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);
-
-    TestTVSConfigurationSetupManagerFactory factory = (TestTVSConfigurationSetupManagerFactory) t.getConfigFactory();
-
-    ((SettableConfigItem) factory.l2DSOConfig().garbageCollectionEnabled()).setValue(true);
-    ((SettableConfigItem) factory.l2DSOConfig().garbageCollectionVerbose()).setValue(true);
-    ((SettableConfigItem) factory.l2DSOConfig().persistenceMode()).setValue(PersistenceMode.TEMPORARY_SWAP_ONLY);
-
     t.initializeTestRunner();
+  }
+
+  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+    configFactory.setGCEnabled(true);
+    configFactory.setGCVerbose(true);
+    configFactory.setPersistenceMode(PersistenceMode.TEMPORARY_SWAP_ONLY);
   }
 
   protected Class getApplicationClass() {
@@ -49,8 +47,8 @@ public class ConcentratedClassTest extends TransparentTestBase {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
     setupManager.setServerCrashWaitTimeInSec(60);
-    setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.DISK);
-    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.PERMANENT_STORE);
+    setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
+    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.TEMPORARY_SWAP_ONLY);
     setupManager.setMaxCrashCount(2);
   }
 

@@ -24,7 +24,7 @@ public class DSOApplicationBuilderTest extends BaseDSOTestCase {
     L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
 
     // minor hack to make server listen on an OS assigned port
-//    ((SettableConfigItem) factory.l2DSOConfig().listenPort()).setValue(0);
+    // ((SettableConfigItem) factory.l2DSOConfig().listenPort()).setValue(0);
 
     server = new TCServerImpl(manager);
     server.start();

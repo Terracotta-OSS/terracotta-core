@@ -6,6 +6,7 @@ package com.tc.test.activepassive;
 
 import org.apache.commons.io.FileUtils;
 
+import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.ApplicationConfigBuilder;
 import com.tc.config.schema.test.HaConfigBuilder;
 import com.tc.config.schema.test.L2ConfigBuilder;
@@ -21,24 +22,27 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 public class ActivePassiveServerConfigCreator {
-  public static final String DEV_MODE  = "development";
-  public static final String PROD_MODE = "production";
+  public static final String                            DEV_MODE  = "development";
+  public static final String                            PROD_MODE = "production";
 
-  private static TCLogger    logger    = TCLogging.getTestingLogger(ActivePassiveServerConfigCreator.class);
-  private final int          serverCount;
-  private final int[]        dsoPorts;
-  private final int[]        jmxPorts;
-  private final int[]        l2GroupPorts;
-  private final String[]     serverNames;
-  private final String       serverPersistence;
-  private final boolean      serverDiskless;
-  private final String       configModel;
-  private final File         configFile;
-  private final File         tempDir;
+  private static TCLogger                               logger    = TCLogging
+                                                                      .getTestingLogger(ActivePassiveServerConfigCreator.class);
+  private final int                                     serverCount;
+  private final int[]                                   dsoPorts;
+  private final int[]                                   jmxPorts;
+  private final int[]                                   l2GroupPorts;
+  private final String[]                                serverNames;
+  private final String                                  serverPersistence;
+  private final boolean                                 serverDiskless;
+  private final String                                  configModel;
+  private final File                                    configFile;
+  private final File                                    tempDir;
+  private final TestTVSConfigurationSetupManagerFactory configFactory;
 
   public ActivePassiveServerConfigCreator(int serverCount, int[] dsoPorts, int[] jmxPorts, int[] l2GroupPorts,
                                           String[] serverNames, String serverPersistence, boolean serverDiskless,
-                                          String configModel, File configFile, File tempDir) {
+                                          String configModel, File configFile, File tempDir,
+                                          TestTVSConfigurationSetupManagerFactory configFactory) {
     this.serverCount = serverCount;
     this.dsoPorts = dsoPorts;
     this.jmxPorts = jmxPorts;
@@ -49,6 +53,7 @@ public class ActivePassiveServerConfigCreator {
     this.configModel = configModel;
     this.configFile = configFile;
     this.tempDir = tempDir;
+    this.configFactory = configFactory;
 
     checkPersistenceAndDiskLessMode();
   }
@@ -79,6 +84,11 @@ public class ActivePassiveServerConfigCreator {
     String dataLocationHome = tempDir.getAbsolutePath() + File.separator + "server-data";
     cleanDataDirectory(dataLocationHome);
     String logLocationHome = tempDir.getAbsolutePath() + File.separator + "server-logs" + File.separator;
+
+    boolean gcEnabled = configFactory.getGCEnabled();
+    boolean gcVerbose = configFactory.getGCVerbose();
+    int gcIntervalInSec = configFactory.getGCIntervalInSec();
+
     L2ConfigBuilder[] l2s = new L2ConfigBuilder[serverCount];
     for (int i = 0; i < serverCount; i++) {
       L2ConfigBuilder l2 = new L2ConfigBuilder();
@@ -93,6 +103,9 @@ public class ActivePassiveServerConfigCreator {
       l2.setJMXPort(jmxPorts[i]);
       l2.setL2GroupPort(l2GroupPorts[i]);
       l2.setPersistenceMode(serverPersistence);
+      l2.setGCEnabled(gcEnabled);
+      l2.setGCVerbose(gcVerbose);
+      l2.setGCInterval(gcIntervalInSec);
       l2s[i] = l2;
     }
     HaConfigBuilder ha = new HaConfigBuilder();

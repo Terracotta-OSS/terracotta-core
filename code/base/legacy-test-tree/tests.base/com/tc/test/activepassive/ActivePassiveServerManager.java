@@ -71,7 +71,8 @@ public class ActivePassiveServerManager {
 
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
                                     String configModel, ActivePassiveTestSetupManager setupManger, long startTimeout,
-                                    File javaHome) throws Exception {
+                                    File javaHome, TestTVSConfigurationSetupManagerFactory configFactory)
+      throws Exception {
     if (!isActivePassiveTest) { throw new AssertionError("A non-ActivePassiveTest is trying to use this class."); }
 
     this.setupManger = setupManger;
@@ -106,7 +107,8 @@ public class ActivePassiveServerManager {
 
     serverConfigCreator = new ActivePassiveServerConfigCreator(this.serverCount, dsoPorts, jmxPorts, l2GroupPorts,
                                                                serverNames, serverPersistence, serverNetworkShare,
-                                                               this.configModel, configFile, this.tempDir);
+                                                               this.configModel, configFile, this.tempDir,
+                                                               configFactory);
     serverConfigCreator.writeL2Config();
 
     errors = new ArrayList();
