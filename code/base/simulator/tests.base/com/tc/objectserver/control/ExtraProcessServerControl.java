@@ -223,7 +223,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     return rv;
   }
 
-  public void crash() throws Exception {
+  public synchronized void crash() throws Exception {
     System.out.println("Crashing server " + this.name + "...");
     if (process != null) {
       process.destroy();
@@ -232,7 +232,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     System.out.println(this.name + " crashed.");
   }
 
-  public void attemptShutdown() throws Exception {
+  public synchronized void attemptShutdown() throws Exception {
     System.out.println("Shutting down server " + this.name + "...");
     TCStop stopper = new TCStop(getHost(), getAdminPort());
     stopper.stop();
