@@ -13,8 +13,18 @@ class BuildSubtree
   # for the given subtree. This will be _module_/_subtree_.boot-jar-config.xml if it exists,
   # or static_resources.dso_boot_jar_config_file otherwise.
   def boot_jar_config_file(static_resources)
-    out = FilePath.new(build_module.root, "%s.boot-jar-config.xml" % name)
-    out = static_resources.dso_boot_jar_config_file unless FileTest.file?(out.to_s)
+	jdktype = @build_module.jdk.actual_type
+	jdkrelease = @build_module.jdk.release
+	out = FilePath.new(build_module.root, "%s.%s-%s.boot-jar-config.xml" % [name, jdktype, jdkrelease])
+	if !FileTest.file?(out.to_s)
+		out = FilePath.new(build_module.root, "%s.%s.boot-jar-config.xml" % [name, jdktype])
+ 		if !FileTest.file?(out.to_s)
+   			out = FilePath.new(build_module.root, "%s.boot-jar-config.xml" % name)
+			if !FileTest.file?(out.to_s)
+				out = static_resources.dso_boot_jar_config_file unless FileTest.file?(out.to_s)
+			end
+		end
+	end
     out
   end
 end
@@ -90,7 +100,7 @@ class BootJar
   def ensure_created
     unless @created
       classpath = @module_set['dso-tests-jdk15'].subtree('src').classpath(@build_results, :full, :runtime)
-      puts("Creating boot JAR with: #{@jvm}; using classpath: #{classpath}")
+      puts("Creating boot JAR with: #{@jvm} and config file: #{@config_file}, using classpath: #{classpath}")
       
       File.delete(path.to_s) if FileTest.exist?(path.to_s)
       sysproperties = {
