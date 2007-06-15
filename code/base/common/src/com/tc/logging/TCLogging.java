@@ -88,7 +88,7 @@ public class TCLogging {
   public static TCLogger getLogger(String name) {
     if ((name == null) || !name.startsWith(INTERNAL_LOGGER_NAMESPACE_WITH_DOT)) {
       // this comment here to make formatter sane
-      throw new IllegalArgumentException("Logger not in valid namepsace (ie. '" + INTERNAL_LOGGER_NAMESPACE_WITH_DOT
+      throw new IllegalArgumentException("Logger not in valid namespace (ie. '" + INTERNAL_LOGGER_NAMESPACE_WITH_DOT
           + "' ): " + name);
     }
 
