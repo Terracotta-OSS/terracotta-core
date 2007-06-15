@@ -15,6 +15,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
+import com.tc.util.runtime.Vm;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.Date;
@@ -40,7 +41,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
 
   private final ReentrantReadWriteLock nonFairReadWriteLockRoot = new ReentrantReadWriteLock();
   private final ReentrantReadWriteLock fairReadWriteLockRoot    = new ReentrantReadWriteLock(true);
-  private ReentrantReadWriteLock       sharedReadWriteLock;
   private final Condition              nonFairCondition         = nonFairReadWriteLockRoot.writeLock().newCondition();
   private final Condition              fairCondition            = fairReadWriteLockRoot.writeLock().newCondition();
 
@@ -50,7 +50,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   private int                          numOfPutters             = 1;
   private int                          numOfGetters;
   private final boolean                isCrashTest;
-
+  
   public ReentrantReadWriteLockTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     barrier = new CyclicBarrier(getParticipantCount());
@@ -101,7 +101,9 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     tryReadLockMultiNodeTest(index, readWriteLock);
     tryWriteLockMultiNodeTest(index, readWriteLock);
     tryReadWriteLockSingleNodeTest(index, readWriteLock);
-    tryReadWriteLockSingleNodeTest(index, new ReentrantReadWriteLock());
+    if (!Vm.isIBM()) {
+      tryReadWriteLockSingleNodeTest(index, new ReentrantReadWriteLock());
+    }
 
     basicSingleNodeReadThenWriteLockingTest(index, readWriteLock);
     basicSingleNodeReadThenWriteLockingTest(index, new ReentrantReadWriteLock());
@@ -1248,7 +1250,6 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
 
     spec.addRoot("nonFairReadWriteLockRoot", "nonFairReadWriteLockRoot");
     spec.addRoot("fairReadWriteLockRoot", "fairReadWriteLockRoot");
-    spec.addRoot("sharedReadWriteLock", "sharedReadWriteLock");
     spec.addRoot("barrier", "barrier");
     spec.addRoot("barrier2", "barrier2");
     spec.addRoot("barrier3", "barrier3");
