@@ -21,4 +21,56 @@
     </modules>
   </clients>
 
+	<application>
+		<dso>
+			<!--
+			  -  this config file is just intended to add the required classes
+			  -  to the bootjar for running the tests
+			  -->
+			  <additional-boot-jar-classes>
+			    <include>java.util.Locale</include>
+			    <include>java.awt.Font</include>
+			    <include>java.awt.font.TextAttribute</include>
+			    <include>java.awt.font.TransformAttribute</include>
+			    <include>java.awt.geom.AffineTransform</include>
+			
+			    <include>java.net.URL</include>
+			    <include>java.net.URLStreamHandler</include>
+			    <include>java.net.InetAddress</include>
+			    <include>java.net.Inet4Address</include>
+			    <include>sun.net.www.protocol.http.Handler</include>
+			
+			    <include>java.text.Format</include>
+			    <include>java.text.DateFormat</include>
+			    <include>java.text.SimpleDateFormat</include>
+			    <include>java.text.DateFormatSymbols</include>
+			    <include>java.text.NumberFormat</include>
+			    <include>java.text.DecimalFormat</include>
+			    <include>java.text.DecimalFormatSymbols</include>
+			    
+			    <include>java.util.Calendar</include>
+			    <include>java.util.GregorianCalendar</include>
+			    <include>sun.util.calendar.CalendarDate</include>
+			    <include>sun.util.calendar.Gregorian</include>
+			    <include>sun.util.calendar.Gregorian$Date</include>
+			    <include>sun.util.calendar.BaseCalendar</include>
+			    <include>sun.util.calendar.BaseCalendar$Date</include>
+			    <include>sun.util.calendar.AbstractCalendar</include>
+			    <include>sun.util.calendar.CalendarSystem</include>
+			    <include>sun.util.calendar.ZoneInfo</include>
+			
+			    <include>java.lang.AbstractStringBuilder</include>
+			    <include>java.lang.StringBuffer</include>
+			
+			    <include>java.util.Currency</include>
+			    
+			    <include>java.util.TimeZone</include>
+			    <include>java.util.SimpleTimeZone</include>
+			    <include>java.text.DigitList</include>
+			    <include>java.text.AttributedCharacterIterator$Attribute</include>
+			  </additional-boot-jar-classes>
+			<instrumented-classes/>
+		</dso>
+	</application>
+	
 </tc:tc-config>
