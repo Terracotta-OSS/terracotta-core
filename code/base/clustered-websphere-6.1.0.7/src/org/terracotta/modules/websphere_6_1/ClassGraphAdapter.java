@@ -35,12 +35,10 @@ public class ClassGraphAdapter extends ClassAdapter implements ClassAdapterFacto
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
     if ("createClassLoaders".equals(name)) {
       return new CreateClassLoadersAdapter(mv);
+    } else if (ACC_STATIC == access && "<clinit>".equals(name)) {
+      return new StaticBlockAdapter(mv);
     }
     return mv;
-  }
-
-  public void visitEnd() {
-    super.visitEnd();
   }
 
   private void addProcessWARModuleWrapper(int access, String name, String desc, String signature, String[] exceptions) {
@@ -53,11 +51,11 @@ public class ClassGraphAdapter extends ClassAdapter implements ClassAdapterFacto
     mv.visitMethodInsn(INVOKESPECIAL, "com/ibm/ws/classloader/ClassGraph", //
                        ByteCodeUtil.METHOD_RENAME_PREFIX + name, desc);
 
-    mv.visitVarInsn(ALOAD, 6);  // modulenode
+    mv.visitVarInsn(ALOAD, 6); // modulenode
     mv.visitFieldInsn(GETFIELD, "com/ibm/ws/classloader/ClassGraph$ModuleNode", "classLoader",
                       "Lcom/ibm/ws/classloader/JarClassLoader;");
-    mv.visitVarInsn(ALOAD, 1);  // earfile
-    mv.visitVarInsn(ALOAD, 4);  // moduleref
+    mv.visitVarInsn(ALOAD, 1); // earfile
+    mv.visitVarInsn(ALOAD, 4); // moduleref
     mv.visitMethodInsn(INVOKESTATIC, "com/tc/websphere/WebsphereLoaderNaming", "registerWebAppLoader",
                        "(Lcom/tc/object/loaders/NamedClassLoader;Ljava/lang/Object;Ljava/lang/Object;)V");
 
@@ -82,6 +80,28 @@ public class ClassGraphAdapter extends ClassAdapter implements ClassAdapterFacto
                               "(Lcom/tc/object/loaders/NamedClassLoader;Ljava/lang/Object;)V");
       }
     }
+
+  }
+
+  /**
+   * This class is in the same OSGi bundle as the MBeanServerBuilder that WebSphere wants to use; we trigger the
+   * creation of the platform default MBeanServer here so that L1Management can pick it up.
+   */
+  private static class StaticBlockAdapter extends MethodAdapter implements Opcodes {
+
+    public StaticBlockAdapter(MethodVisitor mv) {
+      super(mv);
+    }
+
+    public void visitInsn(int opcode) {
+      if (opcode == RETURN) {
+        mv.visitMethodInsn(INVOKESTATIC, "java/lang/management/ManagementFactory", "getPlatformMBeanServer",
+                           "()Ljavax/management/MBeanServer;");
+        mv.visitInsn(POP);
+      }
+      super.visitInsn(opcode);
+    }
+
   }
 
 }
