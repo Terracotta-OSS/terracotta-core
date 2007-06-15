@@ -6,12 +6,14 @@ package com.tctest.server.appserver.unit;
 
 import org.apache.commons.httpclient.HttpClient;
 
+import com.tc.test.TestConfigObject;
+import com.tc.test.server.appserver.NewAppServerFactory;
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
 import com.tc.test.server.util.HttpUtil;
-import com.tc.util.runtime.Vm;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Date;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -21,8 +23,8 @@ import javax.servlet.http.HttpSession;
 public class InstrumentEverythingInContainerTest extends AbstractAppServerTestCase {
 
   public InstrumentEverythingInContainerTest() {
-    if (Vm.isIBM()) {
-      disableAllUntil("2007-05-13");
+    if (TestConfigObject.getInstance().appserverFactoryName().equals(NewAppServerFactory.GLASSFISH)) {
+      this.disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
 
