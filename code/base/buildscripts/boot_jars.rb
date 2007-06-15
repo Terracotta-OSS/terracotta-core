@@ -141,3 +141,22 @@ class BootJar
     @created
   end
 end
+
+
+## Subtitute for BootJar class when user wants
+## to use their own bootjar, specified by "boot_jar_path="
+## on command line
+class UserBootJar
+  def initialize
+    @boot_jar_path = Registry[:config_source]['boot_jar_path']
+    fail("Can't find bootjar defined by boot_jar_path [#{@boot_jar_path}]") unless File.exist?(@boot_jar_path)
+  end
+  
+  def path
+    @boot_jar_path
+  end
+  
+  def exist?
+    @boot_jar_path
+  end
+end

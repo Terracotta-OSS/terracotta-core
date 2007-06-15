@@ -148,6 +148,9 @@ run_server
 
 MISCELLANEOUS
 
+boot_jar_path=/path/to/your/boot/jar
+   Specify this option if you want to run your test with your own bootjar
+
 create_boot_jar <jvm_type>
     Creates a boot JAR file for <jvm_type>
     <jvm_type> can be '1.4', '1.5', or the fully-qualified path

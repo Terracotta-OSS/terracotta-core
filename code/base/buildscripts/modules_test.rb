@@ -352,17 +352,21 @@ class SubtreeTestRun
         # Build a DSO boot JAR, if necessary.
         boot_jar = nil
         if @needs_dso_boot_jar
-            puts "This subtree requires a DSO boot JAR to run tests. Building one."
-            module_set = @subtree.build_module.module_set
-
-            boot_jar = BootJar.new(@build_results, tests_jvm,
-                @testrun_results.boot_jar_directory(@subtree),
-                module_set, @ant, @platform,
-                @subtree.boot_jar_config_file(@static_resources).to_s)
-            begin
-              boot_jar.ensure_created
-            rescue
-              STDERR.puts("Failed to create bootjar for: " + @test_patterns.join(", ") + " under module " + @subtree.build_module.name)
+            if @config_source['boot_jar_path']
+              loud_message("Using user specified bootjar at #{@config_source['boot_jar_path']}")
+              boot_jar = UserBootJar.new
+            else
+              puts "This subtree requires a DSO boot JAR to run tests. Building one."
+              module_set = @subtree.build_module.module_set
+              boot_jar = BootJar.new(@build_results, tests_jvm,
+                  @testrun_results.boot_jar_directory(@subtree),
+                  module_set, @ant, @platform,
+                  @subtree.boot_jar_config_file(@static_resources).to_s)
+              begin
+                boot_jar.ensure_created
+              rescue
+                STDERR.puts("Failed to create bootjar for: " + @test_patterns.join(", ") + " under module " + @subtree.build_module.name)
+              end
             end
         end
 

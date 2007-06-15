@@ -17,6 +17,18 @@ end
 def assert(message="Assertion Failed")
   raise RuntimeError, message unless yield
 end
+
+# Prints a "loud", very visible message to the console.  This is used for
+# warning messages that, even while the scroll by quickly on the console,
+# should call out for the user's attention.
+def loud_message(message)
+  banner_char = "*"
+  puts(banner_char * 80)
+  puts(banner_char)
+  puts("#{banner_char} #{message}")
+  puts(banner_char)
+  puts(banner_char * 80)
+end
   
 module CallWithVariableArguments
     # A method to call a procedure that may take variable arguments, but

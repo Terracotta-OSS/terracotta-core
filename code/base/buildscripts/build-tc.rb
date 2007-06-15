@@ -699,18 +699,6 @@ END
 
   private
 
-  # Prints a "loud", very visible message to the console.  This is used for
-  # warning messages that, even while the scroll by quickly on the console,
-  # should call out for the user's attention.
-  def loud_message(message)
-    banner_char = "*"
-    puts(banner_char * 80)
-    puts(banner_char)
-    puts("#{banner_char} #{message}")
-    puts(banner_char)
-    puts(banner_char * 80)
-  end
-
   def mark_this_revision_as_good(revision)
     STDERR.puts("Revision #{revision} is good to go.")
     root = File.join(build_archive_dir.to_s, "general-monkey", @build_environment.current_branch)
