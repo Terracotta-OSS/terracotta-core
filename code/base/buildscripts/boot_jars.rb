@@ -147,8 +147,8 @@ end
 ## to use their own bootjar, specified by "boot_jar_path="
 ## on command line
 class UserBootJar
-  def initialize
-    @boot_jar_path = Registry[:config_source]['boot_jar_path']
+  def initialize(path)
+    @boot_jar_path = path
     fail("Can't find bootjar defined by boot_jar_path [#{@boot_jar_path}]") unless File.exist?(@boot_jar_path)
   end
   

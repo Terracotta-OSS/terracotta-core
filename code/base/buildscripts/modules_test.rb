@@ -354,7 +354,7 @@ class SubtreeTestRun
         if @needs_dso_boot_jar
             if @config_source['boot_jar_path']
               loud_message("Using user specified bootjar at #{@config_source['boot_jar_path']}")
-              boot_jar = UserBootJar.new
+              boot_jar = UserBootJar.new(@config_source['boot_jar_path'])
             else
               puts "This subtree requires a DSO boot JAR to run tests. Building one."
               module_set = @subtree.build_module.module_set
