@@ -218,6 +218,42 @@
         </garbage-collection>
       </dso>
     </server>
+    
+    <!-- This section allows you to indicate properties associated 
+       with running your servers in active-passive mode. The properties 
+       apply to all servers defined. You can omit this section, in which 
+       case your servers, running in persistent mode, will run in 
+       disk-based active-passive mode.
+
+       Note: In order to allow for at most 1 <ha> section to be defined 
+             along with multiple <server> sections, they must be defined 
+             in a given order (i.e., multiple <server> section then 
+             0 or 1 <ha> section).
+    -->
+    <ha>
+
+      <!-- This section allows you configure whether servers run in 
+         disk-based active-passive or network-based active-passive mode. 
+         There are two HA mode options: 'disk-based-active-passive' and 
+         'networked-active-passive'. 
+
+         Default: 'disk-based-active-passive'
+      -->
+      <mode>disk-based-active-passive</mode>
+      
+      <!-- This section allows you to declare the election time window, 
+         which is used when servers run in network-based active-passive mode. 
+         An active server is elected from the servers that cast a vote within 
+         this window. The value is specified in seconds. Network latency and 
+         work load of the servers should be taken into consideration when 
+         choosing an appropriate window.
+
+         Default: 5
+      -->
+      <networked-active-passive>
+        <election-time>5</election-time>
+      </networked-active-passive>
+    </ha>
   </servers>
 
   <!-- This section contains settings that affect all clients that connect to the
