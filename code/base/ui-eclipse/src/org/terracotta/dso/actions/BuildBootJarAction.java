@@ -42,7 +42,6 @@ import org.terracotta.dso.ProjectNature;
 import org.terracotta.dso.TcPlugin;
 import org.terracotta.dso.dialogs.ExceptionDialog;
 
-import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
 
 public class BuildBootJarAction extends Action implements IActionDelegate, IWorkbenchWindowActionDelegate,
@@ -140,14 +139,12 @@ public class BuildBootJarAction extends Action implements IActionDelegate, IWork
 
     TcPlugin plugin = TcPlugin.getDefault();
     IFile configFile = plugin.getConfigurationFile(project);
-    IPath configPath = configFile.getLocation();
+    IPath configPath = configFile != null ? configFile.getLocation() : null;
     String bootJarName = BootJarHelper.getHelper().getBootJarName(portablePath);
     IPath outPath = project.getLocation().append(bootJarName);
-    String args = "-o " + toOSString(outPath) + " -f " + toOSString(configPath);
+    String args = "-w -o " + toOSString(outPath);
 
-    if (configFile == null) { throw new RuntimeException("No config file"); }
-
-    if (!configFile.exists()) { throw new FileNotFoundException(toOSString(configPath)); }
+    if(configPath != null) args +=  " -f " + toOSString(configPath);
 
     String origVMArgs = wc.getAttribute(ATTR_VM_ARGUMENTS, "") + " ";
     String vmargs;

@@ -14,9 +14,9 @@ import com.tc.object.walker.MemberValue;
 import com.tc.object.walker.ObjectGraphWalker;
 import com.tc.object.walker.Visitor;
 import com.tc.object.walker.WalkTest;
+import com.tc.util.NonPortableReason;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -24,12 +24,17 @@ import javax.swing.tree.MutableTreeNode;
 
 public class WalkVisitor implements Visitor, WalkTest {
 
-  private static final LiteralValues    literals = new LiteralValues();
+  private static final LiteralValues    literals               = new LiteralValues();
 
   private final ClientObjectManager     objMgr;
   private final DSOClientConfigHelper   config;
   private final NonPortableEventContext context;
   private final DefaultTreeModel        treeModel;
+
+  private static final String           MAX_WALK_DEPTH_PROP    = "org.terracotta.non-portable.max-walk-depth";
+  private static final int              DEFAULT_MAX_WALK_DEPTH = -1;
+  private static final Integer          maxWalkDepth           = Integer.getInteger(MAX_WALK_DEPTH_PROP,
+                                                                                    DEFAULT_MAX_WALK_DEPTH);
 
   public WalkVisitor(ClientObjectManager objMgr, DSOClientConfigHelper config, Object root,
                      NonPortableEventContext context) {
@@ -62,21 +67,18 @@ public class WalkVisitor implements Visitor, WalkTest {
 
   static String getTypeName(Class type) {
     if (type.isArray()) {
-      try {
-        Class cl = type;
-        int dimensions = 0;
-        while (cl.isArray()) {
-          dimensions++;
-          cl = cl.getComponentType();
-        }
-        StringBuffer sb = new StringBuffer();
-        sb.append(cl.getName());
-        for (int i = 0; i < dimensions; i++) {
-          sb.append("[]");
-        }
-        return sb.toString();
-      } catch (Throwable e) {/* FALLTHRU */
+      Class cl = type;
+      int dimensions = 0;
+      while (cl.isArray()) {
+        dimensions++;
+        cl = cl.getComponentType();
       }
+      StringBuffer sb = new StringBuffer();
+      sb.append(cl.getName());
+      for (int i = 0; i < dimensions; i++) {
+        sb.append("[]");
+      }
+      return sb.toString();
     }
     return type.getName();
   }
@@ -87,14 +89,14 @@ public class WalkVisitor implements Visitor, WalkTest {
     StringBuffer sb = new StringBuffer();
     String rep = null;
 
-    if(value.isElement()) {
-      sb.append("["+value.getIndex()+"] ");
+    if (value.isElement()) {
+      sb.append("[" + value.getIndex() + "] ");
     } else if (value.isMapKey()) {
       sb.append("key ");
     } else if (value.isMapValue()) {
       sb.append("value ");
     }
-    
+
     if (field != null) {
       Class type = getType(value);
 
@@ -105,7 +107,7 @@ public class WalkVisitor implements Visitor, WalkTest {
       sb.append(getTypeName(type));
       sb.append(")");
 
-      if (type.isArray() && type.getComponentType() == Character.TYPE) {
+      if (type.isArray() && type.getComponentType() == Character.TYPE && o != null) {
         rep = new String((char[]) o);
       }
     } else {
@@ -126,7 +128,7 @@ public class WalkVisitor implements Visitor, WalkTest {
 
   public void addField(MemberValue value, int depth) {
     Field field = value.getSourceField();
-    MutableTreeNode parent = getParent(depth);
+    DefaultMutableTreeNode parent = (DefaultMutableTreeNode) getParent(depth);
 
     if (field != null && context instanceof NonPortableFieldSetContext) {
       NonPortableFieldSetContext cntx = (NonPortableFieldSetContext) context;
@@ -136,19 +138,20 @@ public class WalkVisitor implements Visitor, WalkTest {
         Object fieldValue = cntx.getFieldValue();
         WalkVisitor wv = new WalkVisitor(objMgr, config, fieldValue, null);
         ObjectGraphWalker walker = new ObjectGraphWalker(fieldValue, wv, wv);
-        //walker.setMaxDepth(1);
+        walker.setMaxDepth(maxWalkDepth.intValue());
         walker.walk();
         DefaultMutableTreeNode node = wv.getRootNode();
         NonPortableObjectState state = (NonPortableObjectState) node.getUserObject();
-        state.setLabel(fieldName);
-        treeModel.insertNodeInto(node, parent, parent.getChildCount());
+        state.setFieldName(fieldName);
+        state.setLabel(createLabel(value));
+        addChild(parent, node);
         return;
       }
     }
 
     NonPortableObjectState objectState = createObjectState(value);
-    MutableTreeNode childNode = new DefaultMutableTreeNode(objectState);
-    treeModel.insertNodeInto(childNode, parent, parent.getChildCount());
+    DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(objectState);
+    addChild(parent, childNode);
   }
 
   private String getFieldName(MemberValue value) {
@@ -164,16 +167,12 @@ public class WalkVisitor implements Visitor, WalkTest {
     Object o = value.getValueObject();
 
     if (o != null) {
-      Class type = o.getClass();
-      return type.isArray() ? type.getComponentType() : type;
-    } else if (field != null) {
-      Class type = field.getType();
-      return type.isArray() ? type.getComponentType() : type;
-    }
+      return o.getClass();
+    } else if (field != null) { return field.getType(); }
 
     return null;
   }
-  
+
   private String getTypeName(MemberValue value) {
     Class type = getType(value);
     return type != null ? type.getName() : null;
@@ -194,30 +193,28 @@ public class WalkVisitor implements Visitor, WalkTest {
                                                                     isPortable, isTransient, neverPortable,
                                                                     isPreInstrumented, isRepeated, isSystemType, isNull);
 
-    if (!isPortable && isSystemType) {
-      ArrayList list = new ArrayList();
-      Class type = getType(value);
-
-      list.add(typeName);
-      while (true) {
-        Class parentType = type.getSuperclass();
-        if (parentType != null && !parentType.equals(Object.class) && !isPreInstrumented(parentType)) {
-          list.add(parentType.getName());
-          type = parentType;
-        } else {
-          break;
-        }
-      }
-      objectState.setRequiredBootTypes((String[]) list.toArray(new String[0]));
+    if (!isPortable) {
+      NonPortableReason reason = config.getPortability().getNonPortableReason(getType(value));
+      objectState.setNonPortableReason(reason);
+      objectState.setExplaination(handleSpecialCases(value));
     }
 
     return objectState;
   }
 
+  private String handleSpecialCases(MemberValue value) {
+    // TODO: create specialized explainations for well-known types, such as java.util.logging.Logger.
+    return null;
+  }
+  
   public void visitMapEntry(int index, int depth) {
-    MutableTreeNode parent = getParent(depth);
+    DefaultMutableTreeNode parent = (DefaultMutableTreeNode) getParent(depth);
     DefaultMutableTreeNode childNode = new DefaultMutableTreeNode("mapEntry [" + index + "]");
-    treeModel.insertNodeInto(childNode, parent, parent.getChildCount());
+    addChild(parent, childNode);
+  }
+
+  private void addChild(DefaultMutableTreeNode parent, DefaultMutableTreeNode child) {
+    parent.add(child);
   }
 
   public void visitRootObject(MemberValue value) {
@@ -230,20 +227,24 @@ public class WalkVisitor implements Visitor, WalkTest {
     }
   }
 
-  private boolean isNeverAdaptable(MemberValue value) {
-    Object o = value.getValueObject();
-    if (o != null) return config.isNeverAdaptable(JavaClassInfo.getClassInfo(o.getClass()));
-    else {
-      Field field = value.getSourceField();
-      if (field != null) { return config.isNeverAdaptable(JavaClassInfo.getClassInfo(field.getType())); }
+  private boolean isNeverAdaptable(Class type) {
+    while (!type.equals(Object.class)) {
+      if (config.isNeverAdaptable(JavaClassInfo.getClassInfo(type))) return true;
+      type = type.getSuperclass();
     }
     return false;
   }
 
+  private boolean isNeverAdaptable(MemberValue value) {
+    Object o = value.getValueObject();
+    if (o != null) return isNeverAdaptable(o.getClass());
+    return false;
+  }
+
   public boolean shouldTraverse(MemberValue value) {
-    if (skipVisit(value) || value.isRepeated() || isNeverAdaptable(value) || isTransient(value)) {
-      return false;
-    }
+    if (skipVisit(value) || value.isRepeated() || isNeverAdaptable(value) || isTransient(value)) { return false; }
+
+    if (!isPortable(value) && isSystemType(value)) return false;
 
     if (context instanceof NonPortableFieldSetContext) {
       NonPortableFieldSetContext cntx = (NonPortableFieldSetContext) context;
@@ -257,7 +258,7 @@ public class WalkVisitor implements Visitor, WalkTest {
     Field field = value.getSourceField();
     if (field != null) {
       Class type = field.getType();
-      if (type.isArray() && type.getComponentType() == Character.TYPE) { return false; }
+      if (type.isArray() && type.getComponentType().isPrimitive()) { return false; }
     }
 
     return !isLiteralInstance(value.getValueObject());
@@ -270,34 +271,22 @@ public class WalkVisitor implements Visitor, WalkTest {
     return config.isTransient(f.getModifiers(), JavaClassInfo.getClassInfo(f.getDeclaringClass()), f.getName());
   }
 
-  private static boolean skipVisit(MemberValue value) {
+  public boolean includeFieldsForType(Class type) {
+    return !config.isLogical(type.getName());
+  }
+  
+  private boolean skipVisit(MemberValue value) {
     Field field = value.getSourceField();
-
     if (field != null) {
-      return (field.getType().getName().startsWith("com.tc.") || field.getName().startsWith("$__tc_"));
-    } else {
-      Object o = value.getValueObject();
-      if (o != null) {
-        Class clas = o.getClass();
-        return (clas.getName().startsWith("com.tc."));
-      }
+      return (field.getType().getName().startsWith("com.tc."));
     }
-    return true;
+    return false;
   }
 
   private boolean isPortable(MemberValue value) {
     Object valueObject = value.getValueObject();
 
     if (valueObject != null) return objMgr.isPortableInstance(valueObject);
-    else {
-      Field field = value.getSourceField();
-      if (field != null) {
-        Class type = field.getType();
-        if(!type.isInterface()) {
-          return objMgr.isPortableClass(type);
-        }
-      }
-    }
     return true;
   }
 
@@ -308,7 +297,7 @@ public class WalkVisitor implements Visitor, WalkTest {
     }
     return false;
   }
-  
+
   private boolean isPreInstrumented(MemberValue value) {
     Object o = value.getValueObject();
 
@@ -316,9 +305,7 @@ public class WalkVisitor implements Visitor, WalkTest {
       return isPreInstrumented(o.getClass());
     } else {
       Field field = value.getSourceField();
-      if(field != null) {
-        return isPreInstrumented(field.getType());
-      }
+      if (field != null) { return isPreInstrumented(field.getType()); }
     }
     return false;
   }
@@ -330,16 +317,13 @@ public class WalkVisitor implements Visitor, WalkTest {
       return (o.getClass().getClassLoader() == null);
     } else {
       Field field = value.getSourceField();
-      if(field != null) return (field.getType().getClassLoader() == null);
+      if (field != null) return (field.getType().getClassLoader() == null);
     }
     return false;
   }
 
   private boolean isLiteralInstance(Object obj) {
     if (obj == null) { return false; }
-    int i = literals.valueFor(obj);
-    return i == LiteralValues.BOOLEAN || i == LiteralValues.BYTE || i == LiteralValues.CHARACTER
-           || i == LiteralValues.DOUBLE || i == LiteralValues.FLOAT || i == LiteralValues.INTEGER
-           || i == LiteralValues.LONG || i == LiteralValues.ENUM || i == LiteralValues.STRING;
+    return literals.isLiteralInstance(obj);
   }
 }

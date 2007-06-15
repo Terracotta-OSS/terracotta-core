@@ -173,8 +173,7 @@ public class BootClassesPanel extends ConfigurationEditorPanel {
     return false;
   }
 
-  private class Layout {
-
+  private static class Layout {
     private static final String BOOT_CLASSES = "Boot Classes";
     private static final String ADD          = "Add...";
     private static final String REMOVE       = "Remove";

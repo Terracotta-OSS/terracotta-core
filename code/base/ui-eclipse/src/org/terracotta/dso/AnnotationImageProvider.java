@@ -19,39 +19,29 @@ import java.net.URL;
  */
 
 public class AnnotationImageProvider implements IAnnotationImageProvider {
-  private ImageRegistry m_imageRegistry;
-  
+  private ImageRegistry         m_imageRegistry;
+
   private static final Object[] DEFAULT_IMAGES = {
-    new String[] {"org.terracotta.dso.adaptedTypeAnnotation",
-                  "/com/tc/admin/icons/installed_ovr.gif"},
-    new String[] {"org.terracotta.dso.adaptedTypeReferenceAnnotation",
-                  "/com/tc/admin/icons/blank.gif"},
-    new String[] {"org.terracotta.dso.bootJarTypeAnnotation",
-                  "/com/tc/admin/icons/blank.gif"},
-    new String[] {"org.terracotta.dso.excludedTypeAnnotation",
-                  "/com/tc/admin/icons/error_obj.gif"},
-    new String[] {"org.terracotta.dso.nameLockedAnnotation",
-                  "/com/tc/admin/icons/namelocked_view.gif"},
-    new String[] {"org.terracotta.dso.autolockedAnnotation",
-                  "/com/tc/admin/icons/autolocked_view.gif"},
-    new String[] {"org.terracotta.dso.rootAnnotation",
-                  "/com/tc/admin/icons/hierarchicalLayout.gif"},
-    new String[] {"org.terracotta.dso.distributedMethodAnnotation",
-                  "/com/tc/admin/icons/jspbrkpt_obj.gif"},
-    new String[] {"org.terracotta.dso.transientFieldAnnotation",
-                  "/com/tc/admin/icons/transient.gif"},
-  };
-  
+    new String[] { "org.terracotta.dso.adaptedTypeAnnotation", "/com/tc/admin/icons/installed_ovr.gif" },
+    new String[] { "org.terracotta.dso.adaptedTypeReferenceAnnotation", "/com/tc/admin/icons/blank.gif" },
+    new String[] { "org.terracotta.dso.bootJarTypeAnnotation", "/com/tc/admin/icons/blank.gif" },
+    new String[] { "org.terracotta.dso.excludedTypeAnnotation", "/com/tc/admin/icons/error_obj.gif" },
+    new String[] { "org.terracotta.dso.nameLockedAnnotation", "/com/tc/admin/icons/namelocked_view.gif" },
+    new String[] { "org.terracotta.dso.autolockedAnnotation", "/com/tc/admin/icons/autolocked_view.gif" },
+    new String[] { "org.terracotta.dso.rootAnnotation", "/com/tc/admin/icons/hierarchicalLayout.gif" },
+    new String[] { "org.terracotta.dso.distributedMethodAnnotation", "/com/tc/admin/icons/jspbrkpt_obj.gif" },
+    new String[] { "org.terracotta.dso.transientFieldAnnotation", "/com/tc/admin/icons/transient.gif" }, };
+
   public AnnotationImageProvider() {
     m_imageRegistry = new ImageRegistry(Display.getDefault());
 
     String[] mapping;
-    for(int i = 0; i < DEFAULT_IMAGES.length; i++) {
-      mapping = (String[])DEFAULT_IMAGES[i];
+    for (int i = 0; i < DEFAULT_IMAGES.length; i++) {
+      mapping = (String[]) DEFAULT_IMAGES[i];
       addDescriptor(mapping[0], mapping[1]);
     }
   }
-  
+
   public Image getManagedImage(Annotation annotation) {
     return null;
   }
@@ -63,18 +53,15 @@ public class AnnotationImageProvider implements IAnnotationImageProvider {
   public ImageDescriptor getImageDescriptor(String id) {
     return m_imageRegistry.getDescriptor(id);
   }
-  
+
   public ImageDescriptor addDescriptor(String id, String uri) {
     ImageDescriptor imageDesc = null;
-    URL             url       = getClass().getResource(uri);
-    
-    if(url != null) {
+    URL url = AnnotationImageProvider.class.getResource(uri);
+
+    if (url != null) {
       m_imageRegistry.put(id, imageDesc = ImageDescriptor.createFromURL(url));
     }
-    else {
-      System.out.println("Unable to load image '"+id+"' from '"+url+"'");
-    }
-    
+
     return imageDesc;
   }
 }

@@ -10,9 +10,9 @@ class PlainNode extends AbstractNode {
 
   private Iterator fieldsIterator;
 
-  protected PlainNode(Object o) {
+  protected PlainNode(Object o, WalkTest walkTest) {
     super(o);
-    this.fieldsIterator = AllFields.getAllFields(o, true).getFields();
+    this.fieldsIterator = AllFields.getAllFields(o, true, walkTest).getFields();
   }
 
   public boolean done() {

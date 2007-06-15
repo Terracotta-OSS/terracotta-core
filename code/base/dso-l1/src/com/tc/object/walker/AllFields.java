@@ -25,6 +25,10 @@ class AllFields {
   }
 
   static AllFields getAllFields(Object o, boolean ignoreTC) {
+    return getAllFields(o, ignoreTC, null);
+  }
+  
+  static AllFields getAllFields(Object o, boolean ignoreTC, WalkTest walkTest) {
     // XXX: cache?
 
     AllFields allFields = new AllFields();
@@ -32,7 +36,7 @@ class AllFields {
     Map fieldNames = new HashMap();
 
     Class c = o.getClass();
-    while (c != OBJECT) {
+    while (c != OBJECT && (walkTest == null || walkTest.includeFieldsForType(c))) {
       Field[] fields = c.getDeclaredFields();
       for (int i = 0; i < fields.length; i++) {
         Field f = fields[i];

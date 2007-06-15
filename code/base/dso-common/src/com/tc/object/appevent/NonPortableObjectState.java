@@ -4,13 +4,20 @@
  */
 package com.tc.object.appevent;
 
+import com.tc.util.NonPortableReason;
+
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class NonPortableObjectState implements Serializable {
-  private String label, fieldName, typeName;
-  boolean        isPortable, isTransient, neverPortable, isPreInstrumented, isRepeated, isSystemType, isNull;
-  String[]       requiredBootTypes;
-  
+  private String   label, fieldName, typeName;
+  private boolean  isPortable, isTransient, neverPortable, isPreInstrumented, isRepeated, isSystemType, isNull;
+  private String   explaination;
+  private NonPortableReason nonPortableReason;
+  private List requiredBootTypes;
+  private List requiredIncludeTypes;
+
   public NonPortableObjectState() {
     this(null, null, null, false, false, false, false, false, false, false);
   }
@@ -30,20 +37,48 @@ public class NonPortableObjectState implements Serializable {
     this.isNull = isNull;
   }
 
+  public void setExplaination(String explaination) {
+    this.explaination = explaination;
+  }
+  
+  public String getExplaination() {
+    return this.explaination;
+  }
+  
+  public void setNonPortableReason(NonPortableReason nonPortableReason) {
+    this.nonPortableReason = nonPortableReason;
+    requiredBootTypes = new ArrayList(nonPortableReason.getErroneousBootJarSuperClasses());
+    if(isRequiredBootJarType()) {
+      requiredBootTypes.add(getTypeName());
+    }
+    requiredIncludeTypes = new ArrayList(nonPortableReason.getErroneousSuperClasses());
+    if(isRequiredIncludeType()) {
+      requiredIncludeTypes.add(getTypeName());
+    }
+  }
+  
+  public NonPortableReason getNonPortableReason() {
+    return this.nonPortableReason;
+  }
+  
   public String getLabel() {
     return this.label;
+  }
+
+  public void setLabel(String label) {
+    this.label = label;
   }
 
   public String getFieldName() {
     return this.fieldName;
   }
 
+  public void setFieldName(String fieldName) {
+    this.fieldName = fieldName;
+  }
+  
   public String getTypeName() {
     return this.typeName;
-  }
-
-  public void setLabel(String label) {
-    this.label = label;
   }
 
   public String toString() {
@@ -69,7 +104,7 @@ public class NonPortableObjectState implements Serializable {
   public boolean isSystemType() {
     return this.isSystemType;
   }
-  
+
   public boolean isRepeated() {
     return this.isRepeated;
   }
@@ -77,13 +112,38 @@ public class NonPortableObjectState implements Serializable {
   public boolean isNull() {
     return this.isNull;
   }
-  
-  public void setRequiredBootTypes(String[] requiredBootTypes) {
-    this.requiredBootTypes = requiredBootTypes;
+
+  public List getRequiredBootTypes() {
+    return requiredBootTypes;
+  }
+
+  public List getRequiredIncludeTypes() {
+    return requiredIncludeTypes;
   }
   
-  public String[] getRequiredBootTypes() {
-    return this.requiredBootTypes;
+  public List getNonPortableBaseTypes() {
+    return nonPortableReason != null ? nonPortableReason.getErroneousSuperClasses() : null;
+  }
+
+  public boolean extendsLogicallyManagedType() {
+    if(nonPortableReason != null) {
+      return nonPortableReason.getReason() == NonPortableReason.SUBCLASS_OF_LOGICALLY_MANAGED_CLASS;
+    }
+    return false;
+  }
+  
+  public boolean isRequiredBootJarType() {
+    if(nonPortableReason != null) {
+      return nonPortableReason.getReason() == NonPortableReason.CLASS_NOT_IN_BOOT_JAR;
+    }
+    return false;
+  }
+
+  public boolean isRequiredIncludeType() {
+    if(nonPortableReason != null) {
+      return nonPortableReason.getReason() == NonPortableReason.CLASS_NOT_INCLUDED_IN_CONFIG;
+    }
+    return false;
   }
   
   public String summary() {

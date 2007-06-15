@@ -106,13 +106,9 @@ import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -169,6 +165,8 @@ public class TcPlugin extends AbstractUIPlugin
 
   public TcPlugin() {
     super();
+    if(m_plugin != null) throw new IllegalStateException("Plugin already instantiated.");
+    m_plugin = this;
     m_configurationEventManager = new ConfigurationEventManager();
   }
 
@@ -235,7 +233,6 @@ public class TcPlugin extends AbstractUIPlugin
   public void start(BundleContext context) throws Exception {
     super.start(context);
 
-    m_plugin = this;
     m_configLoader = new Loader();
 
     // TODO: after we remove 3.1 support, change to FileLocator.resolve
@@ -328,9 +325,6 @@ public class TcPlugin extends AbstractUIPlugin
   }
 
   public static TcPlugin getDefault() {
-    if (m_plugin == null) {
-      new TcPlugin();
-    }
     return m_plugin;
   }
 
@@ -541,26 +535,26 @@ public class TcPlugin extends AbstractUIPlugin
   }
 
   private void clearSerializedFile(IFile file) {
-    File serialFile = getSerializedFile(file);
-
-    if (serialFile.exists()) {
-      serialFile.delete();
-    }
+//    File serialFile = getSerializedFile(file);
+//
+//    if (serialFile.exists()) {
+//      serialFile.delete();
+//    }
   }
 
   /**
    * Remove the serialized form of the config information.
    */
   private void clearSerializedConfigFile(IProject project) {
-    IFile configFile = getConfigurationFile(project);
-
-    if (configFile != null && configFile.exists()) {
-      clearSerializedFile(configFile);
-    }
+//    IFile configFile = getConfigurationFile(project);
+//
+//    if (configFile != null && configFile.exists()) {
+//      clearSerializedFile(configFile);
+//    }
   }
 
   private void moveSerializedFile(IFile fromFile, IFile toFile) {
-    getSerializedFile(fromFile).renameTo(getSerializedFile(toFile));
+//    getSerializedFile(fromFile).renameTo(getSerializedFile(toFile));
   }
 
   /**
@@ -569,36 +563,36 @@ public class TcPlugin extends AbstractUIPlugin
    * project name.
    */
   private boolean testLoadSerializedConfigFile(IProject project) {
-    LineLengths lineLengths;
-    TcConfig config;
-
-    File serialFile = getSerializedConfigFile(project);
-    IFile configFile = getConfigurationFile(project);
-
-    if (serialFile != null && configFile != null && serialFile.exists()
-        && (serialFile.lastModified() > configFile.getLocalTimeStamp())) {
-      ObjectInputStream ois = null;
-
-      try {
-        ois = new ObjectInputStream(new FileInputStream(serialFile));
-        lineLengths = (LineLengths) ois.readObject();
-        config = (TcConfig) ois.readObject();
-
-        ois.close();
-        ois = null;
-
-        setSessionProperty(project, CONFIGURATION_LINE_LENGTHS, lineLengths);
-        setSessionProperty(project, CONFIGURATION, config);
-
-        return true;
-      } catch (Exception e) {
-        clearSerializedConfigFile(project);
-      } finally {
-        if (ois != null) {
-          IOUtils.closeQuietly(ois);
-        }
-      }
-    }
+//    LineLengths lineLengths;
+//    TcConfig config;
+//
+//    File serialFile = getSerializedConfigFile(project);
+//    IFile configFile = getConfigurationFile(project);
+//
+//    if (serialFile != null && configFile != null && serialFile.exists()
+//        && (serialFile.lastModified() > configFile.getLocalTimeStamp())) {
+//      ObjectInputStream ois = null;
+//
+//      try {
+//        ois = new ObjectInputStream(new FileInputStream(serialFile));
+//        lineLengths = (LineLengths) ois.readObject();
+//        config = (TcConfig) ois.readObject();
+//
+//        ois.close();
+//        ois = null;
+//
+//        setSessionProperty(project, CONFIGURATION_LINE_LENGTHS, lineLengths);
+//        setSessionProperty(project, CONFIGURATION, config);
+//
+//        return true;
+//      } catch (Exception e) {
+//        clearSerializedConfigFile(project);
+//      } finally {
+//        if (ois != null) {
+//          IOUtils.closeQuietly(ois);
+//        }
+//      }
+//    }
 
     return false;
   }
@@ -607,24 +601,24 @@ public class TcPlugin extends AbstractUIPlugin
    * Serialize out the config information to the plugin's private work area.
    */
   private void writeSerializedConfigFile(IProject project, LineLengths lineLengths, TcConfig config) {
-    File file = getSerializedConfigFile(project);
-    ObjectOutputStream oos = null;
-
-    try {
-      oos = new ObjectOutputStream(new FileOutputStream(file));
-
-      oos.writeObject(lineLengths);
-      oos.writeObject(config);
-
-      oos.close();
-      oos = null;
-    } catch (Exception e) {
-      clearSerializedConfigFile(project);
-    } finally {
-      if (oos != null) {
-        IOUtils.closeQuietly(oos);
-      }
-    }
+//    File file = getSerializedConfigFile(project);
+//    ObjectOutputStream oos = null;
+//
+//    try {
+//      oos = new ObjectOutputStream(new FileOutputStream(file));
+//
+//      oos.writeObject(lineLengths);
+//      oos.writeObject(config);
+//
+//      oos.close();
+//      oos = null;
+//    } catch (Exception e) {
+//      clearSerializedConfigFile(project);
+//    } finally {
+//      if (oos != null) {
+//        IOUtils.closeQuietly(oos);
+//      }
+//    }
   }
 
   /**
@@ -921,8 +915,8 @@ public class TcPlugin extends AbstractUIPlugin
         MarkerUtilities.setCharStart(map, start);
         MarkerUtilities.setCharEnd(map, end);
 
-        map.put(IMarker.PRIORITY, new Integer(IMarker.PRIORITY_HIGH));
-        map.put(IMarker.SEVERITY, new Integer(severity));
+        map.put(IMarker.PRIORITY, Integer.valueOf(IMarker.PRIORITY_HIGH));
+        map.put(IMarker.SEVERITY, Integer.valueOf(severity));
         map.put(IMarker.LOCATION, "line " + line);
 
         MarkerUtilities.createMarker(configFile, map, "org.terracotta.dso.SAXMarker");
@@ -1170,11 +1164,6 @@ public class TcPlugin extends AbstractUIPlugin
     file = project.getFile(new Path(path));
     setSessionProperty(project, CONFIGURATION_FILE, file);
     setSessionProperty(file, ACTIVE_CONFIGURATION_FILE, "true");
-
-    ConfigurationEditor configEditor = getConfigurationEditor(project);
-    if (false && configEditor != null) {
-      configEditor.newInputFile(file);
-    }
   }
 
   public String getConfigurationFilePath(IProject project) {
@@ -1271,7 +1260,7 @@ public class TcPlugin extends AbstractUIPlugin
     Display.getDefault().asyncExec(updater);
   }
 
-  class DecoratorUpdateAction implements Runnable {
+  static class DecoratorUpdateAction implements Runnable {
     IDecoratorManager m_decoratorManager;
     String[]          m_decorators;
 

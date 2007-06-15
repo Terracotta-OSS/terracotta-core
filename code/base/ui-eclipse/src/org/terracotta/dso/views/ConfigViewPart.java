@@ -81,7 +81,6 @@ public class ConfigViewPart extends ViewPart
   public static final String ID_CONFIG_VIEW_PART = "org.terracotta.dso.ui.views.configView";
   private static TcPlugin fPlugin = TcPlugin.getDefault();
   ConfigViewer fConfigViewer;
-  TcConfig fConfig;
   ConfigRefreshAction fRefreshAction;
   DeleteAction fDeleteAction;
   IncludeActionGroup fIncludeActionGroup;
@@ -178,7 +177,7 @@ public class ConfigViewPart extends ViewPart
         setTitleToolTip(configPath);
         setContentDescription(configPath);
 
-        fConfigViewer.setConfig(fConfig = config);
+        fConfigViewer.setConfig(config);
         fRefreshAction.setEnabled(config != null);
         fDeleteAction.setEnabled(config != null && fDeleteAction.canActionBeAdded());
       }
@@ -637,7 +636,7 @@ public class ConfigViewPart extends ViewPart
     return StructuredSelection.EMPTY;
   }
   
-  private class ConfigSelectionProvider extends SelectionProviderMediator {
+  private static class ConfigSelectionProvider extends SelectionProviderMediator {
     public ConfigSelectionProvider(StructuredViewer[] viewers) {
       super(viewers, null);
     }

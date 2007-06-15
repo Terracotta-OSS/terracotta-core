@@ -29,6 +29,7 @@ public class PortabilityImpl implements Portability {
     nonInstrumentedClass.add("java.lang.Number");
     nonInstrumentedClass.add("java.util.AbstractList");
     nonInstrumentedClass.add("java.util.AbstractCollection");
+    nonInstrumentedClass.add("java.util.AbstractQueue");
     nonInstrumentedClass.add("java.lang.Enum");
     nonInstrumentedClass.add("java.lang.reflect.AccessibleObject");
     nonInstrumentedClass.add("java.util.concurrent.atomic.AtomicInteger");
@@ -72,28 +73,7 @@ public class PortabilityImpl implements Portability {
       }
     }
 
-    // Now check if it is a subclass of logically managed class
-    for (Iterator i = classes.iterator(); i.hasNext();) {
-      Class class2Inspect = (Class) i.next();
-
-      if (class2Inspect == topLevelClass) {
-        continue;
-      }
-
-      // if a parent class simply wasn't included, don't report this a logical subclass issue until it really is
-      if (!config.shouldBeAdapted(JavaClassInfo.getClassInfo(class2Inspect))) {
-        break;
-      }
-
-      if (config.isLogical(class2Inspect.getName())) {
-        NonPortableReason reason = new NonPortableReason(topLevelClass,
-                                                         NonPortableReason.SUBCLASS_OF_LOGICALLY_MANAGED_CLASS);
-        reason.addErroneousSuperClass(class2Inspect);
-        return reason;
-      }
-    }
-
-    // Finally check for the set of types that weren't instrumented
+    // check for the set of types that weren't instrumented
     byte reasonCode = NonPortableReason.UNDEFINED;
     List uninstrumentedSupers = new ArrayList();
     for (Iterator i = classes.iterator(); i.hasNext();) {
@@ -108,25 +88,41 @@ public class PortabilityImpl implements Portability {
           }
         }
       } else {
-        if (reasonCode == NonPortableReason.UNDEFINED) {
-          reasonCode = NonPortableReason.SUPER_CLASS_NOT_INSTRUMENTED;
-        }
         if (!isPortableClass(class2Inspect)) {
+          if (reasonCode == NonPortableReason.UNDEFINED) {
+            reasonCode = NonPortableReason.SUPER_CLASS_NOT_INSTRUMENTED;
+          }
           uninstrumentedSupers.add(class2Inspect);
         }
       }
     }
 
-    if (reasonCode == NonPortableReason.UNDEFINED) {
-      // this indicates an error in our code
-      throw new AssertionError("Could not determine non-portable reason for type hierarchy: " + classes);
+    if(uninstrumentedSupers.size() > 0 || reasonCode == NonPortableReason.CLASS_NOT_IN_BOOT_JAR) {
+      NonPortableReason reason = new NonPortableReason(topLevelClass, reasonCode);
+      for (Iterator i = uninstrumentedSupers.iterator(); i.hasNext();) {
+        reason.addErroneousSuperClass((Class) i.next());
+      }
+      return reason;
+    }
+    
+    // Now check if it is a subclass of logically managed class
+    for (Iterator i = classes.iterator(); i.hasNext();) {
+      Class class2Inspect = (Class) i.next();
+
+      // if a parent class simply wasn't included, don't report this a logical subclass issue until it really is
+      if (!config.shouldBeAdapted(JavaClassInfo.getClassInfo(class2Inspect))) {
+        break;
+      }
+
+      if (config.isLogical(class2Inspect.getName())) {
+        NonPortableReason reason = new NonPortableReason(topLevelClass,
+                                                         NonPortableReason.SUBCLASS_OF_LOGICALLY_MANAGED_CLASS);
+        reason.addErroneousSuperClass(class2Inspect);
+        return reason;
+      }
     }
 
-    NonPortableReason reason = new NonPortableReason(topLevelClass, reasonCode);
-    for (Iterator i = uninstrumentedSupers.iterator(); i.hasNext();) {
-      reason.addErroneousSuperClass((Class) i.next());
-    }
-    return reason;
+    return new NonPortableReason(topLevelClass, reasonCode);
   }
 
   /*

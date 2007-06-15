@@ -194,7 +194,7 @@ public class ModulesPanel extends ConfigurationEditorPanel
     m_layout.m_removeModule.setEnabled(m_layout.m_moduleTable.getSelectionCount() > 0);
   }
 
-  private class Layout {
+  private static class Layout {
     private static final String MODULE_REPOSITORIES      = "Module Repositories";
     private static final String MODULES                  = "Modules";
     private static final String LOCATION                 = "Location";

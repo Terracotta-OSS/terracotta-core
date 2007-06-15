@@ -6,6 +6,8 @@ package com.tc.admin.common;
 
 import com.tc.object.appevent.NonPortableObjectState;
 
+import java.util.List;
+
 public class NonPortableWorkState {
   private NonPortableObjectState        fObjectState;
   private NonPortableResolutionAction[] fResolutionActions;
@@ -40,6 +42,14 @@ public class NonPortableWorkState {
     return fObjectState.isNeverPortable();
   }
 
+  public boolean extendsLogicallyManagedType() {
+    return fObjectState.extendsLogicallyManagedType();
+  }
+
+  public boolean isRequiredBootJarType() {
+    return fObjectState.isRequiredBootJarType();
+  }
+  
   public boolean isPreInstrumented() {
     return fObjectState.isPreInstrumented();
   }
@@ -68,10 +78,33 @@ public class NonPortableWorkState {
     return fObjectState.getFieldName();
   }
 
-  public String[] getRequiredBootTypes() {
+  public boolean hasRequiredBootTypes() {
+    List requiredBootTypes = getRequiredBootTypes();
+    return requiredBootTypes != null && requiredBootTypes.size() > 0;
+  }
+
+  public List getRequiredBootTypes() {
     return fObjectState.getRequiredBootTypes();
   }
 
+  public boolean hasNonPortableBaseTypes() {
+    List nonPortableBaseTypes = getNonPortableBaseTypes();
+    return nonPortableBaseTypes != null && nonPortableBaseTypes.size() > 0;
+  }
+
+  public List getNonPortableBaseTypes() {
+    return fObjectState.getNonPortableBaseTypes();
+  }
+
+  public boolean hasRequiredIncludeTypes() {
+    List requiredIncludeTypes = getRequiredIncludeTypes();
+    return requiredIncludeTypes != null && requiredIncludeTypes.size() > 0;
+  }
+  
+  public List getRequiredIncludeTypes() {
+    return fObjectState.getRequiredIncludeTypes();
+  }
+  
   public String summary() {
     return fObjectState.summary();
   }
@@ -89,6 +122,10 @@ public class NonPortableWorkState {
 
   public String getLabel() {
     return fObjectState.getLabel();
+  }
+
+  public String getExplaination() {
+    return fObjectState.getExplaination();
   }
 
   private static final String PRE_INSTRUMENTED_PREAMBLE                  = NonPortableMessages
@@ -119,45 +156,76 @@ public class NonPortableWorkState {
                                                                              .getString("PORTABLE_FIELD_MSG");                        //$NON-NLS-1$
   private static final String PORTABLE_LOGICAL_CHILD_MSG                 = NonPortableMessages
                                                                              .getString("PORTABLE_LOGICAL_CHILD_MSG");                //$NON-NLS-1$
+  private static final String NON_PORTABLE_BASE_TYPE_MSG                 = NonPortableMessages
+                                                                             .getString("NON_PORTABLE_BASE_TYPE_MSG");                //$NON-NLS-1$
+  private static final String REQUIRED_BOOT_JAR_TYPE_MSG                 = NonPortableMessages
+                                                                             .getString("REQUIRED_BOOT_JAR_TYPE_MSG");                //$NON-NLS-1$
+  private static final String EXTENDS_LOGICALLY_MANAGED_TYPE_MSG         = NonPortableMessages
+                                                                             .getString("EXTENDS_LOGICALLY_MANAGED_TYPE_MSG");        //$NON-NLS-1$
+  private static final String WHITESPACE                                 = "\n\n";
+
+  private static void append(StringBuffer sb, String[] strings) {
+    if (strings != null) {
+      for (int i = 0; i < strings.length; i++) {
+        sb.append(strings[i]);
+      }
+    }
+  }
 
   public String descriptionFor() {
+    String explaination = getExplaination();
+    if (explaination != null) { return explaination; }
+
+    StringBuffer sb = new StringBuffer();
     if (isTransient()) {
-      return NonPortableMessages.getString("TRANSIENT_FIELD_MSG"); //$NON-NLS-1$
+      sb.append(NonPortableMessages.getString("TRANSIENT_FIELD_MSG")); //$NON-NLS-1$
     } else if (isPreInstrumented()) {
       if (getFieldName() != null) {
-        return PRE_INSTRUMENTED_PREAMBLE + "\n\n" + PORTABLE_FIELD_MSG; //$NON-NLS-1$
+        append(sb, new String[] { PRE_INSTRUMENTED_PREAMBLE, WHITESPACE, PORTABLE_FIELD_MSG }); //$NON-NLS-1$
       } else {
-        return PRE_INSTRUMENTED_PREAMBLE + "\n\n" + PORTABLE_LOGICAL_CHILD_MSG; //$NON-NLS-1$
+        append(sb, new String[] { PRE_INSTRUMENTED_PREAMBLE, WHITESPACE, PORTABLE_LOGICAL_CHILD_MSG }); //$NON-NLS-1$
       }
     } else if (isNeverPortable()) {
       if (getFieldName() != null) {
-        return NEVER_PORTABLE_PREAMBLE + "\n\n" + NEVER_PORTABLE_FIELD_MSG + "\n\n" + CONSIDER_TRANSIENT_ANCESTOR; //$NON-NLS-1$ //$NON-NLS-2$
+        append(sb, new String[] { NEVER_PORTABLE_PREAMBLE, WHITESPACE, NEVER_PORTABLE_FIELD_MSG, WHITESPACE,
+            CONSIDER_TRANSIENT_ANCESTOR }); //$NON-NLS-1$ //$NON-NLS-2$
       } else {
-        return NEVER_PORTABLE_PREAMBLE
-               + "\n\n" + NEVER_PORTABLE_LOGICAL_CHILD_MSG + "\n\n" + CONSIDER_TRANSIENT_ANCESTOR; //$NON-NLS-1$ //$NON-NLS-2$
+        append(sb, new String[] { NEVER_PORTABLE_PREAMBLE, WHITESPACE, NEVER_PORTABLE_LOGICAL_CHILD_MSG, WHITESPACE,
+            CONSIDER_TRANSIENT_ANCESTOR }); //$NON-NLS-1$ //$NON-NLS-2$
       }
     } else if (!isPortable()) {
+      String reason = "";
+
+      if (hasNonPortableBaseTypes()) reason = " " + NON_PORTABLE_BASE_TYPE_MSG;
+      if (hasRequiredBootTypes()) reason += " " + REQUIRED_BOOT_JAR_TYPE_MSG;
+
       if (isSystemType()) {
         if (getFieldName() != null) {
-          return NOT_PORTABLE_SYSTEM_TYPE_PREAMBLE
-                 + "\n\n" + NOT_PORTABLE_SYSTEM_TYPE_FIELD_MSG + "\n\n" + CONSIDER_TRANSIENT_ANCESTOR; //$NON-NLS-1$ //$NON-NLS-2$
+          append(sb, new String[] { NOT_PORTABLE_SYSTEM_TYPE_PREAMBLE, reason, WHITESPACE,
+              NOT_PORTABLE_SYSTEM_TYPE_FIELD_MSG, WHITESPACE, CONSIDER_TRANSIENT_ANCESTOR }); //$NON-NLS-1$ //$NON-NLS-2$
         } else {
-          return NOT_PORTABLE_SYSTEM_TYPE_PREAMBLE
-                 + "\n\n" + NOT_PORTABLE_SYSTEM_TYPE_LOGICAL_CHILD_MSG + "\n\n" + CONSIDER_TRANSIENT_ANCESTOR; //$NON-NLS-1$ //$NON-NLS-2$
+          append(sb, new String[] { NOT_PORTABLE_SYSTEM_TYPE_PREAMBLE, reason, WHITESPACE,
+              NOT_PORTABLE_SYSTEM_TYPE_LOGICAL_CHILD_MSG, WHITESPACE, CONSIDER_TRANSIENT_ANCESTOR }); //$NON-NLS-1$ //$NON-NLS-2$
         }
+      } else if(extendsLogicallyManagedType()) {
+        append(sb, new String[] { EXTENDS_LOGICALLY_MANAGED_TYPE_MSG });
       } else {
         if (getFieldName() != null) {
-          return NOT_PORTABLE_PREAMBLE + "\n\n" + NOT_PORTABLE_FIELD_MSG + "\n\n" + CONSIDER_TRANSIENT_ANCESTOR; //$NON-NLS-1$ //$NON-NLS-2$
+          append(sb, new String[] { NOT_PORTABLE_PREAMBLE, reason, WHITESPACE, NOT_PORTABLE_FIELD_MSG, WHITESPACE,
+              CONSIDER_TRANSIENT_ANCESTOR }); //$NON-NLS-1$ //$NON-NLS-2$
         } else {
-          return NOT_PORTABLE_PREAMBLE + "\n\n" + NOT_PORTABLE_LOGICAL_CHILD_MSG + "\n\n" + CONSIDER_TRANSIENT_ANCESTOR; //$NON-NLS-1$ //$NON-NLS-2$
+          append(sb, new String[] { NOT_PORTABLE_PREAMBLE, reason, WHITESPACE, NOT_PORTABLE_LOGICAL_CHILD_MSG,
+              WHITESPACE, CONSIDER_TRANSIENT_ANCESTOR }); //$NON-NLS-1$ //$NON-NLS-2$
         }
       }
     } else {
       if (getFieldName() != null) {
-        return PORTABLE_PREAMBLE + "\n\n" + PORTABLE_FIELD_MSG; //$NON-NLS-1$
+        append(sb, new String[] { PORTABLE_PREAMBLE, WHITESPACE, PORTABLE_FIELD_MSG }); //$NON-NLS-1$
       } else {
-        return PORTABLE_PREAMBLE + "\n\n" + PORTABLE_LOGICAL_CHILD_MSG; //$NON-NLS-1$
+        append(sb, new String[] { PORTABLE_PREAMBLE, WHITESPACE, PORTABLE_LOGICAL_CHILD_MSG }); //$NON-NLS-1$
       }
     }
+
+    return sb.toString();
   }
 }

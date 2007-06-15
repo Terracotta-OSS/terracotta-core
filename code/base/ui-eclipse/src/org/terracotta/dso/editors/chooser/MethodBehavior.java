@@ -11,6 +11,7 @@ import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.ui.packageview.ClassPathContainer;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
@@ -45,10 +46,15 @@ public final class MethodBehavior implements NavigatorBehavior {
   public ViewerFilter getFilter(final IJavaProject javaProject) {
     return new ViewerFilter() {
       public boolean select(Viewer viewer, Object parentElement, Object element) {
-        if (element instanceof IJavaProject && element.equals(javaProject)) return true;
-        if (element instanceof ClassPathContainer || element instanceof IPackageFragment
-            || element instanceof ICompilationUnit || element instanceof IType
+        if (element instanceof IJavaProject) return true;
+        if (element instanceof ClassPathContainer || element instanceof ICompilationUnit || element instanceof IType
             || element instanceof IPackageFragmentRoot || element instanceof IClassFile || element instanceof IMethod) { return true; }
+        if (element instanceof IPackageFragment) {
+          try {
+            return ((IPackageFragment) element).containsJavaResources();
+          } catch (JavaModelException jme) {/**/
+          }
+        }
         return false;
       }
     };

@@ -119,10 +119,38 @@ public class ConfigurationHelper {
   }
 
   public boolean isAdaptable(IType type) {
-    if (type != null) { return m_plugin.isBootClass(type) || isAdaptable(PatternHelper.getFullyQualifiedName(type)); }
+    if (type != null) { return m_plugin.isBootClass(type) || isTypeAdaptable(type); }
     return false;
   }
 
+  public boolean isTypeAdaptable(IType type) {
+    TcConfig config = getConfig();
+
+    if (config != null) {
+      InstrumentedClasses classes = getInstrumentedClasses();
+
+      if (classes != null) {
+        XmlObject[] objects = classes.selectPath("*");
+
+        if (objects != null && objects.length > 0) {
+          for (int i = objects.length - 1; i >= 0; i--) {
+            XmlObject object = objects[i];
+
+            if (object instanceof Include) {
+              String expr = ((Include) object).getClassExpression();
+              if (m_patternHelper.matchesType(expr, type)) { return true; }
+            } else if (object instanceof ClassExpression) {
+              String expr = ((ClassExpression) object).getStringValue();
+              if (m_patternHelper.matchesType(expr, type)) { return false; }
+            }
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+  
   public boolean isAdaptable(IPackageDeclaration packageDecl) {
     TcConfig config = getConfig();
 
@@ -338,6 +366,11 @@ public class ConfigurationHelper {
   }
 
   public void ensureAdaptable(IType type, MultiChangeSignaller signaller) {
+    if(isInterface(type)) {
+      internalEnsureAdaptable(type, signaller);
+      return;
+    }
+    
     while (type != null) {
       if (!isInterface(type)) {
         if (!isAdaptable(type)) {
@@ -389,7 +422,8 @@ public class ConfigurationHelper {
   }
 
   public void internalEnsureAdaptable(IType type, MultiChangeSignaller signaller) {
-    internalEnsureAdaptable(PatternHelper.getFullyQualifiedName(type), signaller);
+    String postscript = isInterface(type) ? "+" : "";
+    internalEnsureAdaptable(PatternHelper.getFullyQualifiedName(type)+postscript, signaller);
 
     if (!isBootJarClass(type)) {
       int filter = IJavaSearchScope.SYSTEM_LIBRARIES;
@@ -2964,7 +2998,7 @@ public class ConfigurationHelper {
 
   public void validateAll() {
     if (getConfig() != null) {
-      validateLocks();
+      //validateLocks();
       validateRoots();
       validateTransientFields();
       validateInstrumentedClasses();
@@ -3136,7 +3170,7 @@ public class ConfigurationHelper {
     if (expr != null && (expr.indexOf('*') != -1 || expr.indexOf('+') != -1)) { return; }
 
     try {
-      if (JdtUtils.findType(m_javaProject, expr) != null) { return; }
+      if (expr != null && JdtUtils.findType(m_javaProject, expr) != null) { return; }
     } catch (JavaModelException jme) {/**/
     }
 
@@ -3468,7 +3502,7 @@ public class ConfigurationHelper {
     }
 
     try {
-      if (JdtUtils.findType(m_javaProject, expr) == null) {
+      if (expr != null && JdtUtils.findType(m_javaProject, expr) == null) {
         msg = "Cannot resolve type '" + expr + "'";
       }
     } catch (JavaModelException jme) {
@@ -3520,8 +3554,8 @@ public class ConfigurationHelper {
         MarkerUtilities.setCharStart(map, start);
         MarkerUtilities.setCharEnd(map, end);
 
-        map.put(IMarker.PRIORITY, new Integer(IMarker.PRIORITY_HIGH));
-        map.put(IMarker.SEVERITY, new Integer(IMarker.SEVERITY_WARNING));
+        map.put(IMarker.PRIORITY, Integer.valueOf(IMarker.PRIORITY_HIGH));
+        map.put(IMarker.SEVERITY, Integer.valueOf(IMarker.SEVERITY_WARNING));
         map.put(IMarker.LOCATION, "line " + line);
 
         IFile configFile = plugin.getConfigurationFile(m_project);

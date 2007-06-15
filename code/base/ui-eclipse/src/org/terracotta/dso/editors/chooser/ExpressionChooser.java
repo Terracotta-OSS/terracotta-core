@@ -130,8 +130,7 @@ public class ExpressionChooser extends MessageDialog {
 
   // --------------------------------------------------------------------------------
 
-  private class Layout {
-
+  private static class Layout {
     final Text   m_selectField;
     final Button m_exploreButton;
     final List   m_list;
@@ -140,11 +139,8 @@ public class ExpressionChooser extends MessageDialog {
     private Layout(Composite parent) {
       Composite comp = new Composite(parent, SWT.NONE);
 
-      GridLayout gridLayout = new GridLayout();
-      gridLayout.numColumns = 2;
-      gridLayout.marginWidth = 0;
-      gridLayout.marginHeight = 0;
-      gridLayout.makeColumnsEqualWidth = false;
+      GridLayout gridLayout = new GridLayout(2, false);
+      gridLayout.marginWidth = gridLayout.marginHeight = 0;
       comp.setLayout(gridLayout);
       comp.setLayoutData(new GridData(GridData.FILL_BOTH));
 

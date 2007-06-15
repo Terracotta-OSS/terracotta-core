@@ -74,8 +74,6 @@ public class ConfigurationEditor extends MultiPageEditorPart
   private ElementStateListener     m_elementStateListener;
   private TextInputListener        m_textInputListener;
   private Runnable                 m_parseTimer;
-  private boolean                  m_isXmlEditorVisible       = true;
-  private int                      m_currentPage              = -1;
   private Display                  m_display;
   private IConfigurationListener   m_configAdapter;
   
@@ -88,61 +86,102 @@ public class ConfigurationEditor extends MultiPageEditorPart
     m_parseTimer = new ParseTimer();
     m_display = Display.getDefault();
     m_configAdapter = new ConfigAdapter();
-    
-    TcPlugin.getDefault().addConfigurationListener(m_configAdapter);
   }
 
+  protected void pageChange(final int newPageIndex) {
+    if (newPageIndex != 0) {
+      if (m_project != null && m_project.isOpen()) {
+        TcPlugin plugin = TcPlugin.getDefault();
+        TcConfig config = plugin.getConfiguration(m_project);
+
+        if (config == TcPlugin.BAD_CONFIG) {
+          Display.getDefault().syncExec(new Runnable() {
+            public void run() {
+              getControl(newPageIndex).setVisible(false);
+
+              Shell shell = Display.getDefault().getActiveShell();
+              String title = "Terracotta Config Editor";
+              String msg = "The source page has errors. The other pages cannot be\nused until these errors are resolved.";
+
+              MessageDialog.openWarning(shell, title, msg);
+            }
+          });
+          setActivePage(0);
+          return;
+        }
+      }
+    }
+    super.pageChange(newPageIndex);
+  }
+  
   class ConfigAdapter implements IConfigurationListener {
+    private void update(boolean initPanels) {
+      syncXmlDocument();
+      if(initPanels) {
+        initPanels();
+      }
+      internalSetDirty(Boolean.TRUE);
+    }
+    
+    private void handleUpdate(final boolean updatePanels) {
+      if(Display.getCurrent() != null) {
+        update(updatePanels);
+        return;
+      }
+      asyncExec(new Runnable() {
+        public void run() {
+          update(updatePanels);
+        }
+      });
+    }
+    
     public void configurationChanged(IProject project) {
       if(TcPlugin.getDefault().hasTerracottaNature(project)) {
         if(m_project != null && m_project.equals(project)) {
-          syncXmlDocument();
-          internalSetDirty(Boolean.TRUE);
-          initPanels();
+          handleUpdate(true);
         }
       }
     }
     
-    private void handleChange(IProject project) {
+    private void handleChange(IProject project, boolean updatePanels) {
       if(TcPlugin.getDefault().hasTerracottaNature(project)) {
         if(m_project != null && m_project.equals(project)) {
-          syncXmlDocument();
-          internalSetDirty(Boolean.TRUE);
+          handleUpdate(updatePanels);
         }
       }
     }
     
-    public void serverChanged(IProject project, int index) {handleChange(project);}
-    public void serversChanged(IProject project) {handleChange(project);}
+    public void serverChanged(IProject project, int index) {handleChange(project, false);}
+    public void serversChanged(IProject project) {handleChange(project, true);}
       
-    public void rootChanged(IProject project, int index) {handleChange(project);}
-    public void rootsChanged(IProject project) {handleChange(project);}
+    public void rootChanged(IProject project, int index) {handleChange(project, false);}
+    public void rootsChanged(IProject project) {handleChange(project, true);}
 
-    public void distributedMethodsChanged(IProject project) {handleChange(project);}
-    public void distributedMethodChanged(IProject project, int index) {handleChange(project);}
+    public void distributedMethodsChanged(IProject project) {handleChange(project, true);}
+    public void distributedMethodChanged(IProject project, int index) {handleChange(project, false);}
 
-    public void bootClassesChanged(IProject project) {handleChange(project);}
-    public void bootClassChanged(IProject project, int index) {handleChange(project);}
+    public void bootClassesChanged(IProject project) {handleChange(project, true);}
+    public void bootClassChanged(IProject project, int index) {handleChange(project, false);}
 
-    public void transientFieldsChanged(IProject project) {handleChange(project);}
-    public void transientFieldChanged(IProject project, int index) {handleChange(project);}
+    public void transientFieldsChanged(IProject project) {handleChange(project, true);}
+    public void transientFieldChanged(IProject project, int index) {handleChange(project, false);}
 
-    public void autolockChanged(IProject project, int index) {handleChange(project);}
-    public void autolocksChanged(IProject project) {handleChange(project);}
-    public void namedLockChanged(IProject project, int index) {handleChange(project);}
-    public void namedLocksChanged(IProject project) {handleChange(project);}
+    public void autolockChanged(IProject project, int index) {handleChange(project, false);}
+    public void autolocksChanged(IProject project) {handleChange(project, true);}
+    public void namedLockChanged(IProject project, int index) {handleChange(project, false);}
+    public void namedLocksChanged(IProject project) {handleChange(project, true);}
       
-    public void includeRuleChanged(IProject project, int index) {handleChange(project);}
-    public void includeRulesChanged(IProject project) {handleChange(project);}
-    public void excludeRuleChanged(IProject project, int index) {handleChange(project);}
-    public void excludeRulesChanged(IProject project) {handleChange(project);}
-    public void instrumentationRulesChanged(IProject project) {handleChange(project);}
+    public void includeRuleChanged(IProject project, int index) {handleChange(project, false);}
+    public void includeRulesChanged(IProject project) {handleChange(project, true);}
+    public void excludeRuleChanged(IProject project, int index) {handleChange(project, false);}
+    public void excludeRulesChanged(IProject project) {handleChange(project, true);}
+    public void instrumentationRulesChanged(IProject project) {handleChange(project, true);}
 
-    public void clientChanged(IProject project) {handleChange(project);}
-    public void moduleReposChanged(IProject project) {handleChange(project);}
-    public void moduleRepoChanged(IProject project, int index) {handleChange(project);}
-    public void moduleChanged(IProject project, int index) {handleChange(project);}
-    public void modulesChanged(IProject project) {handleChange(project);}
+    public void clientChanged(IProject project) {handleChange(project, false);}
+    public void moduleReposChanged(IProject project) {handleChange(project, true);}
+    public void moduleRepoChanged(IProject project, int index) {handleChange(project, false);}
+    public void moduleChanged(IProject project, int index) {handleChange(project, false);}
+    public void modulesChanged(IProject project) {handleChange(project, true);}
   }
   
   private void setTimer(boolean start) {
@@ -152,7 +191,7 @@ public class ConfigurationEditor extends MultiPageEditorPart
 
   private class ParseTimer implements Runnable {
     public void run() {
-      if (m_isXmlEditorVisible) syncXmlModel();
+      if (getActivePage() == XML_EDITOR_PAGE_INDEX) syncXmlModel();
     }
   }
 
@@ -229,6 +268,7 @@ public class ConfigurationEditor extends MultiPageEditorPart
       ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
     }
     initPanels();
+    TcPlugin.getDefault().addConfigurationListener(m_configAdapter);
   }
 
   public void structureChanged(XmlObjectStructureChangeEvent e) {
@@ -426,12 +466,6 @@ public class ConfigurationEditor extends MultiPageEditorPart
     return true;
   }
 
-  protected void pageChange(int newPageIndex) {
-    super.pageChange(newPageIndex);
-    m_currentPage = newPageIndex;
-    m_isXmlEditorVisible = (m_currentPage == XML_EDITOR_PAGE_INDEX);
-  }
-
   public void initPanels() {
     if (m_project != null && m_project.isOpen()) {
       m_dsoAppPanel.setup(m_project);
@@ -478,7 +512,7 @@ public class ConfigurationEditor extends MultiPageEditorPart
         IDocument doc = m_xmlEditor.getDocument();
         XmlOptions opts = plugin.getXmlOptions();
         TcConfig config = plugin.getConfiguration(m_project);
-        if (config != null) {
+        if (config != null && config != TcPlugin.BAD_CONFIG) {
           TcConfigDocument configDoc = TcConfigDocument.Factory.newInstance();
           configDoc.setTcConfig(config);
           doc.removeDocumentListener(m_docListener);

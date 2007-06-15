@@ -158,8 +158,7 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel {
     }
   }
 
-  private class Layout {
-
+  private static class Layout {
     private static final String DISTRIBUTED_METHODS = "Distributed Methods";
     private static final String ADD                 = "Add...";
     private static final String REMOVE              = "Remove";

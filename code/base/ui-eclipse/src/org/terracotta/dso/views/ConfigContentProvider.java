@@ -12,7 +12,6 @@ import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 public class ConfigContentProvider implements ITreeContentProvider {
-  ConfigViewPart fPart;
   RootsWrapper rootsWrapper;
   LocksWrapper locksWrapper;
   AutolocksWrapper autolocksWrapper;
@@ -23,10 +22,6 @@ public class ConfigContentProvider implements ITreeContentProvider {
   ExcludesWrapper excludesWrapper;
   DistributedMethodsWrapper distributedMethodsWrapper;
   AdditionalBootJarClassesWrapper additionalBootJarClassesWrapper;
-  
-  ConfigContentProvider(ConfigViewPart fPart) {
-    this.fPart = fPart;
-  }
   
   public Object[] getChildren(Object parentElement) {
     if(parentElement instanceof RootsWrapper) {

@@ -63,7 +63,7 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
   }
 
   public void visitValue(MemberValue value, int depth) {
-    if (skipVisit(value.getSourceField())) { return; }
+    if (skipVisit(value)) { return; }
     indicatePortability(value);
     delegate.visitValue(value, depth);
   }
@@ -114,8 +114,16 @@ public class NonPortableWalkVisitor implements Visitor, ValueFormatter, WalkTest
     return config.isTransient(f.getModifiers(), JavaClassInfo.getClassInfo(f.getDeclaringClass()), f.getName());
   }
 
-  private static boolean skipVisit(Field field) {
-    return (field != null) && field.getType().getName().startsWith("com.tc.");
+  public boolean includeFieldsForType(Class type) {
+    return !config.isLogical(type.getName());
+  }
+  
+  private boolean skipVisit(MemberValue value) {
+    Field field = value.getSourceField();
+    if (field != null) {
+      return (field.getType().getName().startsWith("com.tc."));
+    }
+    return false;
   }
 
   private void indicatePortability(MemberValue value) {

@@ -48,8 +48,7 @@ public class ExceptionDialog extends MessageDialog {
 
   // --------------------------------------------------------------------------------
 
-  private class Layout {
-
+  private static class Layout {
     final Text m_area;
 
     private Layout(Composite parent, String stackTrace) {

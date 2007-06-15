@@ -64,8 +64,7 @@ public class LockAttributesDialog extends MessageDialog {
 
   // --------------------------------------------------------------------------------
 
-  private class Layout {
-
+  private static class Layout {
     private static final String NAME  = "Name";
     private static final String TYPE  = "Type";
     private static final String READ  = "Read";

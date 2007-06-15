@@ -181,7 +181,7 @@ public class RootsPanel extends ConfigurationEditorPanel {
     return false;
   }
 
-  private class Layout {
+  private static class Layout {
     private static final String ROOTS  = "Roots";
     private static final String FIELD  = "Field";
     private static final String NAME   = "Name";

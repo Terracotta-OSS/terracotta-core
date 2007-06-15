@@ -10,17 +10,35 @@ import org.apache.commons.lang.ClassUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.AbstractList;
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import junit.framework.TestCase;
 
 public class BasicWalkerTest extends TestCase {
+
+  public void helper(Object root, String fileNamePrefix) throws IOException {
+    WalkTest test = new MyWalkTestImpl();
+
+    MyOutputSink sink = new MyOutputSink();
+
+    ObjectGraphWalker t = new ObjectGraphWalker(root, test, new PrintVisitor(sink, test, new MyValueFormatter()));
+    t.walk();
+
+    String output = sink.buffer.toString();
+    System.err.println(output);
+    validate(fileNamePrefix, output);
+  }
 
   public void test() throws IOException {
     Root r = new Root();
@@ -29,20 +47,27 @@ public class BasicWalkerTest extends TestCase {
     r.m.put("foo", new Foo());
     r.m.put("foo foo", new Foo(new Foo()));
 
-    WalkTest test = new MyWalkTestImpl();
-
-    MyOutputSink sink = new MyOutputSink();
-
-    ObjectGraphWalker t = new ObjectGraphWalker(r, test, new PrintVisitor(sink, test, new MyValueFormatter()));
-    t.walk();
-
-    String output = sink.buffer.toString();
-    System.err.println(output);
-    validate(output);
+    helper(r, ClassUtils.getShortClassName(getClass()));
   }
 
-  private void validate(String output) throws IOException {
-    String expected = getExpected();
+  public void testArrayListSubclass() throws IOException {
+    helper(new ArrayListSubclass(), "ArrayListSubclassWalkerTest");
+  }
+
+  public void testAbstractListSubclass() throws IOException {
+    helper(new AbstractListSubclass(), "AbstractListSubclassWalkerTest");
+  }
+
+  public void testHashMapSubclass() throws IOException {
+    helper(new HashMapSubclass(), "HashMapSubclassWalkerTest");
+  }
+
+  public void testAbstractMapSubclass() throws IOException {
+    helper(new AbstractMapSubclass(), "AbstractMapSubclassWalkerTest");
+  }
+
+  private void validate(String name, String output) throws IOException {
+    String expected = getExpected(name);
 
     expected = expected.replaceAll("\r", "");
     output = output.replaceAll("\r", "");
@@ -50,8 +75,8 @@ public class BasicWalkerTest extends TestCase {
     assertEquals(expected, output);
   }
 
-  private String getExpected() throws IOException {
-    String resource = ClassUtils.getShortClassName(getClass()) + "-output.txt";
+  private String getExpected(String name) throws IOException {
+    String resource = name + "-output.txt";
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
     InputStream in = null;
@@ -97,6 +122,19 @@ public class BasicWalkerTest extends TestCase {
   }
 
   private static class MyWalkTestImpl implements WalkTest {
+    private static Set logicalTypes = new HashSet();
+    
+    static {
+      logicalTypes.add(ArrayList.class);
+      logicalTypes.add(HashMap.class);
+      logicalTypes.add(TreeMap.class);
+      logicalTypes.add(LinkedHashMap.class);
+      logicalTypes.add(LinkedList.class);
+    }
+    
+    public boolean includeFieldsForType(Class type) {
+      return !logicalTypes.contains(type);
+    }
 
     public boolean shouldTraverse(MemberValue value) {
       Object val = value.getValueObject();
@@ -184,6 +222,131 @@ public class BasicWalkerTest extends TestCase {
     private synchronized static int next() {
       return num++;
     }
+  }
+
+  private static class ArrayListSubclass extends ArrayList {
+    private int    iVal;
+    private String sVal;
+
+    public int getIVal() {
+      return iVal;
+    }
+
+    public void setIVal(int val) {
+      iVal = val;
+    }
+
+    public String getSVal() {
+      return sVal;
+    }
+
+    public void setSVal(String val) {
+      sVal = val;
+    }
+
+    ArrayListSubclass() {
+      super();
+      addAll(Arrays.asList(new String[] { "foo", "bar" }));
+      iVal = 42;
+      sVal = "timmy";
+    }
+
+  }
+
+  private static class AbstractListSubclass extends AbstractList {
+    private int    iVal;
+    private String sVal;
+
+    AbstractListSubclass() {
+      iVal = 42;
+      sVal = "timmy";
+    }
+
+    public Object get(int index) {
+      return null;
+    }
+
+    public int size() {
+      return 0;
+    }
+
+    public int getIVal() {
+      return iVal;
+    }
+
+    public void setIVal(int val) {
+      iVal = val;
+    }
+
+    public String getSVal() {
+      return sVal;
+    }
+
+    public void setSVal(String val) {
+      sVal = val;
+    }
+
+  }
+
+  private static class HashMapSubclass extends HashMap {
+    private int    iVal;
+    private String sVal;
+
+    public int getIVal() {
+      return iVal;
+    }
+
+    public void setIVal(int val) {
+      iVal = val;
+    }
+
+    public String getSVal() {
+      return sVal;
+    }
+
+    public void setSVal(String val) {
+      sVal = val;
+    }
+
+    HashMapSubclass() {
+      super();
+      put("sVal", "timmy");
+      put("iVal", new Integer(42));
+      iVal = 42;
+      sVal = "timmy";
+    }
+
+  }
+
+  private static class AbstractMapSubclass extends AbstractMap {
+    private int    iVal;
+    private String sVal;
+
+    AbstractMapSubclass() {
+      iVal = 42;
+      sVal = "timmy";
+    }
+
+    public int getIVal() {
+      return iVal;
+    }
+
+    public void setIVal(int val) {
+      iVal = val;
+    }
+
+    public String getSVal() {
+      return sVal;
+    }
+
+    public void setSVal(String val) {
+      sVal = val;
+    }
+
+    public Set entrySet() {
+      return new HashSet();
+    }
+
   }
 
 }

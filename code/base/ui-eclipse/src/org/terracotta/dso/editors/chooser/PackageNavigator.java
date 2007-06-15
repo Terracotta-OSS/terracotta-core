@@ -22,6 +22,7 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -124,8 +125,7 @@ public class PackageNavigator extends MessageDialog {
 
   // --------------------------------------------------------------------------------
 
-  private class JavaHierarchyContentProvider extends PackageExplorerContentProvider {
-
+  private static class JavaHierarchyContentProvider extends PackageExplorerContentProvider {
     private final WorkbenchContentProvider m_workbench;
 
     public JavaHierarchyContentProvider() {
@@ -171,13 +171,11 @@ public class PackageNavigator extends MessageDialog {
 
   // --------------------------------------------------------------------------------
 
-  private class Layout {
-
+  private static class Layout {
     final TreeViewer m_viewer;
-    GridData         m_gridData;
 
     private Layout(Composite parent, int style) {
-      this.m_viewer = new TreeViewer(parent, style);
+      this.m_viewer = new TreeViewer(parent, style|SWT.BORDER);
       m_viewer.getTree().setLayoutData(new GridData(GridData.FILL_BOTH));
     }
   }

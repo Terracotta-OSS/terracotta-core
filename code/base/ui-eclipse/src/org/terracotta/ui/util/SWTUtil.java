@@ -19,7 +19,6 @@ import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -114,12 +113,6 @@ public final class SWTUtil {
         Rectangle area = control.getBounds();
         int widthHint = SWT.DEFAULT;
         int heightHint = SWT.DEFAULT;
-        Object layoutData = table.getLayoutData();
-        if(false && layoutData instanceof GridData) {
-          GridData gridData = (GridData)layoutData;
-          widthHint = gridData.widthHint;
-          heightHint = gridData.heightHint;
-        }
         Point preferredSize = table.computeSize(widthHint, heightHint);
         int width = area.width - 2 * table.getBorderWidth();
         if (preferredSize.y > area.height + table.getHeaderHeight()) {
@@ -200,10 +193,13 @@ public final class SWTUtil {
                             updateEvent.index = column;
                             table.notifyListeners(SWT.SetData, updateEvent);
                           }
-                          // FALL THROUGH
+                          text.dispose();
+                          e.doit = false;
+                          break;
                         case SWT.TRAVERSE_ESCAPE:
                           text.dispose();
                           e.doit = false;
+                          break;
                       }
                       break;
                   }
@@ -270,10 +266,13 @@ public final class SWTUtil {
                           updateEvent.index = column;
                           table.notifyListeners(SWT.SetData, updateEvent);
                         }
-                        // FALL THROUGH
+                        combo.dispose();
+                        e.doit = false;
+                        break;
                       case SWT.TRAVERSE_ESCAPE:
                         combo.dispose();
                         e.doit = false;
+                        break;
                     }
                     break;
                 }

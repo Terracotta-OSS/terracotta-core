@@ -39,9 +39,8 @@ import java.util.List;
 import javax.swing.SwingUtilities;
 
 /*
- * TODO: factor out a BaseConfigurationHelper that is shared with the Eclipse plugin's
- * ConfigurationHelper and anyone else that needs basic logic about the config, such as
- * isTransient(String fieldName).
+ * TODO: factor out a BaseConfigurationHelper that is shared with the Eclipse plugin's ConfigurationHelper and anyone
+ * else that needs basic logic about the config, such as isTransient(String fieldName).
  */
 
 public class ConfigHelper {
@@ -332,7 +331,7 @@ public class ConfigHelper {
   }
 
   public boolean removeWebApplication(String name) {
-    DsoApplication dsoApp = ensureDsoApplication();
+    DsoApplication dsoApp = getDsoApplication();
 
     if (dsoApp != null) {
       WebApplications apps = dsoApp.getWebApplications();
@@ -343,6 +342,9 @@ public class ConfigHelper {
         for (int i = 0; i < appNames.length; i++) {
           if (appNames[i].getStringValue().equals(name)) {
             apps.removeWebApplication(i);
+            if (apps.sizeOfWebApplicationArray() == 0) {
+              dsoApp.unsetWebApplications();
+            }
             return true;
           }
         }
@@ -432,6 +434,10 @@ public class ConfigHelper {
         classes.removeInclude(i);
       }
     }
+
+    if (classes.sizeOfExcludeArray() == 0 && classes.sizeOfIncludeArray() == 0) {
+      getDsoApplication().unsetInstrumentedClasses();
+    }
   }
 
   public TransientFields ensureTransientFields() {
@@ -476,6 +482,9 @@ public class ConfigHelper {
     for (int i = 0; i < count; i++) {
       if (fieldName.equals(transients.getFieldNameArray(i))) {
         transients.removeFieldName(i);
+        if (transients.sizeOfFieldNameArray() == 0) {
+          getDsoApplication().unsetTransientFields();
+        }
         return;
       }
     }
@@ -523,6 +532,9 @@ public class ConfigHelper {
       for (int i = 0; i < count; i++) {
         if (typeName.equals(bootClasses.getIncludeArray(i))) {
           bootClasses.removeInclude(i);
+          if (bootClasses.sizeOfIncludeArray() == 0) {
+            getDsoApplication().unsetAdditionalBootJarClasses();
+          }
           return;
         }
       }

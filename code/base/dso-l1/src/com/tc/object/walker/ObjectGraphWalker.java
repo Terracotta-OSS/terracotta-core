@@ -16,7 +16,7 @@ public class ObjectGraphWalker {
   private final Visitor     visitor;
   private final MemberValue root;
   private int               currentDepth = 0;
-  private int               maxDepth = -1;
+  private int               maxDepth     = -1;
   private final WalkTest    walkTest;
 
   public ObjectGraphWalker(Object root, WalkTest walkTest, Visitor visitor) {
@@ -32,7 +32,7 @@ public class ObjectGraphWalker {
   public void setMaxDepth(int maxDepth) {
     this.maxDepth = maxDepth;
   }
-  
+
   public void walk() {
     visitor.visitRootObject(root);
     currentDepth++;
@@ -53,13 +53,13 @@ public class ObjectGraphWalker {
     if (o.getClass().isArray()) {
       return new ArrayNode(o);
     } else if (o instanceof Collection) {
-      return new CollectionNode((Collection) o);
+      return new CollectionNode((Collection) o, walkTest);
     } else if (o instanceof Map) {
-      return new MapNode((Map) o);
+      return new MapNode((Map) o, walkTest);
     } else if (o instanceof MapEntry) {
       return new MapEntryNode((MapEntry) o);
     } else {
-      return new PlainNode(o);
+      return new PlainNode(o, walkTest);
     }
   }
 

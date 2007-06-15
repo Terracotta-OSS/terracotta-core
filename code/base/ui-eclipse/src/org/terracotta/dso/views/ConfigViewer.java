@@ -11,6 +11,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.ui.IWorkbenchPartSite;
+import org.terracotta.dso.TcPlugin;
 
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
@@ -26,7 +27,7 @@ class ConfigViewer extends TreeViewer {
     getControl().setLayoutData(new GridData(GridData.FILL_BOTH));
     setUseHashlookup(true);
     setAutoExpandLevel(ALL_LEVELS);
-    fContentProvider = new ConfigContentProvider(fPart);
+    fContentProvider = new ConfigContentProvider();
     setContentProvider(fContentProvider);
     setLabelProvider(new ConfigLabelProvider(this));
 
@@ -34,7 +35,7 @@ class ConfigViewer extends TreeViewer {
   }
 
   void setConfig(TcConfig config) {
-    if(config != null) {
+    if(config != null && config != TcPlugin.BAD_CONFIG) {
       setInput(getTreeRoot(config));
     } else {
       clearViewer();

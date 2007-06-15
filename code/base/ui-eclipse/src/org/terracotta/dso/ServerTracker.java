@@ -160,20 +160,27 @@ public class ServerTracker implements IDebugEventSetListener {
     }
   }
 
-  class L2ConnectListener implements ConnectionListener {
+  static class L2ConnectListener implements ConnectionListener {
     public void handleConnection() {/**/}
 
     public void handleException() {/**/}
   }
 
   class DSOAppEventListener implements NotificationListener {
+    private boolean fHandlingNonPortableEvent;
+    
     public void handleNotification(Notification notification, Object handback) {
       final Object event = notification.getSource();
 
-      if (event instanceof NonPortableObjectEvent) {
+      if (event instanceof NonPortableObjectEvent && !fHandlingNonPortableEvent) {
+        fHandlingNonPortableEvent = true;
         Display.getDefault().asyncExec(new Runnable() {
           public void run() {
-            handleNonPortableReason((NonPortableObjectEvent) event);
+            try {
+              handleNonPortableReason((NonPortableObjectEvent) event);
+            } finally {
+              fHandlingNonPortableEvent = false;
+            }
           }
         });
       }

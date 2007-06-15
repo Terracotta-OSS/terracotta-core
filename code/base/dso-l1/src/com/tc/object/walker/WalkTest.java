@@ -5,4 +5,5 @@ package com.tc.object.walker;
 
 public interface WalkTest {
   boolean shouldTraverse(MemberValue val);
+  boolean includeFieldsForType(Class type);
 }

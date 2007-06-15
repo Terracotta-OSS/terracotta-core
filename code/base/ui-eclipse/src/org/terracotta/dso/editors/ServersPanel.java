@@ -166,7 +166,7 @@ public class ServersPanel extends ConfigurationEditorPanel
     m_layout.setServer(server);
   }
 
-  private class Layout implements SWTLayout {
+  private static class Layout implements SWTLayout {
     private static final String ADD      = "Add...";
     private static final String REMOVE   = "Remove";
     private static final String SERVERS  = "Servers";

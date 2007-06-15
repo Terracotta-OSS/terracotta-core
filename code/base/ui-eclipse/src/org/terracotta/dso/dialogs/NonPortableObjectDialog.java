@@ -30,6 +30,7 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
@@ -79,6 +80,7 @@ import javax.swing.tree.DefaultTreeModel;
 public class NonPortableObjectDialog extends MessageDialog {
   private IJavaProject                      fJavaProject;
   private NonPortableObjectEvent            fEvent;
+  private SashForm                          fSashForm;
   private Table                             fIssueTable;
   private Tree                              fObjectTree;
   private CLabel                            fSummaryLabel;
@@ -89,11 +91,17 @@ public class NonPortableObjectDialog extends MessageDialog {
   private Composite                         fActionPanel;
   private StackLayout                       fActionStackLayout;
   private IncludeRulePanel                  fIncludeRuleView;
-  private BootTypesPanel                    fBootTypesView;
+  private IncludeTypesPanel                 fIncludeTypesView;
   private Label                             fNoActionView;
   private Button                            fPreviousIssueButton, fNextIssueButton, fApplyButton;
   private TcConfig                          fNewConfig;
   private ConfigurationHelper               fConfigHelper;
+
+  private static final int[]                DEFAULT_SASH_WEIGHTS  = new int[] { 100, 100 };
+  private static final String               DIALOG_SASH_WEIGHTS_1 = TcPlugin.PLUGIN_ID
+                                                                      + ".NON_PORTABLE_DIALOG_SASH_WEIGHTS_1";         //$NON-NLS-1$
+  private static final String               DIALOG_SASH_WEIGHTS_2 = TcPlugin.PLUGIN_ID
+                                                                      + ".NON_PORTABLE_DIALOG_SASH_WEIGHTS_2";         //$NON-NLS-1$
 
   private static final Image                NOT_PORTABLE_ICON     = JavaPluginImages
                                                                       .get(JavaPluginImages.IMG_FIELD_PRIVATE);
@@ -136,19 +144,54 @@ public class NonPortableObjectDialog extends MessageDialog {
   protected IDialogSettings getDialogBoundsSettings() {
     return getDialogSettings();
   }
-  
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see org.eclipse.jface.window.Window#initializeBounds()
+   */
+  protected void initializeBounds() {
+    IDialogSettings settings = getDialogSettings();
+    if (fSashForm != null) {
+      int w1, w2;
+      try {
+        w1 = settings.getInt(DIALOG_SASH_WEIGHTS_1);
+        w2 = settings.getInt(DIALOG_SASH_WEIGHTS_2);
+      } catch (NumberFormatException nfe) {
+        w1 = DEFAULT_SASH_WEIGHTS[0];
+        w2 = DEFAULT_SASH_WEIGHTS[1];
+      }
+      fSashForm.setWeights(new int[] { w1, w2 });
+    }
+    super.initializeBounds();
+  }
+
+  protected void persistSashWeights() {
+    IDialogSettings settings = getDialogSettings();
+    if (fSashForm != null) {
+      int[] sashWeights = fSashForm.getWeights();
+      settings.put(DIALOG_SASH_WEIGHTS_1, sashWeights[0]);
+      settings.put(DIALOG_SASH_WEIGHTS_2, sashWeights[1]);
+    }
+  }
+
   protected IDialogSettings getDialogSettings() {
     IDialogSettings settings = TcPlugin.getDefault().getDialogSettings();
     IDialogSettings section = settings.getSection(getDialogSettingsSectionName());
     if (section == null) {
       section = settings.addNewSection(getDialogSettingsSectionName());
-    } 
+    }
     return section;
   }
 
   protected String getDialogSettingsSectionName() {
     return TcPlugin.PLUGIN_ID + ".NON_PORTABLE_DIALOG_SECTION"; //$NON-NLS-1$
-  } 
+  }
+
+  public boolean close() {
+    persistSashWeights();
+    return super.close();
+  }
 
   private IJavaProject getJavaProject(NonPortableObjectEvent event) {
     IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
@@ -181,13 +224,20 @@ public class NonPortableObjectDialog extends MessageDialog {
     composite.setLayoutData(new GridData(GridData.FILL_BOTH));
     composite.setLayout(new GridLayout());
 
-    Composite topPanel = new Composite(composite, SWT.NONE);
-    topPanel.setLayoutData(new GridData(GridData.FILL_BOTH));
-    GridLayout gridLayout = new GridLayout(2, true);
-    gridLayout.marginWidth = 0;
-    topPanel.setLayout(gridLayout);
+    // Composite topPanel = new Composite(composite, SWT.NONE);
+    // topPanel.setLayoutData(new GridData(GridData.FILL_BOTH));
+    // GridLayout gridLayout = new GridLayout(2, true);
+    // gridLayout.marginWidth = 0;
+    // topPanel.setLayout(gridLayout);
 
-    Group listGroup = new Group(topPanel, SWT.SHADOW_NONE);
+    SashForm sash = new SashForm(composite, SWT.SMOOTH);
+    sash.setOrientation(SWT.HORIZONTAL);
+    sash.setLayoutData(new GridData(GridData.FILL_BOTH));
+    sash.setFont(parent.getFont());
+    sash.setVisible(true);
+    fSashForm = sash;
+
+    Group listGroup = new Group(sash, SWT.SHADOW_NONE);
     listGroup.setText(NonPortableMessages.getString("ISSUES")); //$NON-NLS-1$
     listGroup.setLayout(new GridLayout());
     listGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
@@ -198,7 +248,7 @@ public class NonPortableObjectDialog extends MessageDialog {
     gridData.heightHint = SWTUtil.tableRowsToPixels(fIssueTable, 10);
     fIssueTable.setLayoutData(gridData);
 
-    Group treePanel = new Group(topPanel, SWT.SHADOW_NONE);
+    Group treePanel = new Group(sash, SWT.SHADOW_NONE);
     treePanel.setText(NonPortableMessages.getString("OBJECT_BROWSER")); //$NON-NLS-1$
     treePanel.setLayout(new GridLayout());
     treePanel.setLayoutData(new GridData(GridData.FILL_BOTH));
@@ -231,7 +281,7 @@ public class NonPortableObjectDialog extends MessageDialog {
     actionGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
     fActionTreeViewer = new CheckboxTreeViewer(actionGroup, SWT.BORDER | SWT.SINGLE | SWT.V_SCROLL | SWT.H_SCROLL);
     fActionTreeViewer.getTree().setLayoutData(new GridData(GridData.FILL_BOTH));
-    fActionTreeViewer.addCheckStateListener(new ActionSelectionHandler());
+    fActionTreeViewer.addCheckStateListener(new ActionCheckStateHandler());
     fActionTreeViewer.addSelectionChangedListener(new ActionSelectionChangedHandler());
     fActionTreeViewer.setContentProvider(new ActionTreeContentProvider());
     fActionTreeViewer.setLabelProvider(new ActionLabelProvider());
@@ -245,7 +295,7 @@ public class NonPortableObjectDialog extends MessageDialog {
     fActionPanel.setLayout(fActionStackLayout = new StackLayout());
 
     fIncludeRuleView = new IncludeRulePanel(fActionPanel);
-    fBootTypesView = new BootTypesPanel(fActionPanel);
+    fIncludeTypesView = new IncludeTypesPanel(fActionPanel);
     fNoActionView = new Label(fActionPanel, SWT.NONE);
 
     fActionStackLayout.topControl = fNoActionView;
@@ -506,11 +556,33 @@ public class NonPortableObjectDialog extends MessageDialog {
   }
 
   boolean testIsIssue(NonPortableWorkState workState) {
+    if (workState.isRepeated() || workState.isTransient()) return false;
+
     String fieldName = workState.getFieldName();
     boolean isNull = workState.isNull();
     boolean isTransientField = fieldName != null && (fConfigHelper.isTransient(fieldName) || workState.isTransient());
 
     if (workState.isNeverPortable() && !isTransientField && !isNull) { return true; }
+
+    if (workState.extendsLogicallyManagedType() && !isTransientField && !isNull) return true;
+
+    if (workState.hasRequiredBootTypes()) {
+      java.util.List types = workState.getRequiredBootTypes();
+      for (Iterator iter = types.iterator(); iter.hasNext();) {
+        if (!fConfigHelper.isBootJarClass((String) iter.next())) return true;
+      }
+    }
+
+    if (workState.hasRequiredIncludeTypes()) {
+      java.util.List types = workState.getRequiredIncludeTypes();
+      for (Iterator iter = types.iterator(); iter.hasNext();) {
+        if (!fConfigHelper.isAdaptable((String) iter.next())) return true;
+      }
+    }
+
+    if (!workState.isPortable() && workState.isSystemType() && !fConfigHelper.isBootJarClass(workState.getTypeName())) return true;
+
+    if (workState.getExplaination() != null) return true;
 
     return !workState.isPortable()
         && !(fConfigHelper.isAdaptable(workState.getTypeName()) || isTransientField || isNull);
@@ -525,26 +597,29 @@ public class NonPortableObjectDialog extends MessageDialog {
     TreeItem treeItem = fObjectTree.getItem(0);
 
     fIssueTable.setRedraw(false);
-    fIssueTable.setItemCount(0);
-    while (treeItem != null) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode) treeItem.getData();
-      Object userObject = node.getUserObject();
+    try {
+      fIssueTable.setItemCount(0);
+      while (treeItem != null) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) treeItem.getData();
+        Object userObject = node.getUserObject();
 
-      if (userObject instanceof NonPortableWorkState) {
-        NonPortableWorkState workState = (NonPortableWorkState) userObject;
+        if (userObject instanceof NonPortableWorkState) {
+          NonPortableWorkState workState = (NonPortableWorkState) userObject;
 
-        if (checkAddToIssueList(workState)) {
-          TableItem tableItem = new TableItem(fIssueTable, SWT.NONE);
+          if (checkAddToIssueList(workState)) {
+            TableItem tableItem = new TableItem(fIssueTable, SWT.NONE);
 
-          tableItem.setData(treeItem);
-          tableItem.setImage(hasSelectedActions(treeItem) ? RESOLVED_ICON : BLANK_ICON);
-          tableItem.setText(workState.shortSummary());
+            tableItem.setData(treeItem);
+            tableItem.setImage(hasSelectedActions(treeItem) ? RESOLVED_ICON : BLANK_ICON);
+            tableItem.setText(workState.shortSummary());
+          }
         }
-      }
 
-      treeItem = getNextItem(treeItem, true);
+        treeItem = getNextItem(treeItem, true);
+      }
+    } finally {
+      fIssueTable.setRedraw(true);
     }
-    fIssueTable.setRedraw(true);
   }
 
   void handleTableSelectionChange() {
@@ -594,7 +669,7 @@ public class NonPortableObjectDialog extends MessageDialog {
       fNextIssueButton.setEnabled(getNextIssue() != null);
     }
   }
-  
+
   class IssueTableSelectionListener extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
       handleTableSelectionChange();
@@ -608,7 +683,7 @@ public class NonPortableObjectDialog extends MessageDialog {
   }
 
   void hideResolutionsPanel() {
-  fResolutionsPanel.setVisible(false);
+    fResolutionsPanel.setVisible(false);
   }
 
   void showResolutionsPanel() {
@@ -617,65 +692,92 @@ public class NonPortableObjectDialog extends MessageDialog {
 
   void setWorkState(NonPortableWorkState workState) {
     fActionTreeViewer.getTree().setRedraw(false);
-    showResolutionsPanel();
-    hideActionPanel();
+    try {
+      showResolutionsPanel();
+      hideActionPanel();
 
-    fSummaryLabel.setText(workState.summary());
-    fSummaryLabel.setImage(imageFor(workState));
-    fIssueDescription.setText(workState.descriptionFor());
-    fActionTreeViewer.setInput(workState);
+      fSummaryLabel.setText(workState.summary());
+      fSummaryLabel.setImage(imageFor(workState));
+      fIssueDescription.setText(workState.descriptionFor());
+      fActionTreeViewer.setInput(workState);
 
-    NonPortableResolutionAction[] actions = getActions(workState);
-    if (actions != null && actions.length > 0) {
-      boolean showComponent = true;
+      NonPortableResolutionAction[] actions = getActions(workState);
+      if (actions != null && actions.length > 0) {
+        boolean showComponent = true;
 
-      for (int i = 0; i < actions.length; i++) {
-        NonPortableResolutionAction action = actions[i];
+        for (int i = 0; i < actions.length; i++) {
+          NonPortableResolutionAction action = actions[i];
 
-        if (action.isEnabled()) {
-          boolean isSelected = action.isSelected();
+          if (action.isEnabled()) {
+            boolean isSelected = action.isSelected();
 
-          fActionTreeViewer.setChecked(action, isSelected);
-          if(isSelected) {
-            if(showComponent) {
-              fActionTreeViewer.setSelection(new StructuredSelection(action));
-              action.showControl(this);
-              showComponent = false;
+            fActionTreeViewer.setChecked(action, isSelected);
+            if (isSelected) {
+              if (showComponent) {
+                fActionTreeViewer.setSelection(new StructuredSelection(action));
+                action.showControl(this);
+                showComponent = false;
+              }
             }
           }
         }
+        fActionTreeViewer.expandAll();
       }
-      fActionTreeViewer.expandAll();
+      setNoAction(!workState.hasSelectedActions());
+      if (!haveAnyActions()) {
+        hideResolutionsPanel();
+      }
+    } finally {
+      fActionTreeViewer.getTree().setRedraw(true);
     }
+  }
 
-    setNoAction(!workState.hasSelectedActions());
-
-    if (!haveAnyActions()) {
-      hideResolutionsPanel();
+  private boolean requiresPortabilityAction(NonPortableWorkState workState) {
+    if (workState.isTransient() || workState.extendsLogicallyManagedType()) return false;
+    if (workState.hasRequiredBootTypes()) {
+      java.util.List types = workState.getRequiredBootTypes();
+      for (Iterator iter = types.iterator(); iter.hasNext();) {
+        if (!fConfigHelper.isBootJarClass((String) iter.next())) return true;
+      }
     }
-
-    fActionTreeViewer.getTree().setRedraw(true);
+    if (workState.hasNonPortableBaseTypes()) {
+      java.util.List types = workState.getNonPortableBaseTypes();
+      for (Iterator iter = types.iterator(); iter.hasNext();) {
+        if (!fConfigHelper.isAdaptable((String) iter.next())) return true;
+      }
+    }
+    return !fConfigHelper.isAdaptable(workState.getTypeName());
   }
 
   NonPortableResolutionAction[] createActions(NonPortableWorkState workState) {
     ArrayList list = new ArrayList();
+    String fieldName = workState.getFieldName();
 
     if (workState.isNeverPortable() || workState.isPortable()) {
-      if (workState.getFieldName() != null && !workState.isTransient()) {
+      if (fieldName != null && !workState.isTransient() && !fConfigHelper.isTransient(fieldName)) {
         list.add(new MakeTransientAction(workState));
       }
     } else if (!workState.isPortable()) {
-      list.add(new IncludeTypeAction(workState));
-      list.add(new IncludePackageAction(workState));
-
-      if (workState.isSystemType()) {
-        list.add(new AddToBootJarAction(workState));
+      if (requiresPortabilityAction(workState)) {
+        list.add(new MakePortableAction(workState));
       }
-
-      if (workState.getFieldName() != null && !workState.isTransient()) {
+      // if (!fConfigHelper.isAdaptable(workState.getTypeName())) {
+      // list.add(new IncludeTypeAction(workState));
+      // list.add(new IncludePackageAction(workState));
+      // }
+      //
+      // if (workState.isSystemType() && !fConfigHelper.isBootJarClass(workState.getTypeName())) {
+      // list.add(new AddToBootJarAction(workState));
+      // }
+      //
+      if (fieldName != null && !workState.isTransient() && !fConfigHelper.isTransient(fieldName)) {
         list.add(new MakeTransientAction(workState));
       }
     }
+    // if (!workState.isNeverPortable() && !workState.extendsLogicallyManagedType()
+    // && (workState.hasRequiredBootTypes() || workState.hasNonPortableBaseTypes())) {
+    // list.add(new IncludeBaseTypesAction(workState));
+    // }
 
     return (NonPortableResolutionAction[]) list.toArray(new NonPortableResolutionAction[0]);
   }
@@ -690,29 +792,28 @@ public class NonPortableObjectDialog extends MessageDialog {
     return actions;
   }
 
-  class ActionSelectionChangedHandler implements ISelectionChangedListener {
-    public void selectionChanged(SelectionChangedEvent event) {
-      IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-      Object obj = selection.getFirstElement();
+  private void handleActionSelectionChanged(IStructuredSelection selection) {
+    Object obj = selection.getFirstElement();
 
-      if (obj == NO_ACTION_ITEM) {
-        hideActionPanel();
-      } else {
-        NonPortableResolutionAction action = (NonPortableResolutionAction) obj;
-        if (action != null) {
-          if (action.isSelected()) {
-            action.showControl(this);
-          } else {
-            hideActionPanel();
-          }
+    if (obj == NO_ACTION_ITEM) {
+      hideActionPanel();
+    } else {
+      NonPortableResolutionAction action = (NonPortableResolutionAction) obj;
+      if (action != null) {
+        if (action.isSelected()) {
+          action.showControl(this);
+        } else {
+          hideActionPanel();
         }
       }
     }
   }
 
-  private boolean isSelected(Object element) {
-    IStructuredSelection selection = (IStructuredSelection) fActionTreeViewer.getSelection();
-    return !selection.isEmpty() && (selection.getFirstElement() == element);
+  class ActionSelectionChangedHandler implements ISelectionChangedListener {
+    public void selectionChanged(SelectionChangedEvent event) {
+      IStructuredSelection selection = (IStructuredSelection) event.getSelection();
+      handleActionSelectionChanged(selection);
+    }
   }
 
   private boolean haveAnyActions() {
@@ -720,7 +821,7 @@ public class NonPortableObjectDialog extends MessageDialog {
     NonPortableResolutionAction[] actions = contentProvider.getEnabledActions();
     return actions != null && actions.length > 0;
   }
-  
+
   private boolean anyActionSelected() {
     ActionTreeContentProvider contentProvider = (ActionTreeContentProvider) fActionTreeViewer.getContentProvider();
     NonPortableResolutionAction[] actions = contentProvider.getEnabledActions();
@@ -735,12 +836,12 @@ public class NonPortableObjectDialog extends MessageDialog {
   private void setNoAction(boolean checked) {
     fActionTreeViewer.setChecked(NO_ACTION_ITEM, checked);
   }
-  
+
   private boolean isSetNoAction() {
     return fActionTreeViewer.getChecked(NO_ACTION_ITEM);
   }
-  
-  class ActionSelectionHandler implements ICheckStateListener {
+
+  class ActionCheckStateHandler implements ICheckStateListener {
     public void checkStateChanged(CheckStateChangedEvent event) {
       Object obj = event.getElement();
 
@@ -750,26 +851,19 @@ public class NonPortableObjectDialog extends MessageDialog {
         NonPortableResolutionAction action = (NonPortableResolutionAction) obj;
         if (action != null) {
           boolean isChecked = fActionTreeViewer.getChecked(action);
-          boolean isSelected = isSelected(action);
 
           action.setSelected(isChecked);
           if (isChecked) {
             setNoAction(false);
           } else if (!anyActionSelected()) {
             setNoAction(true);
-            hideActionPanel();
-          }
-
-          if (isSelected) {
-            if (isChecked) {
-              action.showControl(this);
-            } else {
-              hideActionPanel();
-            }
           }
         }
       }
 
+      StructuredSelection newSelection = new StructuredSelection(obj);
+      fActionTreeViewer.setSelection(newSelection);
+      handleActionSelectionChanged(newSelection);
       fApplyButton.setEnabled(anySelectedActions());
     }
   }
@@ -810,11 +904,11 @@ public class NonPortableObjectDialog extends MessageDialog {
     public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
       fWorkState = (NonPortableWorkState) newInput;
       fEnabledActions = null;
-      
-      if(fWorkState != null) {
+
+      if (fWorkState != null) {
         ArrayList list = new ArrayList();
         NonPortableResolutionAction[] actions = getActions(fWorkState);
-  
+
         if (actions != null && actions.length > 0) {
           for (int i = 0; i < actions.length; i++) {
             NonPortableResolutionAction action = actions[i];
@@ -850,7 +944,7 @@ public class NonPortableObjectDialog extends MessageDialog {
     public void dispose() {/**/}
   }
 
-  class ActionLabelProvider implements ILabelProvider {
+  static class ActionLabelProvider implements ILabelProvider {
     public String getText(Object element) {
       if (element == NO_ACTION_ITEM) return NonPortableMessages.getString("TAKE_NO_ACTION");
       return element.toString();
@@ -911,132 +1005,89 @@ public class NonPortableObjectDialog extends MessageDialog {
 
       fIssueTable.setRedraw(false);
       fObjectTree.setRedraw(false);
+      try {
+        if (selected) {
+          fConfigHelper.ensureTransient(fWorkState.getFieldName(), NULL_SIGNALLER);
+          treeItem.removeAll();
+        } else {
+          fConfigHelper.ensureNotTransient(fWorkState.getFieldName(), NULL_SIGNALLER);
 
-      if (selected) {
-        fConfigHelper.internalEnsureTransient(fWorkState.getFieldName(), NULL_SIGNALLER);
-        treeItem.removeAll();
-      } else {
-        fConfigHelper.internalEnsureNotTransient(fWorkState.getFieldName(), NULL_SIGNALLER);
-
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) treeItem.getData();
-        for (int i = 0; i < node.getChildCount(); i++) {
-          TreeItem childItem = new TreeItem(treeItem, SWT.NONE);
-          DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) node.getChildAt(i);
-          initTreeItem(childItem, childNode);
+          DefaultMutableTreeNode node = (DefaultMutableTreeNode) treeItem.getData();
+          for (int i = 0; i < node.getChildCount(); i++) {
+            TreeItem childItem = new TreeItem(treeItem, SWT.NONE);
+            DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) node.getChildAt(i);
+            initTreeItem(childItem, childNode);
+          }
         }
+
+        initIssueList();
+        fObjectTree.setSelection(treeItem);
+        fIssueTable.setSelection(index);
+      } finally {
+        fIssueTable.setRedraw(true);
+        fObjectTree.setRedraw(true);
       }
 
-      initIssueList();
-      fObjectTree.setSelection(treeItem);
-      fIssueTable.setSelection(index);
-      fIssueTable.setRedraw(true);
-      fObjectTree.setRedraw(true);
-      
       resetSearchButtons();
-    }
-
-    public boolean isEnabled() {
-      String fieldName = fWorkState.getFieldName();
-      String declaringType = fieldName.substring(0, fieldName.lastIndexOf('.'));
-      return fConfigHelper.isAdaptable(declaringType);
     }
   }
 
-  class IncludeTypeAction extends NonPortableResolutionAction {
-    IncludeTypeAction(NonPortableWorkState workState) {
+  class MakePortableAction extends NonPortableResolutionAction {
+    MakePortableAction(NonPortableWorkState workState) {
       super(workState);
     }
 
-    String getClassExpression() {
-      return fWorkState.getTypeName();
-    }
-
     public void showControl(Object parentControl) {
-      fActionStackLayout.topControl = fIncludeRuleView;
-      fIncludeRuleView.setInclude(fConfigHelper.includeRuleFor(getClassExpression()));
+      fActionStackLayout.topControl = fIncludeTypesView;
+      fIncludeTypesView.setIncludeTypes(fWorkState.getRequiredIncludeTypes());
+      fIncludeTypesView.setBootTypes(fWorkState.getRequiredBootTypes());
       fActionPanel.layout();
       fActionPanel.redraw();
     }
 
     public String getText() {
-      return NonPortableMessages.getString("INCLUDE_TYPE_FOR_SHARING"); //$NON-NLS-1$
+      return NonPortableMessages.getString("MAKE_PORTABLE"); //$NON-NLS-1$
     }
 
     public void setSelected(boolean selected) {
       super.setSelected(selected);
 
-      String classExpr = getClassExpression();
-      if (selected) {
-        ensureIncludeRuleFor(classExpr);
-      } else {
-        fConfigHelper.ensureNotAdaptable(classExpr, NULL_SIGNALLER);
+      if (fWorkState.hasRequiredBootTypes()) {
+        java.util.List types = fWorkState.getRequiredBootTypes();
+        if (selected) {
+          for (Iterator iter = types.iterator(); iter.hasNext();) {
+            fConfigHelper.ensureBootJarClass((String) iter.next(), NULL_SIGNALLER);
+          }
+        } else {
+          for (Iterator iter = types.iterator(); iter.hasNext();) {
+            fConfigHelper.ensureNotBootJarClass((String) iter.next(), NULL_SIGNALLER);
+          }
+        }
       }
 
-      int index = fIssueTable.getSelectionIndex();
-
-      fIssueTable.setRedraw(false);
-      initIssueList();
-      fIssueTable.setSelection(index);
-      fIssueTable.setRedraw(true);
-      
-      resetSearchButtons();
-    }
-  }
-
-  class IncludePackageAction extends IncludeTypeAction {
-    IncludePackageAction(NonPortableWorkState workState) {
-      super(workState);
-    }
-
-    String getClassExpression() {
-      String typeName = fWorkState.getTypeName();
-      String packageName = typeName.substring(0, typeName.lastIndexOf('.'));
-      return packageName + ".*"; //$NON-NLS-1$
-    }
-
-    public String getText() {
-      return NonPortableMessages.getString("INCLUDE_PACKAGE_FOR_SHARING"); //$NON-NLS-1$
-    }
-  }
-
-  class AddToBootJarAction extends NonPortableResolutionAction {
-    AddToBootJarAction(NonPortableWorkState workState) {
-      super(workState);
-    }
-
-    public void showControl(Object parentControl) {
-      fActionStackLayout.topControl = fBootTypesView;
-      fBootTypesView.setRequiredBootTypes(fWorkState.getRequiredBootTypes());
-      fActionPanel.layout();
-      fActionPanel.redraw();
-    }
-
-    public String getText() {
-      return NonPortableMessages.getString("ADD_TO_BOOTJAR"); //$NON-NLS-1$
-    }
-
-    public void setSelected(boolean selected) {
-      super.setSelected(selected);
-
-      String[] types = fWorkState.getRequiredBootTypes();
-
-      if (selected) {
-        for (int i = 0; i < types.length; i++) {
-          fConfigHelper.internalEnsureBootJarClass(types[i], NULL_SIGNALLER);
-        }
-      } else {
-        for (int i = 0; i < types.length; i++) {
-          fConfigHelper.internalEnsureNotBootJarClass(types[i], NULL_SIGNALLER);
+      if (fWorkState.hasRequiredIncludeTypes()) {
+        java.util.List types = fWorkState.getRequiredIncludeTypes();
+        if (selected) {
+          for (Iterator iter = types.iterator(); iter.hasNext();) {
+            fConfigHelper.ensureAdaptable((String) iter.next(), NULL_SIGNALLER);
+          }
+        } else {
+          for (Iterator iter = types.iterator(); iter.hasNext();) {
+            fConfigHelper.ensureNotAdaptable((String) iter.next(), NULL_SIGNALLER);
+          }
         }
       }
 
       int index = fIssueTable.getSelectionIndex();
 
       fIssueTable.setRedraw(false);
-      initIssueList();
-      fIssueTable.setSelection(index);
-      fIssueTable.setRedraw(true);
-      
+      try {
+        initIssueList();
+        fIssueTable.setSelection(index);
+      } finally {
+        fIssueTable.setRedraw(true);
+      }
+
       resetSearchButtons();
     }
   }
@@ -1195,24 +1246,60 @@ public class NonPortableObjectDialog extends MessageDialog {
     }
   }
 
-  class BootTypesPanel extends Composite {
-    List fTypeList;
+  class IncludeTypesPanel extends Composite {
+    List fIncludeTypesList;
+    List fBootTypesList;
 
-    BootTypesPanel(Composite parent) {
+    IncludeTypesPanel(Composite parent) {
       super(parent, SWT.NONE);
       setLayout(new GridLayout());
       Label label = new Label(this, SWT.NONE);
+      label.setText(NonPortableMessages.getString("TYPES_TO_INCLUDE")); //$NON-NLS-1$
+      label.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+      fIncludeTypesList = new List(this, SWT.BORDER | SWT.V_SCROLL);
+      fIncludeTypesList.setLayoutData(new GridData(GridData.FILL_BOTH));
+
+      label = new Label(this, SWT.NONE);
       label.setText(NonPortableMessages.getString("TYPES_TO_ADD_TO_BOOTJAR")); //$NON-NLS-1$
       label.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-      fTypeList = new List(this, SWT.BORDER | SWT.V_SCROLL);
-      fTypeList.setLayoutData(new GridData(GridData.FILL_BOTH));
+      fBootTypesList = new List(this, SWT.BORDER | SWT.V_SCROLL);
+      fBootTypesList.setLayoutData(new GridData(GridData.FILL_BOTH));
     }
 
-    void setRequiredBootTypes(String[] types) {
-      if (types != null) {
-        for (int i = 0; i < types.length; i++) {
-          fTypeList.add(types[i]);
+    void setIncludeTypes(java.util.List types) {
+      fIncludeTypesList.setRedraw(false);
+      try {
+        fIncludeTypesList.setItems(new String[0]);
+        if (types != null) {
+          ConfigurationHelper configHelper = TcPlugin.getDefault().getConfigurationHelper(fJavaProject.getProject());
+          for (Iterator iter = types.iterator(); iter.hasNext();) {
+            String type = (String) iter.next();
+            if (!configHelper.isAdaptable(type)) {
+              fIncludeTypesList.add(type);
+            }
+          }
         }
+      } finally {
+        fIncludeTypesList.setRedraw(true);
+      }
+    }
+
+    void setBootTypes(java.util.List types) {
+      fBootTypesList.setRedraw(false);
+      try {
+        fBootTypesList.setItems(new String[0]);
+        if (types != null) {
+          ConfigurationHelper configHelper = TcPlugin.getDefault().getConfigurationHelper(fJavaProject.getProject());
+
+          for (Iterator iter = types.iterator(); iter.hasNext();) {
+            String type = (String) iter.next();
+            if (!configHelper.isBootJarClass(type)) {
+              fBootTypesList.add(type);
+            }
+          }
+        }
+      } finally {
+        fBootTypesList.setRedraw(true);
       }
     }
   }

@@ -167,8 +167,7 @@ public class TransientFieldsPanel extends ConfigurationEditorPanel {
     return TcPlugin.getDefault().getConfigurationHelper(m_project).isTransient(fieldName);
   }
 
-  private class Layout {
-
+  private static class Layout {
     private static final String TRANSIENT_FIELDS = "Transient Fields";
     private static final String ADD              = "Add...";
     private static final String REMOVE           = "Remove";

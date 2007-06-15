@@ -9,24 +9,27 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class MapNode extends AbstractNode {
+public class MapNode extends PlainNode {
 
-  private final Iterator iterator;
-
+  private final Iterator entryIterator;
   private int            index = 0;
 
-  public MapNode(Map map) {
-    super(map);
-    iterator = map.entrySet().iterator();
+  public MapNode(Map map, WalkTest walkTest) {
+    super(map, walkTest);
+    entryIterator = map.entrySet().iterator();
   }
 
   public boolean done() {
-    return !iterator.hasNext();
+    return super.done() && !entryIterator.hasNext();
   }
 
   public MemberValue next() {
-    Map.Entry entry = (Entry) iterator.next();
-    return new MapEntry(entry, index++);
+    if (!super.done()) {
+      return super.next();
+    } else {
+      Map.Entry entry = (Entry) entryIterator.next();
+      return new MapEntry(entry, index++);
+    }
   }
 
 }

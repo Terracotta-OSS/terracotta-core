@@ -134,7 +134,7 @@ public class DsoApplicationPanel extends ConfigurationEditorPanel
     setEnabled(false);      
   }
   
-  private class Layout {
+  private static class Layout {
     private static final String      ROOTS_ICON                = "/com/tc/admin/icons/hierarchicalLayout.gif";
     private static final String      LOCKS_ICON                = "/com/tc/admin/icons/deadlock_view.gif";
     private static final String      TRANSIENT_FIELDS_ICON     = "/com/tc/admin/icons/transient.gif";

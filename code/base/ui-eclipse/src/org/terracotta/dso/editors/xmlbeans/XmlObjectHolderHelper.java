@@ -228,12 +228,12 @@ public class XmlObjectHolderHelper {
   
   public Integer minInclusive() {
     XmlInteger min = (XmlInteger)getPropertyFacet(SchemaType.FACET_MIN_INCLUSIVE);
-    return new Integer(min.getBigIntegerValue().intValue());
+    return Integer.valueOf(min.getBigIntegerValue().intValue());
   }
 
   public Integer maxInclusive() {
     XmlInteger min = (XmlInteger)getPropertyFacet(SchemaType.FACET_MAX_INCLUSIVE);
-    return new Integer(min.getBigIntegerValue().intValue());
+    return Integer.valueOf(min.getBigIntegerValue().intValue());
   }
   
   // TODO: make lazy ivar
@@ -243,7 +243,7 @@ public class XmlObjectHolderHelper {
   
   // TODO: make lazy ivar
   public Integer defaultIntegerValue() {
-    return new Integer(defaultInteger());
+    return Integer.valueOf(defaultInteger());
   }
   
   public int getInteger() {
@@ -251,7 +251,7 @@ public class XmlObjectHolderHelper {
   }
   
   public Integer getIntegerValue() {
-    return new Integer(getInteger());
+    return Integer.valueOf(getInteger());
   }
   
   // TODO: make lazy ivar
@@ -349,7 +349,7 @@ public class XmlObjectHolderHelper {
     return m_listenerList.toArray(new XmlObjectStructureListener[0]);
   }
   
-  protected void fireXmlObjectStructureChanged() {
+  protected synchronized void fireXmlObjectStructureChanged() {
     if(m_listenerList != null) {
       XmlObjectStructureListener[]  listeners = getListenerArray();
       XmlObjectStructureChangeEvent event     = getChangeEvent();

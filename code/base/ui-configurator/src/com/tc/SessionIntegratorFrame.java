@@ -34,13 +34,9 @@ import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XTree;
 import com.tc.config.Directories;
 import com.tc.management.beans.L2MBeanNames;
-import com.tc.object.appevent.NonPortableEventContext;
-import com.tc.object.appevent.NonPortableFieldSetContext;
-import com.tc.object.appevent.NonPortableLogicalInvokeContext;
 import com.tc.object.appevent.NonPortableObjectEvent;
 import com.tc.servers.ServerSelection;
 import com.tc.servers.ServersDialog;
-import com.tc.util.NonPortableReason;
 import com.tc.util.runtime.Os;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
@@ -92,16 +88,13 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
-import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
@@ -366,7 +359,7 @@ public class SessionIntegratorFrame extends Frame {
 
     Container configPaneToolbar = (Container) findComponent("ConfigPaneToolbar");
     Button button;
-    Insets emptyInsets = new Insets(1,1,1,1);
+    Insets emptyInsets = new Insets(1, 1, 1, 1);
     button = (Button) configPaneToolbar.findComponent("SaveButton");
     button.setAction(m_xmlPane.getSaveAction());
     button.setText(null);
@@ -392,7 +385,7 @@ public class SessionIntegratorFrame extends Frame {
     button.setAction(m_xmlPane.getPasteAction());
     button.setText(null);
     button.setMargin(emptyInsets);
-    
+
     m_l2OutView = (ProcessOutputView) findComponent("L2OutView");
     m_l2Label = (Label) findComponent("L2Label");
     m_l2Status = new ProcessStatus("L2");
@@ -457,7 +450,6 @@ public class SessionIntegratorFrame extends Frame {
     setupEditorPanels();
 
     m_startButton.setEnabled(isWebServer1Enabled() || isWebServer2Enabled() || isDsoEnabled());
-    m_stopButton.setEnabled(isWebServer1Enabled() || isWebServer2Enabled() || isDsoEnabled());
 
     if (prefs.getBoolean(SHOW_SPLASH_PREF_KEY, true)) {
       addComponentListener(new ComponentAdapter() {
@@ -717,8 +709,8 @@ public class SessionIntegratorFrame extends Frame {
             m_webServer2Label.setText(getWebServer2Label());
 
             // If the selected server changes, rebuild the webapp tree.
-            if(oldSelectedServerIndex != m_serverSelection.getSelectedServerIndex()) {
-              m_webAppTreeModel = new WebAppTreeModel(SessionIntegratorFrame.this, getWebApps());    
+            if (oldSelectedServerIndex != m_serverSelection.getSelectedServerIndex()) {
+              m_webAppTreeModel = new WebAppTreeModel(SessionIntegratorFrame.this, getWebApps());
               m_webAppTree.setModel(m_webAppTreeModel);
             }
 
@@ -1219,6 +1211,12 @@ public class SessionIntegratorFrame extends Frame {
     if (err != null) { throw err; }
   }
 
+  void saveAndStart() {
+    m_configHelper.save();
+    setXmlModified(false);
+    m_startButton.doClick();
+  }
+
   private boolean isDsoEnabled() {
     return m_dsoEnabled;
   }
@@ -1373,7 +1371,7 @@ public class SessionIntegratorFrame extends Frame {
     BrowserLauncher.openURL(page);
   }
 
-  private void startSystem() {
+  void startSystem() {
     try {
       if (isXmlModified()) {
         if (querySaveConfig() == JOptionPane.CANCEL_OPTION) { return; }
@@ -1494,12 +1492,12 @@ public class SessionIntegratorFrame extends Frame {
   }
 
   private void startL2() {
-    if(System.getProperty("tc.server") != null) {
-      m_l2OutView.append("Using external Terracotta servers: "+System.getProperty("tc.server"));
+    if (System.getProperty("tc.server") != null) {
+      m_l2OutView.append("Using external Terracotta servers: " + System.getProperty("tc.server"));
       startWebServers();
       return;
     }
-    
+
     trace("startL2");
 
     if (m_l2Monitor != null) {
@@ -1681,7 +1679,7 @@ public class SessionIntegratorFrame extends Frame {
   }
 
   private void stopL2(boolean restart) {
-    if(System.getProperty("tc.server") != null) {
+    if (System.getProperty("tc.server") != null) {
       if (m_webServer1Status.isReady() || m_webServer2Status.isReady()) {
         stopWebServers();
       }
@@ -1871,340 +1869,35 @@ public class SessionIntegratorFrame extends Frame {
     }
   }
 
+  private static final String NON_PORTABLE_DIALOG_SIZE                  = "NonPortableDialogSize";
+  private static final String NON_PORTABLE_DIALOG_ISSUES_SPLIT_LOCATION = "NonPortableDialogIssuesSplitLocation";
+
   private void handleNonPortableReason(NonPortableObjectEvent event) {
-    ContainerResource res = (ContainerResource)SessionIntegrator.getContext().topRes.getComponent("NonPortableObjectPanel");
+    ContainerResource res = (ContainerResource) SessionIntegrator.getContext().topRes
+        .getComponent("NonPortableObjectPanel");
     NonPortableObjectPanel panel = new NonPortableObjectPanel(res, this);
     Dialog dialog = new Dialog(this, this.getTitle(), true);
-    Container cp = (Container)dialog.getContentPane();
+    Container cp = (Container) dialog.getContentPane();
     cp.setLayout(new BorderLayout());
     cp.add(panel);
     panel.setEvent(event);
     dialog.pack();
+    SplitPane issuesSplitter = (SplitPane) panel.findComponent("IssuesSplitter");
+    Preferences prefs = getPreferences();
+    String s = prefs.get(NON_PORTABLE_DIALOG_ISSUES_SPLIT_LOCATION, null);
+    if (s != null) {
+      issuesSplitter.setDividerLocation(parseInt(s));
+    }
+    if ((s = prefs.get(NON_PORTABLE_DIALOG_SIZE, null)) != null) {
+      dialog.setSize(parseSizeString(s));
+    }
     dialog.center(this);
     dialog.setVisible(true);
+    prefs.put(NON_PORTABLE_DIALOG_SIZE, getSizeString(dialog));
+    prefs.put(NON_PORTABLE_DIALOG_ISSUES_SPLIT_LOCATION, Integer.toString(issuesSplitter.getDividerLocation()));
+    storePreferences();
     m_handlingAppEvent = false;
     return;
-    
-    /*
-    NonPortableReason reason = event.getReason();
-
-    switch (reason.getReason()) {
-      case NonPortableReason.CLASS_NOT_IN_BOOT_JAR: {
-        handleClassNotInBootJar(event);
-        break;
-      }
-      case NonPortableReason.CLASS_NOT_INCLUDED_IN_CONFIG: {
-        handleClassNotIncludedInConfig(event);
-        break;
-      }
-      case NonPortableReason.SUPER_CLASS_NOT_INSTRUMENTED: {
-        handleSuperClassNotInstrumented(event);
-        break;
-      }
-      case NonPortableReason.SUBCLASS_OF_LOGICALLY_MANAGED_CLASS: {
-        handleSubclassOfLocicallyManagedClass(event);
-        break;
-      }
-      case NonPortableReason.CLASS_NOT_ADAPTABLE: {
-        handleClassNotAdaptable(event);
-        break;
-      }
-      default: {
-        handleNonPortable(event);
-        break;
-      }
-    }
-    
-    m_handlingAppEvent = false;
-   */
-  }
-
-  private void handleClassNotAdaptable(NonPortableObjectEvent event) {
-    NonPortableReason reason = event.getReason();
-    NonPortableEventContext cntx = event.getContext();
-    String msg = reason.getMessage();
-    String targetClass = cntx.getTargetClassName();
-    String className = reason.getClassName();
-
-    msg = "<html><p>Attempted to share an instance of type <b>" + targetClass + "</b>,<br>"
-          + "containing an instance of type <b>" + className + "</b><br>" + "which inherently cannot be shared in DSO.";
-
-    String fieldName = null;
-
-    if (reason.hasUltimateNonPortableFieldName()) {
-      fieldName = reason.getUltimateNonPortableFieldName();
-    } else if (cntx instanceof NonPortableFieldSetContext) {
-      fieldName = ((NonPortableFieldSetContext) cntx).getFieldName();
-    }
-
-    if (fieldName != null) {
-      msg += "<br><br>Update the configuration to add <b>" + fieldName + "</b><br>"
-             + "as a transient field and restart the system?";
-
-      int answer = showConfirmDialog(msg, JOptionPane.YES_NO_OPTION);
-      if (answer == JOptionPane.YES_OPTION) {
-        m_transientFieldsPanel.ensureTransient(fieldName);
-        m_configHelper.save();
-        setXmlModified(false);
-        m_startButton.doClick();
-      }
-    } else {
-      TreeModel treeModel = event.getContext().getTreeModel();
-      showPlainMessage(new JScrollPane(new JTree(treeModel)));
-    }
-  }
-
-  // TODO: handle multiple logically-managed parent types.
-
-  private void handleSubclassOfLocicallyManagedClass(NonPortableObjectEvent event) {
-    NonPortableReason reason = event.getReason();
-    NonPortableEventContext cntx = event.getContext();
-    String msg = reason.getMessage();
-    String targetClass = cntx.getTargetClassName();
-    String className = reason.getClassName();
-    List bootClasses = reason.getErroneousBootJarSuperClasses();
-    List nonBootClasses = reason.getErroneousSuperClasses();
-    String logicalType = bootClasses.size() > 0 ? (String) bootClasses.get(0) : (String) nonBootClasses.get(0);
-
-    if (cntx instanceof NonPortableLogicalInvokeContext) {
-      msg = "<html><p>Attempted to share an instance of type <b>" + className + "</b><br>"
-            + "that extends the logically-managed type <b>" + targetClass + "</b>.<br><br>"
-            + "Subclasses of logically-managed types cannot be shared in DSO.";
-    } else {
-      msg = "<html><p>Attempted to share an instance of type <b>" + targetClass + "</b>,<br>"
-            + "containing an instance of type <b>" + className + "</b><br>"
-            + "that extends the logically-managed type <b>" + logicalType + "</b>.<br><br>"
-            + "Subclasses of logically-managed types cannot be shared in DSO.";
-    }
-
-    if (reason.hasUltimateNonPortableFieldName()) {
-      String fieldName = reason.getUltimateNonPortableFieldName();
-
-      msg += "<br><br>Update the configuration to add <b>" + fieldName + "</b><br>"
-             + "as a transient field and restart the system?";
-
-      int answer = showConfirmDialog(msg, JOptionPane.YES_NO_OPTION);
-      if (answer == JOptionPane.YES_OPTION) {
-        m_transientFieldsPanel.ensureTransient(fieldName);
-        m_configHelper.save();
-        setXmlModified(false);
-        m_startButton.doClick();
-      }
-    } else {
-      showPlainMessage(msg);
-    }
-  }
-
-  private void handleNonPortable(NonPortableObjectEvent event) {
-    NonPortableReason reason = event.getReason();
-    NonPortableEventContext cntx = event.getContext();
-    String msg = reason.getMessage();
-    String className = reason.getClassName();
-
-    if (cntx instanceof NonPortableFieldSetContext) {
-      NonPortableFieldSetContext npfsc = (NonPortableFieldSetContext) cntx;
-      String targetClass = cntx.getTargetClassName();
-      String fieldName = npfsc.getFieldName();
-
-      msg = "<html><p>Attempted to share an instance of type <b>" + targetClass + "</b>,<br>"
-            + "containing an instance of type <b>" + className + "</b><br>"
-            + "which inherently cannot be shared in DSO.<br><br>" + "Update the configuration to add <b>" + fieldName
-            + "</b><br>" + "as a transient field and restart the system?";
-
-      int answer = showConfirmDialog(msg, JOptionPane.YES_NO_OPTION);
-      if (answer == JOptionPane.YES_OPTION) {
-        m_transientFieldsPanel.ensureTransient(fieldName);
-        m_configHelper.save();
-        setXmlModified(false);
-        m_startButton.doClick();
-      }
-    } else if (cntx instanceof NonPortableLogicalInvokeContext) {
-      List bootClasses = reason.getErroneousBootJarSuperClasses();
-      List nonBootClasses = reason.getErroneousSuperClasses();
-      String nonPortableType = bootClasses.size() > 0 ? (String) bootClasses.get(0) : (String) nonBootClasses.get(0);
-
-      msg = "<html><p>Attempted to share an instance of type <b>" + className + "</b>,<br>"
-            + "containing an instance of type <b>" + nonPortableType + "</b><br>"
-            + "which is inherently not sharable in DSO.";
-
-      if (reason.hasUltimateNonPortableFieldName()) {
-        String fieldName = reason.getUltimateNonPortableFieldName();
-
-        msg += "<br><br>Update the configuration to add <b>" + fieldName + "</b><br>"
-               + "as a transient field and restart the system?";
-
-        int answer = showConfirmDialog(msg, JOptionPane.YES_NO_OPTION);
-        if (answer == JOptionPane.YES_OPTION) {
-
-          m_transientFieldsPanel.ensureTransient(fieldName);
-          m_configHelper.save();
-          setXmlModified(false);
-          m_startButton.doClick();
-        }
-      } else {
-        showPlainMessage(msg);
-      }
-    } else {
-      showPlainMessage(msg);
-    }
-  }
-
-  private String getClassNotInBootJarMessage(NonPortableObjectEvent event) {
-    NonPortableReason reason = event.getReason();
-    NonPortableEventContext cntx = event.getContext();
-    String targetClass = cntx.getTargetClassName();
-    String className = reason.getClassName();
-    List bootTypes = reason.getErroneousBootJarSuperClasses();
-
-    if (cntx instanceof NonPortableLogicalInvokeContext) {
-      if (bootTypes.size() > 0) {
-        return "<html><p>An instance of type <b>" + className + "</b> cannot be shared until<br>"
-               + "it, and some of its parent types, are added to the DSO boot jar.</html>";
-      } else {
-        return "<html><p>An instance of type <b>" + className + "</b> cannot be shared until<br>"
-               + "it is added to the DSO boot jar.<br><br>" + "Update the configuration to add <b>" + className
-               + "</b> to the<br>" + "DSO boot-jar and restart the system?";
-      }
-    } else {
-      if (bootTypes.size() > 0) {
-        return "<html><p>Cannot share an instance of type <b>" + targetClass + "</b><br>"
-               + "because it contains an instance of type <b>" + className + "</b>,<br>"
-               + "and some parent types, that must be added to the DSO boot-jar.</html>";
-      } else {
-        return "<html><p>Cannot share an instance of type <b>" + targetClass + "</b><br>"
-               + "because it contains an instance of type <b>" + className + "</b><br>"
-               + "that must be added to the DSO boot-jar.<br><br>" + "Update the configuration to add <b>" + className
-               + "</b> to the<br>" + "DSO boot-jar and restart the system?";
-      }
-    }
-  }
-
-  private void handleClassNotInBootJar(NonPortableObjectEvent event) {
-    NonPortableReason reason = event.getReason();
-    String className = reason.getClassName();
-    List bootTypes = reason.getErroneousBootJarSuperClasses();
-    List superTypes = reason.getErroneousSuperClasses();
-    String msg = getClassNotInBootJarMessage(event);
-    int type = JOptionPane.YES_NO_OPTION;
-
-    if (bootTypes.size() > 0) {
-      bootTypes.add(0, className);
-
-      InstrumentSuperTypesPanel panel = getInstrumentSuperTypesPanel(msg, className, bootTypes, superTypes);
-
-      if (showConfirmDialog(panel, type) == JOptionPane.OK_OPTION) {
-        for (int i = 0; i < bootTypes.size(); i++) {
-          m_bootClassesPanel.ensureBootClass((String) bootTypes.get(i));
-        }
-
-        m_configHelper.save();
-        setXmlModified(false);
-
-        if (panel.restartSystem()) {
-          m_startButton.doClick();
-        }
-      }
-    } else {
-      if (showConfirmDialog(msg, type) == JOptionPane.YES_OPTION) {
-        m_bootClassesPanel.ensureBootClass(className);
-        m_configHelper.save();
-        setXmlModified(false);
-        m_startButton.doClick();
-      }
-    }
-  }
-
-  private InstrumentTypePanel m_instrumentPanel;
-
-  private InstrumentTypePanel getInstrumentPanel(String msg, String className, List bootTypes, List superTypes) {
-    if (m_instrumentPanel == null) {
-      DictionaryResource topRes = SessionIntegrator.getContext().topRes;
-      ContainerResource res = (ContainerResource) topRes.getComponent("InstrumentPanel");
-
-      m_instrumentPanel = new InstrumentTypePanel(res);
-    }
-    m_instrumentPanel.setup(msg, className, bootTypes, superTypes);
-
-    return m_instrumentPanel;
-  }
-
-  private void handleClassNotIncludedInConfig(NonPortableObjectEvent event) {
-    NonPortableReason reason = event.getReason();
-    List bootTypes = reason.getErroneousBootJarSuperClasses();
-    List superTypes = reason.getErroneousSuperClasses();
-
-    String className = reason.getClassName();
-    String msg = "<html><p>Cannot share an instance of type <b>" + className + "</b>,<br> "
-                 + "because it is not instrumented for use with DSO.";
-    int type = JOptionPane.OK_CANCEL_OPTION;
-    InstrumentTypePanel panel = getInstrumentPanel(msg, className, bootTypes, superTypes);
-    JScrollPane scrollPane = new JScrollPane(new JTree(event.getContext().getTreeModel()));
-    int answer = showConfirmDialog(scrollPane, type);
-
-    if (answer == JOptionPane.OK_OPTION) {
-      m_instrumentedClassesPanel.ensureAdaptable(panel.getPattern());
-
-      for (int i = 0; i < bootTypes.size(); i++) {
-        m_bootClassesPanel.ensureBootClass((String) bootTypes.get(i));
-      }
-
-      if (!panel.includeAll()) {
-        for (int i = 0; i < superTypes.size(); i++) {
-          m_instrumentedClassesPanel.ensureAdaptable((String) superTypes.get(i));
-        }
-      }
-
-      m_configHelper.save();
-      setXmlModified(false);
-
-      if (panel.restartSystem()) {
-        m_startButton.doClick();
-      }
-    }
-  }
-
-  private InstrumentSuperTypesPanel m_instrumentSuperTypesPanel;
-
-  private InstrumentSuperTypesPanel getInstrumentSuperTypesPanel(String msg, String className, List bootTypes,
-                                                                 List superTypes) {
-    if (m_instrumentSuperTypesPanel == null) {
-      DictionaryResource topRes = SessionIntegrator.getContext().topRes;
-      ContainerResource res = (ContainerResource) topRes.getComponent("InstrumentSuperTypesPanel");
-
-      m_instrumentSuperTypesPanel = new InstrumentSuperTypesPanel(res);
-    }
-    m_instrumentSuperTypesPanel.setup(msg, className, bootTypes, superTypes);
-
-    return m_instrumentSuperTypesPanel;
-  }
-
-  private void handleSuperClassNotInstrumented(NonPortableObjectEvent event) {
-    NonPortableReason reason = event.getReason();
-    String className = reason.getClassName();
-    String msg = "<html><p>An instance of type <b>" + className + "</b> cannot be shared because<br>"
-                 + "some of its base classes are not instrumented for use with DSO.</html>";
-    int type = JOptionPane.OK_CANCEL_OPTION;
-    List bootTypes = reason.getErroneousBootJarSuperClasses();
-    List superTypes = reason.getErroneousSuperClasses();
-    InstrumentSuperTypesPanel panel = getInstrumentSuperTypesPanel(msg, className, bootTypes, superTypes);
-    int answer = showConfirmDialog(panel, type);
-
-    if (answer == JOptionPane.OK_OPTION) {
-      for (int i = 0; i < bootTypes.size(); i++) {
-        m_bootClassesPanel.ensureBootClass((String) bootTypes.get(i));
-      }
-
-      for (int i = 0; i < superTypes.size(); i++) {
-        m_instrumentedClassesPanel.ensureAdaptable((String) superTypes.get(i));
-      }
-
-      m_configHelper.save();
-      setXmlModified(false);
-
-      if (panel.restartSystem()) {
-        m_startButton.doClick();
-      }
-    }
   }
 
   private int showConfirmDialog(Object msg, int msgType) {
@@ -3047,12 +2740,21 @@ public class SessionIntegratorFrame extends Frame {
     return new Rectangle(x, y, width, height);
   }
 
-  private String getBoundsString() {
-    Rectangle b = getBounds();
+  private static String getSizeString(java.awt.Window window) {
+    Dimension size = window.getSize();
+    return size.width + "," + size.height;
+  }
+
+  private static String getBoundsString(java.awt.Window window) {
+    Rectangle b = window.getBounds();
     return b.x + "," + b.y + "," + b.width + "," + b.height;
   }
 
-  private int parseInt(String s) {
+  private String getBoundsString() {
+    return getBoundsString(this);
+  }
+
+  private static int parseInt(String s) {
     try {
       return Integer.parseInt(s);
     } catch (Exception e) {
@@ -3060,7 +2762,15 @@ public class SessionIntegratorFrame extends Frame {
     }
   }
 
-  private Rectangle parseBoundsString(String s) {
+  private static Dimension parseSizeString(String s) {
+    String[] split = s.split(",");
+    int width = parseInt(split[0]);
+    int height = parseInt(split[1]);
+
+    return new Dimension(width, height);
+  }
+
+  private static Rectangle parseBoundsString(String s) {
     String[] split = s.split(",");
     int x = parseInt(split[0]);
     int y = parseInt(split[1]);

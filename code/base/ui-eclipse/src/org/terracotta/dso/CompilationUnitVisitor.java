@@ -204,49 +204,65 @@ public class CompilationUnitVisitor extends ASTVisitor {
   }
   
   public boolean visit(TypeDeclaration node) {
-    if(node.isInterface()) {
-      return false;
-    }
-    else {
-      ITypeBinding binding = node.resolveBinding();
-    
-      if(binding != null) {
-        IType type = typeFromTypeBinding(binding);
-        
-        if(type != null) {
-          String fullName = PatternHelper.getFullyQualifiedName(type);
+    ITypeBinding binding = node.resolveBinding();
   
-          if(m_configHelper.isAdaptable(fullName)) {
-            addMarker("adaptedTypeMarker", "DSO Adapted Type", node.getName());
-          } else if(m_configHelper.isExcluded(fullName)) {
-            addMarker("excludedTypeMarker", "DSO Excluded Type", node.getName());
-          }
+    if(binding != null) {
+      IType type = typeFromTypeBinding(binding);
+      
+      if(type != null) {
+        String fullName = PatternHelper.getFullyQualifiedName(type);
+
+        if(m_configHelper.isAdaptable(fullName)) {
+          addMarker("adaptedTypeMarker", "DSO Adapted Type", node.getName());
+        } else if(m_configHelper.isExcluded(fullName)) {
+          addMarker("excludedTypeMarker", "DSO Excluded Type", node.getName());
         }
-        
-        Type superType = node.getSuperclassType();
-        if(superType != null) {
-          binding  = superType.resolveBinding();
-          
-          if(binding != null && !binding.isPrimitive() && !binding.isTypeVariable()) {
+      }
+      
+      List superInterfaces = node.superInterfaceTypes();
+      if (superInterfaces != null) {
+        for (Iterator iter = superInterfaces.iterator(); iter.hasNext();) {
+          Type t = (Type) iter.next();
+          binding = t.resolveBinding();
+
+          if (binding != null && !binding.isPrimitive() && !binding.isTypeVariable()) {
             type = typeFromTypeBinding(binding);
-            
-            if(type != null) {
-              String fullName = PatternHelper.getFullyQualifiedName(type);
-          
-              if(m_plugin.isBootClass(fullName)) {
-                addMarker("bootJarTypeMarker", "BootJar Type", superType);
-              } else if(m_configHelper.isAdaptable(fullName)) {
-                addMarker("adaptedTypeReferenceMarker", "DSO Instrumented Type Reference", superType);
-              } else if(m_configHelper.isExcluded(fullName)) {
-                addMarker("excludedTypeMarker", "DSO Excluded Type", superType);
-              }
+
+            String fullName = PatternHelper.getFullyQualifiedName(type);
+            if (m_plugin.isBootClass(fullName)) {
+              addMarker("bootJarTypeMarker", "BootJar Type", t);
+            } else if (m_configHelper.isAdaptable(fullName)) {
+              addMarker("adaptedTypeReferenceMarker", "DSO Instrumented Type Reference", t);
+            } else if (m_configHelper.isExcluded(fullName)) {
+              addMarker("excludedTypeMarker", "DSO Excluded Type", t);
             }
           }
         }
       }
       
-      return true;
+      Type superType = node.getSuperclassType();
+      if(superType != null) {
+        binding  = superType.resolveBinding();
+        
+        if(binding != null && !binding.isPrimitive() && !binding.isTypeVariable()) {
+          type = typeFromTypeBinding(binding);
+          
+          if(type != null) {
+            String fullName = PatternHelper.getFullyQualifiedName(type);
+        
+            if(m_plugin.isBootClass(fullName)) {
+              addMarker("bootJarTypeMarker", "BootJar Type", superType);
+            } else if(m_configHelper.isAdaptable(fullName)) {
+              addMarker("adaptedTypeReferenceMarker", "DSO Instrumented Type Reference", superType);
+            } else if(m_configHelper.isExcluded(fullName)) {
+              addMarker("excludedTypeMarker", "DSO Excluded Type", superType);
+            }
+          }
+        }
+      }
     }
+    
+    return true;
   }
 
   public boolean visit(FieldDeclaration node) {
@@ -273,6 +289,14 @@ public class CompilationUnitVisitor extends ASTVisitor {
   }
 
   public boolean visit(MethodDeclaration node) {
+//    IMethod method = (IMethod)node.resolveBinding().getJavaElement();
+//    JavaModelMethodInfo methodInfo = PatternHelper.getHelper().getMethodInfo(method);
+//    for(Object o : node.modifiers()) {
+//      if (o instanceof Annotation) {
+//        methodInfo.addAnnotation((Annotation)o);
+//      }
+//    }
+    
     if(m_configHelper.isAutolocked(node)) {
       addMarker("autolockedMarker", "DSO Auto-locked Method", node.getName());
       
@@ -557,7 +581,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
     MarkerUtilities.setCharStart(map, startPos);
     MarkerUtilities.setCharEnd(map, endPos);
     MarkerUtilities.setLineNumber(map, line);
-    map.put(IMarker.SEVERITY, new Integer(IMarker.SEVERITY_WARNING));
+    map.put(IMarker.SEVERITY, Integer.valueOf(IMarker.SEVERITY_WARNING));
     
     createMarker(m_res, map, markerID);
   }

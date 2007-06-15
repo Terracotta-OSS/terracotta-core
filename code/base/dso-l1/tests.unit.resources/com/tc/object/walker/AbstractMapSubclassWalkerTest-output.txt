@@ -1,0 +1,5 @@
+com.tc.object.walker.BasicWalkerTest$AbstractMapSubclass (id 0)
+  int iVal = 42
+  Set keySet = null
+  String sVal = "timmy"
+  Collection values = null

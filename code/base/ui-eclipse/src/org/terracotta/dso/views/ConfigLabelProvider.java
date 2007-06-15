@@ -16,7 +16,7 @@ class ConfigLabelProvider extends LabelProvider {
   private static Image m_transientsImage;
   private static Image m_missingElementImage;
   
-  private static JavaElementLabelProvider m_javaLabelProvider;
+  private static JavaElementLabelProvider m_javaLabelProvider = new JavaElementLabelProvider(JavaElementLabelProvider.SHOW_SMALL_ICONS);
 
   static {
     m_rootsImage = TcPlugin.createImage("/images/eclipse/roots.gif");
@@ -31,7 +31,6 @@ class ConfigLabelProvider extends LabelProvider {
   ConfigLabelProvider(ConfigViewer viewer) {
     super();
     fViewer = viewer;
-    m_javaLabelProvider = new JavaElementLabelProvider(JavaElementLabelProvider.SHOW_SMALL_ICONS);
   }
   
   public String getText(Object element) {

@@ -158,6 +158,7 @@ public class InstrumentedClassesPanel extends ConfigurationEditorPanel {
   }
 
   private void initTableItems() {
+    m_layout.m_table.removeAll();
     if (m_instrumentedClasses == null) return;
     SWTUtil.makeTableComboItem(m_layout.m_table, 0, new String[] { INCLUDE, EXCLUDE });
     updateRules();
@@ -184,12 +185,14 @@ public class InstrumentedClassesPanel extends ConfigurationEditorPanel {
 
   private void updateRules() {
     m_layout.m_table.removeAll();
-    XmlObject[] classes = m_instrumentedClasses.selectPath("*");
-    for (int i = 0; i < classes.length; i++) {
-      if (classes[i] instanceof Include) {
-        createIncludeTableItem((Include) classes[i]);
-      } else {
-        createExcludeTableItem((ClassExpression) classes[i]);
+    if(m_instrumentedClasses != null) {
+      XmlObject[] classes = m_instrumentedClasses.selectPath("*");
+      for (int i = 0; i < classes.length; i++) {
+        if (classes[i] instanceof Include) {
+          createIncludeTableItem((Include) classes[i]);
+        } else {
+          createExcludeTableItem((ClassExpression) classes[i]);
+        }
       }
     }
   }
@@ -783,8 +786,8 @@ public class InstrumentedClassesPanel extends ConfigurationEditorPanel {
   }
 
   public void includeRulesChanged(IProject project) {
-    if (project.equals(getProject())) {
-      initTableItems();
-    }
+//    if (project.equals(getProject())) {
+//      initTableItems();
+//    }
   }
 }

@@ -147,7 +147,7 @@ public class BootJarView extends ViewPart
     }
   }
 
-  class ViewLabelProvider extends LabelProvider implements
+  static class ViewLabelProvider extends LabelProvider implements
       ITableLabelProvider {
     public String getColumnText(Object obj, int index) {
       return getText(obj);

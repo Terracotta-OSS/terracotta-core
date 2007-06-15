@@ -22,8 +22,9 @@ import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.aspectwerkz.reflect.MethodInfo;
 import com.tc.object.bytecode.aspectwerkz.AsmMethodInfo;
-import com.tc.object.bytecode.aspectwerkz.ClassInfoFactory;
 import com.tc.object.bytecode.aspectwerkz.ExpressionHelper;
+
+import java.util.HashMap;
 
 /**
  * Utility singleton for bridging the gap between Eclipse internal
@@ -34,7 +35,9 @@ public class PatternHelper {
   private static PatternHelper m_helper = new PatternHelper();
   private ExpressionHelper     m_expressionHelper;
   private ClassInfoFactory     m_classInfoFactory;
-
+  private HashMap              m_expressionContextCache;
+  private HashMap              m_executionExpressionContextCache;
+  
   public static final PatternHelper getHelper() {
     return m_helper;
   }
@@ -42,6 +45,8 @@ public class PatternHelper {
   private PatternHelper() {
     m_expressionHelper = new ExpressionHelper();
     m_classInfoFactory = new ClassInfoFactory();
+    m_expressionContextCache = new HashMap();
+    m_executionExpressionContextCache = new HashMap();
   }
 
   public boolean matchesMethod(String expression, final IMethod method) {
@@ -69,7 +74,12 @@ public class PatternHelper {
   }
   
   public ExpressionContext createExecutionExpressionContext(final MemberInfo methodInfo) {
-    return m_expressionHelper.createExecutionExpressionContext(methodInfo);  
+    ExpressionContext exprCntx = (ExpressionContext)m_executionExpressionContextCache.get(methodInfo);
+    if(exprCntx == null) {
+      exprCntx = m_expressionHelper.createExecutionExpressionContext(methodInfo);
+      m_executionExpressionContextCache.put(methodInfo, exprCntx);
+    }
+    return exprCntx;  
   }
   
   public void testValidateMethodExpression(final String expr) throws Exception {
@@ -96,7 +106,7 @@ public class PatternHelper {
       expr = expr.substring(0, parentIndex)+tmp;
     }
     
-    return matchesMethod(expr, m_expressionHelper.createExecutionExpressionContext(methodInfo));
+    return matchesMethod(expr, createExecutionExpressionContext(methodInfo));
   }
 
   public static String getFullyQualifiedName(IType type) {
@@ -104,7 +114,7 @@ public class PatternHelper {
   }
   
   public ExpressionContext createWithinExpressionContext(final IType type) {
-    return createWithinExpressionContext(getFullyQualifiedName(type));
+    return createWithinExpressionContext(m_classInfoFactory.getClassInfo(type));
   }
 
   public ExpressionContext createWithinExpressionContext(final IPackageDeclaration packageDecl) {
@@ -120,7 +130,12 @@ public class PatternHelper {
   }
   
   public ExpressionContext createWithinExpressionContext(final ClassInfo classInfo) {
-    return m_expressionHelper.createWithinExpressionContext(classInfo);
+    ExpressionContext exprCntx = (ExpressionContext)m_expressionContextCache.get(classInfo);
+    if(exprCntx == null) {
+      exprCntx = m_expressionHelper.createWithinExpressionContext(classInfo);
+      m_expressionContextCache.put(classInfo, exprCntx);
+    }
+    return exprCntx;
   }
   
   public boolean matchesClass(final String expr, final ExpressionContext exprCntx) {
@@ -134,12 +149,17 @@ public class PatternHelper {
     }
   }
   
+  public JavaModelClassInfo getClassInfo(IType type) {
+    return (JavaModelClassInfo)m_classInfoFactory.getClassInfo(type);
+  }
+  
   public boolean matchesClass(final String expression, final String className) {
+    if(expression != null && expression.equals(className)) return true;
     return matchesClass(expression, m_classInfoFactory.getClassInfo(className));
   }
   
   public boolean matchesClass(final String expr, final ClassInfo classInfo) {
-    return matchesClass(expr, m_expressionHelper.createWithinExpressionContext(classInfo));
+    return matchesClass(expr, createWithinExpressionContext(classInfo));
   }
   
   public boolean matchesType(final String expr, final IType type) {

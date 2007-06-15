@@ -98,7 +98,7 @@ public class JavaSetupParticipant implements IDocumentSetupParticipant {
   
   public void setup(IDocument document) {/**/}
   
-  class Inspector implements Runnable {
+  static class Inspector implements Runnable {
     private IFile m_file;
     
     Inspector(IFile file) {

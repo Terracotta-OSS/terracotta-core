@@ -9,6 +9,7 @@ import org.dijon.CheckBox;
 import org.dijon.Container;
 import org.dijon.ContainerResource;
 import org.dijon.Dialog;
+import org.dijon.EmptyBorder;
 import org.dijon.Label;
 import org.dijon.PagedView;
 import org.dijon.RadioButton;
@@ -22,7 +23,9 @@ import com.tc.admin.common.NonPortableWorkState;
 import com.tc.admin.common.XCellEditor;
 import com.tc.admin.common.XCheckBox;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
 import com.tc.admin.common.XList;
+import com.tc.admin.common.XTextField;
 import com.tc.admin.common.XTextPane;
 import com.tc.admin.common.XTree;
 import com.tc.admin.common.XTreeCellRenderer;
@@ -32,28 +35,34 @@ import com.terracottatech.config.Include;
 import com.terracottatech.config.OnLoad;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.EventObject;
 import java.util.Iterator;
 
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JTree;
-import javax.swing.ListCellRenderer;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellEditor;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.DefaultTreeSelectionModel;
@@ -82,6 +91,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   private TextField                 fOnLoadMethodField;
   private RadioButton               fOnLoadCodeToggle;
   private TextArea                  fOnLoadCodeText;
+  private XList                     fIncludeTypesList;
   private XList                     fBootTypesList;
   private Button                    fPreviousIssueButton;
   private Button                    fNextIssueButton;
@@ -106,7 +116,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   private static final ImageIcon    RESOLVED_ICON         = new ImageIcon(NonPortableWalkNode.class
                                                               .getResource("/com/tc/admin/icons/installed_ovr.gif"));
   private static final ImageIcon    BLANK_ICON            = new ImageIcon(NonPortableWalkNode.class
-                                                              .getResource("/com/tc/admin/icons/blank.gif"));
+                                                              .getResource("/com/tc/admin/icons/blank12x12.gif"));
 
   public NonPortableObjectPanel(ContainerResource res, SessionIntegratorFrame frame) {
     super();
@@ -125,8 +135,8 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   public void load(ContainerResource res) {
     super.load(res);
 
-    fMessageLabel = (Label)findComponent("MessageLabel");
-    
+    fMessageLabel = (Label) findComponent("MessageLabel");
+
     fIssueList = (XList) findComponent("IssueList");
     fIssueList.setModel(fIssueListModel = new DefaultListModel());
     fIssueList.setCellRenderer(new IssueListCellRenderer());
@@ -135,11 +145,12 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
 
     fObjectTree = (XTree) findComponent("Tree");
     fObjectTree.setCellRenderer(new ObjectTreeCellRenderer());
-    ((DefaultTreeSelectionModel) fObjectTree.getSelectionModel()).setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    ((DefaultTreeSelectionModel) fObjectTree.getSelectionModel())
+        .setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     fObjectTree.addTreeSelectionListener(this);
 
     fIssueDetailsPanel = (Container) findComponent("IssueDetailsPanel");
-    
+
     fSummaryLabel = (Label) findComponent("SummaryLabel");
     fDescriptionText = (XTextPane) findComponent("DescriptionText");
     fResolutionsPanel = (Container) findComponent("ResolutionsPanel");
@@ -147,11 +158,13 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     fActionTree = (XTree) findComponent("ActionTree");
     fActionTree.addTreeSelectionListener(new ActionTreeSelectionHandler());
     fActionTree.setCellRenderer(new ActionTreeNodeRenderer());
+    fActionTree.setCellEditor(new ActionTreeNodeEditor());
     fActionTree.setRootVisible(true);
-    fActionTree.addMouseListener(new ActionTreeMouseListener());
-    ((DefaultTreeModel)fActionTree.getModel()).setRoot(new ActionTreeRootNode());
-    
-    fActionPanel = (PagedView)findComponent("ActionPanel");
+    fActionTree.setEditable(true);
+    ((DefaultTreeModel) fActionTree.getModel()).setRoot(new ActionTreeRootNode());
+    fActionTree.setInvokesStopCellEditing(true);
+
+    fActionPanel = (PagedView) findComponent("ActionPanel");
 
     fIncludePatternField = (TextField) findComponent("PatternField");
     fHonorTransientToggle = (CheckBox) findComponent("HonorTransientToggle");
@@ -168,6 +181,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     fOnLoadCodeText.setRows(3);
 
     fBootTypesList = (XList) findComponent("BootTypesList");
+    fIncludeTypesList = (XList) findComponent("IncludeTypesList");
 
     fNextIssueButton = (Button) findComponent("NextIssueButton");
     fNextIssueButton.addActionListener(new ActionListener() {
@@ -200,6 +214,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     configHelper.setConfig(fNewConfig);
     fMainFrame.modelChanged();
     close();
+    fMainFrame.saveAndStart();
   }
 
   private void cancel() {
@@ -268,14 +283,36 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   }
 
   boolean testIsIssue(NonPortableWorkState workState) {
+    if(workState.isRepeated() || workState.isTransient()) return false;
+    
     String fieldName = workState.getFieldName();
     boolean isNull = workState.isNull();
     boolean isTransientField = fieldName != null && (fConfigHelper.isTransient(fieldName) || workState.isTransient());
 
     if (workState.isNeverPortable() && !isTransientField && !isNull) { return true; }
 
+    if(workState.extendsLogicallyManagedType() && !isTransientField && !isNull) return true;
+    
+    if (workState.hasRequiredBootTypes()) {
+      java.util.List types = workState.getRequiredBootTypes();
+      for (Iterator iter = types.iterator(); iter.hasNext();) {
+        if (!fConfigHelper.isBootJarClass((String)iter.next())) return true;
+      }
+    }
+
+    if (workState.hasRequiredIncludeTypes()) {
+      java.util.List types = workState.getRequiredIncludeTypes();
+      for (Iterator iter = types.iterator(); iter.hasNext();) {
+        if (!fConfigHelper.isAdaptable((String)iter.next())) return true;
+      }
+    }
+
+    if(!workState.isPortable() && workState.isSystemType() && !fConfigHelper.isBootJarClass(workState.getTypeName())) return true;
+    
+    if(workState.getExplaination() != null) return true;
+    
     return !workState.isPortable()
-           && !(fConfigHelper.isAdaptable(workState.getTypeName()) || isTransientField || isNull);
+        && !(fConfigHelper.isAdaptable(workState.getTypeName()) || isTransientField || isNull);
   }
 
   boolean checkAddToIssueList(NonPortableWorkState workState) {
@@ -286,7 +323,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   void initIssueList() {
     fIssueList.removeListSelectionListener(fIssueListSelectionHandler);
     fIssueListModel.clear();
-    Enumeration e = ((DefaultMutableTreeNode) fObjectTree.getModel().getRoot()).breadthFirstEnumeration();
+    Enumeration e = ((DefaultMutableTreeNode) fObjectTree.getModel().getRoot()).preorderEnumeration();
     while (e.hasMoreElements()) {
       Object obj = e.nextElement();
 
@@ -311,23 +348,25 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   class IssueListSelectionHandler implements ListSelectionListener {
     public void valueChanged(ListSelectionEvent e) {
       if (!e.getValueIsAdjusting() && fIssueList.getModel().getSize() > 0) {
-        int index = e.getFirstIndex();
+        int index = fIssueList.getSelectedIndex();
         IssueListItem item = (IssueListItem) fIssueList.getModel().getElementAt(index);
         DefaultMutableTreeNode node = item.fTreeNode;
         TreePath path = new TreePath(node.getPath());
 
         fObjectTree.setSelectionPath(path);
+        fObjectTree.scrollPathToVisible(path);
       }
     }
   }
 
-  class IssueListCellRenderer extends JLabel implements ListCellRenderer {
+  class IssueListCellRenderer extends DefaultListCellRenderer {
     public IssueListCellRenderer() {
       setOpaque(true);
     }
 
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
                                                   boolean cellHasFocus) {
+      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       if (value instanceof IssueListItem) {
         IssueListItem item = (IssueListItem) value;
 
@@ -359,7 +398,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     if (event == null) { return; }
 
     fMessageLabel.setText(event.getReason().getMessage());
-    
+
     fObjectTree.setModel(event.getContext().getTreeModel());
 
     DefaultMutableTreeNode root = (DefaultMutableTreeNode) fObjectTree.getModel().getRoot();
@@ -375,7 +414,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
 
     initIssueList();
     resetSearchButtons();
-    
+
     if (fIssueList.getModel().getSize() > 0) {
       fIssueList.setSelectedIndex(0);
     }
@@ -385,13 +424,13 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     fPreviousIssueButton.setEnabled(getPreviousIssue() != null);
     fNextIssueButton.setEnabled(getNextIssue() != null);
   }
-  
+
   public void valueChanged(TreeSelectionEvent e) {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode) fObjectTree.getLastSelectedPathComponent();
-    
-    if(node != null) {
+
+    if (node != null) {
       Object userObject = node.getUserObject();
-  
+
       selectIssueListItem(node);
       if (userObject instanceof NonPortableWorkState) {
         NonPortableWorkState workState = (NonPortableWorkState) userObject;
@@ -464,19 +503,25 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     fSummaryLabel.setText(workState.summary());
     fSummaryLabel.setIcon(iconFor(workState));
     fDescriptionText.setText(workState.descriptionFor());
-    fDescriptionText.select(0,0);
+    fDescriptionText.select(0, 0);
     fResolutionsPanel.setVisible(true);
-    DefaultMutableTreeNode actionTreeRoot = (DefaultMutableTreeNode)fActionTree.getModel().getRoot();
+    DefaultMutableTreeNode actionTreeRoot = (DefaultMutableTreeNode) fActionTree.getModel().getRoot();
     actionTreeRoot.removeAllChildren();
     createActionNodes(workState);
-    ((DefaultTreeModel)fActionTree.getModel()).nodeStructureChanged(actionTreeRoot);
+    ((DefaultTreeModel) fActionTree.getModel()).nodeStructureChanged(actionTreeRoot);
     if (actionTreeRoot.getChildCount() == 0) {
       hideResolutionsPanel();
       return;
     }
+    ((DefaultTreeModel) fActionTree.getModel()).reload();
     fActionTree.expandRow(0);
     fResolutionsPanel.revalidate();
     fResolutionsPanel.repaint();
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        fActionTree.startEditingAtPath(fActionTree.getPathForRow(0));
+      }
+    });
   }
 
   private void hideIssueDetailsPanel() {
@@ -495,12 +540,13 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     ActionTreeNode(NonPortableResolutionAction action) {
       super(action);
     }
-    
+
+    public void setUserObject(Object o) {/**/
+    }
+
     NonPortableResolutionAction getAction() {
       Object obj = getUserObject();
-      if(obj instanceof NonPortableResolutionAction) {
-        return (NonPortableResolutionAction)obj;
-      }
+      if (obj instanceof NonPortableResolutionAction) { return (NonPortableResolutionAction) obj; }
       return null;
     }
 
@@ -508,97 +554,239 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       NonPortableResolutionAction action = getAction();
       return action != null ? action.isSelected() : false;
     }
-    
+
     void setSelected(boolean selected) {
       NonPortableResolutionAction action = getAction();
-      if(action != null) {
+      if (action != null) {
         action.setSelected(selected);
-        if(selected) {
-          ((ActionTreeRootNode)getParent()).setSelected(false);
+        if (selected) {
+          ((ActionTreeRootNode) getParent()).setSelected(false);
         } else {
-          ((ActionTreeRootNode)getParent()).testSelect();
+          ((ActionTreeRootNode) getParent()).testSelect();
         }
+        fireNodeChanged();
       }
     }
-    
+
     void showControl(NonPortableObjectPanel panel) {
       NonPortableResolutionAction action = getAction();
-      if(action != null && action.isSelected()) {
+      if (action != null && action.isSelected()) {
         action.showControl(panel);
       } else {
         hideActionPanel();
       }
     }
+
+    void fireNodeChanged() {
+      ((DefaultTreeModel) fActionTree.getModel()).nodeChanged(this);
+    }
   }
-  
+
   class ActionTreeRootNode extends ActionTreeNode {
     boolean fSelected;
-  
+
     ActionTreeRootNode() {
       super(null);
-      setUserObject("Take no action");
+      userObject = NonPortableMessages.getString("TAKE_NO_ACTION");
     }
-    
+
     boolean isSelected() {
       return fSelected;
     }
-    
+
     void setSelected(boolean selected) {
-      if((fSelected = selected) == true) {
-        for(int i = 0; i < getChildCount(); i++) {
-          ((ActionTreeNode)getChildAt(i)).setSelected(false);
+      if ((fSelected = selected) == true) {
+        for (int i = 0; i < getChildCount(); i++) {
+          ((ActionTreeNode) getChildAt(i)).setSelected(false);
         }
       }
+      fireNodeChanged();
     }
-    
+
     void testSelect() {
-      for(int i = 0; i < getChildCount(); i++) {
-        if(((ActionTreeNode)getChildAt(i)).isSelected()) {
-          return;
-        }
+      for (int i = 0; i < getChildCount(); i++) {
+        if (((ActionTreeNode) getChildAt(i)).isSelected()) { return; }
       }
       fSelected = true;
+      fireNodeChanged();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          fActionTree.selectTop();
+          fActionTree.startEditingAtPath(fActionTree.getPathForRow(0));
+        }
+      });
     }
   }
-  
+
+  static class ActionTreeCellRendererComponent extends Container {
+    public XCheckBox checkBox;
+    public XLabel    label;
+    public Container container;
+
+    public ActionTreeCellRendererComponent() {
+      super();
+      setLayout(new FlowLayout(SwingConstants.CENTER, 3, 1));
+      add(checkBox = new XCheckBox());
+      add(label = new XLabel());
+      checkBox.setBorder(new EmptyBorder());
+      setBorder(new EmptyBorder());
+      setFocusCycleRoot(true);
+    }
+
+    void setColors(Color fg, Color bg) {
+      checkBox.setBackground(null);
+      checkBox.setForeground(null);
+      label.setBackground(null);
+      label.setForeground(null);
+      setBackground(bg);
+      setForeground(fg);
+      setOpaque(true);
+    }
+  }
+
   class ActionTreeNodeRenderer extends DefaultTreeCellRenderer {
-    XCheckBox fCheckBox = new XCheckBox();
-    XCellEditor fCellRenderer = new XCellEditor(fCheckBox);
-    
-    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel,
-                                                  boolean expanded, boolean leaf, int row,
-                                                  boolean focused)
-    {
+    ActionTreeCellRendererComponent atcrc = new ActionTreeCellRendererComponent();
+
+    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
+                                                  boolean leaf, int row, boolean focused) {
       Component comp = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, focused);
-      
-      if(value instanceof ActionTreeNode) {
-        ActionTreeNode actionNode = (ActionTreeNode)value;
-        comp = fCellRenderer.getTreeCellEditorComponent(tree, value, sel, expanded, leaf, row);
-        fCheckBox.setSelected(actionNode.isSelected());
-        fCheckBox.setText(actionNode.toString());
-        fCheckBox.setBackground(tree.getBackground());
+
+      if (value instanceof ActionTreeNode) {
+        ActionTreeNode actionNode = (ActionTreeNode) value;
+        atcrc.checkBox.setSelected(actionNode.isSelected());
+        atcrc.label.setText(actionNode.toString());
+        Color bg = sel ? getBackgroundSelectionColor() : getBackgroundNonSelectionColor();
+        Color fg = sel ? getTextSelectionColor() : getTextNonSelectionColor();
+        atcrc.setColors(fg, bg);
+        comp = atcrc;
       }
-      
+
       return comp;
     }
+  }
+
+  class ActionSelectionHandler implements ActionListener {
+    public void actionPerformed(ActionEvent e) {
+      TreePath treePath = fActionTree.getEditingPath();
+      ActionTreeNode actionNode = (ActionTreeNode) treePath.getLastPathComponent();
+      if (actionNode != null) {
+        XCheckBox checkBox = (XCheckBox) e.getSource();
+        actionNode.setSelected(checkBox.isSelected());
+
+        NonPortableResolutionAction action = actionNode.getAction();
+        if (action != null && action.isSelected()) {
+          action.showControl(NonPortableObjectPanel.this);
+        } else {
+          hideActionPanel();
+        }
+        fApplyButton.setEnabled(anySelectedActions());
+      }
+    }
+  }
+
+  class CellEditor extends XCellEditor {
+    ActionTreeCellRendererComponent atcrc;
+
+    CellEditor() {
+      super(new XTextField());
+      atcrc = new ActionTreeCellRendererComponent();
+      m_editorComponent = atcrc;
+      atcrc.checkBox.addActionListener(new ActionSelectionHandler());
+    }
+
+    public boolean isCellEditable(EventObject event) {
+      return true;
+    }
+
+    protected void fireEditingStopped() {/**/
+    }
+
+    public boolean shouldSelectCell(EventObject event) {
+      if (event instanceof MouseEvent) {
+        MouseEvent me = (MouseEvent) event;
+        Point p = SwingUtilities.convertPoint(fActionTree, new Point(me.getX(), me.getY()), atcrc);
+        Component activeComponent = SwingUtilities.getDeepestComponentAt(atcrc, p.x, p.y);
+
+        if (activeComponent instanceof XCheckBox) {
+          TreePath path = fActionTree.getPathForLocation(me.getX(), me.getY());
+          if (path != null) {
+            ActionTreeNode node = (ActionTreeNode) path.getLastPathComponent();
+            node.setSelected(!node.isSelected());
+            atcrc.checkBox.setSelected(node.isSelected());
+            fApplyButton.setEnabled(anySelectedActions());
+          }
+        }
+      }
+      return true;
+    }
+
+    public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded,
+                                                boolean leaf, int row) {
+      Component comp = super.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row);
+
+      isSelected = true;
+      if (value instanceof ActionTreeNode) {
+        ActionTreeNode actionNode = (ActionTreeNode) value;
+        atcrc.checkBox.setSelected(actionNode.isSelected());
+        atcrc.label.setText(actionNode.toString());
+        Color fg = isSelected ? UIManager.getColor("Tree.selectionForeground") : UIManager
+            .getColor("Tree.textForeground");
+        Color bg = isSelected ? UIManager.getColor("Tree.selectionBackground") : UIManager
+            .getColor("Tree.textBackground");
+        atcrc.setColors(fg, bg);
+        comp = atcrc;
+      }
+
+      return comp;
+    }
+  }
+
+  class ActionTreeNodeEditor extends DefaultTreeCellEditor {
+    ActionTreeNodeEditor() {
+      super(fActionTree, new ActionTreeNodeRenderer(), new CellEditor());
+    }
+
+    protected boolean canEditImmediately(EventObject event) {
+      return true;
+    }
+
+    protected void determineOffset(JTree theTree, Object value, boolean isSelected, boolean expanded, boolean leaf,
+                                   int row) {
+      editingIcon = null;
+      offset = 0;
+    }
+  }
+
+  private boolean requiresPortabilityAction(NonPortableWorkState workState) {
+    if(workState.isTransient() || workState.extendsLogicallyManagedType()) return false;
+    if(workState.hasRequiredBootTypes()) {
+      java.util.List types = workState.getRequiredBootTypes();
+      for(Iterator iter = types.iterator(); iter.hasNext();) {
+        if(!fConfigHelper.isBootJarClass((String)iter.next())) return true;
+      }
+    }
+    if(workState.hasNonPortableBaseTypes()) {
+      java.util.List types = workState.getNonPortableBaseTypes();
+      for(Iterator iter = types.iterator(); iter.hasNext();) {
+        if(!fConfigHelper.isAdaptable((String)iter.next())) return true;
+      }
+    }
+    return !fConfigHelper.isAdaptable(workState.getTypeName());
   }
   
   NonPortableResolutionAction[] createActions(NonPortableWorkState workState) {
     ArrayList list = new ArrayList();
+    String fieldName = workState.getFieldName();
 
     if (workState.isNeverPortable() || workState.isPortable()) {
-      if (workState.getFieldName() != null && !workState.isTransient()) {
+      if (fieldName != null && !workState.isTransient() && !fConfigHelper.isTransient(fieldName)) {
         list.add(new MakeTransientAction(workState));
       }
     } else if (!workState.isPortable()) {
-      list.add(new IncludeTypeAction(workState));
-      list.add(new IncludePackageAction(workState));
-
-      if (workState.isSystemType()) {
-        list.add(new AddToBootJarAction(workState));
+      if(requiresPortabilityAction(workState)) {
+        list.add(new MakePortableAction(workState));
       }
-
-      if (workState.getFieldName() != null && !workState.isTransient()) {
+      if (fieldName != null && !workState.isTransient() && !fConfigHelper.isTransient(fieldName)) {
         list.add(new MakeTransientAction(workState));
       }
     }
@@ -617,17 +805,18 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   }
 
   void createActionNodes(NonPortableWorkState state) {
-    DefaultMutableTreeNode actionTreeRoot = (DefaultMutableTreeNode)fActionTree.getModel().getRoot();
+    ActionTreeRootNode actionTreeRoot = (ActionTreeRootNode) fActionTree.getModel().getRoot();
     NonPortableResolutionAction[] actions = getActions(state);
     NonPortableResolutionAction action;
 
+    actionTreeRoot.fSelected = true;
     if (actions != null && actions.length > 0) {
       for (int i = 0; i < actions.length; i++) {
         action = actions[i];
-        
+
         if (action.isEnabled()) {
           actionTreeRoot.add(new ActionTreeNode(action));
-          if(action.isSelected()) {
+          if (action.isSelected()) {
             ((IssueListItem) fIssueList.getSelectedValue()).setIcon(RESOLVED_ICON);
             fApplyButton.setEnabled(true);
           }
@@ -639,7 +828,11 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   private void hideActionPanel() {
     fActionPanel.setPage("EmptyPage");
   }
-  
+
+  private boolean anySelectedActions() {
+    return selectedActions().hasNext();
+  }
+
   private Iterator selectedActions() {
     ArrayList list = new ArrayList();
 
@@ -661,51 +854,29 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     return list.iterator();
   }
 
-  private boolean anySelectedActions() {
-    return selectedActions().hasNext();
-  }
-
-  class ActionTreeMouseListener extends MouseAdapter {
-    public void mouseClicked(MouseEvent e) {
-      TreePath path = fActionTree.getPathForLocation(e.getX(), e.getY());
-      if(path != null) {
-        ActionTreeNode actionNode = (ActionTreeNode)path.getLastPathComponent();
-
-        if(actionNode != null) {
-          boolean actionSelected = !actionNode.isSelected();
-          
-          actionNode.setSelected(actionSelected);
-          actionNode.showControl(NonPortableObjectPanel.this);
-
-          fActionTree.setSelectionPath(path);
-          fApplyButton.setEnabled(actionSelected ? true : anySelectedActions());
-          fActionTree.repaint();
-        }
-      }
-    }
-  }
-  
   class ActionTreeSelectionHandler implements TreeSelectionListener {
     public void valueChanged(TreeSelectionEvent e) {
-      ActionTreeNode actionNode = (ActionTreeNode)fActionTree.getLastSelectedPathComponent();
-      if(actionNode != null) {
+      ActionTreeNode actionNode = (ActionTreeNode) fActionTree.getLastSelectedPathComponent();
+      if (actionNode != null) {
         NonPortableResolutionAction action = actionNode.getAction();
-        
-        if (action != null) {
-          if(action.isSelected()) {
-            action.showControl(NonPortableObjectPanel.this);
-          } else {
-            hideActionPanel();
-          }
+
+        if (action != null && action.isSelected()) {
+          action.showControl(NonPortableObjectPanel.this);
+        } else {
+          hideActionPanel();
         }
       }
     }
   }
 
-  void setRequiredBootTypes(String[] types) {
-    fBootTypesList.setListData(types);
+  void setIncludeTypes(java.util.List types) {
+    fIncludeTypesList.setListData(types.toArray(new String[0]));
   }
-
+  
+  void setBootTypes(java.util.List types) {
+    fBootTypesList.setListData(types.toArray(new String[0]));
+  }
+  
   void setInclude(Include include) {
     fIncludePatternField.setText(include.getClassExpression());
     fHonorTransientToggle.setSelected(include.getHonorTransient());
@@ -758,7 +929,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       NonPortableObjectPanel parent = (NonPortableObjectPanel) parentControl;
       String fieldName = fWorkState.getFieldName();
       String declaringType = fieldName.substring(0, fieldName.lastIndexOf('.'));
-      Include include = fConfigHelper.includeRuleFor(declaringType);
+      Include include = fConfigHelper.ensureIncludeRuleFor(declaringType);
 
       if (include != null) {
         parent.fActionPanel.setPage("IncludeRulePage");
@@ -798,93 +969,50 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
       fIssueList.setSelectedIndex(index);
       resetSearchButtons();
     }
-
-    public boolean isEnabled() {
-      String fieldName = fWorkState.getFieldName();
-      String declaringType = fieldName.substring(0, fieldName.lastIndexOf('.'));
-      return fConfigHelper.isAdaptable(declaringType);
-    }
   }
 
-  class IncludeTypeAction extends NonPortableResolutionAction {
-    IncludeTypeAction(NonPortableWorkState workState) {
+  class MakePortableAction extends NonPortableResolutionAction {
+    MakePortableAction(NonPortableWorkState workState) {
       super(workState);
-    }
-
-    String getClassExpression() {
-      return fWorkState.getTypeName();
     }
 
     public void showControl(Object parentControl) {
       NonPortableObjectPanel parent = (NonPortableObjectPanel) parentControl;
-      parent.fActionPanel.setPage("IncludeRulePage");
-      parent.setInclude(fConfigHelper.includeRuleFor(getClassExpression()));
+      parent.setIncludeTypes(fWorkState.getRequiredIncludeTypes());
+      parent.setBootTypes(fWorkState.getRequiredBootTypes());
+      parent.fActionPanel.setPage("IncludeTypesPage");
     }
 
     public String getText() {
-      return NonPortableMessages.getString("INCLUDE_TYPE_FOR_SHARING"); //$NON-NLS-1$
+      return NonPortableMessages.getString("MAKE_PORTABLE"); //$NON-NLS-1$
     }
 
     public void setSelected(boolean selected) {
       super.setSelected(selected);
 
-      String classExpr = getClassExpression();
-      if (selected) {
-        fConfigHelper.ensureIncludeRuleFor(classExpr);
-      } else {
-        fConfigHelper.ensureNotAdaptable(classExpr);
+      if (fWorkState.hasRequiredBootTypes()) {
+        java.util.List types = fWorkState.getRequiredBootTypes();
+        if (selected) {
+          for (Iterator iter = types.iterator(); iter.hasNext();) {
+            fConfigHelper.ensureBootJarClass((String)iter.next());
+          }
+        } else {
+          for (Iterator iter = types.iterator(); iter.hasNext();) {
+            fConfigHelper.ensureNotBootJarClass((String)iter.next());
+          }
+        }
       }
 
-      int index = fIssueList.getSelectedIndex();
-      initIssueList();
-      fIssueList.setSelectedIndex(index);
-      resetSearchButtons();
-    }
-  }
-
-  class IncludePackageAction extends IncludeTypeAction {
-    IncludePackageAction(NonPortableWorkState workState) {
-      super(workState);
-    }
-
-    String getClassExpression() {
-      String typeName = fWorkState.getTypeName();
-      String packageName = typeName.substring(0, typeName.lastIndexOf('.'));
-      return packageName + ".*"; //$NON-NLS-1$
-    }
-
-    public String getText() {
-      return NonPortableMessages.getString("INCLUDE_PACKAGE_FOR_SHARING"); //$NON-NLS-1$
-    }
-  }
-
-  class AddToBootJarAction extends NonPortableResolutionAction {
-    AddToBootJarAction(NonPortableWorkState workState) {
-      super(workState);
-    }
-
-    public void showControl(Object parentControl) {
-      NonPortableObjectPanel parent = (NonPortableObjectPanel) parentControl;
-      parent.setRequiredBootTypes(fWorkState.getRequiredBootTypes());
-      parent.fActionPanel.setPage("BootTypesPage");
-    }
-
-    public String getText() {
-      return NonPortableMessages.getString("ADD_TO_BOOTJAR"); //$NON-NLS-1$
-    }
-
-    public void setSelected(boolean selected) {
-      super.setSelected(selected);
-
-      String[] types = fWorkState.getRequiredBootTypes();
-
-      if (selected) {
-        for (int i = 0; i < types.length; i++) {
-          fConfigHelper.ensureBootJarClass(types[i]);
-        }
-      } else {
-        for (int i = 0; i < types.length; i++) {
-          fConfigHelper.ensureNotBootJarClass(types[i]);
+      if (fWorkState.hasRequiredIncludeTypes()) {
+        java.util.List types = fWorkState.getRequiredIncludeTypes();
+        if (selected) {
+          for (Iterator iter = types.iterator(); iter.hasNext();) {
+            fConfigHelper.ensureAdaptable((String)iter.next());
+          }
+        } else {
+          for (Iterator iter = types.iterator(); iter.hasNext();) {
+            fConfigHelper.ensureNotAdaptable((String)iter.next());
+          }
         }
       }
 

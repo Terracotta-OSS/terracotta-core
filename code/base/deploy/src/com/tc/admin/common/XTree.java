@@ -140,4 +140,6 @@ public class XTree extends org.dijon.Tree {
     revalidate();
     repaint();
   }
+  
+  public void createOverlayListener() {/**/}
 }

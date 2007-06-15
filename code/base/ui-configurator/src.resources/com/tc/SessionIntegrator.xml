@@ -965,35 +965,47 @@
    <container tag="NonPortableObjectPanel">
       <children>
          <label name="MessageLabel" text="Message label"/>
-         <container>
-            <border>
-               <titled-border title="Issues" />
-            </border>
-            <children>
-               <scrollpane>
-                  <list name="IssueList"
-                     class="com.tc.admin.common.XList" />
-               </scrollpane>
-            </children>
-            <connections>
-               <item left="-1,left:0" top="-1,top:0" right="-1,right:0"
-                  bottom="-1,bottom:0" width="s" height="130s" />
-            </connections>
-         </container>
-         <container>
-            <border>
-               <titled-border title="Object Browser" />
-            </border>
-            <children>
-               <scrollpane>
-                  <tree name="Tree" class="com.tc.admin.common.XTree" />
-               </scrollpane>
-            </children>
-            <connections>
-               <item left="-1,left:0" top="-1,top:0" right="-1,right:0"
-                  bottom="-1,bottom:0" width="s" height="ns" />
-            </connections>
-         </container>
+         <splitpane name="IssuesSplitter" orientation="horizontal"
+            focus-index="0" divider-location="-1" resize-weight="0.5">
+            <left>
+               <container>
+                  <children>
+                     <label text="Issues"/>
+                     <scrollpane>
+                        <list name="IssueList"
+                           class="com.tc.admin.common.XList" />
+                     </scrollpane>
+                  </children>
+                  <connections>
+                     <item left="-1,left:n" top="-1,top:n"
+                        right="-1,right:s" bottom="1,top:0"
+                        width="n" height="n" />
+                     <item left="-1,left:n" top="0,bottom:0"
+                        right="-1,right:n" bottom="-1,bottom:n"
+                        width="s" height="130s" />
+                  </connections>
+               </container>
+            </left>
+            <right>
+               <container>
+                  <children>
+                     <label text="Object Browser"/>
+                     <scrollpane>
+                        <tree name="Tree"
+                           class="com.tc.admin.common.XTree" />
+                     </scrollpane>
+                  </children>
+                  <connections>
+                     <item left="-1,left:n" top="-1,top:n"
+                        right="-1,right:s" bottom="1,top:0"
+                        width="n" height="n" />
+                     <item left="-1,left:n" top="0,bottom:0"
+                        right="-1,right:n" bottom="-1,bottom:n"
+                        width="s" height="130s" />
+                  </connections>
+               </container>
+            </right>
+         </splitpane>
          <container name="IssueDetailsPanel">
             <border>
                <titled-border title="Issue Details" />
@@ -1009,10 +1021,24 @@
                      <titled-border title="Resolutions" />
                   </border>
                   <children>
-                     <scrollpane>
-                       <tree name="ActionTree" class="com.tc.admin.common.XTree"/>
-                     </scrollpane>
+                     <container>
+                        <border>
+                           <titled-border title="Actions" />
+                        </border>
+                        <children>
+                           <scrollpane>
+                             <tree name="ActionTree" class="com.tc.admin.common.XTree"/>
+                           </scrollpane>
+                        </children>
+                        <connections>
+                           <item left="-1,left:0" top="-1,top:0" right="-1,right:0"
+                              bottom="-1,bottom:0" width="ns" height="ns" />
+                        </connections>
+                     </container>
                      <pagedview name="ActionPanel" page="EmptyPage">
+                        <border>
+                           <titled-border title="Selected action" />
+                        </border>
                         <pages>
                            <label name="EmptyPage" />
                            <container name="IncludeRulePage">
@@ -1084,19 +1110,54 @@
                                     height="ns" />
                               </connections>
                            </container>
-                           <container name="BootTypesPage">
-                              <border>
-                                 <titled-border
-                                    title="Types to add to BootJar" />
-                              </border>
+                           <container name="IncludeTypesPage">
                               <children>
-                                 <scrollpane>
-                                    <list name="BootTypesList"
-                                       class="com.tc.admin.common.XList" />
-                                 </scrollpane>
+                                 <container>
+                                    <border>
+                                       <titled-border
+                                          title="Types to be included for instrumentation:" />
+                                    </border>
+                                    <children>
+                                       <scrollpane>
+                                          <list
+                                             name="IncludeTypesList"
+                                             class="com.tc.admin.common.XList" />
+                                       </scrollpane>
+                                    </children>
+                                    <connections>
+                                       <item left="-1,left:0"
+                                          top="-1,top:0"
+                                          right="-1,right:0"
+                                          bottom="-1,bottom:0" width="s"
+                                          height="s" />
+                                    </connections>
+                                 </container>
+                                 <container>
+                                    <border>
+                                       <titled-border
+                                          title="Types to add to BootJar:" />
+                                    </border>
+                                    <children>
+                                       <scrollpane>
+                                          <list
+                                             name="BootTypesList"
+                                             class="com.tc.admin.common.XList" />
+                                       </scrollpane>
+                                    </children>
+                                    <connections>
+                                       <item left="-1,left:0"
+                                          top="-1,top:0"
+                                          right="-1,right:0"
+                                          bottom="-1,bottom:0" width="s"
+                                          height="s" />
+                                    </connections>
+                                 </container>
                               </children>
                               <connections>
                                  <item left="-1,left:0" top="-1,top:0"
+                                    right="-1,right:0" bottom="1,top:0"
+                                    width="s" height="s" />
+                                 <item left="-1,left:0" top="0,bottom:0"
                                     right="-1,right:0"
                                     bottom="-1,bottom:0" width="s"
                                     height="s" />
@@ -1128,7 +1189,7 @@
             <children>
                <button text="Previous Issue" name="PreviousIssueButton" />
                <button text="Next Issue" name="NextIssueButton" />
-               <button text="Apply" name="ApplyButton" />
+               <button text="Apply" name="ApplyButton" enabled="false"/>
                <button text="Cancel" name="CancelButton" />
             </children>
             <connections>
@@ -1146,14 +1207,12 @@
       <connections>
          <item bottom="1,top:10" height="n" left="-1,left:10s"
             right="-1,right:10s" top="-1,top:10" width="n" />
-         <item bottom="3,top:n" height="ns" left="-1,left:n"
-            right="2,left:n" top="0,bottom:10" width="s" />
-         <item bottom="3,top:n" height="ns" left="1,right:n"
+         <item bottom="2,top:n" height="ns" left="-1,left:n"
             right="-1,right:n" top="0,bottom:10" width="s" />
-         <item bottom="4,top:n" height="ns" left="-1,left:n"
+         <item bottom="3,top:n" height="ns" left="-1,left:n"
             right="-1,right:n" top="1,bottom:n" width="s" />
          <item bottom="-1,bottom:n" height="n" left="-1,left:n"
-            right="-1,right:n" top="3,bottom:n" width="s" />
+            right="-1,right:n" top="2,bottom:n" width="s" />
       </connections>
    </container>
 </dict>
