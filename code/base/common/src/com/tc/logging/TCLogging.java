@@ -18,6 +18,7 @@ import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
@@ -154,11 +155,21 @@ public class TCLogging {
 
   private static boolean developmentConfiguration() {
     try {
-      File props = new File(System.getProperty("user.dir"), LOG4J_PROPERTIES_FILENAME);
+      Properties devLoggingProperties = new Properties();
 
-      if (props.canRead() && props.isFile()) {
+      // Specify the order of LEAST importantance; last one in wins
+      File[] devLoggingLocations = new File[] { new File(System.getProperty("user.home"), LOG4J_PROPERTIES_FILENAME),
+          new File(System.getProperty("user.dir"), LOG4J_PROPERTIES_FILENAME) };
+
+      for (int pos = 0; pos < devLoggingLocations.length; ++pos) {
+        File propFile = devLoggingLocations[pos];
+        if (propFile.isFile() && propFile.canRead()) {
+          devLoggingProperties.load(new FileInputStream(propFile));
+        }
+      }
+      if (!devLoggingProperties.isEmpty()) {
         Logger.getRootLogger().setLevel(Level.INFO);
-        PropertyConfigurator.configure(props.getAbsolutePath());
+        PropertyConfigurator.configure(devLoggingProperties);
         return true;
       }
     } catch (Exception e) {
