@@ -41,9 +41,6 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   def initialize(arguments)
     super(:help, arguments)
 
-    # Figure out which JVMs we're using.
-    find_jvms
-
     # Some more objects we need.
     root_dir = FilePath.new(@basedir.to_s, "..", "..").canonicalize.to_s
     @build_environment = BuildEnvironment.new(platform, config_source, root_dir)
@@ -53,7 +50,11 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     Registry[:build_environment] = @build_environment
     Registry[:static_resources] = @static_resources
 
-
+    handle_appserver_overwite()
+    
+    # Figure out which JVMs we're using.
+    find_jvms()
+    
     # Load up our modules; allow definition of new modules by setting a configuration
     # property that points to additional module files to load. I believe that right now
     # this isn't used, but it was used in the past to (e.g.) let the Spring folks
@@ -81,10 +82,9 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     appserver = @config_source['tc.build-control.appserver'] || @config_source['appserver']     
     unless appserver.nil?
       if appserver =~ /([^-]+)-([^\.]+)\.(.*)/
-        internal_config_source = Registry[:internal_config_source]
-        internal_config_source['tc.tests.configuration.appserver.factory.name'] = $1
-        internal_config_source['tc.tests.configuration.appserver.major-version'] = $2
-        internal_config_source['tc.tests.configuration.appserver.minor-version'] = $3
+        @internal_config_source['tc.tests.configuration.appserver.factory.name'] = $1
+        @internal_config_source['tc.tests.configuration.appserver.major-version'] = $2
+        @internal_config_source['tc.tests.configuration.appserver.minor-version'] = $3
       end
     end
   end
@@ -121,7 +121,6 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
   # Used by every other target, basically.
   def init
-    handle_appserver_overwite()
     write_build_info_file if monkey?
   end
 
@@ -907,7 +906,7 @@ END
       appserver_compatibility = YAML::load_file("appservers.yml")
       Registry[:appserver_compatibility] = appserver_compatibility
       factory, major, minor = %w(factory.name major-version minor-version).map { |key|
-        config_source["tc.tests.configuration.appserver.#{key}"]
+        @internal_config_source["tc.tests.configuration.appserver.#{key}"]
       }
       Registry[:appserver_generic] = "#{factory}-#{major}"
       Registry[:appserver] = "#{Registry[:appserver_generic]}.#{minor}"
