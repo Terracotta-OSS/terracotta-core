@@ -80,10 +80,20 @@ public final class L1Management extends TerracottaManagement {
         int attemptCounter = 0;
         while (!registered && attemptCounter++ < MAX_ATTEMPTS) {
           try {
+            if (logger.isDebugEnabled()) {
+              logger.debug("Attempt #" + (attemptCounter + 1) + " to find the MBeanServer and register the L1 MBeans");
+            }
             attemptToRegister();
             registered = true;
+            if (logger.isDebugEnabled()) {
+              logger.debug("L1 MBeans registered with the MBeanServer successfully after " + (attemptCounter + 1)
+                           + " attempts");
+            }
           } catch (Exception e) {
             // Ignore and try again after 1 second, give the VM a chance to get started
+            if (logger.isDebugEnabled()) {
+              logger.debug("Caught exception while trying to register L1 MBeans", e);
+            }
             try {
               Thread.sleep(1000);
             } catch (InterruptedException ie) {
@@ -138,10 +148,16 @@ public final class L1Management extends TerracottaManagement {
           if (mBeanServer != null && !mBeanServers.isEmpty()) {
             mBeanServer = (MBeanServer) mBeanServers.get(0);
           } else {
+            if (logger.isDebugEnabled()) {
+              logger.debug("attemptToRegister(): Inside a 1.4 runtime, try to create an MBeanServer");
+            }
             mBeanServer = MBeanServerFactory.createMBeanServer();
           }
         } else {
           // CDV-260: Make sure to use java.lang.management.ManagementFactory.getPlatformMBeanServer() on JDK 1.5+
+          if (logger.isDebugEnabled()) {
+            logger.debug("attemptToRegister(): Inside a 1.5+ runtime, trying to get the platform default MBeanServer");
+          }
           mBeanServer = getPlatformDefaultMBeanServer();
         }
         addJMXConnectors();
