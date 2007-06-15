@@ -46,6 +46,7 @@ public class HeartBeatClient extends Thread {
           throw new Exception("Null signal");
         } else if (HeartBeatServer.PULSE.equals(signal)) {
           logger.info("Received pulse from heartbeat server, port " + socket.getLocalPort());
+          out.println(signal);
         } else if (HeartBeatServer.KILL.equals(signal)) {
           logger.info("Received KILL from heartbeat server. Killing self.");
           System.exit(1);

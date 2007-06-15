@@ -69,7 +69,7 @@ public class HeartBeatServer {
   }
 
   public synchronized void removeDeadClient(HeartBeatThread thread) {
-    logger.info("Dead client detected... removing " + thread.getName());
+    logger.info("Removed dead client: " + thread.getName());
     heartBeatThreads.remove(thread);
   }
 
@@ -153,6 +153,9 @@ public class HeartBeatServer {
       socket = s;
       try {
         socket.setSoTimeout(PULSE_INTERVAL + 5000);
+        //socket.setTcpNoDelay(true);
+        //socket.setKeepAlive(true);
+        
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(socket.getOutputStream(), true);
       } catch (Exception e) {
@@ -167,8 +170,12 @@ public class HeartBeatServer {
         logger.info("got new client: " + clientName);
 
         while (true) {
-          logger.info("send pulse to client: " + clientName);
+          logger.info("send pulse to client: " + clientName);          
           out.println(PULSE);
+          String reply = in.readLine();
+          if (reply == null) {
+            throw new Exception("read-half of socket closed.");
+          }
           reallySleep(PULSE_INTERVAL);
         }
       } catch (Exception e) {
