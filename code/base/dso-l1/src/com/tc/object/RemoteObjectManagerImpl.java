@@ -337,9 +337,10 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   }
 
   private class DNALRU {
-    //TODO:: These two data structure can be merged to one with into a LinkedHashMap with some marker object to identify buckets 
-    private LinkedHashMap dnas = new LinkedHashMap();
-    private HashMap oids2BatchID = new HashMap();
+    // TODO:: These two data structure can be merged to one with into a LinkedHashMap with some marker object to
+    // identify buckets
+    private LinkedHashMap dnas         = new LinkedHashMap();
+    private HashMap       oids2BatchID = new HashMap();
 
     public synchronized int size() {
       return dnas.size();
@@ -366,10 +367,13 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
     public synchronized void remove(ObjectID id) {
       Long batchID = (Long) oids2BatchID.remove(id);
-      if(batchID != null) {
-        Map m = (Map)  dnas.get(batchID);
-        Object dna  = m.remove(id);
+      if (batchID != null) {
+        Map m = (Map) dnas.get(batchID);
+        Object dna = m.remove(id);
         Assert.assertNotNull(dna);
+        if (m.isEmpty()) {
+          dnas.remove(batchID);
+        }
       }
     }
 
