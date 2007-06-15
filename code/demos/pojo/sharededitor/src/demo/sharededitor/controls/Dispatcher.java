@@ -54,7 +54,7 @@ public final class Dispatcher extends MouseInputAdapter implements KeyListener
 		this.renderer.addKeyListener(this);
 
 		this.objmgr = objects;
-		this.objmgr.addListener((IListListener) this.renderer);
+		this.objmgr.setListener((IListListener) this.renderer);
 	}
 
 	public synchronized void mousePressed(MouseEvent e)

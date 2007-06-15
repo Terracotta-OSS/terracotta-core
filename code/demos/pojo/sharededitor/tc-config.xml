@@ -85,8 +85,8 @@
            we make them transient because we want the values that they hold to only be available
            locally-->
       <transient-fields>
+        <field-name>demo.sharededitor.models.ObjectManager.listener</field-name>
         <field-name>demo.sharededitor.models.ObjectManager.grabList</field-name>
-        <field-name>demo.sharededitor.models.ObjectManager.listeners</field-name>
         <field-name>demo.sharededitor.models.ObjectManager.lastGrabbed</field-name>
       </transient-fields>
       <!--These methods (originating from local objects) operates on objects declared as shared. This 
