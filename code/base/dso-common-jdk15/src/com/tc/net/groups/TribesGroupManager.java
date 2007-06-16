@@ -31,6 +31,7 @@ import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -447,8 +448,10 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   public void zapNode(NodeID nodeID, int type, String reason) {
     Member m = (Member) nodes.get(nodeID);
     if (m != null && zapNodeRequestProcessor.acceptOutgoingZapNodeRequest(nodeID, type, reason)) {
-      logger.warn("Zapping node : " + nodeID + " type = " + type + " reason = " + reason);
-      GroupMessage msg = GroupZapNodeMessageFactory.createGroupZapNodeMessage(type, reason);
+      long weights[] = zapNodeRequestProcessor.getCurrentNodeWeights();
+      logger.warn("Zapping node : " + nodeID + " type = " + type + " reason = " + reason + " my weight = "
+                  + Arrays.toString(weights));
+      GroupMessage msg = GroupZapNodeMessageFactory.createGroupZapNodeMessage(type, reason, weights);
       try {
         sendTo(nodeID, msg);
       } catch (GroupException e) {
@@ -543,7 +546,8 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
 
     public void messageReceived(NodeID fromNode, GroupMessage msg) {
       GroupZapNodeMessage zapMsg = (GroupZapNodeMessage) msg;
-      zapNodeRequestProcessor.incomingZapNodeRequest(msg.messageFrom(), zapMsg.getZapNodeType(), zapMsg.getReason());
+      zapNodeRequestProcessor.incomingZapNodeRequest(msg.messageFrom(), zapMsg.getZapNodeType(), zapMsg.getReason(),
+                                                     zapMsg.getWeights());
     }
 
   }

@@ -409,8 +409,12 @@ public class TribesGroupManagerTest extends TCTestCase {
       return true;
     }
 
-    public void incomingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason) {
+    public void incomingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason, long[] weights) {
       incoming.put(reason);
+    }
+
+    public long[] getCurrentNodeWeights() {
+      return new long[0];
     }
 
   }

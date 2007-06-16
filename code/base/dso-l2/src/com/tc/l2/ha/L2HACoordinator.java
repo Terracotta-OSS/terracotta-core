@@ -11,6 +11,7 @@ import com.tc.config.schema.NewHaConfig;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.context.StateChangedEvent;
+import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
 import com.tc.l2.handler.GCResultHandler;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
 import com.tc.l2.handler.L2ObjectSyncDehydrateHandler;
@@ -46,6 +47,7 @@ import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupManagerFactory;
 import com.tc.net.groups.Node;
 import com.tc.net.groups.NodeID;
+import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
@@ -112,16 +114,21 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
                                                           new L2StateChangeHandler(), 1, Integer.MAX_VALUE).getSink();
     this.groupManager = GroupManagerFactory.createGroupManager();
 
-    WeightGeneratorFactory weightFactory = createWeightGeneratorFactory(gtxm);
-
     this.stateManager = new StateManagerImpl(consoleLogger, groupManager, stateChangeSink,
-                                             new StateManagerConfigImpl(haConfig), weightFactory);
+                                             new StateManagerConfigImpl(haConfig),
+                                             createWeightGeneratorFactoryForStateManager(gtxm));
     this.stateManager.registerForStateChangeEvents(this);
 
     this.l2ObjectStateManager = new L2ObjectStateManagerImpl(objectManager, transactionManager);
     this.sequenceGenerator = new SequenceGenerator(this);
 
-    this.groupManager.setZapNodeRequestProcessor(new L2HAZapNodeRequestProcessor(consoleLogger, stateManager));
+    L2HAZapNodeRequestProcessor zapProcessor = new L2HAZapNodeRequestProcessor(
+                                                                               consoleLogger,
+                                                                               stateManager,
+                                                                               groupManager,
+                                                                               createWeightGeneratorFactoryForZapNodeProcessor(server
+                                                                                   .getConnectionIdFactory()));
+    this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 
     final Sink objectsSyncRequestSink = stageManager
         .createStage(ServerConfigurationContext.OBJECTS_SYNC_REQUEST_STAGE,
@@ -169,7 +176,19 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     groupManager.registerForGroupEvents(dispatcher);
   }
 
-  private WeightGeneratorFactory createWeightGeneratorFactory(ServerGlobalTransactionManager gtxm) {
+  private WeightGeneratorFactory createWeightGeneratorFactoryForZapNodeProcessor(
+                                                                                 final ConnectionIDFactory connectionIdFactory) {
+    WeightGeneratorFactory wgf = new WeightGeneratorFactory();
+    wgf.add(new WeightGenerator() {
+      public long getWeight() {
+        // return number of connected clients
+        return connectionIdFactory.loadConnectionIDs().size();
+      }
+    });
+    return wgf;
+  }
+
+  private WeightGeneratorFactory createWeightGeneratorFactoryForStateManager(ServerGlobalTransactionManager gtxm) {
     WeightGeneratorFactory wgf = new WeightGeneratorFactory();
     // TODO::FIXME :: this is probably not the right thing to do since a runnign active might have current gid < curreng
     // gid in a just turned active because of how things are wired.

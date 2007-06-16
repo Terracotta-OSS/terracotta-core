@@ -18,10 +18,14 @@ public class DefaultZapNodeRequestProcessor implements ZapNodeRequestProcessor {
     return true;
   }
 
-  public void incomingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason) {
+  public void incomingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason, long[] weights) {
     logger.warn("DefaultZapNodeRequestProcessor : Received Zap Node request from " + nodeID + " type = " + zapNodeType
                 + " reason = " + reason);
     System.exit(zapNodeType);
+  }
+
+  public long[] getCurrentNodeWeights() {
+    return new long[0];
   }
 
 }

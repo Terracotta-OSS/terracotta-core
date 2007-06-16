@@ -16,32 +16,53 @@ public class GroupZapNodeMessage extends AbstractGroupMessage {
 
   private int             zapNodeType;
   private String          reason;
+  private long[]          weights;
 
   // To make serialization happy
   public GroupZapNodeMessage() {
     super(-1);
   }
 
-  public GroupZapNodeMessage(int type, int zapNodeType, String reason) {
+  public GroupZapNodeMessage(int type, int zapNodeType, String reason, long[] weights) {
     super(type);
     this.reason = reason;
     this.zapNodeType = zapNodeType;
+    this.weights = weights;
   }
 
   protected void basicReadExternal(int msgType, ObjectInput in) throws IOException {
     Assert.assertEquals(ZAP_NODE_REQUEST, msgType);
     zapNodeType = in.readInt();
     reason = in.readUTF();
+    weights = new long[in.readInt()];
+    for (int i = 0; i < weights.length; i++) {
+      weights[i] = in.readLong();
+    }
   }
 
   protected void basicWriteExternal(int msgType, ObjectOutput out) throws IOException {
     Assert.assertEquals(ZAP_NODE_REQUEST, msgType);
     out.writeInt(zapNodeType);
     out.writeUTF(reason);
+    out.writeInt(weights.length);
+    for (int i = 0; i < weights.length; i++) {
+      out.writeLong(weights[i]);
+    }
   }
 
   public String toString() {
-    return "GroupZapNodeMessage [ " + zapNodeType + " , " + reason + " ]";
+    return "GroupZapNodeMessage [ " + zapNodeType + " , " + reason + " , weights = " + toString(weights) + " ]";
+  }
+
+  private String toString(long[] l) {
+    if (l == null) return "null";
+    if (l.length == 0) return "empty";
+    StringBuffer sb = new StringBuffer();
+    for (int i = 0; i < l.length; i++) {
+      sb.append(String.valueOf(l[i])).append(",");
+    }
+    sb.setLength(sb.length() - 1);
+    return sb.toString();
   }
 
   public String getReason() {
@@ -50,6 +71,10 @@ public class GroupZapNodeMessage extends AbstractGroupMessage {
 
   public int getZapNodeType() {
     return zapNodeType;
+  }
+
+  public long[] getWeights() {
+    return weights;
   }
 
 }

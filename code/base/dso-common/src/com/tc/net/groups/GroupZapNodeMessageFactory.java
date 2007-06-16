@@ -5,8 +5,8 @@ package com.tc.net.groups;
 
 public class GroupZapNodeMessageFactory {
 
-  public static GroupMessage createGroupZapNodeMessage(int type, String reason) {
-    return new GroupZapNodeMessage(GroupZapNodeMessage.ZAP_NODE_REQUEST, type, reason);
+  public static GroupMessage createGroupZapNodeMessage(int type, String reason, long[] weights) {
+    return new GroupZapNodeMessage(GroupZapNodeMessage.ZAP_NODE_REQUEST, type, reason, weights);
   }
 
 }

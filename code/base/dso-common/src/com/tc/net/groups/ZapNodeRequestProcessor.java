@@ -8,6 +8,8 @@ public interface ZapNodeRequestProcessor {
 
   public boolean acceptOutgoingZapNodeRequest(NodeID nodeID, int type, String reason);
 
-  public void incomingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason);
+  public long[] getCurrentNodeWeights();
+
+  public void incomingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason, long[] weights);
 
 }
