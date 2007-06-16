@@ -182,8 +182,6 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(dsoPort);
     ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(jmxPort);
     configFactory().addServerToL1Config(null, dsoProxyPort, -1);
-    
-    mgr.startProxyTest();
   }
 
   protected void setupProxyConnectTest(ProxyConnectManagerImpl mgr) {
@@ -331,6 +329,18 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
         apServerManager.startServers();
       } else if (useExternalProcess()) {
         serverControl.start(30 * 1000);
+      }
+      // start proxy after server is up
+      if(canRunProxyConnect()) {
+        // not support active-passive yet
+        while(!serverControl.isRunning()) {
+          try {
+            Thread.sleep(500);
+          } catch (Exception e) {
+            //
+          }
+        }
+        ProxyConnectManagerImpl.getManager().startProxyTest();        
       }
       this.runner.run();
 
