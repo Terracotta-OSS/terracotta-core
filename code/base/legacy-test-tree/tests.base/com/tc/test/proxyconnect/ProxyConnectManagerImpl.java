@@ -16,6 +16,8 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
   private static ProxyConnectManagerImpl mgr = null;
   private int downtime = 100;
   private int waittime = 20 * 1000;
+  private Thread td = null;
+  private boolean toStop = false;
   
   private ProxyConnectManagerImpl() {
     PortChooser pc = new PortChooser();
@@ -67,8 +69,24 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
     }
   }
   
+  public void stopProxyTest() {
+    toStop = true;
+    proxyDown();
+    if(td.isAlive()) td.interrupt();
+    while (td.isAlive()) {
+      try {
+        Thread.sleep(10);
+      } catch(Exception x) {
+        //
+      }
+      if(td.isAlive()) td.interrupt();
+    }
+    System.out.println("XXX proxy thread stopped");
+  }
+  
   public void startProxyTest() {
-    Thread td = new Thread(new Runnable() {
+    toStop = false;
+    td = new Thread(new Runnable() {
       public void run() {
         runProxy();
       }
@@ -78,23 +96,25 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
   
   private void runProxy() {
     proxyUp();
+    if(toStop) return;
     
     try {
       Thread.sleep(waittime);
     } catch (Exception x) {
-      throw new RuntimeException("proxy wait time failed! " + x);
+      //throw new RuntimeException("proxy wait time failed! " + x);
       //return;
     }
-    
+    if(toStop) return;
     proxyDown();
     
     try {
       Thread.sleep(downtime);
     } catch (Exception x) {
-      throw new RuntimeException("proxy down time failed! " + x);
+      //throw new RuntimeException("proxy down time failed! " + x);
       //return;
     }
-
+    if(toStop) return;
+    
     proxyUp();
   }
 

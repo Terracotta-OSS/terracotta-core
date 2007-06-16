@@ -53,7 +53,6 @@ public class OOONetworkStackHarness extends AbstractNetworkStackHarness {
       OOOReconnectionTimeout ort = new OOOReconnectionTimeout(oooLayer, timeout);
       transport.addTransportListener(ort);
     }
-
   }
 
   protected void createIntermediateLayers() {

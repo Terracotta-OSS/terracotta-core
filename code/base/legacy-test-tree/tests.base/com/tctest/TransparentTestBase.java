@@ -108,7 +108,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       int adminPort = helper.getAdminPort();
       ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(dsoPort);
       ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(adminPort);
-      configFactory().addServerToL1Config(null, dsoPort, adminPort);
+      if (!canRunProxyConnect()) configFactory().addServerToL1Config(null, dsoPort, adminPort);
       serverControl = helper.getServerControl();
     } else if (isActivePassive() && canRunActivePassive()) {
       setUpActivePassiveServers(portChooser);
@@ -117,7 +117,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       int adminPort = portChooser.chooseRandomPort();
       ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(dsoPort);
       ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(adminPort);
-      configFactory().addServerToL1Config(null, dsoPort, -1);
+      if (!canRunProxyConnect()) configFactory().addServerToL1Config(null, dsoPort, -1);
     }
 
     if (canRunProxyConnect()) {
@@ -126,14 +126,11 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
     this.doSetUp(this);
 
-    if (canRunProxyConnect()) {
-      this.runner.setProxyConnectSubMode(true);
-    }
-
     if (isCrashy() && canRunCrash()) {
       crashTestState = new TestState(false);
       crasher = new ServerCrasher(serverControl, helper.getServerCrasherConfig().getRestartInterval(), helper
           .getServerCrasherConfig().isCrashy(), crashTestState);
+      if (canRunProxyConnect()) crasher.setProxyConnectMode(true);
       crasher.startAutocrash();
     }
   }
@@ -165,6 +162,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     if (helper != null) {
       dsoPort = helper.getServerPort();
       jmxPort = helper.getAdminPort();
+      // for crash+proxy, set crash interval to 60 sec
+      helper.getServerCrasherConfig().setRestartInterval(60 * 1000);
     } else if (isActivePassive() && canRunActivePassive()) {
       // not doing active-passive for proxy yet
       throw new AssertionError("Proxy-connect is yet not running with active-passive mode");
@@ -183,7 +182,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(dsoPort);
     ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(jmxPort);
     configFactory().addServerToL1Config(null, dsoProxyPort, -1);
-
+    
     mgr.startProxyTest();
   }
 

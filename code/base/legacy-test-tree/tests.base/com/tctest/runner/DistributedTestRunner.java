@@ -76,7 +76,6 @@ public class DistributedTestRunner implements ResultsListener {
   private ApplicationBuilder[]                          applicationBuilders;
   private Container[]                                   containers;
   private Container[]                                   validatorContainers;
-  private boolean                                       proxyConnectSubMode = false;
 
   /**
    * @param applicationClass Class of the application to be executed. It should implement the static method required by
@@ -159,17 +158,6 @@ public class DistributedTestRunner implements ResultsListener {
     if (DEBUG) {
       System.err.println(s);
     }
-  }
-
-  /*
-   * too many parameters passed to constructor. use set/get instead.
-   */
-  public void setProxyConnectSubMode(boolean onoff) {
-    proxyConnectSubMode = onoff;
-  }
-
-  public boolean getProxyConnectSubMode() {
-    return (proxyConnectSubMode);
   }
 
   public void run() {

@@ -28,7 +28,7 @@ public class ReceiveStateMachine extends AbstractStateMachine {
     if (val != null) MaxDelayedAcks = Integer.valueOf(val).intValue();
     this.delivery = delivery;
    }
-  
+    
   public void execute(OOOProtocolMessage msg) {
     getCurrentState().execute(msg);
   }
@@ -50,7 +50,6 @@ public class ReceiveStateMachine extends AbstractStateMachine {
           // handshake to a fresh start
           // set session id from ackRequest message
           setSessionId(protocolMessage.getSessionId());
-          reset();
           sendAck(-1);
           return;
         } else if (matchSessionId(protocolMessage)) {
@@ -59,6 +58,9 @@ public class ReceiveStateMachine extends AbstractStateMachine {
           return;
         } else {
           //System.err.println("XXX receiver got unmatched ackRequest expect "+getSessionId()+" but got "+protocolMessage.getSessionId());
+          reset();
+          setSessionId(protocolMessage.getSessionId());
+          sendAck(-1);
           return;
         }
       } else if (protocolMessage.isAck() && (protocolMessage.getAckSequence() == -1)) {

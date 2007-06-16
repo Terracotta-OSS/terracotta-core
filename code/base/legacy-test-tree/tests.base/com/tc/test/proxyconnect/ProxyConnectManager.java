@@ -8,6 +8,7 @@ public interface ProxyConnectManager {
   void proxyDown();
   void proxyUp();
   void startProxyTest();
+  void stopProxyTest();
   
   void setProxyPort(int port);
   int getProxyPort();

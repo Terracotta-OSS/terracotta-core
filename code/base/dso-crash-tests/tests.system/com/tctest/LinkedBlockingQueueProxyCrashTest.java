@@ -8,10 +8,10 @@ import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
 
 public class LinkedBlockingQueueProxyCrashTest extends TransparentTestBase {
 
-  private static final int NODE_COUNT = 8;
+  private static final int NODE_COUNT = 4;
   
   public LinkedBlockingQueueProxyCrashTest() {
-    disableAllUntil("2007-06-30");
+    //disableAllUntil("2007-06-30");
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {

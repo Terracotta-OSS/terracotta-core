@@ -53,7 +53,7 @@ public class SendStateMachine extends AbstractStateMachine {
   }
 
   protected State initialState() {
-     Assert.eval(MESSAGE_WAIT_STATE != null);
+    Assert.eval(MESSAGE_WAIT_STATE != null);
     return MESSAGE_WAIT_STATE;
   }
 
@@ -94,7 +94,8 @@ public class SendStateMachine extends AbstractStateMachine {
       if (protocolMessage.isSend()) return;
       // accept only matched sessionId
       if (!matchSessionId(protocolMessage)) {
-        //System.err.println("XXX sender received unmatched ack expect "+ getSessionId() + " but got "+protocolMessage.getSessionId() );
+        System.err.println("SendStateMachine: sender received session-id unmatched ack expect "+ 
+                           getSessionId() + " but got "+protocolMessage.getSessionId() );
         return;
       }
       long ackedSeq = protocolMessage.getAckSequence();
@@ -120,7 +121,7 @@ public class SendStateMachine extends AbstractStateMachine {
         } else {
           // all acked, we're good here
           switchToState(MESSAGE_WAIT_STATE);
-        }
+         }
       }
     }
   }

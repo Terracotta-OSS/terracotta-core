@@ -101,7 +101,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   }
 
   private void resetStack() {
-    // we need to reset because we are talking to a new stack on the other side
+     // we need to reset because we are talking to a new stack on the other side
     restoringConnection.set(false);
     delivery.pause();
     delivery.reset();
@@ -148,6 +148,10 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     if (!restoringConnection.get()) receiveLayer.notifyTransportDisconnected(this);
   }
 
+  public void start() {
+    this.delivery.start();
+  }
+  
   public void pause() {
     this.delivery.pause();
   }

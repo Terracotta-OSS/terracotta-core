@@ -28,8 +28,8 @@ import java.util.List;
  * Client implementation of the transport network layer.
  */
 public class ClientMessageTransport extends MessageTransportBase {
-  // it was 2 minutes timeout, reduce to 20 sec
-  private static final long                 SYN_ACK_TIMEOUT = 20000;
+  // it was 2 minutes timeout, reduce to 2 sec
+  private static final long                 SYN_ACK_TIMEOUT = 2000;
   private final ClientConnectionEstablisher connectionEstablisher;
   private boolean                           wasOpened       = false;
   private TCFuture                          waitForSynAckResult;
@@ -85,9 +85,10 @@ public class ClientMessageTransport extends MessageTransportBase {
         }
         Assert.eval(!this.connectionId.isNull());
         isOpen.set(true);
-        wasOpened = true;
         sendAck();
-        return new NetworkStackID(this.connectionId.getChannelID());
+        NetworkStackID nid =  new NetworkStackID(this.connectionId.getChannelID());
+        wasOpened = true;
+        return(nid);
       } catch (TCTimeoutException e) {
         status.reset();
         throw e;
@@ -149,7 +150,6 @@ public class ClientMessageTransport extends MessageTransportBase {
         Assert.eval(!ConnectionID.NULL_ID.equals(this.connectionId));
         Assert.assertNotNull(this.waitForSynAckResult);
       }
-
       this.waitForSynAckResult.set(synAck);
     }
 
@@ -208,6 +208,10 @@ public class ClientMessageTransport extends MessageTransportBase {
   }
 
   void reconnect(TCConnection connection) throws Exception {
+    
+    // don't do reconnect if open is still going on
+    if(!wasOpened) return;
+    
     Assert.eval(!isConnected());
     wireNewConnection(connection);
     try {

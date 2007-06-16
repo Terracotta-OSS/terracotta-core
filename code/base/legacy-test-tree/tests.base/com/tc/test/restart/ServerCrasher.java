@@ -6,6 +6,7 @@ package com.tc.test.restart;
 
 import com.tc.exception.TCRuntimeException;
 import com.tc.objectserver.control.ServerControl;
+import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.TestState;
 
@@ -14,6 +15,7 @@ public class ServerCrasher implements Runnable {
   private final Thread        myThread = new Thread(this, "ServerCrasher");
   private final long          crashInterval;
   private final TestState     testState;
+  private boolean             proxyConnectMode = false;
 
   public ServerCrasher(final ServerControl server, final long crashInterval, final boolean crash, TestState testState) {
     super();
@@ -25,6 +27,10 @@ public class ServerCrasher implements Runnable {
   public void startAutocrash() throws Exception {
     testState.setTestState(TestState.RUNNING);
     myThread.start();
+  }
+  
+  public void setProxyConnectMode(boolean onoff) {
+    proxyConnectMode = onoff;
   }
 
   public void run() {
@@ -46,12 +52,20 @@ public class ServerCrasher implements Runnable {
         if (testState.isRunning()) {
           try {
             System.err.println("Crashing server...");
+            if (proxyConnectMode) ProxyConnectManagerImpl.getManager().stopProxyTest();
             server.crash();
 
             if (server.isRunning()) throw new AssertionError("Server is still running even after shutdown or crash.");
 
             System.err.println("Starting server...");
             server.start(30 * 1000);
+            if (proxyConnectMode) {
+              // wait for a little bit for server to be up
+              while(!server.isRunning()) {
+                Thread.sleep(100);
+              }
+              ProxyConnectManagerImpl.getManager().startProxyTest();
+            }
 
           } catch (Exception e) {
             throw new TCRuntimeException(e);
