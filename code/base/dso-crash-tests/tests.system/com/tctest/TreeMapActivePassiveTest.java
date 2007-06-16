@@ -9,7 +9,7 @@ import com.tc.test.activepassive.ActivePassivePersistenceMode;
 import com.tc.test.activepassive.ActivePassiveSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 
-public class TreeMapTest extends TransparentTestBase {
+public class TreeMapActivePassiveTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 3;
 
