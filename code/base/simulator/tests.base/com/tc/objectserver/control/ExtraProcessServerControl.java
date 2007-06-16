@@ -225,12 +225,12 @@ public class ExtraProcessServerControl extends ServerControlBase {
     return rv;
   }
 
-  public synchronized void crash() throws Exception {
-    isCrashed = true;
+  public synchronized void crash() throws Exception {    
     System.out.println("Crashing server " + this.name + "...");
     if (process != null) {
       process.destroy();
       waitUntilShutdown();
+      isCrashed = true;
     }
     System.out.println(this.name + " crashed.");
   }
