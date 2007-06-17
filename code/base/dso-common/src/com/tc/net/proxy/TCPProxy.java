@@ -93,8 +93,22 @@ public class TCPProxy {
     }, "Accept thread (port " + listenPort + ")");
     acceptThread.start();
   }
+  
+  /*
+   * Stop without joing dead threads.
+   * This is to workaround the issue of taking
+   * too long to stop proxy which longer than
+   * OOO's L1 reconnect timeout.
+   */
+  public synchronized void fastStop() {
+    subStop(false);
+  }
 
   public synchronized void stop() {
+    subStop(true);
+  }
+  
+  synchronized void subStop(boolean waitDeadThread) {
     stop = true;
 
     try {
@@ -135,10 +149,10 @@ public class TCPProxy {
       acceptThread = null;
     }
 
-    closeAllConnections();
+    closeAllConnections(waitDeadThread);
   }
 
-  synchronized void closeAllConnections() {
+  synchronized void closeAllConnections(boolean waitDeadThread) {
     Connection conns[];
     synchronized (connections) {
       conns = (Connection[]) connections.toArray(new Connection[] {});
@@ -146,7 +160,7 @@ public class TCPProxy {
 
     for (int i = 0; i < conns.length; i++) {
       try {
-        conns[i].close();
+        conns[i].close(waitDeadThread);
       } catch (Exception e) {
         log("Error closing connection " + conns[i].toString(), e);
       }
@@ -315,7 +329,7 @@ public class TCPProxy {
             }
 
             if (line.toLowerCase().startsWith("c")) {
-              theProxy.closeAllConnections();
+              theProxy.closeAllConnections(true);
               out("all connections closed");
               continue;
             }
@@ -505,7 +519,7 @@ public class TCPProxy {
 
         if (bytesRead < 0) {
           // delay();
-          close();
+          close(true);
           return;
         }
 
@@ -516,7 +530,7 @@ public class TCPProxy {
           try {
             dest.write(buffer, 0, bytesRead);
           } catch (IOException ioe) {
-            close();
+            close(true);
             return;
           }
         }
@@ -531,7 +545,7 @@ public class TCPProxy {
       }
     }
 
-    void close() {
+    void close(boolean waitDeadThread) {
       synchronized (closeLock) {
         if (stopConn) return;
         stopConn = true;
@@ -553,15 +567,17 @@ public class TCPProxy {
         clientThread.interrupt();
         proxyThread.interrupt();
 
-        try {
-          clientThread.join(1000);
-        } catch (InterruptedException ie) {
-          // ignore
-        }
-        try {
-          proxyThread.join(1000);
-        } catch (InterruptedException ie) {
-          // ignore
+        if (waitDeadThread) {
+          try {
+            clientThread.join(1000);
+          } catch (InterruptedException ie) {
+            // ignore
+          }
+          try {
+            proxyThread.join(1000);
+          } catch (InterruptedException ie) {
+            // ignore
+          }
         }
       } finally {
         parent.deregister(this);

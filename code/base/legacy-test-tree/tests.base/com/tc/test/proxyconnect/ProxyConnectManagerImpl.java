@@ -57,7 +57,7 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
 
   public void proxyDown() {
     System.out.println("XXX stop proxy");
-    proxy.stop();
+    proxy.fastStop();
   }
 
   public void proxyUp(){
