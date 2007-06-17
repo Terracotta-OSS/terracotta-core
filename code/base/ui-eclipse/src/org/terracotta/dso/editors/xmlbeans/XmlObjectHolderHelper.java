@@ -280,7 +280,8 @@ public class XmlObjectHolderHelper {
   }
   
   public String getStringValue() {
-    return ((XmlAnySimpleType)getXmlObject()).getStringValue();
+    XmlAnySimpleType o = (XmlAnySimpleType)getXmlObject();
+    return o != null ? o.getStringValue() : null;
   }
   
   public void set(String text) {

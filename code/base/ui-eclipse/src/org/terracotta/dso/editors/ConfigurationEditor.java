@@ -74,6 +74,7 @@ public class ConfigurationEditor extends MultiPageEditorPart
   private ElementStateListener     m_elementStateListener;
   private TextInputListener        m_textInputListener;
   private Runnable                 m_parseTimer;
+  private boolean                  m_syncXmlText;
   private Display                  m_display;
   private IConfigurationListener   m_configAdapter;
   
@@ -116,7 +117,9 @@ public class ConfigurationEditor extends MultiPageEditorPart
   
   class ConfigAdapter implements IConfigurationListener {
     private void update(boolean initPanels) {
-      syncXmlDocument();
+      if(!m_syncXmlText) {
+        syncXmlDocument();
+      }
       if(initPanels) {
         initPanels();
       }
@@ -191,7 +194,11 @@ public class ConfigurationEditor extends MultiPageEditorPart
 
   private class ParseTimer implements Runnable {
     public void run() {
-      if (getActivePage() == XML_EDITOR_PAGE_INDEX) syncXmlModel();
+      if (getActivePage() == XML_EDITOR_PAGE_INDEX) {
+        m_syncXmlText = true;
+        syncXmlModel();
+        m_syncXmlText = false;
+      }
     }
   }
 
@@ -289,6 +296,9 @@ public class ConfigurationEditor extends MultiPageEditorPart
     if (haveActiveConfig()) setTimer(false);
     TcPlugin.getDefault().ignoreNextConfigChange();
     m_xmlEditor.doSave(monitor);
+    m_syncXmlText = true;
+    syncXmlModel();
+    m_syncXmlText = false;
     clearDirty();
   }
 
@@ -389,29 +399,29 @@ public class ConfigurationEditor extends MultiPageEditorPart
 
   public void newInputFile(final IFile file) {
     if (file != null && file.exists()) {
-      final FileEditorInput input = new FileEditorInput(file);
-
-      setInput(input);
-
-      m_project = file.getProject();
-
-      if (haveActiveConfig()) {
-        if (getPageCount() == 1) {
-          createDsoApplicationPage(1);
-          createServersPage(2);
-          createClientPage(3);
-        }
-        ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
-        initPanels();
-      } else {
-        ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
-        for (int i = getPageCount() - 1; i > 0; i--) {
-          removePage(i);
-        }
-      }
-
       syncExec(new Runnable() {
         public void run() {
+          final FileEditorInput input = new FileEditorInput(file);
+
+          setInput(input);
+
+          m_project = file.getProject();
+
+          if (haveActiveConfig()) {
+            if (getPageCount() == 1) {
+              createDsoApplicationPage(1);
+              createServersPage(2);
+              createClientPage(3);
+            }
+            ResourcesPlugin.getWorkspace().addResourceChangeListener(ConfigurationEditor.this);
+            initPanels();
+          } else {
+            ResourcesPlugin.getWorkspace().removeResourceChangeListener(ConfigurationEditor.this);
+            for (int i = getPageCount() - 1; i > 0; i--) {
+              removePage(i);
+            }
+          }
+
           m_xmlEditor.setInput(input);
           String name = file.getName();
           setPartName(name);
@@ -498,7 +508,15 @@ public class ConfigurationEditor extends MultiPageEditorPart
       case IResourceChangeEvent.PRE_DELETE:
       case IResourceChangeEvent.PRE_CLOSE: {
         if (m_project.equals(event.getResource())) {
-          ConfigurationEditor.this.closeEditor();
+          if(Display.getCurrent() != null) {
+            ConfigurationEditor.this.closeEditor();
+            return;
+          }
+          syncExec(new Runnable() {
+            public void run() {
+              ConfigurationEditor.this.closeEditor();
+            }
+          });
         }
         break;
       }
@@ -508,16 +526,23 @@ public class ConfigurationEditor extends MultiPageEditorPart
   public void syncXmlDocument() {
     asyncExec(new Runnable() {
       public void run() {
-        TcPlugin plugin = TcPlugin.getDefault();
-        IDocument doc = m_xmlEditor.getDocument();
-        XmlOptions opts = plugin.getXmlOptions();
-        TcConfig config = plugin.getConfiguration(m_project);
-        if (config != null && config != TcPlugin.BAD_CONFIG) {
-          TcConfigDocument configDoc = TcConfigDocument.Factory.newInstance();
-          configDoc.setTcConfig(config);
-          doc.removeDocumentListener(m_docListener);
-          doc.set(configDoc.xmlText(opts));
-          doc.addDocumentListener(m_docListener);
+        m_xmlEditor.getTextWidget().setRedraw(false);
+        try {
+          int topLine = m_xmlEditor.getTopIndex();
+          TcPlugin plugin = TcPlugin.getDefault();
+          IDocument doc = m_xmlEditor.getDocument();
+          XmlOptions opts = plugin.getXmlOptions();
+          TcConfig config = plugin.getConfiguration(m_project);
+          if (config != null && config != TcPlugin.BAD_CONFIG) {
+            TcConfigDocument configDoc = TcConfigDocument.Factory.newInstance();
+            configDoc.setTcConfig(config);
+            doc.removeDocumentListener(m_docListener);
+            doc.set(configDoc.xmlText(opts));
+            doc.addDocumentListener(m_docListener);
+          }
+          m_xmlEditor.setTopIndex(topLine);
+        } finally {
+          m_xmlEditor.getTextWidget().setRedraw(true);
         }
       }
     });

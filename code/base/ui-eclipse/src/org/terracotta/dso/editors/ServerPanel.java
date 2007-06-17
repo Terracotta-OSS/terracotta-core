@@ -60,7 +60,12 @@ public class ServerPanel extends ConfigurationEditorPanel
           (m_server.isSetData()    ||
            m_server.isSetLogs()    ||
            m_server.isSetDsoPort() ||
-           m_server.isSetDso());
+           m_server.isSetDso()     ||
+           m_server.isSetJmxPort() ||
+           m_server.isSetAuthentication() ||
+           m_server.isSetName() ||
+           m_server.isSetHost() ||
+           m_server.isSetL2GroupPort());
   }
 
   private void addListeners() {

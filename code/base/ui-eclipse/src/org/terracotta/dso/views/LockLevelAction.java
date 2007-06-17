@@ -69,9 +69,11 @@ public class LockLevelAction extends Action implements IMenuCreator {
       return LockLevel.WRITE;
     } else if(fConcurrent.isChecked()){
       return LockLevel.CONCURRENT;
-    } else {
+    } else if(fSynchronousWrite.isChecked()) {
       return LockLevel.SYNCHRONOUS_WRITE;
     }
+    
+    return LockLevel.WRITE;
   }
   
   public void setContext(ActionContext context) {
@@ -81,10 +83,10 @@ public class LockLevelAction extends Action implements IMenuCreator {
       LockWrapper wrapper = (LockWrapper)element;
       LockLevel level = wrapper.getLevel();
       
-      fRead.setChecked(level.enumValue() == LockLevel.READ);
-      fWrite.setChecked(level.enumValue() == LockLevel.WRITE);
-      fConcurrent.setChecked(level.enumValue() == LockLevel.CONCURRENT);
-      fSynchronousWrite.setChecked(level.enumValue() == LockLevel.SYNCHRONOUS_WRITE);
+      fRead.setChecked(level != null && level.enumValue() == LockLevel.READ);
+      fWrite.setChecked(level == null || level.enumValue() == LockLevel.WRITE);
+      fConcurrent.setChecked(level != null && level.enumValue() == LockLevel.CONCURRENT);
+      fSynchronousWrite.setChecked(level != null && level.enumValue() == LockLevel.SYNCHRONOUS_WRITE);
     }
   }
 

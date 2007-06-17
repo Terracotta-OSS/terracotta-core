@@ -59,15 +59,15 @@ public class XmlStringField implements XmlObjectHolder {
   }
   
   public void setup(XmlObject parent) {
-    m_listening = false;
+    setListening(false);
     m_helper.setup(parent);
     setText(stringValue());
-    m_listening = true;
+    setListening(true);
   }
   
   public void tearDown() {
     m_helper.tearDown();
-    m_listening = false;
+    setListening(false);
     setText("");
   }
   
@@ -84,24 +84,30 @@ public class XmlStringField implements XmlObjectHolder {
   }
 
   public void set() {
-    m_listening = false;
-    String s = getText();
-    if(m_helper.hasDefault() && m_helper.defaultStringValue().equals(s)) {
-      unset();
-    } else if(!s.equals(m_helper.getStringValue())){
-      ensureXmlObject();
-      m_helper.set(s);
-      m_field.setText(s);
+    setListening(false);
+    try {
+      String s = getText();
+      if(m_helper.hasDefault() && m_helper.defaultStringValue().equals(s)) {
+        unset();
+      } else if(!s.equals(m_helper.getStringValue())){
+        ensureXmlObject();
+        m_helper.set(s);
+        m_field.setText(s);
+      }
+    } finally {
+      setListening(true);
     }
-    m_listening = true;
   }
   
   public void unset() {
     if(!isRequired()) {
-      m_listening = false;
-      m_helper.unset();
-      setText(m_helper.defaultStringValue());
-      m_listening = true;
+      setListening(false);
+      try {
+        m_helper.unset();
+        setText(m_helper.defaultStringValue());
+      } finally {
+        setListening(true);
+      }
     }
   }
   
@@ -119,6 +125,12 @@ public class XmlStringField implements XmlObjectHolder {
   
   public void setText(String text) {
     m_field.setText(text != null ? text : "");
+  }
+  
+  private void setListening(boolean listening) {
+    if(m_listening != listening) {
+      m_listening = listening;
+    }
   }
 }
 

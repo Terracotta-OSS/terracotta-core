@@ -5,6 +5,7 @@ package org.terracotta.dso.launch;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -167,6 +168,10 @@ public class LaunchHelper implements IDSOLaunchConfigurationConstants {
     } catch(CoreException ce) {/**/}
     
     if(!stdBootJarExists || (configFile != null && configHasBootJarClasses)) {
+      try {
+        bootJar.refreshLocal(IResource.DEPTH_ZERO, null);
+      } catch(CoreException ce) {/**/}
+      
       long bootStamp = bootJar.getLocation().toFile().lastModified();
       long confStamp = configFile.getLocation().toFile().lastModified();
       

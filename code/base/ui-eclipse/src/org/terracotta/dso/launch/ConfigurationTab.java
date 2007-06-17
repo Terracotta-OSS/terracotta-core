@@ -212,10 +212,13 @@ public class ConfigurationTab extends AbstractLaunchConfigurationTab implements 
     try {
       IProject project = getProject(configuration);
       IFile configFile = TcPlugin.getDefault().getConfigurationFile(project);
-      String arg = configFile.getFullPath().toString();
-      IStringVariableManager variableManager = VariablesPlugin.getDefault().getStringVariableManager();
-      configSpec = variableManager.generateVariableExpression("workspace_loc", arg); //$NON-NLS-1$
-      configuration.setAttribute(ID_CONFIG_FILE_SPEC, configSpec);
+      
+      if(configFile != null) {
+        String arg = configFile.getFullPath().toString();
+        IStringVariableManager variableManager = VariablesPlugin.getDefault().getStringVariableManager();
+        configSpec = variableManager.generateVariableExpression("workspace_loc", arg); //$NON-NLS-1$
+        configuration.setAttribute(ID_CONFIG_FILE_SPEC, configSpec);
+      }
     } catch (CoreException ce) {
       /**/
     }

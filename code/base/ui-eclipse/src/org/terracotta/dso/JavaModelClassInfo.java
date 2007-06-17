@@ -57,7 +57,7 @@ public class JavaModelClassInfo extends SimpleClassInfo {
   }
   
   public ClassInfo[] getInterfaces() {
-    return fInterfaces;
+    return fInterfaces.clone();
   }
   
   public boolean isStale() {

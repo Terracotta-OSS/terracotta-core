@@ -123,9 +123,7 @@ import java.util.List;
  * manage the configuration information associated with a Terracotta Eclipse project. Configuration information is
  * stored as session properties in the project, which are not persistent across sessions. The config information is made
  * up of: 1) the config file XML document 2) the parsed form of the XML document, aka the config object 3) the line
- * length information of the config document 3) a configuration helper, used by various popup actions After successfully
- * parsing the config document, items 1-3 above are serialized to the plugin's private working area. Subsequent lookups
- * are first attempted on the serialized form. When the config data changes, the serialized form is cleared.
+ * length information of the config document 3) a configuration helper, used by various actions.
  * 
  * @see loadConfiguration(IProject) When there are errors instantiating the config document, those XmlErrors are turned
  *      into SAXMarkers on the document, which appear as error indicators in the config document editor.
@@ -515,112 +513,6 @@ public class TcPlugin extends AbstractUIPlugin
     return -1;
   }
 
-  private File getSerializedFile(IFile file) {
-    File result = getStateLocation().append(file.getLocation()).toFile();
-
-    if (!result.exists()) {
-      result.getParentFile().mkdirs();
-    }
-
-    return result;
-  }
-
-  /**
-   * Returns the file to which the config document, config object, and line lengths are serialized. This file lives in
-   * the plugin's private working area.
-   */
-  private File getSerializedConfigFile(IProject project) {
-    IFile configFile = getConfigurationFile(project);
-    return configFile != null ? getSerializedFile(configFile) : null;
-  }
-
-  private void clearSerializedFile(IFile file) {
-//    File serialFile = getSerializedFile(file);
-//
-//    if (serialFile.exists()) {
-//      serialFile.delete();
-//    }
-  }
-
-  /**
-   * Remove the serialized form of the config information.
-   */
-  private void clearSerializedConfigFile(IProject project) {
-//    IFile configFile = getConfigurationFile(project);
-//
-//    if (configFile != null && configFile.exists()) {
-//      clearSerializedFile(configFile);
-//    }
-  }
-
-  private void moveSerializedFile(IFile fromFile, IFile toFile) {
-//    getSerializedFile(fromFile).renameTo(getSerializedFile(toFile));
-  }
-
-  /**
-   * Test for the existance of, and load, the serialized form our the config information. Both the config and the
-   * LineLengths objects are stored under the name of the config file in the plugin working area, federated by the
-   * project name.
-   */
-  private boolean testLoadSerializedConfigFile(IProject project) {
-//    LineLengths lineLengths;
-//    TcConfig config;
-//
-//    File serialFile = getSerializedConfigFile(project);
-//    IFile configFile = getConfigurationFile(project);
-//
-//    if (serialFile != null && configFile != null && serialFile.exists()
-//        && (serialFile.lastModified() > configFile.getLocalTimeStamp())) {
-//      ObjectInputStream ois = null;
-//
-//      try {
-//        ois = new ObjectInputStream(new FileInputStream(serialFile));
-//        lineLengths = (LineLengths) ois.readObject();
-//        config = (TcConfig) ois.readObject();
-//
-//        ois.close();
-//        ois = null;
-//
-//        setSessionProperty(project, CONFIGURATION_LINE_LENGTHS, lineLengths);
-//        setSessionProperty(project, CONFIGURATION, config);
-//
-//        return true;
-//      } catch (Exception e) {
-//        clearSerializedConfigFile(project);
-//      } finally {
-//        if (ois != null) {
-//          IOUtils.closeQuietly(ois);
-//        }
-//      }
-//    }
-
-    return false;
-  }
-
-  /**
-   * Serialize out the config information to the plugin's private work area.
-   */
-  private void writeSerializedConfigFile(IProject project, LineLengths lineLengths, TcConfig config) {
-//    File file = getSerializedConfigFile(project);
-//    ObjectOutputStream oos = null;
-//
-//    try {
-//      oos = new ObjectOutputStream(new FileOutputStream(file));
-//
-//      oos.writeObject(lineLengths);
-//      oos.writeObject(config);
-//
-//      oos.close();
-//      oos = null;
-//    } catch (Exception e) {
-//      clearSerializedConfigFile(project);
-//    } finally {
-//      if (oos != null) {
-//        IOUtils.closeQuietly(oos);
-//      }
-//    }
-  }
-
   /**
    * Instantiate the config information, either from the serialized form, or directly from the config document.
    */
@@ -634,12 +526,10 @@ public class TcPlugin extends AbstractUIPlugin
       IPath path = configFile.getLocation();
       File file = path.toFile();
       List errors = new ArrayList();
-      boolean refreshed = false;
 
       if (!configFile.isSynchronized(IResource.DEPTH_ZERO)) {
         ignoreNextConfigChange();
         configFile.refreshLocal(IResource.DEPTH_ZERO, null);
-        refreshed = true;
       }
 
       LineLengths lineLengths = new LineLengths(configFile);
@@ -648,8 +538,6 @@ public class TcPlugin extends AbstractUIPlugin
       if (m_configLoader.testIsOld(file)) {
         m_configLoader.updateToCurrent(file);
       }
-
-      if (!refreshed && testLoadSerializedConfigFile(project)) { return; }
 
       clearSAXMarkers(configFile);
 
@@ -675,7 +563,6 @@ public class TcPlugin extends AbstractUIPlugin
       if (config != null) {
         getConfigurationHelper(project).validateAll();
         fireConfigurationChange(project);
-        writeSerializedConfigFile(project, lineLengths, config);
       }
     }
   }
@@ -717,7 +604,6 @@ public class TcPlugin extends AbstractUIPlugin
       if (config != null) {
         getConfigurationHelper(project).validateAll();
         fireConfigurationChange(project);
-        writeSerializedConfigFile(project, lineLengths, config);
       }
     }
   }
@@ -733,7 +619,6 @@ public class TcPlugin extends AbstractUIPlugin
 
       if (fromPath.toString().equals(configPath)) {
         setConfigurationFilePath(project, path.toString());
-        moveSerializedFile(project.getFile(fromPath), file);
       }
     }
   }
@@ -806,7 +691,6 @@ public class TcPlugin extends AbstractUIPlugin
     String extension = path.getFileExtension();
 
     if (extension.equals("java")) {
-      clearSerializedFile(file);
       getConfigurationHelper(file.getProject()).validateAll();
     } else if (extension.equals("xml")) {
       final IProject project = file.getProject();
@@ -990,8 +874,6 @@ public class TcPlugin extends AbstractUIPlugin
     setSessionProperty(project, CONFIGURATION_LINE_LENGTHS, null);
     setSessionProperty(project, CONFIGURATION_FILE, null);
     setSessionProperty(project, CONFIGURATION, null);
-
-    clearSerializedConfigFile(project);
 
     setConfigurationFileDirty(project, Boolean.FALSE);
   }

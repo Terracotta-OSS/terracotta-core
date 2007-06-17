@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config;
 
@@ -19,7 +20,7 @@ import com.tc.util.stringification.OurStringBuilder;
  */
 public class ConnectionInfoConfigItem extends DerivedConfigItem {
   static TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
-  
+
   public ConnectionInfoConfigItem(ConfigItem l2DataConfigItem) {
     super(new ConfigItem[] { l2DataConfigItem });
   }
@@ -30,22 +31,23 @@ public class ConnectionInfoConfigItem extends DerivedConfigItem {
     String serversProperty = System.getProperty("tc.server");
     if (serversProperty != null && (serversProperty = serversProperty.trim()) != null && serversProperty.length() > 0) {
       consoleLogger.info("tc.server: " + serversProperty);
-      
+
       String[] serverDescs = StringUtils.split(serversProperty, ",");
       int count = serverDescs.length;
 
       out = new ConnectionInfo[count];
       for (int i = 0; i < count; i++) {
         String[] serverDesc = StringUtils.split(serverDescs[i], ":");
-        Assert.eval(serverDesc.length == 2);
-        String host = serverDesc[0];
-        int dsoPort = 0;
-        
-        try {
-          dsoPort = Integer.parseInt(serverDesc[1]);
-        } catch(NumberFormatException nfe) {
-          consoleLogger.fatal("Cannot parse port for tc.server element '"+serverDescs[i]+"'");
-          System.exit(-1);
+        String host = serverDesc.length > 0 ? serverDesc[0] : "localhost";
+        int dsoPort = 9510;
+
+        if (serverDesc.length == 2) {
+          try {
+            dsoPort = Integer.parseInt(serverDesc[1]);
+          } catch (NumberFormatException nfe) {
+            consoleLogger.warn("Cannot parse port for tc.server element '" + serverDescs[i]
+                               + "'; Using default of 9510.");
+          }
         }
 
         out[i] = new ConnectionInfo(host, dsoPort);
