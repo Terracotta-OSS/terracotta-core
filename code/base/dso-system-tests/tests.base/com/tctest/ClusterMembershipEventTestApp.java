@@ -13,6 +13,7 @@ import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.HashSet;
 
@@ -50,6 +51,8 @@ public class ClusterMembershipEventTestApp extends ServerCrashingAppBase impleme
     if (isMasterNode) {
       System.err.println("### masterNode=" + thisNode + " -> crashing server...");
       getConfig().getServerControl().crash();
+      // this sleep should be longer than l1-reconnect timeout
+      ThreadUtil.reallySleep(30 * 1000);
       System.err.println("### masterNode=" + thisNode + " -> crashed server");
       System.err.println("### masterNode=" + thisNode + " -> restarting server...");
       getConfig().getServerControl().start(30 * 1000);
@@ -110,7 +113,7 @@ public class ClusterMembershipEventTestApp extends ServerCrashingAppBase impleme
     // NOTE: on some systems (Solaris, Win) we get multiple disconnect/connect events
     // per one logical disconnect/connect occurance.
     if (actual < expectedMin) notifyError(msg + " expectedMin=" + expectedMin + ", actual=" + actual + ", thisNodeId="
-                                        + thisNode);
+                                          + thisNode);
   }
 
   public void nodeConnected(String nodeId) {
