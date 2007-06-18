@@ -228,30 +228,41 @@ public class BootJarTool {
       System.exit(1);
     }
 
-    final Map result  = compareBootJarContentsToUserSpec(bootJarFile);
-    final Set missing = (Set)result.get(MISSING_CLASSES);
-    final Set excess  = (Set)result.get(EXCESS_CLASSES);
+    final String MESSAGE0 = "\nYour boot JAR file might be out of date or invalid.";
+    final String MESSAGE1 = "\nThe following classes was declared in the <additional-boot-jar-classes/> section "
+                          + "of your tc-config file but is not a part of your boot JAR file:";
+    final String MESSAGE2 = "\nThe following user-classes were found in the boot JAR but was not declared in the "
+                          + "<additional-boot-jar-classes/> section of your tc-config file:";
+    final String MESSAGE3 = "\nUse the make-boot-jar tool to re-create your boot JAR.";
     
-    if (!missing.isEmpty() || !excess.isEmpty()) {
-      System.err.println("\nYour boot JAR file might be out of date.");
+    try {
+      final Map result  = compareBootJarContentsToUserSpec(bootJarFile);
+      final Set missing = (Set)result.get(MISSING_CLASSES);
+      final Set excess  = (Set)result.get(EXCESS_CLASSES);
       
-      if (!missing.isEmpty()) {
-        System.err.println("\nThe following classes was declared in the <additional-boot-jar-classes/> section "
-                         + "of your tc-config file but is not a part of your boot JAR file:");
-        for (Iterator i = missing.iterator(); i.hasNext();) {
-          System.err.println("- " + i.next());
+      if (!missing.isEmpty() || !excess.isEmpty()) {
+        System.err.println(MESSAGE0);
+        
+        if (!missing.isEmpty()) {
+          System.err.println(MESSAGE1);
+          for (Iterator i = missing.iterator(); i.hasNext();) {
+            System.err.println("- " + i.next());
+          }
         }
-      }
-      
-      if (!excess.isEmpty()) {
-        System.err.println("\nThe following user-classes were found in the boot JAR but was not declared in the "
-                         + "<additional-boot-jar-classes/> section of your tc-config file:");
-        for (Iterator i = missing.iterator(); i.hasNext();) {
-          System.err.println("- " + i.next());
+        
+        if (!excess.isEmpty()) {
+          System.err.println(MESSAGE2);
+          for (Iterator i = missing.iterator(); i.hasNext();) {
+            System.err.println("- " + i.next());
+          }
         }
+  
+        System.err.println(MESSAGE3);
+        System.exit(1);
       }
-
-      System.err.println("\nUse the make-boot-jar tool to re-create your boot JAR.");
+    } catch (InvalidBootJarMetaDataException e) {
+      System.err.println(e.getMessage());
+      System.err.println(MESSAGE3);
       System.exit(1);
     }
   }
@@ -266,10 +277,14 @@ public class BootJarTool {
    * @return <code>true</cide> if the boot jar is complete.
    */
   private final boolean isBootJarComplete(File bootJarFile) {
-    final Map result  = compareBootJarContentsToUserSpec(bootJarFile);
-    final Set missing = (Set)result.get(MISSING_CLASSES);
-    final Set excess  = (Set)result.get(EXCESS_CLASSES);
-    return missing.isEmpty() && excess.isEmpty();
+    try {
+      final Map result  = compareBootJarContentsToUserSpec(bootJarFile);
+      final Set missing = (Set)result.get(MISSING_CLASSES);
+      final Set excess  = (Set)result.get(EXCESS_CLASSES);
+      return missing.isEmpty() && excess.isEmpty();
+    } catch (InvalidBootJarMetaDataException e) {
+      return false;
+    }
   }
 
   /**
@@ -277,8 +292,9 @@ public class BootJarTool {
    * - User-defined classes that are in the boot JAR but is not defined in the
    *   <additional-boot-jar-classes/> section of the config
    * - Class names declared in the config but are not in the boot JAR
+   * @throws InvalidBootJarMetaDataException 
    */
-  private final Map compareBootJarContentsToUserSpec(File bootJarFile) {
+  private final Map compareBootJarContentsToUserSpec(File bootJarFile) throws InvalidBootJarMetaDataException {
     try {
       Map result                 = new HashMap();
       final Map internalSpecs    = getTCSpecs();
@@ -305,6 +321,8 @@ public class BootJarTool {
       result.put(EXCESS_CLASSES, excess);
       
       return result;
+    } catch (InvalidBootJarMetaDataException e) {
+      throw e;
     } catch (BootJarException e) {
       throw new RuntimeException(e);
     } catch (IOException e) {

@@ -347,42 +347,52 @@ public class BootJar {
     BootJarMetaData(Manifest manifest) throws BootJarException {
       Assert.assertNotNull(manifest);
       Attributes attributes = (Attributes) manifest.getEntries().get(META_DATA_ATTRIBUTE_NAME);
-      if (attributes == null) throw new InvalidBootJarMetaDataException(
-                                                                        "Missing attributes in jar manifest.  Please regenerate boot jar");
+      if (attributes == null) {
+        throw new InvalidBootJarMetaDataException("Missing attributes in jar manifest.");
+      }
 
       version = attributes.getValue(VERSION);
-      if (version == null) throw new InvalidBootJarMetaDataException("Missing metadata: version");
+      if (version == null) {
+        throw new InvalidBootJarMetaDataException("Missing metadata: version.");
+      }
 
       String expect_version = VERSION_1_1;
       if (expect_version.equals(version)) {
         vmSignature = attributes.getValue(VM_SIGNATURE);
-        if (vmSignature == null) throw new InvalidJVMVersionException("Missing vm signature");
+        if (vmSignature == null) {
+          throw new InvalidJVMVersionException("Missing vm signature.");
+        }
       } else {
         throw new InvalidBootJarMetaDataException("Incompatible DSO meta data: version; expected '" + expect_version
-                                                  + "' but was (in boot jar): '" + version
-                                                  + "'; please regenerate the DSO boot jar");
+          + "' but was (in boot jar): '" + version);
       }
 
       tcversion = attributes.getValue(TC_VERSION);
-      if (tcversion == null) throw new InvalidBootJarMetaDataException("Missing metadata: tcversion");
+      if (tcversion == null) {
+        throw new InvalidBootJarMetaDataException("Missing metadata: tcversion.");
+      }
 
       tcmoniker = attributes.getValue(TC_MONIKER);
-      if (tcmoniker == null) throw new InvalidBootJarMetaDataException("Missing metadata: tcmoniker");
+      if (tcmoniker == null) { 
+        throw new InvalidBootJarMetaDataException("Missing metadata: tcmoniker.");
+      }
 
       ProductInfo productInfo = ProductInfo.getInstance();
       String expect_tcversion = productInfo.buildVersion();
 
-      if (productInfo.isDevMode()) logger
-          .warn("The value for the DSO meta data, tcversion is: '"
-                + expect_tcversion
-                + "'; this might not be correct, this value is used only under development mode or when tests are being run.");
-
-      if (!productInfo.isDevMode() && !expect_tcversion.equals(tcversion)) throw new InvalidBootJarMetaDataException(
-                                                                                                                                     "Incompatible DSO meta data: tcversion; expected '"
-                                                                                                                                         + expect_tcversion
-                                                                                                                                         + "' but was (in boot jar): '"
-                                                                                                                                         + tcversion
-                                                                                                                                         + "'; please regenerate the DSO boot jar");
+      if (productInfo.isDevMode()) {
+        logger.warn("The value for the DSO meta data, tcversion is: '"
+          + expect_tcversion
+          + "'; this might not be correct, this value is used only under development mode or when tests are being run.");
+      }
+      if (!productInfo.isDevMode() && !expect_tcversion.equals(tcversion)) {
+        throw new InvalidBootJarMetaDataException(
+          "Incompatible DSO meta data: tcversion; expected '"
+          + expect_tcversion
+          + "' but was (in boot jar): '"
+          + tcversion 
+          + "'");
+      }
     }
 
     public void write(Manifest manifest) {
