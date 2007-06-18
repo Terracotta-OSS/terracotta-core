@@ -22,7 +22,7 @@ public class StartServersStopDSOStartServersAgainTest extends SpringDeploymentTe
   
   public void testStartServersStopDSOStartServersAgain() throws Exception {
     
-    Deployment warPath = makeDeploymentBuilder("foo.war")
+    Deployment warPath = makeDeploymentBuilder("test-singleton.war")
         .addBeanDefinitionFile(BEAN_DEFINITION_FILE_FOR_TEST)
         .addRemoteService(REMOTE_SERVICE_NAME, "singleton", ISingleton.class)
         .addDirectoryOrJARContainingClass(ISingleton.class)
