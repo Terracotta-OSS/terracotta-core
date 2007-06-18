@@ -12,7 +12,6 @@ import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
-import com.tc.util.runtime.Vm;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.io.BufferedWriter;
@@ -21,19 +20,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.StringWriter;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 public class RandomIOClassesTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 2;
-
-  public RandomIOClassesTest() {
-    if  (Vm.isIBM()) {
-      disableAllUntil(new Date(Long.MAX_VALUE));
-    }
-  }
   
   protected void setUp() throws Exception {
     super.setUp();

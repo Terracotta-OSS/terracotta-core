@@ -3,20 +3,9 @@
  */
 package com.tctest;
 
-import com.tc.util.runtime.Vm;
-
-import java.util.Date;
-
-
 public class AutoLockMapTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 3;
-  
-  public AutoLockMapTest() {
-    if  (Vm.isIBM()) {
-      disableAllUntil(new Date(Long.MAX_VALUE));
-    }
-  }
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -27,5 +16,4 @@ public class AutoLockMapTest extends TransparentTestBase {
   protected Class getApplicationClass() {
     return AutoLockMapTestApp.class;
   }
-
 }

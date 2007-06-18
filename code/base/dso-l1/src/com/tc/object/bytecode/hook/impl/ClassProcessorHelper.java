@@ -68,6 +68,11 @@ public class ClassProcessorHelper {
   private static final PrintStream           TRACE_STREAM;
 
   static {
+    // Make sure that the DSOContext class is loaded before using the
+    // TC functionalities. This is needed for the IBM JDK when Hashtable is
+    // instrumented for auto-locking in the bootjar.
+    Class dsocontext_class = DSOContext.class;
+    
     inStaticInitializer.set(new Object());
 
     try {
