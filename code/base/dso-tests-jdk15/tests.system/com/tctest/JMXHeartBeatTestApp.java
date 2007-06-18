@@ -70,11 +70,14 @@ public class JMXHeartBeatTestApp extends AbstractTransparentApp {
     try {
       String theUrl = "service:jmx:rmi:///jndi/rmi://localhost:" + config.getAttribute(JMX_PORT) + "/jmxrmi";
       JMXServiceURL url = new JMXServiceURL(theUrl);
+      echo("connecting to jmx server....");
       jmxc = JMXConnectorFactory.connect(url, null);
       mbsc = jmxc.getMBeanServerConnection();
+      echo("obtained mbeanserver connection");
       serverMBean = (TCServerInfoMBean) MBeanServerInvocationHandler
       .newProxyInstance(mbsc, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
       String result = serverMBean.getHealthStatus();
+      echo("got health status: " + result);
       jmxc.close();
       isAlive = result.startsWith("OK"); 
     } catch (Throwable e) {
@@ -97,10 +100,13 @@ public class JMXHeartBeatTestApp extends AbstractTransparentApp {
 
     Assert.assertEquals(true, isServerAlive());
     echo("Server is alive");
+    echo("About to crash server...");
     config.getServerControl().crash();    
     Assert.assertEquals(false, isServerAlive());
-    echo("Server is down");
+    echo("Server is crashed.");
+    echo("About to restart server");
     config.getServerControl().start(30 * 1000);
+    echo("Server restarted.");
     stage1.await();
     echo("Server restarted successfully.");
     Assert.assertEquals(true, isServerAlive());    
