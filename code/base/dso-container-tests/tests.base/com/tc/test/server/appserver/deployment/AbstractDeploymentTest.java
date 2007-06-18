@@ -26,13 +26,11 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
 
   private ServerManager    serverManager;
   private WatchDog         watchDog;
-  private boolean          shouldKillAppServers = true;
 
   Map                      disabledVariants    = new HashMap();
   List                     disabledJavaVersion = new ArrayList();
 
   private static final int TIMEOUT_DEFAULT     = 30 * 60;
-  
 
   public AbstractDeploymentTest() {
     // nop
