@@ -4,6 +4,7 @@
 package com.tctest.server.appserver.unit;
 
 import com.tc.test.server.appserver.unit.TCServletFilter;
+import com.tc.util.runtime.Vm;
 
 import java.io.IOException;
 import java.util.Map;
@@ -22,7 +23,9 @@ import javax.servlet.http.HttpSession;
 public final class SimpleSessionFilterTest extends SimpleDsoSessionsTest {
 
   public SimpleSessionFilterTest() {
-    // disableAllUntil("2007-01-01");
+    if (Vm.isIBM()) {
+      disableAllUntil("2007-06-25");
+    }
   }
 
   public static final class SimpleFilter implements TCServletFilter {

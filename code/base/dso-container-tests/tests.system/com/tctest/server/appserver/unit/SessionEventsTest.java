@@ -8,6 +8,7 @@ import org.apache.commons.httpclient.HttpClient;
 
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
 import com.tc.test.server.util.HttpUtil;
+import com.tc.util.runtime.Vm;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -26,6 +27,12 @@ import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
 public class SessionEventsTest extends AbstractAppServerTestCase {
+  
+  public SessionEventsTest() {
+    if (Vm.isIBM()) {
+      disableAllUntil("2007-06-25");
+    }
+  }
 
   public static final class ListenerReportingServlet extends HttpServlet {
     private static Map callCounts = new HashMap();

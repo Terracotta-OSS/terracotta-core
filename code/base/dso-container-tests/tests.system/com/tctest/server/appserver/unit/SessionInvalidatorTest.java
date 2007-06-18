@@ -6,6 +6,7 @@ package com.tctest.server.appserver.unit;
 
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
 import com.tc.test.server.util.WebClient;
+import com.tc.util.runtime.Vm;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -29,7 +30,9 @@ import javax.servlet.http.HttpSessionListener;
 public class SessionInvalidatorTest extends AbstractAppServerTestCase {
 
   public SessionInvalidatorTest() {
-    //
+    if (Vm.isIBM()) {
+      disableAllUntil("2007-06-25");
+    }
   }
 
   public static final class ListenerReportingServlet extends HttpServlet {

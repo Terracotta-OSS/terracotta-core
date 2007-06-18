@@ -4,11 +4,20 @@
  */
 package com.tctest;
 
+import com.tc.util.runtime.Vm;
 import com.tctest.stringbuffer.StringBufferTestApp;
+
+import java.util.Date;
 
 public class StringBufferTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 5;
+  
+  public StringBufferTest() {
+    if  (Vm.isIBM()) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
+  }
 
   public void setUp() throws Exception {
     super.setUp();
