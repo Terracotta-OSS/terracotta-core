@@ -24,7 +24,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
 
   private static class DsoLock {
     private final ReentrantReadWriteLockTC lock;
-    private final int                    lockLevel;
+    private final int                      lockLevel;
 
     public DsoLock(ReentrantReadWriteLockTC lock, int lockLevel) {
       this.lock = lock;
@@ -32,20 +32,32 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     }
 
     public void lock() {
-      ManagerUtil.monitorEnter(lock, lockLevel);
+      if (ManagerUtil.isManaged(lock)) {
+        ManagerUtil.monitorEnter(lock, lockLevel);
+      }
     }
 
     public boolean tryLock() {
-      return ManagerUtil.tryMonitorEnter(lock, 0, lockLevel);
+      if (ManagerUtil.isManaged(lock)) {
+        return ManagerUtil.tryMonitorEnter(lock, 0, lockLevel);
+      } else {
+        return true;
+      }
     }
 
     public boolean tryLock(long timeout, TimeUnit unit) {
-      long timeoutInNanos = TimeUnit.NANOSECONDS.convert(timeout, unit);
-      return ManagerUtil.tryMonitorEnter(lock, timeoutInNanos, lockLevel);
+      if (ManagerUtil.isManaged(lock)) {
+        long timeoutInNanos = TimeUnit.NANOSECONDS.convert(timeout, unit);
+        return ManagerUtil.tryMonitorEnter(lock, timeoutInNanos, lockLevel);
+      } else {
+        return true;
+      }
     }
 
     public void unlock() {
-      ManagerUtil.monitorExit(lock);
+      if (ManagerUtil.isManaged(lock)) {
+        ManagerUtil.monitorExit(lock);
+      }
     }
 
     public ReentrantReadWriteLockTC getDsoLock() {
@@ -154,7 +166,8 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
 
     public void lock() {
       if (DebugUtil.DEBUG) {
-        System.err.println("Client " + ManagerUtil.getClientID() + " in ReentrantReadWriteLock.lock() -- dsoLock: " + ((dsoLock == null)? "null" : "not null") + ", sync: " + sync);
+        System.err.println("Client " + ManagerUtil.getClientID() + " in ReentrantReadWriteLock.lock() -- dsoLock: "
+                           + ((dsoLock == null) ? "null" : "not null") + ", sync: " + sync);
       }
       dsoLock.lock();
       super.lock();
@@ -250,7 +263,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
       return super.getQueuedReaderThreads();
     }
   }
-  
+
   protected Collection<Thread> getQueuedThreads() {
     if (ManagerUtil.isManaged(this)) {
       throw new TCNotSupportedMethodException();
@@ -328,7 +341,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock {
     if (isLocked) { throw new TCObjectNotSharableException(
                                                            "You attempt to share a ReentrantReadWriteLock when it is in a lock state. Lock cannot be in a locked state when shared."); }
   }
-  
+
   public Sync getSync() {
     return sync;
   }
