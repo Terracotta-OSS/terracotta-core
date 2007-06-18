@@ -22,6 +22,7 @@ public class ClusterMembershipEventTest extends ServerCrashingTestBase {
     
   public ClusterMembershipEventTest() {
     super(NODE_COUNT);
+    disableAllUntil("2007-06-25");
   }
 
   protected Class getApplicationClass() {
