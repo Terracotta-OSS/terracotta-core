@@ -318,8 +318,6 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
   # Runs the crash tests. Uses the internal configuration source to set the required property.
   def check_crashtests
-    loud_message("TEMPORARILY DISABLED")
-    return
     depends :init, :compile
     @internal_config_source['tc.tests.configuration.transparent-tests.mode'] = 'crash'
     run_tests(FixedModuleTypeTestSet.new([ 'dso-crash-tests', 'dso-spring-crash-tests' ], [ 'system' ]))
@@ -328,8 +326,6 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   # Runs the active/passive tests. Uses the internal configuration source to set
   # the required property.
   def check_active_passive
-    loud_message("TEMPORARILY DISABLED")
-    return
     depends :init, :compile
     @internal_config_source['tc.tests.configuration.transparent-tests.mode'] = 'active-passive'
     @internal_config_source['test_timeout'] = (30 * 60).to_s
