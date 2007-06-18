@@ -288,7 +288,7 @@ public class BasicWalkerTest extends TestCase {
 
   }
 
-  private static class HashMapSubclass extends HashMap {
+  private static class HashMapSubclass extends LinkedHashMap {
     private int    iVal;
     private String sVal;
 
