@@ -8,7 +8,6 @@ import org.apache.commons.io.FileUtils;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -58,7 +57,6 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     String testClass = ClusterMembershipEventJMXTestApp.class.getName();
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
-    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     config.addIncludePattern(testClass + "$*");
   }
 
@@ -75,6 +73,8 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     while (config.getServerControl().isRunning()) {
       Thread.sleep(5000);
     }
+    // this sleep should be longer than l1-reconnect timeout
+    Thread.sleep(30 * 1000);
     config.getServerControl().start(30 * 1000);
     while (!config.getServerControl().isRunning()) {
       Thread.sleep(5000);
