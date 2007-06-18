@@ -160,8 +160,10 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
   
   private EventNode doPut() throws Exception {
     EventNode node;
-    node = eventIndex.produce();
-    lbqueue1.put(node);
+      synchronized(eventIndex) {
+        node = eventIndex.produce();
+      }
+      lbqueue1.put(node);
     return(node);
   }
 
@@ -172,9 +174,7 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
   
   private EventNode doPass() throws Exception {
     EventNode node;
-    synchronized(lbqueue1) {
-      node = lbqueue1.take();
-    }
+    node = lbqueue1.take();
     lbqueue2.put(node);
     return(node);
   }
