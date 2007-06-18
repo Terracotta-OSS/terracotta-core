@@ -29,8 +29,6 @@ public class StateMaintainedTest extends SpringDeploymentTest {
     
     server2 = makeWebApplicationServer(CONFIG_FILE_FOR_TEST);
     server2.addWarDeployment(deployment, APP_NAME);
-    
-    this.getServerManager().restartDSO(this.isWithPersistentStore());
   }
 
   public void testThatStatePreservedAcrossServerRestart() throws Exception {
@@ -40,6 +38,7 @@ public class StateMaintainedTest extends SpringDeploymentTest {
     
     ISingleton singleton1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
     assertEquals(1, singleton1.getCounter());
+    singleton1.resetCounter();
   }
 
   private void startServer1() throws Exception {
@@ -57,6 +56,7 @@ public class StateMaintainedTest extends SpringDeploymentTest {
     server2.start();
     ISingleton singleton2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
     assertEquals(1, singleton2.getCounter());
+    singleton2.resetCounter();
   }
   
   private Deployment makeDeployment() throws Exception {

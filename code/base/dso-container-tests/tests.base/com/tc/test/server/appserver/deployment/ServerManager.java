@@ -105,10 +105,14 @@ public class ServerManager {
   }
 
   void stop() {
+    System.out.println("Stopping all servers...");
     for (Iterator it = getServersToStop().iterator(); it.hasNext();) {
       Stoppable stoppable = (Stoppable) it.next();
       try {
-        if (!stoppable.isStopped()) stoppable.stop();
+        if (!stoppable.isStopped()) {
+          System.out.println("About to stop: " + stoppable.toString());
+          stoppable.stop();
+        }
       } catch (Exception e) {
         logger.error(stoppable, e);
       }

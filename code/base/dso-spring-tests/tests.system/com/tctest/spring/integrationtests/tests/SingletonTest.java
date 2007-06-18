@@ -6,6 +6,7 @@ package com.tctest.spring.integrationtests.tests;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.Server;
+import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.bean.ISingleton;
 import com.tctest.spring.integrationtests.SpringDeploymentTest;
@@ -13,6 +14,8 @@ import com.tctest.spring.integrationtests.SpringDeploymentTest;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import junit.framework.Test;
 
 public class SingletonTest extends SpringDeploymentTest {
 
@@ -25,6 +28,10 @@ public class SingletonTest extends SpringDeploymentTest {
   private String              context                       = "test-singleton";
   private String              url                           = "/test-singleton";
 
+  public static Test suite() {
+    return new ServerTestSetup(SingletonTest.class);
+  }
+  
   protected void setUp() throws Exception {
     super.setUp();
     if (deployment == null) deployment = makeDeployment();
@@ -38,9 +45,9 @@ public class SingletonTest extends SpringDeploymentTest {
     runNodes(4);
   }
 
-  public void testSingleton8() throws Exception {
-    runNodes(8);
-  }
+//  public void testSingleton8() throws Exception {
+//    runNodes(8);
+//  }
 
   private void runNodes(int nodeCount) throws Exception {
     List servers = new ArrayList();

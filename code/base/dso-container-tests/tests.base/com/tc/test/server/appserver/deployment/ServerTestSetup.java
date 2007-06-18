@@ -20,6 +20,11 @@ public class ServerTestSetup extends TestSetup {
     super(new TestSuite(testClass));
     this.testClass = testClass;
   }
+  
+  protected void setUp() throws Exception {
+    super.setUp();
+    getServerManager();
+  }
 
   protected void tearDown() throws Exception {
     if (sm != null) {

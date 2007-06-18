@@ -80,6 +80,9 @@ public class Singleton implements ISingleton, Serializable {
     this.transientValue = transientValue;
   }
   
+  public synchronized void resetCounter() {
+    this.counter = 0;
+  }
   
   public String toString() {
     return "Singleton:" + counter + " " + transientValue;

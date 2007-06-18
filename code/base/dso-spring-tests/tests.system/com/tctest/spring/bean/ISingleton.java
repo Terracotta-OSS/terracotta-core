@@ -16,4 +16,6 @@ public interface ISingleton {
 
   public boolean toggleBoolean();
 
+  public void resetCounter();
+
 }

@@ -26,22 +26,28 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
 
   private ServerManager    serverManager;
   private WatchDog         watchDog;
+  private boolean          shouldKillAppServers = true;
 
   Map                      disabledVariants    = new HashMap();
   List                     disabledJavaVersion = new ArrayList();
 
   private static final int TIMEOUT_DEFAULT     = 30 * 60;
+  
 
   public AbstractDeploymentTest() {
     // nop
   }
 
+  protected boolean shouldKillAppServersEachRun() {
+    return true;
+  }
+  
   protected boolean isSessionTest() {
     return true;
   }
 
   public void runBare() throws Throwable {
-    getServerManager();
+
     if (shouldDisable()) { return; }
 
     watchDog = new WatchDog(getTimeout());
@@ -74,7 +80,9 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   }
 
   protected void tearDown() throws Exception {
-    ServerManagerUtil.stop(serverManager);
+    if (shouldKillAppServersEachRun()) {
+      ServerManagerUtil.stopAllWebServers(serverManager);
+    }
     super.tearDown();
   }
 

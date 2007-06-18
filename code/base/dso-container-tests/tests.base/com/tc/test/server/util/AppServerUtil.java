@@ -66,7 +66,7 @@ public class AppServerUtil {
   public static void shutdownAndArchive(File from, File to) {
     awaitShutdown(2 * 60 * 1000);
     System.out.println("Send kill signal to app servers...");
-    HeartBeatService.sendKillSignalToChildren();
+    //HeartBeatService.sendKillSignalToChildren();
 
     System.err.println("Copying files from " + from + " to " + to);
     try {

@@ -21,4 +21,8 @@ public class BarServiceImpl implements FooService {
     return counter++;
   }
 
+  public int getCounter() {
+    return counter;
+  }
+
 }

@@ -7,4 +7,6 @@ public interface FooService {
   
   public String serviceMethod();
 
+  public int getCounter();
+
 }

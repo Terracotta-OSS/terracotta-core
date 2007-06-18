@@ -20,5 +20,9 @@ public class FooServiceImpl implements FooService {
   private synchronized int nextValue() {
     return counter++;
   }
+  
+  public int getCounter() {
+    return counter;
+  }
 
 }

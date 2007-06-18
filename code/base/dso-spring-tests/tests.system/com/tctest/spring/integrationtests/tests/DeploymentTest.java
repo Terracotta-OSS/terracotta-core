@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.spring.integrationtests.tests;
 
@@ -25,7 +26,6 @@ public class DeploymentTest extends SpringDeploymentTest {
     super.setUp();
     singletonWAR = makeSingletonWAR();
     fooServiceWAR = makeFooServiceWAR();
-    this.getServerManager().restartDSO(this.isWithPersistentStore());
   }
 
   protected void runTest() throws Throwable {
@@ -46,7 +46,7 @@ public class DeploymentTest extends SpringDeploymentTest {
     DeploymentBuilder builder = makeDeploymentBuilder("test-parent-child.war");
     builder.addBeanDefinitionFile("classpath:/com/tctest/spring/beanfactory-parent-child.xml");
     builder.addRemoteService(FOO_SERVICE_NAME, "service1", FooService.class);
-    builder.addDirectoryOrJARContainingClass(ISingleton.class);
+    builder.addDirectoryOrJARContainingClass(FooService.class);
     builder.addDirectoryContainingResource("/tc-config-files/singleton-tc-config.xml");
     return builder.makeDeployment();
   }
@@ -91,13 +91,17 @@ public class DeploymentTest extends SpringDeploymentTest {
     SingletonStateUtil.assertSingletonShared(server1, server2, SINGLETON_SERVICE_NAME);
 
     assertFooServiceTransient(server1, server2);
+
+    server1.stopIgnoringExceptions();
+    server2.stopIgnoringExceptions();
   }
 
   private void assertFooServiceTransient(Server server1, Server server2) throws Exception {
     FooService foo1a = (FooService) server1.getProxy(FooService.class, FOO_SERVICE_NAME);
     FooService foo2a = (FooService) server2.getProxy(FooService.class, FOO_SERVICE_NAME);
-    assertEquals("rawValue-0", foo1a.serviceMethod());
-    assertEquals("rawValue-0", foo2a.serviceMethod());
+    int count = foo1a.getCounter();
+    assertEquals("rawValue-" + count, foo1a.serviceMethod());
+    assertEquals("rawValue-" + count, foo2a.serviceMethod());
   }
 
   private Server makeServerWithTwoWARsOneDistributed() throws Exception {
@@ -116,13 +120,18 @@ public class DeploymentTest extends SpringDeploymentTest {
     SingletonStateUtil.assertSingletonShared(server1, server2, SINGLETON_SERVICE_NAME);
 
     assertFooServiceShared(server1, server2);
+
+    server1.stopIgnoringExceptions();
+    server2.stopIgnoringExceptions();
   }
 
   private void assertFooServiceShared(Server server1, Server server2) throws Exception {
     FooService foo1a = (FooService) server1.getProxy(FooService.class, FOO_SERVICE_NAME);
     FooService foo2a = (FooService) server2.getProxy(FooService.class, FOO_SERVICE_NAME);
-    assertEquals("rawValue-0", foo1a.serviceMethod());
-    assertEquals("rawValue-1", foo2a.serviceMethod());
+    int counter = foo1a.getCounter();
+
+    assertEquals("rawValue-" + (counter), foo1a.serviceMethod());
+    assertEquals("rawValue-" + (counter + 1), foo2a.serviceMethod());
   }
 
   private Server makeServerWithTwoDistributedWARs() throws Exception {

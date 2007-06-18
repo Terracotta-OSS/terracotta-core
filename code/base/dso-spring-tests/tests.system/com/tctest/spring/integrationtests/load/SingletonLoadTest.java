@@ -28,7 +28,6 @@ public class SingletonLoadTest extends SpringDeploymentTest {
   protected void setUp() throws Exception {
     super.setUp();
     if (deployment == null) deployment = makeDeployment();
-    this.getServerManager().restartDSO(this.isWithPersistentStore());
   }
 
   public void testTwoNodeSingletonLoad() throws Exception {
@@ -81,7 +80,11 @@ public class SingletonLoadTest extends SpringDeploymentTest {
 
     } finally {
       for (Iterator it = servers.iterator(); it.hasNext();) {
-        ((WebApplicationServer) it.next()).stopIgnoringExceptions();
+        WebApplicationServer cur = (WebApplicationServer) it.next();
+        ISingleton isp = (ISingleton) cur.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+        // reset for subsequent test runs
+        isp.resetCounter();
+        cur.stopIgnoringExceptions();
       }
     }
   }

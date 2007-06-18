@@ -21,6 +21,9 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
     this.server2 = server2;
   }  
   
+  protected boolean shouldKillAppServersEachRun() {
+    return false;
+  }
   
   public static abstract class TwoServerTestSetup extends ServerTestSetup {
     private Log logger = LogFactory.getLog(getClass());
@@ -51,6 +54,8 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
       if(shouldDisable()) return;
       
       try {
+        getServerManager();
+        
         long l1 = System.currentTimeMillis();
         Deployment deployment = makeWAR();
         long l2 = System.currentTimeMillis();
