@@ -443,7 +443,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
 
     public String toString() {
       return "LookupContext [ txnID = " + transactionID + ", oids = " + oids + "] = { pending = " + pending
-             + ", lookedupObjects = " + lookedUpObjects.keySet() + "}";
+             + ", lookedupObjects = " + (lookedUpObjects == null ? "null" : lookedUpObjects.keySet().toString()) + "}";
     }
 
     public Set getLookupIDs() {
