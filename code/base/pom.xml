@@ -9,6 +9,10 @@
   <version>2.3-SNAPSHOT</version>
   <name>terracotta base</name>
 
+  <properties>
+    <tcVersion>2.3-SNAPSHOT</tcVersion>
+  </properties>
+
   <scm>
     <connection>scm:svn:http://svn.terracotta.org/svn/tc/dso/trunk</connection>
     <url>scm:svn:http://svn.terracotta.org/svn/tc/dso/trunk</url>
@@ -18,14 +22,9 @@
     <url>https://jira.terracotta.org/jira/secure/BrowseProject.jspa</url>
   </issueManagement>
 
-  <properties>
-    <tcVersion>2.3-SNAPSHOT</tcVersion>
-    <jdk14.home>/System/Library/Frameworks/JavaVM.framework/Versions/1.4.2/Home</jdk14.home>
-    <jdk15.home>/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Home</jdk15.home>
-  </properties>
-
   <modules>
     <module>parent14</module>
+    <module>parent15</module>
   </modules>
 
   <build>

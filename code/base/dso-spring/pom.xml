@@ -9,7 +9,35 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>dso-spring</artifactId>
   <name>dso-spring</name>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/*.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
   <dependencies>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>dso-common</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>common</artifactId>
@@ -41,6 +69,8 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>dso-l1</artifactId>
+      <version>${tcVersion}</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>hsqldb</groupId>

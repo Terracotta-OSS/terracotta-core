@@ -5,8 +5,9 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.terracotta</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>parent15</artifactId>
     <version>2.3-SNAPSHOT</version>
+    <relativePath>../parent15</relativePath>
   </parent>
   <artifactId>dso-tests-jdk15</artifactId>
   <name>dso-tests-jdk15</name>
@@ -14,88 +15,21 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
-        </configuration>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <systemProperties>
-            <property>
-              <name>tc.base-dir</name>
-              <value>code/base</value>
-            </property>
-            <property>
-              <name>java.awt.headless</name>
-              <value>true</value>
-            </property>
-            <property>
-              <name>tc.tests.info.property-files</name>
-              <value>../build/externally-run-tests/common/tests.unit.config</value>
-            </property>
-            <property>
-              <name>tc.tests.info.junit-test-timeout-inseconds</name>
-              <value>900</value>
-            </property>
-            <property>
-              <name>tc.tests.info.temp-root</name>
-              <value>target/temp-root</value>
-            </property>
-            <property>
-              <name>tc.tests.info.jvm.version</name>
-              <value>1.5.0_07</value>
-            </property>
-<!--
-tc.tests.info.temp-root=/Users/eredmond/Svn/terracotta/code/base/build/externally-run-tests/common/tests.unit.temp
-tc.tests.info.data-root=/Users/eredmond/Svn/terracotta/code/base/build/externally-run-tests/common/tests.unit.data
-tc.tests.info.linked-child-process-classpath=/Users/eredmond/Svn/terracotta/code/base/build/linked-child-process/src.classes:/Users/eredmond/Svn/terracotta/code/base/dependencies/lib/log4j-1.2.9.jar
-tc.tests.info.session.classpath=/Users/eredmond/Svn/terracotta/code/base/build/dso-l1-session/src.classes:/Users/eredmond/Svn/terracotta/code/base/build/dso-l1-tomcat/src.classes:/Users/eredmond/Svn/terracotta/code/base/build/dso-l1-tomcat50/src.classes:/Users/eredmond/Svn/terracotta/code/base/build/dso-l1-tomcat55/src.classes:/Users/eredmond/Svn/terracotta/code/base/build/dso-l1-weblogic/src.classes:/Users/eredmond/Svn/terracotta/code/base/build/dso-l1-session/src.classes
-tc.tests.info.executable-search-path=/Users/eredmond/Svn/terracotta/code/base/common/lib.tests.base.native/OSX
-tc.tests.info.junit-test-timeout-inseconds=900
-tc.tests.info.jvm.version=1.4.2_12
-tc.tests.info.jvm.type=hotspot
-tc.tests.info.jvm.mode=client
-tc.tests.info.l2.startup.jvm=/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Home
-tc.tests.info.l2.startup.mode=external
-
-# Static properties: those specified manually by the user or CruiseControl configuration, not the buildsystem
-tc.tests.configuration.appserver.minor-version=5.23
-tc.tests.configuration.appserver.major-version=5
-tc.tests.configuration.transparent-tests.mode=normal
-tc.tests.configuration.appserver.factory.name=tomcat
-tc.tests.configuration.appserver.repository=http://kong.terracotta.lan/resources/appservers
-tc.tests.configuration.variants.selected.spring=20
--->
-          </systemProperties>
-
-          <jvm>${jdk15.home}/bin/java</jvm>
-
-          <!-- scarey-huge list... need to find the cause of failures - probably one thing -->
           <excludes>
-			<exclude>**/AnnotationTest.java</exclude>
-			<exclude>**/AtomicIntegerTest.java</exclude>
-			<exclude>**/ClusterMembershipEventJMXTest.java</exclude>
-			<exclude>**/ConcurrentHashMapGCTest.java</exclude>
-			<exclude>**/ConcurrentHashMapLoadTest.java</exclude>
-			<exclude>**/ConcurrentHashMapTest.java</exclude>
-			<exclude>**/CyclicBarrierTest.java</exclude>
-			<exclude>**/EnumMapTest.java</exclude>
-			<exclude>**/EnumSetTest.java</exclude>
-			<exclude>**/FutureTaskTest.java</exclude>
-			<exclude>**/GenericList15Test.java</exclude>
-			<exclude>**/GenericQueueTest.java</exclude>
-			<exclude>**/JMXHeartBeatTest.java</exclude>
-			<exclude>**/LinkedBlockingQueueMultiThreadTest.java</exclude>
-			<exclude>**/LinkedBlockingQueueSingleNodeTest.java</exclude>
-			<exclude>**/LinkedBlockingQueueTest.java</exclude>
-			<exclude>**/MutableInstrumentedEnumTest.java</exclude>
-			<exclude>**/ReentrantLockTest.java</exclude>
-			<exclude>**/ReentrantReadWriteLockTest.java</exclude>
-            <exclude>**/TribesGroupManagerTest.java</exclude>
+            <!-- TODO cannot find boot jar .+dso-boot.*\.jar$ -->
+			<exclude>**/*.java</exclude>
           </excludes>
         </configuration>
       </plugin>
@@ -107,6 +41,8 @@ tc.tests.configuration.variants.selected.spring=20
       <groupId>org.terracotta</groupId>
       <artifactId>legacy-test-tree</artifactId>
       <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -122,6 +58,13 @@ tc.tests.configuration.variants.selected.spring=20
       <groupId>org.terracotta</groupId>
       <artifactId>common</artifactId>
       <version>${tcVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>common</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>

@@ -9,29 +9,45 @@
     <version>2.3-SNAPSHOT</version>
     <relativePath>../parent15</relativePath>
   </parent>
-  <artifactId>clustered-commons-collections-3.1</artifactId>
-  <name>clustered-commons-collections-3.1</name>
+  <artifactId>ui-eclipse</artifactId>
+  <name>ui-eclipse</name>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
   <dependencies>
+    <!--
+      TODO some eclipse dependencies need placed into an accessable repo
+      others just need found
+      http://mvnrepository.com/search.html?query=eclipse
+    -->
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>dso-l1</artifactId>
+      <artifactId>common</artifactId>
       <version>${tcVersion}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>legacy-test-tree</artifactId>
-      <version>${tcVersion}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
+      <artifactId>aspectwerkz</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>simulator</artifactId>
-      <version>${tcVersion}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
+      <artifactId>dso-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>dso-common-jdk15</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>deploy</artifactId>
     </dependency>
   </dependencies>
 </project>

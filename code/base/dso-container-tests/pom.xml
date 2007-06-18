@@ -22,6 +22,14 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/*.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
@@ -29,6 +37,10 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>dso-l1-session</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -46,7 +58,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>tc_cargo-core-uberjar</artifactId>
+      <artifactId>tc-cargo-core-uberjar</artifactId>
       <version>1.0</version>
     </dependency>
     <dependency>
@@ -56,6 +68,12 @@
     <dependency>
       <groupId>commons-httpclient</groupId>
       <artifactId>commons-httpclient</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>httpunit</groupId>
+      <artifactId>httpunit</artifactId>
+      <version>1.6</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

@@ -39,11 +39,5 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-    <!--
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>dso-common-jdk15</artifactId>
-    </dependency>
-    -->
   </dependencies>
 </project>

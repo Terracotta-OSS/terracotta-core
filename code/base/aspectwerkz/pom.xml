@@ -13,6 +13,12 @@
   <name>aspectwerkz</name>
   <dependencies>
     <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <!-- TODO WeavedTestCase is in src, not test -->
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>thirdparty</artifactId>
     </dependency>

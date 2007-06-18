@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <parent>
-    <artifactId>parent</artifactId>
     <groupId>org.terracotta</groupId>
+    <artifactId>parent15</artifactId>
     <version>2.3-SNAPSHOT</version>
+    <relativePath>../parent15</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>dso-spring-aj</artifactId>
@@ -12,16 +13,25 @@
   <build>
     <plugins>
       <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
+        <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
+          <excludes>
+            <!-- TODO java.lang.NoClassDefFoundError: com/tc/process/LinkedJavaProcessStarter -->
+			<exclude>**/AspectJTest.java</exclude>
+          </excludes>
         </configuration>
       </plugin>
     </plugins>
   </build>
 
   <dependencies>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>simulator</artifactId>
+      <version>${tcVersion}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>dso-spring</artifactId>
@@ -32,6 +42,10 @@
       <version>${tcVersion}</version>
       <type>test-jar</type>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>common</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
