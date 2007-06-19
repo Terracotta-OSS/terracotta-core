@@ -18,19 +18,29 @@ class Square extends BaseObject implements ITexturable {
 		return shape;
 	}
 
-	protected Shape[] getAnchors() {
-		return new Shape[] { new Ellipse2D.Double(x1 - 5, y2 - 5, 10, 10),
+	private Shape[] anchors = null;
+
+	private void makeAnchors() {
+		anchors = new Shape[] { new Ellipse2D.Double(x1 - 5, y2 - 5, 10, 10),
 				new Ellipse2D.Double(x2 - 5, y2 - 5, 10, 10),
 				new Ellipse2D.Double(x2 - 5, y1 - 5, 10, 10),
 				new Ellipse2D.Double(x1 - 5, y1 - 5, 10, 10) };
 	}
 
+	protected Shape[] getAnchors() {
+		if (anchors == null) {
+			makeAnchors();
+		}
+		return anchors;
+	}
+	
 	public synchronized void move(int dx, int dy) {
 		x1 += dx;
 		y1 += dy;
 		x2 += dx;
 		y2 += dy;
 		shape.setFrameFromDiagonal(x1, y1, x2, y2);
+		makeAnchors();
 		this.notifyListeners(this);
 	}
 
@@ -54,6 +64,7 @@ class Square extends BaseObject implements ITexturable {
 			break;
 		}
 		shape.setFrameFromDiagonal(x1, y1, x2, y2);
+		makeAnchors();
 		this.notifyListeners(this);
 	}
 

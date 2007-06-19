@@ -43,6 +43,7 @@
              package-->
         <include>
           <class-expression>demo.sharededitor.models.*</class-expression>
+          <honor-transient>true</honor-transient>
         </include>
         <!--Although the class 'demo.sharededitor.models.ObjectManager' is already declared as
              instrumented by the preceding declaration - we want certain parts of it to only

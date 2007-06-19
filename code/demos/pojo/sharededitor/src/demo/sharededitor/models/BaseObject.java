@@ -183,6 +183,7 @@ public abstract class BaseObject implements IFillStyleConsts {
 	}
 
 	private byte[] texture = null;
+	private transient Image textureImage = null;
 
 	protected void clearTexture() {
 		this.texture = null;
@@ -190,24 +191,24 @@ public abstract class BaseObject implements IFillStyleConsts {
 
 	protected void setTexture(Image image) {
 		try {
-			if (texture == null) {
-				ByteArrayOutputStream bos = new ByteArrayOutputStream();
-				ObjectOutputStream oos = new ObjectOutputStream(bos);
-				int width = image.getWidth(null);
-				if (width > 640) {
-					width = 640;
-				}
-
-				int height = image.getHeight(null);
-				if (height > 480) {
-					height = 480;
-				}
-
-				Image scaledImage = image.getScaledInstance(width, height,
-						Image.SCALE_FAST);
-				oos.writeObject(new ImageIcon(scaledImage));
-				texture = bos.toByteArray();
+			//if (texture == null) {
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream oos = new ObjectOutputStream(bos);
+			int width = image.getWidth(null);
+			if (width > 640) {
+				width = 640;
 			}
+
+			int height = image.getHeight(null);
+			if (height > 480) {
+				height = 480;
+			}
+
+			Image scaledImage = image.getScaledInstance(width, height,
+					Image.SCALE_FAST);
+			oos.writeObject(new ImageIcon(scaledImage));
+			texture = bos.toByteArray();
+			//}
 		} catch (Exception ex) {
 			throw new InternalError("Unable to convert Image to byte[]");
 		}
@@ -215,10 +216,13 @@ public abstract class BaseObject implements IFillStyleConsts {
 
 	protected Image getTexture() {
 		try {
-			ByteArrayInputStream bis = new ByteArrayInputStream(texture);
-			ObjectInputStream ois = new ObjectInputStream(bis);
-			ImageIcon image = (ImageIcon) ois.readObject();
-			return image.getImage();
+			if (textureImage == null) {
+				ByteArrayInputStream bis = new ByteArrayInputStream(texture);
+				ObjectInputStream ois = new ObjectInputStream(bis);
+				ImageIcon image = (ImageIcon) ois.readObject();
+				textureImage = image.getImage(); 
+			} 
+			return textureImage;
 		} catch (Exception ex) {
 			throw new InternalError("Unable to convert byte[] to Image");
 		}

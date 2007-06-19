@@ -27,8 +27,10 @@ public class Text extends BaseObject implements IFontable, ITexturable {
 		return shape;
 	}
 
+	private Shape[] anchors = new Shape[0];
+
 	protected Shape[] getAnchors() {
-		return new Shape[0];
+		return anchors;
 	}
 
 	public boolean isAt(int x, int y) {
