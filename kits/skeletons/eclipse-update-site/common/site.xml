@@ -12,7 +12,7 @@
    </feature>
    <archive path="plugins/org.terracotta.dso_VERSION.jar" url="http://download.terracotta.org/org.terracotta.dso_VERSION.jar"/>
 
-   <feature url="features/org.terracotta.dso_2.3.0.r2739_v20070427.jar" id="org.terracotta.dso" version="2.2.0">
+   <feature url="features/org.terracotta.dso_2.3.0.r2739_v20070427.jar" id="org.terracotta.dso" version="2.3.0">
       <category name="dso"/>
    </feature>
    <archive path="plugins/org.terracotta.dso_2.3.0.r2739_v20070427.jar" url="http://download.terracotta.org/org.terracotta.dso_2.3.0.r2739_v20070427.jar"/>
