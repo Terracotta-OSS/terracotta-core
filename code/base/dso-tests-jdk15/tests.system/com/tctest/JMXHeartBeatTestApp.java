@@ -12,6 +12,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.IOException;
@@ -101,7 +102,9 @@ public class JMXHeartBeatTestApp extends AbstractTransparentApp {
     Assert.assertEquals(true, isServerAlive());
     echo("Server is alive");
     echo("About to crash server...");
-    config.getServerControl().crash();    
+    config.getServerControl().crash();
+    // has to sleep longer than l1-reconnect timeout
+    ThreadUtil.reallySleep(30 * 1000);
     Assert.assertEquals(false, isServerAlive());
     echo("Server is crashed.");
     echo("About to restart server");
