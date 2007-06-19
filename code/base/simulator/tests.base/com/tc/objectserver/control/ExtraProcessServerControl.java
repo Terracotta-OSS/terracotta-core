@@ -248,6 +248,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   public void shutdown() throws Exception {
     attemptShutdown();
     waitUntilShutdown();
+    isCrashed = true;
     System.out.println(this.name + " stopped.");
   }
 
@@ -266,6 +267,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   public void waitUntilShutdown() throws Exception {
     while (isRunning()) {
       Thread.sleep(1000);
+      System.out.println("...server was forced shutdown but still running... waiting...");
     }
   }
 
