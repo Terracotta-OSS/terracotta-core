@@ -18,16 +18,27 @@ import com.tctest.runner.TransparentAppConfig;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class ServerCrashingTestBase extends TransparentTestBase {
 
-  private final int nodeCount;
-  private int       port;
-  private int       adminPort;
-  private File      configFile;
+  private final int  nodeCount;
+  private int        port;
+  private int        adminPort;
+  private File       configFile;
+  private final List jvmArgs;
+
+  protected ServerCrashingTestBase(int nodeCount, String jvmArgsArray[]) {
+    this.nodeCount = nodeCount;
+    this.jvmArgs = new ArrayList();
+    for (int i = 0; jvmArgsArray != null && i < jvmArgsArray.length; i++) {
+      jvmArgs.add(jvmArgsArray[i]);
+    }
+  }
 
   protected ServerCrashingTestBase(int nodeCount) {
-    this.nodeCount = nodeCount;
+    this(nodeCount, null);
   }
 
   public void setUp() throws Exception {
@@ -48,7 +59,7 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
     factory.addServerToL1Config(null, port, adminPort);
     L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
     setUpControlledServer(factory, new StandardDSOClientConfigHelper(manager), port, adminPort, configFile
-        .getAbsolutePath());
+        .getAbsolutePath(), jvmArgs);
 
     getTransparentAppConfig().setClientCount(nodeCount);
     initializeTestRunner();

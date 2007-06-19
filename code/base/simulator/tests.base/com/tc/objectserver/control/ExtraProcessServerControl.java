@@ -27,7 +27,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   private static final String ERR_STREAM         = "ERR";
   private static final String OUT_STREAM         = "OUT";
   private final long          SHUTDOWN_WAIT_TIME = 2 * 60 * 1000;
-  
+
   private final String        name;
   private final boolean       mergeOutput;
 
@@ -74,6 +74,11 @@ public class ExtraProcessServerControl extends ServerControlBase {
     this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, mergeOutput, javaHome);
   }
 
+  public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput,
+                                   File javaHome, List jvmArgs) throws FileNotFoundException {
+    this(new DebugParams(), host, dsoPort, adminPort, configFileLoc, mergeOutput, javaHome, jvmArgs);
+  }
+
   // constructor 5: used by active-passive tests
   public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput,
                                    String servername, List additionalJvmArgs, File javaHome, boolean useIdentifier)
@@ -88,6 +93,13 @@ public class ExtraProcessServerControl extends ServerControlBase {
       throws FileNotFoundException {
     this(debugParams, host, dsoPort, adminPort, configFileLoc, null, Directories.getInstallationRoot(), mergeOutput,
          null, new ArrayList(), NOT_DEF, javaHome, false);
+  }
+
+  public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
+                                   String configFileLoc, boolean mergeOutput, File javaHome, List jvmArgs)
+      throws FileNotFoundException {
+    this(debugParams, host, dsoPort, adminPort, configFileLoc, null, Directories.getInstallationRoot(), mergeOutput,
+         null, jvmArgs, NOT_DEF, javaHome, false);
   }
 
   // only called by constructors in this class
@@ -272,9 +284,8 @@ public class ExtraProcessServerControl extends ServerControlBase {
     while (isRunning()) {
       Thread.sleep(1000);
       System.out.println("...server was forced shutdown but still running... waiting...");
-      if (System.currentTimeMillis() > timeout) {
-        throw new Exception("Server was shutdown but still up after " + SHUTDOWN_WAIT_TIME + " ms");
-      }
+      if (System.currentTimeMillis() > timeout) { throw new Exception("Server was shutdown but still up after "
+                                                                      + SHUTDOWN_WAIT_TIME + " ms"); }
     }
   }
 

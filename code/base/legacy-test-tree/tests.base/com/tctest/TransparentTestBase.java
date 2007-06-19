@@ -37,9 +37,11 @@ import com.tctest.runner.TransparentAppConfig;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import javax.management.MBeanServerConnection;
@@ -200,14 +202,22 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected final void setUpControlledServer(TestTVSConfigurationSetupManagerFactory factory,
                                              DSOClientConfigHelper helper, int serverPort, int adminPort,
                                              String configFile) throws Exception {
+    setUpControlledServer(factory, helper, serverPort, adminPort, configFile, new ArrayList());
+  }
+  
+  protected final void setUpControlledServer(TestTVSConfigurationSetupManagerFactory factory,
+                                             DSOClientConfigHelper helper, int serverPort, int adminPort,
+                                             String configFile, List jvmArgs) throws Exception {
+
     controlledCrashMode = true;
-    setUpExternalProcess(factory, helper, serverPort, adminPort, configFile);
+    setUpExternalProcess(factory, helper, serverPort, adminPort, configFile, jvmArgs);
   }
 
   protected void setUpExternalProcess(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper,
-                                      int serverPort, int adminPort, String configFile) throws Exception {
+                                      int serverPort, int adminPort, String configFile, List jvmArgs) throws Exception {
     setJavaHome();
-    serverControl = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile, true, javaHome);
+    assertNotNull(jvmArgs);
+    serverControl = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile, true, javaHome, jvmArgs);
     setUp(factory, helper);
 
     ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(serverPort);
