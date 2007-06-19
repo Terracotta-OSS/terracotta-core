@@ -61,6 +61,7 @@ public class PackageFragmentHandler extends BaseMenuCreator {
       m_excludedAction.setJavaElement(m_fragment);
       addMenuAction(menu, m_excludedAction);
       
+      m_lockHandler.setJavaElement(m_fragment);
       m_lockHandler.fillMenu(menu);
     }
   }  

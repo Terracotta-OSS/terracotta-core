@@ -39,6 +39,10 @@ public final class SWTUtil {
   public static void makeIntField(final Text text) {
     text.addListener(SWT.Verify, new Listener() {
       public void handleEvent(Event e) {
+        if (e.widget.getDisplay() == null) {
+          e.widget.removeListener(SWT.Verify, this);
+          return;
+        }
         String string = e.text;
         char[] chars = new char[string.length()];
         string.getChars(0, chars.length, chars, 0);
@@ -88,9 +92,9 @@ public final class SWTUtil {
   }
 
   public static int tableRowsToPixels(Table table, int rows) {
-    return table.getHeaderHeight()+(rows*table.getItemHeight());
+    return table.getHeaderHeight() + (rows * table.getItemHeight());
   }
-  
+
   public static void applyDefaultButtonSize(Button button) {
     Point preferredSize = button.computeSize(SWT.DEFAULT, SWT.DEFAULT, false);
     Point hint = Geometry.max(LayoutConstants.getMinButtonSize(), preferredSize);
@@ -110,6 +114,10 @@ public final class SWTUtil {
     final Control control = table;
     control.addControlListener(new ControlAdapter() {
       public void controlResized(ControlEvent e) {
+        if (e.widget.getDisplay() == null) {
+          ((Control) e.widget).removeControlListener(this);
+          return;
+        }
         Rectangle area = control.getBounds();
         int widthHint = SWT.DEFAULT;
         int heightHint = SWT.DEFAULT;
@@ -137,6 +145,10 @@ public final class SWTUtil {
     final int totalWeight = weight;
     tablePanel.addControlListener(new ControlAdapter() {
       public void controlResized(ControlEvent e) {
+        if (e.widget.getDisplay() == null) {
+          ((Control) e.widget).removeControlListener(this);
+          return;
+        }
         Rectangle area = tablePanel.getClientArea();
         Point preferredSize = table.computeSize(SWT.DEFAULT, SWT.DEFAULT);
         int width = area.width - 2 * table.getBorderWidth();
@@ -159,6 +171,10 @@ public final class SWTUtil {
     editor.grabHorizontal = true;
     table.addListener(SWT.MouseDown, new Listener() {
       public void handleEvent(Event event) {
+        if (event.widget.getDisplay() == null) {
+          event.widget.removeListener(SWT.MouseDown, this);
+          return;
+        }
         Rectangle clientArea = table.getClientArea();
         Point pt = new Point(event.x, event.y);
         int index = table.getTopIndex();
@@ -229,6 +245,10 @@ public final class SWTUtil {
     editor.grabHorizontal = true;
     table.addListener(SWT.MouseDown, new Listener() {
       public void handleEvent(Event event) {
+        if (event.widget.getDisplay() == null) {
+          event.widget.removeListener(SWT.MouseDown, this);
+          return;
+        }
         Rectangle clientArea = table.getClientArea();
         Point pt = new Point(event.x, event.y);
         int index = table.getTopIndex();
@@ -290,7 +310,7 @@ public final class SWTUtil {
                 isMouseOverCombo[0] = false;
               }
             });
-            combo.addSelectionListener(new SelectionAdapter () {
+            combo.addSelectionListener(new SelectionAdapter() {
               public void widgetSelected(SelectionEvent e) {
                 Event updateEvent = new Event();
                 item.setText(column, combo.getText());

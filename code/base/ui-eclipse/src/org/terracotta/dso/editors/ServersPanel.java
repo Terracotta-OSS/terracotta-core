@@ -79,6 +79,7 @@ public class ServersPanel extends ConfigurationEditorPanel
   private void updateChildren() {
     m_layout.m_serverTable.removeAll();
     initTableItems();
+    testDisableRemoveButton();
     m_layout.m_serverPanel.setVisible(haveAnyServers());
   }
   
@@ -122,8 +123,13 @@ public class ServersPanel extends ConfigurationEditorPanel
     }
     m_layout.m_serverPanel.setVisible(haveAnyServers());
     fireServersChanged();
+    testDisableRemoveButton();
   }
 
+  private void testDisableRemoveButton() {
+    m_layout.m_removeServerButton.setEnabled(m_layout.m_serverTable.getSelectionCount()>0);
+  }
+  
   public void tearDown() {
     removeListeners();
 

@@ -6,6 +6,7 @@ package org.terracotta.dso.views;
 import org.eclipse.jdt.internal.ui.util.SelectionUtil;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.InputDialog;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.window.Window;
@@ -30,7 +31,13 @@ public class EditIncludePatternAction extends Action {
     
     InputDialog dialog = new InputDialog(shell, title, dialogMessage, initialValue, null);
     if(dialog.open() == Window.OK) {
-      fPart.setIncludeExpression(dialog.getValue());
+      String expr = dialog.getValue();
+      
+      if(expr != null && (expr = expr.trim()) != null && expr.length() > 0) {
+        fPart.setIncludeExpression(expr);
+      } else if(MessageDialog.openQuestion(shell, title, "Remove include '"+wrapper.getClassExpression()+"'?")) {
+        fPart.removeSelectedItem();
+      }
     }
   }
 

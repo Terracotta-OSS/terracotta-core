@@ -95,6 +95,15 @@ public class InstrumentedClassesPanel extends ConfigurationEditorPanel {
       addListeners();
     }
   }
+  
+  private void testInstrumentedClasses() {
+    if (!hasAnySet() && m_dsoApp.getInstrumentedClasses() != null) {
+      m_dsoApp.unsetInstrumentedClasses();
+      m_instrumentedClasses = null;
+      fireXmlObjectStructureChanged(m_dsoApp);
+    }
+    handleTableSelection();
+  }
 
   private void addListeners() {
     m_layout.m_table.addSelectionListener(m_tableSelectionListener);
@@ -128,6 +137,7 @@ public class InstrumentedClassesPanel extends ConfigurationEditorPanel {
 
   public void updateChildren() {
     initTableItems();
+    handleTableSelection();
   }
 
   public void updateModel() {
@@ -432,7 +442,8 @@ public class InstrumentedClassesPanel extends ConfigurationEditorPanel {
     private static final String DETAILS               = "Details";
     private static final String ADD                   = "Add...";
     private static final String REMOVE                = "Remove";
-    private static final String ORDER                 = "Order";
+    private static final String RAISE_PRIORITY        = "Raise priority";
+    private static final String LOWER_PRIORITY        = "Lower priority";
     private static final String HONOR_TRANSIENT       = "Honor Transient";
     private static final String ON_LOAD               = "On Load Behavior";
     private static final String DO_NOTHING            = "Do Nothing";
@@ -614,14 +625,14 @@ public class InstrumentedClassesPanel extends ConfigurationEditorPanel {
       new Label(buttonPanel, SWT.NONE); // filler
 
       m_moveUpButton = new Button(buttonPanel, SWT.PUSH);
-      m_moveUpButton.setText(ORDER);
+      m_moveUpButton.setText(LOWER_PRIORITY);
       m_moveUpButton.setEnabled(false);
       m_moveUpButton.setImage(new Image(parent.getDisplay(), this.getClass().getResourceAsStream(UP)));
       m_moveUpButton.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
       SWTUtil.applyDefaultButtonSize(m_moveUpButton);
 
       m_moveDownButton = new Button(buttonPanel, SWT.PUSH);
-      m_moveDownButton.setText(ORDER);
+      m_moveDownButton.setText(RAISE_PRIORITY);
       m_moveDownButton.setEnabled(false);
       m_moveDownButton.setImage(new Image(parent.getDisplay(), this.getClass().getResourceAsStream(DOWN)));
       m_moveDownButton.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
@@ -639,25 +650,48 @@ public class InstrumentedClassesPanel extends ConfigurationEditorPanel {
     public void handleEvent(Event event) {
       TableItem item = (TableItem) event.item;
       XmlObject xmlObj = (XmlObject) item.getData();
+      final int index = m_layout.m_table.indexOf(item);
 
       if (event.index == Layout.RULE_COLUMN) {
         removeListeners();
-        int index = m_layout.m_table.indexOf(item);
         toggleRuleType(index);
         addListeners();
         m_layout.m_table.select(index);
       } else {
-        String text = item.getText(event.index);
+        String text = item.getText(event.index).trim();
+        
         if (xmlObj instanceof ClassExpression) {
           ClassExpression exclude = (ClassExpression) xmlObj;
-          exclude.setStringValue(text);
-          fireExcludeRuleChanged(indexOfExclude(exclude));
+          
+          if(text.length() == 0) {
+            item.setText(exclude.getStringValue());
+            removeRuleLater(index);
+          } else {
+            exclude.setStringValue(text);
+            fireExcludeRuleChanged(indexOfExclude(exclude));
+          }
         } else {
           Include include = (Include) xmlObj;
-          include.setClassExpression(text);
-          fireIncludeRuleChanged(indexOfInclude(include));
+          
+          if(text.length() == 0) {
+            item.setText(include.getClassExpression());
+            removeRuleLater(index);
+          } else {
+            include.setClassExpression(text);
+            fireIncludeRuleChanged(indexOfInclude(include));
+          }
         }
       }
+    }
+    
+    private void removeRuleLater(final int index) {
+      getDisplay().asyncExec(new Runnable() {
+        public void run() {
+          removeRule(index);
+          fireInstrumentationRulesChanged();
+          testInstrumentedClasses();
+        }
+      });
     }
   }
 
@@ -688,6 +722,7 @@ public class InstrumentedClassesPanel extends ConfigurationEditorPanel {
         removeRule(selection[i]);
       }
       fireInstrumentationRulesChanged();
+      testInstrumentedClasses();
     }
   }
 

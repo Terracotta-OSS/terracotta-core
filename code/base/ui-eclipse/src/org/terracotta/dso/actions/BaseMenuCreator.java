@@ -74,6 +74,10 @@ public abstract class BaseMenuCreator
     m_selection = selection;
   }
 
+  public void setJavaElement(IJavaElement javaElement) {
+    m_element = javaElement;
+  }
+  
   protected abstract IJavaElement getJavaElement(ISelection selection);
   
   protected void buildMenu(Menu menu) {

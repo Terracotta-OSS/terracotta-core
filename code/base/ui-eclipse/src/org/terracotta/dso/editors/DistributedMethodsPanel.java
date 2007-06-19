@@ -80,8 +80,13 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel {
       fireXmlObjectStructureChanged(m_dsoApp);
     }
     fireDistributedMethodsChanged();
+    testDisableRemoveButton();
   }
 
+  private void testDisableRemoveButton() {
+    m_layout.m_removeButton.setEnabled(m_layout.m_table.getSelectionCount()>0);
+  }
+  
   private void addListeners() {
     m_layout.m_addButton.addSelectionListener(m_addHandler);
     m_layout.m_removeButton.addSelectionListener(m_removeHandler);
@@ -98,6 +103,7 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel {
 
   public void updateChildren() {
     initTableItems();
+    testDisableRemoveButton();
   }
 
   public void updateModel() {

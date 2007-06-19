@@ -27,7 +27,7 @@ import java.util.List;
 
 public final class MethodBehavior implements NavigatorBehavior {
 
-  public static final String  ADD_MSG       = "Enter Fully Qualified Field Name";
+  public static final String  ADD_MSG       = "Enter AspectWerks Method Expression";
   private static final String SELECT_METHOD = "Select Method";
   private final List          m_selectedValues;
 

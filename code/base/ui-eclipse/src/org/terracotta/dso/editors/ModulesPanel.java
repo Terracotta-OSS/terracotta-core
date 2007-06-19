@@ -27,9 +27,7 @@ import com.terracottatech.config.Client;
 import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
 
-public class ModulesPanel extends ConfigurationEditorPanel
-  implements XmlObjectStructureListener
-{
+public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectStructureListener {
   private Client                 m_dsoClient;
   private Modules                m_modules;
 
@@ -47,11 +45,11 @@ public class ModulesPanel extends ConfigurationEditorPanel
   private static final String    REPO_DECLARATION     = "Repository Declaration";
 
   private static final int       MODULE_NAME_INDEX    = 0;
-  
+
   public ModulesPanel(Composite parent, int style) {
     super(parent, style);
     m_layout = new Layout(this);
-    
+
     m_tableSelectionListener = new TableSelectionListener();
     m_tableDataListener = new TableDataListener();
     m_addModuleHandler = new AddModuleHandler();
@@ -148,13 +146,13 @@ public class ModulesPanel extends ConfigurationEditorPanel
     module.setVersion(version);
     createModuleTableItem(module);
   }
-  
+
   private void createModuleTableItem(Module module) {
     TableItem item = new TableItem(m_layout.m_moduleTable, SWT.NONE);
     item.setText(new String[] { module.getName(), module.getVersion() });
     item.setData(module);
   }
-  
+
   private void initModules() {
     m_layout.m_moduleTable.removeAll();
     if (m_modules == null) return;
@@ -162,7 +160,7 @@ public class ModulesPanel extends ConfigurationEditorPanel
     for (int i = 0; i < modules.length; i++) {
       createModuleTableItem(modules[i]);
     }
-    if(modules.length > 0) {
+    if (modules.length > 0) {
       m_layout.m_moduleTable.setSelection(0);
     }
   }
@@ -176,7 +174,7 @@ public class ModulesPanel extends ConfigurationEditorPanel
     TableItem item = new TableItem(m_layout.m_moduleRepoTable, SWT.NONE);
     item.setText(repo);
   }
-  
+
   private void initModuleRepositories() {
     m_layout.m_moduleRepoTable.removeAll();
     if (m_modules == null) return;
@@ -184,7 +182,7 @@ public class ModulesPanel extends ConfigurationEditorPanel
     for (int i = 0; i < repos.length; i++) {
       createModuleRepoTableItem(repos[i]);
     }
-    if(repos.length > 0) {
+    if (repos.length > 0) {
       m_layout.m_moduleRepoTable.setSelection(0);
     }
   }
@@ -195,13 +193,13 @@ public class ModulesPanel extends ConfigurationEditorPanel
   }
 
   private static class Layout {
-    private static final String MODULE_REPOSITORIES      = "Module Repositories";
-    private static final String MODULES                  = "Modules";
-    private static final String LOCATION                 = "Location";
-    private static final String NAME                     = "Name";
-    private static final String VERSION                  = "Version";
-    private static final String ADD                      = "Add...";
-    private static final String REMOVE                   = "Remove";
+    private static final String MODULE_REPOSITORIES = "Module Repositories";
+    private static final String MODULES             = "Modules";
+    private static final String LOCATION            = "Location";
+    private static final String NAME                = "Name";
+    private static final String VERSION             = "Version";
+    private static final String ADD                 = "Add...";
+    private static final String REMOVE              = "Remove";
 
     private Table               m_moduleRepoTable;
     private Button              m_addModuleRepo;
@@ -334,7 +332,7 @@ public class ModulesPanel extends ConfigurationEditorPanel
       SWTUtil.applyDefaultButtonSize(m_removeModule);
     }
   }
-  
+
   class TableSelectionListener extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
       Table table = (Table) e.widget;
@@ -348,15 +346,15 @@ public class ModulesPanel extends ConfigurationEditorPanel
     public void handleEvent(Event event) {
       TableItem item = (TableItem) event.item;
       String text = item.getText(event.index);
-      Table table = (Table)event.widget; 
+      Table table = (Table) event.widget;
       int index = table.getSelectionIndex();
-      
-      if(event.widget == m_layout.m_moduleRepoTable) {
+
+      if (event.widget == m_layout.m_moduleRepoTable) {
         m_modules.setRepositoryArray(index, text);
         fireModuleRepoChanged(index);
       } else {
-        Module module = (Module)item.getData();
-        if(event.index == MODULE_NAME_INDEX) {
+        Module module = (Module) item.getData();
+        if (event.index == MODULE_NAME_INDEX) {
           module.setName(text);
         } else {
           module.setVersion(text);
@@ -366,7 +364,7 @@ public class ModulesPanel extends ConfigurationEditorPanel
       table.setSelection(index);
     }
   }
-  
+
   class AddModuleHandler extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
       AddModuleDialog dialog = new AddModuleDialog(getShell(), MODULE_DECLARATION, MODULE_DECLARATION);
@@ -379,12 +377,12 @@ public class ModulesPanel extends ConfigurationEditorPanel
       dialog.open();
     }
   }
-  
+
   class RemoveModuleHandler extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
       int[] selection = m_layout.m_moduleTable.getSelectionIndices();
-      Modules modules = ensureModules(); 
-      for(int i = selection.length-1; i >= 0; i--) {
+      Modules modules = ensureModules();
+      for (int i = selection.length - 1; i >= 0; i--) {
         modules.removeModule(selection[i]);
       }
       m_layout.m_moduleTable.remove(selection);
@@ -413,8 +411,8 @@ public class ModulesPanel extends ConfigurationEditorPanel
   class RemoveRepoHandler extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
       int[] selection = m_layout.m_moduleRepoTable.getSelectionIndices();
-      Modules modules = ensureModules(); 
-      for(int i = selection.length-1; i >= 0; i--) {
+      Modules modules = ensureModules();
+      for (int i = selection.length - 1; i >= 0; i--) {
         modules.removeRepository(selection[i]);
       }
       m_layout.m_moduleRepoTable.remove(selection);

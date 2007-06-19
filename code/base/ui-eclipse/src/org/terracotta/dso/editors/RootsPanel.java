@@ -81,8 +81,13 @@ public class RootsPanel extends ConfigurationEditorPanel {
       fireXmlObjectStructureChanged(m_dsoApp);
     }
     fireRootsChanged();
+    testDisableRemoveButton();
   }
 
+  private void testDisableRemoveButton() {
+    m_layout.m_removeButton.setEnabled(m_layout.m_table.getSelectionCount()>0);
+  }
+  
   private void addListeners() {
     m_layout.m_addButton.addSelectionListener(m_addRootHandler);
     m_layout.m_removeButton.addSelectionListener(m_removeRootHandler);
@@ -99,6 +104,7 @@ public class RootsPanel extends ConfigurationEditorPanel {
 
   public void updateChildren() {
     initTableItems();
+    testDisableRemoveButton();
   }
 
   public void updateModel() {

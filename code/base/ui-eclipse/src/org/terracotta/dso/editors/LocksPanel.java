@@ -80,8 +80,14 @@ public class LocksPanel extends ConfigurationEditorPanel {
       m_locks = null;
       fireXmlObjectStructureChanged(m_dsoApp);
     }
+    testDisableRemoveButtons();
   }
 
+  private void testDisableRemoveButtons() {
+    m_layout.m_removeAutoLockButton.setEnabled(m_layout.m_autoLocksTable.getSelectionCount()>0);
+    m_layout.m_removeNamedLockButton.setEnabled(m_layout.m_namedLocksTable.getSelectionCount()>0);
+  }
+  
   private void addListeners() {
     m_layout.m_addAutoLockButton.addSelectionListener(m_addLockHandler);
     m_layout.m_removeAutoLockButton.addSelectionListener(m_removeLockHandler);
@@ -108,6 +114,7 @@ public class LocksPanel extends ConfigurationEditorPanel {
 
   public void updateChildren() {
     initTableItems();
+    testDisableRemoveButtons();
   }
 
   public void updateModel() {
@@ -449,7 +456,7 @@ public class LocksPanel extends ConfigurationEditorPanel {
         int[] selection = m_layout.m_namedLocksTable.getSelectionIndices();
 
         for (int i = selection.length - 1; i >= 0; i--) {
-          m_locks.removeAutolock(selection[i]);
+          m_locks.removeNamedLock(selection[i]);
         }
         m_layout.m_namedLocksTable.remove(selection);
         fireNamedLocksChanged();
@@ -471,32 +478,73 @@ public class LocksPanel extends ConfigurationEditorPanel {
   class TableDataListener implements Listener {
     public void handleEvent(Event e) {
       TableItem item = (TableItem) e.item;
-      String text = item.getText(e.index);
+      String text = item.getText(e.index).trim();
+      int index = ((Table)e.widget).getSelectionIndex();
 
       if (e.widget == m_layout.m_autoLocksTable) {
         Autolock lock = (Autolock) item.getData();
-
+        
         if (e.index == Layout.AUTO_METHOD_COLUMN) {
-          lock.setMethodExpression(text);
+          if(text.length() == 0) {
+            item.setText(lock.getMethodExpression());
+            removeAutolockLater(index);
+            return;
+          } else {
+            lock.setMethodExpression(text);
+          }
         } else {
           lock.xgetLockLevel().setStringValue(text);
         }
-        fireAutolockChanged(m_layout.m_autoLocksTable.getSelectionIndex());
+        fireAutolockChanged(index);
       } else if (e.widget == m_layout.m_namedLocksTable) {
         NamedLock lock = (NamedLock) item.getData();
 
         if (e.index == Layout.NAMED_NAME_COLUMN) {
-          lock.setLockName(text);
+          if(text.length() == 0) {
+            item.setText(lock.getLockName());
+            removeNamedLockLater(index);
+            return;
+          } else {
+            lock.setLockName(text);
+          }
         } else if (e.index == Layout.NAMED_METHOD_COLUMN) {
-          lock.setMethodExpression(text);
+          if(text.length() == 0) {
+            item.setText(lock.getMethodExpression());
+            removeNamedLockLater(index);
+            return;
+          } else {
+            lock.setMethodExpression(text);
+          }
         } else {
           lock.xgetLockLevel().setStringValue(text);
         }
-        fireNamedLockChanged(m_layout.m_namedLocksTable.getSelectionIndex());
+        fireNamedLockChanged(index);
       }
     }
   }
 
+  private void removeAutolockLater(final int index) {
+    getDisplay().asyncExec(new Runnable() {
+      public void run() {
+        m_locks.removeAutolock(index);
+        m_layout.m_autoLocksTable.remove(index);
+        fireAutolocksChanged();
+        testRemoveLocks();
+      }
+    });
+  }
+
+  private void removeNamedLockLater(final int index) {
+    getDisplay().asyncExec(new Runnable() {
+      public void run() {
+        m_locks.removeNamedLock(index);
+        m_layout.m_namedLocksTable.remove(index);
+        fireAutolocksChanged();
+        testRemoveLocks();
+      }
+    });
+  }
+  
   public void namedLockChanged(IProject project, int index) {
     if (project.equals(getProject())) {
       updateNamedLockTableItem(index);

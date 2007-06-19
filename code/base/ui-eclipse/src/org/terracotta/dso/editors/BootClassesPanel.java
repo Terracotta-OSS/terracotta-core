@@ -89,6 +89,11 @@ public class BootClassesPanel extends ConfigurationEditorPanel {
       fireXmlObjectStructureChanged(m_dsoApp);
     }
     fireBootClassesChanged();
+    testDisableRemoveButton();
+  }
+
+  private void testDisableRemoveButton() {
+    m_layout.m_removeButton.setEnabled(m_layout.m_table.getSelectionCount()>0);
   }
 
   private void addListeners() {
@@ -107,6 +112,7 @@ public class BootClassesPanel extends ConfigurationEditorPanel {
 
   public void updateChildren() {
     initTableItems();
+    testDisableRemoveButton();
   }
 
   public void updateModel() {

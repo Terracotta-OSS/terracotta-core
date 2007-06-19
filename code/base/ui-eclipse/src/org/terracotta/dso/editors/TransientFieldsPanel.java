@@ -80,6 +80,7 @@ public class TransientFieldsPanel extends ConfigurationEditorPanel {
       fireXmlObjectStructureChanged(m_dsoApp);
     }
     fireTransientFieldsChanged();
+    testDisableRemoveButton();
   }
 
   private void addListeners() {
@@ -98,6 +99,7 @@ public class TransientFieldsPanel extends ConfigurationEditorPanel {
 
   public void updateChildren() {
     initTableItems();
+    testDisableRemoveButton();
   }
 
   public void updateModel() {
@@ -231,8 +233,12 @@ public class TransientFieldsPanel extends ConfigurationEditorPanel {
     }
   }
 
-  private void handleTableSelection() {
+  private void testDisableRemoveButton() {
     m_layout.m_removeButton.setEnabled(m_layout.m_table.getSelectionCount() > 0);
+  }
+
+  private void handleTableSelection() {
+    m_layout.m_removeButton.setEnabled(true);
   }
   
   class AddHandler extends SelectionAdapter {
@@ -257,16 +263,19 @@ public class TransientFieldsPanel extends ConfigurationEditorPanel {
   class RemoveHandler extends SelectionAdapter {
     public void widgetSelected(SelectionEvent e) {
       m_layout.m_table.setRedraw(false);
-      m_layout.m_table.forceFocus();
-      int[] selection = m_layout.m_table.getSelectionIndices();
-
-      for (int i = selection.length - 1; i >= 0; i--) {
-        ensureTransientFields().removeFieldName(selection[i]);
+      try {
+        m_layout.m_table.forceFocus();
+        int[] selection = m_layout.m_table.getSelectionIndices();
+  
+        for (int i = selection.length - 1; i >= 0; i--) {
+          ensureTransientFields().removeFieldName(selection[i]);
+        }
+        m_layout.m_table.remove(selection);
+        testRemoveTransientFields();
+        handleTableSelection();
+      } finally {
+        m_layout.m_table.setRedraw(true);
       }
-      m_layout.m_table.remove(selection);
-      testRemoveTransientFields();
-      handleTableSelection();
-      m_layout.m_table.setRedraw(true);
     }
   }
 
