@@ -260,6 +260,10 @@ public class ConfigPropertiesTest extends TestCase {
       properties.putAll(props);
       return properties;
     }
+
+    public int getInt(String key, int defaultValue) {
+      return 0;
+    }
   }
 
 }

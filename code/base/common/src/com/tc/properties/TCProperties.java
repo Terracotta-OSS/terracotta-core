@@ -8,7 +8,8 @@ import java.util.Properties;
 public interface TCProperties {
 
   int getInt(String key);
-
+  int getInt(String key, int defaultValue);
+  
   long getLong(String key);
 
   boolean getBoolean(String key);

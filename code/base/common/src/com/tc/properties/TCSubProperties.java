@@ -60,4 +60,8 @@ class TCSubProperties implements TCProperties {
   public String getProperty(String key, boolean missingOkay) {
     return properties.getProperty(getActualKey(key), missingOkay);
   }
+
+  public int getInt(String key, int defaultValue) {
+    return properties.getInt(key, defaultValue);
+  }
 }

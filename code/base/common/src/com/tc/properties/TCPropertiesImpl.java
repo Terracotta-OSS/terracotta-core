@@ -179,6 +179,12 @@ public class TCPropertiesImpl implements TCProperties {
     String val = getProperty(key);
     return Integer.valueOf(val).intValue();
   }
+  
+  public int getInt(String key, int defValue) {
+    String val = getProperty(key, true);
+    if (val == null) return defValue;
+    else return Integer.parseInt(val);
+  }
 
   public long getLong(String key) {
     String val = getProperty(key);
