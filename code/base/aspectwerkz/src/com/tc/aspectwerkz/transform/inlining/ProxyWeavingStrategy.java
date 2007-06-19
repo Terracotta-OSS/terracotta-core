@@ -70,7 +70,7 @@ public class ProxyWeavingStrategy implements WeavingStrategy {
       ClassVisitor reversedChainPhase1 = writerPhase1;
       reversedChainPhase1 = new AddMixinMethodsVisitor(reversedChainPhase1, classInfo, context, addedMethods);
       reversedChainPhase1 = new AddInterfaceVisitor(reversedChainPhase1, classInfo, context);
-      readerPhase1.accept(reversedChainPhase1, 0);
+      readerPhase1.accept(reversedChainPhase1, ClassReader.SKIP_FRAMES);
       context.setCurrentBytecode(writerPhase1.toByteArray());
 
       // ------------------------------------------------
@@ -201,4 +201,3 @@ public class ProxyWeavingStrategy implements WeavingStrategy {
 //    return false;
 //  }
 }
-    

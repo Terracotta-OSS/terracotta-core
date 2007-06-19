@@ -191,7 +191,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
           newInvocationsByCallerMemberHash = new HashMap();
           crLookahead.accept(
               new ConstructorCallVisitor.LookaheadNewDupInvokeSpecialInstructionClassAdapter(newInvocationsByCallerMemberHash),
-              ClassReader.SKIP_DEBUG);
+              ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
         }
 
         // prepare handler jp, by gathering ALL catch blocks and their exception type
@@ -202,13 +202,13 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
               new HandlerVisitor.LookaheadCatchLabelsClassAdapter(cv, loader, classInfo, context, catchLabels);
           // we must visit exactly as we will do further on with debug info (that produces extra labels)
           final ClassReader crLookahead2 = new ClassReader(bytecode);
-          crLookahead2.accept(lookForCatches, 0);
+          crLookahead2.accept(lookForCatches, ClassReader.SKIP_FRAMES);
         }
 
         // gather wrapper methods to support multi-weaving
         // skip annotations visit and debug info by using the lookahead read-only classreader
         Set addedMethods = new HashSet();
-        crLookahead.accept(new AlreadyAddedMethodAdapter(addedMethods), ClassReader.SKIP_DEBUG);
+        crLookahead.accept(new AlreadyAddedMethodAdapter(addedMethods), ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
         // ------------------------------------------------
         // -- Phase 1 -- type change (ITDs)
@@ -216,7 +216,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         final ClassWriter writerPhase1 = new ClassWriter(readerPhase1, ClassWriter.COMPUTE_MAXS);
         ClassVisitor reversedChainPhase1 = new AddMixinMethodsVisitor(writerPhase1, classInfo, context, addedMethods);
         reversedChainPhase1 = new AddInterfaceVisitor(reversedChainPhase1, classInfo, context);
-        readerPhase1.accept(reversedChainPhase1, 0);
+        readerPhase1.accept(reversedChainPhase1, ClassReader.SKIP_FRAMES);
         context.setCurrentBytecode(writerPhase1.toByteArray());
 
         // ------------------------------------------------
@@ -244,7 +244,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         }
         reversedChainPhase2 = new LabelToLineNumberVisitor(reversedChainPhase2, context);
 
-        readerPhase2.accept(reversedChainPhase2, 0);
+        readerPhase2.accept(reversedChainPhase2, ClassReader.SKIP_FRAMES);
         context.setCurrentBytecode(writerPhase2.toByteArray());
 
         // ------------------------------------------------
@@ -254,7 +254,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
           final ClassWriter writerPhase3 = new ClassWriter(readerPhase3, ClassWriter.COMPUTE_MAXS);
           ClassVisitor reversedChainPhase3 = new AddWrapperVisitor(writerPhase3, context, addedMethods);
           reversedChainPhase3 = new JoinPointInitVisitor(reversedChainPhase3, context);
-          readerPhase3.accept(reversedChainPhase3, 0);
+          readerPhase3.accept(reversedChainPhase3, ClassReader.SKIP_FRAMES);
           context.setCurrentBytecode(writerPhase3.toByteArray());
         }
       }
@@ -266,7 +266,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         final ClassWriter dsoWriter = new ClassWriter(dsoReader, ClassWriter.COMPUTE_MAXS);
         ClassVisitor dsoVisitor = m_configHelper.createClassAdapterFor(dsoWriter, classInfo, m_logger, loader);
         try {
-          dsoReader.accept(dsoVisitor, 0);
+          dsoReader.accept(dsoVisitor, ClassReader.SKIP_FRAMES);
           context.setCurrentBytecode(dsoWriter.toByteArray());
         } catch (TCLogicalSubclassNotPortableException e) {
           List l = new ArrayList(1);
@@ -281,7 +281,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         if (ClassInfoHelper.implementsInterface(classInfo, "java.io.Serializable")) {
           ClassReader readerPhase3 = new ClassReader(context.getCurrentBytecode());
           final ClassWriter writerPhase3 = new ClassWriter(readerPhase3, ClassWriter.COMPUTE_MAXS);
-          readerPhase3.accept(new SafeSerialVersionUIDAdder(writerPhase3), 0);
+          readerPhase3.accept(new SafeSerialVersionUIDAdder(writerPhase3), ClassReader.SKIP_FRAMES);
           context.setCurrentBytecode(writerPhase3.toByteArray());
         }
       }

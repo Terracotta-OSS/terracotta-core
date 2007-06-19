@@ -82,7 +82,7 @@ public class ProxyDelegationCompiler implements TransformationConstants {
           // ignore
         }
       }
-      classReader.accept(createProxy, ClassReader.SKIP_DEBUG);  // no need for debug info
+      classReader.accept(createProxy, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);  // no need for debug info
     }
     return proxyWriter.toByteArray();
   }
