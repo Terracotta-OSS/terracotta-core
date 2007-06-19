@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.control;
 
@@ -9,6 +10,8 @@ import com.tc.util.Assert;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ExtraL1ProcessControl extends ExtraProcessServerControl {
 
@@ -18,7 +21,12 @@ public class ExtraL1ProcessControl extends ExtraProcessServerControl {
 
   public ExtraL1ProcessControl(String l2Host, int dsoPort, Class mainClass, String configFileLoc, String[] mainArgs,
                                File directory) throws FileNotFoundException {
-    super(new DebugParams(), l2Host, dsoPort, 0, configFileLoc, true);
+    this(l2Host, dsoPort, mainClass, configFileLoc, mainArgs, directory, new ArrayList());
+  }
+
+  public ExtraL1ProcessControl(String l2Host, int dsoPort, Class mainClass, String configFileLoc, String[] mainArgs,
+                               File directory, List jvmArgs) throws FileNotFoundException {
+    super(new DebugParams(), l2Host, dsoPort, 0, configFileLoc, true, jvmArgs);
     this.mainClass = mainClass;
     this.mainArgs = mainArgs;
     this.directory = directory;

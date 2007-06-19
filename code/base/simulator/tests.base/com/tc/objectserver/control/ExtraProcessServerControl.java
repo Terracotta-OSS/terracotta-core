@@ -60,6 +60,12 @@ public class ExtraProcessServerControl extends ServerControlBase {
          null, new ArrayList(), NOT_DEF, null, false);
   }
 
+  public ExtraProcessServerControl(DebugParams params, String host, int dsoPort, int adminPort, String configFileLoc,
+                                   boolean mergeOutput, List jvmArgs) throws FileNotFoundException {
+    this(params, host, dsoPort, adminPort, configFileLoc, null, Directories.getInstallationRoot(), mergeOutput, null,
+         jvmArgs, NOT_DEF, null, false);
+  }
+
   // constructor 3: used by ControlSetup, Setup, and container tests
   public ExtraProcessServerControl(DebugParams debugParams, String host, int dsoPort, int adminPort,
                                    String configFileLoc, File runningDirectory, File installationRoot,
