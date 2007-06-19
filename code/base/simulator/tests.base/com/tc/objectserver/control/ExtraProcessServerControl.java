@@ -247,6 +247,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   }
 
   public void shutdown() throws Exception {
+    System.out.println("In shutdown()");
     attemptShutdown();
     waitUntilShutdown();
     isCrashed = true;
