@@ -24,16 +24,6 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 	public static Test suite() {
 		return new ContinuationsTestSetup();
 	}
-	
-	/////////////////////////////////////
-	public ContinuationsTest() {
-		disableAllUntil("2007-08-01");
-	}
-	
-	public boolean shouldDisable() {
-		return true;
-	}	
-	/////////////////////////////////////
 
 	/**
 	 * This test simply counts to 10 inside a while loop.
