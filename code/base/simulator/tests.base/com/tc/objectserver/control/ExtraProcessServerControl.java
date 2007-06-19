@@ -23,10 +23,11 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ExtraProcessServerControl extends ServerControlBase {
-  private static final String NOT_DEF    = "";
-  private static final String ERR_STREAM = "ERR";
-  private static final String OUT_STREAM = "OUT";
-
+  private static final String NOT_DEF            = "";
+  private static final String ERR_STREAM         = "ERR";
+  private static final String OUT_STREAM         = "OUT";
+  private final long          SHUTDOWN_WAIT_TIME = 2 * 60 * 1000;
+  
   private final String        name;
   private final boolean       mergeOutput;
 
@@ -41,7 +42,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   private StreamCopier        outCopier;
   private StreamCopier        errCopier;
   private final boolean       useIdentifier;
-  private volatile boolean    isCrashed   = false;
+  private volatile boolean    isCrashed          = false;
 
   // constructor 1: used by container tests
   public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput)
@@ -225,7 +226,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     return rv;
   }
 
-  public synchronized void crash() throws Exception {    
+  public synchronized void crash() throws Exception {
     System.out.println("Crashing server " + this.name + "...");
     if (process != null) {
       process.destroy();
@@ -265,9 +266,14 @@ public class ExtraProcessServerControl extends ServerControlBase {
   }
 
   public void waitUntilShutdown() throws Exception {
+    long start = System.currentTimeMillis();
+    long timeout = start + SHUTDOWN_WAIT_TIME;
     while (isRunning()) {
       Thread.sleep(1000);
       System.out.println("...server was forced shutdown but still running... waiting...");
+      if (System.currentTimeMillis() > timeout) {
+        throw new Exception("Server was shutdown but still up after " + SHUTDOWN_WAIT_TIME + " ms");
+      }
     }
   }
 
