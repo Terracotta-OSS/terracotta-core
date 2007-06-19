@@ -161,13 +161,15 @@ public class TCLogging {
       File[] devLoggingLocations = new File[] { new File(System.getProperty("user.home"), LOG4J_PROPERTIES_FILENAME),
           new File(System.getProperty("user.dir"), LOG4J_PROPERTIES_FILENAME) };
 
+      boolean devLog4JPropsFilePresent = false;
       for (int pos = 0; pos < devLoggingLocations.length; ++pos) {
         File propFile = devLoggingLocations[pos];
         if (propFile.isFile() && propFile.canRead()) {
+          devLog4JPropsFilePresent = true;
           devLoggingProperties.load(new FileInputStream(propFile));
         }
       }
-      if (!devLoggingProperties.isEmpty()) {
+      if (devLog4JPropsFilePresent) {
         Logger.getRootLogger().setLevel(Level.INFO);
         PropertyConfigurator.configure(devLoggingProperties);
         return true;
