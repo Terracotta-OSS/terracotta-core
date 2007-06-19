@@ -122,26 +122,18 @@ public abstract class BaseObject implements IFillStyleConsts {
 		if ((FILLSTYLE_TEXTURED == this.fillstyle)
 				&& (this instanceof ITexturable) && isTextured()
 				&& (bounds.width > 0) && (bounds.height > 0)) {
-			BufferedImage texture = new BufferedImage(bounds.width,
-					bounds.height, BufferedImage.TYPE_INT_RGB);
-			Graphics tg = texture.getGraphics();
-			tg.drawImage(getTexture(), 0, 0, bounds.width, bounds.height, null);
-			Paint paint = new TexturePaint(texture, bounds);
-			g.setPaint(paint);
-			g.fill(shape);
+			g.drawImage(getTexture(), bounds.x, bounds.y, bounds.width, bounds.height, null);
 		}
 
 		g.setStroke(this.stroke);
 		g.setColor(this.foreground);
 		g.draw(shape);
 
-		if (!showAnchors) {
-			return;
-		}
-
-		Shape[] anchors = getAnchors();
-		for (int i = 0; i < anchors.length; i++) {
-			g.fill(anchors[i]);
+		if (showAnchors) {
+			Shape[] anchors = getAnchors();
+			for (int i = 0; i < anchors.length; i++) {
+				g.fill(anchors[i]);
+			}
 		}
 	}
 
@@ -191,7 +183,6 @@ public abstract class BaseObject implements IFillStyleConsts {
 
 	protected void setTexture(Image image) {
 		try {
-			//if (texture == null) {
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream oos = new ObjectOutputStream(bos);
 			int width = image.getWidth(null);
@@ -207,8 +198,9 @@ public abstract class BaseObject implements IFillStyleConsts {
 			Image scaledImage = image.getScaledInstance(width, height,
 					Image.SCALE_FAST);
 			oos.writeObject(new ImageIcon(scaledImage));
-			texture = bos.toByteArray();
-			//}
+			
+			texture 	 = bos.toByteArray();
+			textureImage = null;
 		} catch (Exception ex) {
 			throw new InternalError("Unable to convert Image to byte[]");
 		}
@@ -218,9 +210,9 @@ public abstract class BaseObject implements IFillStyleConsts {
 		try {
 			if (textureImage == null) {
 				ByteArrayInputStream bis = new ByteArrayInputStream(texture);
-				ObjectInputStream ois = new ObjectInputStream(bis);
-				ImageIcon image = (ImageIcon) ois.readObject();
-				textureImage = image.getImage(); 
+				ObjectInputStream ois    = new ObjectInputStream(bis);
+				ImageIcon image          = (ImageIcon) ois.readObject();
+				textureImage             = image.getImage(); 
 			} 
 			return textureImage;
 		} catch (Exception ex) {
