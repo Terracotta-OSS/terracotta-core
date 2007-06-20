@@ -358,7 +358,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       // start proxy after server is up
       if(canRunProxyConnect()) {
         // not support active-passive yet
-        while(!serverControl.isRunning()) {
+        while((serverControl !=null) && !serverControl.isRunning()) {
           try {
             Thread.sleep(500);
           } catch (Exception e) {

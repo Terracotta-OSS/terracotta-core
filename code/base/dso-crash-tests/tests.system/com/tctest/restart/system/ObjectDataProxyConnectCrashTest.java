@@ -25,6 +25,14 @@ public class ObjectDataProxyConnectCrashTest extends TransparentTestBase impleme
   protected boolean canRunProxyConnect() {
     return true;
   }
+  
+  protected boolean canRunCrash() {
+    return true;
+  }
+  
+  protected boolean enableL1Reconnect() {
+    return true;
+  }
 
   protected void setupProxyConnectTest(ProxyConnectManagerImpl mgr) {
     mgr.setProxyWaitTime(20 * 1000);
