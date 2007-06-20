@@ -12,6 +12,11 @@ import com.tctest.TransparentTestIface;
 public class ObjectDataProxyConnectCrashTest extends TransparentTestBase implements TestConfigurator {
 
   private int clientCount = 2;
+  
+  public ObjectDataProxyConnectCrashTest() {
+    disableAllUntil("2007-06-30");
+  }
+
 
   protected Class getApplicationClass() {
     return ObjectDataTestApp.class;
