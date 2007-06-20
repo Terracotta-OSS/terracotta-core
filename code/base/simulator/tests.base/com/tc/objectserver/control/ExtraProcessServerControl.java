@@ -42,7 +42,6 @@ public class ExtraProcessServerControl extends ServerControlBase {
   private StreamCopier        outCopier;
   private StreamCopier        errCopier;
   private final boolean       useIdentifier;
-  private volatile boolean    isCrashed          = false;
 
   // constructor 1: used by container tests
   public ExtraProcessServerControl(String host, int dsoPort, int adminPort, String configFileLoc, boolean mergeOutput)
@@ -231,7 +230,6 @@ public class ExtraProcessServerControl extends ServerControlBase {
     }
     waitUntilStarted(timeout);
     System.err.println(this.name + " started.");
-    isCrashed = false;
   }
 
   protected LinkedJavaProcess createLinkedJavaProcess() {
@@ -244,31 +242,29 @@ public class ExtraProcessServerControl extends ServerControlBase {
     return rv;
   }
 
-  public synchronized void crash() throws Exception {
+  public void crash() throws Exception {
     System.out.println("Crashing server " + this.name + "...");
     if (process != null) {
       process.destroy();
       waitUntilShutdown();
-      isCrashed = true;
     }
     System.out.println(this.name + " crashed.");
   }
 
-  public synchronized void attemptShutdown() throws Exception {
-    if (isCrashed) {
-      System.out.println("Server " + this.name + " is crashed. Won't attempt to shut it down.");
-    } else {
-      System.out.println("Shutting down server " + this.name + "...");
-      TCStop stopper = new TCStop(getHost(), getAdminPort());
-      stopper.stop();
-    }
+  public void attemptShutdown() throws Exception {
+    System.out.println("Shutting down server " + this.name + "...");
+    TCStop stopper = new TCStop(getHost(), getAdminPort());
+    stopper.stop();
   }
 
   public void shutdown() throws Exception {
     System.out.println("In shutdown()");
-    attemptShutdown();
+    try {
+      attemptShutdown();
+    } catch (Exception e) {
+      System.err.println("Attempt to shutdown server but it might have already crashed: " + e.getMessage());
+    }
     waitUntilShutdown();
-    isCrashed = true;
     System.out.println(this.name + " stopped.");
   }
 
