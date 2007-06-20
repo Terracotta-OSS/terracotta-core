@@ -431,10 +431,10 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
           }
         }
       }
-    } else if (useExternalProcess()) {
-      if (serverControl.isRunning()) {
-        serverControl.shutdown();
-      }
+    }
+    
+    if (serverControl != null && serverControl.isRunning()) {
+      serverControl.shutdown();
     }
 
     super.tearDown();
