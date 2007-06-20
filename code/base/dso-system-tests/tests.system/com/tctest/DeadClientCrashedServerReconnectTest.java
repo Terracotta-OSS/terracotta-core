@@ -23,6 +23,7 @@ import com.tc.test.restart.RestartTestHelper;
 import com.tc.util.PortChooser;
 
 import java.net.InetAddress;
+import java.util.ArrayList;
 
 public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
 
@@ -41,7 +42,8 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     PortChooser portChooser = new PortChooser();
     RestartTestHelper helper = new RestartTestHelper(isCrashy,
                                                      new RestartTestEnvironment(this.getTempDirectory(), portChooser,
-                                                                                RestartTestEnvironment.DEV_MODE));
+                                                                                RestartTestEnvironment.DEV_MODE),
+                                                                                new ArrayList());
     ServerControl server = helper.getServerControl();
     long startTimeout = 20 * 60 * 1000;
     server.start(startTimeout);

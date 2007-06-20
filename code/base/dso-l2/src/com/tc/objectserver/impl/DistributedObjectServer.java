@@ -372,6 +372,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
     final NetworkStackHarnessFactory networkStackHarnessFactory;
     final boolean useOOOLayer = TCPropertiesImpl.getProperties().getBoolean("l1.reconnect.enabled");
+//boolean useOOOLayer = true;
+System.out.println("XXX useOOOLayer:"+useOOOLayer);
     if (useOOOLayer) {
       final Stage oooStage = stageManager.createStage("OOONetStage", new OOOEventHandler(), 1, maxStageSize);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(

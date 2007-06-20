@@ -72,6 +72,7 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
 
     // new TCPProxy(int listenPort, InetAddress destHost, int destPort, long delay, boolean logData, File logDir
     TCPProxy proxy = new TCPProxy(dsoProxyPort, InetAddress.getLocalHost(), dsoPort, 0L, false, new File("."));
+    proxy.setReuseAddress(true);
     proxy.start();
 
     ExtraL1ProcessControl client = spawnNewClient(dsoProxyPort);

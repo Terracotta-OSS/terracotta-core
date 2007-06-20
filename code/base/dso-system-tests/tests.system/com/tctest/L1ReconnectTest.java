@@ -34,7 +34,7 @@ public class L1ReconnectTest extends TransparentTestBase {
   private int             adminPort;
 
   public L1ReconnectTest() {
-    this.disableAllUntil("2007-06-25");
+    //this.disableAllUntil("2007-06-25");
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
@@ -44,6 +44,10 @@ public class L1ReconnectTest extends TransparentTestBase {
     cfg.setAttribute(L1ReconnectTestApp.CONFIG_FILE, configFile.getAbsolutePath());
     cfg.setAttribute(L1ReconnectTestApp.PORT_NUMBER, String.valueOf(port));
     cfg.setAttribute(L1ReconnectTestApp.HOST_NAME, "localhost");
+  }
+  
+  protected boolean enableL1Reconnect() {
+    return true;
   }
 
   protected Class getApplicationClass() {
