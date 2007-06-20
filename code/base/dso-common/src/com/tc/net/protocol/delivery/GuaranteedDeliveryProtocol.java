@@ -13,7 +13,7 @@ import com.tc.net.protocol.TCNetworkMessage;
  * This implements an asynchronous Once and only once protocol. Sent messages go out on the sent queue received messages
  * come in to the ProtocolMessageDelivery instance.
  */
-class GuaranteedDeliveryProtocol implements DeliveryProtocol {
+class GuaranteedDeliveryProtocol {
   private final StateMachineRunner send;
   private final StateMachineRunner receive;
   private final BoundedLinkedQueue sendQueue;

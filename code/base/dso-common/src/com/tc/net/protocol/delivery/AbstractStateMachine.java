@@ -10,24 +10,24 @@ import com.tc.util.Assert;
  * 
  */
 public abstract class AbstractStateMachine {
-  private State   current;
-  private boolean started = false;
-  private boolean paused  = true;
+  private State              current;
+  private boolean            started   = false;
+  private boolean            paused    = true;
   private StateMachineRunner runner;
-  private short sessionId = (short)0xffff;
+  private short              sessionId = (short) 0xffff;
 
   public abstract void execute(OOOProtocolMessage msg);
-  
+
   public void setSessionId(short id) {
     sessionId = id;
   }
-  
+
   public short getSessionId() {
-    return(sessionId);
+    return (sessionId);
   }
-  
+
   public boolean matchSessionId(OOOProtocolMessage opm) {
-    return(opm.getSessionId() == getSessionId());
+    return (opm.getSessionId() == getSessionId());
   }
 
   public final synchronized boolean isStarted() {
@@ -50,11 +50,11 @@ public abstract class AbstractStateMachine {
   public void setRunner(StateMachineRunner runner) {
     this.runner = runner;
   }
-  
+
   public StateMachineRunner getRunner() {
-    return(runner);
+    return (runner);
   }
-  
+
   protected void basicPause() {
     // Override me
   }
