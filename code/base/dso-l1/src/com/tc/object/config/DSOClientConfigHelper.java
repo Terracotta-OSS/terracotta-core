@@ -184,9 +184,10 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   boolean removeCustomAdapter(String name);
 
   /**
-   * @return true if the adapter was added (ie. it was not already present)
+   * If an adapter with the same name was already present, this new one
+   * will not be added, and the operation will simply return as a no-op.
    */
-  boolean addCustomAdapter(String name, ClassAdapterFactory adapterFactory);
+  void addCustomAdapter(String name, ClassAdapterFactory adapterFactory);
 
   int getSessionLockType(String appName);
 

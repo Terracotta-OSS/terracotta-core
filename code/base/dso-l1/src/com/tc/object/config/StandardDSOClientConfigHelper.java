@@ -1072,12 +1072,14 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     }
   }
 
-  public boolean addCustomAdapter(String name, ClassAdapterFactory factory) {
+  public void addCustomAdapter(String name, ClassAdapterFactory factory) {
     synchronized (customAdapters) {
-      if (customAdapters.containsKey(name)) { return false; }
+      if (customAdapters.containsKey(name)) {
+        return;
+      }
+      
       Object prev = this.customAdapters.put(name, factory);
       Assert.assertNull(prev);
-      return true;
     }
   }
 
