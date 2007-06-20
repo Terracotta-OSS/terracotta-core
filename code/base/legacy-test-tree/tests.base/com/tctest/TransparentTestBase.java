@@ -132,7 +132,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       if (!canRunProxyConnect()) configFactory().addServerToL1Config(null, dsoPort, adminPort);
       serverControl = helper.getServerControl();
     } else if (isActivePassive() && canRunActivePassive()) {
-      setUpActivePassiveServers(portChooser);
+      setUpActivePassiveServers(portChooser, jvmArgs);
     } else {
       int dsoPort = portChooser.chooseRandomPort();
       int adminPort = portChooser.chooseRandomPort();
@@ -156,7 +156,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     }
   }
 
-  private final void setUpActivePassiveServers(PortChooser portChooser) throws Exception {
+  private final void setUpActivePassiveServers(PortChooser portChooser, List jvmArgs) throws Exception {
     controlledCrashMode = true;
     setJavaHome();
     apSetupManager = new ActivePassiveTestSetupManager();
@@ -164,7 +164,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     apServerManager = new ActivePassiveServerManager(mode()
         .equals(TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE), getTempDirectory(), portChooser,
                                                      ActivePassiveServerConfigCreator.DEV_MODE, apSetupManager,
-                                                     runnerConfig.startTimeout(), javaHome, configFactory());
+                                                     runnerConfig.startTimeout(), javaHome, configFactory(), jvmArgs);
     apServerManager.addServersToL1Config(configFactory);
   }
 

@@ -68,11 +68,25 @@ public class ActivePassiveServerManager {
   private long                                   seed;
   private final File                             javaHome;
   private int                                    pid              = -1;
+  private List                                   jvmArgs = null;
 
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
                                     String configModel, ActivePassiveTestSetupManager setupManger, long startTimeout,
-                                    File javaHome, TestTVSConfigurationSetupManagerFactory configFactory)
+                                    File javaHome, TestTVSConfigurationSetupManagerFactory configFactory) 
+  throws Exception {
+    this(isActivePassiveTest, tempDir, portChooser,
+         configModel, setupManger, startTimeout,
+         javaHome, configFactory, new ArrayList());
+    
+  }
+
+  
+  public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
+                                    String configModel, ActivePassiveTestSetupManager setupManger, long startTimeout,
+                                    File javaHome, TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs)
       throws Exception {
+    this.jvmArgs = extraJvmArgs;
+   
     if (!isActivePassiveTest) { throw new AssertionError("A non-ActivePassiveTest is trying to use this class."); }
 
     this.setupManger = setupManger;
@@ -209,8 +223,7 @@ public class ActivePassiveServerManager {
   }
 
   private ServerControl getServerControl(int dsoPort, int jmxPort, String serverName) throws FileNotFoundException {
-    List jvmArgs = new ArrayList();
-    return new ExtraProcessServerControl(HOST, dsoPort, jmxPort, configFileLocation, true, serverName, jvmArgs,
+    return new ExtraProcessServerControl(HOST, dsoPort, jmxPort, configFileLocation, true, serverName, this.jvmArgs,
                                          javaHome, true);
   }
 
