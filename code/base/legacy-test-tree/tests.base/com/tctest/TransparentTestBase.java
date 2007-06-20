@@ -89,6 +89,13 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       javaHome = new File(javaHome_local);
     }
   }
+  
+  protected void setJvmArgsL1Reconnect(ArrayList jvmArgs) {
+    System.setProperty("com.tc.l1.reconnect.enabled", "true");
+    TCPropertiesImpl.setProperty("l1.reconnect.enabled", "true");
+    
+    jvmArgs.add("-Dcom.tc.l1.reconnect.enabled=true");
+  }
 
   protected void setUp() throws Exception {
     setUp(configFactory(), configHelper());
@@ -96,13 +103,14 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     // config should be set up before tc-config for external L2s are written out
     setupConfig(configFactory());
     
+    if (canRunProxyConnect() && !enableL1Reconnect()) {
+      throw new AssertionError("proxy-connect needs l1reconnect enabled, please overwrite enableL1Reconnect()");
+    }
+    
     ArrayList jvmArgs = new ArrayList();
     // for some test cases to enable l1reconnect
     if (enableL1Reconnect()) {
-      System.setProperty("com.tc.l1.reconnect.enabled", "true");
-      TCPropertiesImpl.setProperty("l1.reconnect.enabled", "true");
-      
-      jvmArgs.add("-Dcom.tc.l1.reconnect.enabled=true");
+      setJvmArgsL1Reconnect(jvmArgs);
     }
 
     RestartTestHelper helper = null;
