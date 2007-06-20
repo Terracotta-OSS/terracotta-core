@@ -28,7 +28,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class RestartTestEnvironment {
 
@@ -196,7 +198,7 @@ public class RestartTestEnvironment {
     server.shutdown();
   }
 
-  public ServerControl newExtraProcessServer() throws FileNotFoundException {
+  public ServerControl newExtraProcessServer(List jvmArgs) throws FileNotFoundException {
     assertServerOff();
     File javaHome = null;
     try {
@@ -208,8 +210,12 @@ public class RestartTestEnvironment {
       // ignore, leaving javaHome as null
     }
     this.server = new ExtraProcessServerControl(new DebugParams(), "localhost", serverPort, adminPort, this.configFile
-        .getAbsolutePath(), mergeServerOutput, javaHome);
+        .getAbsolutePath(), mergeServerOutput, javaHome, jvmArgs);
     return serverWrapper;
+  }
+  
+  public ServerControl newExtraProcessServer() throws FileNotFoundException {
+    return (newExtraProcessServer(new ArrayList()));
   }
 
   public ServerControl newIntraProcessServer() throws ConfigurationSetupException {

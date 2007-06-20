@@ -6,6 +6,8 @@ package com.tc.test.restart;
 
 import com.tc.objectserver.control.ServerControl;
 
+import java.util.List;
+
 public class RestartTestHelper {
 
   private final RestartTestEnvironment  env;
@@ -13,7 +15,7 @@ public class RestartTestHelper {
   private final boolean                 isCrashy;
   private final ServerControl           server;
 
-  public RestartTestHelper(boolean isCrashy, RestartTestEnvironment env) throws Exception {
+  public RestartTestHelper(boolean isCrashy, RestartTestEnvironment env, List jvmArgs) throws Exception {
     this.isCrashy = isCrashy;
     this.env = env;
     serverCrasherConfig = new ServerCrasherConfigImpl();
@@ -22,7 +24,7 @@ public class RestartTestHelper {
     this.env.setIsPersistent(true);
     initRestartEnv();
     env.setUp();
-    server = env.newExtraProcessServer();
+    server = env.newExtraProcessServer(jvmArgs);
     serverCrasherConfig.setServer(server);
   }
 
