@@ -42,6 +42,12 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
   }
 
   public void setUp() throws Exception {
+
+    // for some test cases to enable l1reconnect
+    if (enableL1Reconnect()) {
+      setJvmArgsL1Reconnect((ArrayList)jvmArgs);
+    }
+
     // XXX: ERR! HACK! Will collide eventually
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
