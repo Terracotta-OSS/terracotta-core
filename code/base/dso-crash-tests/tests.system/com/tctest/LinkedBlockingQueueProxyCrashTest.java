@@ -11,7 +11,7 @@ public class LinkedBlockingQueueProxyCrashTest extends TransparentTestBase {
   private static final int NODE_COUNT = 4;
   
   public LinkedBlockingQueueProxyCrashTest() {
-    disableAllUntil("2007-06-30");
+    //disableAllUntil("2007-06-30");
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
@@ -28,6 +28,10 @@ public class LinkedBlockingQueueProxyCrashTest extends TransparentTestBase {
   }
   
   protected boolean canRunProxyConnect() {
+    return true;
+  }
+  
+  protected boolean enableL1Reconnect() {
     return true;
   }
 
