@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -72,6 +73,7 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
 
     // new TCPProxy(int listenPort, InetAddress destHost, int destPort, long delay, boolean logData, File logDir
     TCPProxy proxy = new TCPProxy(dsoProxyPort, InetAddress.getLocalHost(), dsoPort, 0L, false, new File("."));
+    proxy.setReuseAddress(true);
     proxy.start();
 
     ExtraL1ProcessControl client = spawnNewClient(dsoProxyPort);
@@ -140,10 +142,13 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
     final File proxyConfigFile = createNewConfigFile(configFile, dsoProxyPort);
     File workingDir = new File(configFile.getParentFile(), "l1client");
     FileUtils.forceMkdir(workingDir);
+    
+    ArrayList jvmArgs = new ArrayList();
+    jvmArgs.add("-Dcom.tc.l1.reconnect.enabled=true");
 
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, 0 /* not used */, L1Client.class,
                                                              proxyConfigFile.getAbsolutePath(), new String[0],
-                                                             workingDir);
+                                                             workingDir,jvmArgs);
     client.start(20000);
     client.mergeSTDERR();
     client.mergeSTDOUT();
