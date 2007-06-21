@@ -16,62 +16,81 @@ final class Circle extends BaseObject implements ITexturable {
 		return this.shape;
 	}
 
-	private Shape[] anchors = null;
+	private transient Shape[] anchors = null;
 
-	private void makeAnchors() {
-		anchors = new Shape[] { new Ellipse2D.Double(x1 - 5, y2 - 5, 10, 10),
-				new Ellipse2D.Double(x2 - 5, y2 - 5, 10, 10),
-				new Ellipse2D.Double(x2 - 5, y1 - 5, 10, 10),
-				new Ellipse2D.Double(x1 - 5, y1 - 5, 10, 10) };
-	}
-
-	protected Shape[] getAnchors() {
+	private Shape[] updateAnchors() {
 		if (anchors == null) {
-			makeAnchors();
-		}
+			anchors = new Shape[] {
+					new Ellipse2D.Double(x1 - 5, y2 - 5, 10, 10),
+					new Ellipse2D.Double(x2 - 5, y2 - 5, 10, 10),
+					new Ellipse2D.Double(x2 - 5, y1 - 5, 10, 10),
+					new Ellipse2D.Double(x1 - 5, y1 - 5, 10, 10) };
+			return anchors;
+		} 
+
+		((Ellipse2D.Double) anchors[0]).x = x1 - 5;
+		((Ellipse2D.Double) anchors[0]).y = y2 - 5;
+		((Ellipse2D.Double) anchors[1]).x = x2 - 5;
+		((Ellipse2D.Double) anchors[1]).y = y2 - 5;
+		((Ellipse2D.Double) anchors[2]).x = x2 - 5;
+		((Ellipse2D.Double) anchors[2]).y = y1 - 5;
+		((Ellipse2D.Double) anchors[3]).x = x1 - 5;
+		((Ellipse2D.Double) anchors[3]).y = y1 - 5;
 		return anchors;
 	}
 
-	public synchronized void move(int dx, int dy) {
-		x1 += dx;
-		y1 += dy;
-		x2 += dx;
-		y2 += dy;
-		shape.setFrameFromDiagonal(x1, y1, x2, y2);
-		makeAnchors();
-		this.notifyListeners(this);
+	protected Shape[] getAnchors() {
+		return updateAnchors();
 	}
 
-	public synchronized void resize(int x, int y) {
-		switch (grabbedAnchor()) {
-		case 0:
-			x1 = x;
-			y2 = y;
-			break;
-		case 1:
-			x2 = x;
-			y2 = y;
-			break;
-		case 2:
-			x2 = x;
-			y1 = y;
-			break;
-		case 3:
-			x1 = x;
-			y1 = y;
-			break;
+	public void move(int dx, int dy) {
+		synchronized (this) {
+			x1 += dx;
+			y1 += dy;
+			x2 += dx;
+			y2 += dy;
+			shape.setFrameFromDiagonal(x1, y1, x2, y2);
+			updateAnchors();
 		}
-		shape.setFrameFromDiagonal(x1, y1, x2, y2);
-		makeAnchors();
 		this.notifyListeners(this);
 	}
 
-	public synchronized void clearTexture() {
-		super.clearTexture();
+	public void resize(int x, int y) {
+		synchronized (this) {
+			switch (grabbedAnchor()) {
+			case 0:
+				x1 = x;
+				y2 = y;
+				break;
+			case 1:
+				x2 = x;
+				y2 = y;
+				break;
+			case 2:
+				x2 = x;
+				y1 = y;
+				break;
+			case 3:
+				x1 = x;
+				y1 = y;
+				break;
+			}
+			shape.setFrameFromDiagonal(x1, y1, x2, y2);
+			updateAnchors();
+		}
+		this.notifyListeners(this);
 	}
 
-	public synchronized void setTexture(Image image) {
-		super.setTexture(image);
+	public void clearTexture() {
+		synchronized (this) {
+			super.clearTexture();
+		}
+	}
+
+	public void setTexture(Image image) {
+		synchronized (this) {
+			super.setTexture(image);
+		}
 		notifyListeners(this);
 	}
 
