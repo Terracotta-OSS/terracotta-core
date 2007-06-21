@@ -33,16 +33,16 @@ public class HelpHandler extends BaseMenuCreator {
   protected void fillMenu(Menu menu) {
     addMenuAction(menu,
         new HelpAction("Concept and Architecture Guide",
-          "http://www.terracotta.org/kit/reflector?kitID=2.3&pageID=ConceptAndArchGuide"));
+          "http://www.terracotta.org/kit/reflector?kitID=2.4&pageID=ConceptAndArchGuide"));
     addMenuAction(menu,
         new HelpAction("Configuration Guide and Reference",
-          "http://www.terracotta.org/kit/reflector?kitID=2.3&pageID=ConfigGuideAndRef"));
+          "http://www.terracotta.org/kit/reflector?kitID=2.4&pageID=ConfigGuideAndRef"));
     addMenuAction(menu,
         new HelpAction("Slider Tutorial",
-          "http://www.terracotta.org/kit/reflector?kitID=2.3&pageID=PojoTutorial"));
+          "http://www.terracotta.org/kit/reflector?kitID=2.4&pageID=PojoTutorial"));
     addMenuAction(menu,
         new HelpAction("Plugin Reference",
-          "http://www.terracotta.org/kit/reflector?kitID=2.3&pageID=PluginReferenceGuide"));
+          "http://www.terracotta.org/kit/reflector?kitID=2.4&pageID=PluginReferenceGuide"));
   }
 
   protected IJavaElement getJavaElement(ISelection selection) {

@@ -1289,7 +1289,7 @@ You may cancel this installation at any time by clicking the 'Cancel' button.]]>
 								<string><![CDATA[$USER_MAGIC_FOLDER_4$]]></string>
 							</property>
 							<property name="value">
-								<string><![CDATA[$USER_MAGIC_FOLDER_2$/Pojos]]></string>
+								<string><![CDATA[$USER_MAGIC_FOLDER_2$/Pojo]]></string>
 							</property>
 							<rules logicalOperation="AND">
 								<object class="com.zerog.ia.installer.rules.CompareVariable" objectID="747efa0d8b5f">
