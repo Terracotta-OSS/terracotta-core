@@ -39,6 +39,9 @@ public class ClassProcessorHelper {
   // Directory where Terracotta jars (and dependencies) can be found
   private static final String                TC_INSTALL_ROOT_SYSPROP = "tc.install-root";
 
+  // Property to indicate whether the Terracotta classloader is active
+  private static final String                TC_ACTIVE_SYSPROP = "tc.active";
+
   // NOTE: This is not intended to be a public/documented system property,
   // it is for dev use only. It is NOT for QA or customer use
   private static final String                TC_CLASSPATH_SYSPROP    = "tc.classpath";
@@ -290,6 +293,8 @@ public class ClassProcessorHelper {
         }
 
         initState.initialized();
+        
+        System.setProperty(TC_ACTIVE_SYSPROP, Boolean.TRUE.toString());
       } catch (Throwable t) {
         t.printStackTrace();
         handleError(t);
