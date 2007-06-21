@@ -618,7 +618,7 @@ class SubtreeTestRun
         # Run the tests. Most of the real magic here comes in the 'splice_into_ant_junit'
         # method, which puts the necessary <jvmarg>, <sysproperty>, and so forth elements
         # into the junit task.
-        loud_message("TIMEOUT VALUE: #{@timeout/(1000*60)} minutes")
+        
         @ant.junit(
         :maxmemory => "512m",        
         :timeout => @timeout,
@@ -671,7 +671,7 @@ class SubtreeTestRun
     <property name="unknow" value="none"></property>
   </properties>
   <testcase classname="#{classname}" name="test" time="69"></testcase>
-  <system-out><![CDATA[Test #{classname} failed. JVM crashed. Error parsing XML: Premature end of file.]]></system-out>
+  <system-out/>
   <system-err><![CDATA[Test #{classname} failed. JVM crashed. Error parsing XML: Premature end of file.]]></system-err>
 </testsuite>
 END
@@ -685,7 +685,7 @@ END
 
     # Call this when you're all done with tests. It doesn't do anything yet, but it well may in the future.
     def tearDown
-        # nothing yet
+      # nothing yet
     end
 
     # Prints out the arguments and system properties we'd use when running tests on this tree.
