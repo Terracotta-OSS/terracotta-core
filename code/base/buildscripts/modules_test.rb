@@ -618,8 +618,9 @@ class SubtreeTestRun
         # Run the tests. Most of the real magic here comes in the 'splice_into_ant_junit'
         # method, which puts the necessary <jvmarg>, <sysproperty>, and so forth elements
         # into the junit task.
+        loud_message("TIMEOUT VALUE: #{@timeout/(1000*60)} minutes")
         @ant.junit(
-        :maxmemory => "512m",
+        :maxmemory => "512m",        
         :timeout => @timeout,
         :dir => @cwd.to_s,
         :tempdir => @testrun_results.ant_temp_dir(@subtree).to_s,

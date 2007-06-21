@@ -100,7 +100,7 @@ class BootJar
   def ensure_created
     unless @created
       classpath = @module_set['dso-tests-jdk15'].subtree('src').classpath(@build_results, :full, :runtime)
-      puts("Creating boot JAR with: #{@jvm} and config file: #{@config_file}, using classpath: #{classpath}")
+      puts("Creating boot JAR with: #{@jvm} and config file: #{@config_file}")
       
       File.delete(path.to_s) if FileTest.exist?(path.to_s)
       sysproperties = {
