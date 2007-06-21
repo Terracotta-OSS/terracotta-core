@@ -1,8 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
+import com.tc.lang.TCThreadGroup;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.util.UnsafeUtil;
@@ -16,10 +18,10 @@ import java.lang.reflect.InvocationTargetException;
  * @author orion
  */
 public class TCObjectFactoryImpl implements TCObjectFactory {
-  private final static Object[]   EMPTY_OBJECT_ARRAY   = new Object[] {};
+  private final static Object[] EMPTY_OBJECT_ARRAY = new Object[] {};
 
-  private ClientObjectManager     objectManager;
-  private final TCClassFactory    clazzFactory;
+  private ClientObjectManager   objectManager;
+  private final TCClassFactory  clazzFactory;
 
   public TCObjectFactoryImpl(TCClassFactory clazzFactory) {
     this.clazzFactory = clazzFactory;
@@ -72,11 +74,13 @@ public class TCObjectFactoryImpl implements TCObjectFactory {
     // XXX: hack to workaround issue with commons logging dependence on context loader
     Thread thread = Thread.currentThread();
     ClassLoader cl = thread.getContextClassLoader();
+    final boolean adjustTCL = TCThreadGroup.currentThreadInTCThreadGroup();
+
+    if (adjustTCL) thread.setContextClassLoader(ctor.getDeclaringClass().getClassLoader());
     try {
-      thread.setContextClassLoader(ctor.getDeclaringClass().getClassLoader());
       rv = ctor.newInstance(args);
     } finally {
-      thread.setContextClassLoader(cl);
+      if (adjustTCL) thread.setContextClassLoader(cl);
     }
     return rv;
   }
@@ -88,12 +92,15 @@ public class TCObjectFactoryImpl implements TCObjectFactory {
     // XXX: hack to workaround issue with commons logging dependence on context loader
     Thread thread = Thread.currentThread();
     ClassLoader cl = thread.getContextClassLoader();
+    final boolean adjustTCL = TCThreadGroup.currentThreadInTCThreadGroup();
+
+    if (adjustTCL) thread.setContextClassLoader(ctor.getDeclaringClass().getClassLoader());
+
     try {
-      thread.setContextClassLoader(ctor.getDeclaringClass().getClassLoader());
       rv = ctor.newInstance(EMPTY_OBJECT_ARRAY);
       UnsafeUtil.setField(rv, type.getParentField(), parent);
     } finally {
-      thread.setContextClassLoader(cl);
+      if (adjustTCL) thread.setContextClassLoader(cl);
     }
     return rv;
   }

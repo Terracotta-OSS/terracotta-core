@@ -8,6 +8,7 @@ import bsh.EvalError;
 import bsh.Interpreter;
 import bsh.ParseException;
 
+import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -53,6 +54,7 @@ public abstract class TCObjectImpl implements TCObject {
     this.objectID = id;
     this.tcClazz = clazz;
     setPeerObject(new WeakObjectReference(id, peer, queue));
+    logger.info("Creating a TCObject(" + id.toLong() + ")");
   }
 
   public boolean isShared() {
@@ -92,7 +94,7 @@ public abstract class TCObjectImpl implements TCObject {
    * Reconstitutes the object using the data in the DNA strand. XXX: We may need to signal (via a different signature or
    * args) that the hydration is intended to initialize the object from scratch or if it's a delta. We must avoid
    * creating a new instance of the peer object if the strand is just a delta.
-   * 
+   *
    * @throws ClassNotFoundException
    */
   public void hydrate(DNA from, boolean force) throws ClassNotFoundException {
@@ -123,7 +125,9 @@ public abstract class TCObjectImpl implements TCObject {
       resolveAllReferences();
 
       ClassLoader prevLoader = Thread.currentThread().getContextClassLoader();
-      Thread.currentThread().setContextClassLoader(pojo.getClass().getClassLoader());
+      final boolean adjustTCL = TCThreadGroup.currentThreadInTCThreadGroup();
+      if (adjustTCL) Thread.currentThread().setContextClassLoader(pojo.getClass().getClassLoader());
+
       try {
         Interpreter i = new Interpreter();
         i.setClassLoader(tcc.getPeerClass().getClassLoader());
@@ -147,7 +151,7 @@ public abstract class TCObjectImpl implements TCObject {
         logger.error("OnLoad execute script failed for: " + pojo.getClass() + " error: " + e.getErrorText() + " line: "
                      + e.getErrorLineNumber() + "; " + e.getMessage() + "; stack: " + e.getScriptStackTrace());
       } finally {
-        Thread.currentThread().setContextClassLoader(prevLoader);
+        if (adjustTCL) Thread.currentThread().setContextClassLoader(prevLoader);
       }
     }
   }
