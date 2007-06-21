@@ -11,10 +11,10 @@ import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 
 public class LinkedBlockingQueueActivePassiveTest extends TransparentTestBase {
 
-  private static final int NODE_COUNT = 8;
+  private static final int NODE_COUNT = 4;
   
   public LinkedBlockingQueueActivePassiveTest() {
-    disableAllUntil("2007-06-30");
+    //disableAllUntil("2007-06-30");
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
@@ -33,9 +33,9 @@ public class LinkedBlockingQueueActivePassiveTest extends TransparentTestBase {
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(ActivePassiveCrashMode.CONTINUOUS_ACTIVE_CRASH);
-    setupManager.setServerCrashWaitTimeInSec(60);
-    setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.DISK);
-    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.PERMANENT_STORE);
+    setupManager.setServerCrashWaitTimeInSec(30);
+    setupManager.setServerShareDataMode(ActivePassiveSharedDataMode.NETWORK);
+    setupManager.setServerPersistenceMode(ActivePassivePersistenceMode.TEMPORARY_SWAP_ONLY);
   }
 
 }
