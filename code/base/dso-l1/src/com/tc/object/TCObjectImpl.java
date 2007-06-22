@@ -54,7 +54,6 @@ public abstract class TCObjectImpl implements TCObject {
     this.objectID = id;
     this.tcClazz = clazz;
     setPeerObject(new WeakObjectReference(id, peer, queue));
-    logger.info("Creating a TCObject(" + id.toLong() + ")");
   }
 
   public boolean isShared() {
