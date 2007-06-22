@@ -33,8 +33,6 @@ public abstract class AbstractAppServerInstallation implements AppServerStartupE
       throws Exception {
     Assert.assertTrue(home.isDirectory());
     Assert.assertTrue(workingDir.isDirectory());
-    if (workingDir.list().length > 0) { throw new Exception("Installation directory: " + workingDir.getAbsolutePath()
-                                                            + " contains legacy files. It must be empty to install."); }
     this.majorVersion = majorVersion;
     this.minorVersion = minorVersion;
     this.serverInstall = home;
