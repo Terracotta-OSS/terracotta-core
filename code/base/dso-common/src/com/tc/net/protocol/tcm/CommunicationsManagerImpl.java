@@ -179,7 +179,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       }
 
     };
-    NetworkStackHarness stackHarness = this.stackHarnessFactory.clientClientHarness(transportFactory, rv,
+    NetworkStackHarness stackHarness = this.stackHarnessFactory.createClientHarness(transportFactory, rv,
                                                                                     new MessageTransportListener[0]);
 
     stackHarness.finalizeStack();

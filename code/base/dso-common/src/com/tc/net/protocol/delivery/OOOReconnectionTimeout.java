@@ -8,11 +8,14 @@ import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportListener;
 import com.tc.net.protocol.transport.RestoreConnectionCallback;
 import com.tc.util.Assert;
+import com.tc.util.DebugUtil;
 import com.tc.util.TCTimerImpl;
 
 import java.util.TimerTask;
 
 public class OOOReconnectionTimeout implements MessageTransportListener, RestoreConnectionCallback {
+
+  private static final boolean                      debug = true;
 
   private final OnceAndOnlyOnceProtocolNetworkLayer oooLayer;
   private final long                                timeoutMillis;
@@ -24,6 +27,7 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
   }
 
   public synchronized void notifyTransportClosed(MessageTransport transport) {
+    log(transport, "Transport Closed");
     oooLayer.notifyTransportClosed(transport);
   }
 
@@ -33,9 +37,8 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
 
   public synchronized void notifyTransportDisconnected(MessageTransport transport) {
     Assert.assertNull(timer);
-    if (oooLayer.isClosed()) {
-      return;
-    }
+    log(transport, "Transport Disconnected, starting Timer for " + timeoutMillis);
+    if (oooLayer.isClosed()) { return; }
     oooLayer.startRestoringConnection();
     oooLayer.notifyTransportDisconnected(transport);
     // start the timer...
@@ -45,6 +48,7 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
 
   public synchronized void notifyTransportConnected(MessageTransport transport) {
     if (timer != null) {
+      log(transport, "Transport Connected, killing Timer for " + timeoutMillis);
       cancelTimer();
     }
     oooLayer.notifyTransportConnected(transport);
@@ -57,6 +61,7 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
 
   public synchronized void restoreConnectionFailed(MessageTransport transport) {
     if (timer != null) {
+      log(transport, "Restore Connection Failed, killing Timer for " + timeoutMillis);
       oooLayer.connectionRestoreFailed();
       cancelTimer();
     }
@@ -75,5 +80,9 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
     public void run() {
       rcc.restoreConnectionFailed(transport);
     }
+  }
+
+  private static void log(MessageTransport transport, String msg) {
+    if (debug) DebugUtil.trace("OOOTimer-SERVER-" + transport.getConnectionId() + " -> " + msg);
   }
 }

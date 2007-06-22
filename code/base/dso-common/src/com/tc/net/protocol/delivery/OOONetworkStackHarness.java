@@ -19,10 +19,12 @@ public class OOONetworkStackHarness extends AbstractNetworkStackHarness {
   private final OnceAndOnlyOnceProtocolNetworkLayerFactory factory;
   private Sink                                             sink;
   private OnceAndOnlyOnceProtocolNetworkLayer              oooLayer;
+  private final boolean                                    isClient;
 
   OOONetworkStackHarness(ServerMessageChannelFactory channelFactory, MessageTransport transport,
                          OnceAndOnlyOnceProtocolNetworkLayerFactory factory, Sink sink) {
     super(channelFactory, transport);
+    this.isClient = false;
     this.factory = factory;
     this.sink = sink;
   }
@@ -30,6 +32,7 @@ public class OOONetworkStackHarness extends AbstractNetworkStackHarness {
   OOONetworkStackHarness(MessageTransportFactory transportFactory, MessageChannelInternal channel,
                          OnceAndOnlyOnceProtocolNetworkLayerFactory factory, Sink sink) {
     super(transportFactory, channel);
+    this.isClient = true;
     this.factory = factory;
     this.sink = sink;
   }
@@ -56,6 +59,6 @@ public class OOONetworkStackHarness extends AbstractNetworkStackHarness {
   }
 
   protected void createIntermediateLayers() {
-    oooLayer = factory.createNewInstance(sink);
+    oooLayer = (isClient) ? factory.createNewClientInstance(sink) : factory.createNewServerInstance(sink);
   }
 }

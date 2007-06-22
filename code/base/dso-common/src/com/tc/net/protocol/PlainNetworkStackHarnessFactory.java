@@ -24,7 +24,7 @@ public class PlainNetworkStackHarnessFactory implements NetworkStackHarnessFacto
     return new PlainNetworkStackHarness(channelFactory, transport);
   }
 
-  public NetworkStackHarness clientClientHarness(MessageTransportFactory transportFactory,
+  public NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
                                                  MessageChannelInternal channel,
                                                  MessageTransportListener[] transportListeners) {
     return new PlainNetworkStackHarness(transportFactory, channel);

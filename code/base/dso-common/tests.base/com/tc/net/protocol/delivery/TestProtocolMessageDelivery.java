@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.delivery;
 
@@ -8,43 +9,44 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.delivery.OOOProtocolMessage;
 import com.tc.net.protocol.delivery.OOOProtocolMessageDelivery;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.util.Assert;
 
 /**
  *
  */
 public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
-  public boolean          sentAckRequest = false;
-  public long             ackCount       = -1;
-  public boolean          sentAck        = false;
-  public OOOProtocolMessage  msg            = null;
-  public TCNetworkMessage tcMessage      = null;
-  public boolean          created        = false;
-  public int              receivedMessageCount;
-  private LinkedQueue receivedQueue;
+  public boolean            sentAckRequest = false;
+  public long               ackCount       = -1;
+  public boolean            sentAck        = false;
+  public OOOProtocolMessage msg            = null;
+  public TCNetworkMessage   tcMessage      = null;
+  public boolean            created        = false;
+  public int                receivedMessageCount;
+  private LinkedQueue       receivedQueue;
 
   public TestProtocolMessageDelivery(LinkedQueue receivedQueue) {
     this.receivedQueue = receivedQueue;
   }
-  
+
   public OOOProtocolMessage createAckRequestMessage(short sessionId) {
     sentAckRequest = true;
-    return(new TestProtocolMessage());
+    return (new TestProtocolMessage());
   }
-  
+
   public void sendAckRequest() {
     sentAckRequest = true;
   }
-  
+
   public OOOProtocolMessage createAckMessage(long sequence) {
     this.ackCount = sequence;
     this.sentAck = true;
-    
+
     TestProtocolMessage opm = new TestProtocolMessage(null, 0, sequence);
     opm.isAck = true;
-    return(opm);
+    return (opm);
   }
-  
+
   public void sendAck(long count) {
     this.ackCount = count;
     this.sentAck = true;
@@ -75,12 +77,16 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
   public void receiveMessage(OOOProtocolMessage pm) {
     receivedMessageCount++;
     try {
-      receivedQueue.put(((TestProtocolMessage)pm).msg);
+      receivedQueue.put(((TestProtocolMessage) pm).msg);
     } catch (InterruptedException e) {
       e.printStackTrace();
       junit.framework.Assert.fail("yikes! " + e);
     }
-    
+
+  }
+
+  public ConnectionID getConnectionId() {
+    return null;
   }
 
 }

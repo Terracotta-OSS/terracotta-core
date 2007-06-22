@@ -18,7 +18,7 @@ public class MockStackHarnessFactory implements NetworkStackHarnessFactory {
     return harness;
   }
 
-  public NetworkStackHarness clientClientHarness(MessageTransportFactory transportFactory,
+  public NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
                                                  MessageChannelInternal channel,
                                                  MessageTransportListener[] transportListeners) {
     throw new ImplementMe();

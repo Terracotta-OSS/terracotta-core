@@ -24,6 +24,7 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.WireProtocolMessage;
 import com.tc.util.Assert;
+import com.tc.util.DebugUtil;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -44,15 +45,20 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   private GuaranteedDeliveryProtocol      delivery;
   private final SynchronizedBoolean       restoringConnection = new SynchronizedBoolean(false);
   private boolean                         isClosed            = false;
+  private final boolean                   isClient;
+  private final String                    debugId;
+  private static final boolean            debug               = true;
 
   public OnceAndOnlyOnceProtocolNetworkLayerImpl(OOOProtocolMessageFactory messageFactory,
-                                                 OOOProtocolMessageParser messageParser, Sink workSink) {
+                                                 OOOProtocolMessageParser messageParser, Sink workSink, boolean isClient) {
     super(logger);
     this.messageFactory = messageFactory;
     this.messageParser = messageParser;
+    this.isClient = isClient;
     // Use BoundedLinkedQueue to prevent outgrow of queue and causing OOME, refer DEV-710
     this.delivery = new GuaranteedDeliveryProtocol(this, workSink);
     this.delivery.start();
+    this.debugId = (this.isClient) ? "CLIENT" : "SERVER";
   }
 
   /*********************************************************************************************************************
@@ -84,17 +90,25 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   public void receive(TCByteBuffer[] msgData) {
     OOOProtocolMessage msg = createProtocolMessage(msgData);
     if (msg.isGoodbye()) {
+      debugLog("Got GoodBye message - shutting down");
       isClosed = true;
       sendLayer.close();
       receiveLayer.close();
       delivery.pause();
       return;
     } else if (restoringConnection.get() && msg.isAck() && msg.getAckSequence() == -1) {
+      debugLog("The other side restarted - resetting local stack");
       resetStack();
       receiveLayer.notifyTransportDisconnected(this);
       this.notifyTransportConnected(this);
     } else {
       delivery.receive(msg);
+    }
+  }
+
+  private void debugLog(String msg) {
+    if (debug) {
+      DebugUtil.trace("OOOLayer-" + debugId + "-" + sendLayer.getConnectionId() + " -> " + msg);
     }
   }
 
@@ -130,20 +144,17 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
    */
 
   public void notifyTransportConnected(MessageTransport transport) {
-    logNotifyTransportConnected(transport);
+    final boolean restoreConnectionMode = restoringConnection.get();
+    debugLog("Transport Connected - resuming delivery, restoreConnection = " + restoreConnectionMode);
     this.delivery.resume();
-    if (!restoringConnection.get()) receiveLayer.notifyTransportConnected(this);
-  }
-
-  private void logNotifyTransportConnected(MessageTransport transport) {
-    if (logger.isDebugEnabled()) {
-      logger.debug("notifyTransportConnected(" + transport + ")");
-    }
+    if (!restoreConnectionMode) receiveLayer.notifyTransportConnected(this);
   }
 
   public void notifyTransportDisconnected(MessageTransport transport) {
+    final boolean restoreConnectionMode = restoringConnection.get();
+    debugLog("Transport Disconnected - pausing delivery, restoreConnection = " + restoreConnectionMode);
     this.delivery.pause();
-    if (!restoringConnection.get()) receiveLayer.notifyTransportDisconnected(this);
+    if (!restoreConnectionMode) receiveLayer.notifyTransportDisconnected(this);
   }
 
   public void start() {
@@ -159,11 +170,14 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   }
 
   public void notifyTransportConnectAttempt(MessageTransport transport) {
-    if (!restoringConnection.get()) receiveLayer.notifyTransportConnectAttempt(this);
+    if (!restoringConnection.get()) {
+      receiveLayer.notifyTransportConnectAttempt(this);
+    }
   }
 
   public void notifyTransportClosed(MessageTransport transport) {
     // XXX: do we do anything here? We've probably done everything we need to do when close() was called.
+    debugLog("Transport Closed - notifying higher layer");
     receiveLayer.notifyTransportClosed(this);
   }
 
@@ -181,12 +195,10 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     return (this.messageFactory.createNewAckMessage(sequence));
   }
 
-  public void sendAck(long sequence) {
-    sendToSendLayer(createAckMessage(sequence));
-  }
-
   public void sendMessage(OOOProtocolMessage msg) {
-    sendToSendLayer(msg);
+    // this method doesn't do anything at the moment, but it is a good spot to plug in things you might want to do
+    // every message flowing down from the layer (like logging for example)
+    this.sendLayer.send(msg);
   }
 
   public void receiveMessage(OOOProtocolMessage msg) {
@@ -211,12 +223,6 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     }
 
     return rv;
-  }
-
-  private void sendToSendLayer(OOOProtocolMessage msg) {
-    // this method doesn't do anything at the moment, but it is a good spot to plug in things you might want to do
-    // every message flowing down from the layer (like logging for example)
-    this.sendLayer.send(msg);
   }
 
   private OOOProtocolMessage createProtocolMessage(TCByteBuffer[] msgData) {
@@ -253,10 +259,12 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   }
 
   public void startRestoringConnection() {
+    debugLog("Switched to restoreConnection mode");
     restoringConnection.set(true);
   }
 
   public void connectionRestoreFailed() {
+    debugLog("RestoreConnectionFailed - resetting stack");
     resetStack();
     receiveLayer.notifyTransportDisconnected(this);
   }
@@ -264,5 +272,4 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   public boolean isClosed() {
     return isClosed;
   }
-
 }

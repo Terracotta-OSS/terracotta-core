@@ -23,7 +23,7 @@ public class OOONetworkStackHarnessFactory implements NetworkStackHarnessFactory
     this.sink = sink;
   }
 
-  public NetworkStackHarness clientClientHarness(MessageTransportFactory transportFactory,
+  public NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
                                                  MessageChannelInternal channel,
                                                  MessageTransportListener[] transportListeners) {
     return new OOONetworkStackHarness(transportFactory, channel, factory, sink);

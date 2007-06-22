@@ -11,13 +11,22 @@ import com.tc.async.api.Sink;
  */
 public class OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl implements OnceAndOnlyOnceProtocolNetworkLayerFactory {
 
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewInstance(Sink workSink) {
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink workSink) {
     
     OOOProtocolMessageHeader.ProtocolMessageHeaderFactory headerFactory = new OOOProtocolMessageHeader.ProtocolMessageHeaderFactory();
     OOOProtocolMessageFactory messageFactory = new OOOProtocolMessageImpl.ProtocolMessageFactoryImpl(headerFactory);
     OOOProtocolMessageParser messageParser = new OOOProtocolMessageImpl.ProtocolMessageParserImpl(headerFactory,
                                                                                             messageFactory);
-    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, workSink);
+    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, workSink, true);
+  }
+
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink workSink) {
+    
+    OOOProtocolMessageHeader.ProtocolMessageHeaderFactory headerFactory = new OOOProtocolMessageHeader.ProtocolMessageHeaderFactory();
+    OOOProtocolMessageFactory messageFactory = new OOOProtocolMessageImpl.ProtocolMessageFactoryImpl(headerFactory);
+    OOOProtocolMessageParser messageParser = new OOOProtocolMessageImpl.ProtocolMessageParserImpl(headerFactory,
+                                                                                            messageFactory);
+    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, workSink, false);
   }
 
 }

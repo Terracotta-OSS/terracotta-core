@@ -12,14 +12,16 @@ import com.tc.net.protocol.TCNetworkMessage;
  * come in to the ProtocolMessageDelivery instance.
  */
 class GuaranteedDeliveryProtocol {
-  private final StateMachineRunner send;
-  private final StateMachineRunner receive;
-  private final SendStateMachine   sender;
+  private final StateMachineRunner  send;
+  private final StateMachineRunner  receive;
+  private final SendStateMachine    sender;
+  private final ReceiveStateMachine receiver;
 
   public GuaranteedDeliveryProtocol(OOOProtocolMessageDelivery delivery, Sink workSink) {
     this.sender = new SendStateMachine(delivery);
     this.send = new StateMachineRunner(sender, workSink);
-    this.receive = new StateMachineRunner(new ReceiveStateMachine(delivery), workSink);
+    this.receiver = new ReceiveStateMachine(delivery);
+    this.receive = new StateMachineRunner(receiver, workSink);
   }
 
   public void send(TCNetworkMessage message) {
@@ -67,5 +69,10 @@ class GuaranteedDeliveryProtocol {
 
   public short getReceiverSessionId() {
     return (receive.getSessionId());
+  }
+
+  public void setDebugId(String debugId) {
+    sender.setDebugId(debugId);
+    receiver.setDebugId(debugId);
   }
 }

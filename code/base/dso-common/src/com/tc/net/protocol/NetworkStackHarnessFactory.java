@@ -23,7 +23,7 @@ public interface NetworkStackHarnessFactory {
   /**
    * Creates client-side stack harnesses.
    */
-  NetworkStackHarness clientClientHarness(MessageTransportFactory transportFactory, MessageChannelInternal channel,
+  NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory, MessageChannelInternal channel,
                                           MessageTransportListener[] transportListeners);
 
 }
