@@ -64,7 +64,7 @@ public class ServerManager {
       }
     }
 
-    AppServerUtil.shutdownAndArchive(sandbox, new File(tempDir, "working"));
+    AppServerUtil.shutdownAndArchive(sandbox, new File(tempDir, "sandbox"));
   }
 
   protected boolean cleanTempDir() {
@@ -154,5 +154,13 @@ public class ServerManager {
 
   public TestConfigObject getTestConfig() {
     return this.config;
+  }
+
+  public File getSandbox() {
+    return sandbox;
+  }
+
+  public File getTempDir() {
+    return tempDir;
   }
 }

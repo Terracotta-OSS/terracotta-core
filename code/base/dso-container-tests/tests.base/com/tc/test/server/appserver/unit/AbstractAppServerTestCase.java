@@ -382,6 +382,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     if (dsoServer != null && dsoServer.isRunning()) dsoServer.stop();
 
     AppServerUtil.shutdownAndArchive(sandbox, new File(tempDir, getName()));
+    super.tearDown();
   }
 
   private synchronized File warFile() throws Exception {

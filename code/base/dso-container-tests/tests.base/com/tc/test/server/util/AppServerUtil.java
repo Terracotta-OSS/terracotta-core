@@ -71,40 +71,36 @@ public class AppServerUtil {
   }
 
   public static void shutdownAndArchive(File from, File to) {
+    shutdown();
+    archive(from, to);
+  }
+
+  public static void shutdown() {
     awaitShutdown(2 * 60 * 1000);
     System.out.println("Send kill signal to app servers...");
     HeartBeatService.sendKillSignalToChildren();
-
-    if (Os.isWindows()) {
-      System.out.println("Copying files from " + from + " to " + to);
-      try {
-        com.tc.util.io.FileUtils.copyFile(from, to);
-      } catch (IOException ioe) {
-        Banner.warnBanner("IOException caught while copying workingDir files");
-        ioe.printStackTrace();
-      }
-    }
   }
 
   public static File createSandbox(File tempDir) {
     File sandbox = null;
     if (Os.isWindows()) {
       sandbox = new File(config.cacheDir(), "sandbox");
-      try {
-        if (sandbox.exists()) {
-          if (sandbox.isDirectory()) {
-            FileUtils.cleanDirectory(sandbox);
-          } else {
-            throw new RuntimeException(sandbox + " exists, but is not a directory");
-          }
-        }
-      } catch (IOException e) {
-        File prev = sandbox;
-        sandbox = new File(sandbox.getAbsolutePath() + "-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()));
-        Banner.warnBanner("Caught IOException setting up workDir as " + prev + ", using " + sandbox + " instead");
-      }
     } else {
       sandbox = new File(tempDir, "sandbox");
+    }
+    
+    try {
+      if (sandbox.exists()) {
+        if (sandbox.isDirectory()) {
+          FileUtils.cleanDirectory(sandbox);
+        } else {
+          throw new RuntimeException(sandbox + " exists, but is not a directory");
+        }
+      }
+    } catch (IOException e) {
+      File prev = sandbox;
+      sandbox = new File(sandbox.getAbsolutePath() + "-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()));
+      Banner.warnBanner("Caught IOException setting up workDir as " + prev + ", using " + sandbox + " instead");
     }
 
     if (!sandbox.exists() && !sandbox.mkdirs()) { throw new RuntimeException("Failed to create sandbox: " + sandbox); }
@@ -122,5 +118,17 @@ public class AppServerUtil {
       throw new AssertionError("No appserver found! You must define: " + TestConfigObject.APP_SERVER_HOME);
     }
     return installation;
+  }
+
+  public static void archive(File from, File to) {
+    if (!from.equals(to)) {
+      System.out.println("Copying files from " + from + " to " + to);
+      try {
+        com.tc.util.io.FileUtils.copyFile(from, to);
+      } catch (IOException ioe) {
+        Banner.warnBanner("IOException caught while copying workingDir files");
+        ioe.printStackTrace();
+      }
+    }    
   }
 }
