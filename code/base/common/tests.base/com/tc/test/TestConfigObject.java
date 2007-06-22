@@ -28,8 +28,6 @@ import java.util.Properties;
  */
 public class TestConfigObject {
 
-  private static final String     APP_SERVER_WORKING                = "sandbox";
-
   public static final String      TC_BASE_DIR                       = "tc.base-dir";
 
   public static final String      SPRING_VARIANT                    = "spring";
@@ -60,8 +58,6 @@ public class TestConfigObject {
   private static final String     BOOT_JAR_NORMAL                   = DYNAMIC_PROPERTIES_PREFIX + "bootjars.normal";
 
   private static final String     SESSION_CLASSPATH                 = DYNAMIC_PROPERTIES_PREFIX + "session.classpath";
-
-  private static final String     SHORT_PATH_TEMP_DIR               = DYNAMIC_PROPERTIES_PREFIX + "short-path-tempdir";
 
   private static final String     AVAILABLE_VARIANTS_PREFIX         = DYNAMIC_PROPERTIES_PREFIX + "variants.available.";
   private static final String     VARIANT_LIBRARIES_PREFIX          = DYNAMIC_PROPERTIES_PREFIX + "libraries.variants.";
@@ -383,7 +379,7 @@ public class TestConfigObject {
     return this.properties.getProperty(EXECUTABLE_SEARCH_PATH);
   }
 
-  private File cacheDir() {
+  public File cacheDir() {
     String root = System.getProperty("user.home");
     if (Os.isWindows()) {
       File temp = new File("c:/temp");
@@ -395,17 +391,10 @@ public class TestConfigObject {
     return new File(root, ".tc");
   }
 
-  public String appserverServerInstallDir() {        
-    File installDir = new File(cacheDir(), "appservers");    
-    return installDir.getAbsolutePath();
-  }
-
-  public String appserverWorkingDir() {
-    if (Os.isWindows()) {
-      return new File(cacheDir(), APP_SERVER_WORKING).getAbsolutePath();
-    } else {
-      return new File(this.tempDirectoryRoot(), APP_SERVER_WORKING).getAbsolutePath();
-    }
+  public File appserverServerInstallDir() {        
+    File installDir = new File(cacheDir(), "appservers");
+    if (!installDir.exists()) installDir.mkdirs();
+    return installDir;
   }
 
   public String normalBootJar() {

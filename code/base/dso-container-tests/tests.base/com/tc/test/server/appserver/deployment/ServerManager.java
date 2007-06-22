@@ -4,7 +4,6 @@
  */
 package com.tc.test.server.appserver.deployment;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -13,7 +12,6 @@ import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.appserver.NewAppServerFactory;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
 import com.tc.test.server.util.AppServerUtil;
-import com.tc.text.Banner;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,71 +31,19 @@ public class ServerManager {
 
   private final TestConfigObject config;
   private NewAppServerFactory    factory;
-
-  static final boolean           MONKEY_MODE    = true;
+  private AppServerInstallation  installation;
+  private File                   sandbox;
+  private File                   tempDir;
+  private File                   installDir;
 
   public ServerManager(final Class testClass) throws Exception {
     PropertiesHackForRunningInEclipse.initializePropertiesWhenRunningInEclipse();
-
     config = TestConfigObject.getInstance();
     factory = NewAppServerFactory.createFactoryFromProperties(config);
-
+    installDir = config.appserverServerInstallDir();
     tempDir = TempDirectoryUtil.getTempDirectory(testClass);
-
-    workingDir = workingDir();
-
-    String appserverURLBase = config.appserverURLBase();
-    String appserverHome = config.appserverHome();
-
-    if (appserverHome != null && !appserverHome.trim().equals("")) {
-      File home = new File(appserverHome);
-      installation = factory.createInstallation(home, workingDir);
-
-    } else if (appserverURLBase != null && !appserverURLBase.trim().equals("")) {
-      URL host = new URL(appserverURLBase);
-      installation = factory.createInstallation(host, serverInstallDir(), workingDir);
-
-    } else {
-      throw new AssertionError(
-                               "No container installation available. You must define one of the following config properties:\n"
-                                   + TestConfigObject.APP_SERVER_HOME + "\nor\n"
-                                   + TestConfigObject.APP_SERVER_REPOSITORY_URL_BASE);
-    }
-  }
-
-  private AppServerInstallation installation;
-  private File                  workingDir;
-
-  private File                  tempDir;
-
-  private synchronized File serverInstallDir() {
-    return makeDir(config.appserverServerInstallDir());
-  }
-
-  private synchronized File workingDir() {
-    File workDir = new File(config.appserverWorkingDir());
-    try {
-      if (workDir.exists()) {
-        if (workDir.isDirectory()) {
-          FileUtils.cleanDirectory(workDir);
-        } else {
-          throw new RuntimeException(workDir + " exists, but is not a directory");
-        }
-      }
-    } catch (IOException e) {
-      File prev = workDir;
-      workDir = new File(config.appserverWorkingDir() + "-" + System.currentTimeMillis());
-      Banner.warnBanner("Caught IOException setting up workDir as " + prev + ", using " + workDir + " instead");
-    }
-
-    return makeDir(workDir.getAbsolutePath());
-  }
-
-  private File makeDir(String dirPath) {
-    File dir = new File(dirPath);
-    if (dir.exists()) return dir;
-    dir.mkdirs();
-    return dir;
+    sandbox = AppServerUtil.createSandbox(tempDir);
+    installation = AppServerUtil.createAppServerInstallation(factory, installDir, sandbox);
   }
 
   public void addServerToStop(Stoppable stoppable) {
@@ -117,8 +63,8 @@ public class ServerManager {
         logger.error(stoppable, e);
       }
     }
-    
-    AppServerUtil.shutdownAndArchive(workingDir, new File(tempDir, "working"));
+
+    AppServerUtil.shutdownAndArchive(sandbox, new File(tempDir, "working"));
   }
 
   protected boolean cleanTempDir() {
@@ -130,7 +76,7 @@ public class ServerManager {
   }
 
   private void startDSO(boolean withPersistentStore) throws Exception {
-    dsoServer = new DSOServer(withPersistentStore, workingDir);
+    dsoServer = new DSOServer(withPersistentStore, sandbox);
     dsoServer.start();
     addServerToStop(dsoServer);
   }
@@ -144,12 +90,12 @@ public class ServerManager {
     return makeWebApplicationServer(getTcConfigFile(tcConfigPath));
   }
 
-// public AbstractDBServer makeDBServer(String dbType, String dbName, int serverPort) {
-// // XXX this should use server factory
-// AbstractDBServer svr = new HSqlDBServer(dbName, serverPort);
-// this.addServerToStop(svr);
-// return svr;
-// }
+  // public AbstractDBServer makeDBServer(String dbType, String dbName, int serverPort) {
+  // // XXX this should use server factory
+  // AbstractDBServer svr = new HSqlDBServer(dbName, serverPort);
+  // this.addServerToStop(svr);
+  // return svr;
+  // }
 
   public FileSystemPath getTcConfigFile(String tcConfigPath) {
     URL url = getClass().getResource(tcConfigPath);

@@ -257,8 +257,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     stopper.stop();
   }
 
-  public void shutdown() throws Exception {
-    System.out.println("In shutdown()");
+  public void shutdown() throws Exception {    
     try {
       attemptShutdown();
     } catch (Exception e) {
@@ -284,8 +283,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     long start = System.currentTimeMillis();
     long timeout = start + SHUTDOWN_WAIT_TIME;
     while (isRunning()) {
-      Thread.sleep(1000);
-      System.out.println("...server was forced shutdown but still running... waiting...");
+      Thread.sleep(1000);      
       if (System.currentTimeMillis() > timeout) { throw new Exception("Server was shutdown but still up after "
                                                                       + SHUTDOWN_WAIT_TIME + " ms"); }
     }

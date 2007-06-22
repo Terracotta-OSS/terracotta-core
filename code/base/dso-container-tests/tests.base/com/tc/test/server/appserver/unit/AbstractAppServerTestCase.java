@@ -4,7 +4,6 @@
  */
 package com.tc.test.server.appserver.unit;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ClassUtils;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.Zip;
@@ -31,18 +30,15 @@ import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
 import com.tc.test.server.tcconfig.TerracottaServerConfigGenerator;
 import com.tc.test.server.util.AppServerUtil;
 import com.tc.test.server.util.HttpUtil;
-import com.tc.text.Banner;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.ThreadDump;
 import com.terracotta.session.util.ConfigProperties;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -91,7 +87,7 @@ import javax.servlet.http.HttpSessionListener;
  * the appserver)
  * </ul>
  * <p>
- *
+ * 
  * <pre>
  *                            outer class:
  *                            ...
@@ -108,7 +104,7 @@ import javax.servlet.http.HttpSessionListener;
  *                            out.println(&quot;false&quot;);
  *                            ...
  * </pre>
- *
+ * 
  * <p>
  * <h3>Debugging Information:</h3>
  * There are a number of locations and files to consider when debugging appserver unit tests. Below is a list followed
@@ -143,7 +139,7 @@ import javax.servlet.http.HttpSessionListener;
  * <p>
  * As a final note: the <tt>UttpUtil</tt> class should be used (and added to as needed) to page servlets and validate
  * assertions.
- *
+ * 
  * @author eellis
  */
 public abstract class AbstractAppServerTestCase extends TCTestCase {
@@ -161,7 +157,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   private final TestConfigObject          config;
 
   private File                            serverInstallDir;
-  private File                            workingDir;
+  private File                            sandbox;
   private File                            tempDir;
   private File                            bootJar;
   private NewAppServerFactory             appServerFactory;
@@ -187,52 +183,17 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   }
 
   protected int getJMXPort() {
-    if (configGen == null) { throw new AssertionError(
-                                                      "DSO server is not running so JMX port has not been assigned yet."); }
+    if (configGen == null) { throw new AssertionError("DSO server is not running"); }
     return configGen.getConfig().getJmxPort();
   }
 
   protected void setUp() throws Exception {
     tempDir = getTempDirectory();
-    serverInstallDir = makeDir(config.appserverServerInstallDir());
-    File workDir = new File(config.appserverWorkingDir());
-
-    try {
-      if (workDir.exists()) {
-        if (workDir.isDirectory()) {
-          FileUtils.cleanDirectory(workDir);
-        } else {
-          throw new RuntimeException(workDir + " exists, but is not a directory");
-        }
-      }
-    } catch (IOException e) {
-      File prev = workDir;
-      workDir = new File(config.appserverWorkingDir() + "-"
-                         + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()));
-      Banner.warnBanner("Caught IOException setting up workDir as " + prev + ", using " + workDir + " instead");
-    }
-
-    workingDir = makeDir(workDir.getAbsolutePath());
+    serverInstallDir = config.appserverServerInstallDir();
+    sandbox = AppServerUtil.createSandbox(tempDir);
     bootJar = new File(config.normalBootJar());
     appServerFactory = NewAppServerFactory.createFactoryFromProperties(config);
-
-    String appserverURLBase = config.appserverURLBase();
-    String appserverHome = config.appserverHome();
-
-    if (appserverHome != null && !appserverHome.trim().equals("")) {
-      File home = new File(appserverHome);
-      installation = appServerFactory.createInstallation(home, workingDir);
-
-    } else if (appserverURLBase != null && !appserverURLBase.trim().equals("")) {
-      URL host = new URL(appserverURLBase);
-      installation = appServerFactory.createInstallation(host, serverInstallDir, workingDir);
-
-    } else {
-      throw new AssertionError(
-                               "No container installation available. You must define one of the following config properties:\n"
-                                   + TestConfigObject.APP_SERVER_HOME + "\nor\n"
-                                   + TestConfigObject.APP_SERVER_REPOSITORY_URL_BASE);
-    }
+    installation = AppServerUtil.createAppServerInstallation(appServerFactory, serverInstallDir, sandbox);
   }
 
   protected final boolean cleanTempDir() {
@@ -328,7 +289,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   /**
    * Starts an instance of the assigned default application server listed in testconfig.properties. Servlets and the WAR
    * are dynamically generated using the convention listed in the header of this document.
-   *
+   * 
    * @param dsoEnabled - enable or disable dso for this instance
    * @return AppServerResult - series of return values including the server port assigned to this instance
    */
@@ -409,18 +370,18 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
   /**
    * If overridden <tt>super.tearDown()</tt> must be called to ensure that servers are all shutdown properly
-   *
+   * 
    * @throws Exception
    */
   protected void tearDown() throws Exception {
-      System.out.println("in tearDown...");
-      for (Iterator iter = appservers.iterator(); iter.hasNext();) {
-        Server server = (Server) iter.next();
-        server.stop();
-      }
-      if (dsoServer != null && dsoServer.isRunning()) dsoServer.stop();
-      
-      AppServerUtil.shutdownAndArchive(workingDir, new File(tempDir, getName()));
+    System.out.println("in tearDown...");
+    for (Iterator iter = appservers.iterator(); iter.hasNext();) {
+      Server server = (Server) iter.next();
+      server.stop();
+    }
+    if (dsoServer != null && dsoServer.isRunning()) dsoServer.stop();
+
+    AppServerUtil.shutdownAndArchive(sandbox, new File(tempDir, getName()));
   }
 
   private synchronized File warFile() throws Exception {
@@ -471,17 +432,6 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     return HttpSessionActivationListener.class.isAssignableFrom(clazz)
            || HttpSessionAttributeListener.class.isAssignableFrom(clazz)
            || HttpSessionListener.class.isAssignableFrom(clazz);
-  }
-
-  private File makeDir(String dirPath) throws IOException {
-    File dir = new File(dirPath);
-    if (dir.exists()) {
-      if (dir.isDirectory()) { return dir; }
-      throw new IOException(dir + " exists, but is not a directory");
-    }
-    boolean created = dir.mkdirs();
-    if (!created) { throw new IOException("Could not create directory " + dir); }
-    return dir;
   }
 
   private String testName() {
