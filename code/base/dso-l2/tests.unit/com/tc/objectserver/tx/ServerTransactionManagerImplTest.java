@@ -84,7 +84,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
     this.transactionManager = new ServerTransactionManagerImpl(this.gtxm, this.transactionStore, this.lockManager,
                                                                this.clientStateManager, this.objectManager,
                                                                this.action, this.transactionRateCounter,
-                                                               this.channelStats);
+                                                               this.channelStats, new ServerTransactionManagerConfig());
     this.transactionManager.goToActiveMode();
   }
 

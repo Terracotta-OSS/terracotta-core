@@ -63,14 +63,15 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
   private final ServerGlobalTransactionManager gtxm;
 
-  private final ServerTransactionLogger        txnLogger           = new ServerTransactionLogger(logger);
+  private final ServerTransactionLogger        txnLogger;
 
   private volatile State                       state               = PASSIVE_MODE;
 
   public ServerTransactionManagerImpl(ServerGlobalTransactionManager gtxm, TransactionStore transactionStore,
                                       LockManager lockManager, ClientStateManager stateManager,
                                       ObjectManager objectManager, TransactionAcknowledgeAction action,
-                                      Counter transactionRateCounter, ChannelStats channelStats) {
+                                      Counter transactionRateCounter, ChannelStats channelStats,
+                                      ServerTransactionManagerConfig config) {
     this.gtxm = gtxm;
     this.lockManager = lockManager;
     this.objectManager = objectManager;
@@ -78,6 +79,10 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.action = action;
     this.transactionRateCounter = transactionRateCounter;
     this.channelStats = channelStats;
+    this.txnLogger = new ServerTransactionLogger(logger, config);
+    if(config.isLoggingEnabled()) {
+      enableTransactionLogger();
+    }
   }
 
   public void enableTransactionLogger() {
@@ -155,7 +160,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private void acknowledge(ChannelID waiter, TransactionID txnID) {
     final ServerTransactionID serverTxnID = new ServerTransactionID(waiter, txnID);
     fireTransactionCompleteEvent(serverTxnID);
-    action.acknowledgeTransaction(serverTxnID);
+    if (isActive()) {
+      action.acknowledgeTransaction(serverTxnID);
+    }
   }
 
   public void acknowledgement(ChannelID waiter, TransactionID txnID, ChannelID waitee) {
@@ -255,16 +262,15 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   public void incomingTransactions(ChannelID cid, Set txnIDs, Collection txns, boolean relayed) {
-    boolean active = isActive();
+    final boolean active = isActive();
     TransactionAccount ci = getOrCreateTransactionAccount(cid);
     for (Iterator i = txns.iterator(); i.hasNext();) {
       final ServerTransaction txn = (ServerTransaction) i.next();
       final ServerTransactionID stxnID = txn.getServerTransactionID();
       final TransactionID txnID = stxnID.getClientTransactionID();
-      if (!relayed) {
+      if (active && !relayed) {
         ci.relayTransactionComplete(txnID);
-      }
-      if (!active) {
+      } else if (!active) {
         gtxm.createGlobalTransactionDescIfNeeded(stxnID, txn.getGlobalTransactionID());
       }
     }
@@ -404,6 +410,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   public void setResentTransactionIDs(ChannelID channelID, Collection transactionIDs) {
+    if (transactionIDs.isEmpty()) return;
     Collection stxIDs = new ArrayList();
     for (Iterator iter = transactionIDs.iterator(); iter.hasNext();) {
       TransactionID txn = (TransactionID) iter.next();

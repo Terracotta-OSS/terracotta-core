@@ -23,7 +23,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
   }
 
   public boolean applyCommitted(TransactionID requestID) {
-    return false;
+    return true;
   }
 
   public void applyStarted(TransactionID requestID) {
@@ -31,7 +31,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
   }
 
   public boolean broadcastCompleted(TransactionID requestID) {
-    return false;
+    throw new AssertionError("Transactions should never be broadcasted in Passive Server");
   }
 
   public ChannelID getClientID() {
@@ -43,7 +43,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
   }
 
   public boolean removeWaitee(ChannelID waitee, TransactionID requestID) {
-    return false;
+    throw new AssertionError("Transactions should never be ACKED to Passive Server");
   }
 
   public Set requestersWaitingFor(ChannelID waitee) {
@@ -51,10 +51,10 @@ public class PassiveTransactionAccount implements TransactionAccount {
   }
 
   public boolean skipApplyAndCommit(TransactionID requestID) {
-    return false;
+    return true;
   }
 
   public boolean relayTransactionComplete(TransactionID requestID) {
-    return false;
+    throw new AssertionError("Transactions should never be relayed from Passive Server");
   }
 }

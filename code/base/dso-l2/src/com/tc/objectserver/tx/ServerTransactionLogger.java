@@ -13,10 +13,15 @@ import java.util.Set;
 
 public class ServerTransactionLogger implements ServerTransactionListener {
 
-  private final TCLogger logger;
+  private final TCLogger                       logger;
+  private final ServerTransactionManagerConfig config;
 
-  public ServerTransactionLogger(TCLogger logger) {
+  private long                                 outStandingTxns = 0;
+  private long                                 last            = 0;
+
+  public ServerTransactionLogger(TCLogger logger, ServerTransactionManagerConfig config) {
     this.logger = logger;
+    this.config = config;
   }
 
   public void addResentServerTransactionIDs(Collection stxIDs) {
@@ -28,15 +33,46 @@ public class ServerTransactionLogger implements ServerTransactionListener {
   }
 
   public void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
-    logger.info("incomingTransactions: " + cid + ", " + serverTxnIDs);
+    if (config.isVerboseLogging()) logger.info("incomingTransactions: " + cid + ", " + serverTxnIDs);
+    incrementOutStandingTxns(serverTxnIDs.size());
+  }
+
+  private void incrementOutStandingTxns(int count) {
+    boolean log = needToLogStats();
+    outStandingTxns += count;
+    if (log) {
+      logStats();
+    }
+  }
+
+  private void decrementOutStandingTxns(int count) {
+    outStandingTxns -= count;
+    boolean log = needToLogStats();
+    if (log) {
+      logStats();
+    }
+  }
+
+  private boolean needToLogStats() {
+    if (config.isPrintStatsEnabled()) return false;
+    long now = System.currentTimeMillis();
+    boolean log = (outStandingTxns == 0 || (now - last) > 1000);
+    if (log) {
+      last = now;
+    }
+    return log;
+  }
+
+  private void logStats() {
+    logger.info("Number of pending transactions in the System : " + outStandingTxns);
   }
 
   public void transactionApplied(ServerTransactionID stxID) {
-    logger.info("transactionApplied: " + stxID);
+    if (config.isVerboseLogging()) logger.info("transactionApplied: " + stxID);
   }
 
   public void transactionCompleted(ServerTransactionID stxID) {
-    logger.info("transactionCompleted: " + stxID);
+    if (config.isVerboseLogging()) logger.info("transactionCompleted: " + stxID);
+    decrementOutStandingTxns(1);
   }
-
 }
