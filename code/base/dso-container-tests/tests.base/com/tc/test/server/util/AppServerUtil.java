@@ -86,25 +86,25 @@ public class AppServerUtil {
     }
   }
 
-  public static File createSandbox(File tempDir) {
+  public static File createSandbox(File tempDir, String testMethod) {
     File sandbox = null;
     if (Os.isWindows()) {
       sandbox = new File(config.cacheDir(), "sandbox");
+      try {
+        if (sandbox.exists()) {
+          if (sandbox.isDirectory()) {
+            FileUtils.cleanDirectory(sandbox);
+          } else {
+            throw new RuntimeException(sandbox + " exists, but is not a directory");
+          }
+        }
+      } catch (IOException e) {
+        File prev = sandbox;
+        sandbox = new File(sandbox.getAbsolutePath() + "-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()));
+        Banner.warnBanner("Caught IOException setting up workDir as " + prev + ", using " + sandbox + " instead");
+      }
     } else {
       sandbox = new File(tempDir, "sandbox");
-    }
-    try {
-      if (sandbox.exists()) {
-        if (sandbox.isDirectory()) {
-          FileUtils.cleanDirectory(sandbox);
-        } else {
-          throw new RuntimeException(sandbox + " exists, but is not a directory");
-        }
-      }
-    } catch (IOException e) {
-      File prev = sandbox;
-      sandbox = new File(sandbox.getAbsolutePath() + "-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()));
-      Banner.warnBanner("Caught IOException setting up workDir as " + prev + ", using " + sandbox + " instead");
     }
 
     if (!sandbox.exists() && !sandbox.mkdirs()) { throw new RuntimeException("Failed to create sandbox: " + sandbox); }
