@@ -48,7 +48,7 @@ public class GuaranteedDeliveryProtocolTest extends TestCase {
     assertTrue(delivery.created);
     assertTrue(delivery.tcMessage == tcMessage);
     TestProtocolMessage pm = (TestProtocolMessage) delivery.msg;
-    msg.setSessionId(gdp.getSenderSessionId());
+    pm.setSessionId(gdp.getSenderSessionId());
     delivery.clear();
     pm.isSend = true;
     gdp.receive(pm);
@@ -61,7 +61,7 @@ public class GuaranteedDeliveryProtocolTest extends TestCase {
 
     delivery.clear();
     TestProtocolMessage ackMessage = new TestProtocolMessage();
-    msg.setSessionId(gdp.getSenderSessionId());
+    ackMessage.setSessionId(gdp.getSenderSessionId());
     ackMessage.ack = 0;
     ackMessage.isAck = true;
     gdp.receive(ackMessage);
