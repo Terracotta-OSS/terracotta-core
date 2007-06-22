@@ -470,7 +470,11 @@
          across the entire cluster just as you'd expect, by locking on
          the object you're synchronizing upon; Applying autolocks to
          methods that contain no synchronization (method or block)
-         is ineffective
+         is ineffective. If the original definition of the method is not
+         synchronized, one could enable the "auto-synchronized" attribute.
+         When set to true, this attribute will add a synchronized modifier
+         to the method signature before autolocking on the method.
+         By default, "auto-synchronized" attribute is set to false.
 
          Named locks are completely independent of Java synchronization.
          Named locks create a lock with the specified name. Named locks
@@ -482,7 +486,7 @@
       -->
       <locks>
         <!-- Specifies an autolock (distributed synchronization). -->
-        <autolock>
+        <autolock auto-synchronized="false">
           <!-- The expression of method(s) to lock. This is an
              AspectWerkz-compatible method specification expression.
              (REQUIRED) -->
