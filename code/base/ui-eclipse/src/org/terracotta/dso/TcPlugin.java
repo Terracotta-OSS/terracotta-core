@@ -44,7 +44,6 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.BinaryMember;
 import org.eclipse.jdt.internal.core.SourceMethod;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
@@ -99,6 +98,7 @@ import com.tc.admin.common.InputStreamDrainer;
 import com.tc.config.Loader;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.server.ServerConstants;
+import com.tc.util.runtime.Os;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.TcConfigDocument;
@@ -185,7 +185,7 @@ public class TcPlugin extends AbstractUIPlugin
     if (m_bootClassHelper != null && classFile != null) {
       try {
         return isBootClass(classFile.getType());
-      } catch (JavaModelException jme) {/**/
+      } catch (Exception e) {/**/
       }
     }
     return false;
@@ -269,6 +269,14 @@ public class TcPlugin extends AbstractUIPlugin
     }
   }
 
+  private static String getJavaCmd() {
+    String javaCmd = System.getProperty("java.home")+File.separatorChar+"bin"+File.separatorChar+"java";
+    if(Os.isWindows()) {
+      javaCmd += ".exe";
+    }
+    return javaCmd;
+  }
+  
   private void buildBootJarForThisVM() {
     new Thread() {
       public void run() {
@@ -279,7 +287,7 @@ public class TcPlugin extends AbstractUIPlugin
           System.setProperty("tc.install-root", getLocation().toOSString());
 
           String[] args = {
-            System.getProperty("eclipse.vm"),
+            getJavaCmd(),
             "-cp",
             tcJarPath.toOSString(),
             "com.tc.object.tools.BootJarTool",
@@ -745,7 +753,25 @@ public class TcPlugin extends AbstractUIPlugin
     return helper;
   }
 
-  public static final TcConfig BAD_CONFIG = ProjectWizard.createTemplateConfigDoc().getTcConfig();
+  public static final TcConfig BAD_CONFIG = createTemplateConfigDoc().getTcConfig();
+
+  public static TcConfigDocument createTemplateConfigDoc() {
+    TcConfigDocument doc     = TcConfigDocument.Factory.newInstance();
+    TcConfig         config  = doc.addNewTcConfig();
+    Servers          servers = config.addNewServers();
+    Server           server  = servers.addNewServer();
+
+    server.setHost("%i");
+    server.setName("localhost");
+    server.setDsoPort(9510);
+    server.setJmxPort(9520);
+    server.setData("terracotta/server-data");
+    server.setLogs("terracotta/server-logs");
+    
+    config.addNewClients().setLogs("terracotta/client-logs");
+    
+    return doc;
+  }
 
   public synchronized TcConfig getConfiguration(IProject project) {
     TcConfig config = (TcConfig) getSessionProperty(project, CONFIGURATION);

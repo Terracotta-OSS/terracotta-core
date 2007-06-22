@@ -178,20 +178,20 @@ public class PatternHelper {
     throws JavaModelException
   {
     IType        dType  = method.getDeclaringType();
-    String[]     pTypes = method.getParameterTypes();
+    String[]     pTypes = method.getParameterTypes().clone();
     String       rType  = method.getReturnType();
     StringBuffer sb     = new StringBuffer("(");
     
     rType = Signature.getTypeErasure(rType);
     
     for(int i = 0; i < pTypes.length; i++) {
-      pTypes[i] = Signature.getTypeErasure(pTypes[i]);
-      if(pTypes[i].charAt(0) == 'T') {
-        pTypes[i] = "Ljava.lang.Object;";
-      } else if(pTypes[i].charAt(0) == '[' && pTypes[i].charAt(1) == 'T') {
-        pTypes[i] = "[Ljava.lang.Object;";
+      String erasedSig = Signature.getTypeErasure(pTypes[i]);
+      if(erasedSig.charAt(0) == 'T') {
+        erasedSig = "Ljava.lang.Object;";
+      } else if(erasedSig.charAt(0) == '[' && erasedSig.charAt(1) == 'T') {
+        erasedSig = "[Ljava.lang.Object;";
       }
-      JdtUtils.resolveTypeName(pTypes[i], dType, sb);
+      JdtUtils.resolveTypeName(erasedSig, dType, sb);
     }
     sb.append(')');
     if(rType.charAt(0) == 'T') {
@@ -229,7 +229,7 @@ public class PatternHelper {
     StringBuffer sb            = new StringBuffer();
     IType        declaringType = method.getDeclaringType();
     boolean      isVararg      = isVarargs(method);
-    String[]     params        = method.getParameterTypes();
+    String[]     params        = method.getParameterTypes().clone();
     int          lastParam     = params.length - 1;
     int          dim;
     
@@ -258,9 +258,9 @@ public class PatternHelper {
         sb.append(", ");
       }
 
-      params[i] = Signature.getTypeErasure(params[i]);
-      sb.append(JdtUtils.getResolvedTypeFileName(params[i], declaringType));
-      dim = Signature.getArrayCount(params[i]);
+      String erasedSig = Signature.getTypeErasure(params[i]);
+      sb.append(JdtUtils.getResolvedTypeFileName(erasedSig, declaringType));
+      dim = Signature.getArrayCount(erasedSig);
     
       if(i == lastParam && isVararg) {
         dim--;

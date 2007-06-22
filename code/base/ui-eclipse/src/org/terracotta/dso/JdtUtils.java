@@ -8,7 +8,6 @@ import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICodeAssist;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.IJavaModelStatusConstants;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
@@ -206,13 +205,18 @@ public class JdtUtils {
         }
         name= refTypeSig.substring(arrayCount + 1, semi);
       }
-      String[][] resolvedNames= declaringType.resolveType(name);
-      if (resolvedNames != null && resolvedNames.length > 0) {
-        return JdtUtils.concatenateName(resolvedNames[0][0], resolvedNames[0][1]);
-      }
-      else {
-        throw new JavaModelException(new Exception(name + " not resolvable"),
-                                     IJavaModelStatusConstants.EVALUATION_ERROR);
+      try {
+        String[][] resolvedNames= declaringType.resolveType(name);
+        if (resolvedNames != null && resolvedNames.length > 0) {
+          return JdtUtils.concatenateName(resolvedNames[0][0], resolvedNames[0][1]);
+        }
+        else {
+          return "java.lang.Object";
+//        throw new JavaModelException(new Exception(name + " not resolvable"),
+//                                     IJavaModelStatusConstants.EVALUATION_ERROR);
+        }
+      } catch(JavaModelException jme) {
+        return name;
       }
     }
 

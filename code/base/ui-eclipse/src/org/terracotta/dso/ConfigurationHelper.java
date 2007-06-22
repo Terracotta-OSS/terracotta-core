@@ -113,7 +113,7 @@ public class ConfigurationHelper {
   public boolean isAdaptable(IClassFile classFile) {
     try {
       return isAdaptable(classFile.getType());
-    } catch (JavaModelException jme) {
+    } catch (Exception e) {
       return false;
     }
   }
@@ -354,8 +354,8 @@ public class ConfigurationHelper {
   public void ensureAdaptable(IClassFile classFile, MultiChangeSignaller signaller) {
     try {
       ensureAdaptable(classFile.getType(), signaller);
-    } catch (JavaModelException jme) {
-      openError("Error ensuring '" + classFile.getElementName() + "' instrumented", jme);
+    } catch (Exception e) {
+      openError("Error ensuring '" + classFile.getElementName() + "' instrumented", e);
     }
   }
 
@@ -2998,7 +2998,7 @@ public class ConfigurationHelper {
 
   public void validateAll() {
     if (getConfig() != null) {
-      //validateLocks();
+      validateLocks();
       validateRoots();
       validateTransientFields();
       validateInstrumentedClasses();

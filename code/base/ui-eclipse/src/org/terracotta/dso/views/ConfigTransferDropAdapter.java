@@ -10,7 +10,6 @@ import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.ui.packageview.SelectionTransferDropAdapter;
 import org.eclipse.jdt.internal.ui.util.SelectionUtil;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -175,7 +174,7 @@ class ConfigTransferDropAdapter extends SelectionTransferDropAdapter {
                     target instanceof ExcludeWrapper) {
             fPart.addExcludes((IJavaElement[])list.toArray(new IJavaElement[0]));
           }
-        } catch(JavaModelException jme) {/**/}
+        } catch(Exception e) {/**/}
         break;
       case IJavaElement.COMPILATION_UNIT:
         if(target instanceof AdditionalBootJarClassesWrapper) {

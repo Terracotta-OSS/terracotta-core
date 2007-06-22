@@ -33,11 +33,6 @@ import org.eclipse.ui.PlatformUI;
 import org.terracotta.dso.ProjectNature;
 import org.terracotta.dso.TcPlugin;
 
-import com.terracottatech.config.Server;
-import com.terracottatech.config.Servers;
-import com.terracottatech.config.TcConfigDocument;
-import com.terracottatech.config.TcConfigDocument.TcConfig;
-
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -250,7 +245,7 @@ public class ProjectWizard extends Wizard {
       try {
         XmlOptions xmlOpts = plugin.getXmlOptions();
         
-        is = createTemplateConfigDoc().newInputStream(xmlOpts);                
+        is = TcPlugin.createTemplateConfigDoc().newInputStream(xmlOpts);                
         configFile.create(is, true, monitor);
       } catch(CoreException ce) {
         String  step   = "Creating default Terracotta config file";
@@ -314,24 +309,6 @@ public class ProjectWizard extends Wizard {
     }
   }
   
-  public static TcConfigDocument createTemplateConfigDoc() {
-    TcConfigDocument doc     = TcConfigDocument.Factory.newInstance();
-    TcConfig         config  = doc.addNewTcConfig();
-    Servers          servers = config.addNewServers();
-    Server           server  = servers.addNewServer();
-
-    server.setHost("%i");
-    server.setName("localhost");
-    server.setDsoPort(9510);
-    server.setJmxPort(9520);
-    server.setData("terracotta/server-data");
-    server.setLogs("terracotta/server-logs");
-    
-    config.addNewClients().setLogs("terracotta/client-logs");
-    
-    return doc;
-  }
-
   public boolean canFinish() {
     return m_page.isPageComplete();
   }

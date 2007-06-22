@@ -7,7 +7,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.JavaModelException;
 
 import com.tc.object.tools.BootJar;
 import com.tc.object.tools.BootJarSignature;
@@ -80,7 +79,7 @@ public class BootClassHelper {
   public boolean isAdaptable(final IClassFile classFile) {
     try {
       return classFile != null ? isAdaptable(classFile.getType()) : false;
-    } catch(JavaModelException jme) {
+    } catch(Exception e) {
       return false;
     }
   }

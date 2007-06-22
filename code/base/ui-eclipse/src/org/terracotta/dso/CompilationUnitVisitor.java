@@ -14,6 +14,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
+import org.eclipse.core.runtime.jobs.MultiRule;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
@@ -159,6 +160,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
         ISchedulingRule      rule        = ruleFactory.markerRule(cu.getResource());
 
         m_inspector.setTarget(cu);
+        rule = MultiRule.combine(rule, cu.getSchedulingRule());
         ResourcesPlugin.getWorkspace().run(m_inspector, rule, IWorkspace.AVOID_UPDATE, null);
       }
     } catch(CoreException ce) {
@@ -297,20 +299,11 @@ public class CompilationUnitVisitor extends ASTVisitor {
 //      }
 //    }
     
-    if(m_configHelper.isAutolocked(node)) {
-      addMarker("autolockedMarker", "DSO Auto-locked Method", node.getName());
-      
-      if(!isDeclaringTypeAdaptable(node)) {
-        addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node.getName());
-      }
-      if(CHECK_SYNCHRONIZED && hasSynchronization(node)) {
-        addProblemMarker("ConfigProblemMarker", "Autolocked method without synchronization", node.getName());
-      }
-    } else if(m_configHelper.isNameLocked(node)) {
-      addMarker("nameLockedMarker", "DSO Name-locked Method", node.getName());
-      
-      if(!isDeclaringTypeAdaptable(node)) {
-        addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node.getName());
+    if(isDeclaringTypeAdaptable(node)) {
+      if(m_configHelper.isAutolocked(node) && hasSynchronization(node)) {
+        addMarker("autolockedMarker", "DSO Auto-locked Method", node.getName());
+      } else if(m_configHelper.isNameLocked(node)) {
+        addMarker("nameLockedMarker", "DSO Name-locked Method", node.getName());
       }
     }
 
@@ -321,7 +314,7 @@ public class CompilationUnitVisitor extends ASTVisitor {
         addProblemMarker("DeclaringTypeNotInstrumentedMarker", "Declaring type not instrumented", node.getName());
       }
     }
-
+    
     return true;
   }
   

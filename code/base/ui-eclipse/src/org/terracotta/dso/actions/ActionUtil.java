@@ -280,7 +280,7 @@ public class ActionUtil {
       else if(elem instanceof IClassFile) {
         try {
           return ((IClassFile)elem).getType();
-        } catch(JavaModelException jme) {/**/}
+        } catch(Exception e) {/**/}
       }
     }
 
