@@ -6,8 +6,7 @@ package com.tc.net.protocol.delivery;
 import com.tc.net.protocol.TCNetworkMessage;
 
 public interface OOOProtocolMessageDelivery {
-  public OOOProtocolMessage createAckRequestMessage();
-  public void sendAckRequest();
+  public OOOProtocolMessage createAckRequestMessage(short s);
 
   public OOOProtocolMessage createAckMessage(long sequence);
   public void sendAck(long sequence);
@@ -16,6 +15,6 @@ public interface OOOProtocolMessageDelivery {
 
   public void receiveMessage(OOOProtocolMessage msg);
   
-  public OOOProtocolMessage createProtocolMessage(long sent, TCNetworkMessage msg);
+  public OOOProtocolMessage createProtocolMessage(long sent, short sessionId, TCNetworkMessage msg);
   
 }

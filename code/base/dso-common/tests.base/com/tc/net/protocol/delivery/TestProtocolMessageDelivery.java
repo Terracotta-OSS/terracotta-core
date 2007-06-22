@@ -27,7 +27,7 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
     this.receivedQueue = receivedQueue;
   }
   
-  public OOOProtocolMessage createAckRequestMessage() {
+  public OOOProtocolMessage createAckRequestMessage(short sessionId) {
     sentAckRequest = true;
     return(new TestProtocolMessage());
   }
@@ -54,7 +54,7 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
     this.msg = pmsg;
   }
 
-  public OOOProtocolMessage createProtocolMessage(long sent, TCNetworkMessage tcmsg) {
+  public OOOProtocolMessage createProtocolMessage(long sent, short sessionId, TCNetworkMessage tcmsg) {
     Assert.eval(sent >= 0);
     this.tcMessage = tcmsg;
     this.created = true;

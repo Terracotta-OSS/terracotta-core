@@ -99,7 +99,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   }
 
   private void resetStack() {
-     // we need to reset because we are talking to a new stack on the other side
+    // we need to reset because we are talking to a new stack on the other side
     restoringConnection.set(false);
     delivery.pause();
     delivery.reset();
@@ -149,7 +149,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   public void start() {
     this.delivery.start();
   }
-  
+
   public void pause() {
     this.delivery.pause();
   }
@@ -171,18 +171,16 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
    * Protocol Message Delivery interface
    */
 
-  public OOOProtocolMessage createAckRequestMessage() {
-    return(this.messageFactory.createNewAckRequestMessage());
+  public OOOProtocolMessage createAckRequestMessage(short sessionId) {
+    OOOProtocolMessage rv = this.messageFactory.createNewAckRequestMessage();
+    rv.setSessionId(sessionId);
+    return rv;
   }
-  
-  public void sendAckRequest() {
-    sendToSendLayer(createAckRequestMessage());
-  }
-  
+
   public OOOProtocolMessage createAckMessage(long sequence) {
-    return(this.messageFactory.createNewAckMessage(sequence));
+    return (this.messageFactory.createNewAckMessage(sequence));
   }
-  
+
   public void sendAck(long sequence) {
     sendToSendLayer(createAckMessage(sequence));
   }
@@ -199,8 +197,9 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     this.receiveLayer.receive(msg.getPayload());
   }
 
-  public OOOProtocolMessage createProtocolMessage(long sequence, final TCNetworkMessage msg) {
+  public OOOProtocolMessage createProtocolMessage(long sequence, short sessionId, final TCNetworkMessage msg) {
     OOOProtocolMessage rv = messageFactory.createNewSendMessage(sequence, msg);
+    rv.setSessionId(sessionId);
 
     final Runnable callback = msg.getSentCallback();
     if (callback != null) {

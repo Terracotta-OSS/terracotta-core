@@ -29,7 +29,7 @@ public class SendStateMachine extends AbstractStateMachine {
   private final SynchronizedLong           sent                = new SynchronizedLong(-1);
   private final SynchronizedLong           acked               = new SynchronizedLong(-1);
   private final OOOProtocolMessageDelivery delivery;
-  private final BoundedLinkedQueue         sendQueue;
+  private BoundedLinkedQueue               sendQueue;
   private final LinkedList                 outstandingMsgs     = new LinkedList();
   private final SynchronizedInt            outstandingCnt      = new SynchronizedInt(0);
   private int                              sendWindow          = 32;                      // default by 32, can be
@@ -170,9 +170,7 @@ public class SendStateMachine extends AbstractStateMachine {
   }
 
   private void sendAckRequest() {
-    OOOProtocolMessage opm = delivery.createAckRequestMessage();
-    // attached sessionId to ackRequest
-    opm.setSessionId(getSessionId());
+    OOOProtocolMessage opm = delivery.createAckRequestMessage(getSessionId());
     sendMessage(opm);
   }
 
@@ -181,17 +179,10 @@ public class SendStateMachine extends AbstractStateMachine {
   }
 
   private OOOProtocolMessage createProtocolMessage(long count) {
-    OOOProtocolMessage opm;
-    try {
-      opm = delivery.createProtocolMessage(count, (TCNetworkMessage) sendQueue.take());
-      // attached sessionId to each message from this sender
-      opm.setSessionId(getSessionId());
-      Assert.eval(opm != null);
-      outstandingCnt.increment();
-      outstandingMsgs.add(opm);
-    } catch (InterruptedException ex) {
-      throw new AssertionError(ex);
-    }
+    final OOOProtocolMessage opm = delivery.createProtocolMessage(count, getSessionId(), dequeue(sendQueue));
+    Assert.eval(opm != null);
+    outstandingCnt.increment();
+    outstandingMsgs.add(opm);
     return (opm);
   }
 
@@ -220,14 +211,18 @@ public class SendStateMachine extends AbstractStateMachine {
     outstandingCnt.set(0);
     outstandingMsgs.clear();
 
-    while (!sendQueue.isEmpty()) {
-      dequeue(sendQueue);
+    BoundedLinkedQueue tmpQ = sendQueue;
+    sendQueue = new BoundedLinkedQueue(MAX_SEND_QUEUE_SIZE);
+    synchronized (tmpQ) {
+      while (!tmpQ.isEmpty()) {
+        dequeue(tmpQ);
+      }
     }
   }
 
-  private Object dequeue(BoundedLinkedQueue q) {
+  private static TCNetworkMessage dequeue(BoundedLinkedQueue q) {
     try {
-      return q.take();
+      return (TCNetworkMessage) q.take();
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
@@ -240,7 +235,7 @@ public class SendStateMachine extends AbstractStateMachine {
     return ((short) r.nextInt(0x0000fff0));
   }
 
-  public void put(TCNetworkMessage message) throws InterruptedException {
+  public synchronized void put(TCNetworkMessage message) throws InterruptedException {
     sendQueue.put(message);
   }
 
