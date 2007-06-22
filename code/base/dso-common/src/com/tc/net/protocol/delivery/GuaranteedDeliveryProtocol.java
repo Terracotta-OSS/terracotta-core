@@ -4,8 +4,6 @@
  */
 package com.tc.net.protocol.delivery;
 
-import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
-
 import com.tc.async.api.Sink;
 import com.tc.net.protocol.TCNetworkMessage;
 
@@ -16,17 +14,17 @@ import com.tc.net.protocol.TCNetworkMessage;
 class GuaranteedDeliveryProtocol {
   private final StateMachineRunner send;
   private final StateMachineRunner receive;
-  private final BoundedLinkedQueue sendQueue;
+  private final SendStateMachine   sender;
 
-  public GuaranteedDeliveryProtocol(OOOProtocolMessageDelivery delivery, Sink workSink, BoundedLinkedQueue sendQueue) {
-    this.send = new StateMachineRunner(new SendStateMachine(delivery, sendQueue), workSink);
+  public GuaranteedDeliveryProtocol(OOOProtocolMessageDelivery delivery, Sink workSink) {
+    this.sender = new SendStateMachine(delivery);
+    this.send = new StateMachineRunner(sender, workSink);
     this.receive = new StateMachineRunner(new ReceiveStateMachine(delivery), workSink);
-    this.sendQueue = sendQueue;
   }
 
   public void send(TCNetworkMessage message) {
     try {
-      sendQueue.put(message);
+      sender.put(message);
       send.addEvent(new OOOProtocolEvent());
     } catch (InterruptedException e) {
       throw new AssertionError(e);
@@ -62,12 +60,12 @@ class GuaranteedDeliveryProtocol {
     send.reset();
     receive.reset();
   }
-  
+
   public short getSenderSessionId() {
-    return(send.getSessionId());
+    return (send.getSessionId());
   }
-  
+
   public short getReceiverSessionId() {
-    return(receive.getSessionId());
+    return (receive.getSessionId());
   }
 }

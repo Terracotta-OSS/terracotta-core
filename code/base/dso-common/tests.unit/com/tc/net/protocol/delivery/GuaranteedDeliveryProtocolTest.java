@@ -4,7 +4,6 @@
  */
 package com.tc.net.protocol.delivery;
 
-import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.net.protocol.TCNetworkMessage;
@@ -22,12 +21,11 @@ public class GuaranteedDeliveryProtocolTest extends TestCase {
     LinkedQueue receiveQueue = new LinkedQueue();
     TestProtocolMessageDelivery delivery = new TestProtocolMessageDelivery(receiveQueue);
     TestSink workSink = new TestSink();
-    BoundedLinkedQueue sendQueue = new BoundedLinkedQueue();
 
-    GuaranteedDeliveryProtocol gdp = new GuaranteedDeliveryProtocol(delivery, workSink, sendQueue);
+    GuaranteedDeliveryProtocol gdp = new GuaranteedDeliveryProtocol(delivery, workSink);
     gdp.start();
     gdp.resume();
-    
+
     // hand shake state
     // send AckRequest to receiver
     TestProtocolMessage msg = new TestProtocolMessage();
@@ -41,7 +39,7 @@ public class GuaranteedDeliveryProtocolTest extends TestCase {
     msg.setSessionId(gdp.getSenderSessionId());
     gdp.receive(msg);
     runWorkSink(workSink);
-    
+
     TCNetworkMessage tcMessage = new PingMessage(new NullMessageMonitor());
     assertTrue(workSink.size() == 0);
     gdp.send(tcMessage);
