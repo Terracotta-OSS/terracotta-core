@@ -86,7 +86,7 @@ public class AppServerUtil {
     }
   }
 
-  public static File createSandbox(File tempDir, String testMethod) {
+  public static File createSandbox(File tempDir) {
     File sandbox = null;
     if (Os.isWindows()) {
       sandbox = new File(config.cacheDir(), "sandbox");
