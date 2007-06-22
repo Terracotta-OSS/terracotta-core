@@ -1697,7 +1697,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
    * - check that all that all the necessary referenced classes are also present in the boot jar 
    */
   public void verifyBootJarContents() throws IncompleteBootJarException, UnverifiedBootJarException {
-    logger.info("Verifying boot jar contents...");
+    logger.debug("Verifying boot jar contents...");
     try {
       scanForMissingClassesDeclaredInConfig();
     } catch (BootJarException bjex) {

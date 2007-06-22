@@ -620,6 +620,7 @@ class SubtreeTestRun
         # into the junit task.
         
         @ant.junit(
+        :printsummary => "yes",
         :maxmemory => "512m",        
         :timeout => @timeout,
         :dir => @cwd.to_s,
@@ -641,8 +642,8 @@ class SubtreeTestRun
                 failure_properties << failure_property_name
 
                 @ant.batchtest(:todir => @testrun_results.results_dir(@subtree).to_s, :fork => true, :failureproperty => failure_property_name) {
-                    @ant.formatter(:classname => "com.tc.test.TCXMLJUnitFormatter", :usefile => false)
-                    @ant.fileset(:dir => @build_results.classes_directory(@subtree).to_s, :includes => "**/#{pattern}.class")
+                  @ant.formatter(:type => "plain", :usefile => false)
+                  @ant.fileset(:dir => @build_results.classes_directory(@subtree).to_s, :includes => "**/#{pattern}.class")
                 }
             end
         }

@@ -54,8 +54,7 @@ public class TCJUnitFormatter implements JUnitResultFormatter {
   }
 
   public void startTestSuite(JUnitTest theTest) throws BuildException {
-    System.err.println(theTest.getName() + "...");
-    System.err.flush();
+    System.out.println("STARTING TESTSUITE: " + theTest.getName() + "...");
   }
 
   public void addError(Test arg0, Throwable arg1) {
@@ -71,6 +70,6 @@ public class TCJUnitFormatter implements JUnitResultFormatter {
   }
 
   public void startTest(Test arg0) {
-    //
+    System.out.println("Running testcase: " + arg0);
   }
 }
