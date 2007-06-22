@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver.deployment;
 
@@ -42,14 +43,13 @@ import javax.management.MBeanServerConnection;
 
 import junit.framework.Assert;
 
-
 public class GenericServer extends AbstractStoppable implements WebApplicationServer {
 
   private int                         jmxRemotePort;
 
   private int                         rmiRegistryPort;
 
-  int                                 contextId = 1;
+  int                                 contextId       = 1;
 
   private NewAppServerFactory         factory;
 
@@ -60,19 +60,20 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   private ServerResult                result;
 
   private final AppServerInstallation installation;
-  
-  private final Map proxyBuilderMap = new HashMap();
-  
-  static final boolean      MONKEY_MODE = ServerManager.MONKEY_MODE;
-  
-  private ProxyBuilder proxyBuilder = null;
 
-  public GenericServer(TestConfigObject config, NewAppServerFactory factory, AppServerInstallation installation, FileSystemPath tcConfigPath, int serverId, File tempDir) throws Exception {
+  private final Map                   proxyBuilderMap = new HashMap();
+
+  static final boolean                MONKEY_MODE     = true;
+
+  private ProxyBuilder                proxyBuilder    = null;
+
+  public GenericServer(TestConfigObject config, NewAppServerFactory factory, AppServerInstallation installation,
+                       FileSystemPath tcConfigPath, int serverId, File tempDir) throws Exception {
     this(config, factory, installation, new SpringTerracottaAppServerConfig(tcConfigPath.getFile()), serverId, tempDir);
   }
-  
+
   public GenericServer(TestConfigObject config, NewAppServerFactory factory, AppServerInstallation installation,
-      StandardTerracottaAppServerConfig terracottaConfig, int serverId, File tempDir) throws Exception {
+                       StandardTerracottaAppServerConfig terracottaConfig, int serverId, File tempDir) throws Exception {
     this.factory = factory;
     this.installation = installation;
     this.rmiRegistryPort = AppServerUtil.getPort();
@@ -111,11 +112,11 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
         "aspectwerkz.details", "aspectwerkz.gen.closures", "aspectwerkz.dump.pattern", "aspectwerkz.dump.closures",
         "aspectwerkz.dump.factories", "aspectwerkz.aspectmodules" };
     for (int i = 0; i < params.length; i++) {
-      if(Boolean.getBoolean(params[i])) {
+      if (Boolean.getBoolean(params[i])) {
         parameters.appendSysProp(params[i], true);
       }
     }
-    
+
     if (!MONKEY_MODE) {
       int debugPort = AppServerUtil.getPort();
       logger.info("Debug port=" + debugPort);
@@ -124,17 +125,18 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       parameters.appendSysProp("aspectwerkz.transform.verbose", true);
       parameters.appendSysProp("aspectwerkz.transform.details", true);
     }
-    
-    parameters.appendSysProp("tc.tests.configuration.modules.url", System.getProperty("tc.tests.configuration.modules.url"));
+
+    parameters.appendSysProp("tc.tests.configuration.modules.url", System
+        .getProperty("tc.tests.configuration.modules.url"));
 
     proxyBuilderMap.put(RmiServiceExporter.class, new RMIProxyBuilder());
     proxyBuilderMap.put(HttpInvokerServiceExporter.class, new HttpInvokerProxyBuilder());
   }
-  
+
   public StandardAppServerParameters getServerParameters() {
     return parameters;
   }
-  
+
   private class RMIProxyBuilder implements ProxyBuilder {
     public Object createProxy(Class serviceType, String url, Map initialContext) throws Exception {
       String rmiURL = "rmi://localhost:" + rmiRegistryPort + "/" + url;
@@ -155,9 +157,10 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       throw e;
     }
   }
-  
+
   public class HttpInvokerProxyBuilder implements ProxyBuilder {
     private HttpClient client;
+
     public Object createProxy(Class serviceType, String url, Map initialContext) throws Exception {
       String serviceURL = "http://localhost:" + result.serverPort() + "/" + url;
       logger.debug("Getting proxy for: " + serviceURL);
@@ -166,9 +169,9 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       prfb.setServiceInterface(serviceType);
       CommonsHttpInvokerRequestExecutor executor;
       if (initialContext != null) {
-        client = (HttpClient)initialContext.get(ProxyBuilder.HTTP_CLIENT_KEY);
+        client = (HttpClient) initialContext.get(ProxyBuilder.HTTP_CLIENT_KEY);
       }
-      
+
       if (client == null) {
         executor = new CommonsHttpInvokerRequestExecutor();
         client = executor.getHttpClient();
@@ -178,32 +181,30 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       } else {
         executor = new CommonsHttpInvokerRequestExecutor(client);
       }
-      
+
       prfb.setHttpInvokerRequestExecutor(executor);
       prfb.afterPropertiesSet();
       return prfb.getObject();
     }
-    
+
     public HttpClient getClient() {
       return client;
     }
-    
+
     public void setClient(HttpClient client) {
       this.client = client;
     }
   }
-  
+
   public Object getProxy(Class serviceType, String url) throws Exception {
-    if (this.proxyBuilder != null) {
-      return proxyBuilder.createProxy(serviceType, url, null);
-    }
+    if (this.proxyBuilder != null) { return proxyBuilder.createProxy(serviceType, url, null); }
     Map initCtx = new HashMap();
     initCtx.put(ProxyBuilder.EXPORTER_TYPE_KEY, RmiServiceExporter.class);
-    return getProxy(serviceType, url, initCtx); 
+    return getProxy(serviceType, url, initCtx);
   }
-  
+
   public Object getProxy(Class serviceType, String url, Map initialContext) throws Exception {
-    Class exporterClass = (Class)initialContext.get(ProxyBuilder.EXPORTER_TYPE_KEY);
+    Class exporterClass = (Class) initialContext.get(ProxyBuilder.EXPORTER_TYPE_KEY);
     this.proxyBuilder = (ProxyBuilder) proxyBuilderMap.get(exporterClass);
     return this.proxyBuilder.createProxy(serviceType, url, initialContext);
   }
@@ -236,7 +237,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   public WebResponse ping(String url, WebConversation wc) throws MalformedURLException, IOException, SAXException {
     String fullURL = "http://localhost:" + result.serverPort() + url;
     logger.debug("Getting page: " + fullURL);
-    
+
     wc.setExceptionsThrownOnErrorStatus(false);
     WebResponse response = wc.getResponse(fullURL);
     Assert.assertEquals("Server error:/n" + response.getText(), 200, response.getResponseCode());
@@ -272,7 +273,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     runtimeConfiguration.setProperty(RemotePropertySet.USERNAME, "admin");
     runtimeConfiguration.setProperty(RemotePropertySet.PASSWORD, "");
     runtimeConfiguration.setProperty(TomcatPropertySet.MANAGER_URL, "http://localhost:" + result.serverPort()
-        + "/manager");
+                                                                    + "/manager");
 
     Tomcat5xRemoteContainer remoteContainer = new Tomcat5xRemoteContainer(runtimeConfiguration);
     Tomcat5xRemoteDeployer deployer = new Tomcat5xRemoteDeployer(remoteContainer);
@@ -288,6 +289,6 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   }
 
   public String toString() {
-    return "Generic Server" + (result!=null ? "; port:"+result.serverPort() : "");
+    return "Generic Server" + (result != null ? "; port:" + result.serverPort() : "");
   }
 }
