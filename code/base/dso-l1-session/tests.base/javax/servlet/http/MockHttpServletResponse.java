@@ -124,7 +124,7 @@ public class MockHttpServletResponse implements HttpServletResponse {
   }
 
   public boolean isCommitted() {
-    throw new ImplementMe();
+    return false;
   }
 
   public void reset() {

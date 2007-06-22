@@ -13,6 +13,7 @@ import org.apache.coyote.tomcat5.CoyoteRequest;
 import org.apache.coyote.tomcat5.CoyoteResponse;
 
 import com.tc.object.bytecode.ManagerUtil;
+import com.terracotta.session.SessionManager;
 import com.terracotta.session.TerracottaSessionManager;
 import com.terracotta.session.WebAppConfig;
 import com.terracotta.session.util.Assert;
@@ -53,7 +54,7 @@ public class SessionValve50 extends ValveBase {
 
   private void tcInvoke(final CoyoteRequest valveReq, final CoyoteResponse valveRes, final ValveContext valveContext)
       throws IOException, ServletException {
-    TerracottaSessionManager mgr = findOrCreateManager(valveReq, valveReq.getContextPath());
+    SessionManager mgr = findOrCreateManager(valveReq, valveReq.getContextPath());
     SessionRequest50 sReq50 = (SessionRequest50) mgr.preprocess(valveReq, valveRes);
     SessionResponse50 sRes50 = new SessionResponse50(valveRes, sReq50);
     sReq50.setSessionResposne50(sRes50);
@@ -64,10 +65,10 @@ public class SessionValve50 extends ValveBase {
     }
   }
 
-  private TerracottaSessionManager findOrCreateManager(CoyoteRequest valveReq, String contextPath) {
-    TerracottaSessionManager rv = null;
+  private SessionManager findOrCreateManager(CoyoteRequest valveReq, String contextPath) {
+    SessionManager rv = null;
     synchronized (mgrs) {
-      rv = (TerracottaSessionManager) mgrs.get(contextPath);
+      rv = (SessionManager) mgrs.get(contextPath);
       if (rv == null) {
         rv = createManager(valveReq, contextPath);
         mgrs.put(contextPath, rv);
@@ -76,20 +77,20 @@ public class SessionValve50 extends ValveBase {
     return rv;
   }
 
-  private static TerracottaSessionManager createManager(CoyoteRequest valveReq, String contextPath) {
+  private static SessionManager createManager(CoyoteRequest valveReq, String contextPath) {
     final WebAppConfig webAppConfig = makeWebAppConfig(valveReq.getContext());
     final ConfigProperties cp = new ConfigProperties(webAppConfig);
-    
+
     String appName = DefaultContextMgr.computeAppName(valveReq);
     int lockType = ManagerUtil.getSessionLockType(appName);
     final SessionIdGenerator sig = DefaultIdGenerator.makeInstance(cp, lockType, null);
-    
+
     final SessionCookieWriter scw = DefaultCookieWriter.makeInstance(cp);
     final LifecycleEventMgr eventMgr = DefaultLifecycleEventMgr.makeInstance(cp);
     final ContextMgr contextMgr = DefaultContextMgr
         .makeInstance(contextPath, valveReq.getContext().getServletContext());
 
-    final TerracottaSessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr,
+    final SessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr,
                                                                      new Tomcat50RequestResponseFactory(), cp);
     return rv;
   }

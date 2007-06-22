@@ -13,6 +13,7 @@ import org.apache.catalina.valves.ValveBase;
 
 import com.tc.object.bytecode.ManagerUtil;
 import com.terracotta.session.BaseRequestResponseFactory;
+import com.terracotta.session.SessionManager;
 import com.terracotta.session.SessionResponse;
 import com.terracotta.session.TerracottaRequest;
 import com.terracotta.session.TerracottaSessionManager;
@@ -51,7 +52,7 @@ public class SessionValve55 extends ValveBase {
   }
 
   private void tcInvoke(Request valveReq, Response valveRes) throws IOException, ServletException {
-    TerracottaSessionManager mgr = findOrCreateManager(valveReq, valveReq.getContextPath());
+    SessionManager mgr = findOrCreateManager(valveReq, valveReq.getContextPath());
     TerracottaRequest sReq = mgr.preprocess(valveReq, valveRes);
     SessionRequest55 sReq55 = new SessionRequest55(sReq, valveReq, valveReq.getContext().getRealm());
     SessionResponse sRes = new SessionResponse(sReq, valveRes);
@@ -63,10 +64,10 @@ public class SessionValve55 extends ValveBase {
     }
   }
 
-  private TerracottaSessionManager findOrCreateManager(Request valveReq, String contextPath) {
-    TerracottaSessionManager rv = null;
+  private SessionManager findOrCreateManager(Request valveReq, String contextPath) {
+    SessionManager rv = null;
     synchronized (mgrs) {
-      rv = (TerracottaSessionManager) mgrs.get(contextPath);
+      rv = (SessionManager) mgrs.get(contextPath);
       if (rv == null) {
         rv = createManager(valveReq, contextPath);
         mgrs.put(contextPath, rv);
@@ -75,7 +76,7 @@ public class SessionValve55 extends ValveBase {
     return rv;
   }
 
-  private static TerracottaSessionManager createManager(Request valveReq, String contextPath) {
+  private static SessionManager createManager(Request valveReq, String contextPath) {
     final ConfigProperties cp = new ConfigProperties(makeWebAppConfig(valveReq.getContext()));
 
     String appName = DefaultContextMgr.computeAppName(valveReq);
@@ -86,7 +87,7 @@ public class SessionValve55 extends ValveBase {
     final LifecycleEventMgr eventMgr = DefaultLifecycleEventMgr.makeInstance(cp);
     final ContextMgr contextMgr = DefaultContextMgr
         .makeInstance(contextPath, valveReq.getContext().getServletContext());
-    final TerracottaSessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr,
+    final SessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr,
                                                                      new BaseRequestResponseFactory(), cp);
     return rv;
   }

@@ -5,7 +5,6 @@
 package com.terracotta.session;
 
 import com.tc.exception.ImplementMe;
-import com.terracotta.session.util.Lock;
 
 public class MockSessionId implements SessionId {
 
@@ -18,10 +17,6 @@ public class MockSessionId implements SessionId {
   }
 
   public String getKey() {
-    throw new ImplementMe();
-  }
-
-  public Lock getLock() {
     throw new ImplementMe();
   }
 

@@ -21,6 +21,7 @@ public class SessionEventTest extends TestCase {
   private SessionData           session;
   private int                   maxIdleSeconds;
   private SessionIdGenerator    idGenerator;
+  private SessionManager        sessionManager;
 
   protected void setUp() throws Exception {
     maxIdleSeconds = 123;
@@ -30,7 +31,8 @@ public class SessionEventTest extends TestCase {
     eventMgr = new MockLifecycleEventMgr();
     contextMgr = new MockContextMgr();
     session = new SessionData(maxIdleSeconds);
-    session.associate(sessionId, eventMgr, contextMgr);
+    sessionManager = new MockSessionManager();
+    session.associate(sessionId, eventMgr, contextMgr, sessionManager);
   }
 
   public final void testEvents() {

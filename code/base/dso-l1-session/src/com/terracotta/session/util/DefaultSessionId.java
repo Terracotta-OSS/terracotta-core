@@ -59,7 +59,4 @@ public class DefaultSessionId implements SessionId {
     return lock.tryWriteLock();
   }
 
-  public Lock getLock() {
-    return lock;
-  }
 }

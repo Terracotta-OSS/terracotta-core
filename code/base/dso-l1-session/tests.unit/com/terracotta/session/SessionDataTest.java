@@ -21,7 +21,7 @@ public class SessionDataTest extends TestCase {
   public final void testCollection() {
     final int maxIdleSeconds = 123;
     SessionData sd = new SessionData(maxIdleSeconds);
-    sd.associate(new MockSessionId(), new MockLifecycleEventMgr(), new MockContextMgr());
+    sd.associate(new MockSessionId(), new MockLifecycleEventMgr(), new MockContextMgr(), new MockSessionManager());
     final String[] attributes = new String[] { "one", "two", "three", "four", "five" };
     for (int i = 0; i < attributes.length; i++) {
       String a = attributes[i];

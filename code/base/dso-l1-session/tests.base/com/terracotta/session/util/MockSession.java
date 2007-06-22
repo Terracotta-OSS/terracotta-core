@@ -8,6 +8,7 @@ import com.tc.exception.ImplementMe;
 import com.terracotta.session.Session;
 import com.terracotta.session.SessionData;
 import com.terracotta.session.SessionId;
+import com.terracotta.session.SessionRequest;
 
 import java.util.Enumeration;
 
@@ -93,6 +94,14 @@ public class MockSession implements Session {
   }
 
   public void setMaxInactiveInterval(int arg0) {
+    throw new ImplementMe();
+  }
+
+  public void associateRequest(SessionRequest request) {
+    throw new ImplementMe();
+  }
+
+  public void clearRequest() {
     throw new ImplementMe();
   }
 

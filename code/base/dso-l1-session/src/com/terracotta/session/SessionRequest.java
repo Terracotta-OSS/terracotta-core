@@ -14,21 +14,25 @@ import javax.servlet.http.HttpSession;
 public class SessionRequest extends HttpServletRequestWrapper implements TerracottaRequest {
   private final HttpServletRequest  req;
   private final HttpServletResponse res;
-  private final SessionId           requestedSessionId;
+  private SessionId                 requestedSessionId;
   private final long                requestStartMillis;
   private final boolean             isForwarded;
   private final boolean             isSessionOwner;
+  private final SessionManager      mgr;
 
   private Session                   session;
-  private TerracottaSessionManager  mgr;
 
-  public SessionRequest(SessionId requestedSessionId, HttpServletRequest req, HttpServletResponse res) {
+  public SessionRequest(SessionId requestedSessionId, HttpServletRequest req, HttpServletResponse res,
+                        SessionManager sessionManager) {
     super(req);
+
     Assert.pre(req != null);
     Assert.pre(res != null);
+    Assert.pre(sessionManager != null);
 
     this.req = req;
     this.res = res;
+    this.mgr = sessionManager;
     this.requestedSessionId = requestedSessionId;
     this.requestStartMillis = System.currentTimeMillis();
     // in some cases, we could be multi-wrapping native requests.
@@ -68,10 +72,14 @@ public class SessionRequest extends HttpServletRequestWrapper implements Terraco
     return mgr.getCookieWriter().encodeURL(url, this);
   }
 
-  public Session getTerracottaSession(boolean createNew) {
+  public final Session getTerracottaSession(boolean createNew) {
     if (session != null) return session;
     session = (createNew) ? mgr.getSession(requestedSessionId, req, res) : mgr.getSessionIfExists(requestedSessionId,
                                                                                                   req, res);
+
+    if (session != null) {
+      session.associateRequest(this);
+    }
     Assert.post(!createNew || session != null);
     return session;
   }
@@ -88,7 +96,10 @@ public class SessionRequest extends HttpServletRequestWrapper implements Terraco
     return requestStartMillis;
   }
 
-  public void setSessionManager(TerracottaSessionManager sessionManager) {
-    this.mgr = sessionManager;
+  void clearSession() {
+    Assert.pre(session != null);
+    session = null;
+    requestedSessionId = null;
   }
+
 }

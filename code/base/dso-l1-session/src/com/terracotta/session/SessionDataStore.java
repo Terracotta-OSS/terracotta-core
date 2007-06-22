@@ -18,14 +18,16 @@ import java.util.Set;
 
 public class SessionDataStore {
 
-  private final Map               store;                // <SessionData>
-  private final Map               dtmStore;             // <Timestamp>
-  private final int               maxIdleTimeoutSeconds;
-  private final ContextMgr        ctxMgr;
-  private final LifecycleEventMgr lifecycleEventMgr;
+  private final Map                      store;                // <SessionData>
+  private final Map                      dtmStore;             // <Timestamp>
+  private final int                      maxIdleTimeoutSeconds;
+  private final ContextMgr               ctxMgr;
+  private final LifecycleEventMgr        lifecycleEventMgr;
+  private final SessionManager sessionManager;
 
   public SessionDataStore(String appName, int maxIdleTimeoutSeconds, LifecycleEventMgr lifecycleEventMgr,
-                          ContextMgr ctxMgr) {
+                          ContextMgr ctxMgr, SessionManager sessionManager) {
+    this.sessionManager = sessionManager;
     Assert.pre(appName != null && appName.length() > 0);
 
     this.maxIdleTimeoutSeconds = maxIdleTimeoutSeconds;
@@ -60,7 +62,7 @@ public class SessionDataStore {
     SessionData rv = null;
     sessId.getWriteLock();
     rv = new SessionData(maxIdleTimeoutSeconds);
-    rv.associate(sessId, lifecycleEventMgr, ctxMgr);
+    rv.associate(sessId, lifecycleEventMgr, ctxMgr, sessionManager);
     store.put(sessId.getKey(), rv);
     dtmStore.put(sessId.getKey(), rv.getTimestamp());
     rv.startRequest();
@@ -82,7 +84,7 @@ public class SessionDataStore {
     try {
       rv = (SessionData) store.get(sessId.getKey());
       if (rv != null) {
-        rv.associate(sessId, lifecycleEventMgr, ctxMgr);
+        rv.associate(sessId, lifecycleEventMgr, ctxMgr, sessionManager);
         rv.startRequest();
         if (!rv.isValid()) rv = null;
         else {
@@ -133,7 +135,7 @@ public class SessionDataStore {
   SessionData findSessionDataUnlocked(final SessionId sessId) {
     final SessionData rv = (SessionData) store.get(sessId.getKey());
     if (rv != null) {
-      rv.associate(sessId, lifecycleEventMgr, ctxMgr);
+      rv.associate(sessId, lifecycleEventMgr, ctxMgr, sessionManager);
     }
     return rv;
   }

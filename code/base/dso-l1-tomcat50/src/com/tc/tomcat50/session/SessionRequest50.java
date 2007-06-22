@@ -15,6 +15,7 @@ import org.apache.coyote.tomcat5.CoyoteResponse;
 import org.apache.tomcat.util.buf.MessageBytes;
 
 import com.terracotta.session.SessionId;
+import com.terracotta.session.SessionManager;
 import com.terracotta.session.SessionRequest;
 
 import java.io.IOException;
@@ -35,8 +36,8 @@ public class SessionRequest50 extends SessionRequest implements HttpRequest {
   private SessionResponse50   sessRes50;
 
   public SessionRequest50(SessionId requestedSessionId, CoyoteRequest req,
-                          CoyoteResponse res) {
-    super(requestedSessionId, req, res);
+                          CoyoteResponse res, SessionManager manager) {
+    super(requestedSessionId, req, res, manager);
     this.req = req;
   }
 

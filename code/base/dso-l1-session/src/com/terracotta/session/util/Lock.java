@@ -9,8 +9,6 @@ import com.tc.object.bytecode.ManagerUtil;
 
 public class Lock {
 
-  private final Timer  unlockTimer;
-  private final Timer  lockTimer;
   private final String lockId;
 
   private boolean      isLocked = false;
@@ -30,37 +28,21 @@ public class Lock {
     this.lockType = lockType;
     Assert.pre(lockId != null && lockId.length() > 0);
     this.lockId = lockId;
-    lockTimer = new Timer(false);
-    unlockTimer = new Timer(false);
   }
 
   public void commitLock() {
-    unlockTimer.start();
     ManagerUtil.commitLock(lockId);
     isLocked = false;
-    unlockTimer.stop();
   }
 
   public void getWriteLock() {
-    lockTimer.start();
     ManagerUtil.beginLock(lockId, lockType);
     isLocked = true;
-    lockTimer.stop();
   }
 
   public boolean tryWriteLock() {
-    lockTimer.start();
     isLocked = ManagerUtil.tryBeginLock(lockId, lockType);
-    lockTimer.stop();
     return isLocked;
-  }
-
-  public Timer getLockTimer() {
-    return lockTimer;
-  }
-
-  public Timer getUnlockTimer() {
-    return unlockTimer;
   }
 
   public String getLockId() {

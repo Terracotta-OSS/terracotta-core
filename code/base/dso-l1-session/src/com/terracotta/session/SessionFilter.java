@@ -31,15 +31,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class SessionFilter implements Filter {
-  public final static String       APP_SERVER_PARAM_NAME = "app-server";
-  public final static String       BEA_WEBLOGIC          = "BEA-Weblogic";
-  private final static String      IBM_WEBSPHERE         = "IBM-Websphere";
+  public final static String  APP_SERVER_PARAM_NAME = "app-server";
+  public final static String  BEA_WEBLOGIC          = "BEA-Weblogic";
+  private final static String IBM_WEBSPHERE         = "IBM-Websphere";
 
-  private TerracottaSessionManager mgr                   = null;
-  private ServletContext           servletContext        = null;
-  private String                   appServer             = null;
-  public static final String       FILTER_CLASS          = SessionFilter.class.getName();
-  public static final String       FILTER_NAME           = "Terracotta Session Filter";
+  private SessionManager      mgr                   = null;
+  private ServletContext      servletContext        = null;
+  private String              appServer             = null;
+  public static final String  FILTER_CLASS          = SessionFilter.class.getName();
+  public static final String  FILTER_NAME           = "Terracotta Session Filter";
 
   public SessionFilter() {
     // nothing
@@ -69,7 +69,7 @@ public class SessionFilter implements Filter {
     Assert.pre(response != null);
     Assert.pre(chain != null);
 
-    TerracottaSessionManager tcMgr = getManager(request);
+    SessionManager tcMgr = getManager(request);
     TerracottaRequest sReq = tcMgr.preprocess(request, response);
     TerracottaResponse sRes = tcMgr.createResponse(sReq, response);
     try {
@@ -79,7 +79,7 @@ public class SessionFilter implements Filter {
     }
   }
 
-  protected synchronized TerracottaSessionManager getManager(HttpServletRequest req) {
+  protected synchronized SessionManager getManager(HttpServletRequest req) {
     if (mgr == null) {
       if (servletContext instanceof WebAppConfig) mgr = createWebAppConfigManager(req, (WebAppConfig) servletContext,
                                                                                   servletContext);
@@ -89,21 +89,19 @@ public class SessionFilter implements Filter {
     return mgr;
   }
 
-  protected TerracottaSessionManager createDefaultManager(final HttpServletRequest req,
-                                                          final ServletContext sc) {
-    final TerracottaSessionManager rv = createManager(req, null, new BaseRequestResponseFactory(), sc);
+  protected SessionManager createDefaultManager(final HttpServletRequest req, final ServletContext sc) {
+    final SessionManager rv = createManager(req, null, new BaseRequestResponseFactory(), sc);
     return rv;
   }
 
-  protected TerracottaSessionManager createWebAppConfigManager(final HttpServletRequest req, final WebAppConfig wac,
-                                                               final ServletContext sc) {
-    final TerracottaSessionManager rv = createManager(req, wac, pickFactory(), sc);
+  protected SessionManager createWebAppConfigManager(final HttpServletRequest req, final WebAppConfig wac,
+                                                     final ServletContext sc) {
+    final SessionManager rv = createManager(req, wac, pickFactory(), sc);
     return rv;
   }
 
-  protected TerracottaSessionManager createManager(final HttpServletRequest req, final WebAppConfig wac,
-                                                   final RequestResponseFactory factory,
-                                                   final ServletContext sc) {
+  protected SessionManager createManager(final HttpServletRequest req, final WebAppConfig wac,
+                                         final RequestResponseFactory factory, final ServletContext sc) {
     final ConfigProperties cp = new ConfigProperties(wac);
 
     String appName = DefaultContextMgr.computeAppName(req);
@@ -113,7 +111,7 @@ public class SessionFilter implements Filter {
     final SessionCookieWriter scw = DefaultCookieWriter.makeInstance(cp);
     final LifecycleEventMgr eventMgr = DefaultLifecycleEventMgr.makeInstance(cp);
     final ContextMgr contextMgr = DefaultContextMgr.makeInstance(req, sc);
-    final TerracottaSessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr, factory, cp);
+    final SessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr, factory, cp);
     return rv;
   }
 
@@ -121,7 +119,7 @@ public class SessionFilter implements Filter {
     try {
       if (BEA_WEBLOGIC.equals(appServer)) {
         return (RequestResponseFactory) Class.forName("com.terracotta.session.WeblogicRequestResponseFactory")
-        .newInstance();
+            .newInstance();
       } else {
         return new BaseRequestResponseFactory();
       }
@@ -129,7 +127,7 @@ public class SessionFilter implements Filter {
       throw new AssertionError(e);
     }
   }
-  
+
   private IdDeclarator pickDeclarator() {
     if (IBM_WEBSPHERE.equals(appServer)) {
       return new WebsphereIdDeclarator();

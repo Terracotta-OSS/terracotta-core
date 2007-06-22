@@ -41,7 +41,7 @@ public class DefaultCookieWriterTest extends TestCase {
   }
 
   public final void testCreateCookie() {
-    final Cookie c = writer.createCookie(req, res, id);
+    final Cookie c = writer.createCookie(req, id);
     checkCookie(cookieName, idValue, req.getContextPath(), c);
   }
 

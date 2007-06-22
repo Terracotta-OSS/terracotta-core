@@ -5,6 +5,7 @@
 package com.terracotta.session;
 
 import com.tc.session.SessionSupport;
+import com.tc.util.Assert;
 import com.terracotta.session.util.ContextMgr;
 import com.terracotta.session.util.LifecycleEventMgr;
 import com.terracotta.session.util.StringArrayEnumeration;
@@ -34,7 +35,10 @@ public class SessionData implements Session, SessionSupport {
   private transient SessionId         sessionId;
   private transient LifecycleEventMgr eventMgr;
   private transient ContextMgr        contextMgr;
+  private transient SessionManager    sessionManager;
   private transient boolean           invalidated        = false;
+
+  private static final ThreadLocal    request            = new ThreadLocal();
 
   protected SessionData(int maxIdleSeconds) {
     this.createTime = System.currentTimeMillis();
@@ -43,10 +47,20 @@ public class SessionData implements Session, SessionSupport {
     this.timestamp = new Timestamp(this.createTime + maxIdleMillis);
   }
 
-  void associate(SessionId sid, LifecycleEventMgr lifecycleEventMgr, ContextMgr ctxMgr) {
+  void associate(SessionId sid, LifecycleEventMgr lifecycleEventMgr, ContextMgr ctxMgr, SessionManager sessionMgr) {
     this.sessionId = sid;
     this.eventMgr = lifecycleEventMgr;
     this.contextMgr = ctxMgr;
+    this.sessionManager = sessionMgr;
+  }
+
+  public void associateRequest(SessionRequest req) {
+    Assert.pre(request.get() == null);
+    request.set(req);
+  }
+
+  public void clearRequest() {
+    request.set(null);
   }
 
   public SessionId getSessionId() {
@@ -76,7 +90,16 @@ public class SessionData implements Session, SessionSupport {
     return sessionId.isNew();
   }
 
-  public synchronized void invalidate() {
+  synchronized void invalidateIfNecessary() {
+    if (invalidated) return;
+    invalidate(false);
+  }
+
+  public void invalidate() {
+    invalidate(true);
+  }
+
+  public synchronized void invalidate(boolean unlock) {
     if (invalidated) { throw new IllegalStateException("session already invalidated"); }
 
     try {
@@ -88,7 +111,16 @@ public class SessionData implements Session, SessionSupport {
         unbindAttribute(attrs[i]);
       }
     } finally {
-      invalidated = true;
+      try {
+        SessionRequest r = (SessionRequest) request.get();
+        if (r != null) {
+          r.clearSession();
+          clearRequest();
+        }
+        sessionManager.remove(this, unlock);
+      } finally {
+        invalidated = true;
+      }
     }
   }
 
@@ -272,10 +304,6 @@ public class SessionData implements Session, SessionSupport {
 
   Timestamp getTimestamp() {
     return timestamp;
-  }
-
-  public synchronized boolean isInvalidated() {
-    return invalidated;
   }
 
 }

@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 
 public interface RequestResponseFactory {
 
-  TerracottaRequest createRequest(SessionId id, HttpServletRequest request, HttpServletResponse response);
+  TerracottaRequest createRequest(SessionId id, HttpServletRequest request, HttpServletResponse response, SessionManager manager);
 
   TerracottaResponse createResponse(TerracottaRequest request, HttpServletResponse response);
 

@@ -8,8 +8,8 @@ import javax.servlet.http.HttpServletResponse;
 
 public class BaseRequestResponseFactory implements RequestResponseFactory {
 
-  public TerracottaRequest createRequest(SessionId id, HttpServletRequest request, HttpServletResponse response) {
-    return new SessionRequest(id, request, response);
+  public TerracottaRequest createRequest(SessionId id, HttpServletRequest request, HttpServletResponse response, SessionManager manager) {
+    return new SessionRequest(id, request, response, manager);
   }
 
   public TerracottaResponse createResponse(TerracottaRequest request, HttpServletResponse response) {

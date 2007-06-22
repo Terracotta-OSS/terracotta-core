@@ -22,7 +22,7 @@ import com.terracotta.session.util.Timestamp;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class TerracottaSessionManager {
+public class TerracottaSessionManager implements SessionManager {
 
   private final SessionMonitorMBean    mBean;
   private final SessionIdGenerator     idGenerator;
@@ -52,7 +52,8 @@ public class TerracottaSessionManager {
     this.eventMgr = eventMgr;
     this.contextMgr = contextMgr;
     this.factory = factory;
-    this.store = new SessionDataStore(contextMgr.getAppName(), cp.getSessionTimeoutSeconds(), eventMgr, contextMgr);
+    this.store = new SessionDataStore(contextMgr.getAppName(), cp.getSessionTimeoutSeconds(), eventMgr, contextMgr,
+                                      this);
     this.logger = ManagerUtil.getLogger("com.tc.tcsession." + contextMgr.getAppName());
     this.reqeustLogEnabled = cp.getRequestLogBenchEnabled();
     this.invalidatorLogEnabled = cp.getInvalidatorLogBenchEnabled();
@@ -160,8 +161,7 @@ public class TerracottaSessionManager {
     String sessionInfo = "";
     if (req.isSessionOwner()) {
       final SessionId id = req.getTerracottaSession(false).getSessionId();
-      sessionInfo = " sid=[" + id.getKey() + "] -> [" + id.getLock().getLockTimer().elapsed() + ":"
-                    + id.getLock().getUnlockTimer().elapsed() + "]";
+      sessionInfo = " sid=[" + id.getKey() + "]";
     }
     final String msg = msgPrefix + sessionInfo + " -> " + (System.currentTimeMillis() - req.getRequestStartMillis());
     logger.info(msg);
@@ -172,6 +172,7 @@ public class TerracottaSessionManager {
     Assert.pre(!req.isForwarded());
     Assert.pre(req.isSessionOwner());
     final Session session = req.getTerracottaSession(false);
+    session.clearRequest();
     Assert.inv(session != null);
     final SessionId id = session.getSessionId();
     final SessionData sd = session.getSessionData();
@@ -211,17 +212,15 @@ public class TerracottaSessionManager {
   }
 
   private TerracottaRequest wrapRequest(SessionId sessionId, HttpServletRequest req, HttpServletResponse res) {
-    TerracottaRequest request = factory.createRequest(sessionId, req, res);
-    request.setSessionManager(this);
-    return request;
+    return factory.createRequest(sessionId, req, res, this);
   }
 
   /**
    * This method always returns a valid session. If data for the requestedSessionId found and is valid, it is returned.
    * Otherwise, we must create a new session id, a new session data, a new sessiono, and cookie the response.
    */
-  protected Session getSession(final SessionId requestedSessionId, final HttpServletRequest req,
-                               final HttpServletResponse res) {
+  public Session getSession(final SessionId requestedSessionId, final HttpServletRequest req,
+                            final HttpServletResponse res) {
     Assert.pre(req != null);
     Assert.pre(res != null);
     Session rv = doGetSession(requestedSessionId, req, res);
@@ -229,7 +228,7 @@ public class TerracottaSessionManager {
     return rv;
   }
 
-  protected Session getSessionIfExists(SessionId requestedSessionId, HttpServletRequest req, HttpServletResponse res) {
+  public Session getSessionIfExists(SessionId requestedSessionId, HttpServletRequest req, HttpServletResponse res) {
     if (requestedSessionId == null) return null;
     SessionData sd = store.find(requestedSessionId);
     if (sd == null) return null;
@@ -238,7 +237,7 @@ public class TerracottaSessionManager {
     return sd;
   }
 
-  protected SessionCookieWriter getCookieWriter() {
+  public SessionCookieWriter getCookieWriter() {
     return this.cookieWriter;
   }
 
@@ -254,14 +253,21 @@ public class TerracottaSessionManager {
     }
   }
 
+  public void remove(Session data, boolean unlock) {
+    store.remove(data.getSessionId());
+    mBean.sessionDestroyed();
+
+    if (unlock) {
+      data.getSessionId().commitLock();
+    }
+  }
+
   private void expire(SessionId id, SessionData sd) {
     try {
-      if (!sd.isInvalidated()) sd.invalidate();
+      sd.invalidateIfNecessary();
     } catch (Throwable t) {
       logger.error("unhandled exception during invalidate() for session " + id.getKey());
     }
-    store.remove(id);
-    mBean.sessionDestroyed();
   }
 
   private Session doGetSession(final SessionId requestedSessionId, final HttpServletRequest req,
@@ -375,8 +381,8 @@ public class TerracottaSessionManager {
       Assert.pre(id != null);
 
       boolean rv = false;
-      id.tryWriteLock();
-      if (!id.getLock().isLocked()) { return rv; }
+
+      if (!id.tryWriteLock()) { return rv; }
 
       try {
         final SessionData sd = store.findSessionDataUnlocked(id);
@@ -402,6 +408,7 @@ public class TerracottaSessionManager {
     }
   }
 
+  // XXX: move this method?
   public static boolean isDsoSessionApp(HttpServletRequest request) {
     Assert.pre(request != null);
     final String appName = DefaultContextMgr.computeAppName(request);

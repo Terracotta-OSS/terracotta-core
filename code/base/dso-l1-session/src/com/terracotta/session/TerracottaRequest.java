@@ -20,6 +20,4 @@ public interface TerracottaRequest extends HttpServletRequest {
 
   long getRequestStartMillis();
 
-  void setSessionManager(TerracottaSessionManager sessionManager);
-
 }

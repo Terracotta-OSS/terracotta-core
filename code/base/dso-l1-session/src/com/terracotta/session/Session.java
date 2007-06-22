@@ -13,4 +13,8 @@ public interface Session extends HttpSession {
   public SessionId getSessionId();
 
   public boolean isValid();
+
+  public void associateRequest(SessionRequest request);
+
+  public void clearRequest();
 }
