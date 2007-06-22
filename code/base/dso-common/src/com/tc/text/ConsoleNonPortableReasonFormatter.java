@@ -16,6 +16,7 @@ public class ConsoleNonPortableReasonFormatter implements NonPortableReasonForma
   private final PrintWriter        out;
   private final StringFormatter    stringFormatter;
   private final Collection         details;
+  private String                   instructions;
   private int                      maxLabelLength;
   private final String             separator;
   private final ParagraphFormatter paragraphFormatter;
@@ -74,12 +75,26 @@ public class ConsoleNonPortableReasonFormatter implements NonPortableReasonForma
       }
     }
     details.clear();
+    if (instructions != null) {
+      out.println();
+      out.print(instructions);
+    }
     out.flush();
   }
 
   public void formatReasonText(String reasonText) {
+    if (null == reasonText || 0 == reasonText.length()) return;
+      
     out.println(paragraphFormatter.format(reasonText));
     out.println();
+  }
+
+  public void formatInstructionsText(String instructionsText) {
+    if (null == instructionsText || 0 == instructionsText.length()) {
+      instructions = null;
+    }
+     
+    instructions = instructionsText;
   }
 
 }

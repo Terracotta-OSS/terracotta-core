@@ -30,6 +30,9 @@ public class NonPortableReasonTest extends TestCase {
     assertEquals(2, formatter.formatDetailsCalls.size());
     assertReasonEquals("label1", "value1", formatter.formatDetailsCalls.get(0));
     assertReasonEquals("label2", "value2", formatter.formatDetailsCalls.get(1));
+
+    // make sure the instruction text was formatted
+    assertEquals(1, formatter.formatInstructionsTextCalls.size());
   }
 
   private void assertReasonEquals(String label, String value, Object o) {
@@ -42,6 +45,7 @@ public class NonPortableReasonTest extends TestCase {
 
     public final List formatReasonTextCalls = new LinkedList();
     public final List formatDetailsCalls = new LinkedList();
+    public final List formatInstructionsTextCalls = new LinkedList();
     public final List flushCalls = new LinkedList();
 
     public void formatReasonText(String reasonText) {
@@ -52,6 +56,10 @@ public class NonPortableReasonTest extends TestCase {
       formatDetailsCalls.add(detail);
     }
 
+    public void formatInstructionsText(String instructionsText) {
+      formatInstructionsTextCalls.add(instructionsText);
+    }
+
     public void flush() {
       flushCalls.add(new Object());
     }
@@ -59,6 +67,5 @@ public class NonPortableReasonTest extends TestCase {
     public void formatReasonTypeName(byte reasonType) {
       return;
     }
-
   }
 }

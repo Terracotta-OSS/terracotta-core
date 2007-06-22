@@ -36,6 +36,7 @@ public class NonPortableReason implements Serializable {
   private final Collection  details;
   private final byte        reason;
   private transient String  detailedReason;
+  private transient String  instructions;
   private String            message;
   private String            ultimateNonPortableFieldName;
 
@@ -60,6 +61,13 @@ public class NonPortableReason implements Serializable {
       detailedReason = constructDetailedReason();
     }
     return detailedReason;
+  }
+
+  public synchronized String getInstructions() {
+    if (instructions == null) {
+      instructions = constructInstructions();
+    }
+    return instructions;
   }
 
   private void writeObject(ObjectOutputStream out) throws IOException {
@@ -218,6 +226,37 @@ public class NonPortableReason implements Serializable {
     return sb.toString();
   }
 
+  private String constructInstructions() {
+    StringBuffer sb = new StringBuffer();
+
+    switch (reason) {
+      case CLASS_NOT_IN_BOOT_JAR:
+        List classes = new ArrayList();
+        classes.addAll(bootJarClasses);
+        classes.add(this.className);
+        
+        sb.append("\nTypical steps to resolve this are:\n\n");
+        sb.append("* edit your tc-config.xml file\n");
+        sb.append("* locate the <dso> tag\n");
+        sb.append("* add this snippet inside the tag\n\n");
+        sb.append("  <additional-boot-jar-classes>\n");
+        for (Iterator i = classes.iterator(); i.hasNext();) {
+          sb.append("    <include>");
+          sb.append(i.next());
+          sb.append("</include>\n");
+        }
+        sb.append("  </additional-boot-jar-classes>\n\n");
+        sb.append("* if there's already an <additional-boot-jar-classes> tag present, simply add\n  the new includes to the existing one\n");
+        sb.append("\n");
+        sb.append("It's possible that this class is truly not-portable, the solution is then to\nmark the referring field as transient.\n");
+        break;
+      case TEST_REASON:
+        sb.append("instructions");
+        break;
+    }
+    return sb.toString();
+  }
+
   public boolean hasUltimateNonPortableFieldName() {
     return this.ultimateNonPortableFieldName != null;
   }
@@ -300,6 +339,7 @@ public class NonPortableReason implements Serializable {
     for (Iterator i = details.iterator(); i.hasNext();) {
       formatter.formatDetail((NonPortableDetail) i.next());
     }
+    formatter.formatInstructionsText(getInstructions());
   }
 
 }

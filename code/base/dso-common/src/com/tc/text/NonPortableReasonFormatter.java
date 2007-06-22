@@ -9,5 +9,6 @@ public interface NonPortableReasonFormatter {
   public void formatReasonTypeName(byte reasonType);
   public void formatReasonText(String reasonText);
   public void formatDetail(NonPortableDetail detail);
+  public void formatInstructionsText(String instructionsText);
   public void flush();
 }
