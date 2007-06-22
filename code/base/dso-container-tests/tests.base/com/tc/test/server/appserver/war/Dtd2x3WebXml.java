@@ -59,10 +59,10 @@ public final class Dtd2x3WebXml extends AbstractDescriptorXml implements WebXml 
     add("");
     add("<web-app>");
     add(1, "<display-name>" + appName + "</display-name>");
+    addFilters();
     addListeners();
     addServlets();
     addMappings();
-    addFilters();
     add("</web-app>");
 
     return sout().toString().getBytes();

@@ -1,9 +1,9 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver.deployment;
 
-import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.taskdefs.War;
@@ -13,6 +13,8 @@ import org.springframework.remoting.rmi.RmiRegistryFactoryBean;
 import org.springframework.web.context.ContextLoader;
 import org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.test.TestConfigObject;
 
 import java.io.File;
@@ -34,43 +36,41 @@ import java.util.StringTokenizer;
 
 import junit.framework.Assert;
 
-
 public class WARBuilder implements DeploymentBuilder {
 
-  Log                    logger              = LogFactory.getLog(getClass());
+  private static final TCLogger  logger                = TCLogging.getLogger(WARBuilder.class);
 
-  private FileSystemPath warDirectoryPath;
+  private FileSystemPath         warDirectoryPath;
 
-  private String         warFileName;
+  private String                 warFileName;
 
-  private Set            classDirectories    = new HashSet(); /* <FileSystemPath> */
+  private Set                    classDirectories      = new HashSet();                        /* <FileSystemPath> */
 
-  private Set            libs                = new HashSet();
-  
-  private List           resources           = new ArrayList();
+  private Set                    libs                  = new HashSet();
 
-  private List           remoteServices      = new ArrayList();
+  private List                   resources             = new ArrayList();
 
-  private Set            beanDefinitionFiles = new HashSet();
+  private List                   remoteServices        = new ArrayList();
 
-  private Map            contextParams       = new HashMap();
+  private Set                    beanDefinitionFiles   = new HashSet();
 
-  private List           listeners           = new ArrayList();
+  private Map                    contextParams         = new HashMap();
 
-  private List           servlets           = new ArrayList();
+  private List                   listeners             = new ArrayList();
 
-  private List           filters           = new ArrayList();
+  private List                   servlets              = new ArrayList();
 
-  private Map            taglibs             = new HashMap();
+  private List                   filters               = new ArrayList();
 
-  private StringBuffer   remoteSvcDefBlock   = new StringBuffer();
+  private Map                    taglibs               = new HashMap();
 
-  private final FileSystemPath tempDirPath;
-  
-  private String         dispatcherServletName = null;
-  
+  private StringBuffer           remoteSvcDefBlock     = new StringBuffer();
+
+  private final FileSystemPath   tempDirPath;
+
+  private String                 dispatcherServletName = null;
+
   private final TestConfigObject testConfig;
-
 
   public WARBuilder(File tempDir, TestConfigObject config) throws IOException {
     this(File.createTempFile("test", ".war", tempDir).getAbsolutePath(), tempDir, config);
@@ -81,14 +81,15 @@ public class WARBuilder implements DeploymentBuilder {
     this.tempDirPath = new FileSystemPath(tempDir);
     this.testConfig = config;
 
-    addDirectoryOrJARContainingClass(WARBuilder.class);  // test framework
-    addDirectoryOrJARContainingClass(LogFactory.class);  // commons-logging
-    addDirectoryOrJARContainingClass(Logger.class);  // log4j
+    addDirectoryOrJARContainingClass(WARBuilder.class); // test framework
+    addDirectoryOrJARContainingClass(LogFactory.class); // commons-logging
+    addDirectoryOrJARContainingClass(Logger.class); // log4j
 
     // XXX this should NOT be in such general purpose class!
     // XXX this should add ALL jars from the variant directory!
-    // addDirectoryOrJARContainingClassOfSelectedVersion(BeanFactory.class, new String[]{TestConfigObject.SPRING_VARIANT});  // springframework
-    // addDirectoryOrJARContainingClass(BeanFactory.class);  // springframework
+    // addDirectoryOrJARContainingClassOfSelectedVersion(BeanFactory.class, new
+    // String[]{TestConfigObject.SPRING_VARIANT}); // springframework
+    // addDirectoryOrJARContainingClass(BeanFactory.class); // springframework
   }
 
   public DeploymentBuilder addClassesDirectory(FileSystemPath path) {
@@ -146,9 +147,9 @@ public class WARBuilder implements DeploymentBuilder {
       warTask.addClasses(zipFileSet);
     }
   }
-  
+
   private void addResources(War warTask) {
-    for(Iterator it = resources.iterator(); it.hasNext(); ) {
+    for (Iterator it = resources.iterator(); it.hasNext();) {
       ResourceDefinition definition = (ResourceDefinition) it.next();
       ZipFileSet zipfileset = new ZipFileSet();
       zipfileset.setDir(definition.location);
@@ -223,7 +224,7 @@ public class WARBuilder implements DeploymentBuilder {
       fos.close();
     }
   }
-  
+
   private void writeHandlerMappingBean(PrintWriter pw) {
     pw.println("<bean id=\"defaultHandlerMapping\" class=\"" + BeanNameUrlHandlerMapping.class.getName() + "\"/>");
   }
@@ -243,10 +244,11 @@ public class WARBuilder implements DeploymentBuilder {
       printPropertyRef(pw, "registry", "registry");
       pw.println("</bean>");
     } else {
-      pw.println("<bean name=\"/" + remoteService.getRemoteName() +  "\" class=\"" + remoteService.getExporterType().getName() + "\">");
+      pw.println("<bean name=\"/" + remoteService.getRemoteName() + "\" class=\""
+                 + remoteService.getExporterType().getName() + "\">");
       printPropertyRef(pw, "service", remoteService.getBeanName());
       printProperty(pw, "serviceInterface", remoteService.getInterfaceType().getName());
-      pw.println("</bean>");      
+      pw.println("</bean>");
     }
   }
 
@@ -279,31 +281,46 @@ public class WARBuilder implements DeploymentBuilder {
     FileSystemPath webXML = webInfDir.file("web.xml");
     FileOutputStream fos = new FileOutputStream(webXML.getFile());
     try {
+      logger.debug("Creating " + webXML.getFile().getAbsolutePath());
       PrintWriter pw = new PrintWriter(fos);
-      
-      
+
       pw.println("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");
 
-//      if (testConfig.appserverFactoryName().indexOf("weblogic8")>=0) {
-        pw.println("<!DOCTYPE web-app PUBLIC \"-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN\" \"http://java.sun.com/dtd/web-app_2_3.dtd\">"); 
-        pw.println("<web-app>\n");
-//      } else {
-//        pw.println("<web-app xmlns=\"http://java.sun.com/xml/ns/j2ee\"\n" + 
-//            "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" + 
-//            "    xsi:schemaLocation=\"http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd\"\n" + 
-//            "    version=\"2.4\">");
-//      }
-      
-      if(!beanDefinitionFiles.isEmpty()) {
+      // if (testConfig.appserverFactoryName().indexOf("weblogic8")>=0) {
+      pw
+          .println("<!DOCTYPE web-app PUBLIC \"-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN\" \"http://java.sun.com/dtd/web-app_2_3.dtd\">");
+      pw.println("<web-app>\n");
+      // } else {
+      // pw.println("<web-app xmlns=\"http://java.sun.com/xml/ns/j2ee\"\n" +
+      // " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+      // " xsi:schemaLocation=\"http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd\"\n" +
+      // " version=\"2.4\">");
+      // }
+
+      if (!beanDefinitionFiles.isEmpty()) {
         writeContextParam(pw, ContextLoader.CONFIG_LOCATION_PARAM, generateContextConfigLocationValue());
       }
-      
+
       for (Iterator it = contextParams.entrySet().iterator(); it.hasNext();) {
         Map.Entry param = (Map.Entry) it.next();
         writeContextParam(pw, (String) param.getKey(), (String) param.getValue());
       }
-      
-      if(!beanDefinitionFiles.isEmpty()) {
+
+      for (Iterator it = filters.iterator(); it.hasNext();) {
+        FilterDefinition definition = (FilterDefinition) it.next();
+        writeFilter(pw, definition);
+      }
+
+      for (Iterator it = filters.iterator(); it.hasNext();) {
+        FilterDefinition definition = (FilterDefinition) it.next();
+        logger.debug("Writing filter mapping[" + definition.name + " -> " + definition.mapping + "]");
+        pw.println("  <filter-mapping>");
+        pw.println("    <filter-name>" + definition.name + "</filter-name>");
+        pw.println("    <url-pattern>" + definition.mapping + "</url-pattern>");
+        pw.println("  </filter-mapping>");
+      }
+
+      if (!beanDefinitionFiles.isEmpty()) {
         writeListener(pw, org.springframework.web.context.ContextLoaderListener.class.getName());
         if (this.dispatcherServletName == null) {
           writeListener(pw, com.tc.test.server.appserver.deployment.RemoteContextListener.class.getName());
@@ -312,102 +329,99 @@ public class WARBuilder implements DeploymentBuilder {
       for (Iterator it = listeners.iterator(); it.hasNext();) {
         writeListener(pw, ((Class) it.next()).getName());
       }
-      
+
       for (Iterator it = servlets.iterator(); it.hasNext();) {
         ServletDefinition definition = (ServletDefinition) it.next();
         writeServlet(pw, definition);
       }
+
       for (Iterator it = servlets.iterator(); it.hasNext();) {
         ServletDefinition definition = (ServletDefinition) it.next();
+        logger.debug("Writing servlet mapping[" + definition.name + " -> " + definition.mapping + "]");
         pw.println("  <servlet-mapping>");
-        pw.println("    <servlet-name>"+definition.name+"</servlet-name>");
-        pw.println("    <url-pattern>"+definition.mapping+"</url-pattern>");
+        pw.println("    <servlet-name>" + definition.name + "</servlet-name>");
+        pw.println("    <url-pattern>" + definition.mapping + "</url-pattern>");
         pw.println("  </servlet-mapping>");
       }
-      
-      for (Iterator it = filters.iterator(); it.hasNext();) {
-        FilterDefinition definition = (FilterDefinition) it.next();
-        writeFilter(pw, definition);
-      }
-      for (Iterator it = filters.iterator(); it.hasNext();) {
-        FilterDefinition definition = (FilterDefinition) it.next();
-        pw.println("  <filter-mapping>");
-        pw.println("    <filter-name>"+definition.name+"</filter-name>");
-        pw.println("    <url-pattern>"+definition.mapping+"</url-pattern>");
-        pw.println("  </filter-mapping>");
-      }
-      
-      if(!taglibs.isEmpty()) {
+
+      if (!taglibs.isEmpty()) {
         pw.println("  <jsp-config>");
         for (Iterator it = taglibs.entrySet().iterator(); it.hasNext();) {
           Map.Entry taglib = (Map.Entry) it.next();
-          pw.println("    <taglib-uri>"+taglib.getKey()+"</taglib-uri>");
-          pw.println("    <taglib-location>"+taglib.getValue()+"</taglib-location>");
+          logger.debug("Writing taglib[" + taglib.getKey() + "/" + taglib.getValue() + "]");
+          pw.println("    <taglib-uri>" + taglib.getKey() + "</taglib-uri>");
+          pw.println("    <taglib-location>" + taglib.getValue() + "</taglib-location>");
         }
         pw.println("  </jsp-config>");
       }
-      
+
       pw.println("</web-app>");
       pw.flush();
-
+      logger.debug("Finished creating " + webXML.getFile().getAbsolutePath());
     } finally {
       fos.close();
     }
   }
 
   private void writeContextParam(PrintWriter pw, String name, String value) {
+    logger.debug("Writing context param[" + name + "/" + value + "]");
     pw.println("  <context-param>");
-    pw.println("    <param-name>"+name+"</param-name>");
-    pw.println("    <param-value>"+value+"</param-value>");
+    pw.println("    <param-name>" + name + "</param-name>");
+    pw.println("    <param-value>" + value + "</param-value>");
     pw.println("  </context-param>");
   }
 
   private void writeListener(PrintWriter pw, String className) {
+    logger.debug("Writing listener[" + className + "]");
     pw.println("  <listener>");
-    pw.println("    <listener-class>"+className+"</listener-class>");
+    pw.println("    <listener-class>" + className + "</listener-class>");
     pw.println("  </listener>");
   }
 
   private void writeServlet(PrintWriter pw, ServletDefinition definition) {
+    logger.debug("Writing servlet[" + definition.name + " of type " + definition.servletClass.getName() + "]");
     pw.println("  <servlet>");
-    pw.println("    <servlet-name>"+definition.name+"</servlet-name>");
-    pw.println("    <servlet-class>"+definition.servletClass.getName()+"</servlet-class>");
+    pw.println("    <servlet-name>" + definition.name + "</servlet-name>");
+    pw.println("    <servlet-class>" + definition.servletClass.getName() + "</servlet-class>");
 
-    if(definition.initParameters!=null) {
+    if (definition.initParameters != null) {
       for (Iterator it = definition.initParameters.entrySet().iterator(); it.hasNext();) {
         Map.Entry param = (Map.Entry) it.next();
+        logger.debug("Writing servlet init parameter[" + param.getKey() + "/" + param.getValue() + "]");
         pw.println("    <init-param>");
-        pw.println("      <param-name>"+param.getKey()+"</param-name>");
-        pw.println("      <param-value>"+param.getValue()+"</param-value>");
+        pw.println("      <param-name>" + param.getKey() + "</param-name>");
+        pw.println("      <param-value>" + param.getValue() + "</param-value>");
         pw.println("    </init-param>");
       }
     }
-    
-    if(definition.loadOnStartup) {
+
+    if (definition.loadOnStartup) {
       pw.println("    <load-on-startup>1</load-on-startup>");
     }
-    
+
     pw.println("  </servlet>");
   }
 
   private void writeFilter(PrintWriter pw, FilterDefinition definition) {
+    logger.debug("Writing filter[" + definition.name + " of type " + definition.filterClass.getName() + "]");
     pw.println("  <filter>");
-    pw.println("    <filter-name>"+definition.name+"</filter-name>");
-    pw.println("    <filter-class>"+definition.filterClass.getName()+"</filter-class>");
+    pw.println("    <filter-name>" + definition.name + "</filter-name>");
+    pw.println("    <filter-class>" + definition.filterClass.getName() + "</filter-class>");
 
-    if(definition.initParameters!=null) {
+    if (definition.initParameters != null) {
       for (Iterator it = definition.initParameters.entrySet().iterator(); it.hasNext();) {
         Map.Entry param = (Map.Entry) it.next();
+        logger.debug("Writing filter init param[" + param.getKey() + "/" + param.getValue() + "]");
         pw.println("    <init-param>");
-        pw.println("      <param-name>"+param.getKey()+"</param-name>");
-        pw.println("      <param-value>"+param.getValue()+"</param-value>");
+        pw.println("      <param-name>" + param.getKey() + "</param-name>");
+        pw.println("      <param-value>" + param.getValue() + "</param-value>");
         pw.println("    </init-param>");
       }
     }
-    
+
     pw.println("  </filter>");
   }
-  
+
   private String generateContextConfigLocationValue() {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
@@ -458,7 +472,7 @@ public class WARBuilder implements DeploymentBuilder {
     }
     return buffer.toString();
   }
-  
+
   public DeploymentBuilder addRemoteServiceBlock(String block) {
     remoteSvcDefBlock.append(block + "\n");
     return this;
@@ -472,10 +486,10 @@ public class WARBuilder implements DeploymentBuilder {
   public DeploymentBuilder addDirectoryOrJARContainingClass(Class type) {
     return addDirectoryOrJar(calculatePathToClass(type));
   }
-  
+
   public DeploymentBuilder addDirectoryOrJARContainingClassOfSelectedVersion(Class type, String[] variantNames) {
     String pathSeparator = System.getProperty("path.separator");
-    
+
     for (int i = 0; i < variantNames.length; i++) {
       String selectedVariant = testConfig.selectedVariantFor(variantNames[i]);
       String path = testConfig.variantLibraryClasspathFor(variantNames[i], selectedVariant);
@@ -487,7 +501,7 @@ public class WARBuilder implements DeploymentBuilder {
 
     return this;
   }
-  
+
   public DeploymentBuilder addDirectoryContainingResource(String resource) {
     return addDirectoryOrJar(calculatePathToResource(resource));
   }
@@ -497,7 +511,7 @@ public class WARBuilder implements DeploymentBuilder {
     resources.add(new ResourceDefinition(path.getFile(), includes, prefix, null));
     return this;
   }
-  
+
   public DeploymentBuilder addResourceFullpath(String location, String includes, String fullpath) {
     FileSystemPath path = getResourceDirPath(location, includes);
     resources.add(new ResourceDefinition(path.getFile(), includes, null, fullpath));
@@ -511,39 +525,40 @@ public class WARBuilder implements DeploymentBuilder {
     FileSystemPath path = calculateDirectory(url, includes);
     return path;
   }
-  
+
   public DeploymentBuilder addContextParameter(String name, String value) {
     contextParams.put(name, value);
     return this;
   }
-  
+
   public DeploymentBuilder addListener(Class listenerClass) {
     listeners.add(listenerClass);
     return this;
   }
-  
-  public DeploymentBuilder setDispatcherServlet(String name, String mapping, Class servletClass, Map params, boolean loadOnStartup) {
+
+  public DeploymentBuilder setDispatcherServlet(String name, String mapping, Class servletClass, Map params,
+                                                boolean loadOnStartup) {
     Assert.assertNull(this.dispatcherServletName);
     this.dispatcherServletName = name;
     addServlet(name, mapping, servletClass, params, loadOnStartup);
     return this;
   }
-  
+
   public DeploymentBuilder addServlet(String name, String mapping, Class servletClass, Map params, boolean loadOnStartup) {
     servlets.add(new ServletDefinition(name, mapping, servletClass, params, loadOnStartup));
     return this;
   }
-  
+
   public DeploymentBuilder addFilter(String name, String mapping, Class filterClass, Map params) {
     filters.add(new FilterDefinition(name, mapping, filterClass, params));
     return this;
   }
-  
+
   public DeploymentBuilder addTaglib(String uri, String location) {
     taglibs.put(uri, location);
     return this;
   }
-  
+
   private DeploymentBuilder addDirectoryOrJar(FileSystemPath path) {
     if (path.isDirectory()) {
       classDirectories.add(path);
@@ -552,14 +567,14 @@ public class WARBuilder implements DeploymentBuilder {
     }
     return this;
   }
-  
+
   public static FileSystemPath calculatePathToClass(Class type) {
     URL url = type.getResource("/" + classToPath(type));
     Assert.assertNotNull("Not found: " + type, url);
     FileSystemPath filepath = calculateDirectory(url, "/" + classToPath(type));
     return filepath;
   }
-  
+
   static public FileSystemPath calculatePathToClass(Class type, String pathString) {
     String pathSeparator = System.getProperty("path.separator");
     StringTokenizer st = new StringTokenizer(pathString, pathSeparator);
@@ -588,18 +603,20 @@ public class WARBuilder implements DeploymentBuilder {
   }
 
   public static FileSystemPath calculateDirectory(URL url, String classNameAsPath) {
-    
+
     String urlAsString = null;
     try {
       urlAsString = java.net.URLDecoder.decode(url.toString(), "UTF-8");
-    } catch (Exception ex ) { throw new RuntimeException(ex); } 
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
     Assert.assertTrue("URL should end with: " + classNameAsPath, urlAsString.endsWith(classNameAsPath));
     if (urlAsString.startsWith("file:")) {
       return FileSystemPath.existingDir(urlAsString.substring("file:".length(), urlAsString.length()
-          - classNameAsPath.length()));
+                                                                                - classNameAsPath.length()));
     } else if (urlAsString.startsWith("jar:file:")) {
       int n = urlAsString.indexOf('!');
-      return FileSystemPath.makeExistingFile(urlAsString.substring("jar:file:".length(), n ));
+      return FileSystemPath.makeExistingFile(urlAsString.substring("jar:file:".length(), n));
     } else throw new RuntimeException("unsupported protocol: " + url);
   }
 
@@ -613,9 +630,8 @@ public class WARBuilder implements DeploymentBuilder {
     return calculateDirectory(url, resource);
   }
 
-  
   private static class ResourceDefinition {
-    public final File location;
+    public final File   location;
     public final String prefix;
     public final String includes;
     public final String fullpath;
@@ -627,15 +643,14 @@ public class WARBuilder implements DeploymentBuilder {
       this.fullpath = fullpath;
     }
   }
-  
-  
+
   private static class ServletDefinition {
-    public final String name;
-    public final String mapping;
-    public final Class servletClass;
-    public final Map initParameters;
+    public final String  name;
+    public final String  mapping;
+    public final Class   servletClass;
+    public final Map     initParameters;
     public final boolean loadOnStartup;
-    
+
     public ServletDefinition(String name, String mapping, Class servletClass, Map initParameters, boolean loadOnStartup) {
       this.name = name;
       this.mapping = mapping;
@@ -644,14 +659,13 @@ public class WARBuilder implements DeploymentBuilder {
       this.loadOnStartup = loadOnStartup;
     }
   }
-  
-  
+
   private static class FilterDefinition {
     public final String name;
     public final String mapping;
-    public final Class filterClass;
-    public final Map initParameters;
-    
+    public final Class  filterClass;
+    public final Map    initParameters;
+
     public FilterDefinition(String name, String mapping, Class filterClass, Map initParameters) {
       this.name = name;
       this.mapping = mapping;
@@ -659,5 +673,5 @@ public class WARBuilder implements DeploymentBuilder {
       this.initParameters = initParameters;
     }
   }
-  
+
 }
