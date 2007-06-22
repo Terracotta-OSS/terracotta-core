@@ -2,6 +2,6 @@
 <ivy-module version="1.0">
   <info organisation="terracotta" module="buildsystems"/>
   <dependencies>
-	<dependency org="terracotta" name="jruby" rev="1.0-20070622"/>
+	<dependency org="terracotta" name="jruby" rev="1.0-20070622a"/>
   </dependencies>
 </ivy-module>
