@@ -214,6 +214,16 @@ Dir.foreach( "." ) { |dir|
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
+      <id>terracotta-internal-repository</id>
+      <url>http://kong/maven2/</url>
+    </repository>
+    <repository>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
       <id>codehaus-repository</id>
       <url>http://repository.codehaus.org/</url>
     </repository>
