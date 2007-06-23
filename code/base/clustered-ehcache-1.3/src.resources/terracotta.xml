@@ -86,11 +86,6 @@
       <method-expression>* net.sf.ehcache.CacheManager.shutdown(..)</method-expression>
       <lock-level>write</lock-level>
     </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.create</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.create(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
     
     <!--
       <named-lock>
