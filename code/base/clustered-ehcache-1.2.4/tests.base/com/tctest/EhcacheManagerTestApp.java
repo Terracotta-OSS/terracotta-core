@@ -23,7 +23,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 
 	private final CyclicBarrier barrier;
 
-	private final CacheManager clusteredCacheManager;
+	private final CacheManager cacheManager;
 
 	/**
 	 * Test that Ehcache's CacheManger and Cache objects can be clustered.
@@ -36,9 +36,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 			final ApplicationConfig cfg, final ListenerProvider listenerProvider) {
 		super(appId, cfg, listenerProvider);
 		barrier = new CyclicBarrier(getParticipantCount());
-		clusteredCacheManager = CacheManager.getInstance();
-		//clusteredCacheManager = new CacheManager();
-		//clusteredCacheManager = CacheManager.create();
+		cacheManager = CacheManager.getInstance();
 	}
 
 	/**
@@ -49,14 +47,12 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 */
 	public static void visitL1DSOConfig(final ConfigVisitor visitor,
 			final DSOClientConfigHelper config) {
-		//config.addNewModule("clustered-commons-collections-3.1", "1.0.0"); 
 		config.addNewModule("clustered-ehcache-1.2.4", "1.0.0");
 		config.addAutolock("* *..*.*(..)", ConfigLockLevel.WRITE);
 
 		final String testClass = EhcacheManagerTestApp.class.getName();
 		final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 		spec.addRoot("barrier", "barrier");
-		spec.addRoot("clusteredCacheManager", "clusteredCacheManager");
 	}
 
 	/**
@@ -141,7 +137,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * Remove all the caches.
 	 */
 	private void removeAllCaches() {
-		clusteredCacheManager.removalAll();
+		cacheManager.removalAll();
 	}
 
 	/**
@@ -151,7 +147,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * @throws Exception
 	 */
 	private void verifyCacheCount(final int expected) throws Throwable {
-		final String[] cacheNames = clusteredCacheManager.getCacheNames();
+		final String[] cacheNames = cacheManager.getCacheNames();
 		Assert.assertEquals(expected, cacheNames.length);
 	}
 	
@@ -181,13 +177,13 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	private void addCache(final String name, boolean mustDelegate)
 			throws Throwable {
 		if (mustDelegate) {
-			clusteredCacheManager.addCache(name);
+			cacheManager.addCache(name);
 		} else {
 			Cache cache = new Cache(name, 2, false, true, 0, 2);
-			clusteredCacheManager.addCache(cache);
+			cacheManager.addCache(cache);
 		}
 
-		Cache cache = clusteredCacheManager.getCache(name);
+		Cache cache = cacheManager.getCache(name);
 		cache.put(new Element(name + "key1", "value1"));
 		cache.put(new Element(name + "key2", "value1"));
 	}
@@ -201,10 +197,10 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * @throws Exception
 	 */
 	private void verifyCache(final String name) throws Exception {
-		boolean cacheExists = clusteredCacheManager.cacheExists(name);
+		boolean cacheExists = cacheManager.cacheExists(name);
 		Assert.assertEquals(true, cacheExists);
 
-		Cache cache = clusteredCacheManager.getCache(name);
+		Cache cache = cacheManager.getCache(name);
 		Assert.assertNotNull(cache);
 		Assert.assertEquals(name, cache.getName());
 		Assert.assertEquals(Status.STATUS_ALIVE, cache.getStatus());
@@ -224,13 +220,13 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * @param name
 	 */
 	private void removeCache(final String name) {
-		Cache cache = clusteredCacheManager.getCache(name);
+		Cache cache = cacheManager.getCache(name);
 		for (Iterator i = cache.getKeys().iterator(); i.hasNext();) {
 			String key = (String)i.next();
 			cache.remove(key);
 			Assert.assertFalse(cache.isKeyInCache(key));
 		}
-		clusteredCacheManager.removeCache(name);
+		cacheManager.removeCache(name);
 	}
 
 	/**
@@ -240,10 +236,10 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * @throws Exception
 	 */
 	private void verifyCacheRemoved(final String name) throws Exception {
-		boolean cacheExists = clusteredCacheManager.cacheExists(name);
+		boolean cacheExists = cacheManager.cacheExists(name);
 		Assert.assertEquals(false, cacheExists);
 
-		Cache cache = clusteredCacheManager.getCache(name);
+		Cache cache = cacheManager.getCache(name);
 		Assert.assertNull(cache);
 	}
 
@@ -251,14 +247,14 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * Shuts down the clustered cache manager.
 	 */
 	private void shutdownCacheManager() {
-		clusteredCacheManager.shutdown();
+		cacheManager.shutdown();
 	}
 
 	/**
 	 * Verify that the clustered cache manager has shut down.
 	 */
 	private void verifyCacheManagerShutdown() {
-		Assert.assertEquals(Status.STATUS_SHUTDOWN, clusteredCacheManager
+		Assert.assertEquals(Status.STATUS_SHUTDOWN, cacheManager
 				.getStatus());
 	}
 

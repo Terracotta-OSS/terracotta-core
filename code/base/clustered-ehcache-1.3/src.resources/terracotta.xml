@@ -28,6 +28,9 @@
       <field-name>net.sf.ehcache.CacheManager.ALL_CACHE_MANAGERS</field-name>
     </root>
     <root>
+      <field-name>net.sf.ehcache.CacheManager.singleton</field-name>
+    </root>
+    <root>
       <field-name>net.sf.ehcache.store.MemoryStoreEvictionPolicy.LRU</field-name>
     </root>
     <root>
