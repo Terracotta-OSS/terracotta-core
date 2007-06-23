@@ -54,7 +54,7 @@ public class ServerTransactionLogger implements ServerTransactionListener {
   }
 
   private boolean needToLogStats() {
-    if (config.isPrintStatsEnabled()) return false;
+    if (!config.isPrintStatsEnabled()) return false;
     long now = System.currentTimeMillis();
     boolean log = (outStandingTxns == 0 || (now - last) > 1000);
     if (log) {
