@@ -237,7 +237,7 @@ public class SendStateMachine extends AbstractStateMachine {
     return ((short) r.nextInt(0x0000fff0));
   }
 
-  public synchronized void put(TCNetworkMessage message) throws InterruptedException {
+  public void put(TCNetworkMessage message) throws InterruptedException {
     sendQueue.put(message);
   }
 
