@@ -629,10 +629,8 @@ class SubtreeTestRun
         :showoutput => true,
         :jvm => tests_jvm.java.to_s) {
             splice_into_ant_junit
-
-            # Use our two formatters -- the first for the XML output files, the second for
-            # printing output.
-            @ant.formatter(:type => 'xml')
+            
+            # formatter that outputs result to console
             @ant.formatter(:classname => 'com.tc.test.TCJUnitFormatter', :usefile => false)
 
             # Create a <batchtest> element for each pattern we have.
@@ -642,7 +640,8 @@ class SubtreeTestRun
                 failure_properties << failure_property_name
 
                 @ant.batchtest(:todir => @testrun_results.results_dir(@subtree).to_s, :fork => true, :failureproperty => failure_property_name) {
-                  @ant.formatter(:type => "plain", :usefile => false)
+                  # formatter that out put JUnit XML result file  
+                  @ant.formatter(:type=> 'xml', :classname => 'com.tc.test.TCJUnitFormatter', :usefile => true)                  
                   @ant.fileset(:dir => @build_results.classes_directory(@subtree).to_s, :includes => "**/#{pattern}.class")
                 }
             end
