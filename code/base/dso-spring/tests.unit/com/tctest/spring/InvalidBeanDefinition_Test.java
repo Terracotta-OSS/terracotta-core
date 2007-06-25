@@ -19,7 +19,7 @@ import com.tc.simulator.listener.ListenerProvider;
 public class InvalidBeanDefinition_Test extends SimpleTransparentTestBase {
 
   public InvalidBeanDefinition_Test() {
-    disableAllUntil("2008-01-01");
+    //
   }
 
   protected int getNodeCount() {
