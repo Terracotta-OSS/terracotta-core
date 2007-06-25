@@ -24,7 +24,7 @@ public class SingletonWithInterceptor_Test extends TransparentTestBase {
   private static final int NODE_COUNT      = 2;
 
   public SingletonWithInterceptor_Test() {
-    disableAllUntil("2008-01-01");
+    //
   }
 
   protected void setUp() throws Exception {
