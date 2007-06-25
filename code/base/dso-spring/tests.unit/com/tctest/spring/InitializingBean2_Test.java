@@ -21,7 +21,7 @@ import com.tctest.spring.bean.SimpleInitializingSingleton;
 public class InitializingBean2_Test extends SimpleTransparentTestBase {
 
   public InitializingBean2_Test() {
-    disableAllUntil("2008-01-01");
+    //
   }
 
   protected int getNodeCount() {
