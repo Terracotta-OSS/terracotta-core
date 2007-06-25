@@ -52,54 +52,9 @@
       <lock-level>write</lock-level>
     </named-lock>
     <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.addCache</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.addCache(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.addCacheNoCheck</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.addCacheNoCheck(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.addConfiguredCaches</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.addConfiguredCaches(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.cacheExists</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.cacheExists(..)</method-expression>
-      <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.checkStatus</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.checkStatus(..)</method-expression>
-      <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
       <lock-name>__ehcache_lock__CacheManager.clearAll</lock-name>
       <method-expression>* net.sf.ehcache.CacheManager.clearAll(..)</method-expression>
       <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.configure</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.configure(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.detectAndFixCacheManagerPeerListenerConflict</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.detectAndFixCacheManagerPeerListenerConflict(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.detectAndFixDiskStorePathConflict</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.detectAndFixDiskStorePathConflict(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.getCache</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.getCache(..)</method-expression>
-      <lock-level>read</lock-level>
     </named-lock>
     <named-lock>
       <lock-name>__ehcache_lock__CacheManager.getCacheManagerEventListener</lock-name>
@@ -112,54 +67,14 @@
       <lock-level>read</lock-level>
     </named-lock>
     <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.getCacheNames</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.getCacheNames(..)</method-expression>
-      <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.getPeerListener</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.getCachePeerListener(..)</method-expression>
-      <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
       <lock-name>__ehcache_lock__CacheManager.getCachePeerProvider</lock-name>
       <method-expression>* net.sf.ehcache.CacheManager.getCachePeerProvider(..)</method-expression>
-      <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.getEhcache</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.getEhcache(..)</method-expression>
       <lock-level>read</lock-level>
     </named-lock>
     <named-lock>
       <lock-name>__ehcache_lock__CacheManager.getStatus</lock-name>
       <method-expression>* net.sf.ehcache.CacheManager.getStatus(..)</method-expression>
       <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.reinitialisationCheck</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.reinitialisationCheck(..)</method-expression>
-      <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.removeAll</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.removalAll(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.removeAll</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.removalAll(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.removeCache</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.removeCache(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.replaceCacheWithDecoratedCache</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.replaceCacheWithDecoratedCache(..)</method-expression>
-      <lock-level>write</lock-level>
     </named-lock>
     <named-lock>
       <lock-name>__ehcache_lock__CacheManager.setCacheManagerEventListener</lock-name>
@@ -171,11 +86,92 @@
       <method-expression>* net.sf.ehcache.CacheManager.shutdown(..)</method-expression>
       <lock-level>write</lock-level>
     </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.create</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.create(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
+    
+    <!--
+      <named-lock>
+        <lock-name>__ehcache_lock__CacheManager.addConfiguredCaches</lock-name>
+        <method-expression>* net.sf.ehcache.CacheManager.addConfiguredCaches(..)</method-expression>
+        <lock-level>write</lock-level>
+      </named-lock>
+      <named-lock>
+        <lock-name>__ehcache_lock__CacheManager.checkStatus</lock-name>
+        <method-expression>* net.sf.ehcache.CacheManager.checkStatus(..)</method-expression>
+        <lock-level>read</lock-level>
+      </named-lock>
+      <named-lock>
+        <lock-name>__ehcache_lock__CacheManager.configure</lock-name>
+        <method-expression>* net.sf.ehcache.CacheManager.configure(..)</method-expression>
+        <lock-level>write</lock-level>
+      </named-lock>
+      <named-lock>
+        <lock-name>__ehcache_lock__CacheManager.detectAndFixCacheManagerPeerListenerConflict</lock-name>
+        <method-expression>* net.sf.ehcache.CacheManager.detectAndFixCacheManagerPeerListenerConflict(..)</method-expression>
+        <lock-level>write</lock-level>
+      </named-lock>
+      <named-lock>
+        <lock-name>__ehcache_lock__CacheManager.detectAndFixDiskStorePathConflict</lock-name>
+        <method-expression>* net.sf.ehcache.CacheManager.detectAndFixDiskStorePathConflict(..)</method-expression>
+        <lock-level>write</lock-level>
+      </named-lock>
+      <named-lock>
+        <lock-name>__ehcache_lock__CacheManager.getPeerListener</lock-name>
+        <method-expression>* net.sf.ehcache.CacheManager.getCachePeerListener(..)</method-expression>
+        <lock-level>read</lock-level>
+      </named-lock>
+      <named-lock>
+        <lock-name>__ehcache_lock__CacheManager.reinitialisationCheck</lock-name>
+        <method-expression>* net.sf.ehcache.CacheManager.reinitialisationCheck(..)</method-expression>
+        <lock-level>read</lock-level>
+      </named-lock>
+    -->
+
+    <!--
+      <named-lock>
+        <lock-name>__ehcache_lock__CacheManager.addCache</lock-name>
+        <method-expression>* net.sf.ehcache.CacheManager.addCache(..)</method-expression>
+        <lock-level>write</lock-level>
+      </named-lock>
+      <named-lock>
+        <lock-name>__ehcache_lock__CacheManager.addCacheNoCheck</lock-name>
+        <method-expression>* net.sf.ehcache.CacheManager.addCacheNoCheck(..)</method-expression>
+        <lock-level>write</lock-level>
+      </named-lock>
+      <named-lock>
+        <lock-name>__ehcache_lock__CacheManager.cacheExists</lock-name>
+        <method-expression>* net.sf.ehcache.CacheManager.cacheExists(..)</method-expression>
+        <lock-level>read</lock-level>
+      </named-lock>
+      <named-lock>
+        <lock-name>__ehcache_lock__CacheManager.getCache</lock-name>
+        <method-expression>* net.sf.ehcache.CacheManager.getCache(..)</method-expression>
+        <lock-level>read</lock-level>
+      </named-lock>
+      <named-lock>
+        <lock-name>__ehcache_lock__CacheManager.getCacheNames</lock-name>
+        <method-expression>* net.sf.ehcache.CacheManager.getCacheNames(..)</method-expression>
+        <lock-level>read</lock-level>
+      </named-lock>
+      <named-lock>
+        <lock-name>__ehcache_lock__CacheManager.getEhcache</lock-name>
+        <method-expression>* net.sf.ehcache.CacheManager.getEhcache(..)</method-expression>
+        <lock-level>read</lock-level>
+      </named-lock>
+      <named-lock>
+        <lock-name>__ehcache_lock__CacheManager.removeAll</lock-name>
+        <method-expression>* net.sf.ehcache.CacheManager.removalAll(..)</method-expression>
+        <lock-level>write</lock-level>
+      </named-lock>
+      <named-lock>
+        <lock-name>__ehcache_lock__CacheManager.removeCache</lock-name>
+        <method-expression>* net.sf.ehcache.CacheManager.removeCache(..)</method-expression>
+        <lock-level>write</lock-level>
+      </named-lock>
+      <named-lock>
+        <lock-name>__ehcache_lock__CacheManager.replaceCacheWithDecoratedCache</lock-name>
+        <method-expression>* net.sf.ehcache.CacheManager.replaceCacheWithDecoratedCache(..)</method-expression>
+        <lock-level>write</lock-level>
+      </named-lock>
+    -->
 
     <!-- @@@TODO: We need to instrument all of the Hashtable class' methods from a different config bundle -->
     <autolock>

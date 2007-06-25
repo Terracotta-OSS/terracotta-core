@@ -15,12 +15,12 @@
 
   <transient-fields>
     <field-name>net.sf.ehcache.store.DiskStore.spoolAndExpiryThread</field-name>
-    <field-name>net.sf.ehcache.store.DiskStore.randomAccessFile</field-name>
-    <field-name>net.sf.ehcache.distribution.RMIAsynchronousCacheReplicator.replicationThread</field-name>
+    <field-name>net.sf.ehcache.store.DiskStoreRMIAsynchronousCacheReplicator.replicationThread</field-name>
     <field-name>net.sf.ehcache.CacheManager.cacheManagerEventListener</field-name>
     <field-name>net.sf.ehcache.CacheManager.cacheManagerPeerListener</field-name>
     <field-name>net.sf.ehcache.CacheManager.cacheManagerPeerProvider</field-name>
     <field-name>net.sf.ehcache.CacheManager.shutdownHook</field-name>
+    <field-name>net.sf.ehcache.store.DiskStore.randomAccessFile</field-name>
   </transient-fields>
 
   <roots>
@@ -420,5 +420,5 @@
 
   <additional-boot-jar-classes>
     <include>java.util.Random</include>
-  </additional-boot-jar-classes>
+   </additional-boot-jar-classes>
 </xml-fragment>
