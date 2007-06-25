@@ -30,7 +30,7 @@ public class SessionEventsTest extends AbstractAppServerTestCase {
   
   public SessionEventsTest() {
     if (Vm.isIBM()) {
-      disableAllUntil("2007-06-25");
+      disableAllUntil("2007-07-03");
     }
   }
 
