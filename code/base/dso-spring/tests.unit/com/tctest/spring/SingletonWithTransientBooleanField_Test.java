@@ -20,7 +20,7 @@ import com.tctest.spring.bean.SingletonWithTransientField;
 public class SingletonWithTransientBooleanField_Test extends SimpleTransparentTestBase {
 
   public SingletonWithTransientBooleanField_Test() {
-    disableAllUntil("2008-01-01");
+    //
   }
 
   protected int getNodeCount() {
