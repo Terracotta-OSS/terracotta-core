@@ -45,7 +45,7 @@ public class WebAppContext_Test extends TransparentTestBase {
   private static final int NODE_COUNT      = 4;
 
   public WebAppContext_Test() {
-    disableAllUntil("2008-01-01");
+    //disableAllUntil("2008-01-01");
   }
 
   protected void setUp() throws Exception {
