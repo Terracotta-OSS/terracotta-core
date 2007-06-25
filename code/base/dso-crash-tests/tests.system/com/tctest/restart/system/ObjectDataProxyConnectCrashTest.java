@@ -14,7 +14,7 @@ public class ObjectDataProxyConnectCrashTest extends TransparentTestBase impleme
   private int clientCount = 2;
   
   public ObjectDataProxyConnectCrashTest() {
-    disableAllUntil("2007-06-30");
+    //
   }
 
 
