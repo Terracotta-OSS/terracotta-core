@@ -36,10 +36,6 @@ public class CollectionsWrappersTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 3;
 
-  public CollectionsWrappersTest() {
-    //    disableAllUntil("2023-04-01");
-  }
-
   public void setUp() throws Exception {
     super.setUp();
     getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);
@@ -50,6 +46,7 @@ public class CollectionsWrappersTest extends TransparentTestBase {
     return CollectionsWrappersTestApp.class;
   }
 
+  @SuppressWarnings("unchecked")
   public static class CollectionsWrappersTestApp extends AbstractErrorCatchingTransparentApp {
 
     private static final Map    root = new HashMap();
