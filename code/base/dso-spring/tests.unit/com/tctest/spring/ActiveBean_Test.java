@@ -26,7 +26,7 @@ public class ActiveBean_Test extends TransparentTestBase {
   private static final int NODE_COUNT      = 2;
 
   public ActiveBean_Test() {
-    disableAllUntil("2008-01-01");
+    //disableAllUntil("2008-01-01");
   }
 
   protected void setUp() throws Exception {
