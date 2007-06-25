@@ -19,7 +19,7 @@ import com.tctest.spring.bean.FooService;
 public class ParentChildBean_Test extends SimpleTransparentTestBase {
 
   public ParentChildBean_Test() {
-    disableAllUntil("2008-01-01");
+    //
   }
 
   protected int getNodeCount() {
