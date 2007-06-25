@@ -3,13 +3,15 @@
  */
 package org.terracotta.dso.refactoring;
 
+import org.apache.xmlbeans.XmlOptions;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
-
 import org.terracotta.dso.TcPlugin;
+
+import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 public class ConfigUndoneChange extends Change {
@@ -43,7 +45,10 @@ public class ConfigUndoneChange extends Change {
     TcConfig config = (TcConfig)plugin.getConfiguration(fProject).copy();
     
     try {
-      plugin.setConfigurationFromString(fProject, fConfig.xmlText(plugin.getXmlOptions()));
+      XmlOptions xmlOpts = plugin.getXmlOptions();
+      TcConfigDocument doc = TcConfigDocument.Factory.newInstance(xmlOpts);
+      doc.setTcConfig(fConfig);
+      plugin.setConfigurationFromString(fProject, doc.xmlText(xmlOpts));
     } catch(Exception e) {
       e.printStackTrace();
     }

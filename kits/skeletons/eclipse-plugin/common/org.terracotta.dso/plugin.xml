@@ -100,12 +100,17 @@
              <with variable="selection">
                <count value="1"/>
                <iterate>
-                 <or>
-                   <test property="org.eclipse.debug.ui.matchesPattern" value="*.java"/>
-                   <test property="org.eclipse.debug.ui.matchesPattern" value="*.class"/>
-                   <instanceof value="org.eclipse.jdt.core.IJavaElement"/>
-                 </or>
-                 <test property="org.eclipse.jdt.debug.ui.hasMainType"/>
+                <or>
+               	  <test property="org.eclipse.jdt.launching.hasMain"/>
+               	  <and>
+               	  	 <test property="org.eclipse.jdt.launching.hasProjectNature" args="org.eclipse.jdt.core.javanature"/>
+               	  	 <or>
+               	     	<test property="org.eclipse.jdt.launching.isContainer"/>
+               	     	<test property="org.eclipse.jdt.launching.isPackageFragment"/>
+               	     	<test property="org.eclipse.jdt.launching.isPackageFragmentRoot"/>
+               	     </or>
+               	  </and>
+               	</or>
                </iterate>
              </with>
            </enablement>
@@ -586,7 +591,7 @@
 
       <objectContribution
             objectClass="org.eclipse.jdt.core.IClassFile"
-            id="typeMenuContribution">
+            id="classMenuContribution">
          <filter
             name="projectNature"
             value="org.terracotta.dso.ProjectNature">
@@ -594,14 +599,14 @@
          <menu
             label="Terracotta"
             path="additions"
-            id="typeMenu">
+            id="classMenu">
             <separator name="group1"/>
          </menu>
       </objectContribution>
 
       <objectContribution
             objectClass="org.eclipse.jdt.core.IClassFile"
-            id="typesMenuContribution">
+            id="classTypesMenuContribution">
          <filter
             name="projectNature"
             value="org.terracotta.dso.ProjectNature">
@@ -610,9 +615,9 @@
                label="Types"
                icon="images/eclipse/types.gif"
                class="org.terracotta.dso.actions.TypeHandler"
-               menubarPath="typeMenu/group1"
+               menubarPath="classMenu/group1"
                enablesFor="1"
-               id="typesMenu">
+               id="classTypesMenu">
          </action>
       </objectContribution>
 

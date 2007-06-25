@@ -3615,7 +3615,7 @@ public class ConfigurationHelper {
 
     if (dsoApp != null) {
       InstrumentedClasses classes = dsoApp.getInstrumentedClasses();
-      boolean hasClasses = classes.sizeOfExcludeArray() > 0 || classes.sizeOfIncludeArray() > 0;
+      boolean hasClasses = classes != null && (classes.sizeOfExcludeArray() > 0 || classes.sizeOfIncludeArray() > 0);
 
       if (!dsoApp.isSetAdditionalBootJarClasses() && !dsoApp.isSetDistributedMethods() && !hasClasses
           && !dsoApp.isSetLocks() && !dsoApp.isSetRoots() && !dsoApp.isSetTransientFields()) {
