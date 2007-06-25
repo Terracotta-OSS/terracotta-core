@@ -7,7 +7,7 @@ public class AutoLockVectorTest extends TransparentTestBase {
   private static final int NODE_COUNT = 3;
 
   public AutoLockVectorTest() {
-    disableAllUntil("2023-04-01");
+    //
   }
 
   protected void setUp() throws Exception {

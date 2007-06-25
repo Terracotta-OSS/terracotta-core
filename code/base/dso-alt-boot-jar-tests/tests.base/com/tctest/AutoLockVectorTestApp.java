@@ -3,6 +3,7 @@
  */
 package com.tctest;
 
+import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
@@ -344,6 +345,9 @@ public class AutoLockVectorTestApp extends GenericTestApp {
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = AutoLockVectorTestApp.class.getName();
     config.getOrCreateSpec(testClass);
+    
+    config.addIncludePattern("java.util.Vector");
+    config.addAutolock("* java.util.Vector.*(..)", ConfigLockLevel.WRITE);
   }
 
 }
