@@ -30,7 +30,7 @@ public class MultipleContexts_Test extends TransparentTestBase {
   private static final int NODE_COUNT      = 2;
 
   public MultipleContexts_Test() {
-    disableAllUntil("2008-01-01");
+    //
   }
 
   protected void setUp() throws Exception {
