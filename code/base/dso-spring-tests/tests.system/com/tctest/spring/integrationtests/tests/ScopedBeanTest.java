@@ -6,6 +6,7 @@ package com.tctest.spring.integrationtests.tests;
 
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
+import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
@@ -35,11 +36,11 @@ public class ScopedBeanTest extends AbstractTwoServerDeploymentTest {
   }
 
   
-  public ScopedBeanTest() {
-    // XXX timebombed till 2006-09-15
-    disableAllUntil("2007-09-15");
-  }
-  
+  public ScopedBeanTest() {    
+    disableAllUntil("2008-09-15");
+    this.disableVariant(TestConfigObject.SPRING_VARIANT, "128");
+  }  
+   
   public void testSessionScopedBean() throws Exception {
     WebConversation webConversation1 = new WebConversation();    
     verifyValue(server1, webConversation1, "Jonas");
