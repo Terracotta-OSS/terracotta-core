@@ -37,7 +37,7 @@ public class ServerTransactionLogger implements ServerTransactionListener {
     incrementOutStandingTxns(serverTxnIDs.size());
   }
 
-  private void incrementOutStandingTxns(int count) {
+  private synchronized void incrementOutStandingTxns(int count) {
     boolean log = needToLogStats();
     outStandingTxns += count;
     if (log) {
@@ -45,7 +45,7 @@ public class ServerTransactionLogger implements ServerTransactionListener {
     }
   }
 
-  private void decrementOutStandingTxns(int count) {
+  private synchronized void decrementOutStandingTxns(int count) {
     outStandingTxns -= count;
     boolean log = needToLogStats();
     if (log) {
