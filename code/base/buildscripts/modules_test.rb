@@ -642,7 +642,7 @@ class SubtreeTestRun
 
                 @ant.batchtest(:todir => @testrun_results.results_dir(@subtree).to_s, :fork => true, :failureproperty => failure_property_name) {
                   # formatter that out put JUnit XML result file  
-                  @ant.formatter(:classname => 'com.tc.test.TCXMLJUnitFormatter', :usefile => false)                  
+                  #@ant.formatter(:classname => 'com.tc.test.TCXMLJUnitFormatter', :usefile => false)                  
                   @ant.fileset(:dir => @build_results.classes_directory(@subtree).to_s, :includes => "**/#{pattern}.class")
                 }
             end

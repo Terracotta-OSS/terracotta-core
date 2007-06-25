@@ -799,7 +799,7 @@ END
         if testrun_record.failed?
           puts "     Tests FAILED. See results above."
         elsif testrun_record.total_suites == 0
-          puts "     No tests ran."
+          loud_message "No tests ran."
         else
           puts "     Tests passed."
         end
@@ -839,16 +839,6 @@ END
           test_runs[subtree].tearDown
         end
       end
-
-      #~ test_set.run_on_subtrees(@module_set) do |subtree, test_patterns|
-      #~ begin
-      #~ testrun_proc.call(test_runs[subtree]) unless failed_setUpSet.member?(subtree)
-      #~ ensure
-      #~ test_runs[subtree].tearDown
-      #~ end
-      #~ end
-
-
     end
 
     # Finds the JVMs that we need to use -- one each for compiling and testing, for 1.4 and 1.5.

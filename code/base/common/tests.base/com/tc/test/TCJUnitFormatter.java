@@ -35,7 +35,11 @@ public class TCJUnitFormatter implements JUnitResultFormatter {
       while (iter.hasNext()) {
         System.err.println(iter.next().toString());
         System.err.println("");
+        System.err.flush();
       }
+    } else {
+      System.out.println("*** " + theTest.getName() + " PASSED.");
+      System.out.println();
     }
 
     this.currentExceptions.clear();
