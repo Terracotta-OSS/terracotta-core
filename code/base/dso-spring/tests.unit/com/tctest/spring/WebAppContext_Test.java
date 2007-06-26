@@ -20,6 +20,7 @@ import com.tc.object.config.DSOSpringConfigHelper;
 import com.tc.object.config.StandardDSOSpringConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.runtime.Vm;
 import com.tctest.TransparentTestBase;
 import com.tctest.runner.AbstractTransparentApp;
 import com.tctest.spring.bean.Singleton;
@@ -45,7 +46,9 @@ public class WebAppContext_Test extends TransparentTestBase {
   private static final int NODE_COUNT      = 4;
 
   public WebAppContext_Test() {
-    //disableAllUntil("2008-01-01");
+    if (Vm.isIBM()) {
+      this.disableAllUntil("2007-10-01");
+    }
   }
 
   protected void setUp() throws Exception {

@@ -11,6 +11,7 @@ import com.tc.object.config.DSOSpringConfigHelper;
 import com.tc.object.config.StandardDSOSpringConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.runtime.Vm;
 import com.tctest.TransparentTestBase;
 import com.tctest.runner.AbstractTransparentApp;
 import com.tctest.spring.bean.FooService;
@@ -24,7 +25,9 @@ public class SingletonWithInterceptor_Test extends TransparentTestBase {
   private static final int NODE_COUNT      = 2;
 
   public SingletonWithInterceptor_Test() {
-    //
+    if (Vm.isIBM()) {
+      this.disableAllUntil("2007-10-01");
+    }
   }
 
   protected void setUp() throws Exception {
