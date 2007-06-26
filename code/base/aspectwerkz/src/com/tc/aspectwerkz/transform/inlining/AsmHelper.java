@@ -897,16 +897,7 @@ public class AsmHelper implements TransformationConstants {
   public static int getRegisterDepth(final Type[] typesOnStack) {
     int depth = 0;
     for (int i = 0; i < typesOnStack.length; i++) {
-      Type type = typesOnStack[i];
-      depth++;
-      switch (type.getSort()) {
-        case Type.LONG:
-          depth++;
-          break;
-        case Type.DOUBLE:
-          depth++;
-          break;
-      }
+      depth += typesOnStack[i].getSize();
     }
     return depth;
   }
@@ -921,16 +912,7 @@ public class AsmHelper implements TransformationConstants {
   public static int getRegisterIndexOf(final Type[] typesOnStack, final int typeIndex) {
     int depth = 0;
     for (int i = 0; i < typeIndex; i++) {
-      Type type = typesOnStack[i];
-      depth++;
-      switch (type.getSort()) {
-        case Type.LONG:
-          depth++;
-          break;
-        case Type.DOUBLE:
-          depth++;
-          break;
-      }
+      depth += typesOnStack[i].getSize();
     }
     return depth;
   }
@@ -983,12 +965,7 @@ public class AsmHelper implements TransformationConstants {
    * @return the incremented index
    */
   public static int incrementIndex(int index, final Type type) {
-    if (type.getSort() == Type.LONG || type.getSort() == Type.DOUBLE) {
-      index += 2;
-    } else {
-      index++;
-    }
-    return index;
+    return index += type.getSize();
   }
 
   /**

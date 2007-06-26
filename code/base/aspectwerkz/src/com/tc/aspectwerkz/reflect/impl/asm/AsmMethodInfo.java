@@ -4,15 +4,11 @@
  */
 package com.tc.aspectwerkz.reflect.impl.asm;
 
-import com.tc.backport175.bytecode.AnnotationElement;
 import com.tc.asm.Type;
-
-import com.tc.aspectwerkz.exception.DefinitionException;
-import com.tc.aspectwerkz.transform.inlining.AsmHelper;
-import com.tc.aspectwerkz.reflect.MethodInfo;
 import com.tc.aspectwerkz.reflect.ClassInfo;
-
-import java.lang.reflect.Modifier;
+import com.tc.aspectwerkz.reflect.MethodInfo;
+import com.tc.aspectwerkz.transform.inlining.AsmHelper;
+import com.tc.backport175.bytecode.AnnotationElement;
 
 /**
  * ASM implementation of the MethodInfo interface.
@@ -34,7 +30,7 @@ public class AsmMethodInfo extends AsmMemberInfo implements MethodInfo {
   /**
    * A list with the parameter type names.
    */
-  private String[]    m_parameterTypeNames = null;
+  protected String[]    m_parameterTypeNames = null;
 
   /**
    * A list with the exception type names.
@@ -204,27 +200,4 @@ public class AsmMethodInfo extends AsmMemberInfo implements MethodInfo {
     return sb.toString();
   }
 
-  /**
-   * Update the parameter name given the parameter information the index is the one from the register ie a long or
-   * double will needs 2 register
-   *
-   * @param registerIndex
-   * @param parameterName
-   */
-  public void pushParameterNameFromRegister(int registerIndex, String parameterName) {
-    int registerStart = 1;
-    if (Modifier.isStatic(m_member.modifiers)) {
-      registerStart = 0;
-    }
-    // assume we have a stack starting at the first parameter
-    int registerIndexFrom0 = registerIndex - registerStart;
-    Type[] parameters = Type.getArgumentTypes(m_member.desc);
-    int typeIndex = AsmHelper.getTypeIndexOf(parameters, registerIndexFrom0);
-    if (typeIndex >= 0 && typeIndex < m_parameterNames.length) {
-      m_parameterNames[typeIndex] = parameterName;
-    } else {
-      throw new DefinitionException("Could not register parameter named " + parameterName + " from register "
-                                    + registerIndex + " for " + m_member.name + "." + m_member.desc);
-    }
-  }
 }

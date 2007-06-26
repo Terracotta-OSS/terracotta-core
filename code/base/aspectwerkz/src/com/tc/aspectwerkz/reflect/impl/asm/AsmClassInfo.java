@@ -4,22 +4,25 @@
 package com.tc.aspectwerkz.reflect.impl.asm;
 
 
-import com.tc.backport175.bytecode.AnnotationElement;
-import com.tc.backport175.bytecode.AnnotationReader;
-import com.tc.asm.*;
-
+import com.tc.asm.ClassReader;
+import com.tc.asm.FieldVisitor;
+import com.tc.asm.Label;
+import com.tc.asm.MethodVisitor;
+import com.tc.asm.Type;
 import com.tc.aspectwerkz.exception.WrappedRuntimeException;
-import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.aspectwerkz.reflect.ClassInfo;
-import com.tc.aspectwerkz.reflect.StaticInitializationInfo;
 import com.tc.aspectwerkz.reflect.ConstructorInfo;
-import com.tc.aspectwerkz.reflect.MethodInfo;
-import com.tc.aspectwerkz.reflect.StaticInitializationInfoImpl;
 import com.tc.aspectwerkz.reflect.FieldInfo;
+import com.tc.aspectwerkz.reflect.MethodInfo;
+import com.tc.aspectwerkz.reflect.StaticInitializationInfo;
+import com.tc.aspectwerkz.reflect.StaticInitializationInfoImpl;
+import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.aspectwerkz.transform.TransformationConstants;
 import com.tc.aspectwerkz.transform.inlining.AsmHelper;
 import com.tc.aspectwerkz.transform.inlining.AsmNullAdapter;
 import com.tc.aspectwerkz.util.ContextClassLoader;
+import com.tc.backport175.bytecode.AnnotationElement;
+import com.tc.backport175.bytecode.AnnotationReader;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -880,9 +883,8 @@ public class AsmClassInfo implements ClassInfo {
                   parameterTypes.length, methodInfo
           );
           return methodParameterNamesVisitor;
-        } else {
-          methodInfo.m_parameterNames = EMPTY_STRING_ARRAY;
         }
+        methodInfo.m_parameterNames = EMPTY_STRING_ARRAY;
       }
       return null;
     }
@@ -902,12 +904,13 @@ public class AsmClassInfo implements ClassInfo {
     private final int m_parameterCount;
     private AsmMethodInfo m_methodInfo;
     private int m_signatureParameterRegisterDepth = 0;
-
+    private String[] m_parameterNames;
+    
     public MethodParameterNamesCodeAdapter(boolean isStatic, int parameterCount, AsmMethodInfo methodInfo) {
       m_isStatic = isStatic;
-      m_parameterCount = parameterCount;
       m_methodInfo = methodInfo;
-      m_methodInfo.m_parameterNames = new String[m_parameterCount];
+      m_parameterCount = parameterCount;
+      m_parameterNames = new String[parameterCount];
 
       // compute the max index of the arguments that appear in the method signature
       // including "this" on register 0 for non static methods
@@ -923,30 +926,63 @@ public class AsmClassInfo implements ClassInfo {
     /**
      * Do not assume to visit the local variable with index always increasing since it is a wrong assumption
      * [ see f.e. test.args.ArgsAspect.withArray advice ]
-     *
-     * @param name
-     * @param desc
-     * @param sig
-     * @param start
-     * @param end
-     * @param index the index of the argument on the stack
      */
     public void visitLocalVariable(String name, String desc, String sig, Label start, Label end, int index) {
-      if (index < m_signatureParameterRegisterDepth) {
-        // this is not a local variable
-        if (index == 0) {
-          if (!m_isStatic) {
-            //skip this
-          } else {
-            m_methodInfo.pushParameterNameFromRegister(index, name);
-          }
-        } else {
-          m_methodInfo.pushParameterNameFromRegister(index, name);
-        }
-      } else {
-        // skip code block locals
+      // skip local variables and "this"
+      if (index >= m_signatureParameterRegisterDepth || (index == 0 && !m_isStatic)) { 
+        return; // local variable
+      }
+      
+      int startIndex = m_isStatic ? index : index-1;
+      
+      String[] typeNames = m_methodInfo.m_parameterTypeNames;
+      
+      // assume we have a stack starting at the first parameter
+      Type[] parameters = Type.getArgumentTypes(m_methodInfo.getSignature());
+      int typeIndex = AsmHelper.getTypeIndexOf(parameters, startIndex);
+      
+      if (typeIndex >= 0 && typeIndex < m_parameterNames.length
+          && parameters[typeIndex].getClassName()
+               .equals(typeNames[typeIndex])) {
+        m_parameterNames[typeIndex] = name;
       }
     }
+    
+    public void visitEnd() {
+      boolean resolved = true;
+      for (int i = 0; i < m_parameterNames.length; i++) {
+        String name = m_parameterNames[i];
+        if(name==null) {
+          resolved = false;
+        }
+      }
+      if(resolved) {
+        m_methodInfo.m_parameterNames = m_parameterNames;
+      }
+    }
+    
+    /**
+     * Update the parameter name given the parameter information the index is the one from the register ie a long or
+     * double will needs 2 register
+     *
+     * @param registerIndex
+     * @param parameterName
+     */
+//    public void pushParameterNameFromRegister(int registerIndex, String parameterName) {
+//      int registerStart = m_isStatic ? 0 : 1;
+//
+//      // assume we have a stack starting at the first parameter
+//      int registerIndexFrom0 = registerIndex - registerStart;
+//      Type[] parameters = Type.getArgumentTypes(m_member.desc);
+//      int typeIndex = AsmHelper.getTypeIndexOf(parameters, registerIndexFrom0);
+//      if (typeIndex >= 0 && typeIndex < m_parameterNames.length) {
+//        m_parameterNames[typeIndex] = parameterName;
+//      } else {
+//        throw new DefinitionException("Could not register parameter named " + parameterName + " from register "
+//                                      + registerIndex + " for " + m_member.name + "." + m_member.desc);
+//      }
+//    }
+    
   }
 
   /**
