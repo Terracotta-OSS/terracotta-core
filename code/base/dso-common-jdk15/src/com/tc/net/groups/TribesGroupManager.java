@@ -46,6 +46,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   private static final String                             L2_NHA                  = "l2.nha";
   private static final String                             SEND_TIMEOUT_PROP       = "send.timeout.millis";
   private static final String                             USE_MCAST               = "mcast.enabled";
+  private static final String                             USE_ORDER_INTERCEPTOR   = "tribes.orderinterceptor.enabled";
   private static final int                                SEND_OPTIONS_NO_ACK     = 0x00;
 
   private static final TCLogger                           logger                  = TCLogging
@@ -54,6 +55,11 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   private static final boolean                            useMcast                = TCPropertiesImpl.getProperties()
                                                                                       .getPropertiesFor(L2_NHA)
                                                                                       .getBoolean(USE_MCAST);
+  // TODO::FIXME:: Its disabled since it causes issues (exposed using TIMS test)
+  private static final boolean                            useOrderInterceptor     = TCPropertiesImpl
+                                                                                      .getProperties()
+                                                                                      .getPropertiesFor(L2_NHA)
+                                                                                      .getBoolean(USE_ORDER_INTERCEPTOR);
 
   private final GroupChannel                              group;
   private TcpFailureDetector                              failuredetector;
@@ -131,13 +137,21 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       tcp.setUseThread(true);
       tcp.setInterval(1000);
 
-      OrderInterceptor oi = new OrderInterceptor();
-      oi.setExpire(60000);
-
-      // start services
       // set up failure detector
       failuredetector = new TcpFailureDetector();
-      group.addInterceptor(oi);
+
+      if (useOrderInterceptor) {
+        OrderInterceptor oi = new OrderInterceptor();
+        oi.setExpire(60000);
+        group.addInterceptor(oi);
+      } else {
+        // XXX::FIXME::TODO:: These settings are added since OrderInterceptor has issues and we want to maintain message
+        // ordering
+        receiver.setMaxThreads(1);
+        receiver.setMinThreads(1);
+      }
+
+      // start services
       group.addInterceptor(tcp);
       group.addInterceptor(failuredetector);
       group.addInterceptor(smi);
@@ -152,10 +166,19 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   protected NodeID joinMcast() throws GroupException {
     try {
       commonGroupChanelConfig();
-      OrderInterceptor oi = new OrderInterceptor();
-      oi.setExpire(60000);
 
-      group.addInterceptor(oi);
+      if (useOrderInterceptor) {
+        OrderInterceptor oi = new OrderInterceptor();
+        oi.setExpire(60000);
+        group.addInterceptor(oi);
+      } else {
+        // XXX::FIXME::TODO:: These settings are added since OrderInterceptor has issues and we want to maintain message
+        // ordering
+        ReceiverBase receiver = (ReceiverBase) group.getChannelReceiver();
+        receiver.setMaxThreads(1);
+        receiver.setMinThreads(1);
+      }
+
       group.start(Channel.DEFAULT);
       this.thisMember = group.getLocalMember(false);
       this.thisNodeID = makeNodeIDFrom(this.thisMember);

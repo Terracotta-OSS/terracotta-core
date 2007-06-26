@@ -21,6 +21,51 @@ public class TribesGroupManagerTest extends TCTestCase {
 
   private static final TCLogger logger = TCLogging.getLogger(TribesGroupManager.class);
 
+  // public void testTribesTimeoutOnCrash() throws Exception {
+  // PortChooser pc = new PortChooser();
+  // final int p1 = pc.chooseRandomPort();
+  // final int p2 = pc.chooseRandomPort();
+  // final Node[] allNodes = new Node[] { new Node("localhost", p1), new Node("localhost", p2) };
+  //
+  // TribesGroupManager gm1 = new TribesGroupManager();
+  // MyGroupEventListener gel1 = new MyGroupEventListener();
+  // MyListener l1 = new MyListener();
+  // gm1.registerForMessages(TestMessage.class, l1);
+  // gm1.registerForGroupEvents(gel1);
+  // NodeID n1 = gm1.joinStatic(allNodes[0], allNodes);
+  //
+  // TribesGroupManager gm2 = new TribesGroupManager();
+  // MyListener l2 = new MyListener();
+  // MyGroupEventListener gel2 = new MyGroupEventListener();
+  // gm2.registerForMessages(TestMessage.class, l2);
+  // gm2.registerForGroupEvents(gel2);
+  // NodeID n2 = gm2.joinStatic(allNodes[1], allNodes);
+  // assertNotEquals(n1, n2);
+  //
+  // // setup throwable ThreadGroup to catch AssertError from threads.
+  // TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandler(logger), "StateManagerTestGroup");
+  // ThreadUtil.reallySleep(1000);
+  //
+  // SenderThread sender = new SenderThread(threadGroup, "Node-0", gm1, Integer.MAX_VALUE, n2);
+  // Thread receiver = new ReceiverThread(threadGroup, "Node-1", l2, Integer.MAX_VALUE);
+  //
+  // System.err.println("*** Starting sending and receiving messages....");
+  // sender.start();
+  // receiver.start();
+  //
+  // ThreadUtil.reallySleep(5000);
+  // System.err.println("*** " + new Date() + " Stopping GM2 ....");
+  // gm2.stop();
+  //
+  // System.err.println("*** " + new Date() + " Waiting for sender to fail ....");
+  // ThreadUtil.reallySleep(60000);
+  //
+  // System.err.println("*** " + new Date() + " Stopping GM1 ....");
+  // gm1.stop();
+  //
+  // System.err.println("*** Test complete ....");
+  // }
+
   public void testIfTribesGroupManagerLoads() throws Exception {
     GroupManager gm = GroupManagerFactory.createGroupManager();
     assertNotNull(gm);
@@ -269,24 +314,35 @@ public class TribesGroupManagerTest extends TCTestCase {
     TribesGroupManager mgr;
     Integer            upbound;
     Integer            index = new Integer(0);
+    NodeID             node;
 
     public SenderThread(ThreadGroup group, String name, TribesGroupManager mgr, Integer upbound) {
+      this(group, name, mgr, upbound, NodeID.NULL_ID);
+    }
+
+    public SenderThread(ThreadGroup group, String name, TribesGroupManager mgr, Integer upbound, NodeID node) {
       super(group, name);
       this.mgr = mgr;
       this.upbound = upbound;
+      this.node = node;
     }
 
     public void run() {
       while (index <= upbound) {
         TestMessage msg = new TestMessage(index.toString());
-        System.err.println("*** " + getName() + " sends " + index);
+        if (index % 10 == 0) System.err.println("*** " + getName() + " sends " + index);
         try {
-          mgr.sendAll(msg);
+          if (node.isNull()) {
+            mgr.sendAll(msg);
+          } else {
+            mgr.sendTo(node, msg);
+          }
         } catch (Exception x) {
           System.err.println("Got exception : " + getName() + " " + x.getMessage());
           x.printStackTrace();
           throw new RuntimeException("sendAll GroupException:" + x);
         }
+        // ThreadUtil.reallySleep(100);
         ++index;
       }
     }
@@ -306,7 +362,7 @@ public class TribesGroupManagerTest extends TCTestCase {
     public void run() {
       while (index <= upbound) {
         TestMessage msg = (TestMessage) l.take();
-        System.err.println("*** " + getName() + " receives " + msg);
+        if (index % 10 == 0) System.err.println("*** " + getName() + " receives " + msg);
         assertEquals(new TestMessage(index.toString()), msg);
         index++;
       }
