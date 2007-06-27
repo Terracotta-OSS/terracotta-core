@@ -47,7 +47,7 @@ import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupManagerFactory;
 import com.tc.net.groups.Node;
 import com.tc.net.groups.NodeID;
-import com.tc.net.protocol.transport.ConnectionIDFactory;
+import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
@@ -84,19 +84,20 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   public L2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server, StageManager stageManager,
                          PersistentMapStore clusterStateStore, ObjectManager objectManager,
                          ServerTransactionManager transactionManager, TransactionalObjectManager txnObjectManager,
-                         ServerGlobalTransactionManager gtxm, NewHaConfig haConfig) {
+                         ServerGlobalTransactionManager gtxm, DSOChannelManager channelManager, NewHaConfig haConfig) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.haConfig = haConfig;
 
-    init(stageManager, clusterStateStore, objectManager, transactionManager, txnObjectManager, gtxm);
+    init(stageManager, clusterStateStore, objectManager, transactionManager, txnObjectManager, gtxm, channelManager);
   }
 
   private void init(StageManager stageManager, PersistentMapStore clusterStateStore, ObjectManager objectManager,
                     ServerTransactionManager transactionManager, TransactionalObjectManager txnObjectManager,
-                    ServerGlobalTransactionManager gtxm) {
+                    ServerGlobalTransactionManager gtxm, DSOChannelManager channelManager) {
     try {
-      basicInit(stageManager, clusterStateStore, objectManager, transactionManager, txnObjectManager, gtxm);
+      basicInit(stageManager, clusterStateStore, objectManager, transactionManager, txnObjectManager, gtxm,
+                channelManager);
     } catch (GroupException e) {
       logger.error(e);
       throw new AssertionError(e);
@@ -105,7 +106,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
   private void basicInit(StageManager stageManager, PersistentMapStore clusterStateStore, ObjectManager objectManager,
                          ServerTransactionManager transactionManager, TransactionalObjectManager txnObjectManager,
-                         ServerGlobalTransactionManager gtxm) throws GroupException {
+                         ServerGlobalTransactionManager gtxm, DSOChannelManager channelManager) throws GroupException {
 
     this.clusterState = new ClusterState(clusterStateStore, server.getManagedObjectStore(), server
         .getConnectionIdFactory(), gtxm.getGlobalTransactionIDSequenceProvider());
@@ -126,8 +127,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
                                                                                consoleLogger,
                                                                                stateManager,
                                                                                groupManager,
-                                                                               createWeightGeneratorFactoryForZapNodeProcessor(server
-                                                                                   .getConnectionIdFactory()));
+                                                                               createWeightGeneratorFactoryForZapNodeProcessor(channelManager));
     this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 
     final Sink objectsSyncRequestSink = stageManager
@@ -176,13 +176,12 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     groupManager.registerForGroupEvents(dispatcher);
   }
 
-  private WeightGeneratorFactory createWeightGeneratorFactoryForZapNodeProcessor(
-                                                                                 final ConnectionIDFactory connectionIdFactory) {
+  private WeightGeneratorFactory createWeightGeneratorFactoryForZapNodeProcessor(final DSOChannelManager channelManager) {
     WeightGeneratorFactory wgf = new WeightGeneratorFactory();
     wgf.add(new WeightGenerator() {
       public long getWeight() {
         // return number of connected clients
-        return connectionIdFactory.loadConnectionIDs().size();
+        return channelManager.getAllActiveChannelIDs().size();
       }
     });
     return wgf;
