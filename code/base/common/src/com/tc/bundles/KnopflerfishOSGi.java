@@ -34,8 +34,13 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
   private static String         KF_BUNDLESTORAGE_PROP         = "org.knopflerfish.framework.bundlestorage";
   private static String         KF_BUNDLESTORAGE_PROP_DEFAULT = "memory";
 
-  // {0} := bundle name, {1} := bundle version (not necessarily numeric)
-  private static final String   BUNDLE_PATH                   = "{0}-{1}.jar";
+  // {0} := bundle name, {1} := bundle version
+  private static final String   BUNDLE_FILENAME_EXT           = ".jar";
+  private static final String   BUNDLE_PATH                   = "{0}-{1}" + BUNDLE_FILENAME_EXT;
+  private static final String   MODULE_VERSION_REGEX          = "[0-9]+\\.[0-9]+\\.[0-9]+";
+  private static final String   MODULE_FILENAME_REGEX         = ".+-";
+  private static final String   MODULE_FILENAME_EXT_REGEX     = "\\" + BUNDLE_FILENAME_EXT;
+  
 
   private final URL[]           bundleRepositories;
   private final Framework       framework;
@@ -80,14 +85,21 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
 
         if (!bundleDir.isDirectory()) { throw new BundleException("Invalid bundle repository specified in the URL ["
             + bundleDir + "]"); }
-
-        final String MODULE_VERSION_REGEX = "[0-9]+\\.[0-9]+\\.[0-9]+";
-        final String MODULE_FILENAME_REGEX = ".+-.+-";
-        final String MODULE_FILENAME_EXT_REGEX = "\\.jar";
+        
         final File[] bundleFiles = bundleDir.listFiles(new FileFilter() {
-          public boolean accept(File file) {
-            return file.isFile()
-                && file.getName().matches(MODULE_FILENAME_REGEX + MODULE_VERSION_REGEX + MODULE_FILENAME_EXT_REGEX);
+          public boolean accept(final File file) {
+            final String pattern = "^" + MODULE_FILENAME_REGEX + MODULE_VERSION_REGEX + MODULE_FILENAME_EXT_REGEX + "$";
+            final boolean isOk = file.isFile() && file.getName().matches(pattern);
+            if (!isOk) {
+              final String msg = MessageFormat.format(
+                  "Skipped config-bundle installation of file: {0}, config-bundle filenames are expected to conform to the following pattern: {1}", 
+                  new String[] { file.getName(), pattern });
+              logger.warn(msg); 
+              if (file.getName().endsWith(BUNDLE_FILENAME_EXT)) {
+                System.err.println("WARNING: " + msg);
+              }
+            }
+            return isOk;
           }
         });
 

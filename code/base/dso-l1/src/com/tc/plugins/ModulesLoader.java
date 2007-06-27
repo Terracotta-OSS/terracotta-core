@@ -89,8 +89,8 @@ public class ModulesLoader {
           } catch (BundleException be2) {
             logger.error("Error shutting down plugin runtime", be2);
           }
-          logger.fatal("\nFATAL: ", be1);
-          System.err.println("\nFATAL: " + be1.getMessage());
+          logger.fatal("FATAL: ", be1);
+          System.err.println("FATAL: " + be1.getMessage());
           System.exit(-1);
         } catch (InvalidSyntaxException be1) {
           try {
@@ -98,7 +98,7 @@ public class ModulesLoader {
           } catch (BundleException be2) {
             logger.error("Error shutting down plugin runtime", be2);
           }
-          System.err.println("\nFATAL: " + be1.getMessage());
+          System.err.println("FATAL: " + be1.getMessage());
           System.exit(-1);
         } finally {
           if (forBootJar) {
