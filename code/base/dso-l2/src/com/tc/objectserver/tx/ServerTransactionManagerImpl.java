@@ -234,9 +234,11 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     final TransactionID txnID = txn.getTransactionID();
     TransactionAccount ci = getOrCreateTransactionAccount(channelID);
     if (ci.skipApplyAndCommit(txnID)) {
+      fireTransactionAppliedEvent(txn.getServerTransactionID());
       acknowledge(channelID, txnID);
+    } else {
+      fireTransactionAppliedEvent(txn.getServerTransactionID());
     }
-    fireTransactionAppliedEvent(txn.getServerTransactionID());
   }
 
   public void commit(PersistenceTransactionProvider ptxp, Collection objects, Map newRoots,
