@@ -4,7 +4,9 @@
  */
 package com.tc.tomcat55.session;
 
+import org.apache.catalina.Container;
 import org.apache.catalina.Context;
+import org.apache.catalina.Engine;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
 import org.apache.catalina.connector.SessionRequest55;
@@ -88,12 +90,13 @@ public class SessionValve55 extends ValveBase {
     final ContextMgr contextMgr = DefaultContextMgr
         .makeInstance(contextPath, valveReq.getContext().getServletContext());
     final SessionManager rv = new TerracottaSessionManager(sig, scw, eventMgr, contextMgr,
-                                                                     new BaseRequestResponseFactory(), cp);
+                                                           new BaseRequestResponseFactory(), cp);
     return rv;
   }
 
   private static WebAppConfig makeWebAppConfig(Context context) {
     Assert.pre(context != null);
+
     final ArrayList sessionListeners = new ArrayList();
     final ArrayList attributeListeners = new ArrayList();
     sortByType(context.getApplicationEventListeners(), sessionListeners, attributeListeners);
@@ -102,7 +105,17 @@ public class SessionValve55 extends ValveBase {
         .toArray(new HttpSessionAttributeListener[attributeListeners.size()]);
     HttpSessionListener[] sessList = (HttpSessionListener[]) sessionListeners
         .toArray(new HttpSessionListener[sessionListeners.size()]);
-    return new DefaultWebAppConfig(context.getManager().getMaxInactiveInterval(), attrList, sessList);
+
+    String jvmRoute = null;
+
+    for (Container c = context; c != null; c = c.getParent()) {
+      if (c instanceof Engine) {
+        jvmRoute = ((Engine) c).getJvmRoute();
+        break;
+      }
+    }
+
+    return new DefaultWebAppConfig(context.getManager().getMaxInactiveInterval(), attrList, sessList, ".", jvmRoute);
   }
 
   private static void sortByType(Object[] listeners, ArrayList sessionListeners, ArrayList attributeListeners) {

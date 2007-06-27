@@ -46,6 +46,7 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     addServerId();
     addSessionTrackingEnabled();
     addSessionUrlRewritingEnabled();
+    addSessionDelimiter();
     super.visitEnd();
   }
 
@@ -188,6 +189,15 @@ public class WebAppServletContextAdapter extends ClassAdapter implements Opcodes
     mv.visitFieldInsn(GETFIELD, "weblogic/servlet/internal/WebAppServletContext", "httpServer",
                       "Lweblogic/servlet/internal/HttpServer;");
     mv.visitMethodInsn(INVOKEVIRTUAL, "weblogic/servlet/internal/HttpServer", "getServerHash", "()Ljava/lang/String;");
+    mv.visitInsn(ARETURN);
+    mv.visitMaxs(0, 0);
+    mv.visitEnd();
+  }
+
+  private void addSessionDelimiter() {
+    MethodVisitor mv = cv.visitMethod(ACC_PUBLIC, "__tc_session_getSessionDelimiter", "()Ljava/lang/String;", null, null);
+    mv.visitCode();
+    mv.visitLdcInsn("!");
     mv.visitInsn(ARETURN);
     mv.visitMaxs(0, 0);
     mv.visitEnd();

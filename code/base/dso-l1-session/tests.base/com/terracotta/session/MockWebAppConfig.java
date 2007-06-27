@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session;
 
@@ -22,6 +23,7 @@ public class MockWebAppConfig implements WebAppConfig {
   private boolean                        trackingEnabled;
   private HttpSessionAttributeListener[] attrListeners;
   private HttpSessionListener[]          sessListeners;
+  private String                         delimiter;
 
   public String __tc_session_getCookieComment() {
     return cookieComment;
@@ -133,6 +135,14 @@ public class MockWebAppConfig implements WebAppConfig {
 
   public void setUrlEnabled(boolean urlEnabled) {
     this.urlEnabled = urlEnabled;
+  }
+
+  public String __tc_session_getSessionDelimiter() {
+    return this.delimiter;
+  }
+
+  public void setDelimiter(String delimiter) {
+    this.delimiter = delimiter;
   }
 
 }

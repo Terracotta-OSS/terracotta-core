@@ -16,27 +16,29 @@ public class DefaultIdGenerator implements SessionIdGenerator {
 
   // NOTE: IMPORTANT!!! don't change MIN_LENGTH without reviewing generateKey method
   private static final int   MIN_LENGTH = 8;
-  private static final char  DLM        = '!';
   private final SecureRandom random;
   private final int          idLength;
-  protected final String     serverId;
-  private short              nextId     = Short.MIN_VALUE;
+  private final String       serverId;
+  private final String       delimiter;
   private final int          lockType;
   private final IdDeclarator idDeclarator;
+  private short              nextId     = Short.MIN_VALUE;
 
   public static SessionIdGenerator makeInstance(ConfigProperties cp, int lockType, IdDeclarator idDeclarator) {
     Assert.pre(cp != null);
     final int idLength = cp.getSessionIdLength();
-    final String servetId = cp.getServerId();
-    return new DefaultIdGenerator(idLength, servetId, lockType, idDeclarator);
-  }
-  
-  // for non-synchronous-write tests
-  public DefaultIdGenerator(final int idLength, final String serverId) {
-    this(idLength, serverId, Manager.LOCK_TYPE_WRITE, null);
+    final String serverId = cp.getServerId();
+    final String delimiter = cp.getDelimiter();
+    return new DefaultIdGenerator(idLength, serverId, lockType, idDeclarator, delimiter);
   }
 
-  public DefaultIdGenerator(final int idLength, final String serverId, int lockType, IdDeclarator idDeclarator) {
+  // for non-synchronous-write tests
+  public DefaultIdGenerator(final int idLength, final String serverId) {
+    this(idLength, serverId, Manager.LOCK_TYPE_WRITE, null, ConfigProperties.defaultDelimiter);
+  }
+
+  public DefaultIdGenerator(final int idLength, final String serverId, int lockType, IdDeclarator idDeclarator,
+                            String delimiter) {
     random = new SecureRandom();
     // init
     random.nextInt();
@@ -45,6 +47,7 @@ public class DefaultIdGenerator implements SessionIdGenerator {
     this.idLength = Math.max(idLength, MIN_LENGTH);
     this.serverId = serverId;
     this.idDeclarator = idDeclarator;
+    this.delimiter = delimiter;
   }
 
   public SessionId generateNewId() {
@@ -66,13 +69,13 @@ public class DefaultIdGenerator implements SessionIdGenerator {
       return null;
     }
   }
-  
+
   protected int getDLMIndex(String requestedSessionId) {
-    return requestedSessionId.indexOf(DLM);
+    return requestedSessionId.indexOf(delimiter);
   }
-  
+
   protected String makeExternalId(String key) {
-    String externalId = key + DLM + serverId;
+    String externalId = key + delimiter + serverId;
     if (idDeclarator != null) {
       externalId = idDeclarator.transform(externalId);
     }

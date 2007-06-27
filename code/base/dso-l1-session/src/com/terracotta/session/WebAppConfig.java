@@ -33,8 +33,10 @@ public interface WebAppConfig {
   boolean __tc_session_getTrackingEnabled();
 
   boolean __tc_session_getURLRewritingEnabled();
-  
+
   String __tc_session_getServerId();
-  
+
+  String __tc_session_getSessionDelimiter();
+
 }
 

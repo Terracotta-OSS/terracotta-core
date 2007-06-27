@@ -39,6 +39,7 @@ public class ConfigProperties {
   public static final String     STUCK_REQUEST_THRESHOLD    = PREFIX + "request.tracking.threshold";
   public static final String     DEBUG_SERVER_HOPS          = PREFIX + "debug.hops";
   public static final String     DEBUG_SERVER_HOPS_INTERVAL = PREFIX + "debug.hops.interval";
+  public static final String     DELIMITER                  = PREFIX + "delimiter";
 
   protected static final boolean defaultCookiesEnabled      = true;
   protected static final boolean defaultTrackingEnabled     = true;
@@ -52,6 +53,7 @@ public class ConfigProperties {
   protected static final int     defaultIdLength            = 20;
   protected static final String  defaultServerId            = ManagerUtil.getClientID();
   protected static final int     defaultSessionTimeout      = 30 * 60;
+  protected static final String  defaultDelimiter           = "!";
 
   private final WebAppConfig     wac;
   private final TCProperties     props;
@@ -116,6 +118,11 @@ public class ConfigProperties {
   public String getServerId() {
     final String wacVal = wac == null ? null : wac.__tc_session_getServerId();
     return getStringVal(SERVER_ID, wacVal, defaultServerId);
+  }
+
+  public String getDelimiter() {
+    final String wacVal = wac.__tc_session_getSessionDelimiter();
+    return getStringVal(DELIMITER, wacVal, defaultDelimiter);
   }
 
   public String getCookieDomain() {

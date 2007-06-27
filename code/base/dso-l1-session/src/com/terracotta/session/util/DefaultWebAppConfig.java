@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.terracotta.session.util;
 
@@ -10,14 +11,19 @@ import javax.servlet.http.HttpSessionListener;
 
 public class DefaultWebAppConfig implements WebAppConfig {
 
-  private final int sessTimeoutSeconds;
+  private final int                            sessTimeoutSeconds;
   private final HttpSessionAttributeListener[] attrList;
   private final HttpSessionListener[]          sessList;
+  private final String                         serverId;
+  private final String                         delimiter;
 
-  public DefaultWebAppConfig(final int sessTimeoutSeconds, final HttpSessionAttributeListener[] attrList,  final HttpSessionListener[] sessList) {
+  public DefaultWebAppConfig(final int sessTimeoutSeconds, final HttpSessionAttributeListener[] attrList,
+                             final HttpSessionListener[] sessList, final String delimiter, final String serverId) {
     this.sessTimeoutSeconds = sessTimeoutSeconds;
     this.attrList = attrList;
     this.sessList = sessList;
+    this.delimiter = delimiter;
+    this.serverId = serverId;
   }
 
   public String __tc_session_getCookieComment() {
@@ -61,7 +67,7 @@ public class DefaultWebAppConfig implements WebAppConfig {
   }
 
   public String __tc_session_getServerId() {
-    return null;
+    return serverId;
   }
 
   public int __tc_session_getSessionTimeoutSecs() {
@@ -74,6 +80,10 @@ public class DefaultWebAppConfig implements WebAppConfig {
 
   public boolean __tc_session_getURLRewritingEnabled() {
     return true;
+  }
+
+  public String __tc_session_getSessionDelimiter() {
+    return delimiter;
   }
 
 }

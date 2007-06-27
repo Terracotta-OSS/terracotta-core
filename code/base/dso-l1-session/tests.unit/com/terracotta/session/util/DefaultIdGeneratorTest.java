@@ -22,7 +22,7 @@ public class DefaultIdGeneratorTest extends TestCase {
     // this is a pretty silly attempt at uniqueness test...
     HashMap map = new HashMap();
     final String serverId = "SomeServerId";
-    final DefaultIdGenerator dig = new DefaultIdGenerator(20, serverId, lockType, null);
+    final DefaultIdGenerator dig = new DefaultIdGenerator(20, serverId);
     final int expectedLength = 20;
     // I tried running this from 0 to Integer.MAX_VALUE but it's taking a LOOOONG time and ran out of heap space :-(
     for (int i = 0; i < Short.MAX_VALUE; i++) {
@@ -41,7 +41,7 @@ public class DefaultIdGeneratorTest extends TestCase {
 
   public final void testNextId() {
     final String serverId = "SomeServerId";
-    DefaultIdGenerator dig = new DefaultIdGenerator(20, serverId, lockType, null);
+    DefaultIdGenerator dig = new DefaultIdGenerator(20, serverId);
     for (short s = Short.MIN_VALUE; true; s++) {
       assertEquals(s, dig.getNextId());
       if (s == Short.MAX_VALUE) break;
@@ -85,28 +85,28 @@ public class DefaultIdGeneratorTest extends TestCase {
   }
 
   public final void testIdLength() {
-    DefaultIdGenerator dig = new DefaultIdGenerator(-1234, null, lockType, null);
+    DefaultIdGenerator dig = new DefaultIdGenerator(-1234, null);
     assertEquals(8, dig.generateKey().length());
 
-    dig = new DefaultIdGenerator(7, null, lockType, null);
+    dig = new DefaultIdGenerator(7, null);
     assertEquals(8, dig.generateKey().length());
 
-    dig = new DefaultIdGenerator(8, null, lockType, null);
+    dig = new DefaultIdGenerator(8, null);
     assertEquals(8, dig.generateKey().length());
 
-    dig = new DefaultIdGenerator(9, null, lockType, null);
+    dig = new DefaultIdGenerator(9, null);
     assertEquals(9, dig.generateKey().length());
 
-    dig = new DefaultIdGenerator(31, null, lockType, null);
+    dig = new DefaultIdGenerator(31, null);
     assertEquals(31, dig.generateKey().length());
 
-    dig = new DefaultIdGenerator(52, null, lockType, null);
+    dig = new DefaultIdGenerator(52, null);
     assertEquals(52, dig.generateKey().length());
 
-    dig = new DefaultIdGenerator(666, null, lockType, null);
+    dig = new DefaultIdGenerator(666, null);
     assertEquals(666, dig.generateKey().length());
 
-    dig = new DefaultIdGenerator(777, null, lockType, null);
+    dig = new DefaultIdGenerator(777, null);
     assertEquals(777, dig.generateKey().length());
   }
 
@@ -116,7 +116,7 @@ public class DefaultIdGeneratorTest extends TestCase {
     final String newServerId = "someServerId";
     final String browserId = key + "!" + serverId;
     final String externalId = key + "!" + newServerId;
-    DefaultIdGenerator dig = new DefaultIdGenerator(10, newServerId, lockType, null);
+    DefaultIdGenerator dig = new DefaultIdGenerator(10, newServerId);
     SessionId id = dig.makeInstanceFromBrowserId(browserId);
     assertEquals(key, id.getKey());
     assertEquals(browserId, id.getRequestedId());
