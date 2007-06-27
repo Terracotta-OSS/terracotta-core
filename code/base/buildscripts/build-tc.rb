@@ -170,12 +170,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
   # Um. Duh.
   def clean
-    # DO NOT make 'clean' depend on 'init'. 'init' writes out certain files to the build/ directory;
-    # if you make 'clean' depend on 'init', then if you do something like 'tcbuild clean compile',
-    # 'clean' will invoke 'init', then blow away those files, and then 'compile' won't invoke 'init'
-    # (even though it depends on it) since it's already been run. All the files written out by 'init'
-    # will then be missing.
-    @build_results.clean(ant)
+    FileUtils.rm_rf(File.join(@base_dir.to_s, "build"))
   end
 
   def clean_cache
