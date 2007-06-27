@@ -20,20 +20,14 @@ public class ReceiveStateMachineTest extends TestCase {
     TestProtocolMessageDelivery delivery = new TestProtocolMessageDelivery(receiveQueue);
     ReceiveStateMachine rsm = new ReceiveStateMachine(delivery);
     TestProtocolMessage tpm = new TestProtocolMessage();
-    tpm.isAckRequest = true;
+    tpm.isHandshake = true;
 
     rsm.start();
 
-    // Ack request
-    rsm.execute(tpm);
-    assertTrue(delivery.sentAck);
-
-    delivery.clear();
-
     tpm.msg = new PingMessage(new NullMessageMonitor());
     tpm.sent = 0;
-    tpm.isAckRequest = false;
-
+    tpm.isSend = true;
+ 
     assertEquals(0, delivery.receivedMessageCount);
     //REceive message
     rsm.execute(tpm);

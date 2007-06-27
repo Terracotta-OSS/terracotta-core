@@ -21,19 +21,10 @@ public class StateMachineRunner implements EventContext {
   public StateMachineRunner(AbstractStateMachine stateMachine, Sink sink) {
     this.sink = sink;
     this.stateMachine = stateMachine;
-    stateMachine.setRunner(this);
   }
 
   public synchronized int getEventsCount() {
     return (events.size());
-  }
-  
-  public void setSessionId(short id) {
-    stateMachine.setSessionId(id);
-  }
-  
-  public short getSessionId() {
-    return(stateMachine.getSessionId());
   }
 
   public synchronized void start() {

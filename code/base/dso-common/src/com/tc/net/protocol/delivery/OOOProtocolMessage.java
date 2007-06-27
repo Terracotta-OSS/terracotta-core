@@ -15,7 +15,11 @@ public interface OOOProtocolMessage extends TCNetworkMessage {
 
   public long getSent();
 
-  public boolean isAckRequest();
+  public boolean isHandshake();
+
+  public boolean isHandshakeReplyOk();
+
+  public boolean isHandshakeReplyFail();
 
   public boolean isSend();
 
@@ -24,9 +28,6 @@ public interface OOOProtocolMessage extends TCNetworkMessage {
   public boolean isGoodbye();
 
   public void reallyDoRecycleOnWrite();
-  
-  public short getSessionId();
-  
-  public void setSessionId(short id);
 
+  public short getSessionId();
 }

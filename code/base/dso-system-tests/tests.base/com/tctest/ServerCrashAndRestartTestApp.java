@@ -12,6 +12,7 @@ import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.DebugUtil;
 
 public class ServerCrashAndRestartTestApp extends ServerCrashingAppBase implements ClusterEventListener {
 
@@ -25,7 +26,9 @@ public class ServerCrashAndRestartTestApp extends ServerCrashingAppBase implemen
 
   public void runTest() throws Throwable {
     ManagerUtil.addClusterEventListener(this);
+    DebugUtil.trace("Before barrier...");
     final boolean isMasterNode = barrier.barrier() == 0;
+    DebugUtil.trace("AFTER barrier...");
     if (isMasterNode) {
       getConfig().getServerControl().crash();
       getConfig().getServerControl().start(30 * 1000);

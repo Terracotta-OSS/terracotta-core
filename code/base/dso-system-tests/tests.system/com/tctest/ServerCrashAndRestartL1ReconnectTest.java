@@ -23,7 +23,7 @@ public class ServerCrashAndRestartL1ReconnectTest extends ServerCrashingTestBase
   public ServerCrashAndRestartL1ReconnectTest() {
     super(NODE_COUNT);
   }
-  
+
   protected boolean enableL1Reconnect() {
     return true;
   }
@@ -51,7 +51,7 @@ public class ServerCrashAndRestartL1ReconnectTest extends ServerCrashingTestBase
         new InstrumentedClassConfigBuilderImpl(getApplicationClass()) };
 
     cb.getApplication().getDSO().setInstrumentedClasses(instrClasses);
-    
+
     // roots
     RootConfigBuilder[] roots = new RootConfigBuilder[] { new RootConfigBuilderImpl(getApplicationClass(), "barrier") };
     cb.getApplication().getDSO().setRoots(roots);

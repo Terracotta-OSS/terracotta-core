@@ -29,25 +29,28 @@ import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.Random;
 
 /**
  * NetworkLayer implementation for once and only once message delivery protocol.
  */
 public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTransport implements
     OnceAndOnlyOnceProtocolNetworkLayer, OOOProtocolMessageDelivery {
-  private static final TCLogger           logger              = TCLogging
-                                                                  .getLogger(OnceAndOnlyOnceProtocolNetworkLayerImpl.class);
+  private static final TCLogger           logger        = TCLogging
+                                                            .getLogger(OnceAndOnlyOnceProtocolNetworkLayerImpl.class);
   private final OOOProtocolMessageFactory messageFactory;
   private final OOOProtocolMessageParser  messageParser;
-  boolean                                 wasConnected        = false;
+  boolean                                 wasConnected  = false;
   private MessageChannelInternal          receiveLayer;
   private MessageTransport                sendLayer;
   private GuaranteedDeliveryProtocol      delivery;
-  private final SynchronizedBoolean       restoringConnection = new SynchronizedBoolean(false);
-  private boolean                         isClosed            = false;
+  private final SynchronizedBoolean       reconnectMode = new SynchronizedBoolean(false);
+  private final SynchronizedBoolean       handshakeMode = new SynchronizedBoolean(false);
+  private boolean                         isClosed      = false;
   private final boolean                   isClient;
   private final String                    debugId;
-  private static final boolean            debug               = true;
+  private short                           sessionId     = -1;
+  private static final boolean            debug         = false;
 
   public OnceAndOnlyOnceProtocolNetworkLayerImpl(OOOProtocolMessageFactory messageFactory,
                                                  OOOProtocolMessageParser messageParser, Sink workSink, boolean isClient) {
@@ -55,9 +58,10 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     this.messageFactory = messageFactory;
     this.messageParser = messageParser;
     this.isClient = isClient;
-    // Use BoundedLinkedQueue to prevent outgrow of queue and causing OOME, refer DEV-710
-    this.delivery = new GuaranteedDeliveryProtocol(this, workSink);
+    this.delivery = new GuaranteedDeliveryProtocol(this, workSink, isClient);
     this.delivery.start();
+    this.delivery.pause();
+    this.sessionId = (this.isClient) ? -1 : newRandomSessionId();
     this.debugId = (this.isClient) ? "CLIENT" : "SERVER";
   }
 
@@ -89,20 +93,80 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
 
   public void receive(TCByteBuffer[] msgData) {
     OOOProtocolMessage msg = createProtocolMessage(msgData);
-    if (msg.isGoodbye()) {
+    debugLog("receive -> " + msg.getHeader().toString());
+    if (msg.isSend()) {
+      Assert.inv(!handshakeMode.get());
+      Assert.inv(!reconnectMode.get());
+      delivery.receive(msg);
+    } else if (msg.isAck()) {
+      Assert.inv(!handshakeMode.get());
+      Assert.inv(!reconnectMode.get());
+      delivery.receive(msg);
+    } else if (msg.isHandshake()) {
+      Assert.inv(!isClient);
+      debugLog("Got Handshake message...");
+      if (msg.getSessionId() == -1) {
+        debugLog("A brand new client is trying to connect - reply OK");
+        OOOProtocolMessage reply = createHandshakeReplyOkMessage(delivery.getReceiver().getReceived().get());
+        sendMessage(reply);
+        delivery.resume();
+        handshakeMode.set(false);
+        if (!reconnectMode.get()) receiveLayer.notifyTransportConnected(this);
+        else reconnectMode.set(false);
+      } else if (msg.getSessionId() == getSessionId()) {
+        debugLog("A same-session client is trying to connect - reply OK");
+        OOOProtocolMessage reply = createHandshakeReplyOkMessage(delivery.getReceiver().getReceived().get());
+        sendMessage(reply);
+        handshakeMode.set(false);
+        delivery.resume();
+        if (!reconnectMode.get()) receiveLayer.notifyTransportConnected(this);
+        else reconnectMode.set(false);
+      } else {
+        debugLog("A DIFF-session client is trying to connect - reply FAIL");
+        OOOProtocolMessage reply = createHandshakeReplyFailMessage(delivery.getReceiver().getReceived().get());
+        sendMessage(reply);
+        handshakeMode.set(false);
+        reconnectMode.set(false);
+        delivery.resume();
+        receiveLayer.notifyTransportConnected(this);
+      }
+    } else if (msg.isHandshakeReplyOk()) {
+      Assert.inv(isClient);
+      Assert.inv(handshakeMode.get());
+      debugLog("Got reply OK");
+      // current session is still ok:
+      // 1. might have to resend some messages
+      // 2. no need to signal to Higher Level
+      handshakeMode.set(false);
+      sessionId = msg.getSessionId();
+      delivery.resume();
+      delivery.receive(msg);
+      if (!reconnectMode.get()) receiveLayer.notifyTransportConnected(this);
+      else reconnectMode.set(false);
+    } else if (msg.isHandshakeReplyFail()) {
+      debugLog("Received handshake fail reply");
+      Assert.inv(isClient);
+      Assert.inv(handshakeMode.get());
+      // we did not synch'ed the existing session.
+      // 1. clear OOO state (drop messages, clear counters, etc)
+      // 2. set the new session
+      // 3. signal Higher Lever to re-synch
+      receiveLayer.notifyTransportDisconnected(this);
+      resetStack();
+      sessionId = msg.getSessionId();
+      handshakeMode.set(false);
+      reconnectMode.set(false);
+      delivery.resume();
+      delivery.receive(msg);
+      receiveLayer.notifyTransportConnected(this);
+    } else if (msg.isGoodbye()) {
       debugLog("Got GoodBye message - shutting down");
       isClosed = true;
       sendLayer.close();
       receiveLayer.close();
       delivery.pause();
-      return;
-    } else if (restoringConnection.get() && msg.isAck() && msg.getAckSequence() == -1) {
-      debugLog("The other side restarted - resetting local stack");
-      resetStack();
-      receiveLayer.notifyTransportDisconnected(this);
-      this.notifyTransportConnected(this);
     } else {
-      delivery.receive(msg);
+      Assert.inv(false);
     }
   }
 
@@ -110,13 +174,6 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     if (debug) {
       DebugUtil.trace("OOOLayer-" + debugId + "-" + sendLayer.getConnectionId() + " -> " + msg);
     }
-  }
-
-  private void resetStack() {
-    // we need to reset because we are talking to a new stack on the other side
-    restoringConnection.set(false);
-    delivery.pause();
-    delivery.reset();
   }
 
   public boolean isConnected() {
@@ -133,8 +190,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   public void close() {
     Assert.assertNotNull(sendLayer);
     // send goobye message with session-id on it
-    OOOProtocolMessage opm = messageFactory.createNewGoodbyeMessage();
-    opm.setSessionId(delivery.getSenderSessionId());
+    OOOProtocolMessage opm = messageFactory.createNewGoodbyeMessage(getSessionId());
     sendLayer.send(opm);
     sendLayer.close();
   }
@@ -144,21 +200,25 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
    */
 
   public void notifyTransportConnected(MessageTransport transport) {
-    final boolean restoreConnectionMode = restoringConnection.get();
-    debugLog("Transport Connected - resuming delivery, restoreConnection = " + restoreConnectionMode);
-    this.delivery.resume();
-    if (!restoreConnectionMode) receiveLayer.notifyTransportConnected(this);
+    handshakeMode.set(true);
+    if (isClient) {
+      OOOProtocolMessage handshake = createHandshakeMessage(delivery.getReceiver().getReceived().get());
+      debugLog("Seding Handshake message...");
+      sendMessage(handshake);
+    } else {
+      //
+    }
   }
 
   public void notifyTransportDisconnected(MessageTransport transport) {
-    final boolean restoreConnectionMode = restoringConnection.get();
+    final boolean restoreConnectionMode = reconnectMode.get();
     debugLog("Transport Disconnected - pausing delivery, restoreConnection = " + restoreConnectionMode);
     this.delivery.pause();
     if (!restoreConnectionMode) receiveLayer.notifyTransportDisconnected(this);
   }
 
   public void start() {
-    this.delivery.start();
+    //
   }
 
   public void pause() {
@@ -170,7 +230,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   }
 
   public void notifyTransportConnectAttempt(MessageTransport transport) {
-    if (!restoringConnection.get()) {
+    if (!reconnectMode.get()) {
       receiveLayer.notifyTransportConnectAttempt(this);
     }
   }
@@ -185,14 +245,29 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
    * Protocol Message Delivery interface
    */
 
-  public OOOProtocolMessage createAckRequestMessage(short sessionId) {
-    OOOProtocolMessage rv = this.messageFactory.createNewAckRequestMessage();
-    rv.setSessionId(sessionId);
+  public OOOProtocolMessage createHandshakeMessage(long ack) {
+    OOOProtocolMessage rv = this.messageFactory.createNewHandshakeMessage(getSessionId(), ack);
     return rv;
   }
 
-  public OOOProtocolMessage createAckMessage(long sequence) {
-    return (this.messageFactory.createNewAckMessage(sequence));
+  public OOOProtocolMessage createHandshakeReplyOkMessage(long ack) {
+    // FIXME: need to use correct ack
+    OOOProtocolMessage rv = this.messageFactory.createNewHandshakeReplyOkMessage(getSessionId(), ack);
+    return rv;
+  }
+
+  public OOOProtocolMessage createHandshakeReplyFailMessage(long ack) {
+    // FIXME: need to use correct ack
+    OOOProtocolMessage rv = this.messageFactory.createNewHandshakeReplyFailMessage(getSessionId(), ack);
+    return rv;
+  }
+
+  private short getSessionId() {
+    return sessionId;
+  }
+
+  public OOOProtocolMessage createAckMessage(long ack) {
+    return (this.messageFactory.createNewAckMessage(getSessionId(), ack));
   }
 
   public void sendMessage(OOOProtocolMessage msg) {
@@ -209,10 +284,8 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     this.receiveLayer.receive(msg.getPayload());
   }
 
-  public OOOProtocolMessage createProtocolMessage(long sequence, short sessionId, final TCNetworkMessage msg) {
-    OOOProtocolMessage rv = messageFactory.createNewSendMessage(sequence, msg);
-    rv.setSessionId(sessionId);
-
+  public OOOProtocolMessage createProtocolMessage(long sequence, final TCNetworkMessage msg) {
+    OOOProtocolMessage rv = messageFactory.createNewSendMessage(getSessionId(), sequence, msg);
     final Runnable callback = msg.getSentCallback();
     if (callback != null) {
       rv.setSentCallback(new Runnable() {
@@ -239,7 +312,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   }
 
   public ConnectionID getConnectionId() {
-    return sendLayer.getConnectionId();
+    return sendLayer != null ? sendLayer.getConnectionId() : null;
   }
 
   public TCSocketAddress getLocalAddress() {
@@ -260,7 +333,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
 
   public void startRestoringConnection() {
     debugLog("Switched to restoreConnection mode");
-    restoringConnection.set(true);
+    reconnectMode.set(true);
   }
 
   public void connectionRestoreFailed() {
@@ -269,7 +342,22 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     receiveLayer.notifyTransportDisconnected(this);
   }
 
+  private void resetStack() {
+    // we need to reset because we are talking to a new stack on the other side
+    reconnectMode.set(false);
+    delivery.pause();
+    delivery.reset();
+  }
+
   public boolean isClosed() {
     return isClosed;
   }
+
+  private short newRandomSessionId() {
+    // generate a random session id
+    Random r = new Random();
+    r.setSeed(System.currentTimeMillis());
+    return ((short) r.nextInt(Short.MAX_VALUE));
+  }
+
 }

@@ -13,7 +13,7 @@ import com.tc.util.DebugUtil;
 
 public class OOOConnectionWatcher extends ConnectionWatcher implements RestoreConnectionCallback {
 
-  private static final boolean                      debug = true;
+  private static final boolean                      debug = false;
 
   private final OnceAndOnlyOnceProtocolNetworkLayer oooLayer;
   private final long                                timeoutMillis;
