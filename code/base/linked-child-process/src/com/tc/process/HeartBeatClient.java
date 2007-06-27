@@ -31,7 +31,7 @@ public class HeartBeatClient extends Thread {
   }
 
   public static void log(String message) {
-    System.out.println(DATEFORMAT.format(new Date()) + " - HeartBeatServer: " + message);
+    System.out.println(DATEFORMAT.format(new Date()) + " - HeartBeatClient: " + message);
   }
 
   public void run() {
