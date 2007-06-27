@@ -170,7 +170,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
   # Um. Duh.
   def clean
-    FileUtils.rm_rf(File.join(@base_dir.to_s, "build"))
+    FileUtils.rm_rf(File.join(@basedir.to_s, "build"))
   end
 
   def clean_cache
