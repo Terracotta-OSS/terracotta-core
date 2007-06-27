@@ -238,7 +238,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     return this.thisNodeID;
   }
 
-  private static void validateExternalizableClass(Class clazz) {
+  private static void validateExternalizableClass(Class<AbstractGroupMessage> clazz) {
     String name = clazz.getName();
     try {
       Constructor cons = clazz.getDeclaredConstructor(new Class[0]);
@@ -257,6 +257,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
                                                                                 + EventContext.class.getName()); }
   }
 
+  @SuppressWarnings("unchecked")
   public void registerForMessages(Class msgClass, GroupMessageListener listener) {
     validateExternalizableClass(msgClass);
     GroupMessageListener prev = messageListeners.put(msgClass.getName(), listener);
