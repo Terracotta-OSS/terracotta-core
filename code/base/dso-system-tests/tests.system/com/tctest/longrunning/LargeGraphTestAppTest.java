@@ -1,10 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.longrunning;
 
 import EDU.oswego.cs.dl.util.concurrent.CountDown;
 
+import com.tc.net.proxy.TCPProxy;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.MockListenerProvider;
@@ -61,6 +63,14 @@ public class LargeGraphTestAppTest extends TestCase {
       }
 
       public int getGlobalValidatorCount() {
+        throw new AssertionError();
+      }
+
+      public TCPProxy[] getProxies() {
+        throw new AssertionError();
+      }
+
+      public ServerControl[] getServerControls() {
         throw new AssertionError();
       }
 

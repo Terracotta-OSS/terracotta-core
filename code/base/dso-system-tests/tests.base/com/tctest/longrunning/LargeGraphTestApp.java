@@ -1,9 +1,11 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.longrunning;
 
 import com.tc.exception.TCRuntimeException;
+import com.tc.net.proxy.TCPProxy;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -30,20 +32,20 @@ import java.util.Random;
 
 public class LargeGraphTestApp implements Application, ApplicationConfigBuilder {
 
-  private static final DateFormat  df          = new SimpleDateFormat("yyyy-MM=dd HH:mm:ss,SSS Z");
+  private static final DateFormat df          = new SimpleDateFormat("yyyy-MM=dd HH:mm:ss,SSS Z");
 
-  private final String             appId;
-  private final ResultsListener    resultsListener;
-  private final Random             random      = new Random();
-  private int                      idCounter;
+  private final String            appId;
+  private final ResultsListener   resultsListener;
+  private final Random            random      = new Random();
+  private int                     idCounter;
 
-  private final Map                graph       = new HashMap();
-  private final Collection         references;
-  private final Map                referencesByNodeID;
-  private final Map                nodesByNodeID;
-  private final List               objectCount = new ArrayList(1);
+  private final Map               graph       = new HashMap();
+  private final Collection        references;
+  private final Map               referencesByNodeID;
+  private final Map               nodesByNodeID;
+  private final List              objectCount = new ArrayList(1);
 
-  private ConfigVisitor visitor;
+  private ConfigVisitor           visitor;
 
   /**
    * This ctor is for when it's an ApplicationConfigBuilder
@@ -474,6 +476,14 @@ public class LargeGraphTestApp implements Application, ApplicationConfigBuilder 
       }
 
       public int getGlobalValidatorCount() {
+        throw new AssertionError();
+      }
+
+      public TCPProxy[] getProxies() {
+        throw new AssertionError();
+      }
+
+      public ServerControl[] getServerControls() {
         throw new AssertionError();
       }
 

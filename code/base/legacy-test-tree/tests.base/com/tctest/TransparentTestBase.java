@@ -12,6 +12,7 @@ import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
+import com.tc.net.proxy.TCPProxy;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.objectserver.control.ExtraProcessServerControl;
@@ -38,6 +39,7 @@ import com.tctest.runner.TransparentAppConfig;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -67,6 +69,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
   private String                                  mode;
   private ServerControl                           serverControl;
+  private ServerControl[]                         serverControls;
+  private TCPProxy[]                              proxies;
   private boolean                                 controlledCrashMode     = false;
   private ServerCrasher                           crasher;
   private File                                    javaHome;
@@ -89,11 +93,11 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       javaHome = new File(javaHome_local);
     }
   }
-  
+
   protected void setJvmArgsL1Reconnect(ArrayList jvmArgs) {
     System.setProperty("com.tc.l1.reconnect.enabled", "true");
     TCPropertiesImpl.setProperty("l1.reconnect.enabled", "true");
-    
+
     jvmArgs.add("-Dcom.tc.l1.reconnect.enabled=true");
   }
 
@@ -102,11 +106,10 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
     // config should be set up before tc-config for external L2s are written out
     setupConfig(configFactory());
-    
-    if (canRunProxyConnect() && !enableL1Reconnect()) {
-      throw new AssertionError("proxy-connect needs l1reconnect enabled, please overwrite enableL1Reconnect()");
-    }
-    
+
+    if (canRunProxyConnect() && !enableL1Reconnect()) { throw new AssertionError(
+                                                                                 "proxy-connect needs l1reconnect enabled, please overwrite enableL1Reconnect()"); }
+
     ArrayList jvmArgs = new ArrayList();
     // for some test cases to enable l1reconnect
     if (enableL1Reconnect()) {
@@ -124,7 +127,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       helper = new RestartTestHelper(mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_CRASH),
                                      new RestartTestEnvironment(getTempDirectory(), portChooser,
                                                                 RestartTestEnvironment.PROD_MODE, configFactory()),
-                                                                jvmArgs);
+                                     jvmArgs);
       int dsoPort = helper.getServerPort();
       int adminPort = helper.getAdminPort();
       ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(dsoPort);
@@ -179,8 +182,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   private final void setupProxyConnect(RestartTestHelper helper, PortChooser portChooser) throws Exception {
     int dsoPort = 0;
     int jmxPort = 0;
-    
-     if (helper != null) {
+
+    if (helper != null) {
       dsoPort = helper.getServerPort();
       jmxPort = helper.getAdminPort();
       // for crash+proxy, set crash interval to 60 sec
@@ -223,7 +226,29 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
                                              String configFile) throws Exception {
     setUpControlledServer(factory, helper, serverPort, adminPort, configFile, new ArrayList());
   }
-  
+
+  // used by ResolveTwoActiveServersTest... only works with 2 servers !!
+  protected final void setUpForMultipleExternalProcesses(TestTVSConfigurationSetupManagerFactory factory,
+                                                         DSOClientConfigHelper helper, int[] dsoPorts, int[] jmxPorts,
+                                                         int[] l2GroupPorts, int[] proxyPorts, String[] serverNames,
+                                                         File[] configFiles) throws Exception {
+    assertEquals(dsoPorts.length, 2);
+
+    controlledCrashMode = true;
+    setJavaHome();
+    serverControls = new ServerControl[dsoPorts.length];
+
+    proxies = new TCPProxy[2];
+
+    for (int i = 0; i < 2; i++) {
+      proxies[i] = new TCPProxy(proxyPorts[i], InetAddress.getLocalHost(), l2GroupPorts[i], 0L, false, new File("."));
+      proxies[i].setReuseAddress(true);
+      serverControls[i] = new ExtraProcessServerControl("localhost", dsoPorts[i], jmxPorts[i], configFiles[i]
+          .getAbsolutePath(), true, serverNames[i], null, javaHome, true);
+    }
+    setUp(factory, helper, true);
+  }
+
   protected final void setUpControlledServer(TestTVSConfigurationSetupManagerFactory factory,
                                              DSOClientConfigHelper helper, int serverPort, int adminPort,
                                              String configFile, List jvmArgs) throws Exception {
@@ -236,7 +261,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
                                       int serverPort, int adminPort, String configFile, List jvmArgs) throws Exception {
     setJavaHome();
     assertNotNull(jvmArgs);
-    serverControl = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile, true, javaHome, jvmArgs);
+    serverControl = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile, true, javaHome,
+                                                  jvmArgs);
     setUp(factory, helper);
 
     ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(serverPort);
@@ -246,12 +272,22 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
   private final void setUp(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper)
       throws Exception {
+    setUp(factory, helper, false);
+  }
+
+  private final void setUp(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper,
+                           boolean serverControlsSet) throws Exception {
     super.setUp();
     this.configFactory = factory;
     this.configHelper = helper;
-    transparentAppConfig = new TransparentAppConfig(getApplicationClass().getName(), new TestGlobalIdGenerator(),
-                                                    DEFAULT_CLIENT_COUNT, DEFAULT_INTENSITY, serverControl,
-                                                    DEFAULT_VALIDATOR_COUNT);
+    if (serverControlsSet) {
+      transparentAppConfig = new TransparentAppConfig(getApplicationClass().getName(), new TestGlobalIdGenerator(),
+                                                      DEFAULT_CLIENT_COUNT, DEFAULT_INTENSITY, serverControls, proxies);
+    } else {
+      transparentAppConfig = new TransparentAppConfig(getApplicationClass().getName(), new TestGlobalIdGenerator(),
+                                                      DEFAULT_CLIENT_COUNT, DEFAULT_INTENSITY, serverControl,
+                                                      DEFAULT_VALIDATOR_COUNT);
+    }
   }
 
   protected synchronized final String mode() {
@@ -349,31 +385,48 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected boolean canRunProxyConnect() {
     return false;
   }
-  
+
   protected boolean enableL1Reconnect() {
     return false;
   }
 
+  protected void startServerControlsAndProxies() throws Exception {
+    assertEquals(serverControls.length, 2);
+    for (int i = 0; i < serverControls.length; i++) {
+      serverControls[i].start(30 * 1000);
+
+      // make sure that the first server becomes active
+      if (i == 0) {
+        Thread.sleep(10 * 1000);
+      } else {
+        proxies[1].start();
+        proxies[0].start();
+      }
+    }
+  }
+
   public void test() throws Exception {
     if (canRun()) {
-      if (controlledCrashMode && !isActivePassive()) {
-        serverControl.start(30 * 1000);
-      } else if (controlledCrashMode) {
+      if (controlledCrashMode && isActivePassive() && apServerManager != null) {
         apServerManager.startServers();
+      } else if (controlledCrashMode && serverControl != null) {
+        serverControl.start(30 * 1000);
+      } else if (controlledCrashMode && serverControls != null && proxies != null) {
+        startServerControlsAndProxies();
       } else if (useExternalProcess()) {
         serverControl.start(30 * 1000);
       }
       // start proxy after server is up
-      if(canRunProxyConnect()) {
+      if (canRunProxyConnect()) {
         // not support active-passive yet
-        while((serverControl !=null) && !serverControl.isRunning()) {
+        while ((serverControl != null) && !serverControl.isRunning()) {
           try {
             Thread.sleep(500);
           } catch (Exception e) {
             //
           }
         }
-        ProxyConnectManagerImpl.getManager().startProxyTest();        
+        ProxyConnectManagerImpl.getManager().startProxyTest();
       }
       this.runner.run();
 
@@ -407,38 +460,49 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   private void dumpServers() throws Exception {
     if (serverControl != null && serverControl.isRunning()) {
       System.out.println("Dumping server=[" + serverControl.getDsoPort() + "]");
-
-      JMXConnector jmxConnector = ActivePassiveServerManager.getJMXConnector(serverControl.getAdminPort());
-      MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
-      L2DumperMBean mbean = (L2DumperMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DUMPER,
-                                                                                          L2DumperMBean.class, true);
-      while (true) {
-        try {
-          mbean.doServerDump();
-          break;
-        } catch (Exception e) {
-          System.out.println("Could not find L2DumperMBean... sleep for 1 sec.");
-          Thread.sleep(1000);
-        }
-      }
-
-      if (pid != 0) {
-        mbean.setThreadDumpCount(getThreadDumpCount());
-        mbean.setThreadDumpInterval(getThreadDumpInterval());
-        System.out.println("Thread dumping server=[" + serverControl.getDsoPort() + "] pid=[" + pid + "]");
-        pid = mbean.doThreadDump();
-      }
-      jmxConnector.close();
+      dumpServerControl(serverControl);
     }
+
     if (apServerManager != null) {
       apServerManager.dumpAllServers(pid, getThreadDumpCount(), getThreadDumpInterval());
       pid = apServerManager.getPid();
     }
+
+    if (serverControls != null) {
+      for (int i = 0; i < serverControls.length; i++) {
+        dumpServerControl(serverControls[i]);
+      }
+    }
+
     if (runner != null) {
       runner.dumpServer();
     } else {
       System.err.println("Runner is null !!");
     }
+  }
+
+  private void dumpServerControl(ServerControl control) throws Exception {
+    JMXConnector jmxConnector = ActivePassiveServerManager.getJMXConnector(control.getAdminPort());
+    MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+    L2DumperMBean mbean = (L2DumperMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DUMPER,
+                                                                                        L2DumperMBean.class, true);
+    while (true) {
+      try {
+        mbean.doServerDump();
+        break;
+      } catch (Exception e) {
+        System.out.println("Could not find L2DumperMBean... sleep for 1 sec.");
+        Thread.sleep(1000);
+      }
+    }
+
+    if (pid != 0) {
+      mbean.setThreadDumpCount(getThreadDumpCount());
+      mbean.setThreadDumpInterval(getThreadDumpInterval());
+      System.out.println("Thread dumping server=[" + serverControl.getDsoPort() + "] pid=[" + pid + "]");
+      pid = mbean.doThreadDump();
+    }
+    jmxConnector.close();
   }
 
   protected void tearDown() throws Exception {
@@ -455,7 +519,15 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
         }
       }
     }
-    
+
+    if (serverControls != null) {
+      for (int i = 0; i < serverControls.length; i++) {
+        if (serverControls[i].isRunning()) {
+          serverControls[i].shutdown();
+        }
+      }
+    }
+
     if (serverControl != null && serverControl.isRunning()) {
       serverControl.shutdown();
     }

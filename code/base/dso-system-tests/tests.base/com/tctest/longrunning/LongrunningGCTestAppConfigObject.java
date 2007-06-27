@@ -1,8 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.longrunning;
 
+import com.tc.net.proxy.TCPProxy;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.ApplicationConfig;
 
@@ -39,7 +41,6 @@ public class LongrunningGCTestAppConfigObject implements LongrunningGCTestAppCon
     return null;
   }
 
-
   public int getIntensity() {
     throw new AssertionError();
   }
@@ -61,6 +62,14 @@ public class LongrunningGCTestAppConfigObject implements LongrunningGCTestAppCon
   }
 
   public int getGlobalValidatorCount() {
+    throw new AssertionError();
+  }
+
+  public TCPProxy[] getProxies() {
+    throw new AssertionError();
+  }
+
+  public ServerControl[] getServerControls() {
     throw new AssertionError();
   }
 }

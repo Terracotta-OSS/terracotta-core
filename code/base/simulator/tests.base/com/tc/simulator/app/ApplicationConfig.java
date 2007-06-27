@@ -4,6 +4,7 @@
  */
 package com.tc.simulator.app;
 
+import com.tc.net.proxy.TCPProxy;
 import com.tc.objectserver.control.ServerControl;
 
 public interface ApplicationConfig {
@@ -25,4 +26,8 @@ public interface ApplicationConfig {
   int getValidatorCount();
 
   int getGlobalValidatorCount();
+  
+  ServerControl[] getServerControls();
+  
+  TCPProxy[] getProxies();
 }

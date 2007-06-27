@@ -1,10 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tcsimulator;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
+import com.tc.net.proxy.TCPProxy;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOApplicationConfig;
 import com.tc.objectserver.control.ServerControl;
@@ -20,26 +22,26 @@ public class ApplicationConfigImpl implements ApplicationConfig {
   private final int    globalParticipantCount;
   private final Map    attributes;
   private int          hashCode;
-  private final int validatorCount;
+  private final int    validatorCount;
 
   public static void visitDSOApplicationConfig(ConfigVisitor visitor, DSOApplicationConfig config) {
     String classname = ApplicationConfigImpl.class.getName();
     config.addIncludePattern(classname);
     config.addWriteAutolock("* " + classname + ".*(..)");
   }
-  
+
   public ApplicationConfigImpl(String applicatonClassname, int intensity, int globalParticipantCount) {
     this(applicatonClassname, intensity, globalParticipantCount, 0);
   }
-  
+
   public ApplicationConfigImpl(String applicatonClassname, int intensity, int globalParticipantCount, int validatorCount) {
     this.applicatonClassname = applicatonClassname;
     this.intensity = intensity;
     this.globalParticipantCount = globalParticipantCount;
     this.validatorCount = validatorCount;
     attributes = new HashMap();
-    hashCode = new HashCodeBuilder(17, 37).append(this.applicatonClassname).append(intensity).append(globalParticipantCount)
-        .append(attributes).toHashCode();
+    hashCode = new HashCodeBuilder(17, 37).append(this.applicatonClassname).append(intensity)
+        .append(globalParticipantCount).append(attributes).toHashCode();
   }
 
   public String getApplicationClassname() {
@@ -53,7 +55,7 @@ public class ApplicationConfigImpl implements ApplicationConfig {
   public int getGlobalParticipantCount() {
     return this.globalParticipantCount;
   }
-  
+
   public int getValidatorCount() {
     return validatorCount;
   }
@@ -74,7 +76,7 @@ public class ApplicationConfigImpl implements ApplicationConfig {
   public String getAttribute(String key) {
     return (String) attributes.get(key);
   }
-  
+
   public ApplicationConfig copy() {
     return new ApplicationConfigImpl(applicatonClassname, intensity, globalParticipantCount, validatorCount);
   }
@@ -85,5 +87,13 @@ public class ApplicationConfigImpl implements ApplicationConfig {
 
   public int getGlobalValidatorCount() {
     throw new AssertionError("This method needs to be implemented");
+  }
+
+  public TCPProxy[] getProxies() {
+    throw new UnsupportedOperationException("not implemented, should not be used");
+  }
+
+  public ServerControl[] getServerControls() {
+    throw new UnsupportedOperationException("not implemented, should not be used");
   }
 }

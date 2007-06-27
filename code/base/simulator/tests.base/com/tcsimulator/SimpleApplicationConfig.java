@@ -1,8 +1,10 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tcsimulator;
 
+import com.tc.net.proxy.TCPProxy;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.ApplicationConfig;
 
@@ -10,15 +12,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SimpleApplicationConfig implements ApplicationConfig {
-  
+
   private final Map attributes = new HashMap();
-  
+
   public SimpleApplicationConfig() {
     // XXX: This is pretty retarded.
     setAttribute("sleepInterval", "0");
     setAttribute("throwException", Boolean.FALSE.toString());
-  } 
-  
+  }
+
   public String getApplicationClassname() {
     return SimpleApplication.class.getName();
   }
@@ -28,7 +30,7 @@ public class SimpleApplicationConfig implements ApplicationConfig {
   }
 
   public String getAttribute(String key) {
-    return (String)attributes.get(key);
+    return (String) attributes.get(key);
   }
 
   public int getIntensity() {
@@ -52,6 +54,14 @@ public class SimpleApplicationConfig implements ApplicationConfig {
   }
 
   public int getGlobalValidatorCount() {
+    throw new AssertionError();
+  }
+
+  public TCPProxy[] getProxies() {
+    throw new AssertionError();
+  }
+
+  public ServerControl[] getServerControls() {
     throw new AssertionError();
   }
 }

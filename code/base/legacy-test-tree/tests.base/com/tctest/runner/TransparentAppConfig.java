@@ -4,6 +4,7 @@
  */
 package com.tctest.runner;
 
+import com.tc.net.proxy.TCPProxy;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.ApplicationConfig;
@@ -19,10 +20,19 @@ public class TransparentAppConfig implements ApplicationConfig, ApplicationConfi
   private final GlobalIdGenerator idGenerator;
   private final Map               extraConfigAttributes             = new HashMap();
   private final ServerControl     serverControl;
+  private ServerControl[]         serverControls;
+  private TCPProxy[]              proxies;
   private int                     intensity;
   private int                     clientCount;
   private int                     applicationInstancePerClientCount = 1;
   private int                     validatorCount;
+
+  public TransparentAppConfig(String applicationClassname, GlobalIdGenerator idGenerator, int clientCount,
+                              int intensity, ServerControl[] serverControls, TCPProxy[] proxies) {
+    this(applicationClassname, idGenerator, clientCount, intensity, null, 0);
+    this.serverControls = serverControls;
+    this.proxies = proxies;
+  }
 
   public TransparentAppConfig(String applicationClassname, GlobalIdGenerator idGenerator, int clientCount,
                               int intensity, ServerControl serverControl) {
@@ -116,5 +126,13 @@ public class TransparentAppConfig implements ApplicationConfig, ApplicationConfi
 
   public ServerControl getServerControl() {
     return serverControl;
+  }
+
+  public ServerControl[] getServerControls() {
+    return serverControls;
+  }
+
+  public TCPProxy[] getProxies() {
+    return proxies;
   }
 }

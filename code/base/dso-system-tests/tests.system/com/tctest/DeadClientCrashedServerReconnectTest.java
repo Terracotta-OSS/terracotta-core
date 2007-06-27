@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -8,7 +9,7 @@ import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
-import com.tc.net.proxy.TCPProxy;
+import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.PauseListener;
@@ -18,19 +19,27 @@ import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.objectserver.control.ServerControl;
+import com.tc.stats.DSOMBean;
+import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
 import com.tc.test.restart.RestartTestEnvironment;
 import com.tc.test.restart.RestartTestHelper;
 import com.tc.util.PortChooser;
 
-import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.List;
+
+import javax.management.MBeanServerConnection;
+import javax.management.MBeanServerInvocationHandler;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
 
 public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
 
   private TestPauseListener pauseListener;
 
   public DeadClientCrashedServerReconnectTest() {
-    this.disableAllUntil("3001-01-01");
+    // this.disableAllUntil("3001-01-01");
   }
 
   public void setUp() {
@@ -38,32 +47,36 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
   }
 
   public void testClientsStayDeadAcrossRestarts() throws Exception {
-    final boolean isCrashy = true;
+    final boolean isCrashy = true; // so persistence will be on
     PortChooser portChooser = new PortChooser();
+    List jvmArgs = new ArrayList();
+    int proxyPort = portChooser.chooseRandomPort();
+    long startTimeout = 20 * 60 * 1000;
+    int clientReconnectWindowInSec = 120;
+
     RestartTestHelper helper = new RestartTestHelper(isCrashy,
                                                      new RestartTestEnvironment(this.getTempDirectory(), portChooser,
                                                                                 RestartTestEnvironment.DEV_MODE),
-                                                                                new ArrayList());
+                                                     jvmArgs);
+    int dsoPort = helper.getServerPort();
+    int jmxPort = helper.getAdminPort();
     ServerControl server = helper.getServerControl();
-    long startTimeout = 20 * 60 * 1000;
+
+    ProxyConnectManagerImpl mgr = ProxyConnectManagerImpl.getManager();
+    mgr.setDsoPort(dsoPort);
+    mgr.setProxyPort(proxyPort);
+    mgr.setupProxy();
+
     server.start(startTimeout);
 
-    int proxyListenPort = portChooser.chooseRandomPort();
-    InetAddress destHost = InetAddress.getByName("localhost");
-    int destPort = server.getDsoPort();
-    long delay = 0;
-    boolean logData = true;
-    TCPProxy proxy = new TCPProxy(proxyListenPort, destHost, destPort, delay, logData, getTempDirectory());
-    proxy.toggleDebug();
-    proxy.start();
+    mgr.proxyUp();
 
-    makeClientUsePort(proxyListenPort);
-
+    // config for client
+    configFactory().addServerToL1Config(null, proxyPort, jmxPort);
     L1TVSConfigurationSetupManager manager = super.createL1ConfigManager();
+
     DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelper(manager);
-
     PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(manager);
-
     DistributedObjectClient client = new DistributedObjectClient(configHelper,
                                                                  new TCThreadGroup(new ThrowableHandler(TCLogging
                                                                      .getLogger(DistributedObjectClient.class))),
@@ -75,21 +88,45 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     // wait until client handshake is complete...
     pauseListener.waitUntilUnpaused();
 
+    checkServerHasClients(1, jmxPort);
+
+    Thread.sleep(5 * 1000);
+
     // disconnect the client from the server... this should make the server kill the client from the server
     // perspective...
-    proxy.stop();
+    mgr.proxyDown();
 
     // Now crash the server
     server.crash();
 
     // start the server back up
-    proxy.start();
     server.start(startTimeout);
+    mgr.proxyUp();
 
-    // XXX: This is kind of dumb... there should be a way to find out from the server if the client has actually
-    // tried to connect but was not allowed to.
-    Thread.sleep(10 * 1000);
+    System.out.println("***** Waiting for client reconnect window period to expire:  clientReconnectWindowInSec=["
+                       + clientReconnectWindowInSec + "]");
+    Thread.sleep((clientReconnectWindowInSec + 10) * 1000);
+
     assertTrue(pauseListener.isPaused());
+
+    checkServerHasClients(0, jmxPort);
+  }
+
+  private void checkServerHasClients(int clientCount, int jmxPort) throws Exception {
+    String url = "service:jmx:rmi:///jndi/rmi://localhost:" + jmxPort + "/jmxrmi";
+    JMXServiceURL jmxServerUrl = new JMXServiceURL(url);
+    JMXConnector jmxConnector = JMXConnectorFactory.newJMXConnector(jmxServerUrl, null);
+    jmxConnector.connect();
+    MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+    DSOMBean mbean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DSO, DSOMBean.class,
+                                                                              true);
+    int actualClientCount = mbean.getClients().length;
+    if (actualClientCount != clientCount) { throw new AssertionError(
+                                                                     "Incorrect number of clients connected to the server: expected=["
+                                                                         + clientCount + "] but was actual=["
+                                                                         + actualClientCount + "]."); }
+
+    System.out.println("***** " + clientCount + " clients are connected to the server.");
   }
 
   private static final class TestPauseListener implements PauseListener {
