@@ -3,6 +3,7 @@ package com.tctest.rife.tests;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.HashMap;
+import java.util.Date;
 
 import junit.framework.Test;
 
@@ -19,12 +20,18 @@ import com.tctest.rife.elements.AllTypes;
 import com.uwyn.rife.engine.ReservedParameters;
 import com.uwyn.rife.servlet.RifeFilter;
 import com.uwyn.rife.tools.StringUtils;
+import com.tc.util.runtime.Vm;
 
 public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 	public static Test suite() {
 		return new ContinuationsTestSetup();
 	}
 
+  public ContinuationsTest() {
+    if (Vm.isIBM()) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
+  }
 	/**
 	 * This test simply counts to 10 inside a while loop.
 	 * The execution is paused in the middle of the loop so that the user can
