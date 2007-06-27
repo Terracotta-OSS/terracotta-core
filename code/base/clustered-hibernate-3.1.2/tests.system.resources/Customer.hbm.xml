@@ -20,6 +20,7 @@
         
     <set name="products" 
         table="Customer_Products" cascade="save-update,lock" lazy="true" fetch="select" batch-size="1">
+        <cache usage="nonstrict-read-write" />
         <key column="CUS_ID"/>
         <many-to-many column="PROD_ID"
             class="com.tctest.domain.Product"/>

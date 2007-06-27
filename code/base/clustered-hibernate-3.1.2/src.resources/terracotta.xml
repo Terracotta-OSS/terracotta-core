@@ -12,6 +12,10 @@
 
   <locks>
     <autolock auto-synchronized="true">
+      <method-expression>* org.hibernate.cache.ReadWriteCache$Lock.*(..)</method-expression>
+      <lock-level>write</lock-level>
+    </autolock>
+    <autolock auto-synchronized="true">
       <method-expression>* org.hibernate.collection.AbstractPersistentCollection.*(..)</method-expression>
       <lock-level>write</lock-level>
     </autolock>

@@ -64,6 +64,7 @@ public final class HibernateTerracottaConfigurator extends TerracottaConfigurato
     configHelper.addIncludePattern("org.hibernate.cache.ReadWriteCache$Item", false, false, false);
     configHelper.addIncludePattern("org.hibernate.cache.ReadWriteCache$Lock", false, false, false);
     configHelper.addIncludePattern("org.hibernate.cache.entry.CacheEntry", false, false, false);
+    configHelper.addIncludePattern("org.hibernate.cache.entry.CollectionCacheEntry", false, false, false);
     configHelper.addRoot("ReadWriteCache", "org.hibernate.cache.ReadWriteCache.cache");
     /**
      * Second level cache ends

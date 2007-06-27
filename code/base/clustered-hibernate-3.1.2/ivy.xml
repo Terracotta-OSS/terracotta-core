@@ -5,5 +5,6 @@
 	<dependency name="hibernate" rev="3.1.2" org="terracotta"/>
 	<dependency name="cglib" rev="nodep-2.1_3"/>
 	<dependency name="jta" rev="1.0.1b" org="terracotta"/>
+	<dependency name="ehcache" rev="1.2.4" org="terracotta"/>
   </dependencies>
 </ivy-module>

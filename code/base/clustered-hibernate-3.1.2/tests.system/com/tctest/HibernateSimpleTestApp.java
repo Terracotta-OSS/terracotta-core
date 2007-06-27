@@ -1,5 +1,7 @@
 package com.tctest;
 
+import net.sf.ehcache.CacheManager;
+
 import org.hibernate.Session;
 import org.terracotta.modules.hibernate_3_1_2.util.HibernateUtil;
 
@@ -64,6 +66,8 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
       } finally {
         if (index == 0) {
           shutdownDatabase();
+          CacheManager.getInstance().shutdown(); // This is a total hack to shutdown the Ehcache provider before the TC server
+                                                 // shutdown. If cache other than EhCache is used, we may need to modify this.
         }
       }
 
@@ -75,6 +79,9 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
 
   private void singleNodeDeleteTest(int index) throws Exception {
     Customer cus1 = (Customer) loadByIdentifier(Customer.class, 1);
+    Set products = cus1.getProducts();
+    int productSize = products.size();
+    Assert.assertEquals(2, productSize);
 
     assertEqualCustomer(cus1);
     
@@ -162,7 +169,7 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
     
     barrier.barrier();
   }
-
+  
   private Object loadByIdentifier(Class clazz, int id) throws Exception {
     Session session = HibernateUtil.getSessionFactory().getCurrentSession();
     session.beginTransaction();
@@ -319,7 +326,7 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
 
     config.addNewModule("clustered-hibernate-3.1.2", "1.0.0");
     //config.addNewModule("clustered-cglib-2.1.3", "1.0.0");
-    //config.addNewModule("clustered-ehcache-1.2.4", "1.0.0");
+    config.addNewModule("clustered-ehcache-1.2.4", "1.0.0");
   }
 
 }

@@ -7,5 +7,6 @@
 	<dependency name="cglib" rev="nodep-2.1_3"/>
 	<dependency name="jta" rev="1.0.1b" org="terracotta"/>
 	<dependency name="dom4j" rev="1.6.1"/>
+	<dependency name="ehcache" rev="1.2.4" org="terracotta"/>
   </dependencies>
 </ivy-module>
