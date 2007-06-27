@@ -51,8 +51,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     PortChooser portChooser = new PortChooser();
     List jvmArgs = new ArrayList();
     int proxyPort = portChooser.chooseRandomPort();
-    long startTimeout = 20 * 60 * 1000;
-    int clientReconnectWindowInSec = 120;
+    long startTimeout = 2 * 60 * 1000;
 
     RestartTestHelper helper = new RestartTestHelper(isCrashy,
                                                      new RestartTestEnvironment(this.getTempDirectory(), portChooser,
@@ -96,6 +95,9 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     // perspective...
     mgr.proxyDown();
 
+    // give time for server to process client disconnect
+    Thread.sleep(5 * 1000);
+
     // Now crash the server
     server.crash();
 
@@ -103,9 +105,8 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     server.start(startTimeout);
     mgr.proxyUp();
 
-    System.out.println("***** Waiting for client reconnect window period to expire:  clientReconnectWindowInSec=["
-                       + clientReconnectWindowInSec + "]");
-    Thread.sleep((clientReconnectWindowInSec + 10) * 1000);
+    // give time for jmx server to start up
+    Thread.sleep(15 * 1000);
 
     assertTrue(pauseListener.isPaused());
 
