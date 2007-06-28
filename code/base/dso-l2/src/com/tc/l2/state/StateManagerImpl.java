@@ -238,10 +238,12 @@ public class StateManagerImpl implements StateManager {
   private void handleElectionAbort(L2StateMessage clusterMsg) {
     if (state == ACTIVE_COORDINATOR) {
       // Cant get Abort back to ACTIVE, if so then there is a split brain
-      logger.error(state + " Received Abort Election  Msg : Possible split brain detected ");
-      throw new AssertionError(state + " Received Abort Election  Msg : Possible split brain detected ");
+      String error = state + " Received Abort Election  Msg : Possible split brain detected ";
+      logger.error(error);
+      groupManager.zapNode(clusterMsg.messageFrom(), L2HAZapNodeRequestProcessor.SPLIT_BRAIN, error);
+    } else {
+      electionMgr.handleElectionAbort(clusterMsg);
     }
-    electionMgr.handleElectionAbort(clusterMsg);
   }
 
   private void handleStartElectionRequest(L2StateMessage msg) throws GroupException {
