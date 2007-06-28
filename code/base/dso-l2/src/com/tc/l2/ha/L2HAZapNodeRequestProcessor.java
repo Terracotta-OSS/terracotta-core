@@ -24,6 +24,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
   public static final int              COMMUNICATION_ERROR       = 0x01;
   public static final int              PROGRAM_ERROR             = 0x02;
   public static final int              NODE_JOINED_WITH_DIRTY_DB = 0x03;
+  public static final int              SPLIT_BRAIN               = 0xff;
 
   private final TCLogger               consoleLogger;
   private final StateManager           stateManager;
@@ -68,6 +69,8 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
         return "PROGRAM ERROR";
       case NODE_JOINED_WITH_DIRTY_DB:
         return "Newly Joined Node Contains dirty database. (Please clean up DB and restart node)";
+      case SPLIT_BRAIN:
+        return "SPLIT BRAIN DEDUCTED";
       default:
         throw new AssertionError("Unknown type : " + type);
     }
@@ -78,6 +81,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
       case COMMUNICATION_ERROR:
       case PROGRAM_ERROR:
       case NODE_JOINED_WITH_DIRTY_DB:
+      case SPLIT_BRAIN:
         break;
       default:
         throw new AssertionError("Unknown type : " + type + " reason : " + reason);
@@ -124,7 +128,8 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
     } else {
       logger.warn("Not quiting since the other servers weight = " + toString(weights)
                   + " is not greater than my weight = " + toString(myWeights));
-      consoleLogger.warn("Ignoring Quit request from " + nodeID + " since remote servers weight is not greater than local weight");
+      consoleLogger.warn("Ignoring Quit request from " + nodeID
+                         + " since remote servers weight is not greater than local weight");
     }
   }
 

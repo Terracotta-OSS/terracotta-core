@@ -195,16 +195,16 @@ public class StateManagerImpl implements StateManager {
   }
 
   private synchronized void handleElectionWonMessage(L2StateMessage clusterMsg) {
+    Enrollment winningEnrollment = clusterMsg.getEnrollment();
     if (state == ACTIVE_COORDINATOR) {
       // Cant get Election Won from another node : Split brain
-      // TODO:: Add some reconcile path
-      logger.error(state + " Received Election Won Msg : " + clusterMsg + ". Possible split brain detected ");
-      throw new AssertionError(state + " Received Election Won Msg : " + clusterMsg
-                               + ". Possible split brain detected ");
+      String error = state + " Received Election Won Msg : " + clusterMsg + ". Possible split brain detected";
+      logger.error(error);
+      groupManager.zapNode(winningEnrollment.getNodeID(), L2HAZapNodeRequestProcessor.SPLIT_BRAIN, error);
+    } else {
+      this.activeNode = winningEnrollment.getNodeID();
+      moveToPassiveState(winningEnrollment);
     }
-    Enrollment winningEnrollment = clusterMsg.getEnrollment();
-    this.activeNode = winningEnrollment.getNodeID();
-    moveToPassiveState(winningEnrollment);
   }
 
   private synchronized void handleElectionResultMessage(L2StateMessage msg) throws GroupException {
