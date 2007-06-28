@@ -39,8 +39,9 @@ public class JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter extends C
     
     public void visitCode() {
       super.visitCode();
-      super.visitInsn(ICONST_0);
-      super.visitVarInsn(ISTORE, newLocalVar);
+      
+      mv.visitInsn(ICONST_0);
+      mv.visitVarInsn(ISTORE, newLocalVar);
     }
     
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {

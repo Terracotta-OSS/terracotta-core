@@ -396,22 +396,20 @@ public class CheckMethodAdapter extends MethodAdapter {
                     + " for frame type " + type);
         }
 
+        if (type != Opcodes.F_CHOP) {
         if (nLocal > 0 && (local == null || local.length < nLocal)) {
             throw new IllegalArgumentException("Array local[] is shorter than nLocal");
+            }
+            for (int i = 0; i < nLocal; ++i) {
+                checkFrameValue(local[i]);
+            }
         }
         if (nStack > 0 && (stack == null || stack.length < nStack)) {
             throw new IllegalArgumentException("Array stack[] is shorter than nStack");
         }
-
-        /*
-         * TODO check values of the individual frames. Primitive types are
-         * represented by Opcodes.TOP, Opcodes.INTEGER, Opcodes.FLOAT,
-         * Opcodes.LONG, Opcodes.DOUBLE,Opcodes.NULL or
-         * Opcodes.UNINITIALIZED_THIS (long and double are represented by a
-         * single element). Reference types are represented by String objects,
-         * and uninitialized types by Label objects (this label designates the
-         * NEW instruction that created this uninitialized value).
-         */
+        for (int i = 0; i < nStack; ++i) {
+            checkFrameValue(stack[i]);
+        }
 
         mv.visitFrame(type, nLocal, local, nStack, stack);
     }
@@ -452,20 +450,16 @@ public class CheckMethodAdapter extends MethodAdapter {
         mv.visitVarInsn(opcode, var);
     }
 
-    public void visitTypeInsn(final int opcode, final String desc) {
+    public void visitTypeInsn(final int opcode, final String type) {
         checkStartCode();
         checkEndCode();
         checkOpcode(opcode, 3);
-        if (desc != null && desc.length() > 0 && desc.charAt(0) == '[') {
-            checkDesc(desc, false);
-        } else {
-            checkInternalName(desc, "type");
-        }
-        if (opcode == Opcodes.NEW && desc.charAt(0) == '[') {
+        checkInternalName(type, "type");
+        if (opcode == Opcodes.NEW && type.charAt(0) == '[') {
             throw new IllegalArgumentException("NEW cannot be used to create arrays: "
-                    + desc);
+                    + type);
         }
-        mv.visitTypeInsn(opcode, desc);
+        mv.visitTypeInsn(opcode, type);
     }
 
     public void visitFieldInsn(
@@ -493,10 +487,7 @@ public class CheckMethodAdapter extends MethodAdapter {
         checkEndCode();
         checkOpcode(opcode, 5);
         checkMethodIdentifier(name, "name");
-        if (!name.equals("clone")) {
-            // In JDK1.5, clone method can be called on array class descriptors
-            checkInternalName(owner, "owner");
-        }
+        checkInternalName(owner, "owner");
         checkMethodDesc(desc);
         mv.visitMethodInsn(opcode, owner, name, desc);
     }
@@ -686,6 +677,29 @@ public class CheckMethodAdapter extends MethodAdapter {
     }
 
     /**
+     * Checks a stack frame value.
+     * 
+     * @param value the value to be checked.
+     */
+    static void checkFrameValue(final Object value) {
+        if (value == Opcodes.TOP || value == Opcodes.INTEGER
+                || value == Opcodes.FLOAT || value == Opcodes.LONG
+                || value == Opcodes.DOUBLE || value == Opcodes.NULL
+                || value == Opcodes.UNINITIALIZED_THIS)
+        {
+            return;
+        }
+        if (value instanceof String) {
+            checkInternalName((String) value, "Invalid stack frame value");
+            return;
+        }
+        if (!(value instanceof Label)) {
+            throw new IllegalArgumentException("Invalid stack frame value: "
+                    + value);
+        }
+    }
+
+    /**
      * Checks that the type of the given opcode is equal to the given type.
      * 
      * @param opcode the opcode to be checked.
@@ -833,7 +847,15 @@ public class CheckMethodAdapter extends MethodAdapter {
      * @param msg a message to be used in case of error.
      */
     static void checkInternalName(final String name, final String msg) {
-        checkInternalName(name, 0, -1, msg);
+        if (name == null || name.length() == 0) {
+            throw new IllegalArgumentException("Invalid " + msg
+                    + " (must not be null or empty)");
+        }
+        if (name.charAt(0) == '[') {
+            checkDesc(name, false);
+        } else {
+            checkInternalName(name, 0, -1, msg);
+        }
     }
 
     /**
@@ -852,10 +874,6 @@ public class CheckMethodAdapter extends MethodAdapter {
         final int end,
         final String msg)
     {
-        if (name == null || name.length() == 0) {
-            throw new IllegalArgumentException("Invalid " + msg
-                    + " (must not be null or empty)");
-        }
         int max = end == -1 ? name.length() : end;
         try {
             int begin = start;
@@ -979,6 +997,309 @@ public class CheckMethodAdapter extends MethodAdapter {
         if (start != desc.length()) {
             throw new IllegalArgumentException("Invalid descriptor: " + desc);
         }
+    }
+
+    /**
+     * Checks a class signature.
+     * 
+     * @param signature a string containing the signature that must be checked.
+     */
+    static void checkClassSignature(final String signature) {
+        // ClassSignature:
+        // FormalTypeParameters? ClassTypeSignature ClassTypeSignature*
+
+        int pos = 0;
+        if (getChar(signature, 0) == '<') {
+            pos = checkFormalTypeParameters(signature, pos);
+        }
+        pos = checkClassTypeSignature(signature, pos);
+        while (getChar(signature, pos) == 'L') {
+            pos = checkClassTypeSignature(signature, pos);
+        }
+        if (pos != signature.length()) {
+            throw new IllegalArgumentException(signature + ": error at index "
+                    + pos);
+        }
+    }
+
+    /**
+     * Checks a method signature.
+     * 
+     * @param signature a string containing the signature that must be checked.
+     */
+    static void checkMethodSignature(final String signature) {
+        // MethodTypeSignature:
+        // FormalTypeParameters? ( TypeSignature* ) ( TypeSignature | V ) (
+        // ^ClassTypeSignature | ^TypeVariableSignature )*
+
+        int pos = 0;
+        if (getChar(signature, 0) == '<') {
+            pos = checkFormalTypeParameters(signature, pos);
+        }
+        pos = checkChar('(', signature, pos);
+        while ("ZCBSIFJDL[T".indexOf(getChar(signature, pos)) != -1) {
+            pos = checkTypeSignature(signature, pos);
+        }
+        pos = checkChar(')', signature, pos);
+        if (getChar(signature, pos) == 'V') {
+            ++pos;
+        } else {
+            pos = checkTypeSignature(signature, pos);
+        }
+        while (getChar(signature, pos) == '^') {
+            ++pos;
+            if (getChar(signature, pos) == 'L') {
+                pos = checkClassTypeSignature(signature, pos);
+            } else {
+                pos = checkTypeVariableSignature(signature, pos);
+            }
+        }
+        if (pos != signature.length()) {
+            throw new IllegalArgumentException(signature + ": error at index "
+                    + pos);
+        }
+    }
+
+    /**
+     * Checks a field signature.
+     * 
+     * @param signature a string containing the signature that must be checked.
+     */
+    static void checkFieldSignature(final String signature) {
+        int pos = checkFieldTypeSignature(signature, 0);
+        if (pos != signature.length()) {
+            throw new IllegalArgumentException(signature + ": error at index "
+                    + pos);
+        }
+    }
+
+    /**
+     * Checks the formal type parameters of a class or method signature.
+     * 
+     * @param signature a string containing the signature that must be checked.
+     * @param pos index of first character to be checked.
+     * @return the index of the first character after the checked part.
+     */
+    private static int checkFormalTypeParameters(final String signature, int pos)
+    {
+        // FormalTypeParameters:
+        // < FormalTypeParameter+ >
+
+        pos = checkChar('<', signature, pos);
+        pos = checkFormalTypeParameter(signature, pos);
+        while (getChar(signature, pos) != '>') {
+            pos = checkFormalTypeParameter(signature, pos);
+        }
+        return pos + 1;
+    }
+
+    /**
+     * Checks a formal type parameter of a class or method signature.
+     * 
+     * @param signature a string containing the signature that must be checked.
+     * @param pos index of first character to be checked.
+     * @return the index of the first character after the checked part.
+     */
+    private static int checkFormalTypeParameter(final String signature, int pos)
+    {
+        // FormalTypeParameter:
+        // Identifier : FieldTypeSignature? (: FieldTypeSignature)*
+
+        pos = checkIdentifier(signature, pos);
+        pos = checkChar(':', signature, pos);
+        if ("L[T".indexOf(getChar(signature, pos)) != -1) {
+            pos = checkFieldTypeSignature(signature, pos);
+        }
+        while (getChar(signature, pos) == ':') {
+            pos = checkFieldTypeSignature(signature, pos + 1);
+        }
+        return pos;
+    }
+
+    /**
+     * Checks a field type signature.
+     * 
+     * @param signature a string containing the signature that must be checked.
+     * @param pos index of first character to be checked.
+     * @return the index of the first character after the checked part.
+     */
+    private static int checkFieldTypeSignature(final String signature, int pos)
+    {
+        // FieldTypeSignature:
+        // ClassTypeSignature | ArrayTypeSignature | TypeVariableSignature
+        //
+        // ArrayTypeSignature:
+        // [ TypeSignature
+
+        switch (getChar(signature, pos)) {
+            case 'L':
+                return checkClassTypeSignature(signature, pos);
+            case '[':
+                return checkTypeSignature(signature, pos + 1);
+            default:
+                return checkTypeVariableSignature(signature, pos);
+        }
+    }
+
+    /**
+     * Checks a class type signature.
+     * 
+     * @param signature a string containing the signature that must be checked.
+     * @param pos index of first character to be checked.
+     * @return the index of the first character after the checked part.
+     */
+    private static int checkClassTypeSignature(final String signature, int pos)
+    {
+        // ClassTypeSignature:
+        // L Identifier ( / Identifier )* TypeArguments? ( . Identifier
+        // TypeArguments? )* ;
+
+        pos = checkChar('L', signature, pos);
+        pos = checkIdentifier(signature, pos);
+        while (getChar(signature, pos) == '/') {
+            pos = checkIdentifier(signature, pos + 1);
+        }
+        if (getChar(signature, pos) == '<') {
+            pos = checkTypeArguments(signature, pos);
+        }
+        while (getChar(signature, pos) == '.') {
+            pos = checkIdentifier(signature, pos + 1);
+            if (getChar(signature, pos) == '<') {
+                pos = checkTypeArguments(signature, pos);
+            }
+        }
+        return checkChar(';', signature, pos);
+    }
+
+    /**
+     * Checks the type arguments in a class type signature.
+     * 
+     * @param signature a string containing the signature that must be checked.
+     * @param pos index of first character to be checked.
+     * @return the index of the first character after the checked part.
+     */
+    private static int checkTypeArguments(final String signature, int pos) {
+        // TypeArguments:
+        // < TypeArgument+ >
+
+        pos = checkChar('<', signature, pos);
+        pos = checkTypeArgument(signature, pos);
+        while (getChar(signature, pos) != '>') {
+            pos = checkTypeArgument(signature, pos);
+        }
+        return pos + 1;
+    }
+
+    /**
+     * Checks a type argument in a class type signature.
+     * 
+     * @param signature a string containing the signature that must be checked.
+     * @param pos index of first character to be checked.
+     * @return the index of the first character after the checked part.
+     */
+    private static int checkTypeArgument(final String signature, int pos) {
+        // TypeArgument:
+        // * | ( ( + | - )? FieldTypeSignature )
+
+        char c = getChar(signature, pos);
+        if (c == '*') {
+            return pos + 1;
+        } else if (c == '+' || c == '-') {
+            pos = pos + 1;
+        }
+        return checkFieldTypeSignature(signature, pos);
+    }
+
+    /**
+     * Checks a type variable signature.
+     * 
+     * @param signature a string containing the signature that must be checked.
+     * @param pos index of first character to be checked.
+     * @return the index of the first character after the checked part.
+     */
+    private static int checkTypeVariableSignature(
+        final String signature,
+        int pos)
+    {
+        // TypeVariableSignature:
+        // T Identifier ;
+
+        pos = checkChar('T', signature, pos);
+        pos = checkIdentifier(signature, pos);
+        return checkChar(';', signature, pos);
+    }
+
+    /**
+     * Checks a type signature.
+     * 
+     * @param signature a string containing the signature that must be checked.
+     * @param pos index of first character to be checked.
+     * @return the index of the first character after the checked part.
+     */
+    private static int checkTypeSignature(final String signature, int pos) {
+        // TypeSignature:
+        // Z | C | B | S | I | F | J | D | FieldTypeSignature
+
+        switch (getChar(signature, pos)) {
+            case 'Z':
+            case 'C':
+            case 'B':
+            case 'S':
+            case 'I':
+            case 'F':
+            case 'J':
+            case 'D':
+                return pos + 1;
+            default:
+                return checkFieldTypeSignature(signature, pos);
+        }
+    }
+
+    /**
+     * Checks an identifier.
+     * 
+     * @param signature a string containing the signature that must be checked.
+     * @param pos index of first character to be checked.
+     * @return the index of the first character after the checked part.
+     */
+    private static int checkIdentifier(final String signature, int pos) {
+        if (!Character.isJavaIdentifierStart(getChar(signature, pos))) {
+            throw new IllegalArgumentException(signature
+                    + ": identifier expected at index " + pos);
+        }
+        ++pos;
+        while (Character.isJavaIdentifierPart(getChar(signature, pos))) {
+            ++pos;
+        }
+        return pos;
+    }
+
+    /**
+     * Checks a single character.
+     * 
+     * @param signature a string containing the signature that must be checked.
+     * @param pos index of first character to be checked.
+     * @return the index of the first character after the checked part.
+     */
+    private static int checkChar(final char c, final String signature, int pos)
+    {
+        if (getChar(signature, pos) == c) {
+            return pos + 1;
+        }
+        throw new IllegalArgumentException(signature + ": '" + c
+                + "' expected at index " + pos);
+    }
+
+    /**
+     * Returns the signature car at the given index.
+     * 
+     * @param signature a signature.
+     * @param pos an index in signature.
+     * @return the character at the given index, or 0 if there is no such
+     *         character.
+     */
+    private static char getChar(final String signature, int pos) {
+        return pos < signature.length() ? signature.charAt(pos) : (char) 0;
     }
 
     /**

@@ -137,7 +137,7 @@ public class CheckClassAdapter extends ClassAdapter {
                     continue;
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                e.printStackTrace(pw);
             }
             Frame[] frames = a.getFrames();
 
@@ -166,7 +166,7 @@ public class CheckClassAdapter extends ClassAdapter {
                     s.append(' ');
                 }
                 pw.print(Integer.toString(j + 100000).substring(1));
-                pw.print(" " + s + " : " + mv.buf); // mv.text.get(j));
+                pw.print(" " + s + "\n  " + mv.buf); // mv.text.get(j));
             }
             for (int j = 0; j < method.tryCatchBlocks.size(); ++j) {
                 ((TryCatchBlockNode) method.tryCatchBlocks.get(j)).accept(mv);
@@ -174,6 +174,7 @@ public class CheckClassAdapter extends ClassAdapter {
             }
             pw.println();
         }
+        pw.flush();
     }
 
     private static String getShortName(final String name) {
@@ -217,7 +218,7 @@ public class CheckClassAdapter extends ClassAdapter {
                 + Opcodes.ACC_ABSTRACT + Opcodes.ACC_SYNTHETIC
                 + Opcodes.ACC_ANNOTATION + Opcodes.ACC_ENUM
                 + Opcodes.ACC_DEPRECATED);
-        if (!name.endsWith("package-info")) {
+        if (name == null || !name.endsWith("package-info")) {
             CheckMethodAdapter.checkInternalName(name, "class name");
         }
         if ("java/lang/Object".equals(name)) {
@@ -228,7 +229,7 @@ public class CheckClassAdapter extends ClassAdapter {
             CheckMethodAdapter.checkInternalName(superName, "super class name");
         }
         if (signature != null) {
-            // TODO
+            CheckMethodAdapter.checkClassSignature(signature);
         }
         if ((access & Opcodes.ACC_INTERFACE) != 0) {
             if (!"java/lang/Object".equals(superName)) {
@@ -310,7 +311,7 @@ public class CheckClassAdapter extends ClassAdapter {
         CheckMethodAdapter.checkIdentifier(name, "field name");
         CheckMethodAdapter.checkDesc(desc, false);
         if (signature != null) {
-            // TODO
+            CheckMethodAdapter.checkFieldSignature(signature);
         }
         if (value != null) {
             CheckMethodAdapter.checkConstant(value);
@@ -336,7 +337,7 @@ public class CheckClassAdapter extends ClassAdapter {
         CheckMethodAdapter.checkMethodIdentifier(name, "method name");
         CheckMethodAdapter.checkMethodDesc(desc);
         if (signature != null) {
-            // TODO
+            CheckMethodAdapter.checkMethodSignature(signature);
         }
         if (exceptions != null) {
             for (int i = 0; i < exceptions.length; ++i) {
