@@ -170,8 +170,9 @@ public class DNAEncoding {
 
   public void encode(Object value, TCDataOutput output) {
     if (value == null) {
-      // Null values should have already been converted to null ObjectID
-      throw new IllegalArgumentException("Object cannot be null");
+      // Normally Null values should have already been converted to null ObjectID, but this is not true when there are
+      // multiple versions of the same class in the cluster sharign data.
+      value = ObjectID.NULL_ID;
     }
 
     // final Class valueClass = value.getClass();
@@ -181,7 +182,7 @@ public class DNAEncoding {
     switch (type) {
       case LiteralValues.CURRENCY:
         output.writeByte(TYPE_ID_CURRENCY);
-        writeString(((Currency)value).getCurrencyCode(), output);
+        writeString(((Currency) value).getCurrencyCode(), output);
         break;
       case LiteralValues.ENUM:
         output.writeByte(TYPE_ID_ENUM);
@@ -727,7 +728,7 @@ public class DNAEncoding {
     }
     return rv;
   }
-  
+
   /**
    * The reason that we use reflection here is because Enum is a jdk 1.5 construct and this project is jdk 1.4
    * compliance.
@@ -736,7 +737,7 @@ public class DNAEncoding {
     try {
       Method m = enumObj.getClass().getMethod("getDeclaringClass", new Class[0]);
       Object enumDeclaringClass = m.invoke(enumObj, new Object[0]);
-      return (Class)enumDeclaringClass;
+      return (Class) enumDeclaringClass;
     } catch (SecurityException e) {
       throw new TCRuntimeException(e);
     } catch (NoSuchMethodException e) {
@@ -749,7 +750,6 @@ public class DNAEncoding {
       throw new TCRuntimeException(e);
     }
   }
-
 
   /**
    * The reason that we use reflection here is because Enum is a jdk 1.5 construct and this project is jdk 1.4
@@ -772,7 +772,7 @@ public class DNAEncoding {
       throw new TCRuntimeException(e);
     }
   }
-  
+
   private Object readCurrency(TCDataInput input, byte type) throws IOException {
     byte[] data = readByteArray(input);
     String currencyCode = new String(data, "UTF-8");

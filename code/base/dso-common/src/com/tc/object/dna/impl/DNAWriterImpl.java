@@ -22,15 +22,11 @@ public class DNAWriterImpl implements DNAWriter {
   private final Mark                     arrayLengthMark;
   private final ObjectStringSerializer   serializer;
   private final DNAEncoding              encoding;
-  private final String                   className;
-  private final ObjectID                 id;
   private int                            actionCount   = 0;
 
   public DNAWriterImpl(TCByteBufferOutputStream output, ObjectID id, String className,
                        ObjectStringSerializer serializer, DNAEncoding encoding, String loaderDesc, boolean isDelta) {
     this.output = output;
-    this.id = id;
-    this.className = className;
     this.encoding = encoding;
 
     this.headerMark = output.mark();
@@ -84,8 +80,10 @@ public class DNAWriterImpl implements DNAWriter {
 
   public void addPhysicalAction(String fieldName, Object value, boolean canBeReferenced) {
     if (value == null) {
-      //
-      throw new AssertionError("null value for field " + fieldName + " in type " + className + " " + id);
+      // Normally null values are converted into Null ObjectID much earlier, but this is not true when there are
+      // multiple versions of a class in a cluster sharing data.
+      value = ObjectID.NULL_ID;
+      canBeReferenced = true;
     }
 
     actionCount++;
