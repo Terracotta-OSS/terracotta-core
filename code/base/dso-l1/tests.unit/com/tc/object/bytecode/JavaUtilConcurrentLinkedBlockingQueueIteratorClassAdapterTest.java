@@ -8,18 +8,24 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
 import com.tc.asm.util.CheckClassAdapter;
 import com.tc.object.tools.BootJar;
+import com.tc.test.TCTestCase;
+import com.tc.util.runtime.Vm;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Date;
 
-import junit.framework.TestCase;
+public class JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapterTest extends TCTestCase {
 
-public class JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapterTest extends TestCase {
-
+  public JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapterTest() {
+    if(Vm.isJDK14()) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
+  }
+  
   public void testClasAdapter() throws IOException {
     String res = BootJar.classNameToFileName("java.util.concurrent.LinkedBlockingQueue$Itr");
-    
     ClassReader cr = new ClassReader(getClass().getClassLoader().getResourceAsStream(res));
     ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
     ClassVisitor cv = new JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter(new CheckClassAdapter(cw));
