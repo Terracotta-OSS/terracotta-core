@@ -135,7 +135,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     jvmArgs.add("-D" + Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME + "=true");
     jvmArgs.add("-Djava.net.preferIPv4Stack=true");
     debugParams.addDebugParamsTo(jvmArgs);
-    jvmArgs.add("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + ".tc.management.test.mbeans.enabled=true");
+    jvmArgs.add("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + "tc.management.test.mbeans.enabled=true");
     addClasspath(jvmArgs);
     addLibPath(jvmArgs);
     addEnvVarsForWindows(jvmArgs);
@@ -257,7 +257,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     stopper.stop();
   }
 
-  public void shutdown() throws Exception {    
+  public void shutdown() throws Exception {
     try {
       attemptShutdown();
     } catch (Exception e) {
@@ -283,7 +283,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     long start = System.currentTimeMillis();
     long timeout = start + SHUTDOWN_WAIT_TIME;
     while (isRunning()) {
-      Thread.sleep(1000);      
+      Thread.sleep(1000);
       if (System.currentTimeMillis() > timeout) { throw new Exception("Server was shutdown but still up after "
                                                                       + SHUTDOWN_WAIT_TIME + " ms"); }
     }

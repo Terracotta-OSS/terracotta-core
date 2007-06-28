@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.server.appserver.unit;
 
@@ -11,6 +12,7 @@ import com.tc.test.server.util.HttpUtil;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.util.Properties;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -18,19 +20,17 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 public final class ServerHopCookieRewriteTest extends AbstractAppServerTestCase {
-  
-  public ServerHopCookieRewriteTest() {
-    this.disableAllUntil("2007-07-05");
-  }
+
+  private static final String DLM = "!";
 
   public void testSessions() throws Exception {
-
     startDsoServer();
 
     HttpClient client = HttpUtil.createHttpClient();
+    String[] args = new String[] { "-Dcom.tc.session.delimiter=" + DLM };
 
-    int port0 = startAppServer(true).serverPort();
-    int port1 = startAppServer(true).serverPort();
+    int port0 = startAppServer(true, new Properties(), args).serverPort();
+    int port1 = startAppServer(true, new Properties(), args).serverPort();
 
     URL url0 = new URL(createUrl(port0, ServerHopCookieRewriteTest.DsoPingPongServlet.class) + "?server=0");
     URL url1 = new URL(createUrl(port1, ServerHopCookieRewriteTest.DsoPingPongServlet.class) + "?server=1");
@@ -89,13 +89,13 @@ public final class ServerHopCookieRewriteTest extends AbstractAppServerTestCase 
     }
 
     private String getServerId(String s) {
-      if (s == null || s.trim().length() == 0 || s.indexOf("!") == -1) return null;
-      return s.substring(s.indexOf("!") + 1);
+      if (s == null || s.trim().length() == 0 || s.indexOf(DLM) == -1) return null;
+      return s.substring(s.indexOf(DLM) + 1);
     }
 
     private String getKey(String s) {
-      if (s == null || s.trim().length() == 0 || s.indexOf("!") == -1) return null;
-      return s.substring(0, s.indexOf("!"));
+      if (s == null || s.trim().length() == 0 || s.indexOf(DLM) == -1) return null;
+      return s.substring(0, s.indexOf(DLM));
     }
 
     private void hit2(HttpServletRequest req, HttpSession session, PrintWriter out) {

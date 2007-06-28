@@ -28,7 +28,7 @@ import java.util.Map.Entry;
  */
 public class TCPropertiesImpl implements TCProperties {
 
-  public static final String            SYSTEM_PROP_PREFIX         = "com.tc";
+  public static final String            SYSTEM_PROP_PREFIX         = "com.tc.";
 
   private static final LogBuffer        LOG_BUFFER                 = new LogBuffer();
 
@@ -37,7 +37,7 @@ public class TCPropertiesImpl implements TCProperties {
 
   // This file,if present, overrides the default properties and resides in the same directory as tc.jar
   private static final String           TC_PROPERTIES_FILE         = "tc.properties";
-  
+
   // This is the system property that can be set to point to a tc.properties file
   private static final String           TC_PROPERTIES_SYSTEM_PROP  = "com.tc.properties";
 
@@ -58,20 +58,22 @@ public class TCPropertiesImpl implements TCProperties {
       loadOverrides(tcJarDir, TC_PROPERTIES_FILE);
     }
     String tcPropFile = System.getProperty(TC_PROPERTIES_SYSTEM_PROP);
-    if(tcPropFile != null) {
+    if (tcPropFile != null) {
       loadOverrides(tcPropFile);
     }
 
-    applySystemPropertyOverrides();
+    // this happens last -- system properties have highest precedence
+    processSystemProperties();
   }
 
-  private void applySystemPropertyOverrides() {
-    for (Iterator i = props.entrySet().iterator(); i.hasNext();) {
-      Map.Entry e = (Entry) i.next();
-      String key = (String) e.getKey();
-      String sysPropOverride = System.getProperty(SYSTEM_PROP_PREFIX + "." + key);
-      if (sysPropOverride != null) {
-        e.setValue(sysPropOverride);
+  private void processSystemProperties() {
+    // find and record all tc properties set via system properties
+
+    for (Iterator i = System.getProperties().entrySet().iterator(); i.hasNext();) {
+      Map.Entry entry = (Entry) i.next();
+      String key = (String) entry.getKey();
+      if (key.startsWith(SYSTEM_PROP_PREFIX)) {
+        props.setProperty(key.substring(SYSTEM_PROP_PREFIX.length()), (String) entry.getValue());
       }
     }
   }
@@ -99,12 +101,12 @@ public class TCPropertiesImpl implements TCProperties {
     File file = new File(propDir, propFile);
     loadOverrides(file);
   }
-  
+
   private void loadOverrides(String propFile) {
     File file = new File(propFile);
     loadOverrides(file);
   }
-  
+
   private void loadOverrides(File file) {
     if (file.canRead()) {
       try {
@@ -165,7 +167,7 @@ public class TCPropertiesImpl implements TCProperties {
   public static void setProperty(String key, String value) {
     INSTANCE.props.setProperty(key, value);
   }
-  
+
   public String toString() {
     return "TCProperties=" + props.toString();
   }
@@ -179,7 +181,7 @@ public class TCPropertiesImpl implements TCProperties {
     String val = getProperty(key);
     return Integer.valueOf(val).intValue();
   }
-  
+
   public int getInt(String key, int defValue) {
     String val = getProperty(key, true);
     if (val == null) return defValue;
@@ -244,7 +246,7 @@ public class TCPropertiesImpl implements TCProperties {
     }
 
     static void doLog() {
-      // the only reason this method is here is to trigger the static initilizer of this inner class one (and only once)
+    // the only reason this method is here is to trigger the static initilizer of this inner class one (and only once)
     }
 
   }
