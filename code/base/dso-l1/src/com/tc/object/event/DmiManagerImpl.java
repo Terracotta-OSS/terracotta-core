@@ -112,8 +112,12 @@ public class DmiManagerImpl implements DmiManager {
     final ClassLoader origContextLoader = Thread.currentThread().getContextClassLoader();
     Method m = getMethod(dmc);
     m.setAccessible(true);
+
+    ClassLoader tcl = dmc.getReceiver().getClass().getClassLoader();
+    if (tcl == null) tcl = ClassLoader.getSystemClassLoader();
+    Thread.currentThread().setContextClassLoader(tcl);
+
     try {
-      Thread.currentThread().setContextClassLoader(dmc.getReceiver().getClass().getClassLoader());
       m.invoke(dmc.getReceiver(), dmc.getParameters());
     } finally {
       Thread.currentThread().setContextClassLoader(origContextLoader);

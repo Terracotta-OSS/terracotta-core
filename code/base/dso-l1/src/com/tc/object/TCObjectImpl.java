@@ -123,9 +123,14 @@ public abstract class TCObjectImpl implements TCObject {
                                                                                   + "()";
       resolveAllReferences();
 
-      ClassLoader prevLoader = Thread.currentThread().getContextClassLoader();
+      final ClassLoader prevLoader = Thread.currentThread().getContextClassLoader();
       final boolean adjustTCL = TCThreadGroup.currentThreadInTCThreadGroup();
-      if (adjustTCL) Thread.currentThread().setContextClassLoader(pojo.getClass().getClassLoader());
+
+      if (adjustTCL) {
+        ClassLoader newTCL = pojo.getClass().getClassLoader();
+        if (newTCL == null) newTCL = ClassLoader.getSystemClassLoader();
+        Thread.currentThread().setContextClassLoader(newTCL);
+      }
 
       try {
         Interpreter i = new Interpreter();

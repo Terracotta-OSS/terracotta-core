@@ -53,7 +53,7 @@ public class TCObjectFactoryImpl implements TCObjectFactory {
   public Object getNewPeerObject(TCClass type, Object parent) throws IllegalArgumentException, SecurityException,
       InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
     // This one is for non-static inner classes
-    return getNewPeerObject(type.getConstructor(), type, parent);
+    return getNewPeerObject(type.getConstructor(), EMPTY_OBJECT_ARRAY, type, parent);
   }
 
   public Object getNewArrayInstance(TCClass type, int size) {
@@ -64,43 +64,34 @@ public class TCObjectFactoryImpl implements TCObjectFactory {
       IllegalAccessException, InvocationTargetException, SecurityException, NoSuchMethodException {
     Constructor ctor = type.getConstructor();
     if (ctor == null) throw new AssertionError("type:" + type.getName());
-    return getNewPeerObject(ctor, EMPTY_OBJECT_ARRAY);
+    return getNewPeerObject(ctor, EMPTY_OBJECT_ARRAY, null, null);
   }
 
-  private Object getNewPeerObject(Constructor ctor, Object[] args) throws IllegalArgumentException,
-      InstantiationException, IllegalAccessException, InvocationTargetException {
+  private Object getNewPeerObject(Constructor ctor, Object[] args, TCClass type, Object parent)
+      throws IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
     final Object rv;
 
     // XXX: hack to workaround issue with commons logging dependence on context loader
-    Thread thread = Thread.currentThread();
-    ClassLoader cl = thread.getContextClassLoader();
+    final Thread thread = Thread.currentThread();
+    final ClassLoader prevLoader = thread.getContextClassLoader();
     final boolean adjustTCL = TCThreadGroup.currentThreadInTCThreadGroup();
 
-    if (adjustTCL) thread.setContextClassLoader(ctor.getDeclaringClass().getClassLoader());
+    if (adjustTCL) {
+      ClassLoader newTcl = ctor.getDeclaringClass().getClassLoader();
+      if (newTcl == null) {
+        // XXX: workaround jboss bug: http://jira.jboss.com/jira/browse/JBAS-4437
+        newTcl = ClassLoader.getSystemClassLoader();
+      }
+      thread.setContextClassLoader(newTcl);
+    }
+
     try {
       rv = ctor.newInstance(args);
+      if (parent != null) {
+        UnsafeUtil.setField(rv, type.getParentField(), parent);
+      }
     } finally {
-      if (adjustTCL) thread.setContextClassLoader(cl);
-    }
-    return rv;
-  }
-
-  private Object getNewPeerObject(Constructor ctor, TCClass type, Object parent) throws IllegalArgumentException,
-      InstantiationException, IllegalAccessException, InvocationTargetException {
-    final Object rv;
-
-    // XXX: hack to workaround issue with commons logging dependence on context loader
-    Thread thread = Thread.currentThread();
-    ClassLoader cl = thread.getContextClassLoader();
-    final boolean adjustTCL = TCThreadGroup.currentThreadInTCThreadGroup();
-
-    if (adjustTCL) thread.setContextClassLoader(ctor.getDeclaringClass().getClassLoader());
-
-    try {
-      rv = ctor.newInstance(EMPTY_OBJECT_ARRAY);
-      UnsafeUtil.setField(rv, type.getParentField(), parent);
-    } finally {
-      if (adjustTCL) thread.setContextClassLoader(cl);
+      if (adjustTCL) thread.setContextClassLoader(prevLoader);
     }
     return rv;
   }
