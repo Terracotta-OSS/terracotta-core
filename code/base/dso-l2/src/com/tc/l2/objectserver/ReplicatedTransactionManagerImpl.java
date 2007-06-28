@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -193,7 +194,8 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
         ServerTransaction st = (ServerTransaction) i.next();
         List changes = st.getChanges();
         List prunedChanges = new ArrayList(changes.size());
-        List oids = new ArrayList(changes.size());
+        Set oids = new HashSet(changes.size());
+        Set newOids = new HashSet(changes.size());
         for (Iterator j = changes.iterator(); j.hasNext();) {
           DNA dna = (DNA) j.next();
           ObjectID id = dna.getObjectID();
@@ -202,6 +204,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
             if (existingOIDs.add(id)) {
               prunedChanges.add(dna);
               oids.add(id);
+              newOids.add(id);
             } else {
               // XXX::Note:: We already know about this object, ACTIVE has sent it in Object Sync Transaction
               logger.warn("Ignoring New Object " + id + "in transaction " + st + " dna = " + dna
@@ -221,7 +224,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
           m.put(st.getServerTransactionID(), st);
         } else if (!prunedChanges.isEmpty()) {
           // We have pruned changes
-          m.put(st.getServerTransactionID(), new PrunedServerTransaction(prunedChanges, st, oids));
+          m.put(st.getServerTransactionID(), new PrunedServerTransaction(prunedChanges, st, oids, newOids));
         }
       }
 
@@ -258,7 +261,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       // XXX::NOTE:: Normally even though getChanges() returns a list, you will only find one change for each OID (Look
       // at ClientTransactionImpl) but here we break that. But hopefully no one is depending on THAT in the system.
       List compoundChanges = new ArrayList(changes.size() * 2);
-      List oids = new ArrayList(changes.size());
+      Set oids = new HashSet(changes.size());
       boolean modified = false;
       for (Iterator i = changes.iterator(); i.hasNext();) {
         DNA dna = (DNA) i.next();
@@ -293,7 +296,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       }
       if (modified) {
         // This name is little misleading
-        return (compoundChanges.isEmpty() ? null : new PrunedServerTransaction(compoundChanges, txn, oids));
+        return (compoundChanges.isEmpty() ? null : new PrunedServerTransaction(compoundChanges, txn, oids, oids));
       } else {
         return txn;
       }

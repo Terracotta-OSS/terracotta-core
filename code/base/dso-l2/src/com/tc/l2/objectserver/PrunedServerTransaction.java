@@ -26,11 +26,13 @@ public class PrunedServerTransaction implements ServerTransaction {
   private final List              prunedChanges;
   private final ServerTransaction orgTxn;
   private final Collection        oids;
+  private final Set               newOids;
 
-  public PrunedServerTransaction(List prunedChanges, ServerTransaction st, Collection oids) {
+  public PrunedServerTransaction(List prunedChanges, ServerTransaction st, Collection oids, Set newOids) {
     this.prunedChanges = prunedChanges;
     this.orgTxn = st;
     this.oids = oids;
+    this.newOids = newOids;
   }
 
   public Collection getNotifies() {
@@ -58,7 +60,7 @@ public class PrunedServerTransaction implements ServerTransaction {
   }
 
   public Set getNewObjectIDs() {
-    return orgTxn.getNewObjectIDs();
+    return newOids;
   }
 
   public Map getNewRoots() {
