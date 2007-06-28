@@ -5,6 +5,7 @@
 package com.tc.l2.ha;
 
 import com.tc.async.api.Sink;
+import com.tc.exception.TCRuntimeException;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.msg.ClusterStateMessage;
 import com.tc.l2.msg.ClusterStateMessageFactory;
@@ -30,12 +31,14 @@ import java.util.Iterator;
 public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterStateManager, GroupMessageListener,
     ConnectionIDFactoryListener {
 
-  private static final TCLogger logger = TCLogging.getLogger(ReplicatedClusterStateManagerImpl.class);
+  private static final TCLogger logger   = TCLogging.getLogger(ReplicatedClusterStateManagerImpl.class);
 
   private final GroupManager    groupManager;
   private final ClusterState    state;
   private final StateManager    stateManager;
   private final Sink            channelLifeCycleSink;
+
+  private boolean               isActive = false;
 
   public ReplicatedClusterStateManagerImpl(GroupManager groupManager, StateManager stateManager,
                                            ClusterState clusterState, ConnectionIDFactory factory,
@@ -56,6 +59,9 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
 
     // Sync state to external passive servers
     publishToAll(ClusterStateMessageFactory.createClusterStateMessage(state));
+
+    isActive = true;
+    notifyAll();
   }
 
   private void generateClusterIDIfNeeded() {
@@ -66,9 +72,21 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   }
 
   public synchronized void publishClusterState(NodeID nodeID) throws GroupException {
+    waitUntilActive();
     ClusterStateMessage msg = (ClusterStateMessage) groupManager
         .sendToAndWaitForResponse(nodeID, ClusterStateMessageFactory.createClusterStateMessage(state));
     validateResponse(nodeID, msg);
+  }
+
+  private void waitUntilActive() {
+    while (!isActive) {
+      logger.info("Waiting since ReplicatedClusterStateManager hasn't gone ACTIVE yet ...");
+      try {
+        wait(3000);
+      } catch (InterruptedException e) {
+        throw new TCRuntimeException(e);
+      }
+    }
   }
 
   private void validateResponse(NodeID nodeID, ClusterStateMessage msg) {
