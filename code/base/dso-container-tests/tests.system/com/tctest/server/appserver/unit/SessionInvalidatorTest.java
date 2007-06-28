@@ -199,6 +199,7 @@ public class SessionInvalidatorTest extends AbstractAppServerTestCase {
     final List props = new ArrayList();
     props.add("-Dcom.tc.session.invalidator.sleep=" + String.valueOf(invalidatorSleepSeconds));
     props.add("-Dcom.tc.session.maxidle.seconds=" + String.valueOf(defaultMaxIdleSeconds));
+    props.add("-Dcom.tc.session.debug.invalidate=true");
     port = startAppServer(true, new Properties(), (String[]) props.toArray(new String[] {})).serverPort();
 
     WebClient client = new WebClient(); //HttpUtil.createWebClient();

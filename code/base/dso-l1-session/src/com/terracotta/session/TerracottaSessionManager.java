@@ -38,6 +38,7 @@ public class TerracottaSessionManager implements SessionManager {
   private final boolean                debugServerHops;
   private final int                    debugServerHopsInterval;
   private int                          serverHopsDetected = 0;
+  private final boolean                debugInvalidate;
 
   public TerracottaSessionManager(SessionIdGenerator sig, SessionCookieWriter scw, LifecycleEventMgr eventMgr,
                                   ContextMgr contextMgr, RequestResponseFactory factory, ConfigProperties cp) {
@@ -93,6 +94,7 @@ public class TerracottaSessionManager implements SessionManager {
 
     this.debugServerHops = cp.isDebugServerHops();
     this.debugServerHopsInterval = cp.getDebugServerHopsInterval();
+    this.debugInvalidate = cp.isDebugSessionInvalidate();
   }
 
   public TerracottaRequest preprocess(HttpServletRequest req, HttpServletResponse res) {
@@ -254,6 +256,10 @@ public class TerracottaSessionManager implements SessionManager {
   }
 
   public void remove(Session data, boolean unlock) {
+    if (debugInvalidate) {
+      logger.info("Session id: " + data.getSessionId().getKey() + " being removed, unlock: " + unlock);
+    }
+
     store.remove(data.getSessionId());
     mBean.sessionDestroyed();
 

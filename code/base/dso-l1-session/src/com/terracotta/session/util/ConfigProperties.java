@@ -39,6 +39,7 @@ public class ConfigProperties {
   public static final String     STUCK_REQUEST_THRESHOLD    = PREFIX + "request.tracking.threshold";
   public static final String     DEBUG_SERVER_HOPS          = PREFIX + "debug.hops";
   public static final String     DEBUG_SERVER_HOPS_INTERVAL = PREFIX + "debug.hops.interval";
+  private static final String    DEBUG_SESSION_INVALIDATE   = PREFIX + "debug.invalidate";
   public static final String     DELIMITER                  = PREFIX + "delimiter";
 
   protected static final boolean defaultCookiesEnabled      = true;
@@ -71,6 +72,10 @@ public class ConfigProperties {
 
   public int getDebugServerHopsInterval() {
     return props.getInt(DEBUG_SERVER_HOPS_INTERVAL);
+  }
+
+  public boolean isDebugSessionInvalidate() {
+    return props.getBoolean(DEBUG_SESSION_INVALIDATE);
   }
 
   public boolean isDebugServerHops() {
@@ -121,7 +126,7 @@ public class ConfigProperties {
   }
 
   public String getDelimiter() {
-    final String wacVal = wac.__tc_session_getSessionDelimiter();
+    final String wacVal = wac == null ? null : wac.__tc_session_getSessionDelimiter();
     return getStringVal(DELIMITER, wacVal, defaultDelimiter);
   }
 
