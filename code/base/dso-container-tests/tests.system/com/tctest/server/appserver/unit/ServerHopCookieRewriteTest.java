@@ -18,6 +18,10 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 public final class ServerHopCookieRewriteTest extends AbstractAppServerTestCase {
+  
+  public ServerHopCookieRewriteTest() {
+    this.disableAllUntil("2007-07-05");
+  }
 
   public void testSessions() throws Exception {
 
