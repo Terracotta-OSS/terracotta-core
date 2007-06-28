@@ -27,10 +27,6 @@ public class PrunedServerTransaction implements ServerTransaction {
   private final ServerTransaction orgTxn;
   private final Collection        oids;
 
-  public PrunedServerTransaction(List prunedChanges, ServerTransaction st) {
-    this(prunedChanges, st, st.getObjectIDs());
-  }
-
   public PrunedServerTransaction(List prunedChanges, ServerTransaction st, Collection oids) {
     this.prunedChanges = prunedChanges;
     this.orgTxn = st;
