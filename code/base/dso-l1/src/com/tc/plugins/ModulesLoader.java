@@ -89,7 +89,8 @@ public class ModulesLoader {
           } catch (BundleException be2) {
             logger.error("Error shutting down plugin runtime", be2);
           }
-          logger.fatal("FATAL: ", be1);
+          //logger.fatal("FATAL: ", be1);
+          logger.fatal(be1.getMessage());
           System.err.println("FATAL: " + be1.getMessage());
           System.exit(-1);
         } catch (InvalidSyntaxException be1) {
