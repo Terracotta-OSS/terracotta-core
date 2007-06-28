@@ -118,7 +118,6 @@ public class ElectionManagerImpl implements ElectionManager {
   private void basicAbort(L2StateMessage msg) {
     reset(msg.getEnrollment());
     logger.info("Aborted Election : Winner is : " + this.winner);
-    notifyAll();
   }
 
   /**
@@ -141,6 +140,7 @@ public class ElectionManagerImpl implements ElectionManager {
     this.state = INIT;
     this.votes.clear();
     this.myVote = null;
+    notifyAll();
   }
 
   public NodeID runElection(NodeID myNodeId, boolean isNew, WeightGeneratorFactory weightsFactory) {
