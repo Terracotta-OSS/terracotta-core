@@ -6,6 +6,7 @@ package com.tctest.spring.integrationtests.load;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
+import com.tc.util.runtime.Os;
 import com.tctest.spring.bean.ISingleton;
 import com.tctest.spring.integrationtests.SpringDeploymentTest;
 
@@ -39,7 +40,9 @@ public class SingletonLoadTest extends SpringDeploymentTest {
   }
 
   public void testEightNodeSingletonLoad() throws Exception {
-    runNodes(8);
+    if (!Os.isSolaris()) {
+      runNodes(8);
+    }
   }
 
   /*
