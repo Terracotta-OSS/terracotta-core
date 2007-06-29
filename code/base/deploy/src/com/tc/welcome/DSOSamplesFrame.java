@@ -49,6 +49,7 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.Timer;
 import javax.swing.UIManager;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.AttributeSet;
@@ -125,6 +126,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
             m_serversListField.setEnabled(!m_useLocalToggle.isSelected());
           }
         });
+        JPanel bottomPanel = new JPanel(new BorderLayout());
         JPanel otherPanel = new JPanel();
         otherPanel.setLayout(new FlowLayout());
         otherPanel.add(new JLabel(m_bundleHelper.getString("servers.use.remote")));
@@ -134,7 +136,11 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
         String prop = System.getProperty("tc.server");
         m_serversListField.setText(prop);
         otherPanel.add(m_serversListField);
-        m_panel.add(otherPanel);
+        bottomPanel.add(otherPanel, BorderLayout.CENTER);
+        JLabel serversListDescription = new JLabel(m_bundleHelper.getString("servers.field.description"));
+        serversListDescription.setBorder(new EmptyBorder(0, 20, 0, 0));
+        bottomPanel.add(serversListDescription, BorderLayout.SOUTH);
+        m_panel.add(bottomPanel);
         
         m_serversListField.setEnabled(prop != null);
         m_useLocalToggle.setSelected(prop == null);
@@ -272,7 +278,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     setTextPaneCursor(Cursor.WAIT_CURSOR);
     try {
       String bootPath = getBootPath();
-      String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.config=tc-config.xml",
+      String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dcom.tc.l1.max.connect.retries=3", "-Dtc.config=tc-config.xml",
           "-Djava.awt.Window.locationByPlatform=true", "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
           "-Dtc.server=" + System.getProperty("tc.server", ""), "-Xbootclasspath/p:" + bootPath, "-cp", "classes",
           className };

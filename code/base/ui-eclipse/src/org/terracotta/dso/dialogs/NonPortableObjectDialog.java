@@ -1111,6 +1111,7 @@ public class NonPortableObjectDialog extends MessageDialog {
       GridData gridData = new GridData();
       gridData.horizontalSpan = 2;
       honorTransientButton.setLayoutData(gridData);
+      honorTransientButton.addSelectionListener(this);
       Group onLoadGroup = new Group(this, SWT.NO_RADIO_GROUP | SWT.SHADOW_NONE);
       onLoadGroup.setText(NonPortableMessages.getString("ON_LOAD")); //$NON-NLS-1$
       onLoadGroup.setLayout(new GridLayout(2, false));
@@ -1242,6 +1243,8 @@ public class NonPortableObjectDialog extends MessageDialog {
         } else {
           include.addNewOnLoad();
         }
+      } else if (e.widget == honorTransientButton) {
+        include.setHonorTransient(honorTransientButton.getSelection());
       }
     }
   }

@@ -367,7 +367,7 @@ public class TcPlugin extends AbstractUIPlugin
 
     try {
       IRunnableWithProgress op = new TCNatureRemover(javaProject);
-      new ProgressMonitorDialog(shell).run(false, false, op);
+      new ProgressMonitorDialog(shell).run(true, false, op);
     } catch (InvocationTargetException e) {
       openError("Cannot remove Terracotta nature", e.getCause());
     } catch (InterruptedException e) {/**/

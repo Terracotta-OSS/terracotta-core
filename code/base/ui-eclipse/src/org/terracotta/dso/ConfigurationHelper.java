@@ -1880,12 +1880,12 @@ public class ConfigurationHelper {
 
   public void ensureNameLocked(IJavaElement element) {
     MultiChangeSignaller signaller = new MultiChangeSignaller();
-    ensureNameLocked(element, "LockName", LockLevel.WRITE, signaller);
+    ensureNameLocked(element, element.getElementName(), LockLevel.WRITE, signaller);
     signaller.signal(m_project);
   }
 
   public void ensureNameLocked(IJavaElement element, MultiChangeSignaller signaller) {
-    ensureNameLocked(element, "LockName", LockLevel.WRITE, signaller);
+    ensureNameLocked(element, element.getElementName(), LockLevel.WRITE, signaller);
   }
 
   public void ensureNameLocked(IJavaElement element, String name, LockLevel.Enum level) {
@@ -1920,6 +1920,24 @@ public class ConfigurationHelper {
     }
   }
 
+  private void addNewNamedLock(final String name, final String expr, final LockLevel.Enum level, MultiChangeSignaller signaller) {
+    Locks locks = ensureLocks();
+    NamedLock lock = locks.addNewNamedLock();
+
+    lock.setMethodExpression(expr);
+    lock.setLockLevel(level);
+    lock.setLockName(name);
+    signaller.namedLocksChanged = true;
+    
+    for(int i = locks.sizeOfAutolockArray()-1; i >= 0; i--) {
+      Autolock autoLock = locks.getAutolockArray(i);
+      if(expr.equals(autoLock.getMethodExpression())) {
+        locks.removeAutolock(i);
+        signaller.autolocksChanged = true;
+      }
+    }
+  }
+  
   public void internalEnsureNameLocked(IMethod method, String name, LockLevel.Enum level, MultiChangeSignaller signaller) {
     IType declaringType = method.getDeclaringType();
 
@@ -1928,18 +1946,12 @@ public class ConfigurationHelper {
       signaller.includeRulesChanged = true;
     }
 
-    Locks locks = ensureLocks();
-    NamedLock lock = locks.addNewNamedLock();
-
     try {
-      lock.setMethodExpression(PatternHelper.getJavadocSignature(method));
-      lock.setLockLevel(level);
-      lock.setLockName(name);
+      addNewNamedLock(name, PatternHelper.getJavadocSignature(method), level, signaller);
     } catch (JavaModelException jme) {
       openError("Error ensuring method '" + method.getElementName() + "' name-locked", jme);
       return;
     }
-    signaller.namedLocksChanged = true;
   }
 
   public void ensureNameLocked(IType type, String name, LockLevel.Enum level) {
@@ -1965,14 +1977,7 @@ public class ConfigurationHelper {
       internalEnsureAdaptable(type, signaller);
     }
 
-    Locks locks = ensureLocks();
-    NamedLock lock = locks.addNewNamedLock();
-    String expr = PatternHelper.getExecutionPattern(type);
-
-    lock.setMethodExpression(expr);
-    lock.setLockLevel(level);
-    lock.setLockName(name);
-    signaller.namedLocksChanged = true;
+    addNewNamedLock(name, PatternHelper.getExecutionPattern(type), level, signaller);
   }
 
   public void ensureNameLocked(IPackageDeclaration packageDecl, String name, LockLevel.Enum level) {
@@ -2000,15 +2005,7 @@ public class ConfigurationHelper {
       internalEnsureAdaptable(packageDecl, signaller);
     }
 
-    Locks locks = ensureLocks();
-    NamedLock lock = locks.addNewNamedLock();
-    String expr = PatternHelper.getExecutionPattern(packageDecl);
-
-    lock.setMethodExpression(expr);
-    lock.setLockName(name);
-    lock.setLockLevel(level);
-
-    signaller.namedLocksChanged = true;
+    addNewNamedLock(name, PatternHelper.getExecutionPattern(packageDecl), level, signaller);
   }
 
   public void ensureNameLocked(IPackageFragment fragment, String name, LockLevel.Enum level) {
@@ -2036,15 +2033,7 @@ public class ConfigurationHelper {
       internalEnsureAdaptable(fragment, signaller);
     }
 
-    Locks locks = ensureLocks();
-    NamedLock lock = locks.addNewNamedLock();
-    String expr = PatternHelper.getExecutionPattern(fragment);
-
-    lock.setMethodExpression(expr);
-    lock.setLockName(name);
-    lock.setLockLevel(level);
-
-    signaller.namedLocksChanged = true;
+    addNewNamedLock(name, PatternHelper.getExecutionPattern(fragment), level, signaller);
   }
 
   public void ensureNameLocked(IJavaProject javaProject, String name, LockLevel.Enum level) {
@@ -2115,6 +2104,22 @@ public class ConfigurationHelper {
     signaller.signal(m_project);
   }
 
+  private void addNewAutolock(final String expr, final LockLevel.Enum level, MultiChangeSignaller signaller) {
+    Locks locks = ensureLocks();
+    Autolock lock = locks.addNewAutolock();
+    lock.setMethodExpression(expr);
+    lock.setLockLevel(level);
+    signaller.autolocksChanged = true;
+
+    for(int i = locks.sizeOfNamedLockArray()-1; i >= 0; i--) {
+      NamedLock namedLock = locks.getNamedLockArray(i);
+      if(expr.equals(namedLock.getMethodExpression())) {
+        locks.removeNamedLock(i);
+        signaller.namedLocksChanged = true;
+      }
+    }
+  }
+  
   public void internalEnsureAutolocked(IMethod method, MultiChangeSignaller signaller) {
     IType declaringType = method.getDeclaringType();
 
@@ -2122,17 +2127,12 @@ public class ConfigurationHelper {
       internalEnsureAdaptable(declaringType, signaller);
     }
 
-    Locks locks = ensureLocks();
-    Autolock lock = locks.addNewAutolock();
-
     try {
-      lock.setMethodExpression(PatternHelper.getJavadocSignature(method));
-      lock.setLockLevel(LockLevel.WRITE);
+      addNewAutolock(PatternHelper.getJavadocSignature(method), LockLevel.WRITE, signaller);
     } catch (JavaModelException jme) {
       openError("Error ensuring method '" + method.getElementName() + "' auto-locked", jme);
       return;
     }
-    signaller.autolocksChanged = true;
   }
 
   public void ensureAutolocked(IType type) {
@@ -2158,14 +2158,7 @@ public class ConfigurationHelper {
       internalEnsureAdaptable(type, signaller);
     }
 
-    Locks locks = ensureLocks();
-    Autolock lock = locks.addNewAutolock();
-    String expr = PatternHelper.getExecutionPattern(type);
-
-    lock.setMethodExpression(expr);
-    lock.setLockLevel(LockLevel.WRITE);
-
-    signaller.autolocksChanged = true;
+    addNewAutolock(PatternHelper.getExecutionPattern(type), LockLevel.WRITE, signaller);
   }
 
   public void ensureAutolocked(IPackageDeclaration packageDecl) {
@@ -2191,14 +2184,7 @@ public class ConfigurationHelper {
       internalEnsureAdaptable(packageDecl, signaller);
     }
 
-    Locks locks = ensureLocks();
-    Autolock lock = locks.addNewAutolock();
-    String expr = PatternHelper.getExecutionPattern(packageDecl);
-
-    lock.setMethodExpression(expr);
-    lock.setLockLevel(LockLevel.WRITE);
-
-    signaller.autolocksChanged = true;
+    addNewAutolock(PatternHelper.getExecutionPattern(packageDecl), LockLevel.WRITE, signaller);
   }
 
   public void ensureAutolocked(IPackageFragment fragment) {
@@ -2224,14 +2210,7 @@ public class ConfigurationHelper {
       internalEnsureAdaptable(fragment, signaller);
     }
 
-    Locks locks = ensureLocks();
-    Autolock lock = locks.addNewAutolock();
-    String expr = PatternHelper.getExecutionPattern(fragment);
-
-    lock.setMethodExpression(expr);
-    lock.setLockLevel(LockLevel.WRITE);
-
-    signaller.autolocksChanged = true;
+    addNewAutolock(PatternHelper.getExecutionPattern(fragment), LockLevel.WRITE, signaller);
   }
 
   public void ensureAutolocked(IJavaProject javaProject) {
@@ -2998,10 +2977,11 @@ public class ConfigurationHelper {
 
   public void validateAll() {
     if (getConfig() != null) {
-      validateLocks();
+// DISABLING VALIDATING FOR ANYTHING THAT CAN TAKE A PATTERN      
+//      validateLocks();
+//      validateInstrumentedClasses();
       validateRoots();
       validateTransientFields();
-      validateInstrumentedClasses();
       validateBootJarClasses();
     }
   }

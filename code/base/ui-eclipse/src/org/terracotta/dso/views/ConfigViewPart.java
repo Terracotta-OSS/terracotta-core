@@ -168,7 +168,7 @@ public class ConfigViewPart extends ViewPart
         
         if(config == null) {
           m_javaProject = null;
-        } else {
+        } else if(m_javaProject != null) {
           IProject project = m_javaProject.getProject();
           IFile configFile = TcPlugin.getDefault().getConfigurationFile(project);
           configPath = project.getName() + IPath.SEPARATOR + configFile.getProjectRelativePath().toOSString();
@@ -813,7 +813,7 @@ public class ConfigViewPart extends ViewPart
          (delta.getFlags() & IResourceDelta.DESCRIPTION) != 0)
       {
         project = (IProject)delta.getResource();
-        return TcPlugin.getDefault().hasTerracottaNature(project) ? project : null;
+        return project; //TcPlugin.getDefault().hasTerracottaNature(project) ? project : null;
       }
     }
     

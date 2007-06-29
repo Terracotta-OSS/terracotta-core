@@ -348,7 +348,9 @@ public class DistributedObjectClient extends SEDA {
                              hydrateSink);
     channel.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, pauseStage.getSink(), hydrateSink);
 
-    while (true) {
+    final int maxConnectRetries = l1Properties.getInt("max.connect.retries");
+    int i = 0;
+    while(maxConnectRetries <= 0 || i < maxConnectRetries) {
       try {
         logger.debug("Trying to open channel....");
         channel.open();
@@ -368,8 +370,12 @@ public class DistributedObjectClient extends SEDA {
         ioe.printStackTrace();
         throw new RuntimeException(ioe);
       }
+      i++;
     }
-
+    if(i == maxConnectRetries) {
+      consoleLogger.error("MaxConnectRetries '"+maxConnectRetries+"' attempted. Exiting.");
+      System.exit(-1);
+    }
     clientHandshakeManager.waitForHandshake();
 
     cluster.addClusterEventListener(l1Management.getTerracottaCluster());

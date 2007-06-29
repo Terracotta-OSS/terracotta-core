@@ -16,6 +16,7 @@ public class DSOSamplesFrameBundle extends ListResourceBundle {
     {"servers.use.local", "Use local server"},
     {"servers.use.remote", "Use remote servers"},
     {"servers.field.tip", "Example: server1:9510,server2:9510"},
+    {"servers.field.description", "<html>A comma-separated list of server specifications:<br><p align=center>example: server1:9510,server2:9510</html>"},
     {"jvm.coordination", "JVM Coordination"},
     {"shared.work.queue", "Shared Work Queue"},
     {"starting.jtable", "Staring Shared JTable..."},

@@ -3,6 +3,7 @@
  */
 package org.terracotta.dso.refactoring;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -40,7 +41,10 @@ public class RenamePackageFragmentChange extends Change {
   }
   
   public String getName() {
-    return "TCRenamePackageFragmentConfigUpdate";
+    IWorkspace workspace = ResourcesPlugin.getWorkspace();
+    IProject project = workspace.getRoot().getProject(fProjectName);
+    IFile configFile = TcPlugin.getDefault().getConfigurationFile(project);
+    return "Replace '"+fOldFragmentName+"' with '"+fNewFragmentName+"' in "+configFile.getName();
   }
   
   public void initializeValidationData(IProgressMonitor pm) {/**/}
