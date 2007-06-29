@@ -78,7 +78,7 @@ public final class EventMulticaster implements Serializable {
 
   public synchronized void fireUpdateEvent(UpdateEvent data) {
     if (dispatchInterrupted) throw new IllegalStateException();
-    if (eventListener != null && eventListener != data.source) {
+    if (eventListener != null && (data == null || eventListener != data.source)) {
       if (queue == null) eventListener.handleUpdate(data);
       else {
         QueueEvent event = new QueueEvent();

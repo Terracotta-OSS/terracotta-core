@@ -163,10 +163,14 @@ public class FieldTreeNode extends XTreeNode implements DSOObjectTreeNode {
       while(parentNode != null) {
         if(parentNode instanceof DSOObjectTreeNode) {
           if(((DSOObjectTreeNode)parentNode).getDSOObject() == cycleRoot) {
-            JTree    tree = (JTree)e.getSource();
-            TreePath path = new TreePath(parentNode.getPath());
+            JTree      tree     = (JTree)e.getSource();
+            TreePath   path     = new TreePath(parentNode.getPath());
+            TreePath[] paths    = ((JTree)e.getSource()).getSelectionPaths();
+            TreePath[] newPaths = new TreePath[paths.length+1];
             
-            tree.getSelectionModel().addSelectionPath(path);
+            newPaths[0] = path;
+            System.arraycopy(paths, 0, newPaths, 1, paths.length);
+            tree.getSelectionModel().setSelectionPaths(newPaths);
             return;
           }
         }
