@@ -15,6 +15,8 @@ public interface ApplicationConfig {
 
   String getAttribute(String key);
 
+  Object getAttributeObject(String key);
+
   int getGlobalParticipantCount();
 
   int getIntensity();
@@ -26,8 +28,8 @@ public interface ApplicationConfig {
   int getValidatorCount();
 
   int getGlobalValidatorCount();
-  
+
   ServerControl[] getServerControls();
-  
+
   TCPProxy[] getProxies();
 }

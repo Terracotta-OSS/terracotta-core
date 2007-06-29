@@ -55,15 +55,17 @@ import junit.framework.AssertionFailedError;
 
 public abstract class TransparentTestBase extends BaseDSOTestCase implements TransparentTestIface, TestConfigurator {
 
-  public static final int                         DEFAULT_CLIENT_COUNT    = 2;
-  public static final int                         DEFAULT_INTENSITY       = 10;
-  public static final int                         DEFAULT_VALIDATOR_COUNT = 0;
+  public static final int                         DEFAULT_CLIENT_COUNT            = 2;
+  public static final int                         DEFAULT_INTENSITY               = 10;
+  public static final int                         DEFAULT_VALIDATOR_COUNT         = 0;
+  public static final int                         DEFAULT_ADAPTED_MUTATOR_COUNT   = 0;
+  public static final int                         DEFAULT_ADAPTED_VALIDATOR_COUNT = 0;
 
   private TestTVSConfigurationSetupManagerFactory configFactory;
   private DSOClientConfigHelper                   configHelper;
   protected DistributedTestRunner                 runner;
-  private DistributedTestRunnerConfig             runnerConfig            = new DistributedTestRunnerConfig(
-                                                                                                            getTimeoutValueInSeconds());
+  private DistributedTestRunnerConfig             runnerConfig                    = new DistributedTestRunnerConfig(
+                                                                                                                    getTimeoutValueInSeconds());
   private TransparentAppConfig                    transparentAppConfig;
   private ApplicationConfigBuilder                possibleApplicationConfigBuilder;
 
@@ -71,10 +73,10 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   private ServerControl                           serverControl;
   private ServerControl[]                         serverControls;
   private TCPProxy[]                              proxies;
-  private boolean                                 controlledCrashMode     = false;
+  private boolean                                 controlledCrashMode             = false;
   private ServerCrasher                           crasher;
   private File                                    javaHome;
-  private int                                     pid                     = -1;
+  private int                                     pid                             = -1;
 
   // for active-passive tests
   private ActivePassiveServerManager              apServerManager;
@@ -286,7 +288,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     } else {
       transparentAppConfig = new TransparentAppConfig(getApplicationClass().getName(), new TestGlobalIdGenerator(),
                                                       DEFAULT_CLIENT_COUNT, DEFAULT_INTENSITY, serverControl,
-                                                      DEFAULT_VALIDATOR_COUNT);
+                                                      DEFAULT_VALIDATOR_COUNT, DEFAULT_ADAPTED_MUTATOR_COUNT,
+                                                      DEFAULT_ADAPTED_VALIDATOR_COUNT);
     }
   }
 
@@ -357,11 +360,9 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   public void initializeTestRunner(boolean isMutateValidateTest) throws Exception {
     this.runner = new DistributedTestRunner(runnerConfig, configFactory, configHelper, getApplicationClass(),
                                             getOptionalAttributes(), getApplicationConfigBuilder()
-                                                .newApplicationConfig(), transparentAppConfig.getClientCount(),
-                                            transparentAppConfig.getApplicationInstancePerClientCount(),
-                                            getStartServer(), isMutateValidateTest, transparentAppConfig
-                                                .getValidatorCount(), (isActivePassive() && canRunActivePassive()),
-                                            apServerManager);
+                                                .newApplicationConfig(), getStartServer(), isMutateValidateTest,
+                                            (isActivePassive() && canRunActivePassive()), apServerManager,
+                                            transparentAppConfig);
   }
 
   protected boolean canRun() {

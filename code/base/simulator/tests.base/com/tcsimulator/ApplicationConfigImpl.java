@@ -96,4 +96,8 @@ public class ApplicationConfigImpl implements ApplicationConfig {
   public ServerControl[] getServerControls() {
     throw new UnsupportedOperationException("not implemented, should not be used");
   }
+
+  public Object getAttributeObject(String key) {
+    throw new UnsupportedOperationException("not implemented, should not be used");
+  }
 }

@@ -25,7 +25,7 @@ public class LinkedHashMapMutateValidateTest extends TransparentTestBase {
   }
 
   protected Class getApplicationClass() {
-    return MutateValidateLinkedHashMapTestApp.class;
+    return LinkedHashMapMutateValidateTestApp.class;
   }
 
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {

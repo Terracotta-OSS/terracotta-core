@@ -74,6 +74,9 @@ public class LargeGraphTestAppTest extends TestCase {
         throw new AssertionError();
       }
 
+      public Object getAttributeObject(String key) {
+        throw new AssertionError();
+      }
     };
     listeners = new MockListenerProvider();
     listeners.outputListener = new MockOutputListener();

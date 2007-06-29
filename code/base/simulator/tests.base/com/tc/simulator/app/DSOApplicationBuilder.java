@@ -12,6 +12,8 @@ import com.tc.object.loaders.IsolationClassLoader;
 import com.tc.simulator.listener.ListenerProvider;
 
 import java.lang.reflect.Constructor;
+import java.util.Iterator;
+import java.util.Map;
 
 public class DSOApplicationBuilder implements ApplicationBuilder {
 
@@ -21,10 +23,28 @@ public class DSOApplicationBuilder implements ApplicationBuilder {
   private Class                   applicationClass;
   private Constructor             applicationConstructor;
 
+  private boolean                 usesAdapters = false;
+
   public DSOApplicationBuilder(DSOClientConfigHelper config, ApplicationConfig applicationConfig,
                                PreparedComponentsFromL2Connection components) {
 
     this(applicationConfig, new IsolationClassLoader(config, components));
+  }
+
+  public DSOApplicationBuilder(DSOClientConfigHelper config, ApplicationConfig applicationConfig,
+                               PreparedComponentsFromL2Connection components, Map adapterMap) {
+
+    this(applicationConfig, new IsolationClassLoader(config, components));
+    if (adapterMap != null) {
+      if (adapterMap.size() > 0) {
+        usesAdapters = true;
+      }
+      for (Iterator iter = adapterMap.keySet().iterator(); iter.hasNext();) {
+        String adapteeName = (String) iter.next();
+        Class adapterClass = (Class) adapterMap.get(adapteeName);
+        ((IsolationClassLoader) classloader).addAdapter(adapteeName, adapterClass);
+      }
+    }
   }
 
   public DSOApplicationBuilder(ApplicationConfig applicationConfig, ClassLoader classloader) {
@@ -41,6 +61,10 @@ public class DSOApplicationBuilder implements ApplicationBuilder {
 
   public Application newApplication(String applicationId, ListenerProvider listenerProvider)
       throws ApplicationInstantiationException {
+
+    // so the app instance can tell whether it has been adapted
+    applicationConfig.setAttribute(applicationId, usesAdapters + "");
+
     try {
       logger.info("Before initializing Class Loader...");
       initializeClassLoader();

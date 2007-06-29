@@ -72,4 +72,8 @@ public class LongrunningGCTestAppConfigObject implements LongrunningGCTestAppCon
   public ServerControl[] getServerControls() {
     throw new AssertionError();
   }
+
+  public Object getAttributeObject(String key) {
+    throw new AssertionError();
+  }
 }

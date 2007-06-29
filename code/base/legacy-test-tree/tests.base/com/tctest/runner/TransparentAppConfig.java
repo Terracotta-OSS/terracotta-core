@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TransparentAppConfig implements ApplicationConfig, ApplicationConfigBuilder {
+  public static final String      adapterMapKey                     = "adapterMap";
 
   private final String            applicationClassname;
   private final GlobalIdGenerator idGenerator;
@@ -26,21 +27,24 @@ public class TransparentAppConfig implements ApplicationConfig, ApplicationConfi
   private int                     clientCount;
   private int                     applicationInstancePerClientCount = 1;
   private int                     validatorCount;
+  private int                     adaptedMutatorCount;
+  private int                     adaptedValidatorCount;
 
   public TransparentAppConfig(String applicationClassname, GlobalIdGenerator idGenerator, int clientCount,
                               int intensity, ServerControl[] serverControls, TCPProxy[] proxies) {
-    this(applicationClassname, idGenerator, clientCount, intensity, null, 0);
+    this(applicationClassname, idGenerator, clientCount, intensity, null, 0, 0, 0);
     this.serverControls = serverControls;
     this.proxies = proxies;
   }
 
   public TransparentAppConfig(String applicationClassname, GlobalIdGenerator idGenerator, int clientCount,
                               int intensity, ServerControl serverControl) {
-    this(applicationClassname, idGenerator, clientCount, intensity, serverControl, 0);
+    this(applicationClassname, idGenerator, clientCount, intensity, serverControl, 0, 0, 0);
   }
 
   public TransparentAppConfig(String applicationClassname, GlobalIdGenerator idGenerator, int clientCount,
-                              int intensity, ServerControl serverControl, int validatorCount) {
+                              int intensity, ServerControl serverControl, int validatorCount, int adaptedMutatorCount,
+                              int adaptedValidatorCount) {
     this.applicationClassname = applicationClassname;
     this.idGenerator = idGenerator;
     if (clientCount < 1) throw new AssertionError("Client count must be greater than 0");
@@ -48,14 +52,34 @@ public class TransparentAppConfig implements ApplicationConfig, ApplicationConfi
     this.intensity = intensity;
     this.serverControl = serverControl;
     this.validatorCount = validatorCount;
+    this.adaptedMutatorCount = adaptedMutatorCount;
+    isLessThanOrEqualTo(adaptedMutatorCount, clientCount, "adaptedMutatorCount");
+    this.adaptedValidatorCount = adaptedValidatorCount;
+    isLessThanOrEqualTo(adaptedValidatorCount, validatorCount, "adaptedValidatorCount");
+  }
+
+  public int getAdaptedMutatorCount() {
+    return adaptedMutatorCount;
+  }
+
+  public int getAdaptedValidatorCount() {
+    return adaptedValidatorCount;
   }
 
   public void setAttribute(String key, String value) {
     extraConfigAttributes.put(key, value);
   }
 
+  public void setAttribute(String key, Object value) {
+    extraConfigAttributes.put(key, value);
+  }
+
   public String getAttribute(String key) {
     return (String) extraConfigAttributes.get(key);
+  }
+
+  public Object getAttributeObject(String key) {
+    return extraConfigAttributes.get(key);
   }
 
   public int nextGlobalId() {
@@ -108,6 +132,22 @@ public class TransparentAppConfig implements ApplicationConfig, ApplicationConfi
   public TransparentAppConfig setValidatorCount(int count) {
     validatorCount = count;
     return this;
+  }
+
+  public TransparentAppConfig setAdaptedMutatorCount(int count) {
+    adaptedMutatorCount = count;
+    isLessThanOrEqualTo(adaptedMutatorCount, clientCount, "adaptedMutatorCount");
+    return this;
+  }
+
+  public TransparentAppConfig setAdaptedValidatorCount(int count) {
+    adaptedValidatorCount = count;
+    isLessThanOrEqualTo(adaptedValidatorCount, validatorCount, "adaptedValidatorCount");
+    return this;
+  }
+
+  private void isLessThanOrEqualTo(int a, int b, String description) {
+    if (a > b) { throw new AssertionError(description + " is too big!"); }
   }
 
   // ApplicationConfigBuilder interface...

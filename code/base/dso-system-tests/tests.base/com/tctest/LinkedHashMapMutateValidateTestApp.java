@@ -16,7 +16,7 @@ import java.util.Set;
 import java.util.Random;
 import java.util.Iterator;
 
-public class MutateValidateLinkedHashMapTestApp extends AbstractMutateValidateTransparentApp {
+public class LinkedHashMapMutateValidateTestApp extends AbstractMutateValidateTransparentApp {
 
   private int          upbound = 1000;
   private final String appId;
@@ -24,7 +24,7 @@ public class MutateValidateLinkedHashMapTestApp extends AbstractMutateValidateTr
   private final MapRoot map2 = new MapRoot(upbound+100);
   private final EventNode eventIndex = new EventNode(0, "test");
 
-  public MutateValidateLinkedHashMapTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public LinkedHashMapMutateValidateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     this.appId = appId;
   }
@@ -103,7 +103,7 @@ public class MutateValidateLinkedHashMapTestApp extends AbstractMutateValidateTr
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    String testClass = MutateValidateLinkedHashMapTestApp.class.getName();
+    String testClass = LinkedHashMapMutateValidateTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     config.addIncludePattern(testClass + "$*", false, false, true);
  

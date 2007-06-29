@@ -13,7 +13,7 @@ import com.tc.simulator.listener.ListenerProvider;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MutateValidateArrayTestApp extends AbstractMutateValidateTransparentApp {
+public class ArrayMutateValidateTestApp extends AbstractMutateValidateTransparentApp {
 
   private String[]     myArrayTestRoot;
   private List         validationArray;
@@ -22,7 +22,7 @@ public class MutateValidateArrayTestApp extends AbstractMutateValidateTransparen
   private int          iterationCount3;
   private final String appId;
 
-  public MutateValidateArrayTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public ArrayMutateValidateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     this.appId = appId;
     myArrayTestRoot = new String[] { "hee", "hoo", "haa" };
@@ -33,14 +33,21 @@ public class MutateValidateArrayTestApp extends AbstractMutateValidateTransparen
   }
 
   protected void mutate() throws Throwable {
+    try {
+      this.getClass().getDeclaredField("foo");
+      System.out.println("**** appId=[" + appId + "] does have foo field");
+    } catch (Exception e) {
+      System.out.println("**** appId=[" + appId + "] doesn't have foo field");
+    }
+
     synchronized (validationArray) {
       for (int i = 0; i < iterationCount1; i++) {
         int index = (i + 1) % myArrayTestRoot.length;
         String val = myArrayTestRoot[index];
         validationArray.add(val);
-        
+
         Thread.sleep(1000);
-        
+
         if (i % 3 == 0) {
           debugPrintln("****** appId[" + appId + "]:   val added=[" + val + "] index=[" + index + "]");
         }
@@ -53,7 +60,7 @@ public class MutateValidateArrayTestApp extends AbstractMutateValidateTransparen
         validationArray.add(val);
 
         Thread.sleep(1000);
-        
+
         if (i % 3 == 0) {
           debugPrintln("****** appId[" + appId + "]:   val added=[" + val + "] index=[" + index + "]");
         }
@@ -64,7 +71,7 @@ public class MutateValidateArrayTestApp extends AbstractMutateValidateTransparen
         int index = (i + 1) % myArrayTestRoot.length;
         String val = myArrayTestRoot[index];
         validationArray.add(val);
-        
+
         Thread.sleep(1000);
 
         if (i % 3 == 0) {
@@ -93,7 +100,7 @@ public class MutateValidateArrayTestApp extends AbstractMutateValidateTransparen
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    String testClass = MutateValidateArrayTestApp.class.getName();
+    String testClass = ArrayMutateValidateTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
     String methodExpression = "* " + testClass + "*.*(..)";

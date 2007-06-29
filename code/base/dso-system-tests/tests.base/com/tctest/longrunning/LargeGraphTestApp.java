@@ -487,6 +487,9 @@ public class LargeGraphTestApp implements Application, ApplicationConfigBuilder 
         throw new AssertionError();
       }
 
+      public Object getAttributeObject(String key) {
+        throw new AssertionError();
+      }
     };
   }
 }

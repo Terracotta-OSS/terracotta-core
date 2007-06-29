@@ -64,4 +64,8 @@ public class SimpleApplicationConfig implements ApplicationConfig {
   public ServerControl[] getServerControls() {
     throw new AssertionError();
   }
+
+  public Object getAttributeObject(String key) {
+    throw new AssertionError();
+  }
 }

@@ -41,7 +41,7 @@ import java.util.Map;
  * Takes an application configuration and some parameters and runs a single-vm, multi-node (multi-classloader) test.
  */
 public class DistributedTestRunner implements ResultsListener {
-  private static final boolean                          DEBUG               = false;
+  private static final boolean                          DEBUG   = true;
 
   private final boolean                                 startServer;
 
@@ -55,8 +55,8 @@ public class DistributedTestRunner implements ResultsListener {
   private final ContainerStateFactory                   containerStateFactory;
   private final TestGlobalIdGenerator                   globalIdGenerator;
   private final TCServerImpl                            server;
-  private final List                                    errors              = new ArrayList();
-  private final List                                    results             = new ArrayList();
+  private final List                                    errors  = new ArrayList();
+  private final List                                    results = new ArrayList();
   private final DistributedTestRunnerConfig             config;
   private final TestTVSConfigurationSetupManagerFactory configFactory;
   private boolean                                       startTimedOut;
@@ -73,6 +73,10 @@ public class DistributedTestRunner implements ResultsListener {
   private final boolean                                 isActivePassiveTest;
   private final ActivePassiveServerManager              serverManager;
 
+  private final int                                     adaptedMutatorCount;
+  private final int                                     adaptedValidatorCount;
+  private final Map                                     adapterMap;
+
   private ApplicationBuilder[]                          applicationBuilders;
   private Container[]                                   containers;
   private Container[]                                   validatorContainers;
@@ -88,18 +92,19 @@ public class DistributedTestRunner implements ResultsListener {
   public DistributedTestRunner(DistributedTestRunnerConfig config,
                                TestTVSConfigurationSetupManagerFactory configFactory,
                                DSOClientConfigHelper configHelper, Class applicationClass, Map optionalAttributes,
-                               ApplicationConfig applicationConfig, int clientCount, int applicationInstanceCount,
-                               boolean startServer, boolean isMutatorValidatorTest, int validatorCount,
-                               boolean isActivePassiveTest, ActivePassiveServerManager serverManager) throws Exception {
+                               ApplicationConfig applicationConfig, boolean startServer,
+                               boolean isMutatorValidatorTest, boolean isActivePassiveTest,
+                               ActivePassiveServerManager serverManager, TransparentAppConfig transparentAppConfig)
+      throws Exception {
     this.optionalAttributes = optionalAttributes;
-    this.clientCount = clientCount;
-    this.applicationInstanceCount = applicationInstanceCount;
+    this.clientCount = transparentAppConfig.getClientCount();
+    this.applicationInstanceCount = transparentAppConfig.getApplicationInstancePerClientCount();
     this.startServer = startServer;
     this.config = config;
     this.configFactory = configFactory;
     this.configHelper = configHelper;
     this.isMutatorValidatorTest = isMutatorValidatorTest;
-    this.validatorCount = validatorCount;
+    this.validatorCount = transparentAppConfig.getValidatorCount();
     this.isActivePassiveTest = isActivePassiveTest;
     this.serverManager = serverManager;
     this.globalIdGenerator = new TestGlobalIdGenerator();
@@ -111,6 +116,13 @@ public class DistributedTestRunner implements ResultsListener {
     this.statsOutputPrinter = new QueuePrinter(this.statsOutputQueue, System.out);
     this.containerStateFactory = new ContainerStateFactoryObject(statsOutputQueue);
     this.control = newContainerControl();
+
+    adaptedMutatorCount = transparentAppConfig.getAdaptedMutatorCount();
+    adaptedValidatorCount = transparentAppConfig.getAdaptedValidatorCount();
+    adapterMap = (Map) transparentAppConfig.getAttributeObject(TransparentAppConfig.adapterMapKey);
+    if (adapterMap == null) {
+      debugPrintln("***** adapter map is null!");
+    }
 
     this.resultsListeners = newResultsListeners(this.clientCount + this.validatorCount);
 
@@ -330,15 +342,27 @@ public class DistributedTestRunner implements ResultsListener {
     return rv;
   }
 
-  private ApplicationBuilder[] newApplicationBuilders(int count) throws Exception {
-    ApplicationBuilder[] rv = new ApplicationBuilder[count];
+  private ApplicationBuilder[] newApplicationBuilders(int totalClientCount) throws Exception {
+    ApplicationBuilder[] rv = new ApplicationBuilder[totalClientCount];
 
     for (int i = 0; i < rv.length; i++) {
       L1TVSConfigurationSetupManager l1ConfigManager;
       l1ConfigManager = this.configFactory.createL1TVSConfigurationSetupManager();
       l1ConfigManager.setupLogging();
       PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(l1ConfigManager);
-      rv[i] = new DSOApplicationBuilder(this.configHelper, this.applicationConfig, components);
+      if (adapterMap != null
+          && ((i < clientCount && i < adaptedMutatorCount) || (i >= clientCount && i < (adaptedValidatorCount + clientCount)))) {
+        rv[i] = new DSOApplicationBuilder(this.configHelper, this.applicationConfig, components, adapterMap);
+
+        for (Iterator iter = adapterMap.keySet().iterator(); iter.hasNext();) {
+          String adapteeName = (String) iter.next();
+          Class adapterClass = (Class) adapterMap.get(adapteeName);
+          debugPrintln("***** Adding adapter to appBuilder=[" + i + "] adapteeName=[" + adapteeName
+                       + "] adapterClass=[" + adapterClass.getName() + "]");
+        }
+      } else {
+        rv[i] = new DSOApplicationBuilder(this.configHelper, this.applicationConfig, components);
+      }
     }
     return rv;
   }

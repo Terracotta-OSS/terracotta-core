@@ -87,7 +87,10 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
     if (name.startsWith("com.tc.")) {
       return SYSTEM_LOADER.loadClass(name);
     } else {
-      if (adapters.containsKey(name)) { return adaptClass(name); }
+      if (adapters.containsKey(name)) {
+        System.out.println("***** using adapter!  name=[" + name + "]");
+        return adaptClass(name);
+      }
 
       return super.loadClass(name);
     }
