@@ -96,28 +96,28 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
   }
 
   private ResourceBundleHelper getResourceBundleHelper() {
-    if(m_bundleHelper == null) {
+    if (m_bundleHelper == null) {
       m_bundleHelper = new ResourceBundleHelper(DSOSamplesFrame.class);
     }
     return m_bundleHelper;
   }
-  
+
   protected void initFileMenu(Menu fileMenu) {
     fileMenu.add(new ServersAction());
     super.initFileMenu(fileMenu);
   }
 
   class ServersAction extends XAbstractAction {
-    JPanel m_panel;
+    JPanel        m_panel;
     JToggleButton m_useLocalToggle;
-    JTextField m_serversListField;
-    
+    JTextField    m_serversListField;
+
     ServersAction() {
       super(getResourceBundleHelper().getString("servers.action.name"));
     }
 
     private JPanel createPanel() {
-      if(m_panel == null) {
+      if (m_panel == null) {
         m_panel = new JPanel();
         m_panel.setLayout(new GridLayout(2, 1));
         m_panel.add(m_useLocalToggle = new JCheckBox(m_bundleHelper.getString("servers.use.local")));
@@ -141,13 +141,13 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
         serversListDescription.setBorder(new EmptyBorder(0, 20, 0, 0));
         bottomPanel.add(serversListDescription, BorderLayout.SOUTH);
         m_panel.add(bottomPanel);
-        
+
         m_serversListField.setEnabled(prop != null);
         m_useLocalToggle.setSelected(prop == null);
       }
       return m_panel;
     }
-    
+
     public void actionPerformed(ActionEvent ae) {
       JPanel panel = createPanel();
       int result;
@@ -155,7 +155,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
       result = JOptionPane.showConfirmDialog(DSOSamplesFrame.this, panel, DSOSamplesFrame.this.getTitle(),
                                              JOptionPane.OK_CANCEL_OPTION);
       if (result == JOptionPane.OK_OPTION) {
-        if(!m_useLocalToggle.isSelected()) {
+        if (!m_useLocalToggle.isSelected()) {
           System.setProperty("tc.server", m_serversListField.getText());
         } else {
           System.getProperties().remove("tc.server");
@@ -278,8 +278,9 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     setTextPaneCursor(Cursor.WAIT_CURSOR);
     try {
       String bootPath = getBootPath();
-      String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dcom.tc.l1.max.connect.retries=3", "-Dtc.config=tc-config.xml",
-          "-Djava.awt.Window.locationByPlatform=true", "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
+      String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dcom.tc.l1.max.connect.retries=3",
+          "-Dtc.config=tc-config.xml", "-Djava.awt.Window.locationByPlatform=true",
+          "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
           "-Dtc.server=" + System.getProperty("tc.server", ""), "-Xbootclasspath/p:" + bootPath, "-cp", "classes",
           className };
 
@@ -300,15 +301,16 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
   private void runCoordinationSample() {
     setTextPaneCursor(Cursor.WAIT_CURSOR);
     try {
-      String bootPath   = getBootPath();
-      File dir          = new File(getProductDirectory(), "coordination");
-      String classpath  = getLibClassPath(dir, "classes");
-      String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.config=tc-config.xml",
-          "-Djava.awt.Window.locationByPlatform=true", "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
-          "-Xbootclasspath/p:" + bootPath, "-cp", classpath, "demo.coordination.Main" };
+      String bootPath = getBootPath();
+      File dir = new File(getProductDirectory(), "coordination");
+      String classpath = getLibClassPath(dir, "classes");
+      String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dcom.tc.l1.max.connect.retries=3",
+          "-Dtc.config=tc-config.xml", "-Djava.awt.Window.locationByPlatform=true",
+          "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(), "-Xbootclasspath/p:" + bootPath, "-cp", classpath,
+          "demo.coordination.Main" };
 
-      final Process p         = exec(cmdarray, null, dir);
-      XTextPane textPane      = new XTextPane();
+      final Process p = exec(cmdarray, null, dir);
+      XTextPane textPane = new XTextPane();
       StreamReader errDrainer = createStreamReader(p.getErrorStream(), textPane);
       StreamReader outDrainer = createStreamReader(p.getInputStream(), textPane);
 
@@ -340,33 +342,34 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     final String pathSep = System.getProperty("path.separator");
     final String fileSep = System.getProperty("file.separator");
     final String LIB_DIR = "lib";
-    final File libdir    = new File(dir, LIB_DIR);
-    String classpath     = defaultPath; 
+    final File libdir = new File(dir, LIB_DIR);
+    String classpath = defaultPath;
     if (libdir.exists()) {
       final String[] jars = libdir.list(new FilenameFilter() {
-          public boolean accept(File directory, String name) {
-            return name.endsWith(".jar");
-          }
-        });
-      for (int i=0; i<jars.length; i++) {
+        public boolean accept(File directory, String name) {
+          return name.endsWith(".jar");
+        }
+      });
+      for (int i = 0; i < jars.length; i++) {
         classpath += (pathSep + LIB_DIR + fileSep + jars[i]);
       }
     }
     return classpath;
   }
-  
+
   private void runSharedQueueSample() {
     setTextPaneCursor(Cursor.WAIT_CURSOR);
     try {
-      String bootPath   = getBootPath();
-      File dir          = new File(getProductDirectory(), "sharedqueue");
-      String classpath  = getLibClassPath(dir, "classes");
-      String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dtc.config=tc-config.xml",
-          "-Djava.awt.Window.locationByPlatform=true", "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(),
-          "-Xbootclasspath/p:" + bootPath, "-cp", classpath, "demo.sharedqueue.Main" };
+      String bootPath = getBootPath();
+      File dir = new File(getProductDirectory(), "sharedqueue");
+      String classpath = getLibClassPath(dir, "classes");
+      String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Dcom.tc.l1.max.connect.retries=3",
+          "-Dtc.config=tc-config.xml", "-Djava.awt.Window.locationByPlatform=true",
+          "-Dtc.install-root=" + getInstallRoot().getAbsolutePath(), "-Xbootclasspath/p:" + bootPath, "-cp", classpath,
+          "demo.sharedqueue.Main" };
 
-      final Process p         = exec(cmdarray, null, dir);
-      XTextPane textPane      = new XTextPane();
+      final Process p = exec(cmdarray, null, dir);
+      XTextPane textPane = new XTextPane();
       StreamReader errDrainer = createStreamReader(p.getErrorStream(), textPane);
       StreamReader outDrainer = createStreamReader(p.getInputStream(), textPane);
 
@@ -398,11 +401,7 @@ public class DSOSamplesFrame extends HyperlinkFrame implements HyperlinkListener
     HyperlinkEvent.EventType type = e.getEventType();
     Element elem = e.getSourceElement();
 
-    if (elem == null ||
-        type == HyperlinkEvent.EventType.ENTERED ||
-        type == HyperlinkEvent.EventType.EXITED) {
-      return;
-    }
+    if (elem == null || type == HyperlinkEvent.EventType.ENTERED || type == HyperlinkEvent.EventType.EXITED) { return; }
 
     if (m_textPane.getCursor().getType() != Cursor.WAIT_CURSOR) {
       AttributeSet a = elem.getAttributes();
