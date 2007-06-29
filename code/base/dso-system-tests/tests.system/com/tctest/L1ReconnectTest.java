@@ -35,7 +35,12 @@ public class L1ReconnectTest extends TransparentTestBase {
   private int             adminPort;
 
   public L1ReconnectTest() {
-    //this.disableAllUntil("2007-06-25");
+    this.disableAllUntil("2007-12-25");
+    /*
+     * The proxy test in this test is not proper, the proxy is started too late.
+     * And observered a L1 run without going through proxy. No trivial to change.
+     * Sine we have proxy test framework already. This test is good to be deleted.
+     */
   }
   
   protected boolean enableL1Reconnect() {

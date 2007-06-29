@@ -8,6 +8,8 @@ import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -34,6 +36,7 @@ public class SendStateMachine extends AbstractStateMachine {
   private final boolean                    isClient;
   private final String                     debugId;
   private static final boolean             debug                = false;
+  private static final TCLogger            logger               = TCLogging.getLogger(SendStateMachine.class);
 
   // changed by tc.properties
 
@@ -49,8 +52,7 @@ public class SendStateMachine extends AbstractStateMachine {
   }
 
   protected void basicResume() {
-    if (isClient) switchToState(HANDSHAKE_WAIT_STATE);
-    else switchToState(MESSAGE_WAIT_STATE);
+    switchToState(HANDSHAKE_WAIT_STATE);
   }
 
   protected State initialState() {
@@ -80,7 +82,6 @@ public class SendStateMachine extends AbstractStateMachine {
 
     public void execute(OOOProtocolMessage protocolMessage) {
       if (!sendQueue.isEmpty()) {
-        Assert.eval(protocolMessage == null);
         if ((sendWindow == 0) || (outstandingCnt.get() < sendWindow)) {
           delivery.sendMessage(createProtocolMessage(sent.increment()));
         }
@@ -97,7 +98,13 @@ public class SendStateMachine extends AbstractStateMachine {
 
     public void execute(OOOProtocolMessage msg) {
       if (msg == null) return;
-      Assert.inv(msg.isHandshakeReplyOk() || msg.isHandshakeReplyFail());
+      // drop all msgs until handshake reply. 
+      // Happens when short network disruptions and both L1 & L2 still keep states.
+      if(!msg.isHandshakeReplyOk() && !msg.isHandshakeReplyFail())  {
+        logger.warn("Due to handshake drops stale message:"+msg);
+        return;
+      }
+      
       if (msg.isHandshakeReplyFail()) {
         switchToState(MESSAGE_WAIT_STATE);
         return;
@@ -112,6 +119,7 @@ public class SendStateMachine extends AbstractStateMachine {
       }
       if (ackedSeq < acked.get()) {
         // this shall not, old ack
+        Assert.failure("Received bad ack: "+ackedSeq+ " expected >= "+acked.get());
       } else {
         while (ackedSeq > acked.get()) {
           acked.increment();
@@ -189,6 +197,7 @@ public class SendStateMachine extends AbstractStateMachine {
     OOOProtocolMessage msg = (OOOProtocolMessage) outstandingMsgs.removeFirst();
     msg.reallyDoRecycleOnWrite();
     outstandingCnt.decrement();
+    Assert.eval(outstandingCnt.get() >= 0);
   }
 
   public void reset() {

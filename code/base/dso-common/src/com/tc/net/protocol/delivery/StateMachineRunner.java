@@ -38,8 +38,9 @@ public class StateMachineRunner implements EventContext {
   }
 
   public synchronized void resume() {
+    events.clear();
     stateMachine.resume();
-    scheduleIfNeeded();
+    //scheduleIfNeeded();
   }
 
   public void run() {

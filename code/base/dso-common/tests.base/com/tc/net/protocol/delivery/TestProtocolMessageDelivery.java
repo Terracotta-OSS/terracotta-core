@@ -52,8 +52,9 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
     this.sentAck = true;
   }
 
-  public void sendMessage(OOOProtocolMessage pmsg) {
+  public boolean sendMessage(OOOProtocolMessage pmsg) {
     this.msg = pmsg;
+    return(true);
   }
 
   public OOOProtocolMessage createProtocolMessage(long sent, TCNetworkMessage tcmsg) {

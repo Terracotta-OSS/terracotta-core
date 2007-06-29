@@ -66,10 +66,15 @@ public class ReceiveStateMachine extends AbstractStateMachine {
       final long curRecv = received.get();
       if (r <= curRecv) {
         // we already got message
+        debugLog("Received dup msg "+r);
         sendAck(curRecv);
+        delayedAcks.set(0);
+        return;
       } else if (r > (curRecv + 1)) {
         // message missed, resend ack, receive to resend message.
+        debugLog("Received out of order msg "+r);
         sendAck(curRecv);
+        delayedAcks.set(0);
         return;
       } else {
         Assert.inv(r == (curRecv + 1));
@@ -87,19 +92,28 @@ public class ReceiveStateMachine extends AbstractStateMachine {
     if ((delayedAcks.get() < maxDelayedAcks) && (getRunnerEventLength() > 0)) {
       delayedAcks.increment();
     } else {
-      sendAck(next);
-      delayedAcks.set(0);
+       /*
+       * saw IllegalStateException by AbstractTCNetworkMessage.checkSealed
+       * when message sent to non-established transport by MessageTransportBase.send.
+       * reset delayedAcks only ack can be sent.
+       */
+        if (sendAck(next)) {
+          delayedAcks.set(0);
+        } else {
+          debugLog("Failed to send ack:"+next);
+        }
     }
   }
 
-  private void sendAck(long seq) {
+  private boolean sendAck(long seq) {
     OOOProtocolMessage opm = delivery.createAckMessage(seq);
     Assert.inv(opm.getSessionId() > -1);
-    delivery.sendMessage(opm);
+    return (delivery.sendMessage(opm));
   }
 
   public void reset() {
     received.set(-1);
+    delayedAcks.set(0);
   }
 
   private void debugLog(String msg) {

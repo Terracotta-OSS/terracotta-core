@@ -17,7 +17,7 @@ public interface OOOProtocolMessageDelivery {
 
   public OOOProtocolMessage createAckMessage(long sequence);
 
-  public void sendMessage(OOOProtocolMessage msg);
+  public boolean sendMessage(OOOProtocolMessage msg);
 
   public void receiveMessage(OOOProtocolMessage msg);
 
