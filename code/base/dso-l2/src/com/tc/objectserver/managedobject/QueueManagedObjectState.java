@@ -12,6 +12,7 @@ import com.tc.object.dna.api.PhysicalAction;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.util.Assert;
+import com.tc.util.DebugUtil;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -74,9 +75,15 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
       case SerializationUtil.PUT:
         addChangeToCollector(objectID, params[0], includeIDs);
         references.add(params[0]);
+        if (DebugUtil.DEBUG) {
+          System.err.println("LinkedBlockingQueue Server applying PUT -- " + params[0]);
+        }
         break;
       case SerializationUtil.TAKE:
-        references.remove(0);
+        Object o = references.remove(0);
+        if (DebugUtil.DEBUG) {
+          System.err.println("LinkedBlockingQueue Server applying remove -- o: " + o);
+        }
         break;
       case SerializationUtil.CLEAR:
         references.clear();
@@ -103,7 +110,7 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
       getListener().changed(objectID, null, (ObjectID) newValue);
     }
   }
-  
+
   public void addObjectReferencesTo(ManagedObjectTraverser traverser) {
     traverser.addReachableObjectIDs(getObjectReferences());
   }
@@ -177,7 +184,7 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
       }
     }
   }
-  
+
   protected void basicWriteTo(ObjectOutput out) throws IOException {
     writeField(out, TAKE_LOCK_FIELD_NAME, takeLockField);
     writeField(out, PUT_LOCK_FIELD_NAME, putLockField);
@@ -196,7 +203,7 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
            && ((capacityField == mo.capacityField) || (capacityField != null && capacityField.equals(mo.capacityField)))
            && references.equals(mo.references);
   }
-  
+
   private static void readField(ObjectInput in, QueueManagedObjectState mo) throws ClassNotFoundException, IOException {
     String fieldName = in.readUTF();
     boolean fieldExist = in.readBoolean();
@@ -218,8 +225,8 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
     readField(in, mo);
     readField(in, mo);
     readField(in, mo);
-    
-    
+
+
     int size = in.readInt();
     LinkedList list = new LinkedList();
     for (int i = 0; i < size; i++) {
