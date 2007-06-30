@@ -27,15 +27,8 @@ class ArchiveTag
         os_type = @build_environment.os_type(:nice)
         monkey_label = @build_environment.monkey_label
         
-        timestamp = @build_environment.build_timestamp
-        year = timestamp.strftime("%Y")
-        month = timestamp.strftime("%m")
-        day = timestamp.strftime("%d")
-        hour = timestamp.strftime("%H")
-        minute = timestamp.strftime("%M")
-        second = timestamp.strftime("%S")
-        
-        FilePath.new(branch, "rev%s" % revision, monkey_label, os_type, host, year.to_s, month.to_s, day.to_s,
-            [ filename, branch, monkey_label, "rev%s" % revision, host, year, month, day, hour, minute, second ].join("-") + "." + extension)
+        timestamp = @build_environment.build_timestamp.strftime("%Y%m%d-%H%M")
+        FilePath.new(branch, "rev%s" % revision,
+            [ filename, branch, monkey_label, "rev%s" % revision, host, timestamp].join("-") + "." + extension)
     end
 end
