@@ -1,5 +1,3 @@
-#Fri Dec 22 11:17:43 PST 2006
+#Fri Jun 29 15:16:33 PDT 2007
 eclipse.preferences.version=1
-org.eclipse.ajdt.ui.aspectPath.contentKind1=BINARY
-org.eclipse.ajdt.ui.aspectPath.entryKind1=LIBRARY
-org.eclipse.ajdt.ui.aspectPath1=/dso-spring-aj/lib.aspects/spring-aspects-2.0.jar
+instance/org.eclipse.core.net/org.eclipse.core.net.hasMigrated=true

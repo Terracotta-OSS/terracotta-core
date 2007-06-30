@@ -1,13 +1,15 @@
 package com.tctest;
 
 import java.util.Iterator;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.Status;
-import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
+//import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
+//import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
@@ -64,7 +66,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	protected void runTest() throws Throwable {
 		final int CACHE_POPULATION = 10;
 
-		if (barrier.barrier() == 0) {
+		if (barrier.await() == 0) {
 			// create 2 caches, wait for the other node to verify 
 			addCache("CACHE1", true);
 			addCache("CACHE2", false);
@@ -120,7 +122,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 			waitForPermissionToProceed();
 			verifyCacheManagerShutdown();
 		}
-		barrier.barrier();
+		barrier.await();
 	}
 	
 	/**
@@ -263,12 +265,12 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	// This is lame but it makes runTest() slightly more readable
 	private void letOtherNodeProceed() throws InterruptedException,
 			BrokenBarrierException {
-		barrier.barrier();
+		barrier.await();
 	}
 
 	// This is lame but it makes runTest() slightly more readable
 	private void waitForPermissionToProceed() throws InterruptedException,
 			BrokenBarrierException {
-		barrier.barrier();
+		barrier.await();
 	}
 }

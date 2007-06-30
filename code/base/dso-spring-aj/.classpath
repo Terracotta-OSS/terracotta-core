@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="**/SCCS/**" output="build.eclipse/tests.system.classes" kind="src" path="tests.system"/>
-	<classpathentry excluding="**/SCCS/**" output="build.eclipse/tests.system.classes" kind="src" path="tests.system.resources"/>
+	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.system.classes" path="tests.system"/>
+	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/tests.system.classes" path="tests.system.resources"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common"/>
@@ -18,9 +18,11 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/deploy"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-container-tests"/>
 	<classpathentry kind="lib" path="/dependencies/lib/aspectjrt-1.5.jar"/>
-	<!--
-	<classpathentry kind="lib" path="lib/aspectjrt.jar"/>
-	-->
 	<classpathentry kind="lib" path="lib/aspectjrtsrc.zip"/>
+	<classpathentry kind="lib" path="lib.aspects/spring-aspects-2.0.jar">
+		<attributes>
+			<attribute name="org.eclipse.ajdt.aspectpath" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>
