@@ -361,25 +361,12 @@ class SubtreeTestRunRecord
                Dir.open(@subtree_testrun_directory.to_s) do |dir|
                    dir.each do |entry|
                        if entry =~ /^TEST-(\S+)\.xml$/i
-                            file_classname = $1
+                          file_classname = $1
                            
-                            filename = FilePath.new(@subtree_testrun_directory, entry)                            
-                            
-                            unless filename.exist?
-                                # try to remedy the situation where JVM crashed while copying/writing XML. The XML might exist in the
-                                # .temp-files folder. If that is the case, we copy it over to .test-results mannually                                
-                                file_from_tempdir = FilePath.new(@subtree_tempdir, entry)
-                                if file_from_tempdir.exist?
-                                    $stderr.puts("JVM cash dectected.")
-                                    #FileUtils.mv(file_from_tempdir.to_s, filename.to_s)
-                                    ant.move(:file => file_from_tempdir.to_s, :tofile => filename.to_s)
-                                end
-                            end
-                       
+                          filename = FilePath.new(@subtree_testrun_directory, entry)                                                 
                            begin
                                # A little output so users know we're actually doing something
-                               $stderr.printf(".")
-                               $stderr.flush
+                               puts(".")
                                
                                testsuite_run = TestSuiteRunRecord.from_file(filename)
                                @testsuites[testsuite_run.name] = testsuite_run
@@ -388,9 +375,7 @@ class SubtreeTestRunRecord
                                @total_suites += 1
                                @total_suites_passed += 1 unless testsuite_run.failed?
                            rescue => e
-                                $stderr.printf("JVM might have crashed while writing test result for: %s\n", entry)
-                                $stderr.printf("Test %s has failed. Check log for exception.\n", file_classname)
-                                $stderr.flush
+                               STDERR.puts("Test #{file_classname} failed abnormally. Result file can't be parsed. Check log for exception.")
                                testsuite_run = UnparseableTestSuiteRunRecord.new(filename, file_classname, e)
                                @testsuites[file_classname] = testsuite_run
                                @total_suites += 1
