@@ -6,6 +6,7 @@ package com.tc.objectserver.tx;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.TransactionID;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public interface TransactionAccount {
@@ -21,8 +22,6 @@ public interface TransactionAccount {
 
   public abstract boolean skipApplyAndCommit(TransactionID requestID);
 
-  public abstract void applyStarted(TransactionID requestID);
-
   public abstract boolean applyCommitted(TransactionID requestID);
 
   public abstract boolean broadcastCompleted(TransactionID requestID);
@@ -32,5 +31,9 @@ public interface TransactionAccount {
   public abstract Set requestersWaitingFor(ChannelID waitee);
 
   public abstract boolean relayTransactionComplete(TransactionID requestID);
+
+  public abstract void incommingTransactions(Set serverTxnIDs);
+
+  public abstract void addAllPendingServerTransactionIDsTo(HashSet txnsInSystem);
 
 }

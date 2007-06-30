@@ -93,4 +93,8 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   public void goToActiveMode() {
     throw new ImplementMe();
   }
+
+  public void callBackOnTxnsInSystemCompletion(TxnsInSystemCompletionLister l) {
+    throw new ImplementMe();
+  }
 }

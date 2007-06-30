@@ -25,10 +25,6 @@ public class TransactionRecord {
     state.applyAndCommitSkipped();
   }
 
-  public void applyStarted() {
-    state.applyStarted();
-  }
-
   public void applyCommitted() {
     state.applyCommitted();
   }

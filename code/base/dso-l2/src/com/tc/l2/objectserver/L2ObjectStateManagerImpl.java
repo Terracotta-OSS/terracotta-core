@@ -13,6 +13,7 @@ import com.tc.logging.TCLogging;
 import com.tc.net.groups.NodeID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
+import com.tc.objectserver.tx.TxnsInSystemCompletionLister;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.concurrent.CopyOnWriteArrayMap;
@@ -26,22 +27,16 @@ import java.util.Set;
 
 public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
 
-  private static final TCLogger                         logger     = TCLogging
-                                                                       .getLogger(L2ObjectStateManagerImpl.class);
+  private static final TCLogger          logger    = TCLogging.getLogger(L2ObjectStateManagerImpl.class);
 
-  private final ObjectManager                           objectManager;
-  private final UnappliedTransactionsInTheSystemMonitor txnMonitor = new UnappliedTransactionsInTheSystemMonitor();
-  private final CopyOnWriteArrayMap                     nodes      = new CopyOnWriteArrayMap();
-  private final CopyOnWriteArrayList                    listeners  = new CopyOnWriteArrayList();
-  private final ServerTransactionManager                transactionManager;
+  private final ObjectManager            objectManager;
+  private final CopyOnWriteArrayMap      nodes     = new CopyOnWriteArrayMap();
+  private final CopyOnWriteArrayList     listeners = new CopyOnWriteArrayList();
+  private final ServerTransactionManager transactionManager;
 
   public L2ObjectStateManagerImpl(ObjectManager objectManager, ServerTransactionManager transactionManager) {
     this.objectManager = objectManager;
     this.transactionManager = transactionManager;
-  }
-
-  public void goActive() {
-    transactionManager.addTransactionListener(txnMonitor);
   }
 
   public void registerForL2ObjectStateChangeEvents(L2ObjectStateListener listener) {
@@ -85,8 +80,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       l2State = new L2ObjectStateImpl(nodeID, oids);
       nodes.put(nodeID, l2State);
       final L2ObjectStateImpl _l2State = l2State;
-      txnMonitor.callBackWhenAllCurrentTxnsApplied(new UnappliedTransactionsInTheSystemMonitor.Callback() {
-        public void doAction() {
+      transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
+        public void onCompletion() {
           _l2State.moveToReadyToSyncState();
         }
       });
@@ -144,8 +139,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       syncingContext = null;
       if (missingOids.isEmpty()) {
         state = IN_SYNC_PENDING_NOTIFY;
-        txnMonitor.callBackWhenAllCurrentTxnsApplied(new UnappliedTransactionsInTheSystemMonitor.Callback() {
-          public void doAction() {
+        transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
+          public void onCompletion() {
             moveToInSyncState();
           }
         });

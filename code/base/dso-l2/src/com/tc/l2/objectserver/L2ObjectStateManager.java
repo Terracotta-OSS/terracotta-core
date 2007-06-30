@@ -31,5 +31,4 @@ public interface L2ObjectStateManager {
 
   public void registerForL2ObjectStateChangeEvents(L2ObjectStateListener listener);
 
-  public void goActive();
 }

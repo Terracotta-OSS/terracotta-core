@@ -81,6 +81,8 @@ public interface ServerTransactionManager {
   public void addTransactionListener(ServerTransactionListener listener);
 
   public void removeTransactionListener(ServerTransactionListener listener);
+  
+  public void callBackOnTxnsInSystemCompletion(TxnsInSystemCompletionLister l);
 
   public void incomingTransactions(ChannelID channelID, Set txnIDs, Collection txns, boolean relayed);
 

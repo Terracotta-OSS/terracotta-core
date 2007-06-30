@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private static final State                   PASSIVE_MODE        = new State("PASSIVE-MODE");
   private static final State                   ACTIVE_MODE         = new State("ACTIVE-MODE");
 
+  // TODO::FIXME::Change this to concurrent hashmap with top level txn accounting
   private final Map                            transactionAccounts = Collections.synchronizedMap(new HashMap());
   private final ClientStateManager             stateManager;
   private final ObjectManager                  objectManager;
@@ -80,7 +82,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.transactionRateCounter = transactionRateCounter;
     this.channelStats = channelStats;
     this.txnLogger = new ServerTransactionLogger(logger, config);
-    if(config.isLoggingEnabled()) {
+    if (config.isLoggingEnabled()) {
       enableTransactionLogger();
     }
   }
@@ -147,8 +149,12 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   public void addWaitingForAcknowledgement(ChannelID waiter, TransactionID txnID, ChannelID waitee) {
-    TransactionAccount ci = getOrCreateTransactionAccount(waiter);
-    ci.addWaitee(waitee, txnID);
+    TransactionAccount ci = getTransactionAccount(waiter);
+    if (ci != null) {
+      ci.addWaitee(waitee, txnID);
+    } else {
+      logger.warn("Not adding to Wating for Ack since Waiter not found in the states map: " + waiter);
+    }
   }
 
   // For testing
@@ -189,10 +195,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
     GlobalTransactionID gtxID = txn.getGlobalTransactionID();
 
-    // XXX::If the client got disconnected before the transactions are applied, this could be null.
-    TransactionAccount ci = getTransactionAccount(channelID);
-    if (ci != null) ci.applyStarted(txnID);
-
     boolean active = isActive();
 
     for (Iterator i = changes.iterator(); i.hasNext();) {
@@ -232,7 +234,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   public void skipApplyAndCommit(ServerTransaction txn) {
     final ChannelID channelID = txn.getChannelID();
     final TransactionID txnID = txn.getTransactionID();
-    TransactionAccount ci = getOrCreateTransactionAccount(channelID);
+    TransactionAccount ci = getTransactionAccount(channelID);
     if (ci.skipApplyAndCommit(txnID)) {
       fireTransactionAppliedEvent(txn.getServerTransactionID());
       acknowledge(channelID, txnID);
@@ -266,6 +268,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   public void incomingTransactions(ChannelID cid, Set txnIDs, Collection txns, boolean relayed) {
     final boolean active = isActive();
     TransactionAccount ci = getOrCreateTransactionAccount(cid);
+    ci.incommingTransactions(txnIDs);
     for (Iterator i = txns.iterator(); i.hasNext();) {
       final ServerTransaction txn = (ServerTransaction) i.next();
       final ServerTransactionID stxnID = txn.getServerTransactionID();
@@ -284,7 +287,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   public void transactionsRelayed(ChannelID channelID, Set serverTxnIDs) {
-    TransactionAccount ci = getOrCreateTransactionAccount(channelID);
+    TransactionAccount ci = getTransactionAccount(channelID);
     if (ci == null) {
       logger.warn("transactionsRelayed(): TransactionAccount not found for " + channelID);
       return;
@@ -375,6 +378,26 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.txnEventListeners.remove(listener);
   }
 
+  public void callBackOnTxnsInSystemCompletion(TxnsInSystemCompletionLister l) {
+    boolean callback = false;
+    synchronized (transactionAccounts) {
+      HashSet txnsInSystem = new HashSet();
+      for (Iterator i = transactionAccounts.entrySet().iterator(); i.hasNext();) {
+        Entry entry = (Entry) i.next();
+        TransactionAccount client = (TransactionAccount) entry.getValue();
+        client.addAllPendingServerTransactionIDsTo(txnsInSystem);
+      }
+      if (txnsInSystem.isEmpty()) {
+        callback = true;
+      } else {
+        addTransactionListener(new TxnsInSystemCompletionListenerCallback(l, txnsInSystem));
+      }
+    }
+    if (callback) {
+      l.onCompletion();
+    }
+  }
+
   private void fireIncomingTransactionsEvent(ChannelID cid, Set serverTxnIDs) {
     for (Iterator iter = txnEventListeners.iterator(); iter.hasNext();) {
       try {
@@ -443,5 +466,48 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         throw new AssertionError(e);
       }
     }
+  }
+
+  private final class TxnsInSystemCompletionListenerCallback implements ServerTransactionListener {
+
+    private final TxnsInSystemCompletionLister callback;
+    private final HashSet                      txnsInSystem;
+
+    public int                                 count = 0;
+
+    public TxnsInSystemCompletionListenerCallback(TxnsInSystemCompletionLister callback, HashSet txnsInSystem) {
+      this.callback = callback;
+      this.txnsInSystem = txnsInSystem;
+    }
+
+    public void addResentServerTransactionIDs(Collection stxIDs) {
+      // NOP
+    }
+
+    public void clearAllTransactionsFor(ChannelID killedClient) {
+      // NOP
+    }
+
+    public void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
+      // NOP
+    }
+
+    public void transactionApplied(ServerTransactionID stxID) {
+      // NOP
+    }
+
+    public void transactionCompleted(ServerTransactionID stxID) {
+      if (txnsInSystem.remove(stxID)) {
+        if (txnsInSystem.isEmpty()) {
+          ServerTransactionManagerImpl.this.removeTransactionListener(this);
+          callback.onCompletion();
+        }
+      }
+      if (count++ % 100 == 0) {
+        logger.warn("TxnsInSystemCompletionLister :: Still waiting for completion of " + txnsInSystem.size()
+                    + " txns to call callback " + callback + " count = " + count);
+      }
+    }
+
   }
 }

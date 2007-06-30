@@ -1,9 +1,11 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.tx;
 
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 
@@ -18,7 +20,6 @@ import java.util.Set;
  * An account of the state of a given transaction. Keeps track of the initiating client, the state of the transaction
  * (applied, committed, etc), clients the transaction has been broadcast to, and clients that have ACKed the
  * transaction.
- * 
  */
 public class TransactionAccountImpl implements TransactionAccount {
   final ChannelID   clientID;
@@ -36,6 +37,18 @@ public class TransactionAccountImpl implements TransactionAccount {
     return clientID;
   }
 
+  public void incommingTransactions(Set txnIDs) {
+    for (Iterator i = txnIDs.iterator(); i.hasNext();) {
+      ServerTransactionID stxnID = (ServerTransactionID) i.next();
+      createRecord(stxnID.getClientTransactionID());
+    }
+  }
+
+  private void createRecord(TransactionID txnID) {
+    Object old = waitees.put(txnID, new TransactionRecord());
+    Assert.assertNull(old);
+  }
+
   /*
    * returns true if completed, false if not completed or if the client has sent a duplicate ACK.
    */
@@ -50,40 +63,22 @@ public class TransactionAccountImpl implements TransactionAccount {
   }
 
   public void addWaitee(ChannelID waitee, TransactionID requestID) {
-    TransactionRecord record = getOrCreateRecord(requestID);
+    TransactionRecord record = getRecord(requestID);
     synchronized (record) {
       boolean added = record.addWaitee(waitee);
       Assert.eval(added);
     }
   }
 
-  private TransactionRecord getOrCreateRecord(TransactionID requestID) {
-    synchronized (waitees) {
-      TransactionRecord transactionRecord = getRecord(requestID);
-      if (transactionRecord == null) {
-        waitees.put(requestID, (transactionRecord = new TransactionRecord()));
-      }
-      return transactionRecord;
-    }
-  }
-
   private TransactionRecord getRecord(TransactionID requestID) {
-    TransactionRecord transactionRecord = (TransactionRecord) waitees.get(requestID);
-    return transactionRecord;
+    return (TransactionRecord) waitees.get(requestID);
   }
 
   public boolean skipApplyAndCommit(TransactionID requestID) {
-    TransactionRecord transactionRecord = getOrCreateRecord(requestID);
+    TransactionRecord transactionRecord = getRecord(requestID);
     synchronized (transactionRecord) {
       transactionRecord.applyAndCommitSkipped();
       return checkCompleted(requestID, transactionRecord);
-    }
-  }
-
-  public void applyStarted(TransactionID requestID) {
-    TransactionRecord transactionRecord = getOrCreateRecord(requestID);
-    synchronized (transactionRecord) {
-      transactionRecord.applyStarted();
     }
   }
 
@@ -114,7 +109,7 @@ public class TransactionAccountImpl implements TransactionAccount {
   }
 
   public boolean relayTransactionComplete(TransactionID requestID) {
-    TransactionRecord transactionRecord = getOrCreateRecord(requestID);
+    TransactionRecord transactionRecord = getRecord(requestID);
     synchronized (transactionRecord) {
       transactionRecord.relayTransactionComplete();
       return checkCompleted(requestID, transactionRecord);
@@ -149,6 +144,15 @@ public class TransactionAccountImpl implements TransactionAccount {
       return true;
     }
     return false;
+  }
+
+  public void addAllPendingServerTransactionIDsTo(HashSet txnIDs) {
+    synchronized (waitees) {
+      for (Iterator i = waitees.keySet().iterator(); i.hasNext();) {
+        TransactionID txnID = (TransactionID) i.next();
+        txnIDs.add(new ServerTransactionID(clientID, txnID));
+      }
+    }
   }
 
 }
