@@ -9,6 +9,7 @@ import com.tc.config.schema.builder.SpringConfigBuilder;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.Server;
+import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.SpringTerracottaAppServerConfig;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
@@ -18,6 +19,8 @@ import com.tctest.spring.integrationtests.SpringDeploymentTest;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import junit.framework.Test;
 
 /** 
  * This is a simple smoke test for the Spring testing framework extensions.
@@ -36,6 +39,10 @@ public class SpringTestingFrameworkSmokeTest extends SpringDeploymentTest {
   String context = APP_NAME;
   String url = "/" + context;
 
+  public static Test suite() {
+    return new ServerTestSetup(SpringTestingFrameworkSmokeTest.class);
+  }
+  
   protected void setUp() throws Exception {
     super.setUp();
     if (tcConfig == null) tcConfig = buildTCConfig();

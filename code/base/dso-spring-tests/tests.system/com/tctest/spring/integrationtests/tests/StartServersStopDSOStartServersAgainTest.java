@@ -6,8 +6,11 @@ package com.tctest.spring.integrationtests.tests;
 
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.Server;
+import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tctest.spring.bean.ISingleton;
 import com.tctest.spring.integrationtests.SpringDeploymentTest;
+
+import junit.framework.Test;
 
 
 public class StartServersStopDSOStartServersAgainTest extends SpringDeploymentTest {
@@ -15,6 +18,9 @@ public class StartServersStopDSOStartServersAgainTest extends SpringDeploymentTe
   private static final String  BEAN_DEFINITION_FILE_FOR_TEST = "classpath:/com/tctest/spring/beanfactory.xml";
   private static final String  CONFIG_FILE_FOR_TEST          = "/tc-config-files/singleton-tc-config.xml";
 
+  public static Test suite() {
+    return new ServerTestSetup(StartServersStopDSOStartServersAgainTest.class);
+  }
   
   public StartServersStopDSOStartServersAgainTest() {
     //disableAllUntil("2010-03-01");

@@ -16,6 +16,11 @@ public class Banner {
     System.err.flush();
   }
 
+  public static void infoBanner(String message) {
+    System.out.println(makeBanner(message, "INFO"));
+    System.out.flush();
+  }
+  
   private static final int MAX_LINE  = 72;
   private static final int BOX_WIDTH = MAX_LINE + 4;
 

@@ -7,10 +7,13 @@ package com.tctest.spring.integrationtests.tests;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.Server;
+import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.bean.FooService;
 import com.tctest.spring.bean.ISingleton;
 import com.tctest.spring.integrationtests.SpringDeploymentTest;
+
+import junit.framework.Test;
 
 /**
  * Verify various issues with deploying applications
@@ -22,6 +25,10 @@ public class DeploymentTest extends SpringDeploymentTest {
   private Deployment          singletonWAR;
   private Deployment          fooServiceWAR;
 
+  public static Test suite() {
+    return new ServerTestSetup(DeploymentTest.class);
+  }
+  
   protected void setUp() throws Exception {
     super.setUp();
     singletonWAR = makeSingletonWAR();

@@ -129,6 +129,12 @@ public class AppServerUtil {
         Banner.warnBanner("IOException caught while copying workingDir files");
         ioe.printStackTrace();
       }
+      System.out.println("Delete files in: " + from);
+      try {
+        FileUtils.forceDelete(from);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
     }    
   }
 }

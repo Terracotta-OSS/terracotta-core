@@ -7,12 +7,15 @@ package com.tctest.spring.integrationtests.tests;
 
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.Server;
+import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.TestCallback;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.bean.RedeploymentBean;
 import com.tctest.spring.integrationtests.SpringDeploymentTest;
 
 import java.util.Date;
+
+import junit.framework.Test;
 
 /**
  * Test ApplicationContext definition
@@ -30,6 +33,10 @@ import java.util.Date;
  */
 public class RedeploymentTest extends SpringDeploymentTest {
 
+  public static Test suite() {
+    return new ServerTestSetup(RedeploymentTest.class);
+  }
+  
   public RedeploymentTest() {
     disableAllUntil("2010-09-20");
   }

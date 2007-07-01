@@ -5,9 +5,12 @@ package com.tctest.spring.integrationtests.tests;
 
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.bean.ISingleton;
 import com.tctest.spring.integrationtests.SpringDeploymentTest;
+
+import junit.framework.Test;
 
 public class StateMaintainedTest extends SpringDeploymentTest {
 
@@ -19,6 +22,9 @@ public class StateMaintainedTest extends SpringDeploymentTest {
   private WebApplicationServer server1;
   private WebApplicationServer server2;
 
+  public static Test suite() {
+    return new ServerTestSetup(StateMaintainedTest.class);
+  }
   
   protected void setUp() throws Exception {
     super.setUp();

@@ -76,7 +76,7 @@ public class ServerManager {
   }
 
   private void startDSO(boolean withPersistentStore) throws Exception {
-    dsoServer = new DSOServer(withPersistentStore, sandbox);
+    dsoServer = new DSOServer(withPersistentStore, tempDir);
     dsoServer.start();
     addServerToStop(dsoServer);
   }

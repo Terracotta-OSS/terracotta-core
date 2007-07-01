@@ -7,6 +7,7 @@ import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.deployment.Deployment;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.Server;
+import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.spring.integrationtests.SpringDeploymentTest;
 
@@ -14,32 +15,41 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import junit.framework.Test;
 
 public class AspectJTest extends SpringDeploymentTest {
 
   private static final String REMOTE_SERVICE_NAME = "InstrumentedBean";
 
-  private Deployment deployment;
-  private String context = "test-aspectj";
+  private Deployment          deployment;
+  private String              context             = "test-aspectj";
+
+  public static Test suite() {
+    return new ServerTestSetup(AspectJTest.class);
+  }
 
   public AspectJTest() {
     this.disableVariant(TestConfigObject.SPRING_VARIANT, "128");
   }
-  
+
   protected void setUp() throws Exception {
     super.setUp();
 
-    DeploymentBuilder builder = makeDeploymentBuilder(context+".war");
-    
-    builder.addRemoteService(REMOTE_SERVICE_NAME, "instrumentedBean", IInstrumentedBean.class);
-    
+    DeploymentBuilder builder = makeDeploymentBuilder(context + ".war");
+
+    builder.addRemoteService(REMOTE_SERVICE_NAME, "instrumentedBean",
+        IInstrumentedBean.class);
+
     builder.addDirectoryOrJARContainingClass(IInstrumentedBean.class);
     builder.addDirectoryOrJARContainingClass(org.aspectj.lang.Aspects.class);
-    // builder.addDirectoryOrJARContainingClassOfSelectedVersion(org.springframework.beans.factory.aspectj.AnnotationBeanConfigurerAspect.class, new String[] {TestConfigObject.SPRING_VARIANT});  // spring advices
-    
-    builder.addBeanDefinitionFile("classpath:/com/tctest/spring/aj/beanfactory-aspectj.xml");
-    builder.addDirectoryContainingResource("/tc-config-files/aspectj-tc-config.xml");
-    
+    // builder.addDirectoryOrJARContainingClassOfSelectedVersion(org.springframework.beans.factory.aspectj.AnnotationBeanConfigurerAspect.class,
+    // new String[] {TestConfigObject.SPRING_VARIANT}); // spring advices
+
+    builder
+        .addBeanDefinitionFile("classpath:/com/tctest/spring/aj/beanfactory-aspectj.xml");
+    builder
+        .addDirectoryContainingResource("/tc-config-files/aspectj-tc-config.xml");
+
     deployment = builder.makeDeployment();
   }
 
@@ -58,9 +68,10 @@ public class AspectJTest extends SpringDeploymentTest {
 
     for (Iterator it1 = servers.iterator(); it1.hasNext();) {
       WebApplicationServer server1 = (WebApplicationServer) it1.next();
-      for(Iterator it2 = servers.iterator(); it2.hasNext();) {
+      for (Iterator it2 = servers.iterator(); it2.hasNext();) {
         WebApplicationServer server2 = (WebApplicationServer) it2.next();
-        if(server1==server2) continue;
+        if (server1 == server2)
+          continue;
 
         assertShared(server1, server2, REMOTE_SERVICE_NAME);
         assertTransient(server1, server2, REMOTE_SERVICE_NAME);
@@ -68,34 +79,39 @@ public class AspectJTest extends SpringDeploymentTest {
     }
   }
 
-  
-  private static void assertShared(Server server1, Server server2, String remoteServiceName) throws Exception {
-    IInstrumentedBean bean1 = (IInstrumentedBean) server1.getProxy(IInstrumentedBean.class, remoteServiceName);
-    IInstrumentedBean bean2 = (IInstrumentedBean) server2.getProxy(IInstrumentedBean.class, remoteServiceName);
+  private static void assertShared(Server server1, Server server2,
+      String remoteServiceName) throws Exception {
+    IInstrumentedBean bean1 = (IInstrumentedBean) server1.getProxy(
+        IInstrumentedBean.class, remoteServiceName);
+    IInstrumentedBean bean2 = (IInstrumentedBean) server2.getProxy(
+        IInstrumentedBean.class, remoteServiceName);
 
     assertEquals("1", bean1.getProperty1());
     assertEquals("2", bean1.getProperty2());
-    
+
     assertEquals(bean1.getValue(), bean2.getValue());
-    
-    bean1.setValue("AA1"+System.currentTimeMillis());
+
+    bean1.setValue("AA1" + System.currentTimeMillis());
     assertEquals("Should be shared", bean1.getValue(), bean2.getValue());
-    
-    bean2.setValue("AA2"+System.currentTimeMillis());
+
+    bean2.setValue("AA2" + System.currentTimeMillis());
     assertEquals("Should be shared", bean2.getValue(), bean1.getValue());
   }
-  
-  private static void assertTransient(Server server1, Server server2, String remoteServiceName) throws Exception {
-    IInstrumentedBean bean1 = (IInstrumentedBean) server1.getProxy(IInstrumentedBean.class, remoteServiceName);
-    IInstrumentedBean bean2 = (IInstrumentedBean) server2.getProxy(IInstrumentedBean.class, remoteServiceName);
-    
+
+  private static void assertTransient(Server server1, Server server2,
+      String remoteServiceName) throws Exception {
+    IInstrumentedBean bean1 = (IInstrumentedBean) server1.getProxy(
+        IInstrumentedBean.class, remoteServiceName);
+    IInstrumentedBean bean2 = (IInstrumentedBean) server2.getProxy(
+        IInstrumentedBean.class, remoteServiceName);
+
     String originalValue = "aaa";
     assertEquals(originalValue, bean1.getTransientValue());
     assertEquals(originalValue, bean2.getTransientValue());
-    
+
     bean1.setTransientValue("s1");
     assertEquals(originalValue, bean2.getTransientValue());
-    
+
     bean2.setTransientValue("s2");
     assertEquals("s1", bean1.getTransientValue());
     assertEquals("s2", bean2.getTransientValue());
@@ -104,17 +120,20 @@ public class AspectJTest extends SpringDeploymentTest {
     bean2.setTransientValue(originalValue);
   }
 
-//   public StandardTerracottaAppServerConfig buildTCConfig() {
-//    StandardTerracottaAppServerConfig tcConfigBuilder = getConfigBuilder();
-//    SpringConfigBuilder springConfigBuilder = tcConfigBuilder.getConfigBuilder().getApplication().getSpring();
-//    SpringApplicationConfigBuilder application = springConfigBuilder.getApplications()[ 0];
-//    application.setName("test-singleton");
-//    SpringApplicationContextConfigBuilder applicationContext = application.getApplicationContexts()[ 0];
-//    applicationContext.setPaths(new String[] { "*.xml"});
-//    applicationContext.addBean("singleton");
-//    tcConfigBuilder.build();
-//    logger.debug(tcConfigBuilder.toString());
-//    return tcConfigBuilder;
-//  }
+  // public StandardTerracottaAppServerConfig buildTCConfig() {
+  // StandardTerracottaAppServerConfig tcConfigBuilder = getConfigBuilder();
+  // SpringConfigBuilder springConfigBuilder =
+  // tcConfigBuilder.getConfigBuilder().getApplication().getSpring();
+  // SpringApplicationConfigBuilder application =
+  // springConfigBuilder.getApplications()[ 0];
+  // application.setName("test-singleton");
+  // SpringApplicationContextConfigBuilder applicationContext =
+  // application.getApplicationContexts()[ 0];
+  // applicationContext.setPaths(new String[] { "*.xml"});
+  // applicationContext.addBean("singleton");
+  // tcConfigBuilder.build();
+  // logger.debug(tcConfigBuilder.toString());
+  // return tcConfigBuilder;
+  // }
 
 }
