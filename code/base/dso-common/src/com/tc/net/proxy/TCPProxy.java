@@ -424,6 +424,9 @@ public class TCPProxy {
 
       proxy.setSoTimeout(100);
       client.setSoTimeout(100);
+      // TcpDealy can cause multiple times slower for small packages.
+      proxy.setTcpNoDelay(true);
+      client.setTcpNoDelay(true);
 
       final InputStream clientIs = client.getInputStream();
       final OutputStream clientOs = client.getOutputStream();
