@@ -529,6 +529,7 @@ public class TCPProxy {
 
           try {
             dest.write(buffer, 0, bytesRead);
+	    dest.flush();
           } catch (IOException ioe) {
             close(true);
             return;

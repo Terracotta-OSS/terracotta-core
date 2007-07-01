@@ -52,7 +52,6 @@ public class ServerCrasher implements Runnable {
         if (testState.isRunning()) {
           try {
             System.err.println("Crashing server...");
-            if (proxyConnectMode) ProxyConnectManagerImpl.getManager().stopProxyTest();
             server.crash();
 
             if (server.isRunning()) throw new AssertionError("Server is still running even after shutdown or crash.");
@@ -60,10 +59,6 @@ public class ServerCrasher implements Runnable {
             System.err.println("Starting server...");
             server.start(30 * 1000);
             if (proxyConnectMode) {
-              // wait for a little bit for server to be up
-              while(!server.isRunning()) {
-                Thread.sleep(100);
-              }
               ProxyConnectManagerImpl.getManager().startProxyTest();
             }
 

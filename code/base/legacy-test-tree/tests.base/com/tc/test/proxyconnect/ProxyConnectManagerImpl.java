@@ -95,7 +95,6 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
   }
   
   private void runProxy() {
-    proxyUp();
     if(toStop) return;
     
     try {

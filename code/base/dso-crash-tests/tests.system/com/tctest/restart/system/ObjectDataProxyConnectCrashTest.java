@@ -40,7 +40,7 @@ public class ObjectDataProxyConnectCrashTest extends TransparentTestBase impleme
   }
 
   protected void setupProxyConnectTest(ProxyConnectManagerImpl mgr) {
-    mgr.setProxyWaitTime(20 * 1000);
+    mgr.setProxyWaitTime(30 * 1000);
     mgr.setProxyDownTime(100);
   }
 

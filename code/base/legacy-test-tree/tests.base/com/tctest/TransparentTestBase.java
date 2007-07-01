@@ -408,6 +408,10 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
   public void test() throws Exception {
     if (canRun()) {
+      if (canRunProxyConnect()) {
+        ProxyConnectManagerImpl.getManager().proxyUp();
+        ProxyConnectManagerImpl.getManager().startProxyTest();
+      }
       if (controlledCrashMode && isActivePassive() && apServerManager != null) {
         apServerManager.startServers();
       } else if (controlledCrashMode && serverControl != null) {
@@ -416,18 +420,6 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
         startServerControlsAndProxies();
       } else if (useExternalProcess()) {
         serverControl.start(30 * 1000);
-      }
-      // start proxy after server is up
-      if (canRunProxyConnect()) {
-        // not support active-passive yet
-        while ((serverControl != null) && !serverControl.isRunning()) {
-          try {
-            Thread.sleep(500);
-          } catch (Exception e) {
-            //
-          }
-        }
-        ProxyConnectManagerImpl.getManager().startProxyTest();
       }
       this.runner.run();
 
