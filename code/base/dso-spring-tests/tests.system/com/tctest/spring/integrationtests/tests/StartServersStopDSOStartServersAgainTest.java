@@ -19,7 +19,19 @@ public class StartServersStopDSOStartServersAgainTest extends SpringDeploymentTe
   private static final String  CONFIG_FILE_FOR_TEST          = "/tc-config-files/singleton-tc-config.xml";
 
   public static Test suite() {
-    return new ServerTestSetup(StartServersStopDSOStartServersAgainTest.class);
+    return new MyTestSetup(StartServersStopDSOStartServersAgainTest.class);
+  }
+  
+  private static class MyTestSetup extends ServerTestSetup {
+
+    public MyTestSetup(Class testClass) {
+      super(testClass);
+    }
+    
+    public boolean isWithPersistentStore() {
+      return true;
+    } 
+    
   }
   
   public StartServersStopDSOStartServersAgainTest() {
