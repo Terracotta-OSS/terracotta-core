@@ -244,7 +244,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
     TerracottaServerConfigGenerator generator = configGen();
 
-    File dsoWorkingDir = this.tempDir;
+    File dsoWorkingDir = installation.dataDirectory();
     File outputFile = new File(dsoWorkingDir, "dso-server.log");
 
     StandardDsoServerParameters params = new StandardDsoServerParameters(generator, dsoWorkingDir, outputFile,
