@@ -31,7 +31,7 @@ public class SessionInvalidatorTest extends AbstractAppServerTestCase {
 
   public SessionInvalidatorTest() {
     if (Vm.isIBM()) {
-      disableAllUntil("2007-07-03");
+      disableAllUntil("2007-10-03");
     }
   }
 

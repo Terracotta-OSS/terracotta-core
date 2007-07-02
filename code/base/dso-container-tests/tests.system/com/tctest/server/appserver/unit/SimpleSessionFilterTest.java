@@ -24,7 +24,7 @@ public final class SimpleSessionFilterTest extends SimpleDsoSessionsTest {
 
   public SimpleSessionFilterTest() {
     if (Vm.isIBM()) {
-      disableAllUntil("2007-07-03");
+      disableAllUntil("2007-10-03");
     }
   }
 
