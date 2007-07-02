@@ -9,6 +9,8 @@ import com.tc.objectserver.control.ServerControl;
 
 public interface ApplicationConfig {
 
+  static final String ADAPTED_KEY = "Adapted";
+
   String getApplicationClassname();
 
   void setAttribute(String key, String value);

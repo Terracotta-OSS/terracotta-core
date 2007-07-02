@@ -362,6 +362,7 @@ public class DistributedTestRunner implements ResultsListener {
         }
       } else {
         rv[i] = new DSOApplicationBuilder(this.configHelper, this.applicationConfig, components);
+        debugPrintln("***** Creating normal DSOApplicationBuilder: i=[" + i + "]");
       }
     }
     return rv;

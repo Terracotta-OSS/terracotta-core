@@ -30,7 +30,7 @@ public class RootClassChangeTestApp extends AbstractErrorCatchingTransparentApp 
     super(appId, cfg, listenerProvider);
     this.appId = appId;
     nodeCount = cfg.getGlobalParticipantCount();
-    adapted = Boolean.valueOf(cfg.getAttribute(appId)).booleanValue();
+    adapted = Boolean.valueOf(cfg.getAttribute(appId + ApplicationConfig.ADAPTED_KEY)).booleanValue();
 
     tcHashMap = new HashMap();
     numOfLevels = 20;

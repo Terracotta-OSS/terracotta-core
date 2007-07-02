@@ -33,13 +33,6 @@ public class ArrayMutateValidateTestApp extends AbstractMutateValidateTransparen
   }
 
   protected void mutate() throws Throwable {
-    try {
-      this.getClass().getDeclaredField("foo");
-      System.out.println("**** appId=[" + appId + "] does have foo field");
-    } catch (Exception e) {
-      System.out.println("**** appId=[" + appId + "] doesn't have foo field");
-    }
-
     synchronized (validationArray) {
       for (int i = 0; i < iterationCount1; i++) {
         int index = (i + 1) % myArrayTestRoot.length;

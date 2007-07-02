@@ -63,7 +63,7 @@ public class DSOApplicationBuilder implements ApplicationBuilder {
       throws ApplicationInstantiationException {
 
     // so the app instance can tell whether it has been adapted
-    applicationConfig.setAttribute(applicationId, usesAdapters + "");
+    applicationConfig.setAttribute(applicationId + ApplicationConfig.ADAPTED_KEY, usesAdapters + "");
 
     try {
       logger.info("Before initializing Class Loader...");
