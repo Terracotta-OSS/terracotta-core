@@ -32,6 +32,11 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
+  
+  public boolean shouldDisable() {
+  	return Vm.isIBM();
+  }
+  
 	/**
 	 * This test simply counts to 10 inside a while loop.
 	 * The execution is paused in the middle of the loop so that the user can
