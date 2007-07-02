@@ -71,8 +71,6 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
   private String                                  mode;
   private ServerControl                           serverControl;
-  private ServerControl[]                         serverControls;
-  private TCPProxy[]                              proxies;
   private boolean                                 controlledCrashMode             = false;
   private ServerCrasher                           crasher;
   private File                                    javaHome;
@@ -82,6 +80,10 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   private ActivePassiveServerManager              apServerManager;
   private ActivePassiveTestSetupManager           apSetupManager;
   private TestState                               crashTestState;
+
+  // used by ResolveTwoActiveServersTest only
+  private ServerControl[]                         serverControls                  = null;
+  private TCPProxy[]                              proxies                         = null;
 
   protected TestConfigObject getTestConfigObject() {
     return TestConfigObject.getInstance();
