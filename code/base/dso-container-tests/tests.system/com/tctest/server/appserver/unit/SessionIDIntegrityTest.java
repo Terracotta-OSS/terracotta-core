@@ -55,12 +55,11 @@ public class SessionIDIntegrityTest extends AbstractAppServerTestCase {
   private void assertSessionIdIntegrity(String sessionId, String extra_id) {
     String factoryName = TestConfigObject.getInstance().appserverFactoryName();
 
-    if (NewAppServerFactory.TOMCAT.equals(factoryName)) {
+    if (NewAppServerFactory.TOMCAT.equals(factoryName) || 
+        NewAppServerFactory.WASCE.equals(factoryName)) {
       assertTrue(sessionId.endsWith("." + extra_id));      
     } else if (NewAppServerFactory.WEBLOGIC.equals(factoryName)) {      
       assertTrue(Pattern.matches("\\S+!-?\\d+", sessionId));
-    } else if (NewAppServerFactory.WASCE.equals(factoryName)) {
-      // ~ \S+.jvmroute
     } else if (NewAppServerFactory.JBOSS.equals(factoryName)) {
       // ~ \S+.jvmroute
     } else if (NewAppServerFactory.WEBSPHERE.equals(factoryName)) {     

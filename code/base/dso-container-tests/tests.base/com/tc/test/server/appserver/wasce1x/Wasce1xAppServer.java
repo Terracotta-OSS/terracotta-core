@@ -63,6 +63,7 @@ public final class Wasce1xAppServer extends AbstractAppServer {
   private static final String RMI_PREFIX           = "rmi://0.0.0.0:";
   private static final String JMX_RMI              = ".*<gbean name=\"JMXService\">.*";
   private static final String JMX_RMI_PREFIX       = "service:jmx:rmi://0.0.0.0:";
+  private static final String INIT_PARAMS          = "<attribute name=\"initParams\">";
 
   private static final String BASE_DIR_PROP        = "org.apache.geronimo.base.dir";
   private static final String TMP_DIR_PROP         = "java.io.tmpdir";
@@ -77,6 +78,7 @@ public final class Wasce1xAppServer extends AbstractAppServer {
   private int                 rmiPort;
   private ConsoleLogger       consoleLogger;
   private static final String LOG_CAT              = "WASCE 1.0 STARTUP";
+  private String instanceName;
 
   public Wasce1xAppServer(Wasce1xAppServerInstallation installation) {
     super(installation);
@@ -90,6 +92,7 @@ public final class Wasce1xAppServer extends AbstractAppServer {
     TestConfigObject config = TestConfigObject.getInstance();
     AppServerParameters params = (AppServerParameters) rawParams;
     int port = AppServerUtil.getPort();
+    instanceName = params.instanceName();
     final File instance = createInstance(params);
     File home = getHome();
     installPath = home.getCanonicalPath();
@@ -236,6 +239,9 @@ public final class Wasce1xAppServer extends AbstractAppServer {
       if (Pattern.matches(RMI_PORT_ATTRIB, line)) {
         rmiPort = AppServerUtil.getPort();
         useRMIPort = true;
+      }
+      if (Pattern.matches(INIT_PARAMS, line)) {
+        line = "<attribute name=\"initParams\">name=Geronimo jvmRoute=" + instanceName + "</attribute>";
       }
       if (Pattern.matches(WEB_PORT_ATTRIB, line)) useServerPort = true;
       if (Pattern.matches(RMI_PORT_URL, line)) {
