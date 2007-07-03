@@ -46,6 +46,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   private GuaranteedDeliveryProtocol      delivery;
   private final SynchronizedBoolean       reconnectMode = new SynchronizedBoolean(false);
   private final SynchronizedBoolean       handshakeMode = new SynchronizedBoolean(false);
+  private final SynchronizedBoolean       channelConnected = new SynchronizedBoolean(false);
   private boolean                         isClosed      = false;
   private final boolean                   isClient;
   private final String                    debugId;
@@ -96,11 +97,11 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     debugLog("receive -> " + msg.getHeader().toString());
     if (msg.isSend()) {
       Assert.inv(!handshakeMode.get());
-      Assert.inv(!reconnectMode.get());
+      Assert.inv(channelConnected.get());
       delivery.receive(msg);
     } else if (msg.isAck()) {
       Assert.inv(!handshakeMode.get());
-      Assert.inv(!reconnectMode.get());
+      Assert.inv(channelConnected.get());
       delivery.receive(msg);
     } else if (msg.isHandshake()) {
       Assert.inv(!isClient);
@@ -112,8 +113,8 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         delivery.resume();
         delivery.receive(createHandshakeReplyOkMessage(-1));
         handshakeMode.set(false);
-        if (!reconnectMode.get()) receiveLayer.notifyTransportConnected(this);
-        else reconnectMode.set(false);
+        if (!channelConnected.get()) receiveLayer.notifyTransportConnected(this);
+        channelConnected.set(true);
       } else if (msg.getSessionId() == getSessionId()) {
         debugLog("A same-session client is trying to connect - reply OK");
         OOOProtocolMessage reply = createHandshakeReplyOkMessage(delivery.getReceiver().getReceived().get());
@@ -122,18 +123,18 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         delivery.resume();
         // tell local sender the ackseq of client
         delivery.receive(createHandshakeReplyOkMessage(msg.getAckSequence()));
-        if (!reconnectMode.get()) receiveLayer.notifyTransportConnected(this);
-        else reconnectMode.set(false);
+        if (!channelConnected.get()) receiveLayer.notifyTransportConnected(this);
+        channelConnected.set(true);
       } else {
         debugLog("A DIFF-session client is trying to connect - reply FAIL");
         OOOProtocolMessage reply = createHandshakeReplyFailMessage(delivery.getReceiver().getReceived().get());
         sendMessage(reply);
-        handshakeMode.set(false);
-        reconnectMode.set(false);
+        handshakeMode.set(false);     
         resetStack();
         delivery.resume();
         delivery.receive(reply);
-        receiveLayer.notifyTransportConnected(this);
+        if (!channelConnected.get()) receiveLayer.notifyTransportConnected(this);
+        channelConnected.set(true);
       }
     } else if (msg.isHandshakeReplyOk()) {
       Assert.inv(isClient);
@@ -146,8 +147,8 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       sessionId = msg.getSessionId();
       delivery.resume();
       delivery.receive(msg);
-      if (!reconnectMode.get()) receiveLayer.notifyTransportConnected(this);
-      else reconnectMode.set(false);
+      if (!channelConnected.get()) receiveLayer.notifyTransportConnected(this);
+      channelConnected.set(true);
     } else if (msg.isHandshakeReplyFail()) {
       debugLog("Received handshake fail reply");
       Assert.inv(isClient);
@@ -156,14 +157,15 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       // 1. clear OOO state (drop messages, clear counters, etc)
       // 2. set the new session
       // 3. signal Higher Lever to re-synch
-      receiveLayer.notifyTransportDisconnected(this);
+      if (channelConnected.get()) receiveLayer.notifyTransportDisconnected(this);
+      channelConnected.set(false);
       resetStack();
       sessionId = msg.getSessionId();
       handshakeMode.set(false);
-      reconnectMode.set(false);
       delivery.resume();
       delivery.receive(msg);
-      receiveLayer.notifyTransportConnected(this);
+      if (!channelConnected.get()) receiveLayer.notifyTransportConnected(this);
+      channelConnected.set(true);
     } else if (msg.isGoodbye()) {
       debugLog("Got GoodBye message - shutting down");
       isClosed = true;
@@ -216,10 +218,13 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   }
 
   public void notifyTransportDisconnected(MessageTransport transport) {
-    final boolean restoreConnectionMode = reconnectMode.get();
+     final boolean restoreConnectionMode = reconnectMode.get();
     debugLog("Transport Disconnected - pausing delivery, restoreConnection = " + restoreConnectionMode);
     this.delivery.pause();
-    if (!restoreConnectionMode) receiveLayer.notifyTransportDisconnected(this);
+    if (!restoreConnectionMode) {
+    	if(channelConnected.get())receiveLayer.notifyTransportDisconnected(this);
+    	channelConnected.set(false);
+    }
   }
 
   public void start() {
@@ -244,6 +249,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     // XXX: do we do anything here? We've probably done everything we need to do when close() was called.
     debugLog("Transport Closed - notifying higher layer");
     receiveLayer.notifyTransportClosed(this);
+    channelConnected.set(false);
   }
 
   /*********************************************************************************************************************
@@ -349,7 +355,10 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   public void connectionRestoreFailed() {
     debugLog("RestoreConnectionFailed - resetting stack");
     resetStack();
-    receiveLayer.notifyTransportDisconnected(this);
+    if (channelConnected.get()) {
+      receiveLayer.notifyTransportDisconnected(this);
+      channelConnected.set(false);
+    }
   }
 
   private void resetStack() {
