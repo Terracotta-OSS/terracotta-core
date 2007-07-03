@@ -25,6 +25,8 @@ import com.tc.net.groups.NodeID;
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerEventListener;
+import com.tc.objectserver.tx.ServerTransactionManager;
+import com.tc.objectserver.tx.TxnsInSystemCompletionLister;
 import com.tc.util.Assert;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
@@ -45,7 +47,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private final GroupManager                 groupManager;
   private final StateManager                 stateManager;
   private final L2ObjectStateManager         l2ObjectStateManager;
-  private final ReplicatedTransactionManager txnManager;
+  private final ReplicatedTransactionManager rTxnManager;
+  private final ServerTransactionManager     transactionManager;
   private final Sink                         objectsSyncRequestSink;
   private final SequenceGenerator            sequenceGenerator;
   private final GCMonitor                    gcMonitor;
@@ -53,11 +56,13 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   public ReplicatedObjectManagerImpl(GroupManager groupManager, StateManager stateManager,
                                      L2ObjectStateManager l2ObjectStateManager,
                                      ReplicatedTransactionManager txnManager, ObjectManager objectManager,
-                                     Sink objectsSyncRequestSink, SequenceGenerator sequenceGenerator) {
+                                     ServerTransactionManager transactionManager, Sink objectsSyncRequestSink,
+                                     SequenceGenerator sequenceGenerator) {
     this.groupManager = groupManager;
     this.stateManager = stateManager;
-    this.txnManager = txnManager;
+    this.rTxnManager = txnManager;
     this.objectManager = objectManager;
+    this.transactionManager = transactionManager;
     this.objectsSyncRequestSink = objectsSyncRequestSink;
     this.l2ObjectStateManager = l2ObjectStateManager;
     this.sequenceGenerator = sequenceGenerator;
@@ -190,7 +195,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private void handleObjectListRequest(NodeID nodeID, ObjectListSyncMessage clusterMsg) throws GroupException {
     Assert.assertFalse(stateManager.isActiveCoordinator());
     Set knownIDs = objectManager.getAllObjectIDs();
-    txnManager.init(knownIDs);
+    rTxnManager.init(knownIDs);
     logger.info("Send response to Active's query : known id lists = " + knownIDs.size());
     groupManager.sendTo(nodeID, ObjectListSyncMessageFactory.createObjectListSyncResponseMessage(clusterMsg, knownIDs));
   }
@@ -230,12 +235,16 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
     private void notifyGCResultToPassives(Set deleted) {
       if (deleted.isEmpty()) return;
-      GCResultMessage msg = GCResultMessageFactory.createGCResultMessage(deleted);
-      try {
-        groupManager.sendAll(msg);
-      } catch (GroupException e) {
-        logger.error("Error sending gc results : ", e);
-      }
+      final GCResultMessage msg = GCResultMessageFactory.createGCResultMessage(deleted);
+      transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
+        public void onCompletion() {
+          try {
+            groupManager.sendAll(msg);
+          } catch (GroupException e) {
+            logger.error("Error sending gc results : ", e);
+          }
+        }
+      });
     }
 
     private void add2L2StateManager(Map toAdd) {

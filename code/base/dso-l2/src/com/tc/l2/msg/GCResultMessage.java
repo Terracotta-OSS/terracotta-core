@@ -42,4 +42,9 @@ public class GCResultMessage extends AbstractGroupMessage implements EventContex
     return gcedOids;
   }
 
+  public String toString() {
+    return "GCResultMessage@" + System.identityHashCode(this) + " : GC Result size = "
+           + (gcedOids == null ? "null" : "" + gcedOids.size());
+  }
+
 }

@@ -80,7 +80,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       logger.info("Not initing with known Ids since not in UNINITIALIED state : " + knownObjectIDs.size());
     }
   }
-
+  
   public synchronized void addCommitedTransactions(ChannelID channelID, Set txnIDs, Collection txns,
                                                    Collection completedTxnIDs) {
     delegate.addCommitedTransactions(channelID, txnIDs, txns, completedTxnIDs);
