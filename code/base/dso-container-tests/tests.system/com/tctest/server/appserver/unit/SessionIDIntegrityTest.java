@@ -15,7 +15,6 @@ import com.tc.test.server.util.HttpUtil;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServlet;
@@ -58,18 +57,14 @@ public class SessionIDIntegrityTest extends AbstractAppServerTestCase {
 
     if (NewAppServerFactory.TOMCAT.equals(factoryName)) {
       assertTrue(sessionId.endsWith("." + extra_id));      
-    } else if (NewAppServerFactory.WEBLOGIC.equals(factoryName)) {
-      Pattern p = Pattern.compile("\\S+!-?\\d+");
-      Matcher m = p.matcher(sessionId);
-      assertTrue(m.matches());
+    } else if (NewAppServerFactory.WEBLOGIC.equals(factoryName)) {      
+      assertTrue(Pattern.matches("\\S+!-?\\d+", sessionId));
     } else if (NewAppServerFactory.WASCE.equals(factoryName)) {
       // ~ \S+.jvmroute
     } else if (NewAppServerFactory.JBOSS.equals(factoryName)) {
       // ~ \S+.jvmroute
-    } else if (NewAppServerFactory.WEBSPHERE.equals(factoryName)) {      
-      Pattern p = Pattern.compile("0000\\S+:\\S+");
-      Matcher m = p.matcher(sessionId);
-      assertTrue(m.matches());
+    } else if (NewAppServerFactory.WEBSPHERE.equals(factoryName)) {     
+      assertTrue(Pattern.matches("0000\\S+:\\S+", sessionId));
     } else {
       throw new RuntimeException("Appserver [" + factoryName + "] is missing in this test");
     }
