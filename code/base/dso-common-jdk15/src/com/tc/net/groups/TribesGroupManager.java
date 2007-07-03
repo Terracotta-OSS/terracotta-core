@@ -131,6 +131,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       receiver.setAddress(thisNode.getHost());
       receiver.setPort(thisNode.getPort());
       receiver.setAutoBind(0);
+      receiver.setDirect(false);
 
       commonGroupChanelConfig();
       TcpPingInterceptor tcp = new TcpPingInterceptor();
