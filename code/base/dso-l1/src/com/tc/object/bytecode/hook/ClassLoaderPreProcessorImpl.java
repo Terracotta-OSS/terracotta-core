@@ -20,10 +20,10 @@ import java.util.Map;
 
 /**
  * Instruments the java.lang.ClassLoader to plug in the Class PreProcessor mechanism. <p/>
- * 
+ *
  * We are using a lazy initialization of the class preprocessor to allow all class pre processor logic to be in system
  * classpath and not in bootclasspath. <p/>
- * 
+ *
  * This implementation should support IBM custom JRE
  */
 public class ClassLoaderPreProcessorImpl {
@@ -49,10 +49,10 @@ public class ClassLoaderPreProcessorImpl {
   }
 
   /**
-   * Patch caller side of defineClass0 
-   * 
+   * Patch caller side of defineClass0
+   *
    * <pre>
-   * byte[] weaved = ..hook.impl.ClassPreProcessorHelper.defineClass0Pre(this, args..); 
+   * byte[] weaved = ..hook.impl.ClassPreProcessorHelper.defineClass0Pre(this, args..);
    * klass = defineClass0(name, weaved, 0, weaved.length, protectionDomain);
    * </pre>
    *
@@ -80,7 +80,7 @@ public class ClassLoaderPreProcessorImpl {
     public IBMClassLoaderAdapter(ClassVisitor cv) {
       super(cv);
     }
-    
+
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
       super.visit(version, access, name, signature, superName, interfaces);
       this.className = name;
@@ -91,12 +91,10 @@ public class ClassLoaderPreProcessorImpl {
       if (CLASSLOADER_CLASS_NAME.equals(className) && "loadClass".equals(name)
           && "(Ljava/lang/String;)Ljava/lang/Class;".equals(desc)) {
         return new LoadClassVisitor(mv);
-        
+
       } else if (CLASSLOADER_CLASS_NAME.equals(className) && "getResource".equals(name)
-          && "(Ljava/lang/String;)Ljava/net/URL;".equals(desc)) {
-        return new GetResourceVisitor(mv);
-      }
-        
+                 && "(Ljava/lang/String;)Ljava/net/URL;".equals(desc)) { return new GetResourceVisitor(mv); }
+
       return new MethodAdapter(mv) {
         public void visitMethodInsn(int opcode, String owner, String mname, String mdesc) {
           if (CLASSLOADER_CLASS_NAME.equals(owner) && "defineClassImpl".equals(mname)) {
@@ -145,7 +143,7 @@ public class ClassLoaderPreProcessorImpl {
       mv.visitVarInsn(ALOAD, 5);
       mv.visitMethodInsn(INVOKESPECIAL, "java/lang/ClassLoader", "defineClassImpl",
                          "(Ljava/lang/String;[BIILjava/lang/Object;)Ljava/lang/Class;");
-      
+
       mv.visitInsn(ARETURN);
       mv.visitMaxs(0, 0);
       mv.visitEnd();
@@ -226,10 +224,10 @@ public class ClassLoaderPreProcessorImpl {
   /**
    * Adding hook into ClassLoader.loadClassInternal() method to load tc classes.
    * </p>
-   * 
+   *
    * Primitive state machine is used to insert new code after first line attribute (if exists) in order to help with
    * debugging and line-based breakpoints.
-   * 
+   *
    * <pre>
    *   mv.visitCode();
    *   Label l0 = new Label();
@@ -292,10 +290,10 @@ public class ClassLoaderPreProcessorImpl {
 
   /**
    * Wraps calls to defineClass0, defineClass1 and <code>defineClass2</code> methods:
-   * 
+   *
    * <pre>
    * byte[] newbytes = ClassProcessorHelper.defineClass0Pre(loader, name, b, off, len, pd);
-   * if(b==newbytes) {
+   * if (b == newbytes) {
    *   defineClass0(loader, name, b, off, len, pd);
    * } else {
    *   defineClass0(loader, name, newbytes, off, newbytes.length, pd);
@@ -399,7 +397,7 @@ public class ClassLoaderPreProcessorImpl {
       mv.visitVarInsn(Opcodes.ALOAD, locals[1]); // bytes
       mv.visitInsn(Opcodes.ICONST_0); // offset
       mv.visitVarInsn(Opcodes.ALOAD, locals[1]);
-      mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "Ljava/nio/Buffer;", "remaining", "()I");
+      mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/nio/ByteBuffer", "remaining", "()I");
       mv.visitVarInsn(Opcodes.ALOAD, locals[4]); // protection domain
       for (int i = 5; i < args.length; i++) {
         mv.visitVarInsn(args[i].getOpcode(Opcodes.ILOAD), locals[i]);

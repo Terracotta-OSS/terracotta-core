@@ -19,11 +19,11 @@ public class UnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdapter
   public UnsafeAdapter() {
     super(null);
   }
-  
+
   private UnsafeAdapter(ClassVisitor cv, ClassLoader caller) {
     super(cv);
   }
-  
+
   public ClassAdapter create(ClassVisitor visitor, ClassLoader loader) {
     return new UnsafeAdapter(visitor, loader);
   }
@@ -38,6 +38,13 @@ public class UnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdapter
 
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     access = access & ~Modifier.FINAL;
+
+    // DSOUnsafe.<init> will get verify error calling super() if cstr() is not accessible
+    if ("<init>".equals(name)) {
+      access = access & ~Modifier.PRIVATE;
+      access |= Modifier.PROTECTED;
+    }
+
     if ("<clinit>".equals(name)) {
       return new UnsafeMethodAdapter(super.visitMethod(access, name, desc, signature, exceptions));
     } else {
