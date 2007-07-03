@@ -79,7 +79,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   private final Map<MessageID, GroupResponse>             pendingRequests         = new Hashtable<MessageID, GroupResponse>();
 
   private boolean                                         stopped                 = false;
-  private boolean                                         debug                   = false;
+  private boolean                                         debug                   = true;
   private ZapNodeRequestProcessor                         zapNodeRequestProcessor = new DefaultZapNodeRequestProcessor(
                                                                                                                        logger);
 
