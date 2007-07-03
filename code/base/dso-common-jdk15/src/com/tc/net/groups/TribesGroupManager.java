@@ -168,6 +168,9 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     try {
       commonGroupChanelConfig();
 
+      ReceiverBase receiver = (ReceiverBase) group.getChannelReceiver();
+      receiver.setDirect(false);
+
       if (useOrderInterceptor) {
         OrderInterceptor oi = new OrderInterceptor();
         oi.setExpire(60000);
@@ -175,7 +178,6 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       } else {
         // XXX::FIXME::TODO:: These settings are added since OrderInterceptor has issues and we want to maintain message
         // ordering
-        ReceiverBase receiver = (ReceiverBase) group.getChannelReceiver();
         receiver.setMaxThreads(1);
         receiver.setMinThreads(1);
       }
