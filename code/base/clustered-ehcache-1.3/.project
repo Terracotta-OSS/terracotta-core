@@ -25,11 +25,11 @@
 		<nature>org.eclipse.pde.PluginNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>ehcache</name>
-			<type>2</type>
-			<location>/Users/jgalang/Work/TCProjects/qa/ehcache/core/src</location>
-		</link>
-	</linkedResources>
+<!-- 	<linkedResources> -->
+<!-- 		<link> -->
+<!-- 			<name>ehcache</name> -->
+<!-- 			<type>2</type> -->
+<!-- 			<location>/Users/jgalang/Work/TCProjects/qa/ehcache/core/src</location> -->
+<!-- 		</link> -->
+<!-- 	</linkedResources>  -->
 </projectDescription>
