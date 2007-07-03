@@ -56,36 +56,49 @@
       <method-expression>* org.apache.commons.collections.FastHashMap*.size(..)</method-expression>
       <lock-level>read</lock-level>
     </autolock>
-    <named-lock>
-      <lock-name>org.apache.commons.collections.FastHashMap.fast</lock-name>
+    <autolock auto-synchronized="true">
       <method-expression>* org.apache.commons.collections.FastHashMap*.getFast(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>org.apache.commons.collections.FastHashMap.fast</lock-name>
+      <lock-level>read</lock-level>
+    </autolock>
+    <autolock auto-synchronized="true">
       <method-expression>* org.apache.commons.collections.FastHashMap*.setFast(..)</method-expression>
       <lock-level>write</lock-level>
-    </named-lock>
+    </autolock>
 
     <!-- SequencedHashMap -->
     <autolock>
       <method-expression>* org.apache.commons.collections.SequencedHashMap*.*(..)</method-expression>
+      <lock-level>read</lock-level>
+    </autolock>
+    <autolock auto-synchronized="true">
+      <method-expression>* org.apache.commons.collections.SequencedHashMap.put(..)</method-expression>
       <lock-level>write</lock-level>
     </autolock>
-    <named-lock>
-      <lock-name>org.apache.commons.collections.SequencedHashMap.put</lock-name>
-      <method-expression>* org.apache.commons.collections.SequencedHashMap*.put(..)</method-expression>
+    <autolock auto-synchronized="true">
+      <method-expression>* org.apache.commons.collections.SequencedHashMap.remove(..)</method-expression>
       <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>org.apache.commons.collections.SequencedHashMap.remove</lock-name>
-      <method-expression>* org.apache.commons.collections.SequencedHashMap*.remove(..)</method-expression>
+    </autolock>
+    <autolock auto-synchronized="true">
+      <method-expression>* org.apache.commons.collections.SequencedHashMap.clear(..)</method-expression>
       <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>org.apache.commons.collections.SequencedHashMap.clear</lock-name>
-      <method-expression>* org.apache.commons.collections.SequencedHashMap*.clear(..)</method-expression>
+    </autolock>
+    
+    <!-- LRUMap -->
+    <autolock auto-synchronized="true">
+      <method-expression>* org.apache.commons.collections.LRUMap.getMaximumSize(..)</method-expression>
+      <lock-level>read</lock-level>
+    </autolock>
+    <autolock auto-synchronized="true">
+      <method-expression>* org.apache.commons.collections.LRUMap.readExternal(..)</method-expression>
+      <lock-level>read</lock-level>
+    </autolock>
+    <autolock auto-synchronized="true">
+      <method-expression>* org.apache.commons.collections.LRUMap.setMaximumSize(..)</method-expression>
       <lock-level>write</lock-level>
-    </named-lock>
+    </autolock>
+    <autolock auto-synchronized="true">
+      <method-expression>* org.apache.commons.collections.LRUMap.writeExternal(..)</method-expression>
+      <lock-level>write</lock-level>
+    </autolock>
   </locks>
 </xml-fragment>
