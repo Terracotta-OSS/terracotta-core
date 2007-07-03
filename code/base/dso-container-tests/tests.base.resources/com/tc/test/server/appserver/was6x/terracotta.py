@@ -9,9 +9,10 @@ class DSO:
     "Utility to enable/disable DSO in WebSphere AS 6.1"
 
     def __init__(self, adminTask, verbose=1):
-        # Verify our Terracotta environment
         # DSO_JVMARGS will be replaced by real jvmargs from the container test
-        self.dsoArgs = ["-Xshareclasses:none", __DSO_JVMARGS]
+        # TC_CLASSPATH will be a list of runtime classpath entries (build/dso-container-tests/..., build/common/..., etc.)
+        self.dsoArgs = ["-Xshareclasses:none", __DSO_JVMARGS__]
+        self.tcClasspath = __TC_CLASSPATH__
         self.verbose = verbose
         self.p_info("Terracotta settings: " + str(self.dsoArgs))
 
@@ -31,22 +32,36 @@ class DSO:
         self.p_info("Disabling DSO...")
         self.p_toggleDso(None)
 
+    def p_getClasspath(self):
+        return self.AdminTask.showJVMProperties(['-propertyName', 'classpath'])
+
     def getGenericJvmArguments(self):
         return string.split(self.AdminTask.showJVMProperties(['-propertyName', 'genericJvmArguments']))
 
     def p_toggleDso(self, enable):
         jvmArgList = self.getGenericJvmArguments()
         self.p_info("Original value of genericJvmArguments: " + str(jvmArgList))
+        self.p_info("Original value of classpath: " + str(self.p_getClasspath()))
         if enable:
             for dsoArg in self.dsoArgs:
                 if not operator.contains(jvmArgList, dsoArg): jvmArgList.append(dsoArg)
+            # This is odd, but for some reason I can't figure out how to null out the classpath,
+            # "setting" it only seems to append, even if you pass in null, false, or an empty string
+            for classpathEntry in self.tcClasspath:
+                if string.find(str(self.p_getClasspath()), classpathEntry) == -1:
+                    self.p_info("Appending classpath entry[" + str(classpathEntry) + "]")
+                    self.p_setClasspath(str(classpathEntry))
         else:
             jvmArgList = filter(self.p_filterOutDsoArgs, jvmArgList)
-        self.p_info("New value of genericJvmArguments: " + str(jvmArgList))
         self.p_setGenericJvmArguments(jvmArgList)
+        self.p_info("New value of genericJvmArguments: " + str(self.getGenericJvmArguments()))
+        self.p_info("New value of classpath: " + str(self.p_getClasspath()))
 
     def p_setGenericJvmArguments(self, argList):
         self.AdminTask.setJVMProperties(["-genericJvmArguments '" + string.join(argList) + "'"])
+
+    def p_setClasspath(self, classpath):
+        self.AdminTask.setJVMProperties(['-classpath', classpath])
 
     def p_filterOutDsoArgs(self, arg):
         for dsoArg in self.dsoArgs:
