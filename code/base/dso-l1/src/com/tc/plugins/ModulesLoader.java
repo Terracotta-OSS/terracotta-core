@@ -14,6 +14,7 @@ import org.osgi.framework.ServiceReference;
 import com.tc.bundles.EmbeddedOSGiRuntime;
 import com.tc.bundles.EmbeddedOSGiRuntimeCallbackHandler;
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.ConfigLoader;
@@ -60,6 +61,7 @@ public class ModulesLoader {
                                                      };
 
   private static final TCLogger   logger             = TCLogging.getLogger(ModulesLoader.class);
+  private static final TCLogger   consoleLogger      = CustomerLogging.getConsoleLogger();
 
   private static final Object     lock               = new Object();
 
@@ -84,22 +86,20 @@ public class ModulesLoader {
             getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
           }
         } catch (BundleException be1) {
+          consoleLogger.fatal("Unable to initialize modules, shutting down.  See log for details.", be1);
           try {
             osgiRuntime.shutdown();
           } catch (BundleException be2) {
             logger.error("Error shutting down plugin runtime", be2);
           }
-          //logger.fatal("FATAL: ", be1);
-          logger.fatal(be1.getMessage());
-          System.err.println("FATAL: " + be1.getMessage());
           System.exit(-1);
         } catch (InvalidSyntaxException be1) {
+          consoleLogger.fatal("Unable to initialize modules, shutting down.  See log for details", be1);
           try {
             osgiRuntime.shutdown();
           } catch (BundleException be2) {
             logger.error("Error shutting down plugin runtime", be2);
           }
-          System.err.println("FATAL: " + be1.getMessage());
           System.exit(-1);
         } finally {
           if (forBootJar) {
@@ -177,7 +177,7 @@ public class ModulesLoader {
     if (serviceReferences != null && serviceReferences.length > 0) {
       Arrays.sort(serviceReferences, SERVICE_COMPARATOR);
     }
-    
+
     if (serviceReferences == null) { return; }
     ModuleSpec[] modulesSpecs = new ModuleSpec[serviceReferences.length];
     for (int i = 0; i < serviceReferences.length; i++) {

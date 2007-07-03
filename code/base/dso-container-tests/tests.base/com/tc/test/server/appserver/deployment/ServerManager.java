@@ -4,9 +4,8 @@
  */
 package com.tc.test.server.appserver.deployment;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.appserver.NewAppServerFactory;
@@ -23,10 +22,11 @@ import java.util.List;
 import junit.framework.Assert;
 
 public class ServerManager {
+
+  protected static TCLogger      logger         = TCLogging.getLogger(ServerManager.class);
   private static int             appServerIndex = 0;
 
   private List                   serversToStop  = new ArrayList();
-  protected Log                  logger         = LogFactory.getLog(getClass());
   private DSOServer              dsoServer;
 
   private final TestConfigObject config;
@@ -51,12 +51,12 @@ public class ServerManager {
   }
 
   void stop() {
-    System.out.println("Stopping all servers...");
+    logger.info("Stopping all servers");
     for (Iterator it = getServersToStop().iterator(); it.hasNext();) {
       Stoppable stoppable = (Stoppable) it.next();
       try {
         if (!stoppable.isStopped()) {
-          System.out.println("About to stop: " + stoppable.toString());
+          logger.debug("About to stop server: " + stoppable.toString());
           stoppable.stop();
         }
       } catch (Exception e) {
@@ -77,11 +77,13 @@ public class ServerManager {
 
   private void startDSO(boolean withPersistentStore) throws Exception {
     dsoServer = new DSOServer(withPersistentStore, tempDir);
+    logger.debug("Starting DSO server with sandbox: " + sandbox.getAbsolutePath());
     dsoServer.start();
     addServerToStop(dsoServer);
   }
 
   public void restartDSO(boolean withPersistentStore) throws Exception {
+    logger.debug("Restarting DSO server : " + dsoServer);
     dsoServer.stop();
     startDSO(withPersistentStore);
   }
@@ -108,9 +110,9 @@ public class ServerManager {
   public WebApplicationServer makeWebApplicationServer(FileSystemPath tcConfigPath) throws Exception {
     int i = ServerManager.appServerIndex++;
 
-    WebApplicationServer tomcatServer = new GenericServer(config, factory, installation, tcConfigPath, i, tempDir);
-    addServerToStop(tomcatServer);
-    return tomcatServer;
+    WebApplicationServer appServer = new GenericServer(config, factory, installation, tcConfigPath, i, tempDir);
+    addServerToStop(appServer);
+    return appServer;
   }
 
   public WebApplicationServer makeWebApplicationServer(StandardTerracottaAppServerConfig tcConfig) throws Exception {
@@ -147,7 +149,7 @@ public class ServerManager {
       try {
         if (!(stoppable instanceof DSOServer || stoppable.isStopped())) stoppable.stop();
       } catch (Exception e) {
-        logger.error(stoppable, e);
+        logger.error("Unable to stop server: " + stoppable, e);
       }
     }
   }

@@ -10,6 +10,8 @@ import org.apache.tools.ant.taskdefs.Zip;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.config.schema.Lock;
 import com.tc.object.config.schema.Root;
 import com.tc.properties.TCPropertiesImpl;
@@ -144,6 +146,8 @@ import javax.servlet.http.HttpSessionListener;
  */
 public abstract class AbstractAppServerTestCase extends TCTestCase {
 
+  private static final TCLogger           logger             = TCLogging.getLogger(AbstractAppServerTestCase.class);
+
   private static final SynchronizedInt    nodeCounter        = new SynchronizedInt(-1);
   private static final String             NODE               = "node-";
   private static final String             DOMAIN             = "localhost";
@@ -201,6 +205,9 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   }
 
   protected void beforeTimeout() throws Throwable {
+    logger
+        .warn("beforeTimeout() called: a timeout has occurred.  Calling threadDumpGroup() and archiving sandbox logs",
+              new Exception("Stack trace of timeout timer"));
     threadDumpGroup();
 
     // make an archive of the workingDir since it will not be renamed when test times out
@@ -213,11 +220,11 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
         String src = installation.sandboxDirectory().getAbsolutePath();
         String dest = new File(tempDir, "archive-logs-" + System.currentTimeMillis() + ".zip").getAbsolutePath();
 
-        String msg = "\n";
-        msg += "*****************************\n";
-        msg += "* Archiving logs in [" + src + "] to " + dest + "\n";
-        msg += "*****************************\n";
-        System.out.println(msg);
+        StringBuffer msg = new StringBuffer("\n");
+        msg.append("*****************************\n");
+        msg.append("* Archiving logs in [").append(src).append("] to ").append(dest).append("\n");
+        msg.append("*****************************\n");
+        logger.info(msg.toString());
 
         Zip zip = new Zip();
         zip.setProject(new Project());
@@ -381,7 +388,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
    * @throws Exception
    */
   protected void tearDown() throws Exception {
-    System.out.println("in tearDown...");
+    logger.info("tearDown() called, stopping servers and archiving sandbox");
     for (Iterator iter = appservers.iterator(); iter.hasNext();) {
       Server server = (Server) iter.next();
       server.stop();

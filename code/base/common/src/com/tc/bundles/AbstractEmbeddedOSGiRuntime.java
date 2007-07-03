@@ -16,12 +16,18 @@ abstract class AbstractEmbeddedOSGiRuntime implements EmbeddedOSGiRuntime {
 
   static class Message {
 
-    static final Message BUNDLE_INSTALLED   = new Message("bundle.installed");
-    static final Message BUNDLE_UNINSTALLED = new Message("bundle.uninstalled");
-    static final Message BUNDLE_STARTED     = new Message("bundle.started");
-    static final Message BUNDLE_STOPPED     = new Message("bundle.stopped");
-    static final Message SERVICE_REGISTERED = new Message("service.registered");
-    static final Message SHUTDOWN           = new Message("framework.shutdown");
+    static final Message INSTALLING_BUNDLE   = new Message("installing.bundle");
+    static final Message BUNDLE_INSTALLED    = new Message("bundle.installed");
+    static final Message UNINSTALLING_BUNDLE = new Message("uninstalling.bundle");
+    static final Message BUNDLE_UNINSTALLED  = new Message("bundle.uninstalled");
+    static final Message STARTING_BUNDLE     = new Message("starting.bundle");
+    static final Message BUNDLE_STARTED      = new Message("bundle.started");
+    static final Message STOPPING_BUNDLE     = new Message("stopping.bundle");
+    static final Message BUNDLE_STOPPED      = new Message("bundle.stopped");
+    static final Message REGISTERING_SERVICE = new Message("registering.service");
+    static final Message SERVICE_REGISTERED  = new Message("service.registered");
+    static final Message STOPPING_FRAMEWORK  = new Message("stopping.framework");
+    static final Message SHUTDOWN            = new Message("framework.shutdown");
 
     private final String resourceBundleKey;
 

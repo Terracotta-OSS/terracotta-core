@@ -56,7 +56,7 @@ public interface EmbeddedOSGiRuntime {
 
   static class Factory {
 
-    private static final TCLogger logger = TCLogging.getLogger(EmbeddedOSGiRuntime.Factory.class);
+    private static final TCLogger logger = TCLogging.getLogger(EmbeddedOSGiRuntime.class);
 
     public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules) throws BundleException, Exception {
       final List prependLocations = new ArrayList();
