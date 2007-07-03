@@ -4,6 +4,7 @@
 package com.tc.test.server.appserver.wasce1x;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.codehaus.cargo.container.geronimo.internal.GeronimoUtils;
 import org.codehaus.cargo.util.log.Logger;
 
@@ -63,7 +64,7 @@ public final class Wasce1xAppServer extends AbstractAppServer {
   private static final String RMI_PREFIX           = "rmi://0.0.0.0:";
   private static final String JMX_RMI              = ".*<gbean name=\"JMXService\">.*";
   private static final String JMX_RMI_PREFIX       = "service:jmx:rmi://0.0.0.0:";
-  private static final String INIT_PARAMS          = "<attribute name=\"initParams\">";
+  private static final String NAME_TEXT            = ".*name=Geronimo.*";
 
   private static final String BASE_DIR_PROP        = "org.apache.geronimo.base.dir";
   private static final String TMP_DIR_PROP         = "java.io.tmpdir";
@@ -240,8 +241,8 @@ public final class Wasce1xAppServer extends AbstractAppServer {
         rmiPort = AppServerUtil.getPort();
         useRMIPort = true;
       }
-      if (Pattern.matches(INIT_PARAMS, line)) {
-        line = "<attribute name=\"initParams\">name=Geronimo jvmRoute=" + instanceName + "</attribute>";
+      if (Pattern.matches(NAME_TEXT, line)) {
+        line = "name=Geronimo" + IOUtils.LINE_SEPARATOR + "jvmRoute=" + instanceName;
       }
       if (Pattern.matches(WEB_PORT_ATTRIB, line)) useServerPort = true;
       if (Pattern.matches(RMI_PORT_URL, line)) {
