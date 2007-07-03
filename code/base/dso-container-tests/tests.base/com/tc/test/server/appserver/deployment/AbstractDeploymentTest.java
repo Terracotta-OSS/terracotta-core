@@ -33,7 +33,11 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   private static final int TIMEOUT_DEFAULT     = 30 * 60;
 
   public AbstractDeploymentTest() {
-    // nop
+    String appserver = TestConfigObject.getInstance().appserverFactoryName();
+    if (isSessionTest()
+        && (NewAppServerFactory.GLASSFISH.equals(appserver) || NewAppServerFactory.JETTY.equals(appserver))) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
   }
 
   protected boolean shouldKillAppServersEachRun() {
