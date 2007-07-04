@@ -71,9 +71,9 @@ public class HeartBeatClient extends Thread {
             throw new Exception("Unknown signal");
           }
         } catch (SocketTimeoutException toe) {
-          log("No pulse received for " + HeartBeatServer.PULSE_INTERVAL + " seconds");
+          log("No pulse received for " + (HeartBeatServer.PULSE_INTERVAL/1000) + " seconds");
           log("Missed pulse count: " + missedPulse++);
-          if (missedPulse >= 3) {
+          if (missedPulse > 3) {
             throw new Exception("Missing 3 pulse from HeartBeatServer");
           }
         }
