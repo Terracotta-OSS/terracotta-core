@@ -171,7 +171,10 @@ public class ConfigViewPart extends ViewPart
         } else if(m_javaProject != null) {
           IProject project = m_javaProject.getProject();
           IFile configFile = TcPlugin.getDefault().getConfigurationFile(project);
-          configPath = project.getName() + IPath.SEPARATOR + configFile.getProjectRelativePath().toOSString();
+          
+          if(configFile != null) {
+            configPath = project.getName() + IPath.SEPARATOR + configFile.getProjectRelativePath().toOSString();
+          }
         }
 
         setTitleToolTip(configPath);

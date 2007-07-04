@@ -253,7 +253,7 @@ public class BootClassesPanel extends ConfigurationEditorPanel {
       int style = IJavaElementSearchConstants.CONSIDER_ALL_TYPES;
       SelectionDialog dialog;
       try {
-        dialog = JavaUI.createTypeDialog(null, null, scope, style, true);
+        dialog = JavaUI.createTypeDialog(getShell(), null, scope, style, true);
       } catch (JavaModelException jme) {
         jme.printStackTrace();
         return;

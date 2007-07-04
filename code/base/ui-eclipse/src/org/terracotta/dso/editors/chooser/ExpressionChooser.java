@@ -130,7 +130,7 @@ public class ExpressionChooser extends MessageDialog {
 
   // --------------------------------------------------------------------------------
 
-  private static class Layout {
+  private class Layout {
     final Text   m_selectField;
     final Button m_exploreButton;
     final List   m_list;

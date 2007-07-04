@@ -17,6 +17,7 @@ import org.eclipse.jdt.internal.ui.JavaPluginImages;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTreeViewer;
 import org.eclipse.jface.viewers.ICheckStateListener;
@@ -38,6 +39,9 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.PaletteData;
+import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -116,7 +120,6 @@ public class NonPortableObjectDialog extends MessageDialog {
   private static final Image                OBJ_CYCLE_ICON        = TcPlugin
                                                                       .createImage("/images/eclipse/obj_cycle.gif");   //$NON-NLS-1$
   private static final Image                RESOLVED_ICON         = TcPlugin.createImage("/images/eclipse/nature.gif"); //$NON-NLS-1$
-  private static final Image                BLANK_ICON            = TcPlugin.createImage("/images/eclipse/blank.gif"); //$NON-NLS-1$
 
   private static final String               EMPTY_STRING          = "";                                                //$NON-NLS-1$
 
@@ -126,6 +129,18 @@ public class NonPortableObjectDialog extends MessageDialog {
                                                                     public void signal(IProject project) {/**/}
                                                                   };
 
+/*
+ * In Eclipse 3.3 JavaElementImageDescriptor, used by TcPlugin.createImage, started having problems with
+ * transparent images. The code below creates a transparent image manually.
+ */                                                                  
+  private static Image                      BLANK_ICON;
+  
+  static {
+    final ImageData blankImageData = new ImageData(16, 16, 1, new PaletteData(new RGB[] { new RGB(255, 0, 0) }));
+    blankImageData.transparentPixel = 0;
+    BLANK_ICON = ImageDescriptor.createFromImageData(blankImageData).createImage();
+  }
+  
   public NonPortableObjectDialog(Shell parentShell, NonPortableObjectEvent event) {
     super(
         parentShell,
