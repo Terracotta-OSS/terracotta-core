@@ -4,6 +4,7 @@
 package com.tctest.spring;
 
 import org.springframework.beans.factory.BeanDefinitionStoreException;
+import org.springframework.beans.factory.CannotLoadBeanClassException;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import com.tc.object.config.ConfigVisitor;
@@ -24,7 +25,7 @@ public class ErrorReporting_Test extends TransparentTestBase {
   private static final int NODE_COUNT      = 1;
 
   public ErrorReporting_Test() {
-    disableAllUntil("2008-01-01");
+    // disableAllUntil("2008-01-01");
   }
 
   protected void setUp() throws Exception {
@@ -55,6 +56,9 @@ public class ErrorReporting_Test extends TransparentTestBase {
       try {
         ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("com/tctest/spring/ErrorReporting.xml");
         ctx.getBean("bean1");
+        fail("Epected to see Spring exception");
+      } catch (CannotLoadBeanClassException e) {
+        // expected
       } catch (BeanDefinitionStoreException e) {
         // ignore
       }      
