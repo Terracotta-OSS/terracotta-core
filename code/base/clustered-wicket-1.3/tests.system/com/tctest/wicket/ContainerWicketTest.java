@@ -37,12 +37,7 @@ public class ContainerWicketTest extends AbstractTwoServerDeploymentTest {
   }
   
   public ContainerWicketTest() {
-    // disableAllUntil("2007-05-21");
-  }
-  
-  public boolean shouldDisable() {
-	return super.shouldDisable() || 
-	       TestConfigObject.getInstance().appserverFactoryName().equals(NewAppServerFactory.JBOSS);
+    //
   }
 
   public void testWicketInitialization() throws Exception {
