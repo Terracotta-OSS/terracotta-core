@@ -21,6 +21,7 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -91,6 +92,7 @@ public class PackageNavigator extends MessageDialog {
     m_layout.m_viewer.setLabelProvider(new JavaUILabelProvider(AppearanceAwareLabelProvider.DEFAULT_TEXTFLAGS
         | JavaElementLabels.P_COMPRESSED | JavaElementLabels.ALL_CATEGORY,
         AppearanceAwareLabelProvider.DEFAULT_IMAGEFLAGS | JavaElementImageProvider.SMALL_ICONS));
+    m_layout.m_viewer.setSorter(new ViewerSorter());
     IJavaProject jproj = JavaCore.create(m_project);
     IJavaElement root = jproj.getJavaModel();
     m_layout.m_viewer.setInput(root);
