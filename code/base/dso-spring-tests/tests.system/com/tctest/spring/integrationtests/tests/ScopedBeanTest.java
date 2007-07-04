@@ -37,8 +37,7 @@ public class ScopedBeanTest extends AbstractTwoServerDeploymentTest {
 
   
   public ScopedBeanTest() {    
-    disableAllUntil("2008-09-15");
-    this.disableVariant(TestConfigObject.SPRING_VARIANT, "128");
+    disableVariant(TestConfigObject.SPRING_VARIANT, "128");
   }  
    
   public void testSessionScopedBean() throws Exception {
@@ -46,6 +45,7 @@ public class ScopedBeanTest extends AbstractTwoServerDeploymentTest {
     verifyValue(server1, webConversation1, "Jonas");
     updateValue(server1, webConversation1, "Tim");
     verifyValue(server1, webConversation1, "Tim");
+    verifyValue(server2, webConversation1, "Tim");
 
     WebConversation webConversation2 = new WebConversation();    
     verifyValue(server2, webConversation2, "Jonas");
@@ -77,40 +77,6 @@ public class ScopedBeanTest extends AbstractTwoServerDeploymentTest {
       super(ScopedBeanTest.class, "/tc-config-files/scopedbeans-tc-config.xml", "scopedBeans");
     }
     
-
-//    protected void setUp() throws Exception {
-//      super.setUp();
-//
-//      Deployment deployment = makeDeploymentBuilder("scopedBeans.war")
-//          .addDirectoryOrJARContainingClass(SessionScopedBeanTestSetup.class)
-//          .addDirectoryOrJARContainingClass(org.apache.taglibs.standard.Version.class)  // standard-1.0.6.jar
-//          .addDirectoryOrJARContainingClass(javax.servlet.jsp.jstl.core.Config.class)  // jstl-1.0.jar
-//
-//          .addDirectoryContainingResource("/tc-config-files/scopedbeans-tc-config.xml")
-//
-//          .addResource("/web-resources", "scopedBeans.jsp", "WEB-INF")
-//          .addResource("/web-resources", "weblogic.xml", "WEB-INF")
-//
-//          .addResource("/com/tctest/spring", "scopedBeans-servlet.xml", "WEB-INF")
-//
-//          .addServlet("scopedBeans", "*.html", org.springframework.web.servlet.DispatcherServlet.class, null, true)
-//          
-//          .makeDeployment();
-//
-//      server1 = createServer(deployment);
-//      server2 = createServer(deployment);
-//    }
-//
-//    private WebApplicationServer createServer(Deployment deployment) throws Exception {
-//      WebApplicationServer server = sm.makeWebApplicationServer("/tc-config-files/scopedbeans-tc-config.xml");
-//      
-//      server.addWarDeployment(deployment, "scopedBeans");
-//      server.start();
-//      
-//      return server;
-//    }
-
-
     protected void configureWar(DeploymentBuilder builder) {
       builder
         // .addDirectoryOrJARContainingClass(SessionScopedBeanTestSetup.class)

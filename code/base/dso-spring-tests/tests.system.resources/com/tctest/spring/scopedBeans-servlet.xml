@@ -6,17 +6,12 @@
   All rights reserved
 
 -->
-<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN"
-				"http://www.springframework.org/dtd/spring-beans.dtd">
-
-<beans>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop" 
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"> 
   
-  <!-- 
-    Require Spring 2.0 to have scope="session" (DTD URL changed)
-    bean id="sessionScopedBean" class="com.tctest.spring.bean.ScopedBean" scope="session" 
-  -->
-  <bean id="sessionScopedBean" class="com.tctest.spring.bean.ScopedBean"/>
-
+  <bean id="sessionScopedBean" class="com.tctest.spring.bean.ScopedBean" scope="session"/>
 
   <bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
     <property name="urlMap">
