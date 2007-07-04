@@ -169,6 +169,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   private File                            warFile;
   private DsoServer                       dsoServer;
   private TerracottaServerConfigGenerator configGen;
+  private Class filterClass;
 
   private boolean                         isSynchronousWrite = false;
 
@@ -236,6 +237,10 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
         zip.execute();
       }
     }
+  }
+  
+  protected void addSessionFilter(Class filterClazz) {
+    this.filterClass = filterClazz;
   }
 
   /**
@@ -403,6 +408,10 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     if (warFile != null) return warFile;
     War war = appServerFactory.createWar(testName());
     addServletsWebAppClasses(war);
+    if (filterClass != null) {
+      TCServletFilter filterInstance = (TCServletFilter) filterClass.newInstance();
+      war.addFilter(filterClass, filterInstance.getPattern(), filterInstance.getInitParams());
+    }
     File resourceDir = installation.dataDirectory();
     warFile = new File(resourceDir + File.separator + war.writeWarFileToDirectory(resourceDir));
     return warFile;
