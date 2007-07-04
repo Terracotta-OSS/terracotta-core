@@ -105,7 +105,10 @@ class BuildResults
           end
 
           puts "Done archiving build."
+        else
+          puts "#{@build_dir.tos_s} does not exist to archive the testrun"
         end
+        
     end
 
     # The directory to store module JAR files.
