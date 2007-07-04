@@ -18,8 +18,6 @@ import org.apache.wicket.protocol.http.WicketServlet;
 import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebLink;
 import com.meterware.httpunit.WebResponse;
-import com.tc.test.TestConfigObject;
-import com.tc.test.server.appserver.NewAppServerFactory;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
@@ -41,8 +39,7 @@ public class ContainerWicketTest extends AbstractTwoServerDeploymentTest {
   }
 
   public void testWicketInitialization() throws Exception {
-    // server1.start();
-    
+   
     WebConversation webConversation1 = new WebConversation();
 
     WebResponse response1 = request(server1, webConversation1, "");
@@ -54,8 +51,6 @@ public class ContainerWicketTest extends AbstractTwoServerDeploymentTest {
     WebLink[] links2 = response2.getLinks();
     assertEquals(1, links2.length);
     assertEquals("Action link clicked 1 times", links2[0].getText());
-    
-    // server2.start();
     
     WebResponse response3 = request(server2, webConversation1, "?" + response2.getURL().getQuery());
     WebLink[] links3 = response3.getLinks();

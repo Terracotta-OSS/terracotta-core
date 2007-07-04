@@ -12,6 +12,7 @@ import com.tc.object.config.DSOSpringConfigHelper;
 import com.tc.object.config.StandardDSOSpringConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.runtime.Vm;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 import com.tctest.runner.AbstractTransparentApp;
@@ -26,6 +27,13 @@ public class SingletonCrashTest extends TransparentTestBase {
   private static final long TEST_DURATION = 20L * 1000L;
   private static final long INTERVAL      = 1000L;
 
+  public SingletonCrashTest() {
+    // DEV-755 MNK-259
+    if (Vm.isIBM()) {
+      disableAllUntil("2007-10-01");
+    }
+  }
+  
   protected boolean canRunCrash() {
     return true;
   }
