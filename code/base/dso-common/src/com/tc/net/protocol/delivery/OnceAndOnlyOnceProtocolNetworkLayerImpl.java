@@ -130,10 +130,11 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         OOOProtocolMessage reply = createHandshakeReplyFailMessage(delivery.getReceiver().getReceived().get());
         sendMessage(reply);
         handshakeMode.set(false);     
+        if (channelConnected.get()) receiveLayer.notifyTransportDisconnected(this);
         resetStack();
         delivery.resume();
         delivery.receive(reply);
-        if (!channelConnected.get()) receiveLayer.notifyTransportConnected(this);
+        receiveLayer.notifyTransportConnected(this);
         channelConnected.set(true);
       }
     } else if (msg.isHandshakeReplyOk()) {
