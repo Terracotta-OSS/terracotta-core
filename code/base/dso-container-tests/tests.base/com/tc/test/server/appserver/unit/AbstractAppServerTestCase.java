@@ -53,20 +53,19 @@ import javax.servlet.http.HttpSessionListener;
 
 public abstract class AbstractAppServerTestCase extends TCTestCase {
 
-  private static final TCLogger             logger                = TCLogging
-                                                                      .getLogger(AbstractAppServerTestCase.class);
+  private static final TCLogger             logger             = TCLogging.getLogger(AbstractAppServerTestCase.class);
 
-  private static final SynchronizedInt      nodeCounter           = new SynchronizedInt(-1);
-  private static final String               NODE                  = "node-";
-  private static final String               DOMAIN                = "localhost";
+  private static final SynchronizedInt      nodeCounter        = new SynchronizedInt(-1);
+  private static final String               NODE               = "node-";
+  private static final String               DOMAIN             = "localhost";
 
-  protected final List                      appservers            = new ArrayList();
-  private final Object                      workingDirLock        = new Object();
-  private final List                        dsoServerJvmArgs      = new ArrayList();
-  private final List                        roots                 = new ArrayList();
-  private final List                        locks                 = new ArrayList();
-  private final List                        includes              = new ArrayList();
-  private final TestConfigObject            config                = TestConfigObject.getInstance();
+  protected final List                      appservers         = new ArrayList();
+  private final Object                      workingDirLock     = new Object();
+  private final List                        dsoServerJvmArgs   = new ArrayList();
+  private final List                        roots              = new ArrayList();
+  private final List                        locks              = new ArrayList();
+  private final List                        includes           = new ArrayList();
+  private final TestConfigObject            config             = TestConfigObject.getInstance();
 
   private File                              serverInstallDir;
   private File                              sandbox;
@@ -79,11 +78,11 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   private TerracottaServerConfigGenerator   configGen;
   private StandardTerracottaAppServerConfig configBuilder;
 
-  private List                              filterList            = new ArrayList();
-  private List                              listenerList = new ArrayList();
-  private List                              servletList           = new ArrayList();
+  private List                              filterList         = new ArrayList();
+  private List                              listenerList       = new ArrayList();
+  private List                              servletList        = new ArrayList();
 
-  private boolean                           isSynchronousWrite    = false;
+  private boolean                           isSynchronousWrite = false;
 
   public AbstractAppServerTestCase() {
     // keep the regular thread dump behavior for windows and macs
@@ -184,7 +183,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   protected void registerListener(Class listener) {
     listenerList.add(listener);
   }
-  
+
   protected void registerServlet(Class servlet) {
     servletList.add(servlet);
   }
@@ -353,11 +352,11 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     for (Iterator it = listenerList.iterator(); it.hasNext();) {
       war.addListener((Class) it.next());
     }
-    
+
     // add registered servlets
     for (Iterator it = servletList.iterator(); it.hasNext();) {
       war.addServlet((Class) it.next());
-    }    
+    }
 
     File resourceDir = installation.dataDirectory();
     warFile = new File(resourceDir + File.separator + war.writeWarFileToDirectory(resourceDir));
