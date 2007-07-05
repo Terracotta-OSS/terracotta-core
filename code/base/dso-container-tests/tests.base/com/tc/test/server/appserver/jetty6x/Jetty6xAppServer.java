@@ -22,7 +22,10 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class Jetty6xAppServer extends AbstractAppServer {
   private static final String JAVA_CMD           = System.getProperty("java.home") + File.separator + "bin"
@@ -116,6 +119,21 @@ public class Jetty6xAppServer extends AbstractAppServer {
   }
 
   private void prepareDeployment(AppServerParameters params) throws Exception {
+    // move wars into the correct location
+    Map wars = params.wars();
+    if (wars != null && wars.size() > 0) {
+      File wars_dir = getWarsDirectory();
+      
+      Set war_entries = wars.entrySet();
+      Iterator war_entries_it = war_entries.iterator();
+      while (war_entries_it.hasNext()) {
+        Map.Entry war_entry = (Map.Entry)war_entries_it.next();
+        File war_file = (File)war_entry.getValue();
+        war_file.renameTo(new File(wars_dir, war_file.getName()));
+      }
+    }
+    
+    // setup deployment config
     PortChooser portChooser = new PortChooser();
     jetty_port = portChooser.chooseRandomPort();
     stop_port = portChooser.chooseRandomPort();
@@ -130,6 +148,10 @@ public class Jetty6xAppServer extends AbstractAppServer {
                                                                                    + instanceName); }
     setProperties(params, jetty_port, instanceDir);
     createConfigFile();
+  }
+  
+  protected File getWarsDirectory() {
+    return new File(this.sandboxDirectory(), "data");
   }
 
   private void createConfigFile() throws Exception {
@@ -151,7 +173,7 @@ public class Jetty6xAppServer extends AbstractAppServer {
       int startIndex = buffer.indexOf(target);
       if (startIndex > 0) {
         int endIndex = startIndex + target.length();
-        buffer.replace(startIndex, endIndex, new File(this.sandboxDirectory(), "data").getAbsolutePath());
+        buffer.replace(startIndex, endIndex, getWarsDirectory().getAbsolutePath());
       } else {
         throw new RuntimeException("Can't find target: " + target);
       }
