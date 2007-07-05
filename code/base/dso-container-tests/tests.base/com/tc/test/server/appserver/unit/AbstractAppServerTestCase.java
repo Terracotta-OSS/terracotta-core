@@ -31,7 +31,6 @@ import com.tc.test.server.dsoserver.StandardDsoServerParameters;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
 import com.tc.test.server.tcconfig.TerracottaServerConfigGenerator;
 import com.tc.test.server.util.AppServerUtil;
-import com.tc.test.server.util.HttpUtil;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.ThreadDump;
@@ -52,138 +51,61 @@ import javax.servlet.http.HttpSessionActivationListener;
 import javax.servlet.http.HttpSessionAttributeListener;
 import javax.servlet.http.HttpSessionListener;
 
-/**
- * Please read this doc in it's entirety before attempting to utilize the Terracotta Appserver Testing Framework and
- * it's constituent components. The comments below describe the abstract test case itself and explain how it is intended
- * to be extended, debugged, and automated.
- * <p>
- * This class serves as a layer of indirection between unit tests and the terracotta framework for server installation
- * and invocation. The initialization and execution process is as follows:
- * <p>
- * A factory is used to create supporting appserver classes for a given platform. A list of servers is kept for use by
- * the <tt>tearDown()</tt> method. It is generally advised that <tt>startDsoServer()</tt> be called first followed
- * by n calls to <tt>startAppServer()</tt> before {@link HttpUtil} is used to page the running servers. This practice
- * may vary for certain tests that may be expected to fail or timeout. The method <tt>createUrl()</tt> should be
- * called to obtain a reference to a servlet running in a container. The server port is provided as a field of
- * {@link AppServerResult} which should be captured and passed to <tt>createUrl()</tt> for that server.
- * <p>
- * The framework uses reflection to locate <tt>public static</tt> inner classes that extend {@link HttpServlet} and
- * end with "servlet" (not case sensitive). These servlets are automatically deployed in a WAR (web application
- * resource) with the correct servlet mappings and appserver specific descriptors; which are referenced using the
- * <tt>createUrl()</tt> method. The tc-config.xml file is also auto generated and deployed to each server running dso.
- * <p>
- * As a recommended coding practice the inner class servlets should handle the majority of the testing infrastructure;
- * where possible returning a simple boolean "true" or "false". A mechanism is provided to share properties between the
- * outer class (unit test) and it's associated servlets in the form of an overloaded <tt>startAppServer()</tt> method
- * that takes a {@link Properties} file. These properties are available to servlets in that container as system
- * properties. By default every servlet under this convention is provided a system property for the instance name and
- * http port. See {@link AppServerConstants} for exact property names.
- * <p>
- * The coding guidelines for writting unit tests that interact with inner class servlets are as follows:
- * <ul>
- * <li>Servlets are packaged and deployed to the appserver's JVM therefore they know nothing about the outer class or
- * the unit test which is being run.
- * <li>A servlet should not utilize any imports unless the imported files are also included in the associated WAR as
- * libraries.
- * <li>The servlet should not reference any parent class methods (the outer-class superclass is not even deployed to
- * the appserver)
- * </ul>
- * <p>
- * 
- * <pre>
- *                            outer class:
- *                            ...
- *                            int port0 = startAppServer(false).serverPort();
- *                            boolean[] values = HttpUtil.getBooleanValues(createUrl(port0, SimpleDsoSessionsTest.DsoPingPongServlet.class));
- *                            assertTrue(values[0]);
- *                            assertFalse(values[1]);
- *                            ...
- *                            inner class servlet:
- *                            ...
- *                            response.setContentType(&quot;text/html&quot;);
- *                            PrintWriter out = response.getWriter();
- *                            out.println(&quot;true&quot;);
- *                            out.println(&quot;false&quot;);
- *                            ...
- * </pre>
- * 
- * <p>
- * <h3>Debugging Information:</h3>
- * There are a number of locations and files to consider when debugging appserver unit tests. Below is a list followed
- * by a more formal description.
- * <ul>
- * <li>The console - Provides output for the unit test parent process which includes the DSO server (in red) and the
- * output known to the parent about the child process appserver startup.
- * <li>appserver-name.log - located in the sandbox directory of the working instance location which includes all server
- * output for out and err.
- * <li>data directory - contains the WAR and tc-config.
- * </ul>
- * In general if the console does not sufficiently describe a failure you should open the working instance directory
- * (see comments below for more info) to confirm that the .log was created for a particular instance. The .log is
- * created before the appserver is started in the child JVM process. If that does not exist there is something wrong;
- * probably in the classpath that starts the appserver. If the log does exist it will probably describe the failure or
- * exception. If no exception is provided try wrapping your servlet content with a try catch block to the extent of
- * e.printStackTrace().
- * <p>
- * <h3>Working Instance Directory</h3>
- * This directory contains the subdirectories of the sandbox and data. The data directory contains files shared by all
- * instances of an appserver but is specific to a unit test. These files may include the tc-config.xml file,
- * testname.war and DSO logs etc. The sandbox directory contains the actual running server instances. Each server is
- * given a name. By default the convention "node-i" is used. In this location you will find a folder (node-i), a log
- * (node-i.log), and a properties file (node-i.properties) for each allocated server instance. By default the working
- * instance is created in the unit test temp directory referred to by {@link TCTestCase.getTempDirectory()} (usually
- * under build/test/fullclassname). When the monkeys complete a batch run of the unit tests they take the contents of
- * the temp directory and package them into a jar so that the data is available for review. There is an option to
- * override the working instance directory in the appserver properties file (generated by the build process). If this
- * feature is exercised the working instance will run in the specified location. Once complete for that test the
- * contents will be moved to their proper location in the temp folder. You will only need to override the working
- * instance location if the path becomes too long on windows systems.
- * <p>
- * As a final note: the <tt>UttpUtil</tt> class should be used (and added to as needed) to page servlets and validate
- * assertions.
- * 
- * @author eellis
- */
 public abstract class AbstractAppServerTestCase extends TCTestCase {
 
-  private static final TCLogger           logger             = TCLogging.getLogger(AbstractAppServerTestCase.class);
+  private static final TCLogger             logger             = TCLogging.getLogger(AbstractAppServerTestCase.class);
 
-  private static final SynchronizedInt    nodeCounter        = new SynchronizedInt(-1);
-  private static final String             NODE               = "node-";
-  private static final String             DOMAIN             = "localhost";
+  private static final SynchronizedInt      nodeCounter        = new SynchronizedInt(-1);
+  private static final String               NODE               = "node-";
+  private static final String               DOMAIN             = "localhost";
 
-  protected final List                    appservers         = new ArrayList();
-  private final Object                    workingDirLock     = new Object();
-  private final List                      dsoServerJvmArgs   = new ArrayList();
-  private final List                      roots              = new ArrayList();
-  private final List                      locks              = new ArrayList();
-  private final List                      includes           = new ArrayList();
-  private final TestConfigObject          config;
+  protected final List                      appservers         = new ArrayList();
+  private final Object                      workingDirLock     = new Object();
+  private final List                        dsoServerJvmArgs   = new ArrayList();
+  private final List                        roots              = new ArrayList();
+  private final List                        locks              = new ArrayList();
+  private final List                        includes           = new ArrayList();
+  private final TestConfigObject            config             = TestConfigObject.getInstance();
 
-  private File                            serverInstallDir;
-  private File                            sandbox;
-  private File                            tempDir;
-  private File                            bootJar;
-  private NewAppServerFactory             appServerFactory;
-  private AppServerInstallation           installation;
-  private File                            warFile;
-  private DsoServer                       dsoServer;
-  private TerracottaServerConfigGenerator configGen;
-  private Class filterClass;
+  private File                              serverInstallDir;
+  private File                              sandbox;
+  private File                              tempDir;
+  private File                              bootJar;
+  private NewAppServerFactory               appServerFactory;
+  private AppServerInstallation             installation;
+  private File                              warFile;
+  private DsoServer                         dsoServer;
+  private TerracottaServerConfigGenerator   configGen;
+  private Class                             filterClass;
+  private StandardTerracottaAppServerConfig configBuilder;
 
-  private boolean                         isSynchronousWrite = false;
+  private boolean                           isSynchronousWrite = false;
 
   public AbstractAppServerTestCase() {
     // keep the regular thread dump behavior for windows and macs
     setDumpThreadsOnTimeout(Os.isWindows() || Os.isMac());
-
-    config = TestConfigObject.getInstance();
 
     String appserver = config.appserverFactoryName();
     // XXX: Only non-session container tests work in glassfish and jetty at the moment
     if (isSessionTest()
         && (NewAppServerFactory.GLASSFISH.equals(appserver) || NewAppServerFactory.JETTY.equals(appserver))) {
       disableAllUntil(new Date(Long.MAX_VALUE));
+    }
+
+    init();
+  }
+
+  private void init() {
+    try {
+      tempDir = getTempDirectory();
+      serverInstallDir = config.appserverServerInstallDir();
+      sandbox = AppServerUtil.createSandbox(tempDir);
+      bootJar = new File(config.normalBootJar());
+      appServerFactory = NewAppServerFactory.createFactoryFromProperties(config);
+      installation = AppServerUtil.createAppServerInstallation(appServerFactory, serverInstallDir, sandbox);
+      configBuilder = appServerFactory.createTcConfig(installation.dataDirectory());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -193,12 +115,8 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   }
 
   protected void setUp() throws Exception {
-    tempDir = getTempDirectory();
-    serverInstallDir = config.appserverServerInstallDir();
-    sandbox = AppServerUtil.createSandbox(tempDir);
-    bootJar = new File(config.normalBootJar());
-    appServerFactory = NewAppServerFactory.createFactoryFromProperties(config);
-    installation = AppServerUtil.createAppServerInstallation(appServerFactory, serverInstallDir, sandbox);
+    super.setUp();
+    // nothing yet
   }
 
   protected final boolean cleanTempDir() {
@@ -238,7 +156,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       }
     }
   }
-  
+
   protected void addSessionFilter(Class filterClazz) {
     this.filterClass = filterClazz;
   }
@@ -283,19 +201,23 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   /*
    * This method should be called before DSO server is started.
    */
-  protected final void addRoots(List rootsToAdd) {
-    roots.addAll(rootsToAdd);
+  protected final void addRoot(Root dsoRoot) {
+    roots.add(dsoRoot);
   }
 
   /*
    * This method should be called before DSO server is started.
    */
-  protected final void addLocks(List locksToAdd) {
-    locks.addAll(locksToAdd);
+  protected final void addLock(Lock lock) {
+    locks.add(lock);
   }
 
   protected final void addInclude(String expression) {
     includes.add(expression);
+  }
+
+  protected final void addConfigModule(String name, String version) {
+    configBuilder.addModule(name, version);
   }
 
   /**
@@ -464,7 +386,6 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
   private synchronized TerracottaServerConfigGenerator configGen() throws Exception {
     if (configGen != null) { return configGen; }
-    StandardTerracottaAppServerConfig configBuilder = appServerFactory.createTcConfig(installation.dataDirectory());
 
     if (isSessionTest()) {
       if (isSynchronousWrite) {
@@ -476,9 +397,9 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
     // add modules that needed for certain app server here
     if (NewAppServerFactory.JETTY.equals(config.appserverFactoryName())) {
-      configBuilder.addModule("clustered-jetty-6.1", "1.0.0");
+      addConfigModule("clustered-jetty-6.1", "1.0.0");
     } else if (NewAppServerFactory.WEBSPHERE.equals(config.appserverFactoryName())) {
-      configBuilder.addModule("clustered-websphere-6.1.0.7", "1.0.0");
+      addConfigModule("clustered-websphere-6.1.0.7", "1.0.0");
     }
 
     configBuilder.addInclude("com.tctest..*");
@@ -508,4 +429,5 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   protected boolean isSessionTest() {
     return true;
   }
+
 }

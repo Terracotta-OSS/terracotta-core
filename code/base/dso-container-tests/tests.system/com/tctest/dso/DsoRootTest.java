@@ -14,8 +14,6 @@ import com.tc.test.server.util.HttpUtil;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 import javax.servlet.http.HttpServlet;
@@ -30,17 +28,13 @@ public class DsoRootTest extends AbstractAppServerTestCase {
   }
 
   public void testRoot() throws Throwable {
-    List roots = new ArrayList();
     String rootName = "counterObject";
     String fieldName = RootCounterServlet.class.getName() + ".counterObject";
-    roots.add(new Root(rootName, fieldName));
-    addRoots(roots);
+    addRoot(new Root(rootName, fieldName));
 
-    List locks = new ArrayList();
     LockLevel lockLevel = LockLevel.WRITE;
     String methodExpression = "* " + RootCounterServlet.class.getName() + "$Counter.*(..)";
-    locks.add(new AutoLock(methodExpression, lockLevel));
-    addLocks(locks);
+    addLock(new AutoLock(methodExpression, lockLevel));
 
     startDsoServer();
     runNodes(2);
