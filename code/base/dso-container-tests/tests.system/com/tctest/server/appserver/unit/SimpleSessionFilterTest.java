@@ -10,6 +10,6 @@ package com.tctest.server.appserver.unit;
 public final class SimpleSessionFilterTest extends SimpleDsoSessionsTest {
 
   public SimpleSessionFilterTest() {
-    this.addSessionFilter(SimpleFilter.class);
+    this.registerSessionFilter(SimpleFilter.class);
   }  
 }

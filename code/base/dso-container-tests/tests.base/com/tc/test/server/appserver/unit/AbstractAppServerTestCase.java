@@ -53,19 +53,20 @@ import javax.servlet.http.HttpSessionListener;
 
 public abstract class AbstractAppServerTestCase extends TCTestCase {
 
-  private static final TCLogger             logger             = TCLogging.getLogger(AbstractAppServerTestCase.class);
+  private static final TCLogger             logger                = TCLogging
+                                                                      .getLogger(AbstractAppServerTestCase.class);
 
-  private static final SynchronizedInt      nodeCounter        = new SynchronizedInt(-1);
-  private static final String               NODE               = "node-";
-  private static final String               DOMAIN             = "localhost";
+  private static final SynchronizedInt      nodeCounter           = new SynchronizedInt(-1);
+  private static final String               NODE                  = "node-";
+  private static final String               DOMAIN                = "localhost";
 
-  protected final List                      appservers         = new ArrayList();
-  private final Object                      workingDirLock     = new Object();
-  private final List                        dsoServerJvmArgs   = new ArrayList();
-  private final List                        roots              = new ArrayList();
-  private final List                        locks              = new ArrayList();
-  private final List                        includes           = new ArrayList();
-  private final TestConfigObject            config             = TestConfigObject.getInstance();
+  protected final List                      appservers            = new ArrayList();
+  private final Object                      workingDirLock        = new Object();
+  private final List                        dsoServerJvmArgs      = new ArrayList();
+  private final List                        roots                 = new ArrayList();
+  private final List                        locks                 = new ArrayList();
+  private final List                        includes              = new ArrayList();
+  private final TestConfigObject            config                = TestConfigObject.getInstance();
 
   private File                              serverInstallDir;
   private File                              sandbox;
@@ -76,10 +77,13 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   private File                              warFile;
   private DsoServer                         dsoServer;
   private TerracottaServerConfigGenerator   configGen;
-  private Class                             filterClass;
   private StandardTerracottaAppServerConfig configBuilder;
 
-  private boolean                           isSynchronousWrite = false;
+  private List                              filterList            = new ArrayList();
+  private List                              listenerList = new ArrayList();
+  private List                              servletList           = new ArrayList();
+
+  private boolean                           isSynchronousWrite    = false;
 
   public AbstractAppServerTestCase() {
     // keep the regular thread dump behavior for windows and macs
@@ -91,7 +95,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
         && (NewAppServerFactory.GLASSFISH.equals(appserver) || NewAppServerFactory.JETTY.equals(appserver))) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
-    
+
     initTestEnvironment();
   }
 
@@ -173,8 +177,16 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     }
   }
 
-  protected void addSessionFilter(Class filterClazz) {
-    this.filterClass = filterClazz;
+  protected void registerSessionFilter(Class filterClazz) {
+    filterList.add(filterClazz);
+  }
+
+  protected void registerListener(Class listener) {
+    listenerList.add(listener);
+  }
+  
+  protected void registerServlet(Class servlet) {
+    servletList.add(servlet);
   }
 
   /**
@@ -329,10 +341,24 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     if (warFile != null) return warFile;
     War war = appServerFactory.createWar(testName());
     addServletsWebAppClasses(war);
-    if (filterClass != null) {
-      TCServletFilter filterInstance = (TCServletFilter) filterClass.newInstance();
-      war.addFilter(filterClass, filterInstance.getPattern(), filterInstance.getInitParams());
+
+    // add registered session filters
+    for (Iterator it = filterList.iterator(); it.hasNext();) {
+      Class filter = (Class) it.next();
+      TCServletFilter filterInstance = (TCServletFilter) filter.newInstance();
+      war.addFilter(filter, filterInstance.getPattern(), filterInstance.getInitParams());
     }
+
+    // add registered attribute listeners
+    for (Iterator it = listenerList.iterator(); it.hasNext();) {
+      war.addListener((Class) it.next());
+    }
+    
+    // add registered servlets
+    for (Iterator it = servletList.iterator(); it.hasNext();) {
+      war.addServlet((Class) it.next());
+    }    
+
     File resourceDir = installation.dataDirectory();
     warFile = new File(resourceDir + File.separator + war.writeWarFileToDirectory(resourceDir));
     return warFile;
