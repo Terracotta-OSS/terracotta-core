@@ -91,32 +91,48 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
         && (NewAppServerFactory.GLASSFISH.equals(appserver) || NewAppServerFactory.JETTY.equals(appserver))) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
-
-    init();
+    
+    initTestEnvironment();
   }
 
-  private void init() {
+  private void initTestEnvironment() {
     try {
       tempDir = getTempDirectory();
       serverInstallDir = config.appserverServerInstallDir();
-      sandbox = AppServerUtil.createSandbox(tempDir);
       bootJar = new File(config.normalBootJar());
       appServerFactory = NewAppServerFactory.createFactoryFromProperties(config);
-      installation = AppServerUtil.createAppServerInstallation(appServerFactory, serverInstallDir, sandbox);
-      configBuilder = appServerFactory.createTcConfig(installation.dataDirectory());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
+  protected void setUp() throws Exception {
+    super.setUp();
+    sandbox = AppServerUtil.createSandbox(tempDir);
+    installation = AppServerUtil.createAppServerInstallation(appServerFactory, serverInstallDir, sandbox);
+    configBuilder = appServerFactory.createTcConfig(installation.dataDirectory());
+  }
+
+  /**
+   * If overridden <tt>super.tearDown()</tt> must be called to ensure that servers are all shutdown properly
+   * 
+   * @throws Exception
+   */
+  protected void tearDown() throws Exception {
+    logger.info("tearDown() called, stopping servers and archiving sandbox");
+    for (Iterator iter = appservers.iterator(); iter.hasNext();) {
+      Server server = (Server) iter.next();
+      server.stop();
+    }
+    if (dsoServer != null && dsoServer.isRunning()) dsoServer.stop();
+
+    AppServerUtil.shutdownAndArchive(sandbox, new File(tempDir, getName()));
+    super.tearDown();
+  }
+
   protected int getJMXPort() {
     if (configGen == null) { throw new AssertionError("DSO server is not running"); }
     return configGen.getConfig().getJmxPort();
-  }
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    // nothing yet
   }
 
   protected final boolean cleanTempDir() {
@@ -307,23 +323,6 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
   public URL createUrl(int port, Class servletClass) throws MalformedURLException {
     return createUrl(port, servletClass, "");
-  }
-
-  /**
-   * If overridden <tt>super.tearDown()</tt> must be called to ensure that servers are all shutdown properly
-   * 
-   * @throws Exception
-   */
-  protected void tearDown() throws Exception {
-    logger.info("tearDown() called, stopping servers and archiving sandbox");
-    for (Iterator iter = appservers.iterator(); iter.hasNext();) {
-      Server server = (Server) iter.next();
-      server.stop();
-    }
-    if (dsoServer != null && dsoServer.isRunning()) dsoServer.stop();
-
-    AppServerUtil.shutdownAndArchive(sandbox, new File(tempDir, getName()));
-    super.tearDown();
   }
 
   private synchronized File warFile() throws Exception {
