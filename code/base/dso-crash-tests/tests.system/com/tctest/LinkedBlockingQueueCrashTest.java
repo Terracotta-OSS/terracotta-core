@@ -9,7 +9,7 @@ public class LinkedBlockingQueueCrashTest extends TransparentTestBase {
   private static final int NODE_COUNT = 8;
   
   public LinkedBlockingQueueCrashTest() {
-    //disableAllUntil("2007-06-30");
+    disableAllUntil("2007-08-30");
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
