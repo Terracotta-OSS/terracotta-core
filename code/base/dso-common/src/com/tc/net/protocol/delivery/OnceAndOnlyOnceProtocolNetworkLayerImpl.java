@@ -115,6 +115,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         handshakeMode.set(false);
         if (!channelConnected.get()) receiveLayer.notifyTransportConnected(this);
         channelConnected.set(true);
+        reconnectMode.set(false);
       } else if (msg.getSessionId() == getSessionId()) {
         debugLog("A same-session client is trying to connect - reply OK");
         OOOProtocolMessage reply = createHandshakeReplyOkMessage(delivery.getReceiver().getReceived().get());
@@ -125,6 +126,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         delivery.receive(createHandshakeReplyOkMessage(msg.getAckSequence()));
         if (!channelConnected.get()) receiveLayer.notifyTransportConnected(this);
         channelConnected.set(true);
+        reconnectMode.set(false);
       } else {
         debugLog("A DIFF-session client is trying to connect - reply FAIL");
         OOOProtocolMessage reply = createHandshakeReplyFailMessage(delivery.getReceiver().getReceived().get());
@@ -136,6 +138,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         delivery.receive(reply);
         receiveLayer.notifyTransportConnected(this);
         channelConnected.set(true);
+        reconnectMode.set(false);
       }
     } else if (msg.isHandshakeReplyOk()) {
       Assert.inv(isClient);
@@ -150,6 +153,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       delivery.receive(msg);
       if (!channelConnected.get()) receiveLayer.notifyTransportConnected(this);
       channelConnected.set(true);
+      reconnectMode.set(false);
     } else if (msg.isHandshakeReplyFail()) {
       debugLog("Received handshake fail reply");
       Assert.inv(isClient);
@@ -167,6 +171,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       delivery.receive(msg);
       if (!channelConnected.get()) receiveLayer.notifyTransportConnected(this);
       channelConnected.set(true);
+      reconnectMode.set(false);
     } else if (msg.isGoodbye()) {
       debugLog("Got GoodBye message - shutting down");
       isClosed = true;
@@ -214,18 +219,22 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       debugLog("Sending Handshake message...");
       sendMessage(handshake);
     } else {
-      //
+      // resue for missing transportDisconnected events
+      if (!delivery.isPaused()) {
+        notifyTransportDisconnected(null);
+      }
     }
   }
 
   public void notifyTransportDisconnected(MessageTransport transport) {
-     final boolean restoreConnectionMode = reconnectMode.get();
+    final boolean restoreConnectionMode = reconnectMode.get();
     debugLog("Transport Disconnected - pausing delivery, restoreConnection = " + restoreConnectionMode);
     this.delivery.pause();
     if (!restoreConnectionMode) {
     	if(channelConnected.get())receiveLayer.notifyTransportDisconnected(this);
     	channelConnected.set(false);
     }
+    reconnectMode.set(false);
   }
 
   public void start() {

@@ -36,6 +36,10 @@ public class StateMachineRunner implements EventContext {
       stateMachine.pause();
     }
   }
+  
+  public synchronized boolean isPaused() {
+    return stateMachine.isPaused();
+  }
 
   public synchronized void resume() {
     events.clear();

@@ -54,6 +54,10 @@ class GuaranteedDeliveryProtocol {
     send.pause();
     receive.pause();
   }
+  
+  public boolean isPaused() {
+    return (send.isPaused() && receive.isPaused());
+  }
 
   public void resume() {
     send.resume();
