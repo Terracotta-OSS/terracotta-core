@@ -4,12 +4,16 @@
  */
 package com.tc.util;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.text.ParseException;
 
 public class ClassUtils {
 
   private static final Class METHOD_CLASS = Method.class;
+  private static final Class CONSTRUCTOR_CLASS = Constructor.class;
+  private static final Class FIELD_CLASS = Field.class;
 
   public static ClassSpec parseFullyQualifiedFieldName(String fieldName) throws ParseException {
     ClassSpecImpl rv = new ClassSpecImpl();
@@ -60,7 +64,7 @@ public class ClassUtils {
   }
 
   public static boolean isPortableReflectionClass(Class c) {
-    return METHOD_CLASS == c;
+    return METHOD_CLASS == c || CONSTRUCTOR_CLASS == c || FIELD_CLASS == c;
   }
 
   public interface ClassSpec {

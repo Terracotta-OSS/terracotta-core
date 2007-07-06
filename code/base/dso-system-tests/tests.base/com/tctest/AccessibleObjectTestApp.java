@@ -15,6 +15,8 @@ import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public class AccessibleObjectTestApp extends AbstractTransparentApp {
@@ -30,10 +32,190 @@ public class AccessibleObjectTestApp extends AbstractTransparentApp {
     try {
       int index = barrier.barrier();
 
+      testField(index);
+      testConstructor(index);
       testMethod(index);
+
     } catch (Throwable t) {
       notifyError(t);
     }
+  }
+
+  private void testField(int index) throws Exception {
+    basicFieldTest(index);
+    superFieldTest(index);
+    fieldSetAccessibleTest(index);
+  }
+
+  private void basicFieldTest(int index) throws Exception {
+    if (index == 0) {
+      Field f = Superclass.class.getDeclaredField("superString");
+      f.setAccessible(true);
+      root.setF1(f);
+    }
+
+    barrier.barrier();
+
+    if (index == 1) {
+      Superclass sc = new Superclass();
+      Field f = root.getF1();
+      f.set(sc, "Basic Field Test");
+      Assert.assertEquals("Basic Field Test", sc.getSuperString());
+      root.setSharedObject(sc);
+    }
+
+    barrier.barrier();
+
+    Field f = root.getF1();
+    Object o = f.get(root.getSharedObject());
+    Assert.assertEquals("Basic Field Test", o);
+
+    barrier.barrier();
+  }
+
+  private void superFieldTest(int index) throws Exception {
+    if (index == 0) {
+      Field f = Subclass.class.getField("subString");
+      f.setAccessible(true);
+      root.setF1(f);
+    }
+
+    barrier.barrier();
+
+    if (index == 1) {
+      Superclass sc = new Subclass();
+      Field f = root.getF1();
+      f.set(sc, "Super Field Test");
+      Assert.assertEquals("Super Field Test", sc.getSubString());
+      root.setSharedObject(sc);
+    }
+
+    barrier.barrier();
+
+    Field f = root.getF1();
+    Object o = f.get(root.getSharedObject());
+    Assert.assertEquals("Super Field Test", o);
+
+    barrier.barrier();
+  }
+
+  private void fieldSetAccessibleTest(int index) throws Exception {
+    if (index == 0) {
+      Field f = Superclass.class.getDeclaredField("superString");
+      root.setF1(f);
+    }
+
+    barrier.barrier();
+
+    if (index == 1) {
+      Field f = root.getF1();
+      synchronized (root) {
+        f.setAccessible(true);
+      }
+    }
+
+    barrier.barrier();
+
+    Assert.assertTrue(root.getF1().isAccessible());
+
+    barrier.barrier();
+
+    if (index == 0) {
+      Field f = root.getF1();
+      synchronized (root) {
+        f.setAccessible(false);
+      }
+    }
+
+    barrier.barrier();
+
+    Assert.assertFalse(root.getF1().isAccessible());
+
+    barrier.barrier();
+
+    if (index == 1) {
+      synchronized (root) {
+        AccessibleObject.setAccessible(new AccessibleObject[] { root.getF1() }, true);
+      }
+    }
+
+    barrier.barrier();
+
+    Assert.assertTrue(root.getF1().isAccessible());
+
+    barrier.barrier();
+  }
+
+  private void testConstructor(int index) throws Exception {
+    basicConstructorTest(index);
+    constructorSetAccessibleTest(index);
+  }
+
+  private void basicConstructorTest(int index) throws Exception {
+    if (index == 0) {
+      Constructor c = Superclass.class.getDeclaredConstructor(new Class[] { Integer.TYPE, Long.TYPE, String.class });
+      root.setC1(c);
+    }
+
+    barrier.barrier();
+
+    if (index == 1) {
+      Constructor c = root.getC1();
+      Superclass o = (Superclass) c
+          .newInstance(new Object[] { new Integer(1), new Long(10), "Basic Constructor Test" });
+      Assert.assertEquals(1, o.getI());
+      Assert.assertEquals(10, o.getL());
+      Assert.assertEquals("Basic Constructor Test", o.getSuperString());
+    }
+
+    barrier.barrier();
+  }
+
+  private void constructorSetAccessibleTest(int index) throws Exception {
+    if (index == 0) {
+      Constructor c = Superclass.class.getDeclaredConstructor(new Class[] { Integer.TYPE, Long.TYPE, String.class });
+      root.setC1(c);
+    }
+
+    barrier.barrier();
+
+    if (index == 1) {
+      Constructor c = root.getC1();
+      synchronized (root) {
+        c.setAccessible(true);
+      }
+    }
+
+    barrier.barrier();
+
+    Assert.assertTrue(root.getC1().isAccessible());
+
+    barrier.barrier();
+
+    if (index == 0) {
+      Constructor c = root.getC1();
+      synchronized (root) {
+        c.setAccessible(false);
+      }
+    }
+
+    barrier.barrier();
+
+    Assert.assertFalse(root.getC1().isAccessible());
+
+    barrier.barrier();
+
+    if (index == 1) {
+      synchronized (root) {
+        AccessibleObject.setAccessible(new AccessibleObject[] { root.getC1() }, true);
+      }
+    }
+
+    barrier.barrier();
+
+    Assert.assertTrue(root.getC1().isAccessible());
+
+    barrier.barrier();
   }
 
   private void testMethod(int index) throws Exception {
@@ -343,6 +525,17 @@ public class AccessibleObjectTestApp extends AbstractTransparentApp {
     private int    i;
     private long   l;
     private String superString;
+    public String  subString;
+
+    public Superclass() {
+      super();
+    }
+
+    public Superclass(int i, long l, String superString) {
+      this.i = i;
+      this.l = l;
+      this.superString = superString;
+    }
 
     public int getI() {
       return i;
@@ -358,6 +551,14 @@ public class AccessibleObjectTestApp extends AbstractTransparentApp {
 
     protected void setSuperString(String superString) {
       this.superString = superString;
+    }
+
+    public synchronized String getSubString() {
+      return subString;
+    }
+
+    public synchronized void setSubString(String subString) {
+      this.subString = subString;
     }
 
     protected long getL() {
@@ -382,9 +583,11 @@ public class AccessibleObjectTestApp extends AbstractTransparentApp {
   }
 
   private static class DataRoot {
-    private Method     m1;
-    private Method     m2;
-    private Superclass sharedObject;
+    private Method      m1;
+    private Method      m2;
+    private Constructor c1;
+    private Field       f1;
+    private Superclass  sharedObject;
 
     public synchronized Method getM1() {
       return m1;
@@ -402,12 +605,28 @@ public class AccessibleObjectTestApp extends AbstractTransparentApp {
       this.m2 = m;
     }
 
-    public Superclass getSharedObject() {
+    public synchronized Superclass getSharedObject() {
       return sharedObject;
     }
 
-    public void setSharedObject(Superclass sharedObject) {
+    public synchronized void setSharedObject(Superclass sharedObject) {
       this.sharedObject = sharedObject;
+    }
+
+    public synchronized Constructor getC1() {
+      return c1;
+    }
+
+    public synchronized void setC1(Constructor c1) {
+      this.c1 = c1;
+    }
+
+    public synchronized Field getF1() {
+      return f1;
+    }
+
+    public synchronized void setF1(Field f1) {
+      this.f1 = f1;
     }
   }
 }

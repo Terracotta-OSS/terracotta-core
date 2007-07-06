@@ -18,7 +18,10 @@ import com.tc.util.Assert;
 import com.tctest.domain.Account;
 import com.tctest.domain.AccountIntf;
 import com.tctest.domain.Customer;
+import com.tctest.domain.Gifts;
 import com.tctest.domain.Product;
+import com.tctest.domain.Promotion;
+import com.tctest.domain.PromotionId;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.sql.Connection;
@@ -33,6 +36,7 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
 
   private Customer      cus;
   private Customer      cus2;
+  private Promotion     promotion;
   private HSqlDBServer  dbServer = null;
 
   public HibernateSimpleTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
@@ -51,7 +55,7 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
         }
 
         barrier.barrier();
-        
+
         insertData(index);
 
         singleNodeDeleteTest(index);
@@ -59,15 +63,18 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
         insertData(index);
 
         singleNodeModifyTest(index);
-        
+
         multiNodesShareTest(index);
-        
+
         multiNodesLazyLoadingTest(index);
+        
+        compositeIdTest(index);
       } finally {
         if (index == 0) {
           shutdownDatabase();
-          CacheManager.getInstance().shutdown(); // This is a total hack to shutdown the Ehcache provider before the TC server
-                                                 // shutdown. If cache other than EhCache is used, we may need to modify this.
+          CacheManager.getInstance().shutdown(); // This is a total hack to shutdown the Ehcache provider before the TC
+          // server
+          // shutdown. If cache other than EhCache is used, we may need to modify this.
         }
       }
 
@@ -84,7 +91,7 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
     Assert.assertEquals(2, productSize);
 
     assertEqualCustomer(cus1);
-    
+
     commitTransaction();
 
     barrier.barrier();
@@ -105,7 +112,7 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
     Customer cus1 = (Customer) loadByIdentifier(Customer.class, 2);
 
     assertEqualCustomer(cus1);
-    
+
     commitTransaction();
 
     barrier.barrier();
@@ -125,36 +132,36 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
 
     barrier.barrier();
   }
-  
+
   private void multiNodesShareTest(int index) throws Exception {
     Assert.assertNull(cus);
-    
+
     barrier.barrier();
-    
+
     if (index == 0) {
       cus = (Customer) loadByIdentifier(Customer.class, 2);
     }
     barrier.barrier();
-    
+
     assertEqualNewEmailCustomer(cus);
-    
+
     barrier.barrier();
-    
+
     if (index == 1) {
       commitTransaction();
-      synchronized(cus) {
+      synchronized (cus) {
         cus.setEmailAddress("asi@yahoo.com");
       }
       saveOrUpdate(cus);
     }
-    
+
     barrier.barrier();
-    
+
     assertEqualCustomer(cus);
-    
+
     barrier.barrier();
   }
-  
+
   private void multiNodesLazyLoadingTest(int index) throws Exception {
     if (index == 0) {
       cus2 = (Customer) loadByIdentifier(Customer.class, 2);
@@ -166,10 +173,31 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
       startTransaction();
       Assert.assertEquals("ASI-001", account.getNumber());
     }
-    
+
     barrier.barrier();
   }
   
+  private void compositeIdTest(int index) throws Exception {
+    if (index == 0) {
+      Promotion promotion1 = (Promotion) getFirstPromotion();;
+      promotion = promotion1;
+    }
+    
+    barrier.barrier();
+    
+    assertEqualPromotion(promotion);
+    
+    barrier.barrier();
+    
+  }
+  
+  private Object getFirstPromotion() throws Exception {
+    Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+    session.beginTransaction();
+    List promotions = session.createQuery("from Promotion").list();
+    return promotions.get(0);
+  }
+
   private Object loadByIdentifier(Class clazz, int id) throws Exception {
     Session session = HibernateUtil.getSessionFactory().getCurrentSession();
     session.beginTransaction();
@@ -213,6 +241,14 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
     Session session = HibernateUtil.getSessionFactory().getCurrentSession();
     session.getTransaction().commit();
   }
+  
+  private void assertEqualPromotion(Promotion promotion) {
+    System.err.println("Promotion: " + promotion);
+    PromotionId pId = promotion.getId();
+    Assert.assertEquals(2, pId.getCustomerId().intValue());
+    Assert.assertEquals(2, pId.getGiftId().intValue());
+    Assert.assertEquals("holiday", promotion.getReason());
+  }
 
   private void assertEqualCustomer(Customer customer) {
     Account acc = customer.getAccount();
@@ -238,6 +274,8 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
 
   private void insertData(int index) throws Exception {
     if (index == 0) {
+      deleteAllData();
+      
       Account acc = new Account();
       acc.setNumber("ASI-001");
       List accounts = new ArrayList();
@@ -261,8 +299,47 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
       cus.setAccount(acc);
       cus.setProducts(products);
       save(cus);
+
+      Gifts gift = new Gifts();
+      gift.setName("lego");
+      gift.setCategory("toy");
+      save(gift);
+
+      PromotionId pId = new PromotionId(new Long(cus.getId()), new Long(gift.getId()));
+      Promotion p = new Promotion();
+      p.setId(pId);
+      p.setReason("holiday");
+      save(p);
     }
     barrier.barrier();
+  }
+
+  private void deleteAllData() throws Exception {
+    Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+
+    session.beginTransaction();
+
+    Connection conn = session.connection();
+    
+    PreparedStatement stmt = conn.prepareStatement("delete from PROMOTION ");
+    stmt.execute();
+    
+    stmt = conn.prepareStatement("delete from GIFTS ");
+    stmt.execute();
+
+    stmt = conn.prepareStatement("delete from CUSTOMER ");
+    stmt.execute();
+    
+    stmt = conn.prepareStatement("delete from ACCOUNT ");
+    stmt.execute();
+    
+    stmt = conn.prepareStatement("delete from PRODUCT ");
+    stmt.execute();
+    
+    stmt = conn.prepareStatement("delete from Customer_Products ");
+    stmt.execute();
+    
+    session.getTransaction().commit();
   }
 
   private void setupDatabaseResource() throws Exception {
@@ -301,6 +378,14 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
         .prepareStatement("alter table Customer_Products add constraint FKEFFD20A5ED0B4608 foreign key (PROD_ID) references PRODUCT");
     stmt.execute();
 
+    stmt = conn
+        .prepareStatement("create table GIFTS (GIFT_ID integer generated by default as identity (start with 1), GIFT_NAME varchar(255), GIFT_CATEGORY varchar(255), primary key (GIFT_ID))");
+    stmt.execute();
+
+    stmt = conn
+        .prepareStatement("create table PROMOTION (CUST_ID integer, GIFT_ID integer, PROMOTION_REASON varchar(255), primary key (CUST_ID, GIFT_ID))");
+    stmt.execute();
+
     session.getTransaction().commit();
   }
 
@@ -316,16 +401,19 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = HibernateSimpleTestApp.class.getName();
 
-    config.getOrCreateSpec(testClass).addRoot("barrier", "barrier").addRoot("cus", "cus").addRoot("cus2", "cus2");
+    config.getOrCreateSpec(testClass).addRoot("barrier", "barrier").addRoot("cus", "cus").addRoot("cus2", "cus2").addRoot("promotion", "promotion");
 
     config.addWriteAutolock("* " + testClass + "*.*(..)");
     config.addIncludePattern("com.tctest.domain.Account");
     config.addIncludePattern("com.tctest.domain.Customer");
     config.addIncludePattern("com.tctest.domain.Product");
+    config.addIncludePattern("com.tctest.domain.Promotion");
+    config.addIncludePattern("com.tctest.domain.Gifts");
+    config.addIncludePattern("com.tctest.domain.PromotionId");
     new CyclicBarrierSpec().visit(visitor, config);
 
     config.addNewModule("clustered-hibernate-3.1.2", "1.0.0");
-    //config.addNewModule("clustered-cglib-2.1.3", "1.0.0");
+    // config.addNewModule("clustered-cglib-2.1.3", "1.0.0");
     config.addNewModule("clustered-ehcache-1.2.4", "1.0.0");
   }
 

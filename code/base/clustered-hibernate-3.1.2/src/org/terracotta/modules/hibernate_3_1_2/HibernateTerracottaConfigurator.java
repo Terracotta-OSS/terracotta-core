@@ -31,6 +31,18 @@ public final class HibernateTerracottaConfigurator extends TerracottaConfigurato
     
     configHelper.addIncludePattern("org.hibernate.collection.PersistentMap", false, false, false);
     
+    configHelper.addIncludePattern("org.hibernate.type.ComponentType", false, false, false);
+    
+    configHelper.addIncludePattern("org.hibernate.tuple.*", false, false, false);
+    
+    configHelper.addIncludePattern("org.hibernate.engine.*", false, false, false);
+    
+    configHelper.addIncludePattern("org.hibernate.type.*", false, false, false);
+    
+    configHelper.addIncludePattern("org.hibernate.FetchMode", false, false, false);
+    
+    configHelper.addIncludePattern("org.hibernate.property..*", false, false, false);
+    
     /**
      * Session
      

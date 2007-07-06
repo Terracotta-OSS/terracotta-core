@@ -43,6 +43,8 @@
     <mapping resource="Account.hbm.xml"/>
     <mapping resource="Customer.hbm.xml"/>
     <mapping resource="Product.hbm.xml"/>
+    <mapping resource="Gifts.hbm.xml"/>
+    <mapping resource="Promotion.hbm.xml"/>
     
 
 <!--

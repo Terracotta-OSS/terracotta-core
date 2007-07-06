@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+  <class name="com.tctest.domain.Promotion" table="PROMOTION">
+    <cache usage="read-only" />
+    <composite-id name="id" class="com.tctest.domain.PromotionId">
+      <key-property name="customerId" access="field" column="CUST_ID"/>
+      <key-property name="giftId" access="field" column="GIFT_ID"/>
+    </composite-id>
+    <property name="reason" type="string" column="PROMOTION_REASON"/>
+  </class>
+</hibernate-mapping>
