@@ -36,22 +36,22 @@ import java.util.Random;
  */
 public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTransport implements
     OnceAndOnlyOnceProtocolNetworkLayer, OOOProtocolMessageDelivery {
-  private static final TCLogger           logger        = TCLogging
-                                                            .getLogger(OnceAndOnlyOnceProtocolNetworkLayerImpl.class);
+  private static final TCLogger           logger           = TCLogging
+                                                               .getLogger(OnceAndOnlyOnceProtocolNetworkLayerImpl.class);
   private final OOOProtocolMessageFactory messageFactory;
   private final OOOProtocolMessageParser  messageParser;
-  boolean                                 wasConnected  = false;
+  boolean                                 wasConnected     = false;
   private MessageChannelInternal          receiveLayer;
   private MessageTransport                sendLayer;
   private GuaranteedDeliveryProtocol      delivery;
-  private final SynchronizedBoolean       reconnectMode = new SynchronizedBoolean(false);
-  private final SynchronizedBoolean       handshakeMode = new SynchronizedBoolean(false);
+  private final SynchronizedBoolean       reconnectMode    = new SynchronizedBoolean(false);
+  private final SynchronizedBoolean       handshakeMode    = new SynchronizedBoolean(false);
   private final SynchronizedBoolean       channelConnected = new SynchronizedBoolean(false);
-  private boolean                         isClosed      = false;
+  private boolean                         isClosed         = false;
   private final boolean                   isClient;
   private final String                    debugId;
-  private short                           sessionId     = -1;
-  private static final boolean            debug         = false;
+  private short                           sessionId        = -1;
+  private static final boolean            debug            = false;
 
   public OnceAndOnlyOnceProtocolNetworkLayerImpl(OOOProtocolMessageFactory messageFactory,
                                                  OOOProtocolMessageParser messageParser, Sink workSink, boolean isClient) {
@@ -95,13 +95,11 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   public void receive(TCByteBuffer[] msgData) {
     OOOProtocolMessage msg = createProtocolMessage(msgData);
     debugLog("receive -> " + msg.getHeader().toString());
-    if (msg.isSend()) {
+    if (msg.isSend() || msg.isAck()) {
       Assert.inv(!handshakeMode.get());
       Assert.inv(channelConnected.get());
-      delivery.receive(msg);
-    } else if (msg.isAck()) {
-      Assert.inv(!handshakeMode.get());
-      Assert.inv(channelConnected.get());
+      if (sessionId != msg.getSessionId()) 
+        return; // drop bad message
       delivery.receive(msg);
     } else if (msg.isHandshake()) {
       Assert.inv(!isClient);
@@ -131,7 +129,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         debugLog("A DIFF-session client is trying to connect - reply FAIL");
         OOOProtocolMessage reply = createHandshakeReplyFailMessage(delivery.getReceiver().getReceived().get());
         sendMessage(reply);
-        handshakeMode.set(false);     
+        handshakeMode.set(false);
         if (channelConnected.get()) receiveLayer.notifyTransportDisconnected(this);
         resetStack();
         delivery.resume();
@@ -231,8 +229,8 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     debugLog("Transport Disconnected - pausing delivery, restoreConnection = " + restoreConnectionMode);
     this.delivery.pause();
     if (!restoreConnectionMode) {
-    	if(channelConnected.get())receiveLayer.notifyTransportDisconnected(this);
-    	channelConnected.set(false);
+      if (channelConnected.get()) receiveLayer.notifyTransportDisconnected(this);
+      channelConnected.set(false);
     }
     reconnectMode.set(false);
   }
@@ -364,11 +362,14 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
 
   public void connectionRestoreFailed() {
     debugLog("RestoreConnectionFailed - resetting stack");
-    resetStack();
     if (channelConnected.get()) {
       receiveLayer.notifyTransportDisconnected(this);
       channelConnected.set(false);
     }
+    reconnectMode.set(false);
+    delivery.pause();
+    delivery.reset();
+    sessionId = newRandomSessionId();
   }
 
   private void resetStack() {
