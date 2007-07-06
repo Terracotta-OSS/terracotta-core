@@ -63,6 +63,34 @@ public class TCPProxy {
     reuseAddress = reuse;
   }
 
+  /*
+   * Probe if backend is ready for connection.
+   * Make sure L2 is ready before calling start().
+   */
+  public boolean probeBackendConnection() {
+    Socket connectedSocket = null;
+    for (int pos = 0; connectedSocket == null && pos < endpoints.length; ++pos) {
+      final int roundRobinOffset = (pos + roundRobinSequence) % endpoints.length;
+      try {
+        connectedSocket = new Socket(endpoints[roundRobinOffset].getAddress(),
+                                     endpoints[roundRobinOffset].getPort());
+        break;
+      } catch (IOException ioe) {
+        //
+      }
+    }
+    if (connectedSocket != null) {
+      try {
+        connectedSocket.close();
+      } catch (Exception e) {
+        //
+      }
+      return(true);
+    }
+    else return(false);
+  }
+
+
   public synchronized void start() throws IOException {
     stop();
 

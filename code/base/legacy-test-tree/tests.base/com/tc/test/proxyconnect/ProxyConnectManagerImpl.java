@@ -61,6 +61,19 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
   }
 
   public void proxyUp(){
+    // wait until backend is ready
+    int i = 0;
+    while (!proxy.probeBackendConnection()) {
+      try {
+        Thread.sleep(100);
+      } catch (Exception e) {
+        //
+      }
+      if (i++ > 600) {
+        throw new RuntimeException("L2 is not ready!");
+      }
+    }
+
     try {
       System.out.println("XXX start proxy at "+proxyPort+" to "+ dsoPort);
       proxy.start();
