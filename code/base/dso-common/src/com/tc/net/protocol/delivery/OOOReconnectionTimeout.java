@@ -15,7 +15,7 @@ import java.util.TimerTask;
 
 public class OOOReconnectionTimeout implements MessageTransportListener, RestoreConnectionCallback {
 
-  private static final boolean                      debug = true;
+  private static final boolean                      debug = false;
 
   private final OnceAndOnlyOnceProtocolNetworkLayer oooLayer;
   private final long                                timeoutMillis;
