@@ -17,8 +17,11 @@ import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.StandardClassProvider;
 import com.tc.text.Banner;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
@@ -40,7 +43,7 @@ public class ClassProcessorHelper {
   private static final String                TC_INSTALL_ROOT_SYSPROP = "tc.install-root";
 
   // Property to indicate whether the Terracotta classloader is active
-  private static final String                TC_ACTIVE_SYSPROP = "tc.active";
+  private static final String                TC_ACTIVE_SYSPROP       = "tc.active";
 
   // NOTE: This is not intended to be a public/documented system property,
   // it is for dev use only. It is NOT for QA or customer use
@@ -75,7 +78,7 @@ public class ClassProcessorHelper {
     // TC functionalities. This is needed for the IBM JDK when Hashtable is
     // instrumented for auto-locking in the bootjar.
     Class dsocontext_class = DSOContext.class;
-    
+
     inStaticInitializer.set(new Object());
 
     try {
@@ -210,7 +213,7 @@ public class ClassProcessorHelper {
     return tcInstallDir;
   }
 
-  private static URL[] buildTerracottaClassPath() throws MalformedURLException {
+  private static URL[] buildTerracottaClassPath() throws Exception {
     if (System.getProperty(TC_CLASSPATH_SYSPROP) != null) { return buildDevClassPath(); }
 
     File tcHomeDir = getTCInstallDir(true);
@@ -244,10 +247,44 @@ public class ClassProcessorHelper {
     return rv;
   }
 
-  private static URL[] buildDevClassPath() throws MalformedURLException {
+  private static String slurpFile(String path) throws IOException {
+    FileInputStream in = new FileInputStream(path);
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+    try {
+      in = new FileInputStream(path);
+      byte[] buf = new byte[1024];
+      int len;
+      while ((len = in.read(buf, 0, buf.length)) >= 0) {
+        bos.write(buf, 0, len);
+      }
+    } finally {
+      try {
+        in.close();
+      } catch (IOException ioe) {
+        // ignore
+      }
+
+      try {
+        bos.close();
+      } catch (IOException ioe) {
+        // ignore
+      }
+    }
+
+    return new String(bos.toByteArray());
+  }
+
+  private static URL[] buildDevClassPath() throws MalformedURLException, IOException {
     // For development use only. This is handy since you can put the eclipse/ant build output directories
     // here and not bother creating a tc.jar every time you change some source
-    String[] parts = System.getProperty(TC_CLASSPATH_SYSPROP).split(File.pathSeparator);
+
+    String tcClasspath = System.getProperty(TC_CLASSPATH_SYSPROP);
+    if (tcClasspath.startsWith("file:///")) {
+      tcClasspath = slurpFile(tcClasspath.substring("file://".length()));
+    }
+
+    String[] parts = tcClasspath.split(File.pathSeparator);
     ArrayList urls = new ArrayList();
 
     for (int i = 0; i < parts.length; i++) {
@@ -293,7 +330,7 @@ public class ClassProcessorHelper {
         }
 
         initState.initialized();
-        
+
         System.setProperty(TC_ACTIVE_SYSPROP, Boolean.TRUE.toString());
       } catch (Throwable t) {
         t.printStackTrace();
@@ -413,7 +450,7 @@ public class ClassProcessorHelper {
    * XXX::NOTE:: Donot optimize to return same input byte array if the class is instrumented (I cant imagine why we
    * would). ClassLoader checks the returned byte array to see if the class is instrumented or not to maintain the
    * offset.
-   * 
+   *
    * @see ClassLoaderPreProcessorImpl
    */
   public static byte[] defineClass0Pre(ClassLoader caller, String name, byte[] b, int off, int len, ProtectionDomain pd) {

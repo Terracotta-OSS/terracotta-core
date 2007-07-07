@@ -4,9 +4,14 @@
  */
 package com.tc.test.server.appserver;
 
+import org.apache.commons.io.IOUtils;
+
 import com.tc.test.server.tcconfig.TerracottaServerConfigGenerator;
+import com.tc.util.runtime.Os;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -73,13 +78,37 @@ public class StandardAppServerParameters implements AppServerParameters {
     sb.append(' ');
     sb.append("-Xbootclasspath/p:'" + bootJar + "'");
     sb.append(' ');
-    sb.append("-Dtc.classpath='" + System.getProperty("java.class.path") + "'");
+    sb.append("-Dtc.classpath='file://" + writeTerracottaClassPathFile() + "'");
     sb.append(' ');
     sb.append("-Dtc.session.classpath='" + tcSessionClasspath + "'");
     sb.append(' ');
-    sb.append("-Dtc.tests.configuration.modules.url='" + System.getProperty("tc.tests.configuration.modules.url")
+    sb
+        .append("-Dtc.tests.configuration.modules.url='" + System.getProperty("tc.tests.configuration.modules.url")
                 + "'");
     appendJvmArgs(sb.toString());
+  }
+
+  private String writeTerracottaClassPathFile() {
+    FileOutputStream fos = null;
+
+    try {
+      File tempFile = File.createTempFile("tc-classpath", instanceName);
+      tempFile.deleteOnExit();
+      fos = new FileOutputStream(tempFile);
+      fos.write(System.getProperty("java.class.path").getBytes());
+
+      String rv = tempFile.getAbsolutePath();
+      if (Os.isWindows()) {
+        rv = "/" + rv;
+      }
+
+      return rv;
+    } catch (IOException ioe) {
+      throw new AssertionError(ioe);
+    } finally {
+      IOUtils.closeQuietly(fos);
+    }
+
   }
 
   public void appendSysProp(String name, int value) {
