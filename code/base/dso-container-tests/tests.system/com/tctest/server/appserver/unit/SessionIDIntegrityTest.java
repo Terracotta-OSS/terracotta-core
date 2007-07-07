@@ -11,16 +11,11 @@ import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.NewAppServerFactory;
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
 import com.tc.test.server.util.HttpUtil;
+import com.tctest.webapp.servlets.SessionIDIntegrityTestServlet;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.URL;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 /**
  * Test to make sure session id is preserved with Terracotta
@@ -28,7 +23,7 @@ import javax.servlet.http.HttpSession;
 public class SessionIDIntegrityTest extends AbstractAppServerTestCase {
 
   public SessionIDIntegrityTest() {
-    // 
+    registerServlet(SessionIDIntegrityTestServlet.class);
   }
 
   public final void testShutdown() throws Exception {
@@ -39,13 +34,13 @@ public class SessionIDIntegrityTest extends AbstractAppServerTestCase {
     int port1 = startAppServer(true).serverPort();
     int port2 = startAppServer(true).serverPort();
 
-    URL url1 = createUrl(port1, TestServlet.class, "cmd=insert");
+    URL url1 = createUrl(port1, SessionIDIntegrityTestServlet.class, "cmd=insert");
     assertEquals("cmd=insert", "OK", HttpUtil.getResponseBody(url1, client));
     String server0_session_id = extractSessionId(client);
     System.out.println("Server0 session id: " + server0_session_id);
     assertSessionIdIntegrity(server0_session_id, "node-0");
 
-    URL url2 = createUrl(port2, TestServlet.class, "cmd=query");
+    URL url2 = createUrl(port2, SessionIDIntegrityTestServlet.class, "cmd=query");
     assertEquals("cmd=query", "OK", HttpUtil.getResponseBody(url2, client));
     String server1_session_id = extractSessionId(client);
     System.out.println("Server1 session id: " + server1_session_id);
@@ -77,29 +72,5 @@ public class SessionIDIntegrityTest extends AbstractAppServerTestCase {
       }
     }
     return "";
-  }
-
-  public static final class TestServlet extends HttpServlet {
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-      HttpSession session = request.getSession(true);
-      response.setContentType("text/html");
-      PrintWriter out = response.getWriter();
-
-      String cmdParam = request.getParameter("cmd");
-      if ("insert".equals(cmdParam)) {
-        session.setAttribute("hung", "daman");
-        out.println("OK");
-      } else if ("query".equals(cmdParam)) {
-        String data = (String) session.getAttribute("hung");
-        if (data != null && data.equals("daman")) {
-          out.println("OK");
-        } else {
-          out.println("ERROR: " + data);
-        }
-      } else {
-        out.println("unknown cmd");
-      }
-
-    }
   }
 }

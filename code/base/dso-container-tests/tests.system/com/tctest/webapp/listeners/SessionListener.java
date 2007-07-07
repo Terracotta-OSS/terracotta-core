@@ -2,7 +2,9 @@
  * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tctest.server.appserver.unit;
+package com.tctest.webapp.listeners;
+
+import com.tctest.webapp.servlets.ListenerReportingServlet;
 
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;

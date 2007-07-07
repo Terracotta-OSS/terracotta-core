@@ -37,7 +37,6 @@ import com.tc.util.runtime.ThreadDump;
 import com.terracotta.session.util.ConfigProperties;
 
 import java.io.File;
-import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -174,18 +173,6 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
         zip.execute();
       }
     }
-  }
-
-  protected void registerSessionFilter(Class filterClazz) {
-    filterList.add(filterClazz);
-  }
-
-  protected void registerListener(Class listener) {
-    listenerList.add(listener);
-  }
-
-  protected void registerServlet(Class servlet) {
-    servletList.add(servlet);
   }
 
   /**
@@ -339,7 +326,6 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   private synchronized File warFile() throws Exception {
     if (warFile != null) return warFile;
     War war = appServerFactory.createWar(testName());
-    addServletsWebAppClasses(war);
 
     // add registered session filters
     for (Iterator it = filterList.iterator(); it.hasNext();) {
@@ -363,35 +349,24 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     return warFile;
   }
 
-  private void addServletsWebAppClasses(War war) throws InstantiationException, IllegalAccessException {
-    Class[] classes = getClass().getClasses();
-    for (int i = 0; i < classes.length; i++) {
-      Class clazz = classes[i];
-      if (!isSafeClass(clazz)) {
-        continue;
-      }
-      if (isServlet(clazz)) {
-        war.addServlet(clazz);
-      }
-      if (isListener(clazz)) {
-        war.addListener(clazz);
-      }
-      if (isFilter(clazz)) {
-        TCServletFilter filterInstance = (TCServletFilter) clazz.newInstance();
-        war.addFilter(clazz, filterInstance.getPattern(), filterInstance.getInitParams());
-      }
-      // it's just a class, add it
-      war.addClass(clazz);
-    }
+  protected final void registerSessionFilter(Class filterClazz) {
+    Assert.assertTrue("Class " + filterClazz + " is not a session filter", isFilter(filterClazz));
+    filterList.add(filterClazz);
   }
 
-  private static boolean isSafeClass(Class clazz) {
-    int mod = clazz.getModifiers();
-    return Modifier.isStatic(mod) && Modifier.isPublic(mod) && !Modifier.isInterface(mod) && !Modifier.isAbstract(mod);
+  protected final void registerListener(Class listener) {
+    Assert.assertTrue("Class " + listener + " is not any kind of javax.servlet listener", isListener(listener));
+    listenerList.add(listener);
+  }
+
+  protected final void registerServlet(Class servlet) {
+    Assert.assertTrue("Class " + servlet + " is not a servlet", isServlet(servlet));
+    servletList.add(servlet);
   }
 
   private static boolean isServlet(Class clazz) {
-    return clazz.getSuperclass().equals(HttpServlet.class) && clazz.getName().toLowerCase().endsWith("servlet");
+    return clazz.getSuperclass().equals(HttpServlet.class) && clazz.getName().toLowerCase().endsWith("servlet")
+           && clazz.getName().indexOf("$") == -1;
   }
 
   private static boolean isFilter(Class clazz) {

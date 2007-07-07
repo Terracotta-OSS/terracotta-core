@@ -12,16 +12,11 @@ import com.tc.test.server.Server;
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
 import com.tc.test.server.util.HttpUtil;
 import com.tc.util.runtime.Os;
+import com.tctest.webapp.servlets.ShutdownNormallyServlet;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.URL;
 import java.util.Iterator;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 /**
  * Test to make sure the app server shutdown normally with DSO
@@ -32,6 +27,7 @@ public class AppServerShutdownTest extends AbstractAppServerTestCase {
 
   public AppServerShutdownTest() {
     // this.disableAllUntil("2007-04-08");
+    registerServlet(ShutdownNormallyServlet.class);
   }
 
   public final void testShutdown() throws Exception {
@@ -101,29 +97,5 @@ public class AppServerShutdownTest extends AbstractAppServerTestCase {
     } while (foundAlive && System.currentTimeMillis() - start < TIME_WAIT_FOR_SHUTDOWN);
 
     return foundAlive;
-  }
-
-  public static final class ShutdownNormallyServlet extends HttpServlet {
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-      HttpSession session = request.getSession(true);
-      response.setContentType("text/html");
-      PrintWriter out = response.getWriter();
-
-      String cmdParam = request.getParameter("cmd");
-      if ("insert".equals(cmdParam)) {
-        session.setAttribute("hung", "daman");
-        out.println("OK");
-      } else if ("query".equals(cmdParam)) {
-        String data = (String) session.getAttribute("hung");
-        if (data != null && data.equals("daman")) {
-          out.println("OK");
-        } else {
-          out.println("ERROR: " + data);
-        }
-      } else {
-        out.println("unknown cmd");
-      }
-
-    }
   }
 }

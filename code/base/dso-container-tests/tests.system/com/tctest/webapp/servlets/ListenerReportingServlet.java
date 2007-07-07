@@ -2,7 +2,9 @@
  * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package com.tctest.server.appserver.unit;
+package com.tctest.webapp.servlets;
+
+import com.tctest.webapp.listeners.BindingListener;
 
 import java.io.IOException;
 import java.util.HashMap;

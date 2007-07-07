@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.dso;
 
@@ -10,18 +11,18 @@ import com.tc.object.config.schema.LockLevel;
 import com.tc.object.config.schema.Root;
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
 import com.tc.test.server.util.HttpUtil;
+import com.tctest.webapp.servlets.RootCounterServlet;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.URL;
 import java.util.Random;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 public class DsoRootTest extends AbstractAppServerTestCase {
+
   private static final int TOTAL_REQUEST_COUNT = 100;
+
+  public DsoRootTest() {
+    registerServlet(RootCounterServlet.class);
+  }
 
   protected boolean isSessionTest() {
     return false;
@@ -62,38 +63,4 @@ public class DsoRootTest extends AbstractAppServerTestCase {
     }
   }
 
-  public static class RootCounterServlet extends HttpServlet {
-    private final Counter counterObject = new Counter();
-
-    private static class Counter {
-      private int counter;
-
-      public Counter() {
-        counter = 0;
-      }
-
-      public synchronized void increment() {
-        counter++;
-      }
-
-      public synchronized void setValue(int newValue) {
-        counter = newValue;
-      }
-
-      public synchronized int getValue() {
-        return counter;
-      }
-    }
-
-    private int getCurrentCountValue() {
-      counterObject.increment();
-      return counterObject.getValue();
-    }
-
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-      response.setContentType("text/html");
-      PrintWriter out = response.getWriter();
-      out.println(getCurrentCountValue());
-    }
-  }
 }

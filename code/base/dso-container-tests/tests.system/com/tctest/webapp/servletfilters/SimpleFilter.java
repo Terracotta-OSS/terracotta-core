@@ -1,7 +1,7 @@
 /*
  * All content copyright (c) 2003-2007 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
  */
-package com.tctest.server.appserver.unit;
+package com.tctest.webapp.servletfilters;
 
 import com.tc.test.server.appserver.unit.TCServletFilter;
 

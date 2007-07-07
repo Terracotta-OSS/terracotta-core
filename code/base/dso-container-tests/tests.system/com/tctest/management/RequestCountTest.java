@@ -10,9 +10,9 @@ import com.tc.management.TerracottaManagement;
 import com.tc.management.beans.sessions.SessionMonitorMBean;
 import com.tc.test.server.appserver.load.Node;
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
+import com.tctest.webapp.servlets.RequestCountingServlet;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -25,10 +25,6 @@ import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 public final class RequestCountTest extends AbstractAppServerTestCase {
 
@@ -37,6 +33,10 @@ public final class RequestCountTest extends AbstractAppServerTestCase {
   private static final int      SESSIONS_PER_NODE  = 10;
   private static final long     TEST_DURATION      = 30 * 1000;
   private static final String   CLIENT_NAME_PREFIX = "client-";
+
+  public RequestCountTest() {
+    registerServlet(RequestCountingServlet.class);
+  }
 
   public void testRequestCount() throws Throwable {
     assertTimeDirection();
@@ -129,7 +129,8 @@ public final class RequestCountTest extends AbstractAppServerTestCase {
   }
 
   private JMXConnector getJMXConnector() throws IOException {
-    JMXServiceURL jmxServerUrl = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:" + getJMXPort() + "/jmxrmi");
+    JMXServiceURL jmxServerUrl = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:" + getJMXPort()
+                                                   + "/jmxrmi");
     JMXConnector jmxConnector = JMXConnectorFactory.newJMXConnector(jmxServerUrl, null);
     jmxConnector.connect();
     return jmxConnector;
@@ -153,32 +154,6 @@ public final class RequestCountTest extends AbstractAppServerTestCase {
       final URL validateUrl = validateUrls[0];
 
       System.err.println("validated value of " + totalRequests + " for client " + validateUrl);
-    }
-  }
-
-  public static final class RequestCountingServlet extends HttpServlet {
-
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-      HttpSession session = request.getSession(true);
-      response.setContentType("text/html");
-      PrintWriter out = response.getWriter();
-
-      Integer count = (Integer) session.getAttribute("count");
-      if (count == null) {
-        count = new Integer(0);
-      }
-
-      if (request.getParameter("read") != null) {
-        if (session.isNew()) {
-          out.println("session is new"); // this is an error condition (client will fail trying to parse this as int)
-        } else {
-          out.println(count.intValue());
-        }
-      } else {
-        int newValue = count.intValue() + 1;
-        session.setAttribute("count", new Integer(newValue));
-        out.println(newValue);
-      }
     }
   }
 }

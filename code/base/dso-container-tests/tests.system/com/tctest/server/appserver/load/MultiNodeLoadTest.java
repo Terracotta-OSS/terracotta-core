@@ -6,26 +6,21 @@ package com.tctest.server.appserver.load;
 
 import com.tc.test.server.appserver.load.Node;
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
+import com.tctest.webapp.servlets.CounterServlet;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.URL;
 import java.util.ArrayList;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 public class MultiNodeLoadTest extends AbstractAppServerTestCase {
+
   private static final int  SESSIONS_PER_NODE = 10;
-
   private static final long TEST_DURATION     = 4 * 60 * 1000;
-
-// private static final long TEST_DURATION = 10 * 1000;
+  // private static final long TEST_DURATION = 10 * 1000;
 
   public MultiNodeLoadTest() {
     // this.disableAllUntil("2006-10-24");
+    registerServlet(CounterServlet.class);
 
     ArrayList args = new ArrayList();
     args.add("-XX:+HeapDumpOnOutOfMemoryError");
@@ -79,32 +74,6 @@ public class MultiNodeLoadTest extends AbstractAppServerTestCase {
 
     for (int i = 0; i < nodeCount; i++) {
       nodes[i].checkError();
-    }
-  }
-
-  public static class CounterServlet extends HttpServlet {
-
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-      HttpSession session = request.getSession(true);
-      response.setContentType("text/html");
-      PrintWriter out = response.getWriter();
-
-      Integer count = (Integer) session.getAttribute("count");
-      if (count == null) {
-        count = new Integer(0);
-      }
-
-      if (request.getParameter("read") != null) {
-        if (session.isNew()) {
-          out.println("session is new"); // this is an error condition (client will fail trying to parse this as int)
-        } else {
-          out.println(count.intValue());
-        }
-      } else {
-        int newValue = count.intValue() + 1;
-        session.setAttribute("count", new Integer(newValue));
-        out.println(newValue);
-      }
     }
   }
 }

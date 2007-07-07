@@ -9,21 +9,14 @@ import org.apache.commons.httpclient.HttpClient;
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
 import com.tc.test.server.util.HttpUtil;
 import com.tc.util.Assert;
+import com.tctest.webapp.servlets.SynchWriteMultiThreadsTestServlet;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 /**
  *
@@ -34,7 +27,7 @@ public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
   private static final int NUM_OF_DRIVERS = 15;
 
   public SynchWriteMultiThreadsTest() {
-    // this.disableAllUntil("2007-03-08");
+    registerServlet(SynchWriteMultiThreadsTestServlet.class);
   }
 
   private static class Driver extends Thread {
@@ -80,9 +73,9 @@ public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
   }
 
   public URL createUrl(int port, String query) throws MalformedURLException {
-    return super.createUrl(port, SynchWriteMultiThreadsTest.DsoPingPongServlet.class, query);
+    return super.createUrl(port, SynchWriteMultiThreadsTestServlet.class, query);
   }
-  
+
   private static String hit(URL url, HttpClient client) throws Exception {
     String response = "";
     try {
@@ -91,7 +84,7 @@ public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
       Thread.sleep(2000);
       response = HttpUtil.getResponseBody(url, client);
     }
-    
+
     return response;
   }
 
@@ -137,66 +130,6 @@ public class SynchWriteMultiThreadsTest extends AbstractAppServerTestCase {
     } catch (Throwable e) {
       // expected
       System.err.println("Caught exception from kill server0");
-    }
-  }
-
-  public static final class DsoPingPongServlet extends HttpServlet {
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-      HttpSession session = request.getSession(true);
-      response.setContentType("text/html");
-      PrintWriter out = response.getWriter();
-
-      String server = request.getParameter("server");
-      String command = request.getParameter("command");
-      String data = request.getParameter("data");
-
-      switch (Integer.parseInt(server)) {
-        case 0:
-          handleServer0(session, out, command, data);
-          break;
-        case 1:
-          handleServer1(session, out, command, data);
-          break;
-        default:
-          out.print("unknown value for server param: " + server);
-      }
-      out.flush();
-    }
-
-    private void handleServer0(HttpSession session, PrintWriter out, String command, String data) {
-      if (command.equals("ping")) {
-        session.setAttribute("ping", "pong");
-        out.println("OK");
-      } else if (command.equals("insert")) {
-        session.setAttribute("data" + data, data + "");
-        out.println("OK");
-      } else if (command.equals("kill")) {
-        out.println("OK");
-        System.err.println("Execute order 66... halt.");
-        System.err.flush();
-        Runtime.getRuntime().halt(1);
-      }
-    }
-
-    private void handleServer1(HttpSession session, PrintWriter out, String command, String data) {
-      if (command.equals("ping")) {
-        String ping = (String) session.getAttribute("ping");
-        if (ping == null) {
-          out.println("ping is null");
-        } else out.println("OK");
-      } else if (command.equals("query")) {
-
-        String log = "** " + new SimpleDateFormat("HH:mm:ss").format(new Date()) + " | sessionId="
-                     + session.getId().substring(0, 5) + " | command=" + command + " | data=" + data;
-
-        String queried_data = (String) session.getAttribute("data" + data);
-        if (queried_data == null) {
-          out.println("data" + data + " is null");
-        } else out.println(queried_data);
-
-        System.err.println(log + "## found=" + queried_data);
-        System.err.flush();
-      }
     }
   }
 }

@@ -8,17 +8,13 @@ import org.apache.commons.httpclient.HttpClient;
 
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
 import com.tc.test.server.util.HttpUtil;
+import com.tctest.webapp.servlets.SynchronousWriteTestServlet;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 /**
  * Simplest test case for DSO. This class should be used as a model for building container based tests. A feature which
@@ -30,6 +26,10 @@ public class SynchronousWriteTest extends AbstractAppServerTestCase {
 
   private static final int INTENSITY = 100;
 
+  public SynchronousWriteTest() {
+    registerServlet(SynchronousWriteTestServlet.class);
+  }
+
   public final void testSessions() throws Exception {
     setSynchronousWrite(true);
     startDsoServer();
@@ -39,8 +39,9 @@ public class SynchronousWriteTest extends AbstractAppServerTestCase {
     int port0 = startAppServer(true).serverPort();
     int port1 = startAppServer(true).serverPort();
 
-    createTransactions(client, port0, SynchronousWriteTest.DsoPingPongServlet.class, "server=0");
-    URL url1 = new URL(createUrl(port1, SynchronousWriteTest.DsoPingPongServlet.class) + "?server=1&data=" + (INTENSITY-1));
+    createTransactions(client, port0, SynchronousWriteTestServlet.class, "server=0");
+    URL url1 = new URL(createUrl(port1, SynchronousWriteTestServlet.class) + "?server=1&data="
+                       + (INTENSITY - 1));
 
     assertEquals("99", HttpUtil.getResponseBody(url1, client));
   }
@@ -56,45 +57,5 @@ public class SynchronousWriteTest extends AbstractAppServerTestCase {
     }
 
     out.close();
-  }
-
-  public static final class DsoPingPongServlet extends HttpServlet {
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-      HttpSession session = request.getSession(true);
-      response.setContentType("text/html");
-      PrintWriter out = response.getWriter();
-
-      String serverParam = request.getParameter("server");
-      String dataParam = request.getParameter("data");
-
-      switch (Integer.parseInt(serverParam)) {
-        case 0:
-          hit0(session, out, dataParam);
-          break;
-        case 1:
-          hit1(session, out, "data"+dataParam);
-          break;
-        default:
-          out.print("unknown value for server param: " + serverParam);
-      }
-    }
-
-    private void hit1(HttpSession session, PrintWriter out, String attrName) {
-      System.err.println("### hit1: sessionId = " + session.getId());
-      String value = (String) session.getAttribute(attrName);
-      System.err.println(attrName + "=" + value);
-      if (value == null) {
-        out.print(attrName + " is null");
-      } else {
-        out.print(value);
-      }
-    }
-
-    private void hit0(HttpSession session, PrintWriter out, String dataParam) {
-      System.err.println("### hit0: sessionId = " + session.getId());
-      System.err.println("setAttribute: " + "data" + dataParam);
-      session.setAttribute("data" + dataParam, dataParam);
-      out.print("OK");
-    }
   }
 }

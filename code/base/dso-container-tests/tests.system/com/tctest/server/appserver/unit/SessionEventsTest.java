@@ -8,6 +8,10 @@ import org.apache.commons.httpclient.HttpClient;
 
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
 import com.tc.test.server.util.HttpUtil;
+import com.tctest.webapp.listeners.AttributeListener;
+import com.tctest.webapp.listeners.BindingListener;
+import com.tctest.webapp.listeners.SessionListener;
+import com.tctest.webapp.servlets.ListenerReportingServlet;
 
 import java.io.IOException;
 import java.net.ConnectException;

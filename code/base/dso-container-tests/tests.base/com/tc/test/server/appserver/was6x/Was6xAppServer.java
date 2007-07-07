@@ -38,7 +38,6 @@ public class Was6xAppServer extends AbstractAppServer {
   private static final String   DEPLOY_APPS_PY             = "deployApps.py";
   private static final String   ENABLE_DSO_PY              = "enable-dso.py";
   private static final String   DSO_JVMARGS                = "__DSO_JVMARGS__";
-  private static final String   TC_CLASSPATH               = "__TC_CLASSPATH__";
   private static final String   PORTS_DEF                  = "ports.def";
   private static final int      START_STOP_TIMEOUT_SECONDS = 5 * 60;
 
@@ -137,16 +136,14 @@ public class Was6xAppServer extends AbstractAppServer {
     List lines = IOUtils.readLines(fin);
     fin.close();
 
-    // replace __DSO_JVMARGS__ and __TC_CLASSPATH__
-    final String tcClasspathValue = asPythonArray(System.getProperty("java.class.path"), File.pathSeparator);
+    // replace __DSO_JVMARGS__
     for (int i = 0; i < lines.size(); i++) {
       String line = (String) lines.get(i);
-      if (line.indexOf(DSO_JVMARGS) >= 0 || line.indexOf(TC_CLASSPATH) >= 0) {
+      if (line.indexOf(DSO_JVMARGS) >= 0) {
         if (logger.isDebugEnabled()) {
           logger.debug("patchTerracottaPy(): patching line: " + line);
         }
         line = line.replaceFirst(DSO_JVMARGS, dsoJvmArgs);
-        line = line.replaceFirst(TC_CLASSPATH, tcClasspathValue);
         if (logger.isDebugEnabled()) {
           logger.debug("patchTerracottaPy(): after patching line: " + line);
         }
@@ -334,20 +331,6 @@ public class Was6xAppServer extends AbstractAppServer {
     } finally {
       IOUtils.closeQuietly(fos);
     }
-  }
-
-  // Takes something like ("one:two:three:four, ":") and returns "['one', 'two', 'three', 'four']"
-  private static String asPythonArray(String s, String separator) {
-    String[] tokens = s.split(separator);
-    StringBuffer pyArray = new StringBuffer("[");
-    for (int pos = 0; pos < tokens.length; ++pos) {
-      if (pos > 0) {
-        pyArray.append(", ");
-      }
-      pyArray.append("'").append(tokens[pos]).append("'");
-    }
-    pyArray.append("]");
-    return pyArray.toString();
   }
 
 }

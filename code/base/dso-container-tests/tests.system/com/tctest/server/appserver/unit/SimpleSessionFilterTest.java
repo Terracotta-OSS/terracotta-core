@@ -3,6 +3,8 @@
  */
 package com.tctest.server.appserver.unit;
 
+import com.tctest.webapp.servletfilters.SimpleFilter;
+
 
 /**
  * Applies a simple filter to the {@link SimpleDsoSessionsTest}.
@@ -10,6 +12,6 @@ package com.tctest.server.appserver.unit;
 public final class SimpleSessionFilterTest extends SimpleDsoSessionsTest {
 
   public SimpleSessionFilterTest() {
-    this.registerSessionFilter(SimpleFilter.class);
+    registerSessionFilter(SimpleFilter.class);
   }  
 }

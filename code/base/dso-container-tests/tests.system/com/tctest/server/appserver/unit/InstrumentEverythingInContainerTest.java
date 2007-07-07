@@ -10,15 +10,11 @@ import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.NewAppServerFactory;
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
 import com.tc.test.server.util.HttpUtil;
+import com.tctest.webapp.servlets.OkServlet;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 public class InstrumentEverythingInContainerTest extends AbstractAppServerTestCase {
 
@@ -26,6 +22,7 @@ public class InstrumentEverythingInContainerTest extends AbstractAppServerTestCa
     if (TestConfigObject.getInstance().appserverFactoryName().equals(NewAppServerFactory.GLASSFISH)) {
       this.disableAllUntil(new Date(Long.MAX_VALUE));
     }
+    registerServlet(OkServlet.class);
   }
 
   protected boolean isSessionTest() {
@@ -41,19 +38,9 @@ public class InstrumentEverythingInContainerTest extends AbstractAppServerTestCa
 
     int port = startAppServer(true).serverPort();
 
-    URL url = createUrl(port, TestServlet.class);
+    URL url = createUrl(port, OkServlet.class);
 
     assertEquals("OK", HttpUtil.getResponseBody(url, client));
-  }
-
-  public static final class TestServlet extends HttpServlet {
-
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-      HttpSession session = request.getSession(true);
-      session.setAttribute("da", "bomb");
-      response.setContentType("text/html");
-      response.getWriter().println("OK");
-    }
   }
 
 }
