@@ -321,6 +321,8 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   # Runs the active/passive tests. Uses the internal configuration source to set
   # the required property.
   def check_active_passive
+    # TEMPORARY DISABLE THIS TARGET DUE TO OOME
+    return 
     depends :init, :compile
     @internal_config_source['tc.tests.configuration.transparent-tests.mode'] = 'active-passive'
     @internal_config_source['test_timeout'] = (30 * 60).to_s
