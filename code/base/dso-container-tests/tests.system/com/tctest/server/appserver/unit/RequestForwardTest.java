@@ -38,7 +38,7 @@ public class RequestForwardTest extends AbstractAppServerTestCase {
     checkResponse("INVALID REQUEST", url, client);
 
     url = new URL(createUrl(port, RequestForwardTestForwarderServlet.class)
-                  + "?action=s-f-s&target=RequestForwardTest-ForwardeeServlet");
+                  + "?action=s-f-s&target=RequestForwardTestForwardeeServlet");
     checkResponse("FORWARD GOT SESSION", url, client);
   }
 
@@ -53,7 +53,7 @@ public class RequestForwardTest extends AbstractAppServerTestCase {
     URL url = new URL(createUrl(port, RequestForwardTestForwarderServlet.class) + "?action=0");
     checkResponse("INVALID REQUEST", url, client);
 
-    url = new URL(createUrl(port, RequestForwardTestForwarderServlet.class) + "?action=n-f-s&target=RequestForwardTest-ForwardeeServlet");
+    url = new URL(createUrl(port, RequestForwardTestForwarderServlet.class) + "?action=n-f-s&target=RequestForwardTestForwardeeServlet");
     checkResponse("FORWARD GOT SESSION", url, client);
   }
   
@@ -68,7 +68,7 @@ public class RequestForwardTest extends AbstractAppServerTestCase {
     URL url = new URL(createUrl(port, RequestForwardTestForwarderServlet.class) + "?action=0");
     checkResponse("INVALID REQUEST", url, client);
 
-    url = new URL(createUrl(port, RequestForwardTestForwarderServlet.class) + "?action=s-f-n&target=RequestForwardTest-ForwardeeServlet");
+    url = new URL(createUrl(port, RequestForwardTestForwarderServlet.class) + "?action=s-f-n&target=RequestForwardTestForwardeeServlet");
     checkResponse("FORWARD DID NOT GET SESSION", url, client);
   }
 

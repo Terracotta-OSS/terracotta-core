@@ -48,6 +48,7 @@ import java.util.Properties;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpSessionActivationListener;
 import javax.servlet.http.HttpSessionAttributeListener;
+import javax.servlet.http.HttpSessionBindingListener;
 import javax.servlet.http.HttpSessionListener;
 
 public abstract class AbstractAppServerTestCase extends TCTestCase {
@@ -376,7 +377,8 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   private static boolean isListener(Class clazz) {
     return HttpSessionActivationListener.class.isAssignableFrom(clazz)
            || HttpSessionAttributeListener.class.isAssignableFrom(clazz)
-           || HttpSessionListener.class.isAssignableFrom(clazz);
+           || HttpSessionListener.class.isAssignableFrom(clazz)
+           || HttpSessionBindingListener.class.isAssignableFrom(clazz);
   }
 
   private String testName() {
