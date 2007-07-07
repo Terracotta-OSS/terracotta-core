@@ -1912,7 +1912,7 @@ public class GenericMapTestApp extends GenericTestApp {
     }
   }
 
-  void assertSingleMapping(Map map, final Object key, final Object value) {
+  void assertSingleMappingInternal(Map map, final Object key, final Object value) {
     try {
       Assert.assertFalse(map.isEmpty());
       Assert.assertEquals(1, map.size());
@@ -1920,15 +1920,7 @@ public class GenericMapTestApp extends GenericTestApp {
       Assert.assertEquals(1, map.values().size());
       Assert.assertEquals(1, map.keySet().size());
 
-      if (isAccessOrderedLinkedHashMap(map)) {
-        // MyLinkedHashMap3 has accessOrder set to true; therefore, get() method
-        // will mutate internal state and thus, require synchronized.
-        synchronized (map) {
-          Assert.assertEquals(value, map.get(key));
-        }
-      } else {
-        Assert.assertEquals(value, map.get(key));
-      }
+      Assert.assertEquals(value, map.get(key));
       Assert.assertTrue(map.containsKey(key));
       Assert.assertTrue(map.containsValue(value));
 
@@ -1950,6 +1942,18 @@ public class GenericMapTestApp extends GenericTestApp {
       }
     } catch (Throwable t) {
       notifyError(new ErrorContext(map.getClass().getName(), t));
+    }
+  }
+
+  void assertSingleMapping(Map map, final Object key, final Object value) {
+    if (isAccessOrderedLinkedHashMap(map)) {
+      // MyLinkedHashMap3 has accessOrder set to true; therefore, get() method
+      // will mutate internal state and thus, require synchronized.
+      synchronized (map) {
+        assertSingleMappingInternal(map, key, value);
+      }
+    } else {
+      assertSingleMappingInternal(map, key, value);
     }
   }
 
@@ -2286,12 +2290,12 @@ public class GenericMapTestApp extends GenericTestApp {
       return lastGetKey;
     }
   }
-  
+
   private static class MyProperties3 extends Properties {
     public MyProperties3() {
       super();
     }
-    
+
     public void setDefault(Properties newDefaults) {
       defaults = newDefaults;
     }
