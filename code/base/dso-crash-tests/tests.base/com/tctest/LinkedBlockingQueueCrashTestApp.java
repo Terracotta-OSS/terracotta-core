@@ -36,7 +36,7 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
 
   public void run() {
     try {
-      DebugUtil.DEBUG = true;
+      DebugUtil.DEBUG = false;
       int index = barrier.await();
 
       testBlockingQueue(index);
