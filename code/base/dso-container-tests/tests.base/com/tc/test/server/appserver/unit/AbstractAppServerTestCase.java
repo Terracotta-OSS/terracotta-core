@@ -330,9 +330,8 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
     // add registered session filters
     for (Iterator it = filterList.iterator(); it.hasNext();) {
-      Class filter = (Class) it.next();
-      TCServletFilter filterInstance = (TCServletFilter) filter.newInstance();
-      war.addFilter(filter, filterInstance.getPattern(), filterInstance.getInitParams());
+      TCServletFilterHolder filter = (TCServletFilterHolder) it.next();
+      war.addFilter(filter.getFilterClass(), filter.getPattern(), filter.getInitParams());
     }
 
     // add registered attribute listeners
@@ -350,9 +349,9 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
     return warFile;
   }
 
-  protected final void registerSessionFilter(Class filterClazz) {
-    Assert.assertTrue("Class " + filterClazz + " is not a session filter", isFilter(filterClazz));
-    filterList.add(filterClazz);
+  protected final void registerFilter(TCServletFilterHolder filter) {
+    Assert.assertTrue("Class " + filter.getFilterClass() + " is not a filter", filter.isFilter());
+    filterList.add(filter);
   }
 
   protected final void registerListener(Class listener) {
@@ -368,10 +367,6 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   private static boolean isServlet(Class clazz) {
     return clazz.getSuperclass().equals(HttpServlet.class) && clazz.getName().toLowerCase().endsWith("servlet")
            && clazz.getName().indexOf("$") == -1;
-  }
-
-  private static boolean isFilter(Class clazz) {
-    return TCServletFilter.class.isAssignableFrom(clazz);
   }
 
   private static boolean isListener(Class clazz) {

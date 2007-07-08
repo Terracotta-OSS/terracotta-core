@@ -5,7 +5,7 @@ package com.tc.test.server.appserver.war;
 
 import org.apache.commons.io.FileUtils;
 
-import com.tc.test.server.appserver.unit.TCServletFilter;
+import com.tc.test.server.appserver.unit.TCServletFilterHolder;
 import com.tc.util.Assert;
 
 import java.io.ByteArrayOutputStream;
@@ -77,7 +77,7 @@ public abstract class AbstractWar implements War {
 
   public final void addFilter(Class filterClass, String pattern, Map initParams) {
     Assert.assertNotNull(filterClass);
-    if (filters.size() == 0) addClass(TCServletFilter.class);
+    if (filters.size() == 0) addClass(TCServletFilterHolder.class);
     filters.add(filterClass);
     webXml.addFilter(filterClass, pattern, initParams);
   }

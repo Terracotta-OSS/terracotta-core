@@ -3,11 +3,9 @@
  */
 package com.tctest.webapp.servletfilters;
 
-import com.tc.test.server.appserver.unit.TCServletFilter;
-
 import java.io.IOException;
-import java.util.Map;
 
+import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
@@ -16,16 +14,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-public class SimpleFilter implements TCServletFilter {
-
-  public String getPattern() {
-    return "/*";
-  }
-
-  public Map getInitParams() {
-    return null;
-  }
-
+public class SimpleFilter implements Filter {
   public void doFilter(final ServletRequest request, final ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
 
