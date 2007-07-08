@@ -95,7 +95,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   }
 
   public synchronized void runGC() {
-    waitUntilRunning();
+    waitUntilRunning(true);
     logger.info("Running Lock GC...");
     ArrayList toGC = new ArrayList(locksByID.size());
     for (Iterator iter = locksByID.values().iterator(); iter.hasNext();) {
@@ -449,6 +449,37 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
   }
 
   private void waitUntilRunning() {
+    waitUntilRunning(false);
+  }
+  
+  private void waitUntilRunning(boolean checkChannels) {
+    /*
+     * Check channels connected was added for OOO layer to
+     * prevent "Lock GC" sending messages to L2 at OOO restore 
+     * connection period which L2 is not ready yet.
+     */
+    if (checkChannels) {
+      boolean channelConnected;
+      // make sure all channels connected.
+      do {
+        channelConnected = true;
+        for (Iterator iter = locksByID.values().iterator(); iter.hasNext();) {
+          ClientLock lock = (ClientLock) iter.next();
+          if (!lock.getChannel().isConnected()) {
+            channelConnected = false;
+            break;
+          }
+        }
+        if (!channelConnected) {
+          try {
+            wait(100);
+          } catch (InterruptedException e) {
+             //
+          }
+        }
+      } while (!channelConnected);
+    }
+
     boolean isInterrupted = false;
     while (!isRunning()) {
       try {

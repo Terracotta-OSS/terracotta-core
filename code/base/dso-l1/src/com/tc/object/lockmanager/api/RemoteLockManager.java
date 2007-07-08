@@ -3,6 +3,7 @@
  */
 package com.tc.object.lockmanager.api;
 
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.tx.WaitInvocation;
 
 import java.util.Collection;
@@ -30,4 +31,6 @@ public interface RemoteLockManager {
   public void recallCommit(LockID lockID, Collection lockContext, Collection waitContext, Collection pendingRequests, Collection pendingTryLockRequests);
 
   public boolean isTransactionsForLockFlushed(LockID lockID, LockFlushCallback callback);
+
+  public MessageChannel getChannel();
 }

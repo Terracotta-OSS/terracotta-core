@@ -5,6 +5,7 @@
 package com.tc.object.lockmanager.api;
 
 import com.tc.exception.ImplementMe;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.session.SessionProvider;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.WaitInvocation;
@@ -40,6 +41,10 @@ public class TestRemoteLockManager implements RemoteLockManager {
 
   public TestRemoteLockManager(SessionProvider sessionProvider) {
     this.sessionProvider = sessionProvider;
+  }
+
+  public MessageChannel getChannel() {
+    throw new ImplementMe();
   }
 
   public void setClientLockManager(ClientLockManager lockManager) {
