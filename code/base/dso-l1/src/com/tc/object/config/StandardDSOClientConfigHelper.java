@@ -55,6 +55,7 @@ import com.tc.object.config.schema.IncludedInstrumentedClass;
 import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.config.schema.NewDSOApplicationConfig;
 import com.tc.object.config.schema.NewSpringApplicationConfig;
+import com.tc.object.glassfish.transform.RuntimeModelAdapter;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.tools.BootJar;
@@ -754,6 +755,9 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     addCustomAdapter("org.jboss.mx.loading.UnifiedClassLoader", new UCLAdapter());
     addCustomAdapter("org.jboss.Main", new MainAdapter());
 
+    // Glassfish adapters
+    addCustomAdapter("com.sun.jdo.api.persistence.model.RuntimeModel", new RuntimeModelAdapter());
+
     // TODO for the Event Swing sample only
     ld = new LockDefinition("setTextArea", ConfigLockLevel.WRITE);
     ld.commit();
@@ -1077,7 +1081,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
       if (customAdapters.containsKey(name)) {
         return;
       }
-      
+
       Object prev = this.customAdapters.put(name, factory);
       Assert.assertNull(prev);
     }
