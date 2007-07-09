@@ -15,6 +15,8 @@ import com.tc.object.config.LockDefinition;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.TransparencyCodeSpec;
 
+import java.util.AbstractMap;
+
 /**
  * @author steve
  */
@@ -113,24 +115,96 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     }
   }
 
-  /*
-   * The assumption here is that the compiler wouldnt call invokevirtual on a classname other than java.lang.Object when
-   * there is no implementation of clone() defined in that classes' hierarchy. If it does, it a bug in the compiler ;-)
-   * This adaption is needed for both PORTABLE and ADAPTABLE classes as we can have instance where Logical subclass of
-   * ADAPTABLE class calls clone() to make a copy of itself.
-   * 
+  /**
+   * The assumption here is that the compiler wouldn't call invokevirtual on a classname other than java.lang.Object
+   * when there is no implementation of clone() defined in that classes' hierarchy. If it does, it a bug in the compiler
+   * ;-) This adaption is needed for both PORTABLE and ADAPTABLE classes as we can have instance where Logical subclass
+   * of ADAPTABLE class calls clone() to make a copy of itself.
+   *
+   * The resolveLock needs to be held for the duration of the clone() call if the reference is to a shared object
+   *
+   * <pre>
+   * Object refToBeCloned;
+   * Object rv;
+   *
+   * TCObject tco = (refToBeCloned instanceof Manageable) ? ((Manageable) refToBeCloned).__tc_managed() : null;
+   * if (tco != null) {
+   *   synchronized (tco.getResolveLock()) {
+   *     tco.resolveAllReferences();
+   *     rv = Util.fixTCObjectReferenceOfClonedObject(refToBeCloned, refToBeCloned.clone());
+   *   }
+   * } else {
+   *   rv = refToBeCloned.clone();
+   * }
+   * </pre>
+   *
    * @see AbstractMap and HashMap
    */
   private boolean handleJavaLangObjectCloneCall(int opcode, String classname, String theMethodName, String desc) {
     if ("clone".equals(theMethodName) && "()Ljava/lang/Object;".equals(desc)) {
+
+      Type objectType = Type.getObjectType("java/lang/Object");
+
+      int refToBeCloned = newLocal(objectType);
+      int ref1 = newLocal(objectType);
+      int ref2 = newLocal(objectType);
+      int ref3 = newLocal(objectType);
+
+      super.visitVarInsn(ASTORE, refToBeCloned);
+      Label l0 = new Label();
+      Label l1 = new Label();
+      Label l2 = new Label();
+      super.visitTryCatchBlock(l0, l1, l2, null);
+      Label l3 = new Label();
+      super.visitTryCatchBlock(l2, l3, l2, null);
+      super.visitVarInsn(ALOAD, refToBeCloned);
+      super.visitTypeInsn(INSTANCEOF, "com/tc/object/bytecode/Manageable");
+      Label l5 = new Label();
+      super.visitJumpInsn(IFEQ, l5);
+      super.visitVarInsn(ALOAD, refToBeCloned);
+      super.visitTypeInsn(CHECKCAST, "com/tc/object/bytecode/Manageable");
+      super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/bytecode/Manageable", "__tc_managed",
+                            "()Lcom/tc/object/TCObject;");
+      Label l6 = new Label();
+      super.visitJumpInsn(GOTO, l6);
+      super.visitLabel(l5);
+      super.visitInsn(ACONST_NULL);
+      super.visitLabel(l6);
+      super.visitVarInsn(ASTORE, ref2);
+      super.visitVarInsn(ALOAD, ref2);
+      Label l8 = new Label();
+      super.visitJumpInsn(IFNULL, l8);
+      super.visitVarInsn(ALOAD, ref2);
+      super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "getResolveLock", "()Ljava/lang/Object;");
       super.visitInsn(DUP);
-      super.visitInsn(DUP);
-      super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/Util", "resolveAllReferencesBeforeClone",
-                            "(Ljava/lang/Object;)V");
+      super.visitVarInsn(ASTORE, ref3);
+      super.visitInsn(MONITORENTER);
+      super.visitLabel(l0);
+      super.visitVarInsn(ALOAD, ref2);
+      super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "resolveAllReferences", "()V");
+      super.visitVarInsn(ALOAD, refToBeCloned);
+      super.visitVarInsn(ALOAD, refToBeCloned);
       super.visitMethodInsn(opcode, classname, theMethodName, desc);
       super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/Util",
                             "fixTCObjectReferenceOfClonedObject",
                             "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+      super.visitVarInsn(ASTORE, ref1);
+      super.visitVarInsn(ALOAD, ref3);
+      super.visitInsn(MONITOREXIT);
+      super.visitLabel(l1);
+      Label l12 = new Label();
+      super.visitJumpInsn(GOTO, l12);
+      super.visitLabel(l2);
+      super.visitVarInsn(ALOAD, ref3);
+      super.visitInsn(MONITOREXIT);
+      super.visitLabel(l3);
+      super.visitInsn(ATHROW);
+      super.visitLabel(l8);
+      super.visitVarInsn(ALOAD, refToBeCloned);
+      super.visitMethodInsn(opcode, classname, theMethodName, desc);
+      super.visitVarInsn(ASTORE, ref1);
+      super.visitLabel(l12);
+      super.visitVarInsn(ALOAD, ref1);
       return true;
     }
     return false;
