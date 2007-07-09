@@ -276,7 +276,8 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
         }
       }
 
-      addAppServerSpecificJvmArg(NewAppServerFactory.TOMCAT, params, "-Dcatalina.jvmroute=" + NODE + nodeNumber);
+      addAppServerSpecificJvmArg(NewAppServerFactory.TOMCAT, params, "-Djvmroute=" + NODE + nodeNumber);
+      addAppServerSpecificJvmArg(NewAppServerFactory.JBOSS, params, "-Djvmroute=" + NODE + nodeNumber);
 
       params.appendJvmArgs("-DNODE=" + NODE + nodeNumber);
       params.appendJvmArgs("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + ConfigProperties.REQUEST_BENCHES + "=true");
