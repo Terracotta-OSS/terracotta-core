@@ -11,16 +11,18 @@ module BundledModules
         fail "The source directory for the modules: `#{srcdir}' does not exists" unless File.directory?(srcdir)
 
         # make sure all the modules listed in the manifest were built
-        spec[:manifest].each { |pluginmodule|
+        modules_to_include = ""
+        (spec[:manifest] || []).each do |pluginmodule|
           build_module = @module_set[pluginmodule]
           module_jar = @build_results.module_jar_file(build_module)
           fail "Unable to locate the jar file for the module #{pluginmodule}" unless File.exists?(module_jar.to_s)
-        }
+          modules_to_include += "#{module_jar.filename} "
+        end
 
-        # now copy everything over to the kits' modules directory
+        # now copy everything that's listed in the manifest over to the kits' modules directory
         destdir = FilePath.new(product_directory, directory).ensure_directory
         ant.copy(:todir => destdir.to_s) do
-          ant.fileset(:dir => srcdir.to_s, :includes => "*.jar", :excludes => "**/.svn/**, **/.*")
+          ant.fileset(:dir => srcdir.to_s, :includes => "#{modules_to_include}", :excludes => "**/.svn/**, **/.*")
         end
     end
 end

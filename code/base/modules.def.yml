@@ -609,7 +609,6 @@ modules:
         - modules-common-1.0
 
 # these groups are used by the monkeys to run tests in each module. 
-
 module-groups:
   container:
     - dso-container-tests

@@ -98,7 +98,17 @@ bundled_modules:
       install_directory: modules
       manifest:
         - clustered-apache-struts-1.1
+        - clustered-cglib-2.1.3
         - clustered-commons-collections-3.1
+        - clustered-ehcache-1.2.4
+        - clustered-ehcache-1.3
+        - clustered-hibernate-3.1.2
+        - clustered-iBatis-2.2.0
+        - clustered-jetty-6.1
+        - clustered-lucene-2.0.0
+        - clustered-rife-1.6.0
+        - clustered-websphere-6.1.0.7
+        - clustered-wicket-1.3        
 packaging:
   - tar:
       assert: '@build_environment.os_type !~ /^\s*windows\s*$/i'
