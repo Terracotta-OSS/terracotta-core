@@ -13,7 +13,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class SessionsHelper {
@@ -25,8 +24,8 @@ public class SessionsHelper {
     //
   }
 
-  public static String[] injectClasses(String[] s) {
-    List classPaths = new ArrayList(Arrays.asList(s));
+  private static String[] getSessionsPaths() {
+    List classPaths = new ArrayList();
 
     String tcSessionCP = System.getProperty(TC_SESSION_CLASSPATH);
     if (tcSessionCP != null) {
@@ -54,13 +53,12 @@ public class SessionsHelper {
         Util.exit();
       }
     }
-    s = new String[classPaths.size()];
-    classPaths.toArray(s);
-    return s;
+
+    return (String[]) classPaths.toArray(new String[classPaths.size()]);
   }
 
-  public static void injectClasses(ClassLoader loader) throws Exception {
-    final String[] sessionsClasspaths = injectClasses(new String[0]);
+  public static void injectClasses(ClassLoader loader) {
+    final String[] sessionsClasspaths = getSessionsPaths();
     if (!invokeAddURLMethodIfPresent(loader, sessionsClasspaths)) {
       if (!invokeAddPathsMethodIfPresent(loader, sessionsClasspaths)) {
         AssertionError ae = new AssertionError("SessionsHelper.injectClasses() cannot recognize classloader of type: "
@@ -94,7 +92,7 @@ public class SessionsHelper {
     try {
       m = URLClassLoader.class.getDeclaredMethod("addURL", new Class[] { URL.class });
       m.setAccessible(true);
-      for (int pos = 0; pos < classPaths.length; ++pos) {
+      for (int pos = 0; pos < classPaths.length; pos++) {
         m.invoke(loader, new Object[] { new URL("file", "", classPaths[pos]) });
       }
       return true;
