@@ -118,7 +118,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
 
   /**
    * If overridden <tt>super.tearDown()</tt> must be called to ensure that servers are all shutdown properly
-   * 
+   *
    * @throws Exception
    */
   protected void tearDown() throws Exception {
@@ -238,7 +238,7 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   /**
    * Starts an instance of the assigned default application server listed in testconfig.properties. Servlets and the WAR
    * are dynamically generated using the convention listed in the header of this document.
-   * 
+   *
    * @param dsoEnabled - enable or disable dso for this instance
    * @return AppServerResult - series of return values including the server port assigned to this instance
    */
@@ -350,24 +350,35 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   }
 
   protected final void registerFilter(TCServletFilterHolder filter) {
+    assertNonInnerClass(filter.getFilterClass());
     Assert.assertTrue("Class " + filter.getFilterClass() + " is not a filter", filter.isFilter());
     filterList.add(filter);
   }
 
   protected final void registerListener(Class listener) {
+    assertNonInnerClass(listener);
     Assert.assertTrue("Class " + listener + " is not any kind of javax.servlet listener", isListener(listener));
     listenerList.add(listener);
   }
 
   protected final void registerServlet(Class servlet) {
+    assertNonInnerClass(servlet);
     Assert.assertTrue("Class " + servlet + " is not a servlet", isServlet(servlet));
     servletList.add(servlet);
   }
 
   private static boolean isServlet(Class clazz) {
-    return clazz.getSuperclass().equals(HttpServlet.class) && clazz.getName().toLowerCase().endsWith("servlet")
-           && clazz.getName().indexOf("$") == -1;
+    return clazz.getSuperclass().equals(HttpServlet.class) && clazz.getName().toLowerCase().endsWith("servlet");
   }
+
+  private static void assertNonInnerClass(Class clazz) {
+    // Using inner classes for servlets, listeners, filters, etc is problematic under WAS 6.1
+
+    if (clazz.getName().indexOf('$') >= 0) {
+      throw new AssertionError("Inner class not allowed: " + clazz.getName());
+    }
+  }
+
 
   private static boolean isListener(Class clazz) {
     return HttpSessionActivationListener.class.isAssignableFrom(clazz)
