@@ -243,7 +243,6 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
   }
   
   private void assertEqualPromotion(Promotion promotion) {
-    System.err.println("Promotion: " + promotion);
     PromotionId pId = promotion.getId();
     Assert.assertEquals(2, pId.getCustomerId().intValue());
     Assert.assertEquals(2, pId.getGiftId().intValue());
@@ -252,8 +251,6 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
 
   private void assertEqualCustomer(Customer customer) {
     Account acc = customer.getAccount();
-    System.err.println("Client id: " + ManagerUtil.getClientID() + ", customer: " + customer);
-    System.err.println("Client id: " + ManagerUtil.getClientID() + ", account: " + acc);
     Assert.assertEquals("ASI-001", acc.getNumber());
 
     Assert.assertEquals("asi@yahoo.com", customer.getEmailAddress());
@@ -263,8 +260,6 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
 
   private void assertEqualNewEmailCustomer(Customer customer) {
     Account acc = customer.getAccount();
-    System.err.println("Client id: " + ManagerUtil.getClientID() + ", customer: " + customer);
-    System.err.println("Client id: " + ManagerUtil.getClientID() + ", account: " + acc);
     Assert.assertEquals("ASI-001", acc.getNumber());
 
     Assert.assertEquals("asi@gmail.com", customer.getEmailAddress());
