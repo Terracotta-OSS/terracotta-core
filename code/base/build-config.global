@@ -13,7 +13,7 @@ appserver=tomcat-5.5.23
 
 #appserver=jetty-6.1.3
 #appserver=websphere-6.1.0.7
-#appserver=glasshfish-v1.ur1-p01-b02
+#appserver=glassfish-v1.ur1-p01-b02
 #appserver=weblogic-8.1.sp6
 #appserver=jboss-4.0.5
 #appserver=wasce-1.0.1.2

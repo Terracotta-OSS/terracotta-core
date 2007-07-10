@@ -26,6 +26,9 @@ public class InstrumentEverythingInContainerTest extends AbstractAppServerTestCa
   public void test() throws Exception {
     addInclude("*..*");
 
+    // These bytes are obfuscated and get verify errors when instrumented by DSO
+    addExclude("com.sun.crypto.provider..*");
+
     startDsoServer();
 
     HttpClient client = HttpUtil.createHttpClient();
@@ -36,5 +39,4 @@ public class InstrumentEverythingInContainerTest extends AbstractAppServerTestCa
 
     assertEquals("OK", HttpUtil.getResponseBody(url, client));
   }
-
 }
