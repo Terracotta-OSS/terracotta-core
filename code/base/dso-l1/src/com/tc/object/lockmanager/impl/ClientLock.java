@@ -7,7 +7,6 @@ package com.tc.object.lockmanager.impl;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.lockmanager.api.LockFlushCallback;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.LockLevel;
@@ -69,10 +68,6 @@ class ClientLock implements WaitTimerCallback, LockFlushCallback {
     this.lockID = lockID;
     this.remoteLockManager = remoteLockManager;
     this.waitTimer = waitTimer;
-  }
-
-  public MessageChannel getChannel() {
-    return remoteLockManager.getChannel();
   }
 
   boolean tryLock(ThreadID threadID, WaitInvocation timeout, int type) {

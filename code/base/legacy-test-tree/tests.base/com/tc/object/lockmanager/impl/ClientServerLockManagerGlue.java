@@ -7,9 +7,7 @@ package com.tc.object.lockmanager.impl;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.NullSink;
-import com.tc.exception.ImplementMe;
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.lockmanager.api.ClientLockManager;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockFlushCallback;
@@ -55,10 +53,6 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
     eventNotifier = new Thread(this, "ClientServerLockManagerGlue");
     eventNotifier.setDaemon(true);
     eventNotifier.start();
-  }
-
-  public MessageChannel getChannel() {
-    throw new ImplementMe();
   }
 
   public void requestLock(LockID lockID, ThreadID threadID, int lockType) {

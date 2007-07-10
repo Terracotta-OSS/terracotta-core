@@ -4,7 +4,6 @@
  */
 package com.tc.object.lockmanager.impl;
 
-import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.lockmanager.api.LockContext;
 import com.tc.object.lockmanager.api.LockFlushCallback;
@@ -39,11 +38,6 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     this.lockRequestMessageFactory = lrmf;
     this.gtxManager = gtxManager;
   }
-
-  public MessageChannel getChannel() {
-    return lockRequestMessageFactory.newLockRequestMessage().getChannel();
-  }
-
 
   public void requestLock(LockID lockID, ThreadID threadID, int lockType) {
     Assert.assertTrue(LockLevel.isDiscrete(lockType));
