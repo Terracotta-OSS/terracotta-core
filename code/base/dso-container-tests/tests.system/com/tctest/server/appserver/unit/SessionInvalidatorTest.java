@@ -7,6 +7,7 @@ package com.tctest.server.appserver.unit;
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
 import com.tc.test.server.util.WebClient;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.runtime.Vm;
 import com.tctest.webapp.listeners.BindingListenerWithException;
 import com.tctest.webapp.listeners.InvalidatorAttributeListener;
 import com.tctest.webapp.listeners.InvalidatorBindingListener;
@@ -22,9 +23,14 @@ import java.util.List;
 import java.util.Properties;
 
 public class SessionInvalidatorTest extends AbstractAppServerTestCase {
+
   private int port;
 
   public SessionInvalidatorTest() {
+    if (Vm.isIBM()) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+      return;
+    }
     registerListener(InvalidatorAttributeListener.class);
     registerListener(InvalidatorSessionListener.class);
     registerListener(InvalidatorBindingListener.class);

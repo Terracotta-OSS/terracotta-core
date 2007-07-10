@@ -8,6 +8,7 @@ import org.apache.commons.httpclient.HttpClient;
 
 import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
 import com.tc.test.server.util.HttpUtil;
+import com.tc.util.runtime.Vm;
 import com.tctest.webapp.listeners.AttributeListener;
 import com.tctest.webapp.listeners.BindingListener;
 import com.tctest.webapp.listeners.SessionListener;
@@ -16,11 +17,17 @@ import com.tctest.webapp.servlets.ListenerReportingServlet;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URL;
+import java.util.Date;
 
 public class SessionEventsTest extends AbstractAppServerTestCase {
+
   private int port;
 
   public SessionEventsTest() {
+    if (Vm.isIBM()) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+      return;
+    }
     registerListener(AttributeListener.class);
     registerListener(SessionListener.class);
     registerListener(BindingListener.class);
@@ -98,8 +105,7 @@ public class SessionEventsTest extends AbstractAppServerTestCase {
 
   private void checkCallCount(final String key, int expectedCount, HttpClient client) throws ConnectException,
       IOException {
-    URL url = new URL(createUrl(port, ListenerReportingServlet.class) + "?action=call_count&key="
-                      + key);
+    URL url = new URL(createUrl(port, ListenerReportingServlet.class) + "?action=call_count&key=" + key);
     assertEquals(key + "=" + expectedCount, HttpUtil.getResponseBody(url, client));
   }
 }
