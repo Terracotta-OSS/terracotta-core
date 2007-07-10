@@ -62,7 +62,7 @@ bundled_components:
         compiler_versions:
           - 1.4
           - 1.5
-      module_bootjars:
+      module_packages:
         - tc-session:
             install_directory: lib/session
             modules:
@@ -71,6 +71,17 @@ bundled_components:
               - dso-l1-tomcat
               - dso-l1-tomcat50
               - dso-l1-tomcat55
+        - terracotta-api-version:
+            install_directory: lib
+            modules:
+              - aspectwerkz
+              - common
+              - dso-common
+              - dso-common-jdk15
+              - dso-l1
+              - dso-l1-jdk15
+              - modules-common-1.0
+              - thirdparty
       # NOTE: this section also controls what goes into the 'tc.jar' file
       modules:
         - aspectwerkz:

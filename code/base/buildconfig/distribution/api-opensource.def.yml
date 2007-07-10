@@ -4,8 +4,8 @@ kit_name_pattern: terracotta-api-platform-version
 root_directory: terracotta-api-version
 bundled_components:
   - base:
-      module_bootjars:
-        - terracotta-api:
+      module_packages:
+        - terracotta-api-version:
             modules:
               - aspectwerkz
               - common

@@ -102,7 +102,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     add_binaries(component, libdir, destdir)
     libdir.delete
     
-    add_module_bootjars(component, destdir)
+    add_module_packages(component, destdir)
     add_dso_bootjar(component, destdir, true)
     ant.move(:todir => FilePath.new(File.dirname(destdir.to_s), 'tc-jars').to_s) do
       ant.fileset(:dir => destdir.to_s, :includes => '**/*')

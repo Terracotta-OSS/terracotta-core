@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>modules.def.yml</string>
+	<string>buildconfig/distribution/api-opensource.def.yml</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -38,9 +38,7 @@
 			<key>filename</key>
 			<string>modules.def.yml</string>
 			<key>lastUsed</key>
-			<date>2007-07-10T00:13:26Z</date>
-			<key>selected</key>
-			<true/>
+			<date>2007-07-10T00:34:26Z</date>
 		</dict>
 		<dict>
 			<key>filename</key>
@@ -66,7 +64,7 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>2</integer>
+				<integer>0</integer>
 				<key>line</key>
 				<integer>17</integer>
 			</dict>
@@ -207,36 +205,6 @@
 				<integer>101</integer>
 			</dict>
 		</dict>
-		<key>modules.def.yml</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>135</integer>
-			</dict>
-			<key>columnSelection</key>
-			<false/>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>98</integer>
-			<key>selectFrom</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>124</integer>
-			</dict>
-			<key>selectTo</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>135</integer>
-			</dict>
-		</dict>
 	</dict>
 	<key>openDocuments</key>
 	<array>
@@ -245,13 +213,12 @@
 		<string>buildconfig/distribution/dso-opensource.def.yml</string>
 		<string>buildconfig/distribution/api-opensource.def.yml</string>
 		<string>buildscripts/extensions/distribution-utils.rb</string>
-		<string>modules.def.yml</string>
 		<string>buildscripts/extensions/bundled-modules.rb</string>
 		<string>buildscripts/build-tc.rb</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>
-	<string>{{274, 27}, {784, 816}}</string>
+	<string>{{422, 26}, {784, 816}}</string>
 </dict>
 </plist>

@@ -19,7 +19,7 @@ module BundledComponents
       end
     end
     add_dso_bootjar(spec)
-    add_module_bootjars(spec)
+    add_module_packages(spec)
     add_documentations(spec)
   end
 
@@ -75,16 +75,16 @@ module BundledComponents
     end
   end
 
-  def add_module_bootjars(component, destdir=libpath(component))
-    (component[:module_bootjars] || []).each do |bootjar|
+  def add_module_packages(component, destdir=libpath(component))
+    (component[:module_packages] || []).each do |module_package|
       runtime_classes_dir = FilePath.new(@distribution_results.build_dir, 'tmp').ensure_directory
-      bootjar.keys.each do |name|
-        bootjar[name]['modules'].each do |module_name|
-          a_module  = @module_set[module_name]
+      module_package.keys.each do |name|
+        module_package[name]['modules'].each do |module_name|
+          a_module = @module_set[module_name]
           a_module.subtree('src').copy_classes(@build_results, runtime_classes_dir, ant)
         end
-        libdir  = FilePath.new(File.dirname(destdir.to_s), *(bootjar[name]['install_directory'] || '').split('/')).ensure_directory
-        jarfile = FilePath.new(libdir, "#{name}.jar")
+        libdir  = FilePath.new(File.dirname(destdir.to_s), *(module_package[name]['install_directory'] || '').split('/')).ensure_directory
+        jarfile = FilePath.new(libdir, interpolate("#{name}.jar"))
         ant.jar(:destfile => jarfile.to_s, :basedir => runtime_classes_dir.to_s)
       end
       runtime_classes_dir.delete

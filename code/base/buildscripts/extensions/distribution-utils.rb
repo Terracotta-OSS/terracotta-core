@@ -5,7 +5,6 @@
 #
 
 module DistributionUtils
-
   def exec_section(name)
     get_spec(name, []).each do |section|
       (section[:install_directories] || [(section[:install_directory] || '')]).each do |directory|
@@ -13,14 +12,14 @@ module DistributionUtils
       end
     end
   end
-  
+
   def load_config
     product_code = (@product_code || @config_source["product.code"]).downcase
     flavor       = (@flavor || @config_source["flavor"]).downcase
     filename     = FilePath.new(@static_resources.distribution_config_directory(flavor), "#{product_code}-#{flavor}.def.yml").canonicalize.to_s
     File.open(filename) { |file| @config = YAML.load(file) } if File.exist?(filename)
     fail "You need to create a kit definition file named `#{filename}' before you can build distribution for a `#{product_code}' kit." if @config.nil?
-    
+
     @distribution_results = DistributionResults.new(FilePath.new(@build_results.build_dir, "dist"))
   end
 
@@ -30,7 +29,7 @@ module DistributionUtils
     @product_code = product_code
     @flavor       = flavor.downcase
   end
-  
+
   def product_directory
     FilePath.new(@distribution_results.build_dir, get_config(:package_directory)).ensure_directory
   end
@@ -76,12 +75,13 @@ module DistributionUtils
 
   def get_config(symbol, default=nil)
     out = case symbol
-        when :version           then @build_environment.version
-        when :package_directory then @config[symbol.to_s] || "#{get_config(:root_directory)}"
-        else
-          @config[symbol.to_s] || default          
-        end     
-    interpolate(out) unless out.nil?
+    when :version           then @build_environment.version
+    when :package_directory then @config[symbol.to_s] || "#{get_config(:root_directory)}"
+    else
+      @config[symbol.to_s] || default          
+    end     
+    out = interpolate(out) unless out.nil?
+    out
   end
 
   def symbolise_keys(hash)
@@ -89,21 +89,20 @@ module DistributionUtils
     hash
   end
 
- def docspath(component, install_directory=nil)
-   suffix = install_directory unless install_directory.nil?
-   if suffix.nil?
-     suffix = 'docs' unless component[:install_directory].nil?
-   end
-   FilePath.new(product_directory, (component[:install_directory] || ''), (suffix || ''))
- end 
- 
- def interpolate(s)
-  s.gsub!(/version/, @build_environment.version)
-  s.gsub!(/branch/, @build_environment.current_branch)
-  s.gsub!(/platform/, @build_environment.os_family.downcase)
-  s.gsub!(/revision/, @build_environment.current_revision.to_s)
-  s.gsub!(/edition/, @build_environment.edition)  
-  s
-end
- 
+  def docspath(component, install_directory=nil)
+    suffix = install_directory unless install_directory.nil?
+    if suffix.nil?
+      suffix = 'docs' unless component[:install_directory].nil?
+    end
+    FilePath.new(product_directory, (component[:install_directory] || ''), (suffix || ''))
+  end 
+
+  def interpolate(s)
+    s = s.gsub(/version/, @build_environment.version)
+    s = s.gsub(/branch/, @build_environment.current_branch)
+    s = s.gsub(/platform/, @build_environment.os_family.downcase)
+    s = s.gsub(/revision/, @build_environment.current_revision.to_s)
+    s = s.gsub(/edition/, @build_environment.edition)  
+    s
+  end
 end
