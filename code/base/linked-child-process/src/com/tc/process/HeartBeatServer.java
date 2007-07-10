@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -18,16 +19,16 @@ import java.util.Iterator;
 import java.util.List;
 
 public class HeartBeatServer {
-  public static final String  PULSE               = "PULSE";
-  public static final String  KILL                = "KILL";
-  public static final String  IS_APP_SERVER_ALIVE = "IS_APP_SERVER_ALIVE";
-  public static final String  IM_ALIVE            = "IM_ALIVE";
-  public static final int     PULSE_INTERVAL      = 30 * 1000;
-  private static DateFormat   DATEFORMAT          = new SimpleDateFormat("HH:mm:ss.SSS");
+  public static final String PULSE               = "PULSE";
+  public static final String KILL                = "KILL";
+  public static final String IS_APP_SERVER_ALIVE = "IS_APP_SERVER_ALIVE";
+  public static final String IM_ALIVE            = "IM_ALIVE";
+  public static final int    PULSE_INTERVAL      = 30 * 1000;
+  private static DateFormat  DATEFORMAT          = new SimpleDateFormat("HH:mm:ss.SSS");
 
-  private ListenThread        listenThread;
+  private ListenThread       listenThread;
   // @GuardBy(this)
-  private final List          heartBeatThreads    = new ArrayList();
+  private final List         heartBeatThreads    = new ArrayList();
 
   public HeartBeatServer() {
     //
@@ -150,8 +151,9 @@ public class HeartBeatServer {
     private BufferedReader  in;
     private PrintWriter     out;
     private HeartBeatServer server;
-    private boolean         killed = false;
+    private boolean         killed           = false;
     private String          clientName;
+    private int             missedPulseCount = 0;
 
     public HeartBeatThread(HeartBeatServer server, Socket s) {
       this.server = server;
@@ -172,13 +174,22 @@ public class HeartBeatServer {
       try {
         // read clientName
         clientName = in.readLine();
+        this.setName(clientName);
         log("got new client: " + clientName);
 
         while (true) {
           log("send pulse to client: " + clientName);
           out.println(PULSE);
-          String reply = in.readLine();
-          if (reply == null) { throw new Exception("read-half of socket closed."); }
+          try {
+            String reply = in.readLine();
+            if (reply == null) { throw new Exception("read-half of socket closed."); }
+            missedPulseCount = 0;
+          } catch (SocketTimeoutException toe) {
+            missedPulseCount++;
+            if (missedPulseCount >= 3) {
+              throw new Exception("Client missed 3 pulses... considered it dead.");
+            }
+          }
           reallySleep(PULSE_INTERVAL);
         }
       } catch (Exception e) {
