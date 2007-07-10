@@ -16,22 +16,34 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
 
 public class ConcurrentHashMapSwapingTestApp extends AbstractTransparentApp {
-  private static final int        NUM_OF_PUT    = 2000;
-  private static final int        NUM_OF_LOOP   = 5;
-  private static final int        MAX_KEY_VALUE = 1000;
+  private static final String     GC_CREATE_NUM_KEY = "gc-create-num";
+
+  private static final int        NUM_OF_PUT        = 2000;
+  private static final int        NUM_OF_LOOP       = 5;
+  private static final int        MAX_KEY_VALUE     = 1000;
 
   private final CyclicBarrier     barrier;
-  private final ConcurrentHashMap mapRoot       = new ConcurrentHashMap();
+  private final ConcurrentHashMap mapRoot           = new ConcurrentHashMap();
+  private int                     gcCreateNum;
 
   public ConcurrentHashMapSwapingTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     barrier = new CyclicBarrier(getParticipantCount());
+
+    try {
+      gcCreateNum = Integer.parseInt(cfg.getAttribute(GC_CREATE_NUM_KEY));
+      Assert.assertTrue(gcCreateNum > 0);
+    } catch (NumberFormatException e) {
+      gcCreateNum = 1;
+    }
   }
 
   public void run() {
     try {
       int index = barrier.await();
-      testPutMany(index);
+      for (int i = 0; i < gcCreateNum; i++) {
+        testPutMany(index);
+      }
     } catch (Throwable t) {
       notifyError(t);
     }
