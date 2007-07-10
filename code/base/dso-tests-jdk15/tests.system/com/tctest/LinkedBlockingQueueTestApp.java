@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -14,28 +15,57 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class LinkedBlockingQueueTestApp extends AbstractTransparentApp {
-  private static final int    NUM_OF_PUTS  = 1000;
-  private static final int    NUM_OF_LOOPS = 5;
+  public static final String  GC_TEST_KEY         = "gc-test";
 
-  private LinkedBlockingQueue queue        = new LinkedBlockingQueue(100);
+  private static final int    DEFAULT_NUM_OF_PUT  = 1000;
+  private static final int    DEFAULT_NUM_OF_LOOP = 5;
+
+  private static final int    GC_NUM_OF_PUT       = 1000;
+  private static final int    GC_NUM_OF_LOOP      = 5;
+  private static final int    GC_CREATE_NUM       = 5;
+
+  private LinkedBlockingQueue queue               = new LinkedBlockingQueue(100);
   private final CyclicBarrier barrier;
+
+  private boolean             isGcTest            = false;
+  private final int           gcCreateNum;
+  private final int           numOfPut;
+  private final int           numOfLoop;
 
   public LinkedBlockingQueueTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     barrier = new CyclicBarrier(getParticipantCount());
+
+    Boolean booleanObject = Boolean.valueOf(cfg.getAttribute(GC_TEST_KEY));
+    isGcTest = booleanObject.booleanValue();
+
+    if (isGcTest) {
+      gcCreateNum = GC_CREATE_NUM;
+      numOfPut = GC_NUM_OF_PUT;
+      numOfLoop = GC_NUM_OF_LOOP;
+    } else {
+      gcCreateNum = 1;
+      numOfPut = DEFAULT_NUM_OF_PUT;
+      numOfLoop = DEFAULT_NUM_OF_LOOP;
+    }
+
+    System.err.println("***** setting isGcTest=[" + isGcTest + "]  gcCreateNum=[" + gcCreateNum + "] numOfPut=["
+                       + numOfPut + "] numOfLoop=[" + numOfLoop + "]");
   }
 
   public void run() {
     try {
       int index = barrier.await();
 
-      for (int i = 0; i < NUM_OF_LOOPS; i++) {
-        if (index == 0) {
-          doPut();
-        } else {
-          doGet();
+      for (int j = 0; j < gcCreateNum; j++) {
+        for (int i = 0; i < numOfLoop; i++) {
+          if (index == 0) {
+            doPut();
+          } else {
+            doGet();
+          }
+          barrier.await();
         }
-        barrier.await();
       }
 
       barrier.await();
@@ -56,7 +86,7 @@ public class LinkedBlockingQueueTestApp extends AbstractTransparentApp {
   }
 
   private void doPut() throws Exception {
-    for (int i = 0; i < NUM_OF_PUTS; i++) {
+    for (int i = 0; i < numOfPut; i++) {
       System.out.println("Putting " + i);
       queue.put(new WorkItem(i));
     }
