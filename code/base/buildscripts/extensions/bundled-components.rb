@@ -83,7 +83,7 @@ module BundledComponents
           a_module  = @module_set[module_name]
           a_module.subtree('src').copy_classes(@build_results, runtime_classes_dir, ant)
         end
-        libdir  = FilePath.new(File.dirname(destdir.to_s), *bootjar[name]['install_directory'].split('/')).ensure_directory
+        libdir  = FilePath.new(File.dirname(destdir.to_s), *(bootjar[name]['install_directory'] || '').split('/')).ensure_directory
         jarfile = FilePath.new(libdir, "#{name}.jar")
         ant.jar(:destfile => jarfile.to_s, :basedir => runtime_classes_dir.to_s)
       end

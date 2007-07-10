@@ -71,12 +71,7 @@ bundled_components:
               - dso-l1-tomcat
               - dso-l1-tomcat50
               - dso-l1-tomcat55
-      # WARNING:
-      # This section also controls what goes into the 'tc.jar' file
-      # if you modify this section, please make sure it is duplicated
-      # across all kit configuration files, so that the 'tc.jar' file
-      # will contain the same bits across kit types; this allows us
-      # to stack different kit types over one another.
+      # NOTE: this section also controls what goes into the 'tc.jar' file
       modules:
         - aspectwerkz:
             exclude-runtime-libraries: true
