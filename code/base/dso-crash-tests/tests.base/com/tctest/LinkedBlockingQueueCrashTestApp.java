@@ -21,9 +21,9 @@ import java.util.Iterator;
 
 public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
   int upbound = 2000;
-  long MaxRuntimeMillis = 2 * 60 * 1000 + 30000;
-
-  private final CyclicBarrier     barrier;
+  long MaxRuntimeMillis = 5 * 60 * 1000 + 30000;
+  
+  private final CyclicBarrier     barrier; 
   private final LinkedBlockingQueue<EventNode> lbqueue1 = new LinkedBlockingQueue<EventNode>();
   private final LinkedBlockingQueue<EventNode> lbqueue2 = new LinkedBlockingQueue<EventNode>();
   private final EventNode eventIndex = new EventNode(0, "test");
@@ -40,13 +40,13 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
       int index = barrier.await();
 
       testBlockingQueue(index);
-
+      
       DebugUtil.DEBUG = false;
     } catch (Throwable t) {
       notifyError(t);
     }
   }
-
+ 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
 
     String testClass = LinkedBlockingQueueCrashTestApp.class.getName();
@@ -60,21 +60,21 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
     methodExpression = "* " + GetController.class.getName() + "*.*(..)";
     config.addWriteAutolock(methodExpression);
 
-    spec.addRoot("barrier", "barrier");
+    spec.addRoot("barrier", "barrier");    
     spec.addRoot("lbqueue1", "lbqueue1");
     spec.addRoot("lbqueue2", "lbqueue2");
     spec.addRoot("eventIndex", "eventIndex");
     spec.addRoot("controller", "controller");
   }
 
-
+  
   private void testBlockingQueue(int index) throws Exception {
     EventNode node=null;
     Random r = new Random();
     long endTime = System.currentTimeMillis() + MaxRuntimeMillis;
 
     while(true) {
-
+      
       // avoid all are getter
       boolean doPut;
       if(r.nextBoolean()) {
@@ -85,40 +85,38 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
           if(!doPut) controller.incGetter();
         }
       }
-
-      if(doPut) {
+            
+      if(doPut) {  
         node = doPut();
         System.err.println("*** Doing put id=" + node.getId() + " by thread= " + index + ", client: " + ManagerUtil.getClientID());
-      } else {
+      } else { 
         node = doPass();
         System.err.println("*** Doing pass id=" + node.getId() + " by thread= " + index + ", client: " + ManagerUtil.getClientID());
-        synchronized(controller) {
-          controller.decGetter();
-        }
-        // ended when total nodes exceed or use up time
-        if(node.getId() >= upbound) {
-          break;
-        }
+        controller.decGetter();
       }
+      // ended when total nodes exceed
+      if(node.getId() >= upbound) controller.ending();
       // limited by time too
-      if (System.currentTimeMillis() >= endTime) break;
+      if (System.currentTimeMillis() >= endTime) controller.ending();
+      
+      if (controller.canQuit()) break;
 
       Thread.sleep(r.nextInt(20));
-     }
+    }
     index = barrier.await();
-
+    
     // verify
     if(index == 0) {
       System.err.println("*** Start verification");
       // verify size
       Assert.assertTrue("Wrong event count", eventIndex.getId() == lbqueue1.size() + lbqueue2.size());
-
+      
       // verify no event lost
       int lastItem;
       synchronized(eventIndex) {
         lastItem = eventIndex.getId();
         eventIndex.setId(0);
-      }
+      }  
       int id = 0;
       while(id < lastItem) {
         EventNode event;
@@ -148,21 +146,21 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
               }
             }
           }
-
-          Assert.assertTrue("Event " + id + " not found", found);
+            
+          Assert.assertTrue("Event " + id + " not found", found);         
         }
         ++id;
         if(id % 10 == 0) System.err.println("*** Verify id=" + id);
       } // while
-
+        
       Assert.assertTrue("Duplicate events found", 0 == (lbqueue1.size() + lbqueue2.size()));
-
+        
       System.err.println("*** Verification Successful");
     }
-
-    index = barrier.await();
+      
+    index = barrier.await();  
   }
-
+  
   private EventNode doPut() throws Exception {
     EventNode node;
       synchronized(eventIndex) {
@@ -176,7 +174,7 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
     EventNode  node = lbqueue2.take();
     return(node);
   }
-
+  
   private EventNode doPass() throws Exception {
     EventNode node;
     if (DebugUtil.DEBUG) {
@@ -187,17 +185,18 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
       if (node instanceof Manageable) {
         System.err.println("Client " + ManagerUtil.getClientID() + " passing id: " + node.getId() + " objectID: " + ((Manageable)node).__tc_managed().getObjectID());
       }
+      System.err.println("Client " + ManagerUtil.getClientID() + " passing from queue: " + ((Manageable)lbqueue1).__tc_managed().getObjectID() + " to queue: " + ((Manageable)lbqueue2).__tc_managed().getObjectID());
     }
     lbqueue2.put(node);
     return(node);
   }
-
-
+      
+    
   private static class EventNode {
     EventNode next;
     String name;
     int id;
-
+    
     public EventNode produce() {
       EventNode node;
       node = new EventNode(getId(), "Event" + getId() );
@@ -205,63 +204,75 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
       // System.out.println("*** Produce id=" + node.getId());
       return(node);
     }
-
+    
     public EventNode(int id, String name) {
       this.id = id;
       this.name = name;
     }
-
+    
     public EventNode getNextNode() {
       return(next);
     }
-
+    
     public void setNextNode(EventNode next) {
       this.next = next;
     }
-
+    
     public int getId() {
       return(id);
     }
-
+    
     public void setId(int id) {
       this.id = id;
     }
-
+    
     public String toString() {
-	      return name;
+      return name;
     }
   }
-
+  
   public static class GetController  {
     private int participants, getters;
-
+    private boolean ending = false;
+    
     public GetController(int participant) {
       this.participants = participant;
       getters = 0;
     }
-
-    public void incGetter() throws Exception{
+    
+    public synchronized void incGetter() throws Exception{
       ++getters;
       // System.out.println("*** incGetter " + getters);
-      Assert.assertTrue("Stuck in every node is a getter", getters < participants);
+      Assert.assertTrue("Stuck in every node is a getter", getters < participants);        
     }
-
-    public void decGetter() throws Exception {
+    
+    public synchronized void decGetter() throws Exception {
       --getters;
       // System.out.println("*** decGetter " + getters);
       Assert.assertTrue("Negative number of getter", getters >= 0);
     }
-
-    public int nGetters() {
+    
+    public synchronized int nGetters() {
       return(getters);
     }
-
-    public boolean canDoGet() {
-      return(getters < (participants - 1));
+    
+    public synchronized boolean canDoGet() {
+      // no more getter if ending the test
+      if (ending) return(false);
+      else return(getters < (participants - 1));
     }
-
-    public void clean() {
+    
+    public synchronized void clean() {
       getters = 0;
+    }
+    
+    public synchronized void ending() {
+      ending = true;
+    }
+    
+    public synchronized boolean canQuit() {
+      if (ending && (getters == 0)) return true;
+      else return false;
     }
   }
 
