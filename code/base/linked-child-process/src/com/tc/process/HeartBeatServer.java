@@ -159,9 +159,8 @@ public class HeartBeatServer {
       this.server = server;
       socket = s;
       try {
-        socket.setSoTimeout(PULSE_INTERVAL + 5000);
-        // socket.setTcpNoDelay(true);
-        // socket.setKeepAlive(true);
+        socket.setSoTimeout(PULSE_INTERVAL / 2);
+        socket.setTcpNoDelay(true);
 
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(socket.getOutputStream(), true);
