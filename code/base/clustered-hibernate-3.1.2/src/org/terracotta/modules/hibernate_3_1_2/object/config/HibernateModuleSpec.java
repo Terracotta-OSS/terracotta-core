@@ -3,8 +3,7 @@
  */
 package org.terracotta.modules.hibernate_3_1_2.object.config;
 
-import org.terracotta.modules.hibernate_3_1_2.object.dna.impl.HibernateProxyInstance;
-
+import com.tc.hibernate.HibernateProxyInstance;
 import com.tc.object.config.ChangeApplicatorSpec;
 import com.tc.object.config.ModuleSpec;
 

@@ -4,8 +4,7 @@
  */
 package org.terracotta.modules.hibernate_3_1_2.object.config;
 
-import org.terracotta.modules.hibernate_3_1_2.object.dna.impl.HibernateProxyInstance;
-
+import com.tc.hibernate.HibernateProxyInstance;
 import com.tc.object.config.ChangeApplicatorSpec;
 
 public class HibernateChangeApplicatorSpec implements ChangeApplicatorSpec {

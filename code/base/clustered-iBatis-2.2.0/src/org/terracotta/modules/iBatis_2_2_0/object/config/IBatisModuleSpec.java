@@ -3,8 +3,7 @@
  */
 package org.terracotta.modules.iBatis_2_2_0.object.config;
 
-import org.terracotta.modules.iBatis_2_2_0.object.dna.impl.IBatisAccessPlanInstance;
-
+import com.tc.ibatis.IBatisAccessPlanInstance;
 import com.tc.object.config.ChangeApplicatorSpec;
 import com.tc.object.config.ModuleSpec;
 
