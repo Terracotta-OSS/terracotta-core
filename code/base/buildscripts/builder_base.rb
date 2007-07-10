@@ -135,6 +135,7 @@ class TerracottaBuilder
             message = "Received exception from the build system: #{e} [#{e.class}]\n" +
                       e.backtrace.join("\n     ")
             @script_results.failed(message)
+            should_archive = true
         end
 
         end_time = Time.now
@@ -149,7 +150,8 @@ class TerracottaBuilder
 
         # Support for making build archives.
         # archive only if "force-archive=true", or when the run fails
-        if (@script_results.failed? || @config_source["force-archive"] =~ /true/)
+        if ((@config_source['monkey-name'] && (should_archive || @script_results.failed?)) || 
+             @config_source["force-archive"] =~ /true/)
             archive_build_if_necessary
         end
 
