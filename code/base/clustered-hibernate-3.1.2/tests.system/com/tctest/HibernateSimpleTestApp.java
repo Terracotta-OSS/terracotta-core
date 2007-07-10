@@ -7,7 +7,6 @@ import org.terracotta.modules.hibernate_3_1_2.util.HibernateUtil;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.spec.CyclicBarrierSpec;
