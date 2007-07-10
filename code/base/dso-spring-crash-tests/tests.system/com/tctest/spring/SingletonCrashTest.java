@@ -32,7 +32,6 @@ public class SingletonCrashTest extends TransparentTestBase {
     if (Vm.isIBM()) {
       disableAllUntil("2007-10-01");
     }
-    disableAllUntil("2007-07-16"); // MNK-216
   }
   
   protected boolean canRunCrash() {

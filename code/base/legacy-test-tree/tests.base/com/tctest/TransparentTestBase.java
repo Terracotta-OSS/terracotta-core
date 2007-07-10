@@ -412,8 +412,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     if (canRun()) {
       if (controlledCrashMode && isActivePassive() && apServerManager != null) {
         apServerManager.startServers();
-      } else if (controlledCrashMode && serverControl != null && crasher != null) {
-        // don't do anything... server is started by the serverCrasher
+      } else if (controlledCrashMode && serverControl != null) {
+        serverControl.start(30 * 1000);
       } else if (controlledCrashMode && serverControls != null && proxies != null) {
         startServerControlsAndProxies();
       } else if (useExternalProcess()) {
