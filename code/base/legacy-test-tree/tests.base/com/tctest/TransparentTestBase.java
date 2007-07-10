@@ -411,14 +411,17 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   public void test() throws Exception {
     if (canRun()) {
       if (controlledCrashMode && isActivePassive() && apServerManager != null) {
+        // active passive tests
         apServerManager.startServers();
-      } else if (controlledCrashMode && serverControl != null) {
-        serverControl.start(30 * 1000);
       } else if (controlledCrashMode && serverControls != null && proxies != null) {
+        // ResolveTwoActiveServersTest that use proxies between l2s
         startServerControlsAndProxies();
-      } else if (useExternalProcess()) {
+      } else if (serverControl != null && crasher == null) {
+        // normal mode tests
         serverControl.start(30 * 1000);
       }
+      // NOTE: for crash tests the server needs to be started by the ServerCrasher.. timing issue
+
       if (canRunProxyConnect()) {
         ProxyConnectManagerImpl.getManager().proxyUp();
         ProxyConnectManagerImpl.getManager().startProxyTest();

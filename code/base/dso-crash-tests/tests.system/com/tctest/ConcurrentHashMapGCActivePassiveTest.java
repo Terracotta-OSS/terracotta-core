@@ -10,6 +10,10 @@ import com.tc.test.activepassive.ActivePassiveSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 
 public class ConcurrentHashMapGCActivePassiveTest extends GCTestBase implements TestConfigurator {
+  public void doSetUp(TransparentTestIface t) throws Exception {
+    t.getTransparentAppConfig().setAttribute(ConcurrentHashMapSwapingTestApp.GC_TEST_KEY, "true");
+    super.doSetUp(t);
+  }
 
   protected Class getApplicationClass() {
     return ConcurrentHashMapSwapingTestApp.class;

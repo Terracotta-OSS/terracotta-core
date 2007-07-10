@@ -34,6 +34,18 @@ public class ServerCrasher implements Runnable {
   }
 
   public void run() {
+    // initial server start
+    try {
+      synchronized (testState) {
+        if (testState.isRunning()) {
+          System.err.println("Starting server...");
+          server.start(30 * 1000);
+        }
+      }
+    } catch (Exception e) {
+      throw new TCRuntimeException(e);
+    }
+
     while (true) {
       ThreadUtil.reallySleep(crashInterval);
       synchronized (testState) {
