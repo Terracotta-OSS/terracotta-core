@@ -123,46 +123,6 @@
       <lock-level>write</lock-level>
     </autolock>
 
-    <!-- ///////////////////////// -->
-    
-    <!--
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.configure</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.configure(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.addConfiguredCaches</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.addConfiguredCaches(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.checkStatus</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.checkStatus(..)</method-expression>
-      <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.detectAndFixCacheManagerPeerListenerConflict</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.detectAndFixCacheManagerPeerListenerConflict(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.detectAndFixDiskStorePathConflict</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.detectAndFixDiskStorePathConflict(..)</method-expression>
-      <lock-level>write</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.getPeerListener</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.getCachePeerListener(..)</method-expression>
-      <lock-level>read</lock-level>
-    </named-lock>
-    <named-lock>
-      <lock-name>__ehcache_lock__CacheManager.reinitialisationCheck</lock-name>
-      <method-expression>* net.sf.ehcache.CacheManager.reinitialisationCheck(..)</method-expression>
-      <lock-level>read</lock-level>
-    </named-lock>
-    -->
-
     <!-- @@@TODO: We need to instrument all of the Hashtable class' methods from a different config bundle -->
     <autolock>
       <method-expression>void java.util.Hashtable.clear()</method-expression>
