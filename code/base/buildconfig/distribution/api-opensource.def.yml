@@ -13,8 +13,6 @@ bundled_components:
               - dso-common-jdk15
               - dso-l1
               - dso-l1-jdk15
-              - linked-child-process
-              - management
               - modules-common-1.0
               - thirdparty
 packaging:
