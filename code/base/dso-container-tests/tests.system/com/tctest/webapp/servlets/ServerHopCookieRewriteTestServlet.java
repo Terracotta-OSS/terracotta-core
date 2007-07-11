@@ -31,14 +31,28 @@ public final class ServerHopCookieRewriteTestServlet extends HttpServlet {
       hit1(request, session, out);
     } else if ("2".equals(serverParam)) {
       hit2(request, session, out);
+    } else if ("3".equals(serverParam)) {
+      hit3(request, session, out);
     } else {
       out.print("unknown value for server param: " + serverParam);
+    }
+  }
+
+  private void hit3(HttpServletRequest request, HttpSession session, PrintWriter out) {
+    if (session.isNew()) {
+      out.print("session is new for server 2; sessionId=" + session.getId());
+    } else if (isServerHop(session)) {
+      out.print("is a server hop");
+    } else {
+      out.println("OK");
     }
   }
 
   private void hit1(HttpServletRequest req, HttpSession session, PrintWriter out) {
     if (session.isNew()) {
       out.print("session is new for server 1; sessionId=" + session.getId());
+    } else if (!isServerHop(session)) {
+      out.print("not a server hop");
     } else {
       String value = (String) session.getAttribute(ATTR_NAME);
       if (value == null) {
@@ -75,18 +89,19 @@ public final class ServerHopCookieRewriteTestServlet extends HttpServlet {
   private void hit2(HttpServletRequest req, HttpSession session, PrintWriter out) {
     if (session.isNew()) {
       out.print("session is  new for server 2; sessionId=" + session.getId());
-      return;
-    }
-
-    String value = (String) session.getAttribute(ATTR_NAME);
-    if (value == null) {
-      out.print("missing attribute");
-    }
-    value = (String) session.getAttribute(SESS_ID);
-    if (!session.getId().equals(req.getRequestedSessionId()) && session.getId().equals(value)) {
-      out.print("OK");
+    } else if (!isServerHop(session)) {
+      out.print("not a server hop");
     } else {
-      out.print("expected=" + session.getId() + ",got=" + value);
+      String value = (String) session.getAttribute(ATTR_NAME);
+      if (value == null) {
+        out.print("missing attribute");
+      }
+      value = (String) session.getAttribute(SESS_ID);
+      if (!session.getId().equals(req.getRequestedSessionId()) && session.getId().equals(value)) {
+        out.print("OK");
+      } else {
+        out.print("expected=" + session.getId() + ",got=" + value);
+      }
     }
   }
 
@@ -105,4 +120,19 @@ public final class ServerHopCookieRewriteTestServlet extends HttpServlet {
       out.print("attribute already exists: " + value);
     }
   }
+
+  private static boolean isServerHop(HttpSession session) {
+    try {
+      Object sessionId = session.getClass().getMethod("getSessionId", new Class[] {}).invoke(session, new Object[] {});
+      Boolean b = (Boolean) sessionId.getClass().getMethod("isServerHop", new Class[] {}).invoke(sessionId,
+                                                                                                 new Object[] {});
+      return b.booleanValue();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+  }
+
+  // if (!((SessionData) session).getSessionId().isServerHop()) {
+
 }

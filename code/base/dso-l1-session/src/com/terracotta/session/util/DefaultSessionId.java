@@ -8,18 +8,20 @@ import com.terracotta.session.SessionId;
 
 public class DefaultSessionId implements SessionId {
 
-  private final String key;
-  private final String requestedId;
-  private final String externalId;
-  private final Lock   lock;
+  private final String  key;
+  private final String  requestedId;
+  private final String  externalId;
+  private final Lock    lock;
+  private final boolean knownServerHop;
 
   protected DefaultSessionId(final String internalKey, final String requestedId, final String externalId,
-                             final int lockType) {
+                             final int lockType, boolean knownServerHop) {
     Assert.pre(internalKey != null);
     Assert.pre(externalId != null);
     this.key = internalKey;
     this.requestedId = requestedId;
     this.externalId = externalId;
+    this.knownServerHop = knownServerHop;
     this.lock = new Lock(this.key, lockType);
   }
 
@@ -36,11 +38,12 @@ public class DefaultSessionId implements SessionId {
   }
 
   public boolean isServerHop() {
-    return !isNew() && !externalId.equals(requestedId);
+    return !isNew() && knownServerHop;
   }
 
   public String toString() {
-    return getClass().getName() + "{ " + "key=" + getKey() + ", id=" + getRequestedId() + "}";
+    return getClass().getName() + "{ " + "key=" + getKey() + ", requestedId=" + getRequestedId() + ", externalId="
+           + getExternalId() + "}";
   }
 
   public String getExternalId() {

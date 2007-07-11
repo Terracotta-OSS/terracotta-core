@@ -60,8 +60,8 @@ public class TerracottaSessionManager implements SessionManager {
     this.invalidatorLogEnabled = cp.getInvalidatorLogBenchEnabled();
 
     // XXX: If reasonable, we should move this out of the constructor -- leaking a reference to "this" to another thread
-    // within a constructor is a bad practice (note: althought "this" isn't explicitly based as arg, it is available and
-    // acessed by the non-static inner class)
+    // within a constructor is a bad practice (note: although "this" isn't explicitly based as arg, it is available and
+    // accessed by the non-static inner class)
     Thread invalidator = new Thread(new SessionInvalidator(store, cp.getInvalidatorSleepSeconds(), cp
         .getSessionTimeoutSeconds()), "SessionInvalidator - " + contextMgr.getAppName());
     invalidator.setDaemon(true);

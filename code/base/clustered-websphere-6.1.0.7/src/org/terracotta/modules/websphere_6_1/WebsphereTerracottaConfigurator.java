@@ -12,6 +12,9 @@ public final class WebsphereTerracottaConfigurator extends TerracottaConfigurato
     configHelper.addCustomAdapter("com.ibm.ws.classloader.ClassGraph", new ClassGraphAdapter());
     configHelper.addCustomAdapter("com.ibm.ws.webcontainer.filter.WebAppFilterManager",
                                   new WebAppFilterManagerClassAdapter());
+    configHelper.addCustomAdapter("com.ibm.ws.webcontainer.facade.ServletContextFacade",
+                                  new ServletContextFacadeAdapater());
+    configHelper.addCustomAdapter("com.ibm.ws.webcontainer.httpsession.SessionContext", new SessionContextAdapter());
   }
 
 }

@@ -15,30 +15,32 @@ import java.security.SecureRandom;
 public class DefaultIdGenerator implements SessionIdGenerator {
 
   // NOTE: IMPORTANT!!! don't change MIN_LENGTH without reviewing generateKey method
-  private static final int   MIN_LENGTH = 8;
-  private final SecureRandom random;
-  private final int          idLength;
-  private final String       serverId;
-  private final String       delimiter;
-  private final int          lockType;
-  private final IdDeclarator idDeclarator;
-  private short              nextId     = Short.MIN_VALUE;
+  private static final int    MIN_LENGTH = 8;
 
-  public static SessionIdGenerator makeInstance(ConfigProperties cp, int lockType, IdDeclarator idDeclarator) {
+  private static final char[] HEXCHARS   = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B',
+      'C', 'D', 'E', 'F'                };
+
+  private final SecureRandom  random;
+  private final int           idLength;
+  private final String        serverId;
+  private final String        delimiter;
+  private final int           lockType;
+  private short               nextId     = Short.MIN_VALUE;
+
+  public static SessionIdGenerator makeInstance(ConfigProperties cp, int lockType) {
     Assert.pre(cp != null);
     final int idLength = cp.getSessionIdLength();
     final String serverId = cp.getServerId();
     final String delimiter = cp.getDelimiter();
-    return new DefaultIdGenerator(idLength, serverId, lockType, idDeclarator, delimiter);
+    return new DefaultIdGenerator(idLength, serverId, lockType, delimiter);
   }
 
   // for non-synchronous-write tests
   public DefaultIdGenerator(final int idLength, final String serverId) {
-    this(idLength, serverId, Manager.LOCK_TYPE_WRITE, null, ConfigProperties.defaultDelimiter);
+    this(idLength, serverId, Manager.LOCK_TYPE_WRITE, ConfigProperties.defaultDelimiter);
   }
 
-  public DefaultIdGenerator(final int idLength, final String serverId, int lockType, IdDeclarator idDeclarator,
-                            String delimiter) {
+  public DefaultIdGenerator(final int idLength, final String serverId, int lockType, String delimiter) {
     random = new SecureRandom();
     // init
     random.nextInt();
@@ -46,14 +48,13 @@ public class DefaultIdGenerator implements SessionIdGenerator {
     this.lockType = lockType;
     this.idLength = Math.max(idLength, MIN_LENGTH);
     this.serverId = serverId;
-    this.idDeclarator = idDeclarator;
     this.delimiter = delimiter;
   }
 
   public SessionId generateNewId() {
     final String key = generateKey();
     final String externalId = makeExternalId(key);
-    return new DefaultSessionId(key, null, externalId, lockType);
+    return new DefaultSessionId(key, null, externalId, lockType, false);
   }
 
   public SessionId makeInstanceFromBrowserId(String requestedSessionId) {
@@ -62,8 +63,9 @@ public class DefaultIdGenerator implements SessionIdGenerator {
     // everything before dlmIndex is key, everything after is serverId
     if (dlmIndex > 0) {
       final String key = requestedSessionId.substring(0, dlmIndex);
+      final String requestedServerId = requestedSessionId.substring(dlmIndex + 1);
       final String externalId = makeExternalId(key);
-      return new DefaultSessionId(key, requestedSessionId, externalId, lockType);
+      return new DefaultSessionId(key, requestedSessionId, externalId, lockType, !requestedServerId.equals(serverId));
     } else {
       // DLM is missing. someone is messing with our session ids!
       return null;
@@ -76,15 +78,24 @@ public class DefaultIdGenerator implements SessionIdGenerator {
 
   protected String makeExternalId(String key) {
     String externalId = key + delimiter + serverId;
-    if (idDeclarator != null) {
-      externalId = idDeclarator.transform(externalId);
-    }
     return externalId;
+  }
+
+  protected String getDelimiter() {
+    return delimiter;
+  }
+
+  protected String getServerId() {
+    return serverId;
+  }
+
+  protected int getLockType() {
+    return lockType;
   }
 
   public SessionId makeInstanceFromInternalKey(String key) {
     final String externalId = makeExternalId(key);
-    return new DefaultSessionId(key, externalId, externalId, lockType);
+    return new DefaultSessionId(key, externalId, externalId, lockType, false);
   }
 
   /**
@@ -102,7 +113,7 @@ public class DefaultIdGenerator implements SessionIdGenerator {
     toBytes(getNextId(), bytes);
     sb.append(toHex(bytes, 2));
 
-    // append randome bytes until we reach required length
+    // append random bytes until we reach required length
     if (sb.length() < idLength) {
       final byte[] extraBytes = new byte[idLength - MIN_LENGTH];
       random.nextBytes(extraBytes);
@@ -121,13 +132,12 @@ public class DefaultIdGenerator implements SessionIdGenerator {
   }
 
   protected static String toHex(byte[] bytes, int byteCnt) {
-    final char[] hexChars = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
     StringBuffer sb = new StringBuffer();
     for (int i = 0; i < byteCnt; i++) {
       byte b = bytes[i];
       byte b1 = (byte) ((b & 0xf0) >> 4);
       byte b2 = (byte) (b & 0x0f);
-      sb.append(hexChars[b1]).append(hexChars[b2]);
+      sb.append(HEXCHARS[b1]).append(HEXCHARS[b2]);
     }
     return sb.toString();
   }

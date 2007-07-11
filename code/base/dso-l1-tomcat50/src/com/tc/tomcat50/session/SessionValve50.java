@@ -85,7 +85,7 @@ public class SessionValve50 extends ValveBase {
 
     String appName = DefaultContextMgr.computeAppName(valveReq);
     int lockType = ManagerUtil.getSessionLockType(appName);
-    final SessionIdGenerator sig = DefaultIdGenerator.makeInstance(cp, lockType, null);
+    final SessionIdGenerator sig = DefaultIdGenerator.makeInstance(cp, lockType);
 
     final SessionCookieWriter scw = DefaultCookieWriter.makeInstance(cp);
     final LifecycleEventMgr eventMgr = DefaultLifecycleEventMgr.makeInstance(cp);

@@ -127,6 +127,7 @@ import com.tc.util.FieldUtils;
 import com.tc.util.HashtableKeySetWrapper;
 import com.tc.util.HashtableValuesWrapper;
 import com.tc.util.ListIteratorWrapper;
+import com.tc.util.ReflectiveProxy;
 import com.tc.util.SetIteratorWrapper;
 import com.tc.util.THashMapCollectionWrapper;
 import com.tc.util.UnsafeUtil;
@@ -164,7 +165,7 @@ import java.util.Set;
 public class BootJarTool {
   private static final String         EXCESS_CLASSES               = "excess";
   private static final String         MISSING_CLASSES              = "missing";
-  
+
   private final static String         TARGET_FILE_OPTION           = "o";
   private final static boolean        WRITE_OUT_TEMP_FILE          = true;
 
@@ -219,9 +220,8 @@ public class BootJarTool {
   }
 
   /**
-   * Scans the boot JAR file to determine if it is complete and contains only the user-classes 
-   * that are specified in the tc-config's <additional-boot-jar-classes/> section. Program execution 
-   * halts if it fails these checks.
+   * Scans the boot JAR file to determine if it is complete and contains only the user-classes that are specified in the
+   * tc-config's <additional-boot-jar-classes/> section. Program execution halts if it fails these checks.
    */
   private final void scanJar(File bootJarFile) {
     if (!bootJarFile.exists()) {
@@ -232,33 +232,33 @@ public class BootJarTool {
 
     final String MESSAGE0 = "\nYour boot JAR file might be out of date or invalid.";
     final String MESSAGE1 = "\nThe following classes was declared in the <additional-boot-jar-classes/> section "
-                          + "of your tc-config file but is not a part of your boot JAR file:";
+                            + "of your tc-config file but is not a part of your boot JAR file:";
     final String MESSAGE2 = "\nThe following user-classes were found in the boot JAR but was not declared in the "
-                          + "<additional-boot-jar-classes/> section of your tc-config file:";
+                            + "<additional-boot-jar-classes/> section of your tc-config file:";
     final String MESSAGE3 = "\nUse the make-boot-jar tool to re-create your boot JAR.";
-    
+
     try {
-      final Map result  = compareBootJarContentsToUserSpec(bootJarFile);
-      final Set missing = (Set)result.get(MISSING_CLASSES);
-      final Set excess  = (Set)result.get(EXCESS_CLASSES);
-      
+      final Map result = compareBootJarContentsToUserSpec(bootJarFile);
+      final Set missing = (Set) result.get(MISSING_CLASSES);
+      final Set excess = (Set) result.get(EXCESS_CLASSES);
+
       if (!missing.isEmpty() || !excess.isEmpty()) {
         System.err.println(MESSAGE0);
-        
+
         if (!missing.isEmpty()) {
           System.err.println(MESSAGE1);
           for (Iterator i = missing.iterator(); i.hasNext();) {
             System.err.println("- " + i.next());
           }
         }
-        
+
         if (!excess.isEmpty()) {
           System.err.println(MESSAGE2);
           for (Iterator i = missing.iterator(); i.hasNext();) {
             System.err.println("- " + i.next());
           }
         }
-  
+
         System.err.println(MESSAGE3);
         System.exit(1);
       }
@@ -270,19 +270,17 @@ public class BootJarTool {
   }
 
   /**
-   * Checks if the given bootJarFile is complete; meaning:
-   * - All the classes declared in the configurations <additional-boot-jar-classes/> section
-   *   is present in the boot jar.
-   * - And there are no user-classes present in the boot jar that is not declared in the
-   *   <additional-boot-jar-classes/> section 
-   * 
+   * Checks if the given bootJarFile is complete; meaning: - All the classes declared in the configurations
+   * <additional-boot-jar-classes/> section is present in the boot jar. - And there are no user-classes present in the
+   * boot jar that is not declared in the <additional-boot-jar-classes/> section
+   *
    * @return <code>true</cide> if the boot jar is complete.
    */
   private final boolean isBootJarComplete(File bootJarFile) {
     try {
-      final Map result  = compareBootJarContentsToUserSpec(bootJarFile);
-      final Set missing = (Set)result.get(MISSING_CLASSES);
-      final Set excess  = (Set)result.get(EXCESS_CLASSES);
+      final Map result = compareBootJarContentsToUserSpec(bootJarFile);
+      final Set missing = (Set) result.get(MISSING_CLASSES);
+      final Set excess = (Set) result.get(EXCESS_CLASSES);
       return missing.isEmpty() && excess.isEmpty();
     } catch (InvalidBootJarMetaDataException e) {
       return false;
@@ -290,19 +288,19 @@ public class BootJarTool {
   }
 
   /**
-   * Scans the boot JAR file for:
-   * - User-defined classes that are in the boot JAR but is not defined in the
-   *   <additional-boot-jar-classes/> section of the config
-   * - Class names declared in the config but are not in the boot JAR
-   * @throws InvalidBootJarMetaDataException 
+   * Scans the boot JAR file for: - User-defined classes that are in the boot JAR but is not defined in the
+   * <additional-boot-jar-classes/> section of the config - Class names declared in the config but are not in the boot
+   * JAR
+   *
+   * @throws InvalidBootJarMetaDataException
    */
   private final Map compareBootJarContentsToUserSpec(File bootJarFile) throws InvalidBootJarMetaDataException {
     try {
-      Map result                 = new HashMap();
-      final Map internalSpecs    = getTCSpecs();
-      final Map userSpecs        = massageSpecs(getUserDefinedSpecs(internalSpecs), false);
+      Map result = new HashMap();
+      final Map internalSpecs = getTCSpecs();
+      final Map userSpecs = massageSpecs(getUserDefinedSpecs(internalSpecs), false);
       final BootJar bootJarLocal = BootJar.getBootJarForReading(bootJarFile);
-      final Set preInstrumented  = bootJarLocal.getAllPreInstrumentedClasses();
+      final Set preInstrumented = bootJarLocal.getAllPreInstrumentedClasses();
       final Set missing = new HashSet();
       for (final Iterator i = userSpecs.keySet().iterator(); i.hasNext();) {
         final String cn = (String) i.next();
@@ -310,18 +308,18 @@ public class BootJarTool {
           missing.add(cn);
         }
       }
-      result.put(MISSING_CLASSES, missing); 
-     
+      result.put(MISSING_CLASSES, missing);
+
       final Set foreign = bootJarLocal.getAllForeignClasses();
-      final Set excess  = new HashSet();
-      for (final Iterator i = foreign.iterator(); i.hasNext(); ) {
+      final Set excess = new HashSet();
+      for (final Iterator i = foreign.iterator(); i.hasNext();) {
         final String cn = (String) i.next();
         if (!userSpecs.keySet().contains(cn)) {
           excess.add(cn);
         }
       }
       result.put(EXCESS_CLASSES, excess);
-      
+
       return result;
     } catch (InvalidBootJarMetaDataException e) {
       throw e;
@@ -474,10 +472,13 @@ public class BootJarTool {
       loadTerracottaClass(Vm.Version.class.getName());
       loadTerracottaClass(UnknownJvmVersionException.class.getName());
       loadTerracottaClass(UnknownRuntimeVersionException.class.getName());
-      
+
       loadTerracottaClass(IBatisAccessPlanInstance.class.getName());
       loadTerracottaClass(HibernateProxyInstance.class.getName());
-      
+
+      loadTerracottaClass(ReflectiveProxy.class.getName());
+      loadTerracottaClass(ReflectiveProxy.Handler.class.getName());
+
       addManagementClasses();
 
       addRuntimeClasses();
@@ -1210,7 +1211,7 @@ public class BootJarTool {
       bootJar.loadClassIntoJar(spec.getClassName(), classBytes, spec.isPreInstrumented(), foreignClass);
     }
   }
-  
+
   private final void loadBootJarClasses(Map specs) {
     loadBootJarClasses(specs, false);
   }
@@ -1364,10 +1365,8 @@ public class BootJarTool {
   }
 
   private void addInstrumentedAtomicInteger() {
-    if (!Vm.isJDK15Compliant()) {
-      return;
-    }
-    
+    if (!Vm.isJDK15Compliant()) { return; }
+
     String classname = "java.util.concurrent.atomic.AtomicInteger";
     byte[] bytes = getSystemBytes(classname);
 
@@ -1386,10 +1385,8 @@ public class BootJarTool {
   }
 
   private void addInstrumentedAtomicLong() {
-    if (!Vm.isJDK15Compliant()) {
-      return;
-    }
-    
+    if (!Vm.isJDK15Compliant()) { return; }
+
     String classname = "java.util.concurrent.atomic.AtomicLong";
     byte[] bytes = getSystemBytes(classname);
 
