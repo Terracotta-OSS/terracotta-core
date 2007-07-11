@@ -103,7 +103,15 @@ public class ClientConnectionEstablisher {
 
     TCConnection connection = this.connManager.createConnection(cmt.getProtocolAdapter());
     cmt.fireTransportConnectAttemptEvent();
-    connection.connect(sa, timeout);
+    try {
+      connection.connect(sa, timeout);
+    } catch (IOException e) {
+      connection.close(100);
+      throw e;
+    } catch (TCTimeoutException e) {
+      connection.close(100);
+      throw e;   
+    }
     return connection;
   }
 
@@ -120,13 +128,14 @@ public class ClientConnectionEstablisher {
       for (int i = 0; ((maxReconnectTries < 0) || (i < maxReconnectTries)) && !connected; i++) {
         ConnectionAddressIterator addresses = connAddressProvider.getIterator();
         while (addresses.hasNext() && !connected) {
+          TCConnection connection = null;
           final ConnectionInfo connInfo = addresses.next();
           try {
             if (i % 20 == 0) {
               cmt.logger.warn("Reconnect attempt " + i + " of " + desc + " reconnect tries to " + connInfo
                               + ", timeout=" + timeout);
             }
-            TCConnection connection = connect(new TCSocketAddress(connInfo), cmt);
+            connection = connect(new TCSocketAddress(connInfo), cmt);
             cmt.reconnect(connection);
             connected = true;
           } catch (MaxConnectionsExceededException e) {
@@ -137,6 +146,10 @@ public class ClientConnectionEstablisher {
             handleConnectException(e, false, cmt.logger);
           } catch (Exception e) {
             handleConnectException(e, true, cmt.logger);
+          }
+          
+          if (!connected && connection != null) {
+            connection.close(100);
           }
         }
       }
