@@ -40,6 +40,10 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
     }
   }
 
+  protected void beforeTimeout() throws Throwable {
+    getServerManager().stop();
+  }
+  
   protected boolean shouldKillAppServersEachRun() {
     return true;
   }
