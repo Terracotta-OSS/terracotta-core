@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
@@ -29,11 +30,15 @@ public interface ClientHandshakeMessage {
   public Collection getWaitContexts();
 
   public void addPendingLockContext(LockContext ctxt);
-  
+
   public void addPendingTryLockContext(LockContext ctxt);
 
+  public void setClientVersion(String v);
+
+  public String getClientVersion();
+
   public Collection getPendingLockContexts();
-  
+
   public Collection getPendingTryLockContexts();
 
   public ChannelID getChannelID();

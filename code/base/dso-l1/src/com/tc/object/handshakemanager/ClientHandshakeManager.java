@@ -25,6 +25,7 @@ import com.tc.object.lockmanager.api.TryLockContext;
 import com.tc.object.lockmanager.api.TryLockRequest;
 import com.tc.object.lockmanager.api.WaitContext;
 import com.tc.object.lockmanager.api.WaitLockRequest;
+import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
@@ -55,6 +56,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
   private final PauseListener                  pauseListener;
   private final BatchSequenceReceiver          sequenceReceiver;
   private final Cluster                        cluster;
+  private final String                         clientVersion;
 
   private State                                state              = PAUSED;
   private boolean                              stagesPaused       = false;
@@ -65,7 +67,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
                                 ClientLockManager lockManager, RemoteTransactionManager remoteTransactionManager,
                                 ClientGlobalTransactionManager gtxManager, Collection stagesToPauseOnDisconnect,
                                 Sink pauseSink, SessionManager sessionManager, PauseListener pauseListener,
-                                BatchSequenceReceiver sequenceReceiver, Cluster cluster) {
+                                BatchSequenceReceiver sequenceReceiver, Cluster cluster, String clientVersion) {
     this.logger = logger;
     this.cidp = cidp;
     this.chmf = chmf;
@@ -79,6 +81,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
     this.pauseListener = pauseListener;
     this.sequenceReceiver = sequenceReceiver;
     this.cluster = cluster;
+    this.clientVersion = clientVersion;
     pauseManagers();
   }
 
@@ -88,6 +91,8 @@ public class ClientHandshakeManager implements ChannelEventListener {
     notifyManagersStarting();
 
     ClientHandshakeMessage handshakeMessage = chmf.newClientHandshakeMessage();
+
+    handshakeMessage.setClientVersion(clientVersion);
 
     handshakeMessage.setTransactionSequenceIDs(gtxManager.getTransactionSequenceIDs());
     handshakeMessage.setResentTransactionIDs(gtxManager.getResentTransactionIDs());
@@ -118,12 +123,12 @@ public class ClientHandshakeManager implements ChannelEventListener {
       LockContext ctxt = new LockContext(request.lockID(), cidp.getChannelID(), request.threadID(), request.lockLevel());
       handshakeMessage.addPendingLockContext(ctxt);
     }
-    
+
     logger.debug("Getting pending tryLock requests...");
     for (Iterator i = lockManager.addAllPendingTryLockRequestsTo(new HashSet()).iterator(); i.hasNext();) {
       TryLockRequest request = (TryLockRequest) i.next();
-      LockContext ctxt = new TryLockContext(request.lockID(), cidp.getChannelID(), request.threadID(), request.lockLevel(),
-                                  request.getWaitInvocation());
+      LockContext ctxt = new TryLockContext(request.lockID(), cidp.getChannelID(), request.threadID(), request
+          .lockLevel(), request.getWaitInvocation());
       handshakeMessage.addPendingTryLockContext(ctxt);
     }
 
@@ -171,12 +176,20 @@ public class ClientHandshakeManager implements ChannelEventListener {
     initiateHandshake();
   }
 
-  public void acknowledgeHandshake(long objectIDStart, long objectIDEnd, boolean persistentServer, String thisNodeId,
-                                   String[] clusterMembers) {
+  public void acknowledgeHandshake(ClientHandshakeAckMessage handshakeAck) {
+    acknowledgeHandshake(handshakeAck.getObjectIDSequenceStart(), handshakeAck.getObjectIDSequenceEnd(), handshakeAck
+        .getPersistentServer(), handshakeAck.getThisNodeId(), handshakeAck.getAllNodes(), handshakeAck
+        .getServerVersion());
+  }
+
+  protected void acknowledgeHandshake(long objectIDStart, long objectIDEnd, boolean persistentServer,
+                                      String thisNodeId, String[] clusterMembers, String serverVersion) {
     if (getState() != STARTING) {
       logger.warn("Handshake acknowledged while not STARTING: " + getState());
       return;
     }
+
+    checkClientServerVersionMatch(logger, clientVersion, serverVersion);
 
     this.serverIsPersistent = persistentServer;
 
@@ -195,6 +208,14 @@ public class ClientHandshakeManager implements ChannelEventListener {
     unpauseManagers();
 
     changeState(RUNNING);
+  }
+
+  protected static void checkClientServerVersionMatch(TCLogger logger, String clientVersion, String serverVersion) {
+    if (!clientVersion.equals(serverVersion)) {
+      final String msg = "Client/Server Version Mismatch Error: Client Version: " + clientVersion
+                         + ", Server Version: " + serverVersion + ".  Terminating client now.";
+      throw new RuntimeException(msg);
+    }
   }
 
   private void pauseManagers() {

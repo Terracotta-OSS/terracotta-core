@@ -25,12 +25,14 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
   private static final byte PERSISTENT_SERVER        = 3;
   private static final byte ALL_NODES                = 4;
   private static final byte THIS_NODE_ID             = 5;
+  private static final byte SERVER_VERSION           = 6;
 
   private final Set         allNodes                 = new HashSet();
   private long              oidStart;
   private long              oidEnd;
   private boolean           persistentServer;
   private String            thisNodeId;
+  private String            serverVersion;
 
   public ClientHandshakeAckMessageImpl(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
                                        TCMessageType type) {
@@ -52,6 +54,7 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
     }
 
     putNVPair(THIS_NODE_ID, thisNodeId);
+    putNVPair(SERVER_VERSION, serverVersion);
   }
 
   protected boolean hydrateValue(byte name) throws IOException {
@@ -71,12 +74,15 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
       case THIS_NODE_ID:
         thisNodeId = getStringValue();
         return true;
+      case SERVER_VERSION:
+        serverVersion = getStringValue();
+        return true;
       default:
         return false;
     }
   }
 
-  public void initialize(long start, long end, boolean persistent, MessageChannel[] channels) {
+  public void initialize(long start, long end, boolean persistent, MessageChannel[] channels, String sv) {
     this.oidStart = start;
     this.oidEnd = end;
     this.persistentServer = persistent;
@@ -86,6 +92,7 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
     }
 
     this.thisNodeId = toString(getChannelID());
+    this.serverVersion = sv;
   }
 
   public long getObjectIDSequenceStart() {
@@ -112,4 +119,7 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
     return String.valueOf(cid.toLong());
   }
 
+  public String getServerVersion() {
+    return serverVersion;
+  }
 }

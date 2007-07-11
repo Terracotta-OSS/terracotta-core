@@ -47,9 +47,7 @@ public class ClientCoordinationHandler extends AbstractEventHandler {
   }
 
   private void handleClientHandshakeAckMessage(ClientHandshakeAckMessage handshakeAck) {
-    handshakeManager.acknowledgeHandshake(handshakeAck.getObjectIDSequenceStart(), handshakeAck
-        .getObjectIDSequenceEnd(), handshakeAck.getPersistentServer(), handshakeAck.getThisNodeId(), handshakeAck
-        .getAllNodes());
+    handshakeManager.acknowledgeHandshake(handshakeAck);
   }
 
   private void handleClusterMembershipMessage(ClusterMembershipMessage cmm) throws EventHandlerException {

@@ -350,6 +350,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     public final List closeAllChannelIDs = new ArrayList();
     public final Map  handshakeMessages  = new HashMap();
     public final Set  channelIDs         = new HashSet();
+    private String    serverVersion      = "N/A";
 
     public void closeAll(Collection theChannelIDs) {
       closeAllChannelIDs.addAll(theChannelIDs);
@@ -408,14 +409,13 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
     public void makeChannelActive(ChannelID channelID, long startIDs, long endIDs, boolean persistent) {
       ClientHandshakeAckMessage ackMsg = newClientHandshakeAckMessage(channelID);
-      ackMsg.initialize(startIDs, endIDs, persistent, getActiveChannels());
+      ackMsg.initialize(startIDs, endIDs, persistent, getActiveChannels(), serverVersion);
       ackMsg.send();
     }
 
     public void makeChannelActiveNoAck(MessageChannel channel) {
       //
     }
-
   }
 
   private static class TestClientHandshakeAckMessage implements ClientHandshakeAckMessage {
@@ -425,6 +425,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     public long                         end;
     private boolean                     persistent;
     private final TestMessageChannel    channel;
+    private String                      serverVersion;
 
     private TestClientHandshakeAckMessage(ChannelID channelID) {
       this.channelID = channelID;
@@ -448,10 +449,11 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return persistent;
     }
 
-    public void initialize(long startOid, long endOid, boolean isPersistent, MessageChannel[] channels) {
+    public void initialize(long startOid, long endOid, boolean isPersistent, MessageChannel[] channels, String sv) {
       this.start = startOid;
       this.end = endOid;
       this.persistent = isPersistent;
+      this.serverVersion = sv;
     }
 
     public MessageChannel getChannel() {
@@ -464,6 +466,10 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
     public String getThisNodeId() {
       throw new ImplementMe();
+    }
+
+    public String getServerVersion() {
+      return serverVersion;
     }
 
   }

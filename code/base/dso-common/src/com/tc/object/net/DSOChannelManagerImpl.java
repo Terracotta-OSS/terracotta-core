@@ -38,10 +38,12 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   private final List                    eventListeners      = new CopyOnWriteArrayList();
 
   private final ChannelManager          genericChannelManager;
+  private final String                  serverVersion;
 
-  public DSOChannelManagerImpl(ChannelManager genericChannelManager) {
+  public DSOChannelManagerImpl(ChannelManager genericChannelManager, String serverVersion) {
     this.genericChannelManager = genericChannelManager;
     this.genericChannelManager.addEventListener(new GenericChannelEventListener());
+    this.serverVersion = serverVersion;
   }
 
   public MessageChannel getActiveChannel(ChannelID id) throws NoSuchChannelException {
@@ -110,7 +112,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
       MessageChannel channel = ackMsg.getChannel();
       synchronized (activeChannels) {
         activeChannels.put(channel.getChannelID(), channel);
-        ackMsg.initialize(startIDs, endIDs, persistent, getActiveChannels());
+        ackMsg.initialize(startIDs, endIDs, persistent, getActiveChannels(), serverVersion);
         ackMsg.send();
 
       }

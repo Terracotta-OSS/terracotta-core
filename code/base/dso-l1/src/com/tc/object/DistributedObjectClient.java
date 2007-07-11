@@ -99,6 +99,7 @@ import com.tc.object.tx.TransactionBatchWriterFactory;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.sequence.BatchSequence;
@@ -295,11 +296,12 @@ public class DistributedObjectClient extends SEDA {
     // disconnect. Unfortunately, the lock response stage can block, which I didn't realize at the time, so it's not
     // being used.
     Collection stagesToPauseOnDisconnect = Collections.EMPTY_LIST;
+    ProductInfo pInfo = ProductInfo.getInstance();
     clientHandshakeManager = new ClientHandshakeManager(new ChannelIDLogger(channel.getChannelIDProvider(), TCLogging
         .getLogger(ClientHandshakeManager.class)), channel.getChannelIDProvider(), channel
         .getClientHandshakeMessageFactory(), objectManager, remoteObjectManager, lockManager, rtxManager, gtxManager,
                                                         stagesToPauseOnDisconnect, pauseStage.getSink(),
-                                                        sessionManager, pauseListener, sequence, cluster);
+                                                        sessionManager, pauseListener, sequence, cluster, pInfo.buildVersion());
     channel.addListener(clientHandshakeManager);
 
     ClientConfigurationContext cc = new ClientConfigurationContext(stageManager, lockManager, remoteObjectManager,

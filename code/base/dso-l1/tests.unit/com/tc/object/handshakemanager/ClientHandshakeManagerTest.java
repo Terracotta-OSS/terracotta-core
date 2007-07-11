@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Set;
 
 public class ClientHandshakeManagerTest extends TCTestCase {
+  private static final String                clientVersion = "x.y.z";
   private TestClientObjectManager            objectManager;
   private TestClientLockManager              lockManager;
   private TestChannelIDProvider              cip;
@@ -70,7 +71,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     mgr = new ClientHandshakeManager(TCLogging.getLogger(ClientHandshakeManager.class), cip, chmf, objectManager,
                                      remoteObjectManager, lockManager, rtxManager, gtxManager, new ArrayList(),
                                      new NullSink(), new NullSessionManager(), new NullPauseListener(),
-                                     new BatchSequence(new TestSequenceProvider(), 100), new Cluster());
+                                     new BatchSequence(new TestSequenceProvider(), 100), new Cluster(), clientVersion);
     assertNotNull(gtxManager.pauseCalls.poll(0));
     assertNull(gtxManager.pauseCalls.poll(0));
     newMessage();
@@ -161,7 +162,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     assertTrue(lockManager.unpauseContexts.isEmpty());
     assertTrue(gtxManager.resendOutstandingCalls.isEmpty());
 
-    mgr.acknowledgeHandshake(0, 0, false, "1", new String[] {});
+    mgr.acknowledgeHandshake(0, 0, false, "1", new String[] {}, clientVersion);
 
     // make sure the remote object manager was told to requestOutstanding()
     remoteObjectManager.requestOutstandingContexts.take();

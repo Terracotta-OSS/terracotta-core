@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.msg;
 
@@ -14,12 +15,14 @@ public interface ClientHandshakeAckMessage {
 
   public boolean getPersistentServer();
 
-  public void initialize(long start, long end, boolean persistent, MessageChannel[] channels);
+  public void initialize(long start, long end, boolean persistent, MessageChannel[] channels, String serverVersion);
 
   public MessageChannel getChannel();
 
   public String[] getAllNodes();
 
   public String getThisNodeId();
+
+  public String getServerVersion();
 
 }

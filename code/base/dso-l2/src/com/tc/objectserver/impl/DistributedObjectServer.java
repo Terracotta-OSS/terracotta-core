@@ -160,6 +160,7 @@ import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterManager;
 import com.tc.stats.counter.sampled.SampledCounterManagerImpl;
 import com.tc.util.Assert;
+import com.tc.util.ProductInfo;
 import com.tc.util.SequenceValidator;
 import com.tc.util.StartupLock;
 import com.tc.util.TCTimeoutException;
@@ -453,7 +454,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
     ClientTunnelingEventHandler cteh = new ClientTunnelingEventHandler();
 
-    DSOChannelManager channelManager = new DSOChannelManagerImpl(l1Listener.getChannelManager());
+    ProductInfo pInfo = ProductInfo.getInstance();
+    DSOChannelManager channelManager = new DSOChannelManagerImpl(l1Listener.getChannelManager(), pInfo.buildVersion());
     channelManager.addEventListener(cteh);
     channelManager.addEventListener(connectionIdFactory);
 

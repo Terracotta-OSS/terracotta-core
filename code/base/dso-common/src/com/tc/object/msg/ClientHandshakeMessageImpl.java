@@ -36,6 +36,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private static final byte RESENT_TRANSACTION_IDS   = 6;
   private static final byte REQUEST_OBJECT_IDS       = 7;
   private static final byte PENDING_TRY_LOCK_CONTEXT = 8;
+  private static final byte CLIENT_VERSION           = 9;
 
   private final Set         objectIDs                = new HashSet();
   private final Set         lockContexts             = new HashSet();
@@ -45,6 +46,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private final Set         sequenceIDs              = new HashSet();
   private final Set         txnIDs                   = new HashSet();
   private boolean           requestObjectIDs;
+  private String            clientVersion            = "UNKNOW";
 
   public ClientHandshakeMessageImpl(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
                                     TCMessageType messageType) {
@@ -140,6 +142,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
       putNVPair(RESENT_TRANSACTION_IDS, ((TransactionID) i.next()).toLong());
     }
     putNVPair(REQUEST_OBJECT_IDS, this.requestObjectIDs);
+    putNVPair(CLIENT_VERSION, this.clientVersion);
   }
 
   protected boolean hydrateValue(byte name) throws IOException {
@@ -168,6 +171,9 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
       case REQUEST_OBJECT_IDS:
         this.requestObjectIDs = getBooleanValue();
         return true;
+      case CLIENT_VERSION:
+        this.clientVersion = getStringValue();
+        return true;
       default:
         return false;
     }
@@ -195,5 +201,13 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
 
   public boolean isObjectIDsRequested() {
     return this.requestObjectIDs;
+  }
+
+  public String getClientVersion() {
+    return clientVersion;
+  }
+
+  public void setClientVersion(String v) {
+    clientVersion = v;
   }
 }

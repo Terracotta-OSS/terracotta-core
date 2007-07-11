@@ -102,7 +102,8 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   }
 
   public ClientHandshakeMessage newClientHandshakeMessage() {
-    return (ClientHandshakeMessage) channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
+    ClientHandshakeMessage rv = (ClientHandshakeMessage) channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
+    return rv;
   }
 
   public ClientHandshakeMessageFactory getClientHandshakeMessageFactory() {

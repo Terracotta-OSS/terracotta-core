@@ -35,6 +35,7 @@ public class TestClientHandshakeMessage implements ClientHandshakeMessage {
   public Collection             transactionSequenceIDs         = new ArrayList();
   public Collection             transactionIDs                 = new ArrayList();
   private TestMessageChannel    channel;
+  private String                clientVersion;
 
   public void addObjectID(ObjectID id) {
     clientObjectIds.add(id);
@@ -146,10 +147,18 @@ public class TestClientHandshakeMessage implements ClientHandshakeMessage {
 
   public void addPendingTryLockContext(LockContext ctxt) {
     throw new ImplementMe();
-    
+
   }
 
   public Collection getPendingTryLockContexts() {
     return Collections.EMPTY_LIST;
+  }
+
+  public String getClientVersion() {
+    return this.clientVersion;
+  }
+
+  public void setClientVersion(String v) {
+    this.clientVersion = v;
   }
 }
