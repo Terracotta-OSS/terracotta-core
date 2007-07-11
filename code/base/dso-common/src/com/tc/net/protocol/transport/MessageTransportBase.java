@@ -311,7 +311,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   protected void wireNewConnection(TCConnection conn) {
     logger.info("Attaching new connection: " + conn);
     setConnection(conn);
-    isOpen.set(true);
     this.status.reset();
   }
 }
