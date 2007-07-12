@@ -16,7 +16,7 @@ public class ReflectiveProxyTest extends TestCase {
     void foo(Object o);
   }
 
-  static class Test1Class {
+  public static class Test1Class {
 
     int    foo0 = 0;
     int    foo1 = 0;
