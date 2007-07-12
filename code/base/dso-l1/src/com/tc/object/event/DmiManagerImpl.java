@@ -90,6 +90,7 @@ public class DmiManagerImpl implements DmiManager {
     try {
       dmc = (DistributedMethodCall) objMgr.lookupObject(dd.getDmiCallId());
       // FIXME: debug code below ----------
+      dmc.getClass();
       dmc.getReceiver().getClass().getName();
       dmc.getMethodName();
       dmc.getParameterDesc();
