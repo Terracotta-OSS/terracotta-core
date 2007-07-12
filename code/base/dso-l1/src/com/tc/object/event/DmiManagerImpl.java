@@ -89,7 +89,15 @@ public class DmiManagerImpl implements DmiManager {
     DistributedMethodCall dmc;
     try {
       dmc = (DistributedMethodCall) objMgr.lookupObject(dd.getDmiCallId());
+      // FIXME: debug code below ----------
+      dmc.getReceiver().getClass().getName();
+      dmc.getMethodName();
+      dmc.getParameterDesc();
+      // FIXME: debug code above ----------
     } catch (Throwable e) {
+      // FIXME: debug code
+      e.printStackTrace();
+      // FIXME: end debug code
       if (logger.isDebugEnabled()) logger.debug("Ignoring distributed method call", e);
       return;
     }
@@ -99,6 +107,9 @@ public class DmiManagerImpl implements DmiManager {
       feedBack.set(TRUE);
       invoke(dmc);
     } catch (Throwable e) {
+      // FIXME: debug code
+      e.printStackTrace();
+      // FIXME: end debug code
       runtimeLogger.distributedMethodCallError(dmc.getReceiver().getClass().getName(), dmc.getMethodName(), dmc
           .getParameterDesc(), e);
       if (logger.isDebugEnabled()) logger.debug("Ignoring distributed method call", e);
