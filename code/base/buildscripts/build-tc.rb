@@ -121,7 +121,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
   # Used by every other target, basically.
   def init
-    #write_build_info_file if monkey?
+    write_build_info_file if monkey?
   end
 
   # Download and install dependencies as specified by the various ivy*.xml
