@@ -7,8 +7,6 @@ import com.tc.objectserver.context.ManagedObjectRequestContext;
 
 public interface ObjectRequestManager {
   
-  public void start();
-  
   public void requestObjects(ManagedObjectRequestContext responseContext, int maxReachableObjects);
   
 }

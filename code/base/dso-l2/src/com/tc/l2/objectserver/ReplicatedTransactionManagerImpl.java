@@ -139,8 +139,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
   }
 
   private void addIncommingTransactions(ChannelID channelID, Set txnIDs, Collection txns, Collection completedTxnIDs) {
-    transactionManager.incomingTransactions(channelID, txnIDs, txns, false);
-    txnObjectManager.addTransactions(txns, completedTxnIDs);
+    transactionManager.incomingTransactions(channelID, txnIDs, txns, false, completedTxnIDs);
   }
 
   private final class NullPassiveTransactionManager implements PassiveTransactionManager {

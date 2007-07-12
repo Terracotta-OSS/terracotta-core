@@ -23,7 +23,6 @@ import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchReader;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
-import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.util.SequenceValidator;
 
 import java.util.Collection;
@@ -40,17 +39,15 @@ public class ProcessTransactionHandler extends AbstractEventHandler {
   private final TransactionBatchManager    transactionBatchManager;
   private final MessageRecycler            messageRecycler;
   private final SequenceValidator          sequenceValidator;
-  private final TransactionalObjectManager txnObjectManager;
 
   private Sink                             txnRelaySink;
 
   private ServerTransactionManager         transactionManager;
 
   public ProcessTransactionHandler(TransactionBatchManager transactionBatchManager,
-                                   TransactionalObjectManager txnObjectManager, SequenceValidator sequenceValidator,
+                                   SequenceValidator sequenceValidator,
                                    MessageRecycler messageRecycler) {
     this.transactionBatchManager = transactionBatchManager;
-    this.txnObjectManager = txnObjectManager;
     this.sequenceValidator = sequenceValidator;
     this.messageRecycler = messageRecycler;
   }
@@ -76,12 +73,11 @@ public class ProcessTransactionHandler extends AbstractEventHandler {
       }
       messageRecycler.addMessage(ctm, txns.keySet());
       if (replicatedObjectMgr.relayTransactions()) {
-        transactionManager.incomingTransactions(channelID, txns.keySet(), txns.values(), true);
+        transactionManager.incomingTransactions(channelID, txns.keySet(), txns.values(), true, completedTxnIds);
         txnRelaySink.add(new IncomingTransactionContext(channelID, ctm, txns));
       } else {
-        transactionManager.incomingTransactions(channelID, txns.keySet(), txns.values(), false);
+        transactionManager.incomingTransactions(channelID, txns.keySet(), txns.values(), false, completedTxnIds);
       }
-      txnObjectManager.addTransactions(txns.values(), completedTxnIds);
     } catch (Exception e) {
       logger.error("Error reading transaction batch. : ", e);
       MessageChannel c = ctm.getChannel();

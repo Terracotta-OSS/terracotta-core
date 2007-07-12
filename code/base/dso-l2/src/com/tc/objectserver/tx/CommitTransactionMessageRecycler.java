@@ -37,4 +37,8 @@ public class CommitTransactionMessageRecycler extends MessageRecyclerImpl implem
     return;
   }
 
+  public void transactionManagerStarted(Set cids) {
+    return;
+  }
+
 }

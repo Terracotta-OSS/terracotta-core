@@ -20,5 +20,7 @@ public interface ServerTransactionListener {
   public void addResentServerTransactionIDs(Collection stxIDs);
 
   public void clearAllTransactionsFor(ChannelID killedClient);
+
+  public void transactionManagerStarted(Set cids);
   
 }

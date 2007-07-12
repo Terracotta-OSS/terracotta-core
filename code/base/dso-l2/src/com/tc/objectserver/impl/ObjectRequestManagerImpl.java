@@ -44,7 +44,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
 
   }
 
-  public synchronized void start() {
+  public synchronized void transactionManagerStarted(Set cids) {
     state = STARTING;
     objectManager.start();
     moveToStartedIfPossible();
@@ -126,5 +126,6 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
       return responseContext;
     }
   }
+
 
 }
