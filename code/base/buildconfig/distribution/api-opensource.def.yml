@@ -5,7 +5,8 @@ root_directory: terracotta-api-version
 bundled_components:
   - base:
       module_packages:
-        - terracotta-api-version:
+        - terracotta-api-version-vsuffix:
+            vsuffix: PRE-ALPHA
             modules:
               - aspectwerkz
               - common

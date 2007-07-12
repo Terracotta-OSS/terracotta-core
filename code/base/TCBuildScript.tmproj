@@ -66,7 +66,7 @@
 				<key>column</key>
 				<integer>0</integer>
 				<key>line</key>
-				<integer>17</integer>
+				<integer>8</integer>
 			</dict>
 			<key>columnSelection</key>
 			<false/>
@@ -79,14 +79,14 @@
 				<key>column</key>
 				<integer>0</integer>
 				<key>line</key>
-				<integer>9</integer>
+				<integer>7</integer>
 			</dict>
 			<key>selectTo</key>
 			<dict>
 				<key>column</key>
 				<integer>0</integer>
 				<key>line</key>
-				<integer>17</integer>
+				<integer>8</integer>
 			</dict>
 		</dict>
 		<key>buildconfig/distribution/dso-opensource.def.yml</key>
@@ -154,14 +154,30 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>16</integer>
+				<integer>93</integer>
 				<key>line</key>
-				<integer>85</integer>
+				<integer>86</integer>
 			</dict>
+			<key>columnSelection</key>
+			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>43</integer>
+			<integer>63</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>89</integer>
+				<key>line</key>
+				<integer>86</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>93</integer>
+				<key>line</key>
+				<integer>86</integer>
+			</dict>
 		</dict>
 		<key>buildscripts/extensions/bundled-modules.rb</key>
 		<dict>
@@ -182,9 +198,9 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>52</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>55</integer>
+				<integer>101</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
