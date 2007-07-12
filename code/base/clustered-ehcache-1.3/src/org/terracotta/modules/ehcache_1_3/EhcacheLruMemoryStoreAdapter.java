@@ -2,6 +2,7 @@ package org.terracotta.modules.ehcache_1_3;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
+import com.tc.asm.Label;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
@@ -40,11 +41,39 @@ public class EhcacheLruMemoryStoreAdapter extends ClassAdapter
 		if (this.className.equals(LRUMEMORYSTORE_CLASS_NAME_SLASH)
 				&& name.equals("loadMapInstance")
 				&& desc.equals("()Ljava/util/Map;")) {
-			mv = new LruMemoryStoreLoadMapInstanceMethodAdapter(mv);
+		    mv = recreateLoadMapInstanceMethod(mv);
 		}
 		return mv;
 	}
 
+	/**
+	 * Replace the LruMemoryStore.loadMapInstanceMethod(..) so that it will always
+	 * return a Map interface referring to a java.util.HashMap instance.
+	 * @param mv
+	 * @return
+	 */
+	private MethodVisitor recreateLoadMapInstanceMethod(MethodVisitor mv) {
+		mv.visitCode();
+		Label l0 = new Label();
+		mv.visitLabel(l0);
+		mv.visitLineNumber(64, l0);
+		mv.visitTypeInsn(NEW, "java/util/HashMap");
+		mv.visitInsn(DUP);
+		mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashMap", "<init>", "()V");
+		mv.visitInsn(ARETURN);
+		Label l1 = new Label();
+		mv.visitLabel(l1);
+		mv.visitLocalVariable("this", "Lnet/sf/ehcache/store/LruMemoryStore;", null, l0, l1, 0);
+		mv.visitMaxs(2, 1);
+		mv.visitEnd();
+		return null;
+	}
+
+	/**
+	 * Force the LruMemoryStore.loadMapInstanceMethod(..) so that it will always
+	 * return a Map interface referring to a LruMemoryStore.SpoolingLRUMap instance.
+	 * @deprecated
+	 */
 	private static class LruMemoryStoreLoadMapInstanceMethodAdapter extends
 			MethodAdapter implements Opcodes {
 
@@ -74,7 +103,7 @@ public class EhcacheLruMemoryStoreAdapter extends ClassAdapter
 			}
 			super.visitTypeInsn(opcode, desc);
 		}
-
+		
 		public void visitMethodInsn(int opcode, String owner, String name,
 				String desc) {
 			if ((opcode == INVOKESPECIAL)
