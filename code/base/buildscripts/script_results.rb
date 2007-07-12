@@ -51,7 +51,9 @@ class ScriptResults
     def to_s
         if failed?
             out = "Build failed:\n"
+            out += "----- begin failures -----"
             @failed_reasons.each { |reason| out += reason + "\n" }
+            out += "----- end failures -----"
         else
             out = "Build passed."
         end
