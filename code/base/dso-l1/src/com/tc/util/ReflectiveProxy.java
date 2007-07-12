@@ -71,6 +71,7 @@ public class ReflectiveProxy {
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       String key = makeMethodKey(method);
       Method targetMethod = (Method) methods.get(key);
+      targetMethod.setAccessible(true);
       if (targetMethod == null) { throw new AssertionError("missing method for " + key); }
       return targetMethod.invoke(obj, args);
     }
