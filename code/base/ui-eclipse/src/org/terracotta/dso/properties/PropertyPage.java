@@ -17,7 +17,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
 import org.terracotta.dso.TcPlugin;
-import org.terracotta.dso.editors.chooser.FileBehavior;
+import org.terracotta.dso.editors.chooser.ConfigFileBehavior;
 import org.terracotta.dso.editors.chooser.NavigatorBehavior;
 import org.terracotta.dso.editors.chooser.PackageNavigator;
 import org.terracotta.ui.util.SWTUtil;
@@ -70,7 +70,7 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
     SWTUtil.applyDefaultButtonSize(m_configFileButton);
     m_configFileButton.addSelectionListener(new SelectionAdapter() {
       public void widgetSelected(SelectionEvent e) {
-        NavigatorBehavior behavior = new FileBehavior();
+        NavigatorBehavior behavior = new ConfigFileBehavior();
         PackageNavigator dialog = new PackageNavigator(getShell(), behavior.getTitle(), getProject(), behavior);
         dialog.addValueListener(new UpdateEventListener() {
           public void handleUpdate(UpdateEvent event) {

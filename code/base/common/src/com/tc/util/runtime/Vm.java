@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 public class Vm {
 
   public static final Pattern JVM_VERSION_PATTERN         = Pattern
-                                                              .compile("^(\\p{Digit})\\.(\\p{Digit})\\.(\\p{Digit})(?:_(.+))?$");
+                                                              .compile("^(\\p{Digit})\\.(\\p{Digit})\\.(\\p{Digit})(?:[-_](.+))?$");
   public static final Pattern IBM_SERVICE_RELEASE_PATTERN = Pattern
                                                               .compile("^[^-]+-\\p{Digit}{8}\\p{Space}+\\(.*(SR\\p{Digit}+).*\\)$");
 
@@ -58,8 +58,12 @@ public class Vm {
     return VERSION.isJDK16();
   }
 
+  public static boolean isJDK17() {
+    return VERSION.isJDK17();
+  }
+
   public static boolean isJDK15Compliant() {
-    return VERSION.isJDK15() || VERSION.isJDK16();
+    return VERSION.isJDK15() || VERSION.isJDK16() || VERSION.isJDK17();
   }
 
   public static boolean isIBM() {
@@ -155,6 +159,10 @@ public class Vm {
       return mega == 1 && major == 6;
     }
 
+    public boolean isJDK17() {
+      return mega == 1 && major == 7;
+    }
+    
     public boolean isIBM() {
       return isIBM;
     }

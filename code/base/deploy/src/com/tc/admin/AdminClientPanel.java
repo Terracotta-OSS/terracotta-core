@@ -899,10 +899,9 @@ public class AdminClientPanel extends XContainer
 
     public void actionPerformed(ActionEvent ae) {
       if(m_aboutDialog == null) {
-        AdminClientContext acc   = AdminClient.getContext();
-        java.awt.Frame     frame = getFrame();
+        AdminClientContext acc = AdminClient.getContext();
 
-        m_aboutDialog = frame != null ? new Dialog(frame) : new Dialog();
+        m_aboutDialog = new Dialog(getFrame(), true);
         m_aboutDialog.load((DialogResource)acc.topRes.child("AboutDialog"));
 
         AdminClientInfoPanel info;

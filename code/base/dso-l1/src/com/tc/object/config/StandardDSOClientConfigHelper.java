@@ -457,7 +457,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     // end java.awt.geom.Ellipse2D
 
     // java.awt.geom.Path2D
-    if (Vm.isJDK16()) {
+    if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() >= 6) {
       spec = getOrCreateSpec("java.awt.geom.Path2D");
       spec = getOrCreateSpec("java.awt.geom.Path2D$Double");
       spec = getOrCreateSpec("java.awt.geom.Path2D$Float");
@@ -932,7 +932,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   }
 
   private void addJavaUtilConcurrentFutureTaskSpec() {
-    if (Vm.isJDK16()) {
+    if (Vm.getMegaVersion() >= 1 && Vm.getMajorVersion() >= 6) {
       getOrCreateSpec("java.util.concurrent.locks.AbstractOwnableSynchronizer");
     }
     TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.FutureTask$Sync");

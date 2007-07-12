@@ -1291,10 +1291,14 @@ public class TcPlugin extends AbstractUIPlugin
   }
 
   public void closeConfigurationEditor(IProject project) {
-    ConfigurationEditor configEditor = getConfigurationEditor(project);
+    final ConfigurationEditor configEditor = getConfigurationEditor(project);
 
     if (configEditor != null) {
-      configEditor.closeEditor();
+      Display.getDefault().asyncExec(new Runnable() {
+        public void run() {
+          configEditor.closeEditor();
+        }
+      });
     }
   }
 

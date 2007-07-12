@@ -4,6 +4,7 @@
  */
 package org.terracotta.dso.editors.chooser;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -19,15 +20,21 @@ import org.eclipse.jdt.internal.ui.viewsupport.JavaUILabelProvider;
 import org.eclipse.jdt.ui.JavaElementLabels;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 import org.eclipse.ui.model.WorkbenchContentProvider;
 import org.terracotta.ui.util.SWTUtil;
@@ -51,6 +58,7 @@ public class PackageNavigator extends MessageDialog {
     super(shell, title, null, null, MessageDialog.NONE, new String[] {
       IDialogConstants.OK_LABEL,
       IDialogConstants.CANCEL_LABEL }, 0);
+    setShellStyle(getShellStyle() | SWT.RESIZE);
     this.m_parentShell = shell;
     this.m_project = project;
     this.m_valueListener = new EventMulticaster();
@@ -174,6 +182,28 @@ public class PackageNavigator extends MessageDialog {
     private Layout(Composite parent, int style) {
       this.m_viewer = new TreeViewer(parent, style | SWT.BORDER);
       m_viewer.getTree().setLayoutData(new GridData(GridData.FILL_BOTH));
+      m_viewer.getTree().addMouseListener(new MouseAdapter() {
+        public void mouseDoubleClick(MouseEvent e) {
+          ISelection sel = m_viewer.getSelection();
+
+          if (sel instanceof StructuredSelection && !sel.isEmpty()) {
+            Object o = ((StructuredSelection) sel).getFirstElement();
+
+            if (o instanceof IFile) {
+              buttonPressed(IDialogConstants.OK_ID);
+            } else {
+              Tree tree = (Tree) e.widget;
+              TreeItem[] selection = tree.getSelection();
+
+              if (selection.length > 0) {
+                TreeItem item = selection[0];
+                item.setExpanded(!item.getExpanded());
+                m_viewer.refresh();
+              }
+            }
+          }
+        }
+      });
     }
   }
 }
