@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-  All content copyright (c) 2007 Terracotta, Inc.,
-  except as may otherwise be noted in a separate copyright notice.
-  All rights reserved
+All content copyright (c) 2007 Terracotta, Inc.,
+except as may otherwise be noted in a separate copyright notice.
+All rights reserved
 
 -->
 <xml-fragment>
@@ -136,7 +136,6 @@
     <include>sun.util.calendar.CalendarSystem</include>
     <include>sun.util.calendar.ZoneInfo</include>
 
-    <include>java.lang.AbstractStringBuilder</include>
     <include>java.lang.StringBuffer</include>
 
     <include>java.util.Currency</include>
