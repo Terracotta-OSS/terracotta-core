@@ -27,7 +27,6 @@ import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
-import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet2;
 
@@ -52,7 +51,6 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
                                                                                .getLogger(ReplicatedTransactionManagerImpl.class);
 
   private final ServerTransactionManager               transactionManager;
-  private final TransactionalObjectManager             txnObjectManager;
   private final GroupManager                           groupManager;
   private final OrderedSink                            objectsSyncSink;
 
@@ -63,12 +61,10 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
   private final NullPassiveTransactionManager          activeTxnMgr        = new NullPassiveTransactionManager();
 
   public ReplicatedTransactionManagerImpl(GroupManager groupManager, OrderedSink objectsSyncSink,
-                                          ServerTransactionManager transactionManager,
-                                          TransactionalObjectManager txnObjectManager) {
+                                          ServerTransactionManager transactionManager) {
     this.groupManager = groupManager;
     this.objectsSyncSink = objectsSyncSink;
     this.transactionManager = transactionManager;
-    this.txnObjectManager = txnObjectManager;
     groupManager.registerForMessages(ObjectSyncResetMessage.class, this);
     this.delegate = passiveUninitTxnMgr;
   }
@@ -80,7 +76,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
       logger.info("Not initing with known Ids since not in UNINITIALIED state : " + knownObjectIDs.size());
     }
   }
-  
+
   public synchronized void addCommitedTransactions(ChannelID channelID, Set txnIDs, Collection txns,
                                                    Collection completedTxnIDs) {
     delegate.addCommitedTransactions(channelID, txnIDs, txns, completedTxnIDs);

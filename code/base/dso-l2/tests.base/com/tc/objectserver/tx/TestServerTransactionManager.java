@@ -14,6 +14,8 @@ import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,6 +29,8 @@ public class TestServerTransactionManager implements ServerTransactionManager {
 
   public final NoExceptionLinkedQueue shutdownClientCalls = new NoExceptionLinkedQueue();
   public final ArrayList              incomingTxnContexts = new ArrayList();
+  public final List                   incomingTxns        = new ArrayList();
+  public final Set                    completedTxns       = new HashSet();
 
   public void shutdownClient(ChannelID deadClient) {
     shutdownClientCalls.put(deadClient);
@@ -70,8 +74,10 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   }
 
   public void incomingTransactions(ChannelID channelID, Set txnIDs, Collection txns, boolean relayed,
-                                   Collection completedTxns) {
+                                   Collection cmpltedTxns) {
     incomingTxnContexts.add(new Object[] { channelID, txnIDs, Boolean.valueOf(relayed) });
+    incomingTxns.addAll(txns);
+    completedTxns.addAll(cmpltedTxns);
   }
 
   public void transactionsRelayed(ChannelID channelID, Set serverTxnIDs) {

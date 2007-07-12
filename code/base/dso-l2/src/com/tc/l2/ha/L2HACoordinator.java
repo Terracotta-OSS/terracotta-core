@@ -54,7 +54,6 @@ import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.persistence.api.PersistentMapStore;
 import com.tc.objectserver.tx.ServerTransactionManager;
-import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorListener;
@@ -83,21 +82,20 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
   public L2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server, StageManager stageManager,
                          PersistentMapStore clusterStateStore, ObjectManager objectManager,
-                         ServerTransactionManager transactionManager, TransactionalObjectManager txnObjectManager,
-                         ServerGlobalTransactionManager gtxm, DSOChannelManager channelManager, NewHaConfig haConfig) {
+                         ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
+                         DSOChannelManager channelManager, NewHaConfig haConfig) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.haConfig = haConfig;
 
-    init(stageManager, clusterStateStore, objectManager, transactionManager, txnObjectManager, gtxm, channelManager);
+    init(stageManager, clusterStateStore, objectManager, transactionManager, gtxm, channelManager);
   }
 
   private void init(StageManager stageManager, PersistentMapStore clusterStateStore, ObjectManager objectManager,
-                    ServerTransactionManager transactionManager, TransactionalObjectManager txnObjectManager,
-                    ServerGlobalTransactionManager gtxm, DSOChannelManager channelManager) {
+                    ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
+                    DSOChannelManager channelManager) {
     try {
-      basicInit(stageManager, clusterStateStore, objectManager, transactionManager, txnObjectManager, gtxm,
-                channelManager);
+      basicInit(stageManager, clusterStateStore, objectManager, transactionManager, gtxm, channelManager);
     } catch (GroupException e) {
       logger.error(e);
       throw new AssertionError(e);
@@ -105,8 +103,8 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   }
 
   private void basicInit(StageManager stageManager, PersistentMapStore clusterStateStore, ObjectManager objectManager,
-                         ServerTransactionManager transactionManager, TransactionalObjectManager txnObjectManager,
-                         ServerGlobalTransactionManager gtxm, DSOChannelManager channelManager) throws GroupException {
+                         ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
+                         DSOChannelManager channelManager) throws GroupException {
 
     this.clusterState = new ClusterState(clusterStateStore, server.getManagedObjectStore(), server
         .getConnectionIdFactory(), gtxm.getGlobalTransactionIDSequenceProvider());
@@ -155,12 +153,11 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
         .getConnectionIdFactory(), stageManager.getStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE).getSink());
 
     OrderedSink orderedObjectsSyncSink = new OrderedSink(logger, objectsSyncSink);
-    this.rTxnManager = new ReplicatedTransactionManagerImpl(groupManager, orderedObjectsSyncSink, transactionManager,
-                                                            txnObjectManager);
+    this.rTxnManager = new ReplicatedTransactionManagerImpl(groupManager, orderedObjectsSyncSink, transactionManager);
 
     this.rObjectManager = new ReplicatedObjectManagerImpl(groupManager, stateManager, l2ObjectStateManager,
-                                                          rTxnManager, objectManager, transactionManager, objectsSyncRequestSink,
-                                                          sequenceGenerator);
+                                                          rTxnManager, objectManager, transactionManager,
+                                                          objectsSyncRequestSink, sequenceGenerator);
 
     this.groupManager.routeMessages(ObjectSyncMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(ObjectSyncCompleteMessage.class, orderedObjectsSyncSink);

@@ -6,7 +6,6 @@ package com.tc.l2.objectserver;
 
 import com.tc.async.impl.MockSink;
 import com.tc.async.impl.OrderedSink;
-import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.SingleNodeGroupManager;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -15,18 +14,14 @@ import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
-import com.tc.objectserver.context.CommitTransactionContext;
-import com.tc.objectserver.context.RecallObjectsContext;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
 import com.tc.objectserver.tx.TestServerTransactionManager;
-import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.util.SequenceID;
 
 import java.util.ArrayList;
@@ -48,7 +43,6 @@ public class ReplicatedTransactionManagerTest extends TestCase {
   ReplicatedTransactionManagerImpl rtm;
   SingleNodeGroupManager           grpMgr;
   TestServerTransactionManager     txnMgr;
-  TestTransactionalObjectManager   txnObjectMgr;
   TestGlobalTransactionManager     gtxm;
   ChannelID                        channelID;
 
@@ -56,10 +50,9 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     channelID = new ChannelID(1);
     grpMgr = new SingleNodeGroupManager();
     txnMgr = new TestServerTransactionManager();
-    txnObjectMgr = new TestTransactionalObjectManager();
     gtxm = new TestGlobalTransactionManager();
     rtm = new ReplicatedTransactionManagerImpl(grpMgr, new OrderedSink(TCLogging
-        .getLogger(ReplicatedTransactionManagerTest.class), new MockSink()), txnMgr, txnObjectMgr);
+        .getLogger(ReplicatedTransactionManagerTest.class), new MockSink()), txnMgr);
   }
 
   /**
@@ -99,7 +92,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     rtm.addCommitedTransactions(channelID, txns.keySet(), txns.values(), Collections.EMPTY_LIST);
 
     // None should be sent thru
-    assertTrue(txnObjectMgr.incomingTxns.isEmpty());
+    assertTrue(txnMgr.incomingTxns.isEmpty());
 
     // Create more txns with all unknown ObjectIDs (7,8,9)
     LinkedHashMap txns1 = createTxns(1, 7, 1, false);
@@ -108,7 +101,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     rtm.addCommitedTransactions(channelID, txns2.keySet(), txns2.values(), Collections.EMPTY_LIST);
 
     // None should be sent thru
-    assertTrue(txnObjectMgr.incomingTxns.isEmpty());
+    assertTrue(txnMgr.incomingTxns.isEmpty());
 
     // Now create Object Sync Txn for 4,5,6
     LinkedHashMap syncTxns = createTxns(1, 4, 3, true);
@@ -116,8 +109,8 @@ public class ReplicatedTransactionManagerTest extends TestCase {
 
     // One Compound Transaction containing the object DNA and the delta DNA should be sent to the
     // transactionalObjectManager
-    assertTrue(txnObjectMgr.incomingTxns.size() == 1);
-    ServerTransaction gotTxn = (ServerTransaction) txnObjectMgr.incomingTxns.remove(0);
+    assertTrue(txnMgr.incomingTxns.size() == 1);
+    ServerTransaction gotTxn = (ServerTransaction) txnMgr.incomingTxns.remove(0);
     assertContainsAllAndRemove((ServerTransaction) syncTxns.values().iterator().next(), gotTxn);
     assertContainsAllVersionizedAndRemove((ServerTransaction) txns.values().iterator().next(), gotTxn);
     assertTrue(gotTxn.getChanges().isEmpty());
@@ -133,8 +126,8 @@ public class ReplicatedTransactionManagerTest extends TestCase {
 
     // One Compound Transaction containing the object DNA for 7 and the delta DNA should be sent to the
     // transactionalObjectManager
-    assertTrue(txnObjectMgr.incomingTxns.size() == 1);
-    gotTxn = (ServerTransaction) txnObjectMgr.incomingTxns.remove(0);
+    assertTrue(txnMgr.incomingTxns.size() == 1);
+    gotTxn = (ServerTransaction) txnMgr.incomingTxns.remove(0);
     List changes = gotTxn.getChanges();
     assertEquals(4, changes.size());
     DNA dna = (DNA) changes.get(0);
@@ -184,14 +177,14 @@ public class ReplicatedTransactionManagerTest extends TestCase {
   }
 
   private void assertAndClear(Collection txns) {
-    assertEquals(new ArrayList(txns), txnObjectMgr.incomingTxns);
-    txnObjectMgr.incomingTxns.clear();
+    assertEquals(new ArrayList(txns), txnMgr.incomingTxns);
+    txnMgr.incomingTxns.clear();
   }
 
   private void assertAndClear(Collection txns, Set completedTxnIDs) {
     assertAndClear(txns);
-    assertEquals(completedTxnIDs, txnObjectMgr.completedTxns);
-    txnObjectMgr.completedTxns.clear();
+    assertEquals(completedTxnIDs, txnMgr.completedTxns);
+    txnMgr.completedTxns.clear();
   }
 
   long bid = 0;
@@ -221,42 +214,6 @@ public class ReplicatedTransactionManagerTest extends TestCase {
       map.put(tx.getServerTransactionID(), tx);
     }
     return map;
-  }
-
-  public class TestTransactionalObjectManager implements TransactionalObjectManager {
-
-    List incomingTxns  = new ArrayList();
-    Set  completedTxns = new HashSet();
-
-    public void addTransactions(Collection txns, Collection completedTxnIds) {
-      incomingTxns.addAll(txns);
-      completedTxns.addAll(completedTxnIds);
-    }
-
-    public boolean applyTransactionComplete(ServerTransactionID stxnID) {
-      throw new ImplementMe();
-    }
-
-    public void commitTransactionsComplete(CommitTransactionContext ctc) {
-      throw new ImplementMe();
-    }
-
-    public void lookupObjectsForTransactions() {
-      throw new ImplementMe();
-    }
-
-    public void processApplyComplete() {
-      throw new ImplementMe();
-    }
-
-    public void recallAllCheckedoutObject() {
-      throw new ImplementMe();
-    }
-
-    public void recallCheckedoutObject(RecallObjectsContext roc) {
-      throw new ImplementMe();
-    }
-
   }
 
 }

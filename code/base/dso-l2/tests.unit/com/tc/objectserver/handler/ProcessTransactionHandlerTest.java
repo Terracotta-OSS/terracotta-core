@@ -6,9 +6,7 @@ package com.tc.objectserver.handler;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
-import com.tc.async.api.EventContext;
 import com.tc.async.api.Stage;
-import com.tc.async.impl.MockSink;
 import com.tc.async.impl.MockStage;
 import com.tc.exception.ImplementMe;
 import com.tc.l2.api.L2Coordinator;
@@ -40,12 +38,9 @@ import com.tc.objectserver.tx.ServerTransactionImpl;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.objectserver.tx.TestTransactionBatchManager;
-import com.tc.objectserver.tx.TestTransactionalStageCoordinator;
 import com.tc.objectserver.tx.TransactionBatchReader;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
-import com.tc.objectserver.tx.TransactionSequencer;
 import com.tc.objectserver.tx.TransactionalObjectManager;
-import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.SequenceID;
 import com.tc.util.SequenceValidator;
@@ -68,8 +63,6 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
   private TestTransactionBatchManager       transactionBatchManager;
   private TestGlobalTransactionManager      gtxm;
   private SequenceValidator                 sequenceValidator;
-  private TransactionalObjectManager        txnObjectManager;
-  private TestTransactionalStageCoordinator txnStageCoordinator;
   public L2Coordinator                      l2Coordinator;
   public TestServerTransactionManager       transactionMgr;
 
@@ -78,9 +71,6 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     transactionBatchManager = new TestTransactionBatchManager();
     gtxm = new TestGlobalTransactionManager();
     sequenceValidator = new SequenceValidator(0);
-    txnStageCoordinator = new TestTransactionalStageCoordinator();
-    txnObjectManager = new TransactionalObjectManagerImpl(objectManager, new TransactionSequencer(), gtxm,
-                                                          txnStageCoordinator);
     handler = new ProcessTransactionHandler(transactionBatchManager, sequenceValidator, new NullMessageRecycler());
 
     transactionBatchReaderFactory = new TestTransactionBatchReaderFactory();
@@ -132,13 +122,6 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     assertNotNull(incomingCallContext);
     assertTrue(transactionMgr.incomingTxnContexts.isEmpty());
 
-    // make sure that a lookup context is put into the lookup queue
-    MockSink lookupSink = txnStageCoordinator.lookupSink;
-    assertFalse(lookupSink.queue.isEmpty());
-
-    EventContext context = (EventContext) lookupSink.queue.remove(0);
-    assertNotNull(context);
-
     // Look up shouldnt have happened yet
     args = (Object[]) objectManager.lookupObjectForCreateIfNecessaryContexts.poll(100);
     assertNull(args);
@@ -167,15 +150,11 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     // HANDLE EVENT
     objectManager.makePending = true;
     handler.handleEvent(null);
-    assertFalse(lookupSink.queue.isEmpty());
 
     // check to see if incomingTransactions are called on transactionMgr
     incomingCallContext = (Object[]) transactionMgr.incomingTxnContexts.remove(0);
     assertNotNull(incomingCallContext);
     assertTrue(transactionMgr.incomingTxnContexts.isEmpty());
-
-    context = (EventContext) lookupSink.queue.remove(0);
-    assertNotNull(context);
 
   }
 
@@ -278,7 +257,7 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     }
 
     public TransactionalObjectManager getTransactionalObjectManager() {
-      return txnObjectManager;
+      return null;
     }
 
     public L2Coordinator getL2Coordinator() {
