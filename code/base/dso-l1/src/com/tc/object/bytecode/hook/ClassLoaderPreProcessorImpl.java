@@ -115,6 +115,7 @@ public class ClassLoaderPreProcessorImpl {
       mv.visitVarInsn(ILOAD, 3);
       mv.visitVarInsn(ILOAD, 4);
       mv.visitVarInsn(ALOAD, 5);
+      mv.visitTypeInsn(CHECKCAST, "java/security/ProtectionDomain");
       mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/ClassProcessorHelper", "defineClass0Pre",
                          "(Ljava/lang/ClassLoader;Ljava/lang/String;[BIILjava/security/ProtectionDomain;)[B");
 
