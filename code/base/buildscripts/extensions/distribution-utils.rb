@@ -97,13 +97,13 @@ module DistributionUtils
     FilePath.new(product_directory, (component[:install_directory] || ''), (suffix || ''))
   end 
 
-  def interpolate(s, vsuffix=nil)
+  def interpolate(s)
     s = s.gsub(/version/, @build_environment.version)
-    s = s.gsub(/vsuffix/, vsuffix || '')
     s = s.gsub(/branch/, @build_environment.current_branch)
     s = s.gsub(/platform/, @build_environment.os_family.downcase)
     s = s.gsub(/revision/, @build_environment.current_revision.to_s)
     s = s.gsub(/edition/, @build_environment.edition)  
+    s = s.downcase
     s
   end
 end

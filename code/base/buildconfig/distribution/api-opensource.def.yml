@@ -1,12 +1,11 @@
 name: Terracotta DSO API
 internal_name: api
-kit_name_pattern: terracotta-api-platform-version
+kit_name_pattern: terracotta-api-version-PREALPHA-bundle
 root_directory: terracotta-api-version
 bundled_components:
   - base:
       module_packages:
-        - terracotta-api-version-vsuffix:
-            vsuffix: PRE-ALPHA
+        - terracotta-api-version-PREALPHA:
             modules:
               - aspectwerkz
               - common
@@ -17,7 +16,4 @@ bundled_components:
               - modules-common-1.0
               - thirdparty
 packaging:
-  - tar:
-      assert: '@build_environment.os_type !~ /^\s*windows\s*$/i'
-  - zip:
-      assert: '@build_environment.os_type =~ /^\s*windows\s*$/i'
+  - mvn

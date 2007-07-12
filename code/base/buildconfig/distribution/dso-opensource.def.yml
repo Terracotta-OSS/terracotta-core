@@ -71,9 +71,8 @@ bundled_components:
               - dso-l1-tomcat
               - dso-l1-tomcat50
               - dso-l1-tomcat55
-        - terracotta-api-version-vsuffix:
+        - terracotta-api-version-PREALPHA:
             install_directory: lib
-            vsuffix: PRE-ALPHA
             modules:
               - aspectwerkz
               - common
