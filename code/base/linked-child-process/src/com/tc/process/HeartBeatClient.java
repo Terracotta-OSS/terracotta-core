@@ -14,7 +14,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class HeartBeatClient extends Thread {
-  private static final int  HEARTBEAT_TIMEOUT = HeartBeatServer.PULSE_INTERVAL + 5000;
+  private static final int  HEARTBEAT_TIMEOUT = HeartBeatServer.PULSE_INTERVAL * 2;
   private static DateFormat DATEFORMAT        = new SimpleDateFormat("HH:mm:ss.SSS");
 
   private Socket            socket;
