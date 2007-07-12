@@ -14,6 +14,9 @@ bundled_components:
               - dso-l1
               - dso-l1-jdk15
               - modules-common-1.0
+              - management
               - thirdparty
 packaging:
   - mvn
+postscripts:
+  - make-terracotta-api-pom
