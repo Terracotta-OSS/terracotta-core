@@ -54,6 +54,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private final Map                            transactionAccounts = Collections.synchronizedMap(new HashMap());
   private final ClientStateManager             stateManager;
   private final ObjectManager                  objectManager;
+  private final ResentTransactionSequencer     resentTxnSequencer;
   private final TransactionAcknowledgeAction   action;
   private final LockManager                    lockManager;
   private final List                           rootEventListeners  = new CopyOnWriteArrayList();
@@ -71,13 +72,14 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
   public ServerTransactionManagerImpl(ServerGlobalTransactionManager gtxm, TransactionStore transactionStore,
                                       LockManager lockManager, ClientStateManager stateManager,
-                                      ObjectManager objectManager, TransactionAcknowledgeAction action,
-                                      Counter transactionRateCounter, ChannelStats channelStats,
-                                      ServerTransactionManagerConfig config) {
+                                      ObjectManager objectManager, TransactionalObjectManager txnObjectManager,
+                                      TransactionAcknowledgeAction action, Counter transactionRateCounter,
+                                      ChannelStats channelStats, ServerTransactionManagerConfig config) {
     this.gtxm = gtxm;
     this.lockManager = lockManager;
     this.objectManager = objectManager;
     this.stateManager = stateManager;
+    this.resentTxnSequencer = new ResentTransactionSequencer(this, gtxm, txnObjectManager);
     this.action = action;
     this.transactionRateCounter = transactionRateCounter;
     this.channelStats = channelStats;
@@ -142,10 +144,12 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     // For Network enabled Active/Passive, when a passive becomes active, this will be called and the passive (now
     // active) will correct itself.
     gtxm.shutdownAllClientsExcept(cids);
+    fireTransactionManagerStartedEvent(cids);
   }
 
   public void goToActiveMode() {
     state = ACTIVE_MODE;
+    resentTxnSequencer.goToActiveMode();
   }
 
   public void addWaitingForAcknowledgement(ChannelID waiter, TransactionID txnID, ChannelID waitee) {
@@ -265,7 +269,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  public void incomingTransactions(ChannelID cid, Set txnIDs, Collection txns, boolean relayed) {
+  public void incomingTransactions(ChannelID cid, Set txnIDs, Collection txns, boolean relayed,
+                                   Collection completedTxnIds) {
     final boolean active = isActive();
     TransactionAccount ci = getOrCreateTransactionAccount(cid);
     ci.incommingTransactions(txnIDs);
@@ -280,6 +285,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       }
     }
     fireIncomingTransactionsEvent(cid, txnIDs);
+    resentTxnSequencer.addTransactions(txns, completedTxnIds);
   }
 
   private boolean isActive() {
@@ -433,6 +439,19 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       }
     }
   }
+  
+  private void fireTransactionManagerStartedEvent(Set cids) {
+    for (Iterator iter = txnEventListeners.iterator(); iter.hasNext();) {
+      try {
+        ServerTransactionListener listener = (ServerTransactionListener) iter.next();
+        listener.transactionManagerStarted(cids);
+      } catch (Exception e) {
+        logger.error("Exception in Txn listener event callback: ", e);
+        throw new AssertionError(e);
+      }
+    }
+  }
+
 
   public void setResentTransactionIDs(ChannelID channelID, Collection transactionIDs) {
     if (transactionIDs.isEmpty()) return;
@@ -507,6 +526,10 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         logger.warn("TxnsInSystemCompletionLister :: Still waiting for completion of " + txnsInSystem.size()
                     + " txns to call callback " + callback + " count = " + count);
       }
+    }
+
+    public void transactionManagerStarted(Set cids) {
+      //NOP
     }
 
   }

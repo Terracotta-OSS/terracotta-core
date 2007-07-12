@@ -81,8 +81,7 @@ public class ProcessTransactionHandlerTest extends TCTestCase {
     txnStageCoordinator = new TestTransactionalStageCoordinator();
     txnObjectManager = new TransactionalObjectManagerImpl(objectManager, new TransactionSequencer(), gtxm,
                                                           txnStageCoordinator);
-    handler = new ProcessTransactionHandler(transactionBatchManager, txnObjectManager, sequenceValidator,
-                                            new NullMessageRecycler());
+    handler = new ProcessTransactionHandler(transactionBatchManager, sequenceValidator, new NullMessageRecycler());
 
     transactionBatchReaderFactory = new TestTransactionBatchReaderFactory();
     transactionMgr = new TestServerTransactionManager();

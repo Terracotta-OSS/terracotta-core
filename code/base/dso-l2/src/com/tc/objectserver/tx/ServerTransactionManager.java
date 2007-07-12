@@ -84,7 +84,8 @@ public interface ServerTransactionManager {
   
   public void callBackOnTxnsInSystemCompletion(TxnsInSystemCompletionLister l);
 
-  public void incomingTransactions(ChannelID channelID, Set txnIDs, Collection txns, boolean relayed);
+  public void incomingTransactions(ChannelID channelID, Set txnIDs, Collection txns, boolean relayed,
+                                   Collection completedTxnIds);
 
   public void transactionsRelayed(ChannelID channelID, Set serverTxnIDs);
   

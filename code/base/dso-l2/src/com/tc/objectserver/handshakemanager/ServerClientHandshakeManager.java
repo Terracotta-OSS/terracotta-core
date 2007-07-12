@@ -14,7 +14,6 @@ import com.tc.object.lockmanager.api.TryLockContext;
 import com.tc.object.lockmanager.api.WaitContext;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.lockmanager.api.LockManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -45,7 +44,6 @@ public class ServerClientHandshakeManager {
   private final LockManager              lockManager;
   private final Sink                     lockResponseSink;
   private final long                     reconnectTimeout;
-  private final ObjectRequestManager     objectRequestManager;
   private final DSOChannelManager        channelManager;
   private final TCLogger                 logger;
   private final SequenceValidator        sequenceValidator;
@@ -56,14 +54,12 @@ public class ServerClientHandshakeManager {
   private final ServerTransactionManager transactionManager;
 
   public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager,
-                                      ObjectRequestManager objectRequestManager,
                                       ServerTransactionManager transactionManager, SequenceValidator sequenceValidator,
                                       ClientStateManager clientStateManager, LockManager lockManager,
                                       Sink lockResponseSink, ObjectIDSequence oidSequence, TCTimer timer,
                                       long reconnectTimeout, boolean persistent) {
     this.logger = logger;
     this.channelManager = channelManager;
-    this.objectRequestManager = objectRequestManager;
     this.transactionManager = transactionManager;
     this.sequenceValidator = sequenceValidator;
     this.clientStateManager = clientStateManager;
@@ -204,7 +200,6 @@ public class ServerClientHandshakeManager {
   private void start() {
     logger.info("Starting DSO services...");
     lockManager.start();
-    objectRequestManager.start();
     Set cids = Collections.unmodifiableSet(channelManager.getRawChannelIDs());
     transactionManager.start(cids);
     for (Iterator i = cids.iterator(); i.hasNext();) {

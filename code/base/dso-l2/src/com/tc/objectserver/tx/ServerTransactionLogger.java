@@ -31,6 +31,10 @@ public class ServerTransactionLogger implements ServerTransactionListener {
   public void clearAllTransactionsFor(ChannelID killedClient) {
     logger.info("clearAllTransactionsFor: " + killedClient);
   }
+  
+  public void transactionManagerStarted(Set cids) {
+    logger.info("trasactionManagerStarted: " + cids);
+  }
 
   public void incomingTransactions(ChannelID cid, Set serverTxnIDs) {
     if (config.isVerboseLogging()) logger.info("incomingTransactions: " + cid + ", " + serverTxnIDs);
@@ -75,4 +79,5 @@ public class ServerTransactionLogger implements ServerTransactionListener {
     if (config.isVerboseLogging()) logger.info("transactionCompleted: " + stxID);
     decrementOutStandingTxns(1);
   }
+
 }
