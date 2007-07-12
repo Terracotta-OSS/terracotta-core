@@ -15,7 +15,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         xml.modelVersion "4.0.0"
         xml.groupId "org.terracotta"
         xml.artifactId "terracotta-api"
-        xml.version "2.4-prealpha"
+        xml.version interpolate(args[0])
         xml.packaging "jar"
         xml.name "Terracotta API"
         xml.url "http://kong/maven2"

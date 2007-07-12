@@ -19,4 +19,7 @@ bundled_components:
 packaging:
   - mvn
 postscripts:
-  - make-terracotta-api-pom
+  - make-terracotta-api-pom:
+      args:
+        - version-PREALPHA
+  
