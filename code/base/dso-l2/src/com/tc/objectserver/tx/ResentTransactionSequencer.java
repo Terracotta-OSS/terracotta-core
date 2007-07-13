@@ -44,7 +44,7 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
   private final Map                            pendingTxns            = new LinkedHashMap();
   private final Collection                     pendingCompletedTxnIDs = new ArrayList();
 
-  private volatile State                       state                  = PASS_THRU;
+  private State                                state                  = PASS_THRU;
 
   public ResentTransactionSequencer(ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
                                     TransactionalObjectManager txnObjectManager) {
@@ -53,7 +53,7 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
     this.txnObjectManager = txnObjectManager;
   }
 
-  public void addTransactions(Collection txns, Collection completedTxnIds) {
+  public synchronized void addTransactions(Collection txns, Collection completedTxnIds) {
     State lstate = state;
     if (lstate == PASS_THRU) {
       txnObjectManager.addTransactions(txns, completedTxnIds);
@@ -131,8 +131,10 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
     Assert.assertEquals(ADD_RESENT, state);
     for (Iterator i = stxIDs.iterator(); i.hasNext();) {
       ServerTransactionID stxID = (ServerTransactionID) i.next();
-      GlobalTransactionID gid = gtxm.getOrCreateGlobalTransactionID(stxID);
-      addOrdered(stxID, gid);
+      GlobalTransactionID gid = gtxm.getGlobalTransactionID(stxID);
+      if (!gid.isNull()) {
+        addOrdered(stxID, gid);
+      }
     }
     assertGidsInOrder();
     logger.info("Resent Txns = " + resentTxns);

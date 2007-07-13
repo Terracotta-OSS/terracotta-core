@@ -75,4 +75,8 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
   public GlobalTransactionIDSequenceProvider getGlobalTransactionIDSequenceProvider() {
     throw new ImplementMe();
   }
+
+  public GlobalTransactionID getGlobalTransactionID(ServerTransactionID serverTransactionID) {
+    throw new ImplementMe();
+  }
 }

@@ -26,8 +26,8 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
   private final Set             requestedObjectIDs;
   private Map                   objects;
   private final ObjectRequestID requestID;
-  private boolean               moreObjects    = false;
-  private int                   batchCount     = 0;
+  private boolean               moreObjects = false;
+  private int                   batchCount  = 0;
   private Set                   lookupPendingObjectIDs;
   private final int             maxRequestDepth;
   private final Sink            sink;
@@ -83,6 +83,10 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
     out.indent().println("requestID: " + requestID);
     out.indent().print("requestedObjectIDs: ").println(requestedObjectIDs);
     return rv;
+  }
+
+  public String toString() {
+    return "ManagedObjectRequestContext [ " + channelID + " , " + requestID + " , " + requestedObjectIDs + "]";
   }
 
   public void setResults(ObjectManagerLookupResults results) {

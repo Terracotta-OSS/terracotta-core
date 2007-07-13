@@ -75,6 +75,12 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
     return gdesc.getGlobalTransactionID();
   }
 
+  public GlobalTransactionID getGlobalTransactionID(ServerTransactionID serverTransactionID) {
+    GlobalTransactionDescriptor gdesc = transactionStore.getTransactionDescriptor(serverTransactionID);
+    return (gdesc != null ? gdesc.getGlobalTransactionID() : GlobalTransactionID.NULL_ID);
+
+  }
+
   public void createGlobalTransactionDescIfNeeded(ServerTransactionID stxnID, GlobalTransactionID globalTransactionID) {
     transactionStore.createGlobalTransactionDescIfNeeded(stxnID, globalTransactionID);
   }
@@ -82,7 +88,7 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
   public GlobalTransactionIDSequenceProvider getGlobalTransactionIDSequenceProvider() {
     return gidSequenceProvider;
   }
-  
+
   public Sequence getGlobalTransactionIDSequence() {
     return globalTransactionIDSequence;
   }
