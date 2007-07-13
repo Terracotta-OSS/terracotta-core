@@ -104,6 +104,9 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     parameters.appendSysProp("com.sun.management.jmxremote");
     parameters.appendSysProp("com.sun.management.jmxremote.authenticate", false);
     parameters.appendSysProp("com.sun.management.jmxremote.ssl", false);
+    
+    // for websphere
+    parameters.appendSysProp("javax.management.builder.initial", "");
 
     parameters.appendSysProp("com.sun.management.jmxremote.port", this.jmxRemotePort);
     parameters.appendSysProp("rmi.registry.port", this.rmiRegistryPort);
