@@ -4,7 +4,6 @@
  */
 package com.terracotta.session.util;
 
-import com.tc.object.bytecode.Manager;
 import com.terracotta.session.SessionId;
 
 import java.io.ByteArrayOutputStream;
@@ -16,7 +15,6 @@ import java.util.HashMap;
 import junit.framework.TestCase;
 
 public class DefaultIdGeneratorTest extends TestCase {
-  private final static int lockType = Manager.LOCK_TYPE_WRITE;
 
   public final void testIdUniqueness() {
     // this is a pretty silly attempt at uniqueness test...
