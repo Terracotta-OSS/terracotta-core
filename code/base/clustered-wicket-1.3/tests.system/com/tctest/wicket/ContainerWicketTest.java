@@ -21,6 +21,7 @@ import com.meterware.httpunit.WebResponse;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
+import com.tc.util.runtime.Vm;
 
 /**
  * An in-container smoke test for Wicket framework
@@ -35,7 +36,13 @@ public class ContainerWicketTest extends AbstractTwoServerDeploymentTest {
   }
   
   public ContainerWicketTest() {
-    //
+    if (Vm.isIBM()) {
+      this.disableAllUntil("2007-10-01");
+    }
+  }
+  
+  public boolean shouldDisable() {
+    return super.shouldDisable() || Vm.isIBM();
   }
 
   public void testWicketInitialization() throws Exception {
