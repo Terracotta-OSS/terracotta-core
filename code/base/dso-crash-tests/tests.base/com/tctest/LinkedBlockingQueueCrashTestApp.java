@@ -242,13 +242,13 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
     
     public synchronized void incGetter() throws Exception{
       ++getters;
-      // System.out.println("*** incGetter " + getters);
+      System.out.println("*** incGetter " + getters);
       Assert.assertTrue("Stuck in every node is a getter", getters < participants);        
     }
     
     public synchronized void decGetter() throws Exception {
       --getters;
-      // System.out.println("*** decGetter " + getters);
+      System.out.println("*** decGetter " + getters);
       Assert.assertTrue("Negative number of getter", getters >= 0);
     }
     
