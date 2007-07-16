@@ -303,7 +303,15 @@ public class RootsPanel extends ConfigurationEditorPanel {
       Root root = (Root) item.getData();
 
       if (e.index == FIELD_COLUMN) {
-        root.setFieldName(text);
+        if(text.length() == 0) {
+          int index = m_layout.m_table.indexOf(item);
+          ensureRoots().removeRoot(index);
+          m_layout.m_table.remove(index);
+          syncModel();
+          return;
+        } else {
+          root.setFieldName(text);
+        }
       } else if (e.index == NAME_COLUMN) {
         root.setRootName(text);
       }

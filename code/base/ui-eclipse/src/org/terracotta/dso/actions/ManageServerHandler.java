@@ -105,7 +105,9 @@ public class ManageServerHandler extends BaseMenuCreator
 
         if(serverArray != null) {
           for(int i = 0; i < serverArray.length; i++) {
-            String name = ParameterSubstituter.substitute(serverArray[i].getName());
+            Server server = serverArray[i];
+            String name = server.isSetName() ? server.getName() : server.getHost();
+            name = ParameterSubstituter.substitute(name);
             addMenuAction(menu, new ManageServerAction(m_javaProject, name));
           }
         }

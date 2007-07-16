@@ -150,7 +150,7 @@ public class ConfigurationHelper {
 
     return false;
   }
-  
+
   public boolean isAdaptable(IPackageDeclaration packageDecl) {
     TcConfig config = getConfig();
 
@@ -298,7 +298,7 @@ public class ConfigurationHelper {
     if (roots != null) {
       for (int i = 0; i < roots.sizeOfRootArray(); i++) {
         String rootFieldName = roots.getRootArray(i).getFieldName();
-        
+
         if (rootFieldName != null && rootFieldName.length() > 0) {
           int dotIndex = rootFieldName.lastIndexOf('.');
 
@@ -366,11 +366,11 @@ public class ConfigurationHelper {
   }
 
   public void ensureAdaptable(IType type, MultiChangeSignaller signaller) {
-    if(isInterface(type)) {
+    if (isInterface(type)) {
       internalEnsureAdaptable(type, signaller);
       return;
     }
-    
+
     while (type != null) {
       if (!isInterface(type)) {
         if (!isAdaptable(type)) {
@@ -423,7 +423,7 @@ public class ConfigurationHelper {
 
   public void internalEnsureAdaptable(IType type, MultiChangeSignaller signaller) {
     String postscript = isInterface(type) ? "+" : "";
-    internalEnsureAdaptable(PatternHelper.getFullyQualifiedName(type)+postscript, signaller);
+    internalEnsureAdaptable(PatternHelper.getFullyQualifiedName(type) + postscript, signaller);
 
     if (!isBootJarClass(type)) {
       int filter = IJavaSearchScope.SYSTEM_LIBRARIES;
@@ -1164,13 +1164,16 @@ public class ConfigurationHelper {
 
   public IField getField(String fieldName) {
     int lastDot = fieldName.lastIndexOf('.');
-    String declaringTypeName = fieldName.substring(0, lastDot);
 
-    try {
-      IType declaringType = JdtUtils.findType(m_javaProject, declaringTypeName);
+    if (lastDot != -1) {
+      String declaringTypeName = fieldName.substring(0, lastDot);
 
-      if (declaringType != null) { return declaringType.getField(fieldName.substring(lastDot + 1)); }
-    } catch (JavaModelException jme) {/**/
+      try {
+        IType declaringType = JdtUtils.findType(m_javaProject, declaringTypeName);
+
+        if (declaringType != null) { return declaringType.getField(fieldName.substring(lastDot + 1)); }
+      } catch (JavaModelException jme) {/**/
+      }
     }
 
     return null;
@@ -1535,7 +1538,7 @@ public class ConfigurationHelper {
     }
 
     DistributedMethods methods = ensureDistributedMethods();
-    // MethodNameExpression expr = 
+    // MethodNameExpression expr =
     MethodExpression methodExpression = methods.addNewMethodExpression();
 
     try {
@@ -1893,7 +1896,7 @@ public class ConfigurationHelper {
     ensureNameLocked(element, name, level, signaller);
     signaller.signal(m_project);
   }
-  
+
   public void ensureNameLocked(IJavaElement element, String name, LockLevel.Enum level, MultiChangeSignaller signaller) {
     if (element instanceof IMethod) {
       ensureNameLocked((IMethod) element, name, level, signaller);
@@ -1920,7 +1923,8 @@ public class ConfigurationHelper {
     }
   }
 
-  private void addNewNamedLock(final String name, final String expr, final LockLevel.Enum level, MultiChangeSignaller signaller) {
+  private void addNewNamedLock(final String name, final String expr, final LockLevel.Enum level,
+                               MultiChangeSignaller signaller) {
     Locks locks = ensureLocks();
     NamedLock lock = locks.addNewNamedLock();
 
@@ -1928,16 +1932,16 @@ public class ConfigurationHelper {
     lock.setLockLevel(level);
     lock.setLockName(name);
     signaller.namedLocksChanged = true;
-    
-    for(int i = locks.sizeOfAutolockArray()-1; i >= 0; i--) {
+
+    for (int i = locks.sizeOfAutolockArray() - 1; i >= 0; i--) {
       Autolock autoLock = locks.getAutolockArray(i);
-      if(expr.equals(autoLock.getMethodExpression())) {
+      if (expr.equals(autoLock.getMethodExpression())) {
         locks.removeAutolock(i);
         signaller.autolocksChanged = true;
       }
     }
   }
-  
+
   public void internalEnsureNameLocked(IMethod method, String name, LockLevel.Enum level, MultiChangeSignaller signaller) {
     IType declaringType = method.getDeclaringType();
 
@@ -2111,15 +2115,15 @@ public class ConfigurationHelper {
     lock.setLockLevel(level);
     signaller.autolocksChanged = true;
 
-    for(int i = locks.sizeOfNamedLockArray()-1; i >= 0; i--) {
+    for (int i = locks.sizeOfNamedLockArray() - 1; i >= 0; i--) {
       NamedLock namedLock = locks.getNamedLockArray(i);
-      if(expr.equals(namedLock.getMethodExpression())) {
+      if (expr.equals(namedLock.getMethodExpression())) {
         locks.removeNamedLock(i);
         signaller.namedLocksChanged = true;
       }
     }
   }
-  
+
   public void internalEnsureAutolocked(IMethod method, MultiChangeSignaller signaller) {
     IType declaringType = method.getDeclaringType();
 
@@ -2977,9 +2981,9 @@ public class ConfigurationHelper {
 
   public void validateAll() {
     if (getConfig() != null) {
-// DISABLING VALIDATING FOR ANYTHING THAT CAN TAKE A PATTERN      
-//      validateLocks();
-//      validateInstrumentedClasses();
+      // DISABLING VALIDATING FOR ANYTHING THAT CAN TAKE A PATTERN
+      // validateLocks();
+      // validateInstrumentedClasses();
       validateRoots();
       validateTransientFields();
       validateBootJarClasses();
@@ -2989,9 +2993,15 @@ public class ConfigurationHelper {
   private static String LOCK_PROBLEM_MARKER = "org.terracotta.dso.LockMethodProblemMarker";
 
   private static String getRawString(XmlString xmlString) {
+    if (xmlString == null) return null;
     String s = xmlString.toString();
-    s = s.substring(s.indexOf('>') + 1);
-    s = s.substring(0, s.indexOf('<'));
+    if (s != null) {
+      s = s.substring(s.indexOf('>') + 1);
+      int end = s.indexOf('<');
+      if (end != -1) {
+        s = s.substring(0, end);
+      }
+    }
     return s;
   }
 

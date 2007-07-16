@@ -259,7 +259,7 @@ public class ConfigurationEditor extends MultiPageEditorPart
     IFileEditorInput fileEditorInput = (FileEditorInput) getEditorInput();
     IFile file = fileEditorInput.getFile();
 
-    return file != null && file.equals(configFile);
+    return file != null && file.equals(configFile) && plugin.hasTerracottaNature(m_project);
   }
 
   boolean haveActiveConfig() {
@@ -273,9 +273,9 @@ public class ConfigurationEditor extends MultiPageEditorPart
       createServersPage(SERVERS_PAGE_INDEX);
       createClientPage(CLIENT_PAGE_INDEX);
       ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
+      initPanels();
+      TcPlugin.getDefault().addConfigurationListener(m_configAdapter);
     }
-    initPanels();
-    TcPlugin.getDefault().addConfigurationListener(m_configAdapter);
   }
 
   public void structureChanged(XmlObjectStructureChangeEvent e) {
@@ -284,11 +284,13 @@ public class ConfigurationEditor extends MultiPageEditorPart
   }
 
   public void dispose() {
-    m_serversPanel.removeXmlObjectStructureListener(this);
-    m_clientsPanel.removeXmlObjectStructureListener(this);
-    m_dsoAppPanel.removeXmlObjectStructureListener(this);
-    ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
-    TcPlugin.getDefault().removeConfigurationListener(m_configAdapter);
+    if (haveActiveConfig()) {
+      m_serversPanel.removeXmlObjectStructureListener(this);
+      m_clientsPanel.removeXmlObjectStructureListener(this);
+      m_dsoAppPanel.removeXmlObjectStructureListener(this);
+      ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
+      TcPlugin.getDefault().removeConfigurationListener(m_configAdapter);
+    }
     super.dispose();
   }
 
@@ -537,7 +539,7 @@ public class ConfigurationEditor extends MultiPageEditorPart
             TcConfigDocument configDoc = TcConfigDocument.Factory.newInstance();
             configDoc.setTcConfig(config);
             doc.removeDocumentListener(m_docListener);
-            doc.set(configDoc.xmlText(opts));
+            doc.set(plugin.configDocumentAsString(configDoc));
             doc.addDocumentListener(m_docListener);
           }
           m_xmlEditor.setTopIndex(topLine);

@@ -4,7 +4,6 @@
  */
 package org.terracotta.dso.dialogs;
 
-import org.apache.xmlbeans.XmlOptions;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -390,15 +389,12 @@ public class NonPortableObjectDialog extends MessageDialog {
 
   private void apply() {
     TcPlugin plugin = TcPlugin.getDefault();
-    XmlOptions xmlOpts = plugin.getXmlOptions();
     TcConfigDocument configDoc = TcConfigDocument.Factory.newInstance();
 
     configDoc.setTcConfig(fNewConfig);
-    String xmlText = configDoc.xmlText(xmlOpts);
-
     try {
       IProject project = fJavaProject.getProject();
-      plugin.setConfigurationFromString(project, xmlText);
+      plugin.setConfigurationFromString(project, plugin.configDocumentAsString(configDoc));
       ConfigurationEditor configEditor = plugin.getConfigurationEditor(project);
       if (configEditor == null) {
         plugin.saveConfiguration(project);

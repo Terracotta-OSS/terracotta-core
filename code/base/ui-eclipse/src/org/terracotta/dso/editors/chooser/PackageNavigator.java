@@ -6,6 +6,7 @@ package org.terracotta.dso.editors.chooser;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -102,8 +103,7 @@ public class PackageNavigator extends MessageDialog {
         AppearanceAwareLabelProvider.DEFAULT_IMAGEFLAGS | JavaElementImageProvider.SMALL_ICONS));
     m_layout.m_viewer.setSorter(new ViewerSorter());
     IJavaProject jproj = JavaCore.create(m_project);
-    IJavaElement root = jproj.getJavaModel();
-    m_layout.m_viewer.setInput(root);
+    m_layout.m_viewer.setInput(JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()));
     m_layout.m_viewer.addSelectionChangedListener(m_behavior.getSelectionChangedListener(this));
     m_layout.m_viewer.addFilter(m_behavior.getFilter(jproj));
 
@@ -135,7 +135,7 @@ public class PackageNavigator extends MessageDialog {
 
     public JavaHierarchyContentProvider() {
       super(true);
-      this.m_workbench = new WorkbenchContentProvider() {
+      m_workbench = new WorkbenchContentProvider() {
         protected IWorkbenchAdapter getAdapter(Object element) {
           return new JavaWorkbenchAdapter() {
             public Object[] getChildren(Object parentElement) {
@@ -181,6 +181,7 @@ public class PackageNavigator extends MessageDialog {
 
     private Layout(Composite parent, int style) {
       this.m_viewer = new TreeViewer(parent, style | SWT.BORDER);
+      m_viewer.setAutoExpandLevel(2);
       m_viewer.getTree().setLayoutData(new GridData(GridData.FILL_BOTH));
       m_viewer.getTree().addMouseListener(new MouseAdapter() {
         public void mouseDoubleClick(MouseEvent e) {

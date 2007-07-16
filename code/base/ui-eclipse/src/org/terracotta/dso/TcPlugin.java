@@ -110,6 +110,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -1528,6 +1529,15 @@ public class TcPlugin extends AbstractUIPlugin
 
   public static Image createImage(String path) {
     return new JavaElementImageDescriptor(getImageDescriptor(path), 0, new Point(16, 16)).createImage(false);
+  }
+  
+  public String configDocumentAsString(TcConfigDocument configDoc) {
+    InputStream is = configDoc.newInputStream(getXmlOptions());
+    StringWriter writer = new StringWriter();
+    try {
+      CopyUtils.copy(is, writer);
+    } catch(IOException ioe) {/**/}
+    return writer.toString();
   }
 }
 

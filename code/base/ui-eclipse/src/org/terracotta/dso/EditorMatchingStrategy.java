@@ -13,11 +13,13 @@ import org.eclipse.ui.IFileEditorInput;
 public class EditorMatchingStrategy implements IEditorMatchingStrategy {
   public boolean matches(IEditorReference editorRef, IEditorInput input) {
     if(input instanceof IFileEditorInput) {
+      TcPlugin plugin  = TcPlugin.getDefault();
       IFile    file    = ((IFileEditorInput)input).getFile();
       IProject project = file.getProject();
       
       return file.getFullPath().getFileExtension().equals("xml") &&
-         TcPlugin.getDefault().hasTerracottaNature(project);
+         plugin.hasTerracottaNature(project) &&
+         file.equals(plugin.getConfigurationFile(project));
     }
     
     return false;

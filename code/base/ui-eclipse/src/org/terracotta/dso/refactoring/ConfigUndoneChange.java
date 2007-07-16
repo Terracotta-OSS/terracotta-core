@@ -48,7 +48,7 @@ public class ConfigUndoneChange extends Change {
       XmlOptions xmlOpts = plugin.getXmlOptions();
       TcConfigDocument doc = TcConfigDocument.Factory.newInstance(xmlOpts);
       doc.setTcConfig(fConfig);
-      plugin.setConfigurationFromString(fProject, doc.xmlText(xmlOpts));
+      plugin.setConfigurationFromString(fProject, plugin.configDocumentAsString(doc));
     } catch(Exception e) {
       e.printStackTrace();
     }
