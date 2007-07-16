@@ -4,6 +4,7 @@
  */
 package com.tc.test.server.appserver.deployment;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.taskdefs.War;
@@ -266,15 +267,8 @@ public class WARBuilder implements DeploymentBuilder {
 
   private void appendFile(FileOutputStream fos, String fragmentName) throws IOException {
     InputStream is = getClass().getResourceAsStream(fragmentName);
-    try {
-      // Yes. This needs to be optimized
-      int i;
-      while ((i = is.read()) != -1)
-        fos.write(i);
-    } finally {
-      is.close();
-    }
-
+    IOUtils.copy(is, fos);
+    IOUtils.closeQuietly(is);
   }
 
   private void createWebXML(FileSystemPath webInfDir) throws IOException {

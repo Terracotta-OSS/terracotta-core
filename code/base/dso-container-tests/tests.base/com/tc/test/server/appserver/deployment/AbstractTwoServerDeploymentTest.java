@@ -1,13 +1,14 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver.deployment;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import junit.framework.Test;
 import junit.framework.TestSuite;
-
 
 public abstract class AbstractTwoServerDeploymentTest extends AbstractDeploymentTest {
   public WebApplicationServer server1;
@@ -19,20 +20,20 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
 
   public void setServer2(WebApplicationServer server2) {
     this.server2 = server2;
-  }  
-  
+  }
+
   protected boolean shouldKillAppServersEachRun() {
     return false;
   }
-  
+
   public static abstract class TwoServerTestSetup extends ServerTestSetup {
-    private Log logger = LogFactory.getLog(getClass());
+    private Log                    logger = LogFactory.getLog(getClass());
 
-    private final Class testClass;
-    private final String tcConfigFile;
-    private final String context;
+    private final Class            testClass;
+    private final String           tcConfigFile;
+    private final String           context;
 
-    private boolean start = true;
+    private boolean                start  = true;
 
     protected WebApplicationServer server1;
     protected WebApplicationServer server2;
@@ -43,32 +44,35 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
       this.tcConfigFile = tcConfigFile;
       this.context = context;
     }
-    
+
     protected void setStart(boolean start) {
       this.start = start;
     }
 
     protected void setUp() throws Exception {
       super.setUp();
-      
-      if(shouldDisable()) return;
-      
+
+      if (shouldDisable()) return;
+
       try {
         getServerManager();
-        
+
         long l1 = System.currentTimeMillis();
         Deployment deployment = makeWAR();
         long l2 = System.currentTimeMillis();
-        logger.info("### WAR build "+ (l2-l1)/1000f + " at " + deployment.getFileSystemPath());
-  
+        logger.info("### WAR build " + (l2 - l1) / 1000f + " at " + deployment.getFileSystemPath());
+
         server1 = createServer(deployment);
         server2 = createServer(deployment);
-        
+
         TestSuite suite = (TestSuite) getTest();
         for (int i = 0; i < suite.testCount(); i++) {
-          AbstractTwoServerDeploymentTest test = (AbstractTwoServerDeploymentTest) suite.testAt(i);
-          test.setServer1(server1);
-          test.setServer2(server2);
+          Test t = suite.testAt(i);
+          if (t instanceof AbstractTwoServerDeploymentTest) {
+            AbstractTwoServerDeploymentTest test = (AbstractTwoServerDeploymentTest) t;
+            test.setServer1(server1);
+            test.setServer2(server2);
+          }
         }
       } catch (Exception e) {
         e.printStackTrace();
@@ -79,12 +83,12 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
     private WebApplicationServer createServer(Deployment deployment) throws Exception {
       WebApplicationServer server = getServerManager().makeWebApplicationServer(tcConfigFile);
       server.addWarDeployment(deployment, context);
-      if(start) {
+      if (start) {
         server.start();
       }
       return server;
     }
-    
+
     private Deployment makeWAR() throws Exception {
       DeploymentBuilder builder = makeDeploymentBuilder(this.context + ".war");
       builder.addDirectoryOrJARContainingClass(testClass);
@@ -92,9 +96,9 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
       configureWar(builder);
       return builder.makeDeployment();
     }
-    
+
     protected abstract void configureWar(DeploymentBuilder builder);
-  
+
   }
-  
+
 }

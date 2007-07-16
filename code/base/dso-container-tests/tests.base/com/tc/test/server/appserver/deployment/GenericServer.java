@@ -241,11 +241,11 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
 
   public WebResponse ping(String url, WebConversation wc) throws MalformedURLException, IOException, SAXException {
     String fullURL = "http://localhost:" + result.serverPort() + url;
-    logger.debug("Getting page: " + fullURL);
+    logger.info("Getting page: " + fullURL);
 
     wc.setExceptionsThrownOnErrorStatus(false);
     WebResponse response = wc.getResponse(fullURL);
-    Assert.assertEquals("Server error:/n" + response.getText(), 200, response.getResponseCode());
+    Assert.assertEquals("Server error:\n" + response.getText(), 200, response.getResponseCode());
     logger.debug("Got page: " + fullURL);
     return response;
   }

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+  All content copyright (c) 2003-2006 Terracotta, Inc.,
+  except as may otherwise be noted in a separate copyright notice.
+  All rights reserved
+
+-->
+<tc:tc-config 
+    xmlns:tc="http://www.terracotta.org/config"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://www.terracotta.org/config ..\..\..\common\src.resources\com\tc\config\schema\terracotta-4.xsd">
+
+  <system>
+      <configuration-model>development</configuration-model>
+  </system>
+
+  <clients>
+    <logs>%d/client-logs-%h</logs>
+    <dso>
+      <debugging>
+        <runtime-logging>
+          <non-portable-dump>true</non-portable-dump>
+        </runtime-logging>
+      </debugging>
+    </dso>
+    <modules>
+      <module name="clustered-hibernate-3.1.2" version="1.0.0"/>
+    </modules>
+  </clients>
+
+  <servers>
+    <server name="localhost" />
+  </servers>
+
+  <application>
+    <dso>
+      <web-applications>
+        <web-application>events</web-application>
+      </web-applications>
+      
+      <instrumented-classes>
+      	<include>
+      		<class-expression>com.tctest.domain.*</class-expression>
+      	</include>
+      </instrumented-classes>
+    </dso>
+  </application>
+
+</tc:tc-config>

@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+
+    <class name="com.tctest.domain.Person" table="PERSON">
+        <id name="id" column="PERSON_ID">
+            <generator class="native"/>
+        </id>
+        <property name="age"/>
+        <property name="firstname"/>
+        <property name="lastname"/>
+        
+        <set name="events" table="PERSON_EVENT">
+            <key column="PERSON_ID"/>
+            <many-to-many column="EVENT_ID" class="com.tctest.domain.Event"/>
+        </set>
+        
+        <set name="emailAddresses" table="PERSON_EMAIL_ADDR">
+    		<key column="PERSON_ID"/>
+    		<element type="string" column="EMAIL_ADDR"/>
+		</set>
+		
+		<set name="phoneNumbers" cascade="all">
+		    <key column="PERSON_ID"/>
+		    <one-to-many class="com.tctest.domain.PhoneNumber" />
+		</set>
+		
+    
+    </class>
+    
+
+
+</hibernate-mapping>

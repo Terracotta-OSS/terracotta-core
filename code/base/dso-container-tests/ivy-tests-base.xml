@@ -2,12 +2,20 @@
 <ivy-module version="1.0">
   <info organisation="ibiblio" module="dso-container-tests-tests-base"/>
   <dependencies>
-	<dependency name="ant" rev="launcher-1.6.5"/>
-	<dependency name="commons-codec" rev="1.3"/>
-	<dependency name="commons-httpclient" rev="3.0.1"/>
-	<dependency name="tc-cargo-core-uberjar" rev="1.0-20070709" org="terracotta"/>
-  	<dependency name="httpunit" rev="1.6"/>
-  	<dependency name="jtidy" rev="4aug2000r7-dev"/>
-  	<dependency name="spring" rev="2.0.1" org="terracotta"/>
+    <dependency name="ant" rev="launcher-1.6.5"/>
+    <dependency name="commons-codec" rev="1.3"/>
+    <dependency name="commons-httpclient" rev="3.0.1"/>
+    <dependency name="tc-cargo-core-uberjar" rev="1.0-20070709" org="terracotta"/>
+    <dependency name="httpunit" rev="1.6"/>
+    <dependency name="jtidy" rev="4aug2000r7-dev"/>
+    <dependency name="spring" rev="2.0.1" org="terracotta"/>
+    <dependency name="hibernate" rev="3.1.2" org="terracotta"/>
+    <dependency name="dom4j" rev="1.6.1"/>
+    <dependency name="cglib-nodep" rev="2.1_3"/>
+    <dependency name="jta" rev="1.0.1b" org="terracotta"/>
+    <dependency name="commons-collections" rev="3.1"/>
+    <dependency name="derby" rev="10.2.2.0" org="terracotta"/>
+    <dependency name="derbyclient" rev="10.2.2.0" org="terracotta"/>
+    <dependency name="derbynet" rev="10.2.2.0" org="terracotta"/>
   </dependencies>
 </ivy-module>
