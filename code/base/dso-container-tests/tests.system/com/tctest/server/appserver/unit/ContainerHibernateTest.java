@@ -6,6 +6,7 @@ package com.tctest.server.appserver.unit;
 
 import org.apache.derby.drda.NetworkServerControl;
 
+import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebResponse;
 import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
@@ -13,7 +14,6 @@ import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.webapp.servlets.ContainerHibernateTestServlet;
 
 import java.io.PrintWriter;
-import java.util.Date;
 
 import junit.framework.Test;
 
@@ -24,24 +24,18 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
     return new ContainerHibernateTestSetup();
   }
 
-  public ContainerHibernateTest() {
-    this.disableAllUntil(new Date(Long.MAX_VALUE));
-  }
-  
-  public boolean shouldDisable() {
-    return true;
-  }
-  
   public void testHibernate() throws Exception {
-    WebResponse response1 = request(server1, "server=server0");
+    WebConversation conversation = new WebConversation();
+    
+    WebResponse response1 = request(server1, "server=server0", conversation);
     assertEquals("OK", response1.getText().trim());
 
-    WebResponse response2 = request(server2, "server=server1");
+    WebResponse response2 = request(server2, "server=server1", conversation);
     assertEquals("OK", response2.getText().trim());
   }
 
-  private WebResponse request(WebApplicationServer server, String params) throws Exception {
-    return server.ping("/events/ContainerHibernateTestServlet?" + params);
+  private WebResponse request(WebApplicationServer server, String params, WebConversation con) throws Exception {
+    return server.ping("/events/ContainerHibernateTestServlet?" + params, con);
   }
 
   private static class ContainerHibernateTestSetup extends TwoServerTestSetup {
@@ -78,17 +72,15 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
           Thread.sleep(500);
           derbyServer.ping();
           break;
-        } catch (Exception e ) {
+        } catch (Exception e) {
           tries++;
         }
       }
-      if (tries == 5) {
-        throw new Exception("Failed to start Derby!");
-      }
-      
+      if (tries == 5) { throw new Exception("Failed to start Derby!"); }
+
       super.setUp();
     }
-    
+
     public void tearDown() throws Exception {
       derbyServer.shutdown();
       super.tearDown();
