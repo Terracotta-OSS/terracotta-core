@@ -7,6 +7,7 @@ package com.tctest.webapp.servlets;
 import org.hibernate.LockMode;
 import org.hibernate.Session;
 
+import com.tc.util.Assert;
 import com.tctest.domain.Event;
 import com.tctest.domain.EventManager;
 import com.tctest.domain.HibernateUtil;
@@ -63,12 +64,12 @@ public final class ContainerHibernateTestServlet extends HttpServlet {
 
     PhoneNumber p1 = new PhoneNumber();
     p1.setNumberType("Office");
-    p1.setPhone(923234);
+    p1.setPhone(111111);
     mgr.addPhoneNumberToPerson(steveId, p1);
 
     PhoneNumber p2 = new PhoneNumber();
     p2.setNumberType("Home");
-    p2.setPhone(6502312);
+    p2.setPhone(222222);
     mgr.addPhoneNumberToPerson(steveId, p2);
 
     Long orionId = mgr.createAndStorePerson("Orion", "Letizi");
@@ -91,7 +92,6 @@ public final class ContainerHibernateTestServlet extends HttpServlet {
     // list emails of people in Eng meeting
     List emailList = mgr.listEmailsOfEvent(engMeetingId);
     System.out.println("Email list for Eng meeting: " + emailList);
-    httpSession.setAttribute("cac", "bu");
     httpSession.setAttribute("events", eventList);
     System.out.println("added event list to session");
     HibernateUtil.getSessionFactory().close();
@@ -100,7 +100,8 @@ public final class ContainerHibernateTestServlet extends HttpServlet {
   private void doServer1(HttpSession httpSession) throws Exception {
     List events = (List) httpSession.getAttribute("events");
     System.out.println("events: " + events);
-
+    Assert.assertTrue(events.size() >= 2);
+    
     Session session = HibernateUtil.getSessionFactory().getCurrentSession();
     session.beginTransaction();
 
@@ -121,6 +122,7 @@ public final class ContainerHibernateTestServlet extends HttpServlet {
       emails.addAll(person.getEmailAddresses());
     }
     System.out.println("emails: " + emails);
+    Assert.assertTrue(emails.size() >= 3);
 
     Set phones = new HashSet();
     for (Iterator it = people.iterator(); it.hasNext();) {
@@ -128,7 +130,8 @@ public final class ContainerHibernateTestServlet extends HttpServlet {
       phones.addAll(person.getPhoneNumbers());
     }
     System.out.println("phones: " + phones);
-
+    Assert.assertTrue(phones.size() >= 2);
+    
     session.getTransaction().commit();
     HibernateUtil.getSessionFactory().close();
     System.out.println("DONE!");
