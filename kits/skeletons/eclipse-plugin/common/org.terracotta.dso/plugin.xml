@@ -184,11 +184,10 @@
             class="org.terracotta.dso.editors.ConfigurationEditor"
             contributorClass="org.terracotta.dso.editors.ConfigurationEditorContributor"
             default="false"
-            filename="tc-config.xml"
-            extensions="xml"
             icon="images/eclipse/logo16.gif"
             id="editors.configurationEditor"
-            name="Terracotta Config">
+            name="Terracotta Config"
+            matchingStrategy="org.terracotta.dso.EditorMatchingStrategy">
       </editor>
    </extension>
 
