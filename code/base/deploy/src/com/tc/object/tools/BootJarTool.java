@@ -1165,9 +1165,8 @@ public class BootJarTool {
             break;
           }
 
-          if (!specs.containsKey(clazz.getName()) && !bootJar.classLoaded(clazz.getName())) {
+          if (!specs.containsKey(clazz.getName()) && ((bootJar == null) || !bootJar.classLoaded(clazz.getName()))) {
             if (tcSpecs) {
-              //
               throw new AssertionError("Missing super class " + clazz.getName() + " for type " + spec.getClassName());
             }
             supers.add(clazz.getName());
