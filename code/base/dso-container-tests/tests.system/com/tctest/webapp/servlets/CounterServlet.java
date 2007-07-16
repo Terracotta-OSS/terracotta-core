@@ -14,25 +14,30 @@ import javax.servlet.http.HttpSession;
 public class CounterServlet extends HttpServlet {
 
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    HttpSession session = request.getSession(true);
     response.setContentType("text/html");
     PrintWriter out = response.getWriter();
+    try {
+      HttpSession session = request.getSession(true);
 
-    Integer count = (Integer) session.getAttribute("count");
-    if (count == null) {
-      count = new Integer(0);
-    }
-
-    if (request.getParameter("read") != null) {
-      if (session.isNew()) {
-        out.println("session is new"); // this is an error condition (client will fail trying to parse this as int)
-      } else {
-        out.println(count.intValue());
+      Integer count = (Integer) session.getAttribute("count");
+      if (count == null) {
+        count = new Integer(0);
       }
-    } else {
-      int newValue = count.intValue() + 1;
-      session.setAttribute("count", new Integer(newValue));
-      out.println(newValue);
+
+      if (request.getParameter("read") != null) {
+        if (session.isNew()) {
+          out.println("session is new"); // this is an error condition (client will fail trying to parse this as int)
+        } else {
+          out.println(count.intValue());
+        }
+      } else {
+        int newValue = count.intValue() + 1;
+        session.setAttribute("count", new Integer(newValue));
+        out.println(newValue);
+      }
+    } catch (RuntimeException e) {
+      e.printStackTrace(out);
+      throw e;
     }
   }
 }
