@@ -95,9 +95,9 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
       super.setUp();
     }
 
-    public void tearDown() throws Exception {
-      derbyServer.shutdown();
+    public void tearDown() throws Exception {      
       super.tearDown();
+      derbyServer.shutdown();
     }
 
   }
