@@ -23,11 +23,6 @@ public class ThreadDumpTest extends TCTestCase {
     LinkedJavaProcess process = new LinkedJavaProcess(ThreadDump.class.getName());
 
     List args = new ArrayList();
-    String libPath = System.getProperty("java.library.path", "");
-    if (!"".equals(libPath)) {
-      args.add("-Djava.library.path=" + libPath);
-    }
-
     args.add("-D" + TestConfigObject.TC_BASE_DIR + "=" + System.getProperty(TestConfigObject.TC_BASE_DIR));
     args.add("-D" + TestConfigObject.PROPERTY_FILE_LIST_PROPERTY_NAME + "="
              + System.getProperty(TestConfigObject.PROPERTY_FILE_LIST_PROPERTY_NAME));

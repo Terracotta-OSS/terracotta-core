@@ -1,12 +1,17 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util.runtime;
+
+import com.tc.test.TestConfigObject;
+
+import java.io.File;
 
 class GetPid {
 
   private GetPid() {
-    // nothing here
+  // nothing here
   }
 
   public static void main(String args[]) {
@@ -24,13 +29,15 @@ class GetPid {
 
   static {
     boolean ok = false;
+    String nativeLibPath = TestConfigObject.getInstance().executableSearchPath() + File.separator
+        + TestConfigObject.NATIVE_LIB_NAME;
     try {
-      System.loadLibrary("GetPid");
+      System.load(nativeLibPath);
       ok = true;
     } catch (Throwable t) {
       t.printStackTrace(System.err);
-      System.err.println("\n***************************\njava.library.path is ["
-                         + System.getProperty("java.library.path") + "]\n***************************\n");
+      System.err.println("\n***************************\nNative lib path is [" + nativeLibPath
+          + "]\n***************************\n");
       System.err.flush();
     }
 
