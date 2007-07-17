@@ -31,7 +31,11 @@ public class TestConfigObject {
 
   public static final String      NATIVE_LIB_LINUX_64               = "Linux64";
 
-  public static final String      NATIVE_LIB_NAME                   = "libGetPid.so";
+  public static final String      UNIX_NATIVE_LIB_NAME              = "libGetPid.so";
+
+  public static final String      WINDOWS_NATIVE_LIB_NAME           = "GetPid.dll";
+
+  public static final String      OSX_NATIVE_LIB_NAME               = "libGetPid.jnilib";
 
   public static final String      TC_BASE_DIR                       = "tc.base-dir";
 
@@ -336,6 +340,17 @@ public class TestConfigObject {
     } else if (osname.startsWith("SunOS")) {
       return "solaris";
     } else return osname;
+  }
+
+  public String nativeLibName() {
+    String osname = osName();
+    if (osname.startsWith("Windows")) {
+      return WINDOWS_NATIVE_LIB_NAME;
+    } else if (osname.startsWith("Darwin")) {
+      return OSX_NATIVE_LIB_NAME;
+    } else {
+      return UNIX_NATIVE_LIB_NAME;
+    }
   }
 
   public String dataDirectoryRoot() {

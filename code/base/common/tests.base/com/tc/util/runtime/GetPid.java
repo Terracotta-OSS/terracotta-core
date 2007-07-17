@@ -30,7 +30,7 @@ class GetPid {
   static {
     boolean ok = false;
     String nativeLibPath = TestConfigObject.getInstance().executableSearchPath() + File.separator
-        + TestConfigObject.NATIVE_LIB_NAME;
+        + TestConfigObject.getInstance().nativeLibName();
     try {
       System.load(nativeLibPath);
       ok = true;
