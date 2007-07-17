@@ -138,12 +138,17 @@ public class TreeMapTestApp extends AbstractTransparentApp {
     Assert.assertEquals(getParticipantCount(), map.size());
     Assert.assertEquals(getParticipantCount(), map2.size());
 
-    for (Iterator i = map.values().iterator(); i.hasNext();) {
-      Assert.assertEquals("replaced", i.next());
+    // synchronization here to have dso previous transactions completed for the object.
+    synchronized (map) {
+      for (Iterator i = map.values().iterator(); i.hasNext();) {
+        Assert.assertEquals("replaced", i.next());
+      }
     }
 
-    for (Iterator i = map2.values().iterator(); i.hasNext();) {
-      Assert.assertEquals("replaced", i.next());
+    synchronized (map2) {
+      for (Iterator i = map2.values().iterator(); i.hasNext();) {
+        Assert.assertEquals("replaced", i.next());
+      }
     }
 
     barrier.barrier();
