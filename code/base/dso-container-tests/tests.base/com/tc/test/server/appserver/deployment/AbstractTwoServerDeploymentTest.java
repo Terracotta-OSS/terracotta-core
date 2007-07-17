@@ -50,10 +50,8 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
     }
 
     protected void setUp() throws Exception {
-      super.setUp();
-
       if (shouldDisable()) return;
-
+      super.setUp();
       try {
         getServerManager();
 
