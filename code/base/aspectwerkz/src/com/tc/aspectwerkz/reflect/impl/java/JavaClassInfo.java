@@ -1,10 +1,8 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.aspectwerkz.reflect.impl.java;
-
-import com.tc.backport175.bytecode.AnnotationElement;
-import com.tc.backport175.bytecode.AnnotationReader;
 
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.ConstructorInfo;
@@ -15,6 +13,8 @@ import com.tc.aspectwerkz.reflect.StaticInitializationInfo;
 import com.tc.aspectwerkz.reflect.StaticInitializationInfoImpl;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.aspectwerkz.transform.TransformationConstants;
+import com.tc.backport175.bytecode.AnnotationElement;
+import com.tc.backport175.bytecode.AnnotationReader;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -32,62 +32,63 @@ public class JavaClassInfo implements ClassInfo {
    * The class.
    */
   // TODO might be safer to wrap this member in a weak ref
-  private final Class m_class;
+  private final Class                   m_class;
 
   /**
    * The name of the class.
    */
-  private String m_name;
+  private String                        m_name;
 
   /**
    * The signature of the class.
    */
-  private String m_signature;
+  private String                        m_signature;
 
   /**
    * Is the class an interface.
    */
-  private boolean m_isInterface = false;
+  private boolean                       m_isInterface       = false;
 
   /**
    * Is the class a primitive type.
    */
-  private boolean m_isPrimitive = false;
+  private boolean                       m_isPrimitive       = false;
 
   /**
    * Is the class of type array.
    */
-  private boolean m_isArray = false;
+  private boolean                       m_isArray           = false;
 
   /**
    * A list with the <code>ConstructorInfo</code> instances.
    */
-  private final HashMap m_constructors = new HashMap();
+  private final HashMap                 m_constructors      = new HashMap();
 
   /**
    * A list with the <code>MethodInfo</code> instances.
    */
-  private final HashMap m_methods = new HashMap();
+  private final HashMap                 m_methods           = new HashMap();
 
   /**
    * A list with the <code>FieldInfo</code> instances.
    */
-  private final HashMap m_fields = new HashMap();
+  private final HashMap                 m_fields            = new HashMap();
+  private FieldInfo[]                   m_fieldsLazy        = null;
 
   /**
    * A list with the interfaces.
    */
-  private ClassInfo[] m_interfaces = null;
+  private ClassInfo[]                   m_interfaces        = null;
 
   /**
    * The super class.
    */
-  private ClassInfo m_superClass = null;
+  private ClassInfo                     m_superClass        = null;
 
   /**
    * The component type if array type.
    */
-  private ClassInfo m_componentType = null;
+  private ClassInfo                     m_componentType     = null;
 
   /**
    * The class info repository.
@@ -97,7 +98,7 @@ public class JavaClassInfo implements ClassInfo {
   /**
    * Lazy, the static initializer info or null if not present
    */
-  private StaticInitializationInfo m_staticInitializer = null;
+  private StaticInitializationInfo      m_staticInitializer = null;
 
   /**
    * Creates a new class meta data instance.
@@ -105,9 +106,7 @@ public class JavaClassInfo implements ClassInfo {
    * @param klass
    */
   JavaClassInfo(final Class klass) {
-    if (klass == null) {
-      throw new IllegalArgumentException("class can not be null");
-    }
+    if (klass == null) { throw new IllegalArgumentException("class can not be null"); }
     m_class = klass;
 
     m_signature = ReflectHelper.getClassSignature(klass);
@@ -253,9 +252,9 @@ public class JavaClassInfo implements ClassInfo {
    */
   public ConstructorInfo[] getConstructors() {
     ConstructorInfo[] methodInfos = new ConstructorInfo[m_constructors.size()];
-//    Object[] values = m_constructors.getValues();
-//    for (int i = 0; i < values.length; i++) {
-//    methodInfos[i] = (ConstructorInfo) values[i];
+    // Object[] values = m_constructors.getValues();
+    // for (int i = 0; i < values.length; i++) {
+    // methodInfos[i] = (ConstructorInfo) values[i];
     int i = 0;
     for (Iterator it = m_constructors.values().iterator(); it.hasNext();) {
       methodInfos[i++] = (ConstructorInfo) it.next();
@@ -292,9 +291,9 @@ public class JavaClassInfo implements ClassInfo {
    */
   public MethodInfo[] getMethods() {
     MethodInfo[] methodInfos = new MethodInfo[m_methods.size()];
-//    Object[] values = m_methods.getValues();
-//    for (int i = 0; i < values.length; i++) {
-//      methodInfos[i] = (MethodInfo) values[i];
+    // Object[] values = m_methods.getValues();
+    // for (int i = 0; i < values.length; i++) {
+    // methodInfos[i] = (MethodInfo) values[i];
     int i = 0;
     for (Iterator it = m_methods.values().iterator(); it.hasNext();) {
       methodInfos[i++] = (MethodInfo) it.next();
@@ -319,8 +318,7 @@ public class JavaClassInfo implements ClassInfo {
       for (int i = 0; i < interfaces.length; i++) {
         ClassInfo ifc = interfaces[i];
         field = ifc.getField(hash);
-        if (field != null)
-          break;
+        if (field != null) break;
       }
     }
     return field;
@@ -331,16 +329,18 @@ public class JavaClassInfo implements ClassInfo {
    *
    * @return the field info
    */
-  public FieldInfo[] getFields() {
-    FieldInfo[] fieldInfos = new FieldInfo[m_fields.size()];
-//    Object[] values = m_fields.getValues();
-//    for (int i = 0; i < values.length; i++) {
-//      fieldInfos[i] = (FieldInfo) values[i];
-    int i = 0;
-    for (Iterator it = m_methods.values().iterator(); it.hasNext();) {
-      fieldInfos[i++] = (FieldInfo) it.next();
+  public synchronized FieldInfo[] getFields() {
+    if (m_fieldsLazy == null) {
+      FieldInfo[] fieldInfos = new FieldInfo[m_fields.size()];
+
+      int i = 0;
+      for (Iterator it = m_fields.values().iterator(); it.hasNext();) {
+        fieldInfos[i++] = (FieldInfo) it.next();
+      }
+
+      m_fieldsLazy = fieldInfos;
     }
-    return fieldInfos;
+    return m_fieldsLazy;
   }
 
   /**
@@ -430,8 +430,7 @@ public class JavaClassInfo implements ClassInfo {
   }
 
   /**
-   * Converts an internal Java array type name ([Lblabla) to the a the format used by the expression matcher
-   * (blabla[])
+   * Converts an internal Java array type name ([Lblabla) to the a the format used by the expression matcher (blabla[])
    *
    * @param typeName is type name
    * @return
@@ -469,12 +468,8 @@ public class JavaClassInfo implements ClassInfo {
   }
 
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof ClassInfo)) {
-      return false;
-    }
+    if (this == o) { return true; }
+    if (!(o instanceof ClassInfo)) { return false; }
     ClassInfo classInfo = (ClassInfo) o;
     return m_class.getName().toString().equals(classInfo.getName().toString());
   }
