@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.spring;
 
@@ -17,6 +18,7 @@ import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOSpringConfigHelper;
+import com.tc.object.config.Root;
 import com.tc.object.config.StandardDSOSpringConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -37,7 +39,7 @@ import javax.servlet.ServletContextEvent;
 
 /**
  * Test case for Spring web application context
- * 
+ *
  * @author Eugene Kuleshov
  */
 public class WebAppContext_Test extends TransparentTestBase {
@@ -61,115 +63,120 @@ public class WebAppContext_Test extends TransparentTestBase {
   protected Class getApplicationClass() {
     return WebAppContextApp.class;
   }
-  
 
   public static class WebAppContextApp extends AbstractTransparentApp {
 
     private List sharedSingletons = new ArrayList();
-    
-    
+
     public WebAppContextApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
       super(appId, cfg, listenerProvider);
     }
 
     public void run() {
-        try {
-          final Map contextAttributes = new HashMap();
+      try {
+        final Map contextAttributes = new HashMap();
 
-          final String contextName = "beanfactory.xml";
-          URL contextUrl = getClass().getResource(contextName);
-          assertNotNull("Unable to load context "+contextName, contextUrl);
+        final String contextName = "beanfactory.xml";
+        URL contextUrl = getClass().getResource(contextName);
+        assertNotNull("Unable to load context " + contextName, contextUrl);
 
-          Mock servletContextMock = new Mock(ServletContext.class);
-          
-          servletContextMock.expects(new MethodNameMatcher(new IsEqual("log"))).withAnyArguments().isVoid();
-          
-          servletContextMock.expects(new MethodNameMatcher(new IsEqual("getInitParameter")))
-              .with(new IsEqual("locatorFactorySelector")).will(new ReturnStub(null));
-          
-          servletContextMock.expects(new MethodNameMatcher(new IsEqual("getInitParameter")))
-              .with(new IsEqual("parentContextKey")).will(new ReturnStub(null));
+        Mock servletContextMock = new Mock(ServletContext.class);
 
-          servletContextMock.expects(new MethodNameMatcher(new IsEqual("getInitParameter")))
-              .with(new IsEqual("contextClass")).will(new ReturnStub(null));
-          
-          servletContextMock.expects(new MethodNameMatcher(new IsEqual("getInitParameter")))
+        servletContextMock.expects(new MethodNameMatcher(new IsEqual("log"))).withAnyArguments().isVoid();
+
+        servletContextMock.expects(new MethodNameMatcher(new IsEqual("getInitParameter")))
+            .with(new IsEqual("locatorFactorySelector")).will(new ReturnStub(null));
+
+        servletContextMock.expects(new MethodNameMatcher(new IsEqual("getInitParameter")))
+            .with(new IsEqual("parentContextKey")).will(new ReturnStub(null));
+
+        servletContextMock.expects(new MethodNameMatcher(new IsEqual("getInitParameter")))
+            .with(new IsEqual("contextClass")).will(new ReturnStub(null));
+
+        servletContextMock.expects(new MethodNameMatcher(new IsEqual("getInitParameter")))
             .with(new IsEqual("contextConfigLocation")).will(new ReturnStub(contextName));
-      
-          servletContextMock.expects(new MethodNameMatcher(new IsEqual("getResource")))
-            .with(new IsEqual("/"+contextName)).will(new ReturnStub(contextUrl));
-      
-          servletContextMock.expects(new MethodNameMatcher(new IsEqual("getResourceAsStream")))
-            .with(new IsEqual("/"+contextName))
-            .will(new CustomStub("getResourceAsStream") {
-                public Object invoke(Invocation arg) throws Throwable {
-                  return getClass().getResourceAsStream(contextName);
-                }
-              });
-          
-          servletContextMock.expects(new MethodNameMatcher(new IsEqual("setAttribute")) {
-              public void invoked(Invocation invocation) {
-                List params = invocation.parameterValues;
-                contextAttributes.put(params.get(0), params.get(1));
+
+        servletContextMock.expects(new MethodNameMatcher(new IsEqual("getResource"))).with(
+                                                                                           new IsEqual("/"
+                                                                                                       + contextName))
+            .will(new ReturnStub(contextUrl));
+
+        servletContextMock.expects(new MethodNameMatcher(new IsEqual("getResourceAsStream")))
+            .with(new IsEqual("/" + contextName)).will(new CustomStub("getResourceAsStream") {
+              public Object invoke(Invocation arg) throws Throwable {
+                return getClass().getResourceAsStream(contextName);
               }
             });
-        
-          servletContextMock.expects(new MethodNameMatcher(new IsEqual("getAttribute")))
-            .will(new CustomStub("getAttribute") {
-                public Object invoke(Invocation invocation) throws Throwable {
-                  return contextAttributes.get(invocation.parameterValues.get(0));
-                }
-              });
-        
-          ServletContext servletContext = (ServletContext) servletContextMock.proxy();          
-          ContextLoaderListener listener = new ContextLoaderListener();
-          listener.contextInitialized(new ServletContextEvent(servletContext));
 
-          WebApplicationContext ctx = WebApplicationContextUtils.getWebApplicationContext(servletContext);
-
-          moveToStageAndWait(1);
-          
-          Singleton singleton = (Singleton) ctx.getBean("singleton");
-          singleton.incrementCounter();
-
-          String applicationId = getApplicationId();
-          singleton.setTransientValue(applicationId);
-          
-          synchronized (sharedSingletons) {
-            sharedSingletons.add(singleton);
+        servletContextMock.expects(new MethodNameMatcher(new IsEqual("setAttribute")) {
+          public void invoked(Invocation invocation) {
+            List params = invocation.parameterValues;
+            contextAttributes.put(params.get(0), params.get(1));
           }
-          
-          moveToStageAndWait(2);
-          
-          assertTrue("Expected more then one object in the collection", sharedSingletons.size()>1);
-          
-          for (Iterator it = sharedSingletons.iterator(); it.hasNext();) {
-            Singleton o = (Singleton) it.next();
-            assertTrue("Found non-singleton object", o==singleton);
-            assertEquals("Invalid value in shared field "+o, NODE_COUNT, o.getCounter());
-            assertEquals("Invalid transient value "+o, applicationId, o.getTransientValue());
-          }
-          
-        } catch (Throwable e) {
-          notifyError(e);
-           
+        });
+
+        servletContextMock.expects(new MethodNameMatcher(new IsEqual("getAttribute"))).will(
+                                                                                            new CustomStub(
+                                                                                                "getAttribute") {
+                                                                                              public Object invoke(
+                                                                                                                   Invocation invocation)
+                                                                                                  throws Throwable {
+                                                                                                return contextAttributes
+                                                                                                    .get(invocation.parameterValues
+                                                                                                        .get(0));
+                                                                                              }
+                                                                                            });
+
+        ServletContext servletContext = (ServletContext) servletContextMock.proxy();
+        ContextLoaderListener listener = new ContextLoaderListener();
+        listener.contextInitialized(new ServletContextEvent(servletContext));
+
+        WebApplicationContext ctx = WebApplicationContextUtils.getWebApplicationContext(servletContext);
+
+        moveToStageAndWait(1);
+
+        Singleton singleton = (Singleton) ctx.getBean("singleton");
+        singleton.incrementCounter();
+
+        String applicationId = getApplicationId();
+        singleton.setTransientValue(applicationId);
+
+        synchronized (sharedSingletons) {
+          sharedSingletons.add(singleton);
         }
+
+        moveToStageAndWait(2);
+
+        assertTrue("Expected more then one object in the collection", sharedSingletons.size() > 1);
+
+        for (Iterator it = sharedSingletons.iterator(); it.hasNext();) {
+          Singleton o = (Singleton) it.next();
+          assertTrue("Found non-singleton object", o == singleton);
+          assertEquals("Invalid value in shared field " + o, NODE_COUNT, o.getCounter());
+          assertEquals("Invalid transient value " + o, applicationId, o.getTransientValue());
+        }
+
+      } catch (Throwable e) {
+        notifyError(e);
+
+      }
     }
 
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-      config.addRoot("com.tctest.spring.WebAppContext_Test$WebAppContextApp", "sharedSingletons", "sharedSingletons", false);
+      config.addRoot(new Root("com.tctest.spring.WebAppContext_Test$WebAppContextApp", "sharedSingletons",
+                              "sharedSingletons"), false);
       config.addAutolock("* com.tctest.spring.WebAppContext_Test$WebAppContextApp.run()", ConfigLockLevel.WRITE);
-      
-      config.addIncludePattern("org.jmock.core.Invocation");  // needed to make mock definitions happy
-      
+
+      config.addIncludePattern("org.jmock.core.Invocation"); // needed to make mock definitions happy
+
       DSOSpringConfigHelper springConfig = new StandardDSOSpringConfigHelper();
-      springConfig.addApplicationNamePattern(SpringTestConstants.APPLICATION_NAME);  // app name used by testing framework
+      springConfig.addApplicationNamePattern(SpringTestConstants.APPLICATION_NAME); // app name used by testing
+                                                                                    // framework
       springConfig.addConfigPattern("*/beanfactory.xml");
       springConfig.addBean("singleton");
       config.addDSOSpringConfig(springConfig);
     }
-    
+
   }
 
 }
-

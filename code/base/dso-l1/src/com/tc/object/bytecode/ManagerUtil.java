@@ -15,6 +15,8 @@ import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.properties.TCProperties;
 
+import java.lang.reflect.Field;
+
 /**
  * A bunch of static methods that make calling Manager method much easier from instrumented classes
  */
@@ -180,8 +182,8 @@ public class ManagerUtil {
     return getManager().isLogical(obj);
   }
 
-  public static boolean isRoot(String className, String fieldName) {
-    return getManager().isRoot(className, fieldName);
+  public static boolean isRoot(Field field) {
+    return getManager().isRoot(field);
   }
 
   public static void objectNotify(Object obj) {
@@ -219,7 +221,7 @@ public class ManagerUtil {
   public static boolean tryMonitorEnter(Object obj, long timeoutInNanos, int type) {
     return getManager().tryMonitorEnter(obj, timeoutInNanos, type);
   }
-  
+
   public static int localHeldCount(Object obj, int lockLevel) {
     return getManager().localHeldCount(obj, lockLevel);
   }

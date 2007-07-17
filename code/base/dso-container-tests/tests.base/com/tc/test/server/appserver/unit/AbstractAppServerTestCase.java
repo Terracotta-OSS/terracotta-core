@@ -31,6 +31,7 @@ import com.tc.test.server.dsoserver.StandardDsoServerParameters;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
 import com.tc.test.server.tcconfig.TerracottaServerConfigGenerator;
 import com.tc.test.server.util.AppServerUtil;
+import com.tc.text.Banner;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.ThreadDump;
@@ -62,6 +63,8 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
   private static final String               DOMAIN                     = "localhost";
 
   private static final boolean              GC_LOGGGING                = false;
+
+  private static final boolean              ENABLE_DEBUGGER            = false;
 
   protected final List                      appservers                 = new ArrayList();
   private final Object                      workingDirLock             = new Object();
@@ -296,6 +299,15 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
                              + new File(this.installation.sandboxDirectory(), NODE + nodeNumber + "-gc.log")
                                  .getAbsolutePath());
       }
+
+      if (ENABLE_DEBUGGER) {
+        int debugPort = 8000 + nodeNumber;
+        params.appendJvmArgs("-Xdebug");
+        params.appendJvmArgs("-Xrunjdwp:server=y,transport=dt_socket,address=" + debugPort + ",suspend=y");
+        Banner.warnBanner("Waiting for debugger to connect on port " + debugPort);
+      }
+
+      // params.appendJvmArgs("-Dtc.classloader.writeToDisk=true");
 
       addAppServerSpecificJvmArg(NewAppServerFactory.TOMCAT, params, "-Djvmroute=" + NODE + nodeNumber);
       addAppServerSpecificJvmArg(NewAppServerFactory.JBOSS, params, "-Djvmroute=" + NODE + nodeNumber);

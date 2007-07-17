@@ -1,11 +1,13 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode;
 
 import com.tc.asm.Type;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.ConstructorInfo;
+import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MethodInfo;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
@@ -61,14 +63,15 @@ class InstrumentationSpec {
   private TransparencyClassSpec       superClassSpec;
 
   private final ClassInfo             classInfo;
+  private final Map                   fieldInfoMap;
   private final TransparencyClassSpec spec;
   private final ManagerHelper         mgrHelper;
-  private final ClassLoader           caller;
 
   private final Set                   classHierarchy;
   private final Map                   shouldOverrideMethods;
   private final Set                   logicalExtendingMethodSpec;
   private final Set                   logicalExtendingFieldSpec;
+  private final ClassLoader           caller;
 
   InstrumentationSpec(ClassInfo classInfo, TransparencyClassSpec spec, ManagerHelper mgrHelper, ClassLoader caller) {
     this.classInfo = classInfo;
@@ -79,12 +82,29 @@ class InstrumentationSpec {
     this.shouldOverrideMethods = new HashMap();
     this.logicalExtendingMethodSpec = new HashSet();
     this.logicalExtendingFieldSpec = new HashSet();
+    this.fieldInfoMap = buildFieldInfoMap();
+  }
+
+  ClassLoader getCaller() {
+    return caller;
+  }
+
+  private Map buildFieldInfoMap() {
+    Map rv = new HashMap();
+
+    FieldInfo[] fields = this.getClassInfo().getFields();
+    for (int i = 0; i < fields.length; i++) {
+      FieldInfo fieldInfo = fields[i];
+      Object prev = rv.put(fieldInfo.getName(), fieldInfo);
+      if (prev != null) { throw new AssertionError("replaced mapping for " + fieldInfo.getName()); }
+    }
+
+    return rv;
   }
 
   public ClassInfo getClassInfo() {
     return classInfo;
   }
-
 
   // XXX no need to initialize because these values are in the classInfo
   void initialize(int version, int access, String name, String signature, String superName, String[] interfaces,
@@ -407,14 +427,13 @@ class InstrumentationSpec {
   boolean isLogical() {
     return spec.isLogical();
   }
-  
+
   boolean needInstrumentFieldInsn() {
     return !spec.isLogical() && !(isSubclassOfLogicalClass && !hasVisitedField);
   }
 
   void shouldProceedInstrumentation(int access, String name, String desc) {
-    if (isSubclassOfLogicalClass && shouldVisitMethod(access, name)
-        && logicalExtendingMethodSpec.contains(name + desc)) {
+    if (isSubclassOfLogicalClass && shouldVisitMethod(access, name) && logicalExtendingMethodSpec.contains(name + desc)) {
       // Subclass of Logical class cannot override protected method. So, ignore all instrumentation.
       throw new TCLogicalSubclassNotPortableException(classNameDots, superNameDots);
     }
@@ -477,34 +496,33 @@ class InstrumentationSpec {
   }
 
   public MethodInfo getMethodInfo(int access, String name, String desc) {
-    if(!"<init>".equals(name)) {
+    if (!"<init>".equals(name)) {
       MethodInfo[] methods = classInfo.getMethods();
       for (int i = 0; i < methods.length; i++) {
         MethodInfo methodInfo = methods[i];
-        if(methodInfo.getName().equals(name) && methodInfo.getSignature().equals(desc)) {
-          return methodInfo;
-        }
+        if (methodInfo.getName().equals(name) && methodInfo.getSignature().equals(desc)) { return methodInfo; }
       }
     } else {
       ConstructorInfo[] constructors = classInfo.getConstructors();
       for (int i = 0; i < constructors.length; i++) {
         ConstructorInfo info = constructors[i];
-        if(info.getName().equals(name) && info.getSignature().equals(desc)) {
-          return new ConstructorInfoWrapper(info);
-        }
+        if (info.getName().equals(name) && info.getSignature().equals(desc)) { return new ConstructorInfoWrapper(info); }
       }
-      // reflecting old DSO hack (see com.tc.object.bytecode.aspectwerkz.AsmMethodInfo) 
+      // reflecting old DSO hack (see com.tc.object.bytecode.aspectwerkz.AsmMethodInfo)
       name = "__INIT__";
     }
 
     return new StubMethodInfo(name, desc, access, classInfo);
   }
 
-  
+  public FieldInfo getFieldInfo(String fieldName) {
+    return (FieldInfo) fieldInfoMap.get(fieldName);
+  }
+
   private static final class StubMethodInfo implements MethodInfo {
-    private final String name;
-    private final String desc;
-    private final int    access;
+    private final String    name;
+    private final String    desc;
+    private final int       access;
     private final ClassInfo declaringClassInfo;
 
     private StubMethodInfo(String name, String desc, int access, ClassInfo classInfo) {
@@ -561,11 +579,10 @@ class InstrumentationSpec {
     }
   }
 
-  
   public class StubConstructorInfo implements ConstructorInfo {
-    private final String name;
-    private final String desc;
-    private final int    access;
+    private final String    name;
+    private final String    desc;
+    private final int       access;
     private final ClassInfo declaringClassInfo;
 
     private StubConstructorInfo(String name, String desc, int access, ClassInfo classInfo) {
@@ -614,7 +631,6 @@ class InstrumentationSpec {
 
   }
 
-  
   public class ConstructorInfoWrapper implements MethodInfo {
 
     private final ConstructorInfo constructorInfo;
@@ -625,22 +641,22 @@ class InstrumentationSpec {
 
     public String getName() {
       // return constructorInfo.getName();
-      // reflecting old DSO hack (see com.tc.object.bytecode.aspectwerkz.AsmMethodInfo) 
+      // reflecting old DSO hack (see com.tc.object.bytecode.aspectwerkz.AsmMethodInfo)
       return "__INIT__";
     }
 
     public int getModifiers() {
       return constructorInfo.getModifiers();
     }
-    
+
     public ClassInfo[] getParameterTypes() {
       return constructorInfo.getParameterTypes();
     }
-    
+
     public String getSignature() {
       return constructorInfo.getSignature();
     }
-    
+
     public String getGenericsSignature() {
       return constructorInfo.getGenericsSignature();
     }
@@ -648,25 +664,25 @@ class InstrumentationSpec {
     public ClassInfo[] getExceptionTypes() {
       return constructorInfo.getExceptionTypes();
     }
-    
+
     public Annotation[] getAnnotations() {
       return constructorInfo.getAnnotations();
     }
-    
+
     public ClassInfo getDeclaringType() {
       return constructorInfo.getDeclaringType();
     }
 
     // specific to MethodInfo
-    
+
     public String[] getParameterNames() {
       return new String[0];
     }
-    
+
     public ClassInfo getReturnType() {
       return JavaClassInfo.getClassInfo(void.class);
     }
-    
+
   }
-  
+
 }

@@ -7,6 +7,7 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.Root;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -141,9 +142,9 @@ public class TransparentVectorTestApp extends AbstractErrorCatchingTransparentAp
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     new CyclicBarrierSpec().visit(visitor, config);
     String testClassName = TransparentVectorTestApp.class.getName();
-    config.addRoot(testClassName, "vector", "vector", true);
-    config.addRoot(testClassName, "subList", "subList", true);
-    config.addRoot(testClassName, "barrier", "barrier", true);
+    config.addRoot(new Root(testClassName, "vector", "vector"), true);
+    config.addRoot(new Root(testClassName, "subList", "subList"), true);
+    config.addRoot(new Root(testClassName, "barrier", "barrier"), true);
     String methodExpression = "* " + testClassName + ".*(..)";
     System.err.println("Adding autolock for: " + methodExpression);
     config.addWriteAutolock(methodExpression);

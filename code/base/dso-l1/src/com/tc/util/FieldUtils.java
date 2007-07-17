@@ -33,8 +33,7 @@ public class FieldUtils {
     if (isTCField(field)) {
       return null;
     } else if (!isStaticAndNonRootField(field)) {
-      if (ManagerUtil.isRoot(field.getDeclaringClass().getName(), field.getName())
-          || ManagerUtil.isPhysicallyInstrumented(field.getDeclaringClass())) {
+      if (ManagerUtil.isRoot(field) || ManagerUtil.isPhysicallyInstrumented(field.getDeclaringClass())) {
         if ((obj instanceof TransparentAccess) && !isStaticField(field)) {
           return resolveReference((TransparentAccess) obj, field);
         } else {
@@ -164,7 +163,7 @@ public class FieldUtils {
 
     if (isStaticAndNonRootField(field)) { return false; }
 
-    if (ManagerUtil.isRoot(field.getDeclaringClass().getName(), field.getName())) {
+    if (ManagerUtil.isRoot(field)) {
       if ((obj instanceof TransparentAccess) && !isStaticField(field)) {
         setValue((TransparentAccess) obj, field, value);
       } else {
@@ -205,7 +204,7 @@ public class FieldUtils {
   }
 
   private static boolean isStaticAndNonRootField(Field field) {
-    return isStaticField(field) && !ManagerUtil.isRoot(field.getDeclaringClass().getName(), field.getName());
+    return isStaticField(field) && !ManagerUtil.isRoot(field);
   }
 
   private static Object resolveReference(TransparentAccess obj, Field field) {

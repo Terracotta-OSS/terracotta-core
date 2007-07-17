@@ -6,6 +6,7 @@ package com.tctest;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.Root;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
@@ -111,11 +112,11 @@ public class TransparentTransientTestApp extends AbstractTransparentApp {
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     try {
       String testClassName = TransparentTransientTestApp.class.getName();
-      config.addRoot(testClassName, "one", "one", true);
-      config.addRoot(testClassName, "two", "two", true);
-      config.addRoot(testClassName, "three", "three", true);
-      config.addRoot(testClassName, "four", "four", true);
-      config.addRoot(testClassName, "sharedState", "sharedState", true);
+      config.addRoot(new Root(testClassName, "one", "one"), true);
+      config.addRoot(new Root(testClassName, "two", "two"), true);
+      config.addRoot(new Root(testClassName, "three", "three"), true);
+      config.addRoot(new Root(testClassName, "four", "four"), true);
+      config.addRoot(new Root(testClassName, "sharedState", "sharedState"), true);
       config.addIncludePattern(TestClass1.class.getName(), false);
       config.addIncludePattern(TestClass2.class.getName(), true);
       config.addIncludePattern(TestClass3.class.getName(), true);

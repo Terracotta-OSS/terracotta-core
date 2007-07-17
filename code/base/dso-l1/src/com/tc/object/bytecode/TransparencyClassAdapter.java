@@ -11,6 +11,7 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Type;
 import com.tc.aspectwerkz.exception.DefinitionException;
 import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -69,7 +70,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
   private boolean isRoot(int access, String fieldName) {
     try {
-      boolean isRoot = getTransparencyClassSpec().isRootInThisClass(fieldName);
+      FieldInfo fieldInfo = spec.getFieldInfo(fieldName);
+      boolean isRoot = fieldInfo == null ? false : getTransparencyClassSpec().isRootInThisClass(fieldInfo);
       boolean isTransient = getTransparencyClassSpec().isTransient(access, spec.getClassInfo(), fieldName);
       if (isTransient && isRoot) {
         if (instrumentationLogger.transientRootWarning()) {
@@ -88,7 +90,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
   private String rootNameFor(String className, String fieldName) {
     try {
-      return getTransparencyClassSpec().rootNameFor(fieldName);
+      return getTransparencyClassSpec().rootNameFor(spec.getFieldInfo(fieldName));
     } catch (RuntimeException e) {
       handleInstrumentationException(e);
       throw e;
@@ -216,11 +218,11 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
           instrumentationLogger.autolockInserted(this.spec.getClassNameDots(), name, desc, ld);
         }
       }
-      
+
       if (isAutoSynchronized(ld) && !"<init>".equals(name)) {
         access |= ACC_SYNCHRONIZED;
       }
-      
+
       boolean isLockMethod = isAutolock && Modifier.isSynchronized(access) && !Modifier.isStatic(access);
       physicalClassLogger.logVisitMethodCheckIsLockMethod();
 
@@ -272,12 +274,13 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       throw e;
     }
   }
-  
+
   private boolean isAutoSynchronized(LockDefinition ld) {
     if (ld == null) { return false; }
-    
+
     ConfigLockLevel lockLevel = ld.getLockLevel();
-    return ConfigLockLevel.AUTO_SYNCHRONIZED_READ.equals(lockLevel) || ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE.equals(lockLevel);
+    return ConfigLockLevel.AUTO_SYNCHRONIZED_READ.equals(lockLevel)
+           || ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE.equals(lockLevel);
   }
 
   // protected void basicVisitEnd() {
@@ -835,7 +838,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   }
 
   private boolean isRootDSOFinal(String name, boolean isPrimitive) {
-    return spec.getTransparencyClassSpec().isRootDSOFinal(name, isPrimitive);
+    return spec.getTransparencyClassSpec().isRootDSOFinal(spec.getFieldInfo(name), isPrimitive);
   }
 
   private void createRootSetter(int methodAccess, String name, String desc, boolean isStatic) {

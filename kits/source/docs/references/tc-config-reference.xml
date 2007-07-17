@@ -558,9 +558,16 @@
       -->
       <roots>
         <root>
+          <!-- One of either field-name or field-expression is REQUIRED,
+               but not BOTH -->
+
           <!-- The name of the field to make a root. This must be
-             the fully-qualified name of a field. (REQUIRED) -->
+             the fully-qualified name of a field. -->
           <field-name>com.mycompany.pkgc.AnotherClass.field1</field-name>
+
+          <!-- A field expression to select fields to be roots. This must be
+               a valid AspectWerkz-compatible field expresion.-->
+          <!-- <field-expression>@com.example.MyRootAnnotation * *</field-expression> -->
 
           <!-- The name for this root. This is optional, but can
              help when debugging your system, or to declare that

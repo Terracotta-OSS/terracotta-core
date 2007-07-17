@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.restart.unit;
 
@@ -11,6 +12,7 @@ import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.LockDefinition;
+import com.tc.object.config.Root;
 import com.tctest.restart.AbstractRestartTestApp;
 
 import java.lang.reflect.InvocationTargetException;
@@ -21,6 +23,7 @@ public class DSOServerRestartTestApp extends AbstractRestartTestApp implements R
   private final Object[]     sharedLockHolder            = new Object[1];
   private final Object[]     distributedSharedLockHolder = new Object[1];
   private CyclicBarrier      startBarrier;
+
   public DSOServerRestartTestApp(ThreadGroup threadGroup) {
     super(threadGroup);
     changeState(INIT);
@@ -135,7 +138,7 @@ public class DSOServerRestartTestApp extends AbstractRestartTestApp implements R
       public void run() {
         try {
           syncBlockShutdown(blocker, callback);
-        } catch (Exception e ) {
+        } catch (Exception e) {
           throw new TCRuntimeException(e);
         }
       }
@@ -166,7 +169,8 @@ public class DSOServerRestartTestApp extends AbstractRestartTestApp implements R
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper cfg) {
     String appClassName = DSOServerRestartTestApp.class.getName();
     cfg.addIncludePattern(appClassName);
-    cfg.addRoot(appClassName, "distributedSharedLockHolder", appClassName + ".distributedSharedLockHolder", true);
+    cfg.addRoot(new Root(appClassName, "distributedSharedLockHolder", appClassName + ".distributedSharedLockHolder"),
+                true);
     cfg.addWriteAutolock("void " + appClassName + ".setDistributedSharedLock(java.lang.Object)");
     cfg.addReadAutolock("java.lang.Object " + appClassName + ".getSharedLock()");
 

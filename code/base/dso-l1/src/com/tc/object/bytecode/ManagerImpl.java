@@ -5,6 +5,9 @@
 package com.tc.object.bytecode;
 
 import com.tc.asm.Type;
+import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.FieldInfo;
+import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.cluster.Cluster;
 import com.tc.cluster.ClusterEventListener;
 import com.tc.lang.StartupHelper;
@@ -39,6 +42,7 @@ import com.tc.util.Assert;
 import com.tc.util.Util;
 import com.tc.util.concurrent.SetOnceFlag;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -307,7 +311,7 @@ public class ManagerImpl implements Manager {
       runtimeLogger.lockAcquired(lockID, type, instance, tcobj);
     }
   }
-  
+
   private boolean tryBegin(String lockID, int type, Object instance, WaitInvocation timeout, TCObject tcobj) {
     boolean locked = this.txManager.tryBegin(lockID, timeout, type);
     if (locked && runtimeLogger.lockDebug()) {
@@ -315,6 +319,7 @@ public class ManagerImpl implements Manager {
     }
     return locked;
   }
+
   private boolean tryBegin(String lockID, int type, Object instance, TCObject tcobj) {
     return tryBegin(lockID, type, instance, new WaitInvocation(0), tcobj);
   }
@@ -507,11 +512,11 @@ public class ManagerImpl implements Manager {
     }
     return false;
   }
-  
+
   public boolean tryBeginLock(String lockID, int type) {
     return tryBegin(lockID, type, null, null);
   }
-  
+
   public int localHeldCount(Object obj, int lockLevel) {
     if (obj == null) { throw new NullPointerException("isHeldByCurrentThread called on a null object"); }
 
@@ -564,8 +569,8 @@ public class ManagerImpl implements Manager {
 
   public boolean isCreationInProgress() {
     // I think the condition this.txManager.isTransactionLoggingDisabled() is not necessary and is causing the
-    // problem in DEV-602. 
-    //return this.objectManager.isCreationInProgress() || this.txManager.isTransactionLoggingDisabled();
+    // problem in DEV-602.
+    // return this.objectManager.isCreationInProgress() || this.txManager.isTransactionLoggingDisabled();
     return this.objectManager.isCreationInProgress();
   }
 
@@ -674,8 +679,18 @@ public class ManagerImpl implements Manager {
     return this.config.isLogical(object.getClass().getName());
   }
 
-  public boolean isRoot(String className, String fieldName) {
-    return this.config.isRoot(className, fieldName);
+  public boolean isRoot(Field field) {
+    String fName = field.getName();
+    Class c = field.getDeclaringClass();
+    ClassInfo classInfo = AsmClassInfo.getClassInfo(c.getName(), c.getClassLoader());
+
+    FieldInfo[] fields = classInfo.getFields();
+    for (int i = 0; i < fields.length; i++) {
+      FieldInfo fieldInfo = fields[i];
+      if (fieldInfo.getName().equals(fName)) { return this.config.isRoot(fieldInfo); }
+    }
+
+    return false;
   }
 
   public Object deepCopy(Object source) {

@@ -12,6 +12,8 @@ import com.tc.object.TCObject;
 import com.tc.object.event.DmiManager;
 import com.tc.properties.TCProperties;
 
+import java.lang.reflect.Field;
+
 public final class NullManager implements Manager {
 
   public static final String   CLASS    = "com/tc/object/bytecode/NullManager";
@@ -91,7 +93,7 @@ public final class NullManager implements Manager {
     return true;
   }
 
-  public void distributedMethodCallCommit() {
+  public final void distributedMethodCallCommit() {
     //
   }
 
@@ -107,7 +109,7 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public final boolean isRoot(String className, String fieldName) {
+  public final boolean isRoot(Field field) {
     return false;
   }
 
@@ -139,7 +141,7 @@ public final class NullManager implements Manager {
     // do nothing
   }
 
-  public boolean isLocked(Object obj, int lockLevel) {
+  public final boolean isLocked(Object obj, int lockLevel) {
     return false;
   }
 
@@ -163,11 +165,11 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public boolean tryMonitorEnter(Object obj, long timeoutInNanos, int type) {
+  public final boolean tryMonitorEnter(Object obj, long timeoutInNanos, int type) {
     throw new UnsupportedOperationException();
   }
 
-  public boolean tryBeginLock(String lockID, int type) {
+  public final boolean tryBeginLock(String lockID, int type) {
     throw new UnsupportedOperationException();
   }
 
@@ -193,10 +195,6 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public final Object getMBean(String objectName) {
-    throw new UnsupportedOperationException();
-  }
-
   public final SessionMonitorMBean getSessionMonitorMBean() {
     throw new UnsupportedOperationException();
   }
@@ -213,15 +211,15 @@ public final class NullManager implements Manager {
     throw new UnsupportedOperationException();
   }
 
-  public void addClusterEventListener(ClusterEventListener cel) {
+  public final void addClusterEventListener(ClusterEventListener cel) {
     throw new UnsupportedOperationException();
   }
 
-  public DmiManager getDmiManager() {
+  public final DmiManager getDmiManager() {
     throw new UnsupportedOperationException();
   }
 
-  public int localHeldCount(Object obj, int lockLevel) {
+  public final int localHeldCount(Object obj, int lockLevel) {
     throw new UnsupportedOperationException();
   }
 

@@ -9,6 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.Root;
 import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -29,40 +30,40 @@ public class LockUpgradeAndReadTestApp extends AbstractTransparentApp {
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClassName = LockUpgradeAndReadTestApp.class.getName();
 
-    config.addRoot(testClassName, "root", "root", true);
-    config.addRoot(testClassName, "id", "id", true);
+    config.addRoot(new Root(testClassName, "root", "root"), true);
+    config.addRoot(new Root(testClassName, "id", "id"), true);
 
     String methodExpression = "* " + testClassName + ".write(..)";
     config.addWriteAutolock(methodExpression);
-    
+
     methodExpression = "* " + testClassName + ".write2(..)";
     config.addWriteAutolock(methodExpression);
 
     methodExpression = "* " + testClassName + ".read(..)";
     config.addReadAutolock(methodExpression);
-    
+
     methodExpression = "* " + testClassName + ".read2(..)";
     config.addReadAutolock(methodExpression);
 
     methodExpression = "* " + testClassName + ".readAndThenWrite(..)";
     config.addReadAutolock(methodExpression);
-    
+
     methodExpression = "* " + testClassName + ".readAndThenWrite2(..)";
     config.addReadAutolock(methodExpression);
 
     new SynchronizedIntSpec().visit(visitor, config);
   }
-  
+
   public void run() {
     try {
       int myid = id.increment();
-      
+
       test(myid);
     } catch (Throwable t) {
       notifyError(t);
     }
   }
-  
+
   private void test(int myid) throws Exception {
     println("My id is : " + myid);
     for (int i = 0; i < 500; i++) {
@@ -85,7 +86,7 @@ public class LockUpgradeAndReadTestApp extends AbstractTransparentApp {
         barrier1.barrier();
         readAndThenWrite(i, null, false);
         barrier1.barrier();
-      } 
+      }
     }
   }
 

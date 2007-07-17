@@ -6,6 +6,7 @@ package com.tctest;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOApplicationConfig;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.Root;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -106,12 +107,12 @@ public class TransparentLinkedListTestApp extends AbstractTransparentApp {
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClassName = TransparentLinkedListTestApp.class.getName();
     config.addIncludePattern(testClassName);
-    config.addRoot(testClassName, "list", "list", true);
+    config.addRoot(new Root(testClassName, "list", "list"), true);
     config.addWriteAutolock("* " + testClassName + ".*(..)");
     config.addIncludePattern(TestObject.class.getName());
     visitor.visit(config, AbstractTransparentApp.class);
   }
-  
+
   public static void visitDSOApplicationConfig(ConfigVisitor visitor, DSOApplicationConfig config) {
     String classname = TransparentLinkedListTestApp.class.getName();
     config.addIncludePattern(classname);

@@ -8,6 +8,7 @@ import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
 import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.object.Portability;
@@ -70,15 +71,15 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   LockDefinition[] lockDefinitionsFor(MemberInfo memberInfo);
 
-  boolean isRoot(String className, String fieldName);
+  boolean isRoot(FieldInfo fi);
 
-  boolean isRootDSOFinal(String className, String fieldName, boolean isPrimitive);
+  boolean isRootDSOFinal(FieldInfo fi, boolean isPrimitive);
 
   boolean isTransient(int modifiers, ClassInfo classInfo, String field);
 
   boolean isVolatile(int modifiers, ClassInfo classInfo, String field);
 
-  String rootNameFor(String className, String fieldName);
+  String rootNameFor(FieldInfo fi);
 
   boolean isLockMethod(MemberInfo memberInfo);
 
@@ -105,16 +106,14 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   void addReadAutolock(String methodPattern);
 
   void addAutolock(String methodPattern, ConfigLockLevel type);
-  
+
   void addReadAutoSynchronize(String methodPattern);
 
   void addWriteAutoSynchronize(String methodPattern);
 
   void setFaultCount(int count);
 
-  void addRoot(String className, String fieldName, String rootName, boolean addSpecForClass);
-
-  void addRoot(String className, String fieldName, String rootName, boolean dsoFinal, boolean addSpecForClass);
+  void addRoot(Root root, boolean addSpecForClass);
 
   boolean matches(final Lock lock, final MemberInfo methodInfo);
 
@@ -123,7 +122,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   void addTransient(String className, String fieldName);
 
   String getOnLoadScriptIfDefined(ClassInfo classInfo);
-  
+
   String getPreCreateMethodIfDefined(String className);
 
   String getPostCreateMethodIfDefined(String className);

@@ -6,6 +6,7 @@ package com.tctest;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.Root;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.object.tx.ReadOnlyException;
@@ -266,7 +267,7 @@ public class ReflectionArrayTestApp extends GenericTestApp {
     String readOnlyMethodExpression = "* " + testClass + "*.*ReadOnly*(..)";
     config.addReadAutolock(readOnlyMethodExpression);
 
-    config.addRoot(testClass, "dataRoot", "dataRoot", true);
+    config.addRoot(new Root(testClass, "dataRoot", "dataRoot"), true);
     spec.addRoot("barrier", "barrier");
     spec.addRoot("barrier2", "barrier2");
     config.addIncludePattern(DataRoot.class.getName());

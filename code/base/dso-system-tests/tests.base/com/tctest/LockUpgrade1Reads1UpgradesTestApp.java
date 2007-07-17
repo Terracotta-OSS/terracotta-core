@@ -8,6 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.Root;
 import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -28,8 +29,8 @@ public class LockUpgrade1Reads1UpgradesTestApp extends AbstractTransparentApp {
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClassName = LockUpgrade1Reads1UpgradesTestApp.class.getName();
 
-    config.addRoot(testClassName, "root", "root", true);
-    config.addRoot(testClassName, "id", "id", true);
+    config.addRoot(new Root(testClassName, "root", "root"), true);
+    config.addRoot(new Root(testClassName, "id", "id"), true);
 
     String methodExpression = "* " + testClassName + ".write(..)";
     config.addWriteAutolock(methodExpression);

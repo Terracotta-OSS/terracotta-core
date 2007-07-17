@@ -5,6 +5,7 @@
 package com.tc.object.config;
 
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
+import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
@@ -12,6 +13,7 @@ import com.tc.asm.ClassWriter;
 import com.tc.aspectwerkz.expression.ExpressionContext;
 import com.tc.aspectwerkz.expression.ExpressionVisitor;
 import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.config.schema.NewCommonL1Config;
@@ -111,7 +113,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
   private final L1TVSConfigurationSetupManager   configSetupManager;
 
   private Lock[]                                 locks                              = new Lock[0];
-  private final Map                              roots                              = new ConcurrentHashMap();
+  private final List                             roots                              = new CopyOnWriteArrayList();
   private final Set                              transients                         = Collections
                                                                                         .synchronizedSet(new HashSet());
 
@@ -1077,9 +1079,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
 
   public void addCustomAdapter(String name, ClassAdapterFactory factory) {
     synchronized (customAdapters) {
-      if (customAdapters.containsKey(name)) {
-        return;
-      }
+      if (customAdapters.containsKey(name)) { return; }
 
       Object prev = this.customAdapters.put(name, factory);
       Assert.assertNull(prev);
@@ -1175,60 +1175,49 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     } catch (ParseException e) {
       throw new RuntimeException(e);
     }
-    addRoot(classSpec.getFullyQualifiedClassName(), classSpec.getShortFieldName(), rootName, false);
+    addRoot(new Root(classSpec.getFullyQualifiedClassName(), classSpec.getShortFieldName(), rootName), false);
   }
 
-  private void addRoot(String className, String fieldName, Root newRoot, boolean addSpecForClass) {
+  public void addRoot(Root root, boolean addSpecForClass) {
     if (addSpecForClass) {
-      this.getOrCreateSpec(className);
+      this.getOrCreateSpec(root.getClassName());
     }
 
-    synchronized (roots) {
-      Map rootsForClass = (Map) roots.get(className);
-      if (rootsForClass == null) {
-        rootsForClass = new ConcurrentHashMap();
-        roots.put(className, rootsForClass);
-      }
+    roots.add(root);
+  }
 
-      rootsForClass.put(fieldName, newRoot);
+  public String rootNameFor(FieldInfo fi) {
+    Root r = findMatchingRootDefinition(fi);
+    if (r != null) { return r.getRootName(fi); }
+    throw Assert.failure("No such root for fieldName " + fi.getName() + " in class " + fi.getDeclaringType().getName());
+  }
+
+  public boolean isRoot(FieldInfo fi) {
+    return findMatchingRootDefinition(fi) != null;
+  }
+
+  public boolean isRootDSOFinal(FieldInfo fi, boolean isPrimitive) {
+    Root r = findMatchingRootDefinition(fi);
+    if (r != null) { return r.isDsoFinal(isPrimitive); }
+    throw Assert.failure("No such root for fieldName " + fi.getName() + " in class " + fi.getDeclaringType().getName());
+  }
+
+  private Root findMatchingRootDefinition(FieldInfo fi) {
+    for (Iterator i = roots.iterator(); i.hasNext();) {
+      Root r = (Root) i.next();
+      if (r.matches(fi, expressionHelper)) { return r; }
     }
+    return null;
   }
 
-  public void addRoot(String className, String fieldName, String rootName, boolean addSpecForClass) {
-    addRoot(className, fieldName, new Root(className, fieldName, rootName), addSpecForClass);
-  }
+  private boolean classContainsAnyRoots(ClassInfo classInfo) {
+    FieldInfo[] fields = classInfo.getFields();
+    for (int i = 0; i < fields.length; i++) {
+      FieldInfo fieldInfo = fields[i];
+      if (findMatchingRootDefinition(fieldInfo) != null) { return true; }
+    }
 
-  public void addRoot(String className, String fieldName, String rootName, boolean dsoFinal, boolean addSpecForClass) {
-    addRoot(className, fieldName, new Root(className, fieldName, rootName, dsoFinal), addSpecForClass);
-  }
-
-  public String rootNameFor(String className, String fieldName) {
-    Map rootsForClass = (Map) roots.get(className);
-    if (rootsForClass == null) { throw Assert.failure("No roots at all for class " + className); }
-
-    Root root = (Root) rootsForClass.get(fieldName);
-    if (root == null) { throw Assert.failure("No such root for fieldName " + fieldName + " in class " + className); }
-
-    return root.getRootName();
-  }
-
-  public boolean isRoot(String className, String fieldName) {
-    Map rootsForClass = (Map) roots.get(className);
-    if (rootsForClass == null) { return false; }
-    return rootsForClass.containsKey(fieldName);
-  }
-
-  public boolean isRootDSOFinal(String className, String fieldName, boolean isPrimitive) {
-    Map rootsForClass = (Map) roots.get(className);
-    if (rootsForClass == null) { throw Assert.failure("No roots at all for class " + className); }
-    Root root = (Root) rootsForClass.get(fieldName);
-    if (root == null) { throw Assert.failure("No such root for fieldName " + fieldName + " in class " + className); }
-
-    return root.isDsoFinal(isPrimitive);
-  }
-
-  private boolean classContainsAnyRoots(String className) {
-    return roots.containsKey(className);
+    return false;
   }
 
   private void rewriteHashtableAutoLockSpecIfNecessary() {
@@ -1376,7 +1365,7 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     }
 
     // If a root is defined then we automagically instrument
-    if (classContainsAnyRoots(fullClassName)) { return cacheIsAdaptable(fullClassName, true); }
+    if (classContainsAnyRoots(classInfo)) { return cacheIsAdaptable(fullClassName, true); }
     // custom adapters trump config.
     if (customAdapters.containsKey(fullClassName)) { return cacheIsAdaptable(fullClassName, true); }
     // existing class specs trump config

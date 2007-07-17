@@ -7,6 +7,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.Root;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
@@ -48,7 +49,7 @@ public class WaitNotifySystemTestApp extends AbstractTransparentApp {
     List roots = Arrays.asList(new Object[] { "queue", "takers", "putters", "workers", "takeCounts", "first" });
     for (Iterator iter = roots.iterator(); iter.hasNext();) {
       String root = (String) iter.next();
-      config.addRoot(testClassName, root, root + "Lock", true);
+      config.addRoot(new Root(testClassName, root, root + "Lock"), true);
       System.err.println("Adding root for " + testClassName + "." + root);
     }
 

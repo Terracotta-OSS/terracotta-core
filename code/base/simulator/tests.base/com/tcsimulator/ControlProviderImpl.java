@@ -1,11 +1,13 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tcsimulator;
 
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.Root;
 import com.tc.simulator.control.Control;
 import com.tc.simulator.crasher.ControlProvider;
 
@@ -20,7 +22,7 @@ public class ControlProviderImpl implements ControlProvider {
     String classname = ControlProviderImpl.class.getName();
     config.addIncludePattern(classname);
     config.addAutolock("* " + classname + ".*(..)", ConfigLockLevel.WRITE);
-    config.addRoot(classname, "controls", classname + ".controls", true);
+    config.addRoot(new Root(classname, "controls", classname + ".controls"), true);
     ControlImpl.visitL1DSOConfig(visitor, config);
   }
 

@@ -13,6 +13,8 @@ import com.tc.object.event.DmiManager;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.properties.TCProperties;
 
+import java.lang.reflect.Field;
+
 /**
  * The Manager interface
  */
@@ -88,7 +90,7 @@ public interface Manager {
 
   public boolean isLogical(Object object);
 
-  public boolean isRoot(String className, String fieldName);
+  public boolean isRoot(Field field);
 
   public void optimisticBegin();
 
@@ -99,7 +101,7 @@ public interface Manager {
   public boolean isLocked(Object obj, int lockLevel);
 
   public boolean tryMonitorEnter(Object obj, long timeoutInNanos, int type);
-  
+
   public int localHeldCount(Object obj, int lockLevel);
 
   public boolean isHeldByCurrentThread(Object obj, int lockLevel);
@@ -121,5 +123,7 @@ public interface Manager {
   public void addClusterEventListener(ClusterEventListener cel);
 
   public DmiManager getDmiManager();
+
+
 
 }

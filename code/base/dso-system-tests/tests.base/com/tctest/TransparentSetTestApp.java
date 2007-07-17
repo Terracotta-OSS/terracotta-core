@@ -5,6 +5,7 @@ package com.tctest;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.Root;
 import com.tc.simulator.app.Application;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -104,7 +105,7 @@ public class TransparentSetTestApp extends AbstractTransparentApp implements App
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClassName = TransparentSetTestApp.class.getName();
-    config.addRoot(testClassName, "set", "set", true);
+    config.addRoot(new Root(testClassName, "set", "set"), true);
     String methodExpression = "* " + testClassName + ".*(..)";
     System.err.println("Adding autolock for: " + methodExpression);
 

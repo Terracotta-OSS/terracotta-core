@@ -9,7 +9,10 @@ import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
 import com.tc.asm.Type;
 import com.tc.asm.commons.AdviceAdapter;
+import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
+import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.exception.TCInternalError;
 import com.tc.object.config.LockDefinition;
 import com.tc.object.config.TransparencyClassSpec;
@@ -528,7 +531,17 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   }
 
   private boolean isRoot(String classname, String fieldName) {
-    return getTransparencyClassSpec().isRoot(classname.replace('/', '.'), fieldName);
+    ClassInfo classInfo = AsmClassInfo.getClassInfo(classname.replace('/', '.'), spec.getCaller());
+    FieldInfo[] fields = classInfo.getFields();
+    for (int i = 0; i < fields.length; i++) {
+      FieldInfo fieldInfo = fields[i];
+
+      if (fieldName.equals(fieldInfo.getName())) {
+        if (getTransparencyClassSpec().isRoot(fieldInfo)) { return true; }
+      }
+    }
+
+    return false;
   }
 
   protected void onMethodEnter() {

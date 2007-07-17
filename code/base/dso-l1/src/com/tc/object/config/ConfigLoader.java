@@ -61,11 +61,30 @@ public class ConfigLoader {
         for (int i = 0; i < roots.length; ++i) {
           Root root = roots[i];
           try {
-            ClassSpec classSpec = ClassUtils.parseFullyQualifiedFieldName(root.getFieldName());
-            String className = classSpec.getFullyQualifiedClassName();
-            String fieldName = classSpec.getShortFieldName();
             String rootName = root.getRootName();
-            config.addRoot(className, fieldName, rootName, false);
+            String fieldName = root.getFieldName();
+            String fieldExpression = root.getFieldExpression();
+
+            // XXX: It would be nice to enforce this constraint in XML Schema
+            if (fieldName == null && fieldExpression == null) {
+              throw new ConfigurationSetupException("must specify either field-name or field-expression");
+            }
+
+            if (fieldName != null && fieldExpression != null) {
+              throw new ConfigurationSetupException("cannot specify both field-name and field-expression");
+            }
+
+            Assert.assertTrue((fieldName != null && fieldExpression == null) || (fieldName == null && fieldExpression != null));
+
+            if (fieldName != null) {
+              ClassSpec classSpec = ClassUtils.parseFullyQualifiedFieldName(fieldName);
+              String className = classSpec.getFullyQualifiedClassName();
+              config.addRoot(new com.tc.object.config.Root(className, classSpec.getShortFieldName(), rootName), false);
+            } else if (fieldExpression != null) {
+              config.addRoot(new com.tc.object.config.Root(fieldExpression, rootName), false);
+            } else {
+              throw new AssertionError();
+            }
           } catch (ParseException pe) {
             throw new ConfigurationSetupException("Root '" + root.getFieldName() + "' is invalid", pe);
           }
@@ -104,7 +123,7 @@ public class ConfigLoader {
             config.addUserDefinedBootSpec(spec.getClassName(), spec);
           } else if (!spec.isPreInstrumented()) {
             // DEV-458: if the class being added to the boot jar defines locks/distributed methods/etc. it creates a
-            // spec but does not pre-instrument it.  This makes sure that the adapted code gets into the boot jar in
+            // spec but does not pre-instrument it. This makes sure that the adapted code gets into the boot jar in
             // this case.
             spec.markPreInstrumented();
           }
@@ -189,14 +208,14 @@ public class ConfigLoader {
       config.addDSOSpringConfig(springConfigHelper);
     }
   }
-  
+
   private ConfigLockLevel getLockLevel(LockLevel.Enum lockLevel, boolean autoSynchronized) {
     if (lockLevel == null || LockLevel.WRITE.equals(lockLevel)) {
-      return autoSynchronized? ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE : ConfigLockLevel.WRITE;
+      return autoSynchronized ? ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE : ConfigLockLevel.WRITE;
     } else if (LockLevel.CONCURRENT.equals(lockLevel)) {
       return ConfigLockLevel.CONCURRENT;
     } else if (LockLevel.READ.equals(lockLevel)) {
-      return autoSynchronized? ConfigLockLevel.AUTO_SYNCHRONIZED_READ : ConfigLockLevel.READ;
+      return autoSynchronized ? ConfigLockLevel.AUTO_SYNCHRONIZED_READ : ConfigLockLevel.READ;
     } else if (LockLevel.SYNCHRONOUS_WRITE.equals(lockLevel)) { return ConfigLockLevel.SYNCHRONOUS_WRITE; }
     throw Assert.failure("Unknown lock level " + lockLevel);
   }
@@ -206,7 +225,8 @@ public class ConfigLoader {
 
     Autolock[] autolocks = lockList.getAutolockArray();
     for (int i = 0; autolocks != null && i < autolocks.length; i++) {
-      config.addAutolock(autolocks[i].getMethodExpression(), getLockLevel(autolocks[i].getLockLevel(), autolocks[i].getAutoSynchronized()));
+      config.addAutolock(autolocks[i].getMethodExpression(), getLockLevel(autolocks[i].getLockLevel(), autolocks[i]
+          .getAutoSynchronized()));
     }
 
     NamedLock[] namedLocks = lockList.getNamedLockArray();

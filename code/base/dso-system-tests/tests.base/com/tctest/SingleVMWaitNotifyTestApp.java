@@ -7,6 +7,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.Root;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.concurrent.ThreadUtil;
@@ -41,7 +42,7 @@ public class SingleVMWaitNotifyTestApp extends AbstractTransparentApp {
     String testClassName = SingleVMWaitNotifyTestApp.class.getName();
     config.addIncludePattern(testClassName);
     String root = "queue";
-    config.addRoot(testClassName, root, root + "Lock", true);
+    config.addRoot(new Root(testClassName, root, root + "Lock"), true);
     System.err.println("Adding root for " + testClassName + "." + root);
 
     String methodExpression = "* " + testClassName + "*.*(..)";

@@ -7,6 +7,7 @@ import com.tc.exception.TCNonPortableObjectError;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.Root;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
@@ -29,28 +30,28 @@ public class InnerClassInstrumentationTestApp extends AbstractTransparentApp {
     String testClassName = InnerClassInstrumentationTestApp.class.getName();
     config.addIncludePattern(testClassName);
     config.addIncludePattern(MyInstrumentedInnerClass.class.getName());
-    
+
     config.addIncludePattern(InnerInnerExtendsInstrumentedClass.class.getName());
     config.addIncludePattern(InnerInnerExtendsInstrumentedClass.InnerInnerClass.class.getName());
     config.addIncludePattern(InnerInnerExtendsInstrumentedClass.InnerInnerClass.InnerInnerInnerClass.class.getName());
-    
+
     config.addIncludePattern(MyNonInstrumentedInnerSubclass.class.getName());
-    
+
     config.addIncludePattern(InnerInnerExtendsNonInstrumentedClass.class.getName());
     config.addIncludePattern(InnerInnerExtendsNonInstrumentedClass.InnerInnerClass.class.getName());
     config.addIncludePattern(InnerInnerExtendsNonInstrumentedClass.InnerInnerClass.InnerInnerInnerClass.class.getName());
-    
+
     config.addIncludePattern(InnerInnerStaticExtendsInstrumentedClass.class.getName());
     config.addIncludePattern(InnerInnerStaticExtendsInstrumentedClass.InnerInnerClass.class.getName());
-    
+
     config.addIncludePattern(InnerInnerStaticExtendsNonInstrumentedClass.class.getName());
     config.addIncludePattern(InnerInnerStaticExtendsNonInstrumentedClass.InnerInnerClass.class.getName());
-    
+
     config.addIncludePattern(AnonymousInstrumentedInnerInnerClass.class.getName());
     config.addIncludePattern(new AnonymousInstrumentedInnerInnerClass().getInnerInnerClassName());
     config.addIncludePattern(AnonymousNonInstrumentedInnerInnerClass.class.getName());
     config.addIncludePattern(new AnonymousNonInstrumentedInnerInnerClass().getInnerInnerClassName());
-    config.addRoot(testClassName, "root", "root", true);
+    config.addRoot(new Root(testClassName, "root", "root"), true);
     config.addAutolock("* " + testClassName + ".*(..)", ConfigLockLevel.WRITE);
   }
 
@@ -70,25 +71,25 @@ public class InnerClassInstrumentationTestApp extends AbstractTransparentApp {
       } catch ( TCNonPortableObjectError t) {
           // expected.
       }
-      
+
       try {
         root.put(NOT_INSTRUMENTED_KEY, new InnerInnerExtendsNonInstrumentedClass());
         throw new AssertionError("This should have thrown an exception!");
       } catch ( TCNonPortableObjectError t) {
           // expected.
       }
-      
+
       root.put(INSTRUMENTED_KEY, new InnerInnerStaticExtendsInstrumentedClass());
-      
+
       try {
         root.put(NOT_INSTRUMENTED_KEY, new InnerInnerStaticExtendsNonInstrumentedClass());
         throw new AssertionError("This should have thrown an exception!");
       } catch ( TCNonPortableObjectError t) {
           // expected.
       }
-      
+
       root.put(INSTRUMENTED_KEY, new AnonymousInstrumentedInnerInnerClass());
-      
+
       try {
         root.put(NOT_INSTRUMENTED_KEY, new AnonymousNonInstrumentedInnerInnerClass());
         throw new AssertionError("This should have thrown an exception!");
@@ -105,82 +106,82 @@ public class InnerClassInstrumentationTestApp extends AbstractTransparentApp {
   private static class MyInstrumentedInnerClass {
     //
   }
-  
+
   private static final class InnerInnerExtendsInstrumentedClass {
     private final InnerInnerClass inner = new InnerInnerClass();
-    
-    // This method is to remove eclipse warning.
-    public Object getInner() {
-      return inner;
-    }
-    
-    private class InnerInnerClass extends MyInstrumentedInnerClass {
-      private final InnerInnerInnerClass innerInner = new InnerInnerInnerClass();
-      
-      // This method is to remove eclipse warning.
-      public Object getInnerInner() {
-        return innerInner;
-      }
-      
-      private class InnerInnerInnerClass extends MyInstrumentedInnerClass {
-        //
-      }
-    }
-  }
-  
-  private static final class InnerInnerStaticExtendsInstrumentedClass {
-    private final InnerInnerClass inner = new InnerInnerClass();
-    
-    // This method is to remove eclipse warning.
-    public Object getInner() {
-      return inner;
-    }
-    
-    private static class InnerInnerClass extends MyInstrumentedInnerClass {
-      //
-    }
-  }
-  
-  private static final class MyNonInstrumentedInnerSubclass extends MyNonInstrumentedInnerClass {
-    //
-  }
-  
-  private static final class InnerInnerExtendsNonInstrumentedClass {
-    private final InnerInnerClass inner = new InnerInnerClass();
-    
+
     // This method is to remove eclipse warning.
     public Object getInner() {
       return inner;
     }
 
-    
     private class InnerInnerClass extends MyInstrumentedInnerClass {
       private final InnerInnerInnerClass innerInner = new InnerInnerInnerClass();
-      
+
       // This method is to remove eclipse warning.
       public Object getInnerInner() {
         return innerInner;
       }
-      
+
+      private class InnerInnerInnerClass extends MyInstrumentedInnerClass {
+        //
+      }
+    }
+  }
+
+  private static final class InnerInnerStaticExtendsInstrumentedClass {
+    private final InnerInnerClass inner = new InnerInnerClass();
+
+    // This method is to remove eclipse warning.
+    public Object getInner() {
+      return inner;
+    }
+
+    private static class InnerInnerClass extends MyInstrumentedInnerClass {
+      //
+    }
+  }
+
+  private static final class MyNonInstrumentedInnerSubclass extends MyNonInstrumentedInnerClass {
+    //
+  }
+
+  private static final class InnerInnerExtendsNonInstrumentedClass {
+    private final InnerInnerClass inner = new InnerInnerClass();
+
+    // This method is to remove eclipse warning.
+    public Object getInner() {
+      return inner;
+    }
+
+
+    private class InnerInnerClass extends MyInstrumentedInnerClass {
+      private final InnerInnerInnerClass innerInner = new InnerInnerInnerClass();
+
+      // This method is to remove eclipse warning.
+      public Object getInnerInner() {
+        return innerInner;
+      }
+
       private class InnerInnerInnerClass extends MyNonInstrumentedInnerClass {
         //
       }
     }
   }
-  
+
   private static final class InnerInnerStaticExtendsNonInstrumentedClass {
     private final InnerInnerClass inner = new InnerInnerClass();
-    
+
     // This method is to remove eclipse warning.
     public Object getInner() {
       return inner;
     }
-    
+
     private static class InnerInnerClass extends MyNonInstrumentedInnerClass {
       //
     }
   }
-  
+
   private static final class AnonymousInstrumentedInnerInnerClass extends MyInstrumentedInnerClass {
     public String getInnerInnerClassName() {
       return innerInner.getClass().getName();
@@ -189,7 +190,7 @@ public class InnerClassInstrumentationTestApp extends AbstractTransparentApp {
       //
     };
   }
-  
+
   private static final class AnonymousNonInstrumentedInnerInnerClass extends MyInstrumentedInnerClass {
     public String getInnerInnerClassName() {
       return innerInner.getClass().getName();

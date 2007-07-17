@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.spring;
 
@@ -8,6 +9,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOSpringConfigHelper;
+import com.tc.object.config.Root;
 import com.tc.object.config.StandardDSOSpringConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -28,7 +30,7 @@ public class Singleton2_Test extends TransparentTestBase {
   private static final int NODE_COUNT      = 4;
 
   public Singleton2_Test() {
-    disableAllUntil("2008-01-01");  //covered by system test
+    disableAllUntil("2008-01-01"); // covered by system test
   }
 
   protected void setUp() throws Exception {
@@ -99,12 +101,16 @@ public class Singleton2_Test extends TransparentTestBase {
     }
 
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-      config.addRoot("com.tctest.spring.Singleton_Test$SingletonApp", "sharedSingletons1", "sharedSingletons1", false);
-      config.addRoot("com.tctest.spring.Singleton_Test$SingletonApp", "sharedSingletons2", "sharedSingletons2", false);
+      config
+          .addRoot(new Root("com.tctest.spring.Singleton_Test$SingletonApp", "sharedSingletons1", "sharedSingletons1"),
+                   false);
+      config
+          .addRoot(new Root("com.tctest.spring.Singleton_Test$SingletonApp", "sharedSingletons2", "sharedSingletons2"),
+                   false);
 
       DSOSpringConfigHelper springConfig = new StandardDSOSpringConfigHelper();
       springConfig.addApplicationNamePattern(SpringTestConstants.APPLICATION_NAME); // app name used by testing
-                                                                                    // framework
+      // framework
       springConfig.addConfigPattern("*/beanfactory.xml");
       springConfig.addConfigPattern("*/beanfactory2.xml");
       springConfig.addBean("singleton");

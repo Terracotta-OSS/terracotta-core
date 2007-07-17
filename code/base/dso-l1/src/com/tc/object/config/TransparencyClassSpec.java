@@ -6,6 +6,7 @@ package com.tc.object.config;
 
 import com.tc.asm.ClassVisitor;
 import com.tc.aspectwerkz.reflect.ClassInfo;
+import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.aspectwerkz.reflect.MethodInfo;
 import com.tc.object.bytecode.ByteCodeUtil;
@@ -95,12 +96,12 @@ public class TransparencyClassSpec {
   }
 
   public TransparencyClassSpec addRoot(String variableName, String rootName) {
-    configuration.addRoot(className, variableName, rootName, false);
+    configuration.addRoot(new Root(className, variableName, rootName), false);
     return this;
   }
 
   public TransparencyClassSpec addRoot(String variableName, String rootName, boolean dsoFinal) {
-    configuration.addRoot(className, variableName, rootName, dsoFinal, false);
+    configuration.addRoot(new Root(className, variableName, rootName, dsoFinal), false);
     return this;
   }
 
@@ -207,16 +208,16 @@ public class TransparencyClassSpec {
     return TransparencyClassSpecUtil.ignoreChecks(className);
   }
 
-  public boolean isRootInThisClass(String fieldName) {
-    return configuration.isRoot(className, fieldName);
+  public boolean isRootInThisClass(FieldInfo fieldInfo) {
+    return configuration.isRoot(fieldInfo);
   }
 
-  public boolean isRoot(String classname, String fieldName) {
-    return configuration.isRoot(classname, fieldName);
+  public boolean isRoot(FieldInfo fieldInfo) {
+    return configuration.isRoot(fieldInfo);
   }
 
-  public boolean isRootDSOFinal(String fieldName, boolean isPrimitive) {
-    return configuration.isRootDSOFinal(className, fieldName, isPrimitive);
+  public boolean isRootDSOFinal(FieldInfo fieldInfo, boolean isPrimitive) {
+    return configuration.isRootDSOFinal(fieldInfo, isPrimitive);
   }
 
   public boolean isTransient(int access, ClassInfo classInfo, String fieldName) {
@@ -227,8 +228,8 @@ public class TransparencyClassSpec {
     return configuration.isVolatile(access, classInfo, fieldName);
   }
 
-  public String rootNameFor(String fieldName) {
-    return configuration.rootNameFor(className, fieldName);
+  public String rootNameFor(FieldInfo fieldInfo) {
+    return configuration.rootNameFor(fieldInfo);
   }
 
   public boolean isLockMethod(MemberInfo memberInfo) {
@@ -495,7 +496,7 @@ public class TransparencyClassSpec {
   public String getPostCreateMethod() {
     return postCreateMethod;
   }
-  
+
   public void setPreCreateMethod(String preCreateMethod) {
     this.preCreateMethod = preCreateMethod;
   }

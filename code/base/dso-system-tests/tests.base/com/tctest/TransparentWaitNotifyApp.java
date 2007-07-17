@@ -5,6 +5,7 @@ package com.tctest;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.Root;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -80,7 +81,7 @@ public class TransparentWaitNotifyApp extends AbstractTransparentApp {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClassName = TransparentWaitNotifyApp.class.getName();
-    config.addRoot(testClassName, "sharedRoot", "sharedRootLock", true);
+    config.addRoot(new Root(testClassName, "sharedRoot", "sharedRootLock"), true);
     String methodExpression = "* " + testClassName + ".*(..)";
     System.err.println("Adding autolock for: " + methodExpression);
     config.addWriteAutolock(methodExpression);

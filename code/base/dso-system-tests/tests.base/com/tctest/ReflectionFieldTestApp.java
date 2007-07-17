@@ -8,6 +8,7 @@ import com.tc.object.bytecode.ClassAdapterBase;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.Root;
 import com.tc.object.tx.ReadOnlyException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -594,13 +595,14 @@ public class ReflectionFieldTestApp extends GenericTestApp {
     String readOnlyMethodExpression = "* " + testClass + "*.*ReadOnly*(..)";
     config.addReadAutolock(readOnlyMethodExpression);
 
-    config.addRoot(testClass, "reflectionRoot", "reflectionRoot", true);
-    config.addRoot(testClass, "literalRoot", "literalRoot", true);
-    config.addRoot(testClass, "primitiveRoot", "primitiveRoot", true);
+    config.addRoot(new Root(testClass, "reflectionRoot", "reflectionRoot"), true);
+    config.addRoot(new Root(testClass, "literalRoot", "literalRoot"), true);
+    config.addRoot(new Root(testClass, "primitiveRoot", "primitiveRoot"), true);
     config.addIncludePattern(DataRoot.class.getName());
 
-    config.addRoot(NonInstrumented.class.getName(), "nonInstrumentedRoot", "nonInstrumentedRoot", false);
-    config.addRoot(NonInstrumented.class.getName(), "nonInstrumentedStaticRoot", "nonInstrumentedStaticRoot", false);
+    config.addRoot(new Root(NonInstrumented.class.getName(), "nonInstrumentedRoot", "nonInstrumentedRoot"), false);
+    config.addRoot(new Root(NonInstrumented.class.getName(), "nonInstrumentedStaticRoot", "nonInstrumentedStaticRoot"),
+                   false);
   }
 
   protected void silenceCompilerWarnings() {

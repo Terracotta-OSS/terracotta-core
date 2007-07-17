@@ -1,10 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.Root;
 import com.tc.object.tx.ReadOnlyException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -25,7 +27,7 @@ public class LockUpgradeSystemTestApp extends AbstractTransparentApp {
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClassName = LockUpgradeSystemTestApp.class.getName();
 
-    config.addRoot(testClassName, "root", "root" + "Lock", true);
+    config.addRoot(new Root(testClassName, "root", "root" + "Lock"), true);
 
     String methodExpression = "* " + testClassName + ".writeLock(..)";
     config.addWriteAutolock(methodExpression);
@@ -64,7 +66,7 @@ public class LockUpgradeSystemTestApp extends AbstractTransparentApp {
     try {
       root.put("key", "value");
       throw new RuntimeException("read-only transaction context is busted");
-    } catch ( ReadOnlyException roe) {
+    } catch (ReadOnlyException roe) {
       // expected
     }
   }
