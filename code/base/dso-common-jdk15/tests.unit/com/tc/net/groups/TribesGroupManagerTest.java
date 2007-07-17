@@ -8,6 +8,7 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -16,10 +17,34 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Random;
 
 public class TribesGroupManagerTest extends TCTestCase {
 
   private static final TCLogger logger = TCLogging.getLogger(TribesGroupManager.class);
+  
+  public TribesGroupManagerTest() {
+    // use random mcast port for testing purpose.
+    useRandomMcastPort();
+  }
+  
+  /*
+   * Choose a random mcast port number to avoid conflict with other LAN machines.
+   * Must be called before joinMcast.
+   */
+  public void useRandomMcastPort() {
+    // generate a random port number
+    Random r = new Random();
+    r.setSeed(System.currentTimeMillis());
+    short portnum = 0;
+    do {
+      portnum = (short) r.nextInt(Short.MAX_VALUE - 1);
+    } while (portnum <= 1024);
+    
+    TCPropertiesImpl.setProperty("l2.nha.tribes.mcast.mcastPort", String.valueOf(portnum));
+    logger.info("McastService uses random mcast port: "+portnum);
+  }
+
 
   // public void testTribesTimeoutOnCrash() throws Exception {
   // PortChooser pc = new PortChooser();

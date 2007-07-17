@@ -19,20 +19,41 @@ import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.MockSink;
 import com.tc.net.groups.GroupManagerFactory;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.lang.ThrowableHandler;
 import com.tc.lang.TCThreadGroup;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Random;
 
 public class StateManagerTest extends TCTestCase {
-
+  
   private static final TCLogger logger = TCLogging.getLogger(StateManagerImpl.class);
 
   public StateManagerTest() {
     // disableAllUntil("2007-05-23");
+    useRandomMcastPort();
   }
+  
+  /*
+   * Choose a random mcast port number to avoid conflict with other LAN machines.
+   * Must be called before joinMcast.
+   */
+  public void useRandomMcastPort() {
+    // generate a random port number
+    Random r = new Random();
+    r.setSeed(System.currentTimeMillis());
+    short portnum = 0;
+    do {
+      portnum = (short) r.nextInt(Short.MAX_VALUE - 1);
+    } while (portnum <= 1024);
+    
+    TCPropertiesImpl.setProperty("l2.nha.tribes.mcast.mcastPort", String.valueOf(portnum));
+    logger.info("McastService uses random mcast port: "+portnum);
+  }
+
 
   public void testStateManagerTwoServers() throws Exception {
     // 2 nodes join concurrently
