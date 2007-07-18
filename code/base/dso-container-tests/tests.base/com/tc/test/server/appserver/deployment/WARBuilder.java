@@ -8,6 +8,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.taskdefs.War;
+import org.apache.tools.ant.taskdefs.Zip.Duplicate;
 import org.apache.tools.ant.types.ZipFileSet;
 import org.codehaus.cargo.util.AntUtils;
 import org.springframework.remoting.rmi.RmiRegistryFactoryBean;
@@ -107,7 +108,14 @@ public class WARBuilder implements DeploymentBuilder {
 
     War warTask = makeWarTask();
     warTask.setUpdate(false);
+    // XXX: build-data.txt exists in all of classes folders
+    // therefore there will be duplicates. Websphere doesn't like that
+    // This option should be removed when we solve that problem
+    Duplicate df = new Duplicate();
+    df.setValue("preserve");
+    warTask.setDuplicate(df);
     warTask.setDestFile(warFile.getFile());
+    // end XXX
     warTask.setWebxml(warDirectoryPath.existingFile("WEB-INF/web.xml").getFile());
     addWEBINFDirectory(warTask);
     addClassesDirectories(warTask);

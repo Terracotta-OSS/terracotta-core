@@ -378,8 +378,9 @@ public abstract class AbstractAppServerTestCase extends TCTestCase {
       war.addServlet((Class) it.next());
     }
 
-    File resourceDir = installation.dataDirectory();
-    warFile = new File(resourceDir + File.separator + war.writeWarFileToDirectory(resourceDir));
+    File warDir = new File(installation.sandboxDirectory(), "war");
+    warDir.mkdirs();
+    warFile = new File(warDir + File.separator + war.writeWarFileToDirectory(warDir));
     return warFile;
   }
 

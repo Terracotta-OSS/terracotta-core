@@ -54,7 +54,8 @@ public class Was6xAppServer extends AbstractAppServer {
   private File                  sandbox;
   private File                  instanceDir;
   private File                  pyScriptsDir;
-  private File                  webappDir;
+  private File                  dataDir;
+  private File                  warDir;
   private File                  portDefFile;
   private File                  serverInstallDir;
 
@@ -245,10 +246,10 @@ public class Was6xAppServer extends AbstractAppServer {
 
   private void deployWarFile() throws Exception {
     String[] args = new String[] { "-lang", "jython", "-connType", "NONE", "-profileName", instanceName, "-f",
-        new File(pyScriptsDir, DEPLOY_APPS_PY).getAbsolutePath(), webappDir.getAbsolutePath().replace('\\', '/') };
-    logger.info("Deploying war file in: " + webappDir);
+        new File(pyScriptsDir, DEPLOY_APPS_PY).getAbsolutePath(), warDir.getAbsolutePath().replace('\\', '/') };
+    logger.info("Deploying war file in: " + warDir);
     executeCommand(serverInstallDir, "wsadmin", args, pyScriptsDir, "Error in deploying warfile for " + instanceName);
-    logger.info("Done deploying war file in: " + webappDir);
+    logger.info("Done deploying war file in: " + warDir);
   }
 
   private void startWebsphere() throws Exception {
@@ -270,8 +271,9 @@ public class Was6xAppServer extends AbstractAppServer {
     sandbox = sandboxDirectory();
     instanceName = params.instanceName();
     instanceDir = new File(sandbox, instanceName);
-    webappDir = new File(sandbox, "data");
-    pyScriptsDir = new File(webappDir, instanceName);
+    dataDir = new File(sandbox, "data");
+    warDir = new File(sandbox, "war");
+    pyScriptsDir = new File(dataDir, instanceName);
     pyScriptsDir.mkdirs();
     portDefFile = new File(pyScriptsDir, PORTS_DEF);
     serverInstallDir = serverInstallDirectory();
@@ -290,7 +292,7 @@ public class Was6xAppServer extends AbstractAppServer {
       logger.debug("init{sandbox}          ==> " + sandbox.getAbsolutePath());
       logger.debug("init{instanceName}     ==> " + instanceName);
       logger.debug("init{instanceDir}      ==> " + instanceDir.getAbsolutePath());
-      logger.debug("init{webappDir}        ==> " + webappDir.getAbsolutePath());
+      logger.debug("init{webappDir}        ==> " + dataDir.getAbsolutePath());
       logger.debug("init{pyScriptsDir}     ==> " + pyScriptsDir.getAbsolutePath());
       logger.debug("init{portDefFile}      ==> " + portDefFile.getAbsolutePath());
       logger.debug("init{serverInstallDir} ==> " + serverInstallDir.getAbsolutePath());

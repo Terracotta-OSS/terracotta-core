@@ -35,7 +35,8 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
 
   public boolean shouldDisable() {
     return super.shouldDisable()
-           || NewAppServerFactory.WASCE.equals(TestConfigObject.getInstance().appserverFactoryName());
+           || NewAppServerFactory.WASCE.equals(TestConfigObject.getInstance().appserverFactoryName())
+           || NewAppServerFactory.WEBSPHERE.equals(TestConfigObject.getInstance().appserverFactoryName());
   }
 
   public void testHibernate() throws Exception {
@@ -95,7 +96,7 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
       super.setUp();
     }
 
-    public void tearDown() throws Exception {      
+    public void tearDown() throws Exception {
       super.tearDown();
       derbyServer.shutdown();
     }

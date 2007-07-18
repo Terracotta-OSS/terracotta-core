@@ -35,14 +35,16 @@ public class ServerManager {
   private File                   sandbox;
   private File                   tempDir;
   private File                   installDir;
+  private File                   warDir;
 
   public ServerManager(final Class testClass) throws Exception {
     PropertiesHackForRunningInEclipse.initializePropertiesWhenRunningInEclipse();
     config = TestConfigObject.getInstance();
     factory = NewAppServerFactory.createFactoryFromProperties(config);
     installDir = config.appserverServerInstallDir();
-    tempDir = TempDirectoryUtil.getTempDirectory(testClass);
+    tempDir = TempDirectoryUtil.getTempDirectory(testClass);    
     sandbox = AppServerUtil.createSandbox(tempDir);
+    warDir = new File(sandbox, "war");
     installation = AppServerUtil.createAppServerInstallation(factory, installDir, sandbox);
   }
 
@@ -132,11 +134,11 @@ public class ServerManager {
   }
 
   public DeploymentBuilder makeDeploymentBuilder(String warFileName) {
-    return new WARBuilder(warFileName, tempDir, config);
+    return new WARBuilder(warFileName, warDir, config);
   }
 
   public DeploymentBuilder makeDeploymentBuilder() throws IOException {
-    return new WARBuilder(tempDir, config);
+    return new WARBuilder(warDir, config);
   }
 
   public StandardTerracottaAppServerConfig getConfig() {

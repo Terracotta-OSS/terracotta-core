@@ -151,7 +151,7 @@ public class Jetty6xAppServer extends AbstractAppServer {
   }
   
   protected File getWarsDirectory() {
-    return new File(this.sandboxDirectory(), "data");
+    return new File(this.sandboxDirectory(), "war");
   }
 
   private void createConfigFile() throws Exception {
