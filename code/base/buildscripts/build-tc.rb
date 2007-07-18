@@ -51,10 +51,10 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     Registry[:static_resources] = @static_resources
 
     handle_appserver_overwite()
-    
+
     # Figure out which JVMs we're using.
     find_jvms()
-    
+
     # Load up our modules; allow definition of new modules by setting a configuration
     # property that points to additional module files to load. I believe that right now
     # this isn't used, but it was used in the past to (e.g.) let the Spring folks
@@ -76,10 +76,10 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     # Load the XMLBeans task, so we can use it to process config files when needed by that target.
     ant.taskdef(:name => 'xmlbean', :classname => 'org.apache.xmlbeans.impl.tool.XMLBean')
   end
-  
-  
+
+
   def handle_appserver_overwite()
-    appserver = @config_source['tc.build-control.appserver'] || @config_source['appserver']     
+    appserver = @config_source['tc.build-control.appserver'] || @config_source['appserver']
     unless appserver.nil?
       if appserver =~ /([^-]+)-([^\.]+)\.(.*)/
         @internal_config_source['tc.tests.configuration.appserver.factory.name'] = $1
@@ -357,7 +357,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
           if test_set.validate(@module_set, @script_results)
             results_dir = FilePath.new(@build_results.build_dir,
                                       "externally-run-tests")
-            results_dir = results_dir.delete.ensure_directory
+            results_dir = results_dir.ensure_directory
             test_proc = Proc.new { |testrun| testrun.prepare_for_external_run }
             prepare_and_run_block_on_tests(test_set,
                 TestRunResults.new(results_dir), test_proc)
