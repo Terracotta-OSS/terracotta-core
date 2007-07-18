@@ -7,7 +7,9 @@
 -->
 
 <%@ page isErrorPage="true" contentType="text/html" import="java.io.PrintWriter" %>
-<% String node = application.getInitParameter("node"); %>
+<%
+    String node = System.getProperty("tc.node-name", "unknown"); 
+%>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
 <!-- - - - - - - - - - - - - - - -->
 <!--  Events Sample Application  -->
