@@ -24,6 +24,8 @@ import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.Namespace;
+import com.tc.util.VendorVmSignature;
+import com.tc.util.VendorVmSignatureException;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
@@ -186,14 +188,41 @@ public class ModulesLoader {
     }
     configHelper.setModuleSpecs(modulesSpecs);
   }
+  
+  private static String getConfigPath(final Bundle bundle) throws BundleException {
+    final VendorVmSignature vmsig;
+    try {
+      vmsig = new VendorVmSignature();
+      final String TC_CONFIG_HEADER = "Terracotta-Configuration";
+      final String TC_CONFIG_HEADER_FOR_VM = TC_CONFIG_HEADER + VendorVmSignature.SIGNATURE_SEPARATOR + vmsig.getSignature();
+      
+      // check if the config-bundle indicates a vm vendor specific terracotta configuration...
+      String configPath = (String)bundle.getHeaders().get(TC_CONFIG_HEADER_FOR_VM);
+      if (configPath != null) {
+        logger.info("Using VM vendor specific config for module " + bundle.getSymbolicName() + ": " + configPath);
+      }
+      
+      // else, check if the config-bundle prefers a specific terracotta configuration
+      if (configPath == null) {
+        configPath = (String)bundle.getHeaders().get(TC_CONFIG_HEADER);
+        logger.info("Using specific config for module " + bundle.getSymbolicName() + ": " + configPath);
+      }
 
+      // else, just use the default terracotta configuration 
+      if (configPath == null) {
+        configPath = "terracotta.xml";
+        logger.info("Using default config for module " + bundle.getSymbolicName() + ": " + configPath);
+      }
+
+      return configPath;
+    } catch (VendorVmSignatureException e) {
+      throw new BundleException(e.getMessage());
+    }
+  }
+  
   private static void loadConfiguration(final DSOClientConfigHelper configHelper, final Bundle bundle)
       throws BundleException {
-    String config = (String) bundle.getHeaders().get("Terracotta-Configuration");
-    if (config == null) {
-      config = "terracotta.xml";
-    }
-
+    final String config = getConfigPath(bundle);
     final InputStream is;
     try {
       is = getJarResource(new URL(bundle.getLocation()), config);
