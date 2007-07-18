@@ -21,6 +21,7 @@ public class NodeID implements Externalizable {
 
   private String              name;
   private byte[]              uid;
+  private byte[]              instanceID;
 
   private transient int       hash;
 
@@ -30,8 +31,13 @@ public class NodeID implements Externalizable {
   }
 
   public NodeID(String name, byte[] uid) {
+    this(name, uid, uid);
+  }
+
+  public NodeID(String name, byte[] uid, byte[] instanceID) {
     this.name = name;
     this.uid = uid;
+    this.instanceID = instanceID;
   }
 
   public int hashCode() {
@@ -55,6 +61,10 @@ public class NodeID implements Externalizable {
 
   public byte[] getUID() {
     return uid;
+  }
+  
+  public byte[] getInstanceID() {
+    return instanceID;
   }
 
   public String getName() {

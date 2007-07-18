@@ -195,7 +195,8 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   /**
    * XXX:: This method is a temperary hack to make TribesGroupManager work. Without this for static members, we get
    * differernt UniqueID for the same members, one in nodeJoined event and one in the messages. Until that is fixed, the
-   * NodeIDs uid is going to be based on the host and port for static members.
+   * NodeIDs uid is going to be based on the host and port for static members. We are using the UniqueID as the instance
+   * id so that when we Zap node based on nodeID, we dont Zap the next instance of the same server.
    */
   private static NodeID makeNodeIDFrom(Member member) {
     if (useMcast) {
@@ -214,7 +215,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       byte uid[] = new byte[length + 4];
       System.arraycopy(host, 0, uid, 0, length);
       Conversion.writeInt(port, uid, length);
-      return new NodeID(member.getName(), uid);
+      return new NodeID(member.getName(), uid, member.getUniqueId());
     }
   }
 
@@ -474,11 +475,21 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
 
   public void zapNode(NodeID nodeID, int type, String reason) {
     Member m = (Member) nodes.get(nodeID);
-    if (m != null && zapNodeRequestProcessor.acceptOutgoingZapNodeRequest(nodeID, type, reason)) {
+    if (m == null) {
+      logger.warn("Ignoring Zap node request since Member is null");
+    } else if (!Arrays.equals(m.getUniqueId(), nodeID.getInstanceID())) {
+      logger.warn("Ignoring Zap node request since the instance ID from the member " + Arrays.toString(m.getUniqueId())
+                  + " is not equal to the instanceID from the nodeID " + Arrays.toString(nodeID.getInstanceID()));
+
+    } else if (!zapNodeRequestProcessor.acceptOutgoingZapNodeRequest(nodeID, type, reason)) {
+      logger.warn("Ignoreing Zap node request since " + zapNodeRequestProcessor + " asked us to : " + nodeID
+                  + " type = " + type + " reason = " + reason);
+    } else {
       long weights[] = zapNodeRequestProcessor.getCurrentNodeWeights();
-      logger.warn("Zapping node : " + nodeID + " type = " + type + " reason = " + reason + " my weight = "
-                  + Arrays.toString(weights));
-      GroupMessage msg = GroupZapNodeMessageFactory.createGroupZapNodeMessage(type, reason, weights);
+      logger.warn("Zapping node : " + nodeID + " instance ID : " + Arrays.toString(nodeID.getInstanceID()) + " type = "
+                  + type + " reason = " + reason + " my weight = " + Arrays.toString(weights));
+      GroupMessage msg = GroupZapNodeMessageFactory.createGroupZapNodeMessage(type, reason, weights, nodeID
+          .getInstanceID());
       try {
         sendTo(nodeID, msg);
       } catch (GroupException e) {
@@ -486,9 +497,6 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       }
       logger.warn("Removing member " + m + " from group");
       memberDisappeared(m);
-    } else {
-      logger.warn("Ignoring Zap node request since either Member " + m + " is null or " + zapNodeRequestProcessor
-                  + " asked us to : " + nodeID + " type = " + type + " reason = " + reason);
     }
   }
 
@@ -573,8 +581,15 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
 
     public void messageReceived(NodeID fromNode, GroupMessage msg) {
       GroupZapNodeMessage zapMsg = (GroupZapNodeMessage) msg;
-      zapNodeRequestProcessor.incomingZapNodeRequest(msg.messageFrom(), zapMsg.getZapNodeType(), zapMsg.getReason(),
-                                                     zapMsg.getWeights());
+      Member local = group.getLocalMember(false);
+      if (local != null && Arrays.equals(local.getUniqueId(), zapMsg.getInstanceID())) {
+        logger.info("Delivering Zap Message since instanceID " + Arrays.toString(local.getUniqueId()) + " Matches");
+        zapNodeRequestProcessor.incomingZapNodeRequest(msg.messageFrom(), zapMsg.getZapNodeType(), zapMsg.getReason(),
+                                                       zapMsg.getWeights());
+      } else {
+        logger.warn("NOT Delivering Zap Message since instanceID doesnt match : From msg : "
+                    + Arrays.toString(zapMsg.getInstanceID()) + " but local Member is " + local);
+      }
     }
 
   }

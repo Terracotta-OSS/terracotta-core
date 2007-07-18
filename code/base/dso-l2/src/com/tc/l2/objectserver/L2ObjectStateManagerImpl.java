@@ -152,7 +152,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       Assert.assertNull(syncingContext);
       if (isRootsMissing()) { return getMissingRootsSynccontext(sink); }
       Set oids = new HashSet(count);
-      for (Iterator i = missingOids.iterator(); i.hasNext() && --count > 0;) {
+      for (Iterator i = missingOids.iterator(); i.hasNext() && --count >= 0;) {
         oids.add(i.next());
         // XXX::FIXME This has to be commented because ObjectIDSet2 doesnt support remove().
         // i.remove();

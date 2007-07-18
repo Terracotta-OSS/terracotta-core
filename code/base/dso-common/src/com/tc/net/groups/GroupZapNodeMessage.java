@@ -4,6 +4,8 @@
  */
 package com.tc.net.groups;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
 
 import java.io.IOException;
@@ -12,22 +14,26 @@ import java.io.ObjectOutput;
 
 public class GroupZapNodeMessage extends AbstractGroupMessage {
 
-  public static final int ZAP_NODE_REQUEST = 0;
+  private static final TCLogger logger           = TCLogging.getLogger(GroupZapNodeMessage.class);
 
-  private int             zapNodeType;
-  private String          reason;
-  private long[]          weights;
+  public static final int       ZAP_NODE_REQUEST = 0;
+
+  private int                   zapNodeType;
+  private String                reason;
+  private long[]                weights;
+  private byte[]                instanceID;
 
   // To make serialization happy
   public GroupZapNodeMessage() {
     super(-1);
   }
 
-  public GroupZapNodeMessage(int type, int zapNodeType, String reason, long[] weights) {
+  public GroupZapNodeMessage(int type, int zapNodeType, String reason, long[] weights, byte[] instanceID) {
     super(type);
     this.reason = reason;
     this.zapNodeType = zapNodeType;
     this.weights = weights;
+    this.instanceID = instanceID;
   }
 
   protected void basicReadExternal(int msgType, ObjectInput in) throws IOException {
@@ -37,6 +43,18 @@ public class GroupZapNodeMessage extends AbstractGroupMessage {
     weights = new long[in.readInt()];
     for (int i = 0; i < weights.length; i++) {
       weights[i] = in.readLong();
+    }
+    int len = in.readInt();
+    int off = 0;
+    instanceID = new byte[len];
+    while (len > 0) {
+      int read = in.read(instanceID, off, len);
+      if (read == -1) {
+        logger.error("Error reading instance ID from input stream : " + read);
+        break;
+      }
+      off += read;
+      len -= read;
     }
   }
 
@@ -48,10 +66,24 @@ public class GroupZapNodeMessage extends AbstractGroupMessage {
     for (int i = 0; i < weights.length; i++) {
       out.writeLong(weights[i]);
     }
+    out.writeInt(instanceID.length);
+    out.write(instanceID);
   }
 
   public String toString() {
-    return "GroupZapNodeMessage [ " + zapNodeType + " , " + reason + " , weights = " + toString(weights) + " ]";
+    return "GroupZapNodeMessage [ " + zapNodeType + " , " + reason + " , weights = " + toString(weights)
+           + " , instanceID = " + toString(instanceID) + " ]";
+  }
+
+  private String toString(byte[] bs) {
+    if (bs == null) return "null";
+    if (bs.length == 0) return "empty";
+    StringBuffer sb = new StringBuffer();
+    for (int i = 0; i < bs.length; i++) {
+      sb.append(String.valueOf(bs[i])).append(",");
+    }
+    sb.setLength(sb.length() - 1);
+    return sb.toString();
   }
 
   private String toString(long[] l) {
@@ -75,6 +107,10 @@ public class GroupZapNodeMessage extends AbstractGroupMessage {
 
   public long[] getWeights() {
     return weights;
+  }
+
+  public byte[] getInstanceID() {
+    return instanceID;
   }
 
 }
