@@ -73,7 +73,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   boolean isRoot(FieldInfo fi);
 
-  boolean isRootDSOFinal(FieldInfo fi, boolean isPrimitive);
+  boolean isRootDSOFinal(FieldInfo fi);
 
   boolean isTransient(int modifiers, ClassInfo classInfo, String field);
 

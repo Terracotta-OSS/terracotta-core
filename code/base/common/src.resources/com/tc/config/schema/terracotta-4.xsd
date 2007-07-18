@@ -170,11 +170,13 @@
         qualified field name.
       </xs:documentation>
     </xs:annotation>
-    <xs:all>
+    <xs:sequence>
       <xs:element name="root-name" type="java-identifier" minOccurs="0" />
-      <xs:element name="field-name" type="qualified-field-name" maxOccurs="1" minOccurs="0"/>
-      <xs:element name="field-expression" type="field-expression" maxOccurs="1" minOccurs="0"/>
-    </xs:all>
+      <xs:choice>
+        <xs:element name="field-name" type="qualified-field-name"/>
+        <xs:element name="field-expression" type="field-expression"/>
+      </xs:choice>
+    </xs:sequence>
   </xs:complexType>
 
   <xs:complexType name="roots">

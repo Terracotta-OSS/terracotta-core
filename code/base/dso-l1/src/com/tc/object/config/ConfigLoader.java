@@ -65,16 +65,8 @@ public class ConfigLoader {
             String fieldName = root.getFieldName();
             String fieldExpression = root.getFieldExpression();
 
-            // XXX: It would be nice to enforce this constraint in XML Schema
-            if (fieldName == null && fieldExpression == null) {
-              throw new ConfigurationSetupException("must specify either field-name or field-expression");
-            }
-
-            if (fieldName != null && fieldExpression != null) {
-              throw new ConfigurationSetupException("cannot specify both field-name and field-expression");
-            }
-
-            Assert.assertTrue((fieldName != null && fieldExpression == null) || (fieldName == null && fieldExpression != null));
+            // the config schema should enfore this constraint
+            Assert.assertTrue((fieldName != null && fieldExpression == null) ^ (fieldName == null && fieldExpression != null));
 
             if (fieldName != null) {
               ClassSpec classSpec = ClassUtils.parseFullyQualifiedFieldName(fieldName);

@@ -1196,9 +1196,9 @@ public class StandardDSOClientConfigHelper implements DSOClientConfigHelper {
     return findMatchingRootDefinition(fi) != null;
   }
 
-  public boolean isRootDSOFinal(FieldInfo fi, boolean isPrimitive) {
+  public boolean isRootDSOFinal(FieldInfo fi) {
     Root r = findMatchingRootDefinition(fi);
-    if (r != null) { return r.isDsoFinal(isPrimitive); }
+    if (r != null) { return r.isDsoFinal(fi.getType().isPrimitive()); }
     throw Assert.failure("No such root for fieldName " + fi.getName() + " in class " + fi.getDeclaringType().getName());
   }
 

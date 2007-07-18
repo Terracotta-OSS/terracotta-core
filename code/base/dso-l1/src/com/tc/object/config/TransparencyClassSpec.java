@@ -216,8 +216,8 @@ public class TransparencyClassSpec {
     return configuration.isRoot(fieldInfo);
   }
 
-  public boolean isRootDSOFinal(FieldInfo fieldInfo, boolean isPrimitive) {
-    return configuration.isRootDSOFinal(fieldInfo, isPrimitive);
+  public boolean isRootDSOFinal(FieldInfo fieldInfo) {
+    return configuration.isRootDSOFinal(fieldInfo);
   }
 
   public boolean isTransient(int access, ClassInfo classInfo, String fieldName) {

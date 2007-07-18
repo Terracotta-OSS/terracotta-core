@@ -591,7 +591,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   private void createRootGetter(int methodAccess, String name, String desc) {
     Type t = Type.getType(desc);
     boolean isPrimitive = isPrimitive(t);
-    boolean isDSOFinal = isRootDSOFinal(name, isPrimitive);
+    boolean isDSOFinal = isRootDSOFinal(name);
 
     String rootName = rootNameFor(spec.getClassNameSlashes(), name);
     String targetType = isPrimitive ? ByteCodeUtil.sortToWrapperName(t.getSort()) : convertToCheckCastDesc(desc);
@@ -837,14 +837,14 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private boolean isRootDSOFinal(String name, boolean isPrimitive) {
-    return spec.getTransparencyClassSpec().isRootDSOFinal(spec.getFieldInfo(name), isPrimitive);
+  private boolean isRootDSOFinal(String name) {
+    return spec.getTransparencyClassSpec().isRootDSOFinal(spec.getFieldInfo(name));
   }
 
   private void createRootSetter(int methodAccess, String name, String desc, boolean isStatic) {
     Type t = Type.getType(desc);
     boolean isPrimitive = isPrimitive(t);
-    boolean isDSOFinal = isRootDSOFinal(name, isPrimitive);
+    boolean isDSOFinal = isRootDSOFinal(name);
 
     try {
       String sDesc = "(" + desc + ")V";
