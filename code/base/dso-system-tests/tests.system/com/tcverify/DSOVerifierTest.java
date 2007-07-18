@@ -43,11 +43,6 @@ public class DSOVerifierTest extends TCTestCase {
     t.tearDown();
   }
 
-  public DSOVerifierTest() {
-    // DEV-797
-    disableAllUntil("2007-08-01");
-  }
-
   protected void setUp() throws Exception {
     super.setUp();
 

@@ -28,17 +28,13 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 	}
 
   public ContinuationsTest() {
-    // DEV-797
-  	// TODO: when reenable also remove "true" from shouldDisable()
-    disableAllUntil("2007-08-01");
-    
     if (shouldDisable()) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
   
   public boolean shouldDisable() {
-  	return super.shouldDisable() || Vm.isIBM() || true;
+  	return super.shouldDisable() || Vm.isIBM();
   }
   
 	/**

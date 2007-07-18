@@ -22,8 +22,6 @@ public class ClientTerminatingTest extends ServerCrashingTestBase {
 
   public ClientTerminatingTest() {
     super(NODE_COUNT);
-    //DEV-797
-    disableAllUntil("2007-08-01");
   }
 
   protected void setSynchronousWrite() {
