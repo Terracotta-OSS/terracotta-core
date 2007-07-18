@@ -188,23 +188,24 @@ public class ModulesLoader {
     }
     configHelper.setModuleSpecs(modulesSpecs);
   }
-  
+
   private static String getConfigPath(final Bundle bundle) throws BundleException {
     final VendorVmSignature vmsig;
     try {
       vmsig = new VendorVmSignature();
       final String TC_CONFIG_HEADER = "Terracotta-Configuration";
-      final String TC_CONFIG_HEADER_FOR_VM = TC_CONFIG_HEADER + VendorVmSignature.SIGNATURE_SEPARATOR + vmsig.getSignature();
-      
+      final String TC_CONFIG_HEADER_FOR_VM = TC_CONFIG_HEADER + VendorVmSignature.SIGNATURE_SEPARATOR
+                                             + vmsig.getSignature();
+
       // check if the config-bundle indicates a vm vendor specific terracotta configuration...
-      String configPath = (String)bundle.getHeaders().get(TC_CONFIG_HEADER_FOR_VM);
+      String configPath = (String) bundle.getHeaders().get(TC_CONFIG_HEADER_FOR_VM);
       if (configPath != null) {
         logger.info("Using VM vendor specific config for module " + bundle.getSymbolicName() + ": " + configPath);
       }
-      
+
       // else, check if the config-bundle prefers a specific terracotta configuration
       if (configPath == null) {
-        configPath = (String)bundle.getHeaders().get(TC_CONFIG_HEADER);
+        configPath = (String) bundle.getHeaders().get(TC_CONFIG_HEADER);
         logger.info("Using specific config for module " + bundle.getSymbolicName() + ": " + configPath);
       }
 
@@ -219,9 +220,11 @@ public class ModulesLoader {
       throw new BundleException(e.getMessage());
     }
   }
-  
+
   private static void loadConfiguration(final DSOClientConfigHelper configHelper, final Bundle bundle)
       throws BundleException {
+
+    // attempt to load the config-bundle's fragment of the configuration file 
     final String config = getConfigPath(bundle);
     final InputStream is;
     try {
@@ -231,7 +234,16 @@ public class ModulesLoader {
     } catch (IOException ioe) {
       throw new BundleException("Unable to extract " + config + " from URL: " + bundle.getLocation(), ioe);
     }
-    if (is == null) { return; }
+
+    // if config-bundle's fragment of the configuration file is not included in the jar file
+    // then we don't need to merge it in with the current configuration --- but make a note of it.
+    if (is == null) {
+      logger.warn("The config file '" + config + "', for module '" + bundle.getSymbolicName()
+                  + "' does not appear to be a part of the module's config-bundle jar file contents.");
+      return;
+    }
+
+    // otherwise, merge it with the current configuration
     try {
       DsoApplication application = DsoApplication.Factory.parse(is);
       if (application != null) {
