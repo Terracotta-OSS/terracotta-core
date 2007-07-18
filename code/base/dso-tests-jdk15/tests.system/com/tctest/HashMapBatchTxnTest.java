@@ -13,7 +13,7 @@ public class HashMapBatchTxnTest extends TransparentTestBase {
   private static final int NODE_COUNT = 4;
   
   public HashMapBatchTxnTest() {
-    disableAllUntil("2007-07-18");
+    disableAllUntil("2007-08-01");
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
