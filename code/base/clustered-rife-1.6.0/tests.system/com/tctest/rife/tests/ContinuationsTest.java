@@ -28,7 +28,10 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 	}
 
   public ContinuationsTest() {
-    if (Vm.isIBM()) {
+    //DEV-797
+    disableAllUntil("2007-08-01");
+    
+    if (shouldDisable()) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }

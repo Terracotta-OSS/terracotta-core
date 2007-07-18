@@ -21,6 +21,8 @@ public class DsoRootTest extends AbstractAppServerTestCase {
   private static final int TOTAL_REQUEST_COUNT = 100;
 
   public DsoRootTest() {
+    //DEV-797
+    disableAllUntil("2007-08-01");
     registerServlet(RootCounterServlet.class);
   }
 
