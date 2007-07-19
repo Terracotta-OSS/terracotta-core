@@ -194,7 +194,10 @@ public class Was6xAppServer extends AbstractAppServer {
   }
 
   private void deleteProfileIfExists() throws Exception {
-    String[] args = new String[] { "-listProfiles" };
+    // call "manageprofiles.sh -validateAndUpdateRegistry" to clean out corrupted profiles
+    String[] args = new String[] { "-validateAndUpdateRegistry" };
+    executeCommand(serverInstallDir, "manageprofiles", args, serverInstallDir, "");
+    args = new String[] { "-listProfiles" };
     String output = executeCommand(serverInstallDir, "manageprofiles", args, serverInstallDir, "");
     if (output.indexOf(instanceName) >= 0) {
       args = new String[] { "-delete", "-profileName", instanceName };
