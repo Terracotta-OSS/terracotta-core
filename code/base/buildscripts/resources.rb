@@ -53,6 +53,12 @@ compile_only=dso-container-tests,dso-spring-tests
 
 TESTING
 
+NOTE: for all of the check targets described below, the debug=<port> option can be used to run the
+test(s) using the JPDA/JDWP JVM debugging facilities.  The <port> argument specifies the port on
+which the debug server will listen for connections.  For example:
+
+  tcbuild check_one AssertTest debug=8000
+
 check
     Runs all tests
 

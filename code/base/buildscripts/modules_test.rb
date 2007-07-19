@@ -96,13 +96,13 @@ class BuildSubtree
 
             # Write out the properties that control how the L2 is started.  Since the L2 requires
             # a 1.5 or higher JVM, it must be started in an external JVM if the current JVM is 1.4.
-            
+
             # always set l2.startup.jvm for tests that selectively spawns server out of process
             test_jdk = Registry[:jvm_set]['tests-jdk']
             jvm_15_plus = (test_jdk && test_jdk.version >= '1.5.0') ? test_jdk : Registry[:jvm_set]['J2SE-1.5']
             fail("Can't find JVM 15 or greater to run L2") if jvm_15_plus == nil
             write_dynamic_property(file, "l2.startup.jvm", jvm_15_plus.home.to_s)
-            
+
             if jvm.version < '1.5.0'
               write_dynamic_property(file, "l2.startup.mode", "external")
             else
@@ -268,7 +268,7 @@ end
 # them externally (i.e., in Eclipse), or have it print out how it would run tests. This therefore
 # encapsulates all test set-up, run, and tear-down logic into a single place so that you can do
 # whatever you want with it.
-class SubtreeTestRun   
+class SubtreeTestRun
 
     # The default timeout for tests, in seconds. Currently, this is 15 minutes.
     DEFAULT_TEST_TIMEOUT_SECONDS = 15 * 60
@@ -345,6 +345,8 @@ class SubtreeTestRun
           @extra_jvmargs << "-Xdump:java:file=-"
         end
 
+        add_debug_jvmargs
+
         puts "------------------------------------------------------------------------"
         puts "PREPARING to run tests (%s) on subtree '%s/%s'..." % [ @test_patterns.join(", "), @subtree.build_module.name, @subtree.name ]
         puts ""
@@ -376,8 +378,8 @@ class SubtreeTestRun
         if FileTest.exist?(@static_resources.log4j_properties_file.to_s)
             @ant.copy(:file => @static_resources.log4j_properties_file.to_s, :todir => @testrun_results.temp_dir(@subtree).to_s)
         end
-        
-        # download appserver and set appserver.home if needed        
+
+        # download appserver and set appserver.home if needed
         download_appserver_if_needed()
 
         # This creates the file that TestConfigObject reads.
@@ -436,8 +438,8 @@ class SubtreeTestRun
             file << ps_grep_java
           end
         end
-        
-        
+
+
 
         puts "Done."
 
@@ -455,16 +457,16 @@ class SubtreeTestRun
             fail("Appserver home specified [#{appserver_home}] but path not found!")
           end
         end
-        
+
         url = @config_source['tc.tests.configuration.appserver.repository']
         fail("Neither [tc.tests.configuration.appserver.home] OR [tc.tests.configuration.appserver.repository] was specified!") unless url
-        
+
         appserver = @config_source['tc.tests.configuration.appserver.factory.name'] + "-" +
                     @config_source['tc.tests.configuration.appserver.major-version'] + "." +
                     @config_source['tc.tests.configuration.appserver.minor-version']
 
         cache_location = @build_environment.os_type(:nice) =~ /windows/i ? 'c:/temp/appservers' : "#{ENV['HOME']}/.tc/appservers"
-        
+
         appserver_home = File.join(cache_location, appserver)
         if File.exist?(appserver_home)
           puts "** Found cached version of #{appserver} at #{cache_location}"
@@ -478,13 +480,13 @@ class SubtreeTestRun
           # we don't use @ant.unzip because it doesn't preserve executable bit of .sh files
           @ant.exec(:executable => "unzip", :dir => cache_location) do
             @ant.arg(:value => appserver_zip_path)
-          end        
+          end
           @ant.delete(:file => appserver_zip_path)
         end
         Registry[:internal_config_source]['tc.tests.configuration.appserver.home'] = appserver_home
       end
     end
-    
+
     # The list of system properties that *must* be set directly on the spawned JVM, rather than
     # being able to be set by TestConfigObject calling System.setProperty() from its static
     # initializer block. These are system properties that the JVM itself reads, or that DSO
@@ -620,10 +622,10 @@ class SubtreeTestRun
         # Run the tests. Most of the real magic here comes in the 'splice_into_ant_junit'
         # method, which puts the necessary <jvmarg>, <sysproperty>, and so forth elements
         # into the junit task.
-        
+
         @ant.junit(
         :printsummary => "yes",
-        :maxmemory => "512m",        
+        :maxmemory => "512m",
         :timeout => @timeout,
         :dir => @cwd.to_s,
         :tempdir => @testrun_results.ant_temp_dir(@subtree).to_s,
@@ -631,7 +633,7 @@ class SubtreeTestRun
         :showoutput => true,
         :jvm => tests_jvm.java.to_s) {
             splice_into_ant_junit
-            
+
             # formatter that outputs result to console
             @ant.formatter(:type => "xml")
             @ant.formatter(:classname => 'com.tc.test.TCJUnitFormatter', :usefile => false)
@@ -643,8 +645,8 @@ class SubtreeTestRun
                 failure_properties << failure_property_name
 
                 @ant.batchtest(:todir => @testrun_results.results_dir(@subtree).to_s, :fork => true, :failureproperty => failure_property_name) {
-                  # formatter that out put JUnit XML result file  
-                  #@ant.formatter(:classname => 'com.tc.test.TCXMLJUnitFormatter', :usefile => false)                  
+                  # formatter that out put JUnit XML result file
+                  #@ant.formatter(:classname => 'com.tc.test.TCXMLJUnitFormatter', :usefile => false)
                   @ant.fileset(:dir => @build_results.classes_directory(@subtree).to_s, :includes => "**/#{pattern}.class")
                 }
             end
@@ -722,8 +724,8 @@ END
       end
       nil
     end
-    
-  
+
+
     # Which JVM should we use for this set of tests?
     def tests_jvm(jvm_set = Registry[:jvm_set])
       return @jvm if @jvm
@@ -752,7 +754,7 @@ END
         override = false
       end
 
-      if requires_container?       
+      if requires_container?
         current_appserver = Registry[:appserver]
         compatibility = get_compatible_vm(current_appserver) || {
           'min_version' => JavaVersion::JAVA_MIN_VERSION,
@@ -797,6 +799,24 @@ END
     end
 
   private
+
+    def add_debug_jvmargs
+      if debug_port = @config_source['debug']
+        unless Integer(debug_port) > 0
+          raise "debug argument must be an integer"
+        end
+
+        common_options = "server=y,transport=dt_socket,suspend=y,address=#{debug_port}"
+        version = tests_jvm.version
+        if version >= "1.5.0"
+          # Note: this works for IBM JDK too
+          @extra_jvmargs << "-agentlib:jdwp=#{common_options}"
+        elsif version >= "1.4.0"
+          @extra_jvmargs << "-Xdebug"
+          @extra_jvmargs << "-Xrunjdwp:#{common_options}"
+        end
+      end
+    end
 
     def jvm_version_mismatch(candidate_jvm, candidate_source, thing, compatibility)
       raise(JvmVersionMismatchException,
