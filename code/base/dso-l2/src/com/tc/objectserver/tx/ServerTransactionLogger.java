@@ -31,7 +31,7 @@ public class ServerTransactionLogger implements ServerTransactionListener {
   public void clearAllTransactionsFor(ChannelID killedClient) {
     logger.info("clearAllTransactionsFor: " + killedClient);
   }
-  
+
   public void transactionManagerStarted(Set cids) {
     logger.info("trasactionManagerStarted: " + cids);
   }
@@ -42,17 +42,15 @@ public class ServerTransactionLogger implements ServerTransactionListener {
   }
 
   private synchronized void incrementOutStandingTxns(int count) {
-    boolean log = needToLogStats();
     outStandingTxns += count;
-    if (log) {
+    if (needToLogStats()) {
       logStats();
     }
   }
 
   private synchronized void decrementOutStandingTxns(int count) {
     outStandingTxns -= count;
-    boolean log = needToLogStats();
-    if (log) {
+    if (needToLogStats()) {
       logStats();
     }
   }
@@ -60,7 +58,7 @@ public class ServerTransactionLogger implements ServerTransactionListener {
   private boolean needToLogStats() {
     if (!config.isPrintStatsEnabled()) return false;
     long now = System.currentTimeMillis();
-    boolean log = (outStandingTxns == 0 || (now - last) > 1000);
+    boolean log = (now - last) > 1000;
     if (log) {
       last = now;
     }
