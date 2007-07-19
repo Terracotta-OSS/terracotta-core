@@ -103,6 +103,7 @@ import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeLiteral;
+import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
@@ -437,6 +438,8 @@ public class CompilationUnitVisitor extends ASTVisitor {
       return ((FieldDeclaration)node.getParent()).getType();
     } else if(parentNode instanceof VariableDeclarationStatement) {
       return ((VariableDeclarationStatement)node.getParent()).getType();
+    } else if(parentNode instanceof VariableDeclarationExpression) {
+      return ((VariableDeclarationExpression)node.getParent()).getType();
     }
     
     return null;
@@ -549,6 +552,8 @@ public class CompilationUnitVisitor extends ASTVisitor {
   }
 
   private void addMarker(String markerID, String msg, ASTNode node) {
+    if(node == null) return;
+    
     HashMap map      = new HashMap();
     int     startPos = node.getStartPosition();
     int     endPos   = startPos + node.getLength();

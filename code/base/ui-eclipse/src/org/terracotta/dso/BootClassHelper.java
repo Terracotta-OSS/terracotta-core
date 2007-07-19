@@ -8,6 +8,7 @@ import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IType;
 
+import com.tc.object.LiteralValues;
 import com.tc.object.tools.BootJar;
 import com.tc.object.tools.BootJarSignature;
 
@@ -23,6 +24,7 @@ import java.util.Set;
 public class BootClassHelper {
   private static BootClassHelper m_helper;
   private Set<String>            m_bootClasses;
+  private static LiteralValues   m_literals = new LiteralValues();
   
   public static BootClassHelper getHelper() {
     return m_helper;    
@@ -92,6 +94,6 @@ public class BootClassHelper {
   }
   
   public boolean isAdaptable(String fullName) {
-    return m_bootClasses != null && m_bootClasses.contains(fullName);
+    return m_literals.isLiteral(fullName) || (m_bootClasses != null && m_bootClasses.contains(fullName));
   }
 }
