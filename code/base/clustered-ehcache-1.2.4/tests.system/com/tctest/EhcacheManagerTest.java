@@ -3,7 +3,7 @@ package com.tctest;
 public class EhcacheManagerTest extends TransparentTestBase {
 
   public EhcacheManagerTest() {
-    //
+	disableAllUntil("2007-08-30");
   }
   
   public void doSetUp(final TransparentTestIface tt) throws Exception {
