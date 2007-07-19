@@ -106,7 +106,14 @@ public class ManageServerHandler extends BaseMenuCreator
         if(serverArray != null) {
           for(int i = 0; i < serverArray.length; i++) {
             Server server = serverArray[i];
-            String name = server.isSetName() ? server.getName() : server.getHost();
+            String name;
+            
+            if(server.isSetName()) {
+              name = server.getName();
+            } else {
+              int dsoPort = server.isSetDsoPort() ? server.getDsoPort() : 9510;
+              name = server.getHost() + ":" + dsoPort;
+            }
             name = ParameterSubstituter.substitute(name);
             addMenuAction(menu, new ManageServerAction(m_javaProject, name));
           }

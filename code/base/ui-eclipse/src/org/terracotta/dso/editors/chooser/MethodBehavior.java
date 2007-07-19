@@ -75,9 +75,6 @@ public final class MethodBehavior implements NavigatorBehavior {
               selectedMethods.add(element);
             }
           }
-          nav.enableSelection(false, this);
-          event.getSelectionProvider().setSelection(new StructuredSelection(selectedMethods.toArray()));
-          nav.enableSelection(true, this);
         }
         if (selectedMethods.size() > 0) nav.okButtonEnabled(true);
         else nav.okButtonEnabled(false);

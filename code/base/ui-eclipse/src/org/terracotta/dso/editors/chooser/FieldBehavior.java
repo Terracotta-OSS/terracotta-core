@@ -75,9 +75,6 @@ public final class FieldBehavior implements NavigatorBehavior {
               selectedFields.add(element);
             }
           }
-          nav.enableSelection(false, this);
-          event.getSelectionProvider().setSelection(new StructuredSelection(selectedFields.toArray()));
-          nav.enableSelection(true, this);
         }
         if (selectedFields.size() > 0) nav.okButtonEnabled(true);
         else nav.okButtonEnabled(false);

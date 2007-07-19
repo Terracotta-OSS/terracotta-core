@@ -76,9 +76,6 @@ public final class ClassBehavior implements NavigatorBehavior {
               selectedClasses.add(element);
             }
           }
-          nav.enableSelection(false, this);
-          event.getSelectionProvider().setSelection(new StructuredSelection(selectedClasses.toArray()));
-          nav.enableSelection(true, this);
         }
         if (selectedClasses.size() > 0) nav.okButtonEnabled(true);
         else nav.okButtonEnabled(false);

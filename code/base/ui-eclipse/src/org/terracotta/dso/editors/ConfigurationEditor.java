@@ -4,7 +4,6 @@
  */
 package org.terracotta.dso.editors;
 
-import org.apache.xmlbeans.XmlOptions;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
@@ -32,6 +31,7 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.SaveAsDialog;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.ide.IGotoMarker;
@@ -526,6 +526,7 @@ public class ConfigurationEditor extends MultiPageEditorPart
   }
 
   public void syncXmlDocument() {
+    if(PlatformUI.getWorkbench().isClosing()) return;
     asyncExec(new Runnable() {
       public void run() {
         m_xmlEditor.getTextWidget().setRedraw(false);
@@ -533,7 +534,6 @@ public class ConfigurationEditor extends MultiPageEditorPart
           int topLine = m_xmlEditor.getTopIndex();
           TcPlugin plugin = TcPlugin.getDefault();
           IDocument doc = m_xmlEditor.getDocument();
-          XmlOptions opts = plugin.getXmlOptions();
           TcConfig config = plugin.getConfiguration(m_project);
           if (config != null && config != TcPlugin.BAD_CONFIG) {
             TcConfigDocument configDoc = TcConfigDocument.Factory.newInstance();
