@@ -77,10 +77,9 @@ bundled_components:
               - aspectwerkz
               - common
               - dso-common
-              - dso-common-jdk15
               - dso-l1
-              - dso-l1-jdk15
               - modules-common-1.0
+              - management
               - thirdparty
       # NOTE: this section also controls what goes into the 'tc.jar' file
       modules:
