@@ -16,6 +16,7 @@ import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tctest.webapp.servlets.ContainerHibernateTestServlet;
 
 import java.io.PrintWriter;
+import java.util.Date;
 
 import junit.framework.Test;
 
@@ -29,14 +30,13 @@ public class ContainerHibernateTest extends AbstractTwoServerDeploymentTest {
   public ContainerHibernateTest() {
     // MNK-287
     if (shouldDisable()) {
-      disableAllUntil("2007-12-1");
+      disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
 
   public boolean shouldDisable() {
     return super.shouldDisable()
-           || NewAppServerFactory.WASCE.equals(TestConfigObject.getInstance().appserverFactoryName())
-           || NewAppServerFactory.WEBSPHERE.equals(TestConfigObject.getInstance().appserverFactoryName());
+           || NewAppServerFactory.WASCE.equals(TestConfigObject.getInstance().appserverFactoryName());           
   }
 
   public void testHibernate() throws Exception {
