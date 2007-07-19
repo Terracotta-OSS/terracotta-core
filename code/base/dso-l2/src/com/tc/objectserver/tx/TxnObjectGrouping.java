@@ -106,7 +106,7 @@ public final class TxnObjectGrouping implements PrettyPrintable {
   }
 
   public boolean limitReached() {
-    return txns.size() > MAX_TXNS || objects.size() > MAX_OBJECTS;
+    return txns.size() > MAX_TXNS || (txns.size() > 1 && objects.size() > MAX_OBJECTS);
   }
 
   public int hashCode() {

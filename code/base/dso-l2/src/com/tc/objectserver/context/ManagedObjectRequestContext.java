@@ -86,7 +86,8 @@ public class ManagedObjectRequestContext implements ObjectManagerResultsContext,
   }
 
   public String toString() {
-    return "ManagedObjectRequestContext [ " + channelID + " , " + requestID + " , " + requestedObjectIDs + "]";
+    return "ManagedObjectRequestContext@" + System.identityHashCode(this) + " [ " + channelID + " , " + requestID
+           + " , " + requestedObjectIDs + "]";
   }
 
   public void setResults(ObjectManagerLookupResults results) {
