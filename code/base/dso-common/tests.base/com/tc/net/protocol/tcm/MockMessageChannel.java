@@ -134,14 +134,6 @@ public class MockMessageChannel implements MessageChannelInternal {
 
   }
 
-  public void notifyTransportDisrupted(MessageTransport transport) {
-    throw new ImplementMe();
-  }
-  
-  public void notifyTransportRestored(MessageTransport transport) {
-    throw new ImplementMe();
-  }
-
   public void notifyTransportConnectAttempt(MessageTransport transport) {
     throw new ImplementMe();
 

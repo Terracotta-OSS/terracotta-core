@@ -148,10 +148,6 @@ public class ClientHandshakeManager implements ChannelEventListener {
       pauseSink.add(PauseContext.UNPAUSE);
     } else if (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT) {
       cluster.thisNodeDisconnected();
-    } else if (event.getType() == ChannelEventType.TRANSPORT_DISRUPTED_EVENT) {
-      pauseSink.add(PauseContext.PAUSE);
-    } else if (event.getType() == ChannelEventType.TRANSPORT_RESTORED_EVENT) {
-      pauseSink.add(PauseContext.UNPAUSE);
     }
   }
 

@@ -4,7 +4,6 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.net.protocol.NetworkLayer;
-import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportListener;
 
 /**
@@ -15,14 +14,5 @@ import com.tc.net.protocol.transport.MessageTransportListener;
  * @author teck
  */
 public interface MessageChannelInternal extends NetworkLayer, MessageChannel, MessageTransportListener {
-  /**
-   * Called when the transport's connection disrupted (OOO trying to restore)
-   */
-  public void notifyTransportDisrupted(MessageTransport transport);
-
-  /**
-   * Called when OOO successfully restore connection
-   */
-  public void notifyTransportRestored(MessageTransport transport);
-
+  //
 }
