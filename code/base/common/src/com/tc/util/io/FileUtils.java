@@ -20,7 +20,8 @@ public class FileUtils {
    * deletes all files with matching extension. Does not recurse into sub directories.
    */
   public static void forceDelete(File directory, String extension) throws IOException {
-    Iterator files = org.apache.commons.io.FileUtils.iterateFiles(directory, new String[] { extension }, false);
+    // Iterator files = org.apache.commons.io.FileUtils.iterateFiles(directory, new String[] { extension }, false);
+    Iterator files = org.apache.commons.io.FileUtils.listFiles(directory, new String[] { extension }, false).iterator();
     while (files.hasNext()) {
       File f = (File) files.next();
       org.apache.commons.io.FileUtils.forceDelete(f);
