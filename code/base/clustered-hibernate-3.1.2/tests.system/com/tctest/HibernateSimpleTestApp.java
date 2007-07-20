@@ -178,7 +178,7 @@ public class HibernateSimpleTestApp extends AbstractTransparentApp {
   
   private void compositeIdTest(int index) throws Exception {
     if (index == 0) {
-      Promotion promotion1 = (Promotion) getFirstPromotion();;
+      Promotion promotion1 = (Promotion) getFirstPromotion();
       promotion = promotion1;
     }
     
