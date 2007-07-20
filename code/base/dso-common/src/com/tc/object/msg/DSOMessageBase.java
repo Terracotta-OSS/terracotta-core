@@ -20,9 +20,9 @@ public class DSOMessageBase extends TCMessageImpl implements EventContext {
 
   private final SessionID localSessionID;
 
-  public DSOMessageBase(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
+  public DSOMessageBase(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
     super(monitor, out, channel, type);
-    this.localSessionID = SessionID.NULL_ID;
+    this.localSessionID = sessionID;
   }
 
   public DSOMessageBase(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header,

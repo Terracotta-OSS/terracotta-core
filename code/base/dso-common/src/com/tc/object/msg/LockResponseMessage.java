@@ -37,8 +37,8 @@ public class LockResponseMessage extends DSOMessageBase {
   private int               lockLevel;
   private GlobalLockInfo    globalLockInfo;
 
-  public LockResponseMessage(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
-    super(monitor, out, channel, type);
+  public LockResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
+    super(sessionID, monitor, out, channel, type);
   }
 
   public LockResponseMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,

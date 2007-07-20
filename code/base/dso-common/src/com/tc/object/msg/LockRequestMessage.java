@@ -79,8 +79,8 @@ public class LockRequestMessage extends DSOMessageBase {
   private boolean                            notifyAll;
   private int                                waitArgCount                    = -1;
 
-  public LockRequestMessage(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
-    super(monitor, out, channel, type);
+  public LockRequestMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
+    super(sessionID, monitor, out, channel, type);
   }
 
   public LockRequestMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,

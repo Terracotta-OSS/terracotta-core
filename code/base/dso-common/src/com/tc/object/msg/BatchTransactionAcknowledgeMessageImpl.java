@@ -24,9 +24,9 @@ public class BatchTransactionAcknowledgeMessageImpl extends DSOMessageBase imple
 
   private TxnBatchID        batchID;
 
-  public BatchTransactionAcknowledgeMessageImpl(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
+  public BatchTransactionAcknowledgeMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
                                                 TCMessageType type) {
-    super(monitor, out, channel, type);
+    super(sessionID, monitor, out, channel, type);
   }
 
   public BatchTransactionAcknowledgeMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,

@@ -26,8 +26,8 @@ public class JMXMessage extends DSOMessageBase implements TCSerializable {
   private static final byte JMX_OBJECT = 0;
   private Object            jmxObject;
 
-  public JMXMessage(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
-    super(monitor, out, channel, type);
+  public JMXMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
+    super(sessionID, monitor, out, channel, type);
   }
 
   public JMXMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header,

@@ -3,6 +3,8 @@
  */
 package com.tc.object.session;
 
+import com.tc.exception.ImplementMe;
+
 
 public class TestSessionManager implements SessionManager, SessionProvider {
 
@@ -11,6 +13,10 @@ public class TestSessionManager implements SessionManager, SessionProvider {
   
   public SessionID getSessionID() {
     return sessionID;
+  }
+  
+  public SessionID nextSessionID() {
+    throw new ImplementMe();
   }
 
   public void newSession() {

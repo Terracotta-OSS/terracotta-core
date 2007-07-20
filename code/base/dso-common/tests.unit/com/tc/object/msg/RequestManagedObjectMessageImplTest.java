@@ -32,7 +32,7 @@ public class RequestManagedObjectMessageImplTest extends TCTestCase {
       removedIDs.add(new ObjectID(i));
     }
 
-    RequestManagedObjectMessageImpl msg = new RequestManagedObjectMessageImpl(new NullMessageMonitor(),
+    RequestManagedObjectMessageImpl msg = new RequestManagedObjectMessageImpl(new SessionID(0), new NullMessageMonitor(),
                                                                               new TCByteBufferOutputStream(4, 4096,
                                                                                                            false),
                                                                               channel, type);

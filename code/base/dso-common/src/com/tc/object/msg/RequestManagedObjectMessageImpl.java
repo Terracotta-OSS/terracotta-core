@@ -36,9 +36,9 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
   private ObjectRequestID   requestID;
   private int               requestDepth;
 
-  public RequestManagedObjectMessageImpl(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
+  public RequestManagedObjectMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
                                          TCMessageType type) {
-    super(monitor, out, channel, type);
+    super(sessionID, monitor, out, channel, type);
   }
 
   public RequestManagedObjectMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,

@@ -37,9 +37,9 @@ public class CommitTransactionMessageImpl extends DSOMessageBase implements Even
   private TCByteBuffer[]         batchData;
   private final Set              acknowledgedTransactionIDs  = new HashSet();
 
-  public CommitTransactionMessageImpl(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
+  public CommitTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
                                       TCMessageType type) {
-    super(monitor, out, channel, type);
+    super(sessionID, monitor, out, channel, type);
   }
 
   public CommitTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header,

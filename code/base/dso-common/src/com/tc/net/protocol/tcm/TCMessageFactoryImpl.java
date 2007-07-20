@@ -17,7 +17,7 @@ import java.lang.reflect.Constructor;
 import java.util.Map;
 
 public class TCMessageFactoryImpl implements TCMessageFactory {
-  private static final Class[]            SIG1            = new Class[] { MessageMonitor.class, TCByteBufferOutput.class,
+  private static final Class[]            SIG1            = new Class[] { SessionID.class, MessageMonitor.class, TCByteBufferOutput.class,
       MessageChannel.class, TCMessageType.class          };
   private static final Class[]            SIG2            = new Class[] { SessionID.class, MessageMonitor.class,
       MessageChannel.class, TCMessageHeader.class, TCByteBuffer[].class };
@@ -27,7 +27,7 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
   private final Map                       typeAndDataCstr = new ConcurrentReaderHashMap();
   private final TCMessageFinalizer        finalizer;
   private final MessageMonitor            monitor;
-  private final SessionProvider            sessionProvider;
+  private final SessionProvider           sessionProvider;
 
   public TCMessageFactoryImpl(SessionProvider sessionProvider, MessageMonitor monitor) {
     this(sessionProvider, monitor, NULL_FINALIZER);
@@ -38,9 +38,9 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
     this.monitor = monitor;
     this.finalizer = finalizer;
   }
-
+  
   public TCMessage createMessage(MessageChannel source, TCMessageType type) throws UnsupportedMessageTypeException {
-    return createMessage(lookupConstructor(type, typeOnlyCstr), new Object[] { monitor,
+    return createMessage(lookupConstructor(type, typeOnlyCstr), new Object[] { sessionProvider.getSessionID(), monitor,
         new TCByteBufferOutputStream(4, 4096, false), source, type });
   }
 

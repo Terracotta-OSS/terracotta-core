@@ -38,9 +38,9 @@ public class RequestManagedObjectResponseMessage extends DSOMessageBase implemen
   private TCByteBuffer[]         dnaData;
   private int                    dnaCount;
 
-  public RequestManagedObjectResponseMessage(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
+  public RequestManagedObjectResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
                                              TCMessageType type) {
-    super(monitor, out, channel, type);
+    super(sessionID, monitor, out, channel, type);
   }
 
   public RequestManagedObjectResponseMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header,

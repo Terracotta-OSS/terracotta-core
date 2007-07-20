@@ -25,8 +25,8 @@ public class RequestRootResponseMessage extends DSOMessageBase implements EventC
   private String            rootName;
   private ObjectID          rootID;
 
-  public RequestRootResponseMessage(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
-    super(monitor, out, channel, type);
+  public RequestRootResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
+    super(sessionID, monitor, out, channel, type);
   }
 
   public RequestRootResponseMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {

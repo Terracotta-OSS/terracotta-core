@@ -19,9 +19,9 @@ import com.tc.object.session.SessionID;
  */
 public class L1JmxReady extends DSOMessageBase {
 
-	public L1JmxReady(MessageMonitor monitor, TCByteBufferOutput out,
+	public L1JmxReady(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out,
 			MessageChannel channel, TCMessageType type) {
-		super(monitor, out, channel, type);
+		super(sessionID, monitor, out, channel, type);
 	}
 
 	public L1JmxReady(SessionID sessionID, MessageMonitor monitor,

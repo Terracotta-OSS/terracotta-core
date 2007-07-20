@@ -35,9 +35,9 @@ public final class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSe
   private Message           tunneledMessage;
   private byte              flag;
 
-  public JmxRemoteTunnelMessage(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
+  public JmxRemoteTunnelMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
                                 TCMessageType type) {
-    super(monitor, out, channel, type);
+    super(sessionID, monitor, out, channel, type);
     flag = DATA_FLAG;
   }
 

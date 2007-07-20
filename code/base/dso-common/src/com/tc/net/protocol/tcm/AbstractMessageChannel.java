@@ -127,7 +127,7 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     throw new UnsupportedOperationException();
   }
 
-  public final void send(final TCNetworkMessage message) {
+  public void send(final TCNetworkMessage message) {
     if (logger.isDebugEnabled()) {
       final Runnable logMsg = new Runnable() {
         public void run() {

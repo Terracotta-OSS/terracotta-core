@@ -44,7 +44,7 @@ public class CommitTransactionMessageTest extends TCTestCase {
 
       TransactionBatch batch = new TestTransactionBatch(bbos.toArray(), acknowledged);
 
-      CommitTransactionMessageImpl msg = new CommitTransactionMessageImpl(new NullMessageMonitor(),
+      CommitTransactionMessageImpl msg = new CommitTransactionMessageImpl(new SessionID(0), new NullMessageMonitor(),
                                                                           new TCByteBufferOutputStream(4, 4096, false),
                                                                           null,
                                                                           TCMessageType.COMMIT_TRANSACTION_MESSAGE);

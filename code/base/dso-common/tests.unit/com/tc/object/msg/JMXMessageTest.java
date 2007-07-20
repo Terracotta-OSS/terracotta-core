@@ -53,7 +53,7 @@ public class JMXMessageTest extends TCTestCase {
 
   private void createMessageAndTest(NonPortableReason reason) throws Exception {
 
-    JMXMessage msg = new JMXMessage(new NullMessageMonitor(), new TCByteBufferOutputStream(4, 4096, false), null,
+    JMXMessage msg = new JMXMessage(new SessionID(0), new NullMessageMonitor(), new TCByteBufferOutputStream(4, 4096, false), null,
                                     TCMessageType.JMX_MESSAGE);
     msg.setJMXObject(reason);
     msg.dehydrate();

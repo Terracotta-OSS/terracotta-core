@@ -26,8 +26,8 @@ public class ObjectIDBatchRequestResponseMessage extends DSOMessageBase {
   private long              batchStart;
   private long              batchEnd;
 
-  public ObjectIDBatchRequestResponseMessage(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
-    super(monitor, out, channel, type);
+  public ObjectIDBatchRequestResponseMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
+    super(sessionID, monitor, out, channel, type);
   }
 
   public ObjectIDBatchRequestResponseMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {

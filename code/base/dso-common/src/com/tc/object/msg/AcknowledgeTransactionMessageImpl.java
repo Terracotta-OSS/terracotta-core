@@ -25,9 +25,9 @@ public class AcknowledgeTransactionMessageImpl extends DSOMessageBase implements
   private TransactionID     requestID;
   private ChannelID         requesterID;
 
-  public AcknowledgeTransactionMessageImpl(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
+  public AcknowledgeTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
                                            TCMessageType type) {
-    super(monitor, out, channel, type);
+    super(sessionID, monitor, out, channel, type);
   }
 
   public AcknowledgeTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,

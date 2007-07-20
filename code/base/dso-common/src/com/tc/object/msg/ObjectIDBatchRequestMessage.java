@@ -23,8 +23,8 @@ public class ObjectIDBatchRequestMessage extends DSOMessageBase {
   private long              requestID;
   private int               batchSize;
 
-  public ObjectIDBatchRequestMessage(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
-    super(monitor, out, channel, type);
+  public ObjectIDBatchRequestMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel, TCMessageType type) {
+    super(sessionID, monitor, out, channel, type);
   }
 
   public ObjectIDBatchRequestMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {

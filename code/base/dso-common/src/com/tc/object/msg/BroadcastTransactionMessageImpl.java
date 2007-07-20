@@ -72,9 +72,9 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   private GlobalTransactionID    lowWatermark;
   private ObjectStringSerializer serializer;
 
-  public BroadcastTransactionMessageImpl(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
+  public BroadcastTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
                                          TCMessageType type) {
-    super(monitor, out, channel, type);
+    super(sessionID, monitor, out, channel, type);
   }
 
   public BroadcastTransactionMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,

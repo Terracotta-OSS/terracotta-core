@@ -8,6 +8,10 @@ public class NullSessionManager implements SessionManager, SessionProvider {
   public SessionID getSessionID() {
     return SessionID.NULL_ID;
   }
+  
+  public SessionID nextSessionID() {
+    return SessionID.NULL_ID;
+  }
 
   public void newSession() {
     return;

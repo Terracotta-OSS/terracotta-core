@@ -34,9 +34,9 @@ public class MemoryDataStoreRequestMessage extends DSOMessageBase {
   private ThreadID                threadID;
   private TCMemoryDataStoreMessageData data;
 
-  public MemoryDataStoreRequestMessage(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
+  public MemoryDataStoreRequestMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
       TCMessageType type) {
-    super(monitor, out, channel, type);
+    super(sessionID, monitor, out, channel, type);
   }
 
   public MemoryDataStoreRequestMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,

@@ -17,8 +17,8 @@ import com.tc.object.session.SessionID;
  */
 public class PongMessage extends DSOMessageBase {
 
-  public PongMessage(MessageMonitor monitor, MessageChannel channel, TCMessageType type) {
-    super(monitor, new TCByteBufferOutputStream(4, 4096, false), channel, type);
+  public PongMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageType type) {
+    super(sessionID, monitor, new TCByteBufferOutputStream(4, 4096, false), channel, type);
   }
 
   public PongMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {

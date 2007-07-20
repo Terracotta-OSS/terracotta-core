@@ -47,7 +47,7 @@ public class BroadcastTransactionMessageTest extends TestCase {
     monitor = new NullMessageMonitor();
     channel = new TestMessageChannel();
     out = new TCByteBufferOutputStream(4, 4096, false);
-    msg = new BroadcastTransactionMessageImpl(monitor, out, channel, TCMessageType.BROADCAST_TRANSACTION_MESSAGE);
+    msg = new BroadcastTransactionMessageImpl(new SessionID(0), monitor, out, channel, TCMessageType.BROADCAST_TRANSACTION_MESSAGE);
   }
 
   public void testBasics() throws Exception {

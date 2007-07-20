@@ -48,9 +48,9 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private boolean           requestObjectIDs;
   private String            clientVersion            = "UNKNOW";
 
-  public ClientHandshakeMessageImpl(MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
+  public ClientHandshakeMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutput out, MessageChannel channel,
                                     TCMessageType messageType) {
-    super(monitor, out, channel, messageType);
+    super(sessionID, monitor, out, channel, messageType);
   }
 
   public ClientHandshakeMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
