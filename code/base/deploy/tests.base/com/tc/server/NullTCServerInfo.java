@@ -80,4 +80,8 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
     return false;
   }
 
+  public void startBeanShell(int port) {
+    //
+  }
+
 }

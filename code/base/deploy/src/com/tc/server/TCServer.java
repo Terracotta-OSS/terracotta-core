@@ -26,4 +26,6 @@ public interface TCServer {
   String getDescriptionOfCapabilities();
 
   L2Info[] infoForAllL2s();
+
+  void startBeanShell(int port);
 }

@@ -184,7 +184,7 @@ import javax.management.NotCompliantMBeanException;
 
 /**
  * Startup and shutdown point. Builds and starts the server
- * 
+ *
  * @author steve
  */
 public class DistributedObjectServer extends SEDA implements TCDumper {
@@ -700,7 +700,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     return true;
   }
 
-  private void startBeanShell(int port) {
+  public void startBeanShell(int port) {
     try {
       Interpreter i = new Interpreter();
       i.set("dsoServer", this);

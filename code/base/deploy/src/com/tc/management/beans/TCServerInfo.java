@@ -99,6 +99,10 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return NOTIFICATION_INFO;
   }
 
+  public void startBeanShell(int port) {
+    server.startBeanShell(port);
+  }
+
   public String toString() {
     if (isStarted()) {
       return "starting, startTime(" + getStartTime() + ")";
@@ -135,8 +139,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     String user = productInfo.buildUser();
     String host = productInfo.buildHost();
     String branch = productInfo.buildBranch();
-    return timeStamp + " (" + revision + " by " + user + "@" + host + " from "
-           + branch + ")";
+    return timeStamp + " (" + revision + " by " + user + "@" + host + " from " + branch + ")";
   }
 
   public String getHealthStatus() {
