@@ -5,6 +5,7 @@
 package com.tc.objectserver.handshakemanager;
 
 import com.tc.exception.ImplementMe;
+import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -73,11 +74,11 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
   }
 
   private void initHandshakeManager() {
-    this.hm = new ServerClientHandshakeManager(TCLogging.getLogger(ServerClientHandshakeManager.class), channelManager,
-                                               new TestServerTransactionManager(), sequenceValidator,
-                                               clientStateManager, lockManager, lockResponseSink,
+    TCLogger logger = TCLogging.getLogger(ServerClientHandshakeManager.class);
+    this.hm = new ServerClientHandshakeManager(logger, channelManager, new TestServerTransactionManager(),
+                                               sequenceValidator, clientStateManager, lockManager, lockResponseSink,
                                                new ObjectIDSequenceProvider(objectIDSequenceStart), timer,
-                                               reconnectTimeout, false);
+                                               reconnectTimeout, false, logger);
     this.hm.setStarting(convertToConnectionIds(existingUnconnectedClients));
   }
 

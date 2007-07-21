@@ -184,7 +184,7 @@ import javax.management.NotCompliantMBeanException;
 
 /**
  * Startup and shutdown point. Builds and starts the server
- *
+ * 
  * @author steve
  */
 public class DistributedObjectServer extends SEDA implements TCDumper {
@@ -609,7 +609,8 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
                                                                                            new TCTimerImpl(
                                                                                                            "Reconnect timer",
                                                                                                            true),
-                                                                                           reconnectTimeout, persistent);
+                                                                                           reconnectTimeout,
+                                                                                           persistent, consoleLogger);
 
     boolean networkedHA = configSetupManager.haConfig().isNetworkedActivePassive();
     if (networkedHA) {

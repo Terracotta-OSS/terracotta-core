@@ -52,12 +52,13 @@ public class ServerClientHandshakeManager {
   private final Set                      clientsRequestingObjectIDSequence = new HashSet();
   private final boolean                  persistent;
   private final ServerTransactionManager transactionManager;
+  private final TCLogger                 consoleLogger;
 
   public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager,
                                       ServerTransactionManager transactionManager, SequenceValidator sequenceValidator,
                                       ClientStateManager clientStateManager, LockManager lockManager,
                                       Sink lockResponseSink, ObjectIDSequence oidSequence, TCTimer timer,
-                                      long reconnectTimeout, boolean persistent) {
+                                      long reconnectTimeout, boolean persistent, TCLogger consoleLogger) {
     this.logger = logger;
     this.channelManager = channelManager;
     this.transactionManager = transactionManager;
@@ -69,6 +70,7 @@ public class ServerClientHandshakeManager {
     this.reconnectTimeout = reconnectTimeout;
     this.timer = timer;
     this.persistent = persistent;
+    this.consoleLogger = consoleLogger;
     this.reconnectTimerTask = new ReconnectTimerTask(this, timer);
   }
 
@@ -218,7 +220,8 @@ public class ServerClientHandshakeManager {
       for (Iterator i = existingConnections.iterator(); i.hasNext();) {
         existingUnconnectedClients.add(new ChannelID(((ConnectionID) i.next()).getChannelID()));
       }
-      logger.info("Starting reconnect window: " + this.reconnectTimeout + " ms.");
+      
+      consoleLogger.info("Starting reconnect window: " + this.reconnectTimeout + " ms.");
       timer.schedule(reconnectTimerTask, this.reconnectTimeout);
     }
   }
