@@ -229,16 +229,13 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       if (thisNode.equals(node)) continue;
       StaticMember sm = makeMember(node);
       if (sm == null) continue;
-      if (thisNode == node) {
-          sm.setUniqueId(uuid);
-      }
       smi.addStaticMember(sm);
     }
     // set up this node
     thisMember = makeMember(thisNode);
-    this.thisNodeID = makeNodeIDFrom(thisMember);
     if (thisMember == null) { throw new AssertionError("Error setting up this group member: " + thisNode); }
     ((StaticMember)thisMember).setUniqueId(uuid);
+    this.thisNodeID = makeNodeIDFrom(thisMember);
     smi.setLocalMember(thisMember);
     return smi;
   }
@@ -300,6 +297,19 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       logger.warn(warn);
       // XXX:: Sometimes messages arrive before memberAdded event. So we are faking it.
       memberAdded(sender);
+    } else if (!useMcast) {
+      // set uuid as needed from received msg
+      byte[] uuid = ((Member)nodes.get(from)).getUniqueId();
+      boolean emptyUuid = true;
+      for (int i = 0; i < uuid.length; ++i) {
+        if (uuid[i] != 0) {
+          emptyUuid = false;
+          break;
+        }
+      }
+      if (emptyUuid) {
+        nodes.put(from, sender);
+      }
     }
     gmsg.setMessageOrginator(from);
     if (requestID.isNull() || !notifyPendingRequests(requestID, gmsg, sender)) {
