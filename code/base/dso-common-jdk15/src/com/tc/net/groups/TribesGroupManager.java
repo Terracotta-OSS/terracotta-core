@@ -16,6 +16,7 @@ import org.apache.catalina.tribes.membership.StaticMember;
 import org.apache.catalina.tribes.transport.DataSender;
 import org.apache.catalina.tribes.transport.ReceiverBase;
 import org.apache.catalina.tribes.transport.ReplicationTransmitter;
+import org.apache.catalina.tribes.util.UUIDGenerator;
 
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
@@ -221,18 +222,23 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
 
   private StaticMembershipInterceptor setupStaticMembers(final Node thisNode, final Node[] allNodes)
       throws AssertionError {
+     byte[] uuid = UUIDGenerator.randomUUID(true);
     StaticMembershipInterceptor smi = new StaticMembershipInterceptor();
     for (int i = 0; i < allNodes.length; i++) {
       final Node node = allNodes[i];
       if (thisNode.equals(node)) continue;
       StaticMember sm = makeMember(node);
       if (sm == null) continue;
+      if (thisNode == node) {
+          sm.setUniqueId(uuid);
+      }
       smi.addStaticMember(sm);
     }
     // set up this node
     thisMember = makeMember(thisNode);
     this.thisNodeID = makeNodeIDFrom(thisMember);
     if (thisMember == null) { throw new AssertionError("Error setting up this group member: " + thisNode); }
+    ((StaticMember)thisMember).setUniqueId(uuid);
     smi.setLocalMember(thisMember);
     return smi;
   }
