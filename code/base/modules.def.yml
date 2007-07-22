@@ -436,6 +436,7 @@ modules:
         - deploy
         - thirdparty
         - legacy-test-tree
+        - modules-common-1.0
   - clustered-commons-collections-3.1:
       options:
         jdk: J2SE-1.5
