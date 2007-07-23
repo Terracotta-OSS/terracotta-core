@@ -118,6 +118,16 @@
       -->
       <jmx-port>9520</jmx-port>
 
+      <!-- On what port should the server listen for communication from
+         other servers participating in an networked-active-passive setup.
+         This can be any port you like, but note that ports below 1024
+         typically require 'root' privileges to use on Un*x-style systems
+         (Linux, Solaris).
+
+         Default: 9530
+      -->
+      <l2-group-port>9530</l2-group-port>
+
       <!-- Configuration data for DSO that's specific to the DSO server. -->
       <dso>
 
