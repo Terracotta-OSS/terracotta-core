@@ -89,7 +89,6 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   }
 
   public void send(TCNetworkMessage message) {
-    Assert.inv(channelConnected.get());
     delivery.send(message);
   }
 
