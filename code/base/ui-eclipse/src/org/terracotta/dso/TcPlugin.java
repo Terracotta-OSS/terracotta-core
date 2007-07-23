@@ -335,13 +335,27 @@ public class TcPlugin extends AbstractUIPlugin
     return m_plugin;
   }
 
-  public void setup(IProject project, String configFilePath, String serverOpts) {
+  public void setup(IProject project, String configFilePath) {
+    boolean isConfigEditorVisible = getConfigurationEditor(project) != null;
+    
+    if(isConfigEditorVisible) closeConfigurationEditor(project);
+    
     clearConfigurationSessionProperties(project);
     setConfigurationFilePath(project, configFilePath);
-    setPersistentProperty(project, SERVER_OPTIONS, serverOpts);
     reloadConfiguration(project);
+
+    if(isConfigEditorVisible) ensureConfigurationEditor(project);
   }
 
+  public void setup(IProject project, String configFilePath, String serverOpts) {
+    setPersistentProperty(project, SERVER_OPTIONS, serverOpts);
+    setup(project, configFilePath);
+  }
+
+  public void setup(IFile configFile) {
+    setup(configFile.getProject(), configFile.getProjectRelativePath().toString());
+  }
+  
   public void addTerracottaNature(IJavaProject currentProject) {
     IWorkbench workbench = PlatformUI.getWorkbench();
     IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
@@ -1295,11 +1309,15 @@ public class TcPlugin extends AbstractUIPlugin
     final ConfigurationEditor configEditor = getConfigurationEditor(project);
 
     if (configEditor != null) {
-      Display.getDefault().asyncExec(new Runnable() {
-        public void run() {
-          configEditor.closeEditor();
-        }
-      });
+      if (Display.getCurrent() == null) {
+        Display.getDefault().syncExec(new Runnable() {
+          public void run() {
+            configEditor.closeEditor();
+          }
+        });
+      } else {
+        configEditor.closeEditor();
+      }
     }
   }
 
@@ -1311,7 +1329,6 @@ public class TcPlugin extends AbstractUIPlugin
     opts.setSavePrettyPrintIndent(2);
     opts.remove(XmlOptions.LOAD_STRIP_WHITESPACE);
     opts.remove(XmlOptions.LOAD_STRIP_COMMENTS);
-    // opts.remove(XmlOptions.VALIDATE_ON_SET);
 
     return opts;
   }

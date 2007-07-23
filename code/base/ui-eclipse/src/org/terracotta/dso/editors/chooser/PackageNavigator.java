@@ -9,7 +9,6 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.core.JarPackageFragmentRoot;
 import org.eclipse.jdt.internal.core.PackageFragmentRoot;
@@ -135,6 +134,7 @@ public class PackageNavigator extends MessageDialog {
 
     public JavaHierarchyContentProvider() {
       super(true);
+      setIsFlatLayout(true);
       m_workbench = new WorkbenchContentProvider() {
         protected IWorkbenchAdapter getAdapter(Object element) {
           return new JavaWorkbenchAdapter() {
@@ -142,8 +142,7 @@ public class PackageNavigator extends MessageDialog {
               List subset = new ArrayList();
               Object[] children = super.getChildren(parentElement);
               for (int i = 0; i < children.length; i++) {
-                if (!(children[i] instanceof IPackageFragment && super.getChildren(children[i]).length == 0)
-                    && !(children[i] instanceof PackageFragmentRoot && !(children[i] instanceof JarPackageFragmentRoot))) {
+                if (!(children[i] instanceof PackageFragmentRoot && !(children[i] instanceof JarPackageFragmentRoot))) {
                   subset.add(children[i]);
                 }
               }
@@ -166,9 +165,7 @@ public class PackageNavigator extends MessageDialog {
           Object[] workbenchElements = m_workbench.getChildren(parentElement);
           return workbenchElements;
         }
-        if (!(children[i] instanceof IPackageFragment && super.getChildren(children[i]).length == 0)) {
-          subset.add(children[i]);
-        }
+        subset.add(children[i]);
       }
       return subset.toArray();
     }

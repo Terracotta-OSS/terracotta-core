@@ -33,7 +33,6 @@ public class FileBehavior implements NavigatorBehavior {
   public ViewerFilter getFilter(final IJavaProject javaProject) {
     return new ViewerFilter() {
       public boolean select(Viewer viewer, Object parentElement, Object element) {
-        //if (element instanceof IJavaProject && element.equals(javaProject)) return true;
         return filterSelect(viewer, parentElement, element);
       }
     };
