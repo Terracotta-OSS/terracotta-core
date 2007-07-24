@@ -98,6 +98,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager, ServerTra
     logger.info("Processing Pending Lookups = " + pendingRequests.size());
     for (Iterator iter = pendingRequests.iterator(); iter.hasNext();) {
       PendingRequest request = (PendingRequest) iter.next();
+      logger.info("Processing pending Looking up : " + request.getResponseContext());
       objectManager.lookupObjectsAndSubObjectsFor(request.getResponseContext().getChannelID(), request
           .getResponseContext(), request.getMaxReachableObjects());
     }
