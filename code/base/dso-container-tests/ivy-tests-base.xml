@@ -11,7 +11,7 @@
     <dependency name="spring" rev="2.0.1" org="terracotta"/>
     <dependency name="hibernate" rev="3.1.2" org="terracotta"/>
     <dependency name="dom4j" rev="1.6.1"/>
-    <dependency name="cglib-nodep" rev="2.1_3"/>
+    <dependency name="cglib-nodep" rev="2.1_3" org="terracotta"/>
     <dependency name="jta" rev="1.0.1b" org="terracotta"/>
     <dependency name="commons-collections" rev="3.1"/>
     <dependency name="derby" rev="10.2.2.0" org="terracotta"/>
