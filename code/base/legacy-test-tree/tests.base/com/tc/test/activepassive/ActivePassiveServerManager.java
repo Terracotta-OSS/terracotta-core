@@ -194,6 +194,9 @@ public class ActivePassiveServerManager {
       if (newPort == PortChooser.MAX) {
         continue;
       }
+      if (portChooser.isPortUsed(newPort + 1)) {
+        continue;
+      }
       if (isUnusedPort(newPort) && isUnusedPort(newPort + 1)) {
         dsoPorts[index] = newPort;
         l2GroupPorts[index] = newPort + 1;

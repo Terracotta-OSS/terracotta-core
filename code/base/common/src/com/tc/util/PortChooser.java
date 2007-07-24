@@ -27,6 +27,36 @@ public final class PortChooser {
       return choose();
     }
   }
+  
+  public boolean isPortUsed(int portNum) {
+    final Integer port = new Integer(portNum);
+    if (chosen.contains(port)) return true;
+    return !canBind(portNum);
+  }
+  
+  private boolean canBind(int portNum) {
+    ServerSocket ss = null;
+    boolean isFree = false;
+    try {
+      ss = new ServerSocket(portNum);
+      isFree = true;
+    } catch (BindException be) {
+      isFree = false; // port in use,
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      if (ss != null) {
+        while (!ss.isClosed()) {
+          try {
+            ss.close();
+          } catch (IOException e) {
+            // ignore
+          }
+        }
+      }
+    }
+    return isFree;
+  }
 
   private int choose() {
     while (true) {
@@ -34,28 +64,8 @@ public final class PortChooser {
       boolean added = chosen.add(attempt);
       if (!added) {
         continue; // already picked at some point, try again
-      }
-
-      ServerSocket ss = null;
-      try {
-        int port = attempt.intValue();
-        ss = new ServerSocket(port);
-        return port;
-      } catch (BindException be) {
-        continue; // port in use, try another
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      } finally {
-        if (ss != null) {
-          while (!ss.isClosed()) {
-            try {
-              ss.close();
-            } catch (IOException e) {
-              // ignore
-            }
-          }
-        }
-      }
+      }      
+      if (canBind(attempt.intValue())) return(attempt.intValue());
     }
   }
 
