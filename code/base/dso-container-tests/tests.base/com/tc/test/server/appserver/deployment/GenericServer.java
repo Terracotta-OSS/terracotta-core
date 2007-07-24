@@ -32,7 +32,9 @@ import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.appserver.StandardAppServerParameters;
 import com.tc.test.server.util.AppServerUtil;
 import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.text.Banner;
 import com.tc.util.runtime.Os;
+import com.tc.util.runtime.Vm;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -46,6 +48,8 @@ import javax.management.MBeanServerConnection;
 import junit.framework.Assert;
 
 public class GenericServer extends AbstractStoppable implements WebApplicationServer {
+  private static final boolean        GC_LOGGGING     = false;
+  private static final boolean        ENABLE_DEBUGGER = false;
 
   private int                         jmxRemotePort;
   private int                         rmiRegistryPort;
@@ -87,7 +91,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     parameters.appendSysProp("com.sun.management.jmxremote.authenticate", false);
     parameters.appendSysProp("com.sun.management.jmxremote.ssl", false);
 
-    // app server specific system props    
+    // app server specific system props
     int appId = AppServerFactory.getCurrentAppServerId();
     switch (appId) {
       case AppServerFactory.TOMCAT:
@@ -102,6 +106,9 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     parameters.appendSysProp("com.sun.management.jmxremote.port", this.jmxRemotePort);
     parameters.appendSysProp("rmi.registry.port", this.rmiRegistryPort);
 
+    parameters.appendSysProp("tc.tests.configuration.modules.url", System
+                             .getProperty("tc.tests.configuration.modules.url"));
+
     String[] params = { "tc.classloader.writeToDisk", "tc.objectmanager.dumpHierarchy", "aspectwerkz.deployment.info",
         "aspectwerkz.details", "aspectwerkz.gen.closures", "aspectwerkz.dump.pattern", "aspectwerkz.dump.closures",
         "aspectwerkz.dump.factories", "aspectwerkz.aspectmodules" };
@@ -111,17 +118,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       }
     }
 
-    if (!MONKEY_MODE) {
-      int debugPort = AppServerUtil.getPort();
-      logger.info("Debug port=" + debugPort);
-      parameters.appendJvmArgs(" -Xdebug -Xrunjdwp:transport=dt_socket,address=" + debugPort + ",server=y,suspend=n ");
-      // -Daspectwerkz.transform.verbose=true -Daspectwerkz.transform.details=true
-      parameters.appendSysProp("aspectwerkz.transform.verbose", true);
-      parameters.appendSysProp("aspectwerkz.transform.details", true);
-    }
-
-    parameters.appendSysProp("tc.tests.configuration.modules.url", System
-        .getProperty("tc.tests.configuration.modules.url"));
+    enableDebug(serverId);    
 
     proxyBuilderMap.put(RmiServiceExporter.class, new RMIProxyBuilder());
     proxyBuilderMap.put(HttpInvokerServiceExporter.class, new HttpInvokerProxyBuilder());
@@ -130,12 +127,29 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
   public StandardAppServerParameters getServerParameters() {
     return parameters;
   }
-  
+
   public int getPort() {
-    if (result == null) {
-      throw new IllegalStateException("Server has not started.");
-    }
+    if (result == null) { throw new IllegalStateException("Server has not started."); }
     return result.serverPort();
+  }
+
+  private void enableDebug(int serverId) {
+    if (GC_LOGGGING && !Vm.isIBM()) {
+      parameters.appendJvmArgs("-verbose:gc");
+      parameters.appendJvmArgs("-XX:+PrintGCDetails");
+      parameters.appendJvmArgs("-Xloggc:"
+                               + new File(this.installation.sandboxDirectory(), "server_" + serverId + "-gc.log")
+                                   .getAbsolutePath());
+    }
+
+    if (ENABLE_DEBUGGER) {
+      int debugPort = 8000 + serverId;
+      parameters.appendJvmArgs("-Xdebug");
+      parameters.appendJvmArgs("-Xrunjdwp:server=y,transport=dt_socket,address=" + debugPort + ",suspend=y");
+      parameters.appendSysProp("aspectwerkz.transform.verbose", true);
+      parameters.appendSysProp("aspectwerkz.transform.details", true);
+      Banner.warnBanner("Waiting for debugger to connect on port " + debugPort);
+    }
   }
 
   private class RMIProxyBuilder implements ProxyBuilder {
