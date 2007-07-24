@@ -82,7 +82,8 @@ public class WARBuilder implements DeploymentBuilder {
     this.warFileName = warFileName;
     this.tempDirPath = new FileSystemPath(tempDir);
     this.testConfig = config;
-
+    
+    // this is needed for spring tests
     addDirectoryOrJARContainingClass(WARBuilder.class); // test framework
     addDirectoryOrJARContainingClass(LogFactory.class); // commons-logging
     addDirectoryOrJARContainingClass(Logger.class); // log4j
