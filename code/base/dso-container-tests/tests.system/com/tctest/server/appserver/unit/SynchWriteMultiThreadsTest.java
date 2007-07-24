@@ -35,10 +35,10 @@ public class SynchWriteMultiThreadsTest extends AbstractTwoServerDeploymentTest 
     private SynchWriteMultiThreadsTest parent;
     private List                       errors;
 
-    public Driver(SynchWriteMultiThreadsTest parent, List errors, WebConversation wc) {
+    public Driver(SynchWriteMultiThreadsTest parent, List errors) {
       this.parent = parent;
       this.errors = errors;
-      this.wc = wc;
+      this.wc = new WebConversation();
     }
 
     public void run() {
@@ -69,13 +69,11 @@ public class SynchWriteMultiThreadsTest extends AbstractTwoServerDeploymentTest 
   }
 
   public final void testSynchWriteWithLoad() throws Exception {
-    WebConversation wc = new WebConversation();
-
     List errors = Collections.synchronizedList(new ArrayList());
     // start all drivers
     Driver[] drivers = new Driver[NUM_OF_DRIVERS];
     for (int i = 0; i < NUM_OF_DRIVERS; i++) {
-      drivers[i] = new Driver(this, errors, wc);
+      drivers[i] = new Driver(this, errors);
       drivers[i].start();
     }
 
