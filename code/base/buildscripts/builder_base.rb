@@ -93,6 +93,7 @@ class TerracottaBuilder
         option_parser = OptionParser.new
         option_parser.on('--no-ivy') do @no_ivy = true end
         option_parser.on('--no-compile') do @no_compile = true end
+        option_parser.on('--no-demo') do @no_demo = true end
         @start_time = Time.now
         @basedir = FilePath.new(File.dirname(File.expand_path(__FILE__)), "..").canonicalize
         Registry[:basedir] = @basedir

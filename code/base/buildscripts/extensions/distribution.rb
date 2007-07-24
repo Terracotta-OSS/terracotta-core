@@ -164,12 +164,16 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   end
   
   def __assemble
-    exec_section :bundled_components
-    exec_section :bundled_vendors
-    exec_section :bundled_demos
-    exec_section :bundled_jres
+    exec_section :bundled_components    
     exec_section :bundled_modules
-    exec_section :postscripts
+    if @no_demo
+      loud_message("--no-demo option found. No demos will be assembled")
+    else
+      exec_section :bundled_vendors
+      exec_section :bundled_demos
+      exec_section :bundled_jres
+      exec_section :postscripts      
+    end    
   end
 
   def __package

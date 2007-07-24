@@ -122,6 +122,9 @@ PACKAGING & DISTRIBUTION
 
 NOTE: Output of binaries are placed under code/base/build/dist
 
+--no-demo
+    Use this option with "dist" target will create only the binaries
+    
 dist
     Create distribution binaries
 
