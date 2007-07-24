@@ -143,6 +143,10 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   public boolean isWithPersistentStore() {
     return false;
   }
+  
+  protected final boolean cleanTempDir() {
+    return false;
+  }
 
   protected void disableVariant(String variantName, String variantValue) {
     List variantList = (List) disabledVariants.get(variantName);
