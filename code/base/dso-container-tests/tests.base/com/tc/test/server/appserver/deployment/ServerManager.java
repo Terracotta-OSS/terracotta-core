@@ -80,7 +80,7 @@ public class ServerManager {
   }
 
   protected boolean cleanTempDir() {
-    return true;
+    return false;
   }
 
   void start(boolean withPersistentStore) throws Exception {

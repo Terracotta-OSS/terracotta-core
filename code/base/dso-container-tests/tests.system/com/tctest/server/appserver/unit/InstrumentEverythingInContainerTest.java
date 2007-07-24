@@ -38,8 +38,7 @@ public class InstrumentEverythingInContainerTest extends AbstractDeploymentTest 
     TcConfigBuilder tcConfigBuilder = new TcConfigBuilder();
     tcConfigBuilder.addInstrumentedClass("*..*");
     // These bytes are obfuscated and get verify errors when instrumented by DSO
-    tcConfigBuilder.addExclude("com.sun.crypto.provider..*");
-    tcConfigBuilder.addWebApplication(CONTEXT);
+    tcConfigBuilder.addExclude("com.sun.crypto.provider..*");    
 
     WebApplicationServer server = makeWebApplicationServer(tcConfigBuilder);
     server.addWarDeployment(deployment, CONTEXT);

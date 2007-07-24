@@ -60,8 +60,6 @@ public class DsoRootTest extends AbstractTwoServerDeploymentTest {
     }
 
     protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
-      tcConfigBuilder.addWebApplication(CONTEXT);
-
       String rootName = "counterObject";
       String fieldName = RootCounterServlet.class.getName() + ".counterObject";
       tcConfigBuilder.addRoot(fieldName, rootName);

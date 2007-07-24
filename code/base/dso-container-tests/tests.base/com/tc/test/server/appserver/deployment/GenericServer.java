@@ -74,6 +74,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     this.installation = installation;
     this.rmiRegistryPort = AppServerUtil.getPort();
     this.jmxRemotePort = AppServerUtil.getPort();
+    int appId = AppServerFactory.getCurrentAppServerId();
 
     parameters = (StandardAppServerParameters) factory.createParameters("server_" + serverId);
 
@@ -87,27 +88,17 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     parameters.appendSysProp("tc.classpath", "file://" + writeTerracottaClassPathFile());
     parameters.appendSysProp("tc.session.classpath", config.sessionClasspath());
 
-    parameters.appendSysProp("com.sun.management.jmxremote");
-    parameters.appendSysProp("com.sun.management.jmxremote.authenticate", false);
-    parameters.appendSysProp("com.sun.management.jmxremote.ssl", false);
-
-    // app server specific system props
-    int appId = AppServerFactory.getCurrentAppServerId();
-    switch (appId) {
-      case AppServerFactory.TOMCAT:
-      case AppServerFactory.JBOSS:
-        parameters.appendJvmArgs("-Djvmroute=" + "server_" + serverId);
-        break;
-      case AppServerFactory.WEBSPHERE:
-        parameters.appendSysProp("javax.management.builder.initial", "");
-        break;
+    // glassfish fails with these options on
+    if (appId != AppServerFactory.GLASSFISH) {
+      parameters.appendSysProp("com.sun.management.jmxremote");
+      parameters.appendSysProp("com.sun.management.jmxremote.authenticate", false);
+      parameters.appendSysProp("com.sun.management.jmxremote.ssl", false);
+      parameters.appendSysProp("com.sun.management.jmxremote.port", this.jmxRemotePort);
     }
 
-    parameters.appendSysProp("com.sun.management.jmxremote.port", this.jmxRemotePort);
     parameters.appendSysProp("rmi.registry.port", this.rmiRegistryPort);
-
     parameters.appendSysProp("tc.tests.configuration.modules.url", System
-                             .getProperty("tc.tests.configuration.modules.url"));
+        .getProperty("tc.tests.configuration.modules.url"));
 
     String[] params = { "tc.classloader.writeToDisk", "tc.objectmanager.dumpHierarchy", "aspectwerkz.deployment.info",
         "aspectwerkz.details", "aspectwerkz.gen.closures", "aspectwerkz.dump.pattern", "aspectwerkz.dump.closures",
@@ -118,7 +109,18 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       }
     }
 
-    enableDebug(serverId);    
+    enableDebug(serverId);
+
+    // app server specific system props
+    switch (appId) {
+      case AppServerFactory.TOMCAT:
+      case AppServerFactory.JBOSS:
+        parameters.appendJvmArgs("-Djvmroute=" + "server_" + serverId);
+        break;
+      case AppServerFactory.WEBSPHERE:
+        parameters.appendSysProp("javax.management.builder.initial", "");
+        break;
+    }
 
     proxyBuilderMap.put(RmiServiceExporter.class, new RMIProxyBuilder());
     proxyBuilderMap.put(HttpInvokerServiceExporter.class, new HttpInvokerProxyBuilder());
