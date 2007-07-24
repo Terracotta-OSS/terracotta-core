@@ -3,6 +3,8 @@
  */
 package com.tc.runtime;
 
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Vm;
 
@@ -22,8 +24,10 @@ public class TCRuntime {
   }
 
   private static void init() {
+    TCProperties props = TCPropertiesImpl.getProperties();
+
     if (Vm.isJDK15Compliant()) {
-      if (Vm.isIBM()) {
+      if (props.getBoolean("memory.monitor.forcebasic") || Vm.isIBM()) {
         memoryManager = getMemoryManagerJdk15Basic();
       } else {
         memoryManager = getMemoryManagerJdk15PoolMonitor();
@@ -42,7 +46,7 @@ public class TCRuntime {
   }
 
   /*
-   * XXX::This method is intensionally written using Reflection so that we dont have any 1.5 dependences.
+   * XXX::This method is intentionally written using Reflection so that we dont have any 1.5 dependences.
    * TODO:: Figure a better way to do this.
    */
   private static JVMMemoryManager getMemoryManagerJdk15(String className) {
