@@ -12,6 +12,7 @@ import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.ServerTestSetup;
 import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.util.TcConfigBuilder;
+import com.tc.util.runtime.Vm;
 import com.tctest.webapp.servlets.OkServlet;
 
 import junit.framework.Test;
@@ -42,6 +43,10 @@ public class InstrumentEverythingInContainerTest extends AbstractDeploymentTest 
 
     WebApplicationServer server = makeWebApplicationServer(tcConfigBuilder);
     server.addWarDeployment(deployment, CONTEXT);
+    if (!Vm.isIBM()) {
+      // InstrumentEverythingInContainerTest under glassfish needs this
+      server.getServerParameters().appendJvmArgs("-XX:MaxPermSize=128m");
+    }
     server.start();
 
     WebConversation conversation = new WebConversation();
