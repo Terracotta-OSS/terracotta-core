@@ -299,9 +299,12 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
     public synchronized void syncCompleteFor(NodeID nodeID) {
       Object val = syncingPassives.remove(nodeID);
-      Assert.assertTrue(val == ADDED);
-      Assert.assertTrue(disabled);
-      enableGCIfNecessary();
+      // val could be null if the node disconnects before fully synching up.
+      Assert.assertTrue(val == ADDED || val == null);
+      if (val != null) {
+        Assert.assertTrue(disabled);
+        enableGCIfNecessary();
+      }
     }
 
     public synchronized void disableAndAdd2L2StateManager(Map nodeID2ObjectIDs) {
