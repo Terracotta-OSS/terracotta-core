@@ -464,7 +464,7 @@ public class TCTestCase extends TestCase {
     }
   }
 
-  private boolean isAllDisabled() {
+  protected final boolean isAllDisabled() {
     return this.allDisabledUntil != null && new Date().before(this.allDisabledUntil);
   }
 

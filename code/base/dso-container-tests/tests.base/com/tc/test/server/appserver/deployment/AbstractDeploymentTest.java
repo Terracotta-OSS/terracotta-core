@@ -36,7 +36,7 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
         AppServerFactory.JETTY });
     if (isSessionTest() && glassFishOrJetty) {
       disableAllUntil(new Date(Long.MAX_VALUE));
-    }
+    }    
   }
 
   protected void beforeTimeout() throws Throwable {
@@ -166,17 +166,9 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   }
 
   public boolean shouldDisable() {
-    return shouldDisableForJavaVersion() || shouldDisableForVariants() || shouldDisableForCertainAppServers();
+    return isAllDisabled() || shouldDisableForJavaVersion() || shouldDisableForVariants();
   }
-
-  private boolean shouldDisableForCertainAppServers() {
-    boolean glassFishOrJetty = AppServerFactory.currentAppServerBelongsTo(new int[] { AppServerFactory.GLASSFISH,
-        AppServerFactory.JETTY });
-    // XXX: Only non-session container tests work in glassfish and jetty at the moment
-    if (isSessionTest() && glassFishOrJetty) { return true; }
-    return false;
-  }
-
+  
   private boolean shouldDisableForVariants() {
     for (Iterator iter = disabledVariants.entrySet().iterator(); iter.hasNext();) {
       Map.Entry entry = (Map.Entry) iter.next();
