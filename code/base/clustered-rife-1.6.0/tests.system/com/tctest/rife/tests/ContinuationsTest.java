@@ -49,7 +49,7 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 
 		// start counting on the first server, creating the first continuation
 		// in this conversation, counter is 0
-		WebResponse response1a = server1.ping("/continuations-test/counter", conversation);
+		WebResponse response1a = server0.ping("/continuations-test/counter", conversation);
 		String count1a = getCurrentCount(response1a);
 		assertEquals("0", count1a);
 		WebForm form1a = getCountForm(response1a);
@@ -65,7 +65,7 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 		// start counting on the second server, creating the first continuation
 		// in a new conversation on the second server, the counter there starts
 		// at 0
-		WebResponse response2a = server2.ping("/continuations-test/counter", conversation);
+		WebResponse response2a = server1.ping("/continuations-test/counter", conversation);
 		String count2a = getCurrentCount(response2a);
 		assertEquals("0", count2a);
 		WebForm form2a = getCountForm(response2a);
@@ -162,28 +162,28 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 		WebForm form;
 
 		// start the addition by accessing the first server
-		WebResponse response1 = doQueryStringRequest(server1, url, null);
+		WebResponse response1 = doQueryStringRequest(server0, url, null);
 		form = response1.getFormWithName("getanswer");
 		assertEquals(": true", response1.getTitle());
 		assertNotNull(form);
 		form.setCheckbox("start", true);
 
 		// submit the first value to the second server
-		WebResponse response2 = doQueryStringRequest(server2, url, form);
+		WebResponse response2 = doQueryStringRequest(server1, url, form);
 		assertEquals("0 : false", response2.getTitle());
 		form = response2.getFormWithName("getanswer");
 		assertNotNull(form);
 		form.setParameter("answer", "12");
 
 		// submit the second value to the first server
-		WebResponse response3 = doQueryStringRequest(server1, url, form);
+		WebResponse response3 = doQueryStringRequest(server0, url, form);
 		assertEquals("12 : true", response3.getTitle());
 		form = response3.getFormWithName("getanswer");
 		assertNotNull(form);
 		form.setParameter("answer", "32");
 		
 		// submit the third value to the second server
-		WebResponse response4 = doQueryStringRequest(server2, url, form);
+		WebResponse response4 = doQueryStringRequest(server1, url, form);
 		assertEquals("44 : true", response4.getTitle());
 		form = response4.getFormWithName("getanswer");
 		assertNotNull(form);
@@ -191,7 +191,7 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 		
 		// submit the fourth value to the first server, this will exceed the
 		// total amount of 50 and thus print out the final message
-		WebResponse response5 = doQueryStringRequest(server1, url, form);
+		WebResponse response5 = doQueryStringRequest(server0, url, form);
 		assertEquals("got a total of 85 : false", response5.getTitle());
 	}
 	
@@ -210,9 +210,9 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 		String text = null;
 		String[] lines = null;
 
-		response = server1.ping("/continuations-test/alltypes");
+		response = server0.ping("/continuations-test/alltypes");
 
-		WebApplicationServer[] servers = new WebApplicationServer[] {server1, server2}; 
+		WebApplicationServer[] servers = new WebApplicationServer[] {server0, server1}; 
 		for (int i = 8; i < 40; i++) {
 			text = response.getText();
 			lines = StringUtils.splitToArray(text, "\n");
@@ -227,21 +227,21 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 		assertEquals(2, lines.length);
 		assertEquals(AllTypes.BEFORE + " a", lines[0]);
 
-		response = server1.ping("/continuations-test/alltypes?" + ReservedParameters.CONTID + "=" + lines[1]);
+		response = server0.ping("/continuations-test/alltypes?" + ReservedParameters.CONTID + "=" + lines[1]);
 
 		text = response.getText();
 		lines = StringUtils.splitToArray(text, "\n");
 		assertEquals(2, lines.length);
 		assertEquals(AllTypes.BEFORE + " b", lines[0]);
 
-		response = server2.ping("/continuations-test/alltypes?" + ReservedParameters.CONTID + "=" + lines[1]);
+		response = server1.ping("/continuations-test/alltypes?" + ReservedParameters.CONTID + "=" + lines[1]);
 
 		text = response.getText();
 		lines = StringUtils.splitToArray(text, "\n");
 		assertEquals(2, lines.length);
 		assertEquals(AllTypes.BEFORE + " c", lines[0]);
 
-		response = server1.ping("/continuations-test/alltypes?" + ReservedParameters.CONTID + "=" + lines[1]);
+		response = server0.ping("/continuations-test/alltypes?" + ReservedParameters.CONTID + "=" + lines[1]);
 
 		assertEquals(
 				"40,1209000,11,16,7,8,\n"
@@ -279,14 +279,14 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 	public void testSimpleInterface() throws Exception {
 		WebResponse response;
 
-		response = server1.ping("/continuations-test/simpleinterface");
+		response = server0.ping("/continuations-test/simpleinterface");
 
 		String text = response.getText();
 		String[] lines = StringUtils.splitToArray(text, "\n");
 		assertEquals(2, lines.length);
 		assertEquals("before simple pause", lines[0]);
 
-		response = server2.ping("/continuations-test/simpleinterface?" + ReservedParameters.CONTID + "=" + lines[1]);
+		response = server1.ping("/continuations-test/simpleinterface?" + ReservedParameters.CONTID + "=" + lines[1]);
 
 		assertEquals("after simple pause", response.getText());
 	}
@@ -298,7 +298,7 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 	public void testCallAnswer() throws Exception {
 		WebResponse response;
 
-		response = server1.ping("/continuations-test/callanswer");
+		response = server0.ping("/continuations-test/callanswer");
 
 		String text = response.getText();
 		String[] lines = StringUtils.splitToArray(text, "\n");
@@ -309,7 +309,7 @@ public class ContinuationsTest extends AbstractTwoServerDeploymentTest {
 		assertEquals("the exit's answer", lines[4]);
 		assertEquals("after call", lines[5]);
 
-		response = server2.ping("/continuations-test/callanswer?" + ReservedParameters.CONTID + "=" + lines[1]);
+		response = server1.ping("/continuations-test/callanswer?" + ReservedParameters.CONTID + "=" + lines[1]);
 
 		assertEquals("after call", response.getText());
 	}

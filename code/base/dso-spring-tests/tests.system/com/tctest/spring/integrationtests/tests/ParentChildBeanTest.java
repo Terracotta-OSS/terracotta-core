@@ -29,10 +29,10 @@ public class ParentChildBeanTest extends AbstractTwoServerDeploymentTest {
   protected void setUp() throws Exception {
     super.setUp();
 
-    foo1a = (FooService) server1.getProxy(FooService.class, REMOTE_SERVICE_NAME);
-    foo2a = (FooService) server2.getProxy(FooService.class, REMOTE_SERVICE_NAME);
-    foo1b = (FooService) server1.getProxy(FooService.class, REMOTE_SERVICE_NAME2);
-    foo2b = (FooService) server2.getProxy(FooService.class, REMOTE_SERVICE_NAME2);
+    foo1a = (FooService) server0.getProxy(FooService.class, REMOTE_SERVICE_NAME);
+    foo2a = (FooService) server1.getProxy(FooService.class, REMOTE_SERVICE_NAME);
+    foo1b = (FooService) server0.getProxy(FooService.class, REMOTE_SERVICE_NAME2);
+    foo2b = (FooService) server1.getProxy(FooService.class, REMOTE_SERVICE_NAME2);
   }
   
   public void testParentChildBeanDefinitionWithConcreteParent() throws Exception {

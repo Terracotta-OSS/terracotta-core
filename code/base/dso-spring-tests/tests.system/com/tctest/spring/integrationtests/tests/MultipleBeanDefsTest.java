@@ -31,8 +31,8 @@ public class MultipleBeanDefsTest extends AbstractTwoServerDeploymentTest {
 
   protected void setUp() throws Exception {
     super.setUp();
-    masterBean1 = (IMasterBean) server1.getProxy(IMasterBean.class, REMOTE_SERVICE_NAME);
-    masterBean2 = (IMasterBean) server2.getProxy(IMasterBean.class, REMOTE_SERVICE_NAME);
+    masterBean1 = (IMasterBean) server0.getProxy(IMasterBean.class, REMOTE_SERVICE_NAME);
+    masterBean2 = (IMasterBean) server1.getProxy(IMasterBean.class, REMOTE_SERVICE_NAME);
   }
   
   /**

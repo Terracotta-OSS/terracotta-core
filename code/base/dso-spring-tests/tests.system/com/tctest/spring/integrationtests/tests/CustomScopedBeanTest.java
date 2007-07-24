@@ -74,15 +74,15 @@ public class CustomScopedBeanTest extends AbstractTwoServerDeploymentTest {
       HttpClient clientS1C1 = new HttpClientWithParams(Collections.singletonMap(ConversationScope.CONV_KEY, "(1)"));
       initCtx.put(ProxyBuilder.HTTP_CLIENT_KEY, clientS1C1);
       
-      beanN1C1 = (ITestFacade) server1.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
-      beanN2C1 = (ITestFacade) server2.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
+      beanN1C1 = (ITestFacade) server0.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
+      beanN2C1 = (ITestFacade) server1.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
       
       HttpClient clientS1C2 = new HttpClientWithParams(Collections.singletonMap(ConversationScope.CONV_KEY, "(2)"));
       clientS1C2.setState(clientS1C1.getState()); // share state across the clients, they should be in the same session now
       initCtx.put(ProxyBuilder.HTTP_CLIENT_KEY, clientS1C2);
       
-      beanN1C2 = (ITestFacade) server1.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
-      beanN2C2 = (ITestFacade) server2.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
+      beanN1C2 = (ITestFacade) server0.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
+      beanN2C2 = (ITestFacade) server1.getProxy(ITestFacade.class, APP_NAME + "/http/" + FASADE_NAME, initCtx);
     } catch (Exception e) {
       e.printStackTrace(); 
       throw e;

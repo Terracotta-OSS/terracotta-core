@@ -55,8 +55,8 @@ public class AppCtxDefTest extends AbstractTwoServerDeploymentTest {
   private void verifyClustered(String service, int n) throws Exception {
     boolean isLocal = service.indexOf("local")>-1;
     
-    AppCtxDefBean bean1 = (AppCtxDefBean) server1.getProxy(AppCtxDefBean.class, service);
-    AppCtxDefBean bean2 = (AppCtxDefBean) server2.getProxy(AppCtxDefBean.class, service);
+    AppCtxDefBean bean1 = (AppCtxDefBean) server0.getProxy(AppCtxDefBean.class, service);
+    AppCtxDefBean bean2 = (AppCtxDefBean) server1.getProxy(AppCtxDefBean.class, service);
     
     bean1.setValue(n);
     assertTrue("Expected "+(isLocal ? "local " : "shared ")+service, n==bean2.getValue() ? !isLocal : isLocal);
@@ -77,14 +77,14 @@ public class AppCtxDefTest extends AbstractTwoServerDeploymentTest {
       
       if(shouldDisable()) return;
 
+      WebApplicationServer server0 = createServer();
       WebApplicationServer server1 = createServer();
-      WebApplicationServer server2 = createServer();
       
       TestSuite suite = (TestSuite) getTest();
       for (int i = 0; i < suite.testCount(); i++) {
         AbstractTwoServerDeploymentTest test = (AbstractTwoServerDeploymentTest) suite.testAt(i);
+        test.setServer0(server0);
         test.setServer1(server1);
-        test.setServer2(server2);
       }
     }
 

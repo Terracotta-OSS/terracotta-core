@@ -30,20 +30,20 @@ import java.util.Properties;
  * blank, which will fall on the default appserver implementations. This class should be the only point for reference in
  * creating a working appserver. Never instantiate specific appserver classes explicitly.
  */
-public abstract class NewAppServerFactory {
+public abstract class AppServerFactory {
 
-  public static final String       WEBLOGIC  = "weblogic";
-  public static final String       JBOSS     = "jboss";
-  public static final String       TOMCAT    = "tomcat";
-  public static final String       WASCE     = "wasce";
-  public static final String       GLASSFISH = "glassfish";
-  public static final String       JETTY     = "jetty";
-  public static final String       WEBSPHERE = "websphere";
+  public static final int          WEBLOGIC  = 0;
+  public static final int          JBOSS     = 1;
+  public static final int          TOMCAT    = 2;
+  public static final int          WASCE     = 3;
+  public static final int          GLASSFISH = 4;
+  public static final int          JETTY     = 5;
+  public static final int          WEBSPHERE = 6;
 
   protected final TestConfigObject config;
   private boolean                  licenseIsSet;
 
-  protected NewAppServerFactory(ProtectedKey protectedKey, TestConfigObject config) {
+  protected AppServerFactory(ProtectedKey protectedKey, TestConfigObject config) {
     Assert.assertNotNull(protectedKey);
     Assert.assertNotNull(config);
     copyLicenseIfAvailable();
@@ -66,25 +66,26 @@ public abstract class NewAppServerFactory {
 
   public abstract StandardTerracottaAppServerConfig createTcConfig(File baseDir);
 
-  public static final NewAppServerFactory createFactoryFromProperties(TestConfigObject config) {
+  public static final AppServerFactory createFactoryFromProperties(TestConfigObject config) {
     Assert.assertNotNull(config);
     String factoryName = config.appserverFactoryName();
     String majorVersion = config.appserverMajorVersion();
-
-    if (TOMCAT.equals(factoryName)) {
-      if ("5".equals(majorVersion)) return new Tomcat5xAppServerFactory(new ProtectedKey(), config);
-    } else if (WEBLOGIC.equals(factoryName)) {
-      if ("8".equals(majorVersion)) return new Weblogic8xAppServerFactory(new ProtectedKey(), config);
-    } else if (WASCE.equals(factoryName)) {
-      if ("1".equals(majorVersion)) return new Wasce1xAppServerFactory(new ProtectedKey(), config);
-    } else if (JBOSS.equals(factoryName)) {
-      if ("4".equals(majorVersion)) return new JBoss4xAppServerFactory(new ProtectedKey(), config);
-    } else if (GLASSFISH.equals(factoryName)) {
-      if ("v1".equals(majorVersion)) return new GlassfishV1AppServerFactory(new ProtectedKey(), config);
-    } else if (JETTY.equals(factoryName)) {
-      if ("6".equals(majorVersion)) return new Jetty6xAppServerFactory(new ProtectedKey(), config);
-    } else if (WEBSPHERE.equals(factoryName)) {
-      if ("6".equals(majorVersion)) return new Was6xAppServerFactory(new ProtectedKey(), config);
+    int appId = getAppServerId(factoryName);
+    switch (appId) {
+      case TOMCAT:
+        if ("5".equals(majorVersion)) return new Tomcat5xAppServerFactory(new ProtectedKey(), config);
+      case WEBLOGIC:
+        if ("8".equals(majorVersion)) return new Weblogic8xAppServerFactory(new ProtectedKey(), config);
+      case WASCE:
+        if ("1".equals(majorVersion)) return new Wasce1xAppServerFactory(new ProtectedKey(), config);
+      case JBOSS:
+        if ("4".equals(majorVersion)) return new JBoss4xAppServerFactory(new ProtectedKey(), config);
+      case GLASSFISH:
+        if ("v1".equals(majorVersion)) return new GlassfishV1AppServerFactory(new ProtectedKey(), config);
+      case JETTY:
+        if ("6".equals(majorVersion)) return new Jetty6xAppServerFactory(new ProtectedKey(), config);
+      case WEBSPHERE:
+        if ("6".equals(majorVersion)) return new Was6xAppServerFactory(new ProtectedKey(), config);
     }
 
     throw new ImplementMe("App server named '" + factoryName + "' with major version " + majorVersion
@@ -114,5 +115,37 @@ public abstract class NewAppServerFactory {
 
   protected static class ProtectedKey {
     // ensure that only this class may invoke it's children
+  }
+
+  public static int getAppServerId(String appserverName) {
+    if (appserverName.equals("weblogic")) {
+      return WEBLOGIC;
+    } else if (appserverName.equals("jboss")) {
+      return JBOSS;
+    } else if (appserverName.equals("tomcat")) {
+      return TOMCAT;
+    } else if (appserverName.equals("wasce")) {
+      return WASCE;
+    } else if (appserverName.equals("glassfish")) {
+      return GLASSFISH;
+    } else if (appserverName.equals("jetty")) {
+      return JETTY;
+    } else if (appserverName.equals("websphere")) {
+      return WEBSPHERE;
+    } else {
+      throw new RuntimeException("App server [" + appserverName + "] is not yet defined!");
+    }
+  }
+  
+  public static int getCurrentAppServerId() {
+    return getAppServerId(TestConfigObject.getInstance().appserverFactoryName());
+  }
+  
+  public static boolean currentAppServerBelongsTo(int[] set) {
+    int appId = getCurrentAppServerId();
+    for (int i = 0; i < set.length; i++ ) {
+      if (set[i] == appId ) return true;
+    }
+    return false;
   }
 }

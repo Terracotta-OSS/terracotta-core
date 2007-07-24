@@ -4,72 +4,80 @@
  */
 package com.tctest.server.appserver.unit;
 
-import org.apache.commons.httpclient.Cookie;
-import org.apache.commons.httpclient.HttpClient;
-
-import com.tc.test.TestConfigObject;
-import com.tc.test.server.appserver.NewAppServerFactory;
-import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
-import com.tc.test.server.util.HttpUtil;
+import com.meterware.httpunit.WebConversation;
+import com.tc.test.server.appserver.AppServerFactory;
+import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.appserver.deployment.WebApplicationServer;
+import com.tc.test.server.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.SessionIDIntegrityTestServlet;
 
-import java.net.URL;
 import java.util.regex.Pattern;
 
+import junit.framework.Test;
 
 /**
  * Test to make sure session id is preserved with Terracotta
  */
-public class SessionIDIntegrityTest extends AbstractAppServerTestCase {
+public class SessionIDIntegrityTest extends AbstractTwoServerDeploymentTest {
+  private static final String CONTEXT = "SessionIDIntegrityTest";
+  private static final String MAPPING = "SessionIDIntegrityTestServlet";
 
-  public SessionIDIntegrityTest() {
-    registerServlet(SessionIDIntegrityTestServlet.class);
+  public static Test suite() {
+    return new SessionIDIntegrityTestSetup();
   }
 
-  public final void testShutdown() throws Exception {
+  public final void testSessionId() throws Exception {
+    WebConversation wc = new WebConversation();
 
-    startDsoServer();
+    assertEquals("OK", request(server0, "cmd=insert", wc));
 
-    HttpClient client = HttpUtil.createHttpClient();    
-    int port1 = startAppServer(true).serverPort();
-    int port2 = startAppServer(true).serverPort();
-
-    URL url1 = createUrl(port1, SessionIDIntegrityTestServlet.class, "cmd=insert");
-    assertEquals("cmd=insert", "OK", HttpUtil.getResponseBody(url1, client));
-    String server0_session_id = extractSessionId(client);
+    String server0_session_id = wc.getCookieValue("JSESSIONID");
     System.out.println("Server0 session id: " + server0_session_id);
-    assertSessionIdIntegrity(server0_session_id, "node-0");
+    assertSessionIdIntegrity(server0_session_id, "server_0");
 
-    URL url2 = createUrl(port2, SessionIDIntegrityTestServlet.class, "cmd=query");
-    assertEquals("cmd=query", "OK", HttpUtil.getResponseBody(url2, client));
-    String server1_session_id = extractSessionId(client);
+    assertEquals("OK", request(server1, "cmd=query", wc));
+
+    String server1_session_id = wc.getCookieValue("JSESSIONID");
     System.out.println("Server1 session id: " + server1_session_id);
-    assertSessionIdIntegrity(server1_session_id, "node-1");
+    assertSessionIdIntegrity(server1_session_id, "server_1");
   }
-  
-  private void assertSessionIdIntegrity(String sessionId, String extra_id) {
-    String factoryName = TestConfigObject.getInstance().appserverFactoryName();
 
-    if (NewAppServerFactory.TOMCAT.equals(factoryName) || 
-        NewAppServerFactory.WASCE.equals(factoryName)  ||
-        NewAppServerFactory.JBOSS.equals(factoryName)) {
-      assertTrue(sessionId.endsWith("." + extra_id));      
-    } else if (NewAppServerFactory.WEBLOGIC.equals(factoryName)) {      
-      assertTrue(Pattern.matches("\\S+!-?\\d+", sessionId));
-    } else if (NewAppServerFactory.WEBSPHERE.equals(factoryName)) {     
-      assertTrue(Pattern.matches("0000\\S+:\\S+", sessionId));
-    } else {
-      throw new RuntimeException("Appserver [" + factoryName + "] is missing in this test");
+  private void assertSessionIdIntegrity(String sessionId, String extra_id) {
+    int appId = AppServerFactory.getCurrentAppServerId();
+
+    switch (appId) {
+      case AppServerFactory.TOMCAT:
+      case AppServerFactory.WASCE:
+      case AppServerFactory.JBOSS:
+        assertTrue(sessionId.endsWith("." + extra_id));
+        break;
+      case AppServerFactory.WEBLOGIC:
+        assertTrue(Pattern.matches("\\S+!-?\\d+", sessionId));
+        break;
+      case AppServerFactory.WEBSPHERE:
+        assertTrue(Pattern.matches("0000\\S+:\\S+", sessionId));
+        break;
+      default:
+        throw new RuntimeException("Appserver id [" + appId + "] is missing in this test");
     }
   }
-  
-  private String extractSessionId(HttpClient client) {
-    Cookie[] cookies = client.getState().getCookies();    
-    for (int i = 0; i < cookies.length; i++) {      
-      if (cookies[i].getName().equalsIgnoreCase("JSESSIONID")) {
-        return cookies[i].getValue();
-      }
+
+  private String request(WebApplicationServer server, String params, WebConversation wc) throws Exception {
+    return server.ping("/" + CONTEXT + "/" + MAPPING + "?" + params, wc).getText().trim();
+  }
+
+  private static class SessionIDIntegrityTestSetup extends TwoServerTestSetup {
+    public SessionIDIntegrityTestSetup() {
+      super(SessionIDIntegrityTest.class, CONTEXT);
     }
-    return "";
+
+    protected void configureWar(DeploymentBuilder builder) {
+      builder.addServlet(MAPPING, "/" + MAPPING + "/*", SessionIDIntegrityTestServlet.class, null, false);
+    }
+
+    protected void configureTcConfig(TcConfigBuilder clientConfig) {
+      clientConfig.addWebApplication(CONTEXT);
+    }
   }
 }

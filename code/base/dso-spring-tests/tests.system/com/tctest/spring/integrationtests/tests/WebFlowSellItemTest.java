@@ -41,16 +41,16 @@ public class WebFlowSellItemTest extends AbstractTwoServerDeploymentTest {
   
   public void testSellitem() throws Exception {
 
+    server0.start();
     server1.start();
-    server2.start();
     
     WebConversation webConversation1 = new WebConversation();
     // XXX interleave servers when LKC-2369 is fixed
-    executeConversation(webConversation1, server1, server2, server2, server1);
+    executeConversation(webConversation1, server0, server1, server1, server0);
     
     // XXX Uncomment when LKC-2369 is fixed 
     WebConversation webConversation2 = new WebConversation();
-    executeConversation(webConversation2, server1, server2, server1, server2);
+    executeConversation(webConversation2, server0, server1, server0, server1);
     
   }
 

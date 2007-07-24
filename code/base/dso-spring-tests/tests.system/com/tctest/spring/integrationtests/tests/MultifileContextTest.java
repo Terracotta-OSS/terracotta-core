@@ -27,8 +27,8 @@ public class MultifileContextTest extends AbstractTwoServerDeploymentTest {
 
 //    try {
       
-    IMasterBean masterBean1 = (IMasterBean) server1.getProxy(IMasterBean.class, REMOTE_SERVICE_NAME);
-    IMasterBean masterBean2 = (IMasterBean) server2.getProxy(IMasterBean.class, REMOTE_SERVICE_NAME);
+    IMasterBean masterBean1 = (IMasterBean) server0.getProxy(IMasterBean.class, REMOTE_SERVICE_NAME);
+    IMasterBean masterBean2 = (IMasterBean) server1.getProxy(IMasterBean.class, REMOTE_SERVICE_NAME);
 
     ISingleton singleton1 = masterBean1.getSingleton();
     ISingleton singleton2 = masterBean2.getSingleton();

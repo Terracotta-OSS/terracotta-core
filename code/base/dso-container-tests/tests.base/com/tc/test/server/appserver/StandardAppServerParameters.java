@@ -88,7 +88,7 @@ public class StandardAppServerParameters implements AppServerParameters {
     appendJvmArgs(sb.toString());
   }
 
-  private String writeTerracottaClassPathFile() {
+  public String writeTerracottaClassPathFile() {
     FileOutputStream fos = null;
 
     try {
@@ -116,8 +116,11 @@ public class StandardAppServerParameters implements AppServerParameters {
   }
 
   public void appendSysProp(String name, String value) {
-    if (value == null) appendJvmArgs("-D" + name);
-    else appendJvmArgs("-D" + name + "=" + value);
+    if (!name.startsWith("-")) {
+      name = "-D" + name;
+    }
+    if (value == null) appendJvmArgs(name);
+    else appendJvmArgs(name + "=" + value);
   }
 
   public void appendSysProp(String name) {

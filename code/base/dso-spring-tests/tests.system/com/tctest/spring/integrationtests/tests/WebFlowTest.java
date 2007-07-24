@@ -64,48 +64,48 @@ public class WebFlowTest extends AbstractTwoServerDeploymentTest {
   
   
   private void checkWebFlow(String controller, boolean withStepBack) throws Exception {
-    server1.start();
+    server0.start();
     
     WebConversation webConversation1 = new WebConversation();
 
-    Response response1 = request(server1, webConversation1, null, null, controller);
+    Response response1 = request(server0, webConversation1, null, null, controller);
     assertTrue("Expecting non-empty flow execution key; "+response1, response1.flowExecutionKey.length()>0);
     assertEquals("", response1.result);
     
-    server2.start();
+    server1.start();
     
-    Response response2 = request(server2, webConversation1, response1.flowExecutionKey, "valueA", controller);
+    Response response2 = request(server1, webConversation1, response1.flowExecutionKey, "valueA", controller);
     assertTrue("Expecting non-empty flow execution key; "+response2, response2.flowExecutionKey.length()>0);
     assertEquals("Invalid state; "+response2, WebFlowBean.STATEB, response2.result);
     assertEquals("valueA", response2.valueA);
 
-    Response response3 = request(server1, webConversation1, response2.flowExecutionKey, "valueB", controller);
+    Response response3 = request(server0, webConversation1, response2.flowExecutionKey, "valueB", controller);
     assertTrue("Expecting non-empty flow execution key; "+response3, response3.flowExecutionKey.length()>0);
     assertEquals("Invalid state; "+response3, WebFlowBean.STATEC, response3.result);
     assertEquals("Invalid value; "+response3, "valueB", response3.valueB);
     
-    server1.stop();
-    server2.stop();  // both servers are down
+    server0.stop();
+    server1.stop();  // both servers are down
     
-    server1.start();
+    server0.start();
     
     if(withStepBack) {
       // step back
-      Response response3a = request(server1, webConversation1, response2.flowExecutionKey, "valueB1", controller);
+      Response response3a = request(server0, webConversation1, response2.flowExecutionKey, "valueB1", controller);
       assertTrue("Expecting non-empty flow execution key; "+response3a, response3a.flowExecutionKey.length()>0);
       assertEquals("Invalid state; "+response3a, WebFlowBean.STATEC, response3a.result);
       assertEquals("Invalid value; "+response3a, "valueB1", response3a.valueB);
     }
     
     // throw away the step back and continue
-    Response response4 = request(server1, webConversation1, response3.flowExecutionKey, "valueC", controller);
+    Response response4 = request(server0, webConversation1, response3.flowExecutionKey, "valueC", controller);
     assertTrue("Expecting non-empty flow execution key; "+response4, response4.flowExecutionKey.length()>0);
     assertEquals("Invalid state; "+response4, WebFlowBean.STATED, response4.result);
     assertEquals("Invalid value; "+response4, "valueC", response4.valueC);
     
-    server2.start();
+    server1.start();
 
-    Response response5 = request(server2, webConversation1, response4.flowExecutionKey, "valueD", controller);
+    Response response5 = request(server1, webConversation1, response4.flowExecutionKey, "valueD", controller);
     // flowExecutionKey is empty since flow is completed
     assertEquals("Invalid state; "+response5, WebFlowBean.COMPLETE, response5.result);    
     assertEquals("Invalid value; "+response5, "valueD", response5.valueD);

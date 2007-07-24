@@ -9,10 +9,9 @@ import org.apache.commons.logging.LogFactory;
 
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
-import com.tc.test.server.appserver.NewAppServerFactory;
-import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
+import com.tc.test.server.appserver.AppServerFactory;
+import com.tc.test.server.util.TcConfigBuilder;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -33,21 +32,21 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   private static final int TIMEOUT_DEFAULT     = 30 * 60;
 
   public AbstractDeploymentTest() {
-    String appserver = TestConfigObject.getInstance().appserverFactoryName();
-    if (isSessionTest()
-        && (NewAppServerFactory.GLASSFISH.equals(appserver) || NewAppServerFactory.JETTY.equals(appserver))) {
+    boolean glassFishOrJetty = AppServerFactory.currentAppServerBelongsTo(new int[] { AppServerFactory.GLASSFISH,
+        AppServerFactory.JETTY });
+    if (isSessionTest() && glassFishOrJetty) {
       disableAllUntil(new Date(Long.MAX_VALUE));
     }
   }
 
   protected void beforeTimeout() throws Throwable {
-    getServerManager().stop();
+    getServerManager().timeout();
   }
-  
+
   protected boolean shouldKillAppServersEachRun() {
     return true;
   }
-  
+
   protected boolean isSessionTest() {
     return true;
   }
@@ -76,7 +75,7 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
     return serverManager;
   }
 
-  protected int getTimeout() throws IOException {
+  protected int getTimeout() {
     String timeout = TestConfigObject.getInstance().springTestsTimeout();
     if (timeout == null) {
       return TIMEOUT_DEFAULT;
@@ -92,16 +91,15 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
     super.tearDown();
   }
 
+  /**
+   * tcConfig: resource path to tc-config.xml
+   */
   protected WebApplicationServer makeWebApplicationServer(String tcConfig) throws Exception {
     return getServerManager().makeWebApplicationServer(tcConfig);
   }
-
-  protected WebApplicationServer makeWebApplicationServer(FileSystemPath tcConfigPath) throws Exception {
-    return getServerManager().makeWebApplicationServer(tcConfigPath);
-  }
-
-  protected WebApplicationServer makeWebApplicationServer(StandardTerracottaAppServerConfig tcConfig) throws Exception {
-    return getServerManager().makeWebApplicationServer(tcConfig);
+  
+  protected WebApplicationServer makeWebApplicationServer(TcConfigBuilder configBuilder) throws Exception {
+    return getServerManager().makeWebApplicationServer(configBuilder);
   }
 
   protected void restartDSO() throws Exception {
@@ -138,10 +136,6 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
     }
   }
 
-  protected StandardTerracottaAppServerConfig getConfigBuilder() {
-    return getServerManager().getConfig();
-  }
-
   protected void stopAllWebServers() {
     ServerManagerUtil.stopAllWebServers(getServerManager());
   }
@@ -172,10 +166,10 @@ public abstract class AbstractDeploymentTest extends TCTestCase {
   }
 
   private boolean shouldDisableForCertainAppServers() {
-    String appserver = TestConfigObject.getInstance().appserverFactoryName();
+    boolean glassFishOrJetty = AppServerFactory.currentAppServerBelongsTo(new int[] { AppServerFactory.GLASSFISH,
+        AppServerFactory.JETTY });
     // XXX: Only non-session container tests work in glassfish and jetty at the moment
-    if (isSessionTest()
-        && (NewAppServerFactory.GLASSFISH.equals(appserver) || NewAppServerFactory.JETTY.equals(appserver))) { return true; }
+    if (isSessionTest() && glassFishOrJetty) { return true; }
     return false;
   }
 

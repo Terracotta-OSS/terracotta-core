@@ -30,8 +30,8 @@ public class SingletonReferencingProxiedBeanTest extends AbstractTwoServerDeploy
   protected void setUp() throws Exception {
     super.setUp();
 
-    bar1 = (FooService) server1.getProxy(FooService.class, BAR_SERVICE_NAME);
-    bar2 = (FooService) server2.getProxy(FooService.class, BAR_SERVICE_NAME);
+    bar1 = (FooService) server0.getProxy(FooService.class, BAR_SERVICE_NAME);
+    bar2 = (FooService) server1.getProxy(FooService.class, BAR_SERVICE_NAME);
   }
   
   public void testProxiedBean() throws Exception {

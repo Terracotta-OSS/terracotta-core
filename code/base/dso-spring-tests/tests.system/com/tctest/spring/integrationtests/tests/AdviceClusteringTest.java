@@ -38,12 +38,12 @@ public class AdviceClusteringTest extends AbstractTwoServerDeploymentTest {
   protected void setUp() throws Exception {
     super.setUp();
     
-    singletonWithPC1 = (ISingleton) server1.getProxy(ISingleton.class, SINGLETON_SERVICE_NAME);
-    singletonWithPC2 = (ISingleton) server2.getProxy(ISingleton.class, SINGLETON_SERVICE_NAME);
-    counterSaver1 = (CounterSaver) server1.getProxy(CounterSaver.class, IN_SERVICE_NAME);
-    counterSaver2 = (CounterSaver) server2.getProxy(CounterSaver.class, IN_SERVICE_NAME);
-    pcAdvice1 = (ISingletonAdvice) server1.getProxy(ISingletonAdvice.class, PC_SERVICE_NAME);
-    pcAdvice2 = (ISingletonAdvice) server2.getProxy(ISingletonAdvice.class, PC_SERVICE_NAME);
+    singletonWithPC1 = (ISingleton) server0.getProxy(ISingleton.class, SINGLETON_SERVICE_NAME);
+    singletonWithPC2 = (ISingleton) server1.getProxy(ISingleton.class, SINGLETON_SERVICE_NAME);
+    counterSaver1 = (CounterSaver) server0.getProxy(CounterSaver.class, IN_SERVICE_NAME);
+    counterSaver2 = (CounterSaver) server1.getProxy(CounterSaver.class, IN_SERVICE_NAME);
+    pcAdvice1 = (ISingletonAdvice) server0.getProxy(ISingletonAdvice.class, PC_SERVICE_NAME);
+    pcAdvice2 = (ISingletonAdvice) server1.getProxy(ISingletonAdvice.class, PC_SERVICE_NAME);
   }
 
   

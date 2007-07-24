@@ -7,7 +7,7 @@ import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.AppServer;
 import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.appserver.AppServerParameters;
-import com.tc.test.server.appserver.NewAppServerFactory;
+import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.war.DescriptorXml;
 import com.tc.test.server.appserver.war.DtdWar;
 import com.tc.test.server.appserver.war.War;
@@ -21,7 +21,7 @@ import java.util.Properties;
  * This class creates specific implementations of return values for the given methods. To obtain an instance you must
  * call {@link NewAppServerFactory.createFactoryFromProperties()}.
  */
-public final class Weblogic8xAppServerFactory extends NewAppServerFactory {
+public final class Weblogic8xAppServerFactory extends AppServerFactory {
 
   // This class may only be instantiated by it's parent which contains the ProtectedKey
   public Weblogic8xAppServerFactory(ProtectedKey protectedKey, TestConfigObject config) {

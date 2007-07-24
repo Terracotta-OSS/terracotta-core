@@ -45,8 +45,8 @@ public class ThreadCoordinationTest extends AbstractTwoServerDeploymentTest {
   public void testWaitNotify() throws Throwable {
     logger.info("Start testWaitNotify()");
     
-    final IActiveBean bean1 = (IActiveBean) server1.getProxy(IActiveBean.class, "beanWithWaitNotify");
-    final IActiveBean bean2 = (IActiveBean) server2.getProxy(IActiveBean.class, "beanWithWaitNotify");
+    final IActiveBean bean1 = (IActiveBean) server0.getProxy(IActiveBean.class, "beanWithWaitNotify");
+    final IActiveBean bean2 = (IActiveBean) server1.getProxy(IActiveBean.class, "beanWithWaitNotify");
     
     bean1.start();
     bean2.start();
@@ -84,8 +84,8 @@ public class ThreadCoordinationTest extends AbstractTwoServerDeploymentTest {
   }
   
   private void checkThreadCoordination(String beanName) throws Throwable {
-    final IActiveBean bean1 = (IActiveBean) server1.getProxy(IActiveBean.class, beanName);
-    final IActiveBean bean2 = (IActiveBean) server2.getProxy(IActiveBean.class, beanName);
+    final IActiveBean bean1 = (IActiveBean) server0.getProxy(IActiveBean.class, beanName);
+    final IActiveBean bean2 = (IActiveBean) server1.getProxy(IActiveBean.class, beanName);
     
     bean1.setValue("1");
 

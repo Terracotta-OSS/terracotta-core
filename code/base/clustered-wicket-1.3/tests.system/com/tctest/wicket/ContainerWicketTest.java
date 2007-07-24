@@ -49,27 +49,27 @@ public class ContainerWicketTest extends AbstractTwoServerDeploymentTest {
    
     WebConversation webConversation1 = new WebConversation();
 
-    WebResponse response1 = request(server1, webConversation1, "");
+    WebResponse response1 = request(server0, webConversation1, "");
     WebLink[] links1 = response1.getLinks();
     assertEquals(1, links1.length);
     assertEquals("Action link clicked 0 times", links1[0].getText());
     
-    WebResponse response2 = request(server1, webConversation1, links1[0].getURLString());
+    WebResponse response2 = request(server0, webConversation1, links1[0].getURLString());
     WebLink[] links2 = response2.getLinks();
     assertEquals(1, links2.length);
     assertEquals("Action link clicked 1 times", links2[0].getText());
     
-    WebResponse response3 = request(server2, webConversation1, "?" + response2.getURL().getQuery());
+    WebResponse response3 = request(server1, webConversation1, "?" + response2.getURL().getQuery());
     WebLink[] links3 = response3.getLinks();
     assertEquals(1, links3.length);
     assertEquals("Action link clicked 1 times", links3[0].getText());
 
-    WebResponse response4 = request(server2, webConversation1, links3[0].getURLString());
+    WebResponse response4 = request(server1, webConversation1, links3[0].getURLString());
     WebLink[] links4 = response4.getLinks();
     assertEquals(1, links4.length);
     assertEquals("Action link clicked 2 times", links4[0].getText());
 
-    WebResponse response5 = request(server1, webConversation1, "?" + response4.getURL().getQuery());
+    WebResponse response5 = request(server0, webConversation1, "?" + response4.getURL().getQuery());
     WebLink[] links5 = response5.getLinks();
     assertEquals(1, links5.length);
     assertEquals("Action link clicked 2 times", links5[0].getText());

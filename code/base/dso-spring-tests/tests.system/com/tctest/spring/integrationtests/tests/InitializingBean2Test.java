@@ -30,8 +30,8 @@ public class InitializingBean2Test extends AbstractTwoServerDeploymentTest {
   protected void setUp() throws Exception {
     super.setUp();
 
-    singleton1 = (ISimpleInitializingSingleton) server1.getProxy(ISimpleInitializingSingleton.class, REMOTE_SERVICE_NAME);
-    singleton2 = (ISimpleInitializingSingleton) server2.getProxy(ISimpleInitializingSingleton.class, REMOTE_SERVICE_NAME);
+    singleton1 = (ISimpleInitializingSingleton) server0.getProxy(ISimpleInitializingSingleton.class, REMOTE_SERVICE_NAME);
+    singleton2 = (ISimpleInitializingSingleton) server1.getProxy(ISimpleInitializingSingleton.class, REMOTE_SERVICE_NAME);
   }
 
   

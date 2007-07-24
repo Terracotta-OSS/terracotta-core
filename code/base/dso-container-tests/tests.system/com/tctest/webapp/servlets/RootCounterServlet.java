@@ -39,7 +39,7 @@ public class RootCounterServlet extends HttpServlet {
   }
 
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    response.setContentType("text/html");
+    response.setContentType("text/plain");
     PrintWriter out = response.getWriter();
     out.println(getCurrentCountValue());
   }

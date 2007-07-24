@@ -30,8 +30,8 @@ public class LifeCycleTest extends AbstractTwoServerDeploymentTest {
   protected void setUp() throws Exception {
     super.setUp();
 
-    mLifeCycleBean1 = (ILifeCycle) server1.getProxy(ILifeCycle.class, REMOTE_SERVICE_NAME);
-    mLifeCycleBean2 = (ILifeCycle) server2.getProxy(ILifeCycle.class, REMOTE_SERVICE_NAME);
+    mLifeCycleBean1 = (ILifeCycle) server0.getProxy(ILifeCycle.class, REMOTE_SERVICE_NAME);
+    mLifeCycleBean2 = (ILifeCycle) server1.getProxy(ILifeCycle.class, REMOTE_SERVICE_NAME);
   }
 
 

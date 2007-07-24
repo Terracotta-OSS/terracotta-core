@@ -26,8 +26,8 @@ public class InterceptorAppliedViaPostprocessorTest extends AbstractTwoServerDep
   protected void setUp() throws Exception {
     super.setUp();
     
-    singleton1 = (FooService) server1.getProxy(FooService.class, REMOTE_SERVICE_NAME);
-    singleton2 = (FooService) server2.getProxy(FooService.class, REMOTE_SERVICE_NAME);
+    singleton1 = (FooService) server0.getProxy(FooService.class, REMOTE_SERVICE_NAME);
+    singleton2 = (FooService) server1.getProxy(FooService.class, REMOTE_SERVICE_NAME);
   }
   
   public void testInterceptor() throws Exception {

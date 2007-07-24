@@ -4,32 +4,43 @@
  */
 package com.tctest.server.appserver.unit;
 
-import org.apache.commons.httpclient.HttpClient;
-
-import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
-import com.tc.test.server.util.HttpUtil;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebResponse;
+import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.SessionObjectIdentityTestServlet;
 
-import java.net.URL;
+import junit.framework.Test;
 
+public class SessionObjectIdentityTest extends AbstractOneServerDeploymentTest {
+  private static final String CONTEXT = "SessionObjectIdentityTest";
+  private static final String SERVLET = "SessionObjectIdentityTestServlet";
 
-public class SessionObjectIdentityTest extends AbstractAppServerTestCase {
-
-  public SessionObjectIdentityTest() {
-    registerServlet(SessionObjectIdentityTestServlet.class);
+  public static Test suite() {
+    return new SessionObjectIdentityTestSetup();
   }
 
   public final void testSessions() throws Exception {
-    startDsoServer();
-
-    HttpClient client = HttpUtil.createHttpClient();
-
-    int port = startAppServer(true).serverPort();
-
-    URL url = createUrl(port, SessionObjectIdentityTestServlet.class);
-
-    assertEquals("OK", HttpUtil.getResponseBody(url, client));
-    assertEquals("OK", HttpUtil.getResponseBody(url, client));
+    WebConversation wc = new WebConversation();
+    String url = "/" + CONTEXT + "/" + SERVLET;
+    WebResponse response = server1.ping(url, wc);
+    assertEquals("OK", response.getText().trim());
+    response = server1.ping(url, wc);
+    assertEquals("OK", response.getText().trim());
   }
 
+  private static class SessionObjectIdentityTestSetup extends OneServerTestSetup {
+    public SessionObjectIdentityTestSetup() {
+      super(SessionObjectIdentityTest.class, CONTEXT);
+    }
+
+    protected void configureWar(DeploymentBuilder builder) {
+      builder.addServlet(SERVLET, "/" + SERVLET + "/*", SessionObjectIdentityTestServlet.class, null, false);
+    }
+
+    protected void configureTcConfig(TcConfigBuilder clientConfig) {
+      clientConfig.addWebApplication(CONTEXT);
+    }
+  }
 }

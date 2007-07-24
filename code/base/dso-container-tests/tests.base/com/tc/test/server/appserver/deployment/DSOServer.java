@@ -7,6 +7,7 @@ package com.tc.test.server.appserver.deployment;
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.objectserver.control.ExtraProcessServerControl;
+import com.tc.test.server.util.TcConfigBuilder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -15,7 +16,7 @@ import java.io.PrintWriter;
 
 public class DSOServer extends AbstractStoppable {
 
-  private static final String       SPRING_TEST_CONFIG       = "spring-test-config.xml";
+  private static final String       SERVER_TEST_CONFIG       = "server-config.xml";
 
   // XXX move this into the common place for all constants
   private static final long         DSO_SERVER_START_TIMEOUT = 240 * 1000L;
@@ -23,19 +24,29 @@ public class DSOServer extends AbstractStoppable {
   private ExtraProcessServerControl serverProc               = null;
   private final boolean             withPersistentStore;
 
-  private final static int          serverPort               = 9510;
-  private final static int          adminPort                = 9520;
+  private int                       serverPort               = 9510;
+  private int                       adminPort                = 9520;
 
   private final File                workingDir;
+  private TcConfigBuilder           configBuilder;
 
   public DSOServer(boolean withPersistentStore, File workingDir) {
     this.withPersistentStore = withPersistentStore;
     this.workingDir = workingDir;
   }
 
+  public DSOServer(boolean withPersistentStore, File workingDir, TcConfigBuilder configBuilder) {
+    this.withPersistentStore = withPersistentStore;
+    this.workingDir = workingDir;
+    this.configBuilder = configBuilder;
+    this.serverPort = configBuilder.getDsoPort();
+    this.adminPort = configBuilder.getJmxPort();
+  }
+
   protected void doStart() throws Exception {
     File configFile = writeConfig();
-    serverProc = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile.getAbsolutePath(), true);
+    serverProc = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile.getAbsolutePath(), false);
+    serverProc.writeOutputTo(new File(workingDir, "dso-server.log"));
     serverProc.start(DSO_SERVER_START_TIMEOUT);
   }
 
@@ -46,31 +57,42 @@ public class DSOServer extends AbstractStoppable {
   }
 
   private File writeConfig() throws IOException {
-    File configFile = new File(workingDir, SPRING_TEST_CONFIG);
+    File configFile = new File(workingDir, SERVER_TEST_CONFIG);
+    if (configBuilder != null) {
+      configBuilder.saveToFile(configFile);
+    } else {
+      TerracottaConfigBuilder builder = TerracottaConfigBuilder.newMinimalInstance();
+      builder.getSystem().setConfigurationModel("development");
 
-    TerracottaConfigBuilder builder = TerracottaConfigBuilder.newMinimalInstance();
-    builder.getSystem().setConfigurationModel("development");
+      L2ConfigBuilder l2 = builder.getServers().getL2s()[0];
+      l2.setDSOPort(serverPort);
+      l2.setJMXPort(adminPort);
+      l2.setData(workingDir + File.separator + "data");
+      l2.setLogs(workingDir + File.separator + "logs");
+      if (withPersistentStore) {
+        l2.setPersistenceMode("permanent-store"); // XXX make this one configurable
+      }
 
-    L2ConfigBuilder l2 = builder.getServers().getL2s()[0];
-    l2.setDSOPort(serverPort);
-    l2.setJMXPort(adminPort);
-    l2.setData(workingDir + File.separator + "data");
-    l2.setLogs(workingDir + File.separator + "logs");
-    if (withPersistentStore) {
-      l2.setPersistenceMode("permanent-store"); // XXX make this one configurable
+      String configAsString = builder.toString();
+
+      FileOutputStream fileOutputStream = new FileOutputStream(configFile);
+      PrintWriter out = new PrintWriter((fileOutputStream));
+      out.println(configAsString);
+      out.flush();
+      out.close();
     }
-
-    String configAsString = builder.toString();
-
-    FileOutputStream fileOutputStream = new FileOutputStream(configFile);
-    PrintWriter out = new PrintWriter((fileOutputStream));
-    out.println(configAsString);
-    out.flush();
-    out.close();
     return configFile;
   }
 
   public String toString() {
     return "DSO server; serverport:" + serverPort + "; adminPort:" + adminPort;
+  }
+
+  public int getServerPort() {
+    return serverPort;
+  }
+
+  public int getAdminPort() {
+    return adminPort;
   }
 }

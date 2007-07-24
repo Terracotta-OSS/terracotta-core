@@ -5,8 +5,6 @@
 package com.tc.test.server.appserver.deployment;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.Logger;
 import org.apache.tools.ant.taskdefs.War;
 import org.apache.tools.ant.taskdefs.Zip.Duplicate;
 import org.apache.tools.ant.types.ZipFileSet;
@@ -84,14 +82,9 @@ public class WARBuilder implements DeploymentBuilder {
     this.testConfig = config;
 
     addDirectoryOrJARContainingClass(WARBuilder.class); // test framework
-    addDirectoryOrJARContainingClass(LogFactory.class); // commons-logging
-    addDirectoryOrJARContainingClass(Logger.class); // log4j
+    // addDirectoryOrJARContainingClass(LogFactory.class); // commons-logging
+    // addDirectoryOrJARContainingClass(Logger.class); // log4j
 
-    // XXX this should NOT be in such general purpose class!
-    // XXX this should add ALL jars from the variant directory!
-    // addDirectoryOrJARContainingClassOfSelectedVersion(BeanFactory.class, new
-    // String[]{TestConfigObject.SPRING_VARIANT}); // springframework
-    // addDirectoryOrJARContainingClass(BeanFactory.class); // springframework
   }
 
   public DeploymentBuilder addClassesDirectory(FileSystemPath path) {
@@ -288,16 +281,9 @@ public class WARBuilder implements DeploymentBuilder {
 
       pw.println("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");
 
-      // if (testConfig.appserverFactoryName().indexOf("weblogic8")>=0) {
       pw
           .println("<!DOCTYPE web-app PUBLIC \"-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN\" \"http://java.sun.com/dtd/web-app_2_3.dtd\">");
       pw.println("<web-app>\n");
-      // } else {
-      // pw.println("<web-app xmlns=\"http://java.sun.com/xml/ns/j2ee\"\n" +
-      // " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-      // " xsi:schemaLocation=\"http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd\"\n" +
-      // " version=\"2.4\">");
-      // }
 
       if (!beanDefinitionFiles.isEmpty()) {
         writeContextParam(pw, ContextLoader.CONFIG_LOCATION_PARAM, generateContextConfigLocationValue());
@@ -548,6 +534,7 @@ public class WARBuilder implements DeploymentBuilder {
 
   public DeploymentBuilder addServlet(String name, String mapping, Class servletClass, Map params, boolean loadOnStartup) {
     servlets.add(new ServletDefinition(name, mapping, servletClass, params, loadOnStartup));
+    addDirectoryOrJARContainingClass(servletClass);
     return this;
   }
 

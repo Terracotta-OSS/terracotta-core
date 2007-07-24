@@ -47,15 +47,15 @@ public class ReferenceAndReplicationTest extends AbstractTwoServerDeploymentTest
   protected void setUp() throws Exception {
     super.setUp();
     // for N1
-    localChild1N1 = (ISimpleBean) server1.getProxy(ISimpleBean.class, LOCALCHILD1_SERVICE_NAME);
-    localChild2N1 = (ISimpleBean) server1.getProxy(ISimpleBean.class, LOCALCHILD2_SERVICE_NAME);
-    localChild3N1 = (ISimpleBean) server1.getProxy(ISimpleBean.class, LOCALCHILD3_SERVICE_NAME);
-    sharedParentN1 = (ISimpleBean) server1.getProxy(ISimpleBean.class, SHAREDPARENT_SERVICE_NAME);
+    localChild1N1 = (ISimpleBean) server0.getProxy(ISimpleBean.class, LOCALCHILD1_SERVICE_NAME);
+    localChild2N1 = (ISimpleBean) server0.getProxy(ISimpleBean.class, LOCALCHILD2_SERVICE_NAME);
+    localChild3N1 = (ISimpleBean) server0.getProxy(ISimpleBean.class, LOCALCHILD3_SERVICE_NAME);
+    sharedParentN1 = (ISimpleBean) server0.getProxy(ISimpleBean.class, SHAREDPARENT_SERVICE_NAME);
     // for N2
-    localChild1N2 = (ISimpleBean) server2.getProxy(ISimpleBean.class, LOCALCHILD1_SERVICE_NAME);
-    localChild2N2 = (ISimpleBean) server2.getProxy(ISimpleBean.class, LOCALCHILD2_SERVICE_NAME);
-    localChild3N2 = (ISimpleBean) server2.getProxy(ISimpleBean.class, LOCALCHILD3_SERVICE_NAME);
-    sharedParentN2 = (ISimpleBean) server2.getProxy(ISimpleBean.class, SHAREDPARENT_SERVICE_NAME);
+    localChild1N2 = (ISimpleBean) server1.getProxy(ISimpleBean.class, LOCALCHILD1_SERVICE_NAME);
+    localChild2N2 = (ISimpleBean) server1.getProxy(ISimpleBean.class, LOCALCHILD2_SERVICE_NAME);
+    localChild3N2 = (ISimpleBean) server1.getProxy(ISimpleBean.class, LOCALCHILD3_SERVICE_NAME);
+    sharedParentN2 = (ISimpleBean) server1.getProxy(ISimpleBean.class, SHAREDPARENT_SERVICE_NAME);
   }
 
   

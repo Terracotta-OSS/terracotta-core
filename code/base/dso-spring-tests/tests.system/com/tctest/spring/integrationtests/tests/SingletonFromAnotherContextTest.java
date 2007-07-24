@@ -34,11 +34,11 @@ public class SingletonFromAnotherContextTest extends AbstractTwoServerDeployment
   protected void setUp() throws Exception {
     super.setUp();
 
-    singleton1N1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
-    singleton2N1 = (ISingleton) server1.getProxy(ISingleton.class, ANOTHER_REMOTE_SERVICE_NAME);
+    singleton1N1 = (ISingleton) server0.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+    singleton2N1 = (ISingleton) server0.getProxy(ISingleton.class, ANOTHER_REMOTE_SERVICE_NAME);
 
-    singleton1N2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
-    singleton2N2 = (ISingleton) server2.getProxy(ISingleton.class, ANOTHER_REMOTE_SERVICE_NAME);
+    singleton1N2 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+    singleton2N2 = (ISingleton) server1.getProxy(ISingleton.class, ANOTHER_REMOTE_SERVICE_NAME);
   }
   
   public void testSingletonFromAnotherContext() throws Exception {

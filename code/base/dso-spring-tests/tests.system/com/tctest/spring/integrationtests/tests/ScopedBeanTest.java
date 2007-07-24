@@ -42,19 +42,19 @@ public class ScopedBeanTest extends AbstractTwoServerDeploymentTest {
    
   public void testSessionScopedBean() throws Exception {
     WebConversation webConversation1 = new WebConversation();    
-    verifyValue(server1, webConversation1, "Jonas");
-    updateValue(server1, webConversation1, "Tim");
+    verifyValue(server0, webConversation1, "Jonas");
+    updateValue(server0, webConversation1, "Tim");
+    verifyValue(server0, webConversation1, "Tim");
     verifyValue(server1, webConversation1, "Tim");
-    verifyValue(server2, webConversation1, "Tim");
 
     WebConversation webConversation2 = new WebConversation();    
-    verifyValue(server2, webConversation2, "Jonas");
-    updateValue(server2, webConversation2, "Steve");
-    verifyValue(server2, webConversation2, "Steve");
+    verifyValue(server1, webConversation2, "Jonas");
+    updateValue(server1, webConversation2, "Steve");
     verifyValue(server1, webConversation2, "Steve");
+    verifyValue(server0, webConversation2, "Steve");
 
-    verifyValue(server2, webConversation1, "Tim");
-    verifyValue(server2, webConversation1, "Tim");
+    verifyValue(server1, webConversation1, "Tim");
+    verifyValue(server1, webConversation1, "Tim");
   }
 
 

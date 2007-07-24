@@ -4,102 +4,109 @@
  */
 package com.tctest.server.appserver.unit;
 
-import org.apache.commons.httpclient.HttpClient;
-
-import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
-import com.tc.test.server.util.HttpUtil;
+import com.meterware.httpunit.WebConversation;
+import com.tc.test.server.appserver.deployment.AbstractOneServerDeploymentTest;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.util.TcConfigBuilder;
 import com.tctest.webapp.listeners.AttributeListener;
 import com.tctest.webapp.listeners.BindingListener;
 import com.tctest.webapp.listeners.SessionListener;
 import com.tctest.webapp.servlets.ListenerReportingServlet;
 
-import java.io.IOException;
-import java.net.ConnectException;
-import java.net.URL;
+import junit.framework.Test;
 
-public class SessionEventsTest extends AbstractAppServerTestCase {
+public class SessionEventsTest extends AbstractOneServerDeploymentTest {
+  private static final String CONTEXT = "SessionEventsTest";
+  private static final String MAPPING = "ListenerReportingServlet";
 
-  private int port;
-
-  public SessionEventsTest() {
-    registerListener(AttributeListener.class);
-    registerListener(SessionListener.class);
-    registerListener(BindingListener.class);
-    registerServlet(ListenerReportingServlet.class);
+  public static Test suite() {
+    return new SessionEventsTestSetup();
   }
 
   public void testListener() throws Exception {
-    startDsoServer();
-
-    port = startAppServer(true).serverPort();
-
-    HttpClient client = HttpUtil.createHttpClient();
+    WebConversation wc = new WebConversation();
 
     // first, sanity check
-    URL url = new URL(createUrl(port, ListenerReportingServlet.class) + "?action=0");
-    assertEquals("INVALID REQUEST", HttpUtil.getResponseBody(url, client));
+    assertEquals("INVALID REQUEST", request("action=0", wc));
 
     // now, put a string into session...
-    url = new URL(createUrl(port, ListenerReportingServlet.class) + "?action=set&key=attr1");
-    assertEquals("OK", HttpUtil.getResponseBody(url, client));
+    assertEquals("OK", request("action=set&key=attr1", wc));
     // ... and check if it made it there.
-    url = new URL(createUrl(port, ListenerReportingServlet.class) + "?action=get&key=attr1");
-    assertEquals("attr1=attr1", HttpUtil.getResponseBody(url, client));
+    assertEquals("attr1=attr1", request("action=get&key=attr1", wc));
 
     // check if sessionCreated event got fired
-    checkCallCount("SessionListener.sessionCreated", 1, client);
+    checkCallCount("SessionListener.sessionCreated", 1, wc);
 
     // check if attributeAdded event got fired
-    checkCallCount("AttributeListener.attributeAdded", 1, client);
-    checkCallCount("BindingListener.valueBound", 1, client);
+    checkCallCount("AttributeListener.attributeAdded", 1, wc);
+    checkCallCount("BindingListener.valueBound", 1, wc);
 
     // now, replace the same attribute...
-    url = new URL(createUrl(port, ListenerReportingServlet.class) + "?action=set&key=attr1");
-    assertEquals("OK", HttpUtil.getResponseBody(url, client));
-    checkCallCount("AttributeListener.attributeReplaced", 1, client);
-    checkCallCount("BindingListener.valueUnbound", 1, client);
-    checkCallCount("BindingListener.valueBound", 2, client);
+    assertEquals("OK", request("action=set&key=attr1", wc));
+    checkCallCount("AttributeListener.attributeReplaced", 1, wc);
+    checkCallCount("BindingListener.valueUnbound", 1, wc);
+    checkCallCount("BindingListener.valueBound", 2, wc);
 
     // now, remove the attribute
-    url = new URL(createUrl(port, ListenerReportingServlet.class) + "?action=remove&key=attr1");
-    assertEquals("OK", HttpUtil.getResponseBody(url, client));
+    assertEquals("OK", request("action=remove&key=attr1", wc));
 
-    checkCallCount("AttributeListener.attributeRemoved", 1, client);
-    checkCallCount("BindingListener.valueUnbound", 2, client);
+    checkCallCount("AttributeListener.attributeRemoved", 1, wc);
+    checkCallCount("BindingListener.valueUnbound", 2, wc);
 
     // now add an attribute...
-    url = new URL(createUrl(port, ListenerReportingServlet.class) + "?action=set&key=attr1");
-    assertEquals("OK", HttpUtil.getResponseBody(url, client));
+    assertEquals("OK", request("action=set&key=attr1", wc));
     // ... and check if it made it there
-    url = new URL(createUrl(port, ListenerReportingServlet.class) + "?action=get&key=attr1");
-    assertEquals("attr1=attr1", HttpUtil.getResponseBody(url, client));
+    assertEquals("attr1=attr1", request("action=get&key=attr1", wc));
 
     // ...check if right events got fired
-    checkCallCount("SessionListener.sessionCreated", 1, client);
-    checkCallCount("AttributeListener.attributeAdded", 2, client);
-    checkCallCount("BindingListener.valueBound", 3, client);
+    checkCallCount("SessionListener.sessionCreated", 1, wc);
+    checkCallCount("AttributeListener.attributeAdded", 2, wc);
+    checkCallCount("BindingListener.valueBound", 3, wc);
 
     // ...now proactively invalidate the session
-    url = new URL(createUrl(port, ListenerReportingServlet.class) + "?action=invalidate");
-    assertEquals("OK", HttpUtil.getResponseBody(url, client));
+    assertEquals("OK", request("action=invalidate", wc));
 
     // ...and check if the next request creates a new session
-    url = new URL(createUrl(port, ListenerReportingServlet.class) + "?action=isNew");
-    assertEquals("OK", HttpUtil.getResponseBody(url, client));
+    assertEquals("OK", request("action=isNew", wc));
 
     // ...now check events counts again
     // ...check if right events got fired
-    checkCallCount("SessionListener.sessionCreated", 2, client);
-    checkCallCount("SessionListener.sessionDestroyed", 1, client);
-    checkCallCount("AttributeListener.attributeAdded", 2, client);
-    checkCallCount("BindingListener.valueBound", 3, client);
-    checkCallCount("AttributeListener.attributeRemoved", 2, client);
-    checkCallCount("BindingListener.valueUnbound", 3, client);
+    checkCallCount("SessionListener.sessionCreated", 2, wc);
+    checkCallCount("SessionListener.sessionDestroyed", 1, wc);
+    checkCallCount("AttributeListener.attributeAdded", 2, wc);
+    checkCallCount("BindingListener.valueBound", 3, wc);
+    checkCallCount("AttributeListener.attributeRemoved", 2, wc);
+    checkCallCount("BindingListener.valueUnbound", 3, wc);
   }
 
-  private void checkCallCount(final String key, int expectedCount, HttpClient client) throws ConnectException,
-      IOException {
-    URL url = new URL(createUrl(port, ListenerReportingServlet.class) + "?action=call_count&key=" + key);
-    assertEquals(key + "=" + expectedCount, HttpUtil.getResponseBody(url, client));
+  private void checkCallCount(final String key, int expectedCount, WebConversation wc) throws Exception {
+    String response = request("action=call_count&key=" + key, wc);
+    assertEquals(key + "=" + expectedCount, response);
+  }
+
+  private String request(String params, WebConversation wc) throws Exception {
+    return server1.ping("/" + CONTEXT + "/" + MAPPING + "?" + params, wc).getText().trim();
+  }
+
+  private static class SessionEventsTestSetup extends OneServerTestSetup {
+
+    public SessionEventsTestSetup() {
+      super(SessionEventsTest.class, CONTEXT);
+    }
+
+    protected void configureWar(DeploymentBuilder builder) {
+      builder.addServlet("ListenerReportingServlet", "/" + MAPPING + "/*", ListenerReportingServlet.class, null, false);
+      builder.addListener(AttributeListener.class);
+      builder.addListener(SessionListener.class);
+      builder.addListener(BindingListener.class);
+    }
+
+    protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
+      tcConfigBuilder.addWebApplication(CONTEXT);
+      tcConfigBuilder.addInstrumentedClass(AttributeListener.class.getName());
+      tcConfigBuilder.addInstrumentedClass(SessionListener.class.getName());
+      tcConfigBuilder.addInstrumentedClass(BindingListener.class.getName());
+    }
+
   }
 }

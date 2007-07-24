@@ -41,13 +41,13 @@ public class MultipleContextsTest extends AbstractTwoServerDeploymentTest {
 
   protected void setUp() throws Exception {
     super.setUp();
-    bean11 = (ISimpleBean) server1.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "1");
-    bean12 = (ISimpleBean) server1.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "2");
-    bean13 = (ISimpleBean) server1.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "3");
+    bean11 = (ISimpleBean) server0.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "1");
+    bean12 = (ISimpleBean) server0.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "2");
+    bean13 = (ISimpleBean) server0.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "3");
     
-    bean21 = (ISimpleBean) server2.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "1");
-    bean22 = (ISimpleBean) server2.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "2");
-    bean23 = (ISimpleBean) server2.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "3");
+    bean21 = (ISimpleBean) server1.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "1");
+    bean22 = (ISimpleBean) server1.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "2");
+    bean23 = (ISimpleBean) server1.getProxy(ISimpleBean.class, REMOTE_SERVICE_NAME + "3");
   }
   
   public void testBeansFrom2ClusteredContexts() throws Exception {

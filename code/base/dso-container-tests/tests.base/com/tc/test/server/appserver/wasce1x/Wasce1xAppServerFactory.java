@@ -7,7 +7,7 @@ import com.tc.test.TestConfigObject;
 import com.tc.test.server.appserver.AppServer;
 import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.appserver.AppServerParameters;
-import com.tc.test.server.appserver.NewAppServerFactory;
+import com.tc.test.server.appserver.AppServerFactory;
 import com.tc.test.server.appserver.war.DtdWar;
 import com.tc.test.server.appserver.war.War;
 import com.tc.test.server.tcconfig.StandardTerracottaAppServerConfig;
@@ -20,7 +20,7 @@ import java.util.Properties;
  * This class creates specific implementations of return values for the given methods. To obtain an instance you must
  * call {@link NewAppServerFactory.createFactoryFromProperties()}.
  */
-public final class Wasce1xAppServerFactory extends NewAppServerFactory {
+public final class Wasce1xAppServerFactory extends AppServerFactory {
 
   // This class may only be instantiated by its parent which contains the ProtectedKey
   public Wasce1xAppServerFactory(ProtectedKey protectedKey, TestConfigObject config) {

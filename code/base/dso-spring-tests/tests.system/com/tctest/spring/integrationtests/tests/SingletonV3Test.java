@@ -37,8 +37,8 @@ public class SingletonV3Test extends AbstractTwoServerDeploymentTest {
       String name = APP_NAME + "/http/" + REMOTE_SERVICE_NAME;
       Map initCtx = new HashMap(); 
       initCtx.put(ProxyBuilder.EXPORTER_TYPE_KEY, HttpInvokerServiceExporter.class);
-      singleton1 = (ISingleton) server1.getProxy(ISingleton.class, name, initCtx);
-      singleton2 = (ISingleton) server2.getProxy(ISingleton.class, name, initCtx);
+      singleton1 = (ISingleton) server0.getProxy(ISingleton.class, name, initCtx);
+      singleton2 = (ISingleton) server1.getProxy(ISingleton.class, name, initCtx);
     } catch(Exception ex) {
       ex.printStackTrace(); throw ex;
     }

@@ -23,7 +23,8 @@ public interface WebApplicationServer extends Server {
   public void undeployWar(Deployment warDeployment, String context);
 
   public WebResponse ping(String url) throws MalformedURLException, IOException, SAXException;
-
   public WebResponse ping(String url, WebConversation wc) throws MalformedURLException, IOException, SAXException;
+  
+  public int getPort();
 
 }

@@ -1,20 +1,23 @@
 package com.tc.test.server.util;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.xmlbeans.XmlOptions;
 
+import com.tc.config.Loader;
 import com.terracottatech.config.Autolock;
 import com.terracottatech.config.Include;
 import com.terracottatech.config.LockLevel;
 import com.terracottatech.config.Module;
+import com.terracottatech.config.QualifiedClassName;
 import com.terracottatech.config.Root;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.WebApplication;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class TcConfigBuilder {
   private TcConfigDocument tcConfigDocument;
@@ -27,12 +30,25 @@ public class TcConfigBuilder {
 
   public TcConfigBuilder(String resourcePath) {
     try {
-      tcConfigDocument = TcConfigDocument.Factory.parse(getClass()
-          .getResourceAsStream(resourcePath));
+      tcConfigDocument = new Loader().parse(getClass().getResourceAsStream(resourcePath));
       tcConfig = tcConfigDocument.getTcConfig();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public TcConfigBuilder(File file) {
+    try {
+      tcConfigDocument = new Loader().parse(file);
+      tcConfig = tcConfigDocument.getTcConfig();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private TcConfigBuilder(TcConfigDocument tcd) {
+    tcConfigDocument = tcd;
+    tcConfig = tcConfigDocument.getTcConfig();
   }
 
   public void setDsoPort(int portNo) {
@@ -40,9 +56,19 @@ public class TcConfigBuilder {
     tcConfig.getServers().getServerArray(0).setDsoPort(portNo);
   }
 
+  public int getDsoPort() {
+    ensureServers();
+    return tcConfig.getServers().getServerArray(0).getDsoPort();
+  }
+
   public void setJmxPort(int portNo) {
     ensureServers();
     tcConfig.getServers().getServerArray(0).setJmxPort(portNo);
+  }
+
+  public int getJmxPort() {
+    ensureServers();
+    return tcConfig.getServers().getServerArray(0).getJmxPort();
   }
 
   public void setServerLogs(String path) {
@@ -60,14 +86,13 @@ public class TcConfigBuilder {
     tcConfig.getClients().setLogs(path);
   }
 
-  public void addLock(String pattern, String lockLevel) {
-    addLock(pattern, lockLevel, false);
+  public void addAutoLock(String pattern, String lockLevel) {
+    addAutoLock(pattern, lockLevel, false);
   }
 
-  public void addLock(String pattern, String lockLevel, boolean autoSynch) {
+  public void addAutoLock(String pattern, String lockLevel, boolean autoSynch) {
     ensureLocks();
-    Autolock autoLock = tcConfig.getApplication().getDso().getLocks()
-        .insertNewAutolock(0);
+    Autolock autoLock = tcConfig.getApplication().getDso().getLocks().insertNewAutolock(0);
     autoLock.setMethodExpression(pattern);
     autoLock.setLockLevel(LockLevel.Enum.forString(lockLevel));
     if (autoSynch) {
@@ -75,25 +100,35 @@ public class TcConfigBuilder {
     }
   }
 
-  public void addRoot(String field, String name) {
+  public void addRoot(String fieldName, String rootName) {
     ensureRoots();
     Root root = tcConfig.getApplication().getDso().getRoots().addNewRoot();
-    root.setFieldExpression(field);
-    root.setRootName(name);
+    root.setFieldName(fieldName);
+    root.setRootName(rootName);
+  }
+
+  public void addInstrumentedClass(String pattern) {
+    addInstrumentedClass(pattern, false);
   }
 
   public void addInstrumentedClass(String pattern, boolean honorTransient) {
     ensureInstrumentedClasses();
-    Include include = tcConfig.getApplication().getDso()
-        .getInstrumentedClasses().insertNewInclude(0);
+    Include include = tcConfig.getApplication().getDso().getInstrumentedClasses().insertNewInclude(0);
     include.setClassExpression(pattern);
-    include.setHonorTransient(honorTransient);
+    if (honorTransient) {
+      include.setHonorTransient(honorTransient);
+    }
+  }
+
+  public void addBootJarClass(String classname) {
+    ensureBootJarClasses();
+    QualifiedClassName qcn = tcConfig.getApplication().getDso().getAdditionalBootJarClasses().insertNewInclude(0);
+    qcn.setStringValue(classname);
   }
 
   public void addExclude(String pattern) {
     ensureInstrumentedClasses();
-    tcConfig.getApplication().getDso().getInstrumentedClasses().addExclude(
-        pattern);
+    tcConfig.getApplication().getDso().getInstrumentedClasses().addExclude(pattern);
   }
 
   public void addModule(String name, String version) {
@@ -106,7 +141,7 @@ public class TcConfigBuilder {
   public void addWebApplication(String appName) {
     addWebApplication(appName, false);
   }
-  
+
   public void addWebApplication(String appName, boolean synchWrite) {
     ensureWebApplications();
     WebApplication wa = tcConfig.getApplication().getDso().getWebApplications().insertNewWebApplication(0);
@@ -115,12 +150,12 @@ public class TcConfigBuilder {
       wa.setSynchronousWrite(synchWrite);
     }
   }
-  
+
   public String toString() {
     return tcConfigDocument.toString();
   }
 
-  public void saveToFile(File filename) throws Exception {
+  public void saveToFile(File filename) throws IOException {
     InputStream is = null;
     FileOutputStream fos = null;
     try {
@@ -196,13 +231,29 @@ public class TcConfigBuilder {
     }
   }
 
+  private void ensureBootJarClasses() {
+    ensureDso();
+    if (!tcConfig.getApplication().getDso().isSetAdditionalBootJarClasses()) {
+      tcConfig.getApplication().getDso().addNewAdditionalBootJarClasses();
+    }
+  }
+
   private void ensureWebApplications() {
     ensureDso();
     if (!tcConfig.getApplication().getDso().isSetWebApplications()) {
       tcConfig.getApplication().getDso().addNewWebApplications();
     }
   }
-  
+
+  public TcConfigBuilder copy() {
+    try {
+      TcConfigBuilder aCopy = new TcConfigBuilder(new Loader().parse(this.toString()));
+      return aCopy;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public static void main(String[] args) {
     TcConfigBuilder tc = new TcConfigBuilder();
     tc.setDsoPort(3232);
@@ -210,11 +261,14 @@ public class TcConfigBuilder {
     tc.addModule("asdfa", "23432");
     tc.setServerData("c:/temp");
     tc.setClientLogs("c:/temp/logs");
-    tc.addLock("* com.tctest.*.*(..)", "write", true);
-    tc.addLock("* adfad..*()", "read");
+    tc.addAutoLock("* com.tctest.*.*(..)", "write", true);
+    tc.addAutoLock("* adfad..*()", "read");
     tc.addRoot("com.tc.Test.field", "myField");
     tc.addWebApplication("events", false);
-    System.out.println(tc.toString());
+    tc.addBootJarClass("java.lang.Local");
+    TcConfigBuilder aCopy = tc.copy();
+    aCopy.addModule("hung", "huynh");
+    System.out.println(aCopy.toString());
   }
 
 }

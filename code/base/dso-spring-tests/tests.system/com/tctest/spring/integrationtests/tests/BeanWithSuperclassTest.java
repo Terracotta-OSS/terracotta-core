@@ -28,8 +28,8 @@ public class BeanWithSuperclassTest extends AbstractTwoServerDeploymentTest {
   protected void setUp() throws Exception {
     super.setUp();
     
-    singleton1 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
-    singleton2 = (ISingleton) server2.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+    singleton1 = (ISingleton) server0.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
+    singleton2 = (ISingleton) server1.getProxy(ISingleton.class, REMOTE_SERVICE_NAME);
   }
   
   public void testSharedField() throws Exception {

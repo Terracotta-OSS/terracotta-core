@@ -31,8 +31,8 @@ public class SharedLockTest extends AbstractTwoServerDeploymentTest {
   protected void setUp() throws Exception {
     super.setUp();
 
-    sharedLock1 = (ISharedLock) server1.getProxy(ISharedLock.class, REMOTE_SERVICE_NAME);
-    sharedLock2 = (ISharedLock) server2.getProxy(ISharedLock.class, REMOTE_SERVICE_NAME);
+    sharedLock1 = (ISharedLock) server0.getProxy(ISharedLock.class, REMOTE_SERVICE_NAME);
+    sharedLock2 = (ISharedLock) server1.getProxy(ISharedLock.class, REMOTE_SERVICE_NAME);
   }
   
   public void testSharedLock() throws Exception {

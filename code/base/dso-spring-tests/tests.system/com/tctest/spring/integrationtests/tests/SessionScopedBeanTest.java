@@ -52,15 +52,15 @@ public class SessionScopedBeanTest extends AbstractTwoServerDeploymentTest {
       initCtx.put(ProxyBuilder.EXPORTER_TYPE_KEY, HttpInvokerServiceExporter.class);
       
       String name = APP_NAME + "/http/" + SERVICE_FOR_SHARED_SESSION_SCOPED_BEAN;
-      beanN1S1 = (ISimpleBean) server1.getProxy(ISimpleBean.class, name, initCtx);
+      beanN1S1 = (ISimpleBean) server0.getProxy(ISimpleBean.class, name, initCtx);
       // beanN1S1Local = (ISimpleBean) server1.getProxy(ISimpleBean.class, name);
-      beanN2S1 = (ISimpleBean) server2.getProxy(ISimpleBean.class, name, initCtx);
+      beanN2S1 = (ISimpleBean) server1.getProxy(ISimpleBean.class, name, initCtx);
       // beanN2S1Local = (ISimpleBean) server2.getProxy(ISimpleBean.class, name);
       
       initCtx.remove(ProxyBuilder.HTTP_CLIENT_KEY); // this resets the internal client
       
-      beanN1S2 = (ISimpleBean) server1.getProxy(ISimpleBean.class, name, initCtx);
-      beanN2S2 = (ISimpleBean) server2.getProxy(ISimpleBean.class, name, initCtx);
+      beanN1S2 = (ISimpleBean) server0.getProxy(ISimpleBean.class, name, initCtx);
+      beanN2S2 = (ISimpleBean) server1.getProxy(ISimpleBean.class, name, initCtx);
     } catch (Exception e) {
       e.printStackTrace(); throw e;
     }      

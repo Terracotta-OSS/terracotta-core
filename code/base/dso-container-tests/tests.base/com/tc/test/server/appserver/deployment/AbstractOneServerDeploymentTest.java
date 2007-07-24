@@ -13,13 +13,8 @@ import com.tc.test.server.util.TcConfigBuilder;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-public abstract class AbstractTwoServerDeploymentTest extends AbstractDeploymentTest {
-  public WebApplicationServer server0;
+public abstract class AbstractOneServerDeploymentTest extends AbstractDeploymentTest {
   public WebApplicationServer server1;
-
-  public void setServer0(WebApplicationServer server0) {
-    this.server0 = server0;
-  }
 
   public void setServer1(WebApplicationServer server1) {
     this.server1 = server1;
@@ -29,7 +24,7 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
     return false;
   }
 
-  public static abstract class TwoServerTestSetup extends ServerTestSetup {
+  public static abstract class OneServerTestSetup extends ServerTestSetup {
     private Log                    logger = LogFactory.getLog(getClass());
 
     private final Class            testClass;
@@ -38,18 +33,17 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
 
     private boolean                start  = true;
 
-    protected WebApplicationServer server0;
     protected WebApplicationServer server1;
 
-    protected TwoServerTestSetup(Class testClass, String context) {
+    protected OneServerTestSetup(Class testClass, String context) {
       this(testClass, new TcConfigBuilder(), context);
     }
     
-    protected TwoServerTestSetup(Class testClass, String tcConfigFile, String context) {
+    protected OneServerTestSetup(Class testClass, String tcConfigFile, String context) {
       this(testClass, new TcConfigBuilder(tcConfigFile), context);
     }
 
-    protected TwoServerTestSetup(Class testClass, TcConfigBuilder configBuilder, String context) {
+    protected OneServerTestSetup(Class testClass, TcConfigBuilder configBuilder, String context) {
       super(testClass);
       this.testClass = testClass;
       this.context = context;
@@ -72,15 +66,13 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
         logger.info("### WAR build " + (l2 - l1) / 1000f + " at " + deployment.getFileSystemPath());
 
         configureTcConfig(tcConfigBuilder);
-        server0 = createServer(deployment);
         server1 = createServer(deployment);
 
         TestSuite suite = (TestSuite) getTest();
         for (int i = 0; i < suite.testCount(); i++) {
           Test t = suite.testAt(i);
-          if (t instanceof AbstractTwoServerDeploymentTest) {
-            AbstractTwoServerDeploymentTest test = (AbstractTwoServerDeploymentTest) t;
-            test.setServer0(server0);
+          if (t instanceof AbstractOneServerDeploymentTest) {
+            AbstractOneServerDeploymentTest test = (AbstractOneServerDeploymentTest) t;
             test.setServer1(server1);
           }
         }
@@ -92,8 +84,8 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
 
     private WebApplicationServer createServer(Deployment deployment) throws Exception {
       WebApplicationServer server = getServerManager().makeWebApplicationServer(tcConfigBuilder);
-      configureServerParamers(server.getServerParameters());
       server.addWarDeployment(deployment, context);
+      configureServerParamers(server.getServerParameters());
       if (start) {
         server.start();
       }

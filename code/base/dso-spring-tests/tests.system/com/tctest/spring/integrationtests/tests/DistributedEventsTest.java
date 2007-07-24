@@ -27,8 +27,8 @@ public class DistributedEventsTest extends AbstractTwoServerDeploymentTest {
   protected void setUp() throws Exception {
     super.setUp();
     
-    eventManager1 = (EventManager) server1.getProxy(EventManager.class, REMOTE_SERVICE_NAME);
-    eventManager2 = (EventManager) server2.getProxy(EventManager.class, REMOTE_SERVICE_NAME);
+    eventManager1 = (EventManager) server0.getProxy(EventManager.class, REMOTE_SERVICE_NAME);
+    eventManager2 = (EventManager) server1.getProxy(EventManager.class, REMOTE_SERVICE_NAME);
 
     eventManager1.clear();
     eventManager2.clear();

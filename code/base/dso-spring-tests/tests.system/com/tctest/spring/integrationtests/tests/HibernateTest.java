@@ -44,8 +44,8 @@ public class HibernateTest extends AbstractTwoServerDeploymentTest {
       Map initCtx = new HashMap();
       initCtx.put(ProxyBuilder.EXPORTER_TYPE_KEY, HttpInvokerServiceExporter.class);
       String name = APP_NAME + "/http/" + REMOTE_SERVICE_NAME;
-      hibernateBean1 = (IHibernateBean) server1.getProxy(IHibernateBean.class, name, initCtx);
-      hibernateBean2 = (IHibernateBean) server2.getProxy(IHibernateBean.class, name, initCtx);
+      hibernateBean1 = (IHibernateBean) server0.getProxy(IHibernateBean.class, name, initCtx);
+      hibernateBean2 = (IHibernateBean) server1.getProxy(IHibernateBean.class, name, initCtx);
 
     } catch (Exception ex) {
       ex.printStackTrace();

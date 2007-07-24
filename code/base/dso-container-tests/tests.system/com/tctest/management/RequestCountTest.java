@@ -8,16 +8,18 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.TerracottaManagement;
 import com.tc.management.beans.sessions.SessionMonitorMBean;
+import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
+import com.tc.test.server.appserver.deployment.Deployment;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.appserver.deployment.ServerTestSetup;
+import com.tc.test.server.appserver.deployment.WebApplicationServer;
 import com.tc.test.server.appserver.load.Node;
-import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
-import com.tctest.webapp.servlets.RequestCountingServlet;
+import com.tc.test.server.util.TcConfigBuilder;
+import com.tctest.webapp.servlets.CounterServlet;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 import javax.management.MBeanServerConnection;
@@ -26,25 +28,57 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
-public final class RequestCountTest extends AbstractAppServerTestCase {
+import junit.framework.Test;
 
+public final class RequestCountTest extends AbstractDeploymentTest {
   private static final TCLogger logger             = TCLogging.getTestingLogger(RequestCountTest.class);
 
   private static final int      SESSIONS_PER_NODE  = 10;
   private static final long     TEST_DURATION      = 30 * 1000;
   private static final String   CLIENT_NAME_PREFIX = "client-";
 
-  public RequestCountTest() {
-    registerServlet(RequestCountingServlet.class);
+  private static final String   CONTEXT            = "RequestCountTest";
+  private static final String   SERVLET            = "RequestCountingServlet";
+
+  private Deployment            deployment;
+  private TcConfigBuilder       configBuilder;
+
+  public static Test suite() {
+    return new ServerTestSetup(RequestCountTest.class);
   }
 
+  public void setUp() throws Exception {
+    super.setUp();
+    if (deployment == null) {
+      deployment = makeDeployment();
+      configBuilder = new TcConfigBuilder();
+      configBuilder.addWebApplication(CONTEXT);
+    }
+  }
+  
   public void testRequestCount() throws Throwable {
     assertTimeDirection();
-    List jvmArgs = new ArrayList(1);
-    jvmArgs.add("-Dcom.sun.management.jmxremote");
-    addDsoServerJvmArgs(jvmArgs);
-    startDsoServer();
     runNodes(2);
+  }
+  
+  private Deployment makeDeployment() throws Exception {
+    DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
+    builder.addServlet(SERVLET, "/" + SERVLET + "/*", CounterServlet.class, null, false);
+    return builder.makeDeployment();
+  }
+
+  private int createAndStartServer(String extraJvmArg) throws Exception {
+    WebApplicationServer server = makeWebApplicationServer(configBuilder);
+    server.addWarDeployment(deployment, CONTEXT);
+    server.getServerParameters().appendJvmArgs(extraJvmArg);
+    server.start();
+    return server.getPort();
+  }
+
+  private URL createUrl(int port, String params) throws Exception {
+    URL url = new URL("http://localhost:" + port + "/" + CONTEXT + "/" + SERVLET
+                      + (params.length() > 0 ? "?" + params : ""));
+    return url;
   }
 
   private void runNodes(int nodeCount) throws Throwable {
@@ -53,8 +87,7 @@ public final class RequestCountTest extends AbstractAppServerTestCase {
     int[] ports = new int[nodeCount];
 
     for (int i = 0; i < nodeCount; i++) {
-      ports[i] = startAppServer(true, new Properties(), new String[] { "-Dtc.node-name=" + CLIENT_NAME_PREFIX + i })
-          .serverPort();
+      ports[i] = createAndStartServer("-Dtc.node-name=" + CLIENT_NAME_PREFIX + i);
     }
 
     final JMXConnector jmxConnector = getJMXConnector();
@@ -103,8 +136,8 @@ public final class RequestCountTest extends AbstractAppServerTestCase {
     }
 
     for (int i = 0; i < nodeCount; i++) {
-      URL mutateUrl = createUrl(ports[i], RequestCountingServlet.class);
-      URL validateUrl = createUrl(ports[(i + 1) % nodeCount], RequestCountingServlet.class, "read=true");
+      URL mutateUrl = createUrl(ports[i], "");
+      URL validateUrl = createUrl(ports[(i + 1) % nodeCount], "read=true");
       nodes[i] = new NodeWithJMX(mutateUrl, validateUrl, SESSIONS_PER_NODE, TEST_DURATION);
       nodeRunners[i] = new Thread(nodes[i], "Runner for server at port " + ports[i]);
     }
@@ -129,8 +162,8 @@ public final class RequestCountTest extends AbstractAppServerTestCase {
   }
 
   private JMXConnector getJMXConnector() throws IOException {
-    JMXServiceURL jmxServerUrl = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:" + getJMXPort()
-                                                   + "/jmxrmi");
+    JMXServiceURL jmxServerUrl = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:"
+                                                   + getServerManager().getServerTcConfig().getJmxPort() + "/jmxrmi");
     JMXConnector jmxConnector = JMXConnectorFactory.newJMXConnector(jmxServerUrl, null);
     jmxConnector.connect();
     return jmxConnector;

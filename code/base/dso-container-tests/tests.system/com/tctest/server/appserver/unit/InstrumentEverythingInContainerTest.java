@@ -4,39 +4,54 @@
  */
 package com.tctest.server.appserver.unit;
 
-import org.apache.commons.httpclient.HttpClient;
-
-import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
-import com.tc.test.server.util.HttpUtil;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebResponse;
+import com.tc.test.server.appserver.deployment.AbstractDeploymentTest;
+import com.tc.test.server.appserver.deployment.Deployment;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.appserver.deployment.ServerTestSetup;
+import com.tc.test.server.appserver.deployment.WebApplicationServer;
+import com.tc.test.server.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.OkServlet;
 
-import java.net.URL;
+import junit.framework.Test;
 
+public class InstrumentEverythingInContainerTest extends AbstractDeploymentTest {
+  private static final String CONTEXT = "OkServlet";
+  private Deployment          deployment;
 
-public class InstrumentEverythingInContainerTest extends AbstractAppServerTestCase {
-
-  public InstrumentEverythingInContainerTest() {
-    registerServlet(OkServlet.class);
+  public static Test suite() {
+    return new ServerTestSetup(InstrumentEverythingInContainerTest.class);
   }
 
   protected boolean isSessionTest() {
     return false;
   }
 
-  public void test() throws Exception {
-    addInclude("*..*");
+  public void setUp() throws Exception {
+    super.setUp();
+    if (deployment == null) deployment = makeDeployment();
+  }
 
+  public void testInstrumentEverything() throws Exception {
+    TcConfigBuilder tcConfigBuilder = new TcConfigBuilder();
+    tcConfigBuilder.addInstrumentedClass("*..*");
     // These bytes are obfuscated and get verify errors when instrumented by DSO
-    addExclude("com.sun.crypto.provider..*");
+    tcConfigBuilder.addExclude("com.sun.crypto.provider..*");
+    tcConfigBuilder.addWebApplication(CONTEXT);
 
-    startDsoServer();
+    WebApplicationServer server = makeWebApplicationServer(tcConfigBuilder);
+    server.addWarDeployment(deployment, CONTEXT);
+    server.start();
 
-    HttpClient client = HttpUtil.createHttpClient();
+    WebConversation conversation = new WebConversation();
+    WebResponse response = server.ping("/OkServlet/ok", conversation);
+    assertEquals("OK", response.getText().trim());
+  }
 
-    int port = startAppServer(true).serverPort();
-
-    URL url = createUrl(port, OkServlet.class);
-
-    assertEquals("OK", HttpUtil.getResponseBody(url, client));
+  private Deployment makeDeployment() throws Exception {
+    DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
+    builder.addServlet("OkServlet", "/ok/*", OkServlet.class, null, false);
+    return builder.makeDeployment();
   }
 }

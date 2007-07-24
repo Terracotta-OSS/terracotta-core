@@ -4,63 +4,73 @@
  */
 package com.tctest.dso;
 
-import org.apache.commons.httpclient.HttpClient;
-
-import com.tc.object.config.schema.AutoLock;
-import com.tc.object.config.schema.LockLevel;
-import com.tc.object.config.schema.Root;
-import com.tc.test.server.appserver.unit.AbstractAppServerTestCase;
-import com.tc.test.server.util.HttpUtil;
+import com.meterware.httpunit.WebConversation;
+import com.tc.test.server.appserver.deployment.AbstractTwoServerDeploymentTest;
+import com.tc.test.server.appserver.deployment.DeploymentBuilder;
+import com.tc.test.server.appserver.deployment.WebApplicationServer;
+import com.tc.test.server.util.TcConfigBuilder;
 import com.tctest.webapp.servlets.RootCounterServlet;
 
-import java.net.URL;
 import java.util.Random;
 
-public class DsoRootTest extends AbstractAppServerTestCase {
+import junit.framework.Test;
 
-  private static final int TOTAL_REQUEST_COUNT = 100;
+public class DsoRootTest extends AbstractTwoServerDeploymentTest {
 
-  public DsoRootTest() {
-    registerServlet(RootCounterServlet.class);
+  private static final int    TOTAL_REQUEST_COUNT = 100;
+  private static final String CONTEXT             = "DsoRootTest";
+  private static final String MAPPING             = "count";
+
+  public static Test suite() {
+    return new DsoRootTestSetup();
   }
 
   protected boolean isSessionTest() {
     return false;
   }
 
-  public void testRoot() throws Throwable {
-    String rootName = "counterObject";
-    String fieldName = RootCounterServlet.class.getName() + ".counterObject";
-    addRoot(new Root(rootName, fieldName));
-
-    LockLevel lockLevel = LockLevel.WRITE;
-    String methodExpression = "* " + RootCounterServlet.class.getName() + "$Counter.*(..)";
-    addLock(new AutoLock(methodExpression, lockLevel));
-
-    startDsoServer();
-    runNodes(2);
+  private int getCount(WebApplicationServer server, WebConversation con) throws Exception {
+    return Integer.parseInt(server.ping("/" + CONTEXT + "/" + MAPPING, con).getText().trim());
   }
 
-  private void runNodes(int nodeCount) throws Throwable {
-    HttpClient client = HttpUtil.createHttpClient();
-
-    int[] ports = new int[nodeCount];
-    URL[] urls = new URL[nodeCount];
-
-    for (int i = 0; i < nodeCount; i++) {
-      ports[i] = startAppServer(true).serverPort();
-      urls[i] = createUrl(ports[i], RootCounterServlet.class);
-    }
+  public void testRoot() throws Exception {
+    int nodeCount = 2;
+    WebConversation conversation = new WebConversation();
+    WebApplicationServer[] servers = new WebApplicationServer[] { server0, server1 };
 
     Random random = new Random();
     for (int i = 0, currentRequestCount = 0; i < TOTAL_REQUEST_COUNT && currentRequestCount < TOTAL_REQUEST_COUNT; i++) {
       int remainingRequests = TOTAL_REQUEST_COUNT - currentRequestCount;
       for (int j = 0; j < random.nextInt(remainingRequests + 1); j++) {
-        int newVal = HttpUtil.getInt(urls[i % nodeCount], client);
+        int newVal = getCount(servers[i % nodeCount], conversation);
         currentRequestCount++;
         assertEquals(currentRequestCount, newVal);
       }
     }
   }
 
+  private static class DsoRootTestSetup extends TwoServerTestSetup {
+
+    public DsoRootTestSetup() {
+      super(DsoRootTest.class, CONTEXT);
+    }
+
+    protected void configureWar(DeploymentBuilder builder) {
+      builder.addServlet("RootCounterServlet", "/" + MAPPING + "/*", RootCounterServlet.class, null, false);
+    }
+
+    protected void configureTcConfig(TcConfigBuilder tcConfigBuilder) {
+      tcConfigBuilder.addWebApplication(CONTEXT);
+
+      String rootName = "counterObject";
+      String fieldName = RootCounterServlet.class.getName() + ".counterObject";
+      tcConfigBuilder.addRoot(fieldName, rootName);
+
+      String methodExpression = "* " + RootCounterServlet.class.getName() + "$Counter.*(..)";
+      tcConfigBuilder.addAutoLock(methodExpression, "write");
+      
+      tcConfigBuilder.addInstrumentedClass(RootCounterServlet.class.getName() + "$Counter", false);
+    }
+
+  }
 }
