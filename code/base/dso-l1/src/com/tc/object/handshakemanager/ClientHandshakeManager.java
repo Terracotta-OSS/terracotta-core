@@ -150,7 +150,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
     }
   }
 
-  public void pause() {
+  public synchronized void pause() {
     logger.info("Pause " + getState());
     if (getState() == PAUSED) {
       logger.warn("pause called while already PAUSED");
@@ -163,7 +163,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
     sessionManager.newSession();
   }
 
-  public void unpause() {
+  public synchronized void unpause() {
     logger.info("Unpause " + getState());
     if (getState() != PAUSED) {
       logger.warn("unpause called while not PAUSED: " + getState());
