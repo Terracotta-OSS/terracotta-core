@@ -16,7 +16,6 @@ import org.apache.catalina.tribes.membership.StaticMember;
 import org.apache.catalina.tribes.transport.DataSender;
 import org.apache.catalina.tribes.transport.ReceiverBase;
 import org.apache.catalina.tribes.transport.ReplicationTransmitter;
-import org.apache.catalina.tribes.util.UUIDGenerator;
 
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
@@ -73,7 +72,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
                                                                                                             new CopyOnWriteArrayMap.TypedArrayFactory() {
                                                                                                               public Object[] createTypedArray(
                                                                                                                                                int size) {
-                                                                                                                return new Member[size];
+                                                                                                                return new MemberNode[size];
                                                                                                               }
                                                                                                             });
   private final Map<String, GroupMessageListener>         messageListeners        = new ConcurrentHashMap<String, GroupMessageListener>();
@@ -107,7 +106,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   }
 
   private void commonGroupChanelConfig() {
-    // config send timeout
+    // Configure send timeout
     ReplicationTransmitter transmitter = (ReplicationTransmitter) group.getChannelSender();
     DataSender sender = transmitter.getTransport();
     final long l = TCPropertiesImpl.getProperties().getPropertiesFor(L2_NHA).getLong(SEND_TIMEOUT_PROP);
@@ -119,7 +118,6 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     // add listeners
     group.addMembershipListener(this);
     group.addChannelListener(this);
-
   }
 
   protected NodeID joinStatic(final Node thisNode, final Node[] allNodes) throws GroupException {
@@ -194,10 +192,9 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   }
 
   /**
-   * XXX:: This method is a temperary hack to make TribesGroupManager work. Without this for static members, we get
-   * differernt UniqueID for the same members, one in nodeJoined event and one in the messages. Until that is fixed, the
-   * NodeIDs uid is going to be based on the host and port for static members. We are using the UniqueID as the instance
-   * id so that when we Zap node based on nodeID, we dont Zap the next instance of the same server.
+   * XXX:: This method is a temporary hack to make TribesGroupManager work. Without this for static members, we get
+   * different UniqueID for the same members, one in nodeJoined event and one in the messages. Until that is fixed, the
+   * NodeID is going to be based on the host and port for static members.
    */
   private static NodeID makeNodeIDFrom(Member member) {
     if (useMcast) {
@@ -208,7 +205,8 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       if (port < 0) {
         port = member.getSecurePort();
         if (port < 0) {
-          // Ports shouldnt be 0 either, but in our test framework when there is only one inprocess active, it could be.
+          // Ports shouldn't be 0 either, but in our test framework when there is only one in-process active, it could
+          // be.
           throw new AssertionError("Invalid port number : " + port + " for host " + Conversion.bytesToHex(host));
         }
       }
@@ -216,13 +214,12 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       byte uid[] = new byte[length + 4];
       System.arraycopy(host, 0, uid, 0, length);
       Conversion.writeInt(port, uid, length);
-      return new NodeID(member.getName(), uid, member.getUniqueId());
+      return new NodeID(member.getName(), uid);
     }
   }
 
   private StaticMembershipInterceptor setupStaticMembers(final Node thisNode, final Node[] allNodes)
       throws AssertionError {
-     byte[] uuid = UUIDGenerator.randomUUID(true);
     StaticMembershipInterceptor smi = new StaticMembershipInterceptor();
     for (int i = 0; i < allNodes.length; i++) {
       final Node node = allNodes[i];
@@ -234,7 +231,6 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     // set up this node
     thisMember = makeMember(thisNode);
     if (thisMember == null) { throw new AssertionError("Error setting up this group member: " + thisNode); }
-    ((StaticMember)thisMember).setUniqueId(uuid);
     this.thisNodeID = makeNodeIDFrom(thisMember);
     smi.setLocalMember(thisMember);
     return smi;
@@ -248,7 +244,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   private static void validateExternalizableClass(Class<AbstractGroupMessage> clazz) {
     String name = clazz.getName();
     try {
-      Constructor cons = clazz.getDeclaredConstructor(new Class[0]);
+      Constructor<AbstractGroupMessage> cons = clazz.getDeclaredConstructor(new Class[0]);
       if ((cons.getModifiers() & Modifier.PUBLIC) == 0) {
         //
         throw new AssertionError(name + " : public no arg constructor not found");
@@ -258,7 +254,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     }
   }
 
-  private static void validateEventClass(Class clazz) {
+  private static void validateEventClass(Class<?> clazz) {
     if (!EventContext.class.isAssignableFrom(clazz)) { throw new AssertionError(clazz
                                                                                 + " does not implement interface "
                                                                                 + EventContext.class.getName()); }
@@ -273,16 +269,19 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     }
   }
 
+  @SuppressWarnings("unchecked")
   public void routeMessages(Class msgClass, Sink sink) {
     validateEventClass(msgClass);
     registerForMessages(msgClass, new RouteGroupMessagesToSink(msgClass.getName(), sink));
   }
 
   public boolean accept(Serializable msg, Member sender) {
-    if (stopped) return false;
-    if (msg instanceof GroupMessage) { return true; }
-    logger.warn("Rejecting unknown message : " + msg + " from " + sender.getName());
-    return false;
+    if (stopped || !(msg instanceof GroupMessage)) {
+      logger.warn("Rejecting message : " + msg + " from " + sender.getName()
+                  + " since its not Group Message or TribesGroupManager is stopped : " + stopped);
+      return false;
+    }
+    return true;
   }
 
   public void messageReceived(Serializable msg, Member sender) {
@@ -292,24 +291,19 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     }
     MessageID requestID = gmsg.inResponseTo();
     NodeID from = makeNodeIDFrom(sender);
-    if (!nodes.containsKey(from)) {
+    MemberNode inode = (MemberNode) nodes.get(from);
+    if (inode == null) {
       String warn = "Message from non-existing member " + sender + " . Adding this node to nodes = " + nodes;
       logger.warn(warn);
-      // XXX:: Sometimes messages arrive before memberAdded event. So we are faking it.
-      memberAdded(sender);
-    } else if (!useMcast) {
-      // set uuid as needed from received msg
-      byte[] uuid = ((Member)nodes.get(from)).getUniqueId();
-      boolean emptyUuid = true;
-      for (int i = 0; i < uuid.length; ++i) {
-        if (uuid[i] != 0) {
-          emptyUuid = false;
-          break;
-        }
-      }
-      if (emptyUuid) {
-        nodes.put(from, sender);
-      }
+      // XXX:: Sometimes messages arrive before memberAdded event. So we are faking it. Also @see comment below
+      from = basicMemberAdded(from, sender);
+    } else {
+      // We always maintain reference equality to all NodeIDs that is exposed to Application layer for a particular
+      // instance of the server. This is done so that when Zap node request comes in, we can identify if it is for the
+      // current instance of the remote node or not. When send fails with timeout (like in Solaris boxes) and the active
+      // tries to Zap node, we don't want to zap the wrong instance (i.e. the server might have crashed and come back
+      // already)
+      from = inode.getNodeID();
     }
     gmsg.setMessageOrginator(from);
     if (requestID.isNull() || !notifyPendingRequests(requestID, gmsg, sender)) {
@@ -358,16 +352,28 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       logger.info("memberAdded -> name=" + member.getName() + ", uid=" + Conversion.bytesToHex(member.getUniqueId()));
     }
     NodeID newNode = makeNodeIDFrom(member);
-    Member old;
-    if ((old = (Member) nodes.put(newNode, member)) == null) {
-      fireNodeEvent(newNode, true);
-    } else {
-      logger.warn("Member Added Event called for : " + newNode + " while it is still present in the list of nodes : "
-                  + old + " : " + nodes);
-      if (!old.equals(member)) {
-        logger.error("Old Member : " + old + " NOT Equal to  New one " + member);
+    basicMemberAdded(newNode, member);
+  }
+
+  private NodeID basicMemberAdded(NodeID newNode, Member member) {
+    MemberNode inode;
+    synchronized (nodes) {
+      inode = (MemberNode) nodes.get(newNode);
+      if (inode == null) {
+        nodes.put(newNode, new MemberNode(newNode, member));
+      } else {
+        logger.warn("Member Added Event called for : " + newNode + " while it is still present in the list of nodes : "
+                    + inode.getMember() + " : " + nodes);
+        if (!inode.getMember().equals(member)) {
+          logger.error("Old Member : " + inode.getMember() + " NOT Equal to  New one " + member);
+        }
+        return inode.getNodeID();
       }
     }
+    if (inode == null) {
+      fireNodeEvent(newNode, true);
+    }
+    return newNode;
   }
 
   private void fireNodeEvent(NodeID newNode, boolean joined) {
@@ -375,10 +381,9 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       logger.info("fireNodeEvent: joined=" + joined + ", name=" + newNode.getName() + ", uid="
                   + Conversion.bytesToHex(newNode.getUID()));
     }
-
-    Iterator i = groupListeners.iterator();
+    Iterator<GroupEventsListener> i = groupListeners.iterator();
     while (i.hasNext()) {
-      GroupEventsListener listener = (GroupEventsListener) i.next();
+      GroupEventsListener listener = i.next();
       if (joined) {
         listener.nodeJoined(newNode);
       } else {
@@ -392,10 +397,11 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       logger.info("memberDisappeared -> name=" + member.getName() + ", uid="
                   + Conversion.bytesToHex(member.getUniqueId()));
     }
-
     NodeID node = makeNodeIDFrom(member);
-    if ((nodes.remove(node)) != null) {
-      fireNodeEvent(node, false);
+    MemberNode inode = (MemberNode) nodes.remove(node);
+    if (inode != null) {
+      // Make sure that all external application layer sees the same NodeID instance always
+      fireNodeEvent(inode.getNodeID(), false);
     } else {
       logger.warn("Member Disappered Event called for : " + node + " while it is not present in the list of nodes : "
                   + nodes);
@@ -405,7 +411,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
 
   private void notifyAnyPendingRequests(Member member) {
     synchronized (pendingRequests) {
-      for (Iterator i = pendingRequests.values().iterator(); i.hasNext();) {
+      for (Iterator<GroupResponse> i = pendingRequests.values().iterator(); i.hasNext();) {
         GroupResponseImpl response = (GroupResponseImpl) i.next();
         response.notifyMemberDead(member);
       }
@@ -426,9 +432,15 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     }
   }
 
+  // TODO:: This method can be optimized by caching members;
   private Member[] getCurrentMembers() {
     // return group.getMembers();
-    return (Member[]) nodes.valuesToArray();
+    MemberNode[] inodes = (MemberNode[]) nodes.valuesToArray();
+    Member[] members = new Member[inodes.length];
+    for (int i = 0; i < members.length; i++) {
+      members[i] = inodes[i].getMember();
+    }
+    return members;
   }
 
   public GroupResponse sendAllAndWaitForResponse(GroupMessage msg) throws GroupException {
@@ -450,16 +462,17 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
       logger.info(this.thisNodeID + " : Sending to : " + node + " msg " + msg.getMessageID() + " node.name="
                   + node.getName() + ", node.uid=" + Conversion.bytesToHex(node.getUID()));
     }
-    try {
-      Member member = (Member) nodes.get(node);
-      if (member != null) {
-        group.send(new Member[] { member }, msg, SEND_OPTIONS_NO_ACK);
-      } else {
-        // TODO:: These could be exceptions
-        logger.warn("Ignoring Msg sent to: Node " + node + " not present in the group. Msg : " + msg);
+    MemberNode inode = (MemberNode) nodes.get(node);
+    if (inode != null) {
+      try {
+        group.send(new Member[] { inode.getMember() }, msg, SEND_OPTIONS_NO_ACK);
+      } catch (ChannelException e) {
+        throw new GroupException(e);
       }
-    } catch (ChannelException e) {
-      throw new GroupException(e);
+    } else {
+      String error = "Msg sent to non-exisitent Node : Node " + node + ". Msg : " + msg;
+      logger.error(error);
+      throw new GroupException(error);
     }
   }
 
@@ -469,9 +482,10 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     }
     GroupResponseImpl groupResponse = new GroupResponseImpl();
     MessageID msgID = msg.getMessageID();
-    Member to[] = new Member[1];
-    to[0] = (Member) nodes.get(nodeID);
-    if (to[0] != null) {
+    MemberNode inode = (MemberNode) nodes.get(nodeID);
+    if (inode != null) {
+      Member to[] = new Member[1];
+      to[0] = inode.getMember();
       GroupResponse old = pendingRequests.put(msgID, groupResponse);
       Assert.assertNull(old);
       groupResponse.sendTo(group, msg, to);
@@ -490,29 +504,29 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
   }
 
   public void zapNode(NodeID nodeID, int type, String reason) {
-    Member m = (Member) nodes.get(nodeID);
-    if (m == null) {
+    MemberNode inode = (MemberNode) nodes.get(nodeID);
+    if (inode == null) {
       logger.warn("Ignoring Zap node request since Member is null");
-    } else if (!Arrays.equals(m.getUniqueId(), nodeID.getInstanceID())) {
-      logger.warn("Ignoring Zap node request since the instance ID from the member " + Arrays.toString(m.getUniqueId())
-                  + " is not equal to the instanceID from the nodeID " + Arrays.toString(nodeID.getInstanceID()));
-
+    } else if (inode.getNodeID() != nodeID) {
+      logger
+          .warn("Ignoring Zap node request since the Node ID for zapNode request is not reference equal to the one in the internal list. "
+                + " This probably means that zap node request is meant for the previous instance of the server. NodeID "
+                + nodeID + " INode = " + inode);
     } else if (!zapNodeRequestProcessor.acceptOutgoingZapNodeRequest(nodeID, type, reason)) {
       logger.warn("Ignoreing Zap node request since " + zapNodeRequestProcessor + " asked us to : " + nodeID
                   + " type = " + type + " reason = " + reason);
     } else {
       long weights[] = zapNodeRequestProcessor.getCurrentNodeWeights();
-      logger.warn("Zapping node : " + nodeID + " instance ID : " + Arrays.toString(nodeID.getInstanceID()) + " type = "
-                  + type + " reason = " + reason + " my weight = " + Arrays.toString(weights));
-      GroupMessage msg = GroupZapNodeMessageFactory.createGroupZapNodeMessage(type, reason, weights, nodeID
-          .getInstanceID());
+      logger.warn("Zapping node : " + nodeID + " type = " + type + " reason = " + reason + " my weight = "
+                  + Arrays.toString(weights));
+      GroupMessage msg = GroupZapNodeMessageFactory.createGroupZapNodeMessage(type, reason, weights);
       try {
         sendTo(nodeID, msg);
       } catch (GroupException e) {
         logger.error("Error sending ZapNode Request to " + nodeID + " msg = " + msg);
       }
-      logger.warn("Removing member " + m + " from group");
-      memberDisappeared(m);
+      logger.warn("Removing member " + inode + " from group");
+      memberDisappeared(inode.getMember());
     }
   }
 
@@ -521,7 +535,7 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     HashSet<NodeID>    waitFor   = new HashSet<NodeID>();
     List<GroupMessage> responses = new ArrayList<GroupMessage>();
 
-    public synchronized List getResponses() {
+    public synchronized List<GroupMessage> getResponses() {
       Assert.assertTrue(waitFor.isEmpty());
       return responses;
     }
@@ -593,21 +607,36 @@ public class TribesGroupManager implements GroupManager, ChannelListener, Member
     }
   }
 
-  private final class ZapNodeRequestRouter implements GroupMessageListener {
+  private static final class MemberNode {
 
-    public void messageReceived(NodeID fromNode, GroupMessage msg) {
-      GroupZapNodeMessage zapMsg = (GroupZapNodeMessage) msg;
-      Member local = group.getLocalMember(false);
-      if (local != null && Arrays.equals(local.getUniqueId(), zapMsg.getInstanceID())) {
-        logger.info("Delivering Zap Message since instanceID " + Arrays.toString(local.getUniqueId()) + " Matches");
-        zapNodeRequestProcessor.incomingZapNodeRequest(msg.messageFrom(), zapMsg.getZapNodeType(), zapMsg.getReason(),
-                                                       zapMsg.getWeights());
-      } else {
-        logger.warn("NOT Delivering Zap Message since instanceID doesnt match : From msg : "
-                    + Arrays.toString(zapMsg.getInstanceID()) + " but local Member is " + local);
-      }
+    private final NodeID nodeID;
+    private final Member member;
+
+    public MemberNode(NodeID nodeID, Member member) {
+      this.nodeID = nodeID;
+      this.member = member;
+    }
+
+    public NodeID getNodeID() {
+      return nodeID;
+    }
+
+    public Member getMember() {
+      return member;
+    }
+
+    public String toString() {
+      return "[ " + nodeID + " => " + member + " ]";
     }
 
   }
 
+  private final class ZapNodeRequestRouter implements GroupMessageListener {
+
+    public void messageReceived(NodeID fromNode, GroupMessage msg) {
+      GroupZapNodeMessage zapMsg = (GroupZapNodeMessage) msg;
+      zapNodeRequestProcessor.incomingZapNodeRequest(msg.messageFrom(), zapMsg.getZapNodeType(), zapMsg.getReason(),
+                                                     zapMsg.getWeights());
+    }
+  }
 }

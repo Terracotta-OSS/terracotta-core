@@ -153,7 +153,7 @@ public class ResentTransactionSequencer implements ServerTransactionListener {
   private void addOrdered(ServerTransactionID stxID, GlobalTransactionID gid) {
     TransactionDesc toAdd = new TransactionDesc(stxID, gid);
     ListIterator i;
-    // Going from the reverse means iterations
+    // Going from the reverse means less iterations
     for (i = resentTxns.listIterator(resentTxns.size()); i.hasPrevious();) {
       TransactionDesc desc = (TransactionDesc) i.previous();
       if (desc.getGlobalTransactionID().lessThan(toAdd.getGlobalTransactionID())) {

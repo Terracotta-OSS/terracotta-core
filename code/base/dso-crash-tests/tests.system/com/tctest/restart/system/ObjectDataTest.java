@@ -16,7 +16,7 @@ public class ObjectDataTest extends TransparentTestBase implements TestConfigura
 
   private int clientCount = 2;
 
-  protected Class getApplicationClass() {
+  protected Class<ObjectDataTestApp> getApplicationClass() {
     return ObjectDataTestApp.class;
   }
 

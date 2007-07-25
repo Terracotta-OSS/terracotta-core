@@ -21,7 +21,7 @@ public class SessionManagerImpl implements SessionManager, SessionProvider {
   
   /*
    * Return the next session id will be when call newSession.
-   * This advanecs session id but not apply to messages creation.
+   * This advances session id but not apply to messages creation.
    * Message filter uses it to drop old messages when session changes.
    */
   public synchronized SessionID nextSessionID() {
