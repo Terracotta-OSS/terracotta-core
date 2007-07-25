@@ -68,7 +68,7 @@ public class ClassHierarchyWalker {
         int modifiers = fieldInfo.getModifiers();
         if ((modifiers & (Modifier.TRANSIENT | Modifier.STATIC)) == 0) {
           ClassInfo fieldType = fieldInfo.getType();
-          if (fieldType.isArray()) {
+          while (fieldType.isArray()) {
             fieldType = fieldType.getComponentType();
           }
           addClassIfNeeded(fieldType);
