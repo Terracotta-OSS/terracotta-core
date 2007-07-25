@@ -104,9 +104,11 @@ public class ObjectDataTestApp extends AbstractTransparentApp {
   private void verify(int expectedValue, Collection results) {
     synchronized (results) {
       Assert.assertEquals(workSize, results.size());
+      int cnt = 0;
       for (Iterator i = results.iterator(); i.hasNext();) {
         TestObject to = (TestObject) i.next();
         if (!to.validate(expectedValue)) { throw new RuntimeException("Failed!"); }
+        System.out.println("Verified object " + (cnt++));
       }
     }
   }
