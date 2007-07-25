@@ -31,6 +31,7 @@ import java.util.Random;
 public class StateManagerTest extends TCTestCase {
   
   private static final TCLogger logger = TCLogging.getLogger(StateManagerImpl.class);
+  private static short portnum = 0;
 
   public StateManagerTest() {
     // disableAllUntil("2007-05-23");
@@ -42,13 +43,12 @@ public class StateManagerTest extends TCTestCase {
    * Must be called before joinMcast.
    */
   public void useRandomMcastPort() {
-    // generate a random port number
-    Random r = new Random();
-    r.setSeed(System.currentTimeMillis());
-    short portnum = 0;
-    do {
-      portnum = (short) r.nextInt(Short.MAX_VALUE - 1);
-    } while (portnum <= 1024);
+    if (portnum == 0) {
+      // generate a random port number
+      Random r = new Random();
+      r.setSeed(System.currentTimeMillis());
+      portnum = (short) (r.nextInt(Short.MAX_VALUE - 1025) + 1024);
+    }
     
     TCPropertiesImpl.setProperty("l2.nha.tribes.mcast.mcastPort", String.valueOf(portnum));
     logger.info("McastService uses random mcast port: "+portnum);
