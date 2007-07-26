@@ -13,7 +13,7 @@ public class Vm {
   public static final Pattern JVM_VERSION_PATTERN         = Pattern
                                                               .compile("^(\\p{Digit})\\.(\\p{Digit})\\.(\\p{Digit})(?:[-_](.+))?$");
   public static final Pattern IBM_SERVICE_RELEASE_PATTERN = Pattern
-                                                              .compile("^[^-]+-\\p{Digit}{8}\\p{Space}*\\(.*(SR\\p{Digit}+).*\\)$");
+                                                              .compile("^[^-]+-\\p{Digit}{8}[^\\p{Space}]*\\p{Space}*\\(.*(SR\\p{Digit}+).*\\)$");
 
   public static final Version VERSION;
   static {
@@ -162,7 +162,7 @@ public class Vm {
     public boolean isJDK17() {
       return mega == 1 && major == 7;
     }
-    
+
     public boolean isIBM() {
       return isIBM;
     }
