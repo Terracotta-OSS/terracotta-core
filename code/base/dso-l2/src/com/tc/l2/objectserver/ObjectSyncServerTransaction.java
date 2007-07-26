@@ -73,7 +73,7 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
     return rootsMap;
   }
 
-  public Collection getObjectIDs() {
+  public Set getObjectIDs() {
     return oids;
   }
 

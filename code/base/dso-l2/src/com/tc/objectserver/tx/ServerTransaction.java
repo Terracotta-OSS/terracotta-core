@@ -45,7 +45,7 @@ public interface ServerTransaction extends GlobalTransaction {
 
   public TxnType getTransactionType();
 
-  public Collection getObjectIDs();
+  public Set getObjectIDs();
   
   public Set getNewObjectIDs();
 

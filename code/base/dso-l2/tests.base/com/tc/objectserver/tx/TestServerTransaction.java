@@ -72,7 +72,7 @@ public final class TestServerTransaction implements ServerTransaction {
     throw new ImplementMe();
   }
 
-  public Collection getObjectIDs() {
+  public Set getObjectIDs() {
     throw new ImplementMe();
   }
 

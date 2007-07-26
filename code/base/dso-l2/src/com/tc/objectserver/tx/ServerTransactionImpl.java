@@ -15,9 +15,9 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
+import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -42,7 +42,7 @@ public class ServerTransactionImpl implements ServerTransaction {
   private final ObjectStringSerializer serializer;
   private final Collection             notifies;
   private final DmiDescriptor[]        dmis;
-  private final Collection             objectIDs;
+  private final Set                    objectIDs;
   private final Set                    newObjectIDs;
   private final TxnBatchID             batchID;
   private final GlobalTransactionID    globalTxnID;
@@ -68,15 +68,17 @@ public class ServerTransactionImpl implements ServerTransaction {
     this.dmis = dmis;
     this.changes = dnas;
     this.serializer = serializer;
-    List ids = new ArrayList(changes.size());
+    Set ids = new HashSet(changes.size());
     HashSet newIDs = new HashSet(changes.size());
+    boolean added = true;
     for (Iterator i = changes.iterator(); i.hasNext();) {
       DNA dna = (DNA) i.next();
-      ids.add(dna.getObjectID());
+      added &= ids.add(dna.getObjectID());
       if (!dna.isDelta()) {
         newIDs.add(dna.getObjectID());
       }
     }
+    Assert.assertTrue(added);
     this.objectIDs = ids;
     this.newObjectIDs = newIDs;
   }
@@ -113,7 +115,7 @@ public class ServerTransactionImpl implements ServerTransaction {
     return transactionType;
   }
 
-  public Collection getObjectIDs() {
+  public Set getObjectIDs() {
     return this.objectIDs;
   }
 
