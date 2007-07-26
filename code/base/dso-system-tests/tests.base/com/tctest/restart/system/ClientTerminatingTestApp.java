@@ -75,7 +75,7 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
         System.err.println(this + "Creating Client with args " + id + " , " + toAdd);
         client = new ExtraL1ProcessControl(getHostName(), getPort(), Client.class, getConfigFilePath(), new String[] {
             "" + id, "" + toAdd, "" + forceKill }, workingDir);
-        client.start(20000);
+        client.start();
         int exitCode = client.waitFor();
         if (exitCode == 0) {
           System.err.println(this + "Client existed Normally");

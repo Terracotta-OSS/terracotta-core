@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.control;
 
@@ -23,7 +24,7 @@ public class IntraProcessServerControl extends ServerControlBase {
     throw new UnsupportedOperationException("Can't crash an in-process server.");
   }
 
-  public synchronized void start(long timeout) throws Exception {
+  public synchronized void start() throws Exception {
     if (isRunning()) throw new RuntimeException("Server is already running!");
     server = new TCServerImpl(this.configSetupManager);
     server.start();

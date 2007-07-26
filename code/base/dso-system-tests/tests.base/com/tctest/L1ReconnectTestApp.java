@@ -68,7 +68,7 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
 
   private void runTest() throws Throwable {
     PortChooser pc = new PortChooser();
-    int dsoPort = Integer.parseInt((String) config.getAttribute(PORT_NUMBER));
+    int dsoPort = Integer.parseInt(config.getAttribute(PORT_NUMBER));
     int dsoProxyPort = pc.chooseRandomPort();
 
     // new TCPProxy(int listenPort, InetAddress destHost, int destPort, long delay, boolean logData, File logDir
@@ -137,8 +137,8 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
   }
 
   private ExtraL1ProcessControl spawnNewClient(int dsoProxyPort) throws Exception {
-    final String hostName = (String) config.getAttribute(HOST_NAME);
-    final File configFile = new File((String) config.getAttribute(CONFIG_FILE));
+    final String hostName = config.getAttribute(HOST_NAME);
+    final File configFile = new File(config.getAttribute(CONFIG_FILE));
     final File proxyConfigFile = createNewConfigFile(configFile, dsoProxyPort);
     File workingDir = new File(configFile.getParentFile(), "l1client");
     FileUtils.forceMkdir(workingDir);
@@ -149,7 +149,7 @@ public class L1ReconnectTestApp extends AbstractTransparentApp {
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, 0 /* not used */, L1Client.class,
                                                              proxyConfigFile.getAbsolutePath(), new String[0],
                                                              workingDir, jvmArgs);
-    client.start(20000);
+    client.start();
     client.mergeSTDERR();
     client.mergeSTDOUT();
     System.err.println("\n### Started New Client");

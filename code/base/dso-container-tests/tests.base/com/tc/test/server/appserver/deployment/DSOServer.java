@@ -16,16 +16,13 @@ import java.io.PrintWriter;
 
 public class DSOServer extends AbstractStoppable {
 
-  private static final String       SERVER_TEST_CONFIG       = "server-config.xml";
+  private static final String       SERVER_TEST_CONFIG = "server-config.xml";
 
-  // XXX move this into the common place for all constants
-  private static final long         DSO_SERVER_START_TIMEOUT = 240 * 1000L;
-
-  private ExtraProcessServerControl serverProc               = null;
+  private ExtraProcessServerControl serverProc         = null;
   private final boolean             withPersistentStore;
 
-  private int                       serverPort               = 9510;
-  private int                       adminPort                = 9520;
+  private int                       serverPort         = 9510;
+  private int                       adminPort          = 9520;
 
   private final File                workingDir;
   private TcConfigBuilder           configBuilder;
@@ -47,7 +44,7 @@ public class DSOServer extends AbstractStoppable {
     File configFile = writeConfig();
     serverProc = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile.getAbsolutePath(), false);
     serverProc.writeOutputTo(new File(workingDir, "dso-server.log"));
-    serverProc.start(DSO_SERVER_START_TIMEOUT);
+    serverProc.start();
   }
 
   protected void doStop() throws Exception {

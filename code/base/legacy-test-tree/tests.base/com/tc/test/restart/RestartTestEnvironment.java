@@ -190,7 +190,7 @@ public class RestartTestEnvironment {
   public void startServer(long timeout) throws Exception {
     assertServerOff();
     assertSetUp();
-    server.start(timeout);
+    server.start();
   }
 
   public void shutdownServer() throws Exception {
@@ -213,7 +213,7 @@ public class RestartTestEnvironment {
         .getAbsolutePath(), mergeServerOutput, javaHome, jvmArgs);
     return serverWrapper;
   }
-  
+
   public ServerControl newExtraProcessServer() throws FileNotFoundException {
     return (newExtraProcessServer(new ArrayList()));
   }
@@ -312,10 +312,10 @@ public class RestartTestEnvironment {
       server.crash();
     }
 
-    public void start(long timeout) throws Exception {
+    public void start() throws Exception {
       assertSetUp();
       assertServerNotNull();
-      server.start(timeout);
+      server.start();
     }
 
     public boolean isRunning() {

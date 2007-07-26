@@ -31,7 +31,7 @@ public final class StandardDsoServer implements DsoServer {
                                               params.jmxPort(), params.configFile().toString(), params.workingDir(),
                                               Directories.getInstallationRoot(), false, jvmArgs, "");
     dsoServer.writeOutputTo(params.outputFile());
-    dsoServer.start(2 * 60 * 1000);
+    dsoServer.start();
 
     return new DsoServerResult(params.dsoPort(), this);
   }

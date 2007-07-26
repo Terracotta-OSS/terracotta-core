@@ -31,7 +31,7 @@ public class ServerCrashAndRestartTestApp extends ServerCrashingAppBase implemen
     DebugUtil.trace("AFTER barrier...");
     if (isMasterNode) {
       getConfig().getServerControl().crash();
-      getConfig().getServerControl().start(30 * 1000);
+      getConfig().getServerControl().start();
     }
     barrier.barrier();
   }

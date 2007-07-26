@@ -20,7 +20,7 @@ public abstract class ServerCrashingAppBase extends AbstractErrorCatchingTranspa
   public static final String HOST_NAME   = "host-name";
 
   private ApplicationConfig  config;
-  
+
   public ServerCrashingAppBase(String appId, ApplicationConfig config, ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
     this.config = config;
@@ -62,7 +62,7 @@ public abstract class ServerCrashingAppBase extends AbstractErrorCatchingTranspa
 
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, clientClass, configFile.getAbsolutePath(),
                                                              new String[0], workingDir);
-    client.start(20000);
+    client.start();
     client.mergeSTDERR();
     client.mergeSTDOUT();
     client.waitFor();

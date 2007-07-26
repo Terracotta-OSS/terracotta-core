@@ -171,7 +171,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     apServerManager = new ActivePassiveServerManager(mode()
         .equals(TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE), getTempDirectory(), portChooser,
                                                      ActivePassiveServerConfigCreator.DEV_MODE, apSetupManager,
-                                                     runnerConfig.startTimeout(), javaHome, configFactory(), jvmArgs);
+                                                     javaHome, configFactory(), jvmArgs);
     apServerManager.addServersToL1Config(configFactory);
   }
 
@@ -396,7 +396,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   protected void startServerControlsAndProxies() throws Exception {
     assertEquals(serverControls.length, 2);
     for (int i = 0; i < serverControls.length; i++) {
-      serverControls[i].start(30 * 1000);
+      serverControls[i].start();
 
       // make sure that the first server becomes active
       if (i == 0) {
@@ -418,7 +418,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
         startServerControlsAndProxies();
       } else if (serverControl != null && crasher == null) {
         // normal mode tests
-        serverControl.start(30 * 1000);
+        serverControl.start();
       }
       // NOTE: for crash tests the server needs to be started by the ServerCrasher.. timing issue
 

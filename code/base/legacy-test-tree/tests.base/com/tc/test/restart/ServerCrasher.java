@@ -39,7 +39,7 @@ public class ServerCrasher implements Runnable {
       synchronized (testState) {
         if (testState.isRunning()) {
           System.err.println("Starting server...");
-          server.start(30 * 1000);
+          server.start();
         }
       }
     } catch (Exception e) {
@@ -61,7 +61,7 @@ public class ServerCrasher implements Runnable {
             if (server.isRunning()) throw new AssertionError("Server is still running even after shutdown or crash.");
 
             System.err.println("Starting server...");
-            server.start(30 * 1000);
+            server.start();
             if (proxyConnectMode) {
               ProxyConnectManagerImpl.getManager().proxyUp();
               ProxyConnectManagerImpl.getManager().startProxyTest();

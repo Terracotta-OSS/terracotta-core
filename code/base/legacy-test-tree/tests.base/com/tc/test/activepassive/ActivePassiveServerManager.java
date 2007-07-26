@@ -38,7 +38,6 @@ public class ActivePassiveServerManager {
   private final PortChooser                      portChooser;
   private final String                           configModel;
   private final ActivePassiveTestSetupManager    setupManger;
-  private final long                             startTimeout;
 
   private final int                              serverCount;
   private final String                           serverCrashMode;
@@ -68,25 +67,23 @@ public class ActivePassiveServerManager {
   private long                                   seed;
   private final File                             javaHome;
   private int                                    pid              = -1;
-  private List                                   jvmArgs = null;
+  private List                                   jvmArgs          = null;
 
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
-                                    String configModel, ActivePassiveTestSetupManager setupManger, long startTimeout,
-                                    File javaHome, TestTVSConfigurationSetupManagerFactory configFactory) 
-  throws Exception {
-    this(isActivePassiveTest, tempDir, portChooser,
-         configModel, setupManger, startTimeout,
-         javaHome, configFactory, new ArrayList());
-    
+                                    String configModel, ActivePassiveTestSetupManager setupManger,
+                                    File javaHome, TestTVSConfigurationSetupManagerFactory configFactory)
+      throws Exception {
+    this(isActivePassiveTest, tempDir, portChooser, configModel, setupManger, javaHome, configFactory,
+         new ArrayList());
+
   }
 
-  
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
-                                    String configModel, ActivePassiveTestSetupManager setupManger, long startTimeout,
-                                    File javaHome, TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs)
+                                    String configModel, ActivePassiveTestSetupManager setupManger, File javaHome,
+                                    TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs)
       throws Exception {
     this.jvmArgs = extraJvmArgs;
-   
+
     if (!isActivePassiveTest) { throw new AssertionError("A non-ActivePassiveTest is trying to use this class."); }
 
     this.setupManger = setupManger;
@@ -102,7 +99,6 @@ public class ActivePassiveServerManager {
 
     this.portChooser = portChooser;
     this.configModel = configModel;
-    this.startTimeout = startTimeout * 2;
 
     serverCrashMode = this.setupManger.getServerCrashMode();
     serverCrashWaitTimeInSec = this.setupManger.getServerCrashWaitTimeInSec();
@@ -234,7 +230,7 @@ public class ActivePassiveServerManager {
     if (activeIndex >= 0) { throw new AssertionError("Server(s) has/have been already started"); }
 
     for (int i = 0; i < servers.length; i++) {
-      servers[i].getServerControl().start(startTimeout);
+      servers[i].getServerControl().start();
     }
     Thread.sleep(500 * servers.length);
 
@@ -560,7 +556,7 @@ public class ActivePassiveServerManager {
                                                                                                    + servers[lastCrashedIndex]
                                                                                                        .getDsoPort()
                                                                                                    + "] is not down as expected!"); }
-      servers[lastCrashedIndex].getServerControl().start(startTimeout);
+      servers[lastCrashedIndex].getServerControl().start();
 
       if (!servers[lastCrashedIndex].getServerControl().isRunning()) { throw new AssertionError(
                                                                                                 "Server["

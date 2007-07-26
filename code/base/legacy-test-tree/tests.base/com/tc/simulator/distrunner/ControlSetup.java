@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.simulator.distrunner;
 
@@ -100,7 +101,7 @@ public class ControlSetup {
   private void startServer() {
     try {
       this.server.crash();
-      this.server.start(30 * 1000);
+      this.server.start();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tcsimulator;
 
@@ -28,7 +29,6 @@ import java.util.List;
 
 public class Setup {
 
-  private static final int    SERVER_START_TIMEOUT = 30 * 1000;
   private final ServerSpec    testServerSpec;
   private final String        testAppClassName;
   private final ServerControl server;
@@ -36,8 +36,8 @@ public class Setup {
   private final boolean       isServerMachine;
   private final ConfigWriter  configWriter;
   private Sandbox             sandbox;
-  private final boolean       debugTestSetup       = false;
-  private final boolean       debugTestStarter     = false;
+  private final boolean       debugTestSetup   = false;
+  private final boolean       debugTestStarter = false;
   private LinkedJavaProcess   testStarterProcess;
   private LinkedJavaProcess   testSetupProcess;
 
@@ -128,12 +128,12 @@ public class Setup {
 
   public void crashServer() throws Exception {
     synchronized (this.server) {
-      //if (!this.server.isRunning()) { throw new RuntimeException("Server is not running... server crash failed!"); }
+      // if (!this.server.isRunning()) { throw new RuntimeException("Server is not running... server crash failed!"); }
       this.server.crash();
       if (this.server.isRunning()) { throw new RuntimeException("srever is still running... server crash failed!"); }
 
       ((TestEnvironmentViewImpl) this.testEnvironmentView).setServerRunning(ServerView.NOT_RUNNING);
-      
+
       this.responseQueue.put("Crash successful!");
     }
   }
@@ -141,11 +141,11 @@ public class Setup {
   public void restartServer() throws Exception {
     synchronized (this.server) {
       if (this.server.isRunning()) { throw new RuntimeException("Server is already running... server restart failed!"); }
-      this.server.start(SERVER_START_TIMEOUT);
+      this.server.start();
       if (!this.server.isRunning()) { throw new RuntimeException("Server is not running... server restart failed!"); }
 
       ((TestEnvironmentViewImpl) this.testEnvironmentView).setServerRunning(ServerView.RUNNING);
-      
+
       this.responseQueue.put("Restart successful!");
     }
   }
@@ -167,7 +167,7 @@ public class Setup {
   private void startServer() {
     try {
       server.crash();
-      server.start(SERVER_START_TIMEOUT);
+      server.start();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

@@ -51,7 +51,6 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     PortChooser portChooser = new PortChooser();
     List jvmArgs = new ArrayList();
     int proxyPort = portChooser.chooseRandomPort();
-    long startTimeout = 2 * 60 * 1000;
 
     RestartTestHelper helper = new RestartTestHelper(isCrashy,
                                                      new RestartTestEnvironment(this.getTempDirectory(), portChooser,
@@ -66,7 +65,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     mgr.setProxyPort(proxyPort);
     mgr.setupProxy();
 
-    server.start(startTimeout);
+    server.start();
 
     mgr.proxyUp();
 
@@ -102,7 +101,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     server.crash();
 
     // start the server back up
-    server.start(startTimeout);
+    server.start();
     mgr.proxyUp();
 
     // give time for jmx server to start up

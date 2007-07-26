@@ -212,7 +212,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     this.out = outputFile;
   }
 
-  public void start(long timeout) throws Exception {
+  public void start() throws Exception {
     System.err.println("Starting " + this.name + /* ": jvmArgs=" + jvmArgs + */", main=" + getMainClassName()
                        + ", main args=" + ArrayUtils.toString(getMainClassArguments()));
     process = createLinkedJavaProcess();
@@ -228,7 +228,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
       outCopier.start();
       errCopier.start();
     }
-    waitUntilStarted(timeout);
+    waitUntilStarted();
     System.err.println(this.name + " started.");
   }
 
@@ -267,14 +267,9 @@ public class ExtraProcessServerControl extends ServerControlBase {
     System.out.println(this.name + " stopped.");
   }
 
-  private void waitUntilStarted(long timeout) throws Exception {
-    long timeoutTime = System.currentTimeMillis() + timeout;
+  private void waitUntilStarted() throws Exception {
     while (true) {
       if (isRunning()) return;
-      if (System.currentTimeMillis() > timeoutTime) {
-        //
-        throw new RuntimeException("Timeout occurred waiting for server to start: " + timeout + " ms.");
-      }
       Thread.sleep(1000);
     }
   }

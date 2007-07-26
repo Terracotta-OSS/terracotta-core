@@ -31,16 +31,16 @@ import javax.management.ObjectName;
 
 public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp implements NotificationListener {
 
-  public static final String      CONFIG_FILE      = "config-file";
-  public static final String      PORT_NUMBER      = "port-number";
-  public static final String      HOST_NAME        = "host-name";
+  public static final String      CONFIG_FILE    = "config-file";
+  public static final String      PORT_NUMBER    = "port-number";
+  public static final String      HOST_NAME      = "host-name";
 
   private final ApplicationConfig config;
 
-  private MBeanServer             server           = null;
-  private ObjectName              clusterBean      = null;
-  private List                    clusterBeanBag   = new ArrayList();
-  private Map                     eventsCount      = new HashMap();
+  private MBeanServer             server         = null;
+  private ObjectName              clusterBean    = null;
+  private List                    clusterBeanBag = new ArrayList();
+  private Map                     eventsCount    = new HashMap();
 
   public ClusterMembershipEventJMXTestApp(String appId, ApplicationConfig config, ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
@@ -75,7 +75,7 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     }
     // this sleep should be longer than l1-reconnect timeout
     Thread.sleep(30 * 1000);
-    config.getServerControl().start(30 * 1000);
+    config.getServerControl().start();
     while (!config.getServerControl().isRunning()) {
       Thread.sleep(5000);
     }
@@ -85,10 +85,10 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
       while (eventsCount.size() < 4) {
         eventsCount.wait(3 * 60 * 1000);
       }
-      Assert.assertTrue(((Integer)eventsCount.get("com.tc.cluster.event.nodeDisconnected")).intValue() >= 1);
-      Assert.assertTrue(((Integer)eventsCount.get("com.tc.cluster.event.nodeConnected")).intValue() >= 1);
-      Assert.assertTrue(((Integer)eventsCount.get("com.tc.cluster.event.thisNodeDisconnected")).intValue() >= 1);
-      Assert.assertTrue(((Integer)eventsCount.get("com.tc.cluster.event.thisNodeConnected")).intValue() >= 1);
+      Assert.assertTrue(((Integer) eventsCount.get("com.tc.cluster.event.nodeDisconnected")).intValue() >= 1);
+      Assert.assertTrue(((Integer) eventsCount.get("com.tc.cluster.event.nodeConnected")).intValue() >= 1);
+      Assert.assertTrue(((Integer) eventsCount.get("com.tc.cluster.event.thisNodeDisconnected")).intValue() >= 1);
+      Assert.assertTrue(((Integer) eventsCount.get("com.tc.cluster.event.thisNodeConnected")).intValue() >= 1);
     }
   }
 
@@ -180,7 +180,7 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
 
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class, configFile
         .getAbsolutePath(), new String[0], workingDir);
-    client.start(20000);
+    client.start();
     client.mergeSTDERR();
     client.mergeSTDOUT();
     client.waitFor();

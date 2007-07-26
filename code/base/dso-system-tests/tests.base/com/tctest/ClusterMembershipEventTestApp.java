@@ -55,7 +55,7 @@ public class ClusterMembershipEventTestApp extends ServerCrashingAppBase impleme
       ThreadUtil.reallySleep(30 * 1000);
       System.err.println("### masterNode=" + thisNode + " -> crashed server");
       System.err.println("### masterNode=" + thisNode + " -> restarting server...");
-      getConfig().getServerControl().start(30 * 1000);
+      getConfig().getServerControl().start();
       System.err.println("### masterNode=" + thisNode + " -> restarted server");
     }
     System.err.println("### stage 2 [reconnecting]: thisNode=" + thisNode + ", threadId="

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.restart.unit;
 
@@ -141,7 +142,7 @@ public class DSOServerRestartTester extends TCTestCase {
       System.out.println(snapshot);
       assertEquals(apps.length - i - 1, snapshot.getWaiters().length);
       if (i + 1 < apps.length) {
-        server.start(startTimeout);
+        server.start();
       }
     }
     snapshot.takeSnapshot();
@@ -149,14 +150,14 @@ public class DSOServerRestartTester extends TCTestCase {
   }
 
   public void testDSOWaitNotifyAll() throws Exception {
-    env.newExtraProcessServer().start(startTimeout);
+    env.newExtraProcessServer().start();
     RestartUnitTestApp[] apps = newTestApps(10);
     basicTestWaitNotifyAll(apps);
     waitForTestThreads();
   }
 
   public void testDSOTimedWait() throws Exception {
-    env.newExtraProcessServer().start(startTimeout);
+    env.newExtraProcessServer().start();
     RestartUnitTestApp[] apps = newTestApps(10);
     basicTestTimedWait(apps);
     waitForTestThreads();
@@ -203,7 +204,7 @@ public class DSOServerRestartTester extends TCTestCase {
     assertTrue(snapshot.takeSnapshot().allWaiters());
     ThreadUtil.reallySleep(waitTime);
     assertTrue(snapshot.takeSnapshot().allWaiters());
-    server.start(startTimeout);
+    server.start();
     while (!snapshot.takeSnapshot().allEnded()) {
       System.out.println(snapshot);
       ThreadUtil.reallySleep(500);
@@ -247,7 +248,7 @@ public class DSOServerRestartTester extends TCTestCase {
     }).start();
 
     serverStartBarrier.barrier();
-    server.start(startTimeout);
+    server.start();
     do {
       snapshot.takeSnapshot();
       System.out.println(snapshot);
@@ -257,16 +258,16 @@ public class DSOServerRestartTester extends TCTestCase {
 
   private RestartUnitTestApp newRestartTestApp(ThreadGroup tg) throws Exception {
     // FIXME 2005-12-01 andrew
-//    IsolationClassLoader cl = new IsolationClassLoader(env.getDSOConfig(), env.getL1DSOConfig());
-//    Class clazz = cl.loadClass(DSOServerRestartTestApp.class.getName());
-//    Constructor ctor = clazz.getConstructor(new Class[] { ThreadGroup.class });
-//    return (RestartUnitTestApp) ctor.newInstance(new Object[] { tg });
+    // IsolationClassLoader cl = new IsolationClassLoader(env.getDSOConfig(), env.getL1DSOConfig());
+    // Class clazz = cl.loadClass(DSOServerRestartTestApp.class.getName());
+    // Constructor ctor = clazz.getConstructor(new Class[] { ThreadGroup.class });
+    // return (RestartUnitTestApp) ctor.newInstance(new Object[] { tg });
     return null;
   }
 
   private RestartUnitTestApp[] newTestApps(int instanceCount) throws Exception {
     // FIXME 2005-12-01 andrew
-//    DSOServerRestartTestApp.visitL1DSOConfig(null, env.getL1DSOConfig());
+    // DSOServerRestartTestApp.visitL1DSOConfig(null, env.getL1DSOConfig());
     RestartUnitTestApp[] apps = new RestartUnitTestApp[instanceCount];
     for (int i = 0; i < apps.length; i++) {
       apps[i] = newRestartTestApp(env.getThreadGroup());
