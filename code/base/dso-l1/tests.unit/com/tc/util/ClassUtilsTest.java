@@ -237,6 +237,8 @@ public class ClassUtilsTest extends TestCase {
           return Boolean.TRUE;
         } else if ("isPortableModuleClass".equals(name)) {
           return Boolean.FALSE;
+        } else if ("getSpec".equals(name)) {
+          return null;
         } else if ("isNeverAdaptable".equals(name)) {
           return neverAdaptaed.contains(((ClassInfo) args[0]).getName()) ? Boolean.TRUE : Boolean.FALSE;
         } else if ("isLogical".equals(name)) { //
