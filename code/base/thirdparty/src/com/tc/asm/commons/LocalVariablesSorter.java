@@ -150,8 +150,7 @@ public class LocalVariablesSorter extends MethodAdapter {
         final Label end,
         final int index)
     {
-        int size = "J".equals(desc) || "D".equals(desc) ? 2 : 1;
-        int newIndex = remap(index, size);
+        int newIndex = remap(index, Type.getType(desc));
         if(newIndex==-1) {
           throw new IllegalStateException("Unknown local variable " + index + " : " + name + " " + desc);          
         }
@@ -310,8 +309,7 @@ public class LocalVariablesSorter extends MethodAdapter {
         int key = 2 * var + size - 1;
         int value = key < mapping.length ? mapping[key] : 0;
         if (value == 0) {
-            // throw new IllegalStateException("Unknown local variable " + var);
-            return -1;
+            throw new IllegalStateException("Unknown local variable " + var);
         }
         return value - 1;
     }
