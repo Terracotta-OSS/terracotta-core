@@ -415,10 +415,12 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     ManagedObjectFaultHandler managedObjectFaultHandler = new ManagedObjectFaultHandler();
     // Server initiated request processing queues shouldn't have any max queue size.
     Stage faultManagedObjectStage = stageManager.createStage(ServerConfigurationContext.MANAGED_OBJECT_FAULT_STAGE,
-                                                             managedObjectFaultHandler, 4, -1);
+                                                             managedObjectFaultHandler, l2Properties
+                                                                 .getInt("seda.faultstage.threads"), -1);
     ManagedObjectFlushHandler managedObjectFlushHandler = new ManagedObjectFlushHandler();
     Stage flushManagedObjectStage = stageManager.createStage(ServerConfigurationContext.MANAGED_OBJECT_FLUSH_STAGE,
-                                                             managedObjectFlushHandler, (persistent ? 1 : 4), -1);
+                                                             managedObjectFlushHandler, (persistent ? 1 : l2Properties
+                                                                 .getInt("seda.flushstage.threads")), -1);
 
     TCProperties objManagerProperties = l2Properties.getPropertiesFor("objectmanager");
 
@@ -467,6 +469,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     TransactionBatchManager transactionBatchManager = new TransactionBatchManagerImpl();
     SampledCounter globalTxnCounter = sampledCounterManager.createCounter(new SampledCounterConfig(1, 300, true, 0L));
 
+    
     final TransactionStore transactionStore = new TransactionStoreImpl(transactionPersistor,
                                                                        globalTransactionIDSequence);
     ServerGlobalTransactionManager gtxm = new ServerGlobalTransactionManagerImpl(sequenceValidator, transactionStore,
@@ -487,7 +490,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
     // Server initiated request processing stages should not be bounded
     stageManager.createStage(ServerConfigurationContext.RECALL_OBJECTS_STAGE, new RecallObjectsHandler(), 1, -1);
 
-    int commitThreads = (persistent ? 4 : 1);
+    int commitThreads = (persistent ? l2Properties.getInt("seda.commitstage.threads") : 1);
     stageManager.createStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE,
                              new CommitTransactionChangeHandler(transactionStorePTP), commitThreads, maxStageSize);
 
