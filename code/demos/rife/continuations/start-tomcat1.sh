@@ -26,7 +26,8 @@ CWD=`dirname "$0"`
 TC_INSTALL_DIR=${CWD}/../../..
 
 TC_CONFIG_PATH="${CWD}/tc-config.xml"
-. "${TC_INSTALL_DIR}/bin/dso-env.sh" -q "${TC_CONFIG}"
+set -- -q "${TC_CONFIG}"
+. "${TC_INSTALL_DIR}/bin/dso-env.sh"
 
 OPTS="${TC_JAVA_OPTS} -Dcom.sun.management.jmxremote"
 OPTS="${OPTS} -Dcom.sun.management.jmxremote.port=8091"

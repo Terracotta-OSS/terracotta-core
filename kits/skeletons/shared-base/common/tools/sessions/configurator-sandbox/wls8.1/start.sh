@@ -28,7 +28,8 @@ PORT="$1"
 
 if test "$2" != "nodso"; then
   TC_CONFIG_PATH="${SANDBOX}/wls8.1/tc-config.xml"
-  . "${TC_INSTALL_DIR}/bin/dso-env.sh" -q ${TC_CONFIG}
+  set -- -q "${TC_CONFIG}"
+  . "${TC_INSTALL_DIR}/bin/dso-env.sh"
 
   OPTS="${TC_JAVA_OPTS} -Dwebserver.log.name=${PORT}"
   OPTS="${OPTS} -Dcom.sun.management.jmxremote"
