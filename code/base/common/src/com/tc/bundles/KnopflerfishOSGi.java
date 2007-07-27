@@ -71,32 +71,17 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
           // here, and we're running a test, then it breaks the test;
           // but if we're in production and 'bundleDir' does not exists, then
           // the client wont be notified of the anomaly; maybe print a warning message???
-          logger.warn("The bundle repository: '" + bundleDir.toString() + "' does not exist.");
+          logger.warn("The bundle repository: '" + bundleDir + "' does not exist.");
           continue;
         }
 
-        if (!bundleDir.isDirectory()) { throw new BundleException("Invalid bundle repository specified in the URL ["
-            + bundleDir + "]"); }
+        if (!bundleDir.isDirectory()) {
+          throw new BundleException("Invalid bundle repository specified in the URL [" + bundleDir + "]");
+        }
 
-        final File[] bundleFiles = bundleDir.listFiles(new FileFilter() {
-          public boolean accept(final File file) {
-            final boolean isOk = file.isFile() && file.getName().matches(BUNDLE_FILENAME_PATTERN);
-            if (!isOk) {
-              final String msg = MessageFormat.format("Skipped config-bundle installation of file: {0}, "
-                  + "config-bundle filenames are expected to conform to the following pattern: {1}", new String[] {
-                  file.getName(), BUNDLE_FILENAME_PATTERN });
-              logger.warn(msg);
-            }
-            return isOk;
-          }
-        });
-
+        final File[] bundleFiles = findBundleFiles(bundleDir);
         for (int j = 0; j < bundleFiles.length; j++) {
-          final String bundleName = bundleFiles[j].getName().replaceFirst(
-              "-" + MODULE_VERSION_REGEX + MODULE_FILENAME_EXT_REGEX, "");
-          final String bundleVersion = bundleFiles[j].getName().replaceFirst(MODULE_FILENAME_REGEX, "").replaceFirst(
-              MODULE_FILENAME_EXT_REGEX, "");
-          installBundle(bundleName, bundleVersion);
+          installBundle(getBundleName(bundleFiles[j]), getBundleVersion(bundleFiles[j]));
         }
       }
     }
@@ -126,6 +111,25 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
       throw new BundleException("Unable to find bundle '" + bundleName + "', version '" + bundleVersion
           + "' from the default repository or any of the repositories listed in your config");
     }
+  }
+
+  /**
+   * Finds all files in the given <code>bundleDir</code> for which {@link #isBundleFileName(File)}
+   * is <code>true</code> and returns them as a File[].
+   */
+  protected File[] findBundleFiles(final File bundleDir) {
+    return bundleDir.listFiles(new FileFilter() {
+      public boolean accept(final File file) {
+        final boolean isOk = isBundleFileName(file);
+        if (!isOk) {
+          final String msg = MessageFormat.format("Skipped config-bundle installation of file: {0}, "
+              + "config-bundle filenames are expected to conform to the following pattern: {1}", new String[] {
+              file.getName(), BUNDLE_FILENAME_PATTERN });
+          logger.warn(msg);
+        }
+        return isOk;
+      }
+    });
   }
 
   private Bundle findBundleBySymbolicName(final RequiredBundleSpec spec) {
@@ -245,6 +249,24 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
   private String getSymbolicName(final String bundleName, final String bundleVersion) throws BundleException {
     final Bundle bundle = framework.getSystemBundleContext().getBundle(getBundleID(bundleName, bundleVersion));
     return bundle.getSymbolicName();
+  }
+
+  private String getBundleVersion(File bundleFile) {
+    return bundleFile.getName().replaceFirst(MODULE_FILENAME_REGEX, "").replaceFirst(
+        MODULE_FILENAME_EXT_REGEX, "");
+  }
+
+  private String getBundleName(File bundleFile) {
+    return bundleFile.getName().replaceFirst(
+        "-" + MODULE_VERSION_REGEX + MODULE_FILENAME_EXT_REGEX, "");
+  }
+
+  /**
+   * Returns <code>true</code> if the given File object refers to a file matching the
+   * {@link KnopflerfishOSGi#BUNDLE_FILENAME_PATTERN}, <code>false</code> otherwise.
+   */
+  protected boolean isBundleFileName(final File file) {
+    return file.isFile() && file.getName().matches(BUNDLE_FILENAME_PATTERN);
   }
 
 }
