@@ -13,6 +13,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DSOServer extends AbstractStoppable {
 
@@ -23,6 +25,7 @@ public class DSOServer extends AbstractStoppable {
 
   private int                       serverPort         = 9510;
   private int                       adminPort          = 9520;
+  private List                      jvmArgs            = new ArrayList();
 
   private final File                workingDir;
   private TcConfigBuilder           configBuilder;
@@ -44,6 +47,7 @@ public class DSOServer extends AbstractStoppable {
     File configFile = writeConfig();
     serverProc = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile.getAbsolutePath(), false);
     serverProc.writeOutputTo(new File(workingDir, "dso-server.log"));
+    serverProc.getJvmArgs().addAll(jvmArgs);
     serverProc.start();
   }
 
@@ -92,4 +96,9 @@ public class DSOServer extends AbstractStoppable {
   public int getAdminPort() {
     return adminPort;
   }
+  
+  public List getJvmArgs() {
+    return jvmArgs;
+  }
+
 }

@@ -12,6 +12,7 @@ import com.tc.test.server.appserver.AppServerInstallation;
 import com.tc.test.server.util.AppServerUtil;
 import com.tc.test.server.util.TcConfigBuilder;
 import com.tc.util.PortChooser;
+import com.tc.util.runtime.Vm;
 
 import java.io.File;
 import java.io.IOException;
@@ -89,6 +90,9 @@ public class ServerManager {
 
   private void startDSO(boolean withPersistentStore) throws Exception {
     dsoServer = new DSOServer(withPersistentStore, tempDir, serverTcConfig);
+    if (!Vm.isIBM()) {
+      dsoServer.getJvmArgs().add("-XX:+HeapDumpOnOutOfMemory");
+    }
     logger.debug("Starting DSO server with sandbox: " + sandbox.getAbsolutePath());
     dsoServer.start();
     addServerToStop(dsoServer);
