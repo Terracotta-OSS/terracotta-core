@@ -341,4 +341,8 @@ public class ExtraProcessServerControl extends ServerControlBase {
     }
   }
 
+  public List getJvmArgs() {
+    return jvmArgs;
+  }
+
 }
