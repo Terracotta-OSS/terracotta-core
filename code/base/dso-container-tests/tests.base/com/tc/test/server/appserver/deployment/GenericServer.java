@@ -89,7 +89,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
     parameters.appendSysProp("tc.session.classpath", config.sessionClasspath());
     
     if (!Vm.isIBM()) {
-      parameters.appendJvmArgs("-XX:+HeapDumpOnOutOfMemory");
+      parameters.appendJvmArgs("-XX:+HeapDumpOnOutOfMemoryError");
     }
 
     // glassfish fails with these options on

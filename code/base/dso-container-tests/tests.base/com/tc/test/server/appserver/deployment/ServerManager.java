@@ -91,7 +91,7 @@ public class ServerManager {
   private void startDSO(boolean withPersistentStore) throws Exception {
     dsoServer = new DSOServer(withPersistentStore, tempDir, serverTcConfig);
     if (!Vm.isIBM()) {
-      dsoServer.getJvmArgs().add("-XX:+HeapDumpOnOutOfMemory");
+      dsoServer.getJvmArgs().add("-XX:+HeapDumpOnOutOfMemoryError");
     }
     logger.debug("Starting DSO server with sandbox: " + sandbox.getAbsolutePath());
     dsoServer.start();
