@@ -28,11 +28,17 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.CyclicBarrier;
 
+/**
+ * Test to make sure local object state is preserved when TC throws UnlockedSharedObjectException
+ * and ReadOnlyException - INT-186
+ * 
+ * @author hhuynh
+ */
 public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp {
   private List<MapWrapper> root       = new ArrayList<MapWrapper>();
   private CyclicBarrier    barrier;
   private Class[]          mapClasses = new Class[] { HashMap.class, TreeMap.class, Hashtable.class,
-      LinkedHashMap.class, THashMap.class, /* FastHashMap.class */};
+      LinkedHashMap.class, THashMap.class /*, ConcurrentHashMap.class, FastHashMap.class */};
 
   public LocalObjectStateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -80,7 +86,7 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
     if (await() == 0) {
       m.getHandler().setReadLock(testWithReadLock);
       try {
-        mutator.doMutate(m.getMap());
+        mutator.doMutate(m.getMapProxy());
       } catch (Exception e) {
         System.out.println("Expected: " + e.getClass());
       }
