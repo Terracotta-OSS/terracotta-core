@@ -25,14 +25,13 @@ import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp {
   private List<MapWrapper> root       = new ArrayList<MapWrapper>();
   private CyclicBarrier    barrier    = new CyclicBarrier(2);
   private Class[]          mapClasses = new Class[] { HashMap.class, TreeMap.class, Hashtable.class,
-      LinkedHashMap.class, THashMap.class /* , FastHashMap.class */};
+      LinkedHashMap.class, THashMap.class, /*FastHashMap.class*/};
 
   public LocalObjectStateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -46,9 +45,8 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
 
     for (Boolean withReadLock : new Boolean[] { Boolean.FALSE, Boolean.TRUE }) {
       for (MapWrapper mw : root) {
-        testPutMutate(mw, withReadLock);
-        testPutAllMutate(mw, withReadLock);
-        testAddKeySetMutate(mw, withReadLock);
+        testWrapper(mw, withReadLock, new PutMutator());
+        testWrapper(mw, withReadLock, new PutAllMutator());
       }
     }
   }
@@ -61,56 +59,14 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
     }
   }
 
-  private void testPutMutate(MapWrapper m, boolean testWithReadLock) throws Exception {
+  private void testWrapper(MapWrapper m, boolean testWithReadLock, Mutator mutator) throws Exception {
     int currentSize = m.getMap().size();
     boolean currentReadLock = m.getHandler().getReadLock();
 
     if (await() == 0) {
       m.getHandler().setReadLock(testWithReadLock);
       try {
-        m.getMapProxy().put("key", "value");
-      } catch (Exception e) {
-        System.out.println("Expected: " + e.getClass());
-      }
-    }
-
-    await();
-    m.getHandler().setReadLock(currentReadLock);
-    Assert.assertEquals("Map type: " + m.getMap().getClass() + ", readLock: " + testWithReadLock, currentSize, m
-        .getMap().size());
-  }
-
-  private void testPutAllMutate(MapWrapper m, boolean testWithReadLock) throws Exception {
-    int currentSize = m.getMap().size();
-    boolean currentReadLock = m.getHandler().getReadLock();
-
-    if (await() == 0) {
-      m.getHandler().setReadLock(testWithReadLock);
-      try {
-        Map lhm = new LinkedHashMap();
-        lhm.put("a", "a");
-        lhm.put("b", "b");
-        m.getMapProxy().putAll(lhm);
-      } catch (Exception e) {
-        System.out.println("Expected: " + e.getClass());
-      }
-    }
-
-    await();
-    m.getHandler().setReadLock(currentReadLock);
-    Assert.assertEquals("Map type: " + m.getMap().getClass() + ", readLock: " + testWithReadLock, currentSize, m
-        .getMap().size());
-  }
-
-  private void testAddKeySetMutate(MapWrapper m, boolean testWithReadLock) throws Exception {
-    int currentSize = m.getMap().size();
-    boolean currentReadLock = m.getHandler().getReadLock();
-
-    if (await() == 0) {
-      m.getHandler().setReadLock(testWithReadLock);
-      try {
-        Set keys = m.getMapProxy().keySet();
-        keys.add("dud");
+        mutator.doMutate(m.getMap());
       } catch (Exception e) {
         System.out.println("Expected: " + e.getClass());
       }
@@ -183,7 +139,7 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
     }
   }
 
-  static class MapWrapper {
+  private static class MapWrapper {
     private Map     map;
     private Map     proxy;
     private Handler handler;
@@ -206,4 +162,25 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
       return handler;
     }
   }
+
+  private static interface Mutator {
+    public void doMutate(Object o);
+  }
+
+  private static class PutMutator implements Mutator {
+    public void doMutate(Object o) {
+      Map map = (Map)o;
+      map.put("key", "value");
+    }
+  }
+
+  private static class PutAllMutator implements Mutator {
+    public void doMutate(Object o) {
+      Map map = (Map)o;
+      Map anotherMap = new HashMap();
+      anotherMap.put("k", "v");
+      map.putAll(anotherMap);
+    }
+  }
+  
 }
