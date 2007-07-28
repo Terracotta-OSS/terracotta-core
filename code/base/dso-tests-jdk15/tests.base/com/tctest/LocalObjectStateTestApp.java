@@ -4,8 +4,6 @@
  */
 package com.tctest;
 
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
-
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -28,15 +26,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.CyclicBarrier;
 
 public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp {
   private List<MapWrapper> root       = new ArrayList<MapWrapper>();
-  private CyclicBarrier    barrier    = new CyclicBarrier(LocalObjectStateTest.NODE_COUNT);
+  private CyclicBarrier    barrier;
   private Class[]          mapClasses = new Class[] { HashMap.class, TreeMap.class, Hashtable.class,
       LinkedHashMap.class, THashMap.class, /* FastHashMap.class */};
 
   public LocalObjectStateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
+    barrier = new CyclicBarrier(cfg.getGlobalParticipantCount());
   }
 
   protected void runTest() throws Throwable {
@@ -94,19 +94,17 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
 
   private int await() {
     try {
-      return barrier.barrier();
+      return barrier.await();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    TransparencyClassSpec spec = config.getOrCreateSpec(CyclicBarrier.class.getName());
-    config.addWriteAutolock("* " + CyclicBarrier.class.getName() + "*.*(..)");
     config.addNewModule("clustered-commons-collections-3.1", "1.0.0");
 
     String testClass = LocalObjectStateTestApp.class.getName();
-    spec = config.getOrCreateSpec(testClass);
+    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
     config.addIncludePattern(testClass + "$*");
 
