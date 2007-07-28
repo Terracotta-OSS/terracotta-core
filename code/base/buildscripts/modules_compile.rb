@@ -76,7 +76,9 @@ class BuildSubtree
                 }
             end
 
-            create_build_data(config_source, build_results, build_environment)
+            if (build_module.name =~ /common/)
+              create_build_data(config_source, build_results, build_environment)
+            end
 
             if self.build_module.module?
               build_src_dir = FilePath.new(
