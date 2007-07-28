@@ -135,6 +135,10 @@ public class Assert {
     if (expected != actual) { throw new TCAssertionError("Expected <" + expected + "> but got <" + actual + ">"); }
   }
 
+  public static void assertEquals(Object msg, int expected, int actual) {
+    if (expected != actual) { throw new TCAssertionError(msg.toString() + ": Expected <" + expected + "> but got <" + actual + ">"); }
+  }
+  
   public static void assertEquals(double expected, double actual) {
     if (expected != actual) { throw new TCAssertionError("Expected <" + expected + "> but got <" + actual + ">"); }
   }
