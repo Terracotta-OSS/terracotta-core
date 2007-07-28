@@ -20,18 +20,20 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp {
   private List<MapWrapper> root       = new ArrayList<MapWrapper>();
-  private CyclicBarrier    barrier    = new CyclicBarrier(2);
+  private CyclicBarrier    barrier    = new CyclicBarrier(LocalObjectStateTest.NODE_COUNT);
   private Class[]          mapClasses = new Class[] { HashMap.class, TreeMap.class, Hashtable.class,
-      LinkedHashMap.class, THashMap.class, /*FastHashMap.class*/};
+      LinkedHashMap.class, THashMap.class, /* FastHashMap.class */};
 
   public LocalObjectStateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -45,21 +47,33 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
 
     for (Boolean withReadLock : new Boolean[] { Boolean.FALSE, Boolean.TRUE }) {
       for (MapWrapper mw : root) {
-        testWrapper(mw, withReadLock, new PutMutator());
-        testWrapper(mw, withReadLock, new PutAllMutator());
+        testMutate(mw, withReadLock, new PutMutator());
+        testMutate(mw, withReadLock, new PutAllMutator());
+        testMutate(mw, withReadLock, new RemoveMutator());
+        testMutate(mw, withReadLock, new ClearMutator());
+        testMutate(mw, withReadLock, new KeySetClearMutator());
+        testMutate(mw, withReadLock, new RemoveValueMutator());
+        testMutate(mw, withReadLock, new EntrySetClearMutator());
       }
     }
   }
 
   private void createMaps() throws Exception {
+    Map data = new HashMap();
+    data.put("k1", "v1");
+    data.put("k2", "v2");
+    data.put("k3", "v3");
+
     synchronized (root) {
       for (Class k : mapClasses) {
-        root.add(new MapWrapper(k));
+        MapWrapper mw = new MapWrapper(k);
+        mw.getMap().putAll(data);
+        root.add(mw);
       }
     }
   }
 
-  private void testWrapper(MapWrapper m, boolean testWithReadLock, Mutator mutator) throws Exception {
+  private void testMutate(MapWrapper m, boolean testWithReadLock, Mutator mutator) throws Exception {
     int currentSize = m.getMap().size();
     boolean currentReadLock = m.getHandler().getReadLock();
 
@@ -169,18 +183,63 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
 
   private static class PutMutator implements Mutator {
     public void doMutate(Object o) {
-      Map map = (Map)o;
+      Map map = (Map) o;
       map.put("key", "value");
     }
   }
 
   private static class PutAllMutator implements Mutator {
     public void doMutate(Object o) {
-      Map map = (Map)o;
+      Map map = (Map) o;
       Map anotherMap = new HashMap();
       anotherMap.put("k", "v");
       map.putAll(anotherMap);
     }
   }
-  
+
+  private static class RemoveMutator implements Mutator {
+    public void doMutate(Object o) {
+      Map map = (Map) o;
+      map.remove("k1");
+    }
+  }
+
+  private static class ClearMutator implements Mutator {
+    public void doMutate(Object o) {
+      Map map = (Map) o;
+      map.clear();
+    }
+  }
+
+  private static class RemoveValueMutator implements Mutator {
+    public void doMutate(Object o) {
+      Map map = (Map) o;
+      Collection values = map.values();
+      values.remove("v1");
+    }
+  }
+
+  private static class EntrySetClearMutator implements Mutator {
+    public void doMutate(Object o) {
+      Map map = (Map) o;
+      Set entries = map.entrySet();
+      entries.clear();
+    }
+  }
+
+  private static class KeySetClearMutator implements Mutator {
+    public void doMutate(Object o) {
+      Map map = (Map) o;
+      Set keys = map.keySet();
+      keys.clear();
+    }
+  }
+
+  private static class KeySetRemoveMutator implements Mutator {
+    public void doMutate(Object o) {
+      Map map = (Map) o;
+      Set keys = map.keySet();
+      keys.remove("k1");
+    }
+  }
 }
