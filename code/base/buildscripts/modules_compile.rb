@@ -76,7 +76,7 @@ class BuildSubtree
                 }
             end
 
-            if (build_module.name =~ /common/)
+            if (build_module.name == 'common')
               create_build_data(config_source, build_results, build_environment)
             end
 
