@@ -4,6 +4,8 @@
  */
 package com.tctest;
 
+import org.apache.commons.collections.FastHashMap;
+
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -17,6 +19,8 @@ import gnu.trove.THashMap;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.UndeclaredThrowableException;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -26,11 +30,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
 
 /**
- * Test to make sure local object state is preserved when TC throws UnlockedSharedObjectException
- * and ReadOnlyException - INT-186
+ * Test to make sure local object state is preserved when TC throws UnlockedSharedObjectException and ReadOnlyException -
+ * INT-186
  * 
  * @author hhuynh
  */
@@ -38,7 +43,7 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
   private List<MapWrapper> root       = new ArrayList<MapWrapper>();
   private CyclicBarrier    barrier;
   private Class[]          mapClasses = new Class[] { HashMap.class, TreeMap.class, Hashtable.class,
-      LinkedHashMap.class, THashMap.class /*, ConcurrentHashMap.class, FastHashMap.class */};
+      LinkedHashMap.class, THashMap.class, ConcurrentHashMap.class, FastHashMap.class };
 
   public LocalObjectStateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -51,15 +56,16 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
     }
     await();
 
-    for (Boolean withReadLock : new Boolean[] { Boolean.FALSE, Boolean.TRUE }) {
+    for (LOCK_MODE lockMode : LOCK_MODE.values()) {
       for (MapWrapper mw : root) {
-        testMutate(mw, withReadLock, new PutMutator());
-        testMutate(mw, withReadLock, new PutAllMutator());
-        testMutate(mw, withReadLock, new RemoveMutator());
-        testMutate(mw, withReadLock, new ClearMutator());
-        testMutate(mw, withReadLock, new KeySetClearMutator());
-        testMutate(mw, withReadLock, new RemoveValueMutator());
-        testMutate(mw, withReadLock, new EntrySetClearMutator());
+        testMutate(mw, lockMode, new PutMutator());
+        testMutate(mw, lockMode, new PutAllMutator());
+        testMutate(mw, lockMode, new RemoveMutator());
+        testMutate(mw, lockMode, new ClearMutator());
+        testMutate(mw, lockMode, new KeySetClearMutator());
+        testMutate(mw, lockMode, new RemoveValueMutator());
+        testMutate(mw, lockMode, new EntrySetClearMutator());
+        testMutate(mw, lockMode, new NonPortableAddMutator());
       }
     }
   }
@@ -79,23 +85,29 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
     }
   }
 
-  private void testMutate(MapWrapper m, boolean testWithReadLock, Mutator mutator) throws Exception {
+  private void testMutate(MapWrapper m, LOCK_MODE lockMode, Mutator mutator) throws Throwable {
     int currentSize = m.getMap().size();
-    boolean currentReadLock = m.getHandler().getReadLock();
+    LOCK_MODE curr_lockMode = m.getHandler().getLockMode();
+    boolean gotExpectedException = false;
 
     if (await() == 0) {
-      m.getHandler().setReadLock(testWithReadLock);
+      m.getHandler().setLockMode(lockMode);
       try {
         mutator.doMutate(m.getMapProxy());
+      } catch (UndeclaredThrowableException ute) {
+        System.out.println("UndeclaredThrowableException: " + ute.getClass());
       } catch (Exception e) {
-        System.out.println("Expected: " + e.getClass());
+        gotExpectedException = true;
       }
     }
 
     await();
-    m.getHandler().setReadLock(currentReadLock);
-    Assert.assertEquals("Map type: " + m.getMap().getClass() + ", readLock: " + testWithReadLock, currentSize, m
-        .getMap().size());
+    m.getHandler().setLockMode(curr_lockMode);
+
+    if (gotExpectedException) {
+      Assert.assertEquals("Map type: " + m.getMap().getClass() + ", lock: " + lockMode, currentSize, m
+          .getMap().size());
+    }
   }
 
   private int await() {
@@ -124,33 +136,52 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
     spec.addRoot("barrier", "barrier");
 
     config.addReadAutolock("* " + Handler.class.getName() + "*.invokeWithReadLock(..)");
-    config.addWriteAutolock("* " + Handler.class.getName() + "*.setReadLock(..)");
+    config.addWriteAutolock("* " + Handler.class.getName() + "*.invokeWithWriteLock(..)");
+    config.addWriteAutolock("* " + Handler.class.getName() + "*.setLockMode(..)");
   }
 
-  static class Handler implements InvocationHandler {
+  private static enum LOCK_MODE {
+    NONE, READ, WRITE
+  };
+
+  private static class Handler implements InvocationHandler {
     private final Object o;
-    private boolean      readLock = false;
+    private LOCK_MODE    lockMode = LOCK_MODE.NONE;
 
     public Handler(Object o) {
       this.o = o;
     }
 
-    public void setReadLock(boolean wrl) {
+    public LOCK_MODE getLockMode() {
+      return lockMode;
+    }
+
+    public void setLockMode(LOCK_MODE mode) {
       synchronized (this) {
-        this.readLock = wrl;
+        lockMode = mode;
       }
     }
 
-    public boolean getReadLock() {
-      return readLock;
-    }
-
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-      if (readLock) { return invokeWithReadLock(method, args); }
-      return method.invoke(o, args);
+      switch (lockMode) {
+        case NONE:
+          return method.invoke(o, args);
+        case READ:
+          return invokeWithReadLock(method, args);
+        case WRITE:
+          return invokeWithWriteLock(method, args);
+        default:
+          throw new RuntimeException("Should not happen");
+      }
     }
 
     private Object invokeWithReadLock(Method method, Object[] args) throws Throwable {
+      synchronized (o) {
+        return method.invoke(o, args);
+      }
+    }
+
+    private Object invokeWithWriteLock(Method method, Object[] args) throws Throwable {
       synchronized (o) {
         return method.invoke(o, args);
       }
@@ -244,6 +275,17 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
       Map map = (Map) o;
       Set keys = map.keySet();
       keys.remove("k1");
+    }
+  }
+  
+  private static class NonPortableAddMutator implements Mutator {
+    public void doMutate(Object o) {
+      Map map = (Map) o;
+      Map anotherMap = new LinkedHashMap();
+      anotherMap.put("k4", "v4");
+      anotherMap.put("socket", new Socket());
+      anotherMap.put("k5", "v5");
+      map.putAll(anotherMap);
     }
   }
 }
