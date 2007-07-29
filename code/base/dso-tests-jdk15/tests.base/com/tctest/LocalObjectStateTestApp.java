@@ -19,7 +19,6 @@ import gnu.trove.THashMap;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.lang.reflect.UndeclaredThrowableException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
