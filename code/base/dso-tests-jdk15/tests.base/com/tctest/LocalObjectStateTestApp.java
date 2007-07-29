@@ -94,8 +94,6 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
       m.getHandler().setLockMode(lockMode);
       try {
         mutator.doMutate(m.getMapProxy());
-      } catch (UndeclaredThrowableException ute) {
-        System.out.println("UndeclaredThrowableException: " + ute.getClass());
       } catch (Exception e) {
         gotExpectedException = true;
       }
