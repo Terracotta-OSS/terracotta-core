@@ -55,7 +55,7 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
     }
     await();
 
-    for (LOCK_MODE lockMode : LOCK_MODE.values()) {
+    for (LOCK_MODE lockMode : new LOCK_MODE[] { LOCK_MODE.NONE, LOCK_MODE.READ }) {
       for (MapWrapper mw : root) {
         testMutate(mw, lockMode, new PutMutator());
         testMutate(mw, lockMode, new PutAllMutator());
@@ -64,7 +64,6 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
         testMutate(mw, lockMode, new KeySetClearMutator());
         testMutate(mw, lockMode, new RemoveValueMutator());
         testMutate(mw, lockMode, new EntrySetClearMutator());
-        testMutate(mw, lockMode, new NonPortableAddMutator());
       }
     }
   }
@@ -102,8 +101,7 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
     m.getHandler().setLockMode(curr_lockMode);
 
     if (gotExpectedException) {
-      Assert.assertEquals("Map type: " + m.getMap().getClass() + ", lock: " + lockMode, currentSize, m
-          .getMap().size());
+      Assert.assertEquals("Map type: " + m.getMap().getClass() + ", lock: " + lockMode, currentSize, m.getMap().size());
     }
   }
 
@@ -274,14 +272,19 @@ public class LocalObjectStateTestApp extends AbstractErrorCatchingTransparentApp
       keys.remove("k1");
     }
   }
-  
+
   private static class NonPortableAddMutator implements Mutator {
     public void doMutate(Object o) {
       Map map = (Map) o;
       Map anotherMap = new LinkedHashMap();
       anotherMap.put("k4", "v4");
-      anotherMap.put("socket", new Socket());
       anotherMap.put("k5", "v5");
+      anotherMap.put("k6", "v6");
+      anotherMap.put("k7", "v7");
+      anotherMap.put("k8", "v8");
+      anotherMap.put("k9", "v9");
+      anotherMap.put("socket", new Socket());
+      anotherMap.put("k10", "v10");
       map.putAll(anotherMap);
     }
   }
