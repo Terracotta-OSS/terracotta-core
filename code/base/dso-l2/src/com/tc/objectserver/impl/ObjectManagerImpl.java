@@ -230,7 +230,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     ManagedObjectReference mor = null;
     try {
       while (true) {
-        mor = getOrLookupReference(id, (missingOk ? REMOVE_ON_RELEASE | MISSING_OK : REMOVE_ON_RELEASE));
+        mor = getOrLookupReference(null, id, (missingOk ? REMOVE_ON_RELEASE | MISSING_OK : REMOVE_ON_RELEASE));
         if (mor == null) {
           Assert.assertTrue(missingOk);
           return null;
@@ -277,7 +277,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    * Retrieves materialized references-- if not materialized, will initiate a request to materialize them from the
    * object store.
    */
-  private ManagedObjectReference getOrLookupReference(ObjectID id, byte flags) {
+  private ManagedObjectReference getOrLookupReference(ObjectManagerLookupContext context, ObjectID id, byte flags) {
     ManagedObjectReference rv = getReference(id);
 
     if (rv == null) {
@@ -296,7 +296,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       if (!fmr.isFaultingInProgress()) {
         references.remove(id);
         if (isMissingOkay(flags)) { return null; }
-        throw new AssertionError("Request for a non-existent object: " + id);
+        throw new AssertionError("Request for a non-existent object: " + id + 
+                                 " context: " + ((context==null)? "null" : context.toString()));
       }
       if (isNewRequest(flags)) stats.cacheMiss();
     } else {
@@ -430,7 +431,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       // We dont check available flag before doing calling getOrLookupReference() for two reasons.
       // 1) To get the right hit/miss count and
       // 2) to Fault objects that are not available
-      ManagedObjectReference reference = getOrLookupReference(id, (context.isPendingRequest() ? DEFAULT_FLAG
+      ManagedObjectReference reference = getOrLookupReference(context, id, (context.isPendingRequest() ? DEFAULT_FLAG
           : NEW_REQUEST));
       if (available && reference.isReferenced()) {
         available = false;
