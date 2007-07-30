@@ -1,0 +1,10 @@
+--- StartLevelImpl.java.orig    2007-03-15 13:43:22.000000000 -0700
++++ StartLevelImpl.java 2007-03-15 13:43:38.000000000 -0700
+@@ -91,6 +91,7 @@
+     }
+     Runnable firstJob = (Runnable)jobQueue.firstElement();
+     wc   = new Thread(this, "startlevel job thread");
++    wc.setDaemon(true);
+     synchronized (firstJob) {
+       bRun = true;
+       wc.start();
