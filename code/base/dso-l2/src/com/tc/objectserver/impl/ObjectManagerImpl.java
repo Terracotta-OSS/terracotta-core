@@ -297,7 +297,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         references.remove(id);
         if (isMissingOkay(flags)) { return null; }
         throw new AssertionError("Request for a non-existent object: " + id + 
-                                 " context: " + ((context==null)? "null" : context.toString()));
+                                 " context: " + context);
       }
       if (isNewRequest(flags)) stats.cacheMiss();
     } else {
