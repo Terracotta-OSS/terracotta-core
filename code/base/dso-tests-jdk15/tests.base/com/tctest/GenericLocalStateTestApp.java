@@ -27,9 +27,9 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
     throw new ImplementMe();
   }
 
-  protected void testMutate(Wrapper m, LOCK_MODE lockMode, Mutator mutator) throws Throwable {
+  protected void testMutate(Wrapper m, LockMode lockMode, Mutator mutator) throws Throwable {
     int currentSize = m.size();
-    LOCK_MODE curr_lockMode = m.getHandler().getLockMode();
+    LockMode curr_lockMode = m.getHandler().getLockMode();
     boolean gotExpectedException = false;
 
     if (await() == 0) {
@@ -53,23 +53,23 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
 
   protected abstract int await();
 
-  static enum LOCK_MODE {
+  static enum LockMode {
     NONE, READ, WRITE
   }
 
   static class Handler implements InvocationHandler {
     private final Object o;
-    private LOCK_MODE    lockMode = LOCK_MODE.NONE;
+    private LockMode    lockMode = LockMode.NONE;
 
     public Handler(Object o) {
       this.o = o;
     }
 
-    public LOCK_MODE getLockMode() {
+    public LockMode getLockMode() {
       return lockMode;
     }
 
-    public void setLockMode(LOCK_MODE mode) {
+    public void setLockMode(LockMode mode) {
       synchronized (this) {
         lockMode = mode;
       }

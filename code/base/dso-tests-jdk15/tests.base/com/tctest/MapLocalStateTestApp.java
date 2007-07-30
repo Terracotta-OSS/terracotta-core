@@ -50,7 +50,7 @@ public class MapLocalStateTestApp extends GenericLocalStateTestApp {
     }
     await();
 
-    for (LOCK_MODE lockMode : new LOCK_MODE[] { LOCK_MODE.NONE, LOCK_MODE.READ }) {
+    for (LockMode lockMode : new LockMode[] { LockMode.NONE, LockMode.READ }) {
       for (Wrapper mw : root) {
         testMutate(mw, lockMode, new PutMutator());
         testMutate(mw, lockMode, new PutAllMutator());

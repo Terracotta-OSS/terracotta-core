@@ -10,12 +10,14 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 
+import gnu.trove.THashSet;
+
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Stack;
-import java.util.Vector;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CyclicBarrier;
 
 /**
@@ -24,19 +26,19 @@ import java.util.concurrent.CyclicBarrier;
  * 
  * @author hhuynh
  */
-public class ListLocalStateTestApp extends GenericLocalStateTestApp {
+public class SetLocalStateTestApp extends GenericLocalStateTestApp {
   private List<Wrapper> root        = new ArrayList<Wrapper>();
   private CyclicBarrier barrier;
-  private Class[]       listClasses = new Class[] { ArrayList.class, Vector.class, LinkedList.class, Stack.class };
+  private Class[]       setClasses = new Class[] { HashSet.class, TreeSet.class, LinkedHashSet.class, THashSet.class };
 
-  public ListLocalStateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public SetLocalStateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     barrier = new CyclicBarrier(cfg.getGlobalParticipantCount());
   }
 
   protected void runTest() throws Throwable {
     if (await() == 0) {
-      createLists();
+      createSets();
     }
     await();
 
@@ -48,22 +50,20 @@ public class ListLocalStateTestApp extends GenericLocalStateTestApp {
         testMutate(w, lockMode, new ClearMutator());
         testMutate(w, lockMode, new RemoveAllMutator());
         testMutate(w, lockMode, new RetainAllMutator());
-        testMutate(w, lockMode, new IteratorRemoveMutator());
-        testMutate(w, lockMode, new IteratorAddMutator());
       }
     }
   }
 
-  private void createLists() throws Exception {
-    List data = new ArrayList();
+  private void createSets() throws Exception {
+    Set data = new HashSet();
     data.add("v1");
     data.add("v2");
     data.add("v3");
 
     synchronized (root) {
-      for (Class k : listClasses) {
-        Wrapper cw = new CollectionWrapper(k, List.class);
-        ((List) cw.getObject()).addAll(data);
+      for (Class k : setClasses) {
+        Wrapper cw = new CollectionWrapper(k, Set.class);
+        ((Set) cw.getObject()).addAll(data);
         root.add(cw);
       }
     }
@@ -80,13 +80,13 @@ public class ListLocalStateTestApp extends GenericLocalStateTestApp {
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     config.addNewModule("clustered-commons-collections-3.1", "1.0.0");
 
-    String testClass = ListLocalStateTestApp.class.getName();
+    String testClass = SetLocalStateTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
     config.addIncludePattern(testClass + "$*");
     config.addIncludePattern(GenericLocalStateTestApp.class.getName() + "$*");
 
-    String methodExpression = "* " + testClass + "*.createLists()";
+    String methodExpression = "* " + testClass + "*.createSets()";
     config.addWriteAutolock(methodExpression);
 
     methodExpression = "* " + testClass + "*.runTest()";
@@ -102,69 +102,51 @@ public class ListLocalStateTestApp extends GenericLocalStateTestApp {
 
   private static class AddMutator implements Mutator {
     public void doMutate(Object o) {
-      List l = (List) o;
-      l.add("v4");
+      Set s = (Set) o;
+      s.add("v4");
     }
   }
 
   private static class AddAllMutator implements Mutator {
     public void doMutate(Object o) {
-      List l = (List) o;
-      List anotherList = new ArrayList();
-      anotherList.add("v");
-      l.addAll(anotherList);
+      Set s = (Set) o;
+      Set anotherSet = new HashSet();
+      anotherSet.add("v");
+      s.addAll(anotherSet);
     }
   }
 
   private static class RemoveMutator implements Mutator {
     public void doMutate(Object o) {
-      List l = (List) o;
-      l.remove("v1");
+      Set s = (Set) o;
+      s.remove("v1");
     }
   }
 
   private static class ClearMutator implements Mutator {
     public void doMutate(Object o) {
-      List l = (List) o;
-      l.clear();
+      Set s = (Set) o;
+      s.clear();
     }
   }
 
   private static class RemoveAllMutator implements Mutator {
     public void doMutate(Object o) {
-      List l = (List) o;
-      List a = new ArrayList();
+      Set s = (Set) o;
+      Set a = new HashSet();
       a.add("v1");
       a.add("v2");
-      l.removeAll(a);
+      s.removeAll(a);      
     }
   }
   
   private static class RetainAllMutator implements Mutator {
     public void doMutate(Object o) {
-      List l = (List) o;
-      List a = new ArrayList();
+      Set s = (Set) o;
+      Set a = new HashSet();
       a.add("v1");
       a.add("v2");      
-      l.retainAll(a);
+      s.retainAll(a);      
     }
   }
-  
-  private static class IteratorRemoveMutator implements Mutator {
-    public void doMutate(Object o) {
-      List l = (List) o;
-      for (ListIterator it = l.listIterator(); it.hasNext();) {
-        it.remove();
-      }
-    }
-  }
-
-  private static class IteratorAddMutator implements Mutator {
-    public void doMutate(Object o) {
-      List l = (List) o;
-      ListIterator it = l.listIterator();
-      it.add("v");
-    }
-  }
-
 }
