@@ -3,7 +3,7 @@
  */
 package com.tctest;
 
-public class LocalObjectStateTest extends TransparentTestBase {
+public class MapLocalStateTest extends TransparentTestBase {
 
   public static final int NODE_COUNT = 2;
 
@@ -13,7 +13,7 @@ public class LocalObjectStateTest extends TransparentTestBase {
   }
 
   protected Class getApplicationClass() {
-    return LocalObjectStateTestApp.class;
+    return MapLocalStateTestApp.class;
   }
 
 }
