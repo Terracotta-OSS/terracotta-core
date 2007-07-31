@@ -11,6 +11,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -50,6 +51,7 @@ public class ListLocalStateTestApp extends GenericLocalStateTestApp {
         testMutate(w, lockMode, new RetainAllMutator());
         testMutate(w, lockMode, new IteratorRemoveMutator());
         testMutate(w, lockMode, new IteratorAddMutator());
+        testMutate(w, lockMode, new ListIteratorRemoveMutator());
       }
     }
   }
@@ -153,7 +155,18 @@ public class ListLocalStateTestApp extends GenericLocalStateTestApp {
   private static class IteratorRemoveMutator implements Mutator {
     public void doMutate(Object o) {
       List l = (List) o;
+      for (Iterator it = l.iterator(); it.hasNext();) {
+        it.next();
+        it.remove();
+      }
+    }
+  }
+  
+  private static class ListIteratorRemoveMutator implements Mutator {
+    public void doMutate(Object o) {
+      List l = (List) o;
       for (ListIterator it = l.listIterator(); it.hasNext();) {
+        it.next();
         it.remove();
       }
     }

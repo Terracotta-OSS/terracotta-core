@@ -14,6 +14,7 @@ import gnu.trove.THashSet;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,7 +28,7 @@ import java.util.concurrent.CyclicBarrier;
  * @author hhuynh
  */
 public class SetLocalStateTestApp extends GenericLocalStateTestApp {
-  private List<Wrapper> root        = new ArrayList<Wrapper>();
+  private List<Wrapper> root       = new ArrayList<Wrapper>();
   private CyclicBarrier barrier;
   private Class[]       setClasses = new Class[] { HashSet.class, TreeSet.class, LinkedHashSet.class, THashSet.class };
 
@@ -50,6 +51,7 @@ public class SetLocalStateTestApp extends GenericLocalStateTestApp {
         testMutate(w, lockMode, new ClearMutator());
         testMutate(w, lockMode, new RemoveAllMutator());
         testMutate(w, lockMode, new RetainAllMutator());
+        testMutate(w, lockMode, new IteratorRemoveMutator());
       }
     }
   }
@@ -136,17 +138,27 @@ public class SetLocalStateTestApp extends GenericLocalStateTestApp {
       Set a = new HashSet();
       a.add("v1");
       a.add("v2");
-      s.removeAll(a);      
+      s.removeAll(a);
     }
   }
-  
+
   private static class RetainAllMutator implements Mutator {
     public void doMutate(Object o) {
       Set s = (Set) o;
       Set a = new HashSet();
       a.add("v1");
-      a.add("v2");      
-      s.retainAll(a);      
+      a.add("v2");
+      s.retainAll(a);
+    }
+  }
+
+  private static class IteratorRemoveMutator implements Mutator {
+    public void doMutate(Object o) {
+      Set s = (Set) o;
+      for (Iterator it = s.iterator(); it.hasNext();) {
+        it.next();
+        it.remove();
+      }
     }
   }
 }
