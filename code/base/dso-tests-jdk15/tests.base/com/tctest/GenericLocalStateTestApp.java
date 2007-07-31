@@ -54,6 +54,8 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
     wrapper.getHandler().setLockMode(curr_lockMode);
 
     if (gotExpectedException) {
+      validate(wrapper, lockMode, mutator);
+      
       int newSize = wrapper.size();
       switch (lockMode) {
         case NONE:
@@ -67,7 +69,6 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
           System.out.println("New size: " + newSize);
           Assert.assertFalse("Type: " + wrapper.getObject().getClass() + ", socket shouldn't be added", ((Map) wrapper
               .getObject()).containsKey("socket"));
-          Assert.assertTrue("Type: " + wrapper.getObject().getClass() + ", lock: WRITE", newSize >= currentSize + 6);
           break;
         default:
           throw new RuntimeException("Shouldn't happen");
@@ -78,6 +79,9 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
   }
 
   protected abstract int await();
+  protected void validate(Wrapper wrapper, LockMode lockMode, Mutator mutator) throws Throwable {
+    return;
+  }
 
   static enum LockMode {
     NONE, READ, WRITE

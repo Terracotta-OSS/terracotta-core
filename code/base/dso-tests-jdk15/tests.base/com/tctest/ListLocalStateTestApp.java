@@ -20,7 +20,14 @@ import java.util.Vector;
 import java.util.concurrent.CyclicBarrier;
 
 /**
- * Test to make sure local object state is preserved when TC throws UnlockedSharedObjectException and ReadOnlyException -
+ * Test to make sure local object state is preserved when TC throws: 
+ * 
+ * UnlockedSharedObjectException 
+ * ReadOnlyException
+ * TCNonPortableObjectError
+ * 
+ * List version
+ * 
  * INT-186
  * 
  * @author hhuynh

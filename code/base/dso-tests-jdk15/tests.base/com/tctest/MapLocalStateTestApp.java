@@ -11,6 +11,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.Assert;
 
 import gnu.trove.THashMap;
 
@@ -29,7 +30,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
 
 /**
- * Test to make sure local object state is preserved when TC throws UnlockedSharedObjectException and ReadOnlyException -
+ * Test to make sure local object state is preserved when TC throws:
+ * 
+ * UnlockedSharedObjectException ReadOnlyException TCNonPortableObjectError
+ * 
+ * Map version
+ * 
  * INT-186
  * 
  * @author hhuynh
@@ -60,11 +66,12 @@ public class MapLocalStateTestApp extends GenericLocalStateTestApp {
         testMutate(mw, lockMode, new KeySetClearMutator());
         testMutate(mw, lockMode, new RemoveValueMutator());
         testMutate(mw, lockMode, new EntrySetClearMutator());
-        testMutate(mw, lockMode, new AddEntryMutator());
         testMutate(mw, lockMode, new EntrySetIteratorRemoveMutator());
         testMutate(mw, lockMode, new KeySetIteratorRemoveMutator());
         testMutate(mw, lockMode, new ValuesIteratorRemoveMutator());
         testMutate(mw, lockMode, new KeySetRemoveMutator());
+        testMutate(mw, lockMode, new AddEntryMutator());
+        testMutate(mw, lockMode, new AddNonPortableEntryMutator());
         // Failing, disabled for now
         // testMutate(w, LockMode.WRITE, new NonPortableAddMutator());
       }
@@ -87,6 +94,28 @@ public class MapLocalStateTestApp extends GenericLocalStateTestApp {
     }
   }
 
+  protected void validate(Wrapper wrapper, LockMode lockMode, Mutator mutator) throws Throwable {
+    switch (lockMode) {
+      case NONE:
+      case READ:
+        if (mutator instanceof AddEntryMutator) {
+          Collection values = ((Map) wrapper.getObject()).values();
+          for (Iterator it = values.iterator(); it.hasNext();) {
+            String value = (String) it.next();
+            Assert.assertFalse("Type: " + wrapper.getObject().getClass() + ", lock: " + lockMode, value.equals("hung"));
+          }
+        } else if (mutator instanceof NonPortableAddMutator) {
+          Collection values = ((Map) wrapper.getObject()).values();
+          for (Iterator it = values.iterator(); it.hasNext();) {
+            Object value = it.next();
+            Assert.assertFalse("Type: " + wrapper.getObject().getClass() + ", lock: " + lockMode,
+                               value instanceof Socket);
+          }
+        }
+        break;
+    }
+  }
+
   protected int await() {
     try {
       return barrier.await();
@@ -104,11 +133,9 @@ public class MapLocalStateTestApp extends GenericLocalStateTestApp {
     config.addIncludePattern(testClass + "$*");
     config.addIncludePattern(GenericLocalStateTestApp.class.getName() + "$*");
 
-    String methodExpression = "* " + testClass + "*.createMaps()";
-    config.addWriteAutolock(methodExpression);
-
-    methodExpression = "* " + testClass + "*.runTest()";
-    config.addReadAutolock(methodExpression);
+    config.addWriteAutolock("* " + testClass + "*.createMaps()");
+    config.addWriteAutolock("* " + testClass + "*.validate()");
+    config.addReadAutolock("* " + testClass + "*.runTest()");
 
     spec.addRoot("root", "root");
     spec.addRoot("barrier", "barrier");
@@ -171,6 +198,17 @@ public class MapLocalStateTestApp extends GenericLocalStateTestApp {
       for (Iterator it = entries.iterator(); it.hasNext();) {
         Map.Entry entry = (Map.Entry) it.next();
         entry.setValue("hung");
+      }
+    }
+  }
+
+  private static class AddNonPortableEntryMutator implements Mutator {
+    public void doMutate(Object o) {
+      Map map = (Map) o;
+      Set entries = map.entrySet();
+      for (Iterator it = entries.iterator(); it.hasNext();) {
+        Map.Entry entry = (Map.Entry) it.next();
+        entry.setValue(new Socket());
       }
     }
   }

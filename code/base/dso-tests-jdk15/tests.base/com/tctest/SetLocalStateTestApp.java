@@ -22,7 +22,14 @@ import java.util.TreeSet;
 import java.util.concurrent.CyclicBarrier;
 
 /**
- * Test to make sure local object state is preserved when TC throws UnlockedSharedObjectException and ReadOnlyException -
+ * Test to make sure local object state is preserved when TC throws: 
+ * 
+ * UnlockedSharedObjectException 
+ * ReadOnlyException
+ * TCNonPortableObjectError
+ * 
+ * Set version
+ * 
  * INT-186
  * 
  * @author hhuynh
