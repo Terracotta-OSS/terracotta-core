@@ -93,6 +93,7 @@ public class ServerManager {
     if (!Vm.isIBM()) {
       dsoServer.getJvmArgs().add("-XX:+HeapDumpOnOutOfMemoryError");
     }
+    dsoServer.getJvmArgs().add("-Xmx128m");
     logger.debug("Starting DSO server with sandbox: " + sandbox.getAbsolutePath());
     dsoServer.start();
     addServerToStop(dsoServer);
