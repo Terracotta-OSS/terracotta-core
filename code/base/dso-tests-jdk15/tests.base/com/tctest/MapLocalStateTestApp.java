@@ -11,7 +11,6 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tc.util.Assert;
 
 import gnu.trove.THashMap;
 
@@ -52,7 +51,7 @@ public class MapLocalStateTestApp extends GenericLocalStateTestApp {
     }
     await();
 
-    for (LockMode lockMode : new LockMode[] { LockMode.NONE, LockMode.READ }) {
+    for (LockMode lockMode : LockMode.values()) {
       for (Wrapper mw : root) {
         testMutate(mw, lockMode, new PutMutator());
         testMutate(mw, lockMode, new PutAllMutator());
@@ -66,41 +65,11 @@ public class MapLocalStateTestApp extends GenericLocalStateTestApp {
         testMutate(mw, lockMode, new KeySetIteratorRemoveMutator());
         testMutate(mw, lockMode, new ValuesIteratorRemoveMutator());
         testMutate(mw, lockMode, new KeySetRemoveMutator());
+        // Failing, disabled for now
+        // testMutate(w, LockMode.WRITE, new NonPortableAddMutator());
       }
     }
 
-    // Failing, disabled for now
-    // for (Wrapper w : root) {
-    // testWriteLockWithNonPortable(w, new NonPortableAddMutator());
-    // }
-  }
-
-  private void testWriteLockWithNonPortable(Wrapper w, Mutator mutator) throws Exception {
-    int currentSize = w.size();
-    LockMode curr_lockMode = w.getHandler().getLockMode();
-    boolean gotExpectedException = false;
-
-    if (await() == 0) {
-      w.getHandler().setLockMode(LockMode.WRITE);
-      try {
-        mutator.doMutate(w.getProxy());
-      } catch (Exception e) {
-        e.printStackTrace();
-        gotExpectedException = true;
-      }
-    }
-
-    await();
-    w.getHandler().setLockMode(curr_lockMode);
-
-    if (gotExpectedException) {
-      int newSize = w.size();
-      System.out.println("Map type: " + w.getObject().getClass().getName());
-      System.out.println("Current size: " + currentSize);
-      System.out.println("New size: " + newSize);
-      Assert.assertFalse(((Map) w.getObject()).containsKey("socket"));
-      Assert.assertTrue("Collection type: " + w.getObject().getClass() + ", lock: WRITE", newSize >= currentSize + 6);
-    }
   }
 
   private void createMaps() throws Exception {
