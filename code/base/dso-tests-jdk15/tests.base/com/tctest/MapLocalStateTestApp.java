@@ -11,6 +11,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.Assert;
 
 import gnu.trove.THashMap;
 
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,9 +37,9 @@ import java.util.concurrent.CyclicBarrier;
  */
 public class MapLocalStateTestApp extends GenericLocalStateTestApp {
   private List<Wrapper> root       = new ArrayList<Wrapper>();
-  private CyclicBarrier    barrier;
-  private Class[]          mapClasses = new Class[] { HashMap.class, TreeMap.class, Hashtable.class,
-      LinkedHashMap.class, THashMap.class, ConcurrentHashMap.class, FastHashMap.class };
+  private CyclicBarrier barrier;
+  private Class[]       mapClasses = new Class[] { TreeMap.class, THashMap.class, LinkedHashMap.class, Hashtable.class,
+      HashMap.class, ConcurrentHashMap.class, FastHashMap.class };
 
   public MapLocalStateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -59,7 +61,45 @@ public class MapLocalStateTestApp extends GenericLocalStateTestApp {
         testMutate(mw, lockMode, new KeySetClearMutator());
         testMutate(mw, lockMode, new RemoveValueMutator());
         testMutate(mw, lockMode, new EntrySetClearMutator());
+        testMutate(mw, lockMode, new AddEntryMutator());
+        testMutate(mw, lockMode, new EntrySetIteratorRemoveMutator());
+        testMutate(mw, lockMode, new KeySetIteratorRemoveMutator());
+        testMutate(mw, lockMode, new ValuesIteratorRemoveMutator());
+        testMutate(mw, lockMode, new KeySetRemoveMutator());
       }
+    }
+
+    // Failing, disabled for now
+    // for (Wrapper w : root) {
+    // testWriteLockWithNonPortable(w, new NonPortableAddMutator());
+    // }
+  }
+
+  private void testWriteLockWithNonPortable(Wrapper w, Mutator mutator) throws Exception {
+    int currentSize = w.size();
+    LockMode curr_lockMode = w.getHandler().getLockMode();
+    boolean gotExpectedException = false;
+
+    if (await() == 0) {
+      w.getHandler().setLockMode(LockMode.WRITE);
+      try {
+        mutator.doMutate(w.getProxy());
+      } catch (Exception e) {
+        e.printStackTrace();
+        gotExpectedException = true;
+      }
+    }
+
+    await();
+    w.getHandler().setLockMode(curr_lockMode);
+
+    if (gotExpectedException) {
+      int newSize = w.size();
+      System.out.println("Map type: " + w.getObject().getClass().getName());
+      System.out.println("Current size: " + currentSize);
+      System.out.println("New size: " + newSize);
+      Assert.assertFalse(((Map) w.getObject()).containsKey("socket"));
+      Assert.assertTrue("Collection type: " + w.getObject().getClass() + ", lock: WRITE", newSize >= currentSize + 6);
     }
   }
 
@@ -151,15 +191,59 @@ public class MapLocalStateTestApp extends GenericLocalStateTestApp {
     public void doMutate(Object o) {
       Map map = (Map) o;
       Set entries = map.entrySet();
-      entries.clear();      
+      entries.clear();
     }
-  }  
+  }
+
+  private static class AddEntryMutator implements Mutator {
+    public void doMutate(Object o) {
+      Map map = (Map) o;
+      Set entries = map.entrySet();
+      for (Iterator it = entries.iterator(); it.hasNext();) {
+        Map.Entry entry = (Map.Entry) it.next();
+        entry.setValue("hung");
+      }
+    }
+  }
+
+  private static class EntrySetIteratorRemoveMutator implements Mutator {
+    public void doMutate(Object o) {
+      Map map = (Map) o;
+      Set entries = map.entrySet();
+      for (Iterator it = entries.iterator(); it.hasNext();) {
+        it.next();
+        it.remove();
+      }
+    }
+  }
 
   private static class KeySetClearMutator implements Mutator {
     public void doMutate(Object o) {
       Map map = (Map) o;
       Set keys = map.keySet();
       keys.clear();
+    }
+  }
+
+  private static class KeySetIteratorRemoveMutator implements Mutator {
+    public void doMutate(Object o) {
+      Map map = (Map) o;
+      Set keys = map.keySet();
+      for (Iterator it = keys.iterator(); it.hasNext();) {
+        it.next();
+        it.remove();
+      }
+    }
+  }
+
+  private static class ValuesIteratorRemoveMutator implements Mutator {
+    public void doMutate(Object o) {
+      Map map = (Map) o;
+      Collection values = map.values();
+      for (Iterator it = values.iterator(); it.hasNext();) {
+        it.next();
+        it.remove();
+      }
     }
   }
 

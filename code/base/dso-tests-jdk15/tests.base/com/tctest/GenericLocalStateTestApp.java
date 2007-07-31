@@ -5,17 +5,17 @@
 package com.tctest;
 
 import com.tc.exception.ImplementMe;
+import com.tc.object.tx.ReadOnlyException;
+import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTransparentApp {
 
@@ -36,9 +36,10 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
       m.getHandler().setLockMode(lockMode);
       try {
         mutator.doMutate(m.getProxy());
-      } catch (Exception e) {
-        e.printStackTrace();
-        gotExpectedException = true;        
+      } catch (UnlockedSharedObjectException usoe) {
+        gotExpectedException = lockMode == LockMode.NONE;        
+      } catch (ReadOnlyException roe) {
+        gotExpectedException = lockMode == LockMode.READ;
       }
     }
 
@@ -76,15 +77,19 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
     }
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-      switch (lockMode) {
-        case NONE:
-          return method.invoke(o, args);
-        case READ:
-          return invokeWithReadLock(method, args);
-        case WRITE:
-          return invokeWithWriteLock(method, args);
-        default:
-          throw new RuntimeException("Should not happen");
+      try {
+        switch (lockMode) {
+          case NONE:
+            return method.invoke(o, args);
+          case READ:
+            return invokeWithReadLock(method, args);
+          case WRITE:
+            return invokeWithWriteLock(method, args);
+          default:
+            throw new RuntimeException("Should not happen");
+        }
+      } catch (InvocationTargetException e) {
+        throw e.getTargetException();
       }
     }
 
@@ -137,15 +142,15 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
     public Object getProxy() {
       return proxy;
     }
-
+   
     public int size() {
-      if (object instanceof Map) {
-        return ((Map) object).size();
-      } else if (object instanceof List) {
-        return ((List) object).size();
-      } else if (object instanceof Set) { return ((Set) object).size(); }
-
-      throw new RuntimeException("not expected: " + object.getClass().getName());
+      try {
+        Method method = object.getClass().getMethod("size");
+        return (Integer)method.invoke(object);
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw new RuntimeException(e);
+      }
     }
   }
 }
