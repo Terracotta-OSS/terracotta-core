@@ -34,6 +34,7 @@ import com.tc.object.session.SessionID;
 import com.tc.object.tx.TestRemoteTransactionManager;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.WaitInvocation;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -76,7 +77,7 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     assertNull(gtxManager.pauseCalls.poll(0));
     newMessage();
   }
-  
+
   private void newMessage() {
     chmf.message = new TestClientHandshakeMessage();
   }
@@ -162,12 +163,16 @@ public class ClientHandshakeManagerTest extends TCTestCase {
     assertTrue(lockManager.unpauseContexts.isEmpty());
     assertTrue(gtxManager.resendOutstandingCalls.isEmpty());
 
-    // make sure RuntimeException is thrown iff client/server versions don't match
+    // make sure RuntimeException is thrown iff client/server versions don't match and version checking is enabled
     try {
       mgr.acknowledgeHandshake(0, 0, false, "1", new String[] {}, clientVersion + "a.b.c");
-      fail();
+      if (checkVersionMatchEnabled()) {
+        fail();
+      }
     } catch (RuntimeException e) {
-      // it's all good
+      if (!checkVersionMatchEnabled()) {
+        fail();
+      }
     }
 
     // now ack for real
@@ -179,6 +184,10 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
     assertNotNull(lockManager.unpauseContexts.poll(1));
     assertNotNull(gtxManager.resendOutstandingCalls.poll(1));
+  }
+
+  private boolean checkVersionMatchEnabled() {
+    return TCPropertiesImpl.getProperties().getBoolean("l1.connect.versionMatchCheck.enabled");
   }
 
   private static class TestRemoteObjectManager implements RemoteObjectManager {

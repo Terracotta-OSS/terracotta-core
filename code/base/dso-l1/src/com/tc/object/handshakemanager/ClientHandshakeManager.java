@@ -30,6 +30,7 @@ import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.object.tx.RemoteTransactionManager;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.State;
 import com.tc.util.Util;
 import com.tc.util.sequence.BatchSequenceReceiver;
@@ -141,7 +142,7 @@ public class ClientHandshakeManager implements ChannelEventListener {
 
   public void notifyChannelEvent(ChannelEvent event) {
     if (event.getType() == ChannelEventType.TRANSPORT_DISCONNECTED_EVENT) {
-      cluster.thisNodeDisconnected();      
+      cluster.thisNodeDisconnected();
       pauseSink.add(PauseContext.PAUSE);
     } else if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
       pauseSink.add(PauseContext.UNPAUSE);
@@ -186,7 +187,11 @@ public class ClientHandshakeManager implements ChannelEventListener {
       return;
     }
 
-    checkClientServerVersionMatch(logger, clientVersion, serverVersion);
+    final boolean checkVersionMatches = TCPropertiesImpl.getProperties()
+        .getBoolean("l1.connect.versionMatchCheck.enabled");
+    if (checkVersionMatches) {
+      checkClientServerVersionMatch(logger, clientVersion, serverVersion);
+    }
 
     this.serverIsPersistent = persistentServer;
 
