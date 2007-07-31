@@ -24,11 +24,7 @@ public class TCThreadGroup extends ThreadGroup {
   }
 
   public void uncaughtException(Thread thread, Throwable throwable) {
-    try {
-      super.uncaughtException(thread, throwable);
-    } finally {
-      throwableHandler.handleThrowable(thread, throwable);
-    }
+    throwableHandler.handleThrowable(thread, throwable);
   }
 
 }

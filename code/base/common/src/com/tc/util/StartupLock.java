@@ -15,8 +15,6 @@ import com.tc.util.startuplock.LocationNotCreatedException;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.nio.channels.OverlappingFileLockException;
 
 /**
@@ -79,30 +77,13 @@ public class StartupLock {
     } catch (OverlappingFileLockException e) {
       // File is already locked in this thread or virtual machine
     } catch (IOException ioe) {
-      reportDataFileLockingError("Unable to acquire file lock on '" + tcFile.getFile().getAbsolutePath()
-          + "'.  Aborting Terracotta server startup.", null);
-      throw new TCAssertionError(ioe);
+      throw new TCDataFileLockingException("Unable to acquire file lock on '" + tcFile.getFile().getAbsolutePath()
+          + "'.  Aborting Terracotta server startup.");
     }
 
     Assert.eval(tcFile.exists());
+
     return lock != null;
-  }
-
-  private void reportDataFileLockingError(String message, Exception e) {
-    String newLine = System.getProperty("line.separator");
-    StringBuffer errorMsg = new StringBuffer(newLine);
-
-    if (message != null) {
-      errorMsg.append("ERROR: ").append(message).append(newLine);
-    }
-
-    if (e != null) {
-      StringWriter sw = new StringWriter();
-      e.printStackTrace(new PrintWriter(sw));
-      errorMsg.append(sw.toString());
-    }
-
-    System.err.println(errorMsg.toString());
   }
 
   private void ensureFileExists(TCFile file) throws FileNotCreatedException {

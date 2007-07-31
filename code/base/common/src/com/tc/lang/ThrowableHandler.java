@@ -10,6 +10,7 @@ import com.tc.exception.ExceptionHelperImpl;
 import com.tc.exception.MortbayMultiExceptionHelper;
 import com.tc.exception.RuntimeExceptionHelper;
 import com.tc.logging.TCLogger;
+import com.tc.util.TCDataFileLockingException;
 import com.tc.util.startuplock.FileNotCreatedException;
 import com.tc.util.startuplock.LocationNotCreatedException;
 
@@ -43,6 +44,8 @@ public class ThrowableHandler {
     } else if (ultimateCause instanceof LocationNotCreatedException) {
       handleStartupException((Exception) ultimateCause);
     } else if (ultimateCause instanceof FileNotCreatedException) {
+      handleStartupException((Exception) ultimateCause);
+    } else if (ultimateCause instanceof TCDataFileLockingException) {
       handleStartupException((Exception) ultimateCause);
     } else {
       handleDefaultException(thread, proximateCause);
