@@ -272,8 +272,8 @@ public class DistributedObjectClient extends SEDA {
     Stage receiveTransaction = stageManager
         .createStage(ClientConfigurationContext.RECEIVE_TRANSACTION_STAGE,
                      new ReceiveTransactionHandler(channel.getChannelIDProvider(), channel
-                         .getAcknowledgeTransactionMessageFactory(), gtxManager, sessionManager, dmiStage.getSink()),
-                     1, maxSize);
+                         .getAcknowledgeTransactionMessageFactory(), gtxManager, sessionManager, dmiStage.getSink(),
+                                                   dmiManager), 1, maxSize);
     Stage oidRequestResponse = stageManager.createStage(ClientConfigurationContext.OBJECT_ID_REQUEST_RESPONSE_STAGE,
                                                         remoteIDProvider, 1, maxSize);
     Stage transactionResponse = stageManager.createStage(ClientConfigurationContext.RECEIVE_TRANSACTION_COMPLETE_STAGE,
@@ -301,7 +301,8 @@ public class DistributedObjectClient extends SEDA {
         .getLogger(ClientHandshakeManager.class)), channel.getChannelIDProvider(), channel
         .getClientHandshakeMessageFactory(), objectManager, remoteObjectManager, lockManager, rtxManager, gtxManager,
                                                         stagesToPauseOnDisconnect, pauseStage.getSink(),
-                                                        sessionManager, pauseListener, sequence, cluster, pInfo.buildVersion());
+                                                        sessionManager, pauseListener, sequence, cluster, pInfo
+                                                            .buildVersion());
     channel.addListener(clientHandshakeManager);
 
     ClientConfigurationContext cc = new ClientConfigurationContext(stageManager, lockManager, remoteObjectManager,
@@ -352,7 +353,7 @@ public class DistributedObjectClient extends SEDA {
 
     final int maxConnectRetries = l1Properties.getInt("max.connect.retries");
     int i = 0;
-    while(maxConnectRetries <= 0 || i < maxConnectRetries) {
+    while (maxConnectRetries <= 0 || i < maxConnectRetries) {
       try {
         logger.debug("Trying to open channel....");
         channel.open();
@@ -374,8 +375,8 @@ public class DistributedObjectClient extends SEDA {
       }
       i++;
     }
-    if(i == maxConnectRetries) {
-      consoleLogger.error("MaxConnectRetries '"+maxConnectRetries+"' attempted. Exiting.");
+    if (i == maxConnectRetries) {
+      consoleLogger.error("MaxConnectRetries '" + maxConnectRetries + "' attempted. Exiting.");
       System.exit(-1);
     }
     clientHandshakeManager.waitForHandshake();

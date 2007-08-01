@@ -11,6 +11,8 @@ import com.tc.async.api.Sink;
 import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.event.DmiEventContext;
+import com.tc.object.event.DmiManager;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.lockmanager.api.ClientLockManager;
@@ -21,6 +23,7 @@ import com.tc.object.msg.BroadcastTransactionMessageImpl;
 import com.tc.object.session.SessionManager;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.util.Assert;
+import com.tcclient.object.DistributedMethodCall;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -38,15 +41,17 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
   private final AcknowledgeTransactionMessageFactory atmFactory;
   private final ChannelIDProvider                    cidProvider;
   private final Sink                                 dmiSink;
+  private final DmiManager                           dmiManager;
 
   public ReceiveTransactionHandler(ChannelIDProvider provider, AcknowledgeTransactionMessageFactory atmFactory,
                                    ClientGlobalTransactionManager gtxManager, SessionManager sessionManager,
-                                   Sink dmiSink) {
+                                   Sink dmiSink, DmiManager dmiManager) {
     this.cidProvider = provider;
     this.atmFactory = atmFactory;
     this.gtxManager = gtxManager;
     this.sessionManager = sessionManager;
     this.dmiSink = dmiSink;
+    this.dmiManager = dmiManager;
   }
 
   public void handleEvent(EventContext context) {
@@ -82,7 +87,13 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
     List dmis = btm.getDmiDescriptors();
     for (Iterator i = dmis.iterator(); i.hasNext();) {
       DmiDescriptor dd = (DmiDescriptor) i.next();
-      dmiSink.add(dd);
+
+      // NOTE: This prepare call must happen before handing off the DMI to the stage, and more
+      // importantly before sending ACK below
+      DistributedMethodCall dmc = dmiManager.extract(dd);
+      if (dmc != null) {
+        dmiSink.add(new DmiEventContext(dmc));
+      }
     }
 
     // XXX:: This is a potential race condition here 'coz after we decide to send an ACK

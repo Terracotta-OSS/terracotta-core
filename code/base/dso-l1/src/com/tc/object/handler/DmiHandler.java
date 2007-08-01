@@ -6,7 +6,7 @@ package com.tc.object.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
-import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.event.DmiEventContext;
 import com.tc.object.event.DmiManager;
 import com.tc.util.Assert;
 
@@ -20,8 +20,8 @@ public class DmiHandler extends AbstractEventHandler {
   }
 
   public void handleEvent(EventContext context) {
-    DmiDescriptor dd = (DmiDescriptor) context;
-    dmiMgr.invoke(dd);
+    DmiEventContext dmiEvent = (DmiEventContext) context;
+    dmiMgr.invoke(dmiEvent.getDmc());
   }
 
 }

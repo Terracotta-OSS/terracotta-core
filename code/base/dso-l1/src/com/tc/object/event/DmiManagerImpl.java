@@ -77,36 +77,12 @@ public class DmiManagerImpl implements DmiManager {
     nesting.set(null);
   }
 
-  public void invoke(DmiDescriptor dd) {
-    Assert.pre(dd != null);
-
-    try {
-      checkClassAvailability(classProvider, dd.getClassSpecs());
-    } catch (ClassNotFoundException e) {
-      if (logger.isDebugEnabled()) logger.debug("Ignoring distributed method call", e);
-      return;
-    }
-    DistributedMethodCall dmc;
-    try {
-      dmc = (DistributedMethodCall) objMgr.lookupObject(dd.getDmiCallId());
-      // FIXME: debug code below ----------
-      dmc.getClass();
-      dmc.getReceiver().getClass().getName();
-      dmc.getMethodName();
-      dmc.getParameterDesc();
-      // FIXME: debug code above ----------
-    } catch (Throwable e) {
-      // FIXME: debug code
-      e.printStackTrace();
-      // FIXME: end debug code
-      if (logger.isDebugEnabled()) logger.debug("Ignoring distributed method call", e);
-      return;
-    }
+  public void invoke(DistributedMethodCall dmc) {
     try {
       if (runtimeLogger.distributedMethodDebug()) runtimeLogger.distributedMethodCall(dmc.getReceiver().getClass()
           .getName(), dmc.getMethodName(), dmc.getParameterDesc());
       feedBack.set(TRUE);
-      invoke(dmc);
+      invoke0(dmc);
     } catch (Throwable e) {
       // FIXME: debug code
       e.printStackTrace();
@@ -119,7 +95,7 @@ public class DmiManagerImpl implements DmiManager {
     }
   }
 
-  private static void invoke(DistributedMethodCall dmc) throws IllegalArgumentException, IllegalAccessException,
+  private static void invoke0(DistributedMethodCall dmc) throws IllegalArgumentException, IllegalAccessException,
       InvocationTargetException {
     final ClassLoader origContextLoader = Thread.currentThread().getContextClassLoader();
     Method m = getMethod(dmc);
@@ -196,6 +172,38 @@ public class DmiManagerImpl implements DmiManager {
     final String classLoader = classProvider.getLoaderDescriptionFor(obj.getClass());
     final String className = obj.getClass().getName();
     return new DmiClassSpec(classLoader, className);
+  }
+
+  public DistributedMethodCall extract(DmiDescriptor dd) {
+    Assert.pre(dd != null);
+
+    try {
+      checkClassAvailability(classProvider, dd.getClassSpecs());
+    } catch (ClassNotFoundException e) {
+      if (logger.isDebugEnabled()) logger.debug("Ignoring distributed method call", e);
+      return null;
+    }
+
+    try {
+      DistributedMethodCall dmc = (DistributedMethodCall) objMgr.lookupObject(dd.getDmiCallId());
+      // FIXME: debug code below ----------
+      dmc.getClass();
+      dmc.getReceiver().getClass().getName();
+      dmc.getMethodName();
+      dmc.getParameterDesc();
+      // FIXME: debug code above ----------
+
+      return dmc;
+    } catch (Throwable e) {
+      // FIXME: debug code
+      e.printStackTrace();
+      // FIXME: end debug code
+
+      if (logger.isDebugEnabled()) logger.debug("Ignoring distributed method call", e);
+      return null;
+    }
+
+    // unreachable
   }
 
 }
