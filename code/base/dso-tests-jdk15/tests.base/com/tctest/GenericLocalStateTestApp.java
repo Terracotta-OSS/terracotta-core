@@ -10,14 +10,12 @@ import com.tc.object.tx.ReadOnlyException;
 import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-import com.tc.util.Assert;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Map;
 
 public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTransparentApp {
 
@@ -30,7 +28,7 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
   }
 
   protected void testMutate(Wrapper wrapper, LockMode lockMode, Mutator mutator) throws Throwable {
-    int currentSize = wrapper.size();
+    int oldSize = wrapper.size();
     LockMode curr_lockMode = wrapper.getHandler().getLockMode();
     boolean gotExpectedException = false;
     Throwable throwable = null;
@@ -54,34 +52,15 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
     wrapper.getHandler().setLockMode(curr_lockMode);
 
     if (gotExpectedException) {
-      validate(wrapper, lockMode, mutator);
-      
-      int newSize = wrapper.size();
-      switch (lockMode) {
-        case NONE:
-        case READ:
-          Assert.assertEquals("Type: " + wrapper.getObject().getClass() + ", lock: " + lockMode,
-                              currentSize, newSize);
-          break;
-        case WRITE:
-          System.out.println("Map type: " + wrapper.getObject().getClass().getName());
-          System.out.println("Current size: " + currentSize);
-          System.out.println("New size: " + newSize);
-          Assert.assertFalse("Type: " + wrapper.getObject().getClass() + ", socket shouldn't be added", ((Map) wrapper
-              .getObject()).containsKey("socket"));
-          break;
-        default:
-          throw new RuntimeException("Shouldn't happen");
-      }
+      validate(oldSize, wrapper, lockMode, mutator);
     }
 
     if (throwable != null) throw throwable;
   }
 
   protected abstract int await();
-  protected void validate(Wrapper wrapper, LockMode lockMode, Mutator mutator) throws Throwable {
-    return;
-  }
+
+  protected abstract void validate(int oldSize, Wrapper wrapper, LockMode lockMode, Mutator mutator) throws Throwable;
 
   static enum LockMode {
     NONE, READ, WRITE

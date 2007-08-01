@@ -94,10 +94,13 @@ public class MapLocalStateTestApp extends GenericLocalStateTestApp {
     }
   }
 
-  protected void validate(Wrapper wrapper, LockMode lockMode, Mutator mutator) throws Throwable {
+  protected void validate(int oldSize, Wrapper wrapper, LockMode lockMode, Mutator mutator) throws Throwable {
+    int newSize = wrapper.size();
     switch (lockMode) {
       case NONE:
       case READ:
+        Assert.assertEquals("Type: " + wrapper.getObject().getClass() + ", lock: " + lockMode,
+                            oldSize, newSize);
         if (mutator instanceof AddEntryMutator) {
           Collection values = ((Map) wrapper.getObject()).values();
           for (Iterator it = values.iterator(); it.hasNext();) {
@@ -113,6 +116,15 @@ public class MapLocalStateTestApp extends GenericLocalStateTestApp {
           }
         }
         break;
+      case WRITE:
+        System.out.println("Map type: " + wrapper.getObject().getClass().getName());
+        System.out.println("Current size: " + newSize);
+        System.out.println("New size: " + newSize);
+        Assert.assertFalse("Type: " + wrapper.getObject().getClass() + ", socket shouldn't be added", ((Map) wrapper
+            .getObject()).containsKey("socket"));
+        break;
+      default:
+        throw new RuntimeException("Shouldn't happen");
     }
   }
 
