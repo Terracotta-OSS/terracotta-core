@@ -9,11 +9,11 @@ import com.terracottatech.config.PersistenceMode;
 
 public abstract class GCTestBase extends TransparentTestBase implements TestConfigurator {
 
-  int     NODE_COUNT                  = 3;
-  int     LOOP_ITERATION_COUNT        = 1;
-  int     GARBAGE_COLLECTION_INTERVAL = 10;
-  boolean GC_ENABLED                  = true;
-  boolean GC_VERBOSE                  = true;
+  private final int     NODE_COUNT                  = 3;
+  private final int     LOOP_ITERATION_COUNT        = 1;
+  private final int     GARBAGE_COLLECTION_INTERVAL = 10;
+  private final boolean GC_ENABLED                  = true;
+  private final boolean GC_VERBOSE                  = true;
 
   public void setUp() throws Exception {
     super.setUp();
