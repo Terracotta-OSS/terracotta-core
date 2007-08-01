@@ -9,13 +9,13 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
-import org.eclipse.jdt.internal.junit.launcher.JUnitLaunchConfiguration;
+import org.eclipse.jdt.junit.launcher.JUnitLaunchConfigurationDelegate;
 
 /**
  * Launcher for DSO JUnit tests.
  */
 
-public class DSOJUnitLaunchConfiguration extends JUnitLaunchConfiguration implements IDSOLaunchDelegate {
+public class DSOJUnitLaunchConfiguration extends JUnitLaunchConfigurationDelegate implements IDSOLaunchDelegate {
 
   private LaunchHelper fLaunchHelper = new LaunchHelper(this);
 
