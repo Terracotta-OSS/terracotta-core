@@ -151,6 +151,15 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
     }
   }
 
+  /*
+   * This method is overridden to give Arrays ability to be partial in L1
+   */
+  public void addObjectReferencesTo(ManagedObjectTraverser traverser) {
+    if (!isPrimitive) {
+      traverser.addReachableObjectIDs(getObjectReferences());
+    }
+  }
+
   public void dehydrate(ObjectID objectID, DNAWriter writer) {
     writer.addEntireArray(arrayData);
     writer.setArrayLength(size);
