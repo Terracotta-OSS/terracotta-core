@@ -65,7 +65,9 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
       } else if (a.isSubArray()) {
         int startPos = a.getArrayIndex();
         Object value = a.getObject();
-        System.arraycopy(value, 0, arrayData, startPos, Array.getLength(value));
+        int length = Array.getLength(value);
+        informListener(objectID, listener, startPos, length, value, includeIDs);
+        System.arraycopy(value, 0, arrayData, startPos, length);
       } else {
         throw Assert.failure("unknown action type");
       }
@@ -109,6 +111,25 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
       default:
         ((Object[]) array)[index] = value;
         break;
+    }
+  }
+
+  /*
+   * This method should be called before the new value is applied
+   */
+  private void informListener(ObjectID objectID, ManagedObjectChangeListener listener, int startPos, int length,
+                              Object value, BackReferences includeIDs) {
+    if (!isPrimitive) {
+      Object[] oldArray = (Object[]) arrayData;
+      Object[] newArray = (Object[]) value;
+      for (int i = 0; i < length; i++) {
+        Object oldVal = oldArray[startPos + i];
+        Object newVal = newArray[i];
+        ObjectID oldValue = oldVal instanceof ObjectID ? (ObjectID) oldVal : ObjectID.NULL_ID;
+        ObjectID newValue = newVal instanceof ObjectID ? (ObjectID) newVal : ObjectID.NULL_ID;
+        listener.changed(objectID, oldValue, newValue);
+        includeIDs.addBackReference(newValue, objectID);
+      }
     }
   }
 

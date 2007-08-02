@@ -44,6 +44,8 @@ public class TreeMapManagedObjectState extends MapManagedObjectState implements 
         PhysicalAction pa = (PhysicalAction) action;
         Assert.assertEquals(COMPARATOR_FIELDNAME, pa.getFieldName());
         this.comparator = (ObjectID) pa.getObject();
+        getListener().changed(objectID, null, comparator);
+        includeIDs.addBackReference(comparator, objectID);
       } else {
         LogicalAction la = (LogicalAction) action;
         int method = la.getMethod();

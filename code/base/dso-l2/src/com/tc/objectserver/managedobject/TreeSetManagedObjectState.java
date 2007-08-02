@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.managedobject;
 
@@ -14,11 +15,8 @@ import com.tc.util.Assert;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -45,6 +43,8 @@ public class TreeSetManagedObjectState extends SetManagedObjectState {
       PhysicalAction pa = (PhysicalAction) action;
       Assert.assertEquals(COMPARATOR_FIELDNAME, pa.getFieldName());
       this.comparator = (ObjectID) pa.getObject();
+      getListener().changed(objectID, null, comparator);
+      includeIDs.addBackReference(comparator, objectID);
     } else {
       LogicalAction la = (LogicalAction) action;
       int method = la.getMethod();
@@ -67,12 +67,11 @@ public class TreeSetManagedObjectState extends SetManagedObjectState {
     super.dehydrate(objectID, writer);
   }
 
-  protected Collection getAllReferences() {
-    List allReferences = new ArrayList(references);
+  protected void addAllObjectReferencesTo(Set refs) {
+    super.addAllObjectReferencesTo(refs);
     if (comparator != null) {
-      allReferences.add(comparator);
+      refs.add(comparator);
     }
-    return allReferences;
   }
 
   // TODO This Facade has not included the comparator.

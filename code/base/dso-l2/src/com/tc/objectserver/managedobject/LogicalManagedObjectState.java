@@ -28,7 +28,7 @@ public abstract class LogicalManagedObjectState extends AbstractManagedObjectSta
 
   protected abstract void addAllObjectReferencesTo(Set refs);
 
-  protected void addAllObjectReferencesFromIteratorTo(Iterator i, Set refs) {
+  protected final void addAllObjectReferencesFromIteratorTo(Iterator i, Set refs) {
     for (; i.hasNext();) {
       Object o = i.next();
       if(o instanceof ObjectID) {

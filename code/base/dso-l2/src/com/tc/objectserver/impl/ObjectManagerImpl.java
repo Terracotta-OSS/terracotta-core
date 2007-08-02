@@ -43,10 +43,7 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
 import com.tc.util.ObjectIDSet2;
-import com.tc.util.TCAssertionError;
 import com.tc.util.concurrent.StoppableThread;
-
-import gnu.trove.THashSet;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -63,7 +60,6 @@ import java.util.Set;
 /**
  * Manages access to all the Managed objects in the system.
  * 
- * @author steve
  */
 public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeListener, ObjectManagerMBean, Evictable {
 
@@ -79,7 +75,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
                                                                             .getInt(
                                                                                     "l2.objectmanager.maxObjectsToCommit");
   // XXX:: Should go to property file
-  private static final int                     INITIAL_SET_SIZE         = 1;
+  private static final int                     INITIAL_SET_SIZE         = 16;
   private static final float                   LOAD_FACTOR              = 0.75f;
   private static final int                     MAX_LOOKUP_OBJECTS_COUNT = 5000;
   private static final long                    REMOVE_THRESHOLD         = 300;
@@ -177,7 +173,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public boolean lookupObjectsAndSubObjectsFor(ChannelID channelID, ObjectManagerResultsContext responseContext,
                                                int maxReachableObjects) {
-    // maxReachableObjects is atleast 1 so that addReachableObjectsIfNecessary does the right thing
+    // maxReachableObjects is at least 1 so that addReachableObjectsIfNecessary does the right thing
     return lookupObjectsForOptionallyCreate(channelID, responseContext, maxReachableObjects <= 0 ? 1
         : maxReachableObjects);
   }
@@ -296,8 +292,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       if (!fmr.isFaultingInProgress()) {
         references.remove(id);
         if (isMissingOkay(flags)) { return null; }
-        throw new AssertionError("Request for a non-existent object: " + id + 
-                                 " context: " + context);
+        throw new AssertionError("Request for a non-existent object: " + id + " context: " + context);
       }
       if (isNewRequest(flags)) stats.cacheMiss();
     } else {
@@ -421,14 +416,18 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private boolean basicLookupObjectsFor(ChannelID channelID, ObjectManagerLookupContext context, int maxReachableObjects) {
     Set objects = createNewSet();
 
-    createNewObjectsIfNecessary(context);
+    // if (context.getPendingCount() % 500 == 499) {
+    // logger.warn("Reached 500 : basic look up for : " + context + " maxReachable depth : " + maxReachableObjects);
+    // }
 
+    final Set newObjectIDs = context.getNewObjectIDs();
     boolean processPending = false;
     boolean available = true;
     Set ids = context.getLookupIDs();
     for (Iterator i = ids.iterator(); i.hasNext();) {
       ObjectID id = (ObjectID) i.next();
-      // We dont check available flag before doing calling getOrLookupReference() for two reasons.
+      if (newObjectIDs.contains(id)) continue;
+      // We don't check available flag before doing calling getOrLookupReference() for two reasons.
       // 1) To get the right hit/miss count and
       // 2) to Fault objects that are not available
       ManagedObjectReference reference = getOrLookupReference(context, id, (context.isPendingRequest() ? DEFAULT_FLAG
@@ -436,8 +435,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       if (available && reference.isReferenced()) {
         available = false;
         // Setting only the first referenced object to process Pending. If objects are being faulted in, then this
-        // will
-        // ensure that we dont run processPending multiple times unnecessarily.
+        // will ensure that we don't run processPending multiple times unnecessarily.
         reference.setProcessPendingOnRelease(true);
       }
 
@@ -446,6 +444,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     if (available) {
+      createNewObjectsAndAddTo(objects, newObjectIDs);
       Set processLater = addReachableObjectsIfNecessary(channelID, maxReachableObjects, objects);
       ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(processObjectsRequest(objects),
                                                                               processLater);
@@ -460,21 +459,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
   }
 
-  private void createNewObjectsIfNecessary(ObjectManagerLookupContext context) {
-    if (!context.isNewObjectsCreated()) {
-      for (Iterator i = context.getNewObjectIDs().iterator(); i.hasNext();) {
-        ObjectID oid = (ObjectID) i.next();
-        ManagedObject mo = new ManagedObjectImpl(oid);
-        try {
-          createObject(mo);
-        } catch (TCAssertionError tca) {
-          // XXX::REmove:: ADDED for debugging
-          logger.error("Error creating New Objects for : " + oid + " new mo = " + mo + " old mo = " + getReference(oid)
-                       + " context = " + context);
-          throw tca;
-        }
-      }
-      context.newObjectsCreationComplete();
+  private void createNewObjectsAndAddTo(Set objects, Set newObjectIDs) {
+    for (Iterator i = newObjectIDs.iterator(); i.hasNext();) {
+      ObjectID oid = (ObjectID) i.next();
+      ManagedObject mo = new ManagedObjectImpl(oid);
+      createObject(mo);
+      objects.add(mo.getReference());
     }
   }
 
@@ -676,7 +666,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     pw.flush();
   }
 
-  // This method is fo tests only
+  // This method is for tests only
   public synchronized boolean isReferenced(ObjectID id) {
     ManagedObjectReference reference = getReference(id);
     return reference != null && reference.isReferenced();
@@ -856,27 +846,24 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private static class ObjectManagerLookupContext implements ObjectManagerResultsContext {
 
     private final ObjectManagerResultsContext responseContext;
-    private boolean                           pending           = false;
-    private boolean                           newObjectsCreated = false;
+    private boolean                           pending      = false;
+    private int                               pendingCount = 0;
 
     public ObjectManagerLookupContext(ObjectManagerResultsContext responseContext) {
       this.responseContext = responseContext;
+    }
+
+    public int getPendingCount() {
+      return pendingCount;
     }
 
     public boolean isPendingRequest() {
       return pending;
     }
 
-    public boolean isNewObjectsCreated() {
-      return newObjectsCreated;
-    }
-
-    public void newObjectsCreationComplete() {
-      newObjectsCreated = true;
-    }
-
     public void makePending() {
       this.pending = true;
+      this.pendingCount++;
     }
 
     public Set getLookupIDs() {
@@ -892,7 +879,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     public String toString() {
-      return "ObjectManagerLookupContext : [ pending = " + pending + ", newObjectsCreated = " + newObjectsCreated
+      return "ObjectManagerLookupContext : [ pending = " + pending + ", pending count = " + pendingCount
              + ", responseContext = " + responseContext + "] ";
     }
   }
@@ -952,7 +939,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   // TODO:: INITIAL_SET_SIZE too low and can use a pool
   private static Set createNewSet() {
-    return new THashSet(INITIAL_SET_SIZE, LOAD_FACTOR);
+    return new HashSet(INITIAL_SET_SIZE, LOAD_FACTOR);
   }
 
   private void validateManagedObjectReference(ManagedObjectReference mor, ObjectID id) {
