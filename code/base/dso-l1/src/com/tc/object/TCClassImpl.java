@@ -154,10 +154,7 @@ public class TCClassImpl implements TCClass {
       tcObject.setVersion(dnaVersion);
       applicator.hydrate(objectManager, tcObject, dna, pojo);
     } else {
-      if (logger.isDebugEnabled()) {
-        logger.debug("IGNORING UPDATE, local object at version " + localVersion + ", dna update is version "
-                     + dnaVersion);
-      }
+      logger.info("IGNORING UPDATE, local object at version " + localVersion + ", dna update is version " + dnaVersion);
     }
 
   }
@@ -355,15 +352,15 @@ public class TCClassImpl implements TCClass {
     if (unsafe != null) {
       try {
         Field[] fields = peer.equals(Object.class) ? new Field[0] : peer.getDeclaredFields();
-//        System.err.println("Thread " + Thread.currentThread().getName() + ", class: " + getName() + ", # of field: "
-//                           + fields.length);
+        // System.err.println("Thread " + Thread.currentThread().getName() + ", class: " + getName() + ", # of field: "
+        // + fields.length);
         for (int i = 0; i < fields.length; i++) {
           try {
             if (!Modifier.isStatic(fields[i].getModifiers())) {
               fields[i].setAccessible(true);
               offsetToFields.put(new Long(unsafe.objectFieldOffset(fields[i])), fields[i]);
-//              System.err.println("Thread " + Thread.currentThread().getName() + ", class: " + getName() + ", field: "
-//                                 + fields[i].getName() + ", offset: " + unsafe.objectFieldOffset(fields[i]));
+              // System.err.println("Thread " + Thread.currentThread().getName() + ", class: " + getName() + ", field: "
+              // + fields[i].getName() + ", offset: " + unsafe.objectFieldOffset(fields[i]));
             }
           } catch (Exception e) {
             // Ignore those fields that throw an exception
