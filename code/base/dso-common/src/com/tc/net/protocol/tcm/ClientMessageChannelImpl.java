@@ -83,7 +83,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     if (channelSessionID == ((DSOMessageBase)message).getLocalSessionID()) {
      super.send(message);  
     } else {
-      logger.info("Drop old message: "+ ((DSOMessageBase)message).getMessageType());
+      logger.info("Drop old message: "+ ((DSOMessageBase)message).getMessageType() + " Expected "+ channelSessionID + " but got " + ((DSOMessageBase)message).getLocalSessionID());
     }
   }
 
@@ -95,6 +95,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   public void notifyTransportDisconnected(MessageTransport transport) {
     // Move channel to new session
     channelSessionID = sessionProvider.nextSessionID();
+    logger.info("ClientMessageChannel moves to " + channelSessionID);
     this.fireTransportDisconnectedEvent();
   }
 

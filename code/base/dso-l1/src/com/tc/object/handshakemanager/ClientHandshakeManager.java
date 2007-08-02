@@ -155,13 +155,15 @@ public class ClientHandshakeManager implements ChannelEventListener {
     logger.info("Pause " + getState());
     if (getState() == PAUSED) {
       logger.warn("pause called while already PAUSED");
-      return;
+      // ClientMessageChannel moves to next SessionID, need to move to newSession here too.
+    } else {
+      pauseStages();
+      pauseManagers();
+      changeState(PAUSED);
     }
-    pauseStages();
-    pauseManagers();
-    changeState(PAUSED);
     // all the activities paused then can switch to new session
     sessionManager.newSession();
+    logger.info("ClientHandshakeManager moves to "+ sessionManager);
   }
 
   public void unpause() {
