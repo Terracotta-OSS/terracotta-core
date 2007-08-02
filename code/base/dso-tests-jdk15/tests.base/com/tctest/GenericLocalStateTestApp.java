@@ -34,6 +34,8 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
     Throwable throwable = null;
 
     if (await() == 0) {
+      System.out.println("Mutating: " + wrapper.getObject().getClass().getSimpleName() +
+                         " with " + mutator.getClass().getSimpleName() + " with lock " + lockMode);
       wrapper.getHandler().setLockMode(lockMode);
       try {
         mutator.doMutate(wrapper.getProxy());
@@ -52,6 +54,7 @@ public abstract class GenericLocalStateTestApp extends AbstractErrorCatchingTran
     wrapper.getHandler().setLockMode(curr_lockMode);
 
     if (gotExpectedException) {
+      System.out.println("... validating...");
       validate(oldSize, wrapper, lockMode, mutator);
     }
 
