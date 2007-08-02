@@ -13,7 +13,6 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
 
   private final ObjectID id;
   private boolean        inProgress;
-  private boolean        processPending;
 
   public FaultingManagedObjectReference(ObjectID id) {
     this.id = id;
@@ -26,14 +25,6 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
 
   public void faultingComplete() {
     this.inProgress = false;
-  }
-
-  public boolean getProcessPendingOnRelease() {
-    return this.processPending;
-  }
-
-  public void setProcessPendingOnRelease(boolean b) {
-    this.processPending = b;
   }
 
   public void setRemoveOnRelease(boolean removeOnRelease) {
@@ -109,8 +100,7 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
   }
 
   public String toString() {
-    return "FaultingManagedObjectReference [ " + id + " inProgress : " + inProgress + " processPending : "
-           + processPending + " ]";
+    return "FaultingManagedObjectReference [ " + id + " inProgress : " + inProgress + " ]";
   }
 
 }

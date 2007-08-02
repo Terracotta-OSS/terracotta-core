@@ -53,7 +53,6 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   private final static byte        REFERENCED_OFFSET        = 4;
   private final static byte        REMOVE_ON_RELEASE_OFFSET = 8;
   private final static byte        PINNED_OFFSET            = 16;
-  private final static byte        PROCESS_PENDING_OFFSET   = 32;
 
   private final static byte        INITIAL_FLAG_VALUE       = IS_DIRTY_OFFSET | IS_NEW_OFFSET;
 
@@ -272,14 +271,6 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
    */
   public ManagedObject getObject() {
     return this;
-  }
-
-  public boolean getProcessPendingOnRelease() {
-    return getFlag(PROCESS_PENDING_OFFSET);
-  }
-
-  public void setProcessPendingOnRelease(boolean b) {
-    setFlag(PROCESS_PENDING_OFFSET, b);
   }
 
   public boolean isRemoveOnRelease() {
