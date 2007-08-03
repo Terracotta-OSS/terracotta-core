@@ -233,10 +233,15 @@ public class StateManagerTest extends TCTestCase {
   private void shutdown(TribesGroupManager[] groupMgr, L2StateMessageStage[] msgStage, int start, int end)
       throws Exception {
     for (int i = start; i < end; ++i) {
-      groupMgr[i].stop();
-      msgStage[i].requestStop();
+      try {
+        groupMgr[i].stop();
+        msgStage[i].requestStop();
+      } catch (Exception ex) {
+        System.out.println("*** Failed to stop Server[" + i + "] "+ groupMgr[i] + " " + ex);
+      }
     }
-    Thread.sleep(1000);
+    Thread.sleep(2000);
+    System.out.println("*** shutdown done");
   }
 
   private void nodesMixJoinAndElect(int nodes) throws Exception {
