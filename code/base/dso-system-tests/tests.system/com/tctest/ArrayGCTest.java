@@ -12,6 +12,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.HashMap;
@@ -25,8 +26,7 @@ public class ArrayGCTest extends GCTestBase {
   }
 
   public static class App extends AbstractErrorCatchingTransparentApp {
-    private static long         DURATION     = 10 * 60 * 1000;                       // 10 minutes
-
+    private static long         DURATION     = 3 * 60 * 1000;
     private static long         END          = System.currentTimeMillis() + DURATION;
 
     private static final String TYPE_NEW     = "N";
@@ -169,6 +169,9 @@ public class ArrayGCTest extends GCTestBase {
     }
 
     private static boolean shouldEnd() {
+      // slow down for the monkeys
+      ThreadUtil.reallySleep(10);
+
       return System.currentTimeMillis() > END;
     }
 

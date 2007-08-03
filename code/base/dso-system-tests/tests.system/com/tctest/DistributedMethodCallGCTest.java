@@ -14,35 +14,14 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class DistributedMethodCallGCTest extends GCTestBase {
 
-  private static List memoryHog = new ArrayList();
-
-  public DistributedMethodCallGCTest() {
-    hogSomeHeap();
-  }
-
   public void doSetUp(TransparentTestIface t) throws Exception {
     super.doSetUp(t);
     t.getTransparentAppConfig().setAttribute("gc-interval-ms", new Long(getGCIntervalInSeconds() * 1000));
-  }
-
-  private void hogSomeHeap() {
-    long count = 0;
-    long freeTarget = 16L * 1024L * 1024L; // 16MB
-
-    System.gc();
-    while (Runtime.getRuntime().freeMemory() > freeTarget) {
-      memoryHog.add(new String("+1 awesome points"));
-      count++;
-    }
-
-    System.err.println("added " + count + " Strings to consume heap");
   }
 
   protected Class getApplicationClass() {
@@ -58,7 +37,7 @@ public class DistributedMethodCallGCTest extends GCTestBase {
 
     public App(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
       super(appId, cfg, listenerProvider);
-      DMITarget.setGCTime(((Long)cfg.getAttributeObject("gc-interval-ms")).longValue());
+      DMITarget.setGCTime(((Long) cfg.getAttributeObject("gc-interval-ms")).longValue());
 
       if (getParticipantCount() < 2) { throw new AssertionError(); }
     }
@@ -84,6 +63,9 @@ public class DistributedMethodCallGCTest extends GCTestBase {
     }
 
     private static boolean shouldEnd() {
+      // slow down for the monkeys
+      ThreadUtil.reallySleep(50);
+
       return System.currentTimeMillis() > END;
     }
 
