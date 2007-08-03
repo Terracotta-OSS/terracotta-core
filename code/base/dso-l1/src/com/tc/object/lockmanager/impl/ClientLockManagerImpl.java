@@ -183,7 +183,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
       lock = (ClientLock) locksByID.get(lockID);
     }
     if (lock != null) {
-      return lock.isHeld();
+      return lock.isHeldBy(threadID, lockLevel);
     } else {
       GlobalLockInfo lockInfo = getLockInfo(lockID, threadID);
       return lockInfo.isLocked(lockLevel);
@@ -222,7 +222,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     }
     lock.lock(threadID, type);
   }
-  
+
   public boolean tryLock(LockID lockID, ThreadID threadID, WaitInvocation timeout, int type) {
     Assert.assertNotNull("threadID", threadID);
     final ClientLock lock;
@@ -371,7 +371,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
                                                  + " :: " + LockLevel.toString(level)); }
     lock.awardLock(threadID, level);
   }
-  
+
   /*
    * XXX:: @read comment for awardLock();
    */
@@ -432,7 +432,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
     }
     return c;
   }
-  
+
   public synchronized Collection addAllPendingTryLockRequestsTo(Collection c) {
     assertStarting();
     for (Iterator i = locksByID.values().iterator(); i.hasNext();) {
@@ -487,7 +487,7 @@ public class ClientLockManagerImpl implements ClientLockManager, LockFlushCallba
 
     return o;
   }
-  
+
   private synchronized void resubmitQueryLockRequests() {
     for (Iterator i=pendingQueryLockRequestsByID.values().iterator(); i.hasNext(); ) {
       QueryLockRequest qRequest = (QueryLockRequest)i.next();

@@ -121,7 +121,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
       getThreadTransactionContext().removeLock(lockID);
     }
   }
-  
+
   public boolean tryBegin(String lockName, WaitInvocation timeout, int lockLevel) {
     logTryBegin0(lockName, lockLevel);
 
@@ -149,7 +149,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
     return isLocked;
   }
-  
+
   public boolean begin(String lockName, int lockLevel) {
     logBegin0(lockName, lockLevel);
 
@@ -189,13 +189,13 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
   public void wait(String lockName, WaitInvocation call, Object object) throws UnlockedSharedObjectException,
       InterruptedException {
-    final ClientTransaction topTxn = getTransaction();
+    final ClientTransaction topTxn = getTransactionOrNull();
+
+    if (topTxn == null) { throw new IllegalMonitorStateException(); }
 
     LockID lockID = lockManager.lockIDFor(lockName);
 
-    if (lockID == null || lockID.isNull()) {
-      lockID = topTxn.getLockID();
-    }
+    if (!lockManager.isLocked(lockID, LockLevel.WRITE)) { throw new IllegalMonitorStateException(); }
 
     commit(lockID, topTxn, true);
 
@@ -207,12 +207,14 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
   }
 
   public void notify(String lockName, boolean all, Object object) throws UnlockedSharedObjectException {
-    final ClientTransaction currentTxn = getTransaction();
+    final ClientTransaction currentTxn = getTransactionOrNull();
+
+    if (currentTxn == null) { throw new IllegalMonitorStateException(); }
+
     LockID lockID = lockManager.lockIDFor(lockName);
 
-    if (lockID == null || lockID.isNull()) {
-      lockID = currentTxn.getLockID();
-    }
+    if (!lockManager.isLocked(lockID, LockLevel.WRITE)) { throw new IllegalMonitorStateException(); }
+
     currentTxn.addNotify(lockManager.notify(lockID, all));
   }
 
