@@ -20,7 +20,7 @@ import com.tctest.spring.bean.FooService;
 public class SingletonReferencingProxiedBean_Test extends SimpleTransparentTestBase {
 
   public SingletonReferencingProxiedBean_Test() {
-    disableAllUntil("2008-01-01");  //covered by system test
+    //
   }
 
   protected int getNodeCount() {
