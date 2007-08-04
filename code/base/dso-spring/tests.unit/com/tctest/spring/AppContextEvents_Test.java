@@ -31,7 +31,7 @@ public class AppContextEvents_Test extends TransparentTestBase {
   private static final int NODE_COUNT      = 2;
 
   public AppContextEvents_Test() {
-    disableAllUntil("2008-01-01");  //covered by system test
+    //
   }
 
   protected void setUp() throws Exception {
