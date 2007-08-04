@@ -27,7 +27,7 @@ public class JmxSupport_Test extends TransparentTestBase {
   private static final int NODE_COUNT      = 4;
 
   public JmxSupport_Test() {
-    disableAllUntil("2008-01-01");  //covered by system test
+    //
   }
 
   protected void setUp() throws Exception {
