@@ -15,6 +15,7 @@ import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -178,14 +179,25 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     File workingDir = new File(configFile.getParentFile(), "client-0");
     FileUtils.forceMkdir(workingDir);
 
+    List jvmArgs = new ArrayList();
+    addTestTcPropertiesFile(jvmArgs);
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class, configFile
-        .getAbsolutePath(), new String[0], workingDir);
+        .getAbsolutePath(), new String[0], workingDir, jvmArgs);
     client.start();
     client.mergeSTDERR();
     client.mergeSTDOUT();
     client.waitFor();
     System.err.println("\n### Started New Client");
     return client;
+  }
+
+  private void addTestTcPropertiesFile(List jvmArgs) {
+    URL url = getClass().getResource("/com/tc/properties/tests.properties");
+    if (url == null) { return; }
+    String pathToTestTcProperties = url.getPath();
+    if (pathToTestTcProperties == null || pathToTestTcProperties.equals("")) { return; }
+    System.err.println("\n##### -Dcom.tc.properties=" + pathToTestTcProperties);
+    jvmArgs.add("-Dcom.tc.properties=" + pathToTestTcProperties);
   }
 
 }

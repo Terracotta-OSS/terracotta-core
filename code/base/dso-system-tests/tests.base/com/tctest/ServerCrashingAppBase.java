@@ -12,6 +12,9 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class ServerCrashingAppBase extends AbstractErrorCatchingTransparentApp {
 
@@ -60,14 +63,25 @@ public abstract class ServerCrashingAppBase extends AbstractErrorCatchingTranspa
     File workingDir = new File(configFile.getParentFile(), "client-" + clientId);
     FileUtils.forceMkdir(workingDir);
 
+    List jvmArgs = new ArrayList();
+    addTestTcPropertiesFile(jvmArgs);
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, clientClass, configFile.getAbsolutePath(),
-                                                             new String[0], workingDir);
+                                                             new String[0], workingDir, jvmArgs);
     client.start();
     client.mergeSTDERR();
     client.mergeSTDOUT();
     client.waitFor();
     System.err.println("\n### Started New Client");
     return client;
+  }
+
+  protected final void addTestTcPropertiesFile(List jvmArgs) {
+    URL url = getClass().getResource("/com/tc/properties/tests.properties");
+    if (url == null) { return; }
+    String pathToTestTcProperties = url.getPath();
+    if (pathToTestTcProperties == null || pathToTestTcProperties.equals("")) { return; }
+    // System.err.println("\n##### -Dcom.tc.properties=" + pathToTestTcProperties);
+    jvmArgs.add("-Dcom.tc.properties=" + pathToTestTcProperties);
   }
 
 }
