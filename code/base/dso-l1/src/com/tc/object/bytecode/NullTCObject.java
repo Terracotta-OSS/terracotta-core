@@ -227,4 +227,8 @@ public class NullTCObject implements TCObject {
     return null;
   }
 
+  public void setArrayReference(int index, ObjectID id) {
+    //
+  }
+
 }

@@ -95,6 +95,15 @@ public class TCObjectPhysical extends TCObjectImpl {
     }
   }
 
+  public void setArrayReference(int index, ObjectID id) {
+    synchronized (getResolveLock()) {
+      Object[] po = (Object[]) getPeerObject();
+      if (po == null) return;
+      po[index] = null;
+      setReference(String.valueOf(index), id);
+    }
+  }
+
   public void clearReference(String fieldName) {
     synchronized (getResolveLock()) {
       if (hasReferences()) {

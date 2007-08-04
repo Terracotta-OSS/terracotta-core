@@ -24,7 +24,7 @@ public class TCObjectClone implements TCObject {
   private final long                         version;
   private final OptimisticTransactionManager txManager;
   private final TCClass                      tcClass;
-  private final int arrayLength;
+  private final int                          arrayLength;
 
   public TCObjectClone(TCObject source, OptimisticTransactionManager txManager) {
     this(source, txManager, -1);
@@ -137,6 +137,10 @@ public class TCObjectClone implements TCObject {
   public void setReference(String fieldName, ObjectID id) {
     throw new ImplementMe();
 
+  }
+
+  public void setArrayReference(int index, ObjectID id) {
+    throw new ImplementMe();
   }
 
   public void clearReference(String fieldName) {

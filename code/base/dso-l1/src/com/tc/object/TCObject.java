@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -88,6 +89,8 @@ public interface TCObject extends Cacheable {
 
   public void setReference(String fieldName, ObjectID id);
 
+  public void setArrayReference(int index, ObjectID id);
+
   public void clearReference(String fieldName);
 
   public void setValue(String fieldName, Object obj);
@@ -117,5 +120,3 @@ public interface TCObject extends Cacheable {
 
   public boolean autoLockingDisabled();
 }
-
-

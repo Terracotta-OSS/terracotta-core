@@ -242,4 +242,8 @@ public class TestTCObject implements TCObject {
   public ArrayIndexOutOfBoundsException checkArrayIndex(int index) {
     throw new ImplementMe();
   }
+
+  public void setArrayReference(int index, ObjectID id) {
+    throw new ImplementMe();
+  }
 }

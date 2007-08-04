@@ -6,6 +6,7 @@ package com.tctest;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
+import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -14,6 +15,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
+import com.terracottatech.config.PersistenceMode;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,8 +27,17 @@ public class ArrayGCTest extends GCTestBase {
     return App.class;
   }
 
+  protected boolean useExternalProcess() {
+    return true;
+  }
+
+  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+    super.setupConfig(configFactory);
+    configFactory.setPersistenceMode(PersistenceMode.PERMANENT_STORE);
+  }
+
   public static class App extends AbstractErrorCatchingTransparentApp {
-    private static long         DURATION     = 3 * 60 * 1000;
+    private static long         DURATION     = 5 * 60 * 1000;
     private static long         END          = System.currentTimeMillis() + DURATION;
 
     private static final String TYPE_NEW     = "N";
@@ -34,6 +45,7 @@ public class ArrayGCTest extends GCTestBase {
     private static final String TYPE_COPY    = "C";
 
     private static final int    NUM          = 500;
+    private static final int    LEN          = 50;
 
     private final CyclicBarrier barrier;
     private final Map           root;
@@ -79,7 +91,7 @@ public class ArrayGCTest extends GCTestBase {
     }
 
     private Object[] newArray() {
-      return newArray(random.nextInt(50));
+      return newArray(random.nextInt(LEN));
     }
 
     private Object[] newArray(int length) {
@@ -106,7 +118,6 @@ public class ArrayGCTest extends GCTestBase {
             }
           }
         }
-
       }
     }
 
@@ -188,6 +199,7 @@ public class ArrayGCTest extends GCTestBase {
 
       config.addWriteAutolock("* " + testClassName + ".populate()");
       config.addWriteAutolock("* " + testClassName + ".createAndMutate()");
+
     }
 
   }

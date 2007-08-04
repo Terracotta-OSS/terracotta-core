@@ -79,7 +79,7 @@ public class ArrayApplicator extends BaseApplicator {
   private static void setArrayElement(int index, Object value, TCObject tcObject, Object pojo) {
     String fieldName = String.valueOf(index);
     if (value instanceof ObjectID) {
-      tcObject.setReference(fieldName, (ObjectID) value);
+      tcObject.setArrayReference(index, (ObjectID) value);
     } else {
       tcObject.clearReference(fieldName);
       // if you're trying to get rid of reflection here, you need to make sure you deal properly with

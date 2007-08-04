@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode.hook.impl;
 
@@ -323,6 +324,10 @@ public class ArrayManagerTest extends TestCase {
     }
 
     public void setReference(String fieldName, ObjectID id) {
+      throw new ImplementMe();
+    }
+
+    public void setArrayReference(int index, ObjectID id) {
       throw new ImplementMe();
     }
 
