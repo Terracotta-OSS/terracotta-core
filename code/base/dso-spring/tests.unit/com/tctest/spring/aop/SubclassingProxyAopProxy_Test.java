@@ -19,7 +19,7 @@ public class SubclassingProxyAopProxy_Test extends TCTestCase {
 
   public SubclassingProxyAopProxy_Test(String name) {
     super(name);
-    disableAllUntil("2008-09-18");  // XXX timebombed
+    disableAllUntil("2007-11-01");
   }
   
   public static void testBeforeAdvice() {
