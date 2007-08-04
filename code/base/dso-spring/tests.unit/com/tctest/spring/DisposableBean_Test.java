@@ -19,7 +19,7 @@ import com.tctest.spring.bean.DisposableService;
 public class DisposableBean_Test extends SimpleTransparentTestBase {
 
   public DisposableBean_Test() {
-    disableAllUntil("2008-01-01");  //covered by system test
+    //
   }
 
   protected int getNodeCount() {
