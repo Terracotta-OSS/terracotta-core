@@ -19,7 +19,7 @@ import com.tctest.spring.bean.BeanNameAwareBean;
 public class BeanNameAware_Test extends SimpleTransparentTestBase {
 
   public BeanNameAware_Test() {
-    disableAllUntil("2008-01-01");  //covered by system test
+    //
   }
 
   protected int getNodeCount() {
