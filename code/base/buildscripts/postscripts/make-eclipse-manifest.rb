@@ -65,26 +65,16 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   end
   
   def createVersionString(build_environment)
-    # standard
-    #3.2.2.r322_v20070109
-    
-    # example data
-    #2.3-nightly-rev12131
-    #2.3-stable0
-    #2.3.0
-    #2.3.1
-    #trunk-nightly-rev12123
-
-    version = get_config(:version, "1.0.0")
-    version = version.split(/-/).first
-    
-    # if version='trunk' or any non number string, default it to 1.0.0
-    version = "1.0.0" unless version[0..0] =~ /\d/ 
-    version = "#{version}.0" unless version =~ /\d+\.\d+\.\d+/
-    
-    fail("verion string #{version} doesn't conform to Eclipse plugin standard") unless version =~ /\d+\.\d+\.\d+/
-    
-    version = "#{version}.r" + build_environment.current_revision.to_s + "_v" + Time.now.strftime("%Y%m%d") 
+    # eclipse plugin standard
+    # 3.2.2.r322_v20070109
+    raw_version = get_config(:version, "1.0.0")
+    tokens = raw_version.split(/-/).delete_if { |t| t =~ /rev/ }
+    version_number = tokens.first
+    version_number = "1.0.0-trunk" if version_number == 'trunk'
+    version_number = "#{version_number}.0" unless version_number =~ /\d+\.\d+\.\d+/
+    version = version_number + "-" + tokens[1..-1].join("-");      
+    version = "#{version}.r" + build_environment.current_revision.to_s + "_v" + Time.now.strftime("%Y%m%d")
+    fail("version string #{version} doesn't conform to eclipse standard") unless version =~ /^\d+\.\d+\.\d+/
   end
   
 end
