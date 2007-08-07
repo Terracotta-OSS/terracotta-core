@@ -15,7 +15,6 @@ import com.tc.util.Assert;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -24,8 +23,10 @@ import java.util.List;
  * @author hhuynh
  */
 public class MassCloneTestApp extends AbstractErrorCatchingTransparentApp {
-  private static final int COUNT = 6000;
-  private List             root  = new ArrayList();
+  private static final int COUNT    = 6000;
+  private static final int RUN_TIME = 3 * 60 * 1000;
+
+  private List             root     = new ArrayList();
   private CyclicBarrier    barrier;
 
   public MassCloneTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
@@ -36,24 +37,28 @@ public class MassCloneTestApp extends AbstractErrorCatchingTransparentApp {
   protected void runTest() throws Throwable {
     if (barrier.barrier() == 0) {
       System.err.println("creating " + COUNT + " objects...");
-      synchronized (root) {
-        for (int i = 0; i < COUNT; i++) {
-          root.add(new MyStuff());
+      int batch = 20;
+      for (int i = 0; i < COUNT; i += batch) {
+        synchronized (root) {
+          for (int j = 0; j < batch; j++) {
+            root.add(new MyStuff());
+          }
         }
       }
+      System.err.println("created " + root.size() + " objects.");
     }
-
     barrier.barrier();
-    validateClone();
-  }
 
-  private void validateClone() {
-    synchronized (root) {
-      System.err.println("validating clones....");
-      for (Iterator it = root.iterator(); it.hasNext();) {
-        MyStuff cloned = (MyStuff) ((MyStuff) it.next()).clone();
-        Assert.assertTrue(cloned.isSet());
-        cloned = null;
+    System.err.println("Validating clondes...");
+    long timeout = System.currentTimeMillis() + RUN_TIME;
+    int index = 0;
+    while (System.currentTimeMillis() < timeout) {
+      synchronized (root) {
+        MyStuff cloned = (MyStuff) ((MyStuff) root.get(index)).clone();
+        Assert.assertTrue(cloned.allFieldsSet());
+      }
+      if (++index >= COUNT) {
+        index = 0;
       }
     }
   }
@@ -62,9 +67,10 @@ public class MassCloneTestApp extends AbstractErrorCatchingTransparentApp {
     String testClass = MassCloneTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     config.addIncludePattern(MyStuff.class.getName());
+    config.addWriteAutolock("* " + MyStuff.class.getName() + "*.*(..)");
 
-    String methodExpression = "* " + testClass + "*.*(..)";
-    config.addWriteAutolock(methodExpression);
+    config.addWriteAutolock("* " + testClass + "*.runTest(..)");
+
     spec.addRoot("root", "root");
     spec.addRoot("barrier", "barrier");
 
@@ -72,7 +78,7 @@ public class MassCloneTestApp extends AbstractErrorCatchingTransparentApp {
     config.addWriteAutolock("* " + CyclicBarrier.class.getName() + "*.*(..)");
   }
 
-  private static class MyStuff {
+  private static class MyStuff implements Cloneable {
     public Object[] array;
     public List     list;
 
@@ -87,19 +93,12 @@ public class MassCloneTestApp extends AbstractErrorCatchingTransparentApp {
       }
     }
 
-    private MyStuff(int foo) {
-      // just here to not initialize any fields
-    }
-
-    public boolean isSet() {
+    public boolean allFieldsSet() {
       return array != null && list != null;
     }
 
-    protected Object clone() {
-      MyStuff cloned = new MyStuff(0);
-      cloned.array = (Object[]) array.clone();
-      cloned.list = (List) ((ArrayList) list).clone();
-      return cloned;
+    protected Object clone() throws CloneNotSupportedException {
+      return super.clone();
     }
   }
 
