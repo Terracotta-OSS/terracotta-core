@@ -65,15 +65,15 @@
     <!-- The host and symbolic name of the server; host defaults to "%i" (the machine's
        IP address) and name defaults to "host:dso-port".  Expansion parameters may be
        used in both attributes. -->
-    <server host="artichoke" name="apple">
+    <server host="my.host.name" name="My Server Name">
 
       <!-- Where should the server store its persistent data? (This includes
          stored object data for DSO.) This value undergoes parameter substitution
          before being used; this allows you to use placeholders like '%h' (for the hostname)
          or '%(com.mycompany.propname)' (to substitute in the value of
          Java system property 'com.mycompany.propname'). Thus, a value
-         of 'server-data-%h' would expand to 'server-data-artichoke' if 
-         running on host 'artichoke'.
+         of 'server-data-%h' would expand to 'server-data-my.host.name' if 
+         running on host 'my.host.name'.
 
          If this is a relative path, then it is interpreted relative to
          the current working directory of the server (that is, the directory
@@ -88,7 +88,7 @@
       <!-- In which directory should the server store its log files? Again,
          this value undergoes parameter substitution before being used;
          thus, a value like 'server-logs-%h' would expand to
-         'server-logs-artichoke' if running on host 'artichoke'.
+         'server-logs-my.host.name' if running on host 'my.host.names'.
 
          If this is a relative path, then it is interpreted relative to
          the current working directory of the server (that is, the directory
