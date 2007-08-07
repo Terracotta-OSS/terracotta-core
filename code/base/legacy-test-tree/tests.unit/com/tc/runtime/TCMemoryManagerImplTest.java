@@ -6,6 +6,9 @@ package com.tc.runtime;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
+import com.tc.lang.TCThreadGroup;
+import com.tc.lang.ThrowableHandler;
+import com.tc.logging.TCLogging;
 import com.tc.test.TCTestCase;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -25,7 +28,9 @@ public class TCMemoryManagerImplTest extends TCTestCase implements MemoryEventsL
   private Vector  errors                = new Vector();
 
   public void test() throws Throwable {
-    TCMemoryManager mm = new TCMemoryManagerImpl(usedThreshold, usedCriticalThreshold, sleepInterval, lc, true);
+    TCMemoryManager mm = new TCMemoryManagerImpl(usedThreshold, usedCriticalThreshold, sleepInterval, lc, true,
+                                                 new TCThreadGroup(new ThrowableHandler(TCLogging
+                                                     .getLogger(TCMemoryManagerImplTest.class))));
     mm.registerForMemoryEvents(this);
     try {
       hogMemory();

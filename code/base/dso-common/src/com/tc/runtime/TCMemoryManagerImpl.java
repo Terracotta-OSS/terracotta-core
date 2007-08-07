@@ -3,6 +3,8 @@
  */
 package com.tc.runtime;
 
+import com.tc.exception.TCRuntimeException;
+import com.tc.lang.TCThreadGroup;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.DebugUtil;
@@ -26,8 +28,11 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
 
   private MemoryMonitor         monitor;
 
+  private final TCThreadGroup threadGroup;
+
   public TCMemoryManagerImpl(int usedThreshold, int usedCriticalThreshold, long sleepInterval, int leastCount,
-                             boolean monitorOldGenOnly) {
+                             boolean monitorOldGenOnly, TCThreadGroup threadGroup) {
+    this.threadGroup = threadGroup;
     verifyInput(usedThreshold, usedCriticalThreshold, sleepInterval, leastCount);
     this.monitorOldGenOnly = monitorOldGenOnly;
     this.leastCount = leastCount;
@@ -79,7 +84,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
   private void startMonitorIfNecessary() {
     if (listeners.size() > 0 && monitor == null) {
       this.monitor = new MemoryMonitor(TCRuntime.getJVMMemoryManager(), this.sleepInterval, this.monitorOldGenOnly);
-      Thread t = new Thread(this.monitor);
+      Thread t = new Thread(this.threadGroup, this.monitor);
       t.setDaemon(true);
       if (Os.isSolaris()) {
         t.setPriority(Thread.MAX_PRIORITY);
@@ -133,6 +138,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
           adjust(mu);
         } catch (Throwable t) {
           logger.error(t);
+          throw new TCRuntimeException(t);
         }
       }
       logger.debug("Stopping Memory Monitor - sleep interval - " + sleepTime);

@@ -4,6 +4,7 @@
  */
 package com.tc.object.cache;
 
+import com.tc.lang.TCThreadGroup;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.runtime.MemoryEventType;
@@ -30,11 +31,11 @@ public class CacheManager implements MemoryEventsListener {
   private int                       calculatedCacheSize = 0;
   private CacheStatistics           lastStat            = null;
 
-  public CacheManager(Evictable evictable, CacheConfig config) {
+  public CacheManager(Evictable evictable, CacheConfig config, TCThreadGroup threadGroup) {
     this.evictable = evictable;
     this.config = config;
     this.memoryManager = new TCMemoryManagerImpl(config.getUsedThreshold(), config.getUsedCriticalThreshold(), config
-        .getSleepInterval(), config.getLeastCount(), config.isOnlyOldGenMonitored());
+        .getSleepInterval(), config.getLeastCount(), config.isOnlyOldGenMonitored(), threadGroup);
     this.memoryManager.registerForMemoryEvents(this);
   }
 

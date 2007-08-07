@@ -438,7 +438,7 @@ public class DistributedObjectServer extends SEDA implements TCDumper {
 
     TCProperties cacheManagerProperties = l2Properties.getPropertiesFor("cachemanager");
     if (cacheManagerProperties.getBoolean("enabled")) {
-      cacheManager = new CacheManager(objectManager, new CacheConfigImpl(cacheManagerProperties));
+      cacheManager = new CacheManager(objectManager, new CacheConfigImpl(cacheManagerProperties), getThreadGroup());
       if (logger.isDebugEnabled()) {
         logger.debug("CacheManager Enabled : " + cacheManager);
       }

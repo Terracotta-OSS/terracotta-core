@@ -242,7 +242,7 @@ public class DistributedObjectClient extends SEDA {
 
     TCProperties cacheManagerProperties = l1Properties.getPropertiesFor("cachemanager");
     if (cacheManagerProperties.getBoolean("enabled")) {
-      this.cacheManager = new CacheManager(objectManager, new CacheConfigImpl(cacheManagerProperties));
+      this.cacheManager = new CacheManager(objectManager, new CacheConfigImpl(cacheManagerProperties), getThreadGroup());
       if (logger.isDebugEnabled()) {
         logger.debug("CacheManager Enabled : " + cacheManager);
       }
