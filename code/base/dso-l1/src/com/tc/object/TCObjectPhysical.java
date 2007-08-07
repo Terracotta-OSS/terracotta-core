@@ -89,9 +89,9 @@ public class TCObjectPhysical extends TCObjectImpl {
     }
   }
 
-  public void setReference(String fieldName, ObjectID id) {
+  public ObjectID setReference(String fieldName, ObjectID id) {
     synchronized (getResolveLock()) {
-      getReferences().put(fieldName, id);
+      return (ObjectID) getReferences().put(fieldName, id);
     }
   }
 
@@ -180,7 +180,13 @@ public class TCObjectPhysical extends TCObjectImpl {
       if (o == null) continue;
       if (getObjectManager().isManaged(o)) {
         ObjectID lid = getObjectManager().lookupExistingObjectID(o);
-        setReference(Integer.toString(i), lid);
+        ObjectID old = setReference(Integer.toString(i), lid);
+        if (old != null && !lid.equals(old)) {
+          // Formatting
+          throw new AssertionError("clearArrayReferences : mapped [" + i + "] to " + lid
+                                   + " while there was an exisiting mapping in references : " + old + " : TCObject =  "
+                                   + getObjectID() + " : " + this + " version = " + this.getVersion());
+        }
         array[i] = null;
         cleared++;
       }

@@ -323,7 +323,7 @@ public class ArrayManagerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public void setReference(String fieldName, ObjectID id) {
+    public ObjectID setReference(String fieldName, ObjectID id) {
       throw new ImplementMe();
     }
 

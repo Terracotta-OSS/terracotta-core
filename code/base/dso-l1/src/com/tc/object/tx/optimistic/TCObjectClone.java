@@ -134,9 +134,8 @@ public class TCObjectClone implements TCObject {
     // do nothing
   }
 
-  public void setReference(String fieldName, ObjectID id) {
+  public ObjectID setReference(String fieldName, ObjectID id) {
     throw new ImplementMe();
-
   }
 
   public void setArrayReference(int index, ObjectID id) {

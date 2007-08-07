@@ -87,7 +87,10 @@ public interface TCObject extends Cacheable {
 
   public void resolveAllReferences();
 
-  public void setReference(String fieldName, ObjectID id);
+  /**
+   * @returns Old mapping if present
+   */
+  public ObjectID setReference(String fieldName, ObjectID id);
 
   public void setArrayReference(int index, ObjectID id);
 
