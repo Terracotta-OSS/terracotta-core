@@ -37,6 +37,7 @@ import javax.naming.ServiceUnavailableException;
 import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.JTree;
@@ -239,11 +240,37 @@ public class ServerNode extends ComponentNode
     m_autoConnectMenuItem.setSelected(autoConnect);
   }
 
+  private boolean testServerMatch() {
+    ProductInfo consoleInfo = new ProductInfo();
+    String consoleVersion = consoleInfo.getVersion();
+    ProductInfo serverInfo = getProductInfo();
+    String serverVersion = serverInfo.getVersion();
+    
+    if (!consoleVersion.equals(serverVersion)) {
+      Frame frame = (Frame) m_serverPanel.getAncestorOfClass(java.awt.Frame.class);
+      String msg = "<html>Version mismatch.<br><table><tr><td>Terracotta Server Version:</td><td>"+serverVersion+
+        "</tr><tr><td>AdminConsole Version:</td><td>"+consoleVersion+"</td></tr></table><br>Continue?</html>";
+      String title = frame.getTitle();
+      int options = JOptionPane.YES_NO_OPTION;
+      int answer = JOptionPane.showConfirmDialog(frame, msg, title, options);
+      return (answer == JOptionPane.YES_OPTION);
+    }
+    
+    return true;
+  }
+  
   private void setConnected(boolean connected) {
     if (m_acc == null) { return; }
     if (connected) {
+      if (!testServerMatch()) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            disconnect();
+          }
+        });
+        return;
+      }
       m_acc.controller.block();
-
       m_connectException = null;
       if (m_connectManager.isActive()) {
         handleActivation();
