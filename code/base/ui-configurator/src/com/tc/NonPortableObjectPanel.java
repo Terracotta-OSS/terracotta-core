@@ -70,6 +70,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 public class NonPortableObjectPanel extends XContainer implements TreeSelectionListener {
+  private NonPortableObjectEvent    fEvent;
   private SessionIntegratorFrame    fMainFrame;
   private Label                     fMessageLabel;
   private XList                     fIssueList;
@@ -282,17 +283,17 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     return null;
   }
 
+  // NOTE: this is copied in ui-eclipse/src/org/terracotta/dso/dialogs/NonPortableObjectDialog.
+  // ConfigHelper needs to be unified before we can move this to NonPortableWorkState.testIsIssue(ConfigHelper).
+
   boolean testIsIssue(NonPortableWorkState workState) {
-    if(workState.isRepeated() || workState.isTransient()) return false;
-    
     String fieldName = workState.getFieldName();
-    boolean isNull = workState.isNull();
     boolean isTransientField = fieldName != null && (fConfigHelper.isTransient(fieldName) || workState.isTransient());
 
-    if (workState.isNeverPortable() && !isTransientField && !isNull) { return true; }
-
-    if(workState.extendsLogicallyManagedType() && !isTransientField && !isNull) return true;
+    if(workState.isNull() || workState.isRepeated() || isTransientField) return false;
     
+    if (workState.isNeverPortable() || workState.extendsLogicallyManagedType()) { return true; }
+
     if (workState.hasRequiredBootTypes()) {
       java.util.List types = workState.getRequiredBootTypes();
       for (Iterator iter = types.iterator(); iter.hasNext();) {
@@ -311,8 +312,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
     
     if(workState.getExplaination() != null) return true;
     
-    return !workState.isPortable()
-        && !(fConfigHelper.isAdaptable(workState.getTypeName()) || isTransientField || isNull);
+    return !workState.isPortable() && !fConfigHelper.isAdaptable(workState.getTypeName());
   }
 
   boolean checkAddToIssueList(NonPortableWorkState workState) {
@@ -397,6 +397,7 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
   public void setEvent(NonPortableObjectEvent event) {
     if (event == null) { return; }
 
+    fEvent = event;
     fMessageLabel.setText(event.getReason().getMessage());
 
     fObjectTree.setModel(event.getContext().getTreeModel());
@@ -500,9 +501,9 @@ public class NonPortableObjectPanel extends XContainer implements TreeSelectionL
 
   void setWorkState(NonPortableWorkState workState) {
     showIssueDetailsPanel();
-    fSummaryLabel.setText(workState.summary());
+    fSummaryLabel.setText("<html><p>"+workState.summary()+"</p></html>");
     fSummaryLabel.setIcon(iconFor(workState));
-    fDescriptionText.setText(workState.descriptionFor());
+    fDescriptionText.setText(workState.descriptionFor(fEvent.getContext()));
     fDescriptionText.select(0, 0);
     fResolutionsPanel.setVisible(true);
     DefaultMutableTreeNode actionTreeRoot = (DefaultMutableTreeNode) fActionTree.getModel().getRoot();

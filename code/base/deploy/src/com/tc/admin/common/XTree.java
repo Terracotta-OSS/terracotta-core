@@ -67,29 +67,33 @@ public class XTree extends org.dijon.Tree {
   }
   
   private Action getAction(KeyStroke ks) {
-    Action    result = null;
-    XTreeNode node   = (XTreeNode)getLastSelectedPathComponent();
-
-    while(node != null) {
-      ActionMap actionMap = node.getActionMap();
-
-      if(actionMap != null) {
-        InputMap inputMap = node.getInputMap();
-
-        if(inputMap != null) {
-          Object binding = inputMap.get(ks);
-
-          if(binding != null) {
-            if((result = actionMap.get(binding)) != null) {
-              return result;
+    Action result = null;
+    Object object = getLastSelectedPathComponent();
+    
+    if(object instanceof XTreeNode) {
+      XTreeNode node = (XTreeNode)object;
+  
+      while(node != null) {
+        ActionMap actionMap = node.getActionMap();
+  
+        if(actionMap != null) {
+          InputMap inputMap = node.getInputMap();
+  
+          if(inputMap != null) {
+            Object binding = inputMap.get(ks);
+  
+            if(binding != null) {
+              if((result = actionMap.get(binding)) != null) {
+                return result;
+              }
             }
           }
         }
+  
+        node = (XTreeNode)node.getParent();
       }
-
-      node = (XTreeNode)node.getParent();
     }
-
+    
     return null;
   }
 

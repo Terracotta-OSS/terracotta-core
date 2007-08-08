@@ -1,5 +1,6 @@
-#Fri Mar 23 21:14:32 PDT 2007
+#Mon Aug 06 15:35:31 PDT 2007
 eclipse.preferences.version=1
+instance/org.eclipse.core.net/org.eclipse.core.net.hasMigrated=true
 org.eclipse.jdt.core.codeComplete.argumentPrefixes=
 org.eclipse.jdt.core.codeComplete.argumentSuffixes=
 org.eclipse.jdt.core.codeComplete.fieldPrefixes=
@@ -105,8 +106,6 @@ org.eclipse.jdt.core.formatter.brace_position_for_enum_declaration=end_of_line
 org.eclipse.jdt.core.formatter.brace_position_for_method_declaration=end_of_line
 org.eclipse.jdt.core.formatter.brace_position_for_switch=end_of_line
 org.eclipse.jdt.core.formatter.brace_position_for_type_declaration=end_of_line
-org.eclipse.jdt.core.formatter.comment.clear_blank_lines=true
-org.eclipse.jdt.core.formatter.comment.format_comments=true
 org.eclipse.jdt.core.formatter.comment.format_header=true
 org.eclipse.jdt.core.formatter.comment.format_html=true
 org.eclipse.jdt.core.formatter.comment.format_source_code=true

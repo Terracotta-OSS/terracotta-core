@@ -81,7 +81,11 @@ public class ServerTracker implements IDebugEventSetListener {
 
           if (serverInfo != null) {
             m_servers.remove(source);
-            setRunning(serverInfo.getJavaProject(), null);
+            
+            IJavaProject javaProj = serverInfo.getJavaProject();
+            if(!anyRunning(javaProj)) {
+              setRunning(javaProj, null);
+            }
           }
         }
       }
@@ -89,27 +93,28 @@ public class ServerTracker implements IDebugEventSetListener {
   }
 
   public boolean anyRunning(IJavaProject javaProj) {
-    try {
-      return javaProj.getProject().getSessionProperty(SERVER_RUNNING_NAME) != null;
-    } catch (CoreException ce) {
-      return false;
+    Iterator iter = m_servers.keySet().iterator();
+
+    while (iter.hasNext()) {
+      IProcess proc = (IProcess) iter.next();
+      ServerInfo serverInfo = m_servers.get(proc);
+      IJavaProject project = serverInfo.getJavaProject();
+
+      if (project.equals(javaProj)) { return true; }
     }
+
+    return false;
   }
 
   public boolean isRunning(IJavaProject javaProj, String name) {
-    if (anyRunning(javaProj)) {
-      Iterator iter = m_servers.keySet().iterator();
-      IProcess proc;
-      ServerInfo serverInfo;
-      String serverName;
+    Iterator iter = m_servers.keySet().iterator();
 
-      while (iter.hasNext()) {
-        proc = (IProcess) iter.next();
-        serverInfo = m_servers.get(proc);
-        serverName = serverInfo.getName();
+    while (iter.hasNext()) {
+      IProcess proc = (IProcess) iter.next();
+      ServerInfo serverInfo = m_servers.get(proc);
+      String serverName = serverInfo.getName();
 
-        if (name.equals(serverName)) { return true; }
-      }
+      if (name.equals(serverName)) { return true; }
     }
 
     return false;

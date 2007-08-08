@@ -24,7 +24,7 @@ import java.util.ConcurrentModificationException;
  * Eclipse documents provide this sort of information but we can't rely
  * on the config document being loaded into an editor.
  * 
- * @see TcPlugin.loadDomainConfiguration
+ * @see TcPlugin.loadConfiguration
  * @see TcPlugin.handleXmlErrors
  */
 

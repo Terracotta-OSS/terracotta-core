@@ -554,6 +554,11 @@ ORIGINAL CODE SOURCE CODE FOR YOUR MODIFICATIONS.
 ]]>
    </license>
 
+   <requires>
+      <import plugin="org.eclipse.pde.core" version="3.3.0"/>
+      <import plugin="org.eclipse.pde.ui" version="3.3.0"/>
+   </requires>
+
    <plugin
          id="org.terracotta.dso"
          download-size="0"

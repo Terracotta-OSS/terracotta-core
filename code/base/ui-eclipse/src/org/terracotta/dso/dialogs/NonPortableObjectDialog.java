@@ -566,37 +566,36 @@ public class NonPortableObjectDialog extends MessageDialog {
     }
   }
 
+  // NOTE: this is copied in ui-configurator/src/com/tc/NonPortableObjectPanel. ConfigHelper needs to be
+  // unified before we can move this to NonPortableWorkState.testIsIssue(ConfigHelper).
+  
   boolean testIsIssue(NonPortableWorkState workState) {
-    if (workState.isRepeated() || workState.isTransient()) return false;
-
     String fieldName = workState.getFieldName();
-    boolean isNull = workState.isNull();
     boolean isTransientField = fieldName != null && (fConfigHelper.isTransient(fieldName) || workState.isTransient());
 
-    if (workState.isNeverPortable() && !isTransientField && !isNull) { return true; }
-
-    if (workState.extendsLogicallyManagedType() && !isTransientField && !isNull) return true;
+    if(workState.isNull() || workState.isRepeated() || isTransientField) return false;
+    
+    if (workState.isNeverPortable() || workState.extendsLogicallyManagedType()) { return true; }
 
     if (workState.hasRequiredBootTypes()) {
       java.util.List types = workState.getRequiredBootTypes();
       for (Iterator iter = types.iterator(); iter.hasNext();) {
-        if (!fConfigHelper.isBootJarClass((String) iter.next())) return true;
+        if (!fConfigHelper.isBootJarClass((String)iter.next())) return true;
       }
     }
 
     if (workState.hasRequiredIncludeTypes()) {
       java.util.List types = workState.getRequiredIncludeTypes();
       for (Iterator iter = types.iterator(); iter.hasNext();) {
-        if (!fConfigHelper.isAdaptable((String) iter.next())) return true;
+        if (!fConfigHelper.isAdaptable((String)iter.next())) return true;
       }
     }
 
-    if (!workState.isPortable() && workState.isSystemType() && !fConfigHelper.isBootJarClass(workState.getTypeName())) return true;
-
-    if (workState.getExplaination() != null) return true;
-
-    return !workState.isPortable()
-        && !(fConfigHelper.isAdaptable(workState.getTypeName()) || isTransientField || isNull);
+    if(!workState.isPortable() && workState.isSystemType() && !fConfigHelper.isBootJarClass(workState.getTypeName())) return true;
+    
+    if(workState.getExplaination() != null) return true;
+    
+    return !workState.isPortable() && !fConfigHelper.isAdaptable(workState.getTypeName());
   }
 
   boolean checkAddToIssueList(NonPortableWorkState workState) {
@@ -709,7 +708,7 @@ public class NonPortableObjectDialog extends MessageDialog {
 
       fSummaryLabel.setText(workState.summary());
       fSummaryLabel.setImage(imageFor(workState));
-      fIssueDescription.setText(workState.descriptionFor());
+      fIssueDescription.setText(workState.descriptionFor(fEvent.getContext()));
       fActionTreeViewer.setInput(workState);
 
       NonPortableResolutionAction[] actions = getActions(workState);

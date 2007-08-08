@@ -22,10 +22,10 @@ Require-Bundle: org.eclipse.ui.editors,
  org.eclipse.ltk.core.refactoring,
  org.eclipse.ui.console,
  org.eclipse.search,
- org.eclipse.pde.core,
- org.eclipse.pde.ui,
  org.eclipse.jdt.junit,
- org.eclipse.core.variables
+ org.eclipse.core.variables,
+ org.eclipse.pde.core,
+ org.eclipse.pde.ui
 Bundle-ClassPath: ../dependencies/lib/antlr-2.7.3.jar,
  ../dependencies/lib/je-3.2.13.jar,
  ../dependencies/lib/bsh-2.0b4.jar,
@@ -67,3 +67,4 @@ Bundle-ClassPath: ../dependencies/lib/antlr-2.7.3.jar,
  ../thirdparty/build.eclipse/src.classes,
  ../management/build.eclipse/src.classes
 Bundle-Activator: org.terracotta.dso.TcPlugin
+Bundle-RequiredExecutionEnvironment: J2SE-1.5

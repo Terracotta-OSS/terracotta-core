@@ -8,6 +8,7 @@ import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
 import com.tc.object.appevent.NonPortableEventContext;
 import com.tc.object.appevent.NonPortableFieldSetContext;
 import com.tc.object.appevent.NonPortableObjectState;
+import com.tc.object.appevent.NonPortableRootContext;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.walker.MemberValue;
@@ -62,7 +63,10 @@ public class WalkVisitor implements Visitor, WalkTest {
   }
 
   public void addRoot(MemberValue value) {
-    addField(value, 0);
+    DefaultMutableTreeNode parent = (DefaultMutableTreeNode) getParent(0);
+    NonPortableObjectState objectState = createRootObjectState(value);
+    DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(objectState);
+    addChild(parent, childNode);
   }
 
   static String getTypeName(Class type) {
@@ -114,7 +118,7 @@ public class WalkVisitor implements Visitor, WalkTest {
       sb.append(o != null ? getTypeName(o.getClass()) : "java.lang.Object");
     }
 
-    if (o == null || rep != null || isLiteralInstance(o)) {
+    if (o == null || rep != null || isSimpleLiteralInstance(o)) {
       sb.append("=");
       if (rep != null) {
         sb.append(rep);
@@ -178,6 +182,38 @@ public class WalkVisitor implements Visitor, WalkTest {
     return type != null ? type.getName() : null;
   }
 
+  private NonPortableObjectState createRootObjectState(MemberValue value) {
+    String typeName = getTypeName(value);
+    boolean isPortable = isPortable(value);
+    boolean isTransient = isTransient(value);
+    boolean neverPortable = isNeverAdaptable(value);
+    boolean isPreInstrumented = isPreInstrumented(value);
+    boolean isRepeated = value.isRepeated();
+    boolean isSystemType = isSystemType(value);
+    boolean isNull = value.getValueObject() == null;
+    String fieldName = null;
+    String label;
+
+    if (context instanceof NonPortableRootContext) {
+      fieldName = ((NonPortableRootContext) context).getFieldName();
+    } else {
+      fieldName = getFieldName(value);
+    }
+    label = fieldName != null ? fieldName + " (" + typeName + ")" : typeName;
+
+    NonPortableObjectState objectState = new NonPortableObjectState(label, fieldName, typeName, isPortable,
+                                                                    isTransient, neverPortable, isPreInstrumented,
+                                                                    isRepeated, isSystemType, isNull);
+
+    if (!isPortable) {
+      NonPortableReason reason = config.getPortability().getNonPortableReason(getType(value));
+      objectState.setNonPortableReason(reason);
+      objectState.setExplaination(handleSpecialCases(value));
+    }
+
+    return objectState;
+  }
+
   private NonPortableObjectState createObjectState(MemberValue value) {
     String fieldName = getFieldName(value);
     String typeName = getTypeName(value);
@@ -206,7 +242,7 @@ public class WalkVisitor implements Visitor, WalkTest {
     // TODO: create specialized explainations for well-known types, such as java.util.logging.Logger.
     return null;
   }
-  
+
   public void visitMapEntry(int index, int depth) {
     DefaultMutableTreeNode parent = (DefaultMutableTreeNode) getParent(depth);
     DefaultMutableTreeNode childNode = new DefaultMutableTreeNode("mapEntry [" + index + "]");
@@ -274,12 +310,10 @@ public class WalkVisitor implements Visitor, WalkTest {
   public boolean includeFieldsForType(Class type) {
     return !config.isLogical(type.getName());
   }
-  
+
   private boolean skipVisit(MemberValue value) {
     Field field = value.getSourceField();
-    if (field != null) {
-      return (field.getType().getName().startsWith("com.tc."));
-    }
+    if (field != null) { return (field.getType().getName().startsWith("com.tc.")); }
     return false;
   }
 
@@ -325,5 +359,13 @@ public class WalkVisitor implements Visitor, WalkTest {
   private boolean isLiteralInstance(Object obj) {
     if (obj == null) { return false; }
     return literals.isLiteralInstance(obj);
+  }
+
+  private boolean isSimpleLiteralInstance(Object obj) {
+    if (obj == null) { return false; }
+    int i = literals.valueFor(obj);
+    return i != LiteralValues.OBJECT && i != LiteralValues.ARRAY && i != LiteralValues.JAVA_LANG_CLASS
+           && i != LiteralValues.JAVA_LANG_CLASS_HOLDER && i != LiteralValues.JAVA_LANG_CLASSLOADER
+           && i != LiteralValues.JAVA_LANG_CLASSLOADER_HOLDER;
   }
 }

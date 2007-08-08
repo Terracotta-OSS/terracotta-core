@@ -32,13 +32,13 @@ public class SetupWizardPage extends WizardPage {
   private Text                m_serverOptionsField;
   private Button              m_resetOptionsButton;
 
-  private static final String DOMAIN_CONFIG           = "Domain Configuration";
+  private static final String TERRACOTTA_CONFIG       = "Terracotta Configuration";
   private static final String BROWSE                  = "Browse...";
   private static final String RESET                   = "Reset";
   private static final String SERVER_OPTIONS          = "Server Options";
   private static final String PAGE_NAME               = "TCSetupWizardPage";
   private static final String PAGE_TITLE              = "Terracotta Project Setup";
-  private static final String PAGE_DESC               = "Specify the location of your Terracotta domain configuration file and\n"
+  private static final String PAGE_DESC               = "Specify the location of your Terracotta configuration file and\n"
                                                           + "Terracotta server Java runtime options";
 
   private static final String DEFAULT_CONFIG_FILENAME = TcPlugin.DEFAULT_CONFIG_FILENAME;
@@ -62,7 +62,7 @@ public class SetupWizardPage extends WizardPage {
     topComp.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
     Group domainConfig = new Group(topComp, SWT.SHADOW_ETCHED_IN);
-    domainConfig.setText(DOMAIN_CONFIG);
+    domainConfig.setText(TERRACOTTA_CONFIG);
     gridLayout = new GridLayout();
     gridLayout.numColumns = 2;
     domainConfig.setLayout(gridLayout);

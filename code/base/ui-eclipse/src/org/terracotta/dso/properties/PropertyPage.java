@@ -26,7 +26,7 @@ import com.tc.util.event.UpdateEvent;
 import com.tc.util.event.UpdateEventListener;
 
 public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
-  private static final String DOMAIN_CONFIG           = "Domain Configuration";
+  private static final String TERRACOTTA_CONFIG       = "Terracotta Configuration";
   private static final String BROWSE                  = "Browse...";
   private static final String RESET                   = "Reset";
   private static final String SERVER_OPTIONS          = "Server Options";
@@ -55,7 +55,7 @@ public final class PropertyPage extends org.eclipse.ui.dialogs.PropertyPage {
     topComp.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
     Group domainConfig = new Group(topComp, SWT.NONE);
-    domainConfig.setText(DOMAIN_CONFIG);
+    domainConfig.setText(TERRACOTTA_CONFIG);
     gridLayout = new GridLayout();
     gridLayout.numColumns = 2;
     domainConfig.setLayout(gridLayout);

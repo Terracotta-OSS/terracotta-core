@@ -136,8 +136,8 @@ import java.util.List;
  *      annotations used to indicate various states related to the config information, such as a field being a root.
  * @see updateDecorators()
  * @see org.eclipse.ui.plugin.AbstractUIPlugin
- * @see com.terracottatech.config.TerracottaDomainConfigurationDocument
- * @see com.terracottatech.config.TerracottaDomainConfigurationDocument.TerracottaDomainConfiguration
+ * @see com.terracottatech.config.TCConfigDocument
+ * @see com.terracottatech.config.TCConfigDocument.TCConfig
  */
 
 public class TcPlugin extends AbstractUIPlugin
@@ -441,7 +441,7 @@ public class TcPlugin extends AbstractUIPlugin
             for (int j = 0; j < cus.length; j++) {
               file = cus[j].getResource();
               monitor.subTask(file.getLocation().toString());
-              file.deleteMarkers("org.terracotta.dso.baseMarker", true, IResource.DEPTH_ZERO);
+              file.deleteMarkers("org.terracotta.dso.baseMarker", true, IResource.DEPTH_INFINITE);
             }
           }
         }
