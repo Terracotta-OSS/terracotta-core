@@ -136,7 +136,7 @@ class JVMSet
         end
         meets_criteria = false
         jvm_version = JavaVersion.new(jvm.actual_version)
-        if key =~ name_like && jvm_version > min_version && jvm_version < max_version
+        if key =~ name_like && jvm_version >= min_version && jvm_version =< max_version
           meets_criteria = true
 
           if meets_criteria && version_like
