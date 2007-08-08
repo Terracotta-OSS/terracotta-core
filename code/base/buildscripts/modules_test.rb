@@ -96,12 +96,9 @@ class BuildSubtree
 
             # Write out the properties that control how the L2 is started.  Since the L2 requires
             # a 1.5 or higher JVM, it must be started in an external JVM if the current JVM is 1.4.
-
-            # always set l2.startup.jvm for tests that selectively spawns server out of process
-            test_jdk = Registry[:jvm_set]['tests-jdk']
-            jvm_15_plus = (test_jdk && test_jdk.version >= '1.5.0') ? test_jdk : Registry[:jvm_set]['J2SE-1.5']
-            fail("Can't find JVM 15 or greater to run L2") if jvm_15_plus == nil
-            write_dynamic_property(file, "l2.startup.jvm", jvm_15_plus.home.to_s)
+            jvm_15 = Registry[:jvm_set].find_jvm(:min_version => '1.5.0')
+            fail("Can't find JVM 15 or greater to run L2") unless jvm_15
+            write_dynamic_property(file, "l2.startup.jvm", jvm_15.home.to_s)
 
             if jvm.version < '1.5.0'
               write_dynamic_property(file, "l2.startup.mode", "external")
