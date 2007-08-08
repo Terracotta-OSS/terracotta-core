@@ -11,9 +11,12 @@ import com.tc.object.config.DSOSpringConfigHelper;
 import com.tc.object.config.StandardDSOSpringConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.runtime.Vm;
 import com.tctest.TransparentTestBase;
 import com.tctest.runner.AbstractTransparentApp;
 import com.tctest.spring.bean.Singleton;
+
+import java.util.Date;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -27,7 +30,9 @@ public class JmxSupport_Test extends TransparentTestBase {
   private static final int NODE_COUNT      = 4;
 
   public JmxSupport_Test() {
-    //
+    if (Vm.isIBM()) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
   }
 
   protected void setUp() throws Exception {

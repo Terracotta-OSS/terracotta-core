@@ -13,11 +13,13 @@ import com.tc.object.config.Root;
 import com.tc.object.config.StandardDSOSpringConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.runtime.Vm;
 import com.tctest.TransparentTestBase;
 import com.tctest.runner.AbstractTransparentApp;
 import com.tctest.spring.bean.Singleton;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -30,7 +32,9 @@ public class Singleton2_Test extends TransparentTestBase {
   private static final int NODE_COUNT      = 4;
 
   public Singleton2_Test() {
-    //
+    if (Vm.isIBM()) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
   }
 
   protected void setUp() throws Exception {

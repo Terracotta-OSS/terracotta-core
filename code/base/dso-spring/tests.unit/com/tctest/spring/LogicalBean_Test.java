@@ -12,9 +12,11 @@ import com.tc.object.config.DSOSpringConfigHelper;
 import com.tc.object.config.StandardDSOSpringConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.runtime.Vm;
 import com.tctest.TransparentTestBase;
 import com.tctest.runner.AbstractTransparentApp;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -26,7 +28,9 @@ public class LogicalBean_Test extends TransparentTestBase {
   private static final int NODE_COUNT      = 2;
 
   public LogicalBean_Test() {
-     //
+    if (Vm.isIBM()) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
   }
 
   protected void setUp() throws Exception {

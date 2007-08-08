@@ -11,7 +11,10 @@ import com.tc.object.config.DSOSpringConfigHelper;
 import com.tc.object.config.StandardDSOSpringConfigHelper;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.runtime.Vm;
 import com.tctest.spring.bean.FooService;
+
+import java.util.Date;
 
 /**
  * Test attempted to reproduce JIRA issue LKC-1435 where proxies "disappear" when
@@ -20,7 +23,9 @@ import com.tctest.spring.bean.FooService;
 public class SingletonReferencingProxiedBean_Test extends SimpleTransparentTestBase {
 
   public SingletonReferencingProxiedBean_Test() {
-    //
+    if (Vm.isIBM()) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
   }
 
   protected int getNodeCount() {
