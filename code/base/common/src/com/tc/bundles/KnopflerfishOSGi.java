@@ -34,8 +34,8 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
   private static String         KF_BUNDLESTORAGE_PROP         = "org.knopflerfish.framework.bundlestorage";
   private static String         KF_BUNDLESTORAGE_PROP_DEFAULT = "memory";
 
-  // {0} := bundle name, {1} := bundle version
   private static final String   BUNDLE_FILENAME_EXT           = ".jar";
+  // {0} := bundle name, {1} := bundle version
   private static final String   BUNDLE_PATH                   = "{0}-{1}" + BUNDLE_FILENAME_EXT;
   private static final String   MODULE_VERSION_REGEX          = "[0-9]+\\.[0-9]+\\.[0-9]+";
   private static final String   MODULE_FILENAME_REGEX         = ".+-";
