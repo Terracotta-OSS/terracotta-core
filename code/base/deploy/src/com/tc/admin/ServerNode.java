@@ -248,7 +248,7 @@ public class ServerNode extends ComponentNode
     
     if (!consoleVersion.equals(serverVersion)) {
       Frame frame = (Frame) m_serverPanel.getAncestorOfClass(java.awt.Frame.class);
-      String msg = "<html>Version mismatch.<br><table><tr><td>Terracotta Server Version:</td><td>"+serverVersion+
+      String msg = "<html>Version mismatch.<br><br><table><tr><td>Terracotta Server Version:</td><td>"+serverVersion+
         "</tr><tr><td>AdminConsole Version:</td><td>"+consoleVersion+"</td></tr></table><br>Continue?</html>";
       String title = frame.getTitle();
       int options = JOptionPane.YES_NO_OPTION;
