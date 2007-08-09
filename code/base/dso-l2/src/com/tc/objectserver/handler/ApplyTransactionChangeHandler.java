@@ -8,13 +8,13 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
+import com.tc.object.gtx.GlobalTransactionManager;
 import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.lockmanager.api.LockManager;
 import com.tc.objectserver.lockmanager.api.NotifiedWaiters;
 import com.tc.objectserver.managedobject.BackReferences;
@@ -31,14 +31,14 @@ import java.util.Iterator;
  * @author steve
  */
 public class ApplyTransactionChangeHandler extends AbstractEventHandler {
-  private ServerTransactionManager             transactionManager;
-  private LockManager                          lockManager;
-  private Sink                                 broadcastChangesSink;
-  private final ObjectInstanceMonitor          instanceMonitor;
-  private final ServerGlobalTransactionManager gtxm;
-  private TransactionalObjectManager           txnObjectMgr;
+  private ServerTransactionManager       transactionManager;
+  private LockManager                    lockManager;
+  private Sink                           broadcastChangesSink;
+  private final ObjectInstanceMonitor    instanceMonitor;
+  private final GlobalTransactionManager gtxm;
+  private TransactionalObjectManager     txnObjectMgr;
 
-  public ApplyTransactionChangeHandler(ObjectInstanceMonitor instanceMonitor, ServerGlobalTransactionManager gtxm) {
+  public ApplyTransactionChangeHandler(ObjectInstanceMonitor instanceMonitor, GlobalTransactionManager gtxm) {
     this.instanceMonitor = instanceMonitor;
     this.gtxm = gtxm;
   }
@@ -64,7 +64,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
       lockManager.notify(notify.getLockID(), txn.getChannelID(), notify.getThreadID(), notify.getIsAll(),
                          notifiedWaiters);
     }
-    
+
     if (txn.needsBroadcast()) {
       broadcastChangesSink.add(new BroadcastChangeContext(txn, gtxm.getLowGlobalTransactionIDWatermark(),
                                                           notifiedWaiters, includeIDs));

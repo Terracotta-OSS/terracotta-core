@@ -17,13 +17,19 @@ import java.util.Collections;
 
 public class TransactionalStagesCoordinatorImpl implements TransactionalStageCoordinator {
 
-  private final Sink lookupSink;
-  private final Sink applySink;
-  private final Sink commitSink;
-  private final Sink applyCompleteSink;
-  private final Sink recallSink;
+  private Sink               lookupSink;
+  private Sink               applySink;
+  private Sink               commitSink;
+  private Sink               applyCompleteSink;
+  private Sink               recallSink;
+
+  private final StageManager stageManager;
 
   public TransactionalStagesCoordinatorImpl(StageManager stageManager) {
+    this.stageManager = stageManager;
+  }
+
+  public void lookUpSinks() {
     this.lookupSink = stageManager.getStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE).getSink();
     this.recallSink = stageManager.getStage(ServerConfigurationContext.RECALL_OBJECTS_STAGE).getSink();
     this.applySink = stageManager.getStage(ServerConfigurationContext.APPLY_CHANGES_STAGE).getSink();

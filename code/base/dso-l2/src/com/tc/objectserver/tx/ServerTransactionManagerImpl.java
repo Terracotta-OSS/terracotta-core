@@ -13,12 +13,14 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.VersionizedDNAWrapper;
 import com.tc.object.gtx.GlobalTransactionID;
+import com.tc.object.gtx.GlobalTransactionManager;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.gtx.GlobalTransactionIDLowWaterMarkProvider;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.impl.TransactionAcknowledgeAction;
@@ -42,33 +44,36 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-public class ServerTransactionManagerImpl implements ServerTransactionManager, ServerTransactionManagerMBean {
+public class ServerTransactionManagerImpl implements ServerTransactionManager, ServerTransactionManagerMBean,
+    GlobalTransactionManager {
 
-  private static final TCLogger                logger              = TCLogging
-                                                                       .getLogger(ServerTransactionManager.class);
+  private static final TCLogger                         logger              = TCLogging
+                                                                                .getLogger(ServerTransactionManager.class);
 
-  private static final State                   PASSIVE_MODE        = new State("PASSIVE-MODE");
-  private static final State                   ACTIVE_MODE         = new State("ACTIVE-MODE");
+  private static final State                            PASSIVE_MODE        = new State("PASSIVE-MODE");
+  private static final State                            ACTIVE_MODE         = new State("ACTIVE-MODE");
 
   // TODO::FIXME::Change this to concurrent hashmap with top level txn accounting
-  private final Map                            transactionAccounts = Collections.synchronizedMap(new HashMap());
-  private final ClientStateManager             stateManager;
-  private final ObjectManager                  objectManager;
-  private final ResentTransactionSequencer     resentTxnSequencer;
-  private final TransactionAcknowledgeAction   action;
-  private final LockManager                    lockManager;
-  private final List                           rootEventListeners  = new CopyOnWriteArrayList();
-  private final List                           txnEventListeners   = new CopyOnWriteArrayList();
+  private final Map                                     transactionAccounts = Collections
+                                                                                .synchronizedMap(new HashMap());
+  private final ClientStateManager                      stateManager;
+  private final ObjectManager                           objectManager;
+  private final ResentTransactionSequencer              resentTxnSequencer;
+  private final TransactionAcknowledgeAction            action;
+  private final LockManager                             lockManager;
+  private final List                                    rootEventListeners  = new CopyOnWriteArrayList();
+  private final List                                    txnEventListeners   = new CopyOnWriteArrayList();
+  private final GlobalTransactionIDLowWaterMarkProvider lwmProvider;
 
-  private final Counter                        transactionRateCounter;
+  private final Counter                                 transactionRateCounter;
 
-  private final ChannelStats                   channelStats;
+  private final ChannelStats                            channelStats;
 
-  private final ServerGlobalTransactionManager gtxm;
+  private final ServerGlobalTransactionManager          gtxm;
 
-  private final ServerTransactionLogger        txnLogger;
+  private final ServerTransactionLogger                 txnLogger;
 
-  private volatile State                       state               = PASSIVE_MODE;
+  private volatile State                                state               = PASSIVE_MODE;
 
   public ServerTransactionManagerImpl(ServerGlobalTransactionManager gtxm, TransactionStore transactionStore,
                                       LockManager lockManager, ClientStateManager stateManager,
@@ -83,6 +88,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.action = action;
     this.transactionRateCounter = transactionRateCounter;
     this.channelStats = channelStats;
+    this.lwmProvider = new GlobalTransactionIDLowWaterMarkProvider(this, gtxm);
     this.txnLogger = new ServerTransactionLogger(logger, config);
     if (config.isLoggingEnabled()) {
       enableTransactionLogger();
@@ -150,6 +156,11 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   public void goToActiveMode() {
     state = ACTIVE_MODE;
     resentTxnSequencer.goToActiveMode();
+    lwmProvider.goToActiveMode();
+  }
+
+  public GlobalTransactionID getLowGlobalTransactionIDWatermark() {
+    return lwmProvider.getLowGlobalTransactionIDWatermark();
   }
 
   public void addWaitingForAcknowledgement(ChannelID waiter, TransactionID txnID, ChannelID waitee) {
@@ -439,7 +450,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       }
     }
   }
-  
+
   private void fireTransactionManagerStartedEvent(Set cids) {
     for (Iterator iter = txnEventListeners.iterator(); iter.hasNext();) {
       try {
@@ -451,7 +462,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       }
     }
   }
-
 
   public void setResentTransactionIDs(ChannelID channelID, Collection transactionIDs) {
     if (transactionIDs.isEmpty()) return;
@@ -529,7 +539,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
 
     public void transactionManagerStarted(Set cids) {
-      //NOP
+      // NOP
     }
 
   }
