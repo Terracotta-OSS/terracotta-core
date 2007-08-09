@@ -12,6 +12,7 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.serializer.TCObjectInputStream;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.MockClassProvider;
+import com.tc.object.dna.api.IDNAEncoding;
 import com.tc.object.loaders.ClassProvider;
 
 import java.io.ByteArrayInputStream;
@@ -36,7 +37,7 @@ public class DNAEncodingTest extends TestCase {
 
     byte[] b = new byte[] {};
 
-    DNAEncoding encoding = getApplicatorEncoding();
+    IDNAEncoding encoding = getApplicatorEncoding();
     encoding.encode(b, output);
 
     // The bug this test is for only happens if DNAEncoding gets back -1 from the input stream upon being asked to read
@@ -56,7 +57,7 @@ public class DNAEncodingTest extends TestCase {
     Integer[] array = new Integer[] { new Integer(43), new Integer(-1) };
     ObjectID[] array2 = new ObjectID[] {};
 
-    DNAEncoding encoding = getApplicatorEncoding();
+    IDNAEncoding encoding = getApplicatorEncoding();
     encoding.encodeArray(array, output);
     encoding.encodeArray(array2, output);
 
@@ -68,7 +69,7 @@ public class DNAEncodingTest extends TestCase {
     assertEquals(0, input.available());
   }
 
-  private DNAEncoding getApplicatorEncoding() {
+  private IDNAEncoding getApplicatorEncoding() {
     return new DNAEncoding(classProvider);
   }
 
@@ -78,7 +79,7 @@ public class DNAEncodingTest extends TestCase {
     Object[] array = new Object[] { new ObjectID(12), new Integer(34), new Double(Math.PI), ObjectID.NULL_ID,
         new Long(Long.MIN_VALUE + 34), "timmy" };
 
-    DNAEncoding encoding = getApplicatorEncoding();
+    IDNAEncoding encoding = getApplicatorEncoding();
     encoding.encodeArray(array, output);
 
     TCByteBufferInputStream input = new TCByteBufferInputStream(output.toArray());
@@ -91,7 +92,7 @@ public class DNAEncodingTest extends TestCase {
   public void testNullArray() throws Exception {
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
-    DNAEncoding encoding = getApplicatorEncoding();
+    IDNAEncoding encoding = getApplicatorEncoding();
     encoding.encodeArray(null, output);
     TCByteBufferInputStream input = new TCByteBufferInputStream(output.toArray());
 
@@ -102,7 +103,7 @@ public class DNAEncodingTest extends TestCase {
 
   public void testPrimitiveArrays() throws Exception {
 
-    DNAEncoding encoding = getApplicatorEncoding();
+    IDNAEncoding encoding = getApplicatorEncoding();
     for (int iter = 0; iter < 250; iter++) {
       TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
@@ -208,7 +209,7 @@ public class DNAEncodingTest extends TestCase {
   public void testStringDecode() throws Exception {
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
-    DNAEncoding encoding = getApplicatorEncoding();
+    IDNAEncoding encoding = getApplicatorEncoding();
     encoding.encode("timmy", output);
     UTF8ByteDataHolder orgUTF;
     encoding.encode((orgUTF = new UTF8ByteDataHolder("teck".getBytes("UTF-8"))), output);
@@ -240,18 +241,18 @@ public class DNAEncodingTest extends TestCase {
     assertEquals(0, input.available());
   }
 
-  private DNAEncoding getStorageEncoder() {
-    return new DNAEncoding(DNAEncoding.STORAGE);
+  private IDNAEncoding getStorageEncoder() {
+    return new DNAEncoding(IDNAEncoding.STORAGE);
   }
 
-  private DNAEncoding getSerializerEncoder() {
-    return new DNAEncoding(DNAEncoding.SERIALIZER);
+  private IDNAEncoding getSerializerEncoder() {
+    return new DNAEncoding(IDNAEncoding.SERIALIZER);
   }
 
   public void testClassExpand() throws Exception {
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
-    DNAEncoding encoding = getApplicatorEncoding();
+    IDNAEncoding encoding = getApplicatorEncoding();
     encoding.encode(getClass(), output);
     Class c = Object.class;
     UTF8ByteDataHolder name = new UTF8ByteDataHolder(c.getName());
@@ -286,7 +287,7 @@ public class DNAEncodingTest extends TestCase {
   public void testClassSerialize() throws Exception {
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
-    DNAEncoding encoding = getSerializerEncoder();
+    IDNAEncoding encoding = getSerializerEncoder();
     encoding.encode(getClass(), output);
     Class c = Object.class;
     UTF8ByteDataHolder name = new UTF8ByteDataHolder(c.getName());
@@ -331,7 +332,7 @@ public class DNAEncodingTest extends TestCase {
     data.add("ten");
     data.add(new BigDecimal(84564547.45465478d));
 
-    DNAEncoding encoding = getApplicatorEncoding();
+    IDNAEncoding encoding = getApplicatorEncoding();
     for (Iterator i = data.iterator(); i.hasNext();) {
       encoding.encode(i.next(), output);
     }

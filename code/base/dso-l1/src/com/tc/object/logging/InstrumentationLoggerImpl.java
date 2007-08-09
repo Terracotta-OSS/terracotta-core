@@ -5,7 +5,7 @@ package com.tc.object.logging;
 
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
-import com.tc.object.config.LockDefinition;
+import com.tc.object.config.ILockDefinition;
 import com.tc.object.config.schema.DSOInstrumentationLoggingOptions;
 
 import java.util.Collection;
@@ -61,12 +61,12 @@ public class InstrumentationLoggerImpl implements InstrumentationLogger {
 
   }
 
-  public void autolockInserted(String className, String methodName, String methodDesc, LockDefinition lockDefinition) {
+  public void autolockInserted(String className, String methodName, String methodDesc, ILockDefinition lockDefinition) {
     String level = lockDefinition.getLockLevel().toString();
     logger.info("Inserting autolocks in method " + className + "." + methodName + methodDesc + ", level: " + level);
   }
 
-  public void lockInserted(String className, String methodName, String methodDesc, LockDefinition[] locks) {
+  public void lockInserted(String className, String methodName, String methodDesc, ILockDefinition[] locks) {
     StringBuffer sb = new StringBuffer();
 
     String s = locks.length > 1 ? "locks" : "lock";

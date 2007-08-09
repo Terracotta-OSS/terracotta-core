@@ -1,13 +1,12 @@
 /*
- * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2006 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
 
-public class LockDefinition {
-
-  public static final String TC_AUTOLOCK_NAME = "tc:autolock";
+public class LockDefinition implements ILockDefinition {
 
   private String             lockName         = TC_AUTOLOCK_NAME;
   private ConfigLockLevel    lockLevel;
@@ -69,31 +68,37 @@ public class LockDefinition {
   }
 
   public boolean equals(Object o) {
-    if (o == null) return false;
-    if (!(o instanceof LockDefinition)) return false;
+    if (o == null) { return false; }
+
+    if (!(o instanceof LockDefinition)) { return false; }
+
     LockDefinition compare = (LockDefinition) o;
-    if (lockName == null && compare.lockName != null) return false;
-    if (lockLevel == null && compare.lockLevel != null) return false;
+    if (lockName == null && compare.lockName != null) { return false; }
+
+    if (lockLevel == null && compare.lockLevel != null) { return false; }
+
     return lockName.equals(compare.lockName) && lockLevel.equals(compare.lockLevel);
   }
 
   public int hashCode() {
-    if (lockName == null || lockLevel == null) return 1;
+    if (lockName == null || lockLevel == null) { return 1; }
     return lockName.hashCode() | lockLevel.toString().hashCode();
   }
 
   private void normalizeLockName() {
     // Strip all white space.
-    if (this.lockName != null) this.lockName = this.lockName.replaceAll("\\s*", "");
+    if (this.lockName != null) {
+      this.lockName = this.lockName.replaceAll("\\s*", "");
+    }
   }
 
   private synchronized void commitWriteCheck() {
-    if (isCommitted) throw new IllegalStateException("Attempt to alter the state of LockDefinition: " + this
-                                                     + " after committing");
+    if (isCommitted) { throw new IllegalStateException("Attempt to alter the state of LockDefinition: " + this
+                                                       + " after committing"); }
   }
 
   private synchronized void commitReadCheck() {
-    if (!isCommitted) throw new IllegalStateException("Attempt to read an uncommitted LockDefinition: " + this);
+    if (!isCommitted) { throw new IllegalStateException("Attempt to read an uncommitted LockDefinition: " + this); }
   }
 
 }

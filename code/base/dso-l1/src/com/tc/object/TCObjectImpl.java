@@ -26,6 +26,7 @@ import gnu.trove.TLinkable;
 
 import java.io.IOException;
 import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 
 /**
  * Implementation of TCObject interface.
@@ -44,7 +45,7 @@ public abstract class TCObjectImpl implements TCObject {
 
   private final ObjectID        objectID;
   protected final TCClass       tcClazz;
-  private WeakObjectReference   peerObject;
+  private WeakReference         peerObject;
   private TLinkable             next;
   private TLinkable             previous;
   private byte                  flags                       = 0;
@@ -76,7 +77,7 @@ public abstract class TCObjectImpl implements TCObject {
     return peerObject.get();
   }
 
-  protected void setPeerObject(WeakObjectReference pojo) {
+  protected void setPeerObject(WeakReference pojo) {
     this.peerObject = pojo;
     Object realPojo;
     if ((realPojo = peerObject.get()) instanceof Manageable) {

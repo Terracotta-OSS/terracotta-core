@@ -37,13 +37,13 @@ public class ThreadTransactionContext {
     return ctx;
   }
   
-  public TransactionContext peekContext(LockID id) {
+  public ITransactionContext peekContext(LockID id) {
     if (transactionStack.isEmpty()) return null;
     int len = transactionStack.size();
-    TransactionContext tc = null;
+    ITransactionContext tc = null;
     int i=len-1;
     for (; i>=0; i--) {
-      tc = (TransactionContext) transactionStack.get(i);
+      tc = (ITransactionContext) transactionStack.get(i);
       if (tc.getLockID().equals(id)) {
         return tc;
       }
@@ -84,7 +84,7 @@ public class ThreadTransactionContext {
     LockID[] lids = new LockID[transactionStack.size() + 1];
     lids[0] = id;
     for (int i = 1; i < lids.length; i++) {
-      TransactionContext tc = (TransactionContext) transactionStack.get(i - 1);
+      ITransactionContext tc = (ITransactionContext) transactionStack.get(i - 1);
       lids[i] = tc.getLockID();
     }
     return lids;
@@ -92,7 +92,7 @@ public class ThreadTransactionContext {
   
   public void removeLock(LockID id) {
     for (Iterator i=transactionStack.iterator(); i.hasNext(); ) {
-      TransactionContext tc = (TransactionContext) i.next();
+      ITransactionContext tc = (ITransactionContext) i.next();
       if (id.equals(tc.getLockID())) {
         i.remove();
       } else {
@@ -101,8 +101,8 @@ public class ThreadTransactionContext {
     }
   }
 
-  public TransactionContext peekContext() {
+  public ITransactionContext peekContext() {
     if (transactionStack.isEmpty()) return null;
-    return (TransactionContext) transactionStack.peek();
+    return (ITransactionContext) transactionStack.peek();
   }
 }

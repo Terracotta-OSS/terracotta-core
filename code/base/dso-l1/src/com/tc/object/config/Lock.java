@@ -13,13 +13,13 @@ import com.tc.util.Assert;
 public class Lock {
 
   private String         methodJoinPointExpression;
-  private LockDefinition lockDefinition;
+  private ILockDefinition lockDefinition;
 
   public String toString() {
     return ToStringBuilder.reflectionToString(this);
   }
 
-  public Lock(String methodJoinPointExpression, LockDefinition lockDefinition) {
+  public Lock(String methodJoinPointExpression, ILockDefinition lockDefinition) {
     Assert.assertNotNull(lockDefinition);
 
     this.methodJoinPointExpression = methodJoinPointExpression;
@@ -30,7 +30,7 @@ public class Lock {
     return this.methodJoinPointExpression;
   }
 
-  public LockDefinition getLockDefinition() {
+  public ILockDefinition getLockDefinition() {
     return this.lockDefinition;
   }
 

@@ -9,7 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -38,7 +38,7 @@ public class TransparencySpeedTestApp extends AbstractTransparentApp {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     config.getOrCreateSpec("com.tctest.TransparencySpeedTestApp$TestObj");
-    TransparencyClassSpec spec = config.getOrCreateSpec("com.tctest.TransparencySpeedTestApp");
+    ITransparencyClassSpec spec = config.getOrCreateSpec("com.tctest.TransparencySpeedTestApp");
     spec.addRoot("myRoot", "rootBabyRoot");
     spec.addRoot("gcount", "globalCount");
 

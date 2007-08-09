@@ -11,31 +11,31 @@ class BuildSubtree
   # Copies all .class files from this subtree into the given destdir. If there
   # aren't any -- for example, if you haven't called #compile first -- this will
   # do absolutely nothing.
-  def copy_classes(build_results, destdir, ant)
+  def copy_classes(build_results, destdir, ant, excludes='')
       ant.copy(:todir => destdir.to_s) {
-          ant.fileset(:dir => build_results.classes_directory(self).to_s)
+          ant.fileset(:dir => build_results.classes_directory(self).to_s, :excludes => excludes)
       } if FileTest.directory?(build_results.classes_directory(self).to_s)
   end
 
   # Copies the runtime libraries (JAR files), if any, from this build subtree into the given
   # destination directory.
-  def copy_runtime_libraries(destdir, ant)
-      copy_directories_to(destdir, subtree_only_library_roots(:runtime), ant)
+  def copy_runtime_libraries(destdir, ant, excludes='')
+      copy_directories_to(destdir, subtree_only_library_roots(:runtime), ant, excludes)
       copy_dependencies_libraries(destdir, ant)
   end
 
   # Copies the native libraries, if any, from this build subtree into the given
   # destination directory.
-  def copy_native_runtime_libraries(destdir, ant, build_environment)
-      copy_directories_to(destdir, subtree_only_native_library_roots(build_environment), ant)
+  def copy_native_runtime_libraries(destdir, ant, build_environment, excludes='')
+      copy_directories_to(destdir, subtree_only_native_library_roots(build_environment), excludes)
   end
 
   private
   # Copies files from a given set of directories into a given destination directory.
-  def copy_directories_to(destdir, directories, ant)
+  def copy_directories_to(destdir, directories, ant, excludes='')
       ant.copy(:todir => destdir.to_s) {
           directories.each do |directory|
-              ant.fileset(:dir => directory.to_s)
+              ant.fileset(:dir => directory.to_s, :excludes => excludes)
           end
       } unless directories.empty?
   end

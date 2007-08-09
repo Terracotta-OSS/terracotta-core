@@ -37,11 +37,11 @@ public class OptimisticTransactionManagerImpl implements OptimisticTransactionMa
     transaction.set(new OptimisticTransaction());
   }
 
-  public void objectFieldChanged(TCObjectClone clone, String classname, String fieldname, Object newValue, int index) {
+  public void objectFieldChanged(TCObject clone, String classname, String fieldname, Object newValue, int index) {
     getTransaction().objectFieldChanged(clone, classname, fieldname, newValue, index);
   }
 
-  public void logicalInvoke(TCObjectClone clone, int method, String methodName, Object[] parameters) {
+  public void logicalInvoke(TCObject clone, int method, String methodName, Object[] parameters) {
     getTransaction().logicalInvoke(clone, method, parameters);
   }
 

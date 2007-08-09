@@ -17,7 +17,7 @@ import com.tc.asm.tree.ClassNode;
 import com.tc.asm.tree.MethodNode;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.bytecode.ClassAdapterFactory;
-import com.tc.plugins.ModulesLoader;
+import com.tc.object.util.JarResourceLoader;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -86,7 +86,7 @@ public class CGLibProxyEnhancerAdapter extends ClassAdapter implements ClassAdap
     InputStream is = null;
     ByteArrayOutputStream baos = null;
     try {
-      is = ModulesLoader.getJarResource(new URL(bundle.getLocation()), className);
+      is = JarResourceLoader.getJarResource(new URL(bundle.getLocation()), className);
       if (is == null) { throw new ClassNotFoundException("No resource found for class: " + className); }
       final int size = 4096;
       byte[] buffer = new byte[size];

@@ -5,15 +5,21 @@ root_directory: terracotta-api-version
 bundled_components:
   - base:
       module_packages:
-        - terracotta-api-version-PREALPHA:
+        - tc-compile-version-PREALPHA:
             modules:
-              - aspectwerkz
-              - common
-              - dso-common
-              - dso-l1
+              - common-api
+              - dso-l1-api
               - modules-common-1.0
-              - management
-              - thirdparty
+              - thirdparty-api
+        - tc.test-compile-version-PREALPHA:
+            source: tests.base
+            filter: "**/*Test.class, **/*TestApp.class"
+            modules:
+              - common
+              - dso-container-tests
+              - dso-l1
+              - legacy-test-tree
+              - simulator
 packaging:
   - mvn
 postscripts:

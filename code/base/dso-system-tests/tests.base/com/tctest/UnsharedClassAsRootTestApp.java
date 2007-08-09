@@ -6,7 +6,7 @@ package com.tctest;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -36,7 +36,7 @@ public class UnsharedClassAsRootTestApp extends AbstractTransparentApp {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = UnsharedClassAsRootTestApp.class.getName();
-    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+    ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);

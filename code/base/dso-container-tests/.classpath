@@ -30,5 +30,7 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jta-1.0.1b.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/derbynet-10.2.2.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/derbyclient-10.2.2.0.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>

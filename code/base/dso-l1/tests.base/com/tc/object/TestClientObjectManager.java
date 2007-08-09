@@ -12,6 +12,7 @@ import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.util.Assert;
 
 import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -99,7 +100,7 @@ public class TestClientObjectManager implements ClientObjectManager {
     return (TCObject) objects.get(id);
   }
 
-  public WeakObjectReference createNewPeer(TCClass clazz, int size, ObjectID id, ObjectID parentID) {
+  public WeakReference createNewPeer(TCClass clazz, int size, ObjectID id, ObjectID parentID) {
     throw new ImplementMe();
   }
 
@@ -176,7 +177,7 @@ public class TestClientObjectManager implements ClientObjectManager {
     return;
   }
 
-  public WeakObjectReference createNewPeer(TCClass clazz, DNA dna) {
+  public WeakReference createNewPeer(TCClass clazz, DNA dna) {
     throw new ImplementMe();
   }
 

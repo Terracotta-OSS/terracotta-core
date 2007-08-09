@@ -4,6 +4,7 @@
 package com.tc.io.serializer;
 
 import com.tc.io.TCDataOutput;
+import com.tc.object.dna.api.IDNAEncoding;
 import com.tc.object.dna.impl.DNAEncoding;
 
 import java.io.IOException;
@@ -31,7 +32,7 @@ import java.io.UnsupportedEncodingException;
  */
 public class TCObjectOutputStream implements ObjectOutput, TCDataOutput {
 
-  private static final DNAEncoding SERIALIZER_ENCODING = new DNAEncoding(DNAEncoding.SERIALIZER);
+  private static final IDNAEncoding SERIALIZER_ENCODING = new DNAEncoding(IDNAEncoding.SERIALIZER);
 
   protected final OutputStream     out;
 

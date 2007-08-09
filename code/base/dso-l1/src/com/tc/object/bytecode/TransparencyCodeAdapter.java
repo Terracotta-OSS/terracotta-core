@@ -14,9 +14,9 @@ import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.exception.TCInternalError;
-import com.tc.object.config.LockDefinition;
-import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.config.TransparencyCodeSpec;
+import com.tc.object.config.ILockDefinition;
+import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.ITransparencyCodeSpec;
 
 import java.util.AbstractMap;
 
@@ -31,7 +31,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   private final MemberInfo           memberInfo;
   private boolean                    isConstructor;
 
-  private final TransparencyCodeSpec codeSpec;
+  private final ITransparencyCodeSpec codeSpec;
   private final Label                labelZero = new Label();
 
   private int[]                      localVariablesForMethodCall;
@@ -100,7 +100,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     return false;
   }
 
-  private TransparencyClassSpec getTransparencyClassSpec() {
+  private ITransparencyClassSpec getTransparencyClassSpec() {
     return spec.getTransparencyClassSpec();
   }
 
@@ -262,7 +262,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
 
   private void callTCBeginWithLocks(MethodVisitor c) {
     c.visitLabel(new Label());
-    LockDefinition[] defs = getTransparencyClassSpec().lockDefinitionsFor(memberInfo);
+    ILockDefinition[] defs = getTransparencyClassSpec().lockDefinitionsFor(memberInfo);
     for (int i = 0; i < defs.length; i++) {
       if (!defs[i].isAutolock()) {
         callTCBeginWithLock(defs[i], c);
@@ -270,14 +270,14 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     }
   }
 
-  private void callTCBeginWithLock(LockDefinition lock, MethodVisitor c) {
+  private void callTCBeginWithLock(ILockDefinition lock, MethodVisitor c) {
     c.visitLdcInsn(ByteCodeUtil.generateNamedLockName(lock.getLockName()));
     c.visitLdcInsn(new Integer(lock.getLockLevelAsInt()));
     mgrHelper.callManagerMethod("beginLock", c);
   }
 
   private void callTCCommit(MethodVisitor c) {
-    LockDefinition[] locks = getTransparencyClassSpec().lockDefinitionsFor(memberInfo);
+    ILockDefinition[] locks = getTransparencyClassSpec().lockDefinitionsFor(memberInfo);
     for (int i = 0; i < locks.length; i++) {
       if (!locks[i].isAutolock()) {
         c.visitLdcInsn(ByteCodeUtil.generateNamedLockName(locks[i].getLockName()));

@@ -8,7 +8,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.Application;
 import com.tc.simulator.app.ApplicationConfig;
@@ -76,7 +76,7 @@ public class LargeGraphTestApp implements Application, ApplicationConfigBuilder 
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClassName = LargeGraphTestApp.class.getName();
-    TransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
+    ITransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
 
     spec.addRoot("graph", testClassName + ".graph");
     spec.addRoot("objectCount", testClassName + ".objectCount");

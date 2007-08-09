@@ -50,6 +50,7 @@ import com.tc.util.concurrent.StoppableThread;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -1014,7 +1015,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     objectLookupsInProgress.remove(id);
   }
 
-  public WeakObjectReference createNewPeer(TCClass clazz, DNA dna) {
+  public WeakReference createNewPeer(TCClass clazz, DNA dna) {
     if (clazz.isUseNonDefaultConstructor()) {
       try {
         return new WeakObjectReference(dna.getObjectID(), factory.getNewPeerObject(clazz, dna), referenceQueue);
@@ -1055,7 +1056,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, PortableObj
     }
   }
 
-  public WeakObjectReference createNewPeer(TCClass clazz, int size, ObjectID id, ObjectID parentID) {
+  public WeakReference createNewPeer(TCClass clazz, int size, ObjectID id, ObjectID parentID) {
     try {
       if (clazz.isIndexed()) {
         Object array = factory.getNewArrayInstance(clazz, size);

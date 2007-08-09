@@ -42,7 +42,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   void verifyBootJarContents() throws IncompleteBootJarException, UnverifiedBootJarException;
 
-  TransparencyClassSpec[] getAllSpecs();
+  ITransparencyClassSpec[] getAllSpecs();
 
   Iterator getAllUserDefinedBootSpecs();
 
@@ -65,11 +65,13 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   void setModuleSpecs(ModuleSpec[] pluginSpecs);
 
-  TransparencyClassSpec getOrCreateSpec(String className);
+  // HACK: is also in IStandardDSOClientConfigHelper
+  ITransparencyClassSpec getOrCreateSpec(String className);
 
-  TransparencyClassSpec getOrCreateSpec(String className, String applicator);
+  // HACK: is also in IStandardDSOClientConfigHelper
+  ITransparencyClassSpec getOrCreateSpec(String className, String applicator);
 
-  LockDefinition[] lockDefinitionsFor(MemberInfo memberInfo);
+  ILockDefinition[] lockDefinitionsFor(MemberInfo memberInfo);
 
   boolean isRoot(FieldInfo fi);
 
@@ -85,7 +87,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   DistributedMethodSpec getDmiSpec(MemberInfo memberInfo);
 
-  TransparencyClassSpec getSpec(String className);
+  ITransparencyClassSpec getSpec(String className);
 
   boolean isDSOSessions(String name);
 
@@ -101,7 +103,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   void addSynchronousWriteAutolock(String methodPattern);
 
-  void addLock(String methodPattern, LockDefinition lockDefinition);
+  void addLock(String methodPattern, ILockDefinition lockDefinition);
 
   void addReadAutolock(String methodPattern);
 
@@ -131,6 +133,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   boolean isUseNonDefaultConstructor(Class clazz);
 
+  // HACK: is also in IStandardDSOClientConfigHelper
   void addIncludePattern(String expression);
 
   NewCommonL1Config getNewCommonL1Config();
@@ -168,7 +171,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   String getLogicalExtendingClassName(String className);
 
-  void addUserDefinedBootSpec(String className, TransparencyClassSpec spec);
+  void addUserDefinedBootSpec(String className, ITransparencyClassSpec spec);
 
   void addApplicationName(String name);
 
@@ -182,6 +185,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   boolean removeCustomAdapter(String name);
 
+  // HACK: is also in IStandardDSOClientConfigHelper
   /**
    * If an adapter with the same name was already present, this new one
    * will not be added, and the operation will simply return as a no-op.

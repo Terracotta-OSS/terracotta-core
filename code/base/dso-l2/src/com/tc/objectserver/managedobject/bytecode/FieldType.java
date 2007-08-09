@@ -7,7 +7,7 @@ import com.tc.object.LiteralValues;
 
 public class FieldType {
 
-  public static final LiteralValues literalValues = new LiteralValues();
+  public static final LiteralValues literalValues = (LiteralValues) new LiteralValues();
 
   private final String localFieldName;
   private final String fullName;

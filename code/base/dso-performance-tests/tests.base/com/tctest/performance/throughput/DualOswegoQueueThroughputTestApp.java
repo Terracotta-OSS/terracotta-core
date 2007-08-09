@@ -8,7 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOApplicationConfig;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.object.config.spec.LinkedQueueSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -26,7 +26,7 @@ public final class DualOswegoQueueThroughputTestApp extends AbstractDualQueueThr
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    TransparencyClassSpec spec = config.getOrCreateSpec(Metronome.class.getName());
+    ITransparencyClassSpec spec = config.getOrCreateSpec(Metronome.class.getName());
     String className = DualOswegoQueueThroughputTestApp.class.getName();
     spec = config.getOrCreateSpec(className);
     String methodExpression = "* " + className + "*.*(..)";

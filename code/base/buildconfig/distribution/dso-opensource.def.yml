@@ -71,16 +71,21 @@ bundled_components:
               - dso-l1-tomcat
               - dso-l1-tomcat50
               - dso-l1-tomcat55
-        - terracotta-api-version-PREALPHA:
-            install_directory: lib
+        - tc-compile-version-PREALPHA:
             modules:
-              - aspectwerkz
-              - common
-              - dso-common
-              - dso-l1
+              - common-api
+              - dso-l1-api
               - modules-common-1.0
-              - management
-              - thirdparty
+              - thirdparty-api
+        - tc.test-compile-version-PREALPHA:
+            source: tests.base
+            filter: "**/*Test.class, **/*TestApp.class"
+            modules:
+              - common
+              - dso-container-tests
+              - dso-l1
+              - legacy-test-tree
+              - simulator
       # NOTE: this section also controls what goes into the 'tc.jar' file
       modules:
         - aspectwerkz:

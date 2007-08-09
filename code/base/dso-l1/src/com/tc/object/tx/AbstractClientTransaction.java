@@ -17,7 +17,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
 
   private SequenceID              seqID = SequenceID.NULL_ID;
   private final TransactionID     txID;
-  private TransactionContext      transactionContext;
+  private ITransactionContext      transactionContext;
   private boolean                 alreadyCommittedFlag;
   private final ChannelIDProvider cidProvider;
 
@@ -37,7 +37,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
     return this.seqID;
   }
 
-  public void setTransactionContext(TransactionContext transactionContext) {
+  public void setTransactionContext(ITransactionContext transactionContext) {
     this.transactionContext = transactionContext;
   }
 

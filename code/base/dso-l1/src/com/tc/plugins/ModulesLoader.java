@@ -19,11 +19,12 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.ConfigLoader;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.IStandardDSOClientConfigHelper;
 import com.tc.object.config.ModuleSpec;
-import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.Namespace;
+import com.tc.object.util.JarResourceLoader;
 import com.tc.util.VendorVmSignature;
 import com.tc.util.VendorVmSignatureException;
 import com.terracottatech.config.DsoApplication;
@@ -39,10 +40,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
 
 public class ModulesLoader {
+  
   private static final Comparator SERVICE_COMPARATOR = new Comparator() {
 
                                                        public int compare(Object arg0, Object arg1) {
@@ -124,7 +124,7 @@ public class ModulesLoader {
     // install all available bundles
     osgiRuntime.installBundles();
 
-    if (configHelper instanceof StandardDSOClientConfigHelper) {
+    if (configHelper instanceof IStandardDSOClientConfigHelper) {
       final Dictionary serviceProps = new Hashtable();
       serviceProps.put(Constants.SERVICE_VENDOR, "Terracotta, Inc.");
       serviceProps.put(Constants.SERVICE_DESCRIPTION, "Main point of entry for programmatic access to"
@@ -228,7 +228,7 @@ public class ModulesLoader {
     final String config = getConfigPath(bundle);
     final InputStream is;
     try {
-      is = getJarResource(new URL(bundle.getLocation()), config);
+      is = JarResourceLoader.getJarResource(new URL(bundle.getLocation()), config);
     } catch (MalformedURLException murle) {
       throw new BundleException("Unable to create URL from: " + bundle.getLocation(), murle);
     } catch (IOException ioe) {
@@ -269,11 +269,4 @@ public class ModulesLoader {
     }
   }
 
-  public static InputStream getJarResource(final URL location, final String resource) throws IOException {
-    final JarInputStream jis = new JarInputStream(location.openStream());
-    for (JarEntry entry = jis.getNextJarEntry(); entry != null; entry = jis.getNextJarEntry()) {
-      if (entry.getName().equals(resource)) { return jis; }
-    }
-    return null;
-  }
 }

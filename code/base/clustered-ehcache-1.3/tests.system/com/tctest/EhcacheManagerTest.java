@@ -12,6 +12,7 @@ public class EhcacheManagerTest extends TransparentTestBase {
     tt.initializeTestRunner();
   }
 
+  @SuppressWarnings("unchecked")
   protected Class getApplicationClass() {
     return EhcacheManagerTestApp.class;
   }

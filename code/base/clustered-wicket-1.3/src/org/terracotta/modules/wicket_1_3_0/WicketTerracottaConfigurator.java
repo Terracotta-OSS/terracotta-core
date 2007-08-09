@@ -7,11 +7,11 @@ package org.terracotta.modules.wicket_1_3_0;
 import org.osgi.framework.BundleContext;
 import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 
-import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.config.IStandardDSOClientConfigHelper;
 
 public final class WicketTerracottaConfigurator extends TerracottaConfiguratorModule {
 
-  protected final void addInstrumentation(final BundleContext context, final StandardDSOClientConfigHelper configHelper) {
+  protected final void addInstrumentation(final BundleContext context, final IStandardDSOClientConfigHelper configHelper) {
     configHelper.addCustomAdapter("org.apache.wicket.protocol.http.WebApplication", new WicketWebApplicationAdapter());
   }
 

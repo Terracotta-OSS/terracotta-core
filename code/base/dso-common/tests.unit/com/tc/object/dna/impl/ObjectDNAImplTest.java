@@ -6,6 +6,7 @@ package com.tc.object.dna.impl;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.IDNAEncoding;
 
 public class ObjectDNAImplTest extends DNAImplTest {
 
@@ -25,7 +26,7 @@ public class ObjectDNAImplTest extends DNAImplTest {
   }
 
   protected DNAWriter createDNAWriter(TCByteBufferOutputStream out, ObjectID id, String type,
-                                      ObjectStringSerializer serializer, DNAEncoding encoding, String string) {
+                                      ObjectStringSerializer serializer, IDNAEncoding encoding, String string) {
     return new ObjectDNAWriterImpl(out, id, type, serializer, encoding, "loader description", version);
   }
 

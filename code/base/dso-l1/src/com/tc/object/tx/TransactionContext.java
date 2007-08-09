@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class TransactionContext {
+public class TransactionContext implements ITransactionContext {
   TxnType          type;
   LockID           lockID;
   private LockID[] lockIDs;

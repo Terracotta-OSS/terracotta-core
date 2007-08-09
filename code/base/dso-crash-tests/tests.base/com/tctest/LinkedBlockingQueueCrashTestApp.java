@@ -7,17 +7,17 @@ import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
+import java.util.Iterator;
+import java.util.Random;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.Random;
-import java.util.Iterator;
 
 public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
   int upbound = 2000;
@@ -50,7 +50,7 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
 
     String testClass = LinkedBlockingQueueCrashTestApp.class.getName();
-    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+    ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     config.addIncludePattern(testClass + "$*", false, false, true);
 
     String methodExpression = "* " + testClass + "*.*(..)";

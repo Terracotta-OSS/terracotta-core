@@ -49,5 +49,6 @@
 	<classpathentry kind="lib" path="/dependencies/lib/org.eclipse.ui.workbench.texteditor-3.3.0.v20070606-0010.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/org.eclipse.ui.workbench-3.3.0.I20070608-1100.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/org.eclipse.ui-3.3.0.I20070614-0800.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>

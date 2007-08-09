@@ -12,6 +12,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAException;
+import com.tc.object.dna.api.IDNAEncoding;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
@@ -20,7 +21,7 @@ import com.tc.util.Assert;
 import java.io.IOException;
 
 public class DNAImpl implements DNA, DNACursor, TCSerializable {
-  private static final DNAEncoding     DNA_STORAGE_ENCODING = new DNAEncoding(DNAEncoding.STORAGE);
+  private static final IDNAEncoding     DNA_STORAGE_ENCODING = new DNAEncoding(IDNAEncoding.STORAGE);
 
   private final ObjectStringSerializer serializer;
   private final boolean                createOutput;
@@ -74,7 +75,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
     }
   }
 
-  public boolean next(DNAEncoding encoding) throws IOException, ClassNotFoundException {
+  public boolean next(IDNAEncoding encoding) throws IOException, ClassNotFoundException {
     boolean hasNext = actionCount > 0;
     if (hasNext) {
       parseNext(encoding);
@@ -85,7 +86,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
     return hasNext;
   }
 
-  private void parseNext(DNAEncoding encoding) throws IOException, ClassNotFoundException {
+  private void parseNext(IDNAEncoding encoding) throws IOException, ClassNotFoundException {
     byte recordType = input.readByte();
 
     switch (recordType) {
@@ -117,36 +118,36 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
     // unreachable
   }
 
-  private void parseSubArray(DNAEncoding encoding) throws IOException, ClassNotFoundException {
+  private void parseSubArray(IDNAEncoding encoding) throws IOException, ClassNotFoundException {
     int startPos = input.readInt();
     Object subArray = encoding.decode(input);
     currentAction = new PhysicalAction(subArray, startPos);
   }
 
-  private void parseEntireArray(DNAEncoding encoding) throws IOException, ClassNotFoundException {
+  private void parseEntireArray(IDNAEncoding encoding) throws IOException, ClassNotFoundException {
     Object array = encoding.decode(input);
     currentAction = new PhysicalAction(array);
   }
 
-  private void parseLiteralValue(DNAEncoding encoding) throws IOException, ClassNotFoundException {
+  private void parseLiteralValue(IDNAEncoding encoding) throws IOException, ClassNotFoundException {
     Object value = encoding.decode(input);
     currentAction = new LiteralAction(value);
   }
 
-  private void parseArrayElement(DNAEncoding encoding) throws IOException, ClassNotFoundException {
+  private void parseArrayElement(IDNAEncoding encoding) throws IOException, ClassNotFoundException {
     int index = input.readInt();
     Object value = encoding.decode(input);
     currentAction = new PhysicalAction(index, value, value instanceof ObjectID);
   }
 
-  private void parsePhysical(DNAEncoding encoding, boolean isReference) throws IOException, ClassNotFoundException {
+  private void parsePhysical(IDNAEncoding encoding, boolean isReference) throws IOException, ClassNotFoundException {
     String fieldName = serializer.readFieldName(input);
 
     Object value = encoding.decode(input);
     currentAction = new PhysicalAction(fieldName, value, value instanceof ObjectID || isReference);
   }
 
-  private void parseLogical(DNAEncoding encoding) throws IOException, ClassNotFoundException {
+  private void parseLogical(IDNAEncoding encoding) throws IOException, ClassNotFoundException {
     int method = input.readInt();
     int paramCount = input.read();
     if (paramCount < 0) throw new AssertionError("Invalid param count:" + paramCount);

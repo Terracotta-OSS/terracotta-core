@@ -35,7 +35,7 @@ import java.util.Set;
  * 
  * @author steve
  */
-public class LockRequestMessage extends DSOMessageBase {
+public class LockRequestMessage extends DSOMessageBase implements LockRequestMessageConsts {
 
   private static final WaitInvocationFactory waitInvocationFactory           = new WaitInvocationFactory();
 
@@ -61,8 +61,6 @@ public class LockRequestMessage extends DSOMessageBase {
   private final static byte                  QUERY_LOCK_REQUEST_TYPE         = 4;
   private final static byte                  TRY_OBTAIN_LOCK_REQUEST_TYPE    = 5;
   private final static byte                  INTERRUPT_WAIT_REQUEST_TYPE     = 6;
-
-  public final static int                    UNITIALIZED_WAIT_TIME           = -1;
 
   private final Set                          lockContexts                    = new HashSet();
   private final Set                          waitContexts                    = new HashSet();

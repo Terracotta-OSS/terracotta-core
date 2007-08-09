@@ -10,17 +10,17 @@ import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 import org.terracotta.modules.hibernate_3_1_2.object.config.HibernateChangeApplicatorSpec;
 import org.terracotta.modules.hibernate_3_1_2.object.config.HibernateModuleSpec;
 
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.object.config.ModuleSpec;
-import com.tc.object.config.StandardDSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.IStandardDSOClientConfigHelper;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
 
 public final class HibernateTerracottaConfigurator extends TerracottaConfiguratorModule {
-  protected final void addInstrumentation(final BundleContext context, final StandardDSOClientConfigHelper configHelper) {
+  protected final void addInstrumentation(final BundleContext context, final IStandardDSOClientConfigHelper configHelper) {
     /* AutoSynchronized lock for AbstractPersistentCollection, PersistentSet, PersistentBag, PersistentList, and PersistentMap are defined in the terracotta.xml */
-    TransparencyClassSpec spec = configHelper.getOrCreateSpec("org.hibernate.collection.AbstractPersistentCollection");
+    ITransparencyClassSpec spec = configHelper.getOrCreateSpec("org.hibernate.collection.AbstractPersistentCollection");
     spec.addTransient("session");
     
     configHelper.addIncludePattern("org.hibernate.collection.PersistentSet", false, false, false);

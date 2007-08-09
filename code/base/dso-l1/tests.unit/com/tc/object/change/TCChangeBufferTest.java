@@ -10,6 +10,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.dna.api.DNACursor;
+import com.tc.object.dna.api.IDNAEncoding;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAEncoding;
@@ -24,7 +25,7 @@ public class TCChangeBufferTest extends TestCase {
   public void testLogicalClassIgnoresPhysicalChanges() throws Exception {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     ClassProvider classProvider = new MockClassProvider();
-    DNAEncoding encoding = new DNAEncoding(classProvider);
+    IDNAEncoding encoding = new DNAEncoding(classProvider);
     TCChangeBuffer buffer = new TCChangeBufferImpl(new MockTCObject(new ObjectID(1), this, false, true));
 
     // physical updates should be ignored
@@ -60,7 +61,7 @@ public class TCChangeBufferTest extends TestCase {
   public void testLastPhysicalChangeWins() throws Exception {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     ClassProvider classProvider = new MockClassProvider();
-    DNAEncoding encoding = new DNAEncoding(classProvider);
+    IDNAEncoding encoding = new DNAEncoding(classProvider);
     TCChangeBuffer buffer = new TCChangeBufferImpl(new MockTCObject(new ObjectID(1), this));
 
     for (int i = 0; i < 100; i++) {
@@ -93,7 +94,7 @@ public class TCChangeBufferTest extends TestCase {
   public void testLastArrayChangeWins() throws Exception {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     ClassProvider classProvider = new MockClassProvider();
-    DNAEncoding encoding = new DNAEncoding(classProvider);
+    IDNAEncoding encoding = new DNAEncoding(classProvider);
     TCChangeBuffer buffer = new TCChangeBufferImpl(new MockTCObject(new ObjectID(1), this, true, false));
 
     for (int i = 0; i < 100; i++) {

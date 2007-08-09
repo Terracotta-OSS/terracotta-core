@@ -102,6 +102,7 @@ import com.tc.object.bytecode.hook.impl.Util;
 import com.tc.object.cache.Cacheable;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOSpringConfigHelper;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.dna.impl.ProxyInstance;
@@ -207,7 +208,7 @@ public class BootJarTool {
 
   private final void addJdk15SpecificPreInstrumentedClasses() {
     if (Vm.isJDK15Compliant()) {
-      TransparencyClassSpec spec = config.getOrCreateSpec("java.math.MathContext");
+      ITransparencyClassSpec spec = config.getOrCreateSpec("java.math.MathContext");
       spec.markPreInstrumented();
 
       addInstrumentedJavaUtilConcurrentLocks();
@@ -1068,7 +1069,7 @@ public class BootJarTool {
     String className = "java.util.TreeMap";
     byte[] orig = getSystemBytes(className);
 
-    TransparencyClassSpec spec = config.getSpec(className);
+    ITransparencyClassSpec spec = config.getSpec(className);
 
     byte[] transformed = doDSOTransform(className, orig);
 
@@ -1184,7 +1185,7 @@ public class BootJarTool {
         for (Iterator supes = supers.iterator(); supes.hasNext();) {
           String name = (String) supes.next();
           autoIncludedBootstrapClasses.add(name);
-          TransparencyClassSpec superSpec = config.getOrCreateSpec(name);
+          ITransparencyClassSpec superSpec = config.getOrCreateSpec(name);
           superSpec.markPreInstrumented();
           rv.put(name, superSpec);
         }
@@ -1218,9 +1219,9 @@ public class BootJarTool {
   private final Map getTCSpecs() {
     Map map = new HashMap();
 
-    TransparencyClassSpec[] allSpecs = config.getAllSpecs();
+    ITransparencyClassSpec[] allSpecs = config.getAllSpecs();
     for (int i = 0; i < allSpecs.length; i++) {
-      TransparencyClassSpec spec = allSpecs[i];
+      ITransparencyClassSpec spec = allSpecs[i];
 
       if (!spec.isPreInstrumented()) {
         continue;
@@ -1357,7 +1358,7 @@ public class BootJarTool {
     bytes = cw.toByteArray();
 
     // regular DSO instrumentation
-    TransparencyClassSpec spec = config.getOrCreateSpec(classname);
+    ITransparencyClassSpec spec = config.getOrCreateSpec(classname);
     spec.markPreInstrumented();
 
     bootJar.loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
@@ -1377,7 +1378,7 @@ public class BootJarTool {
     bytes = cw.toByteArray();
 
     // regular DSO instrumentation
-    TransparencyClassSpec spec = config.getOrCreateSpec(classname);
+    ITransparencyClassSpec spec = config.getOrCreateSpec(classname);
     spec.markPreInstrumented();
 
     bootJar.loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
@@ -1397,7 +1398,7 @@ public class BootJarTool {
     bytes = cw.toByteArray();
 
     // regular DSO instrumentation
-    TransparencyClassSpec spec = config.getOrCreateSpec(classname);
+    ITransparencyClassSpec spec = config.getOrCreateSpec(classname);
     spec.markPreInstrumented();
 
     bootJar.loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
@@ -1426,7 +1427,7 @@ public class BootJarTool {
     bytes = cw.toByteArray();
 
     // 3rd pass (regular DSO instrumentation)
-    TransparencyClassSpec spec = config.getOrCreateSpec("java.lang.StringBuffer");
+    ITransparencyClassSpec spec = config.getOrCreateSpec("java.lang.StringBuffer");
     spec.markPreInstrumented();
     config.addWriteAutolock("* java.lang.StringBuffer.*(..)");
     bytes = doDSOTransform(spec.getClassName(), bytes);
@@ -1466,7 +1467,7 @@ public class BootJarTool {
   }
 
   private void addNonPortableStringBuffer(String className) {
-    TransparencyClassSpec spec = config.getOrCreateSpec(className);
+    ITransparencyClassSpec spec = config.getOrCreateSpec(className);
     spec.markPreInstrumented();
 
     byte[] bytes = getSystemBytes(className);
@@ -1496,7 +1497,7 @@ public class BootJarTool {
     cr.accept(cv, ClassReader.SKIP_FRAMES);
     classBytes = cw.toByteArray();
 
-    TransparencyClassSpec spec = config.getOrCreateSpec(className);
+    ITransparencyClassSpec spec = config.getOrCreateSpec(className);
     spec.markPreInstrumented();
 
     classBytes = doDSOTransform(className, classBytes);
@@ -1526,7 +1527,7 @@ public class BootJarTool {
 
     bytes = cw.toByteArray();
 
-    TransparencyClassSpec spec = config.getOrCreateSpec(className);
+    ITransparencyClassSpec spec = config.getOrCreateSpec(className);
     bytes = doDSOTransform(spec.getClassName(), bytes);
     bootJar.loadClassIntoJar(className, bytes, true);
   }
@@ -1563,7 +1564,7 @@ public class BootJarTool {
     String className = "java.lang.Throwable";
     byte[] orig = getSystemBytes(className);
 
-    TransparencyClassSpec spec = config.getOrCreateSpec(className);
+    ITransparencyClassSpec spec = config.getOrCreateSpec(className);
     spec.markPreInstrumented();
     spec.setHonorTransient(true);
 
@@ -1587,7 +1588,7 @@ public class BootJarTool {
 
     bytes = cw.toByteArray();
 
-    TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.CyclicBarrier");
+    ITransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.CyclicBarrier");
     bytes = doDSOTransform(spec.getClassName(), bytes);
     bootJar.loadClassIntoJar("java.util.concurrent.CyclicBarrier", bytes, true);
   }
@@ -1607,7 +1608,7 @@ public class BootJarTool {
 
     bytes = cw.toByteArray();
 
-    TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap",
+    ITransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap",
                                                         "com.tc.object.applicator.ConcurrentHashMapApplicator");
     spec.setHonorTransient(true);
     spec.markPreInstrumented();
@@ -1693,7 +1694,7 @@ public class BootJarTool {
 
     bytes = cw.toByteArray();
 
-    TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.LinkedBlockingQueue",
+    ITransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.LinkedBlockingQueue",
                                                         "com.tc.object.applicator.LinkedBlockingQueueApplicator");
     spec.addMethodAdapter(SerializationUtil.TAKE_SIGNATURE,
                           new JavaUtilConcurrentLinkedBlockingQueueAdapter.TakeAdapter());
@@ -1718,7 +1719,7 @@ public class BootJarTool {
     if (!Vm.isJDK15Compliant()) { return; }
     Map instrumentedContext = new HashMap();
 
-    TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.FutureTask");
+    ITransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.FutureTask");
     spec.setHonorTransient(true);
     spec.setCallConstructorOnLoad(true);
     spec.markPreInstrumented();
@@ -1736,7 +1737,7 @@ public class BootJarTool {
   }
 
   private final void addInstrumentedJavaUtilCollection() {
-    TransparencyClassSpec spec = config.getOrCreateSpec("java.util.HashSet",
+    ITransparencyClassSpec spec = config.getOrCreateSpec("java.util.HashSet",
                                                         "com.tc.object.applicator.HashSetApplicator");
     spec.addIfTrueLogSpec(SerializationUtil.ADD_SIGNATURE);
     spec.addIfTrueLogSpec(SerializationUtil.REMOVE_SIGNATURE);
@@ -1816,7 +1817,7 @@ public class BootJarTool {
     addSerializationInstrumentedCode(spec);
   }
 
-  private final void addSerializationInstrumentedCode(TransparencyClassSpec spec) {
+  private final void addSerializationInstrumentedCode(ITransparencyClassSpec spec) {
     byte[] bytes = getSystemBytes(spec.getClassName());
     spec.markPreInstrumented();
     bytes = doDSOTransform(spec.getClassName(), bytes);
@@ -1845,7 +1846,7 @@ public class BootJarTool {
   }
 
   private void addInstrumentedReentrantReadWriteLock() {
-    TransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock");
+    ITransparencyClassSpec spec = config.getOrCreateSpec("java.util.concurrent.locks.ReentrantReadWriteLock");
     spec.addTransient("sync");
     spec.setCallConstructorOnLoad(true);
 
@@ -2097,7 +2098,7 @@ public class BootJarTool {
 
   private void addInstrumentedJavaUtilConcurrentLocksReentrantLock() {
     byte[] bytes = getSystemBytes("com.tc.util.concurrent.locks.ReentrantLock");
-    TransparencyClassSpec spec = config.getOrCreateSpec("com.tc.util.concurrent.locks.ReentrantLock");
+    ITransparencyClassSpec spec = config.getOrCreateSpec("com.tc.util.concurrent.locks.ReentrantLock");
     spec.setHonorTransient(true);
     spec.setCallConstructorOnLoad(true);
     spec.markPreInstrumented();

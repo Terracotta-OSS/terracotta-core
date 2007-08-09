@@ -79,9 +79,11 @@ module BundledComponents
     (component[:module_packages] || []).each do |module_package|
       runtime_classes_dir = FilePath.new(@distribution_results.build_dir, 'tmp').ensure_directory
       module_package.keys.each do |name|
+        src      = module_package[name]['source'] || 'src'
+        excludes = module_package[name]['filter'] || ''
         module_package[name]['modules'].each do |module_name|
           a_module = @module_set[module_name]
-          a_module.subtree('src').copy_classes(@build_results, runtime_classes_dir, ant)
+          a_module.subtree(src).copy_classes(@build_results, runtime_classes_dir, ant, excludes)
         end
         libdir  = FilePath.new(File.dirname(destdir.to_s), *(module_package[name]['install_directory'] || '').split('/')).ensure_directory
         jarfile = FilePath.new(libdir, interpolate("#{name}.jar"))

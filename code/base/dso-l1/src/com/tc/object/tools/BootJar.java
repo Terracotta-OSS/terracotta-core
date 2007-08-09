@@ -68,8 +68,7 @@ public class BootJar {
   }
 
   public static BootJar getBootJarForWriting(File bootJar) throws UnsupportedVMException {
-    String vmSignature = BootJarSignature.getSignatureForThisVM().getSignature();
-    return getBootJarForWriting(bootJar, vmSignature);
+    return getBootJarForWriting(bootJar, BootJarSignature.getSignatureForThisVM().getSignature());
   }
 
   public static BootJar getBootJarForReading(File bootJar) throws IOException, BootJarException {

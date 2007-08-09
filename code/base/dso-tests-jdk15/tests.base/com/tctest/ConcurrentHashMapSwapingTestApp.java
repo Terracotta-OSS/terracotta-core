@@ -6,7 +6,7 @@ package com.tctest;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -116,7 +116,7 @@ public class ConcurrentHashMapSwapingTestApp extends AbstractTransparentApp {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = ConcurrentHashMapSwapingTestApp.class.getName();
-    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+    ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
     config.addIncludePattern(testClass + "$*", false, false, true);
 

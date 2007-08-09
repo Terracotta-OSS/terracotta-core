@@ -11,7 +11,7 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -227,7 +227,7 @@ public class ResolveTwoActiveServersTestApp extends AbstractErrorCatchingTranspa
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = ArrayTestApp.class.getName();
-    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+    ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);

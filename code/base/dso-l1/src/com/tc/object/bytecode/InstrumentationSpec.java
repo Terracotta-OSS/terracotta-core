@@ -15,6 +15,7 @@ import com.tc.backport175.bytecode.AnnotationElement.Annotation;
 import com.tc.exception.TCLogicalSubclassNotPortableException;
 import com.tc.object.LiteralValues;
 import com.tc.object.Portability;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.TransparencyClassSpecUtil;
 import com.tc.util.Assert;
@@ -60,11 +61,11 @@ class InstrumentationSpec {
   private int                         classVersion;
   private boolean                     hasVisitedField;
   private boolean                     isSubclassOfLogicalClass;
-  private TransparencyClassSpec       superClassSpec;
+  private ITransparencyClassSpec       superClassSpec;
 
   private final ClassInfo             classInfo;
   private final Map                   fieldInfoMap;
-  private final TransparencyClassSpec spec;
+  private final ITransparencyClassSpec spec;
   private final ManagerHelper         mgrHelper;
 
   private final Set                   classHierarchy;
@@ -73,7 +74,7 @@ class InstrumentationSpec {
   private final Set                   logicalExtendingFieldSpec;
   private final ClassLoader           caller;
 
-  InstrumentationSpec(ClassInfo classInfo, TransparencyClassSpec spec, ManagerHelper mgrHelper, ClassLoader caller) {
+  InstrumentationSpec(ClassInfo classInfo, ITransparencyClassSpec spec, ManagerHelper mgrHelper, ClassLoader caller) {
     this.classInfo = classInfo;
     this.spec = spec;
     this.mgrHelper = mgrHelper;
@@ -416,11 +417,11 @@ class InstrumentationSpec {
     return (managedField == IS_NEEDED);
   }
 
-  TransparencyClassSpec getTransparencyClassSpec() {
+  ITransparencyClassSpec getTransparencyClassSpec() {
     return spec;
   }
 
-  TransparencyClassSpec getSuperclassTransparencyClassSpec() {
+  ITransparencyClassSpec getSuperclassTransparencyClassSpec() {
     return spec.getClassSpec(superNameDots);
   }
 

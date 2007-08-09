@@ -13,8 +13,8 @@ import com.tc.object.bytecode.TCMap;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.IDNAEncoding;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.impl.DNAEncoding;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.TCObjectClone;
 
@@ -30,7 +30,7 @@ import java.util.Map.Entry;
  */
 public class HashMapApplicator extends BaseApplicator {
 
-  public HashMapApplicator(DNAEncoding encoding) {
+  public HashMapApplicator(IDNAEncoding encoding) {
     super(encoding);
   }
 

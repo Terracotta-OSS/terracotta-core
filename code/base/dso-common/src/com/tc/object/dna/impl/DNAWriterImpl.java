@@ -9,6 +9,7 @@ import com.tc.io.TCByteBufferOutputStream.Mark;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.IDNAEncoding;
 import com.tc.util.Conversion;
 
 public class DNAWriterImpl implements DNAWriter {
@@ -21,11 +22,11 @@ public class DNAWriterImpl implements DNAWriter {
   private final Mark                     parentIdMark;
   private final Mark                     arrayLengthMark;
   private final ObjectStringSerializer   serializer;
-  private final DNAEncoding              encoding;
+  private final IDNAEncoding              encoding;
   private int                            actionCount   = 0;
 
   public DNAWriterImpl(TCByteBufferOutputStream output, ObjectID id, String className,
-                       ObjectStringSerializer serializer, DNAEncoding encoding, String loaderDesc, boolean isDelta) {
+                       ObjectStringSerializer serializer, IDNAEncoding encoding, String loaderDesc, boolean isDelta) {
     this.output = output;
     this.encoding = encoding;
 

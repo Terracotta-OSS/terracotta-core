@@ -9,7 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -130,7 +130,7 @@ public class PartialCollectionsCloneTest extends TransparentTestBase {
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
       new CyclicBarrierSpec().visit(visitor, config);
       String testClass = PartialCollectionsCloneTestApp.class.getName();
-      TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+      ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
       String methodExpr = "* " + testClass + "*.*(..)";
       config.addWriteAutolock(methodExpr);
       config.addIncludePattern(testClass + "*");

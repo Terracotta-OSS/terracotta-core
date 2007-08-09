@@ -8,7 +8,7 @@ import com.tc.logging.TCLogger;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOApplicationConfig;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.simulator.app.Application;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -309,7 +309,7 @@ public class LongrunningGCTestApp implements Application {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClassName = LongrunningGCTestApp.class.getName();
-    TransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
+    ITransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
     spec.addRoot("list", testClassName + ".list");
     String methodExpression = "* " + testClassName + ".*(..)";
     System.err.println("Adding autolock for: " + methodExpression);

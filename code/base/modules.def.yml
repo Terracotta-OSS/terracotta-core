@@ -11,64 +11,97 @@ modules:
   - linked-child-process:
       options:
         jdk: J2SE-1.4
+  - thirdparty-api:
+      options:
+        jdk: J2SE-1.4
   - thirdparty:
+      options:
+        jdk: J2SE-1.4
+      dependencies:
+        - thirdparty-api
+  - common-api:
       options:
         jdk: J2SE-1.4
   - common:
       options:
         jdk: J2SE-1.4
       dependencies:
+        - common-api
         - linked-child-process
+        - thirdparty-api
         - thirdparty
   - aspectwerkz:
       options:
         jdk: J2SE-1.4
       dependencies:
+        - common-api
         - common
+        - thirdparty-api
         - thirdparty
+  - dso-l1-api:
+      options:
+        jdk: J2SE-1.4
+      dependencies:
+        - aspectwerkz
+        - common-api
+        - common
+        - thirdparty-api
   - dso-common:
       options:
         jdk: J2SE-1.4
       dependencies:
+        - common-api
         - common
+        - dso-l1-api
   - dso-common-jdk15:
       options:
         jdk: J2SE-1.5
       dependencies:
+        - common-api
         - common
         - dso-common
   - management:
       options:
         jdk: J2SE-1.4
       dependencies:
+        - common-api
         - common
         - dso-common
+        - dso-l1-api
   - dso-l1:
       options:
         jdk: J2SE-1.4
       dependencies:
+        - common-api
         - common
+        - thirdparty-api
         - thirdparty
         - aspectwerkz
         - management
         - dso-common
         - dso-common-jdk15
+        - dso-l1-api
   - dso-l1-jdk15:
       options:
         jdk: J2SE-1.5
       dependencies:
+        - common-api
         - common
+        - thirdparty-api
         - thirdparty
         - aspectwerkz
         - dso-common
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
   - dso-l1-session:
       options:
         jdk: J2SE-1.4
       dependencies:
+        - common-api
         - common
         - dso-common
+        - dso-l1-api
         - dso-l1
         - management
   - dso-weblogic-stubs:
@@ -79,9 +112,11 @@ modules:
         jdk: J2SE-1.4
       dependencies:
         - dso-weblogic-stubs
+        - common-api
         - common
         - dso-common
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l1-session
         - aspectwerkz
@@ -89,36 +124,47 @@ modules:
       options:
         jdk: J2SE-1.4
       dependencies:
+        - common-api
         - common
+        - dso-l1-api
         - dso-l1
         - dso-common
   - dso-l1-tomcat50:
       options:
         jdk: J2SE-1.4
       dependencies:
+        - common-api
         - common
+        - dso-l1-api
         - dso-l1
         - dso-l1-session
   - dso-l1-tomcat55:
       options:
         jdk: J2SE-1.4
       dependencies:
+        - common-api
         - common
+        - dso-l1-api
         - dso-l1
         - dso-l1-session
   - dso-memory-datastore:
       options:
         jdk: J2SE-1.4
       dependencies:
-        - dso-common
+        - common-api
         - common
+        - dso-l1-api
+        - dso-common
   - dso-l2:
       options:
         jdk: J2SE-1.4
       dependencies:
+        - common-api
         - common
+        - dso-l1-api
         - dso-common
         - dso-common-jdk15
+        - thirdparty-api
         - thirdparty
         - management
         - dso-memory-datastore
@@ -127,11 +173,14 @@ modules:
         jdk: J2SE-1.4
       dependencies:
         - linked-child-process
+        - common-api
         - common
         - dso-common
         - dso-common-jdk15
         - dso-l2
+        - dso-l1-api
         - dso-l1
+        - thirdparty-api
         - thirdparty
         - aspectwerkz
         - management
@@ -139,7 +188,9 @@ modules:
       options:
         jdk: J2SE-1.4
       dependencies:
+        - common-api
         - common
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - dso-common
@@ -149,10 +200,12 @@ modules:
       options:
         jdk: J2SE-1.4
       dependencies:
+        - common-api
         - common
         - dso-common
         - dso-common-jdk15
         - dso-l2
+        - dso-l1-api
         - dso-l1
         - deploy
         - aspectwerkz
@@ -160,7 +213,9 @@ modules:
       options:
         jdk: J2SE-1.4
       dependencies:
+        - common-api
         - common
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - dso-common
@@ -170,10 +225,12 @@ modules:
       options:
         jdk: J2SE-1.5
       dependencies:
+        - common-api
         - common
         - dso-common
         - dso-common-jdk15
         - dso-l2
+        - dso-l1-api
         - dso-l1
         - deploy
         - aspectwerkz
@@ -186,30 +243,36 @@ modules:
       dependencies:
         - aspectwerkz
         - linked-child-process
+        - common-api
         - common
         - dso-common
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - dso-l1-weblogic
         - simulator
         - deploy
         - management
+        - thirdparty-api
         - thirdparty
   - dso-spring:
       options:
         jdk: J2SE-1.4
       dependencies:
+        - common-api
         - common
         - aspectwerkz
         - dso-common
         - dso-common-jdk15
         - management
         - deploy
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - legacy-test-tree
         - simulator
+        - thirdparty-api
         - thirdparty
         - linked-child-process
   - dso-system-tests:
@@ -218,15 +281,18 @@ modules:
       dependencies:
         - aspectwerkz
         - linked-child-process
+        - common-api
         - common
         - dso-common
         - management
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - dso-l1-weblogic
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - legacy-test-tree
         - dso-memory-datastore
@@ -236,14 +302,17 @@ modules:
       dependencies:
         - aspectwerkz
         - linked-child-process
+        - common-api
         - common
         - dso-common
         - management
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - legacy-test-tree
   - dso-tests-jdk15:
@@ -251,14 +320,17 @@ modules:
         jdk: J2SE-1.5
       dependencies:
         - aspectwerkz
+        - common-api
         - common
         - dso-common
         - management
         - dso-common-jdk15
         - linked-child-process
+        - dso-l1-api
         - dso-l1
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - dso-l1-jdk15
         - legacy-test-tree
@@ -270,15 +342,18 @@ modules:
       dependencies:
         - aspectwerkz
         - linked-child-process
+        - common-api
         - common
         - dso-common
         - management
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - dso-l1-weblogic
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - dso-system-tests
         - legacy-test-tree
@@ -291,16 +366,19 @@ modules:
       dependencies:
         - aspectwerkz
         - linked-child-process
+        - common-api
         - common
         - dso-common
         - management
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l1-session
         - dso-l2
         - management
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - legacy-test-tree
   - dso-spring-tests:
@@ -308,17 +386,20 @@ modules:
         jdk: J2SE-1.4
       dependencies:
         - aspectwerkz
+        - common-api
         - common
         - linked-child-process
         - dso-common
         - management
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - dso-l1-weblogic
         - dso-spring
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - legacy-test-tree
         - dso-container-tests
@@ -327,12 +408,15 @@ modules:
         jdk: J2SE-1.5
         aspectj: true
       dependencies:
+        - common-api
         - common
         - aspectwerkz
+        - thirdparty-api
         - thirdparty
         - dso-common
         - management
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - legacy-test-tree
@@ -343,6 +427,7 @@ modules:
         - dso-spring-tests
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - legacy-test-tree
         - dso-container-tests
@@ -352,16 +437,19 @@ modules:
       dependencies:
         - aspectwerkz
         - linked-child-process
+        - common-api
         - common
         - management
         - dso-common
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - dso-l1-weblogic
         - dso-spring
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - dso-system-tests
         - legacy-test-tree
@@ -370,16 +458,19 @@ modules:
         jdk: J2SE-1.5
       dependencies:
         - aspectwerkz
+        - common-api
         - common
         - linked-child-process
         - management
         - dso-common
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l1-jdk15
         - dso-l2
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - legacy-test-tree
   - modules-common-1.0:
@@ -387,9 +478,8 @@ modules:
         jdk: J2SE-1.4
         module: true
       dependencies:
-        - common
-        - dso-l1
-        - thirdparty
+        - common-api
+        - dso-l1-api
   - clustered-apache-struts-1.1:
       options:
         jdk: J2SE-1.4
@@ -398,14 +488,15 @@ modules:
         - modules-common-1.0
         - aspectwerkz
         - linked-child-process
-        - common
+        - common-api
         - dso-common
         - management
         - dso-common-jdk15
-        - dso-l1
+        - dso-l1-api
         - dso-l2
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - legacy-test-tree
         - dso-memory-datastore
@@ -417,7 +508,8 @@ modules:
         - modules-common-1.0
         - aspectwerkz
         - dso-common
-        - dso-l1
+        - dso-l1-api
+        - thirdparty-api
         - thirdparty
   - clustered-lucene-2.0.0:
       options:
@@ -426,14 +518,17 @@ modules:
       dependencies:
         - aspectwerkz
         - linked-child-process
+        - common-api
         - common
         - management
         - dso-common
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - legacy-test-tree
         - modules-common-1.0
@@ -443,16 +538,19 @@ modules:
         module: true
       dependencies:
         - aspectwerkz
+        - common-api
         - common
         - deploy
         - dso-common
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - legacy-test-tree
         - linked-child-process
         - management
         - simulator
+        - thirdparty-api
         - thirdparty
   - clustered-cglib-2.1.3:
       options:
@@ -460,17 +558,18 @@ modules:
         module: true
       dependencies:
         - modules-common-1.0
-        - clustered-cglib-2.1.3
         - aspectwerkz
         - linked-child-process
-        - common
+        - common-api
         - dso-common
         - management
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - legacy-test-tree
         - dso-memory-datastore
@@ -483,14 +582,17 @@ modules:
         - clustered-cglib-2.1.3
         - aspectwerkz
         - linked-child-process
+        - common-api
         - common
         - dso-common
         - management
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - legacy-test-tree
         - dso-memory-datastore
@@ -503,14 +605,17 @@ modules:
         - aspectwerkz
         - linked-child-process
         - common
+        - common-api
         - management
         - dso-common
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l1-weblogic
         - dso-l2
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - legacy-test-tree
         - dso-container-tests
@@ -522,14 +627,17 @@ modules:
         - modules-common-1.0
         - aspectwerkz
         - linked-child-process
+        - common-api
         - common
         - management
         - dso-common
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - legacy-test-tree
   - clustered-ehcache-1.2.4:
@@ -540,14 +648,17 @@ modules:
         - modules-common-1.0
         - aspectwerkz
         - linked-child-process
+        - common-api
         - common
         - management
         - dso-common
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - legacy-test-tree
   - clustered-hibernate-3.1.2:
@@ -559,14 +670,17 @@ modules:
         - clustered-cglib-2.1.3
         - aspectwerkz
         - linked-child-process
+        - common-api
         - common
         - dso-common
         - management
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - legacy-test-tree
         - dso-memory-datastore
@@ -578,14 +692,15 @@ modules:
         - modules-common-1.0
         - aspectwerkz
         - linked-child-process
-        - common
+        - common-api
         - dso-common
         - management
         - dso-common-jdk15
-        - dso-l1
+        - dso-l1-api
         - dso-l2
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - legacy-test-tree
         - dso-memory-datastore
@@ -596,14 +711,17 @@ modules:
       dependencies:
         - aspectwerkz
         - linked-child-process
+        - common-api
         - common
         - management
         - dso-common
         - dso-common-jdk15
+        - dso-l1-api
         - dso-l1
         - dso-l2
         - simulator
         - deploy
+        - thirdparty-api
         - thirdparty
         - legacy-test-tree
         - dso-container-tests

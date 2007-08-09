@@ -8,7 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.concurrent.ThreadUtil;
@@ -71,7 +71,7 @@ public class DistributedMethodCallGCTest extends GCTestBase {
 
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
       String testClassName = App.class.getName();
-      TransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
+      ITransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
       spec.addRoot("root", "root");
 
       config.addWriteAutolock("* " + testClassName + ".*(..)");

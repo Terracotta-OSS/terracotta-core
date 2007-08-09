@@ -15,7 +15,8 @@ import com.tc.object.applicator.LiteralTypesApplicator;
 import com.tc.object.applicator.PhysicalApplicator;
 import com.tc.object.applicator.ProxyApplicator;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.dna.api.IDNAEncoding;
 import com.tc.object.dna.impl.DNAEncoding;
 import com.tc.object.field.TCFieldFactory;
 import com.tc.object.loaders.ClassProvider;
@@ -30,13 +31,13 @@ import java.util.Map;
  */
 public class TCClassFactoryImpl implements TCClassFactory {
   private static final LiteralValues  literalValues             = new LiteralValues();
-  private static Class[]              APPLICATOR_CSTR_SIGNATURE = new Class[] { DNAEncoding.class };
+  private static Class[]              APPLICATOR_CSTR_SIGNATURE = new Class[] { IDNAEncoding.class };
 
   private final Map                   classes                   = new HashMap();
   private final TCFieldFactory        fieldFactory;
   private final DSOClientConfigHelper config;
   private final ClassProvider         classProvider;
-  private final DNAEncoding           encoding;
+  private final IDNAEncoding           encoding;
 
   public TCClassFactoryImpl(TCFieldFactory fieldFactory, DSOClientConfigHelper config, ClassProvider classProvider) {
     this.fieldFactory = fieldFactory;
@@ -66,7 +67,7 @@ public class TCClassFactoryImpl implements TCClassFactory {
   }
 
   public Class getLogicalSuperClassWithDefaultConstructor(Class clazz) {
-    TransparencyClassSpec spec = config.getSpec(clazz.getName());
+    ITransparencyClassSpec spec = config.getSpec(clazz.getName());
     if (spec == null) { return null; }
 
     while (clazz != null) {
@@ -109,7 +110,7 @@ public class TCClassFactoryImpl implements TCClassFactory {
       } else if ("java.util.concurrent.atomic.AtomicInteger".equals(name)) {
         try {
           Class klass = Class.forName("com.tc.object.applicator.AtomicIntegerApplicator");
-          Constructor constructor = klass.getDeclaredConstructor(new Class[] {DNAEncoding.class});
+          Constructor constructor = klass.getDeclaredConstructor(APPLICATOR_CSTR_SIGNATURE);
           return (ChangeApplicator)constructor.newInstance(new Object[] {encoding});
         } catch (Exception e) {
           throw new AssertionError(e);
@@ -117,7 +118,7 @@ public class TCClassFactoryImpl implements TCClassFactory {
       } else if ("java.util.concurrent.atomic.AtomicLong".equals(name)) {
         try {
           Class klass = Class.forName("com.tc.object.applicator.AtomicLongApplicator");
-          Constructor constructor = klass.getDeclaredConstructor(new Class[] {DNAEncoding.class});
+          Constructor constructor = klass.getDeclaredConstructor(APPLICATOR_CSTR_SIGNATURE);
           return (ChangeApplicator)constructor.newInstance(new Object[] {encoding});
         } catch (Exception e) {
           throw new AssertionError(e);

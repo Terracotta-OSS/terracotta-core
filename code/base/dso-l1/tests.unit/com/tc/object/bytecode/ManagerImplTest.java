@@ -12,7 +12,6 @@ import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
-import com.tc.object.WeakObjectReference;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.loaders.StandardClassProvider;
@@ -28,6 +27,7 @@ import com.tc.object.tx.WaitInvocation;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 
 import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -237,11 +237,11 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public WeakObjectReference createNewPeer(TCClass clazz, DNA dna) {
+    public WeakReference createNewPeer(TCClass clazz, DNA dna) {
       throw new ImplementMe();
     }
 
-    public WeakObjectReference createNewPeer(TCClass clazz, int size, ObjectID id, ObjectID parentID) {
+    public WeakReference createNewPeer(TCClass clazz, int size, ObjectID id, ObjectID parentID) {
       throw new ImplementMe();
     }
 

@@ -12,8 +12,8 @@ import com.tc.object.bytecode.AtomicLongAdapter;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.IDNAEncoding;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.impl.DNAEncoding;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.util.Assert;
 
@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class AtomicLongApplicator extends BaseApplicator {
-  public AtomicLongApplicator(DNAEncoding encoding) {
+  public AtomicLongApplicator(IDNAEncoding encoding) {
     super(encoding);
   }
 

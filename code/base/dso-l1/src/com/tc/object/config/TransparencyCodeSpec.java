@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
-public class TransparencyCodeSpec {
+public class TransparencyCodeSpec implements ITransparencyCodeSpec {
   private final static Set MONITOR_INSTRUMENTATION_REQ_LOGICAL_CLASS = new HashSet();
   
   private boolean arrayOperatorInstrumentationReq;

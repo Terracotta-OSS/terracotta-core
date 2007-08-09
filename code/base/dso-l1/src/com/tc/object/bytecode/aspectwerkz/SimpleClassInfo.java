@@ -13,9 +13,6 @@ import com.tc.aspectwerkz.reflect.StaticInitializationInfo;
 import com.tc.backport175.bytecode.AnnotationElement;
 import com.tc.backport175.bytecode.AnnotationReader;
 
-/**
- *
- */
 public class SimpleClassInfo implements ClassInfo {
 
   private static final ClassInfo[] NO_INTERFACES = new ClassInfo[0];

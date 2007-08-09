@@ -9,6 +9,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.IDNAEncoding;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.loaders.ClassProvider;
@@ -28,7 +29,7 @@ public class VersionizedDNAWrapperTest extends TestCase {
     final int arrayLen = 42;
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     ClassProvider classProvider = new MockClassProvider();
-    DNAEncoding encoding = new DNAEncoding(classProvider);
+    IDNAEncoding encoding = new DNAEncoding(classProvider);
     DNAWriter dnaWriter = createDNAWriter(out, id, type, serializer, encoding, "loader description");
     PhysicalAction action1 = new PhysicalAction("class.field1", new Integer(1), false);
     LogicalAction action2 = new LogicalAction(12, new Object[] { "key", "value" });
@@ -87,7 +88,7 @@ public class VersionizedDNAWrapperTest extends TestCase {
   }
   
   protected DNAWriter createDNAWriter(TCByteBufferOutputStream out, ObjectID id, String type,
-                                      ObjectStringSerializer serializer, DNAEncoding encoding, String string) {
+                                      ObjectStringSerializer serializer, IDNAEncoding encoding, String string) {
     return new DNAWriterImpl(out, id, type, serializer, encoding, "loader description", true);
   }
   

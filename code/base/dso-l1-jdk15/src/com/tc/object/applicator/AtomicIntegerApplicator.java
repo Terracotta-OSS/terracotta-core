@@ -12,8 +12,8 @@ import com.tc.object.bytecode.AtomicIntegerAdapter;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.IDNAEncoding;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.impl.DNAEncoding;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.util.Assert;
 
@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class AtomicIntegerApplicator extends BaseApplicator {
-  public AtomicIntegerApplicator(DNAEncoding encoding) {
+  public AtomicIntegerApplicator(IDNAEncoding encoding) {
     super(encoding);
   }
 

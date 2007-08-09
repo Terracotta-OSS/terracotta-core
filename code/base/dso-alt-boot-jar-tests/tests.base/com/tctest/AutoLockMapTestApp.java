@@ -39,6 +39,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
     return maps.iterator();
   }
 
+  @SuppressWarnings({ "unchecked", "unchecked" })
   protected void setupTestObject(String test) {
     List maps = new ArrayList();
     maps.add(new HashMap());
@@ -254,6 +255,7 @@ public class AutoLockMapTestApp extends GenericTestApp {
     }
   }
 
+  @SuppressWarnings("unchecked")
   void testKeySetRetainAll(Map map, boolean validate) throws Exception {
     if (map instanceof HashMap) { return; }
 

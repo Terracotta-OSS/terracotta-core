@@ -6,7 +6,7 @@ package com.tctest.performance.timedtask;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOApplicationConfig;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractTransparentApp;
@@ -37,7 +37,7 @@ public final class TimedObjectFaultTestApp extends AbstractTransparentApp {
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    TransparencyClassSpec spec = config.getOrCreateSpec(CyclicBarrier.class.getName());
+    ITransparencyClassSpec spec = config.getOrCreateSpec(CyclicBarrier.class.getName());
     String className = TimedObjectFaultTestApp.class.getName();
     spec = config.getOrCreateSpec(className);
 

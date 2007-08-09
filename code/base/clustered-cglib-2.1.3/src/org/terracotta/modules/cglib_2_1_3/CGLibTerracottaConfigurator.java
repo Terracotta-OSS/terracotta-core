@@ -10,14 +10,14 @@ import org.terracotta.modules.cglib_2_1_3.object.config.CGLibChangeApplicatorSpe
 import org.terracotta.modules.cglib_2_1_3.object.config.CGLibModuleSpec;
 import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 
+import com.tc.object.config.IStandardDSOClientConfigHelper;
 import com.tc.object.config.ModuleSpec;
-import com.tc.object.config.StandardDSOClientConfigHelper;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
 
 public final class CGLibTerracottaConfigurator extends TerracottaConfiguratorModule {
-  protected final void addInstrumentation(final BundleContext context, final StandardDSOClientConfigHelper configHelper) {
+  protected final void addInstrumentation(final BundleContext context, final IStandardDSOClientConfigHelper configHelper) {
     configHelper.addCustomAdapter("net.sf.cglib.proxy.Enhancer", new CGLibProxyEnhancerAdapter(context.getBundle()));
     configHelper.allowCGLIBInstrumentation();
   }

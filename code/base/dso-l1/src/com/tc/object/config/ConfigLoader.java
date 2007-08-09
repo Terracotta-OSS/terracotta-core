@@ -116,7 +116,7 @@ public class ConfigLoader {
 
         for (Iterator i = userDefinedBootClassNames.iterator(); i.hasNext();) {
           String className = (String) i.next();
-          TransparencyClassSpec spec = config.getSpec(className);
+          ITransparencyClassSpec spec = config.getSpec(className);
           if (spec == null) {
             spec = new TransparencyClassSpec(className, config);
             spec.markPreInstrumented();

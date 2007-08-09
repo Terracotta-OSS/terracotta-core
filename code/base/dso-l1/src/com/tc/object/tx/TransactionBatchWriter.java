@@ -9,7 +9,7 @@ import com.tc.lang.Recyclable;
 import com.tc.object.ObjectID;
 import com.tc.object.change.TCChangeBuffer;
 import com.tc.object.dmi.DmiDescriptor;
-import com.tc.object.dna.impl.DNAEncoding;
+import com.tc.object.dna.api.IDNAEncoding;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.lockmanager.api.LockID;
 import com.tc.object.lockmanager.api.Notify;
@@ -35,13 +35,13 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   private final TxnBatchID                      batchID;
   private final LinkedHashMap                   transactionData            = new LinkedHashMap();
   private final ObjectStringSerializer          serializer;
-  private final DNAEncoding                     encoding;
+  private final IDNAEncoding                     encoding;
   private int                                   txns2Serialize             = 0;
   private final List                            batchDataOutputStreams     = new ArrayList();
   private short                                 outstandingWriteCount      = 0;
   private int                                   bytesWritten               = 0;
 
-  public TransactionBatchWriter(TxnBatchID batchID, ObjectStringSerializer serializer, DNAEncoding encoding,
+  public TransactionBatchWriter(TxnBatchID batchID, ObjectStringSerializer serializer, IDNAEncoding encoding,
                                 CommitTransactionMessageFactory commitTransactionMessageFactory) {
     this.batchID = batchID;
     this.encoding = encoding;

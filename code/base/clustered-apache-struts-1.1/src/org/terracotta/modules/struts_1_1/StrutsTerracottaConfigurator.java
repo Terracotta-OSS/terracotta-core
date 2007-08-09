@@ -7,11 +7,11 @@ package org.terracotta.modules.struts_1_1;
 import org.osgi.framework.BundleContext;
 import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 
-import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.config.IStandardDSOClientConfigHelper;
 
 public final class StrutsTerracottaConfigurator extends TerracottaConfiguratorModule {
 
-  protected void addInstrumentation(BundleContext context, StandardDSOClientConfigHelper configHelper) {
+  protected void addInstrumentation(BundleContext context, IStandardDSOClientConfigHelper configHelper) {
     configHelper.addCustomAdapter("org.apache.struts.taglib.bean.IncludeTag", new IncludeTagAdapter());
     super.addInstrumentation(context, configHelper);
   }

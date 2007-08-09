@@ -6,7 +6,7 @@ package com.tctest;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -47,12 +47,12 @@ public class TransparencyTestApp extends AbstractTransparentApp {
     config.addIncludePattern(testAppName);
     config.addIncludePattern(testAppName + "$*");
 
-    TransparencyClassSpec appSpec = config.getOrCreateSpec("com.tctest.TransparencyTestApp");
+    ITransparencyClassSpec appSpec = config.getOrCreateSpec("com.tctest.TransparencyTestApp");
     appSpec.addRoot("myRoot", "rootBabyRoot");
     appSpec.addRoot("vector", "vector");
     appSpec.addRoot("out", "out");
 
-    TransparencyClassSpec spec = config.getOrCreateSpec("com.tctest.TransparencyTestApp$TestObj");
+    ITransparencyClassSpec spec = config.getOrCreateSpec("com.tctest.TransparencyTestApp$TestObj");
 
     spec.addTransient("transientObject");
     spec.addTransient("transientPrimitive");

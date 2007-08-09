@@ -9,7 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.object.config.spec.SynchronizedIntSpec;
 import com.tc.simulator.app.ApplicationConfig;
@@ -24,7 +24,7 @@ public class NestedPhysicalTransactionTestApp extends AbstractTransparentApp {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = NestedPhysicalTransactionTestApp.class.getName();
-    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+    ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
     spec.addRoot("root", "the-data-root-yo");

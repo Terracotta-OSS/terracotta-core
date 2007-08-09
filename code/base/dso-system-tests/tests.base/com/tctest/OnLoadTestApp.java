@@ -7,7 +7,7 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -80,7 +80,7 @@ public class OnLoadTestApp extends AbstractErrorCatchingTransparentApp {
     new CyclicBarrierSpec().visit(visitor, config);
 
     String testClass = OnLoadTestApp.class.getName();
-    TransparencyClassSpec spec = config.getOrCreateSpec(MyObject.class.getName());
+    ITransparencyClassSpec spec = config.getOrCreateSpec(MyObject.class.getName());
     spec.setHonorTransient(true);
     // We want to make sure that all objects are resolved.
     spec

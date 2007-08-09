@@ -6,7 +6,7 @@ package com.tctest;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.object.tx.ReadOnlyException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -578,7 +578,7 @@ public class GenericQueueTestApp extends GenericTestApp {
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = GenericQueueTestApp.class.getName();
-    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+    ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     spec.addRoot("localBarrier", "localBarrier");
     String writeAllowedMethodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(writeAllowedMethodExpression);

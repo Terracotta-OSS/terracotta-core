@@ -12,8 +12,8 @@ import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.IDNAEncoding;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.impl.DNAEncoding;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.TCObjectClone;
 import com.tc.util.Assert;
@@ -29,7 +29,7 @@ public class ProxyApplicator extends BaseApplicator {
   private static final String INTERFACES_FIELD_NAME         = "java.lang.reflect.Proxy.interfaces";
   private static final String INVOCATION_HANDLER_FIELD_NAME = "java.lang.reflect.Proxy.h";
 
-  public ProxyApplicator(DNAEncoding encoding) {
+  public ProxyApplicator(IDNAEncoding encoding) {
     super(encoding);
   }
 

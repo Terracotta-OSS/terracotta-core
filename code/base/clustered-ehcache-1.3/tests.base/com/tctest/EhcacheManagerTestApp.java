@@ -13,7 +13,7 @@ import net.sf.ehcache.Status;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -52,7 +52,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 		config.addAutolock("* *..*.*(..)", ConfigLockLevel.WRITE);
 
 		final String testClass = EhcacheManagerTestApp.class.getName();
-		final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+		final ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 		spec.addRoot("barrier", "barrier");
 	}
 
@@ -220,6 +220,7 @@ public class EhcacheManagerTestApp extends AbstractErrorCatchingTransparentApp {
 	 * 
 	 * @param name
 	 */
+	@SuppressWarnings("unchecked")
 	private void removeCache(final String name) {
 		Ehcache cache = cacheManager.getEhcache(name);
 		for (Iterator i = cache.getKeys().iterator(); i.hasNext();) {

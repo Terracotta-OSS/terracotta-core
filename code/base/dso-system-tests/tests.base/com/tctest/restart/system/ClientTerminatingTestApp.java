@@ -8,7 +8,7 @@ import org.apache.commons.io.FileUtils;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -186,8 +186,8 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClassName = ClientTerminatingTestApp.class.getName();
     String clientClassName = Client.class.getName();
-    TransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
-    TransparencyClassSpec spec2 = config.getOrCreateSpec(clientClassName);
+    ITransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
+    ITransparencyClassSpec spec2 = config.getOrCreateSpec(clientClassName);
 
     String methodExpression = "* " + testClassName + "*.*(..)";
     setLockLevel(config, methodExpression);

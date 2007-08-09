@@ -6,12 +6,14 @@
 	<classpathentry kind="src" output="build.eclipse/tests.base.classes" path="tests.base"/>
 	<classpathentry kind="src" output="build.eclipse/tests.base.classes" path="tests.base.resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/legacy-test-tree"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/simulator"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-container-tests"/>
 	<classpathentry kind="lib" path="/dependencies/lib/jtidy-4aug2000r7-dev.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/rife-1.6-jdk15.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>

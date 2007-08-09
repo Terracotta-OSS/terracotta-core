@@ -8,7 +8,7 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -19,6 +19,8 @@ import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.util.HashMap;
 import java.util.Map;
+
+
 
 public class SubclassCloneTest extends TransparentTestBase {
   private static final int NODE_COUNT = 2;
@@ -67,7 +69,7 @@ public class SubclassCloneTest extends TransparentTestBase {
 
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
       String testClass = SubclassCloneTestApp.class.getName();
-      TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+      ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
       String methodExpression = "* " + testClass + "*.*(..)";
       config.addWriteAutolock(methodExpression);
       spec.addRoot("root", "root");

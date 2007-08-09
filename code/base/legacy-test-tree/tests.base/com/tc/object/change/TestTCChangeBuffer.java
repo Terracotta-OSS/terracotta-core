@@ -7,7 +7,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.TCObject;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.impl.DNAEncoding;
+import com.tc.object.dna.api.IDNAEncoding;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 
@@ -28,7 +28,7 @@ public class TestTCChangeBuffer implements TCChangeBuffer {
 
   }
 
-  public void writeTo(TCByteBufferOutputStream output, ObjectStringSerializer serializer, DNAEncoding encoding) {
+  public void writeTo(TCByteBufferOutputStream output, ObjectStringSerializer serializer, IDNAEncoding encoding) {
     return;
   }
 

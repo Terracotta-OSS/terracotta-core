@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription ><name >dso-l1-api</name>
+
+<comment >dso-l1-api source code</comment>
+
+<projects />
+<buildSpec ><buildCommand ><name >org.eclipse.jdt.core.javabuilder</name>
+
+<arguments />
+</buildCommand>
+
+</buildSpec>
+
+<natures ><nature >org.eclipse.jdt.core.javanature</nature>
+
+<nature >org.eclipse.pde.PluginNature</nature>
+
+</natures>
+
+</projectDescription>

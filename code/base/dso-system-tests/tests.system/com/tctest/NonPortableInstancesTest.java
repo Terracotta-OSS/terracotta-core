@@ -15,7 +15,7 @@ import com.tc.logging.TCLogging;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -163,7 +163,7 @@ public class NonPortableInstancesTest extends TransparentTestBase {
 
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
       config.getOrCreateSpec(Ref.class.getName());
-      TransparencyClassSpec spec = config.getOrCreateSpec(Portable.class.getName());
+      ITransparencyClassSpec spec = config.getOrCreateSpec(Portable.class.getName());
       spec.setHonorTransient(true);
       spec.addTransient("ss");
 

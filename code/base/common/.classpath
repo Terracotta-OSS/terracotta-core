@@ -40,5 +40,6 @@
 	<classpathentry exported="true" kind="lib" path="lib/tcconfig-xmlbeans-generated.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/tcconfigV2.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/hsqldb-1.7.2.2.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>

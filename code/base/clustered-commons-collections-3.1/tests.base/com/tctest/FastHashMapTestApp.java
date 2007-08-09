@@ -1,14 +1,14 @@
 package com.tctest;
 
-import java.lang.reflect.Field;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
-
 import org.apache.commons.collections.FastHashMap;
+
+import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
+import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
+import com.tc.object.config.ITransparencyClassSpec;
+import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -30,9 +30,10 @@ public final class FastHashMapTestApp extends
 		final String testClass = FastHashMapTestApp.class.getName();
 		config.addIncludePattern(testClass + "$*");
 		
-		final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+		final ITransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 		spec.addRoot("barrier", "barrier");
 		spec.addRoot("clusteredFastHashMap", "clusteredFastHashMap");
+	    new CyclicBarrierSpec().visit(visitor, config);
 	}
 
 	public FastHashMapTestApp(final String appId, final ApplicationConfig cfg,
@@ -44,7 +45,7 @@ public final class FastHashMapTestApp extends
 	}
 
 	protected void runTest() throws Throwable {
-		if (barrier.await() == 0) {
+		if (barrier.barrier() == 0) {
 			addDataToMap(2);
 			letOtherNodeProceed();
 			waitForPermissionToProceed();
@@ -63,19 +64,19 @@ public final class FastHashMapTestApp extends
 			clusteredFastHashMap.clear();
 			letOtherNodeProceed();
 		}
-		barrier.await();
+		barrier.barrier();
 	}
 
 	// This is lame but it makes runTest() slightly more readable
 	private void letOtherNodeProceed() throws InterruptedException,
 			BrokenBarrierException {
-		barrier.await();
+		barrier.barrier();
 	}
 
 	// This is lame but it makes runTest() slightly more readable
 	private void waitForPermissionToProceed() throws InterruptedException,
 			BrokenBarrierException {
-		barrier.await();
+		barrier.barrier();
 	}
 
 	private void addDataToMap(final int count) {

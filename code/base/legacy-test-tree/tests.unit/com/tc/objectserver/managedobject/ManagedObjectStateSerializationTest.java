@@ -10,10 +10,10 @@ import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.IDNAEncoding;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.impl.DNAEncoding;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.persistence.impl.InMemoryPersistor;
 import com.tc.util.Assert;
@@ -522,7 +522,7 @@ public class ManagedObjectStateSerializationTest extends TestCase {
       return (PhysicalAction) actions.get(current);
     }
 
-    public boolean next(DNAEncoding encoding) {
+    public boolean next(IDNAEncoding encoding) {
       throw new ImplementMe();
     }
 

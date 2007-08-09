@@ -9,5 +9,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/jmxremote-1.0.1_04.jar"/>
 	<classpathentry kind="lib" path="/dependencies/lib/jmxremote_optional-1.0.1_04-b58.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
 	<classpathentry kind="output" path="build.eclipse/ECLIPSE.IS.MESSEDUP"/>
 </classpath>
