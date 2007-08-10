@@ -10,6 +10,7 @@ import com.tc.simulator.app.Application;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.ArrayList;
@@ -48,7 +49,7 @@ public class TransparentSetTestApp extends AbstractTransparentApp implements App
         set.add(to);
         Assert.eval(set.size() == size + 1);
       }
-      Thread.yield();
+       ThreadUtil.reallySleep(20);
     }
     moveToStageAndWait(ADD_COMPLETE_STAGE);
 
@@ -64,7 +65,7 @@ public class TransparentSetTestApp extends AbstractTransparentApp implements App
         Assert.eval("Test object should have been removed  but wasn't: " + testObjects.get(i), wasRemoved);
         Assert.eval(set.size() == size - 1);
       }
-      Thread.yield();
+       ThreadUtil.reallySleep(20);
     }
 
     moveToStageAndWait(REMOVE_COMPLETE_STAGE);
