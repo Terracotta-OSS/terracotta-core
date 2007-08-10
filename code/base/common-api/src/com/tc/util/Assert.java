@@ -193,6 +193,10 @@ public class Assert {
     throw failure("generic failure");
   }
   
+  public static void fail(String message) {
+    throw failure(message);
+  }
+  
   public static void pre(boolean v){
     if (!v) throw new TCAssertionError("Precondition failed");
   }
