@@ -103,7 +103,7 @@ import com.tc.object.cache.Cacheable;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOSpringConfigHelper;
 import com.tc.object.config.ITransparencyClassSpec;
-import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.dna.impl.ProxyInstance;
 import com.tc.object.field.TCField;
@@ -2288,7 +2288,7 @@ public class BootJarTool {
     // That requirement is no more, but might come back, so I'm leaving at least this much scaffolding in place
     // WAS: systemProvider = new RuntimeJarBytesProvider(...)
     ClassLoader systemLoader = ClassLoader.getSystemClassLoader();
-    BootJarTool bjTool = new BootJarTool(new StandardDSOClientConfigHelper(config, false), targetFile, systemLoader,
+    BootJarTool bjTool = new BootJarTool(new StandardDSOClientConfigHelperImpl(config, false), targetFile, systemLoader,
                                          !verbose);
 
     if (mode.equals(MAKE_MODE)) {
