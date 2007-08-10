@@ -113,7 +113,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
   }
 
   private void checkServerHasClients(int clientCount, int jmxPort) throws Exception {
-    String url = "service:jmx:rmi:///jndi/rmi://localhost:" + jmxPort + "/jmxrmi";
+    String url = "service:jmx:jmxmp://localhost:" + jmxPort;
     JMXServiceURL jmxServerUrl = new JMXServiceURL(url);
     JMXConnector jmxConnector = JMXConnectorFactory.newJMXConnector(jmxServerUrl, null);
     jmxConnector.connect();

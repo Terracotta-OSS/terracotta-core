@@ -55,12 +55,12 @@ public final class RequestCountTest extends AbstractDeploymentTest {
       configBuilder.addWebApplication(CONTEXT);
     }
   }
-  
+
   public void testRequestCount() throws Throwable {
     assertTimeDirection();
     runNodes(2);
   }
-  
+
   private Deployment makeDeployment() throws Exception {
     DeploymentBuilder builder = makeDeploymentBuilder(CONTEXT + ".war");
     builder.addServlet(SERVLET, "/" + SERVLET + "/*", CounterServlet.class, null, false);
@@ -162,8 +162,8 @@ public final class RequestCountTest extends AbstractDeploymentTest {
   }
 
   private JMXConnector getJMXConnector() throws IOException {
-    JMXServiceURL jmxServerUrl = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:"
-                                                   + getServerManager().getServerTcConfig().getJmxPort() + "/jmxrmi");
+    JMXServiceURL jmxServerUrl = new JMXServiceURL("service:jmx:jmxmp://localhost:"
+                                                   + getServerManager().getServerTcConfig().getJmxPort());
     JMXConnector jmxConnector = JMXConnectorFactory.newJMXConnector(jmxServerUrl, null);
     jmxConnector.connect();
     return jmxConnector;
