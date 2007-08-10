@@ -31,7 +31,7 @@ import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.bytecode.NullManager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.config.schema.NewDSOApplicationConfig;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.object.lockmanager.api.LockID;
@@ -105,7 +105,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     factory.addServerToL1Config(null, server.getListenPort(), -1);
 
     L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
-    DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelper(manager);
+    DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(manager);
 
     PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(manager);
 

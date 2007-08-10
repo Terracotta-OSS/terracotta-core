@@ -17,7 +17,7 @@ import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.bytecode.NullManager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.stats.DSOMBean;
 import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
@@ -73,7 +73,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
     configFactory().addServerToL1Config(null, proxyPort, jmxPort);
     L1TVSConfigurationSetupManager manager = super.createL1ConfigManager();
 
-    DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelper(manager);
+    DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(manager);
     PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(manager);
     DistributedObjectClient client = new DistributedObjectClient(configHelper,
                                                                  new TCThreadGroup(new ThrowableHandler(TCLogging

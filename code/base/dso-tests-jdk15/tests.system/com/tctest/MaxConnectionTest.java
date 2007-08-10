@@ -22,7 +22,7 @@ import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.bytecode.NullManager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.server.TCServerImpl;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -37,7 +37,7 @@ public class MaxConnectionTest extends BaseDSOTestCase {
 
   private DistributedObjectClient newClient() throws Exception {
     L1TVSConfigurationSetupManager manager = super.createL1ConfigManager();
-    DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelper(manager);
+    DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(manager);
 
     PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(manager);
     return new DistributedObjectClient(configHelper, new TCThreadGroup(new ThrowableHandler(TCLogging
