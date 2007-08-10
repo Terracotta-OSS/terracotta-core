@@ -232,7 +232,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
 
   public MBeanServerConnection getMBeanServerConnection() throws Exception {
     MBeanServerConnectionFactoryBean factoryBean = new MBeanServerConnectionFactoryBean();
-    factoryBean.setServiceUrl("service:jmx:rmi:///jndi/rmi://localhost:" + this.jmxRemotePort + "/jmxrmi");
+    factoryBean.setServiceUrl("service:jmx:jmxmp://localhost:" + this.jmxRemotePort);
     factoryBean.afterPropertiesSet();
     return (MBeanServerConnection) factoryBean.getObject();
   }
