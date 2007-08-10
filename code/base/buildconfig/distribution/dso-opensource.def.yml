@@ -72,36 +72,32 @@ bundled_components:
               - dso-l1-tomcat50
               - dso-l1-tomcat55
         - tc-compile-version-PREALPHA:
+            install_directory: lib
             modules:
               - common-api
               - dso-l1-api
               - modules-common-1.0
               - thirdparty-api
-        - tc.test-compile-version-PREALPHA:
-            source: tests.base
-            filter: "**/*Test.class, **/*TestApp.class"
-            modules:
-              - common
-              - dso-container-tests
-              - dso-l1
-              - legacy-test-tree
-              - simulator
       # NOTE: this section also controls what goes into the 'tc.jar' file
       modules:
         - aspectwerkz:
             exclude-runtime-libraries: true
         - common
+        - common-api
         - deploy
         - dso-common
         - dso-common-jdk15
         - dso-l1
+        - dso-l1-api
         - dso-l1-jdk15
         - dso-l2
         - dso-spring:
             exclude-runtime-libraries: true
         - linked-child-process
         - management
+        - modules-common-1.0
         - thirdparty
+        - thirdparty-api
         - ui-configurator
 bundled_modules:
   - core:

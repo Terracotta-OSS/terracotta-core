@@ -20,7 +20,7 @@ bundled_components:
         - terracotta-api-version-PREALPHA:
             install_directory: lib
             modules:
-              - common
+              - common-api
               - dso-l1-api
               - modules-common-1.0
               - thirdparty-api
@@ -28,17 +28,21 @@ bundled_components:
         - aspectwerkz:
             exclude-runtime-libraries: true
         - common
-        - deploy 
+        - common-api
+        - deploy
         - dso-common
-        - dso-common-jdk15 
+        - dso-common-jdk15
         - dso-l1
-        - dso-l1-jdk15 
-        - dso-l2 
+        - dso-l1-api
+        - dso-l1-jdk15
+        - dso-l2
         - dso-spring:
             exclude-runtime-libraries: true
         - linked-child-process
         - management
+        - modules-common-1.0
         - thirdparty
+        - thirdparty-api
         - ui-eclipse:
             exclude-runtime-libraries: true
   - eclipse-plugin: 

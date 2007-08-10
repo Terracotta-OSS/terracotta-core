@@ -25,7 +25,6 @@ import java.io.InterruptedIOException;
 import java.util.Map;
 
 import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXServiceURL;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
@@ -226,9 +225,7 @@ public final class ConnectDialog extends Dialog {
       m_connectThread = new ConnectThread();
       try {
         m_error = null;
-        JMXServiceURL url = m_connectManager.getJMXServiceURL();
-        Map env = m_connectManager.getConnectionEnvironment();
-        m_jmxc = new AuthenticatingJMXConnector(url, env);
+        m_jmxc = new AuthenticatingJMXConnector(m_connectManager);
         ((AuthenticatingJMXConnector) m_jmxc).addAuthenticationListener(new UpdateEventListener() {
           public void handleUpdate(UpdateEvent obj) {
             m_connectionTimer.stopTimer();

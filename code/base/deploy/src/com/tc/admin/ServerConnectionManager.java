@@ -7,6 +7,7 @@ package com.tc.admin;
 import com.tc.config.schema.L2Info;
 
 import java.io.IOException;
+import java.rmi.ConnectException;
 import java.util.EventListener;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +30,9 @@ public class ServerConnectionManager implements NotificationListener {
   private ConnectionContext       m_connectCntx;
   private ConnectionListener      m_connectListener;
   private JMXServiceURL           m_serviceURL;
+  private JMXServiceURL           m_secureServiceURL;
+  private JMXConnector            m_jmxConnector;
+  private JMXConnector            m_secureJmxConnector;
   private HashMap                 m_connectEnv;
   private ServerHelper            m_serverHelper;
   private boolean                 m_connected;
@@ -85,7 +89,8 @@ public class ServerConnectionManager implements NotificationListener {
     m_connectCntx = new ConnectionContext(l2Info);
 
     try {
-      m_serviceURL = new JMXServiceURL(getSecureJMXServicePath());
+      m_secureServiceURL = new JMXServiceURL(getSecureJMXServicePath());
+      m_serviceURL = new JMXServiceURL(getJMXServicePath());
       if (isAutoConnect()) {
         startConnect();
       }
@@ -199,7 +204,7 @@ public class ServerConnectionManager implements NotificationListener {
   /**
    * Since we have all of this infrastructure, turn off the JMXRemote connection monitoring stuff.
    */
-  Map getConnectionEnvironment() {
+  public Map getConnectionEnvironment() {
     if (m_connectEnv == null) {
       m_connectEnv = new HashMap();
       m_connectEnv.put("jmx.remote.x.client.connection.check.period", new Long(0));
@@ -208,14 +213,42 @@ public class ServerConnectionManager implements NotificationListener {
     return m_connectEnv;
   }
 
-  private void initConnector() throws Exception {
-    m_connectCntx.jmxc = JMXConnectorFactory.newJMXConnector(m_serviceURL, getConnectionEnvironment());
+  class ConnectorCloser implements Runnable {
+    private JMXConnector m_connector;
+    
+    ConnectorCloser(JMXConnector connector) {
+      m_connector = connector;
+    }
+    
+    public void run() {
+      try {
+        m_connector.close();
+      } catch(Exception e) {/**/}
+    }
+  }
+  
+  private void initConnectors() throws IOException {
+    if(m_secureJmxConnector != null) new Thread(new ConnectorCloser(m_secureJmxConnector)).start();
+    m_secureJmxConnector = JMXConnectorFactory.newJMXConnector(m_secureServiceURL, getConnectionEnvironment());
+    
+    if(m_jmxConnector != null) new Thread(new ConnectorCloser(m_jmxConnector)).start();
+    m_jmxConnector = JMXConnectorFactory.newJMXConnector(m_serviceURL, getConnectionEnvironment());
   }
 
+  public JMXConnector getJmxConnector() throws IOException {
+    initConnectors();
+    return m_jmxConnector;
+  }
+  
+  public JMXConnector getSecureJmxConnector() throws IOException {
+    initConnectors();
+    return m_secureJmxConnector;
+  }
+  
   private void startConnect() {
     try {
       cancelConnectThread();
-      initConnector();
+      initConnectors();
       m_connectThread = new ConnectThread();
       m_connectThread.start();
     } catch (Exception e) {
@@ -236,13 +269,38 @@ public class ServerConnectionManager implements NotificationListener {
     }
   }
 
+  static boolean isConnectException(IOException ioe) {
+    Throwable t = ioe;
+    
+    while(t != null) {
+      if(t instanceof ConnectException) {
+        return true;
+      }
+      t = t.getCause();
+    }
+    
+    return false;
+  }
+  
   public boolean testIsConnected() throws Exception {
     synchronized(m_connectTestLock) {
       if (m_connectCntx.jmxc == null) {
-        initConnector();
+        initConnectors();
       }
-      m_connectCntx.jmxc.connect(getConnectionEnvironment());
-      m_connectCntx.mbsc = m_connectCntx.jmxc.getMBeanServerConnection();
+      
+      JMXConnector connector = null;
+      try {
+        m_secureJmxConnector.connect(getConnectionEnvironment());
+        connector = m_secureJmxConnector;
+      } catch(IOException ioe) {
+        if(isConnectException(ioe)) {
+          throw ioe;
+        }
+        m_jmxConnector.connect(getConnectionEnvironment());
+        connector = m_jmxConnector;
+      }
+      m_connectCntx.mbsc = connector.getMBeanServerConnection();
+      m_connectCntx.jmxc = connector;
       m_connectException = null;
   
       return true;
@@ -312,6 +370,14 @@ public class ServerConnectionManager implements NotificationListener {
 
   JMXServiceURL getJMXServiceURL() {
     return m_serviceURL;
+  }
+
+  JMXServiceURL getSecureJMXServiceURL() {
+    return m_secureServiceURL;
+  }
+
+  private String getJMXServicePath() {
+    return "service:jmx:jmxmp://" + this;
   }
 
   private String getSecureJMXServicePath() {

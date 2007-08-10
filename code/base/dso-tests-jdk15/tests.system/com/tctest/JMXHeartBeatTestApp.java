@@ -69,7 +69,7 @@ public class JMXHeartBeatTestApp extends AbstractTransparentApp {
     boolean isAlive = false;
 
     try {
-      String theUrl = "service:jmx:rmi:///jndi/rmi://localhost:" + config.getAttribute(JMX_PORT) + "/jmxrmi";
+      String theUrl = "service:jmx:jmxmp://localhost:" + config.getAttribute(JMX_PORT);
       JMXServiceURL url = new JMXServiceURL(theUrl);
       echo("connecting to jmx server....");
       jmxc = JMXConnectorFactory.connect(url, null);

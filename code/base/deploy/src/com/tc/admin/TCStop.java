@@ -21,6 +21,7 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.util.ArrayList;
@@ -149,6 +150,7 @@ public class TCStop {
                          + ". Are you sure there is a Terracotta server running there?");
     } catch(Exception e) {
       System.err.println(e.getMessage());
+      usageAndDie(options);
     }
   }
 
@@ -216,6 +218,11 @@ public class TCStop {
       env.put("jmx.remote.credentials", creds);
     }
 
-    return JMXConnectorFactory.connect(url, env);
+    try {
+      return JMXConnectorFactory.connect(url, env);
+    } catch(IOException ioe) {
+      url = new JMXServiceURL("service:jmx:jmxmp://" + m_host + ":" + m_port);
+      return JMXConnectorFactory.connect(url, env);
+    }
   }
 }

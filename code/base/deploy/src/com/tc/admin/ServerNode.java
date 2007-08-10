@@ -245,6 +245,14 @@ public class ServerNode extends ComponentNode
     String consoleVersion = consoleInfo.getVersion();
     ProductInfo serverInfo = getProductInfo();
     String serverVersion = serverInfo.getVersion();
+    int spaceIndex = serverVersion.lastIndexOf(" ");
+    
+    // The version string that comes from the server is of the form "Terracotta 2.4", while
+    // the default ProductInfo.getVersion is just the raw version number string: "2.4"
+    
+    if(spaceIndex != -1) {
+      serverVersion = serverVersion.substring(spaceIndex+1);
+    }
     
     if (!consoleVersion.equals(serverVersion)) {
       Frame frame = (Frame) m_serverPanel.getAncestorOfClass(java.awt.Frame.class);

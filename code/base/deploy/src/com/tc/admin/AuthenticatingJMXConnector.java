@@ -4,7 +4,6 @@ import com.tc.util.event.EventMulticaster;
 import com.tc.util.event.UpdateEventListener;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.management.ListenerNotFoundException;
@@ -12,8 +11,7 @@ import javax.management.MBeanServerConnection;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
+import javax.naming.CommunicationException;
 import javax.security.auth.Subject;
 
 /**
@@ -21,24 +19,19 @@ import javax.security.auth.Subject;
  */
 public final class AuthenticatingJMXConnector implements JMXConnector {
 
-  private final Map              m_env;
-  private final Map              m_authEnv;
-  private final JMXServiceURL    m_url;              // @NOTThreadSafe
-  private Map                    m_conEnv;
-  private JMXConnector           m_connector;
-  private final EventMulticaster m_authObserver;
-  private final EventMulticaster m_collapseObserver;
-  private final EventMulticaster m_exceptionObserver;
-  private boolean                m_authenticating;
-  private boolean                m_securityEnabled;
-  private final Object           m_error_lock;
-  private Exception              m_error;
+  private ServerConnectionManager m_connectManager;
+  private JMXConnector            m_connector;
+  private final EventMulticaster  m_authObserver;
+  private final EventMulticaster  m_collapseObserver;
+  private final EventMulticaster  m_exceptionObserver;
+  private boolean                 m_authenticating;
+  private boolean                 m_securityEnabled;
+  private final Object            m_error_lock;
+  private Exception               m_error;
 
-  public AuthenticatingJMXConnector(JMXServiceURL url, Map env) throws IOException {
+  public AuthenticatingJMXConnector(ServerConnectionManager connectManager) throws IOException {
     if (false) throw new IOException(); // quiet compiler
-    (this.m_env = new HashMap()).putAll(env);
-    (this.m_authEnv = new HashMap()).putAll(env);
-    this.m_url = url;
+    m_connectManager = connectManager;
     this.m_error_lock = new Object();
     this.m_authObserver = new EventMulticaster();
     this.m_collapseObserver = new EventMulticaster();
@@ -77,11 +70,26 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
     getConnector().connect();
   }
 
+  private void _connect() throws IOException {
+    Map env = m_connectManager.getConnectionEnvironment();
+    
+    try {
+      setConnector(m_connectManager.getSecureJmxConnector());
+      getConnector().connect(env);
+    } catch (IOException ioe) {
+      Throwable cause = ioe.getCause();
+      if(cause instanceof CommunicationException) {
+        setConnector(m_connectManager.getJmxConnector());
+        getConnector().connect(env);
+      } else {
+        throw ioe;
+      }
+    }
+  }
+  
   public synchronized void connect(Map conEnv) throws IOException {
     try {
-      m_conEnv = conEnv;
-      setConnector(JMXConnectorFactory.newJMXConnector(m_url, m_env));
-      getConnector().connect(m_conEnv);
+      _connect();
     } catch (RuntimeException e) {
       if (e instanceof SecurityException) {
         m_securityEnabled = true;
@@ -122,11 +130,11 @@ public final class AuthenticatingJMXConnector implements JMXConnector {
   }
 
   public synchronized void handleOkClick(String username, String password) {
-    m_authEnv.put("jmx.remote.credentials", new String[] { username, password });
+    m_connectManager.setCredentials(username, password);
     try {
       m_collapseObserver.fireUpdateEvent();
-      setConnector(JMXConnectorFactory.newJMXConnector(m_url, m_authEnv));
-      getConnector().connect(m_conEnv);
+      setConnector(m_connectManager.getSecureJmxConnector());
+      getConnector().connect(m_connectManager.getConnectionEnvironment());
     } catch (Exception e) {
       synchronized (m_error_lock) {
         m_error = e;

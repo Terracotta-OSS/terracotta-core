@@ -33,6 +33,7 @@ import javax.management.MBeanServerFactory;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnectorServer;
+import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.management.remote.rmi.RMIJRMPServerImpl;
@@ -96,6 +97,7 @@ public class L2Management extends TerracottaManagement {
     Map env = new HashMap();
     String authMsg = "Authentication OFF";
     String credentialsMsg = "";
+    env.put("jmx.remote.x.server.connection.timeout", new Long(Long.MAX_VALUE));
     if (configurationSetupManager.commonl2Config().authentication()) {
       String pwd = configurationSetupManager.commonl2Config().authenticationPasswordFile();
       String access = configurationSetupManager.commonl2Config().authenticationAccessFile();
@@ -106,18 +108,22 @@ public class L2Management extends TerracottaManagement {
       authMsg = "Authentication ON";
       credentialsMsg = "Credentials: " + configurationSetupManager.commonl2Config().authenticationPasswordFile() + " "
                        + configurationSetupManager.commonl2Config().authenticationAccessFile();
+      url = new JMXServiceURL("service:jmx:rmi://");
+      RMIJRMPServerImpl server = new RMIJRMPServerImpl(jmxPort, null, null, env);
+      jmxConnectorServer = new RMIConnectorServer(url, env, server, mBeanServer);
+      jmxConnectorServer.start();
+      getRMIRegistry(jmxPort).bind("jmxrmi", server);
+      CustomerLogging.getConsoleLogger().info(
+                                              "JMX Server started. " + authMsg + " - Available at URL["
+                                                  + "service:jmx:rmi:///jndi/rmi://localhost:" + jmxPort + "/jmxrmi"
+                                                  + "]");
+      if (!credentialsMsg.equals("")) CustomerLogging.getConsoleLogger().info(credentialsMsg);
+    } else {
+      url = new JMXServiceURL("jmxmp", "localhost", jmxPort);
+      jmxConnectorServer = JMXConnectorServerFactory.newJMXConnectorServer(url, env, mBeanServer);
+      jmxConnectorServer.start();
+      CustomerLogging.getConsoleLogger().info("JMX Server started. Available at URL[" + url + "]");
     }
-    env.put("jmx.remote.x.server.connection.timeout", new Long(Long.MAX_VALUE));
-    url = new JMXServiceURL("service:jmx:rmi://");
-    RMIJRMPServerImpl server = new RMIJRMPServerImpl(jmxPort, null, null, env);
-    jmxConnectorServer = new RMIConnectorServer(url, env, server, mBeanServer);
-    jmxConnectorServer.start();
-    getRMIRegistry(jmxPort).bind("jmxrmi", server);
-    CustomerLogging.getConsoleLogger().info(
-                                            "JMX Server started. " + authMsg + " - Available at URL["
-                                                + "service:jmx:rmi:///jndi/rmi://localhost:" + jmxPort + "/jmxrmi"
-                                                + "]");
-    if (!credentialsMsg.equals("")) CustomerLogging.getConsoleLogger().info(credentialsMsg);
   }
 
   public synchronized void stop() throws IOException, InstanceNotFoundException, MBeanRegistrationException {
