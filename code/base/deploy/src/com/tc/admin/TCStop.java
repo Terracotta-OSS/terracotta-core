@@ -209,7 +209,7 @@ public class TCStop {
   }
   
   private JMXConnector getJMXConnector() throws Exception {
-    String uri = "service:jmx:rmi:///jndi/rmi://" + m_host + ":" + m_port + "/jmxrmi";
+    String uri = "service:jmx:jmxmp://" + m_host + ":" + m_port;
     JMXServiceURL url = new JMXServiceURL(uri);
     HashMap env = new HashMap();
     
