@@ -123,12 +123,12 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return preInstrumented;
   }
 
-  public synchronized ILockDefinition[] lockDefinitionsFor(MemberInfo memberInfo) {
+  public synchronized LockDefinition[] lockDefinitionsFor(MemberInfo memberInfo) {
     return configuration.lockDefinitionsFor(memberInfo);
   }
 
-  public synchronized ILockDefinition autoLockDefinitionFor(MethodInfo methodInfo) {
-    ILockDefinition[] lds = lockDefinitionsFor(methodInfo);
+  public synchronized LockDefinition autoLockDefinitionFor(MethodInfo methodInfo) {
+    LockDefinition[] lds = lockDefinitionsFor(methodInfo);
     for (int i = 0; i < lds.length; i++) {
       if (lds[i].isAutolock()) { return lds[i]; }
     }
@@ -137,9 +137,9 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   }
 
   /**
-   * returns null if no ILockDefinitions exists that makes the method autolocked.
+   * returns null if no LockDefinitions exists that makes the method autolocked.
    */
-  public ILockDefinition getAutoLockDefinition(ILockDefinition lds[]) {
+  public LockDefinition getAutoLockDefinition(LockDefinition lds[]) {
     if (lds == null) return null;
     for (int i = 0; i < lds.length; i++) {
       if (lds[i].isAutolock()) { return lds[i]; }
@@ -147,7 +147,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return null;
   }
 
-  public ILockDefinition getNonAutoLockDefinition(ILockDefinition lds[]) {
+  public LockDefinition getNonAutoLockDefinition(LockDefinition lds[]) {
     if (lds == null) return null;
     for (int i = 0; i < lds.length; i++) {
       if (!lds[i].isAutolock()) { return lds[i]; }
@@ -238,9 +238,9 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   }
 
   /**
-   * returns null if no ILockDefinitions exists that makes the method locked.
+   * returns null if no LockDefinitions exists that makes the method locked.
    */
-  public ILockDefinition getLockMethodILockDefinition(int access, ILockDefinition lds[]) {
+  public LockDefinition getLockMethodLockDefinition(int access, LockDefinition lds[]) {
     if (lds == null) return null;
     for (int i = 0; i < lds.length; i++) {
       if ((lds[i].isAutolock() && Modifier.isSynchronized(access) && !Modifier.isStatic(access))
@@ -357,14 +357,14 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   }
 
   public void addArrayCopyMethodCodeSpec(String name) {
-    TransparencyCodeSpec codeSpec = new TransparencyCodeSpec();
+    TransparencyCodeSpec codeSpec = new TransparencyCodeSpecImpl();
     codeSpec.setArraycopyInstrumentationReq(true);
     codeSpec.setArrayOperatorInstrumentationReq(true);
     codeSpecs.put(name, codeSpec);
   }
 
   public void disableWaitNotifyCodeSpec(String name) {
-    TransparencyCodeSpec codeSpec = TransparencyCodeSpec.getDefaultPhysicalCodeSpec();
+    TransparencyCodeSpec codeSpec = TransparencyCodeSpecImpl.getDefaultPhysicalCodeSpec();
     codeSpec.setWaitNotifyInstrumentationReq(false);
     codeSpecs.put(name, codeSpec);
   }
@@ -377,7 +377,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     methodAdapters.put(name, new DateMethodAdapter(name, methodSpec));
   }
 
-  public void addMethodCodeSpec(String name, ITransparencyCodeSpec codeSpec) {
+  public void addMethodCodeSpec(String name, TransparencyCodeSpec codeSpec) {
     codeSpecs.put(name, codeSpec);
   }
 
@@ -436,11 +436,11 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     return flags.containsKey(HONOR_TRANSIENT_KEY);
   }
 
-  public ITransparencyCodeSpec getCodeSpec(String methodName, String description, boolean isAutolock) {
+  public TransparencyCodeSpec getCodeSpec(String methodName, String description, boolean isAutolock) {
     Object o = codeSpecs.get(methodName + description);
-    if (o == null) { return (ITransparencyCodeSpec) TransparencyCodeSpec.getDefaultCodeSpec(className, isLogical,
+    if (o == null) { return (TransparencyCodeSpec) TransparencyCodeSpecImpl.getDefaultCodeSpec(className, isLogical,
                                                                                             isAutolock); }
-    return (ITransparencyCodeSpec) o;
+    return (TransparencyCodeSpec) o;
   }
 
   public boolean isExecuteScriptOnLoadSet() {

@@ -232,7 +232,7 @@ public class ConfigLoader {
     NamedLock[] namedLocks = lockList.getNamedLockArray();
     for (int i = 0; namedLocks != null && i < namedLocks.length; i++) {
       NamedLock namedLock = namedLocks[i];
-      LockDefinition lockDefinition = new LockDefinition(namedLock.getLockName(),
+      LockDefinition lockDefinition = new LockDefinitionImpl(namedLock.getLockName(),
                                                          getLockLevel(namedLock.getLockLevel(), false));
       lockDefinition.commit();
       config.addLock(namedLock.getMethodExpression(), lockDefinition);

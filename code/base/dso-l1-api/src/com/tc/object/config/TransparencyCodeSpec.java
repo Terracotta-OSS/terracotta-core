@@ -4,7 +4,7 @@
  */
 package com.tc.object.config;
 
-public interface ITransparencyCodeSpec {
+public interface TransparencyCodeSpec {
 
   public boolean isArraycopyInstrumentationReq(String className, String methodName);
 

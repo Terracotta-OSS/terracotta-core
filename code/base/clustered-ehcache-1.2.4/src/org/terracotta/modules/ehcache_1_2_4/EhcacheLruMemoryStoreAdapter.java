@@ -8,7 +8,7 @@ import com.tc.asm.Opcodes;
 import com.tc.object.bytecode.ClassAdapterFactory;
 
 public class EhcacheLruMemoryStoreAdapter extends ClassAdapter implements
-		ClassAdapterFactory, Opcodes, IConstants {
+		ClassAdapterFactory, Opcodes, Constants {
 	private String className;
 
 	public EhcacheLruMemoryStoreAdapter() {

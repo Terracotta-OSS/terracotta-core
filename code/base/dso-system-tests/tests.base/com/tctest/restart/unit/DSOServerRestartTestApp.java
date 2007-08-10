@@ -8,10 +8,11 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import EDU.oswego.cs.dl.util.concurrent.FutureResult;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.ConfigLockLevel;
+import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.LockDefinition;
+import com.tc.object.config.LockDefinitionImpl;
 import com.tc.object.config.Root;
 import com.tctest.restart.AbstractRestartTestApp;
 
@@ -177,11 +178,11 @@ public class DSOServerRestartTestApp extends AbstractRestartTestApp implements R
     cfg.addWriteAutolock("void " + appClassName + ".basicDoWait(..)");
     cfg.addWriteAutolock("void " + appClassName + ".doNotify()");
     cfg.addWriteAutolock("void " + appClassName + ".doNotifyAll()");
-    LockDefinition lockDefinition = new LockDefinition("basicAttemptLock", ConfigLockLevel.WRITE);
+    LockDefinition lockDefinition = new LockDefinitionImpl("basicAttemptLock", ConfigLockLevel.WRITE);
     lockDefinition.commit();
     cfg.addLock("void " + appClassName + ".basicAttemptLock()", lockDefinition);
 
-    lockDefinition = new LockDefinition("blockShutdown", ConfigLockLevel.WRITE);
+    lockDefinition = new LockDefinitionImpl("blockShutdown", ConfigLockLevel.WRITE);
     lockDefinition.commit();
     cfg.addLock("void " + appClassName + ".syncBlockShutdown(..)", lockDefinition);
   }

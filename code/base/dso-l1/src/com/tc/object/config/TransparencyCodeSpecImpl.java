@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
-public class TransparencyCodeSpec implements ITransparencyCodeSpec {
+public class TransparencyCodeSpecImpl implements TransparencyCodeSpec {
   private final static Set MONITOR_INSTRUMENTATION_REQ_LOGICAL_CLASS = new HashSet();
   
   private boolean arrayOperatorInstrumentationReq;
@@ -23,7 +23,7 @@ public class TransparencyCodeSpec implements ITransparencyCodeSpec {
   }
 
   public static TransparencyCodeSpec getDefaultPhysicalCodeSpec() {
-    TransparencyCodeSpec defaultPhysicalCodeSpec = new TransparencyCodeSpec();
+    TransparencyCodeSpec defaultPhysicalCodeSpec = new TransparencyCodeSpecImpl();
     defaultPhysicalCodeSpec.setArrayOperatorInstrumentationReq(true);
     defaultPhysicalCodeSpec.setArraycopyInstrumentationReq(true);
     defaultPhysicalCodeSpec.setFieldInstrumentationReq(true);
@@ -33,7 +33,7 @@ public class TransparencyCodeSpec implements ITransparencyCodeSpec {
   }
 
   public static TransparencyCodeSpec getDefaultLogicalCodeSpec() {
-    TransparencyCodeSpec defaultSpec = new TransparencyCodeSpec();
+    TransparencyCodeSpec defaultSpec = new TransparencyCodeSpecImpl();
     return defaultSpec;
   }
 
@@ -48,7 +48,7 @@ public class TransparencyCodeSpec implements ITransparencyCodeSpec {
     return getDefaultPhysicalCodeSpec();
   }
 
-  public TransparencyCodeSpec() {
+  public TransparencyCodeSpecImpl() {
     super();
   }
 

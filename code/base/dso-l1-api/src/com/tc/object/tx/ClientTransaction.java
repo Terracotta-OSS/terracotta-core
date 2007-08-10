@@ -22,7 +22,7 @@ import java.util.Map;
  */
 public interface ClientTransaction {
 
-  public void setTransactionContext(ITransactionContext transactionContext);
+  public void setTransactionContext(TransactionContext transactionContext);
 
   public Map getChangeBuffers();
 

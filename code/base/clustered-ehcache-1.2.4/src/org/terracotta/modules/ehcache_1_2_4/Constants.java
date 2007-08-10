@@ -1,6 +1,6 @@
-package org.terracotta.modules.ehcache_1_3;
+package org.terracotta.modules.ehcache_1_2_4;
 
-interface IConstants {
+interface Constants {
 	static final String LINKEDHASHMAP_CLASS_NAME_DOTS = "java.util.LinkedHashMap";
 
 	static final String LRUMAP_CLASS_NAME_DOTS = "org.apache.commons.collections.LRUMap";

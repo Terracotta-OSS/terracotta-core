@@ -3,7 +3,7 @@
  */
 package com.tc.object.config;
 
-public interface ILockDefinition {
+public interface LockDefinition {
 
   public static final String TC_AUTOLOCK_NAME = "tc:autolock";
 

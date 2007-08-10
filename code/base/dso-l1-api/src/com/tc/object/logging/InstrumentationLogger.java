@@ -3,7 +3,7 @@
  */
 package com.tc.object.logging;
 
-import com.tc.object.config.ILockDefinition;
+import com.tc.object.config.LockDefinition;
 
 import java.util.Collection;
 
@@ -32,9 +32,9 @@ public interface InstrumentationLogger {
 
   void classIncluded(String className);
 
-  void autolockInserted(String className, String methodName, String methodDesc, ILockDefinition lockDef);
+  void autolockInserted(String className, String methodName, String methodDesc, LockDefinition lockDef);
 
-  void lockInserted(String className, String methodName, String methodDesc, ILockDefinition[] locks);
+  void lockInserted(String className, String methodName, String methodDesc, LockDefinition[] locks);
 
   void subclassOfLogicallyManagedClasses(String className, Collection logicalSuperClasses);
 

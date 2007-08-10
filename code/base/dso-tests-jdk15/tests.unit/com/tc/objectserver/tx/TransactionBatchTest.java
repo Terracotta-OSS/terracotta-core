@@ -23,6 +23,7 @@ import com.tc.object.tx.ClientTransactionImpl;
 import com.tc.object.tx.TestClientTransaction;
 import com.tc.object.tx.TransactionBatchWriter;
 import com.tc.object.tx.TransactionContext;
+import com.tc.object.tx.TransactionContextImpl;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
@@ -117,11 +118,11 @@ public class TransactionBatchTest extends TestCase {
     List tx1Notifies = new LinkedList();
     // A nested transaction (all this buys us is more than 1 lock in a txn)
     LockID lid1 = new LockID("1");
-    TransactionContext tc = new TransactionContext(lid1, TxnType.NORMAL, new LockID[] { lid1 });
+    TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, new LockID[] { lid1 });
     ClientTransaction tmp = new ClientTransactionImpl(new TransactionID(101), new NullRuntimeLogger(), null);
     tmp.setTransactionContext(tc);
     LockID lid2 = new LockID("2");
-    tc = new TransactionContext(lid2, TxnType.NORMAL, new LockID[] { lid1, lid2 });
+    tc = new TransactionContextImpl(lid2, TxnType.NORMAL, new LockID[] { lid1, lid2 });
     ClientTransaction txn1 = new ClientTransactionImpl(new TransactionID(1), new NullRuntimeLogger(), null);
     txn1.setTransactionContext(tc);
 
@@ -134,7 +135,7 @@ public class TransactionBatchTest extends TestCase {
       txn1.addNotify(notify);
     }
 
-    tc = new TransactionContext(new LockID("3"), TxnType.CONCURRENT, new LockID[] { new LockID("3") });
+    tc = new TransactionContextImpl(new LockID("3"), TxnType.CONCURRENT, new LockID[] { new LockID("3") });
     ClientTransaction txn2 = new ClientTransactionImpl(new TransactionID(2), new NullRuntimeLogger(), null);
     txn2.setTransactionContext(tc);
 

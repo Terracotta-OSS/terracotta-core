@@ -7,8 +7,9 @@ package com.tc.object.bytecode;
 import com.tc.object.TestClientObjectManager;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.LockDefinition;
+import com.tc.object.config.LockDefinitionImpl;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.loaders.IsolationClassLoader;
 import com.tc.object.tx.MockTransactionManager;
 import com.tc.object.tx.MockTransactionManager.Begin;
@@ -59,7 +60,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
 
   private void createAutolockLockDefinition() {
     this.config.addIncludePattern(this.targetClassName);
-    this.lockDefinition = new LockDefinition(LockDefinition.TC_AUTOLOCK_NAME, ConfigLockLevel.WRITE);
+    this.lockDefinition = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, ConfigLockLevel.WRITE);
     this.lockDefinition.commit();
   }
 
@@ -88,7 +89,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     String tcn = DefaultListModel.class.getName();
     config.addIncludePattern(tcn);
     String methodPattern = "* " + tcn + ".*(..)";
-    lockDefinition = new LockDefinition("doStuff", ConfigLockLevel.WRITE);
+    lockDefinition = new LockDefinitionImpl("doStuff", ConfigLockLevel.WRITE);
     lockDefinition.commit();
     config.addLock(methodPattern, lockDefinition);
 
@@ -109,7 +110,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
 
     // this.config.addAutolock("public void " + targetClassName + ".doStuff()");
     String methodPattern = "public void " + targetClassName + ".doStuff()";
-    lockDefinition = new LockDefinition("doStuff", ConfigLockLevel.WRITE);
+    lockDefinition = new LockDefinitionImpl("doStuff", ConfigLockLevel.WRITE);
     lockDefinition.commit();
     config.addLock(methodPattern, lockDefinition);
 
@@ -121,7 +122,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
 
   public void testAssertions() throws Exception {
     // Make sure that a bogus lock doesn't pass the test...
-    LockDefinition bogus = new LockDefinition("fakeLock", ConfigLockLevel.WRITE);
+    LockDefinition bogus = new LockDefinitionImpl("fakeLock", ConfigLockLevel.WRITE);
     bogus.commit();
     assertFalse(checkForLock(bogus));
     assertNoTransactions();
@@ -167,7 +168,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     assertNamedLockConditionsPostInvocation(1);
 
     // Make sure that a bogus lock doesn't pass the test...
-    LockDefinition bogus = new LockDefinition("fakeLock", ConfigLockLevel.WRITE);
+    LockDefinition bogus = new LockDefinitionImpl("fakeLock", ConfigLockLevel.WRITE);
     bogus.commit();
     assertFalse(checkForLock(bogus));
 
@@ -365,9 +366,9 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     String methodName = "internalSynchronizedInstanceMethod";
     // set up locks
     String methodExpression = "void " + targetClassName + "." + methodName + "()";
-    LockDefinition ldnamed = new LockDefinition("test-lock", ConfigLockLevel.WRITE);
+    LockDefinition ldnamed = new LockDefinitionImpl("test-lock", ConfigLockLevel.WRITE);
     ldnamed.commit();
-    LockDefinition ldautolock = new LockDefinition(LockDefinition.TC_AUTOLOCK_NAME, ConfigLockLevel.WRITE);
+    LockDefinition ldautolock = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, ConfigLockLevel.WRITE);
     ldautolock.commit();
 
     config.getOrCreateSpec(targetClassName);
@@ -1076,7 +1077,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     config.addIncludePattern(this.targetClassName);
     String methodName = "instanceMethod";
 
-    this.lockDefinition = new LockDefinition("testReadLock", ConfigLockLevel.READ);
+    this.lockDefinition = new LockDefinitionImpl("testReadLock", ConfigLockLevel.READ);
     this.lockDefinition.commit();
 
     createLockConfigurationForMethodExpression("void", methodName, "()");
@@ -1097,7 +1098,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
 
   public void testAutolockCtorNoException() throws Exception {
     String methodExpression = "* " + targetClassName + ".*(..)";
-    LockDefinition ld = new LockDefinition(LockDefinition.TC_AUTOLOCK_NAME, ConfigLockLevel.WRITE);
+    LockDefinition ld = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, ConfigLockLevel.WRITE);
     ld.commit();
 
     config.getOrCreateSpec(targetClassName);
@@ -1116,7 +1117,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
 
   public void testNamedlockCtorNoException() throws Exception {
     String methodExpression = "* " + targetClassName + ".*(..)";
-    LockDefinition ld = new LockDefinition("test-lock", ConfigLockLevel.WRITE);
+    LockDefinition ld = new LockDefinitionImpl("test-lock", ConfigLockLevel.WRITE);
     ld.commit();
 
     config.getOrCreateSpec(targetClassName);
@@ -1131,7 +1132,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
 
   public void testNamedlockCtorThrowsException() throws Exception {
     String methodExpression = "* " + targetClassName + ".*(..)";
-    LockDefinition ld = new LockDefinition("test-lock", ConfigLockLevel.WRITE);
+    LockDefinition ld = new LockDefinitionImpl("test-lock", ConfigLockLevel.WRITE);
     ld.commit();
 
     config.getOrCreateSpec(targetClassName);
@@ -1155,7 +1156,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
 
   private void testAutolockCtorException(boolean inside) throws Exception {
     String methodExpression = "* " + targetClassName + ".*(..)";
-    LockDefinition ld = new LockDefinition(LockDefinition.TC_AUTOLOCK_NAME, ConfigLockLevel.WRITE);
+    LockDefinition ld = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, ConfigLockLevel.WRITE);
     ld.commit();
 
     config.getOrCreateSpec(targetClassName);
@@ -1209,8 +1210,8 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     config.addIncludePattern(this.targetClassName);
     String methodName = "instanceMethod";
     String methodExpression = "* " + targetClassName + "." + methodName + "(..)";
-    LockDefinition ld1 = new LockDefinition("lock1", ConfigLockLevel.WRITE);
-    LockDefinition ld2 = new LockDefinition("lock2", ConfigLockLevel.WRITE);
+    LockDefinition ld1 = new LockDefinitionImpl("lock1", ConfigLockLevel.WRITE);
+    LockDefinition ld2 = new LockDefinitionImpl("lock2", ConfigLockLevel.WRITE);
     ld1.commit();
     ld2.commit();
     LockDefinition[] declaredLockDefs = new LockDefinition[] { ld1, ld2 };
@@ -1233,9 +1234,9 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     String methodName = "internalSynchronizedInstanceMethod";
     // set up locks
     String methodExpression = "void " + targetClassName + "." + methodName + "()";
-    LockDefinition ldnamed = new LockDefinition("test-lock", ConfigLockLevel.WRITE);
+    LockDefinition ldnamed = new LockDefinitionImpl("test-lock", ConfigLockLevel.WRITE);
     ldnamed.commit();
-    LockDefinition ldautolock = new LockDefinition(LockDefinition.TC_AUTOLOCK_NAME, ConfigLockLevel.WRITE);
+    LockDefinition ldautolock = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, ConfigLockLevel.WRITE);
     ldautolock.commit();
 
     config.getOrCreateSpec(targetClassName);
@@ -1261,9 +1262,9 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     String methodName = "synchronizedInstanceMethod";
     // set up locks
     String methodExpression = "void " + targetClassName + "." + methodName + "()";
-    LockDefinition ldnamed = new LockDefinition("test-lock", ConfigLockLevel.WRITE);
+    LockDefinition ldnamed = new LockDefinitionImpl("test-lock", ConfigLockLevel.WRITE);
     ldnamed.commit();
-    LockDefinition ldautolock = new LockDefinition(LockDefinition.TC_AUTOLOCK_NAME, ConfigLockLevel.WRITE);
+    LockDefinition ldautolock = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, ConfigLockLevel.WRITE);
     ldautolock.commit();
 
     config.getOrCreateSpec(targetClassName);
@@ -1541,7 +1542,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
 
   private void createNamedLockDefinition(String lockName) {
     this.config.addIncludePattern(this.targetClassName);
-    this.lockDefinition = new LockDefinition(lockName, ConfigLockLevel.WRITE);
+    this.lockDefinition = new LockDefinitionImpl(lockName, ConfigLockLevel.WRITE);
     this.lockDefinition.commit();
   }
 

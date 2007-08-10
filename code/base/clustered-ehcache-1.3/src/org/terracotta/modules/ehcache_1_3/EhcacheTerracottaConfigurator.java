@@ -8,7 +8,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 
 public class EhcacheTerracottaConfigurator extends TerracottaConfiguratorModule
-		implements IConstants {
+		implements Constants {
 
 	protected void addInstrumentation(final BundleContext context,
 			final StandardDSOClientConfigHelper configHelper) {

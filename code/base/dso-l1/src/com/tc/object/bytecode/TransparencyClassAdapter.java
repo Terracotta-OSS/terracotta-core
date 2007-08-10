@@ -17,7 +17,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.Portability;
 import com.tc.object.config.ConfigLockLevel;
-import com.tc.object.config.ILockDefinition;
+import com.tc.object.config.LockDefinition;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.object.logging.InstrumentationLogger;
@@ -208,8 +208,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
         }
       }
 
-      ILockDefinition[] locks = getTransparencyClassSpec().lockDefinitionsFor(memberInfo);
-      ILockDefinition ld = getTransparencyClassSpec().getAutoLockDefinition(locks);
+      LockDefinition[] locks = getTransparencyClassSpec().lockDefinitionsFor(memberInfo);
+      LockDefinition ld = getTransparencyClassSpec().getAutoLockDefinition(locks);
       boolean isAutolock = (ld != null);
       int lockLevel = -1;
       if (isAutolock) {
@@ -227,7 +227,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       physicalClassLogger.logVisitMethodCheckIsLockMethod();
 
       if (!isLockMethod || spec.isClassAdaptable()) {
-        ILockDefinition namedLockDefinition = getTransparencyClassSpec().getNonAutoLockDefinition(locks);
+        LockDefinition namedLockDefinition = getTransparencyClassSpec().getNonAutoLockDefinition(locks);
         isLockMethod = (namedLockDefinition != null);
       }
 
@@ -274,7 +274,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private boolean isAutoSynchronized(ILockDefinition ld) {
+  private boolean isAutoSynchronized(LockDefinition ld) {
     if (ld == null) { return false; }
 
     ConfigLockLevel lockLevel = ld.getLockLevel();
@@ -289,14 +289,14 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   // super.basicVisitEnd();
   // }
 
-  private void logCustomerLockMethod(String name, final String desc, ILockDefinition[] locks) {
+  private void logCustomerLockMethod(String name, final String desc, LockDefinition[] locks) {
     if (instrumentationLogger.lockInsertion()) {
       instrumentationLogger.lockInserted(this.spec.getClassNameDots(), name, desc, locks);
     }
   }
 
   private void createLockMethod(int access, String name, String desc, String signature, final String[] exceptions,
-                                ILockDefinition[] locks) {
+                                LockDefinition[] locks) {
     try {
       physicalClassLogger.logCreateLockMethodBegin(access, name, desc, signature, exceptions, locks);
       doNotInstrument.add(name + desc);
@@ -319,7 +319,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
    * Creates a tc lock method for the given method that returns void.
    */
   private void createLockMethodVoid(int access, String name, String desc, String signature, final String[] exceptions,
-                                    ILockDefinition[] locks) {
+                                    LockDefinition[] locks) {
     try {
       int localVariableOffset = ByteCodeUtil.getLocalVariableOffset(access);
 
@@ -390,7 +390,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
    * Creates a tc lock method for the given method that returns a value (doesn't return void).
    */
   private void createLockMethodReturn(int access, String name, String desc, String signature,
-                                      final String[] exceptions, ILockDefinition[] locks, Type returnType) {
+                                      final String[] exceptions, LockDefinition[] locks, Type returnType) {
     try {
       physicalClassLogger.logCreateLockMethodReturnBegin(access, name, desc, signature, exceptions, locks);
       int localVariableOffset = ByteCodeUtil.getLocalVariableOffset(access);
@@ -428,10 +428,10 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
   }
 
-  private void callTCBeginWithLocks(int access, String name, String desc, ILockDefinition[] locks, MethodVisitor c) {
+  private void callTCBeginWithLocks(int access, String name, String desc, LockDefinition[] locks, MethodVisitor c) {
     physicalClassLogger.logCallTCBeginWithLocksStart(access, name, desc, locks, c);
     for (int i = 0; i < locks.length; i++) {
-      ILockDefinition lock = locks[i];
+      LockDefinition lock = locks[i];
       if (lock.isAutolock() && spec.isClassPortable()) {
         physicalClassLogger.logCallTCBeginWithLocksAutolock();
         if (Modifier.isSynchronized(access) && !Modifier.isStatic(access)) {
@@ -447,10 +447,10 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private void callTCCommit(int access, String name, String desc, ILockDefinition[] locks, MethodVisitor c) {
+  private void callTCCommit(int access, String name, String desc, LockDefinition[] locks, MethodVisitor c) {
     physicalClassLogger.logCallTCCommitBegin(access, name, desc, locks, c);
     for (int i = 0; i < locks.length; i++) {
-      ILockDefinition lock = locks[i];
+      LockDefinition lock = locks[i];
       if (lock.isAutolock() && spec.isClassPortable()) {
         if (Modifier.isSynchronized(access) && !Modifier.isStatic(access)) {
           callTCMonitorExit(access, c);
@@ -467,7 +467,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     spec.getManagerHelper().callManagerMethod("commitLock", mv);
   }
 
-  private void callTCBeginWithLock(ILockDefinition lock, MethodVisitor c) {
+  private void callTCBeginWithLock(LockDefinition lock, MethodVisitor c) {
     c.visitLdcInsn(ByteCodeUtil.generateNamedLockName(lock.getLockName()));
     c.visitLdcInsn(new Integer(lock.getLockLevelAsInt()));
     spec.getManagerHelper().callManagerMethod("beginLock", c);
@@ -1070,7 +1070,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     spec.getManagerHelper().callManagerMethod("monitorExit", c);
   }
 
-  private void callTCMonitorEnter(int callingMethodModifier, ILockDefinition def, MethodVisitor c) {
+  private void callTCMonitorEnter(int callingMethodModifier, LockDefinition def, MethodVisitor c) {
     Assert.eval("Can't call tc monitorexit from a static method.", !Modifier.isStatic(callingMethodModifier));
     ByteCodeUtil.pushThis(c);
     c.visitLdcInsn(new Integer(def.getLockLevelAsInt()));

@@ -24,13 +24,13 @@ public class LockDefinitionTest extends TestCase {
   public void setUp() throws Exception {
     lockName = "myLockName";
     lockType = ConfigLockLevel.WRITE;
-    ld1 = new LockDefinition(lockName, lockType);
-    ld2 = new LockDefinition(lockName, lockType);
+    ld1 = new LockDefinitionImpl(lockName, lockType);
+    ld2 = new LockDefinitionImpl(lockName, lockType);
     ld3LockName = "ld3LockName";
     ld3LockType = ConfigLockLevel.READ;
-    ld3 = new LockDefinition(ld3LockName, ld3LockType);
-    autolock = new LockDefinition(LockDefinition.TC_AUTOLOCK_NAME, lockType);
-    ld4 = new LockDefinition(lockName, ConfigLockLevel.SYNCHRONOUS_WRITE);
+    ld3 = new LockDefinitionImpl(ld3LockName, ld3LockType);
+    autolock = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, lockType);
+    ld4 = new LockDefinitionImpl(lockName, ConfigLockLevel.SYNCHRONOUS_WRITE);
   }
 
   public void testReadBeforeCommit() {

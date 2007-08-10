@@ -5,7 +5,7 @@ package com.tc.object.tx;
 
 import com.tc.object.lockmanager.api.LockID;
 
-public interface ITransactionContext {
+public interface TransactionContext {
 
   public abstract TxnType getType();
 

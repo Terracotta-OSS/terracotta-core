@@ -390,7 +390,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private void doAutoconfig(boolean interrogateBootJar) {
     TransparencyClassSpec spec = null;
-    ILockDefinition ld = null;
+    LockDefinition ld = null;
 
     // Table model stuff
     addIncludePattern("javax.swing.event.TableModelEvent", true);
@@ -403,21 +403,21 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     spec = getOrCreateSpec("javax.swing.table.DefaultTableModel");
     spec.setCallConstructorOnLoad(true);
-    ld = new LockDefinition("tcdefaultTableLock", ConfigLockLevel.WRITE);
+    ld = new LockDefinitionImpl("tcdefaultTableLock", ConfigLockLevel.WRITE);
     ld.commit();
     addLock("* javax.swing.table.DefaultTableModel.set*(..)", ld);
     addLock("* javax.swing.table.DefaultTableModel.insert*(..)", ld);
     addLock("* javax.swing.table.DefaultTableModel.move*(..)", ld);
     addLock("* javax.swing.table.DefaultTableModel.remove*(..)", ld);
 
-    ld = new LockDefinition("tcdefaultTableLock", ConfigLockLevel.READ);
+    ld = new LockDefinitionImpl("tcdefaultTableLock", ConfigLockLevel.READ);
     ld.commit();
     addLock("* javax.swing.table.DefaultTableModel.get*(..)", ld);
 
     spec = getOrCreateSpec("javax.swing.DefaultListModel");
     spec.setCallConstructorOnLoad(true);
 
-    ld = new LockDefinition("tcdefaultListLock", ConfigLockLevel.WRITE);
+    ld = new LockDefinitionImpl("tcdefaultListLock", ConfigLockLevel.WRITE);
     ld.commit();
     addLock("* javax.swing.DefaultListModel.*(..)", ld);
 
@@ -486,7 +486,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec = getOrCreateSpec("javax.swing.tree.DefaultMutableTreeNode");
 
     spec = getOrCreateSpec("javax.swing.tree.DefaultTreeModel");
-    ld = new LockDefinition("tctreeLock", ConfigLockLevel.WRITE);
+    ld = new LockDefinitionImpl("tctreeLock", ConfigLockLevel.WRITE);
     ld.commit();
     addLock("* javax.swing.tree.DefaultTreeModel.get*(..)", ld);
     addLock("* javax.swing.tree.DefaultTreeModel.set*(..)", ld);
@@ -760,7 +760,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     addCustomAdapter("com.sun.jdo.api.persistence.model.RuntimeModel", new RuntimeModelAdapter());
 
     // TODO for the Event Swing sample only
-    ld = new LockDefinition("setTextArea", ConfigLockLevel.WRITE);
+    ld = new LockDefinitionImpl("setTextArea", ConfigLockLevel.WRITE);
     ld.commit();
     addLock("* test.event.*.setTextArea(..)", ld);
 
@@ -839,7 +839,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.ArrayBlockingQueue", false, false, false);
     addIncludePattern("edu.emory.mathcs.backport.java.util.concurrent.CopyOnWriteArrayList", false, false, false);
 
-    LockDefinition ld = new LockDefinition("addApplicationListener", ConfigLockLevel.WRITE);
+    LockDefinition ld = new LockDefinitionImpl("addApplicationListener", ConfigLockLevel.WRITE);
     ld.commit();
     addLock("* org.springframework.context.event.AbstractApplicationEventMulticaster.addApplicationListener(..)", ld);
 
@@ -1110,7 +1110,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     helperLogger.logIsLockMethodBegin(memberInfo.getModifiers(), memberInfo.getDeclaringType().getName(), //
                                       memberInfo.getName(), memberInfo.getSignature());
 
-    ILockDefinition lockDefinitions[] = lockDefinitionsFor(memberInfo);
+    LockDefinition lockDefinitions[] = lockDefinitionsFor(memberInfo);
 
     for (int j = 0; j < lockDefinitions.length; j++) {
       if (lockDefinitions[j].isAutolock()) {
@@ -1249,7 +1249,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         for (int i = 0; i < locks.length; i++) {
           Lock lock = locks[i];
           if (matches(lock, methodInfo)) {
-            ILockDefinition ld = lock.getLockDefinition();
+            LockDefinition ld = lock.getLockDefinition();
             if (ld.isAutolock() && ld.getLockLevel() != ConfigLockLevel.READ) {
               addReadAutolock("* " + className + "." + methodInfo.getName() + "(..)");
             }
@@ -1260,12 +1260,12 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public synchronized ILockDefinition[] lockDefinitionsFor(MemberInfo memberInfo) {
+  public synchronized LockDefinition[] lockDefinitionsFor(MemberInfo memberInfo) {
     boolean isAutoLocksExcluded = matchesAutoLockExcludes(memberInfo);
     List lockDefs = new ArrayList();
     for (int i = locks.length - 1; i >= 0; i--) {
       if (matches(this.locks[i], memberInfo)) {
-        ILockDefinition definition = this.locks[i].getLockDefinition();
+        LockDefinition definition = this.locks[i].getLockDefinition();
         if (!(definition.isAutolock() && isAutoLocksExcluded)) {
           lockDefs.add(definition);
           if (definition.isAutolock()) {
@@ -1318,7 +1318,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public synchronized void addAutolock(String methodPattern, ConfigLockLevel type) {
-    LockDefinition lockDefinition = new LockDefinition(ILockDefinition.TC_AUTOLOCK_NAME, type);
+    LockDefinition lockDefinition = new LockDefinitionImpl(LockDefinition.TC_AUTOLOCK_NAME, type);
     lockDefinition.commit();
     addLock(methodPattern, lockDefinition);
   }
@@ -1331,7 +1331,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     addAutolock(methodPattern, ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE);
   }
 
-  public synchronized void addLock(String methodPattern, ILockDefinition lockDefinition) {
+  public synchronized void addLock(String methodPattern, LockDefinition lockDefinition) {
     Lock[] result = new Lock[locks.length + 1];
     System.arraycopy(locks, 0, result, 0, locks.length);
     result[locks.length] = new Lock(methodPattern, lockDefinition);

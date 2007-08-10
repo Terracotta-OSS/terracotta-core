@@ -8,8 +8,9 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.LockDefinition;
+import com.tc.object.config.LockDefinitionImpl;
+import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -63,7 +64,7 @@ public class InstrumentedConstructorTestApp extends AbstractTransparentApp {
     config.addIncludePattern(testClass + "$*");
 
     String methodExpression = "* " + testClass + "$TestConstructorClass.*(..)";
-    LockDefinition definition = new LockDefinition("nameLock", ConfigLockLevel.WRITE);
+    LockDefinition definition = new LockDefinitionImpl("nameLock", ConfigLockLevel.WRITE);
     definition.commit();
     config.addLock(methodExpression, definition);
     

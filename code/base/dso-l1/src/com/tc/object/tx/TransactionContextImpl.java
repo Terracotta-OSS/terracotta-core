@@ -9,12 +9,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class TransactionContext implements ITransactionContext {
+public class TransactionContextImpl implements TransactionContext {
   TxnType          type;
   LockID           lockID;
   private LockID[] lockIDs;
 
-  public TransactionContext(LockID lockID, TxnType type, LockID[] lockIDs) {
+  public TransactionContextImpl(LockID lockID, TxnType type, LockID[] lockIDs) {
     this.type = type;
     this.lockID = lockID;
     this.lockIDs = lockIDs;

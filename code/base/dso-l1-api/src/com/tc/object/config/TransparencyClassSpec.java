@@ -32,13 +32,13 @@ public interface TransparencyClassSpec {
 
   public boolean isPreInstrumented();
 
-  public ILockDefinition[] lockDefinitionsFor(MemberInfo memberInfo);
+  public LockDefinition[] lockDefinitionsFor(MemberInfo memberInfo);
 
-  public ILockDefinition autoLockDefinitionFor(MethodInfo methodInfo);
+  public LockDefinition autoLockDefinitionFor(MethodInfo methodInfo);
 
-  public ILockDefinition getAutoLockDefinition(ILockDefinition lds[]);
+  public LockDefinition getAutoLockDefinition(LockDefinition lds[]);
 
-  public ILockDefinition getNonAutoLockDefinition(ILockDefinition lds[]);
+  public LockDefinition getNonAutoLockDefinition(LockDefinition lds[]);
 
   public TransparencyClassSpec addSupportMethodCreator(MethodCreator creator);
 
@@ -72,7 +72,7 @@ public interface TransparencyClassSpec {
 
   public boolean isLockMethod(MemberInfo memberInfo);
 
-  public ILockDefinition getLockMethodILockDefinition(int access, ILockDefinition lds[]);
+  public LockDefinition getLockMethodLockDefinition(int access, LockDefinition lds[]);
 
   public boolean hasCustomMethodAdapter(MemberInfo memberInfo);
 
@@ -128,7 +128,7 @@ public interface TransparencyClassSpec {
 
   public void addDateMethodLogSpec(String name, int methodSpec);
 
-  public void addMethodCodeSpec(String name, ITransparencyCodeSpec codeSpec);
+  public void addMethodCodeSpec(String name, TransparencyCodeSpec codeSpec);
 
   public TransparencyClassSpec setHonorVolatile(boolean b);
 
@@ -152,7 +152,7 @@ public interface TransparencyClassSpec {
 
   public boolean isHonorTransientSet();
 
-  public ITransparencyCodeSpec getCodeSpec(String methodName, String description, boolean isAutolock);
+  public TransparencyCodeSpec getCodeSpec(String methodName, String description, boolean isAutolock);
 
   public boolean isExecuteScriptOnLoadSet();
 

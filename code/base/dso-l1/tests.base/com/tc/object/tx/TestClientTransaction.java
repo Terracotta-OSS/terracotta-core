@@ -103,7 +103,7 @@ public class TestClientTransaction implements ClientTransaction {
     return false;
   }
 
-  public void setTransactionContext(ITransactionContext transactionContext) {
+  public void setTransactionContext(TransactionContext transactionContext) {
     throw new ImplementMe();
   }
 

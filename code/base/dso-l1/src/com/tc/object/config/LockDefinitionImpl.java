@@ -6,7 +6,7 @@ package com.tc.object.config;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
 
-public class LockDefinition implements ILockDefinition {
+public class LockDefinitionImpl implements LockDefinition {
 
   private String             lockName         = TC_AUTOLOCK_NAME;
   private ConfigLockLevel    lockLevel;
@@ -14,11 +14,11 @@ public class LockDefinition implements ILockDefinition {
   private boolean            isCommitted      = false;
   private boolean            autolock;
 
-  public LockDefinition() {
+  public LockDefinitionImpl() {
     return;
   }
 
-  public LockDefinition(String lockName, ConfigLockLevel lockLevel) {
+  public LockDefinitionImpl(String lockName, ConfigLockLevel lockLevel) {
     setLockName(lockName);
     setLockLevel(lockLevel);
   }
@@ -70,9 +70,9 @@ public class LockDefinition implements ILockDefinition {
   public boolean equals(Object o) {
     if (o == null) { return false; }
 
-    if (!(o instanceof LockDefinition)) { return false; }
+    if (!(o instanceof LockDefinitionImpl)) { return false; }
 
-    LockDefinition compare = (LockDefinition) o;
+    LockDefinitionImpl compare = (LockDefinitionImpl) o;
     if (lockName == null && compare.lockName != null) { return false; }
 
     if (lockLevel == null && compare.lockLevel != null) { return false; }

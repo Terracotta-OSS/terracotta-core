@@ -7,7 +7,7 @@ import org.apache.commons.lang.ArrayUtils;
 
 import com.tc.asm.MethodVisitor;
 import com.tc.logging.TCLogger;
-import com.tc.object.config.ILockDefinition;
+import com.tc.object.config.LockDefinition;
 
 /**
  * Logger class for PhysicalClassAdapter
@@ -42,7 +42,7 @@ public class PhysicalClassAdapterLogger {
     if (logger.isDebugEnabled()) logger.debug("Checking isLockMethod()");
   }
 
-  void logCallTCBeginWithLocksStart(int access, String name, String desc, ILockDefinition[] locks, MethodVisitor c) {
+  void logCallTCBeginWithLocksStart(int access, String name, String desc, LockDefinition[] locks, MethodVisitor c) {
     if (logger.isDebugEnabled()) {
       logger.debug("callTCBeginWithLocks(access=" + access + ", name=" + name + ", desc=" + desc + ", locks="
                    + arrayToString(locks) + ", c= " + c + ")");
@@ -67,32 +67,32 @@ public class PhysicalClassAdapterLogger {
     }
   }
 
-  void logCallTCBeginWithLocksNoAutolock(ILockDefinition lock) {
+  void logCallTCBeginWithLocksNoAutolock(LockDefinition lock) {
     if (logger.isDebugEnabled()) logger.debug("calling callTCBeginWithLock() for lock " + lock);
   }
 
   void logCreateLockMethodBegin(int access, String name, String signature, String desc, final String[] exceptions,
-                                ILockDefinition[] locks) {
+                                LockDefinition[] locks) {
     if (logger.isDebugEnabled()) logger.debug("createLockMethod(access=" + access + ", name=" + name + ", desc=" + desc
                                               + ", exceptions=" + arrayToString(exceptions) + ", " + signature + ", "
                                               + arrayToString(locks) + ")");
   }
 
   void logCreateLockMethodVoidBegin(int access, String name, String signature, String desc, final String[] exceptions,
-                                    ILockDefinition[] locks) {
+                                    LockDefinition[] locks) {
     if (logger.isDebugEnabled()) {
       logger.debug("createLockMethodVoid(access=" + access + ", name=" + name + ", desc=" + desc + ", exceptions="
                    + arrayToString(exceptions) + ", sig=" + signature + ", locks=" + arrayToString(locks));
     }
   }
 
-  void logCallTCCommitBegin(int access, String name, String desc, ILockDefinition[] locks, MethodVisitor c) {
+  void logCallTCCommitBegin(int access, String name, String desc, LockDefinition[] locks, MethodVisitor c) {
     if (logger.isDebugEnabled()) logger.debug("callTCCommit(access=" + access + ", name=" + name + ", desc=" + desc
                                               + ", locks=" + arrayToString(locks) + ", c=" + c + ")");
   }
 
   void logCreateLockMethodReturnBegin(int access, String name, String signature, String desc,
-                                      final String[] exceptions, ILockDefinition[] locks) {
+                                      final String[] exceptions, LockDefinition[] locks) {
     if (logger.isDebugEnabled()) logger.debug("createLockMethodReturn(access=" + access + ", name=" + name + ", desc="
                                               + desc + ", exceptions=" + arrayToString(exceptions) + ", signature="
                                               + signature + ", locks=" + arrayToString(locks) + ")");
