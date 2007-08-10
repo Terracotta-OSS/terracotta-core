@@ -155,7 +155,7 @@ modules:
         - common
         - dso-l1-api
         - dso-common
-  - dso-l2:
+  - dso-l2-common:
       options:
         jdk: J2SE-1.4
       dependencies:
@@ -168,15 +168,30 @@ modules:
         - thirdparty
         - management
         - dso-memory-datastore
+  - dso-l2:
+      options:
+        jdk: J2SE-1.5
+      dependencies:
+        - common-api
+        - common
+        - dso-l1-api
+        - dso-common
+        - dso-common-jdk15
+        - dso-l2-common
+        - thirdparty-api
+        - thirdparty
+        - management
+        - dso-memory-datastore
   - deploy:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - linked-child-process
         - common-api
         - common
         - dso-common
         - dso-common-jdk15
+        - dso-l2-common
         - dso-l2
         - dso-l1-api
         - dso-l1
@@ -192,22 +207,23 @@ modules:
         - common
         - dso-l1-api
         - dso-l1
-        - dso-l2
         - dso-common
         - dso-common-jdk15
-        - deploy
+        - dso-l2-common
+        - dso-l2
   - ui-configurator:
       options:
-        jdk: J2SE-1.4
+        jdk: J2SE-1.5
       dependencies:
         - common-api
         - common
         - dso-common
         - dso-common-jdk15
-        - dso-l2
+        - dso-l2-common
         - dso-l1-api
         - dso-l1
         - deploy
+        - dso-l2
         - aspectwerkz
   - examples:
       options:
@@ -217,10 +233,8 @@ modules:
         - common
         - dso-l1-api
         - dso-l1
-        - dso-l2
         - dso-common
         - dso-common-jdk15
-        - deploy
   - ui-eclipse:
       options:
         jdk: J2SE-1.5
@@ -229,10 +243,11 @@ modules:
         - common
         - dso-common
         - dso-common-jdk15
-        - dso-l2
         - dso-l1-api
         - dso-l1
+        - dso-l2-common
         - deploy
+        - dso-l2
         - aspectwerkz
   - installer:
       options:
@@ -249,10 +264,15 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l2-common
+        # NOTE: The dependency on deploy is to allow DistributedTestRunner to instantiate
+        # TCServerImpl via reflection.  However, classes in this module cannot refer directly
+        # to classes in the deploy module because deploy is compiled with JDK 1.5, while this
+        # module is compiled with JDK 1.4.
+        - deploy
         - dso-l2
         - dso-l1-weblogic
         - simulator
-        - deploy
         - management
         - thirdparty-api
         - thirdparty
@@ -266,10 +286,11 @@ modules:
         - dso-common
         - dso-common-jdk15
         - management
-        - deploy
         - dso-l1-api
         - dso-l1
+        - dso-l2-common
         - dso-l2
+        - deploy
         - legacy-test-tree
         - simulator
         - thirdparty-api
@@ -288,10 +309,11 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l2-common
         - dso-l2
+        - deploy
         - dso-l1-weblogic
         - simulator
-        - deploy
         - thirdparty-api
         - thirdparty
         - legacy-test-tree
@@ -309,9 +331,10 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l2-common
         - dso-l2
-        - simulator
         - deploy
+        - simulator
         - thirdparty-api
         - thirdparty
         - legacy-test-tree
@@ -328,12 +351,13 @@ modules:
         - linked-child-process
         - dso-l1-api
         - dso-l1
-        - simulator
         - deploy
+        - simulator
         - thirdparty-api
         - thirdparty
         - dso-l1-jdk15
         - legacy-test-tree
+        - dso-l2-common
         - dso-l2
         - management
   - dso-crash-tests:
@@ -349,10 +373,11 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l2-common
         - dso-l2
+        - deploy
         - dso-l1-weblogic
         - simulator
-        - deploy
         - thirdparty-api
         - thirdparty
         - dso-system-tests
@@ -374,13 +399,14 @@ modules:
         - dso-l1-api
         - dso-l1
         - dso-l1-session
-        - dso-l2
         - management
         - simulator
-        - deploy
         - thirdparty-api
         - thirdparty
         - legacy-test-tree
+        - dso-l2-common
+        - dso-l2
+        - deploy
   - dso-spring-tests:
       options:
         jdk: J2SE-1.4
@@ -394,11 +420,12 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l2-common
+        - deploy
         - dso-l2
         - dso-l1-weblogic
         - dso-spring
         - simulator
-        - deploy
         - thirdparty-api
         - thirdparty
         - legacy-test-tree
@@ -418,6 +445,8 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l2-common
+        - deploy
         - dso-l2
         - legacy-test-tree
         - simulator
@@ -426,7 +455,6 @@ modules:
         - dso-spring
         - dso-spring-tests
         - simulator
-        - deploy
         - thirdparty-api
         - thirdparty
         - legacy-test-tree
@@ -444,11 +472,12 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l2-common
+        - deploy
         - dso-l2
         - dso-l1-weblogic
         - dso-spring
         - simulator
-        - deploy
         - thirdparty-api
         - thirdparty
         - dso-system-tests
@@ -467,9 +496,7 @@ modules:
         - dso-l1-api
         - dso-l1
         - dso-l1-jdk15
-        - dso-l2
         - simulator
-        - deploy
         - thirdparty-api
         - thirdparty
         - legacy-test-tree
@@ -493,9 +520,10 @@ modules:
         - management
         - dso-common-jdk15
         - dso-l1-api
+        - dso-l2-common
+        - deploy
         - dso-l2
         - simulator
-        - deploy
         - thirdparty-api
         - thirdparty
         - legacy-test-tree
@@ -510,6 +538,9 @@ modules:
         - dso-common
         - dso-l1-api
         - thirdparty-api
+        - dso-l2-common
+        - deploy
+        - dso-l2
         - thirdparty
   - clustered-lucene-2.0.0:
       options:
@@ -525,9 +556,10 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l2-common
+        - deploy
         - dso-l2
         - simulator
-        - deploy
         - thirdparty-api
         - thirdparty
         - legacy-test-tree
@@ -540,11 +572,12 @@ modules:
         - aspectwerkz
         - common-api
         - common
-        - deploy
         - dso-common
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l2-common
+        - deploy
         - dso-l2
         - legacy-test-tree
         - linked-child-process
@@ -566,9 +599,10 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l2-common
+        - deploy
         - dso-l2
         - simulator
-        - deploy
         - thirdparty-api
         - thirdparty
         - legacy-test-tree
@@ -589,9 +623,10 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l2-common
+        - deploy
         - dso-l2
         - simulator
-        - deploy
         - thirdparty-api
         - thirdparty
         - legacy-test-tree
@@ -611,10 +646,11 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
-        - dso-l1-weblogic
-        - dso-l2
-        - simulator
+        - dso-l2-common
         - deploy
+        - dso-l2
+        - dso-l1-weblogic
+        - simulator
         - thirdparty-api
         - thirdparty
         - legacy-test-tree
@@ -634,9 +670,10 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l2-common
+        - deploy
         - dso-l2
         - simulator
-        - deploy
         - thirdparty-api
         - thirdparty
         - legacy-test-tree
@@ -677,9 +714,10 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l2-common
+        - deploy
         - dso-l2
         - simulator
-        - deploy
         - thirdparty-api
         - thirdparty
         - legacy-test-tree
@@ -718,16 +756,17 @@ modules:
         - dso-common-jdk15
         - dso-l1-api
         - dso-l1
+        - dso-l2-common
+        - deploy
         - dso-l2
         - simulator
-        - deploy
         - thirdparty-api
         - thirdparty
         - legacy-test-tree
         - dso-container-tests
         - modules-common-1.0
 
-# these groups are used by the monkeys to run tests in each module. 
+# these groups are used by the monkeys to run tests in each module.
 module-groups:
   container:
     - dso-container-tests
@@ -752,9 +791,10 @@ module-groups:
     - dso-l1-tomcat
     - dso-l1-tomcat50
     - dso-l1-tomcat55
+    - dso-l2-common
     - dso-l2
     - deploy
-    - simulator    
+    - simulator
     - examples
     - legacy-test-tree
     - dso-system-tests

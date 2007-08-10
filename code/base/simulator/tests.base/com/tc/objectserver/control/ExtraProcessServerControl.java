@@ -6,13 +6,12 @@ package com.tc.objectserver.control;
 
 import org.apache.commons.lang.ArrayUtils;
 
-import com.tc.admin.TCStop;
 import com.tc.config.Directories;
 import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
 import com.tc.process.LinkedJavaProcess;
 import com.tc.process.StreamCopier;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.server.ServerConstants;
+import com.tc.test.TestConfigObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -32,11 +31,11 @@ public class ExtraProcessServerControl extends ServerControlBase {
   private final boolean       mergeOutput;
 
   protected LinkedJavaProcess process;
+  protected File              javaHome;
   protected final String      configFileLoc;
   protected final List        jvmArgs;
   private final File          runningDirectory;
   private final String        serverName;
-  private File                javaHome;
   private File                out;
   private FileOutputStream    fileOut;
   private StreamCopier        outCopier;
@@ -114,7 +113,12 @@ public class ExtraProcessServerControl extends ServerControlBase {
                                    File javaHome, boolean useIdentifier) {
     super(host, dsoPort, adminPort);
     this.useIdentifier = useIdentifier;
-    this.javaHome = javaHome;
+    if (javaHome != null) {
+      this.javaHome = javaHome;
+    }
+    else {
+      this.javaHome = new File(TestConfigObject.getInstance().getL2StartupJavaHome());
+    }
     this.serverName = serverName;
     jvmArgs = new ArrayList();
 
@@ -188,13 +192,16 @@ public class ExtraProcessServerControl extends ServerControlBase {
   }
 
   protected String getMainClassName() {
-    return ServerConstants.SERVER_MAIN_CLASS_NAME;
+    return "com.tc.server.TCServerMain";
   }
 
   /**
    * The JAVA_HOME for the JVM to use when creating a {@link LinkedChildProcess}.
    */
   public File getJavaHome() {
+    if (javaHome == null) {
+      javaHome = new File(TestConfigObject.getInstance().getL2StartupJavaHome());
+    }
     return javaHome;
   }
 
@@ -231,15 +238,19 @@ public class ExtraProcessServerControl extends ServerControlBase {
     waitUntilStarted();
     System.err.println(this.name + " started.");
   }
-
-  protected LinkedJavaProcess createLinkedJavaProcess() {
-    LinkedJavaProcess rv = new LinkedJavaProcess(getMainClassName(), getMainClassArguments());
-    rv.setDirectory(this.runningDirectory);
+  
+  protected LinkedJavaProcess createLinkedJavaProcess(String mainClassName, String[] arguments) {
+    LinkedJavaProcess result = new LinkedJavaProcess(mainClassName, arguments);
+    result.setDirectory(this.runningDirectory);
     File processJavaHome = getJavaHome();
     if (processJavaHome != null) {
-      rv.setJavaHome(processJavaHome);
+      result.setJavaHome(processJavaHome);
     }
-    return rv;
+    return result;
+  }
+
+  protected LinkedJavaProcess createLinkedJavaProcess() {
+    return createLinkedJavaProcess(getMainClassName(), getMainClassArguments());
   }
 
   public void crash() throws Exception {
@@ -253,8 +264,9 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
   public void attemptShutdown() throws Exception {
     System.out.println("Shutting down server " + this.name + "...");
-    TCStop stopper = new TCStop(getHost(), getAdminPort());
-    stopper.stop();
+    String[] args = getMainClassArguments();
+    LinkedJavaProcess stopper = createLinkedJavaProcess("com.tc.admin.TCStop", args);
+    stopper.start();
   }
 
   public void shutdown() throws Exception {

@@ -5,7 +5,6 @@
 	<classpathentry excluding="**/SCCS/**" kind="src" output="build.eclipse/src.classes" path="src.resources"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/deploy"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/aspectwerkz"/>

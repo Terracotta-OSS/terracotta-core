@@ -28,4 +28,7 @@ public interface TCServer {
   L2Info[] infoForAllL2s();
 
   void startBeanShell(int port);
+
+  public int getDSOListenPort();
+  public void dump();
 }

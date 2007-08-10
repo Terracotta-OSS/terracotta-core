@@ -23,7 +23,6 @@ import com.tc.object.bytecode.NullManager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelper;
-import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.server.TCServerImpl;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -52,7 +51,7 @@ public class MaxConnectionTest extends BaseDSOTestCase {
     TestTVSConfigurationSetupManagerFactory factory = createDistributedConfigFactory();
     L2TVSConfigurationSetupManager l2Manager = factory.createL2TVSConfigurationSetupManager(null);
     server = new TCServerImpl(l2Manager, new TCThreadGroup(new ThrowableHandler(TCLogging
-        .getLogger(DistributedObjectServer.class))), connectionPolicy);
+        .getLogger(TCServerImpl.class))), connectionPolicy);
     server.start();
 
     makeClientUsePort(server.getDSOListenPort());

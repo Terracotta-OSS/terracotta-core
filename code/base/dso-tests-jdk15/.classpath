@@ -15,6 +15,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-jdk15"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/legacy-test-tree"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dso-l2-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-common-jdk15"/>
 	<classpathentry kind="lib" path="/dependencies/lib/catalina-tribes-6.0.11-20070521.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dso-l1-api"/>

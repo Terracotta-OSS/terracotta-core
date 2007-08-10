@@ -7,7 +7,6 @@ package com.tc.test.restart;
 import org.apache.commons.io.FileUtils;
 
 import com.tc.config.schema.MockIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.L2ConfigBuilder;
@@ -16,7 +15,6 @@ import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.control.ExtraProcessServerControl;
-import com.tc.objectserver.control.IntraProcessServerControl;
 import com.tc.objectserver.control.NullServerControl;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.objectserver.control.ExtraProcessServerControl.DebugParams;
@@ -218,11 +216,18 @@ public class RestartTestEnvironment {
     return (newExtraProcessServer(new ArrayList()));
   }
 
+/*
+Commented out by jvoegele since this method is not called from anywhere and it creates a dependency
+on the deploy module.  The following imports were also removed as a result of removing this method:
+import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.objectserver.control.IntraProcessServerControl;
+
   public ServerControl newIntraProcessServer() throws ConfigurationSetupException {
     assertServerOff();
     this.server = new IntraProcessServerControl(this.config.createL2TVSConfigurationSetupManager(null), "localhost");
     return serverWrapper;
   }
+*/
 
   private void assertServerNotNull() {
     if (this.server == null) throw new AssertionError("Server is null.");
