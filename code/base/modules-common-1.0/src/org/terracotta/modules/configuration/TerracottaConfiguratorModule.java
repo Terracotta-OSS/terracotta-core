@@ -8,7 +8,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.ServiceReference;
 
-import com.tc.object.config.IStandardDSOClientConfigHelper;
+import com.tc.object.config.StandardDSOClientConfigHelper;
 
 public abstract class TerracottaConfiguratorModule implements BundleActivator {
 
@@ -26,7 +26,7 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
 
 	public void start(final BundleContext context) throws Exception {
 		final ServiceReference configHelperRef = getConfigHelperReference(context);
-		final IStandardDSOClientConfigHelper configHelper = (IStandardDSOClientConfigHelper) context
+		final StandardDSOClientConfigHelper configHelper = (StandardDSOClientConfigHelper) context
 				.getService(configHelperRef);
 		addInstrumentation(context, configHelper);
 		context.ungetService(configHelperRef);
@@ -38,7 +38,7 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
 	}
 
 	protected void addInstrumentation(final BundleContext context,
-			final IStandardDSOClientConfigHelper configHelper) {
+			final StandardDSOClientConfigHelper configHelper) {
 		// default empty body
 	}
 

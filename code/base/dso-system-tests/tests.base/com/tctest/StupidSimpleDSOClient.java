@@ -7,7 +7,7 @@ import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
-import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.loaders.IsolationClassLoader;
 
 import java.io.BufferedReader;
@@ -58,7 +58,7 @@ public class StupidSimpleDSOClient {
     factory = new StandardTVSConfigurationSetupManagerFactory(args, false, new FatalIllegalConfigurationChangeHandler());
     L1TVSConfigurationSetupManager configManager = factory.createL1TVSConfigurationSetupManager();
     PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(configManager);
-    IsolationClassLoader classLoader = new IsolationClassLoader(new StandardDSOClientConfigHelper(configManager),
+    IsolationClassLoader classLoader = new IsolationClassLoader(new StandardDSOClientConfigHelperImpl(configManager),
                                                                 components);
 
     Class clientClass = classLoader.loadClass(StupidSimpleDSOClient.class.getName());

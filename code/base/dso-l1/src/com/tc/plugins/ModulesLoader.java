@@ -19,8 +19,8 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.ConfigLoader;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.IStandardDSOClientConfigHelper;
 import com.tc.object.config.ModuleSpec;
+import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.Namespace;
@@ -124,7 +124,7 @@ public class ModulesLoader {
     // install all available bundles
     osgiRuntime.installBundles();
 
-    if (configHelper instanceof IStandardDSOClientConfigHelper) {
+    if (configHelper instanceof StandardDSOClientConfigHelper) {
       final Dictionary serviceProps = new Hashtable();
       serviceProps.put(Constants.SERVICE_VENDOR, "Terracotta, Inc.");
       serviceProps.put(Constants.SERVICE_DESCRIPTION, "Main point of entry for programmatic access to"

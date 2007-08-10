@@ -23,7 +23,7 @@ import com.tc.object.bytecode.hook.ClassLoaderPreProcessorImpl;
 import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.IncompleteBootJarException;
-import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.config.UnverifiedBootJarException;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.logging.InstrumentationLoggerImpl;
@@ -174,7 +174,7 @@ public class DSOContextImpl implements DSOContext {
       } catch (Exception e) {
         throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
       }
-      staticConfigHelper = new StandardDSOClientConfigHelper(config);
+      staticConfigHelper = new StandardDSOClientConfigHelperImpl(config);
     }
 
     return staticConfigHelper;

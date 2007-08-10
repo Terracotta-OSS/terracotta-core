@@ -97,7 +97,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class StandardDSOClientConfigHelper implements IStandardDSOClientConfigHelper, DSOClientConfigHelper {
+public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfigHelper, DSOClientConfigHelper {
 
   private static final String                    CGLIB_PATTERN                      = "$$EnhancerByCGLIB$$";
 
@@ -162,12 +162,12 @@ public class StandardDSOClientConfigHelper implements IStandardDSOClientConfigHe
 
   private volatile boolean                       allowCGLIBInstrumentation          = false;
 
-  public StandardDSOClientConfigHelper(L1TVSConfigurationSetupManager configSetupManager)
+  public StandardDSOClientConfigHelperImpl(L1TVSConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
     this(configSetupManager, true);
   }
 
-  public StandardDSOClientConfigHelper(boolean initializedModulesOnlyOnce,
+  public StandardDSOClientConfigHelperImpl(boolean initializedModulesOnlyOnce,
                                        L1TVSConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
     this(configSetupManager, true);
@@ -176,7 +176,7 @@ public class StandardDSOClientConfigHelper implements IStandardDSOClientConfigHe
     }
   }
 
-  public StandardDSOClientConfigHelper(L1TVSConfigurationSetupManager configSetupManager, boolean interrogateBootJar)
+  public StandardDSOClientConfigHelperImpl(L1TVSConfigurationSetupManager configSetupManager, boolean interrogateBootJar)
       throws ConfigurationSetupException {
     this.portability = new PortabilityImpl(this);
     this.configSetupManager = configSetupManager;
@@ -1734,7 +1734,7 @@ public class StandardDSOClientConfigHelper implements IStandardDSOClientConfigHe
   }
 
   public String toString() {
-    return "<StandardDSOClientConfigHelper: " + configSetupManager + ">";
+    return "<StandardDSOClientConfigHelperImpl: " + configSetupManager + ">";
   }
 
   public void writeTo(DSOApplicationConfigBuilder appConfigBuilder) {

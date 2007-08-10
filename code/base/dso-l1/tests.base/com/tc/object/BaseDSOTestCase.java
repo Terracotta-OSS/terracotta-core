@@ -13,7 +13,7 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.test.TCTestCase;
 import com.terracottatech.config.AdditionalBootJarClasses;
 
@@ -107,7 +107,7 @@ public class BaseDSOTestCase extends TCTestCase {
   }
 
   protected final DSOClientConfigHelper createClientConfigHelper() throws ConfigurationSetupException {
-    return new StandardDSOClientConfigHelper(true, createL1ConfigManager());
+    return new StandardDSOClientConfigHelperImpl(true, createL1ConfigManager());
   }
 
   // TODO: fix this

@@ -19,7 +19,7 @@ import com.tc.config.schema.test.L2SConfigBuilder;
 import com.tc.config.schema.test.LockConfigBuilderImpl;
 import com.tc.config.schema.test.RootConfigBuilderImpl;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
-import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 
@@ -73,7 +73,7 @@ public class ResolveTwoActiveServersTest extends TransparentTestBase {
     setConfigFactory(factory);
 
     L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
-    setUpForMultipleExternalProcesses(factory, new StandardDSOClientConfigHelper(manager), dsoPorts, jmxPorts,
+    setUpForMultipleExternalProcesses(factory, new StandardDSOClientConfigHelperImpl(manager), dsoPorts, jmxPorts,
                                       l2GroupPorts, proxyPorts, serverNames, configFiles);
 
     getTransparentAppConfig().setClientCount(NODES);

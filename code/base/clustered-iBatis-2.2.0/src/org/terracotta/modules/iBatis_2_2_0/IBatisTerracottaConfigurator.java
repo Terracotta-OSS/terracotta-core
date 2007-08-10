@@ -12,16 +12,16 @@ import org.terracotta.modules.iBatis_2_2_0.object.config.IBatisModuleSpec;
 
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.config.ConfigLockLevel;
-import com.tc.object.config.IStandardDSOClientConfigHelper;
 import com.tc.object.config.ITransparencyClassSpec;
 import com.tc.object.config.ModuleSpec;
+import com.tc.object.config.StandardDSOClientConfigHelper;
 
 import java.sql.SQLException;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
 public final class IBatisTerracottaConfigurator extends TerracottaConfiguratorModule {
-  protected final void addInstrumentation(final BundleContext context, final IStandardDSOClientConfigHelper configHelper) {
+  protected final void addInstrumentation(final BundleContext context, final StandardDSOClientConfigHelper configHelper) {
     configHelper.addAutolock("* java.util.Collections$SynchronizedList.*(..)", ConfigLockLevel.WRITE);
     
     ClassAdapterFactory factory = new IBatisClassAdapter();

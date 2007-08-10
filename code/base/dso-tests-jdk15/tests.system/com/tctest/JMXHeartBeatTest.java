@@ -13,7 +13,7 @@ import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
-import com.tc.object.config.StandardDSOClientConfigHelper;
+import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tctest.runner.AbstractTransparentApp;
@@ -60,7 +60,7 @@ public class JMXHeartBeatTest extends TransparentTestBase {
 
     factory.addServerToL1Config(null, port, adminPort);
     L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
-    setUpControlledServer(factory, new StandardDSOClientConfigHelper(manager), port, adminPort, configFile
+    setUpControlledServer(factory, new StandardDSOClientConfigHelperImpl(manager), port, adminPort, configFile
         .getAbsolutePath());
     doSetUp(this);
   }

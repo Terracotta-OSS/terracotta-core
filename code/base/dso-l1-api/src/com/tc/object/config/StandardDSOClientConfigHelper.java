@@ -5,9 +5,9 @@ package com.tc.object.config;
 
 import com.tc.object.bytecode.ClassAdapterFactory;
 
-public interface IStandardDSOClientConfigHelper {
+public interface StandardDSOClientConfigHelper {
 
-  // HACK: available only in IStandardDSOClientConfigHelper
+  // HACK: available only in StandardDSOClientConfigHelper
 
   void allowCGLIBInstrumentation();
 
