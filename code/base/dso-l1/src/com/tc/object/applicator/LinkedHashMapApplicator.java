@@ -9,7 +9,7 @@ import com.tc.object.TCObject;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.util.Assert;
@@ -35,7 +35,7 @@ public class LinkedHashMapApplicator extends PartialHashMapApplicator {
     }
   }
 
-  public LinkedHashMapApplicator(IDNAEncoding encoding) {
+  public LinkedHashMapApplicator(DNAEncoding encoding) {
     super(encoding);
   }
 

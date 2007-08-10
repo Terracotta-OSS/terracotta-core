@@ -8,7 +8,7 @@ import com.tc.io.TCDataOutput;
 
 import java.io.IOException;
 
-public interface IDNAEncoding {
+public interface DNAEncoding {
 
   /**
    * When the policy is set to SERIALIZER then the DNAEncoding.decode() will return the exact Objects that where

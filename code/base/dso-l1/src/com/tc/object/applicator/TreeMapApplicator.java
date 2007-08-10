@@ -13,7 +13,7 @@ import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
@@ -46,7 +46,7 @@ public class TreeMapApplicator extends BaseApplicator {
     }
   }
 
-  public TreeMapApplicator(IDNAEncoding encoding) {
+  public TreeMapApplicator(DNAEncoding encoding) {
     super(encoding);
   }
 

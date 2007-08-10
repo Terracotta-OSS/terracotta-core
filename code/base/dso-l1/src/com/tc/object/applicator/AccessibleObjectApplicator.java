@@ -11,7 +11,7 @@ import com.tc.object.TraversedReferences;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.util.Assert;
@@ -33,7 +33,7 @@ public class AccessibleObjectApplicator extends BaseApplicator {
   private static final String CONSTRUCTOR_CLASS_NAME            = Constructor.class.getName();
   private static final String FIELD_CLASS_NAME                  = Field.class.getName();
 
-  public AccessibleObjectApplicator(IDNAEncoding encoding) {
+  public AccessibleObjectApplicator(DNAEncoding encoding) {
     super(encoding);
   }
 

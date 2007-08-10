@@ -14,7 +14,7 @@ import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.field.TCField;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
@@ -31,7 +31,7 @@ public class PhysicalApplicator extends BaseApplicator {
 
   private final TCClass clazz;
 
-  public PhysicalApplicator(TCClass clazz, IDNAEncoding encoding) {
+  public PhysicalApplicator(TCClass clazz, DNAEncoding encoding) {
     super(encoding);
     this.clazz = clazz;
   }

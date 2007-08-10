@@ -14,7 +14,7 @@ import com.tc.object.change.event.LogicalChangeEvent;
 import com.tc.object.change.event.PhysicalChangeEvent;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAWriterImpl;
@@ -73,7 +73,7 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
     }
   }
 
-  public void writeTo(TCByteBufferOutputStream output, ObjectStringSerializer serializer, IDNAEncoding encoding) {
+  public void writeTo(TCByteBufferOutputStream output, ObjectStringSerializer serializer, DNAEncoding encoding) {
     // NOTE: This method releases the change events to conserve memory
 
     if (dnaCreated.attemptSet()) {
@@ -293,7 +293,7 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
 
     abstract Object createNextAction(Object object);
 
-    public boolean next(IDNAEncoding encoding) {
+    public boolean next(DNAEncoding encoding) {
       return next();
     }
 

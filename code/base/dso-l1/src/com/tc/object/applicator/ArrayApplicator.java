@@ -13,7 +13,7 @@ import com.tc.object.bytecode.hook.impl.ArrayManager;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.TCObjectClone;
@@ -28,7 +28,7 @@ import java.util.Map;
 
 public class ArrayApplicator extends BaseApplicator {
 
-  public ArrayApplicator(IDNAEncoding encoding) {
+  public ArrayApplicator(DNAEncoding encoding) {
     super(encoding);
   }
 

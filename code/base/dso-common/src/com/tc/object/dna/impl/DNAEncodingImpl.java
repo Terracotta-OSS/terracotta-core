@@ -11,7 +11,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.util.Assert;
@@ -32,7 +32,7 @@ import java.util.Currency;
 /**
  * Utility for encoding/decoding DNA
  */
-public class DNAEncoding implements IDNAEncoding {
+public class DNAEncodingImpl implements DNAEncoding {
 
   // XXX: These warning thresholds should be done in a non-static way so they can be made configurable
   // and architecture sensitive.
@@ -56,7 +56,7 @@ public class DNAEncoding implements IDNAEncoding {
   static final byte                  SUB_ARRAY_ACTION_TYPE                = 7;
 
   private static final LiteralValues literalValues                        = new LiteralValues();
-  private static final TCLogger      logger                               = TCLogging.getLogger(DNAEncoding.class);
+  private static final TCLogger      logger                               = TCLogging.getLogger(DNAEncodingImpl.class);
 
   private static final byte          TYPE_ID_REFERENCE                    = 1;
   private static final byte          TYPE_ID_BOOLEAN                      = 2;
@@ -93,12 +93,12 @@ public class DNAEncoding implements IDNAEncoding {
   /**
    * Used in the Applicators. The policy is set to APPLICATOR.
    */
-  public DNAEncoding(ClassProvider classProvider) {
+  public DNAEncodingImpl(ClassProvider classProvider) {
     this.classProvider = classProvider;
     this.policy = APPLICATOR;
   }
 
-  public DNAEncoding(byte policy) {
+  public DNAEncodingImpl(byte policy) {
     this.policy = policy;
     // you only want this version on the server where you won't be expanding java.lang.Class instances
     if (policy == STORAGE) {

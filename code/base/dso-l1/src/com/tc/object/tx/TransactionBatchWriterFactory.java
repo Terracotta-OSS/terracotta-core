@@ -3,7 +3,7 @@
  */
 package com.tc.object.tx;
 
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 
@@ -11,9 +11,9 @@ public class TransactionBatchWriterFactory implements TransactionBatchFactory {
 
   private long                                  batchIDSequence = 0;
   private final CommitTransactionMessageFactory messageFactory;
-  private final IDNAEncoding                     encoding;
+  private final DNAEncoding                     encoding;
 
-  public TransactionBatchWriterFactory(CommitTransactionMessageFactory messageFactory, IDNAEncoding encoding) {
+  public TransactionBatchWriterFactory(CommitTransactionMessageFactory messageFactory, DNAEncoding encoding) {
     this.messageFactory = messageFactory;
     this.encoding = encoding;
   }

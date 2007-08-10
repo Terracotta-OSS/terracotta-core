@@ -16,8 +16,8 @@ import com.tc.object.applicator.PhysicalApplicator;
 import com.tc.object.applicator.ProxyApplicator;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.dna.api.IDNAEncoding;
-import com.tc.object.dna.impl.DNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.impl.DNAEncodingImpl;
 import com.tc.object.field.TCFieldFactory;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.util.ClassUtils;
@@ -31,19 +31,19 @@ import java.util.Map;
  */
 public class TCClassFactoryImpl implements TCClassFactory {
   private static final LiteralValues  literalValues             = new LiteralValues();
-  private static Class[]              APPLICATOR_CSTR_SIGNATURE = new Class[] { IDNAEncoding.class };
+  private static Class[]              APPLICATOR_CSTR_SIGNATURE = new Class[] { DNAEncoding.class };
 
   private final Map                   classes                   = new HashMap();
   private final TCFieldFactory        fieldFactory;
   private final DSOClientConfigHelper config;
   private final ClassProvider         classProvider;
-  private final IDNAEncoding           encoding;
+  private final DNAEncoding           encoding;
 
   public TCClassFactoryImpl(TCFieldFactory fieldFactory, DSOClientConfigHelper config, ClassProvider classProvider) {
     this.fieldFactory = fieldFactory;
     this.config = config;
     this.classProvider = classProvider;
-    this.encoding = new DNAEncoding(classProvider);
+    this.encoding = new DNAEncodingImpl(classProvider);
   }
 
   public TCClass getOrCreate(Class clazz, ClientObjectManager objectManager) {

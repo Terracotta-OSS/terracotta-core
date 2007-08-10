@@ -14,7 +14,7 @@ import com.tc.object.applicator.BaseApplicator;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.util.Assert;
@@ -33,7 +33,7 @@ public class IBatisAccessPlanApplicator extends BaseApplicator {
   private static final String CLAZZ_FIELD_NAME  = "com.ibatis.sqlmap.engine.accessplan.BaseAccessPlan.clazz";
   private static final String PROPERTY_NAMES_FIELD_NAME  = "com.ibatis.sqlmap.engine.accessplan.BaseAccessPlan.clazz.propertyNames";
 
-  public IBatisAccessPlanApplicator(IDNAEncoding encoding) {
+  public IBatisAccessPlanApplicator(DNAEncoding encoding) {
     super(encoding);
   }
 

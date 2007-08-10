@@ -9,7 +9,7 @@ import com.tc.io.serializer.TCObjectOutputStream;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
@@ -286,7 +286,7 @@ public class ManagedObjectStateSerialization15Test extends TestCase {
       return (PhysicalAction) actions.get(current);
     }
 
-    public boolean next(IDNAEncoding encoding) {
+    public boolean next(DNAEncoding encoding) {
       throw new ImplementMe();
     }
 

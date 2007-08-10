@@ -9,7 +9,7 @@ import com.tc.object.ClientObjectManager;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.util.Assert;
 
 import java.util.Map;
@@ -19,7 +19,7 @@ public abstract class BaseApplicator implements ChangeApplicator {
   private static final TCLogger       logger   = TCLogging.getLogger(BaseApplicator.class);
   private static final LiteralValues literals = createLiteralValuesInstance();
 
-  protected final IDNAEncoding        encoding;
+  protected final DNAEncoding        encoding;
 
   private static final LiteralValues createLiteralValuesInstance() {
     try {
@@ -34,7 +34,7 @@ public abstract class BaseApplicator implements ChangeApplicator {
     }
   }
 
-  protected BaseApplicator(IDNAEncoding encoding) {
+  protected BaseApplicator(DNAEncoding encoding) {
     this.encoding = encoding;
   }
 

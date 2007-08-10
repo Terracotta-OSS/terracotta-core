@@ -5,7 +5,7 @@ package com.tc.objectserver.core.api;
 
 import com.tc.exception.ImplementMe;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
@@ -58,7 +58,7 @@ public class TestDNACursor implements DNACursor {
     return (PhysicalAction) actions.get(current);
   }
 
-  public boolean next(IDNAEncoding encoding) {
+  public boolean next(DNAEncoding encoding) {
     throw new ImplementMe();
   }
 

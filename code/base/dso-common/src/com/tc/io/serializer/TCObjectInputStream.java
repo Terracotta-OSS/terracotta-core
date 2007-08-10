@@ -4,8 +4,8 @@
 package com.tc.io.serializer;
 
 import com.tc.io.TCDataInput;
-import com.tc.object.dna.api.IDNAEncoding;
-import com.tc.object.dna.impl.DNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.impl.DNAEncodingImpl;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -32,7 +32,7 @@ import java.io.ObjectInput;
  */
 public class TCObjectInputStream implements ObjectInput, TCDataInput {
 
-  private static final IDNAEncoding SERIALIZER_ENCODING = new DNAEncoding(IDNAEncoding.SERIALIZER);
+  private static final DNAEncoding SERIALIZER_ENCODING = new DNAEncodingImpl(DNAEncoding.SERIALIZER);
 
   private final InputStream        in;
 

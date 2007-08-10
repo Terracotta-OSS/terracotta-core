@@ -11,7 +11,7 @@ import com.tc.object.TraversedReferences;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.util.Assert;
@@ -21,7 +21,7 @@ import java.util.Map;
 
 public class LiteralTypesApplicator extends BaseApplicator {
 
-  public LiteralTypesApplicator(TCClass clazz, IDNAEncoding encoding) {
+  public LiteralTypesApplicator(TCClass clazz, DNAEncoding encoding) {
     super(encoding);
   }
 

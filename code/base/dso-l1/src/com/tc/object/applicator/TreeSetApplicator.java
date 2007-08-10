@@ -10,7 +10,7 @@ import com.tc.object.TraversedReferences;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.util.Assert;
@@ -44,7 +44,7 @@ public class TreeSetApplicator extends HashSetApplicator {
     }
   }
 
-  public TreeSetApplicator(IDNAEncoding encoding) {
+  public TreeSetApplicator(DNAEncoding encoding) {
     super(encoding);
   }
 

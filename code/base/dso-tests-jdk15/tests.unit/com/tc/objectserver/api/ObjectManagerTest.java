@@ -22,7 +22,7 @@ import com.tc.object.cache.TestCacheStats;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAException;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
@@ -672,7 +672,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
         return count >= 0;
       }
 
-      public boolean next(IDNAEncoding encoding) {
+      public boolean next(DNAEncoding encoding) {
         throw new ImplementMe();
       }
 
@@ -1243,7 +1243,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
           }
         }
 
-        public boolean next(IDNAEncoding encoding) {
+        public boolean next(DNAEncoding encoding) {
           throw new ImplementMe();
         }
 
@@ -1325,7 +1325,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
           throw new ImplementMe();
         }
 
-        public boolean next(IDNAEncoding encoding) {
+        public boolean next(DNAEncoding encoding) {
           throw new ImplementMe();
         }
 
@@ -1412,7 +1412,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
           throw new ImplementMe();
         }
 
-        public boolean next(IDNAEncoding encoding) {
+        public boolean next(DNAEncoding encoding) {
           throw new ImplementMe();
         }
 
@@ -1497,7 +1497,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
           throw new ImplementMe();
         }
 
-        public boolean next(IDNAEncoding encoding) {
+        public boolean next(DNAEncoding encoding) {
           throw new ImplementMe();
         }
 
@@ -1650,7 +1650,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
 
         }
 
-        public boolean next(IDNAEncoding encoding) {
+        public boolean next(DNAEncoding encoding) {
           throw new ImplementMe();
         }
 
@@ -1746,7 +1746,7 @@ public class ObjectManagerTest extends BaseDSOTestCase {
           throw new ImplementMe();
         }
 
-        public boolean next(IDNAEncoding encoding) {
+        public boolean next(DNAEncoding encoding) {
           throw new ImplementMe();
         }
 

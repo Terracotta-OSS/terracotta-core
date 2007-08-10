@@ -11,7 +11,7 @@ import com.tc.object.bytecode.Manageable;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.object.tx.optimistic.TCObjectClone;
@@ -28,7 +28,7 @@ import java.util.Map;
  */
 public class DateApplicator extends BaseApplicator {
 
-  public DateApplicator(IDNAEncoding encoding) {
+  public DateApplicator(DNAEncoding encoding) {
     super(encoding);
   }
 

@@ -8,8 +8,8 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.MockClassProvider;
-import com.tc.object.dna.api.IDNAEncoding;
-import com.tc.object.dna.impl.DNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.impl.DNAEncodingImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.DefaultGlobalTransactionIDGenerator;
 import com.tc.object.gtx.GlobalTransactionID;
@@ -40,7 +40,7 @@ import junit.framework.TestCase;
 
 public class TransactionBatchTest extends TestCase {
 
-  private IDNAEncoding                         encoding = new DNAEncoding(new MockClassProvider());
+  private DNAEncoding                         encoding = new DNAEncodingImpl(new MockClassProvider());
 
   private TransactionBatchWriter              writer;
   private TestCommitTransactionMessageFactory messageFactory;

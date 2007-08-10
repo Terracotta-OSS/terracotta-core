@@ -4,11 +4,11 @@
 package com.tc.object.applicator;
 
 import com.tc.object.ClientObjectManager;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 
 public class PartialHashMapApplicator extends HashMapApplicator {
 
-  public PartialHashMapApplicator(IDNAEncoding encoding) {
+  public PartialHashMapApplicator(DNAEncoding encoding) {
     super(encoding);
   }
 

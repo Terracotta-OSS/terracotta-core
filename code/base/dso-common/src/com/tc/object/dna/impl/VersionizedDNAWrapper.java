@@ -7,7 +7,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAException;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 
@@ -96,7 +96,7 @@ public class VersionizedDNAWrapper implements DNA {
       return success;
     }
 
-    public boolean next(IDNAEncoding encoding) throws IOException, ClassNotFoundException {
+    public boolean next(DNAEncoding encoding) throws IOException, ClassNotFoundException {
       if(++index < actions.size()) {
         return true;
       }

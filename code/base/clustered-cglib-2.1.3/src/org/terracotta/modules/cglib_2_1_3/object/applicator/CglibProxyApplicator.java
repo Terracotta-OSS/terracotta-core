@@ -14,7 +14,7 @@ import com.tc.object.applicator.BaseApplicator;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.util.Assert;
@@ -28,7 +28,7 @@ public class CglibProxyApplicator extends BaseApplicator {
   private static final String SUPERCLASS_FIELD_NAME  = "net.sf.cglib.proxy.Factory.superclass";
   private static final String CALLBACK_FIELD_NAME    = "net.sf.cglib.proxy.Factory.callBack";
 
-  public CglibProxyApplicator(IDNAEncoding encoding) {
+  public CglibProxyApplicator(DNAEncoding encoding) {
     super(encoding);
   }
 

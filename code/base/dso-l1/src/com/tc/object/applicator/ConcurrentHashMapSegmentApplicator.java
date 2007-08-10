@@ -11,7 +11,7 @@ import com.tc.object.bytecode.JavaUtilConcurrentHashMapSegmentAdapter;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.util.Assert;
 
@@ -26,7 +26,7 @@ public class ConcurrentHashMapSegmentApplicator extends PhysicalApplicator {
   
   private final TCClass clazz;
 
-  public ConcurrentHashMapSegmentApplicator(TCClass clazz, IDNAEncoding encoding) {
+  public ConcurrentHashMapSegmentApplicator(TCClass clazz, DNAEncoding encoding) {
     super(clazz, encoding);
     this.clazz = clazz;
   }

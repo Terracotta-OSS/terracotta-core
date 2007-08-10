@@ -14,7 +14,7 @@ import com.tc.object.applicator.BaseApplicator;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.IDNAEncoding;
+import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.tx.optimistic.OptimisticTransactionManager;
 import com.tc.util.Assert;
@@ -46,7 +46,7 @@ public class HibernateProxyApplicator extends BaseApplicator {
   private static final String ABSTRACT_COMPONENT_CLASS_NAME        = "org.hibernate.type.AbstractComponentType";
   private static final String SESSION_IMPLEMENTOR_CLASS_NAME       = "org.hibernate.engine.SessionImplementor";
 
-  public HibernateProxyApplicator(IDNAEncoding encoding) {
+  public HibernateProxyApplicator(DNAEncoding encoding) {
     super(encoding);
   }
 
